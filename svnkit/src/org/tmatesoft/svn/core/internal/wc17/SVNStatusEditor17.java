@@ -41,7 +41,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo;
-import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbStatus;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo.RepositoryInfoField;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
@@ -185,7 +185,7 @@ public class SVNStatusEditor17 {
         }
 
         final WCDbInfo dirInfo = db.readInfo(localAbsPath, InfoField.status, InfoField.reposRelPath, InfoField.reposRootUrl, InfoField.depth);
-        WCDbStatus dirStatus = dirInfo.status;
+        SVNWCDbStatus dirStatus = dirInfo.status;
         File dirReposRelPath = dirInfo.reposRelPath;
         SVNURL dirReposRootUrl = dirInfo.reposRootUrl;
         SVNDepth dirDepth = dirInfo.depth;
@@ -194,7 +194,7 @@ public class SVNStatusEditor17 {
             if (dirReposRootUrl != null) {
                 dirReposRootUrl = parentReposRootUrl;
                 dirReposRelPath = new File(parentReposRelPath, localAbsPath.getName());
-            } else if (dirStatus != WCDbStatus.Deleted && dirStatus != WCDbStatus.Added) {
+            } else if (dirStatus != SVNWCDbStatus.Deleted && dirStatus != SVNWCDbStatus.Added) {
                 final WCDbRepositoryInfo baseReposInfo = db.scanBaseRepository(localAbsPath, RepositoryInfoField.relPath, RepositoryInfoField.rootUrl);
                 dirReposRelPath = baseReposInfo.relPath;
                 dirReposRootUrl = baseReposInfo.rootUrl;
@@ -328,12 +328,12 @@ public class SVNStatusEditor17 {
         SVNLock repositoryLock = null;
         if (myRepositoryLocks != null) {
             final WCDbInfo info = db.readInfo(localAbsPath, InfoField.status, InfoField.reposRelPath, InfoField.baseShadowed);
-            WCDbStatus status = info.status;
+            SVNWCDbStatus status = info.status;
             File reposRelpath = info.reposRelPath;
             boolean baseShadowed = info.baseShadowed;
 
             /* A switched path can be deleted: check the right relpath */
-            if (status == WCDbStatus.Deleted && baseShadowed) {
+            if (status == SVNWCDbStatus.Deleted && baseShadowed) {
                 final WCDbRepositoryInfo reposInfo = db.scanBaseRepository(localAbsPath, RepositoryInfoField.relPath);
                 reposRelpath = reposInfo.relPath;
             }

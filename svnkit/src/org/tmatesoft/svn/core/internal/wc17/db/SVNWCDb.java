@@ -43,7 +43,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNTreeConflictUtil;
-import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbKind;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbAdditionInfo.AdditionInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbBaseInfo.BaseInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbDeletionInfo.DeletionInfoField;
@@ -67,42 +67,42 @@ public class SVNWCDb implements ISVNWCDb {
     private static final int FORMAT_FROM_SDB = -1;
     private static final long UNKNOWN_WC_ID = -1;
 
-    private static final EnumMap<WCDbKind, String> kindMap = new EnumMap<WCDbKind, String>(WCDbKind.class);
-    private static final HashMap<String, WCDbKind> kindMap2 = new HashMap<String, WCDbKind>();
+    private static final EnumMap<SVNWCDbKind, String> kindMap = new EnumMap<SVNWCDbKind, String>(SVNWCDbKind.class);
+    private static final HashMap<String, SVNWCDbKind> kindMap2 = new HashMap<String, SVNWCDbKind>();
     static {
-        kindMap.put(WCDbKind.File, "file");
-        kindMap.put(WCDbKind.Dir, "dir");
-        kindMap.put(WCDbKind.Symlink, "symlink");
-        kindMap.put(WCDbKind.Subdir, "subdir");
-        kindMap.put(WCDbKind.Unknown, "unknown");
+        kindMap.put(SVNWCDbKind.File, "file");
+        kindMap.put(SVNWCDbKind.Dir, "dir");
+        kindMap.put(SVNWCDbKind.Symlink, "symlink");
+        kindMap.put(SVNWCDbKind.Subdir, "subdir");
+        kindMap.put(SVNWCDbKind.Unknown, "unknown");
 
-        kindMap2.put("file", WCDbKind.File);
-        kindMap2.put("dir", WCDbKind.Dir);
-        kindMap2.put("symlink", WCDbKind.Symlink);
-        kindMap2.put("subdir", WCDbKind.Subdir);
-        kindMap2.put("unknown", WCDbKind.Unknown);
+        kindMap2.put("file", SVNWCDbKind.File);
+        kindMap2.put("dir", SVNWCDbKind.Dir);
+        kindMap2.put("symlink", SVNWCDbKind.Symlink);
+        kindMap2.put("subdir", SVNWCDbKind.Subdir);
+        kindMap2.put("unknown", SVNWCDbKind.Unknown);
     };
 
     /*
      * Note: we only decode presence values from the database. These are a
      * subset of all the status values.
      */
-    private static final EnumMap<WCDbStatus, String> presenceMap = new EnumMap<WCDbStatus, String>(WCDbStatus.class);
-    private static final HashMap<String, WCDbStatus> presenceMap2 = new HashMap<String, WCDbStatus>();
+    private static final EnumMap<SVNWCDbStatus, String> presenceMap = new EnumMap<SVNWCDbStatus, String>(SVNWCDbStatus.class);
+    private static final HashMap<String, SVNWCDbStatus> presenceMap2 = new HashMap<String, SVNWCDbStatus>();
     static {
-        presenceMap.put(WCDbStatus.Normal, "normal");
-        presenceMap.put(WCDbStatus.Absent, "absent");
-        presenceMap.put(WCDbStatus.Excluded, "excluded");
-        presenceMap.put(WCDbStatus.NotPresent, "not-present");
-        presenceMap.put(WCDbStatus.Incomplete, "incomplete");
-        presenceMap.put(WCDbStatus.BaseDeleted, "base-deleted");
+        presenceMap.put(SVNWCDbStatus.Normal, "normal");
+        presenceMap.put(SVNWCDbStatus.Absent, "absent");
+        presenceMap.put(SVNWCDbStatus.Excluded, "excluded");
+        presenceMap.put(SVNWCDbStatus.NotPresent, "not-present");
+        presenceMap.put(SVNWCDbStatus.Incomplete, "incomplete");
+        presenceMap.put(SVNWCDbStatus.BaseDeleted, "base-deleted");
 
-        presenceMap2.put("normal", WCDbStatus.Normal);
-        presenceMap2.put("absent", WCDbStatus.Absent);
-        presenceMap2.put("excluded", WCDbStatus.Excluded);
-        presenceMap2.put("not-present", WCDbStatus.NotPresent);
-        presenceMap2.put("incomplete", WCDbStatus.Incomplete);
-        presenceMap2.put("base-deleted", WCDbStatus.BaseDeleted);
+        presenceMap2.put("normal", SVNWCDbStatus.Normal);
+        presenceMap2.put("absent", SVNWCDbStatus.Absent);
+        presenceMap2.put("excluded", SVNWCDbStatus.Excluded);
+        presenceMap2.put("not-present", SVNWCDbStatus.NotPresent);
+        presenceMap2.put("incomplete", SVNWCDbStatus.Incomplete);
+        presenceMap2.put("base-deleted", SVNWCDbStatus.BaseDeleted);
 
     };
 
@@ -154,13 +154,13 @@ public class SVNWCDb implements ISVNWCDb {
         return set;
     }
 
-    private WCDbOpenMode mode;
+    private SVNWCDbOpenMode mode;
     private ISVNOptions config;
     private boolean autoUpgrade;
     private boolean enforceEmptyWQ;
     private HashMap<File, SVNWCDbDir> dirData;
 
-    public void open(final WCDbOpenMode mode, final ISVNOptions config, final boolean autoUpgrade, final boolean enforceEmptyWQ) throws SVNException {
+    public void open(final SVNWCDbOpenMode mode, final ISVNOptions config, final boolean autoUpgrade, final boolean enforceEmptyWQ) throws SVNException {
         this.mode = mode;
         this.config = config;
         this.autoUpgrade = autoUpgrade;
@@ -220,10 +220,10 @@ public class SVNWCDb implements ISVNWCDb {
         InsertBaseInfo ibb = new InsertBaseInfo();
 
         if (initialRev > 0)
-            ibb.status = WCDbStatus.Incomplete;
+            ibb.status = SVNWCDbStatus.Incomplete;
         else
-            ibb.status = WCDbStatus.Normal;
-        ibb.kind = WCDbKind.Dir;
+            ibb.status = SVNWCDbStatus.Normal;
+        ibb.kind = SVNWCDbKind.Dir;
         ibb.wcId = createDb.wcId;
         ibb.localRelPath = new File("");
         ibb.reposId = createDb.reposId;
@@ -303,8 +303,8 @@ public class SVNWCDb implements ISVNWCDb {
     private static class InsertBaseInfo {
 
         /* common to all insertions into BASE */
-        public WCDbStatus status;
-        public WCDbKind kind;
+        public SVNWCDbStatus status;
+        public SVNWCDbKind kind;
         public long wcId;
         public File localRelPath;
         public long reposId;
@@ -374,13 +374,13 @@ public class SVNWCDb implements ISVNWCDb {
         if (ibb.changedAuthor != null)
             stmt.bindString(12, ibb.changedAuthor);
 
-        if (ibb.kind == WCDbKind.Dir) {
+        if (ibb.kind == SVNWCDbKind.Dir) {
             stmt.bindString(13, depthToWord(ibb.depth));
-        } else if (ibb.kind == WCDbKind.File) {
+        } else if (ibb.kind == SVNWCDbKind.File) {
             stmt.bindChecksum(14, ibb.checksum);
             if (ibb.translatedSize != INVALID_FILESIZE)
                 stmt.bindLong(15, ibb.translatedSize);
-        } else if (ibb.kind == WCDbKind.Symlink) {
+        } else if (ibb.kind == SVNWCDbKind.Symlink) {
             /* Note: incomplete nodes may have a NULL target. */
             if (ibb.target != null)
                 stmt.bindString(16, ibb.target);
@@ -388,7 +388,7 @@ public class SVNWCDb implements ISVNWCDb {
 
         stmt.insert();
 
-        if (ibb.kind == WCDbKind.Dir && ibb.children != null) {
+        if (ibb.kind == SVNWCDbKind.Dir && ibb.children != null) {
 
             stmt = sDb.getStatement(SVNWCDbStatements.INSERT_BASE_NODE_INCOMPLETE);
 
@@ -428,7 +428,7 @@ public class SVNWCDb implements ISVNWCDb {
         stmt.insert();
     }
 
-    public void addBaseAbsentNode(File localAbsPath, File reposRelPath, SVNURL reposRootUrl, String reposUuid, long revision, WCDbKind kind, WCDbStatus status, SVNSkel conflict, SVNSkel workItems)
+    public void addBaseAbsentNode(File localAbsPath, File reposRelPath, SVNURL reposRootUrl, String reposUuid, long revision, SVNWCDbKind kind, SVNWCDbStatus status, SVNSkel conflict, SVNSkel workItems)
             throws SVNException {
         // TODO
         throw new UnsupportedOperationException();
@@ -452,7 +452,7 @@ public class SVNWCDb implements ISVNWCDb {
         throw new UnsupportedOperationException();
     }
 
-    public void addLock(File localAbsPath, WCDbLock lock) throws SVNException {
+    public void addLock(File localAbsPath, SVNWCDbLock lock) throws SVNException {
         // TODO
         throw new UnsupportedOperationException();
     }
@@ -462,7 +462,7 @@ public class SVNWCDb implements ISVNWCDb {
         throw new UnsupportedOperationException();
     }
 
-    public boolean checkPristine(File wcRootAbsPath, SVNChecksum sha1Checksum, WCDbCheckMode mode) throws SVNException {
+    public boolean checkPristine(File wcRootAbsPath, SVNChecksum sha1Checksum, SVNWCDbCheckMode mode) throws SVNException {
         // TODO
         throw new UnsupportedOperationException();
     }
@@ -517,18 +517,18 @@ public class SVNWCDb implements ISVNWCDb {
             have_row = stmt.next();
 
             if (have_row) {
-                WCDbKind node_kind = getColumnToken(stmt, SVNWCDbSchema.BASE_NODE__Fields.kind, kindMap2);
+                SVNWCDbKind node_kind = getColumnToken(stmt, SVNWCDbSchema.BASE_NODE__Fields.kind, kindMap2);
 
                 if (f.contains(BaseInfoField.kind)) {
-                    if (node_kind == WCDbKind.Subdir)
-                        info.kind = WCDbKind.Dir;
+                    if (node_kind == SVNWCDbKind.Subdir)
+                        info.kind = SVNWCDbKind.Dir;
                     else
                         info.kind = node_kind;
                 }
                 if (f.contains(BaseInfoField.status)) {
                     info.status = getColumnToken(stmt, SVNWCDbSchema.BASE_NODE__Fields.presence, presenceMap2);
 
-                    if (node_kind == WCDbKind.Subdir && info.status == WCDbStatus.Normal) {
+                    if (node_kind == SVNWCDbKind.Subdir && info.status == SVNWCDbStatus.Normal) {
                         /*
                          * We're looking at the subdir record in the *parent*
                          * directory, which implies per-dir .svn subdirs. We
@@ -536,7 +536,7 @@ public class SVNWCDb implements ISVNWCDb {
                          * is missing or obstructed in some way. Inform the
                          * caller.
                          */
-                        info.status = WCDbStatus.Obstructed;
+                        info.status = SVNWCDbStatus.Obstructed;
                     }
                 }
                 if (f.contains(BaseInfoField.revision)) {
@@ -549,7 +549,7 @@ public class SVNWCDb implements ISVNWCDb {
                     if (isColumnNull(stmt, SVNWCDbSchema.LOCK__Fields.lock_token)) {
                         info.lock = null;
                     } else {
-                        info.lock = new WCDbLock();
+                        info.lock = new SVNWCDbLock();
                         info.lock.token = getColumnText(stmt, SVNWCDbSchema.LOCK__Fields.lock_token);
                         if (!isColumnNull(stmt, SVNWCDbSchema.LOCK__Fields.lock_owner))
                             info.lock.owner = getColumnText(stmt, SVNWCDbSchema.LOCK__Fields.lock_owner);
@@ -585,7 +585,7 @@ public class SVNWCDb implements ISVNWCDb {
                     info.lastModTime = new Date(getColumnInt64(stmt, SVNWCDbSchema.BASE_NODE__Fields.last_mod_time));
                 }
                 if (f.contains(BaseInfoField.depth)) {
-                    if (node_kind != WCDbKind.Dir) {
+                    if (node_kind != SVNWCDbKind.Dir) {
                         info.depth = SVNDepth.UNKNOWN;
                     } else {
                         String depth_str = getColumnText(stmt, SVNWCDbSchema.BASE_NODE__Fields.depth);
@@ -597,7 +597,7 @@ public class SVNWCDb implements ISVNWCDb {
                     }
                 }
                 if (f.contains(BaseInfoField.checksum)) {
-                    if (node_kind != WCDbKind.File) {
+                    if (node_kind != SVNWCDbKind.File) {
                         info.checksum = null;
                     } else {
                         try {
@@ -612,7 +612,7 @@ public class SVNWCDb implements ISVNWCDb {
                     info.translatedSize = getTranslatedSize(stmt, SVNWCDbSchema.BASE_NODE__Fields.translated_size);
                 }
                 if (f.contains(BaseInfoField.target)) {
-                    if (node_kind != WCDbKind.Symlink)
+                    if (node_kind != SVNWCDbKind.Symlink)
                         info.target = null;
                     else
                         info.target = new File(getColumnText(stmt, SVNWCDbSchema.BASE_NODE__Fields.symlink_target));
@@ -743,7 +743,7 @@ public class SVNWCDb implements ISVNWCDb {
         throw new UnsupportedOperationException();
     }
 
-    public void globalUpdate(File localAbsPath, WCDbKind newKind, File newReposRelpath, long newRevision, SVNProperties newProps, long newChangedRev, Date newChangedDate, String newChangedAuthor,
+    public void globalUpdate(File localAbsPath, SVNWCDbKind newKind, File newReposRelpath, long newRevision, SVNProperties newProps, long newChangedRev, Date newChangedDate, String newChangedAuthor,
             List<File> newChildren, SVNChecksum newChecksum, File newTarget, SVNProperties newDavCache, SVNSkel conflict, SVNSkel workItems) throws SVNException {
         // TODO
         throw new UnsupportedOperationException();
@@ -778,8 +778,8 @@ public class SVNWCDb implements ISVNWCDb {
                  * Note: this can ONLY be an add/copy-here/move-here. It is not
                  * possible to delete a "hidden" node.
                  */
-                WCDbStatus work_status = presenceMap2.get(getColumnText(stmt, SVNWCDbSchema.WORKING_NODE__Fields.presence));
-                return (work_status == WCDbStatus.Excluded);
+                SVNWCDbStatus work_status = presenceMap2.get(getColumnText(stmt, SVNWCDbSchema.WORKING_NODE__Fields.presence));
+                return (work_status == SVNWCDbStatus.Excluded);
             }
         } finally {
             stmt.reset();
@@ -787,8 +787,8 @@ public class SVNWCDb implements ISVNWCDb {
 
         /* Now check the BASE node's status. */
         final WCDbBaseInfo baseInfo = getBaseInfo(localAbsPath, BaseInfoField.status);
-        WCDbStatus base_status = baseInfo.status;
-        return (base_status == WCDbStatus.Absent || base_status == WCDbStatus.NotPresent || base_status == WCDbStatus.Excluded);
+        SVNWCDbStatus base_status = baseInfo.status;
+        return (base_status == SVNWCDbStatus.Absent || base_status == SVNWCDbStatus.NotPresent || base_status == SVNWCDbStatus.Excluded);
     }
 
     public static class DirParsedInfo {
@@ -1335,7 +1335,7 @@ public class SVNWCDb implements ISVNWCDb {
         throw new UnsupportedOperationException();
     }
 
-    public void open(WCDbOpenMode mode, SVNConfigFile config, boolean autoUpgrade, boolean enforceEmptyWQ) throws SVNException {
+    public void open(SVNWCDbOpenMode mode, SVNConfigFile config, boolean autoUpgrade, boolean enforceEmptyWQ) throws SVNException {
         // TODO
         throw new UnsupportedOperationException();
     }
@@ -1485,7 +1485,7 @@ public class SVNWCDb implements ISVNWCDb {
                 info.haveWork = have_work;
 
             if (have_base || have_work) {
-                WCDbKind node_kind;
+                SVNWCDbKind node_kind;
 
                 if (have_work)
                     node_kind = getColumnToken(stmt_work, SVNWCDbSchema.WORKING_NODE__Fields.kind, kindMap2);
@@ -1506,10 +1506,10 @@ public class SVNWCDb implements ISVNWCDb {
                          * BASE_NODE ### row. it appears possible to get rows in
                          * BASE/WORKING ### both set to 'incomplete'.
                          */
-                        assert ((info.status != WCDbStatus.Absent && info.status != WCDbStatus.Excluded
+                        assert ((info.status != SVNWCDbStatus.Absent && info.status != SVNWCDbStatus.Excluded
                         /* && info.status != WCDbStatus.Incomplete */) || !have_work);
 
-                        if (node_kind == WCDbKind.Subdir && info.status == WCDbStatus.Normal) {
+                        if (node_kind == SVNWCDbKind.Subdir && info.status == SVNWCDbStatus.Normal) {
                             /*
                              * We should have read a row from the subdir wc.db.
                              * It must be obstructed in some way.
@@ -1517,21 +1517,21 @@ public class SVNWCDb implements ISVNWCDb {
                              * It is also possible that a WORKING node will
                              * override this value with a proper status.
                              */
-                            info.status = WCDbStatus.Obstructed;
+                            info.status = SVNWCDbStatus.Obstructed;
                         }
                     }
 
                     if (have_work) {
-                        WCDbStatus work_status;
+                        SVNWCDbStatus work_status;
 
                         work_status = getColumnToken(stmt_work, SVNWCDbSchema.WORKING_NODE__Fields.presence, presenceMap2);
-                        assert (work_status == WCDbStatus.Normal || work_status == WCDbStatus.Excluded || work_status == WCDbStatus.NotPresent || work_status == WCDbStatus.BaseDeleted || work_status == WCDbStatus.Incomplete);
+                        assert (work_status == SVNWCDbStatus.Normal || work_status == SVNWCDbStatus.Excluded || work_status == SVNWCDbStatus.NotPresent || work_status == SVNWCDbStatus.BaseDeleted || work_status == SVNWCDbStatus.Incomplete);
 
-                        if (work_status == WCDbStatus.Incomplete) {
-                            info.status = WCDbStatus.Incomplete;
-                        } else if (work_status == WCDbStatus.Excluded) {
-                            info.status = WCDbStatus.Excluded;
-                        } else if (work_status == WCDbStatus.NotPresent || work_status == WCDbStatus.BaseDeleted) {
+                        if (work_status == SVNWCDbStatus.Incomplete) {
+                            info.status = SVNWCDbStatus.Incomplete;
+                        } else if (work_status == SVNWCDbStatus.Excluded) {
+                            info.status = SVNWCDbStatus.Excluded;
+                        } else if (work_status == SVNWCDbStatus.NotPresent || work_status == SVNWCDbStatus.BaseDeleted) {
                             /*
                              * The caller should scan upwards to detect whether
                              * this deletion has occurred because this node has
@@ -1544,10 +1544,10 @@ public class SVNWCDb implements ISVNWCDb {
                              * something has obstructed the child data. Inform
                              * the caller.
                              */
-                            if (node_kind == WCDbKind.Subdir)
-                                info.status = WCDbStatus.ObstructedDelete;
+                            if (node_kind == SVNWCDbKind.Subdir)
+                                info.status = SVNWCDbStatus.ObstructedDelete;
                             else
-                                info.status = WCDbStatus.Deleted;
+                                info.status = SVNWCDbStatus.Deleted;
                         } else /* normal */
                         {
                             /*
@@ -1560,16 +1560,16 @@ public class SVNWCDb implements ISVNWCDb {
                              * something has obstructed the child data. Inform
                              * the caller.
                              */
-                            if (node_kind == WCDbKind.Subdir)
-                                info.status = WCDbStatus.ObstructedAdd;
+                            if (node_kind == SVNWCDbKind.Subdir)
+                                info.status = SVNWCDbStatus.ObstructedAdd;
                             else
-                                info.status = WCDbStatus.Added;
+                                info.status = SVNWCDbStatus.Added;
                         }
                     }
                 }
                 if (f.contains(InfoField.kind)) {
-                    if (node_kind == WCDbKind.Subdir)
-                        info.kind = WCDbKind.Dir;
+                    if (node_kind == SVNWCDbKind.Subdir)
+                        info.kind = SVNWCDbKind.Dir;
                     else
                         info.kind = node_kind;
                 }
@@ -1633,7 +1633,7 @@ public class SVNWCDb implements ISVNWCDb {
                         info.lastModTime = getColumnInt64(stmt_base, SVNWCDbSchema.BASE_NODE__Fields.last_mod_time);
                 }
                 if (f.contains(InfoField.depth)) {
-                    if (node_kind != WCDbKind.Dir && node_kind != WCDbKind.Subdir) {
+                    if (node_kind != SVNWCDbKind.Dir && node_kind != SVNWCDbKind.Subdir) {
                         info.depth = SVNDepth.UNKNOWN;
                     } else {
                         String depth_str;
@@ -1650,7 +1650,7 @@ public class SVNWCDb implements ISVNWCDb {
                     }
                 }
                 if (f.contains(InfoField.checksum)) {
-                    if (node_kind != WCDbKind.File) {
+                    if (node_kind != SVNWCDbKind.File) {
                         info.checksum = null;
                     } else {
                         try {
@@ -1671,7 +1671,7 @@ public class SVNWCDb implements ISVNWCDb {
                         info.translatedSize = getTranslatedSize(stmt_base, SVNWCDbSchema.BASE_NODE__Fields.translated_size);
                 }
                 if (f.contains(InfoField.target)) {
-                    if (node_kind != WCDbKind.Symlink)
+                    if (node_kind != SVNWCDbKind.Symlink)
                         info.target = null;
                     else if (have_work)
                         info.target = new File(getColumnText(stmt_work, SVNWCDbSchema.WORKING_NODE__Fields.symlink_target));
@@ -1736,7 +1736,7 @@ public class SVNWCDb implements ISVNWCDb {
                     if (isColumnNull(stmt_base_lock, SVNWCDbSchema.LOCK__Fields.lock_token))
                         info.lock = null;
                     else {
-                        info.lock = new WCDbLock();
+                        info.lock = new SVNWCDbLock();
                         info.lock.token = getColumnText(stmt_base_lock, SVNWCDbSchema.LOCK__Fields.lock_token);
                         if (!isColumnNull(stmt_base_lock, SVNWCDbSchema.LOCK__Fields.lock_owner))
                             info.lock.owner = getColumnText(stmt_base_lock, SVNWCDbSchema.LOCK__Fields.lock_owner);
@@ -1781,13 +1781,13 @@ public class SVNWCDb implements ISVNWCDb {
         return info;
     }
 
-    public WCDbKind readKind(File localAbsPath, boolean allowMissing) throws SVNException {
+    public SVNWCDbKind readKind(File localAbsPath, boolean allowMissing) throws SVNException {
         try {
             final WCDbInfo info = readInfo(localAbsPath, InfoField.kind);
             return info.kind;
         } catch (SVNException e) {
             if (allowMissing && e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND) {
-                return WCDbKind.Unknown;
+                return SVNWCDbKind.Unknown;
             }
             throw e;
         }
@@ -1865,7 +1865,7 @@ public class SVNWCDb implements ISVNWCDb {
              * props are located and their relation to layered operations.
              */
             if (have_row) {
-                WCDbStatus presence;
+                SVNWCDbStatus presence;
 
                 /*
                  * For "base-deleted", it is obvious the pristine props are
@@ -1877,7 +1877,7 @@ public class SVNWCDb implements ISVNWCDb {
                  * always available, ### and what "pristine" really means.
                  */
                 presence = getColumnToken(stmt, 1, presenceMap2);
-                if (presence != WCDbStatus.BaseDeleted) {
+                if (presence != SVNWCDbStatus.BaseDeleted) {
                     return getColumnProperties(stmt, 0);
                 }
             }

@@ -42,7 +42,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumInputStream;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
-import org.tmatesoft.svn.core.internal.wc.db.SVNWCSchedule;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbAdditionInfo;
@@ -50,11 +49,10 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbBaseInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbDeletionInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbDirDeletedInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo;
-import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbKind;
-import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbLock;
-import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbOpenMode;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbOpenMode;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo;
-import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbStatus;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbAdditionInfo.AdditionInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbBaseInfo.BaseInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbDeletionInfo.DeletionInfoField;
@@ -138,10 +136,10 @@ public class SVNWCContext {
     private ISVNEventHandler eventHandler;
 
     public SVNWCContext(ISVNOptions config, ISVNEventHandler eventHandler) throws SVNException {
-        this(WCDbOpenMode.ReadWrite, config, true, true, eventHandler);
+        this(SVNWCDbOpenMode.ReadWrite, config, true, true, eventHandler);
     }
 
-    public SVNWCContext(WCDbOpenMode mode, ISVNOptions config, boolean autoUpgrade, boolean enforceEmptyWQ, ISVNEventHandler eventHandler) throws SVNException {
+    public SVNWCContext(SVNWCDbOpenMode mode, ISVNOptions config, boolean autoUpgrade, boolean enforceEmptyWQ, ISVNEventHandler eventHandler) throws SVNException {
         this.db = new SVNWCDb();
         this.db.open(mode, config, autoUpgrade, enforceEmptyWQ);
         this.closeDb = true;
@@ -183,7 +181,7 @@ public class SVNWCContext {
                     return SVNNodeKind.NONE;
                 }
             }
-            final WCDbKind kind = db.readKind(path, false);
+            final SVNWCDbKind kind = db.readKind(path, false);
             if (kind == null) {
                 return SVNNodeKind.NONE;
             }
@@ -198,21 +196,21 @@ public class SVNWCContext {
 
     public boolean isNodeAdded(File path) throws SVNException {
         final WCDbInfo info = db.readInfo(path, InfoField.status);
-        final WCDbStatus status = info.status;
-        return status == WCDbStatus.Added || status == WCDbStatus.ObstructedAdd;
+        final SVNWCDbStatus status = info.status;
+        return status == SVNWCDbStatus.Added || status == SVNWCDbStatus.ObstructedAdd;
     }
 
     /** Equivalent to the old notion of "entry->schedule == schedule_replace" */
     public boolean isNodeReplaced(File path) throws SVNException {
         final WCDbInfo info = db.readInfo(path, InfoField.status, InfoField.baseShadowed);
-        final WCDbStatus status = info.status;
+        final SVNWCDbStatus status = info.status;
         final boolean baseShadowed = info.baseShadowed;
-        WCDbStatus baseStatus = null;
+        SVNWCDbStatus baseStatus = null;
         if (baseShadowed) {
             final WCDbBaseInfo baseInfo = db.getBaseInfo(path, BaseInfoField.status);
             baseStatus = baseInfo.status;
         }
-        return ((status == WCDbStatus.Added || status == WCDbStatus.ObstructedAdd) && baseShadowed && baseStatus != WCDbStatus.NotPresent);
+        return ((status == SVNWCDbStatus.Added || status == SVNWCDbStatus.ObstructedAdd) && baseShadowed && baseStatus != SVNWCDbStatus.NotPresent);
     }
 
     public long getRevisionNumber(SVNRevision revision, long[] latestRevisionNumber, SVNRepository repository, File path) throws SVNException {
@@ -294,9 +292,9 @@ public class SVNWCContext {
         if (SVNRevision.isValidRevisionNumber(commitBaseRevision)) {
             return commitBaseRevision;
         }
-        final WCDbStatus status = info.status;
+        final SVNWCDbStatus status = info.status;
         final boolean baseShadowed = info.baseShadowed;
-        if (status == WCDbStatus.Added) {
+        if (status == SVNWCDbStatus.Added) {
             /*
              * If the node was copied/moved-here, return the copy/move source
              * revision (not this node's base revision). If it's just added,
@@ -311,7 +309,7 @@ public class SVNWCContext {
                  */
                 commitBaseRevision = getNodeBaseRev(local_abspath);
             }
-        } else if (status == WCDbStatus.Deleted) {
+        } else if (status == SVNWCDbStatus.Deleted) {
             final WCDbDeletionInfo delInfo = db.scanDeletion(local_abspath, DeletionInfoField.workDelAbsPath);
             final File workDelAbspath = delInfo.workDelAbsPath;
             if (workDelAbspath != null) {
@@ -321,8 +319,8 @@ public class SVNWCContext {
                  */
                 final File parentAbspath = workDelAbspath.getParentFile();
                 final WCDbInfo parentInfo = db.readInfo(parentAbspath, InfoField.status);
-                final WCDbStatus parentStatus = parentInfo.status;
-                assert (parentStatus == WCDbStatus.Added || parentStatus == WCDbStatus.ObstructedAdd);
+                final SVNWCDbStatus parentStatus = parentInfo.status;
+                assert (parentStatus == SVNWCDbStatus.Added || parentStatus == SVNWCDbStatus.ObstructedAdd);
                 final WCDbAdditionInfo parentAddInfo = db.scanAddition(parentAbspath, AdditionInfoField.originalRevision);
                 commitBaseRevision = parentAddInfo.originalRevision;
             } else
@@ -412,7 +410,7 @@ public class SVNWCContext {
 
             if (parentReposRelPath != null) {
                 info.reposRelPath = new File(parentReposRelPath, localAbsPath.getName());
-            } else if (info.status == WCDbStatus.Added) {
+            } else if (info.status == SVNWCDbStatus.Added) {
                 final WCDbAdditionInfo scanAddition = db.scanAddition(localAbsPath, AdditionInfoField.reposRelPath, AdditionInfoField.reposRootUrl);
                 info.reposRelPath = scanAddition.reposRelPath;
                 info.reposRootUrl = scanAddition.reposRootUrl;
@@ -452,17 +450,17 @@ public class SVNWCContext {
          * 
          * ### note that most obstruction concepts disappear in single-db mode
          */
-        if (info.kind == WCDbKind.Dir) {
-            if (info.status == WCDbStatus.Incomplete) {
+        if (info.kind == SVNWCDbKind.Dir) {
+            if (info.status == SVNWCDbStatus.Incomplete) {
                 /* Highest precedence. */
                 node_status = SVNStatusType.STATUS_INCOMPLETE;
-            } else if (info.status == WCDbStatus.ObstructedDelete) {
+            } else if (info.status == SVNWCDbStatus.ObstructedDelete) {
                 /* Deleted directories are never reported as missing. */
                 if (pathKind == SVNNodeKind.NONE)
                     node_status = SVNStatusType.STATUS_DELETED;
                 else
                     node_status = SVNStatusType.STATUS_OBSTRUCTED;
-            } else if (info.status == WCDbStatus.Obstructed || info.status == WCDbStatus.ObstructedAdd) {
+            } else if (info.status == SVNWCDbStatus.Obstructed || info.status == SVNWCDbStatus.ObstructedAdd) {
                 /*
                  * A present or added directory should be on disk, so it is
                  * reported missing or obstructed.
@@ -471,11 +469,11 @@ public class SVNWCContext {
                     node_status = SVNStatusType.STATUS_MISSING;
                 else
                     node_status = SVNStatusType.STATUS_OBSTRUCTED;
-            } else if (info.status == WCDbStatus.Deleted) {
+            } else if (info.status == SVNWCDbStatus.Deleted) {
                 node_status = SVNStatusType.STATUS_DELETED;
             }
         } else {
-            if (info.status == WCDbStatus.Deleted)
+            if (info.status == SVNWCDbStatus.Deleted)
                 node_status = SVNStatusType.STATUS_DELETED;
             else if (pathKind != SVNNodeKind.FILE) {
                 /*
@@ -497,7 +495,7 @@ public class SVNWCContext {
          * missing/obstructed. It means that no further information is
          * available, and we should skip all this work.
          */
-        if (node_status == SVNStatusType.STATUS_NORMAL || (node_status == SVNStatusType.STATUS_MISSING && info.kind != WCDbKind.Dir)) {
+        if (node_status == SVNStatusType.STATUS_NORMAL || (node_status == SVNStatusType.STATUS_MISSING && info.kind != SVNWCDbKind.Dir)) {
             boolean has_props;
             boolean text_modified_p = false;
             boolean wc_special;
@@ -511,7 +509,7 @@ public class SVNWCContext {
              */
 
             /* Does the node have props? */
-            if (info.status == WCDbStatus.Deleted)
+            if (info.status == SVNWCDbStatus.Deleted)
                 has_props = false; /* Not interesting */
             else if (info.propsMod)
                 has_props = true;
@@ -549,7 +547,7 @@ public class SVNWCContext {
                 wc_special = false;
 
             /* If the entry is a file, check for textual modifications */
-            if ((info.kind == WCDbKind.File || info.kind == WCDbKind.Symlink) && (wc_special == pathSpecial)) {
+            if ((info.kind == SVNWCDbKind.File || info.kind == SVNWCDbKind.Symlink) && (wc_special == pathSpecial)) {
                 try {
                     text_modified_p = isTextModified(localAbsPath, false, true);
                 } catch (SVNException e) {
@@ -601,7 +599,7 @@ public class SVNWCContext {
              * fully replace entry->schedule here.
              */
 
-            if (info.status == WCDbStatus.Added) {
+            if (info.status == SVNWCDbStatus.Added) {
                 try {
                     SVNEntry entry = getEntry(localAbsPath, false, SVNNodeKind.UNKNOWN, false);
                     copied = entry.isCopied();
@@ -735,7 +733,7 @@ public class SVNWCContext {
 
         final WCDbInfo info = db.readInfo(localAbsPath, InfoField.status);
 
-        if (info.status == WCDbStatus.Added) {
+        if (info.status == SVNWCDbStatus.Added) {
             /*
              * Resolve the status. copied and moved_here arrive with properties,
              * while a simple add does not.
@@ -743,7 +741,7 @@ public class SVNWCContext {
             final WCDbAdditionInfo addition = db.scanAddition(localAbsPath, AdditionInfoField.status);
             info.status = addition.status;
         }
-        if (info.status == WCDbStatus.Added
+        if (info.status == SVNWCDbStatus.Added
         // #if 0
                 /*
                  * ### the update editor needs to fetch properties while the
@@ -751,7 +749,7 @@ public class SVNWCContext {
                  */
                 // || status == svn_wc__db_status_incomplete
                 // #endif
-                || info.status == WCDbStatus.Excluded || info.status == WCDbStatus.Absent || info.status == WCDbStatus.NotPresent) {
+                || info.status == SVNWCDbStatus.Excluded || info.status == SVNWCDbStatus.Absent || info.status == SVNWCDbStatus.NotPresent) {
             return null;
         }
 
@@ -768,7 +766,7 @@ public class SVNWCContext {
          * ### it would be nice to report an obstruction, rather than simply ###
          * PROPERTY_NOT_FOUND. but this is transitional until single-db.
          */
-        if (info.status == WCDbStatus.ObstructedDelete || info.status == WCDbStatus.Obstructed || info.status == WCDbStatus.ObstructedAdd) {
+        if (info.status == SVNWCDbStatus.ObstructedDelete || info.status == SVNWCDbStatus.Obstructed || info.status == SVNWCDbStatus.ObstructedAdd) {
 
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.PROPERTY_NOT_FOUND, "Directory ''{0}'' is missing on disk, so the " + "properties are not available.", localAbsPath);
             SVNErrorManager.error(err, SVNLogType.WC);
@@ -901,12 +899,12 @@ public class SVNWCContext {
         final WCDbInfo readInfo = db.readInfo(localAbspath, InfoField.status, InfoField.kind, InfoField.checksum);
 
         /* Sanity */
-        if (readInfo.kind != WCDbKind.File) {
+        if (readInfo.kind != SVNWCDbKind.File) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNEXPECTED_KIND, "Can only get the pristine contents of files;" + "  '{0}' is not a file", localAbspath);
             SVNErrorManager.error(err, SVNLogType.WC);
         }
 
-        if (readInfo.status == WCDbStatus.Added) {
+        if (readInfo.status == SVNWCDbStatus.Added) {
             /*
              * For an added node, we return "no stream". Make sure this is not
              * copied-here or moved-here, in which case we return the copy/move
@@ -914,18 +912,18 @@ public class SVNWCContext {
              */
             final WCDbAdditionInfo scanAddition = db.scanAddition(localAbspath, AdditionInfoField.status);
 
-            if (scanAddition.status == WCDbStatus.Added) {
+            if (scanAddition.status == SVNWCDbStatus.Added) {
                 /* Simply added. The pristine base does not exist. */
                 return null;
             }
-        } else if (readInfo.status == WCDbStatus.NotPresent) {
+        } else if (readInfo.status == SVNWCDbStatus.NotPresent) {
             /*
              * We know that the delete of this node has been committed. This
              * should be the same as if called on an unknown path.
              */
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "Cannot get the pristine contents of '{0}' " + "because its delete is already committed", localAbspath);
             SVNErrorManager.error(err, SVNLogType.WC);
-        } else if (readInfo.status == WCDbStatus.Absent || readInfo.status == WCDbStatus.Excluded || readInfo.status == WCDbStatus.Incomplete) {
+        } else if (readInfo.status == SVNWCDbStatus.Absent || readInfo.status == SVNWCDbStatus.Excluded || readInfo.status == SVNWCDbStatus.Incomplete) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS, "Cannot get the pristine contents of '{0}' " + "because it has an unexpected status", localAbspath);
             SVNErrorManager.error(err, SVNLogType.WC);
         } else {
@@ -933,8 +931,8 @@ public class SVNWCContext {
              * We know that it is a file, so we can't hit the _obstructed stati.
              * Also, we should never see _base_deleted here.
              */
-            SVNErrorManager.assertionFailure(readInfo.status != WCDbStatus.Obstructed && readInfo.status != WCDbStatus.ObstructedAdd && readInfo.status != WCDbStatus.ObstructedDelete
-                    && readInfo.status != WCDbStatus.BaseDeleted, null, SVNLogType.WC);
+            SVNErrorManager.assertionFailure(readInfo.status != SVNWCDbStatus.Obstructed && readInfo.status != SVNWCDbStatus.ObstructedAdd && readInfo.status != SVNWCDbStatus.ObstructedDelete
+                    && readInfo.status != SVNWCDbStatus.BaseDeleted, null, SVNLogType.WC);
         }
 
         if (readInfo.checksum == null) {
@@ -1167,17 +1165,17 @@ public class SVNWCContext {
         final WCDbInfo readInfo = db.readInfo(path, InfoField.status, InfoField.reposRelPath, InfoField.reposRootUrl, InfoField.baseShadowed);
 
         if (readInfo.reposRelPath == null) {
-            if (readInfo.status == WCDbStatus.Normal || readInfo.status == WCDbStatus.Incomplete
-                    || (readInfo.baseShadowed && (readInfo.status == WCDbStatus.Deleted || readInfo.status == WCDbStatus.ObstructedDelete))) {
+            if (readInfo.status == SVNWCDbStatus.Normal || readInfo.status == SVNWCDbStatus.Incomplete
+                    || (readInfo.baseShadowed && (readInfo.status == SVNWCDbStatus.Deleted || readInfo.status == SVNWCDbStatus.ObstructedDelete))) {
                 final WCDbRepositoryInfo repos = db.scanBaseRepository(path, RepositoryInfoField.relPath, RepositoryInfoField.rootUrl);
                 readInfo.reposRelPath = repos.relPath;
                 readInfo.reposRootUrl = repos.rootUrl;
-            } else if (readInfo.status == WCDbStatus.Added) {
+            } else if (readInfo.status == SVNWCDbStatus.Added) {
                 final WCDbAdditionInfo scanAddition = db.scanAddition(path, AdditionInfoField.reposRelPath, AdditionInfoField.reposRootUrl);
                 readInfo.reposRelPath = scanAddition.reposRelPath;
                 readInfo.reposRootUrl = scanAddition.reposRootUrl;
-            } else if (readInfo.status == WCDbStatus.Absent || readInfo.status == WCDbStatus.Excluded || readInfo.status == WCDbStatus.NotPresent
-                    || (!readInfo.baseShadowed && (readInfo.status == WCDbStatus.Deleted || readInfo.status == WCDbStatus.ObstructedDelete))) {
+            } else if (readInfo.status == SVNWCDbStatus.Absent || readInfo.status == SVNWCDbStatus.Excluded || readInfo.status == SVNWCDbStatus.NotPresent
+                    || (!readInfo.baseShadowed && (readInfo.status == SVNWCDbStatus.Deleted || readInfo.status == SVNWCDbStatus.ObstructedDelete))) {
                 File parent_abspath = path.getParentFile();
                 readInfo.reposRelPath = new File(path.getName());
                 readInfo.reposRootUrl = getNodeUrl(parent_abspath);
@@ -1204,7 +1202,7 @@ public class SVNWCContext {
         if (!readInfo.conflicted) {
             return info;
         }
-        final File dir_path = (readInfo.kind == WCDbKind.Dir) ? localAbsPath : localAbsPath.getParentFile();
+        final File dir_path = (readInfo.kind == SVNWCDbKind.Dir) ? localAbsPath : localAbsPath.getParentFile();
         final List<SVNTreeConflictDescription> conflicts = db.readConflicts(localAbsPath);
         for (final SVNTreeConflictDescription cd : conflicts) {
             final SVNMergeFileSet cdf = cd.getMergeFiles();
@@ -1255,9 +1253,9 @@ public class SVNWCContext {
 
         SVNProperties properties = null;
 
-        final WCDbKind wcKind = db.readKind(localAbsPath, true);
+        final SVNWCDbKind wcKind = db.readKind(localAbsPath, true);
 
-        if (wcKind == WCDbKind.Unknown) {
+        if (wcKind == SVNWCDbKind.Unknown) {
             /*
              * The node is not present, or not really "here". Therefore, the
              * property is not present.
@@ -1603,7 +1601,7 @@ public class SVNWCContext {
             }
         }
 
-        if (info.status == WCDbStatus.Normal || info.status == WCDbStatus.Incomplete) {
+        if (info.status == SVNWCDbStatus.Normal || info.status == SVNWCDbStatus.Incomplete) {
             boolean haveRow = false;
 
             /*
@@ -1612,7 +1610,7 @@ public class SVNWCContext {
              * return information out of the wc.db in the subdir. We need to
              * detect this situation and create a DELETED entry instead.
              */
-            if (info.kind == WCDbKind.Dir) {
+            if (info.kind == SVNWCDbKind.Dir) {
                 // TODO
                 /*
                  * svn_sqlite__db_t *sdb; svn_sqlite__stmt_t *stmt;
@@ -1647,9 +1645,9 @@ public class SVNWCContext {
                     entry.setUUID(baseRepos.uuid);
                 }
 
-                entry.setIncomplete(info.status == WCDbStatus.Incomplete);
+                entry.setIncomplete(info.status == SVNWCDbStatus.Incomplete);
             }
-        } else if (info.status == WCDbStatus.Deleted || info.status == WCDbStatus.ObstructedDelete) {
+        } else if (info.status == SVNWCDbStatus.Deleted || info.status == SVNWCDbStatus.ObstructedDelete) {
             /* ### we don't have to worry about moves, so this is a delete. */
             entry.scheduleForDeletion();
 
@@ -1670,8 +1668,8 @@ public class SVNWCContext {
             if ("".equals(entry.getName())) {
                 entry.setKeepLocal(db.determineKeepLocalTemp(entryAbsPath));
             }
-        } else if (info.status == WCDbStatus.Added || info.status == WCDbStatus.ObstructedAdd) {
-            WCDbStatus workStatus;
+        } else if (info.status == SVNWCDbStatus.Added || info.status == SVNWCDbStatus.ObstructedAdd) {
+            SVNWCDbStatus workStatus;
             File opRootAbsPath = null;
             File scannedOriginalRelPath;
             long originalRevision = INVALID_REVNUM;
@@ -1685,7 +1683,7 @@ public class SVNWCContext {
             }
 
             if (info.baseShadowed) {
-                WCDbStatus baseStatus;
+                SVNWCDbStatus baseStatus;
 
                 /*
                  * ENTRY->REVISION is overloaded. When a node is schedule-add or
@@ -1697,7 +1695,7 @@ public class SVNWCContext {
                 baseStatus = baseInfo.status;
                 entry.setRevision(baseInfo.revision);
 
-                if (baseStatus == WCDbStatus.NotPresent) {
+                if (baseStatus == SVNWCDbStatus.NotPresent) {
                     /* The underlying node is DELETED in this revision. */
                     entry.setDeleted(true);
 
@@ -1717,7 +1715,7 @@ public class SVNWCContext {
                  * ### we should start generating BASE_NODE rows for THIS_DIR
                  * ### in the subdir. future step because it is harder.
                  */
-                if (info.kind == WCDbKind.Dir && !"".equals(entry.getName())) {
+                if (info.kind == SVNWCDbKind.Dir && !"".equals(entry.getName())) {
                     WCDbDirDeletedInfo deletedInfo = db.isDirDeletedTem(entryAbsPath);
                     entry.setDeleted(deletedInfo.notPresent);
                     entry.setRevision(deletedInfo.baseRevision);
@@ -1742,7 +1740,7 @@ public class SVNWCContext {
                         entry.setRevision(0);
                     }
 
-                    if (info.status == WCDbStatus.ObstructedAdd) {
+                    if (info.status == SVNWCDbStatus.ObstructedAdd) {
                         entry.setRevision(INVALID_REVNUM);
                     }
 
@@ -1750,7 +1748,7 @@ public class SVNWCContext {
                      * ### when we're reading a directory that is not present,
                      * ### then it must be "normal" rather than "add".
                      */
-                    if ("".equals(entry.getName()) && info.status == WCDbStatus.ObstructedAdd) {
+                    if ("".equals(entry.getName()) && info.status == SVNWCDbStatus.ObstructedAdd) {
                         entry.unschedule();
                     } else {
                         entry.scheduleForAddition();
@@ -1764,9 +1762,9 @@ public class SVNWCContext {
              * important data. Set up stuff to kill that idea off, and finish up
              * this entry.
              */
-            if (info.status == WCDbStatus.ObstructedAdd) {
+            if (info.status == SVNWCDbStatus.ObstructedAdd) {
                 entry.setCommittedRevision(INVALID_REVNUM);
-                workStatus = WCDbStatus.Normal;
+                workStatus = SVNWCDbStatus.Normal;
                 scannedOriginalRelPath = null;
             } else {
                 final WCDbAdditionInfo additionInfo = db.scanAddition(entryAbsPath, AdditionInfoField.status, AdditionInfoField.opRootAbsPath, AdditionInfoField.reposRelPath,
@@ -1785,7 +1783,7 @@ public class SVNWCContext {
                  * revision to 0 when adding a new node over a not present base
                  * node.
                  */
-                if (workStatus == WCDbStatus.Added && entry.isDeleted()) {
+                if (workStatus == SVNWCDbStatus.Added && entry.isDeleted()) {
                     entry.setRevision(0);
                 }
             }
@@ -1801,7 +1799,7 @@ public class SVNWCContext {
                  * ### scan_addition may need to be updated to avoid returning
                  * ### status_copied in this case.
                  */
-            } else if (workStatus == WCDbStatus.Copied) {
+            } else if (workStatus == SVNWCDbStatus.Copied) {
                 entry.setCopied(true);
 
                 /*
@@ -1826,7 +1824,7 @@ public class SVNWCContext {
                 boolean isCopiedChild;
                 boolean isMixedRev = false;
 
-                assert (workStatus == WCDbStatus.Copied);
+                assert (workStatus == SVNWCDbStatus.Copied);
 
                 /*
                  * If this node inherits copyfrom information from an ancestor
@@ -1953,7 +1951,7 @@ public class SVNWCContext {
                     entry.setCopyFromURL(SVNPathUtil.append(info.originalRootUrl.toString(), entryReposRelPath));
                 }
             }
-        } else if (info.status == WCDbStatus.NotPresent) {
+        } else if (info.status == SVNWCDbStatus.NotPresent) {
             /*
              * ### buh. 'deleted' nodes are actually supposed to be ### schedule
              * "normal" since we aren't going to actually *do* ### anything to
@@ -1961,15 +1959,15 @@ public class SVNWCContext {
              */
             entry.unschedule();
             entry.setDeleted(true);
-        } else if (info.status == WCDbStatus.Obstructed) {
+        } else if (info.status == SVNWCDbStatus.Obstructed) {
             /*
              * ### set some values that should (hopefully) let this directory
              * ### be usable.
              */
             entry.setRevision(INVALID_REVNUM);
-        } else if (info.status == WCDbStatus.Absent) {
+        } else if (info.status == SVNWCDbStatus.Absent) {
             entry.setAbsent(true);
-        } else if (info.status == WCDbStatus.Excluded) {
+        } else if (info.status == SVNWCDbStatus.Excluded) {
             entry.unschedule();
             entry.setDepth(SVNDepth.EXCLUDE);
         } else {
@@ -1993,11 +1991,11 @@ public class SVNWCContext {
             entry.setDepth(SVNDepth.INFINITY);
         }
 
-        if (info.kind == WCDbKind.Dir) {
+        if (info.kind == SVNWCDbKind.Dir) {
             entry.setKind(SVNNodeKind.DIR);
-        } else if (info.kind == WCDbKind.File) {
+        } else if (info.kind == SVNWCDbKind.File) {
             entry.setKind(SVNNodeKind.FILE);
-        } else if (info.kind == WCDbKind.Symlink) {
+        } else if (info.kind == SVNWCDbKind.Symlink) {
             entry.setKind(SVNNodeKind.FILE); /* ### no symlink kind */
         } else {
             entry.setKind(SVNNodeKind.UNKNOWN);
@@ -2010,8 +2008,8 @@ public class SVNWCContext {
          * 
          * ### the last three should probably have an "implied" REPOS_RELPATH
          */
-        assert (info.reposRelPath != null || entry.isScheduledForDeletion() || info.status == WCDbStatus.Obstructed || info.status == WCDbStatus.ObstructedAdd
-                || info.status == WCDbStatus.ObstructedDelete || info.status == WCDbStatus.NotPresent || info.status == WCDbStatus.Absent || info.status == WCDbStatus.Excluded);
+        assert (info.reposRelPath != null || entry.isScheduledForDeletion() || info.status == SVNWCDbStatus.Obstructed || info.status == SVNWCDbStatus.ObstructedAdd
+                || info.status == SVNWCDbStatus.ObstructedDelete || info.status == SVNWCDbStatus.NotPresent || info.status == SVNWCDbStatus.Absent || info.status == SVNWCDbStatus.Excluded);
         if (info.reposRelPath != null)
             entry.setURL(SVNPathUtil.append(entry.getRepositoryRoot(), info.reposRelPath.toString()));
 
@@ -2096,7 +2094,7 @@ public class SVNWCContext {
 
     private class DeletedBaseInfo {
 
-        public WCDbKind kind;
+        public SVNWCDbKind kind;
         public File reposRelPath;
         public SVNChecksum checksum;
     }
@@ -2160,7 +2158,7 @@ public class SVNWCContext {
             entry.setRepositoryRootURL(parentInfo.reposRootUrl);
             entry.setUUID(parentInfo.reposUuid);
 
-            if (parentInfo.status == WCDbStatus.Added || parentInfo.status == WCDbStatus.ObstructedAdd) {
+            if (parentInfo.status == SVNWCDbStatus.Added || parentInfo.status == SVNWCDbStatus.ObstructedAdd) {
                 final WCDbAdditionInfo additionInfo = db.scanAddition(parent_abspath, AdditionInfoField.reposRelPath, AdditionInfoField.reposRootUrl, AdditionInfoField.reposUuid);
                 parentReposRelPath = additionInfo.reposRelPath;
                 entry.setRepositoryRootURL(additionInfo.reposRootUrl);
@@ -2258,7 +2256,7 @@ public class SVNWCContext {
              */
             if (deletionInfo.workDelAbsPath != null) {
                 File parentAbsPath;
-                WCDbStatus parentStatus;
+                SVNWCDbStatus parentStatus;
 
                 /*
                  * The parent is in WORKING except during post-commit when it
@@ -2267,11 +2265,11 @@ public class SVNWCContext {
                 parentAbsPath = SVNFileUtil.getParentFile(deletionInfo.workDelAbsPath);
                 parentStatus = db.readInfo(parentAbsPath, InfoField.status).status;
 
-                if (parentStatus == WCDbStatus.Added || parentStatus == WCDbStatus.ObstructedAdd) {
+                if (parentStatus == SVNWCDbStatus.Added || parentStatus == SVNWCDbStatus.ObstructedAdd) {
                     parentStatus = db.scanAddition(parentAbsPath, AdditionInfoField.status).status;
 
                 }
-                if (parentStatus == WCDbStatus.Copied || parentStatus == WCDbStatus.MovedHere || parentStatus == WCDbStatus.Normal) {
+                if (parentStatus == SVNWCDbStatus.Copied || parentStatus == SVNWCDbStatus.MovedHere || parentStatus == SVNWCDbStatus.Normal) {
                     /*
                      * The parent is copied/moved here, so WORK_DEL_ABSPATH is
                      * the root of a deleted subtree. Our COPIED status is now
@@ -2305,7 +2303,7 @@ public class SVNWCContext {
                         entry.setCopied(true);
                     }
                 } else {
-                    assert (parentStatus == WCDbStatus.Added);
+                    assert (parentStatus == SVNWCDbStatus.Added);
 
                     /*
                      * Whoops. WORK_DEL_ABSPATH is scheduled for deletion, yet

@@ -99,7 +99,7 @@ public interface ISVNWCDb {
     String WCROOT_TEMPDIR_RELPATH = "tmp";
 
     /** Enumerated constants for how to open a WC datastore. */
-    enum WCDbOpenMode {
+    enum SVNWCDbOpenMode {
         /** Open in the default mode (r/w now). */
         Default,
         /** Changes will definitely NOT be made. */
@@ -111,7 +111,7 @@ public interface ISVNWCDb {
     /**
      * Enum indicating what kind of versioned object we're talking about.
      */
-    enum WCDbKind {
+    enum SVNWCDbKind {
         /** The node is a directory. */
         Dir,
 
@@ -157,7 +157,7 @@ public interface ISVNWCDb {
     }
 
     /** Enumerated values describing the state of a node. */
-    enum WCDbStatus {
+    enum SVNWCDbStatus {
 
         /** The node is present and has no known modifications applied to it. */
         Normal,
@@ -263,7 +263,7 @@ public interface ISVNWCDb {
 
     /**
      * Enumerated constants for how hard
-     * {@link ISVNWCDb#checkPristine(File, SVNChecksum, WCDbCheckMode)} should
+     * {@link ISVNWCDb#checkPristine(File, SVNChecksum, SVNWCDbCheckMode)} should
      * work on checking for the pristine file.
      *
      * <p>
@@ -272,7 +272,7 @@ public interface ISVNWCDb {
      * the following modes are overengineered, premature optimizations. ... will
      * clean up in a future rev.
      */
-    enum WCDbCheckMode {
+    enum SVNWCDbCheckMode {
 
         /**
          * The caller wants to be sure the pristine file is present and usable.
@@ -324,7 +324,7 @@ public interface ISVNWCDb {
      * Lock information. We write/read it all as one, so let's use a struct for
      * convenience.
      */
-    class WCDbLock {
+    class SVNWCDbLock {
 
         /** The lock token */
         public String token;
@@ -375,7 +375,7 @@ public interface ISVNWCDb {
      *            queue is being processed (via 'svn cleanup') and all
      *            operations should be allowed.
      */
-    void open(WCDbOpenMode mode, ISVNOptions config, boolean autoUpgrade, boolean enforceEmptyWQ) throws SVNException;
+    void open(SVNWCDbOpenMode mode, ISVNOptions config, boolean autoUpgrade, boolean enforceEmptyWQ) throws SVNException;
 
     /** Close DB. */
     void close() throws SVNException;
@@ -520,9 +520,9 @@ public interface ISVNWCDb {
      * The node's kind is described by KIND, and the reason for its absence is
      * specified by STATUS. Only three values are allowed for STATUS:
      * <ul>
-     * <li> {@link WCDbStatus#Absent}</li>
-     * <li> {@link WCDbStatus#Excluded}</li>
-     * <li> {@link WCDbStatus#NotPresent}</li>
+     * <li> {@link SVNWCDbStatus#Absent}</li>
+     * <li> {@link SVNWCDbStatus#Excluded}</li>
+     * <li> {@link SVNWCDbStatus#NotPresent}</li>
      * </ul>
      * <p>
      * If CONFLICT is not NULL, then it describes a conflict for this node. The
@@ -531,7 +531,7 @@ public interface ISVNWCDb {
      * Any work items that are necessary as part of this node construction may
      * be passed in WORK_ITEMS.
      */
-    void addBaseAbsentNode(File localAbsPath, File reposRelPath, SVNURL reposRootUrl, String reposUuid, long revision, WCDbKind kind, WCDbStatus status, SVNSkel conflict, SVNSkel workItems)
+    void addBaseAbsentNode(File localAbsPath, File reposRelPath, SVNURL reposRootUrl, String reposUuid, long revision, SVNWCDbKind kind, SVNWCDbStatus status, SVNSkel conflict, SVNSkel workItems)
             throws SVNException;
 
     /**
@@ -647,8 +647,8 @@ public interface ISVNWCDb {
             status, kind, revision, reposRelPath, reposRootUrl, reposUuid, changedRev, changedDate, changedAuthor, lastModTime, depth, checksum, translatedSize, target, lock
         }
 
-        public WCDbStatus status;
-        public WCDbKind kind;
+        public SVNWCDbStatus status;
+        public SVNWCDbKind kind;
         public long revision;
         public File reposRelPath;
         public SVNURL reposRootUrl;
@@ -661,7 +661,7 @@ public interface ISVNWCDb {
         public SVNChecksum checksum;
         public long translatedSize;
         public File target;
-        public WCDbLock lock;
+        public SVNWCDbLock lock;
     }
 
     /**
@@ -769,10 +769,10 @@ public interface ISVNWCDb {
      * Check for presence, according to the given mode (on how hard we should
      * examine things)
      */
-    boolean checkPristine(File wcRootAbsPath, SVNChecksum sha1Checksum, WCDbCheckMode mode) throws SVNException;
+    boolean checkPristine(File wcRootAbsPath, SVNChecksum sha1Checksum, SVNWCDbCheckMode mode) throws SVNException;
 
     /**
-     * If {@link #checkPristine(File, SVNChecksum, WCDbCheckMode)} returns
+     * If {@link #checkPristine(File, SVNChecksum, SVNWCDbCheckMode)} returns
      * "corrupted pristine file", then this function can be used to repair it.
      * It will attempt to restore integrity between the SQLite database and the
      * filesystem. Failing that, then it will attempt to clean out the record
@@ -1030,13 +1030,13 @@ public interface ISVNWCDb {
      *
      * <ul>
      * <li>
-     * {@link WCDbStatus#Normal}
+     * {@link SVNWCDbStatus#Normal}
      * <p>
      * A plain BASE node, with no local changes.</li>
      *
      * <li>
-     * {@link WCDbStatus#Added} <br>
-     * {@link WCDbStatus#ObstructedAdd}
+     * {@link SVNWCDbStatus#Added} <br>
+     * {@link SVNWCDbStatus#ObstructedAdd}
      * <p>
      * A node has been added/copied/moved to here. See BASE_SHADOWED to see if
      * this change overwrites a BASE node. Use scan_addition() to resolve
@@ -1047,8 +1047,8 @@ public interface ISVNWCDb {
      * </li>
      *
      * <li>
-     * {@link WCDbStatus#Deleted} <br>
-     * {@link WCDbStatus#ObstructedDelete}
+     * {@link SVNWCDbStatus#Deleted} <br>
+     * {@link SVNWCDbStatus#ObstructedDelete}
      * <p>
      * This node has been deleted or moved away. It may be a delete/move of a
      * BASE node, or a child node of a subtree that was copied/moved to an
@@ -1058,14 +1058,14 @@ public interface ISVNWCDb {
      * </li>
      *
      * <li>
-     * {@link WCDbStatus#Obstructed}
+     * {@link SVNWCDbStatus#Obstructed}
      * <p>
      * The versioned subdirectory is missing or obstructed by a file.
      *
      * </li>
      *
      * <li>
-     * {@link WCDbStatus#Absent}
+     * {@link SVNWCDbStatus#Absent}
      * <p>
      * The node is versioned/known by the server, but the server has decided not
      * to provide further information about the node. This is a BASE node (since
@@ -1074,7 +1074,7 @@ public interface ISVNWCDb {
      * </li>
      *
      * <li>
-     * {@link WCDbStatus#Excluded}
+     * {@link SVNWCDbStatus#Excluded}
      * <p>
      * The node has been excluded from the working copy tree. This may be an
      * exclusion from the BASE tree, or an exclusion for a child node of a
@@ -1083,7 +1083,7 @@ public interface ISVNWCDb {
      * </li>
      *
      * <li>
-     * {@link WCDbStatus#notPresent}
+     * {@link SVNWCDbStatus#notPresent}
      * <p>
      * This is a node from the BASE tree, has been marked as "not-present"
      * within this mixed-revision working copy. This node is at a revision that
@@ -1093,7 +1093,7 @@ public interface ISVNWCDb {
      * </li>
      *
      * <li>
-     * {@link WCDbStatus#Incomplete}
+     * {@link SVNWCDbStatus#Incomplete}
      * <p>
      * The BASE or WORKING node is incomplete due to an interrupted operation.</li>
      * </ul>
@@ -1128,8 +1128,8 @@ public interface ISVNWCDb {
         }
 
         /* ### derived */
-        public WCDbStatus status;
-        public WCDbKind kind;
+        public SVNWCDbStatus status;
+        public SVNWCDbKind kind;
         public long revision;
         public File reposRelPath;
         public SVNURL reposRootUrl;
@@ -1162,7 +1162,7 @@ public interface ISVNWCDb {
         public boolean baseShadowed;
 
         public boolean conflicted;
-        public WCDbLock lock;
+        public SVNWCDbLock lock;
 
         public boolean haveBase, haveWork;
 
@@ -1229,11 +1229,11 @@ public interface ISVNWCDb {
     /**
      * Return the kind of the node in DB at LOCAL_ABSPATH. The WORKING tree will
      * be examined first, then the BASE tree. If the node is not present in
-     * either tree and ALLOW_MISSING is TRUE, then {@link WCDbKind#unknown} is
+     * either tree and ALLOW_MISSING is TRUE, then {@link SVNWCDbKind#unknown} is
      * returned. If the node is missing and ALLOW_MISSING is FALSE, then it will
      * throw {@link SVNErrorCode#WC_PATH_NOT_FOUND}.
      */
-    WCDbKind readKind(File localAbsPath, boolean allowMissing) throws SVNException;
+    SVNWCDbKind readKind(File localAbsPath, boolean allowMissing) throws SVNException;
 
     /**
      * Return TRUE if LOCAL_ABSPATH in DB "is not present, and I haven't
@@ -1310,7 +1310,7 @@ public interface ISVNWCDb {
      * We do not update a file's TRANSLATED_SIZE here. at some future point,
      * when the file is installed, then a TRANSLATED_SIZE will be set.
      */
-    void globalUpdate(File localAbsPath, WCDbKind newKind, File newReposRelpath, long newRevision, SVNProperties newProps, long newChangedRev, Date newChangedDate, String newChangedAuthor,
+    void globalUpdate(File localAbsPath, SVNWCDbKind newKind, File newReposRelpath, long newRevision, SVNProperties newProps, long newChangedRev, Date newChangedDate, String newChangedAuthor,
             List<File> newChildren, SVNChecksum newChecksum, File newTarget, SVNProperties newDavCache, SVNSkel conflict, SVNSkel workItems) throws SVNException;
 
     /**
@@ -1329,7 +1329,7 @@ public interface ISVNWCDb {
     void globalRecordFileinfo(File local_abspath, long translated_size, Date last_mod_time) throws SVNException;
 
     /** Add or replace LOCK for LOCAL_ABSPATH to DB. */
-    void addLock(File localAbsPath, WCDbLock lock) throws SVNException;
+    void addLock(File localAbsPath, SVNWCDbLock lock) throws SVNException;
 
     /** Remove any lock for LOCAL_ABSPATH in DB. */
     void removeLock(File localAbsPath) throws SVNException;
@@ -1364,26 +1364,26 @@ public interface ISVNWCDb {
      * Scan upwards for information about a known addition to the WORKING tree.
      * <p>
      * If a node's status as returned by
-     * {@link ISVNWCDb#readInfo(File, InfoField...)} is {@link WCDbStatus#Added}
+     * {@link ISVNWCDb#readInfo(File, InfoField...)} is {@link SVNWCDbStatus#Added}
      * (NOT obstructed_add!), then this function returns a refined status in
      * STATUS, which is one of:
      * <p>
      * <ul>
      * <li>
-     * {@link WCDbStatus#Added} -- this NODE is a simple add without history.
+     * {@link SVNWCDbStatus#Added} -- this NODE is a simple add without history.
      * OP_ROOT_ABSPATH will be set to the topmost node in the added subtree
      * (implying its parent will be an unshadowed BASE node). The REPOS_* values
      * will be implied by that ancestor BASE node and this node's position in
      * the added subtree. ORIGINAL_* will be set to their NULL values (and
      * SVN_INVALID_REVNUM for ORIGINAL_REVISION).</li>
      * <li>
-     * {@link WCDbStatus#Copied} -- this NODE is the root or child of a copy.
+     * {@link SVNWCDbStatus#Copied} -- this NODE is the root or child of a copy.
      * The root of the copy will be stored in OP_ROOT_ABSPATH. Note that the
      * parent of the operation root could be another WORKING node (from an add,
      * copy, or move). The REPOS_* values will be implied by the ancestor
      * unshadowed BASE node. ORIGINAL_* will indicate the source of the copy.</li>
      * <li>
-     * {@link WCDbStatus#MovedHere} -- this NODE arrived as a result of a move.
+     * {@link SVNWCDbStatus#MovedHere} -- this NODE arrived as a result of a move.
      * The root of the moved nodes will be stored in OP_ROOT_ABSPATH. Similar to
      * the copied state, its parent may be a WORKING node or a BASE node. And
      * again, the REPOS_* values are implied by this node's position in the
@@ -1415,7 +1415,7 @@ public interface ISVNWCDb {
             status, opRootAbsPath, reposRelPath, reposRootUrl, reposUuid, originalReposRelPath, originalRootUrl, originalUuid, originalRevision
         }
 
-        public WCDbStatus status;
+        public SVNWCDbStatus status;
         public File opRootAbsPath;
         public File reposRelPath;
         public SVNURL reposRootUrl;
