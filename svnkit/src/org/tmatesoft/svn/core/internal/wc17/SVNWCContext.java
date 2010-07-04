@@ -32,6 +32,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
@@ -857,7 +858,7 @@ public class SVNWCContext {
                  * means the timestamps won't be equal, so there's no need to
                  * explicitly check the 'absent' value.
                  */
-                if (readInfo.lastModTime != (localAbsPath.lastModified() * 1000)) {
+                if (compareTimestamps(localAbsPath, readInfo)) {
                     compareThem = true;
                 }
             }
@@ -893,6 +894,10 @@ public class SVNWCContext {
 
         /* Check all bytes, and verify checksum if requested. */
         return compareAndVerify(localAbsPath, pristineStream, compareTextBases, forceComparison);
+    }
+
+    private boolean compareTimestamps(File localAbsPath, WCDbInfo readInfo) {
+        return SVNFileUtil.roundTimeStamp(readInfo.lastModTime) != SVNFileUtil.roundTimeStamp(localAbsPath.lastModified() * (SVNFileUtil.isWindows ? 1000 : 1));
     }
 
     private InputStream getPristineContents(File localAbspath) throws SVNException {
@@ -1086,7 +1091,10 @@ public class SVNWCContext {
                 break;
             }
 
-            if ((bytes_read1 != bytes_read2) || !(Arrays.equals(buf1, buf2 /*, bytes_read1*/))) {
+            if ((bytes_read1 != bytes_read2) || !(Arrays.equals(buf1, buf2 /*
+                                                                            * ,
+                                                                            * bytes_read1
+                                                                            */))) {
                 same = false;
                 break;
             }
