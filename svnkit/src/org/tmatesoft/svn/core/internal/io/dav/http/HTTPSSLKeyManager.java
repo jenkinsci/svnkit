@@ -92,6 +92,11 @@ public final class HTTPSSLKeyManager implements X509KeyManager {
 
     public static KeyManager[] loadClientCertificate(File clientCertFile, String clientCertPassword) throws SVNException {
         char[] passphrase = null;
+        if (clientCertPassword == null || clientCertPassword.length() == 0) {
+            // Client certificates without an passphrase can't be received from Java Keystores. 
+            throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "No client certificate passphrase supplied (did you forget to specify?).\n" +
+            		"Note that client certificates with empty passphrases can''t be used. In this case please re-create the certificate with a passphrase."));
+        }
         if (clientCertPassword != null) {
             passphrase = clientCertPassword.toCharArray();
         }
