@@ -428,24 +428,12 @@ public class FSCommitEditor implements ISVNEditor {
             return isCopied;
         }
 
-        public void setCopied(boolean isCopied) {
-            this.isCopied = isCopied;
-        }
-
         public long getBaseRevision() {
             return myBaseRevision;
         }
 
-        public void setBaseRevision(long baseRevision) {
-            myBaseRevision = baseRevision;
-        }
-
         public String getPath() {
             return myPath;
-        }
-
-        public void setPath(String path) {
-            myPath = path;
         }
     }
 

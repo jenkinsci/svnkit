@@ -1557,7 +1557,6 @@ public class SVNCommitClient16 extends SVNBasicDelegate {
             SVNErrorManager.error(err, SVNLogType.WC);
         }
         editor.addFile(filePath, null, -1);
-        String mimeType = null;
         Map autoProperties = new SVNHashMap();
         if (fileType != SVNFileType.SYMLINK) {
             autoProperties = SVNPropertiesManager.computeAutoProperties(getOptions(), file, autoProperties);

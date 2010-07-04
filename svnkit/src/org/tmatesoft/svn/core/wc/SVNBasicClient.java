@@ -73,9 +73,8 @@ public class SVNBasicClient {
     protected SVNBasicDelegate getDelegate17() throws SVNException {
         if(isWC17Supported()) {
             return this.delegate17;
-        } else {
-            return dontWC17Support();
         }
+        return dontWC17Support();
     }
 
     protected SVNBasicDelegate getDelegate16() {

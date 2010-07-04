@@ -357,11 +357,6 @@ public abstract class FSRoot {
             }
             return null;
         }
-
-        public void clear() {
-            myKeys.clear();
-            myCache.clear();
-        }
     }
 
 }

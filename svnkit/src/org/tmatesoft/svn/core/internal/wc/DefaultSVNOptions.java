@@ -15,7 +15,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.text.DateFormat;
 import java.text.DateFormatSymbols;
 import java.text.SimpleDateFormat;
@@ -551,7 +550,7 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
     }
 
     public ISVNMerger createMerger(byte[] conflictStart, byte[] conflictSeparator, byte[] conflictEnd) {
-        return new DefaultSVNMerger(conflictStart, conflictSeparator, conflictEnd, myConflictResolver);
+        return new DefaultSVNMerger(conflictStart, conflictSeparator, conflictEnd, myConflictResolver, SVNDiffConflictChoiceStyle.CHOOSE_MODIFIED_LATEST);
     }
 
     public ISVNConnector createTunnelConnector(SVNURL url) {

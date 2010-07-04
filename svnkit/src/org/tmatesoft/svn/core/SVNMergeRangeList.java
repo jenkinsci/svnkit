@@ -550,6 +550,7 @@ public class SVNMergeRangeList {
                             if (pushedMRange2 == null) {
                                 pushedMRange2 = new SVNMergeRange(lastRange.getEndRevision(), mRange.getEndRevision(), mRange.isInheritable());
                             } else {
+                                // TODO: unreachable code 
                                 pushedMRange2.setStartRevision(lastRange.getEndRevision());
                                 pushedMRange2.setEndRevision(mRange.getEndRevision());
                                 pushedMRange2.setInheritable(mRange.isInheritable());

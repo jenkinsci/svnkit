@@ -14,7 +14,6 @@ package org.tmatesoft.svn.core.internal.wc17.db;
 import java.io.File;
 
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 
 /**

@@ -197,10 +197,10 @@ public class DAVConnection {
         SVNErrorMessage context = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Lock request failed");
         IHTTPConnection httpConnection = getConnection();
         HTTPStatus status = httpConnection.request("LOCK", path, header, body, -1, 0, null, handler, context);
-        if (status.getError() != null) {
-            SVNErrorManager.error(status.getError(), SVNLogType.NETWORK);
-        }
         if (status != null) {
+            if (status.getError() != null) {
+                SVNErrorManager.error(status.getError(), SVNLogType.NETWORK);
+            }
             String userName = httpConnection.getLastValidCredentials() != null ? httpConnection.getLastValidCredentials().getUserName() : null; 
             String created = status.getHeader().getFirstHeaderValue(HTTPHeader.CREATION_DATE_HEADER);
             if (userName == null || created == null) {

@@ -71,7 +71,7 @@ public class SVNPatch {
         return hunks;
     }
 
-    public void close() throws IOException, SVNException {
+    public void close() throws IOException {
         if (hunks != null) {
             int hunksCount = hunks.size();
             if (hunksCount > 0) {

@@ -3866,6 +3866,7 @@ public class SVNWCClient16 extends SVNBasicDelegate {
             if (propName == null) {
                 SVNVersionedProperties properties = base ? area.getBaseProperties(entry.getName()) : area.getProperties(entry.getName());
                 if (propName != null) {
+                    // TODO: this code is unreachable
                     SVNPropertyValue propValue = properties.getPropertyValue(propName);
                     if (propValue != null) {
                         handler.handleProperty(target, new SVNPropertyData(propName, propValue, getOptions()));

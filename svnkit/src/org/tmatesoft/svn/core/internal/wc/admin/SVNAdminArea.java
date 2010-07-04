@@ -1106,7 +1106,7 @@ public abstract class SVNAdminArea {
         myWCFormatVersion = wcFormatVersion;
     }
 
-    public void close() throws SVNException {
+    public void close() {
 
     }
 

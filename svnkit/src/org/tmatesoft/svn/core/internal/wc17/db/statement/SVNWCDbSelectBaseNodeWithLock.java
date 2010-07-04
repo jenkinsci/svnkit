@@ -11,16 +11,11 @@
  */
 package org.tmatesoft.svn.core.internal.wc17.db.statement;
 
-import org.tmatesoft.sqljet.core.SqlJetException;
-import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
-import org.tmatesoft.sqljet.core.table.ISqlJetTable;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNSqlJetSelectFieldsStatement;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDbSchema;
-import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * select base_node.repos_id, base_node.repos_relpath, presence, kind, revnum,

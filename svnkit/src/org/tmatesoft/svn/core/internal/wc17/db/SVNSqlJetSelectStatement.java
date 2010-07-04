@@ -11,9 +11,6 @@
  */
 package org.tmatesoft.svn.core.internal.wc17.db;
 
-import java.util.Arrays;
-import java.util.Collections;
-
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
 import org.tmatesoft.sqljet.core.table.ISqlJetTable;
@@ -68,6 +65,9 @@ public abstract class SVNSqlJetSelectStatement extends SVNSqlJetStatement {
         return next;
     }
 
+    /**
+     * @throws SVNException  
+     */
     protected boolean isFilterPassed() throws SVNException {
         return true;
     }

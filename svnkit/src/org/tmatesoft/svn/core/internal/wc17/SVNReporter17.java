@@ -26,6 +26,7 @@ import org.tmatesoft.svn.util.ISVNDebugLog;
  */
 public class SVNReporter17 implements ISVNReporterBaton {
 
+
     public SVNReporter17(SVNWCContextInfo info, File file, boolean restoreFiles, 
             boolean useDepthCompatibilityTrick, SVNDepth depth, boolean lockOnDemand, 
             boolean isStatus, boolean isHonorDepthExclude, ISVNDebugLog log) {

@@ -124,7 +124,6 @@ import org.tmatesoft.svn.util.SVNLogType;
  */
 public class SVNWCClient17 extends SVNBasicDelegate {
 
-    private ISVNAddParameters myAddParameters;
     private ISVNCommitHandler myCommitHandler;
     private boolean myIsRevertMissingDirectories;
 
@@ -189,7 +188,6 @@ public class SVNWCClient17 extends SVNBasicDelegate {
      * @since 1.2
      */
     public void setAddParameters(ISVNAddParameters addParameters) {
-        myAddParameters = addParameters;
     }
 
     /**
