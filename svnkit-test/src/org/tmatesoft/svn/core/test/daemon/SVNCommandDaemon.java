@@ -76,10 +76,6 @@ public class SVNCommandDaemon implements Runnable {
             log.logSevere(SVNLogType.DEFAULT, e);
             return;
         }
-        if (serverSocket == null) {
-            log.logSevere(SVNLogType.DEFAULT, "cannot create server socket at port " + myPort);
-            return;
-        }
         while(true) {
             Socket socket = null;
             try {
