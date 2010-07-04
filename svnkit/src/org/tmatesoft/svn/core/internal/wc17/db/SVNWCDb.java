@@ -12,11 +12,8 @@
 package org.tmatesoft.svn.core.internal.wc17.db;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.EnumMap;
 import java.util.EnumSet;
@@ -43,17 +40,14 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNTreeConflictUtil;
-import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbAdditionInfo.AdditionInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbBaseInfo.BaseInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbDeletionInfo.DeletionInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo.RepositoryInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNSqlJetDb.Mode;
-import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDbSchema.ACTUAL_NODE__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
-import org.tmatesoft.svn.core.wc.SVNConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.util.SVNLogType;
@@ -428,8 +422,8 @@ public class SVNWCDb implements ISVNWCDb {
         stmt.insert();
     }
 
-    public void addBaseAbsentNode(File localAbsPath, File reposRelPath, SVNURL reposRootUrl, String reposUuid, long revision, SVNWCDbKind kind, SVNWCDbStatus status, SVNSkel conflict, SVNSkel workItems)
-            throws SVNException {
+    public void addBaseAbsentNode(File localAbsPath, File reposRelPath, SVNURL reposRootUrl, String reposUuid, long revision, SVNWCDbKind kind, SVNWCDbStatus status, SVNSkel conflict,
+            SVNSkel workItems) throws SVNException {
         // TODO
         throw new UnsupportedOperationException();
     }
@@ -1477,11 +1471,11 @@ public class SVNWCDb implements ISVNWCDb {
 
             stmt_act.bindf("is", pdh.getWCRoot().getWcId(), localRelPath);
             boolean have_act = stmt_act.next();
-            
-            if(f.contains(InfoField.haveBase))
+
+            if (f.contains(InfoField.haveBase))
                 info.haveBase = have_base;
-            
-            if(f.contains(InfoField.haveWork))
+
+            if (f.contains(InfoField.haveWork))
                 info.haveWork = have_work;
 
             if (have_base || have_work) {
@@ -1812,14 +1806,7 @@ public class SVNWCDb implements ISVNWCDb {
         /* ### should we look in the PRISTINE table for anything? */
 
         File pristine_abspath = getPristineFileName(pdh, sha1Checksum, false);
-
-        try {
-            return new FileInputStream(pristine_abspath);
-        } catch (FileNotFoundException e) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND);
-            SVNErrorManager.error(err, SVNLogType.WC);
-            return null;
-        }
+        return SVNFileUtil.openFileForReading(pristine_abspath);
 
     }
 
