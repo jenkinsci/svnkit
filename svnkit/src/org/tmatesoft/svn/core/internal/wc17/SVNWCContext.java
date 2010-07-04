@@ -75,6 +75,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 public class SVNWCContext {
 
     private static final long INVALID_REVNUM = -1;
+    private static final int STREAM_CHUNK_SIZE = 16384;
 
     public static boolean isAdminDirectory(String name) {
         return name != null && (SVNFileUtil.isWindows) ? SVNFileUtil.getAdminDirectoryName().equalsIgnoreCase(name) : SVNFileUtil.getAdminDirectoryName().equals(name);
@@ -1022,7 +1023,7 @@ public class SVNWCContext {
                 }
 
                 try {
-                    same = !isSameContents(pristineStream, vStream);
+                    same = isSameContents(pristineStream, vStream);
                 } catch (IOException e) {
                     SVNTranslator.translationError(versionedFileAbsPath, e);
                 }
@@ -1047,7 +1048,7 @@ public class SVNWCContext {
 
             vStream = SVNFileUtil.openFileForReading(versionedFileAbsPath);
             try {
-                same = !isSameContents(vStream, pristineStream);
+                same = isSameContents(vStream, pristineStream);
             } catch (IOException e) {
                 SVNTranslator.translationError(versionedFileAbsPath, e);
             }
@@ -1067,24 +1068,31 @@ public class SVNWCContext {
     }
 
     private boolean isSameContents(InputStream stream1, InputStream stream2) throws IOException {
-        byte[] buffer1 = new byte[8192];
-        byte[] buffer2 = new byte[8192];
-        while (true) {
-            int r1 = SVNFileUtil.readIntoBuffer(stream1, buffer1, 0, buffer1.length);
-            int r2 = SVNFileUtil.readIntoBuffer(stream2, buffer2, 0, buffer2.length);
-            r1 = r1 == -1 ? 0 : r1;
-            r2 = r2 == -1 ? 0 : r2;
-            if (r1 != r2) {
-                return true;
-            } else if (r1 == 0) {
-                return false;
+        byte[] buf1 = new byte[STREAM_CHUNK_SIZE];
+        byte[] buf2 = new byte[STREAM_CHUNK_SIZE];
+        long bytes_read1 = STREAM_CHUNK_SIZE;
+        long bytes_read2 = STREAM_CHUNK_SIZE;
+
+        boolean same = true; /* assume TRUE, until disproved below */
+        while (bytes_read1 == STREAM_CHUNK_SIZE && bytes_read2 == STREAM_CHUNK_SIZE) {
+            try {
+                bytes_read1 = stream1.read(buf1);
+            } catch (IOException e) {
+                break;
             }
-            for (int i = 0; i < r1; i++) {
-                if (buffer1[i] != buffer2[i]) {
-                    return true;
-                }
+            try {
+                bytes_read1 = stream1.read(buf1);
+            } catch (IOException e) {
+                break;
+            }
+
+            if ((bytes_read1 != bytes_read2) || (Arrays.equals(buf1, buf2 /*, bytes_read1*/))) {
+                same = false;
+                break;
             }
         }
+
+        return same;
     }
 
     private InputStream readSpecialFile(File localAbsPath) throws SVNException {
