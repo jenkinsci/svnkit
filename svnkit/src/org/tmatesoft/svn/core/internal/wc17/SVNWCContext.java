@@ -1081,12 +1081,12 @@ public class SVNWCContext {
                 break;
             }
             try {
-                bytes_read1 = stream1.read(buf1);
+                bytes_read2 = stream2.read(buf2);
             } catch (IOException e) {
                 break;
             }
 
-            if ((bytes_read1 != bytes_read2) || (Arrays.equals(buf1, buf2 /*, bytes_read1*/))) {
+            if ((bytes_read1 != bytes_read2) || !(Arrays.equals(buf1, buf2 /*, bytes_read1*/))) {
                 same = false;
                 break;
             }
