@@ -39,18 +39,18 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * Working copy administrative database layer.
- *
+ * 
  * The design doc mentions three different kinds of trees, BASE, WORKING and
  * ACTUAL. We have different APIs to handle each tree, enumerated below, along
  * with a blurb to explain what that tree represents.
- *
+ * 
  * <p>
  * Has those next categories of routines:
- *
+ * 
  * <ul>
- *
+ * 
  * <li><b>General administractive functions</b></li>
- *
+ * 
  * <li>(*Base*") <b> BASE tree management</b>
  * <p>
  * BASE should be what we get from the server. The *absolute* pristine copy.
@@ -60,9 +60,9 @@ import org.tmatesoft.svn.util.SVNLogType;
  * </li>
  * <li>(*Pristine*) <b> Pristine ("text base") management </b></li>
  * <li>(*Repository) <b> Repository information management </b></li>
- *
+ * 
  * <li>(op*) <b> Operations on WORKING tree</b></li>
- *
+ * 
  * <li>(read*) <b> Read operations on the BASE/WORKING tree</b>
  * <p>
  * These functions query information about nodes in ACTUAL, and returns the
@@ -72,22 +72,22 @@ import org.tmatesoft.svn.util.SVNLogType;
  * one recorded in WORKING, or if no WORKING node exists, then the checksum
  * comes from BASE.
  * </li>
- *
+ * 
  * <li>(global*) <b> Operations that alter multiple trees</b></li>
- *
+ * 
  * <li>(*Lock) <b> Function to manage the LOCKS table. </b></li>
- *
+ * 
  * <li>(scan*) <b> Functions to scan up a tree for further data </b></li>
- *
+ * 
  * <li>(*WorkQueue) <b> Work queue manipulation </b></li>
- *
+ * 
  * </ul>
- *
+ * 
  * @author TMate Software Ltd.
  */
 public interface ISVNWCDb {
 
-    int WC_FORMAT_17 = 16;
+    int WC_FORMAT_17 = 17;
     int WC_HAS_WORK_QUEUE = 13;
     long INVALID_FILESIZE = -1;
     long ENTRY_WORKING_SIZE_UNKNOWN = -1;
@@ -263,9 +263,9 @@ public interface ISVNWCDb {
 
     /**
      * Enumerated constants for how hard
-     * {@link ISVNWCDb#checkPristine(File, SVNChecksum, SVNWCDbCheckMode)} should
-     * work on checking for the pristine file.
-     *
+     * {@link ISVNWCDb#checkPristine(File, SVNChecksum, SVNWCDbCheckMode)}
+     * should work on checking for the pristine file.
+     * 
      * <p>
      * Note: this is bogus. we open the sqlite database "all the time", and
      * don't worry about optimizing that. so: given the db is always open, then
@@ -348,7 +348,7 @@ public interface ISVNWCDb {
      * <p>
      * It should be closed manually using {@link #close()}. In particular, this
      * will close any SQLite databases that have been opened and cached.
-     *
+     * 
      * @param mode
      *            indicates whether the caller knows all interactions will be
      *            read-only, whether writing will definitely happen, or whether
@@ -381,7 +381,7 @@ public interface ISVNWCDb {
     void close() throws SVNException;
 
     ISVNOptions getConfig();
-    
+
     /**
      * Initialize the SqlDB for LOCAL_ABSPATH, which should be a working copy
      * path.
@@ -397,7 +397,8 @@ public interface ISVNWCDb {
      * <p>
      * DEPTH is the initial depth of the working copy, it must be a definite
      * depth, not svn_depth_unknown.
-     * @throws SqlJetException 
+     * 
+     * @throws SqlJetException
      */
     void init(File localAbsPath, File reposRelPath, SVNURL reposRootUrl, String reposUuid, long initialRev, SVNDepth depth) throws SVNException, SqlJetException;
 
@@ -765,6 +766,9 @@ public interface ISVNWCDb {
      */
     void removePristine(File wcRootAbsPath, SVNChecksum sha1Checksum) throws SVNException;
 
+    /** Remove all unreferenced pristines belonging to WRI_ABSPATH in DB. */
+    void cleanupPristine(File wcRootAbsPath) throws SVNException;
+
     /**
      * Check for presence, according to the given mode (on how hard we should
      * examine things)
@@ -923,9 +927,9 @@ public interface ISVNWCDb {
      * If there is no information about the node, then
      * {@link SVNErrorCode#WC_PATH_NOT_FOUND} will be returned.
      * <p>
-     *
+     * 
      * The OUT parameters, and their "not available" values are:
-     *
+     * 
      * <table>
      * <tr>
      * <td>STATUS</td>
@@ -1024,16 +1028,16 @@ public interface ISVNWCDb {
      * <td>NULL</td>
      * </tr>
      * <table>
-     *
+     * 
      * <p>
      * When STATUS is requested, then it will be one of these values:
-     *
+     * 
      * <ul>
      * <li>
      * {@link SVNWCDbStatus#Normal}
      * <p>
      * A plain BASE node, with no local changes.</li>
-     *
+     * 
      * <li>
      * {@link SVNWCDbStatus#Added} <br>
      * {@link SVNWCDbStatus#ObstructedAdd}
@@ -1043,9 +1047,9 @@ public interface ISVNWCDb {
      * whether this has been added, copied, or moved, and the details of the
      * operation (this function only looks at LOCAL_ABSPATH, but resolving the
      * details requires scanning one or more ancestor nodes).
-     *
+     * 
      * </li>
-     *
+     * 
      * <li>
      * {@link SVNWCDbStatus#Deleted} <br>
      * {@link SVNWCDbStatus#ObstructedDelete}
@@ -1054,34 +1058,34 @@ public interface ISVNWCDb {
      * BASE node, or a child node of a subtree that was copied/moved to an
      * ancestor location. Call scan_deletion() to determine the full details of
      * the operations upon this node.
-     *
+     * 
      * </li>
-     *
+     * 
      * <li>
      * {@link SVNWCDbStatus#Obstructed}
      * <p>
      * The versioned subdirectory is missing or obstructed by a file.
-     *
+     * 
      * </li>
-     *
+     * 
      * <li>
      * {@link SVNWCDbStatus#Absent}
      * <p>
      * The node is versioned/known by the server, but the server has decided not
      * to provide further information about the node. This is a BASE node (since
      * changes are not allowed to this node).
-     *
+     * 
      * </li>
-     *
+     * 
      * <li>
      * {@link SVNWCDbStatus#Excluded}
      * <p>
      * The node has been excluded from the working copy tree. This may be an
      * exclusion from the BASE tree, or an exclusion for a child node of a
      * copy/move to an ancestor (see BASE_SHADOWED to determine the situation).
-     *
+     * 
      * </li>
-     *
+     * 
      * <li>
      * {@link SVNWCDbStatus#notPresent}
      * <p>
@@ -1089,9 +1093,9 @@ public interface ISVNWCDb {
      * within this mixed-revision working copy. This node is at a revision that
      * is not in the tree, contrary to its inclusion in the parent node's
      * revision.
-     *
+     * 
      * </li>
-     *
+     * 
      * <li>
      * {@link SVNWCDbStatus#Incomplete}
      * <p>
@@ -1102,19 +1106,19 @@ public interface ISVNWCDb {
      * unmodified (BASE) node, or to -1 if any structural changes have been made
      * to that node (that is, if the node has a row in the WORKING table).
      * <p>
-     *
+     * 
      * If DEPTH is requested, and the node is NOT a directory, then the value
      * will be set to {@link SVNDepth#UNKNOWN}.
      * <p>
-     *
+     * 
      * If CHECKSUM is requested, and the node is NOT a file, then it will be set
      * to NULL.
      * <p>
-     *
+     * 
      * If TRANSLATED_SIZE is requested, and the node is NOT a file, then it will
      * be set to {@link #INVALID_FILESIZE}.
      * <p>
-     *
+     * 
      * If TARGET is requested, and the node is NOT a symlink, then it will be
      * set to NULL.
      */
@@ -1123,8 +1127,7 @@ public interface ISVNWCDb {
     class WCDbInfo {
 
         public enum InfoField {
-            status, kind, revision, reposRelPath, reposRootUrl, reposUuid, changedRev, changedDate, changedAuthor, lastModTime, depth, checksum, translatedSize, target, changelist, originalReposRelpath, originalRootUrl, originalUuid, originalRevision, textMod, propsMod, baseShadowed, conflicted, lock,
-            haveBase, haveWork;
+            status, kind, revision, reposRelPath, reposRootUrl, reposUuid, changedRev, changedDate, changedAuthor, lastModTime, depth, checksum, translatedSize, target, changelist, originalReposRelpath, originalRootUrl, originalUuid, originalRevision, textMod, propsMod, baseShadowed, conflicted, lock, haveBase, haveWork;
         }
 
         /* ### derived */
@@ -1229,9 +1232,9 @@ public interface ISVNWCDb {
     /**
      * Return the kind of the node in DB at LOCAL_ABSPATH. The WORKING tree will
      * be examined first, then the BASE tree. If the node is not present in
-     * either tree and ALLOW_MISSING is TRUE, then {@link SVNWCDbKind#unknown} is
-     * returned. If the node is missing and ALLOW_MISSING is FALSE, then it will
-     * throw {@link SVNErrorCode#WC_PATH_NOT_FOUND}.
+     * either tree and ALLOW_MISSING is TRUE, then {@link SVNWCDbKind#unknown}
+     * is returned. If the node is missing and ALLOW_MISSING is FALSE, then it
+     * will throw {@link SVNErrorCode#WC_PATH_NOT_FOUND}.
      */
     SVNWCDbKind readKind(File localAbsPath, boolean allowMissing) throws SVNException;
 
@@ -1248,14 +1251,14 @@ public interface ISVNWCDb {
      * also updates any locks which may exist for the node, as well as any
      * copyfrom repository information. Finally, the DAV cache (aka "wcprops")
      * will be reset for affected entries.
-     *
+     * 
      * <p>
-     *
+     * 
      * localDirAbspath "should be" the wcroot or a switch root. all URLs under
      * this directory (depth=infinity) will be rewritten.
-     *
+     * 
      * <p>
-     *
+     * 
      * SINGLE_DB is a temp argument, and should be TRUE if using compressed
      * metadata. When all metadata gets compressed, it should disappear.
      */
@@ -1272,11 +1275,11 @@ public interface ISVNWCDb {
      * NEW_DATE is the (server-side) date of the new revision. It may be 0 if
      * the revprop is missing on the revision.
      * <p>
-     *
+     * 
      * NEW_AUTHOR is the (server-side) author of the new revision. It may be
      * NULL if the revprop is missing on the revision.
      * <p>
-     *
+     * 
      * One or both of NEW_CHECKSUM and NEW_CHILDREN should be NULL. For new:
      * <ul>
      * <li>files: NEW_CHILDREN should be NULL</li>
@@ -1284,7 +1287,7 @@ public interface ISVNWCDb {
      * <li>symlinks: both should be NULL</li>
      * </ul>
      * <p>
-     *
+     * 
      * WORK_ITEMS will be place into the work queue.
      */
     void globalCommit(File localAbspath, long newRevision, Date newDate, String newAuthor, SVNChecksum newChecksum, List<File> newChildren, SVNProperties newDavCache, boolean keepChangelist,
@@ -1364,9 +1367,9 @@ public interface ISVNWCDb {
      * Scan upwards for information about a known addition to the WORKING tree.
      * <p>
      * If a node's status as returned by
-     * {@link ISVNWCDb#readInfo(File, InfoField...)} is {@link SVNWCDbStatus#Added}
-     * (NOT obstructed_add!), then this function returns a refined status in
-     * STATUS, which is one of:
+     * {@link ISVNWCDb#readInfo(File, InfoField...)} is
+     * {@link SVNWCDbStatus#Added} (NOT obstructed_add!), then this function
+     * returns a refined status in STATUS, which is one of:
      * <p>
      * <ul>
      * <li>
@@ -1383,12 +1386,12 @@ public interface ISVNWCDb {
      * copy, or move). The REPOS_* values will be implied by the ancestor
      * unshadowed BASE node. ORIGINAL_* will indicate the source of the copy.</li>
      * <li>
-     * {@link SVNWCDbStatus#MovedHere} -- this NODE arrived as a result of a move.
-     * The root of the moved nodes will be stored in OP_ROOT_ABSPATH. Similar to
-     * the copied state, its parent may be a WORKING node or a BASE node. And
-     * again, the REPOS_* values are implied by this node's position in the
-     * subtree under the ancestor unshadowed BASE node. ORIGINAL_* will indicate
-     * the source of the move.</li>
+     * {@link SVNWCDbStatus#MovedHere} -- this NODE arrived as a result of a
+     * move. The root of the moved nodes will be stored in OP_ROOT_ABSPATH.
+     * Similar to the copied state, its parent may be a WORKING node or a BASE
+     * node. And again, the REPOS_* values are implied by this node's position
+     * in the subtree under the ancestor unshadowed BASE node. ORIGINAL_* will
+     * indicate the source of the move.</li>
      * </ul>
      * <p>
      * All OUT parameters may be NULL to indicate a lack of interest in that
@@ -1433,7 +1436,7 @@ public interface ISVNWCDb {
      * be quite complex. This function will provide the information to resolve
      * the circumstances of the deletion.
      * <p>
-     *
+     * 
      * For discussion purposes, we will start with the most complex example and
      * then demonstrate simplified examples. Consider node B/W/D/N has been
      * found as deleted. B is an unmodified directory (thus, only in BASE). W is
@@ -1441,7 +1444,7 @@ public interface ISVNWCDb {
      * directory in BASE. D is a deleted subtree in the WORKING tree, and N is
      * the deleted node.
      * <p>
-     *
+     * 
      * In this example, BASE_DEL_ABSPATH will bet set to B/W. That is the root
      * of the BASE tree (implicitly) deleted by the replacement. BASE_REPLACED
      * will be set to TRUE since B/W replaces the BASE node at B/W.
@@ -1449,30 +1452,30 @@ public interface ISVNWCDb {
      * replacement; in this case, B/W/D. No move-away took place, so
      * MOVED_TO_ABSPATH is set to NULL.
      * <p>
-     *
+     * 
      * In another scenario, B/W was moved-away before W was put into the WORKING
      * tree through an add/copy/move-here. MOVED_TO_ABSPATH will indicate where
      * B/W was moved to. Note that further operations may have been performed
      * post-move, but that is not known or reported by this function.
      * <p>
-     *
+     * 
      * If BASE does not have a B/W, then the WORKING B/W is not a replacement,
      * but a simple add/copy/move-here. BASE_DEL_ABSPATH will be set to NULL,
      * and BASE_REPLACED will be set to FALSE.
      * <p>
-     *
+     * 
      * If B/W/D does not exist in the WORKING tree (we're only talking about a
      * deletion of nodes of the BASE tree), then deleting B/W/D would have
      * marked the subtree for deletion. BASE_DEL_ABSPATH will refer to B/W/D,
      * BASE_REPLACED will be FALSE, MOVED_TO_ABSPATH will be NULL, and
      * WORK_DEL_ABSPATH will be NULL.
      * <p>
-     *
+     * 
      * If the BASE node B/W/D was moved instead of deleted, then
      * MOVED_TO_ABSPATH would indicate the target location (and other OUT values
      * as above).
      * <p>
-     *
+     * 
      * When the user deletes B/W/D from the WORKING tree, there are a few
      * additional considerations. If B/W is a simple addition (not a copy or a
      * move-here), then the deletion will simply remove the nodes from WORKING
@@ -1480,7 +1483,7 @@ public interface ISVNWCDb {
      * the source is a copy/moved-here, then the nodes are replaced with
      * deletion markers.
      * <p>
-     *
+     * 
      * If the user moves-away B/W/D from the WORKING tree, then behavior is
      * again dependent upon the origination of B/W. For a plain add, the nodes
      * simply move to the destination. For a copy, a deletion is made at B/W/D,
@@ -1491,10 +1494,10 @@ public interface ISVNWCDb {
      * however, note the double-move could have been performed by moving the
      * subtree first, then moving the source to B/W).
      * <p>
-     *
+     * 
      * There are three further considerations when resolving a deleted node:
      * <ul>
-     *
+     * 
      * <li>
      * If the BASE B/W/D was moved-away, then BASE_DEL_ABSPATH will specify
      * B/W/D as the root of the BASE deletion (not necessarily B/W as an
@@ -1502,51 +1505,51 @@ public interface ISVNWCDb {
      * reported). The other parameters will operate as normal, based on what is
      * happening in the WORKING tree. Also note that ancestors of B/W/D may
      * report additional, explicit moved-away status.
-     *
+     * 
      * <li>
      * If the BASE B/W/D was deleted explicitly *and* B/W is a replacement, then
      * the explicit deletion is subsumed by the implicit deletion that occurred
      * with the B/W replacement. Thus, BASE_DEL_ABSPATH will point to B/W as the
      * root of the BASE deletion. IOW, we can detect the explicit move-away, but
      * not an explicit deletion.
-     *
+     * 
      * <li>
      * If B/W/D/N refers to a node present in the BASE tree, and B/W was
      * replaced by a shallow subtree, then it is possible for N to be reported
      * as deleted (from BASE) yet no deletions occurred in the WORKING tree
      * above N. Thus, WORK_DEL_ABSPATH will be set to NULL.
      * </ul>
-     *
+     * 
      * <p>
      * Summary of OUT parameters:
-     *
+     * 
      * <ul>
-     *
+     * 
      * <li>
      * BASE_DEL_ABSPATH will specify the nearest ancestor of the explicit or
      * implicit deletion (if any) that applies to the BASE tree.
-     *
+     * 
      * <li>
      * BASE_REPLACED will specify whether the node at BASE_DEL_ABSPATH has been
      * replaced (shadowed) by nodes in the WORKING tree. If no BASE deletion has
      * occurred (BASE_DEL_ABSPATH is NULL, meaning the deletion is confined to
      * the WORKING TREE), then BASE_REPLACED will be FALSE.
-     *
+     * 
      * <li>
      * MOVED_TO_ABSPATH will specify the nearest ancestor that has moved-away,
      * if any. If no ancestors have been moved-away, then this is set to NULL.
-     *
+     * 
      * <li>
      * WORK_DEL_ABSPATH will specify the root of a deleted subtree within the
      * WORKING tree (note there is no concept of layered delete operations in
      * WORKING, so there is only one deletion root in the ancestry).
      * </ul>
-     *
+     * 
      * <p>
-     *
+     * 
      * All OUT parameters may be set to NULL to indicate a lack of interest in
      * that piece of information.
-     *
+     * 
      * <p>
      * If the node given by LOCAL_ABSPATH does not exist, then
      * {@link SVNErrorCode#WC_PATH_NOT_FOUND} is returned. If it doesn't have a
@@ -1616,17 +1619,20 @@ public interface ISVNWCDb {
     /** temp function. return the FORMAT for the directory LOCAL_ABSPATH. */
     int getFormatTemp(File localDirAbsPath) throws SVNException;
 
-    /** Return the serialized file external info (from BASE) for LOCAL_ABSPATH.
-    Stores NULL into SERIALIZED_FILE_EXTERNAL if this node is NOT a file
-    external. If a BASE node does not exist: SVN_ERR_WC_PATH_NOT_FOUND.  */
+    /**
+     * Return the serialized file external info (from BASE) for LOCAL_ABSPATH.
+     * Stores NULL into SERIALIZED_FILE_EXTERNAL if this node is NOT a file
+     * external. If a BASE node does not exist: SVN_ERR_WC_PATH_NOT_FOUND.
+     */
 
     String getFileExternalTemp(File path) throws SVNException;
 
     boolean determineKeepLocalTemp(File localAbsPath) throws SVNException;
 
-    WCDbDirDeletedInfo isDirDeletedTem(File entryAbspath) throws SVNException;
+    WCDbDirDeletedInfo isDirDeletedTemp(File entryAbspath) throws SVNException;
 
     public static class WCDbDirDeletedInfo {
+
         public boolean notPresent;
         public long baseRevision;
     }

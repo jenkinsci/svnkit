@@ -2025,11 +2025,16 @@ public class SVNWCDb implements ISVNWCDb {
         throw new UnsupportedOperationException();
     }
 
-    public WCDbDirDeletedInfo isDirDeletedTem(File entryAbspath) throws SVNException {
+    public WCDbDirDeletedInfo isDirDeletedTemp(File entryAbspath) throws SVNException {
         // TODO
         throw new UnsupportedOperationException();
     }
 
+    public void cleanupPristine(File wcRootAbsPath) throws SVNException {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+    
     private long fetchWCId(SVNSqlJetDb sDb) throws SVNException {
         /*
          * ### cheat. we know there is just one WORKING_COPY row, and it has a

@@ -1732,7 +1732,7 @@ public class SVNWCContext {
                  * ### in the subdir. future step because it is harder.
                  */
                 if (info.kind == SVNWCDbKind.Dir && !"".equals(entry.getName())) {
-                    WCDbDirDeletedInfo deletedInfo = db.isDirDeletedTem(entryAbsPath);
+                    WCDbDirDeletedInfo deletedInfo = db.isDirDeletedTemp(entryAbsPath);
                     entry.setDeleted(deletedInfo.notPresent);
                     entry.setRevision(deletedInfo.baseRevision);
                 }
