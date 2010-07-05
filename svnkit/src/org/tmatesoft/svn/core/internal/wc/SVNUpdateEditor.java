@@ -1089,6 +1089,10 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
                 log.addCommand(SVNLog.DELETE, command, false);
                 command.clear();
                 
+                command.put(SVNLog.NAME_ATTR, entry.getName());
+                log.addCommand(SVNLog.DELETE, command, false);
+                command.clear();
+                
                 SVNEvent event = SVNEventFactory.createSVNEvent(area.getFile(name), SVNNodeKind.FILE, null, myTargetRevision, SVNEventAction.UPDATE_DELETE, null, null, null);
                 myWCAccess.handleEvent(event);
             }

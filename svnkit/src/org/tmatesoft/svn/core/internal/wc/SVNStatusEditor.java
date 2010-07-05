@@ -192,21 +192,11 @@ public class SVNStatusEditor {
             String fileName = (String) files.next();
             SVNEntry entry = dir.getEntry(fileName, true);
             if (isNameConflict(entry)) {
-                SVNStatus status = new SVNStatus(entry.getSVNURL(), dir.getFile(fileName), entry.getKind(),
-                        SVNRevision.create(entry.getRevision()), SVNRevision.create(entry.getCommittedRevision()),
-                        SVNDate.parseDate(entry.getCommittedDate()), entry.getAuthor(),
-                        SVNStatusType.STATUS_NAME_CONFLICT,  SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, 
-                        false, entry.isCopied(), false, false, null, null, null, null, 
-                        entry.getCopyFromURL(), SVNRevision.create(entry.getCopyFromRevision()),
-                        null, null, entry.asMap(), entry.getChangelistName(), dir.getFormatVersion(), null);                
-                status.setEntry(entry);
-                handler.handleStatus(status);                
                 continue;
             }
             if ((entry != null && !entry.isHidden()) || SVNFileUtil.getAdminDirectoryName().equals(fileName)) {
                 continue;
             }
-
             File file = (File) childrenFiles.get(fileName);
             if (depth == SVNDepth.FILES && file.isDirectory()) {
                 continue;
@@ -234,8 +224,22 @@ public class SVNStatusEditor {
                     handler);
         }
        
-        for(Iterator entries = dir.entries(false); entries.hasNext();) {
+        for(Iterator entries = dir.entries(true); entries.hasNext();) {
             SVNEntry entry = (SVNEntry) entries.next();
+            if (isNameConflict(entry)) {
+                SVNStatus status = new SVNStatus(entry.getSVNURL(), dir.getFile(entry.getName()), entry.getKind(),
+                        SVNRevision.create(entry.getRevision()), SVNRevision.create(entry.getCommittedRevision()),
+                        SVNDate.parseDate(entry.getCommittedDate()), entry.getAuthor(),
+                        SVNStatusType.STATUS_NAME_CONFLICT,  SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, 
+                        false, entry.isCopied(), false, false, null, null, null, null, 
+                        entry.getCopyFromURL(), SVNRevision.create(entry.getCopyFromRevision()),
+                        null, null, entry.asMap(), entry.getChangelistName(), dir.getFormatVersion(), null);                
+                status.setEntry(entry);
+                handler.handleStatus(status);                
+                continue;
+            } else if (entry.isHidden()) {
+                continue;
+            }
             if (dir.getThisDirName().equals(entry.getName())) {
                 continue;
             }
