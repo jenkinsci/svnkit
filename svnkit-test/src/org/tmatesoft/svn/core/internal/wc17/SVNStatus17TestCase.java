@@ -12,6 +12,10 @@
 package org.tmatesoft.svn.core.internal.wc17;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.logging.Logger;
 
 import junit.framework.TestCase;
 
@@ -19,6 +23,7 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.auth.BasicAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 
@@ -33,13 +38,50 @@ public class SVNStatus17TestCase extends TestCase {
     }
 
     public void testLocalStatus17() throws SVNException {
+        Logger.getLogger(Logger.GLOBAL_LOGGER_NAME).info("testLocalStatus17");
         final SVNStatusClient17 client = new SVNStatusClient17(new BasicAuthenticationManager("test", "test"), new DefaultSVNOptions(null, true));
         final SVNStatus status = client.doStatus(new File(""), false);
     }
 
     public void testLocalStatus17Recursive() throws SVNException {
+        Logger.getLogger(Logger.GLOBAL_LOGGER_NAME).info("testLocalStatus17Recursive");
         final SVNStatusClient17 client = new SVNStatusClient17(new BasicAuthenticationManager("test", "test"), new DefaultSVNOptions(null, true));
         long revision = client.doStatus(new File(""), SVNRevision.WORKING, SVNDepth.INFINITY, false, true, false, false, new StatusHandler(false), null);
+    }
+
+    public void testLocalStatus17Added() throws SVNException, IOException {
+        Logger.getLogger(Logger.GLOBAL_LOGGER_NAME).info("testLocalStatus17Added");
+        File added = new File("added");
+        added.createNewFile();
+        try {
+            final SVNStatusClient17 client = new SVNStatusClient17(new BasicAuthenticationManager("test", "test"), new DefaultSVNOptions(null, true));
+            long revision = client.doStatus(new File(""), SVNRevision.WORKING, SVNDepth.INFINITY, false, true, false, false, new StatusHandler(false), null);
+        } finally {
+            SVNFileUtil.deleteFile(added);
+        }
+    }
+
+    public void testLocalStatus17Modified() throws SVNException, IOException {
+        Logger.getLogger(Logger.GLOBAL_LOGGER_NAME).info("testLocalStatus17Modified");
+        File modify = new File("file1.txt");
+        PrintWriter output = new PrintWriter(modify);
+        try {
+            output.print("\nmodified\n");
+        } finally {
+            output.close();
+        }
+        final SVNStatusClient17 client = new SVNStatusClient17(new BasicAuthenticationManager("test", "test"), new DefaultSVNOptions(null, true));
+        long revision = client.doStatus(new File(""), SVNRevision.WORKING, SVNDepth.INFINITY, false, true, false, false, new StatusHandler(false), null);
+    }
+
+    public void testLocalStatus17Deleted() throws SVNException {
+        Logger.getLogger(Logger.GLOBAL_LOGGER_NAME).info("testLocalStatus17Deleted");
+        System.gc();
+        File delete = new File("file1.txt");
+        if (SVNFileUtil.deleteFile(delete)) {
+            final SVNStatusClient17 client = new SVNStatusClient17(new BasicAuthenticationManager("test", "test"), new DefaultSVNOptions(null, true));
+            long revision = client.doStatus(new File(""), SVNRevision.WORKING, SVNDepth.INFINITY, false, true, false, false, new StatusHandler(false), null);
+        }
     }
 
 }
