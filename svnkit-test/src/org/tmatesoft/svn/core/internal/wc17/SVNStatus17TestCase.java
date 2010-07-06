@@ -16,7 +16,7 @@ import java.util.logging.Logger;
 
 import junit.framework.TestCase;
 
-import org.tmatesoft.svn.cli.SVN;
+import org.tmatesoft.svn.cli.svn.SVN;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.auth.BasicAuthenticationManager;
@@ -39,14 +39,6 @@ public class SVNStatus17TestCase extends TestCase {
         LOGGER.info("testLocalStatus17");
         final SVNStatusClient17 client = new SVNStatusClient17(new BasicAuthenticationManager("test", "test"), new DefaultSVNOptions(null, true));
         long revision = client.doStatus(new File(""), SVNRevision.WORKING, SVNDepth.INFINITY, false, true, false, false, new StatusHandler(false), null);
-    }
-
-    public void testSvnCli17(){
-        LOGGER.info("testSvnCli17");
-        System.setProperty("svnkit.wc.17", "true");
-        SVN.main(new String[] {
-                "-v", "status"
-        });
     }
 
 }

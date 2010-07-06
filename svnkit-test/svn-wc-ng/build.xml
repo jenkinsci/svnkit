@@ -86,7 +86,17 @@
 
 	</target>
 
-	<target name="do-status-svnkit" depends="compile-svnkit-tests">
+	<target name="do-status-jsvn">
+
+		<exec dir="${target.dir}" executable="${basedir}/../../build/lib/jsvn.bat">
+			<env key="USERPROFILE" value="${target.dir}/userprofile" />
+			<env key="SVNKIT_OPTIONS" value="-Dsvnkit.wc.17=true" />
+			<arg line="-v status workingcopy/test" />
+		</exec>
+
+	</target>
+
+	<target name="do-svnkit-test" depends="compile-svnkit-tests">
 		<echo message="${target.dir}/workingcopy/test" />
 		<junit dir="${target.dir}/workingcopy/test" fork="true" showoutput="true" printsummary="true">
 			<classpath>
@@ -114,7 +124,7 @@
 	<target name="do-create" depends="clean, do-checkout-native">
 	</target>
 
-	<target name="main" depends="do-create, do-status-native, do-status-svnkit">
+	<target name="main" depends="do-create, do-status-native, do-status-jsvn, do-svnkit-test">
 	</target>
 
 </project>
