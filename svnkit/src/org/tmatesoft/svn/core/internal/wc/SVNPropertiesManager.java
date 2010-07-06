@@ -11,15 +11,6 @@
  */
 package org.tmatesoft.svn.core.internal.wc;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.StringTokenizer;
-
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -44,6 +35,15 @@ import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.util.SVNLogType;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.StringTokenizer;
 
 
 /**
@@ -436,7 +436,7 @@ public class SVNPropertiesManager {
         } else if (!force && SVNProperty.CHARSET.equals(name)) {
             value = SVNPropertyValue.create(value.getString().trim());
             try {
-                SVNTranslator.getCharset(value.getString(), path, options);
+                SVNTranslator.getCharset(value.getString(), null, path, options);
             } catch (SVNException e) {
                 SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Charset ''{0}'' is not supported on this computer", value.getString());
                 SVNErrorManager.error(error, SVNLogType.DEFAULT);
@@ -510,6 +510,28 @@ public class SVNPropertiesManager {
         if (err != null) {
             SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
+    }
+
+    public static String determineEncodingByMimeType(String mimeType) {
+        if (mimeType == null) {
+            return null;
+        }
+        if (!SVNProperty.isTextMimeType(mimeType)) {
+            return null;
+        }
+        for (StringTokenizer tokenizer = new StringTokenizer(mimeType, ";", false); tokenizer.hasMoreTokens();) {
+            String token = tokenizer.nextToken();
+            token = token.trim();
+            if (!token.startsWith("charset")) {
+                continue;
+            }
+            token = token.substring("charset".length()).trim();
+            if (!token.startsWith("=")) {
+                continue;
+            }
+            return token.substring("=".length()).trim();
+        }
+        return null;
     }
 
     public static void validateEOLProperty(Object path, ISVNFileContentFetcher fetcher) throws SVNException {

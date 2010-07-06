@@ -11,14 +11,17 @@
  */
 package org.tmatesoft.svn.core.internal.util;
 
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.wc.IOExceptionWrapper;
+
 import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
-
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.wc.IOExceptionWrapper;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CharsetEncoder;
+import java.nio.charset.CodingErrorAction;
 
 
 /**
@@ -33,9 +36,18 @@ public class SVNCharsetOutputStream extends FilterOutputStream {
     private ByteBuffer myOutputBuffer;
     private boolean myFlushed;
 
-    public SVNCharsetOutputStream(OutputStream out, Charset inputCharset, Charset outputCharset) {
+    public SVNCharsetOutputStream(OutputStream out, Charset inputCharset, Charset outputCharset,
+                                  CodingErrorAction malformedInputAction, CodingErrorAction unmappableCharAction) {
         super(out);
-        myCharsetConvertor = new SVNCharsetConvertor(inputCharset.newDecoder(), outputCharset.newEncoder());
+        CharsetDecoder decoder = inputCharset.newDecoder();
+        decoder.onMalformedInput(malformedInputAction);
+        decoder.onUnmappableCharacter(unmappableCharAction);
+
+        CharsetEncoder encoder = outputCharset.newEncoder();
+        encoder.onMalformedInput(malformedInputAction);
+        encoder.onUnmappableCharacter(unmappableCharAction);
+        
+        myCharsetConvertor = new SVNCharsetConvertor(decoder, encoder);
         myFlushed = false;
     }
 
@@ -76,5 +88,13 @@ public class SVNCharsetOutputStream extends FilterOutputStream {
     public void close() throws IOException {
         flush();
         out.close();
+    }
+
+    public String toString() {
+        final StringBuffer buffer = new StringBuffer();
+        buffer.append("SVNCharsetOutputStream");
+        buffer.append("[").append(myCharsetConvertor);
+        buffer.append(']');
+        return buffer.toString();
     }
 }

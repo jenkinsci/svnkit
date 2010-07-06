@@ -11,18 +11,18 @@
  */
 package org.tmatesoft.svn.core.internal.util;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.util.SVNLogType;
+
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CoderResult;
-
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @author TMate Software Ltd.
@@ -148,5 +148,14 @@ public class SVNCharsetConvertor {
         } catch (CharacterCodingException e) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e, SVNLogType.DEFAULT);
         }
+    }
+
+    public String toString() {
+        final StringBuffer buffer = new StringBuffer();
+        buffer.append("SVNCharsetConvertor");
+        buffer.append("[from=").append(myDecoder.charset().displayName());
+        buffer.append(", to=").append(myEncoder.charset().displayName());
+        buffer.append(']');
+        return buffer.toString();
     }
 }

@@ -1403,11 +1403,13 @@ public abstract class SVNAdminArea {
     }
 
     private boolean compareAndVerify(File text, File baseFile, boolean compareTextBase, boolean checksum) throws SVNException {
-        String charsetProp = getProperties(text.getName()).getStringPropertyValue(SVNProperty.CHARSET);
-        String charset = SVNTranslator.getCharset(charsetProp, text.getPath(), getWCAccess().getOptions());
-        String eolStyle = getProperties(text.getName()).getStringPropertyValue(SVNProperty.EOL_STYLE);
-        String keywords = getProperties(text.getName()).getStringPropertyValue(SVNProperty.KEYWORDS);
-        boolean special = getProperties(text.getName()).getStringPropertyValue(SVNProperty.SPECIAL) != null && SVNFileUtil.symlinksSupported();
+        SVNVersionedProperties versionedProperties = getProperties(text.getName());
+        String charsetProp = versionedProperties.getStringPropertyValue(SVNProperty.CHARSET);
+        String mimeType = versionedProperties.getStringPropertyValue(SVNProperty.MIME_TYPE);
+        String charset = SVNTranslator.getCharset(charsetProp, mimeType, text.getPath(), getWCAccess().getOptions());
+        String eolStyle = versionedProperties.getStringPropertyValue(SVNProperty.EOL_STYLE);
+        String keywords = versionedProperties.getStringPropertyValue(SVNProperty.KEYWORDS);
+        boolean special = versionedProperties.getStringPropertyValue(SVNProperty.SPECIAL) != null && SVNFileUtil.symlinksSupported();
 
         if (special) {
             compareTextBase = true;
@@ -1430,11 +1432,13 @@ public abstract class SVNAdminArea {
                         baseStream = checksumStream;
                     }
                 }
+                File pathToTranslate = text;
                 if (compareTextBase && needsTranslation) {
                     if (!special) {
                         Map keywordsMap = SVNTranslator.computeKeywords(keywords, null, entry.getAuthor(), entry.getCommittedDate(), entry.getRevision() + "", getWCAccess().getOptions());
                         byte[] eols = SVNTranslator.getBaseEOL(eolStyle);
                         textStream = SVNTranslator.getTranslatingInputStream(textStream, charset, eols, true, keywordsMap, false);
+                        pathToTranslate = text;
                     } else {
                         String linkPath = SVNFileUtil.getSymlinkName(text);
                         if (linkPath == null) {
@@ -1448,6 +1452,7 @@ public abstract class SVNAdminArea {
                     Map keywordsMap = SVNTranslator.computeKeywords(keywords, entry.getURL(), entry.getAuthor(), entry.getCommittedDate(), entry.getRevision() + "", getWCAccess().getOptions());
                     byte[] eols = SVNTranslator.getEOL(eolStyle, getWCAccess().getOptions());
                     baseStream = SVNTranslator.getTranslatingInputStream(baseStream, charset, eols, false, keywordsMap, true);
+                    pathToTranslate = baseFile;
                 }
                 byte[] buffer1 = new byte[8192];
                 byte[] buffer2 = new byte[8192];
@@ -1469,8 +1474,7 @@ public abstract class SVNAdminArea {
                         }
                     }
                 } catch (IOException e) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
-                    SVNErrorManager.error(err, SVNLogType.WC);
+                    SVNTranslator.translationError(pathToTranslate, e);
                 }
             } finally {
                 SVNFileUtil.closeFile(baseStream);
@@ -1616,8 +1620,9 @@ public abstract class SVNAdminArea {
     private void handleCharsetProperty(SVNAdminArea adminArea, SVNLog log, SVNEntry entry, SVNVersionedProperties baseProps) throws SVNException {
         SVNProperties command = new SVNProperties();
         SVNPropertyValue charsetProp = baseProps.getPropertyValue(SVNProperty.CHARSET);
+        String mimeType = baseProps.getStringPropertyValue(SVNProperty.MIME_TYPE);
         String currentCharset = charsetProp == null ? null : charsetProp.getString();
-        currentCharset = SVNTranslator.getCharset(currentCharset, getAdminFile(entry.getName()).toString(), getWCAccess().getOptions());
+        currentCharset = SVNTranslator.getCharset(currentCharset, mimeType, getAdminFile(entry.getName()).toString(), getWCAccess().getOptions());
         if (currentCharset != null && !SVNProperty.isUTF8(currentCharset)) {
             File detranslatedFile = SVNAdminUtil.createTmpFile(this, "detranslated", ".tmp", true);
             String detranslatedPath = SVNPathUtil.getRelativePath(getRoot().getAbsolutePath(), detranslatedFile.getAbsolutePath());

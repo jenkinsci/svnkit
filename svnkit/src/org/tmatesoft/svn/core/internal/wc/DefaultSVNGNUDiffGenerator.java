@@ -114,7 +114,7 @@ public class DefaultSVNGNUDiffGenerator extends DefaultSVNDiffGenerator implemen
             os.write(getEOL());
             myIsHeaderWritten = true;
         }
-        os.write(HEADER_SEPARATOR);
+        os.write(HEADER_SEPARATOR.getBytes(getEncoding()));
         os.write(getEOL());
         return false;
     }
