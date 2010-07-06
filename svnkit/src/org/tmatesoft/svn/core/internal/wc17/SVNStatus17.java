@@ -26,14 +26,14 @@ import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 
 /**
  * Structure for holding the "status" of a working copy item.
- * 
+ *
  * The item's entry data is in entry, augmented and possibly shadowed by the
  * other fields. entry is NULL if this item is not under version control.
- * 
+ *
  * Fields may be added to the end of this structure in future versions.
  * Therefore, to preserve binary compatibility, users should not directly
  * allocate structures of this type.
- * 
+ *
  * @since New in SVN1.7.
  * @author TMate Software Ltd.
  */
@@ -113,7 +113,7 @@ public class SVNStatus17 {
 
     /**
      * WC out-of-date info from the repository
-     * 
+     *
      * When the working copy item is out-of-date compared to the repository, the
      * following fields represent the state of the youngest revision of the item
      * in the repository. If the working copy is not out of date, the fields are
@@ -358,9 +358,9 @@ public class SVNStatus17 {
         this.oodChangedAuthor = oodChangedAuthor;
     }
 
-    public SVNStatus getStatus16(boolean isFileExternal, File conflictNewFile, File conflictOldFile, File conflictWrkFile, File projRejectFile, String copyFromURL, SVNRevision copyFromRevision,
+    public SVNStatus getStatus16(File path, boolean isFileExternal, File conflictNewFile, File conflictOldFile, File conflictWrkFile, File projRejectFile, String copyFromURL, SVNRevision copyFromRevision,
             SVNLock remoteLock, Map entryProperties, int wcFormatVersion, SVNTreeConflictDescription treeConflict) {
-        return new SVNStatus(reposRootUrl, reposRelpath, kind, SVNRevision.create(revision), SVNRevision.create(changedRev), changedDate, changedAuthor, textStatus, propStatus, reposTextStatus,
+        return new SVNStatus(reposRootUrl, path, kind, SVNRevision.create(revision), SVNRevision.create(changedRev), changedDate, changedAuthor, textStatus, propStatus, reposTextStatus,
                 reposPropStatus, lock != null, copied, switched, isFileExternal, conflictNewFile, conflictOldFile, conflictWrkFile, projRejectFile, copyFromURL, copyFromRevision, remoteLock, lock,
                 entryProperties, changelist, wcFormatVersion, treeConflict);
     }

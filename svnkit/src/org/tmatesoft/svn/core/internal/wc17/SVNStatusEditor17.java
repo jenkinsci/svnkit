@@ -138,25 +138,6 @@ public class SVNStatusEditor17 {
         return Collections.EMPTY_SET;
     }
 
-    private static class WrapperSVNStatusFileProvider implements ISVNStatusFileProvider {
-
-        private final ISVNStatusFileProvider myDefault;
-        private final ISVNStatusFileProvider myDelegate;
-
-        private WrapperSVNStatusFileProvider(ISVNStatusFileProvider defaultProvider, ISVNStatusFileProvider delegate) {
-            myDefault = defaultProvider;
-            myDelegate = delegate;
-        }
-
-        public Map getChildrenFiles(File parent) {
-            final Map result = myDelegate.getChildrenFiles(parent);
-            if (result != null) {
-                return result;
-            }
-            return myDefault.getChildrenFiles(parent);
-        }
-    }
-
     private static class DefaultSVNStatusFileProvider implements ISVNStatusFileProvider {
 
         public Map getChildrenFiles(File parent) {
@@ -176,6 +157,18 @@ public class SVNStatusEditor17 {
             boolean skipThisDir, ISVNStatusHandler handler) throws SVNException {
 
         myWCContext.checkCancelled();
+
+        if (selected == null) {
+            /* Handle "this-dir" first. */
+            if (!skipThisDir) {
+                sendStatusStructure(localAbsPath, parentReposRootUrl, parentReposRelPath, SVNNodeKind.DIR, false, getAll, handler);
+            }
+            /* If the requested depth is empty, we only need status on this-dir. */
+            if (depth == SVNDepth.EMPTY) {
+                return;
+            }
+        }
+
         depth = depth == SVNDepth.UNKNOWN ? SVNDepth.INFINITY : depth;
         final Map<String, File> childrenFiles = myFileProvider.getChildrenFiles(localAbsPath);
         final ISVNWCDb db = myWCContext.getDb();
@@ -240,17 +233,6 @@ public class SVNStatusEditor17 {
         }
 
         handleExternals(localAbsPath, dirDepth);
-
-        if (selected == null) {
-            /* Handle "this-dir" first. */
-            if (!skipThisDir) {
-                sendStatusStructure(localAbsPath, parentReposRootUrl, parentReposRelPath, SVNNodeKind.DIR, false, getAll, handler);
-            }
-            /* If the requested depth is empty, we only need status on this-dir. */
-            if (depth == SVNDepth.EMPTY) {
-                return;
-            }
-        }
 
         /*
          * Add empty status structures for each of the unversioned things. This

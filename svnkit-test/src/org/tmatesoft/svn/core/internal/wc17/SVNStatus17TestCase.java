@@ -47,7 +47,7 @@ public class SVNStatus17TestCase extends TestCase {
 
     public void testLocalStatus17Added() throws SVNException, IOException {
         LOGGER.info("testLocalStatus17Added");
-        File added = new File("added");
+        File added = new File("added.txt");
         added.createNewFile();
         try {
             final SVNStatusClient17 client = new SVNStatusClient17(new BasicAuthenticationManager("test", "test"), new DefaultSVNOptions(null, true));

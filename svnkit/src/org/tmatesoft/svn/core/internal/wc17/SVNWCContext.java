@@ -354,43 +354,50 @@ public class SVNWCContext {
          */
         SVNTreeConflictDescription tree_conflict = db.opReadTreeConflict(localAbspath);
 
-        SVNNodeKind kind = SVNNodeKind.UNKNOWN; /* not versioned */
-        SVNStatusType text_status = SVNStatusType.STATUS_NONE;
-        SVNStatusType prop_status = SVNStatusType.STATUS_NONE;
-        SVNStatusType repos_text_status = SVNStatusType.STATUS_NONE;
-        SVNStatusType repos_prop_status = SVNStatusType.STATUS_NONE;
+        SVNStatus17 stat = new SVNStatus17();
+        stat.setKind(SVNNodeKind.UNKNOWN); /* not versioned */
+        stat.setDepth(SVNDepth.UNKNOWN);
+        stat.setNodeStatus(SVNStatusType.STATUS_NONE);
+        stat.setTextStatus(SVNStatusType.STATUS_NONE);
+        stat.setPropStatus(SVNStatusType.STATUS_NONE);
+        stat.setReposNodeStatus(SVNStatusType.STATUS_NONE);
+        stat.setReposTextStatus(SVNStatusType.STATUS_NONE);
+        stat.setReposPropStatus(SVNStatusType.STATUS_NONE);
 
         /*
          * If this path has no entry, but IS present on disk, it's unversioned.
          * If this file is being explicitly ignored (due to matching an
-         * ignore-pattern), the text_status is set to svn_wc_status_ignored.
-         * Otherwise the text_status is set to svn_wc_status_unversioned.
+         * ignore-pattern), the node_status is set to svn_wc_status_ignored.
+         * Otherwise the node_status is set to svn_wc_status_unversioned.
          */
         if (pathKind != SVNNodeKind.NONE) {
-            if (isIgnored)
-                text_status = SVNStatusType.STATUS_IGNORED;
-            else
-                text_status = SVNStatusType.STATUS_UNVERSIONED;
+            if (isIgnored) {
+                stat.setNodeStatus(SVNStatusType.STATUS_IGNORED);
+            } else {
+                stat.setNodeStatus(SVNStatusType.STATUS_UNVERSIONED);
+            }
         } else if (tree_conflict != null) {
             /*
              * If this path has no entry, is NOT present on disk, and IS a tree
              * conflict victim, count it as missing.
              */
-            text_status = SVNStatusType.STATUS_MISSING;
+            stat.setNodeStatus(SVNStatusType.STATUS_MISSING);
         }
 
-        SVNRevision revision = SVNRevision.UNDEFINED;
-        SVNRevision changed_rev = SVNRevision.UNDEFINED;
+        stat.setRevision(INVALID_REVNUM);
+        stat.setChangedRev(INVALID_REVNUM);
+        stat.setOodChangedRev(INVALID_REVNUM);
+        stat.setOodKind(SVNNodeKind.NONE);
 
         /*
          * For the case of an incoming delete to a locally deleted path during
          * an update, we get a tree conflict.
          */
+        stat.setConflicted(tree_conflict != null);
+        stat.setChangelist(null);
 
-        SVNStatus status = new SVNStatus(null, localAbspath, kind, revision, changed_rev, null, null, text_status, prop_status, repos_text_status, repos_prop_status, false, false, false, false, null,
-                null, null, null, null, SVNRevision.UNDEFINED, null, null, null, null, -1, tree_conflict);
+        return stat.getStatus16(localAbspath, false, null, null, null, null, null, null, null, null, ISVNWCDb.WC_FORMAT_17, tree_conflict);
 
-        return status;
     }
 
     public SVNStatus assembleStatus(File localAbsPath, SVNURL parentReposRootUrl, File parentReposRelPath, SVNNodeKind pathKind, boolean pathSpecial, boolean getAll, SVNLock repositoryLock)
@@ -573,8 +580,9 @@ public class SVNWCContext {
          * explicitly for tree conflicts to allow our users to ignore this
          * detail
          */
+        SVNTreeConflictDescription tree_conflict = null;
         if (!info.conflicted) {
-            final SVNTreeConflictDescription tree_conflict = db.opReadTreeConflict(localAbsPath);
+            tree_conflict = db.opReadTreeConflict(localAbsPath);
             info.conflicted = (tree_conflict != null);
         } else {
             /*
@@ -680,7 +688,7 @@ public class SVNWCContext {
         stat.setReposRootUrl(info.reposRootUrl);
         stat.setReposRelpath(info.reposRelPath);
 
-        return stat.getStatus16(false, null, null, null, null, null, null, null, null, ISVNWCDb.WC_FORMAT_17, null);
+        return stat.getStatus16(localAbsPath, false, null, null, null, null, null, null, null, null, ISVNWCDb.WC_FORMAT_17, tree_conflict);
 
     }
 
@@ -2334,6 +2342,5 @@ public class SVNWCContext {
         return errorCode == SVNErrorCode.FS_NOT_FOUND || errorCode == SVNErrorCode.IO_ERROR;
         // TODO
     }
-
 
 }
