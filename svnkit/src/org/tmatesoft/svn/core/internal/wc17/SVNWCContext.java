@@ -396,7 +396,9 @@ public class SVNWCContext {
         stat.setConflicted(tree_conflict != null);
         stat.setChangelist(null);
 
-        return stat.getStatus16(localAbspath, false, null, null, null, null, null, null, null, null, ISVNWCDb.WC_FORMAT_17, tree_conflict);
+        SVNStatus status = stat.getStatus16(localAbspath, false, null, null, null, null, null, null, null, null, ISVNWCDb.WC_FORMAT_17, tree_conflict);
+        status.setEntry(getEntry(localAbspath, true, stat.getKind(), false));
+        return status;
 
     }
 
@@ -688,7 +690,9 @@ public class SVNWCContext {
         stat.setReposRootUrl(info.reposRootUrl);
         stat.setReposRelpath(info.reposRelPath);
 
-        return stat.getStatus16(localAbsPath, false, null, null, null, null, null, null, null, null, ISVNWCDb.WC_FORMAT_17, tree_conflict);
+        SVNStatus status = stat.getStatus16(localAbsPath, false, null, null, null, null, null, null, null, null, ISVNWCDb.WC_FORMAT_17, tree_conflict);
+        status.setEntry(getEntry(localAbsPath, false, stat.getKind(), false));
+        return status;
 
     }
 

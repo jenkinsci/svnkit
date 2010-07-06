@@ -41,7 +41,7 @@ public class SVNStatus17TestCase extends TestCase {
         long revision = client.doStatus(new File(""), SVNRevision.WORKING, SVNDepth.INFINITY, false, true, false, false, new StatusHandler(false), null);
     }
 
-    public void testSvnCli17() throws SVNException {
+    public void testSvnCli17(){
         LOGGER.info("testSvnCli17");
         System.setProperty("svnkit.wc.17", "true");
         SVN.main(new String[] {
