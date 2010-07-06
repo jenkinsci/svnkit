@@ -1872,8 +1872,8 @@ public class SVNWCContext {
                         parentRootUrl = additionInfo.originalRootUrl;
 
                         if (parentRootUrl != null && info.originalRootUrl.equals(parentRootUrl)) {
-                            String relpath_to_entry = SVNPathUtil.getRelativePath(opRootAbsPath.toString(), entryAbsPath.toString());
-                            String entry_repos_relpath = SVNPathUtil.append(parentReposRelPath.toString(), relpath_to_entry);
+                            String relpath_to_entry = SVNPathUtil.getRelativePath(SVNPathUtil.validateFilePath(opRootAbsPath.toString()), SVNPathUtil.validateFilePath(entryAbsPath.toString()));
+                            String entry_repos_relpath = SVNPathUtil.append(SVNPathUtil.validateFilePath(parentReposRelPath.toString()), relpath_to_entry);
 
                             /*
                              * The copyfrom repos roots matched.
@@ -1926,7 +1926,7 @@ public class SVNWCContext {
                     if (isMixedRev)
                         entry.setRevision(originalRevision);
                 } else if (info.originalReposRelpath != null) {
-                    entry.setCopyFromURL(SVNPathUtil.append(info.originalRootUrl.toString(), info.originalReposRelpath.toString()));
+                    entry.setCopyFromURL(SVNPathUtil.append(SVNPathUtil.validateFilePath(info.originalRootUrl.toString()), SVNPathUtil.validateFilePath(info.originalReposRelpath.toString())));
                 } else {
                     /*
                      * NOTE: if original_repos_relpath == NULL, then the second
@@ -1934,8 +1934,8 @@ public class SVNWCContext {
                      * this use of OP_ROOT_ABSPATH still contains the original
                      * value where we fetched a value for SCANNED_REPOS_RELPATH.
                      */
-                    String relPathToEntry = SVNPathUtil.getRelativePath(opRootAbsPath.toString(), entryAbsPath.toString());
-                    String entryReposRelPath = SVNPathUtil.append(scannedOriginalRelPath.toString(), relPathToEntry);
+                    String relPathToEntry = SVNPathUtil.getRelativePath(SVNPathUtil.validateFilePath(opRootAbsPath.toString()), SVNPathUtil.validateFilePath(entryAbsPath.toString()));
+                    String entryReposRelPath = SVNPathUtil.append(SVNPathUtil.validateFilePath(scannedOriginalRelPath.toString()), relPathToEntry);
                     entry.setCopyFromURL(SVNPathUtil.append(info.originalRootUrl.toString(), entryReposRelPath));
                 }
             }
@@ -2154,7 +2154,8 @@ public class SVNWCContext {
             }
 
             /* Now glue it all together */
-            resInfo.reposRelPath = new File(parentReposRelPath, SVNPathUtil.getRelativePath(parent_abspath.toString(), entryAbsPath.toString()));
+            resInfo.reposRelPath = new File(parentReposRelPath, SVNPathUtil.getRelativePath(SVNPathUtil.validateFilePath(parent_abspath.toString()),
+                    SVNPathUtil.validateFilePath(entryAbsPath.toString())));
         } else {
             final WCDbRepositoryInfo baseReposInfo = db.scanBaseRepository(entryAbsPath, RepositoryInfoField.values());
             resInfo.reposRelPath = baseReposInfo.relPath;
