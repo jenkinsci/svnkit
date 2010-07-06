@@ -86,7 +86,7 @@
 
 	</target>
 
-	<target name="do-status-jsvn">
+	<target name="do-status-jsvn" depends="deploy-svnkit">
 
 		<exec dir="${target.dir}" executable="${basedir}/../../build/lib/jsvn.bat">
 			<env key="USERPROFILE" value="${target.dir}/userprofile" />
@@ -117,8 +117,12 @@
 		</junit>
 	</target>
 
+	<target name="deploy-svnkit">
+		<ant antfile="build.xml" dir="${basedir}/../../" target="deploy" />
+	</target>
+
 	<target name="compile-svnkit-tests">
-		<ant antfile="build.xml" dir="../../" target="compile-tests" />
+		<ant antfile="build.xml" dir="${basedir}/../../" target="compile-tests" />
 	</target>
 
 	<target name="do-create" depends="clean, do-checkout-native">
