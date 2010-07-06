@@ -358,9 +358,10 @@ public class SVNStatus17 {
         this.oodChangedAuthor = oodChangedAuthor;
     }
 
-    public SVNStatus getStatus16(File path, boolean isFileExternal, File conflictNewFile, File conflictOldFile, File conflictWrkFile, File projRejectFile, String copyFromURL, SVNRevision copyFromRevision,
-            SVNLock remoteLock, Map entryProperties, int wcFormatVersion, SVNTreeConflictDescription treeConflict) {
-        return new SVNStatus(reposRootUrl, path, kind, SVNRevision.create(revision), SVNRevision.create(changedRev), changedDate, changedAuthor, textStatus, propStatus, reposTextStatus,
+    public SVNStatus getStatus16(File path, boolean isFileExternal, File conflictNewFile, File conflictOldFile, File conflictWrkFile, File projRejectFile, String copyFromURL,
+            SVNRevision copyFromRevision, SVNLock remoteLock, Map entryProperties, int wcFormatVersion, SVNTreeConflictDescription treeConflict) {
+        final SVNStatusType contentStatus = nodeStatus != SVNStatusType.STATUS_NORMAL ? nodeStatus : textStatus;
+        return new SVNStatus(reposRootUrl, path, kind, SVNRevision.create(revision), SVNRevision.create(changedRev), changedDate, changedAuthor, contentStatus, propStatus, reposTextStatus,
                 reposPropStatus, lock != null, copied, switched, isFileExternal, conflictNewFile, conflictOldFile, conflictWrkFile, projRejectFile, copyFromURL, copyFromRevision, remoteLock, lock,
                 entryProperties, changelist, wcFormatVersion, treeConflict);
     }
