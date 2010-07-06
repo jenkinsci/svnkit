@@ -485,27 +485,31 @@ public class SVNStatusClient17 extends SVNBasicDelegate {
     }
 
     private void doExternalStatus(Map externalsNew, SVNDepth depth, boolean remote, boolean reportAll, boolean includeIgnored, final ISVNStatusHandler handler) throws SVNException {
-        /* Loop over the hash of new values (we don't care about the old
-        ones).  This is a mapping of versioned directories to property
-        values. */
+        /*
+         * Loop over the hash of new values (we don't care about the old ones).
+         * This is a mapping of versioned directories to property values.
+         */
         for (Iterator paths = externalsNew.keySet().iterator(); paths.hasNext();) {
             String path = (String) paths.next();
             String propVal = (String) externalsNew.get(path);
-            /* Parse the svn:externals property value.  This results in a
-            hash mapping subdirectories to externals structures. */
+            /*
+             * Parse the svn:externals property value. This results in a hash
+             * mapping subdirectories to externals structures.
+             */
             SVNExternal[] externals = SVNExternal.parseExternals(path, propVal);
             /* Loop over the subdir array. */
             for (int i = 0; i < externals.length; i++) {
                 SVNExternal external = externals[i];
                 File fullPath = new File(path, external.getPath());
-                /* If the external target directory doesn't exist on disk,
-                just skip it. */
+                /*
+                 * If the external target directory doesn't exist on disk, just
+                 * skip it.
+                 */
                 if (SVNFileType.getType(fullPath) != SVNFileType.DIRECTORY) {
                     continue;
                 }
                 /* Tell the client we're staring an external status set. */
-                handleEvent(SVNEventFactory.createSVNEvent(fullPath, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.STATUS_EXTERNAL, null, null, null),
-                        ISVNEventHandler.UNKNOWN);
+                handleEvent(SVNEventFactory.createSVNEvent(fullPath, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.STATUS_EXTERNAL, null, null, null), ISVNEventHandler.UNKNOWN);
                 setEventPathPrefix(fullPath.getPath());
                 /* And then do the status. */
                 try {
