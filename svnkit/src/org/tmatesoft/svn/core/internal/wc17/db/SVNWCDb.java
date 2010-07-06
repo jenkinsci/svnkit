@@ -1679,7 +1679,7 @@ public class SVNWCDb implements ISVNWCDb {
                         info.changelist = null;
                 }
                 if (f.contains(InfoField.originalReposRelpath)) {
-                    if (have_work)
+                    if (have_work && !isColumnNull(stmt_work, SVNWCDbSchema.WORKING_NODE__Fields.copyfrom_repos_path))
                         info.originalReposRelpath = new File(getColumnText(stmt_work, SVNWCDbSchema.WORKING_NODE__Fields.copyfrom_repos_path));
                     else
                         info.originalReposRelpath = null;

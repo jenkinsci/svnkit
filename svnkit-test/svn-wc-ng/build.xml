@@ -77,6 +77,23 @@
 
 	</target>
 
+	<target name="do-modify" depends="do-create-repository-native, do-import-native">
+
+		<echo file="${target.dir}/workingcopy/test/file1.txt" append="true" message="\ntest\n" />
+		<touch file="${target.dir}/workingcopy/test/add.txt" />
+
+		<exec dir="${target.dir}" executable="${path.svn}/svn.exe">
+			<env key="USERPROFILE" value="${target.dir}/userprofile" />
+			<arg line="add workingcopy/test/add.txt" />
+		</exec>
+
+		<exec dir="${target.dir}" executable="${path.svn}/svn.exe">
+			<env key="USERPROFILE" value="${target.dir}/userprofile" />
+			<arg line="delete workingcopy/test/file2.txt" />
+		</exec>
+
+	</target>
+
 	<target name="do-status-native">
 
 		<exec dir="${target.dir}" executable="${path.svn}/svn.exe">
@@ -128,7 +145,7 @@
 	<target name="do-create" depends="clean, do-checkout-native">
 	</target>
 
-	<target name="main" depends="do-create, do-status-native, do-status-jsvn, do-svnkit-test">
+	<target name="main" depends="do-create, do-modify, do-status-native, do-status-jsvn, do-svnkit-test">
 	</target>
 
 </project>
