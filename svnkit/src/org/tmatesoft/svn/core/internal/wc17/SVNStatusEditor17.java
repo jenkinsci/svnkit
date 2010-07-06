@@ -323,13 +323,13 @@ public class SVNStatusEditor17 {
         /* Check for a repository lock. */
         SVNLock repositoryLock = null;
         if (myRepositoryLocks != null) {
-            final WCDbInfo info = db.readInfo(localAbsPath, InfoField.status, InfoField.reposRelPath, InfoField.baseShadowed);
+            final WCDbInfo info = db.readInfo(localAbsPath, InfoField.status, InfoField.reposRelPath, InfoField.haveBase);
             SVNWCDbStatus status = info.status;
             File reposRelpath = info.reposRelPath;
-            boolean baseShadowed = info.baseShadowed;
+            boolean haveBase = info.haveBase;
 
             /* A switched path can be deleted: check the right relpath */
-            if (status == SVNWCDbStatus.Deleted && baseShadowed) {
+            if (status == SVNWCDbStatus.Deleted && haveBase) {
                 final WCDbRepositoryInfo reposInfo = db.scanBaseRepository(localAbsPath, RepositoryInfoField.relPath);
                 reposRelpath = reposInfo.relPath;
             }
@@ -433,7 +433,7 @@ public class SVNStatusEditor17 {
     private void handleExternals(File localAbsPath, SVNDepth depth) throws SVNException {
         String externals = myWCContext.getProperty(localAbsPath, SVNProperty.EXTERNALS);
         if (externals != null) {
-            if (SVNPathUtil.isAncestor(myPath.toString(), localAbsPath.toString())) {
+            if (SVNWCContext.isAncestor(myPath, localAbsPath)) {
                 storeExternals(localAbsPath, externals, externals, depth);
             }
             /*

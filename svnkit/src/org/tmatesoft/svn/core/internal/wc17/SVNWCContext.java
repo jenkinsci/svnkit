@@ -203,15 +203,15 @@ public class SVNWCContext {
 
     /** Equivalent to the old notion of "entry->schedule == schedule_replace" */
     public boolean isNodeReplaced(File path) throws SVNException {
-        final WCDbInfo info = db.readInfo(path, InfoField.status, InfoField.baseShadowed);
+        final WCDbInfo info = db.readInfo(path, InfoField.status, InfoField.haveBase);
         final SVNWCDbStatus status = info.status;
-        final boolean baseShadowed = info.baseShadowed;
+        final boolean haveBase = info.haveBase;
         SVNWCDbStatus baseStatus = null;
-        if (baseShadowed) {
+        if (haveBase) {
             final WCDbBaseInfo baseInfo = db.getBaseInfo(path, BaseInfoField.status);
             baseStatus = baseInfo.status;
         }
-        return ((status == SVNWCDbStatus.Added || status == SVNWCDbStatus.ObstructedAdd) && baseShadowed && baseStatus != SVNWCDbStatus.NotPresent);
+        return ((status == SVNWCDbStatus.Added || status == SVNWCDbStatus.ObstructedAdd) && haveBase && baseStatus != SVNWCDbStatus.NotPresent);
     }
 
     public long getRevisionNumber(SVNRevision revision, long[] latestRevisionNumber, SVNRepository repository, File path) throws SVNException {
@@ -284,7 +284,7 @@ public class SVNWCContext {
     }
 
     private long getNodeCommitBaseRev(File local_abspath) throws SVNException {
-        final WCDbInfo info = db.readInfo(local_abspath, InfoField.status, InfoField.revision, InfoField.baseShadowed);
+        final WCDbInfo info = db.readInfo(local_abspath, InfoField.status, InfoField.revision, InfoField.haveBase);
         /*
          * If this returned a valid revnum, there is no WORKING node. The node
          * is cleanly checked out, no modifications, copies or replaces.
@@ -294,7 +294,7 @@ public class SVNWCContext {
             return commitBaseRevision;
         }
         final SVNWCDbStatus status = info.status;
-        final boolean baseShadowed = info.baseShadowed;
+        final boolean haveBase = info.haveBase;
         if (status == SVNWCDbStatus.Added) {
             /*
              * If the node was copied/moved-here, return the copy/move source
@@ -303,7 +303,7 @@ public class SVNWCContext {
              */
             final WCDbAdditionInfo addInfo = db.scanAddition(local_abspath, AdditionInfoField.originalRevision);
             commitBaseRevision = addInfo.originalRevision;
-            if (!SVNRevision.isValidRevisionNumber(commitBaseRevision) && baseShadowed) {
+            if (!SVNRevision.isValidRevisionNumber(commitBaseRevision) && haveBase) {
                 /*
                  * It is a replace that does not feature a copy/move-here.
                  * Return the revert-base revision.
@@ -332,13 +332,13 @@ public class SVNWCContext {
     }
 
     private long getNodeBaseRev(File local_abspath) throws SVNException {
-        final WCDbInfo info = db.readInfo(local_abspath, InfoField.status, InfoField.revision, InfoField.baseShadowed);
+        final WCDbInfo info = db.readInfo(local_abspath, InfoField.status, InfoField.revision, InfoField.haveBase);
         long baseRevision = info.revision;
         if (SVNRevision.isValidRevisionNumber(baseRevision)) {
             return baseRevision;
         }
-        final boolean baseShadowed = info.baseShadowed;
-        if (baseShadowed) {
+        final boolean haveBase = info.haveBase;
+        if (haveBase) {
             /* The node was replaced with something else. Look at the base. */
             final WCDbBaseInfo baseInfo = db.getBaseInfo(local_abspath, BaseInfoField.revision);
             baseRevision = baseInfo.revision;
@@ -682,46 +682,6 @@ public class SVNWCContext {
 
         return stat.getStatus16(false, null, null, null, null, null, null, null, null, ISVNWCDb.WC_FORMAT_17, null);
 
-        /*
-         * SVNStatus status = new SVNStatus(url, path, info.kind.toNodeKind(),
-         * SVNRevision.create(info.revision),
-         * SVNRevision.create(info.changedRev), info.changedDate,
-         * info.changedAuthor, final_text_status, final_prop_status,
-         * SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, locked_p,
-         * entry.isCopied(), switched_p, file_external_p, entry.getConflictNew()
-         * == null ? null : new File(entry.getConflictNew()),
-         * entry.getConflictOld() == null ? null : new
-         * File(entry.getConflictOld()), entry.getConflictWorking() == null ?
-         * null : new File(entry.getConflictWorking()),
-         * entry.getPropRejectFile() == null ? null : new
-         * File(entry.getPropRejectFile()), entry .getCopyFromURL(),
-         * SVNRevision.create(entry.getCopyFromRevision()), repositoryLock,
-         * lock, actualProperties.asMap(), info.changelist,
-         * ISVNWCDb.WC_FORMAT_17, tree_conflict);
-         */
-
-    }
-
-    private String getPathAsChild(File parent, File child) {
-        if (parent == null || child == null)
-            return null;
-        if (parent.equals(child))
-            return null;
-        final String parentPath = parent.toString();
-        final String childPath = child.toString();
-        if (!childPath.startsWith(parentPath))
-            return null;
-        final String restPath = childPath.substring(parentPath.length());
-        if (restPath.startsWith(File.separator)) {
-            return restPath.substring(1);
-        }
-        return restPath;
-    }
-
-    private boolean isErrorAccess(SVNException e) {
-        final SVNErrorCode errorCode = e.getErrorMessage().getErrorCode();
-        return errorCode == SVNErrorCode.FS_NOT_FOUND || errorCode == SVNErrorCode.IO_ERROR;
-        // TODO
     }
 
     private SVNProperties getPristineProperties(File localAbsPath) throws SVNException {
@@ -1178,11 +1138,11 @@ public class SVNWCContext {
 
     private SVNURL getNodeUrl(File path) throws SVNException {
 
-        final WCDbInfo readInfo = db.readInfo(path, InfoField.status, InfoField.reposRelPath, InfoField.reposRootUrl, InfoField.baseShadowed);
+        final WCDbInfo readInfo = db.readInfo(path, InfoField.status, InfoField.reposRelPath, InfoField.reposRootUrl, InfoField.haveBase);
 
         if (readInfo.reposRelPath == null) {
             if (readInfo.status == SVNWCDbStatus.Normal || readInfo.status == SVNWCDbStatus.Incomplete
-                    || (readInfo.baseShadowed && (readInfo.status == SVNWCDbStatus.Deleted || readInfo.status == SVNWCDbStatus.ObstructedDelete))) {
+                    || (readInfo.haveBase && (readInfo.status == SVNWCDbStatus.Deleted || readInfo.status == SVNWCDbStatus.ObstructedDelete))) {
                 final WCDbRepositoryInfo repos = db.scanBaseRepository(path, RepositoryInfoField.relPath, RepositoryInfoField.rootUrl);
                 readInfo.reposRelPath = repos.relPath;
                 readInfo.reposRootUrl = repos.rootUrl;
@@ -1191,7 +1151,7 @@ public class SVNWCContext {
                 readInfo.reposRelPath = scanAddition.reposRelPath;
                 readInfo.reposRootUrl = scanAddition.reposRootUrl;
             } else if (readInfo.status == SVNWCDbStatus.Absent || readInfo.status == SVNWCDbStatus.Excluded || readInfo.status == SVNWCDbStatus.NotPresent
-                    || (!readInfo.baseShadowed && (readInfo.status == SVNWCDbStatus.Deleted || readInfo.status == SVNWCDbStatus.ObstructedDelete))) {
+                    || (!readInfo.haveBase && (readInfo.status == SVNWCDbStatus.Deleted || readInfo.status == SVNWCDbStatus.ObstructedDelete))) {
                 File parent_abspath = path.getParentFile();
                 readInfo.reposRelPath = new File(path.getName());
                 readInfo.reposRootUrl = getNodeUrl(parent_abspath);
@@ -1698,7 +1658,7 @@ public class SVNWCContext {
                 entry.setRevision(parentEntry.getRevision());
             }
 
-            if (info.baseShadowed) {
+            if (info.haveBase) {
                 SVNWCDbStatus baseStatus;
 
                 /*
@@ -2342,5 +2302,38 @@ public class SVNWCContext {
         // TODO
         throw new UnsupportedOperationException();
     }
+
+    public static String getPathAsChild(File parent, File child) {
+        if (parent == null || child == null)
+            return null;
+        if (parent.equals(child))
+            return null;
+        final String parentPath = parent.toString();
+        final String childPath = child.toString();
+        if (!childPath.startsWith(parentPath))
+            return null;
+        final String restPath = childPath.substring(parentPath.length());
+        if (restPath.startsWith(File.separator)) {
+            return restPath.substring(1);
+        }
+        return restPath;
+    }
+
+    public static boolean isAncestor(File parent, File child) {
+        if (parent == null || child == null)
+            return false;
+        if (parent.equals(child))
+            return false;
+        final String parentPath = parent.toString();
+        final String childPath = child.toString();
+        return childPath.startsWith(parentPath);
+    }
+
+    public static boolean isErrorAccess(SVNException e) {
+        final SVNErrorCode errorCode = e.getErrorMessage().getErrorCode();
+        return errorCode == SVNErrorCode.FS_NOT_FOUND || errorCode == SVNErrorCode.IO_ERROR;
+        // TODO
+    }
+
 
 }

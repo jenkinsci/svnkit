@@ -263,7 +263,7 @@ public class SVNWCDb implements ISVNWCDb {
     /**
      * For a given REPOS_ROOT_URL/REPOS_UUID pair, return the existing REPOS_ID
      * value. If one does not exist, then create a new one.
-     * 
+     *
      * @throws SVNException
      */
     private long createReposId(SVNSqlJetDb sDb, SVNURL reposRootUrl, String reposUuid) throws SVNException {
@@ -837,9 +837,9 @@ public class SVNWCDb implements ISVNWCDb {
             /*
              * If the node specified by the path is NOT present, then it cannot
              * possibly be a directory containing ".svn/wc.db".
-             * 
+             *
              * If it is a file, then it cannot contain ".svn/wc.db".
-             * 
+             *
              * For both of these cases, strip the basename off of the path and
              * move up one level. Keep record of what we strip, though, since
              * we'll need it later to construct local_relpath.
@@ -881,7 +881,7 @@ public class SVNWCDb implements ISVNWCDb {
              * but we just found a directory in its place. After we build the
              * PDH, then we'll examine the parent to see how it describes this
              * particular path.
-             * 
+             *
              * ### this is only possible with per-dir wc.db databases.
              */
             obstruction_possible = true;
@@ -930,7 +930,7 @@ public class SVNWCDb implements ISVNWCDb {
              * If we have not moved upwards, then check for a wc-1 working copy.
              * Since wc-1 has a .svn in every directory, and we didn't find one
              * in the original directory, then we aren't looking at a wc-1.
-             * 
+             *
              * If the original path is not present, then we have to check on
              * every iteration. The content may be the immediate parent, or
              * possibly five ancetors higher. We don't test for directory
@@ -958,12 +958,12 @@ public class SVNWCDb implements ISVNWCDb {
 
             /*
              * An obstruction is no longer possible.
-             * 
+             *
              * Example: we were given "/some/file" and "file" turned out to be a
              * directory. We did not find an SDB at "/some/file/.svn/wc.db", so
              * we are now going to look at "/some/.svn/wc.db". That SDB will
              * contain the correct information for "file".
-             * 
+             *
              * ### obstruction is only possible with per-dir wc.db databases.
              */
             obstruction_possible = false;
@@ -1031,7 +1031,7 @@ public class SVNWCDb implements ISVNWCDb {
         /*
          * Check to see if this (versioned) directory is obstructing what should
          * be a file in the parent directory.
-         * 
+         *
          * ### obstruction is only possible with per-dir wc.db databases.
          */
         if (obstruction_possible) {
@@ -1507,7 +1507,7 @@ public class SVNWCDb implements ISVNWCDb {
                             /*
                              * We should have read a row from the subdir wc.db.
                              * It must be obstructed in some way.
-                             * 
+                             *
                              * It is also possible that a WORKING node will
                              * override this value with a proper status.
                              */
@@ -1533,7 +1533,7 @@ public class SVNWCDb implements ISVNWCDb {
                              * Also note that the deletion could be of the BASE
                              * tree, or a child of something that has been
                              * copied/moved here.
-                             * 
+                             *
                              * If we're looking at the data in the parent, then
                              * something has obstructed the child data. Inform
                              * the caller.
@@ -1549,7 +1549,7 @@ public class SVNWCDb implements ISVNWCDb {
                              * this addition has occurred because of a simple
                              * addition, a copy, or is the destination of a
                              * move.
-                             * 
+                             *
                              * If we're looking at the data in the parent, then
                              * something has obstructed the child data. Inform
                              * the caller.
@@ -1708,9 +1708,6 @@ public class SVNWCDb implements ISVNWCDb {
                 if (f.contains(InfoField.propsMod)) {
                     info.propsMod = have_act && !isColumnNull(stmt_act, SVNWCDbSchema.ACTUAL_NODE__Fields.properties);
                 }
-                if (f.contains(InfoField.baseShadowed)) {
-                    info.baseShadowed = have_base && have_work;
-                }
                 if (f.contains(InfoField.conflicted)) {
                     if (have_act) {
                         info.conflicted = getColumnText(stmt_act, SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_old) != null || /* old */
@@ -1842,9 +1839,9 @@ public class SVNWCDb implements ISVNWCDb {
 
             /*
              * If there is a WORKING row, then examine its status:
-             * 
+             *
              * For adds/copies/moves, then pristine properties are in this row.
-             * 
+             *
              * For deletes, the pristines may be located here (as a result of a
              * copy/move-here), or they are located in BASE. ### right now, we
              * don't have a strong definition yet. moving to the ### proposed
@@ -1857,7 +1854,7 @@ public class SVNWCDb implements ISVNWCDb {
                 /*
                  * For "base-deleted", it is obvious the pristine props are
                  * located in the BASE table. Fall through to fetch them.
-                 * 
+                 *
                  * ### for regular deletes, the properties should be in the
                  * WORKING ### row. though operation layering and the suggested
                  * NODE_DATA may ### really be needed to ensure the props are
@@ -2034,7 +2031,7 @@ public class SVNWCDb implements ISVNWCDb {
         // TODO
         throw new UnsupportedOperationException();
     }
-    
+
     private long fetchWCId(SVNSqlJetDb sDb) throws SVNException {
         /*
          * ### cheat. we know there is just one WORKING_COPY row, and it has a
