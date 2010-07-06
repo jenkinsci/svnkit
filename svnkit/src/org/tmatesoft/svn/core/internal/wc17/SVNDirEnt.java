@@ -13,10 +13,9 @@ package org.tmatesoft.svn.core.internal.wc17;
 
 import java.io.File;
 
-
 /**
  * @version 1.3
- * @author  TMate Software Ltd.
+ * @author TMate Software Ltd.
  */
 public class SVNDirEnt {
 
@@ -30,6 +29,10 @@ public class SVNDirEnt {
 
     public static String getBaseName(File path) {
         return path.getName();
+    }
+
+    public static File join(String base, String component) {
+        return new File(base, component);
     }
 
 }

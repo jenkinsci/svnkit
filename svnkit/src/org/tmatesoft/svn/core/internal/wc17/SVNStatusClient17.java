@@ -475,7 +475,7 @@ public class SVNStatusClient17 extends SVNBasicDelegate {
             }
 
             if (!isIgnoreExternals() && isRecursiveDepth(depth)) {
-                doExternalStatus(dirAbsPath, externalsStore.getNewExternals(), depth, remote, reportAll, includeIgnored, handler);
+                doExternalStatus(externalsStore.getNewExternals(), depth, remote, reportAll, includeIgnored, handler);
             }
         } finally {
             wcContext.close();
@@ -484,31 +484,32 @@ public class SVNStatusClient17 extends SVNBasicDelegate {
 
     }
 
-    private void doExternalStatus(File dirAbsPath, Map externalsMap, SVNDepth depth, boolean remote, boolean reportAll, boolean includeIgnored, final ISVNStatusHandler handler) throws SVNException {
-        for (Iterator paths = externalsMap.keySet().iterator(); paths.hasNext();) {
-            String ownerPath = (String) paths.next();
-            String externalValue = (String) externalsMap.get(ownerPath);
-            SVNExternal[] externals = SVNExternal.parseExternals(ownerPath, externalValue);
+    private void doExternalStatus(Map externalsNew, SVNDepth depth, boolean remote, boolean reportAll, boolean includeIgnored, final ISVNStatusHandler handler) throws SVNException {
+        /* Loop over the hash of new values (we don't care about the old
+        ones).  This is a mapping of versioned directories to property
+        values. */
+        for (Iterator paths = externalsNew.keySet().iterator(); paths.hasNext();) {
+            String path = (String) paths.next();
+            String propVal = (String) externalsNew.get(path);
+            /* Parse the svn:externals property value.  This results in a
+            hash mapping subdirectories to externals structures. */
+            SVNExternal[] externals = SVNExternal.parseExternals(path, propVal);
+            /* Loop over the subdir array. */
             for (int i = 0; i < externals.length; i++) {
                 SVNExternal external = externals[i];
-                String externalPath = SVNPathUtil.append(ownerPath, external.getPath());
-                File externalFile = new File(SVNPathUtil.append(dirAbsPath.toString(), externalPath));
-                if (SVNFileType.getType(externalFile) != SVNFileType.DIRECTORY) {
+                File fullPath = SVNDirEnt.join(path, external.getPath());
+                /* If the external target directory doesn't exist on disk,
+                just skip it. */
+                if (SVNFileType.getType(fullPath) != SVNFileType.DIRECTORY) {
                     continue;
                 }
-                try {
-                    int format = SVNAdminAreaFactory.checkWC(externalFile, true);
-                    if (format == 0) {
-                        continue;
-                    }
-                } catch (SVNException e) {
-                    continue;
-                }
-                handleEvent(SVNEventFactory.createSVNEvent(externalFile, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.STATUS_EXTERNAL, null, null, null),
+                /* Tell the client we're staring an external status set. */
+                handleEvent(SVNEventFactory.createSVNEvent(fullPath, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.STATUS_EXTERNAL, null, null, null),
                         ISVNEventHandler.UNKNOWN);
-                setEventPathPrefix(externalPath);
+                setEventPathPrefix(fullPath.getPath());
+                /* And then do the status. */
                 try {
-                    doStatus(externalFile, SVNRevision.HEAD, depth, remote, reportAll, includeIgnored, false, handler, null);
+                    doStatus(fullPath, SVNRevision.HEAD, depth, remote, reportAll, includeIgnored, false, handler, null);
                 } catch (SVNException e) {
                     if (e instanceof SVNCancelException) {
                         throw e;
