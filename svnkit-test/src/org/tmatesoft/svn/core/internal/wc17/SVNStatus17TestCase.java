@@ -74,7 +74,8 @@ public class SVNStatus17TestCase extends TestCase {
         LOGGER.info("testLocalStatus17Deleted");
         System.gc();
         File delete = new File("file1.txt");
-        if (SVNFileUtil.deleteFile(delete)) {
+        SVNFileUtil.deleteFile(delete);
+        if (!delete.exists()) {
             final SVNStatusClient17 client = new SVNStatusClient17(new BasicAuthenticationManager("test", "test"), new DefaultSVNOptions(null, true));
             long revision = client.doStatus(new File(""), SVNRevision.WORKING, SVNDepth.INFINITY, false, true, false, false, new StatusHandler(false), null);
         }
