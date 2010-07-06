@@ -33,24 +33,20 @@ import org.tmatesoft.svn.core.wc.SVNStatus;
  */
 public class SVNStatus17TestCase extends TestCase {
 
+    private static final Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
+
     public SVNStatus17TestCase() {
         super("SVNStatus17");
     }
 
     public void testLocalStatus17() throws SVNException {
-        Logger.getLogger(Logger.GLOBAL_LOGGER_NAME).info("testLocalStatus17");
-        final SVNStatusClient17 client = new SVNStatusClient17(new BasicAuthenticationManager("test", "test"), new DefaultSVNOptions(null, true));
-        final SVNStatus status = client.doStatus(new File(""), false);
-    }
-
-    public void testLocalStatus17Recursive() throws SVNException {
-        Logger.getLogger(Logger.GLOBAL_LOGGER_NAME).info("testLocalStatus17Recursive");
+        LOGGER.info("testLocalStatus17");
         final SVNStatusClient17 client = new SVNStatusClient17(new BasicAuthenticationManager("test", "test"), new DefaultSVNOptions(null, true));
         long revision = client.doStatus(new File(""), SVNRevision.WORKING, SVNDepth.INFINITY, false, true, false, false, new StatusHandler(false), null);
     }
 
     public void testLocalStatus17Added() throws SVNException, IOException {
-        Logger.getLogger(Logger.GLOBAL_LOGGER_NAME).info("testLocalStatus17Added");
+        LOGGER.info("testLocalStatus17Added");
         File added = new File("added");
         added.createNewFile();
         try {
@@ -62,7 +58,7 @@ public class SVNStatus17TestCase extends TestCase {
     }
 
     public void testLocalStatus17Modified() throws SVNException, IOException {
-        Logger.getLogger(Logger.GLOBAL_LOGGER_NAME).info("testLocalStatus17Modified");
+        LOGGER.info("testLocalStatus17Modified");
         File modify = new File("file1.txt");
         PrintWriter output = new PrintWriter(modify);
         try {
@@ -75,7 +71,7 @@ public class SVNStatus17TestCase extends TestCase {
     }
 
     public void testLocalStatus17Deleted() throws SVNException {
-        Logger.getLogger(Logger.GLOBAL_LOGGER_NAME).info("testLocalStatus17Deleted");
+        LOGGER.info("testLocalStatus17Deleted");
         System.gc();
         File delete = new File("file1.txt");
         if (SVNFileUtil.deleteFile(delete)) {

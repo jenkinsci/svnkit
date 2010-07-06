@@ -1,26 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="svn-wc-ng" default="main" basedir=".">
-	
+
 	<property file="svn-wc-ng.properties"/>
 
 	<target name="clean">
-		
+
 		<delete dir="${target.dir}" verbose="false" failonerror="true"/>
 
 		<mkdir dir="${target.dir}" />
 		<mkdir dir="${target.dir}/userprofile" />
-		
+
 	</target>
 
 	<target name="do-create-repository-native">
 
 		<mkdir dir="${target.dir}/repository" />
-		
+
 		<exec dir="${target.dir}" executable="${path.svnadmin}/svnadmin.exe">
 			<env key="USERPROFILE" value="${target.dir}/userprofile"/>
 			<arg line="create ${target.dir.ux}/repository"/>
 		</exec>
-		
+
 	</target>
 
 	<target name="init-import">
@@ -29,29 +29,29 @@
 
 		<mkdir dir="${target.dir}/import/test" />
 		<touch file="${target.dir}/import/test/file1.txt"></touch>
-		<echo file="${target.dir}/import/test/file1.txt" message="/file1.txt"></echo>		
+		<echo file="${target.dir}/import/test/file1.txt" message="/file1.txt"></echo>
 		<touch file="${target.dir}/import/test/file2.txt"></touch>
-		<echo file="${target.dir}/import/test/file2.txt" message="/file2.txt"></echo>		
+		<echo file="${target.dir}/import/test/file2.txt" message="/file2.txt"></echo>
 		<mkdir dir="${target.dir}/import/test/dir1" />
 		<touch file="${target.dir}/import/test/dir1/file1.txt"></touch>
-		<echo file="${target.dir}/import/test/dir1/file1.txt" message="/dir1/file1.txt"></echo>		
+		<echo file="${target.dir}/import/test/dir1/file1.txt" message="/dir1/file1.txt"></echo>
 		<touch file="${target.dir}/import/test/dir1/file2.txt"></touch>
-		<echo file="${target.dir}/import/test/dir1/file2.txt" message="/dir1/file2.txt"></echo>		
+		<echo file="${target.dir}/import/test/dir1/file2.txt" message="/dir1/file2.txt"></echo>
 		<mkdir dir="${target.dir}/import/test/dir2" />
 		<touch file="${target.dir}/import/test/dir2/file1.txt"></touch>
-		<echo file="${target.dir}/import/test/dir2/file1.txt" message="/dir2/file1.txt"></echo>		
+		<echo file="${target.dir}/import/test/dir2/file1.txt" message="/dir2/file1.txt"></echo>
 		<touch file="${target.dir}/import/test/dir2/file2.txt"></touch>
 		<echo file="${target.dir}/import/test/dir2/file2.txt" message="/dir2/file2.txt"></echo>
-		
+
 	</target>
-	
+
 	<target name="do-import-native" depends="init-import">
-		
+
 		<exec dir="${target.dir}" executable="${path.svn}/svn.exe">
 			<env key="USERPROFILE" value="${target.dir}/userprofile"/>
 			<arg line="import ${target.dir.ux}/import/test file://localhost/${target.dir.ux}/repository/test -m 'initial import'"/>
 		</exec>
-		
+
 	</target>
 
 	<target name="do-checkout-native" depends="do-create-repository-native, do-import-native">
@@ -73,11 +73,10 @@
 		</exec>
 
 	</target>
-	
+
 	<target name="do-status-svnkit" depends="compile-svnkit-tests">
 		<echo message="${target.dir}/workingcopy/test"/>
 		<junit dir="${target.dir}/workingcopy/test" fork="true" showoutput="true" printsummary="true">
-			<formatter type="plain" usefile="false"/>
             <classpath>
                 <pathelement location="../../contrib/junit/junit.jar" />
                 <pathelement location="../../contrib/trilead/trilead.jar"/>
@@ -95,7 +94,7 @@
 			<test name="org.tmatesoft.svn.core.internal.wc17.SVNStatus17TestCase" />
 		</junit>
 	</target>
-	
+
 	<target name="compile-svnkit-tests">
 		<ant antfile="build.xml" dir="../../" target="compile-tests"/>
 	</target>
