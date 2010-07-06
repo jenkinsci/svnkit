@@ -58,7 +58,7 @@ import org.tmatesoft.svn.core.wc.SVNStatusType;
 public class SVNStatusEditor17 {
 
     private SVNWCContext myWCContext;
-    private SVNWCContextInfo myContextInfo;
+    private File myPath;
 
     private boolean myIsReportAll;
     private boolean myIsNoIgnore;
@@ -77,10 +77,12 @@ public class SVNStatusEditor17 {
     private ISVNStatusFileProvider myDefaultFileProvider;
     private boolean myIsGetExcluded;
 
-    public SVNStatusEditor17(ISVNOptions options, SVNWCContext wcContext, SVNWCContextInfo info, boolean noIgnore, boolean reportAll, SVNDepth depth, ISVNStatusHandler handler) {
+    private SVNExternalsStore myExternalsStore;
+
+    public SVNStatusEditor17(File path, SVNWCContext wcContext, ISVNOptions options, boolean noIgnore, boolean reportAll, SVNDepth depth, SVNExternalsStore externalsStore, ISVNStatusHandler handler) {
 
         myWCContext = wcContext;
-        myContextInfo = info;
+        myPath = path;
         myIsNoIgnore = noIgnore;
         myIsReportAll = reportAll;
         myDepth = depth;
@@ -93,21 +95,21 @@ public class SVNStatusEditor17 {
 
         myIsGetExcluded = false;
 
+        myExternalsStore = externalsStore;
+
     }
 
     public SVNCommitInfo closeEdit() throws SVNException {
 
-        final SVNNodeKind localKind = SVNFileType.getNodeKind(SVNFileType.getType(myContextInfo.getTargetAbsFile()));
-        final SVNNodeKind kind = myWCContext.getNodeKind(myContextInfo.getTargetAbsFile(), false);
+        final SVNNodeKind localKind = SVNFileType.getNodeKind(SVNFileType.getType(myPath));
+        final SVNNodeKind kind = myWCContext.getNodeKind(myPath, false);
 
         if (kind == SVNNodeKind.FILE && localKind == SVNNodeKind.FILE) {
-            getDirStatus(myContextInfo.getTargetAbsFile().getParentFile(), null, null, myContextInfo.getTargetAbsFile().getName(), myGlobalIgnores, myDepth, myIsReportAll, true, true,
-                    myIsGetExcluded, myStatusHandler);
+            getDirStatus(SVNDirEnt.getDirName(myPath), null, null, SVNDirEnt.getBaseName(myPath), myGlobalIgnores, myDepth, myIsReportAll, true, true, myIsGetExcluded, myStatusHandler);
         } else if (kind == SVNNodeKind.DIR && localKind == SVNNodeKind.DIR) {
-            getDirStatus(myContextInfo.getTargetAbsFile(), null, null, null, myGlobalIgnores, myDepth, myIsReportAll, myIsNoIgnore, false, myIsGetExcluded, myStatusHandler);
+            getDirStatus(myPath, null, null, null, myGlobalIgnores, myDepth, myIsReportAll, myIsNoIgnore, false, myIsGetExcluded, myStatusHandler);
         } else {
-            getDirStatus(myContextInfo.getTargetAbsFile().getParentFile(), null, null, myContextInfo.getTargetAbsFile().getName(), myGlobalIgnores, myDepth, myIsReportAll, myIsNoIgnore, true,
-                    myIsGetExcluded, myStatusHandler);
+            getDirStatus(SVNDirEnt.getDirName(myPath), null, null, SVNDirEnt.getBaseName(myPath), myGlobalIgnores, myDepth, myIsReportAll, myIsNoIgnore, true, myIsGetExcluded, myStatusHandler);
         }
 
         return null;
@@ -161,7 +163,7 @@ public class SVNStatusEditor17 {
             if (children != null) {
                 Map map = new SVNHashMap();
                 for (int i = 0; i < children.length; i++) {
-                    map.put(SVNFileUtil.getBasePath(children[i]), children[i]);
+                    map.put(SVNDirEnt.getBaseName(children[i]), children[i]);
                 }
                 return map;
             }
@@ -436,7 +438,7 @@ public class SVNStatusEditor17 {
     private void handleExternals(File localAbsPath, SVNDepth depth) throws SVNException {
         String externals = myWCContext.getProperty(localAbsPath, SVNProperty.EXTERNALS);
         if (externals != null) {
-            if (SVNPathUtil.isAncestor(myContextInfo.getTargetAbsPath(), localAbsPath.toString())) {
+            if (SVNPathUtil.isAncestor(myPath.toString(), localAbsPath.toString())) {
                 storeExternals(localAbsPath, externals, externals, depth);
             }
             /*
@@ -452,8 +454,8 @@ public class SVNStatusEditor17 {
     }
 
     private void storeExternals(File localAbsPath, String oldValue, String newValue, SVNDepth depth) {
-        myContextInfo.addExternal(localAbsPath, oldValue, newValue);
-        myContextInfo.addDepth(localAbsPath, depth);
+        myExternalsStore.addExternal(localAbsPath, oldValue, newValue);
+        myExternalsStore.addDepth(localAbsPath, depth);
     }
 
     private Collection<String> collectIgnorePatterns(File localAbsPath, Collection<String> ignores) throws SVNException {

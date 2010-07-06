@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.wc17;
 
+import java.io.File;
 import java.io.OutputStream;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
@@ -23,15 +24,14 @@ import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 
-
 /**
  * @version 1.3
- * @author  TMate Software Ltd.
+ * @author TMate Software Ltd.
  */
 public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEditor, ISVNStatusHandler {
 
-    public SVNRemoteStatusEditor17(ISVNOptions options, SVNWCContext wcContext, SVNWCContextInfo info, boolean includeIgnored, boolean reportAll, SVNDepth depth, ISVNStatusHandler realHandler) {
-        super(options,wcContext,info,includeIgnored,reportAll,depth,realHandler);
+    public SVNRemoteStatusEditor17(File targetAbsPath, SVNWCContext wcContext, ISVNOptions options, boolean includeIgnored, boolean reportAll, SVNDepth depth, SVNExternalsStore externalsStore, ISVNStatusHandler realHandler) {
+        super(targetAbsPath, wcContext, options, includeIgnored, reportAll, depth, externalsStore ,realHandler);
     }
 
     public void abortEdit() throws SVNException {
@@ -88,7 +88,7 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
 
     public void handleStatus(SVNStatus status) throws SVNException {
     }
-    
+
     public SVNCommitInfo closeEdit() throws SVNException {
         return super.closeEdit();
     }

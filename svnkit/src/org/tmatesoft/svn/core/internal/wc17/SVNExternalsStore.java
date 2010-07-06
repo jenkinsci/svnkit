@@ -18,87 +18,16 @@ import java.util.Map;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 
+
 /**
  * @version 1.3
- * @author TMate Software Ltd.
+ * @author  TMate Software Ltd.
  */
-public class SVNWCContextInfo {
+public class SVNExternalsStore {
 
-    private String targetName;
-    private String anchorAbsPath;
-    private String dirAbsPath;
-    private String targetBaseName;
-    private String dir;
-    private String targetAbsPath;
-    private File targetAbsFile;
-    private String anchorRelPath;
-
-    private Map newExternals;
-    private Map oldExternals;
-    private Map depths;
-    private File dirAbsFile;
-
-    public String getAnchorAbsPath() {
-        return anchorAbsPath;
-    }
-
-    public String getAnchorRelPath() {
-        return anchorRelPath;
-    }
-
-    public String getDir() {
-        return dir;
-    }
-
-    public String getDirAbsPath() {
-        return dirAbsPath;
-    }
-
-    public File getTargetAbsFile() {
-        return targetAbsFile;
-    }
-
-    public String getTargetAbsPath() {
-        return targetAbsPath;
-    }
-
-    public String getTargetBaseName() {
-        return targetBaseName;
-    }
-
-    public String getTargetName() {
-        return targetName;
-    }
-
-    public void setAnchorAbsPath(String anchorAbsPath) {
-        this.anchorAbsPath = anchorAbsPath;
-    }
-
-    public void setAnchorRelPath(String anchorRelPath) {
-        this.anchorRelPath = anchorRelPath;
-    }
-
-    public void setDir(String dir) {
-        this.dir = dir;
-    }
-
-    public void setDirAbsPath(String dirAbsPath) {
-        this.dirAbsPath = dirAbsPath;
-        this.dirAbsFile = new File(dirAbsPath);
-    }
-
-    public File getDirAbsFile() {
-        return dirAbsFile;
-    }
-
-    public void setTargetAbsPath(String targetAbsPath) {
-        this.targetAbsPath = targetAbsPath;
-        this.targetAbsFile = new File(targetAbsPath);
-    }
-
-    public void setTargetBaseName(String targetBaseName) {
-        this.targetBaseName = targetBaseName;
-    }
+    private SVNHashMap newExternals;
+    private SVNHashMap oldExternals;
+    private SVNHashMap depths;
 
     public void addOldExternal(File path, String oldValue) {
         if (oldExternals == null) {
