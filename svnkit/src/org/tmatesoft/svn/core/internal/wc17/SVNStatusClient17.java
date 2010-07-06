@@ -388,7 +388,7 @@ public class SVNStatusClient17 extends SVNBasicDelegate {
             File dir, dirAbsPath;
             String targetBaseName;
 
-            File targetAbsPath = SVNDirEnt.getAbsolute(path);
+            File targetAbsPath = path.getAbsoluteFile();
 
             SVNExternalsStore externalsStore = new SVNExternalsStore();
 
@@ -402,9 +402,9 @@ public class SVNStatusClient17 extends SVNBasicDelegate {
                     targetBaseName = "";
                     dir = path;
                 } else {
-                    dirAbsPath = SVNDirEnt.getDirName(targetAbsPath);
-                    targetBaseName = SVNDirEnt.getBaseName(targetAbsPath);
-                    dir = SVNDirEnt.getDirName(path);
+                    dirAbsPath = targetAbsPath.getParentFile();
+                    targetBaseName = targetAbsPath.getName();
+                    dir = path.getParentFile();
                     if (kind != SVNNodeKind.FILE) {
                         kind = wcContext.getNodeKind(dirAbsPath, false);
                         /*
@@ -497,7 +497,7 @@ public class SVNStatusClient17 extends SVNBasicDelegate {
             /* Loop over the subdir array. */
             for (int i = 0; i < externals.length; i++) {
                 SVNExternal external = externals[i];
-                File fullPath = SVNDirEnt.join(path, external.getPath());
+                File fullPath = new File(path, external.getPath());
                 /* If the external target directory doesn't exist on disk,
                 just skip it. */
                 if (SVNFileType.getType(fullPath) != SVNFileType.DIRECTORY) {

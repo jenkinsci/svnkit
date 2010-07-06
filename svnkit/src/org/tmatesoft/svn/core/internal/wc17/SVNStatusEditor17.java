@@ -105,11 +105,11 @@ public class SVNStatusEditor17 {
         final SVNNodeKind kind = myWCContext.getNodeKind(myPath, false);
 
         if (kind == SVNNodeKind.FILE && localKind == SVNNodeKind.FILE) {
-            getDirStatus(SVNDirEnt.getDirName(myPath), null, null, SVNDirEnt.getBaseName(myPath), myGlobalIgnores, myDepth, myIsReportAll, true, true, myIsGetExcluded, myStatusHandler);
+            getDirStatus(myPath.getParentFile(), null, null, myPath.getName(), myGlobalIgnores, myDepth, myIsReportAll, true, true, myIsGetExcluded, myStatusHandler);
         } else if (kind == SVNNodeKind.DIR && localKind == SVNNodeKind.DIR) {
             getDirStatus(myPath, null, null, null, myGlobalIgnores, myDepth, myIsReportAll, myIsNoIgnore, false, myIsGetExcluded, myStatusHandler);
         } else {
-            getDirStatus(SVNDirEnt.getDirName(myPath), null, null, SVNDirEnt.getBaseName(myPath), myGlobalIgnores, myDepth, myIsReportAll, myIsNoIgnore, true, myIsGetExcluded, myStatusHandler);
+            getDirStatus(myPath.getParentFile(), null, null, myPath.getName(), myGlobalIgnores, myDepth, myIsReportAll, myIsNoIgnore, true, myIsGetExcluded, myStatusHandler);
         }
 
         return null;
@@ -163,7 +163,7 @@ public class SVNStatusEditor17 {
             if (children != null) {
                 Map map = new SVNHashMap();
                 for (int i = 0; i < children.length; i++) {
-                    map.put(SVNDirEnt.getBaseName(children[i]), children[i]);
+                    map.put(children[i].getName(), children[i]);
                 }
                 return map;
             }
