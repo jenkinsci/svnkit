@@ -20,12 +20,17 @@ import org.tmatesoft.svn.core.SVNException;
  * @version 1.3
  * @author TMate Software Ltd.
  */
-public abstract class SVNSqlJetSelectStatement extends SVNSqlJetStatement {
+public class SVNSqlJetSelectStatement extends SVNSqlJetStatement {
 
     private ISqlJetTable table;
+    private String indexName;
 
     public SVNSqlJetSelectStatement(SVNSqlJetDb sDb, Enum fromTable) throws SVNException {
         this(sDb, fromTable.toString());
+    }
+
+    public SVNSqlJetSelectStatement(SVNSqlJetDb sDb, Enum fromTable, Enum indexName) throws SVNException {
+        this(sDb, fromTable.toString(), indexName.toString());
     }
 
     public SVNSqlJetSelectStatement(SVNSqlJetDb sDb, String fromTable) throws SVNException {
@@ -35,6 +40,11 @@ public abstract class SVNSqlJetSelectStatement extends SVNSqlJetStatement {
         } catch (SqlJetException e) {
             SVNSqlJetDb.createSqlJetError(e);
         }
+    }
+
+    public SVNSqlJetSelectStatement(SVNSqlJetDb sDb, String fromTable, String indexName) throws SVNException {
+        this(sDb, fromTable);
+        this.indexName = indexName;
     }
 
     protected ISqlJetCursor openCursor() throws SVNException {
@@ -47,7 +57,11 @@ public abstract class SVNSqlJetSelectStatement extends SVNSqlJetStatement {
     }
 
     protected String getIndexName() {
-        return null;
+        return indexName;
+    }
+
+    public void setIndexName(String indexName) {
+        this.indexName = indexName;
     }
 
     protected Object[] getWhere() {
@@ -66,7 +80,7 @@ public abstract class SVNSqlJetSelectStatement extends SVNSqlJetStatement {
     }
 
     /**
-     * @throws SVNException  
+     * @throws SVNException
      */
     protected boolean isFilterPassed() throws SVNException {
         return true;

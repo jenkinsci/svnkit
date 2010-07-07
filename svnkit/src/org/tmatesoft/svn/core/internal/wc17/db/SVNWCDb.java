@@ -40,12 +40,14 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNTreeConflictUtil;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbAdditionInfo.AdditionInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbBaseInfo.BaseInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbDeletionInfo.DeletionInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo.RepositoryInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNSqlJetDb.Mode;
+import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.DirParsedInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -1988,7 +1990,7 @@ public class SVNWCDb implements ISVNWCDb {
         assert (wcroot != null);
         assert (wcroot.getSDb() != null && wcroot.getWcId() != UNKNOWN_WC_ID);
 
-        String relpath_suffix = "";
+        File relpath_suffix = new File("");
         String current_basename = localRelPath.getName();
         File current_relpath = localRelPath;
 
@@ -2022,7 +2024,7 @@ public class SVNWCDb implements ISVNWCDb {
                      * Given the node's relpath, append all the segments that we
                      * stripped as we scanned upwards.
                      */
-                    reposInfo.relPath = new File(getColumnText(stmt, 1), relpath_suffix);
+                    reposInfo.relPath = new File(getColumnText(stmt, 1), relpath_suffix.getPath());
                     long repos_id = getColumnInt64(stmt, 0);
                     return repos_id;
                 }
@@ -2046,7 +2048,7 @@ public class SVNWCDb implements ISVNWCDb {
              */
             current_basename = current_relpath.getName();
             current_relpath = current_relpath.getParentFile();
-            relpath_suffix = SVNPathUtil.append(relpath_suffix, current_basename);
+            relpath_suffix = new File(relpath_suffix, current_basename);
 
             /* Loop to try the parent. */
 
@@ -2076,8 +2078,235 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     public WCDbDeletionInfo scanDeletion(File localAbsPath, DeletionInfoField... fields) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+        assert (isAbsolute(localAbsPath));
+
+        final EnumSet<DeletionInfoField> f = getInfoFields(DeletionInfoField.class, fields);
+
+        /* Initialize all the OUT parameters. */
+        final WCDbDeletionInfo deletionInfo = new WCDbDeletionInfo();
+
+        File current_abspath = localAbsPath;
+        File child_abspath = null;
+        boolean child_has_base = false;
+        boolean found_moved_to = false;
+
+        /*
+         * Initialize to something that won't denote an important parent/child
+         * transition.
+         */
+
+        SVNWCDbStatus child_presence = SVNWCDbStatus.BaseDeleted;
+
+        final DirParsedInfo parsed = parseDirLocalAbsPath(localAbsPath, Mode.ReadOnly);
+        SVNWCDbDir pdh = parsed.wcDbDir;
+        File current_relpath = parsed.localRelPath;
+        verifyDirUsable(pdh);
+
+        while (true) {
+            SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_DELETION_INFO);
+
+            try {
+                stmt.bindf("is", pdh.getWCRoot().getWcId(), current_relpath);
+
+                boolean have_row = stmt.next();
+
+                if (!have_row) {
+                    /* There better be a row for the starting node! */
+                    if (current_abspath == localAbsPath) {
+                        stmt.reset();
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{0}'' was not found.", localAbsPath);
+                        SVNErrorManager.error(err, SVNLogType.WC);
+                    }
+
+                    /* There are no values, so go ahead and reset the stmt now. */
+                    stmt.reset();
+
+                    /*
+                     * No row means no WORKING node at this path, which means we
+                     * just fell off the top of the WORKING tree.
+                     *
+                     * If the child was not-present this implies the root of the
+                     * (added) WORKING subtree was deleted. This can occur
+                     * during post-commit processing when the copied parent that
+                     * was in the WORKING tree has been moved to the BASE tree.
+                     */
+                    if (f.contains(DeletionInfoField.workDelAbsPath) && child_presence == SVNWCDbStatus.NotPresent && deletionInfo.workDelAbsPath == null) {
+                        deletionInfo.workDelAbsPath = child_abspath;
+                    }
+
+                    /*
+                     * If the child did not have a BASE node associated with it,
+                     * then we're looking at a deletion that occurred within an
+                     * added tree. There is no root of a deleted/replaced BASE
+                     * tree.
+                     *
+                     * If the child was base-deleted, then the whole tree is a
+                     * simple (explicit) deletion of the BASE tree.
+                     *
+                     * If the child was normal, then it is the root of a
+                     * replacement, which means an (implicit) deletion of the
+                     * BASE tree.
+                     *
+                     * In both cases, set the root of the operation (if we have
+                     * not already set it as part of a moved-away).
+                     */
+                    if (f.contains(DeletionInfoField.baseDelAbsPath) && child_has_base && deletionInfo.baseDelAbsPath == null) {
+                        deletionInfo.baseDelAbsPath = child_abspath;
+                    }
+
+                    /*
+                     * We found whatever roots we needed. This BASE node and its
+                     * ancestors are unchanged, so we're done.
+                     */
+                    break;
+                }
+
+                /*
+                 * We need the presence of the WORKING node. Note that legal
+                 * values are: normal, not-present, base-deleted.
+                 */
+                SVNWCDbStatus work_presence = getColumnToken(stmt, SVNWCDbSchema.WORKING_NODE__Fields.presence, presenceMap2);
+
+                /* The starting node should be deleted. */
+                if (current_abspath == localAbsPath && work_presence != SVNWCDbStatus.NotPresent && work_presence != SVNWCDbStatus.BaseDeleted) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS, "Expected node ''{0}'' to be deleted.", localAbsPath);
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                }
+                assert (work_presence == SVNWCDbStatus.Normal || work_presence == SVNWCDbStatus.NotPresent || work_presence == SVNWCDbStatus.BaseDeleted);
+
+                SVNSqlJetStatement baseStmt = stmt.getJoinedStatement(SVNWCDbSchema.BASE_NODE);
+                try {
+                    boolean have_base = baseStmt != null && !isColumnNull(baseStmt, SVNWCDbSchema.BASE_NODE__Fields.presence);
+
+                    if (have_base) {
+                        SVNWCDbStatus base_presence = getColumnToken(baseStmt, SVNWCDbSchema.BASE_NODE__Fields.presence, presenceMap2);
+
+                        /* Only "normal" and "not-present" are allowed. */
+                        assert (base_presence == SVNWCDbStatus.Normal || base_presence == SVNWCDbStatus.NotPresent
+
+                        /*
+                         * ### there are cases where the BASE node is ### marked
+                         * as incomplete. we should treat this ### as a "normal"
+                         * node for the purposes of ### this function. we really
+                         * should not allow ### it, but this situation occurs
+                         * within the ### following tests: ### switch_tests 31
+                         * ### update_tests 46 ### update_tests 53
+                         */
+                        || base_presence == SVNWCDbStatus.Incomplete);
+
+                        /* ### see above comment */
+                        if (base_presence == SVNWCDbStatus.Incomplete)
+                            base_presence = SVNWCDbStatus.Normal;
+
+                        /*
+                         * If a BASE node is marked as not-present, then we'll
+                         * ignore it within this function. That status is simply
+                         * a bookkeeping gimmick, not a real node that may have
+                         * been deleted.
+                         */
+
+                        /*
+                         * If we're looking at a present BASE node, *and* there
+                         * is a WORKING node (present or deleted), then a
+                         * replacement has occurred here or in an ancestor.
+                         */
+                        if (f.contains(DeletionInfoField.baseReplaced) && base_presence == SVNWCDbStatus.Normal && work_presence != SVNWCDbStatus.BaseDeleted) {
+                            deletionInfo.baseReplaced = true;
+                        }
+                    }
+
+                    /* Only grab the nearest ancestor. */
+                    if (!found_moved_to && (f.contains(DeletionInfoField.movedToAbsPath) || f.contains(DeletionInfoField.baseDelAbsPath))
+                            && !isColumnNull(stmt, SVNWCDbSchema.WORKING_NODE__Fields.moved_to)) {
+                        /* There better be a BASE_NODE (that was moved-away). */
+                        assert (have_base);
+
+                        found_moved_to = true;
+
+                        /* This makes things easy. It's the BASE_DEL_ABSPATH! */
+                        if (f.contains(DeletionInfoField.baseDelAbsPath))
+                            deletionInfo.baseDelAbsPath = current_abspath;
+
+                        if (f.contains(DeletionInfoField.movedToAbsPath))
+                            deletionInfo.movedToAbsPath = new File(pdh.getWCRoot().getAbsPath(), getColumnText(stmt, SVNWCDbSchema.WORKING_NODE__Fields.moved_to));
+                    }
+
+                    if (f.contains(DeletionInfoField.workDelAbsPath) && work_presence == SVNWCDbStatus.Normal && child_presence == SVNWCDbStatus.NotPresent) {
+                        /*
+                         * Parent is normal, but child was deleted. Therefore,
+                         * the child is the root of a WORKING subtree deletion.
+                         */
+                        deletionInfo.workDelAbsPath = child_abspath;
+                    }
+
+                    /*
+                     * Move to the parent node. Remember the information about
+                     * this node for our parent to use.
+                     */
+                    child_abspath = current_abspath;
+                    child_presence = work_presence;
+                    child_has_base = have_base;
+                    if (current_abspath.equals(pdh.getLocalAbsPath())) {
+                        /*
+                         * The current node is a directory, so move to the
+                         * parent dir.
+                         */
+                        pdh = navigateToParent(pdh, Mode.ReadOnly, true);
+                    }
+                    current_abspath = pdh.getLocalAbsPath();
+                    current_relpath = pdh.computeRelPath();
+                } finally {
+                    baseStmt.reset();
+                }
+            } finally {
+                stmt.reset();
+            }
+
+        }
+
+        return deletionInfo;
+
+    }
+
+    private SVNWCDbDir navigateToParent(SVNWCDbDir childPdh, Mode sMode, boolean verifyParentStub) throws SVNException {
+
+        SVNWCDbDir parentPdh;
+
+        if ((parentPdh = childPdh.getParent()) != null && parentPdh.getWCRoot() != null)
+            return parentPdh;
+
+        /* Make sure we don't see the root as its own parent */
+        assert (childPdh.getLocalAbsPath().getParentFile() != null);
+
+        File parentAbsPath = childPdh.getLocalAbsPath().getParentFile();
+        DirParsedInfo parsed = parseDirLocalAbsPath(parentAbsPath, sMode);
+        parentPdh = parsed.wcDbDir;
+        verifyDirUsable(parentPdh);
+
+        /* Check that the parent has an entry for the child */
+        SVNSqlJetStatement stmtBase = parentPdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_SUBDIR_BASE);
+        SVNSqlJetStatement stmtWork = parentPdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_SUBDIR_WORKING);
+        try {
+            stmtBase.bindf("is", parentPdh.getWCRoot().getWcId(), childPdh.getLocalAbsPath().getName());
+            stmtWork.bindf("is", parentPdh.getWCRoot().getWcId(), childPdh.getLocalAbsPath().getName());
+            boolean got_row = stmtBase.next() || stmtWork.next();
+
+            if (!got_row && verifyParentStub) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_WORKING_COPY, "''{0}'' does not have a parent.", childPdh.getLocalAbsPath());
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+
+            if (got_row) {
+                childPdh.setParent(parentPdh);
+            }
+
+        } finally {
+            stmtBase.reset();
+            stmtWork.reset();
+        }
+
+        return parentPdh;
+
     }
 
     public void setBaseDavCache(File localAbsPath, SVNProperties props) throws SVNException {

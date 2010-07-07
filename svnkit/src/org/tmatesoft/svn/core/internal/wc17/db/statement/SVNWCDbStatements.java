@@ -18,30 +18,33 @@ import org.tmatesoft.svn.core.internal.wc17.db.SVNSqlJetStatement;
  */
 public enum SVNWCDbStatements {
 
-    CREATE_SCHEMA, 
-    INSERT_WCROOT, 
-    SELECT_REPOSITORY, 
-    INSERT_REPOSITORY, 
-    INSERT_BASE_NODE, 
-    INSERT_BASE_NODE_INCOMPLETE, 
-    INSERT_WORK_ITEM, 
-    SELECT_WORKING_NODE(SVNWCDbSelectWorkingNode.class), 
-    SELECT_WCROOT_NULL(SVNWCDbSelectWCRootNull.class), 
-    SELECT_BASE_NODE(SVNWCDbSelectBaseNode.class), 
-    SELECT_BASE_NODE_WITH_LOCK(SVNWCDbSelectBaseNodeWithLock.class), 
-    SELECT_REPOSITORY_BY_ID(SVNWCDbSelectRepositoryById.class), 
-    SELECT_ACTUAL_NODE(SVNWCDbSelectActualNode.class), 
-    SELECT_BASE_NODE_CHILDREN(SVNWCDbSelectBaseNodeChildren.class),  
-    SELECT_WORKING_NODE_CHILDREN(SVNWCDbSelectWorkingNodeChildren.class), 
-    SELECT_ACTUAL_CONFLICT_VICTIMS(SVNWCDbSelectActualConflictVictims.class), 
-    SELECT_ACTUAL_TREE_CONFLICT(SVNWCDbSelectActualTreeConflict.class), 
-    SELECT_ACTUAL_PROPS(SVNWCDbSelectActualProperties.class), 
-    SELECT_WORKING_PROPS(SVNWCDbSelectWorkingProperties.class), 
-    SELECT_BASE_PROPS(SVNWCDbSelectBaseProperties.class), 
-    SELECT_FILE_EXTERNAL(SVNWCDBSelectFileExternal.class), 
-    SELECT_WC_LOCK(SVNWCDbSelectWCLock.class), 
-    SELECT_PRISTINE_SHA1_CHECKSUM(SVNWCDbSelectSHA1Checksum.class), 
-    SELECT_PRISTINE_MD5_CHECKSUM(SVNWCDbSelectPristineMD5Checksum.class);
+    CREATE_SCHEMA,
+    INSERT_WCROOT,
+    SELECT_REPOSITORY,
+    INSERT_REPOSITORY,
+    INSERT_BASE_NODE,
+    INSERT_BASE_NODE_INCOMPLETE,
+    INSERT_WORK_ITEM,
+    SELECT_WORKING_NODE(SVNWCDbSelectWorkingNode.class),
+    SELECT_WCROOT_NULL(SVNWCDbSelectWCRootNull.class),
+    SELECT_BASE_NODE(SVNWCDbSelectBaseNode.class),
+    SELECT_BASE_NODE_WITH_LOCK(SVNWCDbSelectBaseNodeWithLock.class),
+    SELECT_REPOSITORY_BY_ID(SVNWCDbSelectRepositoryById.class),
+    SELECT_ACTUAL_NODE(SVNWCDbSelectActualNode.class),
+    SELECT_BASE_NODE_CHILDREN(SVNWCDbSelectBaseNodeChildren.class),
+    SELECT_WORKING_NODE_CHILDREN(SVNWCDbSelectWorkingNodeChildren.class),
+    SELECT_ACTUAL_CONFLICT_VICTIMS(SVNWCDbSelectActualConflictVictims.class),
+    SELECT_ACTUAL_TREE_CONFLICT(SVNWCDbSelectActualTreeConflict.class),
+    SELECT_ACTUAL_PROPS(SVNWCDbSelectActualProperties.class),
+    SELECT_WORKING_PROPS(SVNWCDbSelectWorkingProperties.class),
+    SELECT_BASE_PROPS(SVNWCDbSelectBaseProperties.class),
+    SELECT_FILE_EXTERNAL(SVNWCDBSelectFileExternal.class),
+    SELECT_WC_LOCK(SVNWCDbSelectWCLock.class),
+    SELECT_PRISTINE_SHA1_CHECKSUM(SVNWCDbSelectSHA1Checksum.class),
+    SELECT_PRISTINE_MD5_CHECKSUM(SVNWCDbSelectPristineMD5Checksum.class),
+    SELECT_DELETION_INFO(SVNWCDbSelectDeletionInfo.class),
+    SELECT_SUBDIR_BASE(SVNWCDbSelectSubDirBase.class),
+    SELECT_SUBDIR_WORKING(SVNWCDbSelectSubDirWorking.class);
 
     private Class<? extends SVNSqlJetStatement> statementClass;
 
@@ -51,7 +54,7 @@ public enum SVNWCDbStatements {
 
     private SVNWCDbStatements() {
     }
-    
+
     public Class<? extends SVNSqlJetStatement> getStatementClass() {
         return statementClass;
     }

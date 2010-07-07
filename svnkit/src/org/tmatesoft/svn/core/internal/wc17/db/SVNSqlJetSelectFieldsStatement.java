@@ -27,6 +27,10 @@ public abstract class SVNSqlJetSelectFieldsStatement<E extends Enum<E>> extends 
     protected final List<E> fields;
 
     public SVNSqlJetSelectFieldsStatement(SVNSqlJetDb sDb, Enum fromTable) throws SVNException {
+        this(sDb, fromTable.toString());
+    }
+
+    public SVNSqlJetSelectFieldsStatement(SVNSqlJetDb sDb, String fromTable) throws SVNException {
         super(sDb, fromTable);
         fields = new ArrayList<E>();
         defineFields();

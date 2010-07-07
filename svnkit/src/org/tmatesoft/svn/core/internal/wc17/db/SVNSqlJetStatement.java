@@ -86,6 +86,15 @@ public abstract class SVNSqlJetStatement {
         }
     }
 
+    public boolean eof() throws SVNException {
+        try {
+            return cursor.eof();
+        } catch (SqlJetException e) {
+            SVNSqlJetDb.createSqlJetError(e);
+            return false;
+        }
+    }
+
     public void bindf(String format, Object... data) throws SVNException {
         // TODO check formats
         // binds.addAll(Arrays.asList(data));
@@ -161,6 +170,10 @@ public abstract class SVNSqlJetStatement {
         }
     }
 
+    public long getColumnLong(Enum f) throws SVNException {
+        return getColumnLong(f.toString());
+    }
+
     public long getColumnLong(String f) throws SVNException {
         try {
             if (cursor == null || cursor.eof())
@@ -170,6 +183,10 @@ public abstract class SVNSqlJetStatement {
             SVNSqlJetDb.createSqlJetError(e);
             return 0;
         }
+    }
+
+    public String getColumnString(Enum f) throws SVNException {
+        return getColumnString(f.toString());
     }
 
     public String getColumnString(String f) throws SVNException {
@@ -183,6 +200,10 @@ public abstract class SVNSqlJetStatement {
         }
     }
 
+    public boolean isColumnNull(Enum f) throws SVNException {
+        return isColumnNull(f.toString());
+    }
+
     public boolean isColumnNull(String f) throws SVNException {
         try {
             if (cursor == null || cursor.eof())
@@ -192,6 +213,10 @@ public abstract class SVNSqlJetStatement {
             SVNSqlJetDb.createSqlJetError(e);
             return false;
         }
+    }
+
+    public byte[] getColumnBlob(Enum f) throws SVNException {
+        return getColumnBlob(f.toString());
     }
 
     public byte[] getColumnBlob(String f) throws SVNException {
@@ -228,6 +253,10 @@ public abstract class SVNSqlJetStatement {
     public SVNSqlJetStatement getJoinedStatement(String joinedTable) throws SVNException {
         SVNErrorManager.assertionFailure(false, "unsupported", SVNLogType.WC);
         return null;
+    }
+
+    public SVNSqlJetStatement getJoinedStatement(Enum joinedTable) throws SVNException {
+        return getJoinedStatement(joinedTable.toString());
     }
 
 }
