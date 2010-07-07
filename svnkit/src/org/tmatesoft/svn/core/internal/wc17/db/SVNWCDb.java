@@ -1960,8 +1960,181 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     public WCDbAdditionInfo scanAddition(File localAbsPath, AdditionInfoField... fields) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+        assert (isAbsolute(localAbsPath));
+
+        EnumSet<AdditionInfoField> f = getInfoFields(AdditionInfoField.class, fields);
+
+        File current_abspath = localAbsPath;
+
+        File child_abspath = null;
+        File build_relpath = new File("");
+
+        boolean found_info = false;
+
+        /*
+         * Initialize all the OUT parameters. Generally, we'll only be filling
+         * in a subset of these, so it is easier to init all up front. Note that
+         * the STATUS parameter will be initialized once we read the status of
+         * the specified node.
+         */
+        WCDbAdditionInfo additionInfo = new WCDbAdditionInfo();
+        additionInfo.originalRevision = INVALID_REVNUM;
+
+        DirParsedInfo parsed = parseDirLocalAbsPath(localAbsPath, Mode.ReadOnly);
+        SVNWCDbDir pdh = parsed.wcDbDir;
+        File current_relpath = parsed.localRelPath;
+        verifyDirUsable(pdh);
+
+        while (true) {
+
+            boolean have_row;
+            SVNWCDbStatus presence;
+
+            /* ### is it faster to fetch fewer columns? */
+            SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_WORKING_NODE);
+            try {
+                stmt.bindf("is", pdh.getWCRoot().getWcId(), current_relpath);
+                have_row = stmt.next();
+
+                if (!have_row) {
+                    if (current_abspath == localAbsPath) {
+                        /* ### maybe we should return a usage error instead? */
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{0}'' was not found.", localAbsPath);
+                        SVNErrorManager.error(err, SVNLogType.WC);
+                    }
+
+                    /*
+                     * We just fell off the top of the WORKING tree. If we
+                     * haven't found the operation root, then the child node
+                     * that we just left was that root.
+                     */
+                    if (f.contains(AdditionInfoField.opRootAbsPath) && additionInfo.opRootAbsPath == null) {
+                        assert (child_abspath != null);
+                        additionInfo.opRootAbsPath = child_abspath;
+                    }
+
+                    /*
+                     * This node was added/copied/moved and has an implicit
+                     * location in the repository. We now need to traverse BASE
+                     * nodes looking for repository info.
+                     */
+                    break;
+                }
+
+                presence = getColumnToken(stmt, 0, presenceMap2);
+
+                /* Record information from the starting node. */
+                if (current_abspath == localAbsPath) {
+                    /* The starting node should exist normally. */
+                    if (presence != SVNWCDbStatus.Normal) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS, "Expected node ''{0}'' to be added.", localAbsPath);
+                        SVNErrorManager.error(err, SVNLogType.WC);
+                    }
+
+                    /*
+                     * ### in per-dir operation, it is possible that we just
+                     * fetched ### the parent stub. examine the KIND field. ###
+                     * ### scan_addition is NOT allowed for an obstructed_add
+                     * status ### from read_info. there may be key information
+                     * in the ### subdir record (eg. copyfrom_*).
+                     */
+                    {
+                        SVNWCDbKind kind = getColumnToken(stmt, 1, kindMap2);
+                        assert (kind != SVNWCDbKind.Subdir);
+                    }
+
+                    /*
+                     * Provide the default status; we'll override as
+                     * appropriate.
+                     */
+                    if (f.contains(AdditionInfoField.status))
+                        additionInfo.status = SVNWCDbStatus.Added;
+                }
+
+                /*
+                 * We want the operation closest to the start node, and then we
+                 * ignore any operations on its ancestors.
+                 */
+                if (!found_info && presence == SVNWCDbStatus.Normal && !isColumnNull(stmt, 9 /* copyfrom_repos_id */)) {
+                    if (f.contains(AdditionInfoField.status)) {
+                        if (getColumnBoolean(stmt, 12 /* moved_here */))
+                            additionInfo.status = SVNWCDbStatus.MovedHere;
+                        else
+                            additionInfo.status = SVNWCDbStatus.Copied;
+                    }
+                    if (f.contains(AdditionInfoField.opRootAbsPath))
+                        additionInfo.opRootAbsPath = current_abspath;
+                    if (f.contains(AdditionInfoField.originalReposRelPath))
+                        additionInfo.originalReposRelPath = isColumnNull(stmt, 10) ? null : new File(getColumnText(stmt, 10));
+                    if (f.contains(AdditionInfoField.originalRootUrl) || f.contains(AdditionInfoField.originalUuid)) {
+                        ReposInfo reposInfo = fetchReposInfo(pdh.getWCRoot().getSDb(), getColumnInt64(stmt, 9));
+                        additionInfo.originalRootUrl = reposInfo.reposRootUrl == null ? null : SVNURL.parseURIEncoded(reposInfo.reposRootUrl);
+                        additionInfo.originalUuid = reposInfo.reposUuid;
+                    }
+                    if (f.contains(AdditionInfoField.originalRevision))
+                        additionInfo.originalRevision = getColumnRevNum(stmt, 11);
+
+                    /*
+                     * We may have to keep tracking upwards for REPOS_* values.
+                     * If they're not needed, then just return.
+                     */
+                    if ((!f.contains(AdditionInfoField.reposRelPath)) && (!f.contains(AdditionInfoField.reposRootUrl)) && (!f.contains(AdditionInfoField.reposUuid)))
+                        return additionInfo;
+
+                    /*
+                     * We've found the info we needed. Scan for the top of the
+                     * WORKING tree, and then the REPOS_* information.
+                     */
+                    found_info = true;
+                }
+            } finally {
+                stmt.reset();
+            }
+
+            /*
+             * If the caller wants to know the starting node's REPOS_RELPATH,
+             * then keep track of what we're stripping off the ABSPATH as we
+             * traverse up the tree.
+             */
+            if (f.contains(AdditionInfoField.reposRelPath)) {
+                // TODO very weird code, sergey
+                build_relpath = new File(current_abspath.getName(), build_relpath.getPath());
+            }
+
+            /*
+             * Move to the parent node. Remember the abspath to this node, since
+             * it could be the root of an add/delete.
+             */
+            child_abspath = current_abspath;
+            if (current_abspath.equals(pdh.getLocalAbsPath())) {
+                /* The current node is a directory, so move to the parent dir. */
+                pdh = navigateToParent(pdh, Mode.ReadOnly, true);
+            }
+            current_abspath = pdh.getLocalAbsPath();
+            current_relpath = pdh.computeRelPath();
+        }
+
+        /*
+         * If we're here, then we have an added/copied/moved (start) node, and
+         * CURRENT_ABSPATH now points to a BASE node. Figure out the repository
+         * information for the current node, and use that to compute the start
+         * node's repository information.
+         */
+        if (f.contains(AdditionInfoField.reposRelPath) || f.contains(AdditionInfoField.reposRootUrl) || f.contains(AdditionInfoField.reposUuid)) {
+            /*
+             * ### unwrap this. we can optimize away the
+             * svn_wc__db_pdh_parse_local_abspath().
+             */
+            WCDbRepositoryInfo baseReposInfo = scanBaseRepository(current_abspath, RepositoryInfoField.values());
+            File base_relpath = baseReposInfo.relPath;
+            additionInfo.reposRootUrl = baseReposInfo.rootUrl;
+            additionInfo.reposUuid = baseReposInfo.uuid;
+
+            if (f.contains(AdditionInfoField.reposRelPath))
+                additionInfo.reposRelPath = new File(base_relpath, build_relpath.getPath());
+        }
+
+        return additionInfo;
     }
 
     public WCDbRepositoryInfo scanBaseRepository(File localAbsPath, RepositoryInfoField... fields) throws SVNException {
@@ -2468,6 +2641,14 @@ public class SVNWCDb implements ISVNWCDb {
         return stmt.getColumnBlob(f);
     }
 
+    private boolean getColumnBoolean(SVNSqlJetStatement stmt, int i) throws SVNException {
+        return stmt.getColumnLong(i) != 0;
+    }
+
+    private boolean getColumnBoolean(SVNSqlJetStatement stmt, Enum f) throws SVNException {
+        return stmt.getColumnLong(f) != 0;
+    }
+
     private static SVNChecksum getColumnChecksum(SVNSqlJetStatement stmt, Enum f) throws SVNException {
         final String digest = getColumnText(stmt, f);
         if (digest != null) {
@@ -2482,6 +2663,12 @@ public class SVNWCDb implements ISVNWCDb {
             return SVNChecksum.deserializeChecksum(digest);
         }
         return null;
+    }
+
+    private static long getColumnRevNum(SVNSqlJetStatement stmt, int i) throws SVNException {
+        if (isColumnNull(stmt, i))
+            return ISVNWCDb.INVALID_REVNUM;
+        return getColumnInt64(stmt, i);
     }
 
     private static long getColumnRevNum(SVNSqlJetStatement stmt, Enum f) throws SVNException {
