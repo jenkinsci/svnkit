@@ -12,7 +12,6 @@
 package org.tmatesoft.svn.core.internal.wc17;
 
 import java.io.File;
-import java.util.logging.Logger;
 
 import junit.framework.TestCase;
 
@@ -28,14 +27,11 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
  */
 public class SVNStatus17TestCase extends TestCase {
 
-    private static final Logger LOGGER = Logger.getLogger("global");
-
     public SVNStatus17TestCase() {
         super("SVNStatus17");
     }
 
     public void testLocalStatus17() throws SVNException {
-        LOGGER.info("testLocalStatus17");
         final SVNStatusClient17 client = new SVNStatusClient17(new BasicAuthenticationManager("test", "test"), new DefaultSVNOptions(null, true));
         client.doStatus(new File(""), SVNRevision.WORKING, SVNDepth.INFINITY, false, true, false, false, new StatusHandler(false), null);
     }
