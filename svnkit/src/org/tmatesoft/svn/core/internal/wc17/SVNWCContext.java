@@ -937,22 +937,22 @@ public class SVNWCContext {
      *
      */
     private boolean compareAndVerify(File versionedFileAbsPath, InputStream pristineStream, boolean compareTextBases, boolean verifyChecksum) throws SVNException {
-        boolean same = false;
+        InputStream vStream = null; /* versioned_file */
+        try {
+            boolean same = false;
 
-        assert (versionedFileAbsPath != null && versionedFileAbsPath.isAbsolute());
+            assert (versionedFileAbsPath != null && versionedFileAbsPath.isAbsolute());
 
-        final SVNEolStyleInfo eolStyle = getEolStyle(versionedFileAbsPath);
-        final Map keywords = getKeyWords(versionedFileAbsPath, null);
-        final boolean special = isSpecial(versionedFileAbsPath);
-        final boolean needTranslation = isTranslationRequired(eolStyle.eolStyle, eolStyle.eolStr, keywords, special, true);
+            final SVNEolStyleInfo eolStyle = getEolStyle(versionedFileAbsPath);
+            final Map keywords = getKeyWords(versionedFileAbsPath, null);
+            final boolean special = isSpecial(versionedFileAbsPath);
+            final boolean needTranslation = isTranslationRequired(eolStyle.eolStyle, eolStyle.eolStr, keywords, special, true);
 
-        if (verifyChecksum || needTranslation) {
-            /* Reading files is necessary. */
-            SVNChecksum checksum = null;
-            InputStream vStream = null; /* versioned_file */
-            SVNChecksum nodeChecksum = null;
+            if (verifyChecksum || needTranslation) {
+                /* Reading files is necessary. */
+                SVNChecksum checksum = null;
+                SVNChecksum nodeChecksum = null;
 
-            try {
                 if (verifyChecksum) {
                     /*
                      * Need checksum verification, so read checksum from entries
@@ -1004,35 +1004,32 @@ public class SVNWCContext {
                     SVNTranslator.translationError(versionedFileAbsPath, e);
                 }
 
-            } finally {
-                SVNFileUtil.closeFile(pristineStream);
-                SVNFileUtil.closeFile(vStream);
-            }
-
-            if (verifyChecksum && nodeChecksum != null) {
-                // TODO unreachable code
-                if (checksum != null && !isChecksumMatch(checksum, nodeChecksum)) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT_TEXT_BASE, "Checksum mismatch indicates corrupt text base for file: "
-                            + "'{0}':\n   expected:  {1}\n     actual:  {2}\n", new Object[] {
-                            versionedFileAbsPath, nodeChecksum, checksum
-                    });
-                    SVNErrorManager.error(err, SVNLogType.WC);
+                if (verifyChecksum && nodeChecksum != null) {
+                    // TODO unreachable code
+                    if (checksum != null && !isChecksumMatch(checksum, nodeChecksum)) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT_TEXT_BASE, "Checksum mismatch indicates corrupt text base for file: "
+                                + "'{0}':\n   expected:  {1}\n     actual:  {2}\n", new Object[] {
+                                versionedFileAbsPath, nodeChecksum, checksum
+                        });
+                        SVNErrorManager.error(err, SVNLogType.WC);
+                    }
+                }
+            } else {
+                /* Translation would be a no-op, so compare the original file. */
+                vStream = SVNFileUtil.openFileForReading(versionedFileAbsPath);
+                try {
+                    same = isSameContents(vStream, pristineStream);
+                } catch (IOException e) {
+                    SVNTranslator.translationError(versionedFileAbsPath, e);
                 }
             }
-        } else {
-            /* Translation would be a no-op, so compare the original file. */
-            InputStream vStream; /* versioned_file */
 
-            vStream = SVNFileUtil.openFileForReading(versionedFileAbsPath);
-            try {
-                same = isSameContents(vStream, pristineStream);
-            } catch (IOException e) {
-                SVNTranslator.translationError(versionedFileAbsPath, e);
-            }
+            return (!same);
 
+        } finally {
+            SVNFileUtil.closeFile(pristineStream);
+            SVNFileUtil.closeFile(vStream);
         }
-
-        return (!same);
 
     }
 
