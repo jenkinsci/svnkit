@@ -56,7 +56,9 @@ import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
- * @version 1.3
+ *
+ * Note: svn-trunk's last seen revision is 960988.
+ *
  * @author TMate Software Ltd.
  */
 public class SVNWCDb implements ISVNWCDb {
