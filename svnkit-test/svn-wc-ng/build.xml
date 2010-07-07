@@ -145,7 +145,7 @@
 	<target name="do-create" depends="clean, do-checkout-native">
 	</target>
 
-	<target name="main" depends="do-create, do-modify, do-status-native, do-status-jsvn, do-svnkit-test">
+	<target name="main" depends="do-create, do-modify, do-status-native, do-svnkit-test, do-status-jsvn">
 	</target>
 
 </project>
