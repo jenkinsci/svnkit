@@ -11,7 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.wc17.db.statement;
 
-import org.tmatesoft.svn.core.internal.wc17.db.SVNSqlJetStatement;
+import org.tmatesoft.svn.core.internal.wc17.db.sqljet.SVNSqlJetStatement;
 
 /**
  * @author TMate Software Ltd.

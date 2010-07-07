@@ -12,10 +12,9 @@
 package org.tmatesoft.svn.core.internal.wc17.db.statement;
 
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.wc17.db.SVNSqlJetDb;
-import org.tmatesoft.svn.core.internal.wc17.db.SVNSqlJetSelectFieldsStatement;
-import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDbSchema;
-import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDbSchema.BASE_NODE__Fields;
+import org.tmatesoft.svn.core.internal.wc17.db.sqljet.SVNSqlJetDb;
+import org.tmatesoft.svn.core.internal.wc17.db.sqljet.SVNSqlJetSelectFieldsStatement;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.BASE_NODE__Fields;
 
 /**
  * select file_external from base_node where wc_id = ?1 and local_relpath = ?2;

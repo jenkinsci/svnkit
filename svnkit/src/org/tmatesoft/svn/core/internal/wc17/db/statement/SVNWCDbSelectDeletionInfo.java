@@ -12,10 +12,9 @@
 package org.tmatesoft.svn.core.internal.wc17.db.statement;
 
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.wc17.db.SVNSqlJetDb;
-import org.tmatesoft.svn.core.internal.wc17.db.SVNSqlJetSelectStatement;
-import org.tmatesoft.svn.core.internal.wc17.db.SVNSqlJetStatement;
-import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDbSchema;
+import org.tmatesoft.svn.core.internal.wc17.db.sqljet.SVNSqlJetDb;
+import org.tmatesoft.svn.core.internal.wc17.db.sqljet.SVNSqlJetSelectStatement;
+import org.tmatesoft.svn.core.internal.wc17.db.sqljet.SVNSqlJetStatement;
 
 /**
  * select base_node.presence, working_node.presence, moved_to from working_node

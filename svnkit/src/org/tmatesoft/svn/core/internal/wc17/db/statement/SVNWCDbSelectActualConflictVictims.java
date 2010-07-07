@@ -12,9 +12,8 @@
 package org.tmatesoft.svn.core.internal.wc17.db.statement;
 
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.wc17.db.SVNSqlJetDb;
-import org.tmatesoft.svn.core.internal.wc17.db.SVNSqlJetSelectFieldsStatement;
-import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDbSchema;
+import org.tmatesoft.svn.core.internal.wc17.db.sqljet.SVNSqlJetDb;
+import org.tmatesoft.svn.core.internal.wc17.db.sqljet.SVNSqlJetSelectFieldsStatement;
 
 /**
  * SELECT local_relpath FROM actual_node WHERE wc_id = ?1 AND parent_relpath =
