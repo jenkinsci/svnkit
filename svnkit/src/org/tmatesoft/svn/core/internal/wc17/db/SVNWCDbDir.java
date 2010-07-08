@@ -25,8 +25,6 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
  */
 public class SVNWCDbDir {
 
-    private static final File EMPTY_PATH = SVNFileUtil.createFilePath("");
-
     /**
      * This (versioned) working copy directory is obstructing what *should* be a
      * file in the parent directory (according to its metadata).
@@ -102,10 +100,7 @@ public class SVNWCDbDir {
 
     public File computeRelPath() {
         final String relativePath = SVNPathUtil.getRelativePath(wcRoot.getAbsPath().toString(), localAbsPath.toString());
-        if (relativePath != null && !"".equals(relativePath)) {
-            return SVNFileUtil.createFilePath(relativePath);
-        }
-        return null;
+        return SVNFileUtil.createFilePath(relativePath);
     }
 
 }
