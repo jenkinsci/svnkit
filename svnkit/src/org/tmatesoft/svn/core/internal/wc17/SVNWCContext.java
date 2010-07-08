@@ -415,6 +415,15 @@ public class SVNWCContext {
         final WCDbInfo info = db.readInfo(localAbsPath, InfoField.status, InfoField.kind, InfoField.revision, InfoField.reposRelPath, InfoField.reposRootUrl, InfoField.changedRev,
                 InfoField.changedDate, InfoField.changedAuthor, InfoField.depth, InfoField.changelist, InfoField.propsMod, InfoField.haveBase, InfoField.conflicted, InfoField.lock);
 
+        SVNEntry entry = null;
+        try {
+            entry = getEntry(localAbsPath, false, SVNNodeKind.UNKNOWN, false);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() != SVNErrorCode.NODE_UNEXPECTED_KIND) {
+                throw e;
+            }
+        }
+
         if (info.reposRelPath == null) {
             /* The node is not switched, so imply from parent if possible */
 
@@ -611,18 +620,11 @@ public class SVNWCContext {
              */
 
             if (info.status == SVNWCDbStatus.Added) {
-                try {
-                    SVNEntry entry = getEntry(localAbsPath, false, SVNNodeKind.UNKNOWN, false);
-                    copied = entry.isCopied();
-                    if (entry.isScheduledForAddition())
-                        node_status = SVNStatusType.STATUS_ADDED;
-                    else if (entry.isScheduledForReplacement())
-                        node_status = SVNStatusType.STATUS_REPLACED;
-                } catch (SVNException e) {
-                    if (e.getErrorMessage().getErrorCode() != SVNErrorCode.NODE_UNEXPECTED_KIND) {
-                        throw e;
-                    }
-                }
+                copied = entry == null ? false : entry.isCopied();
+                if (entry.isScheduledForAddition())
+                    node_status = SVNStatusType.STATUS_ADDED;
+                else if (entry.isScheduledForReplacement())
+                    node_status = SVNStatusType.STATUS_REPLACED;
             }
         }
 
@@ -691,7 +693,7 @@ public class SVNWCContext {
         stat.setReposRelpath(info.reposRelPath);
 
         SVNStatus status = stat.getStatus16(localAbsPath, false, null, null, null, null, null, null, null, null, ISVNWCDb.WC_FORMAT_17, tree_conflict);
-        status.setEntry(getEntry(localAbsPath, false, stat.getKind(), false));
+        status.setEntry(entry);
         return status;
 
     }
@@ -2151,8 +2153,8 @@ public class SVNWCContext {
             }
 
             /* Now glue it all together */
-            resInfo.reposRelPath = SVNFileUtil.createFilePath(parentReposRelPath, SVNPathUtil.getRelativePath(SVNPathUtil.validateFilePath(parent_abspath.toString()),
-                    SVNPathUtil.validateFilePath(entryAbsPath.toString())));
+            resInfo.reposRelPath = SVNFileUtil.createFilePath(parentReposRelPath,
+                    SVNPathUtil.getRelativePath(SVNPathUtil.validateFilePath(parent_abspath.toString()), SVNPathUtil.validateFilePath(entryAbsPath.toString())));
         } else {
             final WCDbRepositoryInfo baseReposInfo = db.scanBaseRepository(entryAbsPath, RepositoryInfoField.values());
             resInfo.reposRelPath = baseReposInfo.relPath;
