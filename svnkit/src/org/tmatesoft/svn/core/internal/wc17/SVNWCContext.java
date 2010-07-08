@@ -419,7 +419,7 @@ public class SVNWCContext {
             /* The node is not switched, so imply from parent if possible */
 
             if (parentReposRelPath != null) {
-                info.reposRelPath = new File(parentReposRelPath, SVNFileUtil.getFileName(localAbsPath));
+                info.reposRelPath = SVNFileUtil.createFilePath(parentReposRelPath, SVNFileUtil.getFileName(localAbsPath));
             } else if (info.status == SVNWCDbStatus.Added) {
                 final WCDbAdditionInfo scanAddition = db.scanAddition(localAbsPath, AdditionInfoField.reposRelPath, AdditionInfoField.reposRootUrl);
                 info.reposRelPath = scanAddition.reposRelPath;
@@ -1162,7 +1162,7 @@ public class SVNWCContext {
             } else if (readInfo.status == SVNWCDbStatus.Absent || readInfo.status == SVNWCDbStatus.Excluded || readInfo.status == SVNWCDbStatus.NotPresent
                     || (!readInfo.haveBase && (readInfo.status == SVNWCDbStatus.Deleted || readInfo.status == SVNWCDbStatus.ObstructedDelete))) {
                 File parent_abspath = SVNFileUtil.getFileDir(path);
-                readInfo.reposRelPath = new File(SVNFileUtil.getFileName(path));
+                readInfo.reposRelPath = SVNFileUtil.createFilePath(SVNFileUtil.getFileName(path));
                 readInfo.reposRootUrl = getNodeUrl(parent_abspath);
             } else {
                 /* Status: obstructed, obstructed_add */
@@ -1201,27 +1201,27 @@ public class SVNWCContext {
                  * if the conflict file still exists on disk.
                  */
                 if (cdf.getBasePath() != null) {
-                    final File path = new File(dir_path, cdf.getBasePath());
+                    final File path = SVNFileUtil.createFilePath(dir_path, cdf.getBasePath());
                     final SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(path));
                     info.textConflicted = (kind == SVNNodeKind.FILE);
                     if (info.textConflicted)
                         continue;
                 }
                 if (cdf.getRepositoryPath() != null) {
-                    final File path = new File(dir_path, cdf.getRepositoryPath());
+                    final File path = SVNFileUtil.createFilePath(dir_path, cdf.getRepositoryPath());
                     final SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(path));
                     info.textConflicted = (kind == SVNNodeKind.FILE);
                     if (info.textConflicted)
                         continue;
                 }
                 if (cdf.getLocalPath() != null) {
-                    final File path = new File(dir_path, cdf.getLocalPath());
+                    final File path = SVNFileUtil.createFilePath(dir_path, cdf.getLocalPath());
                     final SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(path));
                     info.textConflicted = (kind == SVNNodeKind.FILE);
                 }
             } else if (isPropNeed && cd.isPropertyConflict()) {
                 if (cdf.getRepositoryPath() != null) {
-                    final File path = new File(dir_path, cdf.getRepositoryPath());
+                    final File path = SVNFileUtil.createFilePath(dir_path, cdf.getRepositoryPath());
                     final SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(path));
                     info.propConflicted = (kind == SVNNodeKind.FILE);
                 }
@@ -1542,7 +1542,7 @@ public class SVNWCContext {
 
     private SVNEntry readOneEntry(File dirAbsPath, String name, SVNEntry parentEntry) throws SVNException {
 
-        final File entryAbsPath = (name != null && !"".equals(name)) ? new File(dirAbsPath, name) : dirAbsPath;
+        final File entryAbsPath = (name != null && !"".equals(name)) ? SVNFileUtil.createFilePath(dirAbsPath, name) : dirAbsPath;
 
         final WCDbInfo info = db.readInfo(entryAbsPath, InfoField.values());
 
@@ -1567,7 +1567,7 @@ public class SVNWCContext {
 
             for (String child_name : conflict_victims) {
 
-                File child_abspath = new File(dirAbsPath, child_name.toString());
+                File child_abspath = SVNFileUtil.createFilePath(dirAbsPath, child_name.toString());
 
                 final List<SVNTreeConflictDescription> child_conflicts = db.readConflicts(child_abspath);
 
@@ -2151,7 +2151,7 @@ public class SVNWCContext {
             }
 
             /* Now glue it all together */
-            resInfo.reposRelPath = new File(parentReposRelPath, SVNPathUtil.getRelativePath(SVNPathUtil.validateFilePath(parent_abspath.toString()),
+            resInfo.reposRelPath = SVNFileUtil.createFilePath(parentReposRelPath, SVNPathUtil.getRelativePath(SVNPathUtil.validateFilePath(parent_abspath.toString()),
                     SVNPathUtil.validateFilePath(entryAbsPath.toString())));
         } else {
             final WCDbRepositoryInfo baseReposInfo = db.scanBaseRepository(entryAbsPath, RepositoryInfoField.values());

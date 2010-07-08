@@ -176,7 +176,7 @@ public class SVNStatusEditor17 {
             final List<String> childNodes = db.readChildren(localAbsPath);
             if (childNodes != null && childNodes.size() > 0) {
                 for (String childNode : childNodes) {
-                    final File file = new File(childNode);
+                    final File file = SVNFileUtil.createFilePath(childNode);
                     nodes.put(SVNFileUtil.getFileName(file), file);
                 }
             }
@@ -191,7 +191,7 @@ public class SVNStatusEditor17 {
         if (dirReposRelPath == null) {
             if (dirReposRootUrl != null) {
                 dirReposRootUrl = parentReposRootUrl;
-                dirReposRelPath = new File(parentReposRelPath, SVNFileUtil.getFileName(localAbsPath));
+                dirReposRelPath = SVNFileUtil.createFilePath(parentReposRelPath, SVNFileUtil.getFileName(localAbsPath));
             } else if (dirStatus != SVNWCDbStatus.Deleted && dirStatus != SVNWCDbStatus.Added) {
                 final WCDbRepositoryInfo baseReposInfo = db.scanBaseRepository(localAbsPath, RepositoryInfoField.relPath, RepositoryInfoField.rootUrl);
                 dirReposRelPath = baseReposInfo.relPath;
@@ -213,7 +213,7 @@ public class SVNStatusEditor17 {
             final List<String> victims = db.readConflictVictims(localAbsPath);
             if (victims != null && victims.size() > 0) {
                 for (String confict : victims) {
-                    File file = new File(confict);
+                    File file = SVNFileUtil.createFilePath(confict);
                     conflicts.put(SVNFileUtil.getFileName(file), file);
                 }
             }
@@ -222,7 +222,7 @@ public class SVNStatusEditor17 {
                 allChildren.putAll(conflicts);
             }
         } else {
-            final File selectedAbsPath = new File(localAbsPath, selected);
+            final File selectedAbsPath = SVNFileUtil.createFilePath(localAbsPath, selected);
             allChildren.put(selected, selectedAbsPath);
             final SVNConflictDescription tc = db.opReadTreeConflict(selectedAbsPath);
             /* Note this path if a tree conflict is present. */
@@ -239,7 +239,7 @@ public class SVNStatusEditor17 {
          * what's happening right now.
          */
         for (String key : allChildren.keySet()) {
-            final File nodeAbsPath = new File(localAbsPath, key);
+            final File nodeAbsPath = SVNFileUtil.createFilePath(localAbsPath, key);
             final File dirent = childrenFiles.get(key);
             final SVNFileType direntFileType = dirent != null ? SVNFileType.getType(dirent) : null;
             final SVNNodeKind direntNodeKind = dirent != null ? SVNFileType.getNodeKind(direntFileType) : SVNNodeKind.NONE;
@@ -316,7 +316,7 @@ public class SVNStatusEditor17 {
             }
 
             if (reposRelpath == null && parentReposRelPath != null) {
-                reposRelpath = new File(parentReposRelPath, SVNFileUtil.getFileName(localAbsPath));
+                reposRelpath = SVNFileUtil.createFilePath(parentReposRelPath, SVNFileUtil.getFileName(localAbsPath));
             }
 
             if (reposRelpath != null) {
@@ -424,7 +424,7 @@ public class SVNStatusEditor17 {
             SVNExternal[] externalsInfo = SVNExternal.parseExternals(localAbsPath, externals);
             for (int i = 0; i < externalsInfo.length; i++) {
                 SVNExternal external = externalsInfo[i];
-                myExternalsMap.put(new File(localAbsPath, external.getPath()), external);
+                myExternalsMap.put(SVNFileUtil.createFilePath(localAbsPath, external.getPath()), external);
             }
         }
     }
