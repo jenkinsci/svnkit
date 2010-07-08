@@ -224,7 +224,7 @@ public class SVNWCDb implements ISVNWCDb {
             ibb.status = SVNWCDbStatus.Normal;
         ibb.kind = SVNWCDbKind.Dir;
         ibb.wcId = createDb.wcId;
-        ibb.localRelPath = new File("");
+        ibb.localRelPath = null;
         ibb.reposId = createDb.reposId;
         ibb.reposRelPath = reposRelPath;
         ibb.revision = initialRev;
@@ -390,7 +390,7 @@ public class SVNWCDb implements ISVNWCDb {
         if (ibb.kind == SVNWCDbKind.Dir && ibb.children != null) {
             stmt = sDb.getStatement(SVNWCDbStatements.INSERT_BASE_NODE_INCOMPLETE);
             for (File name : ibb.children) {
-                stmt.bindf("issi", ibb.wcId, SVNFileUtil.getFilePath(new File(ibb.localRelPath, name.toString())), SVNFileUtil.getFilePath(ibb.localRelPath), ibb.revision);
+                stmt.bindf("issi", ibb.wcId, SVNFileUtil.getFilePath(SVNFileUtil.createFilePath(ibb.localRelPath, name.toString())), SVNFileUtil.getFilePath(ibb.localRelPath), ibb.revision);
                 stmt.insert();
             }
         }
@@ -539,7 +539,7 @@ public class SVNWCDb implements ISVNWCDb {
                     info.revision = getColumnRevNum(stmt, SVNWCDbSchema.BASE_NODE__Fields.revnum);
                 }
                 if (f.contains(BaseInfoField.reposRelPath)) {
-                    info.reposRelPath = new File(getColumnText(stmt, SVNWCDbSchema.BASE_NODE__Fields.repos_relpath));
+                    info.reposRelPath = SVNFileUtil.createFilePath(getColumnText(stmt, SVNWCDbSchema.BASE_NODE__Fields.repos_relpath));
                 }
                 if (f.contains(BaseInfoField.lock)) {
                     if (isColumnNull(stmt, SVNWCDbSchema.LOCK__Fields.lock_token)) {
@@ -611,7 +611,7 @@ public class SVNWCDb implements ISVNWCDb {
                     if (node_kind != SVNWCDbKind.Symlink)
                         info.target = null;
                     else
-                        info.target = new File(getColumnText(stmt, SVNWCDbSchema.BASE_NODE__Fields.symlink_target));
+                        info.target = SVNFileUtil.createFilePath(getColumnText(stmt, SVNWCDbSchema.BASE_NODE__Fields.symlink_target));
                 }
             } else {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{0}'' was not found.", localAbsPath);
@@ -859,7 +859,7 @@ public class SVNWCDb implements ISVNWCDb {
             info.wcDbDir = info.wcDbDir = dirData.get(localAbsPath);
             if (info.wcDbDir != null && info.wcDbDir.getWCRoot() != null) {
                 /* Stashed directory's local_relpath + basename. */
-                info.localRelPath = new File(info.wcDbDir.computeRelPath(), buildRelPath);
+                info.localRelPath = SVNFileUtil.createFilePath(info.wcDbDir.computeRelPath(), buildRelPath);
                 return info;
             }
 
@@ -1027,7 +1027,7 @@ public class SVNWCDb implements ISVNWCDb {
             File dirRelPath = info.wcDbDir.computeRelPath();
 
             /* And the result local_relpath may include a filename. */
-            info.localRelPath = new File(dirRelPath, buildRelPath);
+            info.localRelPath = SVNFileUtil.createFilePath(dirRelPath, buildRelPath);
         }
 
         /*
@@ -1093,7 +1093,7 @@ public class SVNWCDb implements ISVNWCDb {
                  */
                 if (info.wcDbDir.isObstructedFile()) {
                     info.wcDbDir = parent_pdh;
-                    info.localRelPath = new File(lookfor_relpath);
+                    info.localRelPath = SVNFileUtil.createFilePath(lookfor_relpath);
                     return info;
                 }
             }
@@ -1371,7 +1371,7 @@ public class SVNWCDb implements ISVNWCDb {
         try {
             while (stmt.next()) {
                 String child_relpath = getColumnText(stmt, SVNWCDbSchema.BASE_NODE__Fields.local_relpath);
-                String name = SVNFileUtil.getFileName(new File(child_relpath));
+                String name = SVNFileUtil.getFileName(SVNFileUtil.createFilePath(child_relpath));
                 children.add(name);
             }
         } finally {
@@ -1409,7 +1409,7 @@ public class SVNWCDb implements ISVNWCDb {
             stmt.bindf("is", pdh.getWCRoot().getWcId(), SVNFileUtil.getFilePath(localRelPath));
             while (stmt.next()) {
                 String child_relpath = getColumnText(stmt, SVNWCDbSchema.ACTUAL_NODE__Fields.local_relpath);
-                String child_name = SVNFileUtil.getFileName(new File(child_relpath));
+                String child_name = SVNFileUtil.getFileName(SVNFileUtil.createFilePath(child_relpath));
                 found.add(child_name);
             }
         } finally {
@@ -1431,7 +1431,7 @@ public class SVNWCDb implements ISVNWCDb {
         if (tree_conflict_data != null) {
             Map<String, SVNTreeConflictDescription> conflict_items = SVNTreeConflictUtil.readTreeConflicts(localAbsPath, tree_conflict_data);
             for (String conflict : conflict_items.keySet()) {
-                String child_name = SVNFileUtil.getFileName(new File(conflict));
+                String child_name = SVNFileUtil.getFileName(SVNFileUtil.createFilePath(conflict));
                 /* Using a hash avoids duplicates */
                 found.add(child_name);
             }
@@ -1584,7 +1584,7 @@ public class SVNWCDb implements ISVNWCDb {
                          */
                         info.reposRelPath = null;
                     } else
-                        info.reposRelPath = new File(getColumnText(stmt_base, SVNWCDbSchema.BASE_NODE__Fields.repos_relpath));
+                        info.reposRelPath = SVNFileUtil.createFilePath(getColumnText(stmt_base, SVNWCDbSchema.BASE_NODE__Fields.repos_relpath));
                 }
                 if (f.contains(InfoField.reposRootUrl) || f.contains(InfoField.reposUuid)) {
                     /*
@@ -1670,9 +1670,9 @@ public class SVNWCDb implements ISVNWCDb {
                     if (node_kind != SVNWCDbKind.Symlink)
                         info.target = null;
                     else if (have_work)
-                        info.target = new File(getColumnText(stmt_work, SVNWCDbSchema.WORKING_NODE__Fields.symlink_target));
+                        info.target = SVNFileUtil.createFilePath(getColumnText(stmt_work, SVNWCDbSchema.WORKING_NODE__Fields.symlink_target));
                     else
-                        info.target = new File(getColumnText(stmt_base, SVNWCDbSchema.BASE_NODE__Fields.symlink_target));
+                        info.target = SVNFileUtil.createFilePath(getColumnText(stmt_base, SVNWCDbSchema.BASE_NODE__Fields.symlink_target));
                 }
                 if (f.contains(InfoField.changelist)) {
                     if (have_act)
@@ -1682,7 +1682,7 @@ public class SVNWCDb implements ISVNWCDb {
                 }
                 if (f.contains(InfoField.originalReposRelpath)) {
                     if (have_work && !isColumnNull(stmt_work, SVNWCDbSchema.WORKING_NODE__Fields.copyfrom_repos_path))
-                        info.originalReposRelpath = new File(getColumnText(stmt_work, SVNWCDbSchema.WORKING_NODE__Fields.copyfrom_repos_path));
+                        info.originalReposRelpath = SVNFileUtil.createFilePath(getColumnText(stmt_work, SVNWCDbSchema.WORKING_NODE__Fields.copyfrom_repos_path));
                     else
                         info.originalReposRelpath = null;
                 }
@@ -1820,7 +1820,7 @@ public class SVNWCDb implements ISVNWCDb {
          * use join_many since we know "/" is the separator for ### internal
          * canonical paths
          */
-        File base_dir_abspath = new File(new File(pdh.getWCRoot().getAbsPath(), SVNFileUtil.getAdminDirectoryName()), PRISTINE_STORAGE_RELPATH);
+        File base_dir_abspath = SVNFileUtil.createFilePath(SVNFileUtil.createFilePath(pdh.getWCRoot().getAbsPath(), SVNFileUtil.getAdminDirectoryName()), PRISTINE_STORAGE_RELPATH);
 
         String hexdigest = sha1Checksum.getDigest();
 
@@ -1828,7 +1828,7 @@ public class SVNWCDb implements ISVNWCDb {
         assert (hexdigest != null);
 
         /* The file is located at DIR/.svn/pristine/XX/XXYYZZ... */
-        return new File(base_dir_abspath, hexdigest);
+        return SVNFileUtil.createFilePath(base_dir_abspath, hexdigest);
     }
 
     public SVNProperties readPristineProperties(File localAbsPath) throws SVNException {
@@ -1967,7 +1967,7 @@ public class SVNWCDb implements ISVNWCDb {
         File current_abspath = localAbsPath;
 
         File child_abspath = null;
-        File build_relpath = new File("");
+        File build_relpath = SVNFileUtil.createFilePath("");
 
         boolean found_info = false;
 
@@ -2065,7 +2065,7 @@ public class SVNWCDb implements ISVNWCDb {
                     if (f.contains(AdditionInfoField.opRootAbsPath))
                         additionInfo.opRootAbsPath = current_abspath;
                     if (f.contains(AdditionInfoField.originalReposRelPath))
-                        additionInfo.originalReposRelPath = isColumnNull(stmt, 10) ? null : new File(getColumnText(stmt, 10));
+                        additionInfo.originalReposRelPath = isColumnNull(stmt, 10) ? null : SVNFileUtil.createFilePath(getColumnText(stmt, 10));
                     if (f.contains(AdditionInfoField.originalRootUrl) || f.contains(AdditionInfoField.originalUuid)) {
                         ReposInfo reposInfo = fetchReposInfo(pdh.getWCRoot().getSDb(), getColumnInt64(stmt, 9));
                         additionInfo.originalRootUrl = reposInfo.reposRootUrl == null ? null : SVNURL.parseURIEncoded(reposInfo.reposRootUrl);
@@ -2098,7 +2098,7 @@ public class SVNWCDb implements ISVNWCDb {
              */
             if (f.contains(AdditionInfoField.reposRelPath)) {
                 // TODO very weird code, sergey
-                build_relpath = new File(SVNFileUtil.getFileName(current_abspath), build_relpath.getPath());
+                build_relpath = SVNFileUtil.createFilePath(SVNFileUtil.getFileName(current_abspath), build_relpath.getPath());
             }
 
             /*
@@ -2131,7 +2131,7 @@ public class SVNWCDb implements ISVNWCDb {
             additionInfo.reposUuid = baseReposInfo.uuid;
 
             if (f.contains(AdditionInfoField.reposRelPath))
-                additionInfo.reposRelPath = new File(base_relpath, build_relpath.getPath());
+                additionInfo.reposRelPath = SVNFileUtil.createFilePath(base_relpath, build_relpath.getPath());
         }
 
         return additionInfo;
@@ -2163,7 +2163,7 @@ public class SVNWCDb implements ISVNWCDb {
         assert (wcroot != null);
         assert (wcroot.getSDb() != null && wcroot.getWcId() != UNKNOWN_WC_ID);
 
-        File relpath_suffix = new File("");
+        File relpath_suffix = SVNFileUtil.createFilePath("");
         String current_basename = SVNFileUtil.getFileName(localRelPath);
         File current_relpath = localRelPath;
 
@@ -2197,7 +2197,7 @@ public class SVNWCDb implements ISVNWCDb {
                      * Given the node's relpath, append all the segments that we
                      * stripped as we scanned upwards.
                      */
-                    reposInfo.relPath = new File(getColumnText(stmt, 1), relpath_suffix.getPath());
+                    reposInfo.relPath = SVNFileUtil.createFilePath(getColumnText(stmt, 1), relpath_suffix.getPath());
                     long repos_id = getColumnInt64(stmt, 0);
                     return repos_id;
                 }
@@ -2221,7 +2221,7 @@ public class SVNWCDb implements ISVNWCDb {
              */
             current_basename = SVNFileUtil.getFileName(current_relpath);
             current_relpath = SVNFileUtil.getFileDir(current_relpath);
-            relpath_suffix = new File(relpath_suffix, current_basename);
+            relpath_suffix = SVNFileUtil.createFilePath(relpath_suffix, current_basename);
 
             /* Loop to try the parent. */
 
@@ -2401,7 +2401,7 @@ public class SVNWCDb implements ISVNWCDb {
                             deletionInfo.baseDelAbsPath = current_abspath;
 
                         if (f.contains(DeletionInfoField.movedToAbsPath))
-                            deletionInfo.movedToAbsPath = new File(pdh.getWCRoot().getAbsPath(), getColumnText(stmt, SVNWCDbSchema.WORKING_NODE__Fields.moved_to));
+                            deletionInfo.movedToAbsPath = SVNFileUtil.createFilePath(pdh.getWCRoot().getAbsPath(), getColumnText(stmt, SVNWCDbSchema.WORKING_NODE__Fields.moved_to));
                     }
 
                     if (f.contains(DeletionInfoField.workDelAbsPath) && work_presence == SVNWCDbStatus.Normal && child_presence == SVNWCDbStatus.NotPresent) {
@@ -2598,7 +2598,7 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     private static File admChild(File dirAbsPath, String sdbFileName) {
-        return new File(new File(dirAbsPath, SVNFileUtil.getAdminDirectoryName()), sdbFileName);
+        return SVNFileUtil.createFilePath(SVNFileUtil.createFilePath(dirAbsPath, SVNFileUtil.getAdminDirectoryName()), sdbFileName);
     }
 
     private static boolean isErrorNOENT(final SVNErrorCode errorCode) {

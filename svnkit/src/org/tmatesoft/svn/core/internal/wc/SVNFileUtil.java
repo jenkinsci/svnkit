@@ -1905,20 +1905,31 @@ public class SVNFileUtil {
         return file.getParentFile();
     }
 
-    public static File joinPath(File parent, File child) {
-        if (child == null)
+    public static File createFilePath(String path) {
+        if (path == null)
             return null;
-        return joinPath(parent, child.toString());
+        return new File(path);
     }
 
-    public static File joinPath(File parent, String child) {
+    public static File createFilePath(File parent, File child) {
         if (child == null)
             return null;
-        if (parent != null) {
-            if ("".equals(parent.getPath())) {
-                parent = null;
-            }
-        }
+        return createFilePath(parent, child.toString());
+    }
+
+    public static File createFilePath(File parent, String child) {
+        if (child == null)
+            return null;
+        if (parent == null)
+            return createFilePath(child);
+        return createFilePath(parent.toString(), child.toString());
+    }
+
+    public static File createFilePath(String parent, String child) {
+        if (child == null)
+            return null;
+        if (parent == null || "".equals(parent))
+            return createFilePath(child);
         return new File(parent, child.toString());
     }
 
