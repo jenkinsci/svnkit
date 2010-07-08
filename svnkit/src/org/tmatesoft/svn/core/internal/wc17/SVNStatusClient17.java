@@ -18,6 +18,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNExternal;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.internal.wc16.SVNBasicDelegate;
 import org.tmatesoft.svn.core.io.ISVNEditor;
@@ -399,9 +400,9 @@ public class SVNStatusClient17 extends SVNBasicDelegate {
                     targetBaseName = "";
                     dir = path;
                 } else {
-                    dirAbsPath = targetAbsPath.getParentFile();
-                    targetBaseName = targetAbsPath.getName();
-                    dir = path.getParentFile();
+                    dirAbsPath = SVNFileUtil.getFileDir(targetAbsPath);
+                    targetBaseName = SVNFileUtil.getFileName(targetAbsPath);
+                    dir = SVNFileUtil.getFileDir(path);
                     if (kind != SVNNodeKind.FILE) {
                         kind = wcContext.getNodeKind(dirAbsPath, false);
                         /*

@@ -34,6 +34,7 @@ import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNExternal;
 import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo;
@@ -102,11 +103,11 @@ public class SVNStatusEditor17 {
         final SVNNodeKind kind = myWCContext.getNodeKind(myPath, false);
 
         if (kind == SVNNodeKind.FILE && localKind == SVNNodeKind.FILE) {
-            getDirStatus(myPath.getParentFile(), null, null, myPath.getName(), myGlobalIgnores, myDepth, myIsReportAll, true, true, myStatusHandler);
+            getDirStatus(SVNFileUtil.getFileDir(myPath), null, null, SVNFileUtil.getFileName(myPath), myGlobalIgnores, myDepth, myIsReportAll, true, true, myStatusHandler);
         } else if (kind == SVNNodeKind.DIR && localKind == SVNNodeKind.DIR) {
             getDirStatus(myPath, null, null, null, myGlobalIgnores, myDepth, myIsReportAll, myIsNoIgnore, false, myStatusHandler);
         } else {
-            getDirStatus(myPath.getParentFile(), null, null, myPath.getName(), myGlobalIgnores, myDepth, myIsReportAll, myIsNoIgnore, true, myStatusHandler);
+            getDirStatus(SVNFileUtil.getFileDir(myPath), null, null, SVNFileUtil.getFileName(myPath), myGlobalIgnores, myDepth, myIsReportAll, myIsNoIgnore, true, myStatusHandler);
         }
 
         return null;
@@ -141,7 +142,7 @@ public class SVNStatusEditor17 {
             if (children != null) {
                 Map map = new SVNHashMap();
                 for (int i = 0; i < children.length; i++) {
-                    map.put(children[i].getName(), children[i]);
+                    map.put(SVNFileUtil.getFileName(children[i]), children[i]);
                 }
                 return map;
             }
@@ -175,7 +176,8 @@ public class SVNStatusEditor17 {
             final List<String> childNodes = db.readChildren(localAbsPath);
             if (childNodes != null && childNodes.size() > 0) {
                 for (String childNode : childNodes) {
-                    nodes.put(childNode, new File(childNode));
+                    final File file = new File(childNode);
+                    nodes.put(SVNFileUtil.getFileName(file), file);
                 }
             }
         }
@@ -189,7 +191,7 @@ public class SVNStatusEditor17 {
         if (dirReposRelPath == null) {
             if (dirReposRootUrl != null) {
                 dirReposRootUrl = parentReposRootUrl;
-                dirReposRelPath = new File(parentReposRelPath, localAbsPath.getName());
+                dirReposRelPath = new File(parentReposRelPath, SVNFileUtil.getFileName(localAbsPath));
             } else if (dirStatus != SVNWCDbStatus.Deleted && dirStatus != SVNWCDbStatus.Added) {
                 final WCDbRepositoryInfo baseReposInfo = db.scanBaseRepository(localAbsPath, RepositoryInfoField.relPath, RepositoryInfoField.rootUrl);
                 dirReposRelPath = baseReposInfo.relPath;
@@ -208,10 +210,11 @@ public class SVNStatusEditor17 {
             /* Create a hash containing all children */
             allChildren.putAll(childrenFiles);
             allChildren.putAll(nodes);
-            List<String> victims = db.readConflictVictims(localAbsPath);
+            final List<String> victims = db.readConflictVictims(localAbsPath);
             if (victims != null && victims.size() > 0) {
                 for (String confict : victims) {
-                    conflicts.put(confict, new File(confict));
+                    File file = new File(confict);
+                    conflicts.put(SVNFileUtil.getFileName(file), file);
                 }
             }
             /* Optimize for the no-tree-conflict case */
@@ -313,7 +316,7 @@ public class SVNStatusEditor17 {
             }
 
             if (reposRelpath == null && parentReposRelPath != null) {
-                reposRelpath = new File(parentReposRelPath, localAbsPath.getName());
+                reposRelpath = new File(parentReposRelPath, SVNFileUtil.getFileName(localAbsPath));
             }
 
             if (reposRelpath != null) {
@@ -334,7 +337,7 @@ public class SVNStatusEditor17 {
     }
 
     private void sendUnversionedItem(File nodeAbsPath, SVNNodeKind pathKind, Collection<String> patterns, boolean noIgnore, ISVNStatusHandler handler) throws SVNException {
-        boolean isIgnored = isIgnored(nodeAbsPath.getName(), patterns);
+        boolean isIgnored = isIgnored(SVNFileUtil.getFileName(nodeAbsPath), patterns);
         boolean isExternal = isExternal(nodeAbsPath);
         SVNStatus status = myWCContext.assembleUnversioned(nodeAbsPath, pathKind, isIgnored);
         if (status != null) {

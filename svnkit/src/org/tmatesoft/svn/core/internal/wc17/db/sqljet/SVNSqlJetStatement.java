@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.wc17.db.sqljet;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,6 +23,7 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -100,15 +102,18 @@ public abstract class SVNSqlJetStatement {
         // binds.addAll(Arrays.asList(data));
 
         for (int i = 0; i < format.length(); i++) {
-            char fmt = format.charAt(i);
 
-            // const void *blob;
-            // apr_size_t blob_size;
-            // const svn_token_map_t *map;
+            char fmt = format.charAt(i);
 
             switch (fmt) {
                 case 's':
-                    bindString(i + 1, data[i].toString());
+                    if(data[i]==null) {
+                        bindString(i + 1, "");
+                    } else if(data[i] instanceof File) {
+                        bindString(i + 1, SVNFileUtil.getFilePath((File)data[i]));
+                    } else {
+                        bindString(i + 1, data[i].toString());
+                    }
                     break;
 
                 case 'i':
@@ -136,6 +141,10 @@ public abstract class SVNSqlJetStatement {
             }
         }
 
+    }
+
+    public void bindNull(int i) {
+        binds.add(i - 1, null);
     }
 
     public void bindLong(int i, long v) {

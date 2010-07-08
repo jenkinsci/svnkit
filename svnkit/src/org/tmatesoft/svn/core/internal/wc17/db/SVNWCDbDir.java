@@ -19,7 +19,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 /**
  * This structure records all the information that we need to deal with a given
  * working copy directory.
- * 
+ *
  * @author TMate Software Ltd.
  */
 public class SVNWCDbDir {
@@ -29,9 +29,9 @@ public class SVNWCDbDir {
     /**
      * This (versioned) working copy directory is obstructing what *should* be a
      * file in the parent directory (according to its metadata).
-     * 
+     *
      * Note: this PDH should probably be ignored (or not created).
-     * 
+     *
      * ### obstruction is only possible with per-dir wc.db databases.
      */
     private boolean obstructedFile;
@@ -101,10 +101,10 @@ public class SVNWCDbDir {
 
     public File computeRelPath() {
         final String relativePath = SVNPathUtil.getRelativePath(wcRoot.getAbsPath().toString(), localAbsPath.toString());
-        if (relativePath != null) {
+        if (relativePath != null && !"".equals(relativePath)) {
             return new File(relativePath);
         }
-        return EMPTY_PATH;
+        return null;
     }
 
 }

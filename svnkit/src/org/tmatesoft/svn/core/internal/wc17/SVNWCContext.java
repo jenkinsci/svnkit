@@ -318,7 +318,7 @@ public class SVNWCContext {
                  * This is a deletion within a copied subtree. Get the
                  * copied-from revision.
                  */
-                final File parentAbspath = workDelAbspath.getParentFile();
+                final File parentAbspath = SVNFileUtil.getFileDir(workDelAbspath);
                 final WCDbInfo parentInfo = db.readInfo(parentAbspath, InfoField.status);
                 final SVNWCDbStatus parentStatus = parentInfo.status;
                 assert (parentStatus == SVNWCDbStatus.Added || parentStatus == SVNWCDbStatus.ObstructedAdd);
@@ -419,7 +419,7 @@ public class SVNWCContext {
             /* The node is not switched, so imply from parent if possible */
 
             if (parentReposRelPath != null) {
-                info.reposRelPath = new File(parentReposRelPath, localAbsPath.getName());
+                info.reposRelPath = new File(parentReposRelPath, SVNFileUtil.getFileName(localAbsPath));
             } else if (info.status == SVNWCDbStatus.Added) {
                 final WCDbAdditionInfo scanAddition = db.scanAddition(localAbsPath, AdditionInfoField.reposRelPath, AdditionInfoField.reposRootUrl);
                 info.reposRelPath = scanAddition.reposRelPath;
@@ -436,7 +436,7 @@ public class SVNWCContext {
         } else {
             /* A node is switched if it doesn't have the implied repos_relpath */
             final String name = getPathAsChild(parentReposRelPath, info.reposRelPath);
-            switched_p = name == null || !name.equals(localAbsPath.getName());
+            switched_p = name == null || !name.equals(SVNFileUtil.getFileName(localAbsPath));
         }
 
         if (info.reposRootUrl == null && parentReposRootUrl != null)
@@ -1161,8 +1161,8 @@ public class SVNWCContext {
                 readInfo.reposRootUrl = scanAddition.reposRootUrl;
             } else if (readInfo.status == SVNWCDbStatus.Absent || readInfo.status == SVNWCDbStatus.Excluded || readInfo.status == SVNWCDbStatus.NotPresent
                     || (!readInfo.haveBase && (readInfo.status == SVNWCDbStatus.Deleted || readInfo.status == SVNWCDbStatus.ObstructedDelete))) {
-                File parent_abspath = path.getParentFile();
-                readInfo.reposRelPath = new File(path.getName());
+                File parent_abspath = SVNFileUtil.getFileDir(path);
+                readInfo.reposRelPath = new File(SVNFileUtil.getFileName(path));
                 readInfo.reposRootUrl = getNodeUrl(parent_abspath);
             } else {
                 /* Status: obstructed, obstructed_add */
@@ -1187,7 +1187,7 @@ public class SVNWCContext {
         if (!readInfo.conflicted) {
             return info;
         }
-        final File dir_path = (readInfo.kind == SVNWCDbKind.Dir) ? localAbsPath : localAbsPath.getParentFile();
+        final File dir_path = (readInfo.kind == SVNWCDbKind.Dir) ? localAbsPath : SVNFileUtil.getFileDir(localAbsPath);
         final List<SVNTreeConflictDescription> conflicts = db.readConflicts(localAbsPath);
         for (final SVNTreeConflictDescription cd : conflicts) {
             final SVNMergeFileSet cdf = cd.getMergeFiles();
