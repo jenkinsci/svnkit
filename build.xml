@@ -951,6 +951,15 @@
     			<exclude name="svn-test-work/**"/>
     		</fileset>
         </copy>
+        <mkdir dir="${python.test.home}/python/cmdline-trunk"/>
+        <copy todir="${python.test.home}/python/cmdline-trunk">
+            <fileset dir="svnkit-test/python/cmdline-trunk">
+                <exclude name=".svn"/>
+                <exclude name=".svn/**"/>
+                <exclude name="svn-test-work"/>
+                <exclude name="svn-test-work/**"/>
+            </fileset>
+        </copy>
     	<copy todir="${python.test.home}/python/cmdline"  overwrite="true" failonerror="true">
     		<fileset dir="svnkit-test/patch">
     			<include name="**/**"/>
@@ -971,6 +980,9 @@
     		<fileset dir="${python.test.home}/python/cmdline">
     			<include name="**/*.py"/>
 			</fileset>
+            <fileset dir="${python.test.home}/python/cmdline-trunk">
+                <include name="**/*.py"/>
+            </fileset>
     	</chmod>
     	<pathconvert targetos="unix" property="basedir.unix">
     		<path location="${basedir}"/>

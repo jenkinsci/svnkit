@@ -92,7 +92,7 @@ public class PythonTests {
             }
         }
 
-        String pythonTestsRoot = properties.getProperty("python.tests");
+        String pythonTestsRoot = properties.getProperty("python.tests", "python/cmdline");
 		properties.setProperty("repository.root", new File(pythonTestsRoot).getAbsolutePath());
         String absTestsRootLocation = new File(pythonTestsRoot).getAbsolutePath().replace(File.separatorChar, '/');
         if(!absTestsRootLocation.startsWith("/")){
@@ -236,6 +236,8 @@ public class PythonTests {
 		String pythonLauncher = properties.getProperty("python.launcher");
 		String testSuite = properties.getProperty("python.tests.suite", defaultTestSuite);
 		String options = properties.getProperty("python.tests.options", "");
+        String testsLocation = properties.getProperty("python.tests", "python/cmdline");
+        String listOption = properties.getProperty("python.tests.listOption", "list");
 		String fsfsConfig = properties.getProperty("fsfs.config");
 		for (StringTokenizer tests = new StringTokenizer(testSuite, ","); tests.hasMoreTokens();) {
 			final String testFileString = tests.nextToken();
@@ -254,12 +256,12 @@ public class PythonTests {
 			try {
     			if (tokens.isEmpty() || (tokens.size() == 1 && "ALL".equals(tokens.get(0)))) {
                     System.out.println("PROCESSING " + testFile + " [ALL]");
-                    processTestCase(pythonLauncher, testFile, options, null, url, libPath, fsfsConfig, pythonLogger);
+                    processTestCase(pythonLauncher, testsLocation, testFile, options, null, url, libPath, fsfsConfig, pythonLogger);
     			} else {
-    	            final List availabledTestCases = getAvailableTestCases(pythonLauncher, testFile, pythonLogger);
+    	            final List availabledTestCases = getAvailableTestCases(pythonLauncher, testsLocation, testFile, listOption, pythonLogger);
     	            final List testCases = !tokens.isEmpty() ? combineTestCases(tokens, availabledTestCases) : availabledTestCases;
     	            System.out.println("PROCESSING " + testFile + " " + testCases);
-    	            processTestCase(pythonLauncher, testFile, options, testCases, url, libPath, fsfsConfig, pythonLogger);
+    	            processTestCase(pythonLauncher, testsLocation, testFile, options, testCases, url, libPath, fsfsConfig, pythonLogger);
     			}
 			} finally {
 			    logHandler.close();
@@ -271,7 +273,7 @@ public class PythonTests {
 		}
 	}
 
-	private static void processTestCase(String pythonLauncher, String testFile, String options, List testCases, 
+	private static void processTestCase(String pythonLauncher, String testsLocation, String testFile, String options, List testCases, 
 	        String url, String libPath, String fsfsConfigPath, Logger pythonLogger) {
 	    Collection commandsList = new ArrayList();
         commandsList.add(pythonLauncher);
@@ -298,7 +300,7 @@ public class PythonTests {
         String[] commands = (String[]) commandsList.toArray(new String[commandsList.size()]); 
 
 		try {
-			Process process = Runtime.getRuntime().exec(commands, null, new File("python/cmdline"));
+			Process process = Runtime.getRuntime().exec(commands, null, new File(testsLocation));
 			ReaderThread inReader = new ReaderThread(process.getInputStream(), null, pythonLogger);
 			inReader.start();
 			ReaderThread errReader = new ReaderThread(process.getErrorStream(), null, pythonLogger);
@@ -329,6 +331,9 @@ public class PythonTests {
 
 	private static List combineTestCases(List tokens, List availableTestCases) {
 		final List combinedTestCases = new ArrayList();
+		if (availableTestCases.isEmpty()) {
+		    return combinedTestCases;
+		}
 		Integer endInt = (Integer) availableTestCases.get(availableTestCases.size() - 1);
 		Integer startInt = (Integer) availableTestCases.get(0);
 		boolean isAllSpecified = false;
@@ -388,11 +393,11 @@ public class PythonTests {
 		return combinedTestCases;
 	}
 
-	private static List getAvailableTestCases(String pythonLauncher, String testFile, Logger pythonLogger) throws IOException {
-		final String[] commands = new String[]{pythonLauncher, testFile, "list"};
+	private static List getAvailableTestCases(String pythonLauncher, String testsLocation, String testFile, String listOption, Logger pythonLogger) throws IOException {
+		final String[] commands = new String[]{pythonLauncher, testFile, listOption};
 		final ByteArrayOutputStream os = new ByteArrayOutputStream();
 		try {
-			Process process = Runtime.getRuntime().exec(commands, null, new File("python/cmdline"));
+			Process process = Runtime.getRuntime().exec(commands, null, new File(testsLocation));
             ReaderThread readerThread = new ReaderThread(process.getInputStream(), new PrintStream(os), pythonLogger);
             readerThread.start();
 			ReaderThread errReader = new ReaderThread(process.getErrorStream(), null, pythonLogger);
