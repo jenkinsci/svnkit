@@ -8,11 +8,29 @@ args='dir='
 args+=`pwd`
 args+='\nprogram=%name%'
 
+command_line=''
+
 for arg in "$@"
 do 
     args+='\narg='
     args+=$arg
+    command_line+=$arg
+    command_line+=' '
 done
+
+dir=`dirname $0`
+
+if [ -x $dir/matcher.pl ] 
+then
+# only run jsvn if matched
+   $dir/matcher.pl "$@"
+   if [ $? -ne 0 ] 
+   then
+   # run native
+       %svn_home%/%name% "$@" < /dev/stdin    
+       exit $?
+   fi
+fi
 
 # add env vars (spaces added not send empty lines)
 args+='\nenv.SVN_EDITOR='

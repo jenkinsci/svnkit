@@ -84,7 +84,7 @@ public class PythonTests {
         
         if (Boolean.TRUE.toString().equals(properties.getProperty("daemon")) && SVNFileUtil.isLinux) {
             try {
-                libPath = startCommandDaemon();
+                libPath = startCommandDaemon(properties);
             } catch (IOException e) {
                 e.getMessage();
                 e.printStackTrace();
@@ -525,7 +525,7 @@ public class PythonTests {
         return props;
     }
     
-    public static String startCommandDaemon() throws IOException {
+    public static String startCommandDaemon(Properties properties) throws IOException {
         int portNumber = 1729;
         portNumber = findUnoccupiedPort(portNumber);
         ourDaemon = new SVNCommandDaemon(portNumber);
@@ -534,13 +534,21 @@ public class PythonTests {
         daemonThread.start();
         
         // create client scripts.
-        generateClientScript(new File("daemon/template"), new File("daemon/jsvn"), "svn", portNumber);
-        generateClientScript(new File("daemon/template"), new File("daemon/jsvnadmin"), "svnadmin", portNumber);
-        generateClientScript(new File("daemon/template"), new File("daemon/jsvnversion"), "svnversion", portNumber);
-        generateClientScript(new File("daemon/template"), new File("daemon/jsvnlook"), "svnlook", portNumber);
-        generateClientScript(new File("daemon/template"), new File("daemon/jsvnsync"), "svnsync", portNumber);
-        generateClientScript(new File("daemon/template"), new File("daemon/jsvndumpfilter"), "svndumpfilter", portNumber);
-        
+        String svnHome = properties.getProperty("svn.home", "/usr/bin");
+
+        generateClientScript(new File("daemon/template"), new File("daemon/jsvn"), "svn", portNumber, svnHome);
+        generateClientScript(new File("daemon/template"), new File("daemon/jsvnadmin"), "svnadmin", portNumber, svnHome);
+        generateClientScript(new File("daemon/template"), new File("daemon/jsvnversion"), "svnversion", portNumber, svnHome);
+        generateClientScript(new File("daemon/template"), new File("daemon/jsvnlook"), "svnlook", portNumber, svnHome);
+        generateClientScript(new File("daemon/template"), new File("daemon/jsvnsync"), "svnsync", portNumber, svnHome);
+        generateClientScript(new File("daemon/template"), new File("daemon/jsvndumpfilter"), "svndumpfilter", portNumber, svnHome);
+
+	String pattern = properties.getProperty("python.tests.pattern", null);
+        if (pattern != null) {
+	   generateMatcher(new File("daemon/matcher.pl"), new File("daemon/matcher.pl"), pattern);
+        } else {
+           SVNFileUtil.setExecutable(new File("daemon/matcher.pl"), false);
+        }
         return new File("daemon").getAbsolutePath();
     }
     
@@ -693,7 +701,7 @@ public class PythonTests {
         return connectorPort;
     }
 
-    private static void generateClientScript(File src, File destination, String name, int port) throws IOException {
+    private static void generateClientScript(File src, File destination, String name, int port, String svnHome) throws IOException {
         byte[] contents = new byte[(int) src.length()];
         InputStream is = new FileInputStream(src);
         SVNFileUtil.readIntoBuffer(is, contents, 0, contents.length);
@@ -702,6 +710,23 @@ public class PythonTests {
         String script = new String(contents);
         script = script.replaceAll("%name%", name);
         script = script.replaceAll("%port%", Integer.toString(port));
+        script = script.replaceAll("%svn_home%", svnHome);
+        
+        FileOutputStream os = new FileOutputStream(destination);
+        os.write(script.getBytes());
+        os.close();
+        
+        SVNFileUtil.setExecutable(destination, true);
+    }
+
+    private static void generateMatcher(File src, File destination, String pattern) throws IOException {
+        byte[] contents = new byte[(int) src.length()];
+        InputStream is = new FileInputStream(src);
+        SVNFileUtil.readIntoBuffer(is, contents, 0, contents.length);
+        is.close();
+
+        String script = new String(contents);
+        script = script.replace("%pattern%", pattern);
         
         FileOutputStream os = new FileOutputStream(destination);
         os.write(script.getBytes());

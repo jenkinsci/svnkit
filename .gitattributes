@@ -90,8 +90,10 @@ svnkit-eclipse/org.tmatesoft.svnkit/feature.xml eol=lf
 svnkit-eclipse/site.xml eol=lf
 svnkit-test/apache/python.template.conf eol=lf
 svnkit-test/apache/users eol=lf
+svnkit-test/daemon/matcher.pl -text
 svnkit-test/daemon/template eol=lf
 svnkit-test/fsfs.conf -text
+svnkit-test/patch/entries-dump -text
 svnkit-test/src/org/tigris/subversion/javahl/svnkit_patch1.diff -text
 svnkit-test/svn-wc-ng/build-svn-trunk.sh -text
 svnkit-test/svn-wc-ng/svn-wc-ng.properties -text
