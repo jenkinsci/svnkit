@@ -38,6 +38,7 @@ import java.util.logging.Logger;
 import org.tmatesoft.svn.core.internal.util.DefaultSVNDebugFormatter;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.test.daemon.SVNCommandDaemon;
+import org.tmatesoft.svn.core.SVNException;
 
 /**
  * @version 1.3
@@ -547,7 +548,9 @@ public class PythonTests {
         if (pattern != null) {
 	   generateMatcher(new File("daemon/matcher.pl"), new File("daemon/matcher.pl"), pattern);
         } else {
-           SVNFileUtil.setExecutable(new File("daemon/matcher.pl"), false);
+           try {
+               SVNFileUtil.deleteFile(new File("daemon/matcher.pl"));
+           } catch (SVNException e) {}
         }
         return new File("daemon").getAbsolutePath();
     }
