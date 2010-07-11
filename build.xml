@@ -1048,6 +1048,7 @@
          <jvmarg value="-Dant.basedir=${basedir.unix}" />
          <jvmarg value="-Dsun.io.useCanonCaches=false" />
          <jvmarg value="-Dsvnkit.compatibleHash=true" />
+         <jvmarg value="-Dsvnkit.wc.17=${svnkit.wc.17}" />
 <!--     Uncomment for profiling with YourKit -->   
 <!--         <jvmarg value="-agentlib:yjpagent=port=1729,disablecounts,disablealloc,disablej2ee,sampling,onexit=snapshot" /> -->
 <!--     Uncomment to enable remote debugging -->
