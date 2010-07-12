@@ -148,4 +148,10 @@
 	<target name="main" depends="do-create, do-modify, do-status-native, do-svnkit-test, do-status-jsvn">
 	</target>
 
+	<target name="do-modify-stat-5" depends="do-create">
+		<rename dest="${target.dir}/workingcopy/test/_file1.txt" src="${target.dir}/workingcopy/test/file1.txt"/>
+		<rename dest="${target.dir}/workingcopy/test/file1.txt" src="${target.dir}/workingcopy/test/dir1"/>
+		<rename dest="${target.dir}/workingcopy/test/dir1" src="${target.dir}/workingcopy/test/_file1.txt"/>
+	</target>
+
 </project>

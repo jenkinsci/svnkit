@@ -44,7 +44,9 @@ public enum SVNWCDbStatements {
     SELECT_PRISTINE_MD5_CHECKSUM(SVNWCDbSelectPristineMD5Checksum.class),
     SELECT_DELETION_INFO(SVNWCDbSelectDeletionInfo.class),
     SELECT_SUBDIR_BASE(SVNWCDbSelectSubDirBase.class),
-    SELECT_SUBDIR_WORKING(SVNWCDbSelectSubDirWorking.class);
+    SELECT_SUBDIR_WORKING(SVNWCDbSelectSubDirWorking.class),
+    SELECT_WORKING_IS_FILE(SVNWCDbSelectWorkingIsFile.class),
+    SELECT_BASE_IS_FILE(SVNWCDbSelectBaseIsFile.class);
 
     private Class<? extends SVNSqlJetStatement> statementClass;
 

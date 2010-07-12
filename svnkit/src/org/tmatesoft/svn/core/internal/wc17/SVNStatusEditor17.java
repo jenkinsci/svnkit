@@ -247,7 +247,7 @@ public class SVNStatusEditor17 {
 
             if (nodes.containsKey(key)) {
                 /* Versioned node */
-                WCDbInfo node = db.readInfo(localAbsPath, InfoField.status, InfoField.kind);
+                WCDbInfo node = db.readInfo(nodeAbsPath, InfoField.status, InfoField.kind);
                 boolean hidden = db.isNodeHidden(nodeAbsPath);
 
                 /*

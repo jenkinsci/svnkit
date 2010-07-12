@@ -19,6 +19,8 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc17.db.sqljet.SVNSqlJetDb;
+import org.tmatesoft.svn.core.internal.wc17.db.sqljet.SVNSqlJetStatement;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -118,8 +120,37 @@ public class SVNWCDbRoot {
         }
     }
 
-    public boolean determineObstructedFile(String lookforRelpath) {
-        // TODO
+    /*
+     * The filesystem has a directory at LOCAL_RELPATH. Examine the metadata to
+     * determine if a *file* was supposed to be there.
+     *
+     * ### this function is only required for per-dir .svn support. once all ###
+     * metadata is collected in a single wcroot, then we won't need to ### look
+     * in subdirs for other metadata.
+     */
+    public boolean determineObstructedFile(String localRelPath) throws SVNException {
+        assert (sDb != null && wcId != SVNWCDb.UNKNOWN_WC_ID);
+        SVNSqlJetStatement stmt = sDb.getStatement(SVNWCDbStatements.SELECT_WORKING_IS_FILE);
+        try {
+            stmt.bindf("is", wcId, localRelPath);
+            boolean have_row = stmt.next();
+            if (have_row) {
+                return stmt.getColumnBoolean(0);
+            }
+        } finally {
+            stmt.reset();
+        }
+
+        stmt = sDb.getStatement(SVNWCDbStatements.SELECT_BASE_IS_FILE);
+        try {
+            stmt.bindf("is", wcId, localRelPath);
+            boolean have_row = stmt.next();
+            if (have_row) {
+                return stmt.getColumnBoolean(0);
+            }
+        } finally {
+            stmt.reset();
+        }
         return false;
     }
 

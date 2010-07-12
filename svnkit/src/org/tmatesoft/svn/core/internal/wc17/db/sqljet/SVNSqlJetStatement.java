@@ -239,6 +239,14 @@ public abstract class SVNSqlJetStatement {
         }
     }
 
+    public boolean getColumnBoolean(int f) throws SVNException {
+        return getColumnLong(f)!=0;
+    }
+
+    public boolean getColumnBoolean(Enum f) throws SVNException {
+        return getColumnLong(f)!=0;
+    }
+
     public long getColumnLong(int f) throws SVNException {
         SVNErrorManager.assertionFailure(false, "unsupported", SVNLogType.WC);
         return 0;

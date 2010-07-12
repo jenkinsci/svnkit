@@ -63,8 +63,8 @@ import org.tmatesoft.svn.util.SVNLogType;
  */
 public class SVNWCDb implements ISVNWCDb {
 
-    private static final int FORMAT_FROM_SDB = -1;
-    private static final long UNKNOWN_WC_ID = -1;
+    public static final int FORMAT_FROM_SDB = -1;
+    public static final long UNKNOWN_WC_ID = -1;
 
     private static final EnumMap<SVNWCDbKind, String> kindMap = new EnumMap<SVNWCDbKind, String>(SVNWCDbKind.class);
     private static final HashMap<String, SVNWCDbKind> kindMap2 = new HashMap<String, SVNWCDbKind>();
@@ -2642,11 +2642,11 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     private boolean getColumnBoolean(SVNSqlJetStatement stmt, int i) throws SVNException {
-        return stmt.getColumnLong(i) != 0;
+        return stmt.getColumnBoolean(i);
     }
 
     private boolean getColumnBoolean(SVNSqlJetStatement stmt, Enum f) throws SVNException {
-        return stmt.getColumnLong(f) != 0;
+        return stmt.getColumnBoolean(f);
     }
 
     private static SVNChecksum getColumnChecksum(SVNSqlJetStatement stmt, Enum f) throws SVNException {
