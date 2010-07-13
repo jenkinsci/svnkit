@@ -2,7 +2,7 @@
 setlocal enabledelayedexpansion
 set IS_STATUS=false
 if "%1"=="status" (set IS_STATUS=true)
-if "%2"=="status" (set IS_STATUS=true)
+if "%2"=="-u" (set IS_STATUS=false)
 if "!IS_STATUS!"=="false" (
 %path.svn%/svn.exe %*
 exit
