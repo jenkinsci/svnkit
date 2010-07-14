@@ -161,7 +161,7 @@
 		<antcall target="svnkit.build-cli">
 		</antcall>
 
-        <copy todir="build/lib">
+        <copy todir="build/lib" overwrite="true">
             <fileset dir="svnkit-test/svn-wc-ng">
                 <include name="*.bat" />
             </fileset>
