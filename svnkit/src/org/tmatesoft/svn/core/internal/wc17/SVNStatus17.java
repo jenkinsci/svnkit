@@ -360,10 +360,22 @@ public class SVNStatus17 {
 
     public SVNStatus getStatus16(File path, boolean isFileExternal, File conflictNewFile, File conflictOldFile, File conflictWrkFile, File projRejectFile, String copyFromURL,
             SVNRevision copyFromRevision, SVNLock remoteLock, Map entryProperties, int wcFormatVersion, SVNTreeConflictDescription treeConflict) {
-        final SVNStatusType contentStatus = nodeStatus != SVNStatusType.STATUS_NORMAL ? nodeStatus : textStatus;
+        final SVNStatusType contentStatus = getCombinedStatus();
         return new SVNStatus(reposRootUrl, path, kind, SVNRevision.create(revision), SVNRevision.create(changedRev), changedDate, changedAuthor, contentStatus, propStatus, reposTextStatus,
                 reposPropStatus, lock != null, copied, switched, isFileExternal, conflictNewFile, conflictOldFile, conflictWrkFile, projRejectFile, copyFromURL, copyFromRevision, remoteLock, lock,
                 entryProperties, changelist, wcFormatVersion, treeConflict);
+    }
+
+    /*
+     * Return the combined STATUS as shown in 'svn status' based on the node
+     * status and text status
+     */
+    private SVNStatusType getCombinedStatus() {
+        if (nodeStatus == SVNStatusType.STATUS_MODIFIED || nodeStatus == SVNStatusType.STATUS_CONFLICTED) {
+            /* This value might be the property status */
+            return textStatus;
+        }
+        return nodeStatus;
     }
 
 }
