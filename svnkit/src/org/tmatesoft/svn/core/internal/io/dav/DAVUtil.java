@@ -40,6 +40,16 @@ public class DAVUtil {
     public static int DEPTH_ZERO = 0;
     public static int DEPTH_ONE = 1;
     public static int DEPTH_INFINITE = -1;
+    
+    private static boolean ourIsUseDAVWCURL = true;
+    
+    public static synchronized boolean isUseDAVWCURL() {
+        return ourIsUseDAVWCURL;
+    }
+
+    public static synchronized void setUseDAVWCURL(boolean useDAVWCURL) {
+        ourIsUseDAVWCURL = useDAVWCURL;
+    }
 
     public static HTTPStatus getProperties(DAVConnection connection, String path, int depth, String label, DAVElement[] properties, Map result) throws SVNException {
         HTTPHeader header = new HTTPHeader();
@@ -270,7 +280,7 @@ public class DAVUtil {
         } else if (namespace.equals(DAVElement.SVN_SVN_PROPERTY_NAMESPACE)) {
             return "svn:" + name;
         } else if (element == DAVElement.CHECKED_IN) {
-            return "svn:wc:ra_dav:version-url";
+            return SVNProperty.WC_URL;//"svn:wc:ra_dav:version-url";
         }
         return null;
     }

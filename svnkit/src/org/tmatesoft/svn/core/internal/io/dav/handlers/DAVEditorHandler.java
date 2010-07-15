@@ -505,8 +505,8 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
                 } else if (myIsDirectory) {
                     if (myDirs.size() != 1 || !myHasTarget) {
                         try {
-                            myEditor.changeDirProperty(SVNProperty.WC_URL, 
-                                    SVNPropertyValue.create(myHref));
+                            SVNPropertyValue davWCURL = DAVUtil.isUseDAVWCURL() ? SVNPropertyValue.create(myHref) : null;
+                            myEditor.changeDirProperty(SVNProperty.WC_URL, davWCURL);
                         } catch (SVNCancelException ce) {
                             throw ce;
                         } catch (SVNException svne) {                        
@@ -517,8 +517,8 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
                     }
                 } else {
                     try {
-                        myEditor.changeFileProperty(myPath, SVNProperty.WC_URL, 
-                                SVNPropertyValue.create(myHref));
+                        SVNPropertyValue davWCURL = DAVUtil.isUseDAVWCURL() ? SVNPropertyValue.create(myHref) : null;
+                        myEditor.changeFileProperty(myPath, SVNProperty.WC_URL, davWCURL);
                     } catch (SVNCancelException ce) {
                         throw ce;
                     } catch (SVNException svne) {
