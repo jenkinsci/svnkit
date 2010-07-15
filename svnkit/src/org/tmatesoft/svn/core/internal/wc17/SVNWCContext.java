@@ -397,7 +397,6 @@ public class SVNWCContext {
         stat.setChangelist(null);
 
         SVNStatus status = stat.getStatus16(localAbspath, false, null, null, null, null, null, null, null, null, ISVNWCDb.WC_FORMAT_17, tree_conflict);
-        //status.setEntry(getEntry(localAbspath, true, stat.getKind(), false));
         return status;
 
     }
@@ -414,15 +413,6 @@ public class SVNWCContext {
 
         final WCDbInfo info = db.readInfo(localAbsPath, InfoField.status, InfoField.kind, InfoField.revision, InfoField.reposRelPath, InfoField.reposRootUrl, InfoField.changedRev,
                 InfoField.changedDate, InfoField.changedAuthor, InfoField.depth, InfoField.changelist, InfoField.propsMod, InfoField.haveBase, InfoField.conflicted, InfoField.lock);
-
-        SVNEntry entry = null;
-        try {
-            entry = getEntry(localAbsPath, false, SVNNodeKind.UNKNOWN, false);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() != SVNErrorCode.NODE_UNEXPECTED_KIND) {
-                throw e;
-            }
-        }
 
         if (info.reposRelPath == null) {
             /* The node is not switched, so imply from parent if possible */
@@ -552,11 +542,6 @@ public class SVNWCContext {
              */
             /* ### see r944980 as an example of the brittleness of this stuff. */
             if (has_props) {
-                // #if (SVN_WC__VERSION < SVN_WC__PROPS_IN_DB)
-                // SVN_ERR(svn_wc__props_modified(&prop_modified_p, db,
-                // local_abspath,
-                // scratch_pool));
-                // #endif
                 prop_status = info.propsMod ? SVNStatusType.STATUS_MODIFIED : SVNStatusType.STATUS_NORMAL;
             }
 
@@ -620,11 +605,18 @@ public class SVNWCContext {
              */
 
             if (info.status == SVNWCDbStatus.Added) {
-                copied = entry == null ? false : entry.isCopied();
-                if (entry.isScheduledForAddition())
-                    node_status = SVNStatusType.STATUS_ADDED;
-                else if (entry.isScheduledForReplacement())
-                    node_status = SVNStatusType.STATUS_REPLACED;
+                try {
+                    SVNEntry entry = getEntry(localAbsPath, false, SVNNodeKind.UNKNOWN, false);
+                    copied = entry == null ? false : entry.isCopied();
+                    if (entry.isScheduledForAddition())
+                        node_status = SVNStatusType.STATUS_ADDED;
+                    else if (entry.isScheduledForReplacement())
+                        node_status = SVNStatusType.STATUS_REPLACED;
+                } catch (SVNException e) {
+                    if (e.getErrorMessage().getErrorCode() != SVNErrorCode.NODE_UNEXPECTED_KIND) {
+                        throw e;
+                    }
+                }
             }
         }
 
@@ -693,7 +685,6 @@ public class SVNWCContext {
         stat.setReposRelpath(info.reposRelPath);
 
         SVNStatus status = stat.getStatus16(localAbsPath, false, null, null, null, null, null, null, null, null, ISVNWCDb.WC_FORMAT_17, tree_conflict);
-        //status.setEntry(entry);
         return status;
 
     }
