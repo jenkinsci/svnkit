@@ -115,7 +115,7 @@
 
 	<target name="do-svnkit-test" depends="compile-svnkit-tests">
 		<echo message="${target.dir}/workingcopy/test" />
-		<junit dir="${target.dir}" fork="true" showoutput="true" printsummary="true">
+		<junit dir="${target.dir}/workingcopy/test" fork="true" showoutput="true" printsummary="true">
 			<classpath>
 				<pathelement location="contrib/junit/junit.jar" />
 				<pathelement location="contrib/trilead/trilead.jar" />

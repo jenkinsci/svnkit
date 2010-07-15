@@ -397,7 +397,7 @@ public class SVNWCContext {
         stat.setChangelist(null);
 
         SVNStatus status = stat.getStatus16(localAbspath, false, null, null, null, null, null, null, null, null, ISVNWCDb.WC_FORMAT_17, tree_conflict);
-        status.setEntry(getEntry(localAbspath, true, stat.getKind(), false));
+        //status.setEntry(getEntry(localAbspath, true, stat.getKind(), false));
         return status;
 
     }
@@ -693,7 +693,7 @@ public class SVNWCContext {
         stat.setReposRelpath(info.reposRelPath);
 
         SVNStatus status = stat.getStatus16(localAbsPath, false, null, null, null, null, null, null, null, null, ISVNWCDb.WC_FORMAT_17, tree_conflict);
-        status.setEntry(entry);
+        //status.setEntry(entry);
         return status;
 
     }

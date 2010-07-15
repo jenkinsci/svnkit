@@ -33,7 +33,7 @@ public class SVNStatus17TestCase extends TestCase {
 
     public void testLocalStatus17() throws SVNException {
         final SVNStatusClient17 client = new SVNStatusClient17(new BasicAuthenticationManager("test", "test"), new DefaultSVNOptions(null, true));
-        client.doStatus(new File("workingcopy/test"), SVNRevision.WORKING, SVNDepth.INFINITY, false, true, false, false, new StatusHandler(false), null);
+        client.doStatus(new File(""), SVNRevision.WORKING, SVNDepth.INFINITY, false, true, false, false, new StatusHandler(false), null);
     }
 
 }
