@@ -107,7 +107,6 @@ public class SVNStatusCommand extends SVNXMLCommand implements ISVNStatusHandler
                     getSVNEnvironment().getOut().print(xmlBuffer);
                 }
             } catch (SVNException e) {
-                e.printStackTrace(); // temporary logging
                 getSVNEnvironment().handleWarning(e.getErrorMessage(), new SVNErrorCode[] {SVNErrorCode.WC_NOT_DIRECTORY},
                         getSVNEnvironment().isQuiet());
             }
