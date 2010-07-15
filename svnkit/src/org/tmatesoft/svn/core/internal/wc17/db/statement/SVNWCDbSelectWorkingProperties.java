@@ -16,8 +16,9 @@ import org.tmatesoft.svn.core.internal.wc17.db.sqljet.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.wc17.db.sqljet.SVNSqlJetSelectFieldsStatement;
 
 /**
- * select properties from actual_node where wc_id = ?1 and local_relpath = ?2;
- * 
+ * SELECT properties, presence FROM WORKING_NODE WHERE wc_id = ?1 AND
+ * local_relpath = ?2;
+ *
  * @author TMate Software Ltd.
  */
 public class SVNWCDbSelectWorkingProperties extends SVNSqlJetSelectFieldsStatement<SVNWCDbSchema.WORKING_NODE__Fields> {
@@ -28,6 +29,7 @@ public class SVNWCDbSelectWorkingProperties extends SVNSqlJetSelectFieldsStateme
 
     protected void defineFields() {
         fields.add(SVNWCDbSchema.WORKING_NODE__Fields.properties);
+        fields.add(SVNWCDbSchema.WORKING_NODE__Fields.presence);
     }
 
 }
