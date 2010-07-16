@@ -74,8 +74,7 @@ public class SVNCommitMediator implements ISVNWorkspaceMediator {
         return null;    
     }
 
-    public void setWorkspaceProperty(String path, String name, SVNPropertyValue value)
-            throws SVNException {
+    public void setWorkspaceProperty(String path, String name, SVNPropertyValue value) throws SVNException {
         if (name == null) {
             return;
         }
