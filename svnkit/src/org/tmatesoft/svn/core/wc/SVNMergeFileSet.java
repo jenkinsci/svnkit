@@ -96,8 +96,12 @@ public class SVNMergeFileSet {
         myMimeType = mimeType;
         
         if (myBaseFile != null) {
-            myBaseFilePath = SVNPathUtil.isAncestor(myAdminArea.getAdminDirectory().getAbsolutePath(), 
+            if(myAdminArea!=null) {
+                myBaseFilePath = SVNPathUtil.isAncestor(myAdminArea.getAdminDirectory().getAbsolutePath(), 
                     myBaseFile.getAbsolutePath()) ? SVNFileUtil.getBasePath(myBaseFile) : null;
+            } else {
+                myBaseFilePath = myBaseFile.getAbsolutePath();
+            }
         }
         if (myLocalFile != null) {
             myLocalFilePath = SVNFileUtil.getBasePath(myLocalFile);
