@@ -34,6 +34,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbDeletionInfo.Deletio
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo.RepositoryInfoField;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
+import org.tmatesoft.svn.core.wc.SVNConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -1222,7 +1223,7 @@ public interface ISVNWCDb {
      * <p>
      * This function will probably be removed.
      */
-    List<SVNTreeConflictDescription> readConflicts(File localAbsPath) throws SVNException;
+    List<SVNConflictDescription> readConflicts(File localAbsPath) throws SVNException;
 
     /**
      * Return the kind of the node in DB at LOCAL_ABSPATH. The WORKING tree will

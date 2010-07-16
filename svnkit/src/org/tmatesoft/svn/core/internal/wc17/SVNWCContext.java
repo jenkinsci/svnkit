@@ -61,6 +61,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
+import org.tmatesoft.svn.core.wc.SVNConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNMergeFileSet;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
@@ -1181,8 +1182,8 @@ public class SVNWCContext {
             return info;
         }
         final File dir_path = (readInfo.kind == SVNWCDbKind.Dir) ? localAbsPath : SVNFileUtil.getFileDir(localAbsPath);
-        final List<SVNTreeConflictDescription> conflicts = db.readConflicts(localAbsPath);
-        for (final SVNTreeConflictDescription cd : conflicts) {
+        final List<SVNConflictDescription> conflicts = db.readConflicts(localAbsPath);
+        for (final SVNConflictDescription cd : conflicts) {
             final SVNMergeFileSet cdf = cd.getMergeFiles();
             if (isTextNeed && cd.isTextConflict()) {
                 /*
@@ -1554,7 +1555,7 @@ public class SVNWCContext {
 
         if (entry.isThisDir()) {
             /* get the tree conflict data. */
-            Map<String, SVNTreeConflictDescription> tree_conflicts = null;
+            Map<String, SVNConflictDescription> tree_conflicts = null;
 
             final List<String> conflict_victims = db.readConflictVictims(dirAbsPath);
 
@@ -1562,12 +1563,12 @@ public class SVNWCContext {
 
                 File child_abspath = SVNFileUtil.createFilePath(dirAbsPath, child_name.toString());
 
-                final List<SVNTreeConflictDescription> child_conflicts = db.readConflicts(child_abspath);
+                final List<SVNConflictDescription> child_conflicts = db.readConflicts(child_abspath);
 
-                for (SVNTreeConflictDescription conflict : child_conflicts) {
+                for (SVNConflictDescription conflict : child_conflicts) {
                     if (conflict.isTreeConflict()) {
                         if (tree_conflicts == null) {
-                            tree_conflicts = new HashMap<String, SVNTreeConflictDescription>();
+                            tree_conflicts = new HashMap<String, SVNConflictDescription>();
                         }
                         tree_conflicts.put(child_name, conflict);
                     }
@@ -2006,9 +2007,9 @@ public class SVNWCContext {
 
         if (info.conflicted) {
 
-            final List<SVNTreeConflictDescription> conflicts = db.readConflicts(entryAbsPath);
+            final List<SVNConflictDescription> conflicts = db.readConflicts(entryAbsPath);
 
-            for (SVNTreeConflictDescription cd : conflicts) {
+            for (SVNConflictDescription cd : conflicts) {
 
                 final SVNMergeFileSet cdf = cd.getMergeFiles();
                 if (cd.isTextConflict()) {
