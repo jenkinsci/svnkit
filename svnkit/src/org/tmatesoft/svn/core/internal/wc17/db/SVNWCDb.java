@@ -2732,13 +2732,13 @@ public class SVNWCDb implements ISVNWCDb {
     private static long getColumnRevNum(SVNSqlJetStatement stmt, int i) throws SVNException {
         if (isColumnNull(stmt, i))
             return ISVNWCDb.INVALID_REVNUM;
-        return getColumnInt64(stmt, i);
+        return (int)getColumnInt64(stmt, i);
     }
 
     private static long getColumnRevNum(SVNSqlJetStatement stmt, Enum f) throws SVNException {
         if (isColumnNull(stmt, f))
             return ISVNWCDb.INVALID_REVNUM;
-        return getColumnInt64(stmt, f);
+        return (int)getColumnInt64(stmt, f);
     }
 
     private static long getTranslatedSize(SVNSqlJetStatement stmt, Enum f) throws SVNException {
