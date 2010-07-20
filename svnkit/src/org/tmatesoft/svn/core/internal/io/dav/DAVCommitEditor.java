@@ -472,7 +472,7 @@ class DAVCommitEditor implements ISVNEditor {
             }
         } catch (SVNException e) {
             if (e.getErrorMessage().getErrorCode() == SVNErrorCode.FS_CONFLICT) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CONFLICT, "File or directory ''{0}'' is out of date; try updating", resource.getPath());
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CONFLICT, "File or directory ''{0}'' is out of date; try updating", resource.getURL());
                 SVNErrorManager.error(err, e.getErrorMessage(), SVNLogType.NETWORK);
             }
             throw e;
