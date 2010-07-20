@@ -302,7 +302,7 @@ public class SVNWCAccess implements ISVNEventHandler {
         } catch (SVNException svne) {
             SVNFileType childKind = SVNFileType.getType(path);
             SVNErrorCode errCode = svne.getErrorMessage().getErrorCode();
-            if (!path.equals(dir) && childKind == SVNFileType.DIRECTORY && errCode == SVNErrorCode.WC_NOT_DIRECTORY) {
+            if (!path.equals(dir) && (childKind == SVNFileType.DIRECTORY || childKind == SVNFileType.NONE) && errCode == SVNErrorCode.WC_NOT_DIRECTORY) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "''{0}'' is not a working copy", path);
                 SVNErrorManager.error(err, logLevel, SVNLogType.WC);
             } else {
