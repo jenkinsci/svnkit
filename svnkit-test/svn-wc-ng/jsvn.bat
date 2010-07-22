@@ -4,7 +4,13 @@ set IS_STATUS=false
 if "%1"=="status" (set IS_STATUS=true)
 if "%2"=="-u" (set IS_STATUS=false)
 if "!IS_STATUS!"=="false" (
+if "%1"=="add" (
+bash -c '%path.svn%/svn.exe %1 "$(cygpath -au %2)" %3 %4 %5 %6 %7 %8 %9'
+exit
+) else (
 %path.svn%/svn.exe %*
+exit
+)
 exit
 )
 
