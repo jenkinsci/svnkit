@@ -175,9 +175,9 @@ public class SVNSSHConnector implements ISVNConnector {
         if (mySession != null) {
             // close session and close owning connection if necessary.
             // close session and connection in atomic way.
-            SVNSSHSession.lock(Thread.currentThread());
             SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, 
                     Thread.currentThread() + ": ABOUT TO CLOSE SESSION IN : " + myConnection);
+            SVNSSHSession.lock(Thread.currentThread());
             try {
                 if (myConnection != null) {
                     if (myConnection.closeSession(mySession)) {

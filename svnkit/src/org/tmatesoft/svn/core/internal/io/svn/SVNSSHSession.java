@@ -376,9 +376,9 @@ public class SVNSSHSession {
                 } catch (InterruptedException e) {
                 }
             }
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, ourRequestor + ": LOCKED");
             ourLockLevel++;
             ourRequestor = requestor;
-            SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, ourRequestor + ": LOCKED");
         }
     }
     
@@ -436,10 +436,10 @@ public class SVNSSHSession {
         
         public boolean isSessionPingSupported() {
             lock(Thread.currentThread());
-            if (myConnection == null) {
-                return false;
-            }
             try {
+                if (myConnection == null) {
+                    return false;
+                }
                 ClientServerHello csh = null;
                 try {
                     Method getVersionInfoMethod = myConnection.getClass().getMethod("getVersionInfo", new Class[0]);
