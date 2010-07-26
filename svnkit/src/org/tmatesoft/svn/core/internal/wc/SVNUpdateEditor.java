@@ -1304,6 +1304,21 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
         }
 
         entry.setIncomplete(false);
+        if (!myIsDepthSticky && entry.isThisDir() && 
+                myRequestedDepth == SVNDepth.IMMEDIATES) {
+            int directoryDepth = SVNPathUtil.getSegmentsCount(dirInfo.getPath());
+            if (myTarget != null && !"".equals(myTarget)) {
+                directoryDepth--;
+            }
+            if (directoryDepth > 0) {
+                SVNDepth ambientDepth = dirInfo.myAmbientDepth;
+                if (ambientDepth == null || 
+                        ambientDepth == SVNDepth.UNKNOWN || 
+                        ambientDepth.compareTo(SVNDepth.EMPTY) > 0) {
+                    entry.setIncomplete(true);
+                }
+            }
+        } 
         File target = myAdminInfo.getTarget().getRoot();
 
         if (myIsDepthSticky && (myRequestedDepth == SVNDepth.INFINITY || (adminArea.getRoot().equals(target) &&
