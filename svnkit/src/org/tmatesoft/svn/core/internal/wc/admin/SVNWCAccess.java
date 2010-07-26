@@ -816,7 +816,7 @@ public class SVNWCAccess implements ISVNEventHandler {
         return changeLists == null || changeLists.isEmpty() || (entry != null && entry.getChangelistName() != null && changeLists.contains(entry.getChangelistName()));
     }
 
-    private int getMaxFormatVersion() {
+    int getMaxFormatVersion() {
         int maxVersion = -1;
         for (Iterator iterator = myAdminAreas.values().iterator(); iterator.hasNext();) {
             SVNAdminArea adminArea = (SVNAdminArea) iterator.next();
