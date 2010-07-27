@@ -149,7 +149,7 @@ public class SVNWCDb implements ISVNWCDb {
         return localAbsPath != null && localAbsPath.isAbsolute();
     }
 
-    private static <E extends Enum<E>> EnumSet<E> getInfoFields(Class<E> clazz, E... fields) {
+    public static <E extends Enum<E>> EnumSet<E> getInfoFields(Class<E> clazz, E... fields) {
         final EnumSet<E> set = EnumSet.noneOf(clazz);
         for (E f : fields) {
             set.add(f);

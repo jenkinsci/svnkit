@@ -18,6 +18,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -2302,9 +2303,174 @@ public class SVNWCContext {
         return resInfo;
     }
 
-    public SVNURL getUrlFromPath(File dirAbsPath) {
-        // TODO
-        throw new UnsupportedOperationException();
+    public SVNURL getUrlFromPath(File localAbsPath) throws SVNException {
+        return getEntryLocation(localAbsPath, SVNRevision.UNDEFINED, false).url;
+    }
+
+    public static class EntryLocationInfo {
+
+        public SVNURL url;
+        public long revNum;
+    }
+
+    public EntryLocationInfo getEntryLocation(File localAbsPath, SVNRevision pegRevisionKind, boolean fetchRevnum) throws SVNException {
+        /*
+         * This function doesn't contact the repository, so error out if asked
+         * to do so.
+         */
+        // TODO what is svn_opt_revision_date in our code ? (sergey)
+        if (/* pegRevisionKind == svn_opt_revision_date || */
+        pegRevisionKind == SVNRevision.HEAD) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION);
+            SVNErrorManager.error(err, SVNLogType.WC);
+            return null;
+        }
+
+        final NodeCopyFromInfo copyFrom = getNodeCopyFromInfo(localAbsPath, NodeCopyFromField.url, NodeCopyFromField.rev);
+
+        final EntryLocationInfo result = new EntryLocationInfo();
+
+        if (copyFrom.url != null && pegRevisionKind == SVNRevision.WORKING) {
+            result.url = copyFrom.url;
+            if (fetchRevnum)
+                result.revNum = copyFrom.rev;
+        } else {
+            final SVNURL node_url = getNodeUrl(localAbsPath);
+
+            if (node_url != null) {
+                result.url = node_url;
+                if (fetchRevnum) {
+                    if ((pegRevisionKind == SVNRevision.COMMITTED) || (pegRevisionKind == SVNRevision.PREVIOUS)) {
+                        result.revNum = getNodeChangedInfo(localAbsPath).changedRev;
+                        if (pegRevisionKind == SVNRevision.PREVIOUS)
+                            result.revNum = result.revNum - 1;
+                    } else {
+                        /*
+                         * Local modifications are not relevant here, so
+                         * consider svn_opt_revision_unspecified,
+                         * svn_opt_revision_number, svn_opt_revision_base, and
+                         * svn_opt_revision_working as the same.
+                         */
+                        result.revNum = getNodeBaseRev(localAbsPath);
+                    }
+                }
+            } else {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "Entry for ''{0}'' has no URL", localAbsPath);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+        }
+
+        return result;
+    }
+
+    public enum NodeCopyFromField {
+        rootUrl, reposRelPath, url, rev, isCopyTarget;
+    }
+
+    public static class NodeCopyFromInfo {
+
+        public SVNURL rootUrl = null;
+        public File reposRelPath = null;
+        public SVNURL url = null;
+        public long rev = INVALID_REVNUM;
+        public boolean isCopyTarget = false;
+    }
+
+    public NodeCopyFromInfo getNodeCopyFromInfo(File localAbsPath, NodeCopyFromField... fields) throws SVNException {
+        final EnumSet<NodeCopyFromField> f = SVNWCDb.getInfoFields(NodeCopyFromField.class, fields);
+
+        final WCDbInfo readInfo = db.readInfo(localAbsPath, InfoField.status, InfoField.originalReposRelpath, InfoField.originalRootUrl, InfoField.originalRevision);
+        SVNURL original_root_url = readInfo.originalRootUrl;
+        File original_repos_relpath = readInfo.originalReposRelpath;
+        long original_revision = readInfo.originalRevision;
+        SVNWCDbStatus status = readInfo.status;
+
+        final NodeCopyFromInfo copyFrom = new NodeCopyFromInfo();
+
+        if (original_root_url != null && original_repos_relpath != null) {
+            /*
+             * If this was the root of the copy then the URL is immediately
+             * available...
+             */
+            SVNURL my_copyfrom_url = null;
+
+            if (f.contains(NodeCopyFromField.url) || f.contains(NodeCopyFromField.isCopyTarget))
+                my_copyfrom_url = SVNURL.parseURIEncoded(SVNPathUtil.append(original_root_url.toString(), original_repos_relpath.toString()));
+
+            if (f.contains(NodeCopyFromField.rootUrl))
+                copyFrom.rootUrl = original_root_url;
+            if (f.contains(NodeCopyFromField.reposRelPath))
+                copyFrom.reposRelPath = original_repos_relpath;
+            if (f.contains(NodeCopyFromField.url))
+                copyFrom.url = my_copyfrom_url;
+
+            if (f.contains(NodeCopyFromField.rev))
+                copyFrom.rev = original_revision;
+
+            if (f.contains(NodeCopyFromField.isCopyTarget)) {
+                /*
+                 * ### At this point we'd just set is_copy_target to TRUE, *but*
+                 * we currently want to model wc-1 behaviour. Particularly, this
+                 * affects mixed-revision copies (e.g. wc-wc copy): - Wc-1 saw
+                 * only the root of a mixed-revision copy as the copy's root. -
+                 * Wc-ng returns an explicit original_root_url,
+                 * original_repos_relpath pair for each subtree with mismatching
+                 * revision. We need to compensate for that: Find out if the
+                 * parent of this node is also copied and has a matching
+                 * copy_from URL. If so, nevermind the revision, just like wc-1
+                 * did, and say this was not a separate copy target.
+                 */
+                final File parent_abspath = SVNFileUtil.getFileDir(localAbsPath);
+                final String base_name = SVNFileUtil.getFileName(localAbsPath);
+
+                /*
+                 * This is a copied node, so we should never fall off the top of
+                 * a working copy here.
+                 */
+                final SVNURL parent_copyfrom_url = getNodeCopyFromInfo(parent_abspath, NodeCopyFromField.url).url;
+
+                /*
+                 * So, count this as a separate copy target only if the URLs
+                 * don't match up, or if the parent isn't copied at all.
+                 */
+                if (parent_copyfrom_url == null || !SVNURL.parseURIEncoded(SVNPathUtil.append(parent_copyfrom_url.toString(), base_name)).equals(my_copyfrom_url)) {
+                    copyFrom.isCopyTarget = true;
+                }
+            }
+        } else if ((status == SVNWCDbStatus.Added || status == SVNWCDbStatus.ObstructedAdd)
+                && (f.contains(NodeCopyFromField.rev) || f.contains(NodeCopyFromField.url) || f.contains(NodeCopyFromField.rootUrl) || f.contains(NodeCopyFromField.reposRelPath))) {
+            /*
+             * ...But if this is merely the descendant of an explicitly
+             * copied/moved directory, we need to do a bit more work to
+             * determine copyfrom_url and copyfrom_rev.
+             */
+
+            final WCDbAdditionInfo scanAddition = db.scanAddition(localAbsPath, AdditionInfoField.status, AdditionInfoField.opRootAbsPath, AdditionInfoField.originalReposRelPath,
+                    AdditionInfoField.originalRootUrl, AdditionInfoField.originalRevision);
+            final File op_root_abspath = scanAddition.opRootAbsPath;
+            status = scanAddition.status;
+            original_repos_relpath = scanAddition.originalReposRelPath;
+            original_root_url = scanAddition.originalRootUrl;
+            original_revision = scanAddition.originalRevision;
+
+            if (status == SVNWCDbStatus.Copied || status == SVNWCDbStatus.MovedHere) {
+                SVNURL src_parent_url = SVNURL.parseURIEncoded(SVNPathUtil.append(original_root_url.toString(), original_repos_relpath.toString()));
+                String src_relpath = SVNPathUtil.getPathAsChild(op_root_abspath.toString(), localAbsPath.toString());
+
+                if (src_relpath != null) {
+                    if (f.contains(NodeCopyFromField.rootUrl))
+                        copyFrom.rootUrl = original_root_url;
+                    if (f.contains(NodeCopyFromField.reposRelPath))
+                        copyFrom.reposRelPath = new File(original_repos_relpath, src_relpath);
+                    if (f.contains(NodeCopyFromField.url))
+                        copyFrom.url = SVNURL.parseURIEncoded(SVNPathUtil.append(src_parent_url.toString(), src_relpath.toString()));
+                    if (f.contains(NodeCopyFromField.rev))
+                        copyFrom.rev = original_revision;
+                }
+            }
+        }
+
+        return copyFrom;
     }
 
     public static String getPathAsChild(File parent, File child) {
