@@ -1441,16 +1441,21 @@ public class SVNCopyDriver extends SVNBasicDelegate {
         SVNVersionedProperties srcBaseProps = srcDir.getBaseProperties(src.getName());
         SVNVersionedProperties srcWorkingProps = srcDir.getProperties(src.getName());
 
-        // copy wc file.
         SVNAdminArea dstDir = dstAccess.getAdminArea(dstParent);
-        File tmpWCFile = SVNAdminUtil.createTmpFile(dstDir);
         if (srcWorkingProps.getPropertyValue(SVNProperty.SPECIAL) != null) {
-            // TODO create symlink there?
-            SVNFileUtil.copyFile(src, tmpWCFile, false);
+            SVNWCManager.addRepositoryFile(dstDir, dstName, null, srcBaseFile, srcBaseProps.asMap(), srcWorkingProps.asMap(), copyFromURL, copyFromRevision);
+
+            String sourceLinkTarget = SVNFileUtil.getSymlinkName(src);
+            String targetLinkTarget = SVNFileUtil.getSymlinkName(dst);
+            if (sourceLinkTarget != null && !sourceLinkTarget.equals(targetLinkTarget)) {
+                SVNFileUtil.deleteFile(dst);
+                SVNFileUtil.createSymlink(dst, sourceLinkTarget);
+            }
         } else {
+            File tmpWCFile = SVNAdminUtil.createTmpFile(dstDir);
             SVNFileUtil.copyFile(src, tmpWCFile, false);
+            SVNWCManager.addRepositoryFile(dstDir, dstName, tmpWCFile, null, srcBaseProps.asMap(), srcWorkingProps.asMap(), copyFromURL, copyFromRevision);
         }
-        SVNWCManager.addRepositoryFile(dstDir, dstName, tmpWCFile, null, srcBaseProps.asMap(), srcWorkingProps.asMap(), copyFromURL, copyFromRevision);
 
         SVNEvent event = SVNEventFactory.createSVNEvent(dst, SVNNodeKind.FILE, null, SVNRepository.INVALID_REVISION, SVNEventAction.ADD, null, null, null);
         dstAccess.handleEvent(event);
