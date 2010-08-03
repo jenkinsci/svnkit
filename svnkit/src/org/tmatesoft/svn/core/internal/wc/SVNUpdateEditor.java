@@ -652,6 +652,14 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
                     "Failed to add directory ''{0}'': a non-directory object of the same name already exists",
                     path);
             SVNErrorManager.error(err, SVNLogType.WC);
+        } else if (kind == SVNFileType.NONE) {
+            SVNEntry entryInParent = parentArea.getEntry(name, false);
+            if (entryInParent != null && 
+                    entryInParent.isDirectory() && 
+                    entryInParent.isScheduledForDeletion()) {
+                addDeletedTree(fullPath);
+                isLocallyDeleted = true;
+            }
         }
 
         if (kind == SVNFileType.DIRECTORY) {
