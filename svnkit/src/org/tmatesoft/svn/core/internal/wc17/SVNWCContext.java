@@ -76,7 +76,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  */
 public class SVNWCContext {
 
-    private static final long INVALID_REVNUM = -1;
+    public static final long INVALID_REVNUM = -1;
     private static final int STREAM_CHUNK_SIZE = 16384;
 
     public static boolean isAdminDirectory(String name) {
@@ -153,6 +153,11 @@ public class SVNWCContext {
         this.db = db;
         this.closeDb = false;
         this.eventHandler = eventHandler;
+    }
+
+
+    public ISVNEventHandler getEventHandler() {
+        return eventHandler;
     }
 
     public void close() throws SVNException {

@@ -35,62 +35,71 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
     }
 
     public void abortEdit() throws SVNException {
+        throw new UnsupportedOperationException();
     }
 
     public void absentDir(String path) throws SVNException {
+        throw new UnsupportedOperationException();
     }
 
     public void absentFile(String path) throws SVNException {
+        throw new UnsupportedOperationException();
     }
 
     public void addDir(String path, String copyFromPath, long copyFromRevision) throws SVNException {
+        throw new UnsupportedOperationException();
     }
 
     public void addFile(String path, String copyFromPath, long copyFromRevision) throws SVNException {
+        throw new UnsupportedOperationException();
     }
 
     public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
+        throw new UnsupportedOperationException();
     }
 
     public void changeFileProperty(String path, String propertyName, SVNPropertyValue propertyValue) throws SVNException {
+        throw new UnsupportedOperationException();
     }
 
     public void closeDir() throws SVNException {
+        throw new UnsupportedOperationException();
     }
 
     public void closeFile(String path, String textChecksum) throws SVNException {
+        throw new UnsupportedOperationException();
     }
 
     public void deleteEntry(String path, long revision) throws SVNException {
+        throw new UnsupportedOperationException();
     }
 
     public void openDir(String path, long revision) throws SVNException {
+        throw new UnsupportedOperationException();
     }
 
     public void openFile(String path, long revision) throws SVNException {
+        throw new UnsupportedOperationException();
     }
 
     public void openRoot(long revision) throws SVNException {
-    }
-
-    public void targetRevision(long revision) throws SVNException {
+        throw new UnsupportedOperationException();
     }
 
     public void applyTextDelta(String path, String baseChecksum) throws SVNException {
+        throw new UnsupportedOperationException();
     }
 
     public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     public void textDeltaEnd(String path) throws SVNException {
+        throw new UnsupportedOperationException();
     }
 
     public void handleStatus(SVNStatus status) throws SVNException {
-    }
-
-    public SVNCommitInfo closeEdit() throws SVNException {
-        return super.closeEdit();
+        throw new UnsupportedOperationException();
     }
 
 }

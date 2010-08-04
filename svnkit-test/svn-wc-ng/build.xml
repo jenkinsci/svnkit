@@ -113,6 +113,16 @@
 
 	</target>
 
+	<target name="do-status-jsvn-remote" depends="deploy-svnkit">
+
+		<exec dir="${target.dir}" executable="${basedir}/build/lib/jsvn.bat">
+			<env key="USERPROFILE" value="${target.dir}/userprofile" />
+			<env key="SVNKIT_OPTIONS" value="-Dsvnkit.wc.17=true" />
+			<arg line="-v -u status workingcopy/test" />
+		</exec>
+
+	</target>
+
 	<target name="do-svnkit-test" depends="compile-svnkit-tests">
 		<echo message="${target.dir}/workingcopy/test" />
 		<junit dir="${target.dir}/workingcopy/test" fork="true" showoutput="true" printsummary="true">

@@ -452,7 +452,7 @@ public class SVNStatusClient17 extends SVNBasicDelegate {
                     SVNRepository locksRepos = createRepository(url, false);
                     checkCancelled();
                     boolean serverSupportsDepth = repository.hasCapability(SVNCapability.DEPTH);
-                    reporter = new SVNReporter17(path, false, !serverSupportsDepth, depth, false, true, true, getDebugLog());
+                    reporter = new SVNReporter17(path, wcContext, false, !serverSupportsDepth, depth, false, true, true, false, getDebugLog());
                     SVNStatusReporter17 statusReporter = new SVNStatusReporter17(locksRepos, reporter, editor);
                     String target = "".equals(targetBaseName) ? null : targetBaseName;
                     repository.status(rev, target, depth, statusReporter, SVNCancellableEditor.newInstance((ISVNEditor) editor, getEventDispatcher(), getDebugLog()));

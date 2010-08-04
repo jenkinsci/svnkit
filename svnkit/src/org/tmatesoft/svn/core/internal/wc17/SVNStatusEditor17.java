@@ -117,6 +117,10 @@ public class SVNStatusEditor17 {
         return myTargetRevision;
     }
 
+    public void targetRevision(long revision) {
+        myTargetRevision = revision;
+    }
+
     public void setFileProvider(ISVNStatusFileProvider filesProvider) {
         myFileProvider = filesProvider;
     }
