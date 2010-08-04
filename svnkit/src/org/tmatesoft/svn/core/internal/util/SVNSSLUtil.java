@@ -106,8 +106,9 @@ public class SVNSSLUtil {
           mask |= 2;
       }
       String certHostName = cert.getSubjectDN().getName();
-      int index = certHostName.indexOf("CN=") + 3;
+      int index = certHostName.indexOf("CN=");
       if (index >= 0) {
+          index += 3;
           certHostName = certHostName.substring(index);
           if (certHostName.indexOf(' ') >= 0) {
               certHostName = certHostName.substring(0, certHostName.indexOf(' '));
