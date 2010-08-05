@@ -15,10 +15,12 @@ import java.io.File;
 
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -28,16 +30,20 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbAdditionInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbAdditionInfo.AdditionInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbBaseInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbDeletionInfo.DeletionInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbDirDeletedInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo.RepositoryInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbBaseInfo.BaseInfoField;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.ISVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @version 1.3
@@ -346,8 +352,33 @@ public class SVNReporter17 implements ISVNReporterBaton {
      * Helper for svn_wc_crawl_revisions5() that finds a base revision for a
      * node that doesn't have one itself.
      */
-    private long findBaseRev(File path, File topPath) throws SVNException {
-        throw new UnsupportedOperationException();
+    private long findBaseRev(File local_abspath, File top_local_abspath) throws SVNException {
+        File op_root_abspath;
+
+        final WCDbInfo readInfo = wcContext.getDb().readInfo(local_abspath, InfoField.status, InfoField.revision, InfoField.haveBase);
+        SVNWCDbStatus status = readInfo.status;
+        boolean have_base = readInfo.haveBase;
+        long baseRev = readInfo.revision;
+
+        if (SVNRevision.isValidRevisionNumber(baseRev))
+            return baseRev;
+
+        if (have_base) {
+            return wcContext.getDb().getBaseInfo(local_abspath, BaseInfoField.revision).revision;
+        }
+
+        if (status == SVNWCDbStatus.Added) {
+            op_root_abspath = wcContext.getDb().scanAddition(local_abspath, AdditionInfoField.opRootAbsPath).opRootAbsPath;
+            return findBaseRev(SVNFileUtil.getFileDir(op_root_abspath), top_local_abspath);
+        } else if (status == SVNWCDbStatus.Deleted) {
+            File work_del_abspath = wcContext.getDb().scanDeletion(local_abspath, DeletionInfoField.workDelAbsPath).workDelAbsPath;
+            if (work_del_abspath != null)
+                return findBaseRev(work_del_abspath, top_local_abspath);
+        }
+
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "Can't retrieve base revision for ''{0}''", top_local_abspath);
+        SVNErrorManager.error(err, SVNLogType.WC);
+        return SVNWCContext.INVALID_REVNUM;
     }
 
     private void reportRevisionsAndDepths(File localAbsPath, String dirPath, long target_rev, ISVNReporter reporter) {
