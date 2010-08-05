@@ -12,6 +12,10 @@
 package org.tmatesoft.svn.core.internal.wc17;
 
 import java.io.File;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -19,9 +23,11 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
+import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
@@ -55,7 +61,7 @@ public class SVNReporter17 implements ISVNReporterBaton {
     private SVNWCContext wcContext;
     private final SVNDepth depth;
     private final boolean isRestoreFiles;
-    private final boolean isUdeDepthCompatibilityTrick;
+    private final boolean isUseDepthCompatibilityTrick;
     private final boolean lockOnDemand;
     private final boolean isStatus;
     private final boolean isHonorDepthExclude;
@@ -69,7 +75,7 @@ public class SVNReporter17 implements ISVNReporterBaton {
         this.path = path;
         this.wcContext = wcContext;
         this.isRestoreFiles = restoreFiles;
-        this.isUdeDepthCompatibilityTrick = useDepthCompatibilityTrick;
+        this.isUseDepthCompatibilityTrick = useDepthCompatibilityTrick;
         this.depth = depth;
         this.lockOnDemand = lockOnDemand;
         this.isStatus = isStatus;
@@ -211,7 +217,7 @@ public class SVNReporter17 implements ISVNReporterBaton {
             explicit_rev = false;
 
         start_empty = (status == SVNWCDbStatus.Incomplete);
-        if (isUdeDepthCompatibilityTrick && target_depth.compareTo(SVNDepth.IMMEDIATES) <= 0 && depth.compareTo(target_depth) > 0) {
+        if (isUseDepthCompatibilityTrick && target_depth.compareTo(SVNDepth.IMMEDIATES) <= 0 && depth.compareTo(target_depth) > 0) {
             start_empty = true;
         }
 
@@ -254,7 +260,7 @@ public class SVNReporter17 implements ISVNReporterBaton {
                      * Recursively crawl ROOT_DIRECTORY and report differing
                      * revisions.
                      */
-                    reportRevisionsAndDepths(path, "", target_rev, reporter);
+                    reportRevisionsAndDepths(path, "", target_rev, reporter, start_empty);
                 }
             }
 
@@ -381,7 +387,313 @@ public class SVNReporter17 implements ISVNReporterBaton {
         return SVNWCContext.INVALID_REVNUM;
     }
 
-    private void reportRevisionsAndDepths(File localAbsPath, String dirPath, long target_rev, ISVNReporter reporter) {
-        throw new UnsupportedOperationException();
+    private void reportRevisionsAndDepths(File anchor_abspath, String dir_path, long dir_rev, ISVNReporter reporter, boolean report_everything) throws SVNException {
+
+        /*
+         * Get both the SVN Entries and the actual on-disk entries. Also notice
+         * that we're picking up hidden entries too (read_children never hides
+         * children).
+         */
+        File dir_abspath = SVNFileUtil.createFilePath(anchor_abspath, dir_path);
+
+        List<String> base_children = wcContext.getDb().getBaseChildren(dir_abspath);
+
+        Set<String> dirents = new HashSet<String>();
+        {
+            File[] list = SVNFileListUtil.listFiles(dir_abspath);
+            if (list != null) {
+                for (File file : list) {
+                    dirents.add(SVNFileUtil.getFileName(file));
+                }
+            }
+        }
+
+        /*** Do the real reporting and recursing. ***/
+
+        /* First, look at "this dir" to see what its URL and depth are. */
+        final WCDbInfo readInfo = wcContext.getDb().readInfo(dir_abspath, InfoField.reposRelPath, InfoField.reposRootUrl, InfoField.depth);
+        SVNURL dir_repos_root = readInfo.reposRootUrl;
+        File dir_repos_relpath = readInfo.reposRelPath;
+        SVNDepth dir_depth = readInfo.depth;
+
+        /* If the directory has no url, search its parents */
+        if (dir_repos_relpath == null) {
+            final WCDbRepositoryInfo scan = wcContext.getDb().scanBaseRepository(dir_abspath, RepositoryInfoField.relPath, RepositoryInfoField.rootUrl);
+            dir_repos_relpath = scan.relPath;
+            dir_repos_root = scan.rootUrl;
+        }
+
+        /*
+         * If "this dir" has "svn:externals" property set on it, call the
+         * external_func callback.
+         */
+        // if (external_func)
+        // SVN_ERR(read_externals_info(db, dir_abspath, external_func,
+        // external_baton, dir_depth, iterpool));
+
+        /* Looping over current directory's BASE children: */
+        for (String child : base_children) {
+
+            /* Compute the paths and URLs we need. */
+            File this_path = SVNFileUtil.createFilePath(dir_path, child);
+            File this_abspath = SVNFileUtil.createFilePath(dir_abspath, child);
+
+            SVNWCDbStatus this_status;
+            SVNWCDbKind this_kind = null;
+            long this_rev = SVNWCContext.INVALID_REVNUM;
+            File this_repos_relpath = null;
+            SVNURL this_repos_root_url;
+            SVNDepth this_depth = null;
+            SVNWCDbLock this_lock = null;
+            boolean this_switched;
+
+            try {
+
+                final WCDbBaseInfo baseInfo = wcContext.getDb().getBaseInfo(this_abspath, BaseInfoField.status, BaseInfoField.kind, BaseInfoField.revision, BaseInfoField.reposRelPath,
+                        BaseInfoField.reposRootUrl, BaseInfoField.depth, BaseInfoField.lock);
+
+                this_status = baseInfo.status;
+                this_kind = baseInfo.kind;
+                this_rev = baseInfo.revision;
+                this_repos_relpath = baseInfo.reposRelPath;
+                this_repos_root_url = baseInfo.reposRootUrl;
+                this_depth = baseInfo.depth;
+                this_lock = baseInfo.lock;
+
+            } catch (SVNException e) {
+
+                if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND)
+                    throw e;
+
+                /*
+                 * THIS_ABSPATH was listed as a BASE child of DIR_ABSPATH. Yet,
+                 * we just got an error trying to read it. What gives? :-P
+                 *
+                 * This happens when THIS_ABSPATH is a subdirectory that is
+                 * marked in the parent stub as "not-present". The subdir is
+                 * then removed. Later, an addition is scheduled, putting the
+                 * subdirectory back, but ONLY containing WORKING nodes.
+                 *
+                 * Thus, the BASE fetch comes out of the subdir, and fails.
+                 *
+                 * For this case, we go ahead and treat this as a simple
+                 * not-present, and ignore whatever is in the subdirectory.
+                 */
+
+                this_status = SVNWCDbStatus.NotPresent;
+
+                /*
+                 * Note: the other THIS_* local variables pass to base_get_info
+                 * are NOT set at this point. But we don't need them...
+                 */
+            }
+
+            /*
+             * Note: some older code would attempt to check the parent stub of
+             * subdirectories for the not-present state. That check was
+             * redundant since a not-present directory has no BASE nodes within
+             * it which may report another status.
+             *
+             * There might be NO BASE node (per the condition above), but the
+             * typical case is that base_get_info() reads the parent stub
+             * because there is no subdir (with administrative data). Thus, we
+             * already have all the information we need. No further testing.
+             */
+
+            /* First check for exclusion */
+            if (this_status == SVNWCDbStatus.Excluded) {
+                if (isHonorDepthExclude) {
+                    /*
+                     * Report the excluded path, no matter whether
+                     * report_everything flag is set. Because the
+                     * report_everything flag indicates that the server will
+                     * treat the wc as empty and thus push full content of the
+                     * files/subdirs. But we want to prevent the server from
+                     * pushing the full content of this_path at us.
+                     */
+
+                    /*
+                     * The server does not support link_path report on excluded
+                     * path. We explicitly prohibit this situation in
+                     * svn_wc_crop_tree().
+                     */
+                    reporter.setPath(SVNFileUtil.getFilePath(this_path), null, dir_rev, SVNDepth.EXCLUDE, false);
+                } else {
+                    /*
+                     * We want to pull in the excluded target. So, report it as
+                     * deleted, and server will respond properly.
+                     */
+                    if (!report_everything)
+                        reporter.deletePath(SVNFileUtil.getFilePath(this_path));
+                }
+                continue;
+            }
+
+            /*** The Big Tests: ***/
+            if (this_status == SVNWCDbStatus.Absent || this_status == SVNWCDbStatus.NotPresent) {
+                /*
+                 * If the entry is 'absent' or 'not-present', make sure the
+                 * server knows it's gone... ...unless we're reporting
+                 * everything, in which case we're going to report it missing
+                 * later anyway.
+                 *
+                 * This instructs the server to send it back to us, if it is now
+                 * available (an addition after a not-present state), or if it
+                 * is now authorized (change in authz for the absent item).
+                 */
+                if (!report_everything)
+                    reporter.deletePath(SVNFileUtil.getFilePath(this_path));
+                continue;
+            }
+
+            /* Is the entry NOT on the disk? We may be able to restore it. */
+            if (!dirents.contains(child)) {
+                boolean missing = false;
+
+                final WCDbInfo info = wcContext.getDb().readInfo(this_abspath, InfoField.status, InfoField.kind);
+                SVNWCDbStatus wrk_status = info.status;
+                SVNWCDbKind wrk_kind = info.kind;
+
+                if (isRestoreFiles && wrk_status != SVNWCDbStatus.Added && wrk_status != SVNWCDbStatus.Deleted && wrk_status != SVNWCDbStatus.ObstructedAdd
+                        && wrk_status != SVNWCDbStatus.ObstructedDelete) {
+                    /*
+                     * It is possible on a case insensitive system that the
+                     * entry is not really missing, but just cased incorrectly.
+                     * In this case we can't overwrite it with the pristine
+                     * version
+                     */
+                    SVNNodeKind dirent_kind = SVNFileType.getNodeKind(SVNFileType.getType(this_abspath));
+
+                    if (dirent_kind == SVNNodeKind.NONE) {
+                        boolean restored = restoreNode(this_abspath, wrk_kind, this_rev);
+                        if (!restored)
+                            missing = true;
+                    }
+                } else
+                    missing = true;
+
+                /*
+                 * If a node is still missing from disk here, we have no way to
+                 * recreate it locally, so report as missing and move along.
+                 * Again, don't bother if we're reporting everything, because
+                 * the dir is already missing on the server.
+                 */
+                if (missing && wrk_kind == SVNWCDbKind.Dir && (depth.compareTo(SVNDepth.FILES) > 0 || depth == SVNDepth.UNKNOWN)) {
+                    if (!report_everything)
+                        reporter.deletePath(SVNFileUtil.getFilePath(this_path));
+                    continue;
+                }
+            }
+
+            /* And finally prepare for reporting */
+            if (this_repos_relpath == null) {
+                this_switched = false;
+                this_repos_relpath = SVNFileUtil.createFilePath(dir_repos_relpath, child);
+            } else {
+                final String childname = SVNPathUtil.getPathAsChild(dir_repos_relpath.getPath(), this_repos_relpath.getPath());
+
+                if (childname == null || !childname.equals(child))
+                    this_switched = true;
+                else
+                    this_switched = false;
+            }
+
+            /* Tweak THIS_DEPTH to a useful value. */
+            if (this_depth == SVNDepth.UNKNOWN)
+                this_depth = SVNDepth.INFINITY;
+
+            /*
+             * Obstructed nodes might report SVN_INVALID_REVNUM. Tweak it.
+             *
+             * ### it seems that obstructed nodes should be handled quite a ###
+             * bit differently. maybe reported as missing, like not-present ###
+             * or absent nodes?
+             */
+            if (!SVNRevision.isValidRevisionNumber(this_rev))
+                this_rev = dir_rev;
+
+            /*** Files ***/
+            if (this_kind == SVNWCDbKind.File || this_kind == SVNWCDbKind.Symlink) {
+                if (report_everything) {
+                    /* Report the file unconditionally, one way or another. */
+                    if (this_switched)
+                        reporter.linkPath(SVNURL.parseURIEncoded(SVNPathUtil.append(dir_repos_root.toString(), SVNEncodingUtil.uriEncode(SVNFileUtil.getFilePath(this_repos_relpath)))),
+                                SVNFileUtil.getFilePath(this_path), this_lock != null ? this_lock.token : null, this_rev, this_depth, false);
+                    else
+                        reporter.setPath(SVNFileUtil.getFilePath(this_path), this_lock != null ? this_lock.token : null, this_rev, this_depth, false);
+                }
+
+                /* Possibly report a disjoint URL ... */
+                else if (this_switched)
+                    reporter.linkPath(SVNURL.parseURIEncoded(SVNPathUtil.append(dir_repos_root.toString(), SVNEncodingUtil.uriEncode(SVNFileUtil.getFilePath(this_repos_relpath)))),
+                            SVNFileUtil.getFilePath(this_path), this_lock != null ? this_lock.token : null, this_rev, this_depth, false);
+                /*
+                 * ... or perhaps just a differing revision or lock token, or
+                 * the mere presence of the file in a depth-empty dir.
+                 */
+                else if (this_rev != dir_rev || this_lock != null || dir_depth == SVNDepth.EMPTY)
+                    reporter.setPath(SVNFileUtil.getFilePath(this_path), this_lock != null ? this_lock.token : null, this_rev, this_depth, false);
+            } /* end file case */
+
+            /*** Directories (in recursive mode) ***/
+            else if (this_kind == SVNWCDbKind.Dir && (depth.compareTo(SVNDepth.FILES) > 0 || depth == SVNDepth.UNKNOWN)) {
+                boolean is_incomplete;
+                boolean start_empty;
+
+                /*
+                 * If the subdir and its administrative area are not present,
+                 * then do NOT bother to report this node, much less recurse
+                 * into the thing.
+                 *
+                 * Note: if the there is nothing on the disk, then we may have
+                 * reported it missing further above.
+                 *
+                 * ### hmm. but what if we have a *file* obstructing the dir?
+                 * ### the code above will not report it, and we'll simply ###
+                 * skip it right here. I guess with an obstruction, we ### can't
+                 * really do anything with info the server might ### send, so
+                 * maybe this is just fine.
+                 */
+                if (this_status == SVNWCDbStatus.Obstructed)
+                    continue;
+
+                is_incomplete = (this_status == SVNWCDbStatus.Incomplete);
+                start_empty = is_incomplete;
+
+                if (isUseDepthCompatibilityTrick && this_depth.compareTo(SVNDepth.FILES) <= 0 && depth.compareTo(this_depth) > 0) {
+                    start_empty = true;
+                }
+
+                if (report_everything) {
+                    /* Report the dir unconditionally, one way or another. */
+                    if (this_switched)
+                        reporter.linkPath(SVNURL.parseURIEncoded(SVNPathUtil.append(dir_repos_root.toString(), SVNEncodingUtil.uriEncode(SVNFileUtil.getFilePath(this_repos_relpath)))),
+                                SVNFileUtil.getFilePath(this_path), this_lock != null ? this_lock.token : null, this_rev, this_depth, start_empty);
+                    else
+                        reporter.setPath(SVNFileUtil.getFilePath(this_path), this_lock != null ? this_lock.token : null, this_rev, this_depth, start_empty);
+                }
+
+                /* Possibly report a disjoint URL ... */
+                else if (this_switched)
+                    reporter.linkPath(SVNURL.parseURIEncoded(SVNPathUtil.append(dir_repos_root.toString(), SVNEncodingUtil.uriEncode(SVNFileUtil.getFilePath(this_repos_relpath)))),
+                            SVNFileUtil.getFilePath(this_path), this_lock != null ? this_lock.token : null, this_rev, this_depth, start_empty);
+                /*
+                 * ... or perhaps just a differing revision, lock token,
+                 * incomplete subdir, the mere presence of the directory in a
+                 * depth-empty or depth-files dir, or if the parent dir is at
+                 * depth-immediates but the child is not at depth-empty. Also
+                 * describe shallow subdirs if we are trying to set depth to
+                 * infinity.
+                 */
+                else if (this_rev != dir_rev || this_lock != null || is_incomplete || dir_depth == SVNDepth.EMPTY || dir_depth == SVNDepth.FILES
+                        || (dir_depth == SVNDepth.IMMEDIATES && this_depth != SVNDepth.EMPTY) || (this_depth.compareTo(SVNDepth.INFINITY) < 0 && depth == SVNDepth.INFINITY))
+                    reporter.setPath(SVNFileUtil.getFilePath(this_path), this_lock != null ? this_lock.token : null, this_rev, this_depth, start_empty);
+
+                if (SVNDepth.recurseFromDepth(depth))
+                    reportRevisionsAndDepths(anchor_abspath, SVNFileUtil.getFilePath(this_path), this_rev, reporter, start_empty);
+            } /* end directory case */
+        } /* end main entries loop */
+
+        return;
     }
 }
