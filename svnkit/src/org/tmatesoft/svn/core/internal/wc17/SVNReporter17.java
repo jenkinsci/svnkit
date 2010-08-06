@@ -338,23 +338,6 @@ public class SVNReporter17 implements ISVNReporterBaton {
     }
 
     /**
-     * Helper for report_revisions_and_depths().
-     *
-     * Perform an atomic restoration of the file LOCAL_ABSPATH; that is, copy
-     * the file's text-base to the administrative tmp area, and then move that
-     * file to LOCAL_ABSPATH with possible translations/expansions. If
-     * USE_COMMIT_TIMES is set, then set working file's timestamp to
-     * last-commit-time. Either way, set entry-timestamp to match that of the
-     * working file when all is finished.
-     *
-     * Not that a valid access baton with a write lock to the directory of
-     * LOCAL_ABSPATH must be available in DB.
-     */
-    private void restoreFile(File localAbsPath) throws SVNException {
-        throw new UnsupportedOperationException();
-    }
-
-    /**
      * Helper for svn_wc_crawl_revisions5() that finds a base revision for a
      * node that doesn't have one itself.
      */
@@ -427,6 +410,8 @@ public class SVNReporter17 implements ISVNReporterBaton {
          * If "this dir" has "svn:externals" property set on it, call the
          * external_func callback.
          */
+        // TODO external_func ?
+
         // if (external_func)
         // SVN_ERR(read_externals_info(db, dir_abspath, external_func,
         // external_baton, dir_depth, iterpool));
@@ -696,4 +681,22 @@ public class SVNReporter17 implements ISVNReporterBaton {
 
         return;
     }
+
+    /**
+     * Helper for report_revisions_and_depths().
+     *
+     * Perform an atomic restoration of the file LOCAL_ABSPATH; that is, copy
+     * the file's text-base to the administrative tmp area, and then move that
+     * file to LOCAL_ABSPATH with possible translations/expansions. If
+     * USE_COMMIT_TIMES is set, then set working file's timestamp to
+     * last-commit-time. Either way, set entry-timestamp to match that of the
+     * working file when all is finished.
+     *
+     * Not that a valid access baton with a write lock to the directory of
+     * LOCAL_ABSPATH must be available in DB.
+     */
+    private void restoreFile(File localAbsPath) throws SVNException {
+        throw new UnsupportedOperationException();
+    }
+
 }
