@@ -456,4 +456,9 @@ public class SVNStatusEditor17 {
         return ignores;
     }
 
+    public void setRepositoryInfo(SVNURL repositoryRoot, HashMap<String, SVNLock> repositoryLocks) {
+        myRepositoryRoot = repositoryRoot;
+        myRepositoryLocks = repositoryLocks;
+    }
+
 }

@@ -14,9 +14,12 @@ package org.tmatesoft.svn.core.internal.wc17;
 import java.util.HashMap;
 
 import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -27,12 +30,13 @@ import org.tmatesoft.svn.core.io.SVNRepository;
  */
 public class SVNStatusReporter17 implements ISVNReporterBaton, ISVNReporter {
 
-    private final SVNRepository repository;
-    private final SVNReporter17 reportBaton;
-    private final SVNStatusEditor17 editor;
-    private final SVNURL repositoryLocation;
-    private final HashMap<String, SVNLock> locks;
+    private SVNRepository repository;
+    private SVNReporter17 reportBaton;
+    private SVNStatusEditor17 editor;
+    private SVNURL repositoryLocation;
+    private HashMap<String, SVNLock> locks;
     private ISVNReporter reporter;
+    private SVNURL repositoryRoot;
 
     public SVNStatusReporter17(SVNRepository repository, SVNReporter17 reportBaton, SVNStatusEditor17 editor) {
         this.repository = repository;
@@ -52,27 +56,62 @@ public class SVNStatusReporter17 implements ISVNReporterBaton, ISVNReporter {
     }
 
     public void setPath(String path, String lockToken, long revision, SVNDepth depth, boolean startEmpty) throws SVNException {
-        throw new UnsupportedOperationException();
+        this.reporter.setPath(path, lockToken, revision, depth, startEmpty);
     }
 
     public void deletePath(String path) throws SVNException {
-        throw new UnsupportedOperationException();
+        this.reporter.deletePath(path);
     }
 
     public void linkPath(SVNURL url, String path, String lockToken, long revision, boolean startEmpty) throws SVNException {
-        throw new UnsupportedOperationException();
+        setPath(path, lockToken, revision, SVNDepth.INFINITY, startEmpty);
     }
 
     public void linkPath(SVNURL url, String path, String lockToken, long revision, SVNDepth depth, boolean startEmpty) throws SVNException {
-        throw new UnsupportedOperationException();
+
+        SVNURL ancestor = SVNURLUtil.getCommonURLAncestor(url, repositoryLocation);
+
+        /* If we got a shorter ancestor, truncate our current ancestor.
+           Note that svn_dirent_get_longest_ancestor will allocate its return
+           value even if it identical to one of its arguments. */
+
+        if (SVNPathUtil.getPathAsChild(ancestor.getPath(), repositoryLocation.getPath()) != null) {
+            repositoryLocation = ancestor;
+
+            // TODO set depth infinity to reportBaton:
+            // rb->depth = svn_depth_infinity;
+        }
+
+        reporter.linkPath(url, path, lockToken, revision, depth, startEmpty);
     }
 
     public void finishReport() throws SVNException {
-        throw new UnsupportedOperationException();
+
+        // collect locks
+        SVNLock[] locks = null;
+        try {
+            repositoryRoot = this.repository.getRepositoryRoot(true);
+            locks = this.repository.getLocks("");
+        } catch (SVNException e) {
+            if (!(e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_NOT_IMPLEMENTED)) {
+                throw e;
+            }
+        } finally {
+            this.repository.closeSession();
+        }
+        if (locks != null) {
+            for (int i = 0; i < locks.length; i++) {
+                SVNLock lock = locks[i];
+                this.locks.put(lock.getPath(), lock);
+            }
+        }
+        this.editor.setRepositoryInfo(this.repositoryRoot, this.locks);
+        this.reporter.finishReport();
+
     }
 
     public void abortReport() throws SVNException {
-        throw new UnsupportedOperationException();
+        reporter.abortReport();
     }
 
 }
