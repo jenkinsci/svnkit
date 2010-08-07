@@ -23,6 +23,7 @@ import java.util.StringTokenizer;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
@@ -42,6 +43,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo.RepositoryInfoField;
+import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.ISVNStatusFileProvider;
 import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
@@ -55,27 +57,27 @@ import org.tmatesoft.svn.core.wc.SVNStatusType;
  */
 public class SVNStatusEditor17 {
 
-    private SVNWCContext myWCContext;
-    private File myPath;
+    protected SVNWCContext myWCContext;
+    protected File myPath;
 
-    private boolean myIsReportAll;
-    private boolean myIsNoIgnore;
-    private SVNDepth myDepth;
+    protected boolean myIsReportAll;
+    protected boolean myIsNoIgnore;
+    protected SVNDepth myDepth;
 
-    private ISVNStatusHandler myStatusHandler;
+    protected ISVNStatusHandler myStatusHandler;
 
-    private Map myExternalsMap;
-    private Collection myGlobalIgnores;
+    protected Map myExternalsMap;
+    protected Collection myGlobalIgnores;
 
-    private SVNURL myRepositoryRoot;
-    private Map myRepositoryLocks;
-    private long myTargetRevision;
-    private String myWCRootPath;
-    private ISVNStatusFileProvider myFileProvider;
-    private ISVNStatusFileProvider myDefaultFileProvider;
-    private boolean myIsGetExcluded;
+    protected SVNURL myRepositoryRoot;
+    protected Map myRepositoryLocks;
+    protected long myTargetRevision;
+    protected String myWCRootPath;
+    protected ISVNStatusFileProvider myFileProvider;
+    protected ISVNStatusFileProvider myDefaultFileProvider;
+    protected boolean myIsGetExcluded;
 
-    private SVNExternalsStore myExternalsStore;
+    protected SVNExternalsStore myExternalsStore;
 
     public SVNStatusEditor17(File path, SVNWCContext wcContext, ISVNOptions options, boolean noIgnore, boolean reportAll, SVNDepth depth, SVNExternalsStore externalsStore, ISVNStatusHandler handler) {
 
@@ -123,6 +125,10 @@ public class SVNStatusEditor17 {
 
     public void setFileProvider(ISVNStatusFileProvider filesProvider) {
         myFileProvider = filesProvider;
+    }
+
+    public SVNDepth getDepth() {
+        return myDepth;
     }
 
     private static Collection getGlobalIgnores(ISVNOptions options) {
@@ -459,6 +465,79 @@ public class SVNStatusEditor17 {
     public void setRepositoryInfo(SVNURL repositoryRoot, HashMap<String, SVNLock> repositoryLocks) {
         myRepositoryRoot = repositoryRoot;
         myRepositoryLocks = repositoryLocks;
+    }
+
+    protected SVNStatus17 internalStatus(File localAbsPath) throws SVNException {
+
+        SVNWCDbKind node_kind;
+        File parent_repos_relpath;
+        SVNURL parent_repos_root_url;
+        SVNWCDbStatus node_status = null;
+
+        assert (SVNWCDb.isAbsolute(localAbsPath));
+
+        SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(localAbsPath));
+
+        try {
+            WCDbInfo info = myWCContext.getDb().readInfo(localAbsPath, InfoField.status, InfoField.kind);
+            node_status = info.status;
+            node_kind = info.kind;
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND) {
+                throw e;
+            }
+            node_kind = SVNWCDbKind.Unknown;
+        }
+
+        if (node_status == SVNWCDbStatus.Obstructed || node_status == SVNWCDbStatus.ObstructedAdd || node_status == SVNWCDbStatus.ObstructedDelete || node_status == SVNWCDbStatus.NotPresent) {
+            node_kind = SVNWCDbKind.Unknown;
+        }
+
+        if (node_kind != SVNWCDbKind.Unknown) {
+            /* Check for hidden in the parent stub */
+            boolean hidden = myWCContext.getDb().isNodeHidden(localAbsPath);
+
+            if (hidden)
+                node_kind = SVNWCDbKind.Unknown;
+        }
+
+        if (node_kind == SVNWCDbKind.Unknown)
+            return myWCContext.assembleUnversioned17(localAbsPath, kind, false /* is_ignored */);
+
+        if (SVNFileUtil.getFileDir(localAbsPath) != null) {
+
+            File parent_abspath = SVNFileUtil.getFileDir(localAbsPath);
+
+            try {
+                WCDbInfo parent_info = myWCContext.getDb().readInfo(parent_abspath, InfoField.status, InfoField.reposRelPath, InfoField.reposRootUrl);
+                SVNWCDbStatus parent_status = parent_info.status;
+                parent_repos_relpath = parent_info.reposRelPath;
+                parent_repos_root_url = parent_info.reposRootUrl;
+
+                if (parent_repos_relpath == null && parent_status != SVNWCDbStatus.Added && parent_status != SVNWCDbStatus.Deleted) {
+
+                    final WCDbRepositoryInfo baseRepos = myWCContext.getDb().scanBaseRepository(localAbsPath, RepositoryInfoField.relPath, RepositoryInfoField.rootUrl);
+                    parent_repos_relpath = baseRepos.relPath;
+                    parent_repos_root_url = baseRepos.rootUrl;
+                }
+
+            } catch (SVNException e) {
+                if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND) {
+                    // || SVN_WC__ERR_IS_NOT_CURRENT_WC(err))
+                    parent_repos_root_url = null;
+                    parent_repos_relpath = null;
+                } else {
+                    throw e;
+                }
+            }
+
+        } else {
+            parent_repos_root_url = null;
+            parent_repos_relpath = null;
+        }
+
+        return myWCContext.assembleStatus17(localAbsPath, parent_repos_root_url, parent_repos_relpath, kind, false, true /* get_all */, null /* repos_lock */);
+
     }
 
 }

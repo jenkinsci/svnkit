@@ -155,7 +155,6 @@ public class SVNWCContext {
         this.eventHandler = eventHandler;
     }
 
-
     public ISVNEventHandler getEventHandler() {
         return eventHandler;
     }
@@ -354,6 +353,12 @@ public class SVNWCContext {
     }
 
     public SVNStatus assembleUnversioned(File localAbspath, SVNNodeKind pathKind, boolean isIgnored) throws SVNException {
+        final SVNStatus17 stat17 = assembleUnversioned17(localAbspath, pathKind, isIgnored);
+        SVNStatus status = stat17.getStatus16(localAbspath, false, null, null, null, null, null, null, null, null, ISVNWCDb.WC_FORMAT_17);
+        return status;
+    }
+
+    public SVNStatus17 assembleUnversioned17(File localAbspath, SVNNodeKind pathKind, boolean isIgnored) throws SVNException {
 
         /*
          * Find out whether the path is a tree conflict victim. This function
@@ -402,13 +407,19 @@ public class SVNWCContext {
          */
         stat.setConflicted(tree_conflict != null);
         stat.setChangelist(null);
+        stat.setTreeConflict(tree_conflict);
 
-        SVNStatus status = stat.getStatus16(localAbspath, false, null, null, null, null, null, null, null, null, ISVNWCDb.WC_FORMAT_17, tree_conflict);
-        return status;
-
+        return stat;
     }
 
     public SVNStatus assembleStatus(File localAbsPath, SVNURL parentReposRootUrl, File parentReposRelPath, SVNNodeKind pathKind, boolean pathSpecial, boolean getAll, SVNLock repositoryLock)
+            throws SVNException {
+        final SVNStatus17 stat17 = assembleStatus17(localAbsPath, parentReposRootUrl, parentReposRelPath, pathKind, pathSpecial, getAll, repositoryLock);
+        SVNStatus status = stat17.getStatus16(localAbsPath, false, null, null, null, null, null, null, null, null, ISVNWCDb.WC_FORMAT_17);
+        return status;
+    }
+
+    public SVNStatus17 assembleStatus17(File localAbsPath, SVNURL parentReposRootUrl, File parentReposRelPath, SVNNodeKind pathKind, boolean pathSpecial, boolean getAll, SVNLock repositoryLock)
             throws SVNException {
 
         boolean switched_p, copied = false;
@@ -690,10 +701,9 @@ public class SVNWCContext {
         stat.setChangelist(info.changelist);
         stat.setReposRootUrl(info.reposRootUrl);
         stat.setReposRelpath(info.reposRelPath);
+        stat.setTreeConflict(tree_conflict);
 
-        SVNStatus status = stat.getStatus16(localAbsPath, false, null, null, null, null, null, null, null, null, ISVNWCDb.WC_FORMAT_17, tree_conflict);
-        return status;
-
+        return stat;
     }
 
     private SVNProperties getPristineProperties(File localAbsPath) throws SVNException {

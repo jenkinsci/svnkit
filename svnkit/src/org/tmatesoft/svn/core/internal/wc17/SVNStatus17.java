@@ -158,6 +158,8 @@ public class SVNStatus17 {
      */
     private String oodChangedAuthor;
 
+    private SVNTreeConflictDescription treeConflict;
+
     public SVNNodeKind getKind() {
         return kind;
     }
@@ -359,11 +361,13 @@ public class SVNStatus17 {
     }
 
     public SVNStatus getStatus16(File path, boolean isFileExternal, File conflictNewFile, File conflictOldFile, File conflictWrkFile, File projRejectFile, String copyFromURL,
-            SVNRevision copyFromRevision, SVNLock remoteLock, Map entryProperties, int wcFormatVersion, SVNTreeConflictDescription treeConflict) {
+            SVNRevision copyFromRevision, SVNLock remoteLock, Map entryProperties, int wcFormatVersion) {
         final SVNStatusType contentStatus = getCombinedStatus();
-        return new SVNStatus(reposRootUrl, path, kind, SVNRevision.create(revision), SVNRevision.create(changedRev), changedDate, changedAuthor, contentStatus, propStatus, reposTextStatus,
+        final SVNStatus status = new SVNStatus(reposRootUrl, path, kind, SVNRevision.create(revision), SVNRevision.create(changedRev), changedDate, changedAuthor, contentStatus, propStatus, reposTextStatus,
                 reposPropStatus, lock != null, copied, switched, isFileExternal, conflictNewFile, conflictOldFile, conflictWrkFile, projRejectFile, copyFromURL, copyFromRevision, remoteLock, lock,
                 entryProperties, changelist, wcFormatVersion, treeConflict);
+        status.setStatus17(this);
+        return status;
     }
 
     /*
@@ -376,6 +380,14 @@ public class SVNStatus17 {
             return textStatus;
         }
         return nodeStatus;
+    }
+
+    public void setTreeConflict(SVNTreeConflictDescription treeConflict) {
+        this.treeConflict = treeConflict;
+    }
+
+    public SVNTreeConflictDescription getTreeConflict(){
+        return this.treeConflict;
     }
 
 }

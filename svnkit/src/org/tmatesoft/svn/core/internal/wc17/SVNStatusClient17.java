@@ -448,7 +448,8 @@ public class SVNStatusClient17 extends SVNBasicDelegate {
                     checkCancelled();
                     editor.closeEdit();
                 } else {
-                    editor = new SVNRemoteStatusEditor17(targetAbsPath, wcContext, getOptions(), includeIgnored, reportAll, depth, externalsStore, tweakHandler);
+                    editor = new SVNRemoteStatusEditor17(dirAbsPath, targetBaseName,
+                            wcContext, getOptions(), includeIgnored, reportAll, depth, externalsStore, tweakHandler);
                     SVNRepository locksRepos = createRepository(url, false);
                     checkCancelled();
                     boolean serverSupportsDepth = repository.hasCapability(SVNCapability.DEPTH);
