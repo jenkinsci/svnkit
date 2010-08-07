@@ -354,6 +354,9 @@ public class SVNWCContext {
 
     public SVNStatus assembleUnversioned(File localAbspath, SVNNodeKind pathKind, boolean isIgnored) throws SVNException {
         final SVNStatus17 stat17 = assembleUnversioned17(localAbspath, pathKind, isIgnored);
+        if (stat17 == null) {
+            return null;
+        }
         SVNStatus status = stat17.getStatus16(localAbspath, false, null, null, null, null, null, null, null, null, ISVNWCDb.WC_FORMAT_17);
         return status;
     }
@@ -415,6 +418,9 @@ public class SVNWCContext {
     public SVNStatus assembleStatus(File localAbsPath, SVNURL parentReposRootUrl, File parentReposRelPath, SVNNodeKind pathKind, boolean pathSpecial, boolean getAll, SVNLock repositoryLock)
             throws SVNException {
         final SVNStatus17 stat17 = assembleStatus17(localAbsPath, parentReposRootUrl, parentReposRelPath, pathKind, pathSpecial, getAll, repositoryLock);
+        if (stat17 == null) {
+            return null;
+        }
         SVNStatus status = stat17.getStatus16(localAbsPath, false, null, null, null, null, null, null, null, null, ISVNWCDb.WC_FORMAT_17);
         return status;
     }
