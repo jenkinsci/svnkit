@@ -3,7 +3,7 @@ This file lists all third party libraries used by this version of SVNKit.
 
 1) JNA
 
-JNA Libary, version 3.2.3 - Dynamically access native libraries from Java without JNI.
+JNA Libary, version 3.2.7 - Dynamically access native libraries from Java without JNI.
 License: LGPL 2.1 or later (http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html)
 URL: https://jna.dev.java.net/
 Note: JNA is an optional component, remove jna.jar from the classpath if you would not like to use it.
