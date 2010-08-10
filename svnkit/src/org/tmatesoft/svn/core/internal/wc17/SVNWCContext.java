@@ -369,6 +369,7 @@ public class SVNWCContext {
         SVNTreeConflictDescription tree_conflict = db.opReadTreeConflict(localAbspath);
 
         SVNStatus17 stat = new SVNStatus17();
+        stat.setLocalAbsPath(localAbspath);
         stat.setKind(SVNNodeKind.UNKNOWN); /* not versioned */
         stat.setDepth(SVNDepth.UNKNOWN);
         stat.setNodeStatus(SVNStatusType.STATUS_NONE);
