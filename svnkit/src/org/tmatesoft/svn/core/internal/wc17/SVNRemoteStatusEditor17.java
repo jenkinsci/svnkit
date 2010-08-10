@@ -464,27 +464,24 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
     }
 
     public void abortEdit() throws SVNException {
-        throw new UnsupportedOperationException();
     }
 
     public void absentDir(String path) throws SVNException {
-        throw new UnsupportedOperationException();
     }
 
     public void absentFile(String path) throws SVNException {
-        throw new UnsupportedOperationException();
     }
 
     public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
-        throw new UnsupportedOperationException();
+        return null;
     }
 
     public void textDeltaEnd(String path) throws SVNException {
-        throw new UnsupportedOperationException();
     }
 
     public void handleStatus(SVNStatus status) throws SVNException {
-        throw new UnsupportedOperationException();
+        status.setContentsStatus(SVNStatusType.STATUS_DELETED);
+        getDefaultHandler().handleStatus(status);
     }
 
     private class DirectoryInfo implements ISVNStatusHandler {
