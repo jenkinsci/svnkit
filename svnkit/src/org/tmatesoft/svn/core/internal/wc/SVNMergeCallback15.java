@@ -251,6 +251,13 @@ public class SVNMergeCallback15 extends SVNMergeCallback {
                 if (same) {
                     if (!myIsDryRun && !myIsAddNecessitatedMerge) {
                         SVNFileUtil.rename(file2, mergedFile);
+                        boolean executable = false;
+                        if (diff != null && diff.containsName(SVNProperty.EXECUTABLE)) {
+                            executable = diff.getStringValue(SVNProperty.EXECUTABLE) != null;
+                        } else {
+                            executable = originalProperties != null && originalProperties.getStringValue(SVNProperty.EXECUTABLE) != null;
+                        }                    
+                        SVNFileUtil.setExecutable(mergedFile, executable);
                     }
                     result[0] = SVNStatusType.CHANGED;
                     needsMerge = false;

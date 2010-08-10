@@ -345,6 +345,13 @@ public class SVNMergeCallback extends AbstractDiffCallback {
                 if (same) {
                     if (!myIsDryRun && !myIsAddNecessitatedMerge) {
                         SVNFileUtil.rename(file2, mergedFile);
+                        boolean executable = false;
+                        if (diff != null && diff.containsName(SVNProperty.EXECUTABLE)) {
+                            executable = diff.getStringValue(SVNProperty.EXECUTABLE) != null;
+                        } else {
+                            executable = originalProperties != null && originalProperties.getStringValue(SVNProperty.EXECUTABLE) != null;
+                        }                    
+                        SVNFileUtil.setExecutable(mergedFile, executable);
                     }
                     result[0] = SVNStatusType.CHANGED;
                     needsMerge = false;
@@ -376,6 +383,7 @@ public class SVNMergeCallback extends AbstractDiffCallback {
                     myConflictedPaths.put(path, path);
                 }
             }
+            // if file is marked as executable
         } 
         return result;
     }
