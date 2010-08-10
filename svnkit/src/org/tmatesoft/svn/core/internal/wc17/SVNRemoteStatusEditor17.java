@@ -380,6 +380,89 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
         }
     }
 
+    public void closeFile(String path, String textChecksum) throws SVNException {
+
+        SVNStatusType repos_node_status;
+        SVNStatusType repos_text_status;
+        SVNStatusType repos_prop_status;
+        SVNLock repos_lock = null;
+
+        /* If nothing has changed, return. */
+        if (!(myFileInfo.added || myFileInfo.prop_changed || myFileInfo.text_changed))
+            return;
+
+        /* If this is a new file, add it to the statushash. */
+        if (myFileInfo.added) {
+            repos_node_status = SVNStatusType.STATUS_ADDED;
+            repos_text_status = SVNStatusType.STATUS_ADDED;
+            repos_prop_status = myFileInfo.prop_changed ? SVNStatusType.STATUS_ADDED : SVNStatusType.STATUS_NONE;
+            if (myRepositoryLocks != null) {
+                File dir_repos_relpath = findDirReposRelpath(myFileInfo.parent);
+                if (dir_repos_relpath != null) {
+                    /*
+                     * repos_lock still uses the deprecated filesystem absolute
+                     * path format
+                     */
+                    File repos_relpath = SVNFileUtil.createFilePath(dir_repos_relpath, myFileInfo.name);
+                    repos_lock = (SVNLock) myRepositoryLocks.get(SVNURL.parseURIEncoded("/" + repos_relpath.toString()).getPath());
+                }
+            }
+        } else {
+            repos_node_status = (myFileInfo.text_changed || myFileInfo.prop_changed) ? SVNStatusType.STATUS_MODIFIED : SVNStatusType.STATUS_NONE;
+            repos_text_status = myFileInfo.text_changed ? SVNStatusType.STATUS_MODIFIED : SVNStatusType.STATUS_NONE;
+            repos_prop_status = myFileInfo.prop_changed ? SVNStatusType.STATUS_MODIFIED : SVNStatusType.STATUS_NONE;
+        }
+
+        tweakStatusHash(myFileInfo, myFileInfo.localAbsPath, repos_node_status, repos_text_status, repos_prop_status, SVNWCDb.INVALID_REVNUM, repos_lock);
+    }
+
+    private void tweakStatusHash(FileInfo fileInfo, File localAbsPath, SVNStatusType reposNodeStatus, SVNStatusType reposTextStatus, SVNStatusType reposPropStatus, long revnum, SVNLock reposLock)
+            throws SVNException {
+
+        Map<File, SVNStatus17> statushash = fileInfo.parent.statii;
+        SVNStatus17 statstruct = statushash.get(localAbsPath);
+        if (statstruct == null) {
+            if (reposNodeStatus != SVNStatusType.STATUS_ADDED)
+                return;
+            statstruct = internalStatus(localAbsPath);
+            statstruct.setReposLock(reposLock);
+            statushash.put(localAbsPath, statstruct);
+        }
+
+        if ((reposNodeStatus == SVNStatusType.STATUS_ADDED) && (statstruct.getReposNodeStatus() == SVNStatusType.STATUS_DELETED))
+            reposNodeStatus = SVNStatusType.STATUS_REPLACED;
+
+        /* Tweak the structure's repos fields. */
+        if (reposNodeStatus != null)
+            statstruct.setReposNodeStatus(reposNodeStatus);
+        if (reposTextStatus != null)
+            statstruct.setReposTextStatus(reposTextStatus);
+        if (reposPropStatus != null)
+            statstruct.setReposPropStatus(reposPropStatus);
+
+        statstruct.setOodChangedRev(fileInfo.ood_changed_rev);
+        statstruct.setOodChangedDate(fileInfo.ood_changed_date);
+        statstruct.setOodKind(fileInfo.ood_kind);
+        if (fileInfo.ood_changed_author != null)
+            statstruct.setOodChangedAuthor(fileInfo.ood_changed_author);
+
+    }
+
+    private File findDirReposRelpath(DirectoryInfo dirinfo) {
+        /* If we have no name, we're the root, return the anchor URL. */
+        if (dirinfo.name == null)
+            return myAnchorStatus.getReposRelpath();
+        File repos_relpath;
+        DirectoryInfo parent = dirinfo.parent;
+        SVNStatus17 status = parent.statii.get(dirinfo.localAbsPath);
+        if (status != null)
+            return status.getReposRelpath();
+        repos_relpath = findDirReposRelpath(parent);
+        if (repos_relpath != null)
+            return SVNFileUtil.createFilePath(repos_relpath, dirinfo.name);
+        return null;
+    }
+
     public void abortEdit() throws SVNException {
         throw new UnsupportedOperationException();
     }
@@ -389,10 +472,6 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
     }
 
     public void absentFile(String path) throws SVNException {
-        throw new UnsupportedOperationException();
-    }
-
-    public void closeFile(String path, String textChecksum) throws SVNException {
         throw new UnsupportedOperationException();
     }
 
