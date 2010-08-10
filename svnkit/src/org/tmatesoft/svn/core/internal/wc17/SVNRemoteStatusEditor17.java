@@ -26,7 +26,6 @@ import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
-import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
@@ -147,6 +146,20 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
         return;
     }
 
+    public void addDir(String path, String copyFromPath, long copyFromRevision) throws SVNException {
+        myDirectoryInfo = new DirectoryInfo(path, myDirectoryInfo);
+        myDirectoryInfo.added = true;
+        myDirectoryInfo.parent.text_changed = true;
+    }
+
+    public void openDir(String path, long revision) throws SVNException {
+        myDirectoryInfo = new DirectoryInfo(path, myDirectoryInfo);
+    }
+
+    public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
+        throw new UnsupportedOperationException();
+    }
+
     public void abortEdit() throws SVNException {
         throw new UnsupportedOperationException();
     }
@@ -159,17 +172,10 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
         throw new UnsupportedOperationException();
     }
 
-    public void addDir(String path, String copyFromPath, long copyFromRevision) throws SVNException {
-        throw new UnsupportedOperationException();
-    }
-
     public void addFile(String path, String copyFromPath, long copyFromRevision) throws SVNException {
         throw new UnsupportedOperationException();
     }
 
-    public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
-        throw new UnsupportedOperationException();
-    }
 
     public void changeFileProperty(String path, String propertyName, SVNPropertyValue propertyValue) throws SVNException {
         throw new UnsupportedOperationException();
@@ -180,10 +186,6 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
     }
 
     public void closeFile(String path, String textChecksum) throws SVNException {
-        throw new UnsupportedOperationException();
-    }
-
-    public void openDir(String path, long revision) throws SVNException {
         throw new UnsupportedOperationException();
     }
 
@@ -219,6 +221,10 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
         private String ood_changed_author;
         private boolean excluded;
         private SVNDepth depth;
+        private boolean added;
+        private boolean prop_changed;
+        private boolean text_changed;
+
 
         public DirectoryInfo(String path, DirectoryInfo parent) throws SVNException {
             File local_abspath;
