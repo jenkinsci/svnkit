@@ -19,6 +19,7 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
@@ -38,6 +39,8 @@ import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
  * @author TMate Software Ltd.
  */
 public class SVNStatus17 {
+
+    private File localAbsPath;
 
     /** The kind of node as recorded in the working copy */
     private SVNNodeKind kind;
@@ -159,6 +162,14 @@ public class SVNStatus17 {
     private String oodChangedAuthor;
 
     private SVNTreeConflictDescription treeConflict;
+
+    public void setLocalAbsPath(File localAbsPath) {
+        this.localAbsPath = localAbsPath;
+    }
+
+    public File getLocalAbsPath() {
+        return localAbsPath;
+    }
 
     public SVNNodeKind getKind() {
         return kind;
@@ -360,10 +371,14 @@ public class SVNStatus17 {
         this.oodChangedAuthor = oodChangedAuthor;
     }
 
-    public SVNStatus getStatus16(File path, boolean isFileExternal, File conflictNewFile, File conflictOldFile, File conflictWrkFile, File projRejectFile, String copyFromURL,
+    public SVNStatus getStatus16(){
+        return getStatus16(false, null, null, null, null, null, null, null, null, ISVNWCDb.WC_FORMAT_17);
+    }
+
+    public SVNStatus getStatus16(boolean isFileExternal, File conflictNewFile, File conflictOldFile, File conflictWrkFile, File projRejectFile, String copyFromURL,
             SVNRevision copyFromRevision, SVNLock remoteLock, Map entryProperties, int wcFormatVersion) {
         final SVNStatusType contentStatus = getCombinedStatus();
-        final SVNStatus status = new SVNStatus(reposRootUrl, path, kind, SVNRevision.create(revision), SVNRevision.create(changedRev), changedDate, changedAuthor, contentStatus, propStatus, reposTextStatus,
+        final SVNStatus status = new SVNStatus(reposRootUrl, localAbsPath, kind, SVNRevision.create(revision), SVNRevision.create(changedRev), changedDate, changedAuthor, contentStatus, propStatus, reposTextStatus,
                 reposPropStatus, lock != null, copied, switched, isFileExternal, conflictNewFile, conflictOldFile, conflictWrkFile, projRejectFile, copyFromURL, copyFromRevision, remoteLock, lock,
                 entryProperties, changelist, wcFormatVersion, treeConflict);
         status.setStatus17(this);

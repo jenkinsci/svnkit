@@ -15,6 +15,7 @@ import java.io.File;
 import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -24,10 +25,12 @@ import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
+import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
@@ -50,13 +53,15 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
 
     private File myAnchorAbsPath;
     private String myTargetBaseName;
+    private File myTargetAbsPath;
 
     public SVNRemoteStatusEditor17(File anchorAbsPath, String targetBaseName, SVNWCContext wcContext, ISVNOptions options, boolean includeIgnored, boolean reportAll, SVNDepth depth,
             SVNExternalsStore externalsStore, ISVNStatusHandler realHandler) throws SVNException {
         super(SVNFileUtil.createFilePath(anchorAbsPath, targetBaseName), wcContext, options, includeIgnored, reportAll, depth, externalsStore, realHandler);
         myAnchorStatus = internalStatus(SVNFileUtil.createFilePath(anchorAbsPath, targetBaseName));
-        this.myAnchorAbsPath = anchorAbsPath;
-        this.myTargetBaseName = targetBaseName;
+        myAnchorAbsPath = anchorAbsPath;
+        myTargetBaseName = targetBaseName;
+        myTargetAbsPath = SVNFileUtil.createFilePath(anchorAbsPath, targetBaseName);
     }
 
     public void openRoot(long revision) throws SVNException {
@@ -169,13 +174,177 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
                 try {
                     myDirectoryInfo.ood_changed_rev = Long.parseLong(value.getString());
                 } catch (NumberFormatException nfe) {
-                    myDirectoryInfo.ood_changed_rev = SVNRevision.UNDEFINED.getNumber();
+                    myDirectoryInfo.ood_changed_rev = SVNWCDb.INVALID_REVNUM;
                 }
             } else if (SVNProperty.LAST_AUTHOR.equals(name)) {
                 myDirectoryInfo.ood_changed_author = value.getString();
             } else if (SVNProperty.COMMITTED_DATE.equals(name)) {
                 myDirectoryInfo.ood_changed_date = SVNDate.parseDate(value.getString());
             }
+        }
+    }
+
+    public void closeDir() throws SVNException {
+        DirectoryInfo db = myDirectoryInfo;
+        DirectoryInfo pb = db.parent;
+
+        /*
+         * If nothing has changed and directory has no out of date descendants,
+         * return.
+         */
+        if (db.added || db.prop_changed || db.text_changed || db.ood_changed_rev != SVNWCDb.INVALID_REVNUM) {
+            SVNStatusType repos_node_status;
+            SVNStatusType repos_text_status;
+            SVNStatusType repos_prop_status;
+
+            /* If this is a new directory, add it to the statushash. */
+            if (db.added) {
+                repos_node_status = SVNStatusType.STATUS_ADDED;
+                repos_text_status = SVNStatusType.STATUS_ADDED;
+                repos_prop_status = db.prop_changed ? SVNStatusType.STATUS_ADDED : SVNStatusType.STATUS_NONE;
+            } else {
+                repos_node_status = (db.text_changed || db.prop_changed) ? SVNStatusType.STATUS_MODIFIED : SVNStatusType.STATUS_NONE;
+                repos_text_status = db.text_changed ? SVNStatusType.STATUS_MODIFIED : SVNStatusType.STATUS_NONE;
+                repos_prop_status = db.prop_changed ? SVNStatusType.STATUS_MODIFIED : SVNStatusType.STATUS_NONE;
+            }
+
+            /*
+             * Maybe add this directory to its parent's status hash. Note that
+             * tweak_statushash won't do anything if repos_text_status is not
+             * svn_wc_status_added.
+             */
+            if (pb != null) {
+                /*
+                 * ### When we add directory locking, we need to find a ###
+                 * directory lock here.
+                 */
+                tweakStatusHash(pb, db, db.localAbsPath, true, repos_node_status, repos_text_status, repos_prop_status, null, null);
+            } else {
+                /*
+                 * We're editing the root dir of the WC. As its repos status
+                 * info isn't otherwise set, set it directly to trigger
+                 * invocation of the status callback below.
+                 */
+                myAnchorStatus.setReposNodeStatus(repos_node_status);
+                myAnchorStatus.setReposPropStatus(repos_prop_status);
+                myAnchorStatus.setReposTextStatus(repos_text_status);
+
+                /* If the root dir is out of date set the ood info directly too. */
+                if (db.ood_changed_rev != myAnchorStatus.getRevision()) {
+                    myAnchorStatus.setOodChangedRev(db.ood_changed_rev);
+                    myAnchorStatus.setOodChangedDate(db.ood_changed_date);
+                    myAnchorStatus.setOodKind(db.ood_kind);
+                    myAnchorStatus.setOodChangedAuthor(db.ood_changed_author);
+                }
+            }
+        }
+
+        /*
+         * Handle this directory's statuses, and then note in the parent that
+         * this has been done.
+         */
+        if (pb != null && !db.excluded) {
+            boolean was_deleted = false;
+            SVNStatus17 dir_status = dir_status = pb.statii.get(db.localAbsPath);
+
+            /* See if the directory was deleted or replaced. */
+            if (dir_status != null && ((dir_status.getReposNodeStatus() == SVNStatusType.STATUS_DELETED) || (dir_status.getReposNodeStatus() == SVNStatusType.STATUS_REPLACED)))
+                was_deleted = true;
+
+            /* Now do the status reporting. */
+            handleStatii(dir_status != null ? dir_status.getReposRootUrl() : null, dir_status != null ? dir_status.getReposRelpath() : null, db.statii, was_deleted, db.depth);
+            if (dir_status != null && isSendableStatus(dir_status))
+                getDefaultHandler().handleStatus(dir_status.getStatus16());
+            pb.statii.remove(db.localAbsPath);
+        } else if (pb == null) {
+            /*
+             * If this is the top-most directory, and the operation had a
+             * target, we should only report the target.
+             */
+            if (myTargetBaseName != null) {
+                SVNStatus17 tgt_status = db.statii.get(myTargetAbsPath);
+                if (tgt_status != null) {
+                    if (tgt_status.isVersioned() && tgt_status.getKind() == SVNNodeKind.DIR) {
+                        getDirStatus(myTargetAbsPath, null, null, null, null, getDepth(), isReportAll(), isNoIgnore(), true, getDefaultHandler());
+                    }
+                    if (isSendableStatus(tgt_status)) {
+                        getDefaultHandler().handleStatus(tgt_status.getStatus16());
+                    }
+                }
+            } else {
+                /*
+                 * Otherwise, we report on all our children and ourself. Note
+                 * that our directory couldn't have been deleted, because it is
+                 * the root of the edit drive.
+                 */
+                handleStatii(myAnchorStatus.getReposRootUrl(), myAnchorStatus.getReposRelpath(), db.statii, false, getDepth());
+                if (isSendableStatus(myAnchorStatus))
+                    getDefaultHandler().handleStatus(myAnchorStatus.getStatus16());
+                myAnchorStatus = null;
+            }
+        }
+    }
+
+    private boolean isSendableStatus(SVNStatus17 status) {
+
+        /* If the repository status was touched at all, it's interesting. */
+        if (status.getReposNodeStatus() != SVNStatusType.STATUS_NONE)
+            return true;
+
+        /* If there is a lock in the repository, send it. */
+        if (status.getReposLock() != null)
+            return true;
+
+        /* If the item is ignored, and we don't want ignores, skip it. */
+        if ((status.getNodeStatus() == SVNStatusType.STATUS_IGNORED) && (!isNoIgnore()))
+            return false;
+
+        /*
+         * If we want everything, we obviously want this single-item subset of
+         * everything.
+         */
+        if (isReportAll())
+            return true;
+
+        /* If the item is unversioned, display it. */
+        if (status.getNodeStatus() == SVNStatusType.STATUS_UNVERSIONED)
+            return true;
+
+        /* If the text, property or tree state is interesting, send it. */
+        if ((status.getNodeStatus() != SVNStatusType.STATUS_NONE && (status.getNodeStatus() != SVNStatusType.STATUS_NORMAL)))
+            return true;
+        if (status.isConflicted())
+            return true;
+
+        /* If it's switched, send it. */
+        if (status.isSwitched())
+            return true;
+
+        /* If there is a lock token, send it. */
+        if (status.isVersioned() && status.getLock() != null)
+            return true;
+
+        /* If the entry is associated with a changelist, send it. */
+        if (status.getChangelist() != null)
+            return true;
+
+        /* Otherwise, don't send it. */
+        return false;
+    }
+
+    private void handleStatii(SVNURL dirReposRootUrl, File dirReposRelpath, Map<File, SVNStatus17> statii, boolean dirWasDeleted, SVNDepth depth) throws SVNException {
+        ISVNStatusHandler handler = dirWasDeleted ? this : getDefaultHandler();
+        for (Iterator paths = statii.keySet().iterator(); paths.hasNext();) {
+            File localAbsPath = (File) paths.next();
+            SVNStatus17 status = statii.get(localAbsPath);
+            if (status.getNodeStatus() != SVNStatusType.STATUS_OBSTRUCTED && status.getNodeStatus() != SVNStatusType.STATUS_MISSING && status.isVersioned() && status.getKind() == SVNNodeKind.DIR
+                    && (depth == SVNDepth.UNKNOWN || depth == SVNDepth.INFINITY)) {
+                getDirStatus(localAbsPath, dirReposRootUrl, dirReposRelpath, null, myGlobalIgnores, depth, isReportAll(), isNoIgnore(), true, handler);
+            }
+            if (dirWasDeleted)
+                status.setReposNodeStatus(SVNStatusType.STATUS_DELETED);
+            if (isSendableStatus(status))
+                getDefaultHandler().handleStatus(status.getStatus16());
         }
     }
 
@@ -196,10 +365,6 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
     }
 
     public void changeFileProperty(String path, String propertyName, SVNPropertyValue propertyValue) throws SVNException {
-        throw new UnsupportedOperationException();
-    }
-
-    public void closeDir() throws SVNException {
         throw new UnsupportedOperationException();
     }
 

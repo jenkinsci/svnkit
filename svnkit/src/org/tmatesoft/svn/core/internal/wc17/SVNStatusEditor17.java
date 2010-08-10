@@ -131,6 +131,18 @@ public class SVNStatusEditor17 {
         return myDepth;
     }
 
+    protected ISVNStatusHandler getDefaultHandler() {
+        return myStatusHandler;
+    }
+
+    protected boolean isReportAll() {
+        return myIsReportAll;
+    }
+
+    protected boolean isNoIgnore() {
+        return myIsNoIgnore;
+    }
+
     private static Collection getGlobalIgnores(ISVNOptions options) {
         if (options != null) {
             String[] ignores = options.getIgnorePatterns();
