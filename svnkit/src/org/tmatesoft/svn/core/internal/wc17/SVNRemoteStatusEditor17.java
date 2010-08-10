@@ -348,13 +348,40 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
         }
     }
 
-    public void abortEdit() throws SVNException {
-        throw new UnsupportedOperationException();
-    }
-
     public void addFile(String path, String copyFromPath, long copyFromRevision) throws SVNException {
         myFileInfo = new FileInfo(myDirectoryInfo, path, true);
         myDirectoryInfo.text_changed = true;
+    }
+
+    public void openFile(String path, long revision) throws SVNException {
+        myFileInfo = new FileInfo(myDirectoryInfo, path, false);
+    }
+
+    public void applyTextDelta(String path, String baseChecksum) throws SVNException {
+        myFileInfo.text_changed = true;
+    }
+
+    public void changeFileProperty(String path, String propertyName, SVNPropertyValue propertyValue) throws SVNException {
+        if (!propertyName.startsWith(SVNProperty.SVN_ENTRY_PREFIX) && !propertyName.startsWith(SVNProperty.SVN_WC_PREFIX)) {
+            myFileInfo.prop_changed = true;
+        }
+        if (propertyValue != null) {
+            if (SVNProperty.COMMITTED_REVISION.equals(propertyName)) {
+                try {
+                    myFileInfo.ood_changed_rev = Long.parseLong(propertyValue.getString());
+                } catch (NumberFormatException nfe) {
+                    myFileInfo.ood_changed_rev = SVNWCDb.INVALID_REVNUM;
+                }
+            } else if (SVNProperty.COMMITTED_DATE.equals(propertyName)) {
+                myFileInfo.ood_changed_date = SVNDate.parseDate(propertyValue.getString());
+            } else if (SVNProperty.LAST_AUTHOR.equals(propertyName)) {
+                myFileInfo.ood_changed_author = propertyValue.getString();
+            }
+        }
+    }
+
+    public void abortEdit() throws SVNException {
+        throw new UnsupportedOperationException();
     }
 
     public void absentDir(String path) throws SVNException {
@@ -365,19 +392,7 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
         throw new UnsupportedOperationException();
     }
 
-    public void changeFileProperty(String path, String propertyName, SVNPropertyValue propertyValue) throws SVNException {
-        throw new UnsupportedOperationException();
-    }
-
     public void closeFile(String path, String textChecksum) throws SVNException {
-        throw new UnsupportedOperationException();
-    }
-
-    public void openFile(String path, long revision) throws SVNException {
-        throw new UnsupportedOperationException();
-    }
-
-    public void applyTextDelta(String path, String baseChecksum) throws SVNException {
         throw new UnsupportedOperationException();
     }
 
@@ -500,6 +515,9 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
         private Date ood_changed_date;
         private SVNNodeKind ood_kind;
         private String ood_changed_author;
+        private boolean added;
+        private boolean text_changed;
+        private boolean prop_changed;
 
         public FileInfo(DirectoryInfo parent, String path, boolean added) {
             this.localAbsPath = SVNFileUtil.createFilePath(myAnchorAbsPath, path);
