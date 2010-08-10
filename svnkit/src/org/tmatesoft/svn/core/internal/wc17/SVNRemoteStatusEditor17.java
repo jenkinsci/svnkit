@@ -352,15 +352,16 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
         throw new UnsupportedOperationException();
     }
 
+    public void addFile(String path, String copyFromPath, long copyFromRevision) throws SVNException {
+        myFileInfo = new FileInfo(myDirectoryInfo, path, true);
+        myDirectoryInfo.text_changed = true;
+    }
+
     public void absentDir(String path) throws SVNException {
         throw new UnsupportedOperationException();
     }
 
     public void absentFile(String path) throws SVNException {
-        throw new UnsupportedOperationException();
-    }
-
-    public void addFile(String path, String copyFromPath, long copyFromRevision) throws SVNException {
         throw new UnsupportedOperationException();
     }
 
@@ -491,6 +492,24 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
     }
 
     public class FileInfo {
+
+        private File localAbsPath;
+        private String name;
+        private DirectoryInfo parent;
+        private long ood_changed_rev;
+        private Date ood_changed_date;
+        private SVNNodeKind ood_kind;
+        private String ood_changed_author;
+
+        public FileInfo(DirectoryInfo parent, String path, boolean added) {
+            this.localAbsPath = SVNFileUtil.createFilePath(myAnchorAbsPath, path);
+            this.name = SVNFileUtil.getFileName(this.localAbsPath);
+            this.parent = parent;
+            this.ood_changed_rev = SVNWCDb.INVALID_REVNUM;
+            this.ood_changed_date = null;
+            this.ood_kind = SVNNodeKind.FILE;
+            this.ood_changed_author = null;
+        }
 
     }
 
