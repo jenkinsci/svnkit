@@ -15,19 +15,23 @@ import java.io.File;
 import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Map;
 import java.util.TreeMap;
 
-import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
+import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 
@@ -57,6 +61,90 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
     public void openRoot(long revision) throws SVNException {
         myIsRootOpen = true;
         myDirectoryInfo = new DirectoryInfo(null, null);
+    }
+
+    public void deleteEntry(String path, long revision) throws SVNException {
+        final File local_abspath = SVNFileUtil.createFilePath(myAnchorAbsPath, path);
+        final SVNWCDbKind kind = myWCContext.getDb().readKind(local_abspath, false);
+        tweakStatusHash(myDirectoryInfo, myDirectoryInfo, local_abspath, kind == SVNWCDbKind.Dir, SVNStatusType.STATUS_DELETED, SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE,
+                SVNRevision.create(revision), null);
+        if (myDirectoryInfo.parent != null && myTargetBaseName == null)
+            tweakStatusHash(myDirectoryInfo.parent, myDirectoryInfo, myDirectoryInfo.localAbsPath, kind == SVNWCDbKind.Dir, SVNStatusType.STATUS_MODIFIED, SVNStatusType.STATUS_MODIFIED,
+                    SVNStatusType.STATUS_NONE, null, null);
+    }
+
+    private void tweakStatusHash(DirectoryInfo dirInfo, DirectoryInfo childDir, File localAbsPath, boolean isDir, SVNStatusType reposNodeStatus, SVNStatusType reposTextStatus,
+            SVNStatusType reposPropStatus, SVNRevision deletedRev, SVNLock reposLock) throws SVNException {
+
+        Map<File, SVNStatus17> statushash = dirInfo.statii;
+
+        /* Is PATH already a hash-key? */
+        SVNStatus17 statstruct = statushash.get(localAbsPath);
+
+        /* If not, make it so. */
+        if (statstruct == null) {
+            /*
+             * If this item isn't being added, then we're most likely dealing
+             * with a non-recursive (or at least partially non-recursive)
+             * working copy. Due to bugs in how the client reports the state of
+             * non-recursive working copies, the repository can send back
+             * responses about paths that don't even exist locally. Our best
+             * course here is just to ignore those responses. After all, if the
+             * client had reported correctly in the first, that path would
+             * either be mentioned as an 'add' or not mentioned at all,
+             * depending on how we eventually fix the bugs in non-recursivity.
+             * See issue #2122 for details.
+             */
+            if (reposNodeStatus != SVNStatusType.STATUS_ADDED)
+                return;
+
+            /* Use the public API to get a statstruct, and put it into the hash. */
+            statstruct = internalStatus(localAbsPath);
+            statstruct.setReposLock(reposLock);
+            statushash.put(localAbsPath, statstruct);
+        }
+
+        /* Merge a repos "delete" + "add" into a single "replace". */
+        if ((reposNodeStatus == SVNStatusType.STATUS_ADDED) && (statstruct.getReposNodeStatus() == SVNStatusType.STATUS_DELETED))
+            reposNodeStatus = SVNStatusType.STATUS_REPLACED;
+
+        /* Tweak the structure's repos fields. */
+        if (reposNodeStatus != null)
+            statstruct.setReposNodeStatus(reposNodeStatus);
+        if (reposTextStatus != null)
+            statstruct.setReposTextStatus(reposTextStatus);
+        if (reposPropStatus != null)
+            statstruct.setReposPropStatus(reposPropStatus);
+
+        /* Copy out-of-date info. */
+
+        /*
+         * The last committed date, and author for deleted items isn't
+         * available.
+         */
+        if (statstruct.getReposNodeStatus() == SVNStatusType.STATUS_DELETED) {
+            statstruct.setOodKind(isDir ? SVNNodeKind.DIR : SVNNodeKind.FILE);
+
+            /*
+             * Pre 1.5 servers don't provide the revision a path was deleted. So
+             * we punt and use the last committed revision of the path's parent,
+             * which has some chance of being correct. At worse it is a higher
+             * revision than the path was deleted, but this is better than
+             * nothing...
+             */
+            if (deletedRev == null)
+                statstruct.setOodChangedRev(dirInfo.ood_changed_rev);
+            else
+                statstruct.setOodChangedRev(deletedRev.getNumber());
+        } else {
+            statstruct.setOodKind(childDir.ood_kind);
+            statstruct.setOodChangedRev(childDir.ood_changed_rev);
+            statstruct.setOodChangedDate(childDir.ood_changed_date);
+            if (childDir.ood_changed_author != null)
+                statstruct.setOodChangedAuthor(childDir.ood_changed_author);
+        }
+
+        return;
     }
 
     public void abortEdit() throws SVNException {
@@ -92,10 +180,6 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
     }
 
     public void closeFile(String path, String textChecksum) throws SVNException {
-        throw new UnsupportedOperationException();
-    }
-
-    public void deleteEntry(String path, long revision) throws SVNException {
         throw new UnsupportedOperationException();
     }
 
