@@ -1,3 +1,14 @@
+Version 1.0.3
+(05 May 2010, from /branches/1.0.x)
+
+Repository: http://svn.sqljet.com/repos/sqljet/tags/1.0.x/
+Issues Tracker: http://code.google.com/p/sqljet/issues/list
+
+ Bugfixes:
+ 
+  * Improved support of read only databases (-r907, -r909).
+  * UNIQUE index was not created (issue #124, -r912).
+
 Version 1.0.2
 (08 Jan 2010, from /branches/1.0.x)
 
@@ -27,7 +38,7 @@ Issues Tracker: http://code.google.com/p/sqljet/issues/list
   * Javadoc updates (-r839, -r845).
   * Better error message on schema parsing failure (-r844).
   * Exception is thrown now on lexer error when parsing schema (-r854).
-
+  
 Version 1.0.1
 (20 Nov 2009, from /branches/1.0.x)
 
