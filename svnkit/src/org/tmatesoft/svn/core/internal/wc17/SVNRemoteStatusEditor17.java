@@ -22,7 +22,9 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
@@ -157,7 +159,24 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
     }
 
     public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
-        throw new UnsupportedOperationException();
+        if (!name.startsWith(SVNProperty.SVN_ENTRY_PREFIX) && !name.startsWith(SVNProperty.SVN_WC_PREFIX)) {
+            myDirectoryInfo.prop_changed = true;
+        }
+
+        /* Note any changes to the repository. */
+        if (value != null) {
+            if (SVNProperty.COMMITTED_REVISION.equals(name)) {
+                try {
+                    myDirectoryInfo.ood_changed_rev = Long.parseLong(value.getString());
+                } catch (NumberFormatException nfe) {
+                    myDirectoryInfo.ood_changed_rev = SVNRevision.UNDEFINED.getNumber();
+                }
+            } else if (SVNProperty.LAST_AUTHOR.equals(name)) {
+                myDirectoryInfo.ood_changed_author = value.getString();
+            } else if (SVNProperty.COMMITTED_DATE.equals(name)) {
+                myDirectoryInfo.ood_changed_date = SVNDate.parseDate(value.getString());
+            }
+        }
     }
 
     public void abortEdit() throws SVNException {
@@ -175,7 +194,6 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
     public void addFile(String path, String copyFromPath, long copyFromRevision) throws SVNException {
         throw new UnsupportedOperationException();
     }
-
 
     public void changeFileProperty(String path, String propertyName, SVNPropertyValue propertyValue) throws SVNException {
         throw new UnsupportedOperationException();
@@ -224,7 +242,6 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
         private boolean added;
         private boolean prop_changed;
         private boolean text_changed;
-
 
         public DirectoryInfo(String path, DirectoryInfo parent) throws SVNException {
             File local_abspath;
