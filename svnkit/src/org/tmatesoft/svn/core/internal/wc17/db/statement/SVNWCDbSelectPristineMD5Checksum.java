@@ -12,8 +12,8 @@
 package org.tmatesoft.svn.core.internal.wc17.db.statement;
 
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.wc17.db.sqljet.SVNSqlJetDb;
-import org.tmatesoft.svn.core.internal.wc17.db.sqljet.SVNSqlJetSelectFieldsStatement;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectFieldsStatement;
 
 /**
  * SELECT md5_checksum FROM pristine WHERE checksum = ?1

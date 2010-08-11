@@ -31,6 +31,9 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb.Mode;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
@@ -45,9 +48,6 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbBaseInfo.BaseInfoFie
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbDeletionInfo.DeletionInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo.RepositoryInfoField;
-import org.tmatesoft.svn.core.internal.wc17.db.sqljet.SVNSqlJetDb;
-import org.tmatesoft.svn.core.internal.wc17.db.sqljet.SVNSqlJetDb.Mode;
-import org.tmatesoft.svn.core.internal.wc17.db.sqljet.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
@@ -190,8 +190,8 @@ public class SVNWCDb implements ISVNWCDb {
         for (final SVNWCDbRoot wcRoot : roots) {
             try {
                 wcRoot.close();
-            } catch (SqlJetException e) {
-                // TODO
+            } catch (SVNException e) {
+                // TODO SVNException closeManyWCRoots()
             }
         }
     }

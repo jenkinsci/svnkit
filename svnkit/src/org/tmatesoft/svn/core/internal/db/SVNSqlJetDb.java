@@ -9,7 +9,7 @@
  * newer version instead, at your option.
  * ====================================================================
  */
-package org.tmatesoft.svn.core.internal.wc17.db.sqljet;
+package org.tmatesoft.svn.core.internal.db;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
@@ -54,22 +54,33 @@ public class SVNSqlJetDb {
         return db;
     }
 
-    public void close() throws SqlJetException {
+    public void close() throws SVNException {
         if (db != null) {
-            db.close();
+            try {
+                db.close();
+            } catch (SqlJetException e) {
+                SVNErrorMessage err = SVNErrorMessage.create( SVNErrorCode.SQLITE_ERROR, e );
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
         }
     }
 
-    public static SVNSqlJetDb open(File sdbAbsPath, Mode mode) throws SVNException, SqlJetException {
+    public static SVNSqlJetDb open(File sdbAbsPath, Mode mode) throws SVNException {
         if (mode != Mode.RWCreate) {
             if (!sdbAbsPath.exists()) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "File not found ''{0}''", sdbAbsPath);
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
         }
-        final SqlJetDb db = SqlJetDb.open(sdbAbsPath, mode != Mode.ReadOnly);
-        SVNSqlJetDb sDb = new SVNSqlJetDb(db);
-        return sDb;
+        try {
+            SqlJetDb db = SqlJetDb.open(sdbAbsPath, mode != Mode.ReadOnly);
+            SVNSqlJetDb sDb = new SVNSqlJetDb(db);
+            return sDb;
+        } catch (SqlJetException e) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SQLITE_ERROR, e);
+            SVNErrorManager.error(err, SVNLogType.WC);
+            return null;
+        }
     }
 
     public SVNSqlJetStatement getStatement(SVNWCDbStatements statementIndex) throws SVNException {

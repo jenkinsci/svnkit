@@ -9,7 +9,7 @@
  * newer version instead, at your option.
  * ====================================================================
  */
-package org.tmatesoft.svn.core.internal.wc17.db.sqljet;
+package org.tmatesoft.svn.core.internal.db;
 
 import java.io.File;
 import java.util.ArrayList;

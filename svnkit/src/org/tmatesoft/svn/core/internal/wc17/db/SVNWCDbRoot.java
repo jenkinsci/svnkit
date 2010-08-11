@@ -17,9 +17,9 @@ import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc17.db.sqljet.SVNSqlJetDb;
-import org.tmatesoft.svn.core.internal.wc17.db.sqljet.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -111,7 +111,7 @@ public class SVNWCDbRoot {
         return format;
     }
 
-    public void close() throws SqlJetException {
+    public void close() throws SVNException {
         assert (sDb != null);
         try {
             sDb.close();
