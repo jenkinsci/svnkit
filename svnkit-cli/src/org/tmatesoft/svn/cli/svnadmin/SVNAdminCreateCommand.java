@@ -37,13 +37,16 @@ public class SVNAdminCreateCommand extends SVNAdminCommand {
         options.add(SVNAdminOption.PRE_14_COMPATIBLE);
         options.add(SVNAdminOption.PRE_15_COMPATIBLE);
         options.add(SVNAdminOption.PRE_16_COMPATIBLE);
+        options.add(SVNAdminOption.PRE_17_COMPATIBLE);
+        options.add(SVNAdminOption.WITH_17_COMPATIBLE);
         return options;
     }
 
     public void run() throws SVNException {
         SVNAdminClient client = getEnvironment().getClientManager().getAdminClient();
-        client.doCreateRepository(getLocalRepository(), null, false, false, 
-                getSVNAdminEnvironment().isPre14Compatible(), getSVNAdminEnvironment().isPre15Compatible(), getSVNAdminEnvironment().isPre16Compatible());
+        client.doCreateRepository(getLocalRepository(), null, false, false,
+                getSVNAdminEnvironment().isPre14Compatible(), getSVNAdminEnvironment().isPre15Compatible(), getSVNAdminEnvironment().isPre16Compatible(),
+                getSVNAdminEnvironment().isPre17Compatible(), getSVNAdminEnvironment().isWith17Compatible() );
     }
 
 }

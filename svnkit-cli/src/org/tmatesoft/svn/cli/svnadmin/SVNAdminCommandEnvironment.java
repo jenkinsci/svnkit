@@ -54,6 +54,8 @@ public class SVNAdminCommandEnvironment extends AbstractSVNCommandEnvironment {
     private boolean myIsPre14Compatible;
     private boolean myIsPre15Compatible;
     private boolean myIsPre16Compatible;
+    private boolean myIsPre17Compatible;
+    private boolean myIsWith17Compatible;
     private boolean myIsUsePreCommitHook;
     private boolean myIsUsePostCommitHook;
     private boolean myIsUsePostRevPropChangeHook;
@@ -117,6 +119,10 @@ public class SVNAdminCommandEnvironment extends AbstractSVNCommandEnvironment {
             myIsPre15Compatible = true;
         } else if (option == SVNAdminOption.PRE_16_COMPATIBLE) {
             myIsPre16Compatible = true;
+        } else if (option == SVNAdminOption.PRE_17_COMPATIBLE) {
+            myIsPre17Compatible = true;
+        } else if (option == SVNAdminOption.WITH_17_COMPATIBLE) {
+            myIsWith17Compatible = true;
         }  else if (option == SVNAdminOption.PARENT_DIR) {
             myParentDir = optionValue.getValue();
             myParentDir = myParentDir.replace(File.separatorChar, '/');
@@ -145,7 +151,7 @@ public class SVNAdminCommandEnvironment extends AbstractSVNCommandEnvironment {
             SVNOptionValue optionValue = (SVNOptionValue) options.next();
             AbstractSVNOption option = optionValue.getOption();
             if (option == SVNAdminOption.HELP || option == SVNAdminOption.QUESTION) {
-                myIsHelp = true;                
+                myIsHelp = true;
             } else if (option == SVNAdminOption.VERSION) {
                 myIsVersion = true;
             }
@@ -155,7 +161,7 @@ public class SVNAdminCommandEnvironment extends AbstractSVNCommandEnvironment {
             List newArguments = commandName != null ? Collections.singletonList(commandName) : Collections.EMPTY_LIST;
             setArguments(newArguments);
             return "help";
-        } 
+        }
         if (commandName == null) {
             if (isVersion()) {
                 SVNAdminCommand versionCommand = new SVNAdminCommand("--version", null) {
@@ -165,7 +171,7 @@ public class SVNAdminCommandEnvironment extends AbstractSVNCommandEnvironment {
                         options.add(SVNAdminOption.QUIET);
                         return options;
                     }
-                    
+
                     public void run() throws SVNException {
                         AbstractSVNCommand helpCommand = AbstractSVNCommand.getCommand("help");
                         helpCommand.init(SVNAdminCommandEnvironment.this);
@@ -184,43 +190,43 @@ public class SVNAdminCommandEnvironment extends AbstractSVNCommandEnvironment {
     protected String getCommandLineClientName() {
         return "svnadmin";
     }
-    
+
     public boolean isQuiet() {
         return myIsQuiet;
     }
-    
+
     public boolean isHelp() {
         return myIsHelp;
     }
-    
+
     public boolean isVersion() {
         return myIsVersion;
     }
-    
+
     public String getParentDir() {
         return myParentDir;
     }
-    
+
     public boolean isIncremental() {
         return myIsIncremental;
     }
-    
+
     public boolean isDeltas() {
         return myIsDeltas;
     }
-    
+
     public boolean isIgnoreUUID() {
         return myIsIgnoreUUID;
     }
-    
+
     public boolean isForceUUID() {
         return myIsForceUUID;
     }
-    
+
     public boolean isPre14Compatible() {
         return myIsPre14Compatible;
     }
-    
+
     public boolean isPre15Compatible() {
         return myIsPre15Compatible;
     }
@@ -228,35 +234,43 @@ public class SVNAdminCommandEnvironment extends AbstractSVNCommandEnvironment {
     public boolean isPre16Compatible() {
         return myIsPre16Compatible;
     }
-    
+
+    public boolean isPre17Compatible() {
+        return myIsPre17Compatible;
+    }
+
+    public boolean isWith17Compatible() {
+        return myIsWith17Compatible;
+    }
+
     public boolean isUsePreCommitHook() {
         return myIsUsePreCommitHook;
     }
-    
+
     public boolean isUsePostCommitHook() {
         return myIsUsePostCommitHook;
     }
-    
+
     public boolean isUsePostRevPropChangeHook() {
         return myIsUsePostRevPropChangeHook;
     }
-    
+
     public boolean isUsePreRevPropChangeHook() {
         return myIsUsePreRevPropChangeHook;
     }
-    
+
     public boolean isBypassHooks() {
         return myIsBypassHooks;
     }
-    
+
     public boolean isCleanLogs() {
         return myIsCleanLogs;
     }
-    
+
     public boolean isWait() {
         return myIsWait;
     }
-    
+
     public SVNRevision getStartRevision() {
         return myStartRevision;
     }
