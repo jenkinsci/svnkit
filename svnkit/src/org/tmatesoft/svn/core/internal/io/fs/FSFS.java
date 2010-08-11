@@ -106,7 +106,7 @@ public class FSFS {
     public static final int DIGEST_SUBDIR_LEN = 3;
     public static final int REPOSITORY_FORMAT = 5;
     public static final int REPOSITORY_FORMAT_LEGACY = 3;
-    public static final int DB_FORMAT = 5;
+    public static final int DB_FORMAT = 4; // 5
     public static final int DB_FORMAT_LOW = 1;
     public static final int LAYOUT_FORMAT_OPTION_MINIMAL_FORMAT = 3;
     public static final int MIN_CURRENT_TXN_FORMAT = 3;
