@@ -796,9 +796,21 @@ public class SVNCopyDriver extends SVNBasicClient {
                                 // property or no url in it?
                                 continue;
                             }
+                            
+                            SVNURL resolvedURL = externals[k].resolveURL(repos.getRepositoryRoot(true), ownerURL);
+                            String unresolvedURL = externals[k].getUnresolvedUrl();
+                            if (unresolvedURL != null && !SVNPathUtil.isURL(unresolvedURL) && unresolvedURL.startsWith("../"))  {
+                                unresolvedURL = SVNURLUtil.getRelativeURL(repos.getRepositoryRoot(true), resolvedURL);
+                                if (unresolvedURL.startsWith("/")) {
+                                    unresolvedURL = "^" + unresolvedURL;
+                                } else {
+                                    unresolvedURL = "^/" + unresolvedURL;
+                                }
+                            }
+
                             SVNRevision[] revs = externalsHandler.handleExternal(
                                     externalWC,
-                                    externals[k].resolveURL(repos.getRepositoryRoot(true), ownerURL),
+                                    resolvedURL,
                                     externals[k].getRevision(),
                                     externals[k].getPegRevision(),
                                     externals[k].getRawValue(),
@@ -806,10 +818,13 @@ public class SVNCopyDriver extends SVNBasicClient {
 
                             if (revs != null && revs[0].equals(externals[k].getRevision())) {
                                 newExternals.add(externals[k].getRawValue());
-                            } else if (revs != null) {
+                            } else if (revs != null) {                                
                                 SVNExternal newExternal = new SVNExternal(externals[k].getPath(),
-                                        externals[k].getUnresolvedUrl(), revs[1],
-                                        revs[0], true, externals[k].isPegRevisionExplicit(),
+                                        unresolvedURL,
+                                        revs[1],
+                                        revs[0], 
+                                        true, 
+                                        externals[k].isPegRevisionExplicit(),
                                         externals[k].isNewFormat());
 
                                 newExternals.add(newExternal.toString());
