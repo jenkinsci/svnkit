@@ -13,6 +13,7 @@ package org.tmatesoft.svn.core.internal.db;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -41,13 +42,13 @@ public class SVNSqlJetDb {
     };
 
     private SqlJetDb db;
-    private Map<SVNWCDbStatements, SVNSqlJetStatement> statements;
+    private EnumMap<SVNWCDbStatements, SVNSqlJetStatement> statements;
 
     private int openCount = 0;
 
     private SVNSqlJetDb(SqlJetDb db) {
         this.db = db;
-        statements = new HashMap<SVNWCDbStatements, SVNSqlJetStatement>();
+        statements = new EnumMap<SVNWCDbStatements, SVNSqlJetStatement>(SVNWCDbStatements.class);
     }
 
     public SqlJetDb getDb() {

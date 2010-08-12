@@ -123,8 +123,8 @@ public class FSFS {
     private static long DEFAULT_MAX_FILES_PER_DIRECTORY = 1000;
     private static final String DB_TYPE = "fsfs";
 
-    private static final String REVISION_PROPERTIES_DB = "revprops.db";
-    private static final String MIN_UNPACKED_REVPROP = "min-unpacked-revprop";
+    public static final String REVISION_PROPERTIES_DB = "revprops.db";
+    public static final String MIN_UNPACKED_REVPROP = "min-unpacked-revprop";
 
     private int myDBFormat;
     private int myReposFormat;

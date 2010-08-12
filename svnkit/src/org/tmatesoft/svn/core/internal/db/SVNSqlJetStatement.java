@@ -43,7 +43,7 @@ public abstract class SVNSqlJetStatement {
         throw new UnsupportedOperationException();
     }
 
-    public void exec() {
+    public void exec() throws SVNException {
         throw new UnsupportedOperationException();
     }
 

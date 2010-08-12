@@ -31,6 +31,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepresentationCacheUtil;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
@@ -42,6 +43,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNWCProperties;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -667,6 +669,33 @@ public abstract class SVNRepositoryFactory {
                 File repCacheFile = new File(path, FSFS.DB_DIR + "/" + FSFS.REP_CACHE_DB);
                 FSRepresentationCacheUtil.create(repCacheFile);
             }
+
+            /* Create the revprops directory. */
+            if (fsFormat >= FSFS.MIN_PACKED_REVPROP_FORMAT)
+              {
+                File minUnpackedRevPropFile = new File(path, FSFS.DB_DIR + "/" + FSFS.MIN_UNPACKED_REVPROP);
+                OutputStream minUnpackedRevPropStream = null;
+                try {
+                    minUnpackedRevPropStream = SVNFileUtil.openFileForWriting(minUnpackedRevPropFile);
+                    minUnpackedRevPropStream.write("0\n".getBytes("US-ASCII"));
+                } catch (IOException e) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Error writing min unpacked revision property to ''{0}''", minUnpackedRevPropFile);
+                    err.setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage()));
+                    SVNErrorManager.error(err, SVNLogType.FSFS);
+                } finally {
+                    SVNFileUtil.closeFile(minUnpackedRevPropStream);
+                }
+
+                File revPropFile = new File(path, FSFS.DB_DIR + "/" + FSFS.REVISION_PROPERTIES_DB);
+                final SVNSqlJetDb revPropDb = SVNSqlJetDb.open( revPropFile, SVNSqlJetDb.Mode.RWCreate );
+                try{
+                    revPropDb.execStatement(SVNWCDbStatements.REVPROP_CREATE_SCHEMA);
+                } finally {
+                    revPropDb.close();
+                }
+
+              }
+
 
         } finally {
             SVNFileUtil.closeFile(uuidOS);
