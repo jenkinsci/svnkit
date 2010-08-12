@@ -35,12 +35,12 @@ public class SVNFSFSRevPropCreateSchema extends SVNSqlJetStatement {
 
     public void exec() throws SVNException {
         try {
+            sDb.getDb().getOptions().setAutovacuum(true);
             sDb.getDb().runWriteTransaction(new ISqlJetTransaction() {
                 public Object run(SqlJetDb db) throws SqlJetException {
-                    db.getOptions().setAutovacuum(true);
                     db.createTable("create table revprop (revision integer UNIQUE not null, " +
                             "properties BLOB not null);");
-                    db.createTable("create index i_revision on revprop (revision);");
+                    db.createIndex("create index i_revision on revprop (revision);");
                     db.getOptions().setUserVersion(1);
                     return null;
                 }
