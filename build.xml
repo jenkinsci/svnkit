@@ -673,47 +673,41 @@
 		
 		<mkdir dir="build/maven-deploy"/>
 		<mkdir dir="build/maven-deploy/org.tmatesoft.svnkit-${build.number}"/>
+		<mkdir dir="build/maven-deploy/org.tmatesoft.svnkit-javahl-${build.number}"/>
+
 		<mkdir dir="build/maven-deploy/com.trilead.ssh2-${trilead.ssh2.version}"/>
 		<mkdir dir="build/maven-deploy/com.sun.jna-${jna.version}"/>
 		
 		<mkdir dir="svnkit-eclipse/bin"/>
 		
+		<!-- pack svnkit-xxx.jar without javahl, cli, eclipse plugin -->
 		<jar destfile="build/maven-deploy/org.tmatesoft.svnkit-${build.number}/svnkit-${build.number}.jar">
-			<fileset dir="svnkit/bin">
-                <exclude name="org/tmatesoft/svn/cli/**" />
-			</fileset>
-			<fileset dir="svnkit-eclipse/bin">
-                <include name="**" />
-			</fileset>
-			<fileset dir="svnkit/src">
-                <include name="org/tmatesoft/svn/core/wc/xml/dtd/**" />
-                <include name="org/tmatesoft/svn/core/wc/xml/schema/**" />
-                <include name="org/tmatesoft/svn/core/internal/wc/config/**" />
-                <include name="org/tmatesoft/svn/core/io/repository/**" />
-			</fileset>
-			<fileset dir="contrib/javahl/bin">
-                <exclude name="org/tigris/subversion/javahl/SVNClient**" />
-                <exclude name="org/tigris/subversion/javahl/SVNAdmin**" />
-                <exclude name="org/tigris/subversion/javahl/Path**" />
-                <exclude name="org/tigris/subversion/javahl/tests/**" />
-			</fileset>
-			<fileset dir="contrib/sequence/bin">
-				<include name="**"/>
-			</fileset>
+            <fileset dir="svnkit/bin">
+                <exclude name="org/tigris/**" />
+            </fileset>        	
+            <fileset dir="svnkit/src">
+                <include name="org/tmatesoft/svn/core/internal/io/svn/sasl/*.class" />
+                <include name="org/tmatesoft/svn/core/internal/io/fs/repcache/*.class" />
+            </fileset>
             <fileset dir="${basedir}" >
                 <include name="COPYING" />
             </fileset>
             <fileset dir="build/lib" >
                 <include name="svnkit.build.properties" />
             </fileset>
-            <fileset dir="contrib/javahl" >
-                <include name="JAVAHL-LICENSE" />
-            </fileset>
-            <fileset dir="contrib/sequence" >
+        	<fileset dir="contrib/sequence">
                 <include name="SEQUENCE-LICENSE" />
+        	</fileset>
+            <fileset dir="contrib/sequence/bin" />
+            <fileset dir="svnkit/src">
+                <include name="org/tmatesoft/svn/core/internal/wc/config/**" />
+                <include name="org/tmatesoft/svn/core/io/repository/**" />
+                <include name="org/tmatesoft/svn/core/wc/xml/dtd/**" />
+                <include name="org/tmatesoft/svn/core/wc/xml/schema/**" />
             </fileset>
 		</jar>
 
+		<!-- pack sources for the svnkit-xxx.jar into svnkit-xxx-sources.jar without javahl, cli, eclipse plugin -->
 		<jar destfile="build/maven-deploy/org.tmatesoft.svnkit-${build.number}/svnkit-${build.number}-sources.jar">
             <fileset dir="build/lib">
                 <include name="changelog.txt" />
@@ -722,13 +716,7 @@
 			<fileset dir="svnkit/src">
 				<exclude name=".svn"/>
 				<exclude name=".svn/**"/>
-			</fileset>
-			<fileset dir="contrib/javahl/src">
-				<exclude name=".svn"/>
-				<exclude name=".svn/**"/>
-                <exclude name="org/tigris/subversion/javahl/SVNClient.java" />
-                <exclude name="org/tigris/subversion/javahl/SVNAdmin.java" />
-                <exclude name="org/tigris/subversion/javahl/Path.java" />
+				<exclude name="org/tigris/**"/>
 			</fileset>
 			<fileset dir="contrib/sequence/src">
 				<exclude name=".svn"/>
@@ -740,11 +728,44 @@
             <fileset dir="build/lib" >
                 <include name="svnkit.build.properties" />
             </fileset>
-            <fileset dir="contrib/javahl" >
-                <include name="JAVAHL-LICENSE" />
-            </fileset>
             <fileset dir="contrib/sequence" >
                 <include name="SEQUENCE-LICENSE" />
+            </fileset>
+		</jar>
+
+		<!-- pack svnkit-javahl-xxx.jar for javahl classes only -->
+		<jar destfile="build/maven-deploy/org.tmatesoft.svnkit-javahl-${build.number}/svnkit-javahl-${build.number}.jar">
+            <fileset dir="svnkit/bin">
+                <include name="org/tigris/**" />
+            </fileset>
+            <fileset dir="contrib/javahl/bin" >
+                <exclude name="org/tigris/subversion/javahl/SVNClient.class" />
+                <exclude name="org/tigris/subversion/javahl/SVNClient$*.class" />
+                <exclude name="org/tigris/subversion/javahl/SVNAdmin.class" />
+                <exclude name="org/tigris/subversion/javahl/SVNAdmin$*.class" />
+                <exclude name="org/tigris/subversion/javahl/Path.class" />
+            </fileset>
+            <fileset dir="contrib/javahl">
+                <include name="JAVAHL-LICENSE" />
+            </fileset>
+        </jar>
+		
+		<!-- pack svnkit-javahl-xxx.jar sources into svnkit-javahl-xxx-sources.jar for javahl classes only -->
+		<jar destfile="build/maven-deploy/org.tmatesoft.svnkit-javahl-${build.number}/svnkit-javahl-${build.number}-sources.jar">
+			<fileset dir="svnkit/src">
+				<exclude name=".svn"/>
+				<exclude name=".svn/**"/>
+				<exclude name="org/tmatesoft/**"/>
+			</fileset>
+			<fileset dir="contrib/javahl/src">
+				<exclude name=".svn"/>
+				<exclude name=".svn/**"/>
+                <exclude name="org/tigris/subversion/javahl/SVNClient.java" />
+                <exclude name="org/tigris/subversion/javahl/SVNAdmin.java" />
+                <exclude name="org/tigris/subversion/javahl/Path.java" />
+			</fileset>
+            <fileset dir="contrib/javahl" >
+                <include name="JAVAHL-LICENSE" />
             </fileset>
 		</jar>
 		
@@ -766,12 +787,16 @@
 		<copy file="contrib/jna/pom.xml" tofile="build/maven-deploy/com.sun.jna-${jna.version}/pom.xml"/>
 		<replace token="%jna.version%" value="${jna.version}" file="build/maven-deploy/com.sun.jna-${jna.version}/pom.xml"/>
 
+		<copy file="svnkit-javahl-pom.xml" tofile="build/maven-deploy/org.tmatesoft.svnkit-javahl-${build.number}/pom.xml"/>
+		<replace token="%svnkit.version%" value="${build.number}" file="build/maven-deploy/org.tmatesoft.svnkit-javahl-${build.number}/pom.xml"/>
+
 		<copy file="contrib/trilead/trilead.jar" tofile="build/maven-deploy/com.trilead.ssh2-${trilead.ssh2.version}/trilead-${trilead.ssh2.version}.jar" />
 		<copy file="contrib/jna/jna.jar" tofile="build/maven-deploy/com.sun.jna-${jna.version}/jna-${jna.version}.jar" />
 
 		<artifact:pom id="svnkit.pom" file="build/maven-deploy/org.tmatesoft.svnkit-${build.number}/pom.xml" />
 		<artifact:pom id="trilead.pom" file="build/maven-deploy/com.trilead.ssh2-${trilead.ssh2.version}/pom.xml" />
 		<artifact:pom id="jna.pom" file="build/maven-deploy/com.sun.jna-${jna.version}/pom.xml" />
+		<artifact:pom id="svnkit-javahl.pom" file="build/maven-deploy/org.tmatesoft.svnkit-javahl-${build.number}/pom.xml" />
 
 		<mkdir dir="build/maven-deploy/m2repo" />
 		<artifact:deploy file="build/maven-deploy/org.tmatesoft.svnkit-${build.number}/svnkit-${build.number}.jar">
@@ -790,13 +815,21 @@
 			<remoteRepository url="file://${basedir}/build/maven-deploy/m2repo" />
 			<pom refid="jna.pom"/>
 		</artifact:deploy>
-				
+
+		<artifact:deploy file="build/maven-deploy/org.tmatesoft.svnkit-javahl-${build.number}/svnkit-javahl-${build.number}.jar">
+			<attach file="build/maven-deploy/org.tmatesoft.svnkit-javahl-${build.number}/svnkit-javahl-${build.number}-sources.jar" classifier="sources" />
+			<remoteRepository url="file://${basedir}/build/maven-deploy/m2repo" />
+			<pom refid="svnkit-javahl.pom"/>
+		</artifact:deploy>
+
 		<delete dir="build/maven-deploy" >
 			<include name="org.tmatesoft.svnkit-${build.number}/**"/>
+			<include name="org.tmatesoft.svnkit-javahl-${build.number}/**"/>
 			<include name="com.trilead.ssh2-${trilead.ssh2.version}/**"/>
      		<include name="com.sun.jna-${jna.version}/**"/>
 		</delete>
 		<delete dir="build/maven-deploy/org.tmatesoft.svnkit-${build.number}" />
+		<delete dir="build/maven-deploy/org.tmatesoft.svnkit-javahl-${build.number}" />
 		<delete dir="build/maven-deploy/com.trilead.ssh2-${trilead.ssh2.version}"/>
  		<delete dir="build/maven-deploy/com.sun.jna-${jna.version}"/>
 	</target>
