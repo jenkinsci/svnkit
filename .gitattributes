@@ -83,6 +83,7 @@ svnkit-test/apache/python.template.conf eol=lf
 svnkit-test/apache/users eol=lf
 svnkit-test/daemon/template eol=lf
 svnkit-test/fsfs.conf -text
+svnkit-test/python-tests-log.xml -text
 svnkit-test/test.mac.properties eol=lf
 svnkit-test/test.unix.properties eol=lf
 svnkit-test/test.windows.properties eol=crlf
