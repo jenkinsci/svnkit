@@ -692,7 +692,7 @@ public abstract class SVNRepositoryFactory {
                     SVNFileUtil.closeFile(minUnpackedRevPropStream);
                 }
 
-                File revPropFile = new File(path, FSFS.DB_DIR + "/" + FSFS.REVISION_PROPERTIES_DB);
+                File revPropFile = new File(path, FSFS.DB_DIR + "/" + FSFS.REVISION_PROPERTIES_DIR + "/" + FSFS.REVISION_PROPERTIES_DB);
                 final SVNSqlJetDb revPropDb = SVNSqlJetDb.open( revPropFile, SVNSqlJetDb.Mode.RWCreate );
                 try{
                     revPropDb.execStatement(SVNWCDbStatements.REVPROP_CREATE_SCHEMA);
