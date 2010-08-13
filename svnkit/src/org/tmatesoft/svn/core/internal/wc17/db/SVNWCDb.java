@@ -489,8 +489,7 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     public List<String> getBaseChildren(File localAbsPath) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+        return gatherChildren(localAbsPath, true);
     }
 
     public SVNProperties getBaseDavCache(File localAbsPath) throws SVNException {
