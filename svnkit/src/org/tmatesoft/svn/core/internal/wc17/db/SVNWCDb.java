@@ -547,17 +547,18 @@ public class SVNWCDb implements ISVNWCDb {
                     info.reposRelPath = SVNFileUtil.createFilePath(getColumnText(stmt, SVNWCDbSchema.BASE_NODE__Fields.repos_relpath));
                 }
                 if (f.contains(BaseInfoField.lock)) {
-                    if (isColumnNull(stmt, SVNWCDbSchema.LOCK__Fields.lock_token)) {
+                    final SVNSqlJetStatement lockStmt = stmt.getJoinedStatement(SVNWCDbSchema.LOCK);
+                    if (isColumnNull(lockStmt, SVNWCDbSchema.LOCK__Fields.lock_token)) {
                         info.lock = null;
                     } else {
                         info.lock = new SVNWCDbLock();
-                        info.lock.token = getColumnText(stmt, SVNWCDbSchema.LOCK__Fields.lock_token);
-                        if (!isColumnNull(stmt, SVNWCDbSchema.LOCK__Fields.lock_owner))
-                            info.lock.owner = getColumnText(stmt, SVNWCDbSchema.LOCK__Fields.lock_owner);
-                        if (!isColumnNull(stmt, SVNWCDbSchema.LOCK__Fields.lock_comment))
-                            info.lock.comment = getColumnText(stmt, SVNWCDbSchema.LOCK__Fields.lock_comment);
-                        if (!isColumnNull(stmt, SVNWCDbSchema.LOCK__Fields.lock_date))
-                            info.lock.date = new Date(getColumnInt64(stmt, SVNWCDbSchema.LOCK__Fields.lock_date));
+                        info.lock.token = getColumnText(lockStmt, SVNWCDbSchema.LOCK__Fields.lock_token);
+                        if (!isColumnNull(lockStmt, SVNWCDbSchema.LOCK__Fields.lock_owner))
+                            info.lock.owner = getColumnText(lockStmt, SVNWCDbSchema.LOCK__Fields.lock_owner);
+                        if (!isColumnNull(lockStmt, SVNWCDbSchema.LOCK__Fields.lock_comment))
+                            info.lock.comment = getColumnText(lockStmt, SVNWCDbSchema.LOCK__Fields.lock_comment);
+                        if (!isColumnNull(lockStmt, SVNWCDbSchema.LOCK__Fields.lock_date))
+                            info.lock.date = new Date(getColumnInt64(lockStmt, SVNWCDbSchema.LOCK__Fields.lock_date));
                     }
                 }
                 if (f.contains(BaseInfoField.reposRootUrl) || f.contains(BaseInfoField.reposUuid)) {
