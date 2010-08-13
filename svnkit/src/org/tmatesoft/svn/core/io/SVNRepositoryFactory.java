@@ -532,7 +532,13 @@ public abstract class SVNRepositoryFactory {
                 SVNErrorManager.error(err, SVNLogType.FSFS);
             }
 
-            int fsFormat = with17Compatible? FSFS.DB_FORMAT : FSFS.DB_FORMAT_PRE_17;
+            int fsFormat = FSFS.DB_FORMAT;
+            if( !with17Compatible ) {
+                fsFormat = FSFS.DB_FORMAT_PRE_17;
+            }
+            if( pre17Compatible) {
+                fsFormat = FSFS.DB_FORMAT_PRE_17;
+            }
             if (pre14Compatible) {
                 File reposFormatFile = new File(path, "format");
                 try {
