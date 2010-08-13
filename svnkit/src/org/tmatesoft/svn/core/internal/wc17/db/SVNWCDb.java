@@ -36,6 +36,7 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb.Mode;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
+import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
 import org.tmatesoft.svn.core.internal.wc.SVNChecksumKind;
 import org.tmatesoft.svn.core.internal.wc.SVNConfigFile;
@@ -1021,6 +1022,10 @@ public class SVNWCDb implements ISVNWCDb {
              * code can manage that itself.
              */
             obstruction_possible = false;
+
+            SVNErrorMessage err = SVNErrorMessage.create( SVNErrorCode.WC_UNSUPPORTED_FORMAT );
+            SVNErrorManager.error(err, SVNLogType.WC);
+
         }
 
         {
@@ -1162,7 +1167,11 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     private int getOldVersion(File localAbsPath) {
-        return 0;
+        try {
+            return SVNAdminUtil.getVersion(localAbsPath);
+        } catch (SVNException e) {
+            return 0;
+        }
     }
 
     public boolean isWCLocked(File localAbspath) throws SVNException {
@@ -1450,61 +1459,56 @@ public class SVNWCDb implements ISVNWCDb {
 
         /* The parent should be a working copy directory. */
         DirParsedInfo parseDir = parseDir(localAbsPath, Mode.ReadOnly);
-        SVNWCDbDir pdh=parseDir.wcDbDir;
+        SVNWCDbDir pdh = parseDir.wcDbDir;
         File localRelPath = parseDir.localRelPath;
         verifyDirUsable(pdh);
 
-        /* ### This will be much easier once we have all conflicts in one
-               field of actual.*/
+        /*
+         * ### This will be much easier once we have all conflicts in one field
+         * of actual.
+         */
 
         /* First look for text and property conflicts in ACTUAL */
-        SVNSqlJetStatement stmt=pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_CONFLICT_DETAILS);
-        try{
+        SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_CONFLICT_DETAILS);
+        try {
 
-        stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelPath);
+            stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelPath);
 
-        boolean have_row = stmt.next();
+            boolean have_row = stmt.next();
 
-        if (have_row)
-          {
-            /* ### Store in description! */
-            String prop_reject = getColumnText(stmt, 0);
-            if (prop_reject!=null)
-              {
-                SVNMergeFileSet mergeFiles = new SVNMergeFileSet(null, null, null, localAbsPath,
-                        null, new File(prop_reject), null, null, null);
-                SVNPropertyConflictDescription desc =
-                    new SVNPropertyConflictDescription(mergeFiles, SVNNodeKind.UNKNOWN, "", null, null);
-                conflicts.add(desc);
-              }
+            if (have_row) {
+                /* ### Store in description! */
+                String prop_reject = getColumnText(stmt, 0);
+                if (prop_reject != null) {
+                    SVNMergeFileSet mergeFiles = new SVNMergeFileSet(null, null, null, localAbsPath, null, new File(prop_reject), null, null, null);
+                    SVNPropertyConflictDescription desc = new SVNPropertyConflictDescription(mergeFiles, SVNNodeKind.UNKNOWN, "", null, null);
+                    conflicts.add(desc);
+                }
 
-            String conflict_old = getColumnText(stmt, 1);
-            String conflict_new = getColumnText(stmt, 2);
-            String conflict_working = getColumnText(stmt, 3);
+                String conflict_old = getColumnText(stmt, 1);
+                String conflict_new = getColumnText(stmt, 2);
+                String conflict_working = getColumnText(stmt, 3);
 
-            if (conflict_old!=null || conflict_new!=null || conflict_working!=null)
-              {
-                File baseFile = conflict_old != null ? new File(conflict_old) : null;
-                File theirFile = conflict_new != null ? new File(conflict_new) : null;
-                File myFile = conflict_working != null ? new File(conflict_working) : null;
-                File mergedFile = new File(SVNFileUtil.getFileName(localAbsPath));
-                SVNMergeFileSet mergeFiles = new SVNMergeFileSet(null, null, baseFile, myFile,
-                        null, theirFile, mergedFile, null, null);
-                SVNTextConflictDescription desc = new SVNTextConflictDescription(
-                        mergeFiles, SVNNodeKind.UNKNOWN, null, null);
-                conflicts.add(desc);
-              }
-          }
+                if (conflict_old != null || conflict_new != null || conflict_working != null) {
+                    File baseFile = conflict_old != null ? new File(conflict_old) : null;
+                    File theirFile = conflict_new != null ? new File(conflict_new) : null;
+                    File myFile = conflict_working != null ? new File(conflict_working) : null;
+                    File mergedFile = new File(SVNFileUtil.getFileName(localAbsPath));
+                    SVNMergeFileSet mergeFiles = new SVNMergeFileSet(null, null, baseFile, myFile, null, theirFile, mergedFile, null, null);
+                    SVNTextConflictDescription desc = new SVNTextConflictDescription(mergeFiles, SVNNodeKind.UNKNOWN, null, null);
+                    conflicts.add(desc);
+                }
+            }
         } finally {
             stmt.reset();
         }
 
         /* ### Tree conflicts are still stored on the directory */
         {
-          SVNTreeConflictDescription desc = opReadTreeConflict(localAbsPath);
-          if (desc!=null) {
-              conflicts.add(desc);
-          }
+            SVNTreeConflictDescription desc = opReadTreeConflict(localAbsPath);
+            if (desc != null) {
+                conflicts.add(desc);
+            }
         }
 
         return conflicts;
@@ -2732,13 +2736,13 @@ public class SVNWCDb implements ISVNWCDb {
     private static long getColumnRevNum(SVNSqlJetStatement stmt, int i) throws SVNException {
         if (isColumnNull(stmt, i))
             return ISVNWCDb.INVALID_REVNUM;
-        return (int)getColumnInt64(stmt, i);
+        return (int) getColumnInt64(stmt, i);
     }
 
     private static long getColumnRevNum(SVNSqlJetStatement stmt, Enum f) throws SVNException {
         if (isColumnNull(stmt, f))
             return ISVNWCDb.INVALID_REVNUM;
-        return (int)getColumnInt64(stmt, f);
+        return (int) getColumnInt64(stmt, f);
     }
 
     private static long getTranslatedSize(SVNSqlJetStatement stmt, Enum f) throws SVNException {

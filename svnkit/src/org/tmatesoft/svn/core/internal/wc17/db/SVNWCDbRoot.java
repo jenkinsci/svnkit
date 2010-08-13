@@ -77,7 +77,14 @@ public class SVNWCDbRoot {
 
         /* Auto-upgrade the SDB if possible. */
         if (format < ISVNWCDb.WC_FORMAT_17 && autoUpgrade) {
-            format = sDb.upgrade(absPath, format);
+            if(autoUpgrade){
+                format = upgrade(absPath, format);
+            } else {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, "Working copy format of ''{0}'' is too old '{1}'", new Object[] {
+                        absPath, format
+                });
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
         }
 
         /*
@@ -153,5 +160,11 @@ public class SVNWCDbRoot {
         }
         return false;
     }
+
+    public static int upgrade(File absPath, int format) {
+        // TODO
+        return 0;
+    }
+
 
 }

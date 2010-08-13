@@ -156,11 +156,6 @@ public class SVNSqlJetDb {
         }
     }
 
-    public int upgrade(File absPath, int format) {
-        // TODO
-        return 0;
-    }
-
     public void verifyNoWork() {
     }
 

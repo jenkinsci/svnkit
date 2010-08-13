@@ -139,7 +139,7 @@ public class SVNWCContext {
     private ISVNEventHandler eventHandler;
 
     public SVNWCContext(ISVNOptions config, ISVNEventHandler eventHandler) throws SVNException {
-        this(SVNWCDbOpenMode.ReadWrite, config, true, true, eventHandler);
+        this(SVNWCDbOpenMode.ReadWrite, config, false, true, eventHandler);
     }
 
     public SVNWCContext(SVNWCDbOpenMode mode, ISVNOptions config, boolean autoUpgrade, boolean enforceEmptyWQ, ISVNEventHandler eventHandler) throws SVNException {
