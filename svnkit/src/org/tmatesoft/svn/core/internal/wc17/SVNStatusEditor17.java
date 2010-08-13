@@ -534,8 +534,10 @@ public class SVNStatusEditor17 {
                 }
 
             } catch (SVNException e) {
-                if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND) {
-                    // || SVN_WC__ERR_IS_NOT_CURRENT_WC(err))
+                if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND
+                    || e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_WORKING_COPY
+                    // || SVN_WC__ERR_IS_NOT_CURRENT_WC(err)
+                ) {
                     parent_repos_root_url = null;
                     parent_repos_relpath = null;
                 } else {
