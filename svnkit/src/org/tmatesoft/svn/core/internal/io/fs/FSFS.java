@@ -46,6 +46,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNWCProperties;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -539,6 +540,15 @@ public class FSFS {
                 if (myDBFormat < MIN_REP_SHARING_FORMAT ) {
                     SVNFileUtil.createFile(getMinUnpackedRevFile(), "0\n", "US-ASCII");
                 }
+
+                if (myDBFormat < MIN_PACKED_REVPROP_FORMAT)
+                {
+                    SVNFileUtil.createFile(getMinUnpackedRevPropPath(),"0\n", "US-ASCII");
+                    myRevisionProperitesDb = SVNSqlJetDb.open(
+                            getRevisionPropertiesDbPath(), SVNSqlJetDb.Mode.RWCreate);
+                    myRevisionProperitesDb.execStatement(SVNWCDbStatements.REVPROP_CREATE_SCHEMA);
+                }
+
             } finally {
                 writeLock.unlock();
                 FSWriteLock.release(writeLock);
