@@ -2073,21 +2073,21 @@ public class FSFS {
         return true;
     }
 
-    private File getRevisionPropertiesDbPath() {
+    public File getRevisionPropertiesDbPath() {
         return SVNFileUtil.createFilePath(getRevisionPropertiesRoot(), REVISION_PROPERTIES_DB);
     }
 
-    private File getMinUnpackedRevPropPath() {
+    public File getMinUnpackedRevPropPath() {
         return SVNFileUtil.createFilePath(getDBRoot(), MIN_UNPACKED_REVPROP);
     }
 
-    private void updateMinUnpackedRevProp() throws SVNException {
+    public void updateMinUnpackedRevProp() throws SVNException {
         assert(myDBFormat >= MIN_PACKED_REVPROP_FORMAT);
-        myMinUnpackedRevProp = readMinUnpackedRev(getMinUnpackedRevPropPath());
+        myMinUnpackedRevProp = getMinUnpackedRevProp();
     }
 
-    private long readMinUnpackedRev(File path) throws SVNException {
-        FSFile file = new FSFile(path);
+    public long getMinUnpackedRevProp() throws SVNException {
+        FSFile file = new FSFile(getMinUnpackedRevPropPath());
         try {
             return file.readLong();
         } catch (NumberFormatException nfe) {
