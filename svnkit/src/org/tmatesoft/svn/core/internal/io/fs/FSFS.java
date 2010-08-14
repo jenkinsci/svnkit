@@ -599,6 +599,19 @@ public class FSFS {
     }
 
     public SVNProperties getRevisionProperties(long revision) throws SVNException {
+        try{
+            return readRevisionProperties(revision);
+        } catch(SVNException e ) {
+            if(e.getErrorMessage().getErrorCode()==SVNErrorCode.FS_NO_SUCH_REVISION &&
+                    myDBFormat >= MIN_PACKED_REVPROP_FORMAT ) {
+                updateMinUnpackedRevProp();
+                return readRevisionProperties(revision);
+            }
+            throw e;
+        }
+    }
+
+    private SVNProperties readRevisionProperties(long revision) throws SVNException {
         ensureRevisionsExists(revision);
         if (myDBFormat < MIN_PACKED_REVPROP_FORMAT || revision >= myMinUnpackedRevProp) {
             FSFile file = new FSFile(getRevisionPropertiesFile(revision, false));
@@ -623,7 +636,6 @@ public class FSFS {
         } finally {
             stmt.reset();
         }
-
     }
 
     public FSRevisionRoot createRevisionRoot(long revision) throws SVNException {
