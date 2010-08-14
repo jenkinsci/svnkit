@@ -18,6 +18,8 @@ import java.util.List;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
@@ -39,7 +41,7 @@ public abstract class SVNSqlJetStatement {
         throw new UnsupportedOperationException();
     }
 
-    public long insert(Object... data) {
+    public long insert(Object... data) throws SVNException {
         throw new UnsupportedOperationException();
     }
 
@@ -274,6 +276,18 @@ public abstract class SVNSqlJetStatement {
 
     public SVNSqlJetStatement getJoinedStatement(Enum joinedTable) throws SVNException {
         return getJoinedStatement(joinedTable.toString());
+    }
+
+    public SVNProperties getColumnProperties(String f) throws SVNException {
+        if(isColumnNull(f)) return null;
+        final byte[] val = getColumnBlob(f);
+        if(val==null) return null;
+        final SVNSkel skel = SVNSkel.parse(val);
+        if(!skel.isValidPropList()){
+            SVNErrorMessage err = SVNErrorMessage.create( SVNErrorCode.FS_MALFORMED_SKEL, "proplist");
+            SVNErrorManager.error(err, SVNLogType.FSFS);
+        }
+        return SVNProperties.wrap(skel.parsePropList());
     }
 
 }

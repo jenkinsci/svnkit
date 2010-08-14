@@ -26,6 +26,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 
+import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -36,6 +37,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -125,6 +127,7 @@ public class FSFS {
     private static final String DB_TYPE = "fsfs";
 
     public static final String REVISION_PROPERTIES_DB = "revprops.db";
+    public static final String REVISION_PROPERTIES_TABLE = "revprop";
     public static final String MIN_UNPACKED_REVPROP = "min-unpacked-revprop";
 
     private int myDBFormat;
@@ -597,12 +600,30 @@ public class FSFS {
 
     public SVNProperties getRevisionProperties(long revision) throws SVNException {
         ensureRevisionsExists(revision);
-        FSFile file = new FSFile(getRevisionPropertiesFile(revision, false));
-        try {
-            return file.readProperties(false, true);
+        if (myDBFormat < MIN_PACKED_REVPROP_FORMAT || revision >= myMinUnpackedRevProp) {
+            FSFile file = new FSFile(getRevisionPropertiesFile(revision, false));
+            try {
+                return file.readProperties(false, true);
+            } finally {
+                file.close();
+            }
+         }
+
+        final SVNSqlJetStatement stmt = myRevisionProperitesDb.getStatement(SVNWCDbStatements.FSFS_GET_REVPROP);
+        try{
+            stmt.bindLong(1, revision);
+            boolean have_row = stmt.next();
+            if (!have_row) {
+                SVNErrorMessage err = SVNErrorMessage.create( SVNErrorCode.FS_NO_SUCH_REVISION,
+                        "No such revision ''{0}''", revision );
+                SVNErrorManager.error(err, SVNLogType.FSFS);
+                return null;
+            }
+            return stmt.getColumnProperties("properties");
         } finally {
-            file.close();
+            stmt.reset();
         }
+
     }
 
     public FSRevisionRoot createRevisionRoot(long revision) throws SVNException {
@@ -959,15 +980,27 @@ public class FSFS {
 
     public void setRevisionProperty(long revision, String propertyName, SVNPropertyValue propertyValue) throws SVNException {
         ensureRevisionsExists(revision);
-        FSWriteLock writeLock = FSWriteLock.getWriteLockForDB(this);
-        synchronized (writeLock) {
-            try {
-                writeLock.lock();
-                SVNWCProperties revProps = new SVNWCProperties(getRevisionPropertiesFile(revision, false), null);
-                revProps.setPropertyValue(propertyName, propertyValue);
-            } finally {
-                writeLock.unlock();
-                FSWriteLock.release(writeLock);
+        if (myDBFormat < MIN_PACKED_REVPROP_FORMAT ||
+                revision >= myMinUnpackedRevProp ) {
+            FSWriteLock writeLock = FSWriteLock.getWriteLockForDB(this);
+            synchronized (writeLock) {
+                try {
+                    writeLock.lock();
+                    SVNWCProperties revProps = new SVNWCProperties(getRevisionPropertiesFile(revision, false), null);
+                    revProps.setPropertyValue(propertyName, propertyValue);
+                } finally {
+                    writeLock.unlock();
+                    FSWriteLock.release(writeLock);
+                }
+            }
+        } else {
+            final SVNProperties revisionProperties = getRevisionProperties(revision);
+            revisionProperties.put(propertyName, propertyValue);
+            final SVNSqlJetStatement stmt = myRevisionProperitesDb.getStatement(SVNWCDbStatements.FSFS_SET_REVPROP);
+            try{
+                stmt.insert(new Object[] { revision, revisionProperties } );
+            } finally{
+                stmt.reset();
             }
         }
     }

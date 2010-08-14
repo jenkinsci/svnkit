@@ -13,6 +13,8 @@ package org.tmatesoft.svn.core.internal.wc17.db.statement;
 
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.io.fs.revprop.SVNFSFSRevPropCreateSchema;
+import org.tmatesoft.svn.core.internal.io.fs.revprop.SVNFSFSRevPropGet;
+import org.tmatesoft.svn.core.internal.io.fs.revprop.SVNFSFSRevPropSet;
 
 /**
  * @author TMate Software Ltd.
@@ -50,7 +52,9 @@ public enum SVNWCDbStatements {
     SELECT_BASE_IS_FILE(SVNWCDbSelectBaseIsFile.class),
     SELECT_CONFLICT_DETAILS(SVNWCDbSelectConflictDetails.class),
 
-    REVPROP_CREATE_SCHEMA(SVNFSFSRevPropCreateSchema.class);
+    REVPROP_CREATE_SCHEMA(SVNFSFSRevPropCreateSchema.class),
+    FSFS_GET_REVPROP(SVNFSFSRevPropGet.class),
+    FSFS_SET_REVPROP(SVNFSFSRevPropSet.class);
 
     private Class<? extends SVNSqlJetStatement> statementClass;
 
