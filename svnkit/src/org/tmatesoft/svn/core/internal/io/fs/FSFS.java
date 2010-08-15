@@ -131,8 +131,8 @@ public class FSFS {
     public static final String REVISION_PROPERTIES_TABLE = "revprop";
     public static final String MIN_UNPACKED_REVPROP = "min-unpacked-revprop";
 
-    // public static final boolean DB_FORMAT_PRE_17_USE_AS_DEFAULT = true;
-    public static final boolean DB_FORMAT_PRE_17_USE_AS_DEFAULT = false;
+    public static final boolean DB_FORMAT_PRE_17_USE_AS_DEFAULT = true;
+    //public static final boolean DB_FORMAT_PRE_17_USE_AS_DEFAULT = false;
 
     private int myDBFormat;
     private int myReposFormat;
