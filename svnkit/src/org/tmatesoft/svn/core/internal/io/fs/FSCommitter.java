@@ -31,11 +31,14 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.util.SVNLogType;
@@ -68,13 +71,13 @@ public class FSCommitter {
         myLockTokens = lockTokens != null ? lockTokens : Collections.EMPTY_LIST;
         myAuthor = author;
     }
-    
+
     public void deleteNode(String path) throws SVNException {
         FSTransactionRoot txnRoot = getTxnRoot();
         FSParentPath parentPath = txnRoot.openPath(path, true, true);
         SVNNodeKind kind = parentPath.getRevNode().getType();
         if (parentPath.getParent() == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_ROOT_DIR, 
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_ROOT_DIR,
                     "The root directory cannot be deleted");
             SVNErrorManager.error(err, SVNLogType.FSFS);
         }
@@ -114,7 +117,7 @@ public class FSCommitter {
 
         if (myFSFS.supportsMergeInfo() && name.equals(SVNProperty.MERGE_INFO)) {
             long increment = 0;
-            boolean hadMergeInfo = parentPath.getRevNode().hasMergeInfo(); 
+            boolean hadMergeInfo = parentPath.getRevNode().hasMergeInfo();
             if (propValue != null && !hadMergeInfo) {
                 increment = 1;
             } else if (propValue == null && hadMergeInfo) {
@@ -125,7 +128,7 @@ public class FSCommitter {
                 incrementMergeInfoUpTree(parentPath, increment);
             }
         }
-        
+
         if (propValue == null) {
             properties.remove(name);
         } else {
@@ -168,7 +171,7 @@ public class FSCommitter {
         if (changeKind == FSPathChangeKind.FS_PATH_CHANGE_REPLACE) {
             txnRoot.removeRevNodeFromCache(toParentPath.getAbsPath());
         }
-        
+
         long mergeInfoEnd = 0;
         if (myFSFS.supportsMergeInfo()) {
             mergeInfoEnd = fromNode.getMergeInfoCount();
@@ -256,7 +259,7 @@ public class FSCommitter {
         return childNode;
     }
 
-    public void addChange(String path, FSID id, FSPathChangeKind changeKind, boolean textModified, 
+    public void addChange(String path, FSID id, FSPathChangeKind changeKind, boolean textModified,
             boolean propsModified, long copyFromRevision, String copyFromPath, SVNNodeKind kind) throws SVNException {
         path = SVNPathUtil.canonicalizeAbsolutePath(path);
         OutputStream changesFile = null;
@@ -311,15 +314,15 @@ public class FSCommitter {
             }
             break;
         }
-        
+
         if (runPostCommitHook) {
             try {
                 FSHooks.runPostCommitHook(myFSFS.getRepositoryRoot(), newRevision);
              } catch (SVNException svne) {
-                 SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.REPOS_POST_COMMIT_HOOK_FAILED, 
+                 SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.REPOS_POST_COMMIT_HOOK_FAILED,
                          "Commit succeeded, but post-commit hook failed", SVNErrorMessage.TYPE_WARNING);
                  errorMessage.setChildErrorMessage(svne.getErrorMessage());
-                 
+
                  if (postCommitHookError != null && postCommitHookError.length > 0) {
                      postCommitHookError[0] = errorMessage;
                  } else {
@@ -381,8 +384,8 @@ public class FSCommitter {
             FSTransactionInfo txn = txnRoot.getTxn();
 
             if (txn.getRootID().equals(txn.getBaseID())) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
-                                                             "FATAL error: txn ''{0}'' root id ''{1}'' matches base id ''{2}''", 
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN,
+                                                             "FATAL error: txn ''{0}'' root id ''{1}'' matches base id ''{2}''",
                                                              new Object[] { txnId, txn.getRootID(), txn.getBaseID() });
                 SVNErrorManager.error(err, SVNLogType.FSFS);
             }
@@ -407,8 +410,8 @@ public class FSCommitter {
             parentPath = parentPath.getParent();
         }
     }
-    
-    private void copy(FSRevisionNode toNode, String entryName, FSRevisionNode fromNode, boolean preserveHistory, 
+
+    private void copy(FSRevisionNode toNode, String entryName, FSRevisionNode fromNode, boolean preserveHistory,
             long fromRevision, String fromPath, String txnId) throws SVNException {
         FSID id = null;
         FSTransactionRoot txnRoot = getTxnRoot();
@@ -493,14 +496,34 @@ public class FSCommitter {
                FSWriteLock.release(txnWriteLock);
             }
         }
-        
+
         String commitTime = SVNDate.formatDate(new Date(System.currentTimeMillis()));
-        myFSFS.setTransactionProperty(myTxn.getTxnId(), SVNRevisionProperty.DATE, 
+        myFSFS.setTransactionProperty(myTxn.getTxnId(), SVNRevisionProperty.DATE,
                 SVNPropertyValue.create(commitTime));
-        
+
         File txnPropsFile = myFSFS.getTransactionPropertiesFile(myTxn.getTxnId());
-        File dstRevPropsFile = myFSFS.getNewRevisionPropertiesFile(newRevision);
-        SVNFileUtil.rename(txnPropsFile, dstRevPropsFile);
+
+        if (myFSFS.getDBFormat() < FSFS.MIN_PACKED_REVPROP_FORMAT ||
+                newRevision >= myFSFS.getMinUnpackedRevProp()){
+            File dstRevPropsFile = myFSFS.getNewRevisionPropertiesFile(newRevision);
+            SVNFileUtil.rename(txnPropsFile, dstRevPropsFile);
+        }
+        else
+        {
+          /* Read the revprops, and commit them to the permenant sqlite db. */
+          FSFile fsfProps = new FSFile(txnPropsFile);
+          try {
+              final SVNProperties revProperties = fsfProps.readProperties(false, true);
+              final SVNSqlJetStatement stmt = myFSFS.getRevisionProperitesDb().getStatement(SVNWCDbStatements.FSFS_SET_REVPROP);
+              try{
+                  stmt.insert(new Object[] { newRevision, revProperties } );
+              } finally{
+                  stmt.reset();
+              }
+          } finally {
+              fsfProps.close();
+          }
+        }
 
         try {
             txnRoot.writeFinalCurrentFile(newRevision, startNodeId, startCopyId);
@@ -520,7 +543,7 @@ public class FSCommitter {
             FSID rootId = FSID.createTxnId("0", "0", myTxn.getTxnId());
 
             CountingOutputStream revWriter = new CountingOutputStream(protoFileOS, offset);
-            newRootId = txnRoot.writeFinalRevision(newRootId, revWriter, newRevision, rootId, 
+            newRootId = txnRoot.writeFinalRevision(newRootId, revWriter, newRevision, rootId,
                     startNodeId, startCopyId);
             long changedPathOffset = txnRoot.writeFinalChangedPathInfo(revWriter);
 
@@ -561,13 +584,13 @@ public class FSCommitter {
         }
     }
 
-    private long merge(String targetPath, FSRevisionNode target, FSRevisionNode source, FSRevisionNode ancestor, String txnId, 
+    private long merge(String targetPath, FSRevisionNode target, FSRevisionNode source, FSRevisionNode ancestor, String txnId,
             StringBuffer conflictPath) throws SVNException {
         FSID sourceId = source.getId();
         FSID targetId = target.getId();
         FSID ancestorId = ancestor.getId();
         long mergeInfoIncrement = 0;
-        
+
         if (ancestorId.equals(targetId)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_GENERAL, "Bad merge; target ''{0}'' has id ''{1}'', same as ancestor", new Object[] {
                     targetPath, targetId
@@ -619,22 +642,22 @@ public class FSCommitter {
                     txnRoot.deleteEntry(target, ancestorEntryName);
                 }
             } else {
-                
+
                 if (sourceEntry == null || targetEntry == null) {
-                    SVNErrorManager.error(FSErrors.errorConflict(SVNPathUtil.getAbsolutePath(SVNPathUtil.append(targetPath, ancestorEntryName)), 
+                    SVNErrorManager.error(FSErrors.errorConflict(SVNPathUtil.getAbsolutePath(SVNPathUtil.append(targetPath, ancestorEntryName)),
                             conflictPath), SVNLogType.FSFS);
                 }
 
                 if (sourceEntry.getType() == SVNNodeKind.FILE || targetEntry.getType() == SVNNodeKind.FILE || ancestorEntry.getType() == SVNNodeKind.FILE) {
-                    SVNErrorManager.error(FSErrors.errorConflict(SVNPathUtil.getAbsolutePath(SVNPathUtil.append(targetPath, ancestorEntryName)), 
+                    SVNErrorManager.error(FSErrors.errorConflict(SVNPathUtil.getAbsolutePath(SVNPathUtil.append(targetPath, ancestorEntryName)),
                             conflictPath), SVNLogType.FSFS);
                 }
 
-                if (!sourceEntry.getId().getNodeID().equals(ancestorEntry.getId().getNodeID()) || 
-                        !sourceEntry.getId().getCopyID().equals(ancestorEntry.getId().getCopyID()) || 
-                        !targetEntry.getId().getNodeID().equals(ancestorEntry.getId().getNodeID()) || 
+                if (!sourceEntry.getId().getNodeID().equals(ancestorEntry.getId().getNodeID()) ||
+                        !sourceEntry.getId().getCopyID().equals(ancestorEntry.getId().getCopyID()) ||
+                        !targetEntry.getId().getNodeID().equals(ancestorEntry.getId().getNodeID()) ||
                         !targetEntry.getId().getCopyID().equals(ancestorEntry.getId().getCopyID())) {
-                    SVNErrorManager.error(FSErrors.errorConflict(SVNPathUtil.getAbsolutePath(SVNPathUtil.append(targetPath, ancestorEntryName)), 
+                    SVNErrorManager.error(FSErrors.errorConflict(SVNPathUtil.getAbsolutePath(SVNPathUtil.append(targetPath, ancestorEntryName)),
                             conflictPath), SVNLogType.FSFS);
                 }
 
@@ -654,12 +677,12 @@ public class FSCommitter {
         for (Iterator sourceEntryNames = sourceEntries.keySet().iterator(); sourceEntryNames.hasNext();) {
             String sourceEntryName = (String) sourceEntryNames.next();
             if (removedEntries.contains(sourceEntryName)){
-                continue;                
+                continue;
             }
             FSEntry sourceEntry = (FSEntry) sourceEntries.get(sourceEntryName);
             FSEntry targetEntry = (FSEntry) targetEntries.get(sourceEntryName);
             if (targetEntry != null) {
-                SVNErrorManager.error(FSErrors.errorConflict(SVNPathUtil.getAbsolutePath(SVNPathUtil.append(targetPath, targetEntry.getName())), 
+                SVNErrorManager.error(FSErrors.errorConflict(SVNPathUtil.getAbsolutePath(SVNPathUtil.append(targetPath, targetEntry.getName())),
                         conflictPath), SVNLogType.FSFS);
             }
             if (myFSFS.supportsMergeInfo()) {
@@ -723,7 +746,7 @@ public class FSCommitter {
         }
         return myTxnRoot;
     }
-    
+
     public static void allowLockedOperation(FSFS fsfs, String path, final String username, final Collection lockTokens, boolean recursive, boolean haveWriteLock) throws SVNException {
         path = SVNPathUtil.canonicalizeAbsolutePath(path);
         if (recursive) {
@@ -747,7 +770,7 @@ public class FSCommitter {
             }
         }
     }
-    
+
     private static void verifyLock(SVNLock lock, Collection lockTokens, String username) throws SVNException {
         if (username == null || "".equals(username)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_USER, "Cannot verify lock on path ''{0}''; no username available", lock.getPath());
@@ -758,11 +781,11 @@ public class FSCommitter {
             });
             SVNErrorManager.error(err, SVNLogType.FSFS);
         }
-        
+
         if (lockTokens.contains(lock.getID())) {
             return;
         }
-        
+
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_BAD_LOCK_TOKEN, "Cannot verify lock on path ''{0}''; no matching lock-token available", lock.getPath());
         SVNErrorManager.error(err, SVNLogType.FSFS);
     }

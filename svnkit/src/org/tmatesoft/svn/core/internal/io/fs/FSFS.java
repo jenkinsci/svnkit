@@ -2142,4 +2142,8 @@ public class FSFS {
         }
     }
 
+    public SVNSqlJetDb getRevisionProperitesDb() {
+        return myRevisionProperitesDb;
+    }
+
 }
