@@ -533,7 +533,7 @@ public abstract class SVNRepositoryFactory {
             }
 
             int fsFormat = FSFS.DB_FORMAT;
-            if( !with17Compatible ) {
+            if( FSFS.DB_FORMAT_PRE_17_USE_AS_DEFAULT && !with17Compatible ) {
                 fsFormat = FSFS.DB_FORMAT_PRE_17;
             }
             if( pre17Compatible) {
