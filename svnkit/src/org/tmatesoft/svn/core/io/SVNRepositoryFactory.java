@@ -680,18 +680,7 @@ public abstract class SVNRepositoryFactory {
             if (fsFormat >= FSFS.MIN_PACKED_REVPROP_FORMAT)
               {
                 File minUnpackedRevPropFile = new File(path, FSFS.DB_DIR + "/" + FSFS.MIN_UNPACKED_REVPROP);
-                OutputStream minUnpackedRevPropStream = null;
-                try {
-                    minUnpackedRevPropStream = SVNFileUtil.openFileForWriting(minUnpackedRevPropFile);
-                    minUnpackedRevPropStream.write("0\n".getBytes("US-ASCII"));
-                } catch (IOException e) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Error writing min unpacked revision property to ''{0}''", minUnpackedRevPropFile);
-                    err.setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage()));
-                    SVNErrorManager.error(err, SVNLogType.FSFS);
-                } finally {
-                    SVNFileUtil.closeFile(minUnpackedRevPropStream);
-                }
-
+                SVNFileUtil.writeToFile(minUnpackedRevPropFile, "0\n", "US-ASCII");
                 File revPropFile = new File(path, FSFS.DB_DIR + "/" + FSFS.REVISION_PROPERTIES_DIR + "/" + FSFS.REVISION_PROPERTIES_DB);
                 final SVNSqlJetDb revPropDb = SVNSqlJetDb.open( revPropFile, SVNSqlJetDb.Mode.RWCreate );
                 try{
@@ -699,9 +688,7 @@ public abstract class SVNRepositoryFactory {
                 } finally {
                     revPropDb.close();
                 }
-
               }
-
 
         } finally {
             SVNFileUtil.closeFile(uuidOS);
