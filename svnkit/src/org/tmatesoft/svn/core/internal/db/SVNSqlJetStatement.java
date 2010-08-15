@@ -158,7 +158,6 @@ public abstract class SVNSqlJetStatement {
     }
 
     public void bindProperties(int i, SVNProperties props) throws SVNException {
-        SVNSkel.createPropList(props.asMap()).getData();
         binds.add(i - 1, SVNSkel.createPropList(props.asMap()).getData());
     }
 

@@ -35,6 +35,7 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
@@ -516,7 +517,7 @@ public class FSCommitter {
               final SVNProperties revProperties = fsfProps.readProperties(false, true);
               final SVNSqlJetStatement stmt = myFSFS.getRevisionProperitesDb().getStatement(SVNWCDbStatements.FSFS_SET_REVPROP);
               try{
-                  stmt.insert(new Object[] { newRevision, revProperties } );
+                  stmt.insert(new Object[] { newRevision, SVNSkel.createPropList(revProperties.asMap()).getData() } );
               } finally{
                   stmt.reset();
               }

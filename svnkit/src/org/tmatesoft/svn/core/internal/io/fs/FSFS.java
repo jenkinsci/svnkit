@@ -41,6 +41,7 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNConfigFile;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -1010,7 +1011,7 @@ public class FSFS {
             revisionProperties.put(propertyName, propertyValue);
             final SVNSqlJetStatement stmt = myRevisionProperitesDb.getStatement(SVNWCDbStatements.FSFS_SET_REVPROP);
             try{
-                stmt.insert(new Object[] { revision, revisionProperties } );
+                stmt.insert(new Object[] { revision, SVNSkel.createPropList(revisionProperties.asMap()).getData() } );
             } finally{
                 stmt.reset();
             }
