@@ -44,6 +44,7 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNLog;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNEditor;
@@ -1325,7 +1326,7 @@ public class SVNCopyDriver extends SVNBasicDelegate {
                 try {
                     // do real copy.
                     File sourceFile = new File(pair.mySource);
-                    copyFiles(sourceFile, new File(dstParentPath), dstAccess, pair.myBaseName);
+                    copyFiles(sourceFile, new File(dstParentPath), dstAccess, pair.myBaseName, false);
                 } finally {
                     if (srcAccess != null && srcAccess != dstAccess) {
                         close(srcAccess);
@@ -1368,7 +1369,7 @@ public class SVNCopyDriver extends SVNBasicDelegate {
                         dstAccess.open(dstParent, true, 0);
                     }
                 }
-                copyFiles(sourceFile, dstParent, dstAccess, pair.myBaseName);
+                copyFiles(sourceFile, dstParent, dstAccess, pair.myBaseName, true);
                 // delete src.
                 SVNWCManager.delete(srcAccess, srcAccess.getAdminArea(srcParent), sourceFile, true, true);
             } finally {
@@ -1381,7 +1382,7 @@ public class SVNCopyDriver extends SVNBasicDelegate {
         sleepForTimeStamp();
     }
 
-    private void copyFiles(File src, File dstParent, SVNWCAccess dstAccess, String dstName) throws SVNException {
+    private void copyFiles(File src, File dstParent, SVNWCAccess dstAccess, String dstName, boolean move) throws SVNException {
         SVNWCAccess srcAccess = getWCAccess();
         try {
             probeOpen(srcAccess, src, false, -1);
@@ -1405,7 +1406,7 @@ public class SVNCopyDriver extends SVNBasicDelegate {
                 if (srcEntry.isScheduledForAddition() && !srcEntry.isCopied()) {
                     copyAddedFileAdm(src, srcAccess, dstAccess, dstParent, dstName, true);
                 } else {
-                    copyFileAdm(src, srcAccess, dstParent, dstAccess, dstName);
+                    copyFileAdm(src, srcAccess, dstParent, dstAccess, dstName, move);
                 }
             } else if (srcType == SVNFileType.DIRECTORY) {
                 if (srcEntry.isScheduledForAddition() && !srcEntry.isCopied()) {
@@ -1419,7 +1420,7 @@ public class SVNCopyDriver extends SVNBasicDelegate {
         }
     }
 
-    private void copyFileAdm(File src, SVNWCAccess srcAccess, File dstParent, SVNWCAccess dstAccess, String dstName) throws SVNException {
+    private void copyFileAdm(File src, SVNWCAccess srcAccess, File dstParent, SVNWCAccess dstAccess, String dstName, boolean move) throws SVNException {
         File dst = new File(dstParent, dstName);
         SVNFileType dstType = SVNFileType.getType(dst);
         if (dstType != SVNFileType.NONE) {
@@ -1449,6 +1450,7 @@ public class SVNCopyDriver extends SVNBasicDelegate {
             copyFromURL = srcEntry.getURL();
             copyFromRevision = srcEntry.getRevision();
         }
+        String changelistName = srcEntry.getChangelistName();
         // copy base file.
         File srcBaseFile = new File(src.getParentFile(), SVNAdminUtil.getTextBasePath(src.getName(), false));
         File dstBaseFile = new File(dstParent, SVNAdminUtil.getTextBasePath(dstName, true));
@@ -1471,7 +1473,18 @@ public class SVNCopyDriver extends SVNBasicDelegate {
             SVNFileUtil.copyFile(src, tmpWCFile, false);
             SVNWCManager.addRepositoryFile(dstDir, dstName, tmpWCFile, null, srcBaseProps.asMap(), srcWorkingProps.asMap(), copyFromURL, copyFromRevision);
         }
-
+        
+        if (changelistName != null && move) {
+            dstEntry = dstAccess.getEntry(dst, false);
+            if (dstEntry != null) {
+                SVNLog log = dstDir.getLog();
+                SVNProperties command = new SVNProperties();
+                command.put(SVNProperty.shortPropertyName(SVNProperty.CHANGELIST), changelistName);
+                log.logChangedEntryProperties(dstName, command);
+                log.save();
+                dstDir.runLogs();
+            }
+        }
         SVNEvent event = SVNEventFactory.createSVNEvent(dst, SVNNodeKind.FILE, null, SVNRepository.INVALID_REVISION, SVNEventAction.ADD, null, null, null);
         dstAccess.handleEvent(event);
     }
