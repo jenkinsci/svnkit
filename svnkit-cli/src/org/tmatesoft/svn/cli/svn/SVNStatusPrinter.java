@@ -30,7 +30,7 @@ public class SVNStatusPrinter {
     
     public void printStatus(String path, SVNStatus status, 
             boolean detailed, boolean showLastCommitted, boolean skipUnrecognized, boolean showReposLocks) {
-        if (status == null || (skipUnrecognized && !(status.getEntry() != null || status.getTreeConflict() != null)) || 
+        if (status == null || (skipUnrecognized && !(status.isVersioned() || status.getTreeConflict() != null)) || 
                 (status.getContentsStatus() == SVNStatusType.STATUS_NONE && status.getRemoteContentsStatus() == SVNStatusType.STATUS_NONE)) {
             return;
         }

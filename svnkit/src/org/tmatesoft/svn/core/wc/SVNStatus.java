@@ -749,4 +749,11 @@ public class SVNStatus {
         this.status17 = status17;
     }
 
+    public boolean isVersioned() {
+        if(status17!=null){
+            return status17.isVersioned();
+        }
+        return getEntry()!=null;
+    }
+    
 }
