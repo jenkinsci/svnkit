@@ -47,7 +47,7 @@ public class SVNStatusPrinter {
         if (detailed) {
             String wcRevision;
             char remoteStatus;
-            if (status.getEntry() == null) {
+            if (!status.isVersioned()) {
                 wcRevision = "";
             } else if (!status.getRevision().isValid()) {
                 wcRevision = " ? ";
@@ -81,14 +81,14 @@ public class SVNStatusPrinter {
                 String commitRevision = "";
                 String commitAuthor = "";
 
-                if (status.getEntry() != null && status.getCommittedRevision().isValid()) {
+                if (status.isVersioned() && status.getCommittedRevision().isValid()) {
                     commitRevision = status.getCommittedRevision().toString();
-                } else if (status.getEntry() != null) {
+                } else if (status.isVersioned()) {
                     commitRevision = " ? ";
                 }
-                if (status.getEntry() != null && status.getAuthor() != null) {
+                if (status.isVersioned() && status.getAuthor() != null) {
                     commitAuthor = status.getAuthor();
-                } else if (status.getEntry() != null) {
+                } else if (status.isVersioned()) {
                     commitAuthor = " ? ";
                 }
                 result.append(status.getContentsStatus().getCode());
