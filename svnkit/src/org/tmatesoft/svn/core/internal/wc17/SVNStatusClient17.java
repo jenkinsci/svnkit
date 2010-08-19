@@ -19,6 +19,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNExternal;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.internal.wc16.SVNBasicDelegate;
 import org.tmatesoft.svn.core.io.ISVNEditor;
@@ -93,11 +94,16 @@ public class SVNStatusClient17 extends SVNBasicDelegate {
             if (deletedInRepository) {
                 status.setRemoteStatus(SVNStatusType.STATUS_DELETED, null, null, null);
             }
-            if (!SVNWCAccess.matchesChangeList(myChangeLists, status.getEntry())) {
+            if (!matchesChangeList(myChangeLists, status.getStatus17())) {
                 return;
             }
             myHandler.handleStatus(status);
         }
+        
+        public static boolean matchesChangeList(Collection changeLists, SVNStatus17 status) {
+            return changeLists == null || changeLists.isEmpty() || (status != null && status.getChangelist() != null && changeLists.contains(status.getChangelist()));
+        }
+
     }
 
     private ISVNStatusFileProvider myFilesProvider;
