@@ -27,6 +27,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
@@ -261,7 +262,7 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
              * If this is the top-most directory, and the operation had a
              * target, we should only report the target.
              */
-            if (myTargetBaseName != null) {
+            if (myTargetBaseName != null && !"".equals(myTargetBaseName)) {
                 SVNStatus17 tgt_status = db.statii.get(myTargetAbsPath);
                 if (tgt_status != null) {
                     if (tgt_status.isVersioned() && tgt_status.getKind() == SVNNodeKind.DIR) {
@@ -404,7 +405,7 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
                      * path format
                      */
                     File repos_relpath = SVNFileUtil.createFilePath(dir_repos_relpath, myFileInfo.name);
-                    repos_lock = (SVNLock) myRepositoryLocks.get(SVNURL.parseURIEncoded("/" + repos_relpath.toString()).getPath());
+                    repos_lock = (SVNLock) myRepositoryLocks.get(SVNEncodingUtil.uriDecode("/" + repos_relpath.toString()));
                 }
             }
         } else {

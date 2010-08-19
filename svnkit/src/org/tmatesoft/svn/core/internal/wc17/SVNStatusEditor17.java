@@ -29,6 +29,7 @@ import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
@@ -346,7 +347,7 @@ public class SVNStatusEditor17 {
                  * repos_lock still uses the deprecated filesystem absolute path
                  * format
                  */
-                repositoryLock = (SVNLock) myRepositoryLocks.get(SVNURL.parseURIEncoded("/" + reposRelpath.toString()).getPath());
+                repositoryLock = (SVNLock) myRepositoryLocks.get(SVNEncodingUtil.uriDecode("/" + reposRelpath.toString()));
             }
 
         }
