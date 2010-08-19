@@ -19,6 +19,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
@@ -483,6 +484,13 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
     public void handleStatus(SVNStatus status) throws SVNException {
         status.setContentsStatus(SVNStatusType.STATUS_DELETED);
         getDefaultHandler().handleStatus(status);
+    }
+
+    public SVNCommitInfo closeEdit() throws SVNException {
+        if (!myIsRootOpen) {
+            super.closeEdit();
+        }
+        return new SVNCommitInfo(getTargetRevision(), null, null);
     }
 
     private class DirectoryInfo implements ISVNStatusHandler {
