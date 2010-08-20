@@ -247,7 +247,7 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
          */
         if (pb != null && !db.excluded) {
             boolean was_deleted = false;
-            SVNStatus17 dir_status = dir_status = pb.statii.get(db.localAbsPath);
+            SVNStatus17 dir_status = pb.statii.get(db.localAbsPath);
 
             /* See if the directory was deleted or replaced. */
             if (dir_status != null && ((dir_status.getReposNodeStatus() == SVNStatusType.STATUS_DELETED) || (dir_status.getReposNodeStatus() == SVNStatusType.STATUS_REPLACED)))
@@ -285,6 +285,7 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
                 myAnchorStatus = null;
             }
         }
+        myDirectoryInfo = myDirectoryInfo.parent;
     }
 
     private boolean isSendableStatus(SVNStatus17 status) {
@@ -352,6 +353,7 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
 
     public void addFile(String path, String copyFromPath, long copyFromRevision) throws SVNException {
         myFileInfo = new FileInfo(myDirectoryInfo, path, true);
+        myFileInfo.added = true;
         myDirectoryInfo.text_changed = true;
     }
 
