@@ -60,7 +60,7 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
     public SVNRemoteStatusEditor17(File anchorAbsPath, String targetBaseName, SVNWCContext wcContext, ISVNOptions options, boolean includeIgnored, boolean reportAll, SVNDepth depth,
             SVNExternalsStore externalsStore, ISVNStatusHandler realHandler) throws SVNException {
         super(SVNFileUtil.createFilePath(anchorAbsPath, targetBaseName), wcContext, options, includeIgnored, reportAll, depth, externalsStore, realHandler);
-        myAnchorStatus = internalStatus(SVNFileUtil.createFilePath(anchorAbsPath, targetBaseName));
+        myAnchorStatus = internalStatus(anchorAbsPath);
         myAnchorAbsPath = anchorAbsPath;
         myTargetBaseName = targetBaseName;
         myTargetAbsPath = SVNFileUtil.createFilePath(anchorAbsPath, targetBaseName);
