@@ -109,7 +109,7 @@ public class SVNReporter17 implements ISVNReporterBaton {
         long target_rev = 0;
         File repos_relpath = null;
         SVNURL repos_root = null;
-        SVNDepth target_depth = null;
+        SVNDepth target_depth = SVNDepth.UNKNOWN;
         SVNWCDbLock target_lock = null;
         boolean explicit_rev, start_empty;
 

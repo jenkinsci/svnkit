@@ -2248,7 +2248,7 @@ public class SVNWCDb implements ISVNWCDb {
                      * the root directory of this WCROOT, then something is
                      * wrong.
                      */
-                    if (relpath_suffix != null || localRelPath == null) {
+                    if ((relpath_suffix != null && !"".equals(relpath_suffix.getPath())) || localRelPath == null) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "Parent(s) of ''{0}'' should have been present.", localAbsPath);
                         SVNErrorManager.error(err, SVNLogType.WC);
                     } else {
