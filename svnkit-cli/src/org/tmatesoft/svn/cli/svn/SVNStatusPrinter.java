@@ -13,6 +13,7 @@ package org.tmatesoft.svn.cli.svn;
 
 import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNTreeConflictUtil;
+import org.tmatesoft.svn.core.internal.wc17.SVNStatus17;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 
@@ -49,8 +50,16 @@ public class SVNStatusPrinter {
             char remoteStatus;
             if (!status.isVersioned()) {
                 wcRevision = "";
-            } else if (!status.getRevision().isValid()) {
-                wcRevision = " ? ";
+            } else if (!status.getRevision().isValid()) {                
+                if(status.getStatus17()!=null) {
+                    SVNStatus17 status17 = status.getStatus17();
+                    if (status17.getNodeStatus() == SVNStatusType.STATUS_ADDED ||
+                        status17.getNodeStatus() == SVNStatusType.STATUS_REPLACED)
+                        wcRevision = "0";
+                    else
+                        wcRevision = " ? ";
+                } else 
+                    wcRevision = " ? ";
             } else if (status.isCopied()) {
                 wcRevision = "-";
             } else {
