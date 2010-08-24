@@ -969,6 +969,8 @@
     		<fileset dir="svnkit-test/patch">
     			<include name="entries-dump"/>
     		</fileset>
+    		<filterset begintoken="%" endtoken="%"
+    			filtersfile="svnkit-test/test.properties"/>
         </copy>
     	<copy todir="${python.test.home}">
     		<fileset dir="svnkit-test">
