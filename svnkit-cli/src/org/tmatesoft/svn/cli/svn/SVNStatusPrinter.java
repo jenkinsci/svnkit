@@ -56,6 +56,8 @@ public class SVNStatusPrinter {
                     if (status17.getNodeStatus() == SVNStatusType.STATUS_ADDED ||
                         status17.getNodeStatus() == SVNStatusType.STATUS_REPLACED)
                         wcRevision = "0";
+                    else if(status17.getNodeStatus()==SVNStatusType.STATUS_DELETED)
+                        wcRevision = Long.toString(status17.getChangedRev());
                     else
                         wcRevision = " ? ";
                 } else 
