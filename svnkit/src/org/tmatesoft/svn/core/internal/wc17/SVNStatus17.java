@@ -27,18 +27,28 @@ import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 
 /**
  * Structure for holding the "status" of a working copy item.
- *
+ * 
  * The item's entry data is in entry, augmented and possibly shadowed by the
  * other fields. entry is NULL if this item is not under version control.
- *
+ * 
  * Fields may be added to the end of this structure in future versions.
  * Therefore, to preserve binary compatibility, users should not directly
  * allocate structures of this type.
- *
+ * 
  * @since New in SVN1.7.
  * @author TMate Software Ltd.
  */
 public class SVNStatus17 {
+
+    public static class ConflictedInfo {
+
+        public boolean textConflicted;
+        public boolean propConflicted;
+        public boolean treeConflicted;
+        public File baseFile;
+        public File repositoryFile;
+        public File localFile;
+    }
 
     private File localAbsPath;
 
@@ -58,6 +68,8 @@ public class SVNStatus17 {
 
     /** Set to TRUE if the item is the victim of a conflict. */
     private boolean conflicted;
+
+    private ConflictedInfo conflictedInfo;
 
     /**
      * The status of the node itself. In order of precendence: Tree conflicts,
@@ -116,7 +128,7 @@ public class SVNStatus17 {
 
     /**
      * WC out-of-date info from the repository
-     *
+     * 
      * When the working copy item is out-of-date compared to the repository, the
      * following fields represent the state of the youngest revision of the item
      * in the repository. If the working copy is not out of date, the fields are
@@ -201,6 +213,14 @@ public class SVNStatus17 {
 
     public void setConflicted(boolean conflicted) {
         this.conflicted = conflicted;
+    }
+
+    public ConflictedInfo getConflictedInfo() {
+        return conflictedInfo;
+    }
+
+    public void setConflictedInfo(ConflictedInfo conflictedInfo) {
+        this.conflictedInfo = conflictedInfo;
     }
 
     public SVNStatusType getNodeStatus() {
@@ -371,18 +391,26 @@ public class SVNStatus17 {
         this.oodChangedAuthor = oodChangedAuthor;
     }
 
-    public SVNStatus getStatus16(){
-        return getStatus16(false, null, null, null, null, null, null, null, null, ISVNWCDb.WC_FORMAT_17);
+    public SVNStatus getStatus16() {
+        return getStatus16(false, null, null, null, null, ISVNWCDb.WC_FORMAT_17);
     }
 
-    public SVNStatus getStatus16(boolean isFileExternal, File conflictNewFile, File conflictOldFile, File conflictWrkFile, File projRejectFile, String copyFromURL,
-            SVNRevision copyFromRevision, SVNLock remoteLock, Map entryProperties, int wcFormatVersion) {
+    public SVNStatus getStatus16(boolean isFileExternal, String copyFromURL, SVNRevision copyFromRevision, SVNLock remoteLock, Map entryProperties, int wcFormatVersion) {
         final SVNStatusType contentStatus = getCombinedStatus();
-        final SVNStatus status = new SVNStatus(reposRootUrl, localAbsPath, kind, SVNRevision.create(revision), SVNRevision.create(changedRev), changedDate, changedAuthor, contentStatus, propStatus, reposTextStatus,
-                reposPropStatus, lock != null, copied, switched, isFileExternal, conflictNewFile, conflictOldFile, conflictWrkFile, projRejectFile, copyFromURL, copyFromRevision, remoteLock, lock,
-                entryProperties, changelist, wcFormatVersion, treeConflict);
+        if (conflicted) {
+            final SVNStatus status = new SVNStatus(reposRootUrl, localAbsPath, kind, SVNRevision.create(revision), SVNRevision.create(changedRev), changedDate, changedAuthor, contentStatus,
+                    propStatus, reposTextStatus, reposPropStatus, lock != null, copied, switched, isFileExternal, conflictedInfo.textConflicted ? conflictedInfo.repositoryFile : null,
+                    conflictedInfo.textConflicted ? conflictedInfo.baseFile : null, conflictedInfo.textConflicted ? conflictedInfo.localFile : null,
+                    conflictedInfo.propConflicted ? conflictedInfo.repositoryFile : null, copyFromURL, copyFromRevision, remoteLock, lock, entryProperties, changelist, wcFormatVersion, treeConflict);
+            status.setStatus17(this);
+            return status;
+        }
+        final SVNStatus status = new SVNStatus(reposRootUrl, localAbsPath, kind, SVNRevision.create(revision), SVNRevision.create(changedRev), changedDate, changedAuthor, contentStatus, propStatus,
+                reposTextStatus, reposPropStatus, lock != null, copied, switched, isFileExternal, null, null, null, null, copyFromURL, copyFromRevision, remoteLock, lock, entryProperties, changelist,
+                wcFormatVersion, treeConflict);
         status.setStatus17(this);
         return status;
+
     }
 
     /*
@@ -390,6 +418,9 @@ public class SVNStatus17 {
      * status and text status
      */
     private SVNStatusType getCombinedStatus() {
+        if (conflicted) {
+            return SVNStatusType.STATUS_CONFLICTED;
+        }
         if (nodeStatus == SVNStatusType.STATUS_MODIFIED || nodeStatus == SVNStatusType.STATUS_CONFLICTED) {
             /* This value might be the property status */
             return textStatus;
@@ -401,7 +432,7 @@ public class SVNStatus17 {
         this.treeConflict = treeConflict;
     }
 
-    public SVNTreeConflictDescription getTreeConflict(){
+    public SVNTreeConflictDescription getTreeConflict() {
         return this.treeConflict;
     }
 

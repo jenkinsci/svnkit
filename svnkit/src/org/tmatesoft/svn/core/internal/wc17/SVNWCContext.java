@@ -43,6 +43,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumInputStream;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
+import org.tmatesoft.svn.core.internal.wc17.SVNStatus17.ConflictedInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbOpenMode;
@@ -600,6 +601,7 @@ public class SVNWCContext {
          * detail
          */
         SVNTreeConflictDescription tree_conflict = null;
+        ConflictedInfo conflictInfo = null;
         if (!info.conflicted) {
             tree_conflict = db.opReadTreeConflict(localAbsPath);
             info.conflicted = (tree_conflict != null);
@@ -608,7 +610,7 @@ public class SVNWCContext {
              * ### Check if the conflict was resolved by removing the marker
              * files. ### This should really be moved to the users of this API
              */
-            final ConflictedInfo conflictInfo = getConflicted(localAbsPath, true, true, true);
+            conflictInfo = getConflicted(localAbsPath, true, true, true);
             if (!conflictInfo.textConflicted && !conflictInfo.propConflicted && !conflictInfo.treeConflicted)
                 info.conflicted = false;
         }
@@ -703,6 +705,7 @@ public class SVNWCContext {
         stat.setOodChangedAuthor(null);
 
         stat.setConflicted(info.conflicted);
+        stat.setConflictedInfo(conflictInfo);
         stat.setVersioned(true);
         stat.setChangelist(info.changelist);
         stat.setReposRootUrl(info.reposRootUrl);
@@ -1190,13 +1193,6 @@ public class SVNWCContext {
         return SVNURL.parseURIDecoded(SVNPathUtil.append(readInfo.reposRootUrl.toDecodedString(), readInfo.reposRelPath.toString()));
     }
 
-    private static class ConflictedInfo {
-
-        public boolean textConflicted;
-        public boolean propConflicted;
-        public boolean treeConflicted;
-    }
-
     private ConflictedInfo getConflicted(File localAbsPath, boolean isTextNeed, boolean isPropNeed, boolean isTreeNeed) throws SVNException {
         final WCDbInfo readInfo = db.readInfo(localAbsPath, InfoField.kind, InfoField.conflicted);
         final ConflictedInfo info = new ConflictedInfo();
@@ -1216,30 +1212,38 @@ public class SVNWCContext {
                  * directory anyway. A conflict file entry notation only counts
                  * if the conflict file still exists on disk.
                  */
-                if (cdf.getBasePath() != null) {
-                    final File path = SVNFileUtil.createFilePath(dir_path, cdf.getBasePath());
+                if (cdf.getBaseFile() != null) {
+                    final File path = SVNFileUtil.createFilePath(dir_path, cdf.getBaseFile());
                     final SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(path));
-                    info.textConflicted = (kind == SVNNodeKind.FILE);
-                    if (info.textConflicted)
-                        continue;
+                    if(kind == SVNNodeKind.FILE) {
+                        info.textConflicted = true;
+                        info.baseFile = path;
+                    }
                 }
-                if (cdf.getRepositoryPath() != null) {
-                    final File path = SVNFileUtil.createFilePath(dir_path, cdf.getRepositoryPath());
+                if (cdf.getRepositoryFile() != null) {
+                    final File path = SVNFileUtil.createFilePath(dir_path, cdf.getRepositoryFile());
                     final SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(path));
-                    info.textConflicted = (kind == SVNNodeKind.FILE);
-                    if (info.textConflicted)
-                        continue;
+                    if(kind == SVNNodeKind.FILE) {
+                        info.textConflicted = true;
+                        info.repositoryFile = path;
+                    }
                 }
-                if (cdf.getLocalPath() != null) {
-                    final File path = SVNFileUtil.createFilePath(dir_path, cdf.getLocalPath());
+                if (cdf.getLocalFile() != null) {
+                    final File path = SVNFileUtil.createFilePath(dir_path, cdf.getLocalFile());
                     final SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(path));
-                    info.textConflicted = (kind == SVNNodeKind.FILE);
+                    if(kind == SVNNodeKind.FILE) {
+                        info.textConflicted = true;
+                        info.localFile = path;
+                    }
                 }
             } else if (isPropNeed && cd.isPropertyConflict()) {
-                if (cdf.getRepositoryPath() != null) {
-                    final File path = SVNFileUtil.createFilePath(dir_path, cdf.getRepositoryPath());
+                if (cdf.getRepositoryFile() != null) {
+                    final File path = SVNFileUtil.createFilePath(dir_path, cdf.getRepositoryFile());
                     final SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(path));
-                    info.propConflicted = (kind == SVNNodeKind.FILE);
+                    if(kind == SVNNodeKind.FILE) {
+                        info.propConflicted = true;
+                        info.repositoryFile = path;
+                    }
                 }
             } else if (isTreeNeed && cd.isTreeConflict()) {
                 info.treeConflicted = true;
