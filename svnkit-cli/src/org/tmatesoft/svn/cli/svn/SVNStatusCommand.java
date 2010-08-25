@@ -173,27 +173,27 @@ public class SVNStatusCommand extends SVNXMLCommand implements ISVNStatusHandler
         if (status.isFileExternal()) {
             xmlMap.put("file-external", "true");
         }
-        if (status.getEntry() != null && !status.isCopied()) {
+        if (status.isVersioned() && !status.isCopied()) {
             xmlMap.put("revision", status.getRevision().toString());
         }
         if (status.getTreeConflict() != null) {
             xmlMap.put("tree-conflicted", "true");
         }
         xmlBuffer = openXMLTag("wc-status", SVNXMLUtil.XML_STYLE_NORMAL, xmlMap, xmlBuffer);
-        if (status.getEntry() != null && status.getCommittedRevision().isValid()) {
+        if (status.isVersioned() && status.getCommittedRevision().isValid()) {
             xmlBuffer = openXMLTag("commit", SVNXMLUtil.XML_STYLE_NORMAL, "revision", status.getCommittedRevision().toString(), xmlBuffer);
             xmlBuffer = openCDataTag("author", status.getAuthor(), xmlBuffer);
             if (status.getCommittedDate() != null) {
-                xmlBuffer = openCDataTag("date", ((SVNDate) status.getCommittedDate()).format(), xmlBuffer);
+                xmlBuffer = openCDataTag("date", SVNDate.formatDate(status.getCommittedDate()), xmlBuffer);
             }
             xmlBuffer = closeXMLTag("commit", xmlBuffer);
         }
-        if (status.getEntry() != null && status.getLocalLock() != null) {
+        if (status.isVersioned() && status.getLocalLock() != null) {
             xmlBuffer = openXMLTag("lock", SVNXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
             xmlBuffer = openCDataTag("token", status.getLocalLock().getID(), xmlBuffer);
             xmlBuffer = openCDataTag("owner", status.getLocalLock().getOwner(), xmlBuffer);
             xmlBuffer = openCDataTag("comment", status.getLocalLock().getComment(), xmlBuffer);
-            xmlBuffer = openCDataTag("created", ((SVNDate) status.getLocalLock().getCreationDate()).format(), xmlBuffer);
+            xmlBuffer = openCDataTag("created", SVNDate.formatDate(status.getLocalLock().getCreationDate()), xmlBuffer);
             xmlBuffer = closeXMLTag("lock", xmlBuffer);
         }
         xmlBuffer = closeXMLTag("wc-status", xmlBuffer);
@@ -207,9 +207,9 @@ public class SVNStatusCommand extends SVNXMLCommand implements ISVNStatusHandler
                 xmlBuffer = openCDataTag("token", status.getRemoteLock().getID(), xmlBuffer);
                 xmlBuffer = openCDataTag("owner", status.getRemoteLock().getOwner(), xmlBuffer);
                 xmlBuffer = openCDataTag("comment", status.getRemoteLock().getComment(), xmlBuffer);
-                xmlBuffer = openCDataTag("created", ((SVNDate) status.getRemoteLock().getCreationDate()).format(), xmlBuffer);
+                xmlBuffer = openCDataTag("created", SVNDate.formatDate(status.getRemoteLock().getCreationDate()), xmlBuffer);
                 if (status.getRemoteLock().getExpirationDate() != null) {
-                    xmlBuffer = openCDataTag("expires", ((SVNDate) status.getRemoteLock().getExpirationDate()).format(), xmlBuffer);
+                    xmlBuffer = openCDataTag("expires", SVNDate.formatDate(status.getRemoteLock().getExpirationDate()), xmlBuffer);
                 }
                 xmlBuffer = closeXMLTag("lock", xmlBuffer);
             }

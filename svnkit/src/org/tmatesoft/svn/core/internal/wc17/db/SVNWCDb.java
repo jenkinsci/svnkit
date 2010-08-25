@@ -34,6 +34,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb.Mode;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
@@ -557,7 +558,7 @@ public class SVNWCDb implements ISVNWCDb {
                         if (!isColumnNull(lockStmt, SVNWCDbSchema.LOCK__Fields.lock_comment))
                             info.lock.comment = getColumnText(lockStmt, SVNWCDbSchema.LOCK__Fields.lock_comment);
                         if (!isColumnNull(lockStmt, SVNWCDbSchema.LOCK__Fields.lock_date))
-                            info.lock.date = new Date(getColumnInt64(lockStmt, SVNWCDbSchema.LOCK__Fields.lock_date));
+                            info.lock.date = readDate(getColumnInt64(lockStmt, SVNWCDbSchema.LOCK__Fields.lock_date));
                     }
                 }
                 if (f.contains(BaseInfoField.reposRootUrl) || f.contains(BaseInfoField.reposUuid)) {
@@ -576,14 +577,14 @@ public class SVNWCDb implements ISVNWCDb {
                     info.changedRev = getColumnRevNum(stmt, SVNWCDbSchema.BASE_NODE__Fields.changed_rev);
                 }
                 if (f.contains(BaseInfoField.changedDate)) {
-                    info.changedDate = new Date(getColumnInt64(stmt, SVNWCDbSchema.BASE_NODE__Fields.changed_date));
+                    info.changedDate = readDate(getColumnInt64(stmt, SVNWCDbSchema.BASE_NODE__Fields.changed_date));
                 }
                 if (f.contains(BaseInfoField.changedAuthor)) {
                     /* Result may be NULL. */
                     info.changedAuthor = getColumnText(stmt, SVNWCDbSchema.BASE_NODE__Fields.changed_author);
                 }
                 if (f.contains(BaseInfoField.lastModTime)) {
-                    info.lastModTime = new Date(getColumnInt64(stmt, SVNWCDbSchema.BASE_NODE__Fields.last_mod_time));
+                    info.lastModTime = readDate(getColumnInt64(stmt, SVNWCDbSchema.BASE_NODE__Fields.last_mod_time));
                 }
                 if (f.contains(BaseInfoField.depth)) {
                     if (node_kind != SVNWCDbKind.Dir) {
@@ -1680,9 +1681,9 @@ public class SVNWCDb implements ISVNWCDb {
                 }
                 if (f.contains(InfoField.changedDate)) {
                     if (have_work)
-                        info.changedDate = new Date(getColumnInt64(stmt_work, SVNWCDbSchema.WORKING_NODE__Fields.changed_date));
+                        info.changedDate = readDate(getColumnInt64(stmt_work, SVNWCDbSchema.WORKING_NODE__Fields.changed_date));
                     else
-                        info.changedDate = new Date(getColumnInt64(stmt_base, SVNWCDbSchema.BASE_NODE__Fields.changed_date));
+                        info.changedDate = readDate(getColumnInt64(stmt_base, SVNWCDbSchema.BASE_NODE__Fields.changed_date));
                 }
                 if (f.contains(InfoField.changedAuthor)) {
                     if (have_work)
@@ -1804,7 +1805,7 @@ public class SVNWCDb implements ISVNWCDb {
                         if (!isColumnNull(stmt_base_lock, SVNWCDbSchema.LOCK__Fields.lock_comment))
                             info.lock.comment = getColumnText(stmt_base_lock, SVNWCDbSchema.LOCK__Fields.lock_comment);
                         if (!isColumnNull(stmt_base_lock, SVNWCDbSchema.LOCK__Fields.lock_date))
-                            info.lock.date = new Date(getColumnInt64(stmt_base_lock, SVNWCDbSchema.LOCK__Fields.lock_date));
+                            info.lock.date = readDate(getColumnInt64(stmt_base_lock, SVNWCDbSchema.LOCK__Fields.lock_date));
                     }
                 }
             } else if (have_act) {
@@ -1840,6 +1841,10 @@ public class SVNWCDb implements ISVNWCDb {
         }
 
         return info;
+    }
+
+    private Date readDate(long date) {
+        return new SVNDate(date/1000,(int)date%1000);
     }
 
     public SVNWCDbKind readKind(File localAbsPath, boolean allowMissing) throws SVNException {

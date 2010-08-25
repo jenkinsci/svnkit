@@ -80,7 +80,7 @@ public class SVNDate extends Date {
 
     private int myMicroSeconds;
 
-    private SVNDate(long time, int micro) {
+    public SVNDate(long time, int micro) {
         super((1000 * time + micro) / 1000);
         myMicroSeconds = micro >= 0 ? micro % 1000 : 1000 + (micro % 1000);
     }
