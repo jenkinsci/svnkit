@@ -26,6 +26,8 @@ import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
+import org.tmatesoft.svn.core.internal.wc17.SVNStatus17;
+import org.tmatesoft.svn.core.internal.wc17.SVNStatus17.ConflictedInfo;
 import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
@@ -41,6 +43,10 @@ public class SVNStatusCommand extends SVNXMLCommand implements ISVNStatusHandler
 
     private SVNStatusPrinter myStatusPrinter;
     private Map myStatusCache;
+    
+    private int textConflicts;
+    private int propConflicts;
+    private int treeConflicts;
 
     public SVNStatusCommand() {
         super("status", new String[] {"stat", "st"});
@@ -128,9 +134,16 @@ public class SVNStatusCommand extends SVNXMLCommand implements ISVNStatusHandler
         if (getSVNEnvironment().isXML() && !getSVNEnvironment().isIncremental()) {
             printXMLFooter("status");
         }
+        if (! getSVNEnvironment().isQuiet() && ! getSVNEnvironment().isXML()) {
+            printConflictStats();
+        }
+
     }
 
     public void handleStatus(SVNStatus status) throws SVNException {
+        if(status.getStatus17()!=null && status.getStatus17().isConflicted()){
+            countConflicts(status.getStatus17());
+        }
         String path = getSVNEnvironment().getRelativePath(status.getFile());
         path = SVNCommandUtil.getLocalPath(path);
         if (status != null && status.getChangelistName() != null) {
@@ -153,6 +166,18 @@ public class SVNStatusCommand extends SVNXMLCommand implements ISVNStatusHandler
             myStatusPrinter.printStatus(path, status,
                 getSVNEnvironment().isVerbose() || getSVNEnvironment().isUpdate(),
                 getSVNEnvironment().isVerbose(), getSVNEnvironment().isQuiet(), getSVNEnvironment().isUpdate());
+        }
+    }
+
+    private void countConflicts(SVNStatus17 svnStatus17) {
+        ConflictedInfo conflictedInfo = svnStatus17.getConflictedInfo();
+        if(conflictedInfo==null) return;
+        if(conflictedInfo.textConflicted){
+            textConflicts++;
+        } else if(conflictedInfo.propConflicted) {
+            propConflicts++;
+        } else if(conflictedInfo.treeConflicted) {
+            treeConflicts++;
         }
     }
 
@@ -218,4 +243,26 @@ public class SVNStatusCommand extends SVNXMLCommand implements ISVNStatusHandler
         xmlBuffer = closeXMLTag("entry", xmlBuffer);
         return xmlBuffer;
     }
+    
+    private void printConflictStats()
+    {
+      if (textConflicts > 0 || propConflicts > 0 ||
+          treeConflicts > 0)
+      getEnvironment().getOut().println("Summary of conflicts:");
+
+      if (textConflicts > 0)
+          getEnvironment().getOut().println(
+          "  Text conflicts: " + textConflicts);
+
+      if (propConflicts > 0)
+          getEnvironment().getOut().println(
+          "  Property conflicts: " + propConflicts);
+
+      if (treeConflicts > 0)
+          getEnvironment().getOut().println(
+          "  Tree conflicts: " + treeConflicts);
+
+    }
+
+    
 }
