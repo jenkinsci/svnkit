@@ -178,7 +178,7 @@ public class SVNReporter17 implements ISVNReporterBaton {
             if (target_depth == SVNDepth.UNKNOWN)
                 target_depth = SVNDepth.INFINITY;
 
-            reporter.setPath("", null, target_rev, depth, false);
+            reporter.setPath("", null, target_rev, target_depth, false);
             reporter.deletePath("");
 
             /*
