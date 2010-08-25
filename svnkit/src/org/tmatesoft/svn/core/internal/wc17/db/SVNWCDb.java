@@ -1443,9 +1443,9 @@ public class SVNWCDb implements ISVNWCDb {
         }
 
         if (tree_conflict_data != null) {
-            Map<String, SVNTreeConflictDescription> conflict_items = SVNTreeConflictUtil.readTreeConflicts(localAbsPath, tree_conflict_data);
-            for (String conflict : conflict_items.keySet()) {
-                String child_name = SVNFileUtil.getFileName(SVNFileUtil.createFilePath(conflict));
+            Map<File, SVNTreeConflictDescription> conflict_items = SVNTreeConflictUtil.readTreeConflicts(localAbsPath, tree_conflict_data);
+            for (File conflict : conflict_items.keySet()) {
+                String child_name = SVNFileUtil.getFileName(conflict);
                 /* Using a hash avoids duplicates */
                 found.add(child_name);
             }
