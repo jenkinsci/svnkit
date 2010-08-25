@@ -1843,10 +1843,6 @@ public class SVNWCDb implements ISVNWCDb {
         return info;
     }
 
-    private Date readDate(long date) {
-        return new SVNDate(date/1000,(int)date%1000);
-    }
-
     public SVNWCDbKind readKind(File localAbsPath, boolean allowMissing) throws SVNException {
         try {
             final WCDbInfo info = readInfo(localAbsPath, InfoField.kind);
@@ -2762,6 +2758,11 @@ public class SVNWCDb implements ISVNWCDb {
 
     private static <T extends Enum<T>> T getColumnToken(SVNSqlJetStatement stmt, int f, Map<String, T> tokenMap) throws SVNException {
         return tokenMap.get(getColumnText(stmt, f));
+    }
+
+    private Date readDate(long date) {
+        long time = date/1000;
+        return new SVNDate(time,(int)(date-time*1000));
     }
 
 }
