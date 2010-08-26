@@ -18,6 +18,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -727,7 +728,70 @@ public class SVNWCContext {
                 stat.setNodeStatus(SVNStatusType.STATUS_CONFLICTED);
         }
 
+        if (!SVNRevision.isValidRevisionNumber(stat.getRevision()) && !stat.isCopied()) {
+            /* Retrieve some data from the original version of the replaced node */
+            NodeWorkingRevInfo wrkRevInfo = getNodeWorkingRevInfo(localAbsPath);
+            stat.setRevision(wrkRevInfo.revision);
+            stat.setChangedRev(wrkRevInfo.changedRev);
+            stat.setChangedDate(wrkRevInfo.changedDate);
+            stat.setChangedAuthor(wrkRevInfo.changedAuthor);
+        }
+
         return stat;
+    }
+
+    private static class NodeWorkingRevInfo {
+
+        public long revision;
+        public long changedRev;
+        public Date changedDate;
+        public String changedAuthor;
+    }
+
+    private NodeWorkingRevInfo getNodeWorkingRevInfo(File localAbsPath) throws SVNException {
+
+        final NodeWorkingRevInfo info = new NodeWorkingRevInfo();
+
+        final WCDbInfo readInfo = db.readInfo(localAbsPath, InfoField.status, InfoField.revision, InfoField.changedRev, InfoField.changedDate, InfoField.changedAuthor, InfoField.haveBase);
+        info.revision = readInfo.revision;
+        info.changedRev = readInfo.changedRev;
+        info.changedDate = readInfo.changedDate;
+        info.changedAuthor = readInfo.changedAuthor;
+
+        if (SVNRevision.isValidRevisionNumber(info.changedRev) && SVNRevision.isValidRevisionNumber(info.revision))
+            return info; /* We got everything we need */
+
+        if (readInfo.status == SVNWCDbStatus.Deleted) {
+            WCDbDeletionInfo scanDeletion = db.scanDeletion(localAbsPath, DeletionInfoField.baseDelAbsPath, DeletionInfoField.workDelAbsPath);
+            if (scanDeletion.workDelAbsPath != null) {
+                final WCDbInfo readInfo2 = db.readInfo(scanDeletion.workDelAbsPath, InfoField.status, InfoField.revision, InfoField.changedRev, InfoField.changedDate, InfoField.changedAuthor,
+                        InfoField.haveBase);
+                info.revision = readInfo2.revision;
+                info.changedRev = readInfo2.changedRev;
+                info.changedDate = readInfo2.changedDate;
+                info.changedAuthor = readInfo2.changedAuthor;
+            } else {
+                final WCDbBaseInfo baseInfo = db.getBaseInfo(scanDeletion.baseDelAbsPath, BaseInfoField.revision, BaseInfoField.changedRev, BaseInfoField.changedDate, BaseInfoField.changedAuthor );
+                info.revision = baseInfo.revision;
+                info.changedRev = baseInfo.changedRev;
+                info.changedDate = baseInfo.changedDate;
+                info.changedAuthor = baseInfo.changedAuthor;
+            }
+        } else if (readInfo.haveBase) {
+            final WCDbBaseInfo baseInfo = db.getBaseInfo(localAbsPath, BaseInfoField.status, BaseInfoField.revision, BaseInfoField.changedRev, BaseInfoField.changedDate, BaseInfoField.changedAuthor);
+            info.changedRev = baseInfo.changedRev;
+            info.changedDate = baseInfo.changedDate;
+            info.changedAuthor = baseInfo.changedAuthor;
+
+            if (!SVNRevision.isValidRevisionNumber(info.revision) && baseInfo.status != SVNWCDbStatus.NotPresent) {
+                /*
+                 * When we used entries we reset the revision to 0 when we added
+                 * a new node over an existing not present node
+                 */
+                info.revision = baseInfo.revision;
+            }
+        }
+        return info;
     }
 
     private SVNProperties getPristineProperties(File localAbsPath) throws SVNException {

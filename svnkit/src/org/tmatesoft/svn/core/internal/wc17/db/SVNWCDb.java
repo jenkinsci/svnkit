@@ -2418,7 +2418,7 @@ public class SVNWCDb implements ISVNWCDb {
 
                 SVNSqlJetStatement baseStmt = stmt.getJoinedStatement(SVNWCDbSchema.BASE_NODE);
                 try {
-                    boolean have_base = baseStmt != null && !isColumnNull(baseStmt, SVNWCDbSchema.BASE_NODE__Fields.presence);
+                    boolean have_base = baseStmt != null && baseStmt.next() && !isColumnNull(baseStmt, SVNWCDbSchema.BASE_NODE__Fields.presence);
 
                     if (have_base) {
                         SVNWCDbStatus base_presence = getColumnToken(baseStmt, SVNWCDbSchema.BASE_NODE__Fields.presence, presenceMap2);
