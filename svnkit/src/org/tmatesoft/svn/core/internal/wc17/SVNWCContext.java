@@ -613,6 +613,8 @@ public class SVNWCContext {
             conflictInfo = getConflicted(localAbsPath, true, true, true);
             if (!conflictInfo.textConflicted && !conflictInfo.propConflicted && !conflictInfo.treeConflicted)
                 info.conflicted = false;
+            else if(conflictInfo.treeConflicted)
+                tree_conflict = conflictInfo.treeConflict;
         }
 
         if (node_status == SVNStatusType.STATUS_NORMAL) {
@@ -1247,6 +1249,7 @@ public class SVNWCContext {
                 }
             } else if (isTreeNeed && cd.isTreeConflict()) {
                 info.treeConflicted = true;
+                info.treeConflict = (SVNTreeConflictDescription) cd;
             }
         }
         return info;

@@ -41,13 +41,13 @@ import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 public class SVNStatus17 {
 
     public static class ConflictedInfo {
-
         public boolean textConflicted;
         public boolean propConflicted;
         public boolean treeConflicted;
         public File baseFile;
         public File repositoryFile;
         public File localFile;
+        public SVNTreeConflictDescription treeConflict;
     }
 
     private File localAbsPath;
@@ -418,9 +418,6 @@ public class SVNStatus17 {
      * status and text status
      */
     private SVNStatusType getCombinedStatus() {
-        if (conflicted) {
-            return SVNStatusType.STATUS_CONFLICTED;
-        }
         if (nodeStatus == SVNStatusType.STATUS_MODIFIED || nodeStatus == SVNStatusType.STATUS_CONFLICTED) {
             /* This value might be the property status */
             return textStatus;

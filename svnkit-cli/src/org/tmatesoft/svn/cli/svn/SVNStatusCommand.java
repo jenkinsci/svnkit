@@ -169,15 +169,19 @@ public class SVNStatusCommand extends SVNXMLCommand implements ISVNStatusHandler
         }
     }
 
-    private void countConflicts(SVNStatus17 svnStatus17) {
-        ConflictedInfo conflictedInfo = svnStatus17.getConflictedInfo();
-        if(conflictedInfo==null) return;
-        if(conflictedInfo.textConflicted){
-            textConflicts++;
-        } else if(conflictedInfo.propConflicted) {
-            propConflicts++;
-        } else if(conflictedInfo.treeConflicted) {
+    private void countConflicts(SVNStatus17 status17) {
+        final ConflictedInfo conflictedInfo = status17.getConflictedInfo();
+        if(conflictedInfo!=null) {
+            if(conflictedInfo.textConflicted){
+                textConflicts++;
+            } else if(conflictedInfo.propConflicted) {
+                propConflicts++;
+            } else if(conflictedInfo.treeConflicted) {
+                treeConflicts++;
+            }
+        } else if(status17.getTreeConflict()!=null){
             treeConflicts++;
+            
         }
     }
 
