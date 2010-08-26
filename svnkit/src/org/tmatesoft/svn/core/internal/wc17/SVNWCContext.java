@@ -468,19 +468,19 @@ public class SVNWCContext {
         /*
          * Examine whether our directory metadata is present, and compensate if
          * it is missing.
-         *
+         * 
          * There are a several kinds of obstruction that we detect here:
-         *
+         * 
          * - versioned subdir is missing - the versioned subdir's admin area is
          * missing - the versioned subdir has been replaced with a file/symlink
-         *
+         * 
          * Net result: the target is obstructed and the metadata is unavailable.
-         *
+         * 
          * Note: wc_db can also detect a versioned file that has been replaced
          * with a versioned subdir (moved from somewhere). We don't look for
          * that right away because the file's metadata is still present, so we
          * can examine properties and conflicts and whatnot.
-         *
+         * 
          * ### note that most obstruction concepts disappear in single-db mode
          */
         if (info.kind == SVNWCDbKind.Dir) {
@@ -523,7 +523,7 @@ public class SVNWCContext {
         /*
          * If NODE_STATUS is still normal, after the above checks, then we
          * should proceed to refine the status.
-         *
+         * 
          * If it was changed, then the subdir is incomplete or
          * missing/obstructed. It means that no further information is
          * available, and we should skip all this work.
@@ -613,7 +613,7 @@ public class SVNWCContext {
             conflictInfo = getConflicted(localAbsPath, true, true, true);
             if (!conflictInfo.textConflicted && !conflictInfo.propConflicted && !conflictInfo.treeConflicted)
                 info.conflicted = false;
-            else if(conflictInfo.treeConflicted)
+            else if (conflictInfo.treeConflicted)
                 tree_conflict = conflictInfo.treeConflict;
         }
 
@@ -714,6 +714,19 @@ public class SVNWCContext {
         stat.setReposRelpath(info.reposRelPath);
         stat.setTreeConflict(tree_conflict);
 
+        if (stat.isConflicted() && stat.getConflictedInfo() != null) {
+
+            if (stat.getConflictedInfo().textConflicted)
+                stat.setTextStatus(SVNStatusType.STATUS_CONFLICTED);
+
+            if (stat.getConflictedInfo().propConflicted)
+                stat.setPropStatus(SVNStatusType.STATUS_CONFLICTED);
+
+            /* ### Also set this for tree_conflicts? */
+            if (stat.getConflictedInfo().textConflicted || stat.getConflictedInfo().propConflicted)
+                stat.setNodeStatus(SVNStatusType.STATUS_CONFLICTED);
+        }
+
         return stat;
     }
 
@@ -749,14 +762,14 @@ public class SVNWCContext {
 
         /*
          * The node is obstructed:
-         *
+         * 
          * - subdir is missing, obstructed by a file, or missing admin area - a
          * file is obstructed by a versioned subdir (### not reported)
-         *
+         * 
          * Thus, properties are not available for this node. Returning NULL
          * would indicate "not defined" for its state. For obstructions, we
          * cannot *determine* whether properties should be here or not.
-         *
+         * 
          * ### it would be nice to report an obstruction, rather than simply ###
          * PROPERTY_NOT_FOUND. but this is transitional until single-db.
          */
@@ -804,20 +817,20 @@ public class SVNWCContext {
             /*
              * We're allowed to use a heuristic to determine whether files may
              * have changed. The heuristic has these steps:
-             *
-             *
+             * 
+             * 
              * 1. Compare the working file's size with the size cached in the
              * entries file 2. If they differ, do a full file compare 3. Compare
              * the working file's timestamp with the timestamp cached in the
              * entries file 4. If they differ, do a full file compare 5.
              * Otherwise, return indicating an unchanged file.
-             *
+             * 
              * There are 2 problematic situations which may occur:
-             *
+             * 
              * 1. The cached working size is missing --> In this case, we forget
              * we ever tried to compare and skip to the timestamp comparison.
              * This is because old working copies do not contain cached sizes
-             *
+             * 
              * 2. The cached timestamp is missing --> In this case, we forget we
              * ever tried to compare and skip to full file comparison. This is
              * because the timestamp will be removed when the library updates a
@@ -845,7 +858,7 @@ public class SVNWCContext {
             if (!compareThem) {
                 /*
                  * Compare the timestamps
-                 *
+                 * 
                  * Note: text_time == 0 means absent from entries, which also
                  * means the timestamps won't be equal, so there's no need to
                  * explicitly check the 'absent' value.
@@ -955,7 +968,7 @@ public class SVNWCContext {
      * result with VERSIONED_FILE_ABSPATH.
      * <p>
      * PRISTINE_STREAM will be closed before a successful return.
-     *
+     * 
      */
     private boolean compareAndVerify(File versionedFileAbsPath, InputStream pristineStream, boolean compareTextBases, boolean verifyChecksum) throws SVNException {
         InputStream vStream = null; /* versioned_file */
@@ -1217,7 +1230,7 @@ public class SVNWCContext {
                 if (cdf.getBaseFile() != null) {
                     final File path = SVNFileUtil.createFilePath(dir_path, cdf.getBaseFile());
                     final SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(path));
-                    if(kind == SVNNodeKind.FILE) {
+                    if (kind == SVNNodeKind.FILE) {
                         info.textConflicted = true;
                         info.baseFile = path;
                     }
@@ -1225,7 +1238,7 @@ public class SVNWCContext {
                 if (cdf.getRepositoryFile() != null) {
                     final File path = SVNFileUtil.createFilePath(dir_path, cdf.getRepositoryFile());
                     final SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(path));
-                    if(kind == SVNNodeKind.FILE) {
+                    if (kind == SVNNodeKind.FILE) {
                         info.textConflicted = true;
                         info.repositoryFile = path;
                     }
@@ -1233,7 +1246,7 @@ public class SVNWCContext {
                 if (cdf.getLocalFile() != null) {
                     final File path = SVNFileUtil.createFilePath(dir_path, cdf.getLocalFile());
                     final SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(path));
-                    if(kind == SVNNodeKind.FILE) {
+                    if (kind == SVNNodeKind.FILE) {
                         info.textConflicted = true;
                         info.localFile = path;
                     }
@@ -1242,7 +1255,7 @@ public class SVNWCContext {
                 if (cdf.getRepositoryFile() != null) {
                     final File path = SVNFileUtil.createFilePath(dir_path, cdf.getRepositoryFile());
                     final SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(path));
-                    if(kind == SVNNodeKind.FILE) {
+                    if (kind == SVNNodeKind.FILE) {
                         info.propConflicted = true;
                         info.repositoryFile = path;
                     }
@@ -1330,7 +1343,7 @@ public class SVNWCContext {
          * FILE/NONE/UNKNOWN, then it is obstructing the real LOCAL_ABSPATH (or
          * it was never a versioned item). In all these cases, the
          * read_entries() will (properly) throw an error.
-         *
+         * 
          * NOTE: if KIND is a DIR and we asked for the real data, but it is
          * obstructed on-disk by some other node kind (NONE, FILE, UNKNOWN),
          * then this will throw an error.
@@ -1352,19 +1365,19 @@ public class SVNWCContext {
              * we attempted to read IN that directory, and then wc_db reports
              * that it is NOT a working copy directory. It is possible that one
              * of two things has happened:
-             *
+             * 
              * 1) a directory is obstructing a file in the parent 2) the
              * (versioned) directory's contents have been removed
-             *
+             * 
              * Let's assume situation (1); if that is true, then we can just
              * return the newly-found data.
-             *
+             * 
              * If we assumed (2), then a valid result still won't help us since
              * the caller asked for the actual contents, not the stub (which is
              * why we read *into* the directory). However, if we assume (1) and
              * get back a stub, then we have verified a missing, versioned
              * directory, and can return an error describing that.
-             *
+             * 
              * Redo the fetch, but "insist" we are trying to find a file. This
              * will read from the parent directory of the "file".
              */
@@ -1451,13 +1464,13 @@ public class SVNWCContext {
                  * UNKNOWN), then we cannot treat it as a versioned directory
                  * containing entries to read. Leave READ_FROM_SUBDIR as FALSE,
                  * so that the parent will be examined.
-                 *
+                 * 
                  * For NONE and UNKNOWN, it may be that metadata exists for the
                  * node, even though on-disk is unhelpful.
-                 *
+                 * 
                  * If NEED_PARENT_STUB is TRUE, and the entry is not a
                  * DIRECTORY, then we'll error.
-                 *
+                 * 
                  * If NEED_PARENT_STUB if FALSE, and we successfully read a
                  * stub, then this on-disk node is obstructing the read.
                  */
@@ -1514,7 +1527,7 @@ public class SVNWCContext {
              * unversioned directory where a FILE should be. We navigated from
              * the obstructing subdir up to the parent dir, then returned the
              * FILE found there.
-             *
+             * 
              * Let's return WC_MISSING cuz the caller thought we had a dir, but
              * that (versioned subdir) isn't there.
              */
@@ -1532,7 +1545,7 @@ public class SVNWCContext {
             /*
              * Determine whether the parent KNOWS about this child. If it does
              * not, then we should not attempt to look for it.
-             *
+             * 
              * For example: the parent doesn't "know" about the child, but the
              * versioned directory *does* exist on disk. We don't want to look
              * into that subdir.
@@ -1622,10 +1635,10 @@ public class SVNWCContext {
                 // TODO
                 /*
                  * svn_sqlite__db_t *sdb; svn_sqlite__stmt_t *stmt;
-                 *
+                 * 
                  * SVN_ERR(svn_wc__db_temp_borrow_sdb( &sdb, db, dir_abspath,
                  * svn_wc__db_openmode_readonly, scratch_pool));
-                 *
+                 * 
                  * SVN_ERR(svn_sqlite__get_statement(&stmt, sdb,
                  * STMT_SELECT_NOT_PRESENT)); SVN_ERR(svn_sqlite__bindf(stmt,
                  * "is", wc_id, entry->name));
@@ -1665,7 +1678,7 @@ public class SVNWCContext {
              * rely on the actual record being available in the parent stub when
              * the directory is recorded as deleted in the directory itself.
              * (This last value is the status that brought us in this if block).
-             *
+             * 
              * This is safe because we will only write this flag in the
              * directory itself (see mark_deleted() in adm_ops.c), and also
              * because we will never use keep_local in the final version of
@@ -1719,7 +1732,7 @@ public class SVNWCContext {
                  * provide all of a directory's metadata from its own area. But
                  * this information is stored only in the parent directory, so
                  * we need to call a custom API to fetch this value.
-                 *
+                 * 
                  * ### we should start generating BASE_NODE rows for THIS_DIR
                  * ### in the subdir. future step because it is harder.
                  */
@@ -1862,7 +1875,7 @@ public class SVNWCContext {
                      * reading these back *out* of the database, the additional
                      * copies look like new "Added" nodes rather than a simple
                      * mixed-rev working copy.
-                     *
+                     * 
                      * That would be a behavior change if we did not compensate.
                      * If there is copyfrom information for this node, then the
                      * code below looks at the parent to detect if it *also* has
@@ -1876,7 +1889,7 @@ public class SVNWCContext {
 
                     /*
                      * Get the copyfrom information from our parent.
-                     *
+                     * 
                      * Note that the parent could be added/copied/moved-here.
                      * There is no way for it to be deleted/moved-away and have
                      * *this* node appear as copied.
@@ -1897,14 +1910,14 @@ public class SVNWCContext {
 
                             /*
                              * The copyfrom repos roots matched.
-                             *
+                             * 
                              * Now we look to see if the copyfrom path of the
                              * parent would align with our own path. If so, then
                              * it means this copyfrom was spontaneously created
                              * and inserted for mixed-rev purposes and can be
                              * eliminated without changing the semantics of a
                              * mixed-rev copied subtree.
-                             *
+                             * 
                              * See notes/api-errata/wc003.txt for some
                              * additional detail, and potential issues.
                              */
@@ -2013,7 +2026,7 @@ public class SVNWCContext {
          * We should always have a REPOS_RELPATH, except for: - deleted nodes -
          * certain obstructed nodes - not-present nodes - absent nodes -
          * excluded nodes
-         *
+         * 
          * ### the last three should probably have an "implied" REPOS_RELPATH
          */
         assert (info.reposRelPath != null || entry.isScheduledForDeletion() || info.status == SVNWCDbStatus.Obstructed || info.status == SVNWCDbStatus.ObstructedAdd
@@ -2195,51 +2208,51 @@ public class SVNWCContext {
 
         /*
          * For deleted nodes, our COPIED flag has a rather complex meaning.
-         *
+         * 
          * In general, COPIED means "an operation on an ancestor took care of
          * me." This typically refers to a copy of an ancestor (and this node
          * just came along for the ride). However, in certain situations the
          * COPIED flag is set for deleted nodes.
-         *
+         * 
          * First off, COPIED will *never* be set for nodes/subtrees that are
          * simply deleted. The deleted node/subtree *must* be under an ancestor
          * that has been copied. Plain additions do not count; only copies
          * (add-with-history).
-         *
+         * 
          * The basic algorithm to determine whether we live within a copied
          * subtree is as follows:
-         *
+         * 
          * 1) find the root of the deletion operation that affected us (we may
          * be that root, or an ancestor was deleted and took us with it)
-         *
+         * 
          * 2) look at the root's *parent* and determine whether that was a copy
          * or a simple add.
-         *
+         * 
          * It would appear that we would be done at this point. Once we
          * determine that the parent was copied, then we could just set the
          * COPIED flag.
-         *
+         * 
          * Not so fast. Back to the general concept of "an ancestor operation
          * took care of me." Further consider two possibilities:
-         *
+         * 
          * 1) this node is scheduled for deletion from the copied subtree, so at
          * commit time, we copy then delete
-         *
+         * 
          * 2) this node is scheduled for deletion because a subtree was deleted
          * and then a copied subtree was added (causing a replacement). at
          * commit time, we delete a subtree, and then copy a subtree. we do not
          * need to specifically touch this node -- all operations occur on
          * ancestors.
-         *
+         * 
          * Given the "ancestor operation" concept, then in case (1) we must
          * *clear* the COPIED flag since we'll have more work to do. In case
          * (2), we *set* the COPIED flag to indicate that no real work is going
          * to happen on this node.
-         *
+         * 
          * Great fun. And just maybe the code reading the entries has no bugs in
          * interpreting that gobbledygook... but that *is* the expectation of
          * the code. Sigh.
-         *
+         * 
          * We can get a little bit of shortcut here if THIS_DIR is also schduled
          * for deletion.
          */
@@ -2284,16 +2297,16 @@ public class SVNWCContext {
                      * the root of a deleted subtree. Our COPIED status is now
                      * dependent upon whether the copied root is replacing a
                      * BASE tree or not.
-                     *
+                     * 
                      * But: if we are schedule-delete as a result of being a
                      * copied DELETED node, then *always* mark COPIED. Normal
                      * copies have cmt_* data; copied DELETED nodes are missing
                      * this info.
-                     *
+                     * 
                      * Note: MOVED_HERE is a concept foreign to this old
                      * interface, but it is best represented as if a copy had
                      * occurred, so we'll model it that way to old clients.
-                     *
+                     * 
                      * Note: svn_wc__db_status_normal corresponds to the
                      * post-commit parent that was copied or moved in WORKING
                      * but has now been converted to BASE.
@@ -2320,7 +2333,7 @@ public class SVNWCContext {
                      * occur when a subtree is deleted, and then nodes are added
                      * *later*. Since the parent is a simple add, then nothing
                      * has been copied. Nothing more to do.
-                     *
+                     * 
                      * Note: if a subtree is added, *then* deletions are made,
                      * the nodes should simply be removed from version control.
                      */
