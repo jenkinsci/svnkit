@@ -50,6 +50,8 @@ public class SVNStatusPrinter {
             char remoteStatus;
             if (!status.isVersioned()) {
                 wcRevision = "";
+            } else if (status.isCopied()) {
+                wcRevision = "-";
             } else if (!status.getRevision().isValid()) {                
                 if(status.getStatus17()!=null) {
                     SVNStatus17 status17 = status.getStatus17();
@@ -62,8 +64,6 @@ public class SVNStatusPrinter {
                         wcRevision = " ? ";
                 } else 
                     wcRevision = " ? ";
-            } else if (status.isCopied()) {
-                wcRevision = "-";
             } else {
                 wcRevision = Long.toString(status.getRevision().getNumber());
             }
