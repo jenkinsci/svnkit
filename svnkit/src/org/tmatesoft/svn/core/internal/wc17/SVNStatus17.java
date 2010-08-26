@@ -397,7 +397,7 @@ public class SVNStatus17 {
 
     public SVNStatus getStatus16(boolean isFileExternal, String copyFromURL, SVNRevision copyFromRevision, SVNLock remoteLock, Map entryProperties, int wcFormatVersion) {
         final SVNStatusType contentStatus = getCombinedStatus();
-        if (conflicted) {
+        if (conflicted && conflictedInfo != null) {
             final SVNStatus status = new SVNStatus(reposRootUrl, localAbsPath, kind, SVNRevision.create(revision), SVNRevision.create(changedRev), changedDate, changedAuthor, contentStatus,
                     propStatus, reposTextStatus, reposPropStatus, lock != null, copied, switched, isFileExternal, conflictedInfo.textConflicted ? conflictedInfo.repositoryFile : null,
                     conflictedInfo.textConflicted ? conflictedInfo.baseFile : null, conflictedInfo.textConflicted ? conflictedInfo.localFile : null,

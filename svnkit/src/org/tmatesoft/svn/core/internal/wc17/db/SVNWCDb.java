@@ -1314,7 +1314,7 @@ public class SVNWCDb implements ISVNWCDb {
         try {
             Map<String, SVNTreeConflictDescription> tree_conflicts = opReadAllTreeConflicts(parentAbsPath);
             if (tree_conflicts != null)
-                return tree_conflicts.get(SVNFileUtil.getFileName(localAbsPath));
+                return tree_conflicts.get(localAbsPath);
             return null;
         } catch (SVNException e) {
             if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_WORKING_COPY) {
