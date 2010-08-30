@@ -98,7 +98,7 @@ public class SVNSocketFactory {
     }
 
     private static void connect(Socket socket, InetSocketAddress address, int timeout, ISVNCanceller cancel) throws IOException, SVNCancelException {
-        if (cancel == null) {
+        if (cancel == null || cancel == ISVNCanceller.NULL) {
             socket.connect(address, timeout);
             return;
         }
