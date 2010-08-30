@@ -589,7 +589,7 @@ public class SVNStatus {
         if (myLocalPropertiesDate == null) {
             File propFile = null;
             if (getFile() != null && getKind() == SVNNodeKind.DIR) {
-                propFile = new File(getFile().getAbsoluteFile().getParentFile(), SVNFileUtil.getAdminDirectoryName());
+                propFile = new File(getFile().getAbsoluteFile(), SVNFileUtil.getAdminDirectoryName());
                 propFile = new File(propFile, "dir-props");
             } else if (getFile() != null && getKind() == SVNNodeKind.FILE) {
                 propFile = new File(getFile().getAbsoluteFile().getParentFile(), SVNFileUtil.getAdminDirectoryName());
