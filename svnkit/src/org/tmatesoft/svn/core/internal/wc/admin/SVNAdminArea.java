@@ -1225,6 +1225,14 @@ public abstract class SVNAdminArea {
             if (entry != null && entry.getCopyFromURL() != null) {
                 return;
             }
+            if (entry != null && entry.isFile() && entry.isScheduledForAddition()) {
+                // if this implicit item was scheduled for addition, 
+                // but wasn't actually committed, then skip it.
+                File committedFile = getBaseFile(target, true);
+                if (!committedFile.isFile()) {
+                    return;
+                }
+            }
         }
 
         SVNLog log = getLog();
