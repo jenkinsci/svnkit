@@ -840,27 +840,32 @@ public class SVNWCClient16 extends SVNBasicDelegate {
         if (propValue != null && SVNProperty.isSVNProperty(propName)) {
             final long baseRev = revNumber;
             propValue = SVNPropertiesManager.validatePropertyValue(url, kind, propName, propValue, skipChecks, getOptions(), new ISVNFileContentFetcher() {
-
-                Boolean isBinary = null;
+                
+                private SVNProperties myProperties = null;
 
                 public void fetchFileContent(OutputStream os) throws SVNException {
-                    SVNProperties props = new SVNProperties();
+                    SVNProperties props = myProperties != null ? null : new SVNProperties();
                     repos.getFile("", baseRev, props, os);
-                    setBinary(props);
+                    if (props != null) {
+                        myProperties = props;
+                    }
+                }
+                
+                public SVNPropertyValue getProperty(String propertyName) throws SVNException {
+                    fetchFileProperties();
+                    return myProperties.getSVNPropertyValue(propertyName);
+                }
+                
+                private void fetchFileProperties() throws SVNException {
+                    if (myProperties == null) {
+                        myProperties = new SVNProperties();
+                        repos.getFile("", baseRev, myProperties, null);
+                    }
                 }
 
                 public boolean fileIsBinary() throws SVNException {
-                    if (isBinary == null) {
-                        SVNProperties props = new SVNProperties();
-                        repos.getFile("", baseRev, props, null);
-                        setBinary(props);
-                    }
-                    return isBinary.booleanValue();
-                }
-
-                private void setBinary(SVNProperties props) {
-                    String mimeType = props.getStringValue(SVNProperty.MIME_TYPE);
-                    isBinary = Boolean.valueOf(SVNProperty.isBinaryMimeType(mimeType));
+                    fetchFileProperties();
+                    return Boolean.valueOf(SVNProperty.isBinaryMimeType(myProperties.getStringValue(SVNProperty.MIME_TYPE)));
                 }
             });
         }
