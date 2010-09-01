@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
+import java.nio.charset.CodingErrorAction;
 
 
 /**
@@ -115,7 +116,7 @@ public class SVNDiffCallback extends AbstractDiffCallback {
             String conversionEncoding = defineConversionEncoding(originalProperties, diff);
             if (conversionEncoding != null) {
                 resetEncoding = adjustDiffGenerator("UTF-8");
-                result = new SVNCharsetOutputStream(result, Charset.forName("UTF-8"), Charset.forName(conversionEncoding));
+                result = new SVNCharsetOutputStream(result, Charset.forName("UTF-8"), Charset.forName(conversionEncoding), CodingErrorAction.IGNORE, CodingErrorAction.IGNORE);
             }
         }
         try {
