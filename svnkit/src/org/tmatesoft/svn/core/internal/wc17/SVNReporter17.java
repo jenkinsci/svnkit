@@ -112,6 +112,7 @@ public class SVNReporter17 implements ISVNReporterBaton {
         SVNDepth target_depth = SVNDepth.UNKNOWN;
         SVNWCDbLock target_lock = null;
         boolean explicit_rev, start_empty;
+        boolean missing = false;
 
         try {
 
@@ -224,38 +225,41 @@ public class SVNReporter17 implements ISVNReporterBaton {
         if (target_depth == SVNDepth.UNKNOWN)
             target_depth = SVNDepth.INFINITY;
 
+        SVNNodeKind disk_kind = SVNFileType.getNodeKind(SVNFileType.getType(path));
+
+        /* Determine if there is a missing node that should be restored */
+        if (disk_kind == SVNNodeKind.NONE) {
+            SVNWCDbStatus wrk_status;
+            try {
+                wrk_status = wcContext.getDb().readInfo(path, InfoField.status).status;
+            } catch (SVNException e) {
+                if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND) {
+                    wrk_status = SVNWCDbStatus.NotPresent;
+                } else
+                    throw e;
+            }
+
+            if (wrk_status == SVNWCDbStatus.Added)
+                wrk_status = wcContext.getDb().scanAddition(path, AdditionInfoField.status).status;
+
+            if (isRestoreFiles && wrk_status != SVNWCDbStatus.Added && wrk_status != SVNWCDbStatus.Deleted && wrk_status != SVNWCDbStatus.Excluded && wrk_status != SVNWCDbStatus.NotPresent
+                    && wrk_status != SVNWCDbStatus.Absent) {
+                boolean restored = restoreNode(path, target_kind, target_rev);
+                if (!restored)
+                    missing = true;
+            }
+        }
+
         /*
          * The first call to the reporter merely informs it that the top-level
          * directory being updated is at BASE_REV. Its PATH argument is ignored.
          */
         reporter.setPath("", null, target_rev, target_depth, start_empty);
 
-        /*
-         * ### status can NEVER be deleted. should examine why this was ### ever
-         * here. we may have remapped into wc-ng incorrectly.
-         */
-        boolean missing = false;
-        if (status != SVNWCDbStatus.Deleted) {
-            SVNFileType fileType = SVNFileType.getType(path);
-            missing = fileType == SVNFileType.NONE;
-        }
-
         try {
 
-            if (missing && isRestoreFiles) {
-                boolean restored = restoreNode(path, target_kind, target_rev);
-                if (restored)
-                    missing = false;
-            }
-
             if (target_kind == SVNWCDbKind.Dir) {
-                if (missing) {
-                    /*
-                     * Report missing directories as deleted to retrieve them
-                     * from the repository.
-                     */
-                    reporter.deletePath("");
-                } else if (depth != SVNDepth.EMPTY) {
+                if (depth != SVNDepth.EMPTY) {
                     /*
                      * Recursively crawl ROOT_DIRECTORY and report differing
                      * revisions.
@@ -329,6 +333,13 @@ public class SVNReporter17 implements ISVNReporterBaton {
             /* ... recreate file from text-base, and ... */
             restoreFile(local_abspath);
             restored = true;
+        } else if (kind == SVNWCDbKind.Dir) {
+            /* Recreating a directory is just a mkdir */
+            local_abspath.mkdirs();
+            restored = true;
+        }
+
+        if (restored) {
             /* ... report the restoration to the caller. */
             if (wcContext.getEventHandler() != null) {
                 wcContext.getEventHandler().handleEvent(SVNEventFactory.createSVNEvent(local_abspath, SVNNodeKind.FILE, null, target_rev, SVNEventAction.RESTORE, null, null, null), 0);
@@ -453,14 +464,14 @@ public class SVNReporter17 implements ISVNReporterBaton {
                 /*
                  * THIS_ABSPATH was listed as a BASE child of DIR_ABSPATH. Yet,
                  * we just got an error trying to read it. What gives? :-P
-                 *
+                 * 
                  * This happens when THIS_ABSPATH is a subdirectory that is
                  * marked in the parent stub as "not-present". The subdir is
                  * then removed. Later, an addition is scheduled, putting the
                  * subdirectory back, but ONLY containing WORKING nodes.
-                 *
+                 * 
                  * Thus, the BASE fetch comes out of the subdir, and fails.
-                 *
+                 * 
                  * For this case, we go ahead and treat this as a simple
                  * not-present, and ignore whatever is in the subdirectory.
                  */
@@ -478,7 +489,7 @@ public class SVNReporter17 implements ISVNReporterBaton {
              * subdirectories for the not-present state. That check was
              * redundant since a not-present directory has no BASE nodes within
              * it which may report another status.
-             *
+             * 
              * There might be NO BASE node (per the condition above), but the
              * typical case is that base_get_info() reads the parent stub
              * because there is no subdir (with administrative data). Thus, we
@@ -521,7 +532,7 @@ public class SVNReporter17 implements ISVNReporterBaton {
                  * server knows it's gone... ...unless we're reporting
                  * everything, in which case we're going to report it missing
                  * later anyway.
-                 *
+                 * 
                  * This instructs the server to send it back to us, if it is now
                  * available (an addition after a not-present state), or if it
                  * is now authorized (change in authz for the absent item).
@@ -539,8 +550,11 @@ public class SVNReporter17 implements ISVNReporterBaton {
                 SVNWCDbStatus wrk_status = info.status;
                 SVNWCDbKind wrk_kind = info.kind;
 
-                if (isRestoreFiles && wrk_status != SVNWCDbStatus.Added && wrk_status != SVNWCDbStatus.Deleted && wrk_status != SVNWCDbStatus.ObstructedAdd
-                        && wrk_status != SVNWCDbStatus.ObstructedDelete) {
+                if (wrk_status == SVNWCDbStatus.Added)
+                    wrk_status = wcContext.getDb().scanAddition(this_abspath, AdditionInfoField.status).status;
+
+                if (isRestoreFiles && wrk_status != SVNWCDbStatus.Added && wrk_status != SVNWCDbStatus.Deleted && wrk_status != SVNWCDbStatus.Excluded && wrk_status != SVNWCDbStatus.NotPresent
+                        && wrk_status != SVNWCDbStatus.Absent) {
                     /*
                      * It is possible on a case insensitive system that the
                      * entry is not really missing, but just cased incorrectly.
@@ -554,20 +568,14 @@ public class SVNReporter17 implements ISVNReporterBaton {
                         if (!restored)
                             missing = true;
                     }
-                } else
-                    missing = true;
+                }
 
                 /*
-                 * If a node is still missing from disk here, we have no way to
-                 * recreate it locally, so report as missing and move along.
-                 * Again, don't bother if we're reporting everything, because
-                 * the dir is already missing on the server.
+                 * With single-db, we always know about all children, so never
+                 * tell the server that we don't know, but want to know about
+                 * the missing child.
                  */
-                if (missing && wrk_kind == SVNWCDbKind.Dir && (depth.compareTo(SVNDepth.FILES) > 0 || depth == SVNDepth.UNKNOWN)) {
-                    if (!report_everything)
-                        reporter.deletePath(SVNFileUtil.getFilePath(this_path));
-                    continue;
-                }
+
             }
 
             /* And finally prepare for reporting */
@@ -589,7 +597,7 @@ public class SVNReporter17 implements ISVNReporterBaton {
 
             /*
              * Obstructed nodes might report SVN_INVALID_REVNUM. Tweak it.
-             *
+             * 
              * ### it seems that obstructed nodes should be handled quite a ###
              * bit differently. maybe reported as missing, like not-present ###
              * or absent nodes?
@@ -629,10 +637,10 @@ public class SVNReporter17 implements ISVNReporterBaton {
                  * If the subdir and its administrative area are not present,
                  * then do NOT bother to report this node, much less recurse
                  * into the thing.
-                 *
+                 * 
                  * Note: if the there is nothing on the disk, then we may have
                  * reported it missing further above.
-                 *
+                 * 
                  * ### hmm. but what if we have a *file* obstructing the dir?
                  * ### the code above will not report it, and we'll simply ###
                  * skip it right here. I guess with an obstruction, we ### can't
@@ -684,14 +692,14 @@ public class SVNReporter17 implements ISVNReporterBaton {
 
     /**
      * Helper for report_revisions_and_depths().
-     *
+     * 
      * Perform an atomic restoration of the file LOCAL_ABSPATH; that is, copy
      * the file's text-base to the administrative tmp area, and then move that
      * file to LOCAL_ABSPATH with possible translations/expansions. If
      * USE_COMMIT_TIMES is set, then set working file's timestamp to
      * last-commit-time. Either way, set entry-timestamp to match that of the
      * working file when all is finished.
-     *
+     * 
      * Not that a valid access baton with a write lock to the directory of
      * LOCAL_ABSPATH must be available in DB.
      */
