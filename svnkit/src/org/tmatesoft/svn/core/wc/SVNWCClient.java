@@ -825,26 +825,34 @@ public class SVNWCClient extends SVNBasicClient {
             propValue = SVNPropertiesManager.validatePropertyValue(url, kind, propName, propValue, 
                     skipChecks, getOptions(), new ISVNFileContentFetcher() {
 
-                Boolean isBinary = null;
+                private SVNProperties myProperties = null;
 
                 public void fetchFileContent(OutputStream os) throws SVNException {
-                    SVNProperties props = new SVNProperties();
+                    SVNProperties props = null;                    
+                    if (myProperties == null) {
+                        props = new SVNProperties();
+                    }
                     repos.getFile("", baseRev, props, os);
-                    setBinary(props);
+                    if (props != null) {
+                        myProperties = props;
+                    }
+                }
+                
+                public SVNPropertyValue getProperty(String propertyName) throws SVNException {
+                    fetchFileProperties();
+                    return myProperties.getSVNPropertyValue(propertyName);
                 }
 
                 public boolean fileIsBinary() throws SVNException {
-                    if (isBinary == null) {
-                        SVNProperties props = new SVNProperties();
-                        repos.getFile("", baseRev, props, null);
-                        setBinary(props);
-                    }
-                    return isBinary.booleanValue();
+                    String mimeType = myProperties.getStringValue(SVNProperty.MIME_TYPE);
+                    return SVNProperty.isBinaryMimeType(mimeType);
                 }
-
-                private void setBinary(SVNProperties props) {
-                    String mimeType = props.getStringValue(SVNProperty.MIME_TYPE);
-                    isBinary = Boolean.valueOf(SVNProperty.isBinaryMimeType(mimeType));
+                
+                private void fetchFileProperties() throws SVNException {
+                    if (myProperties == null) {
+                        myProperties = new SVNProperties();
+                        repos.getFile("", baseRev, myProperties, null);
+                    }
                 }
             });
         }

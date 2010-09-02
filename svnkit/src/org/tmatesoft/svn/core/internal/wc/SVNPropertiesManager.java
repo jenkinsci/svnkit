@@ -177,8 +177,12 @@ public class SVNPropertiesManager {
                 }
 
                 public boolean fileIsBinary() throws SVNException {
-                    SVNPropertyValue mimeType = getProperty(access, path, SVNProperty.MIME_TYPE);
+                    SVNPropertyValue mimeType = SVNPropertiesManager.getProperty(access, path, SVNProperty.MIME_TYPE);
                     return mimeType != null && SVNProperty.isBinaryMimeType(mimeType.getString());
+                }
+
+                public SVNPropertyValue getProperty(String propertyName) throws SVNException {
+                    return SVNPropertiesManager.getProperty(access, path, propertyName);
                 }
             });
         }
@@ -448,6 +452,12 @@ public class SVNPropertiesManager {
         } else if (!force && SVNProperty.MIME_TYPE.equals(name)) {
             value = SVNPropertyValue.create(value.getString().trim());
             validateMimeType(value.getString());
+            if (SVNProperty.isBinaryMimeType(value.getString())) {
+                if (fileContentFetcher.getProperty(SVNProperty.EOL_STYLE) != null) {
+                    SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "File ''{0}'' has svn:eol-style property set and thus cannot have binary mime type", path);
+                    SVNErrorManager.error(error, SVNLogType.DEFAULT);
+                }
+            }
         } else if (SVNProperty.IGNORE.equals(name) || SVNProperty.EXTERNALS.equals(name)) {
             if (!value.getString().endsWith("\n")) {
                 value = SVNPropertyValue.create(value.getString().concat("\n"));

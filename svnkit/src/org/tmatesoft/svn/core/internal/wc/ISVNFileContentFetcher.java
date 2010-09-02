@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.internal.wc;
 import java.io.OutputStream;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 
 /**
  * @version 1.3
@@ -24,4 +25,6 @@ public interface ISVNFileContentFetcher {
     public void fetchFileContent(OutputStream os) throws SVNException;
 
     public boolean fileIsBinary() throws SVNException;
+    
+    public SVNPropertyValue getProperty(String propertyName) throws SVNException;
 }
