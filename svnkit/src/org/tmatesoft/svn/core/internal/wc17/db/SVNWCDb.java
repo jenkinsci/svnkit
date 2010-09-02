@@ -2765,4 +2765,13 @@ public class SVNWCDb implements ISVNWCDb {
         return new SVNDate(time,(int)(date-time*1000));
     }
 
+    public SVNSqlJetDb borrowDbTemp(File localDirAbsPath, SVNWCDbOpenMode mode) throws SVNException {
+        assert (isAbsolute(localDirAbsPath));
+        final Mode smode = mode == SVNWCDbOpenMode.ReadOnly ? Mode.ReadOnly : Mode.ReadWrite;        
+        final DirParsedInfo parsed = parseDir(localDirAbsPath, smode );
+        final SVNWCDbDir pdh = parsed.wcDbDir;
+        verifyDirUsable(pdh);
+        return pdh.getWCRoot().getSDb();
+    }
+
 }

@@ -51,6 +51,7 @@ public enum SVNWCDbStatements {
     SELECT_WORKING_IS_FILE(SVNWCDbSelectWorkingIsFile.class),
     SELECT_BASE_IS_FILE(SVNWCDbSelectBaseIsFile.class),
     SELECT_CONFLICT_DETAILS(SVNWCDbSelectConflictDetails.class),
+    SELECT_NOT_PRESENT(SVNWCDbSelectNotPresent.class),
 
     REVPROP_CREATE_SCHEMA(SVNFSFSRevPropCreateSchema.class),
     FSFS_GET_REVPROP(SVNFSFSRevPropGet.class),

@@ -34,6 +34,8 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
@@ -60,6 +62,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo.RepositoryInfoField;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
@@ -1696,19 +1699,13 @@ public class SVNWCContext {
              * detect this situation and create a DELETED entry instead.
              */
             if (info.kind == SVNWCDbKind.Dir) {
-                // TODO
-                /*
-                 * svn_sqlite__db_t *sdb; svn_sqlite__stmt_t *stmt;
-                 * 
-                 * SVN_ERR(svn_wc__db_temp_borrow_sdb( &sdb, db, dir_abspath,
-                 * svn_wc__db_openmode_readonly, scratch_pool));
-                 * 
-                 * SVN_ERR(svn_sqlite__get_statement(&stmt, sdb,
-                 * STMT_SELECT_NOT_PRESENT)); SVN_ERR(svn_sqlite__bindf(stmt,
-                 * "is", wc_id, entry->name));
-                 * SVN_ERR(svn_sqlite__step(&have_row, stmt));
-                 * SVN_ERR(svn_sqlite__reset(stmt));
-                 */
+                SVNSqlJetDb sdb = db.borrowDbTemp(dirAbsPath,SVNWCDbOpenMode.ReadOnly);
+                SVNSqlJetStatement stmt = sdb.getStatement(SVNWCDbStatements.SELECT_NOT_PRESENT);
+                try{
+                    haveRow = stmt.next();
+                } finally {
+                    stmt.reset();
+                }
             }
 
             if (haveRow) {
