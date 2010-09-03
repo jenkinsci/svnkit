@@ -412,14 +412,13 @@ public class SVNStatusEditor17 {
         assert (status != null);
 
         /* We are looking at a directory on-disk. */
-        if (pathKind == SVNNodeKind.DIR && dbKind == SVNWCDbKind.Dir) {
+        if (dbKind == SVNWCDbKind.Dir) {
             /*
              * Descend only if the subdirectory is a working copy directory
              * (which we've discovered because we got a THIS_DIR entry. And only
              * descend if DEPTH permits it, of course.
              */
-            if (status != SVNWCDbStatus.Obstructed && status != SVNWCDbStatus.ObstructedAdd && status != SVNWCDbStatus.ObstructedDelete
-                    && (depth == SVNDepth.UNKNOWN || depth == SVNDepth.IMMEDIATES || depth == SVNDepth.INFINITY)) {
+            if (depth == SVNDepth.UNKNOWN || depth == SVNDepth.IMMEDIATES || depth == SVNDepth.INFINITY) {
                 getDirStatus(localAbsPath, dirReposRootUrl, dirReposRelPath, null, ignorePatterns, depth, getAll, noIgnore, false, handler);
             } else {
                 /*
@@ -535,9 +534,8 @@ public class SVNStatusEditor17 {
                 }
 
             } catch (SVNException e) {
-                if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND
-                    || e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_WORKING_COPY
-                    // || SVN_WC__ERR_IS_NOT_CURRENT_WC(err)
+                if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND || e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_WORKING_COPY
+                // || SVN_WC__ERR_IS_NOT_CURRENT_WC(err)
                 ) {
                     parent_repos_root_url = null;
                     parent_repos_relpath = null;

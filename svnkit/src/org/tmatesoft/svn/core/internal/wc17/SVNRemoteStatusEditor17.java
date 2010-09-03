@@ -340,8 +340,7 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
         for (Iterator paths = statii.keySet().iterator(); paths.hasNext();) {
             File localAbsPath = (File) paths.next();
             SVNStatus17 status = statii.get(localAbsPath);
-            if (status.getNodeStatus() != SVNStatusType.STATUS_OBSTRUCTED && status.getNodeStatus() != SVNStatusType.STATUS_MISSING && status.isVersioned() && status.getKind() == SVNNodeKind.DIR
-                    && (depth == SVNDepth.UNKNOWN || depth == SVNDepth.INFINITY)) {
+            if (status.getKind() == SVNNodeKind.DIR && (depth == SVNDepth.UNKNOWN || depth == SVNDepth.INFINITY)) {
                 getDirStatus(localAbsPath, dirReposRootUrl, dirReposRelpath, null, myGlobalIgnores, depth, isReportAll(), isNoIgnore(), true, handler);
             }
             if (dirWasDeleted)
@@ -568,8 +567,7 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
              * unversioned ("unversioned" for our purposes includes being an
              * external or ignored item).
              */
-            if (status_in_parent != null && (status_in_parent.getNodeStatus() != SVNStatusType.STATUS_UNVERSIONED) && (status_in_parent.getNodeStatus() != SVNStatusType.STATUS_MISSING)
-                    && (status_in_parent.getNodeStatus() != SVNStatusType.STATUS_OBSTRUCTED) && (status_in_parent.getNodeStatus() != SVNStatusType.STATUS_EXTERNAL)
+            if (status_in_parent != null && (status_in_parent.getNodeStatus() != SVNStatusType.STATUS_UNVERSIONED) && (status_in_parent.getNodeStatus() != SVNStatusType.STATUS_EXTERNAL)
                     && (status_in_parent.getNodeStatus() != SVNStatusType.STATUS_IGNORED) && (status_in_parent.getKind() == SVNNodeKind.DIR) && (!this.excluded)
                     && (this.depth == SVNDepth.UNKNOWN || this.depth == SVNDepth.INFINITY || this.depth == SVNDepth.FILES || this.depth == SVNDepth.IMMEDIATES)) {
                 SVNStatus17 this_dir_status;
