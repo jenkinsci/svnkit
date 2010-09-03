@@ -1090,23 +1090,6 @@ public class SVNWCDb implements ISVNWCDb {
                 }
             }
 
-            if (parent_pdh != null) {
-                String lookfor_relpath = SVNFileUtil.getFileName(localAbsPath);
-
-                /* Was there supposed to be a file sitting here? */
-                info.wcDbDir.setObstructedFile(parent_pdh.getWCRoot().determineObstructedFile(lookfor_relpath));
-
-                /*
-                 * If we determined that a file was supposed to be at the
-                 * LOCAL_ABSPATH requested, then return the PDH and
-                 * LOCAL_RELPATH which describes that file.
-                 */
-                if (info.wcDbDir.isObstructedFile()) {
-                    info.wcDbDir = parent_pdh;
-                    info.localRelPath = SVNFileUtil.createFilePath(lookfor_relpath);
-                    return info;
-                }
-            }
         }
 
         /* The PDH is complete. Stash it into DB. */
@@ -2767,7 +2750,7 @@ public class SVNWCDb implements ISVNWCDb {
 
     public SVNSqlJetDb borrowDbTemp(File localDirAbsPath, SVNWCDbOpenMode mode) throws SVNException {
         assert (isAbsolute(localDirAbsPath));
-        final Mode smode = mode == SVNWCDbOpenMode.ReadOnly ? Mode.ReadOnly : Mode.ReadWrite;        
+        final Mode smode = mode == SVNWCDbOpenMode.ReadOnly ? Mode.ReadOnly : Mode.ReadWrite;
         final DirParsedInfo parsed = parseDir(localDirAbsPath, smode );
         final SVNWCDbDir pdh = parsed.wcDbDir;
         verifyDirUsable(pdh);
