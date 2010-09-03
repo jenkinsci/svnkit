@@ -774,7 +774,7 @@ public class SVNWCContext {
                 info.changedDate = readInfo2.changedDate;
                 info.changedAuthor = readInfo2.changedAuthor;
             } else {
-                final WCDbBaseInfo baseInfo = db.getBaseInfo(scanDeletion.baseDelAbsPath, BaseInfoField.revision, BaseInfoField.changedRev, BaseInfoField.changedDate, BaseInfoField.changedAuthor );
+                final WCDbBaseInfo baseInfo = db.getBaseInfo(scanDeletion.baseDelAbsPath, BaseInfoField.revision, BaseInfoField.changedRev, BaseInfoField.changedDate, BaseInfoField.changedAuthor);
                 info.revision = baseInfo.revision;
                 info.changedRev = baseInfo.changedRev;
                 info.changedDate = baseInfo.changedDate;
@@ -1699,9 +1699,9 @@ public class SVNWCContext {
              * detect this situation and create a DELETED entry instead.
              */
             if (info.kind == SVNWCDbKind.Dir) {
-                SVNSqlJetDb sdb = db.borrowDbTemp(dirAbsPath,SVNWCDbOpenMode.ReadOnly);
+                SVNSqlJetDb sdb = db.borrowDbTemp(dirAbsPath, SVNWCDbOpenMode.ReadOnly);
                 SVNSqlJetStatement stmt = sdb.getStatement(SVNWCDbStatements.SELECT_NOT_PRESENT);
-                try{
+                try {
                     haveRow = stmt.next();
                 } finally {
                     stmt.reset();
@@ -1747,9 +1747,20 @@ public class SVNWCContext {
              * working copy directories directly. So any left over directories
              * after the delete operation are always kept locally.
              */
-            if ("".equals(entry.getName())) {
-                entry.setKeepLocal(db.determineKeepLocalTemp(entryAbsPath));
-            }
+
+            /*
+             * If there is still a directory on-disk we keep it, if not it is
+             * already deleted. Simple, isn't it?
+             * 
+             * Before single-db we had to keep the administative area alive
+             * until after the commit really deletes it. Setting keep alive
+             * stopped the commit processing from deleting the directory. We
+             * don't delete it any more, so all we have to do is provide some
+             * 'sane' value.
+             */
+            SVNNodeKind pathKind = SVNFileType.getNodeKind(SVNFileType.getType(entryAbsPath));
+            entry.setKeepLocal(pathKind == SVNNodeKind.DIR);
+
         } else if (info.status == SVNWCDbStatus.Added || info.status == SVNWCDbStatus.ObstructedAdd) {
             SVNWCDbStatus workStatus;
             File opRootAbsPath = null;
