@@ -78,13 +78,11 @@ public class SVNWCDb implements ISVNWCDb {
         kindMap.put(SVNWCDbKind.File, "file");
         kindMap.put(SVNWCDbKind.Dir, "dir");
         kindMap.put(SVNWCDbKind.Symlink, "symlink");
-        kindMap.put(SVNWCDbKind.Subdir, "subdir");
         kindMap.put(SVNWCDbKind.Unknown, "unknown");
 
         kindMap2.put("file", SVNWCDbKind.File);
         kindMap2.put("dir", SVNWCDbKind.Dir);
         kindMap2.put("symlink", SVNWCDbKind.Symlink);
-        kindMap2.put("subdir", SVNWCDbKind.Subdir);
         kindMap2.put("unknown", SVNWCDbKind.Unknown);
     };
 
@@ -1024,7 +1022,7 @@ public class SVNWCDb implements ISVNWCDb {
              */
             obstruction_possible = false;
 
-            SVNErrorMessage err = SVNErrorMessage.create( SVNErrorCode.WC_UNSUPPORTED_FORMAT );
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT);
             SVNErrorManager.error(err, SVNLogType.WC);
 
         }
@@ -1879,8 +1877,22 @@ public class SVNWCDb implements ISVNWCDb {
         /* We should have a valid checksum and (thus) a valid digest. */
         assert (hexdigest != null);
 
+        /* Get the first two characters of the digest, for the subdir. */
+        String subdir = hexdigest.substring(0, 2);
+
+        if (createSubdir) {
+            File subdirAbspath = SVNFileUtil.createFilePath(base_dir_abspath, subdir);
+            subdirAbspath.mkdirs();
+            /*
+             * Whatever error may have occurred... ignore it. Typically, this
+             * will be "directory already exists", but if it is something
+             * different*, then presumably another error will follow when we try
+             * to access the file within this (missing?) pristine subdir.
+             */
+        }
+
         /* The file is located at DIR/.svn/pristine/XX/XXYYZZ... */
-        return SVNFileUtil.createFilePath(base_dir_abspath, hexdigest);
+        return SVNFileUtil.createFilePath(SVNFileUtil.createFilePath(base_dir_abspath, subdir), hexdigest);
     }
 
     public SVNProperties readPristineProperties(File localAbsPath) throws SVNException {
@@ -2744,14 +2756,14 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     private Date readDate(long date) {
-        long time = date/1000;
-        return new SVNDate(time,(int)(date-time*1000));
+        long time = date / 1000;
+        return new SVNDate(time, (int) (date - time * 1000));
     }
 
     public SVNSqlJetDb borrowDbTemp(File localDirAbsPath, SVNWCDbOpenMode mode) throws SVNException {
         assert (isAbsolute(localDirAbsPath));
         final Mode smode = mode == SVNWCDbOpenMode.ReadOnly ? Mode.ReadOnly : Mode.ReadWrite;
-        final DirParsedInfo parsed = parseDir(localDirAbsPath, smode );
+        final DirParsedInfo parsed = parseDir(localDirAbsPath, smode);
         final SVNWCDbDir pdh = parsed.wcDbDir;
         verifyDirUsable(pdh);
         return pdh.getWCRoot().getSDb();

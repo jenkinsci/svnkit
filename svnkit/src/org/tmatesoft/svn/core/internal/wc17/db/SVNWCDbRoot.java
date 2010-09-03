@@ -12,6 +12,8 @@
 package org.tmatesoft.svn.core.internal.wc17.db;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -20,6 +22,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbLock;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -46,6 +49,11 @@ public class SVNWCDbRoot {
      * has not (yet) been determined, this will be UNKNOWN_FORMAT.
      */
     private int format;
+
+    /**
+     * Array of SVNWCDbLock fields. Typically just one or two locks maximum.
+     */
+    private List<SVNWCDbLock> ownedLocks = new ArrayList<ISVNWCDb.SVNWCDbLock>();
 
     public SVNWCDbRoot(File absPath, SVNSqlJetDb sDb, long wcId, int format, boolean autoUpgrade, boolean enforceEmptyWQ) throws SVNException {
         if (sDb != null) {
@@ -77,7 +85,7 @@ public class SVNWCDbRoot {
 
         /* Auto-upgrade the SDB if possible. */
         if (format < ISVNWCDb.WC_FORMAT_17 && autoUpgrade) {
-            if(autoUpgrade){
+            if (autoUpgrade) {
                 format = upgrade(absPath, format);
             } else {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, "Working copy format of ''{0}'' is too old '{1}'", new Object[] {
@@ -116,6 +124,10 @@ public class SVNWCDbRoot {
 
     public int getFormat() {
         return format;
+    }
+
+    public List<SVNWCDbLock> getOwnedLocks() {
+        return ownedLocks;
     }
 
     public void close() throws SVNException {
@@ -165,6 +177,5 @@ public class SVNWCDbRoot {
         // TODO
         return 0;
     }
-
 
 }

@@ -25,16 +25,6 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
  */
 public class SVNWCDbDir {
 
-    /**
-     * This (versioned) working copy directory is obstructing what *should* be a
-     * file in the parent directory (according to its metadata).
-     *
-     * Note: this PDH should probably be ignored (or not created).
-     *
-     * ### obstruction is only possible with per-dir wc.db databases.
-     */
-    private boolean obstructedFile;
-
     /** The absolute path to this working copy directory. */
     private File localAbsPath;
 
@@ -44,18 +34,11 @@ public class SVNWCDbDir {
     /** The parent directory's per-dir information. */
     private SVNWCDbDir parent;
 
-    /** Whether this process owns a write-lock on this directory. */
-    boolean locked;
-
     /** Hold onto the old-style access baton that corresponds to this PDH. */
     private SVNWCAccess admAccess;
 
     public SVNWCDbDir(File localAbsPath) {
         this.localAbsPath = localAbsPath;
-    }
-
-    public boolean isObstructedFile() {
-        return obstructedFile;
     }
 
     public File getLocalAbsPath() {
@@ -68,10 +51,6 @@ public class SVNWCDbDir {
 
     public SVNWCDbDir getParent() {
         return parent;
-    }
-
-    public boolean isLocked() {
-        return locked;
     }
 
     public SVNWCAccess getAdmAccess() {
@@ -88,10 +67,6 @@ public class SVNWCDbDir {
 
     public void setParent(SVNWCDbDir parent) {
         this.parent = parent;
-    }
-
-    public void setObstructedFile(boolean obstructedFile) {
-        this.obstructedFile = obstructedFile;
     }
 
     public static boolean isUsable(SVNWCDbDir pdh) {
