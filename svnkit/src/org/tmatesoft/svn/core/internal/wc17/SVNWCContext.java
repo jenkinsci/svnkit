@@ -491,33 +491,40 @@ public class SVNWCContext {
             if (info.status == SVNWCDbStatus.Incomplete) {
                 /* Highest precedence. */
                 node_status = SVNStatusType.STATUS_INCOMPLETE;
-            } else if (info.status == SVNWCDbStatus.ObstructedDelete) {
-                /* Deleted directories are never reported as missing. */
-                if (pathKind == SVNNodeKind.NONE)
-                    node_status = SVNStatusType.STATUS_DELETED;
-                else
-                    node_status = SVNStatusType.STATUS_OBSTRUCTED;
-            } else if (info.status == SVNWCDbStatus.Obstructed || info.status == SVNWCDbStatus.ObstructedAdd) {
-                /*
-                 * A present or added directory should be on disk, so it is
-                 * reported missing or obstructed.
-                 */
-                if (pathKind == SVNNodeKind.NONE)
-                    node_status = SVNStatusType.STATUS_MISSING;
-                else
-                    node_status = SVNStatusType.STATUS_OBSTRUCTED;
             } else if (info.status == SVNWCDbStatus.Deleted) {
                 node_status = SVNStatusType.STATUS_DELETED;
-            }
+                
+                // TODO
+                
+                //SVN_ERR(svn_wc__internal_node_get_schedule(NULL, &copied,
+                //        db, local_abspath,
+                //        scratch_pool));
+                
+            } else if (pathKind==null || pathKind != SVNNodeKind.DIR)
+                {
+                  /* A present or added directory should be on disk, so it is
+                     reported missing or obstructed.  */
+                  if (pathKind==null || pathKind == SVNNodeKind.NONE)
+                    node_status = SVNStatusType.STATUS_MISSING;
+                  else
+                    node_status = SVNStatusType.STATUS_OBSTRUCTED;
+                }
         } else {
-            if (info.status == SVNWCDbStatus.Deleted)
+            if (info.status == SVNWCDbStatus.Deleted) {
                 node_status = SVNStatusType.STATUS_DELETED;
-            else if (pathKind != SVNNodeKind.FILE) {
+                
+                // TODO
+                
+                //SVN_ERR(svn_wc__internal_node_get_schedule(NULL, &copied,
+                //        db, local_abspath,
+                //        scratch_pool));
+
+            } else if (pathKind==null || pathKind != SVNNodeKind.FILE) {
                 /*
                  * A present or added file should be on disk, so it is reported
                  * missing or obstructed.
                  */
-                if (pathKind == SVNNodeKind.NONE)
+                if (pathKind==null || pathKind == SVNNodeKind.NONE)
                     node_status = SVNStatusType.STATUS_MISSING;
                 else
                     node_status = SVNStatusType.STATUS_OBSTRUCTED;
@@ -648,6 +655,20 @@ public class SVNWCContext {
                         throw e;
                     }
                 }
+                // TODO
+                /*
+
+          svn_wc_schedule_t schedule;
+          SVN_ERR(svn_wc__internal_node_get_schedule(&schedule, &copied,
+                                                     db, local_abspath,
+                                                     scratch_pool));
+
+          if (schedule == svn_wc_schedule_add)
+            node_status = svn_wc_status_added;
+          else if (schedule == svn_wc_schedule_replace)
+            node_status = svn_wc_status_replaced;
+
+                 */
             }
         }
 
