@@ -2172,7 +2172,7 @@ public class SVNWCDb implements ISVNWCDb {
             child_abspath = current_abspath;
             if (current_abspath.equals(pdh.getLocalAbsPath())) {
                 /* The current node is a directory, so move to the parent dir. */
-                pdh = navigateToParent(pdh, Mode.ReadOnly, true);
+                pdh = navigateToParent(pdh, Mode.ReadOnly);
             }
             current_abspath = pdh.getLocalAbsPath();
             current_relpath = pdh.computeRelPath();
@@ -2488,7 +2488,7 @@ public class SVNWCDb implements ISVNWCDb {
                          * The current node is a directory, so move to the
                          * parent dir.
                          */
-                        pdh = navigateToParent(pdh, Mode.ReadOnly, true);
+                        pdh = navigateToParent(pdh, Mode.ReadOnly);
                     }
                     current_abspath = pdh.getLocalAbsPath();
                     current_relpath = pdh.computeRelPath();
@@ -2505,45 +2505,17 @@ public class SVNWCDb implements ISVNWCDb {
 
     }
 
-    private SVNWCDbDir navigateToParent(SVNWCDbDir childPdh, Mode sMode, boolean verifyParentStub) throws SVNException {
-
-        SVNWCDbDir parentPdh;
-
-        if ((parentPdh = childPdh.getParent()) != null && parentPdh.getWCRoot() != null)
+    private SVNWCDbDir navigateToParent(SVNWCDbDir childPdh, Mode sMode) throws SVNException {
+        SVNWCDbDir parentPdh = childPdh.getParent();
+        if (parentPdh != null && parentPdh.getWCRoot() != null)
             return parentPdh;
-
-        /* Make sure we don't see the root as its own parent */
-        assert (SVNFileUtil.getFileDir(childPdh.getLocalAbsPath()) != null);
-
         File parentAbsPath = SVNFileUtil.getFileDir(childPdh.getLocalAbsPath());
-        DirParsedInfo parsed = parseDir(parentAbsPath, sMode);
-        parentPdh = parsed.wcDbDir;
+        /* Make sure we don't see the root as its own parent */
+        assert (parentAbsPath != null);
+        parentPdh = parseDir(parentAbsPath, sMode).wcDbDir;
         verifyDirUsable(parentPdh);
-
-        /* Check that the parent has an entry for the child */
-        SVNSqlJetStatement stmtBase = parentPdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_SUBDIR_BASE);
-        SVNSqlJetStatement stmtWork = parentPdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_SUBDIR_WORKING);
-        try {
-            stmtBase.bindf("is", parentPdh.getWCRoot().getWcId(), SVNFileUtil.getFileName(childPdh.getLocalAbsPath()));
-            stmtWork.bindf("is", parentPdh.getWCRoot().getWcId(), SVNFileUtil.getFileName(childPdh.getLocalAbsPath()));
-            boolean got_row = stmtBase.next() || stmtWork.next();
-
-            if (!got_row && verifyParentStub) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_WORKING_COPY, "''{0}'' does not have a parent.", childPdh.getLocalAbsPath());
-                SVNErrorManager.error(err, SVNLogType.WC);
-            }
-
-            if (got_row) {
-                childPdh.setParent(parentPdh);
-            }
-
-        } finally {
-            stmtBase.reset();
-            stmtWork.reset();
-        }
-
+        childPdh.setParent(parentPdh);
         return parentPdh;
-
     }
 
     public void setBaseDavCache(File localAbsPath, SVNProperties props) throws SVNException {
