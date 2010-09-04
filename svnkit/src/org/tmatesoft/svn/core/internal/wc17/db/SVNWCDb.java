@@ -519,24 +519,10 @@ public class SVNWCDb implements ISVNWCDb {
                 SVNWCDbKind node_kind = getColumnToken(stmt, SVNWCDbSchema.BASE_NODE__Fields.kind, kindMap2);
 
                 if (f.contains(BaseInfoField.kind)) {
-                    if (node_kind == SVNWCDbKind.Subdir)
-                        info.kind = SVNWCDbKind.Dir;
-                    else
                         info.kind = node_kind;
                 }
                 if (f.contains(BaseInfoField.status)) {
                     info.status = getColumnToken(stmt, SVNWCDbSchema.BASE_NODE__Fields.presence, presenceMap2);
-
-                    if (node_kind == SVNWCDbKind.Subdir && info.status == SVNWCDbStatus.Normal) {
-                        /*
-                         * We're looking at the subdir record in the *parent*
-                         * directory, which implies per-dir .svn subdirs. We
-                         * should be looking at the subdir itself; therefore, it
-                         * is missing or obstructed in some way. Inform the
-                         * caller.
-                         */
-                        info.status = SVNWCDbStatus.Obstructed;
-                    }
                 }
                 if (f.contains(BaseInfoField.revision)) {
                     info.revision = getColumnRevNum(stmt, SVNWCDbSchema.BASE_NODE__Fields.revnum);
@@ -1555,16 +1541,6 @@ public class SVNWCDb implements ISVNWCDb {
                         assert ((info.status != SVNWCDbStatus.Absent && info.status != SVNWCDbStatus.Excluded
                         /* && info.status != WCDbStatus.Incomplete */) || !have_work);
 
-                        if (node_kind == SVNWCDbKind.Subdir && info.status == SVNWCDbStatus.Normal) {
-                            /*
-                             * We should have read a row from the subdir wc.db.
-                             * It must be obstructed in some way.
-                             *
-                             * It is also possible that a WORKING node will
-                             * override this value with a proper status.
-                             */
-                            info.status = SVNWCDbStatus.Obstructed;
-                        }
                     }
 
                     if (have_work) {
@@ -1585,15 +1561,8 @@ public class SVNWCDb implements ISVNWCDb {
                              * Also note that the deletion could be of the BASE
                              * tree, or a child of something that has been
                              * copied/moved here.
-                             *
-                             * If we're looking at the data in the parent, then
-                             * something has obstructed the child data. Inform
-                             * the caller.
                              */
-                            if (node_kind == SVNWCDbKind.Subdir)
-                                info.status = SVNWCDbStatus.ObstructedDelete;
-                            else
-                                info.status = SVNWCDbStatus.Deleted;
+                            info.status = SVNWCDbStatus.Deleted;
                         } else { /* normal */
 
                             /*
@@ -1601,23 +1570,13 @@ public class SVNWCDb implements ISVNWCDb {
                              * this addition has occurred because of a simple
                              * addition, a copy, or is the destination of a
                              * move.
-                             *
-                             * If we're looking at the data in the parent, then
-                             * something has obstructed the child data. Inform
-                             * the caller.
                              */
-                            if (node_kind == SVNWCDbKind.Subdir)
-                                info.status = SVNWCDbStatus.ObstructedAdd;
-                            else
-                                info.status = SVNWCDbStatus.Added;
+                            info.status = SVNWCDbStatus.Added;
                         }
                     }
                 }
                 if (f.contains(InfoField.kind)) {
-                    if (node_kind == SVNWCDbKind.Subdir)
-                        info.kind = SVNWCDbKind.Dir;
-                    else
-                        info.kind = node_kind;
+                    info.kind = node_kind;
                 }
                 if (f.contains(InfoField.revision)) {
                     if (have_work)
@@ -1679,7 +1638,7 @@ public class SVNWCDb implements ISVNWCDb {
                         info.lastModTime = getColumnInt64(stmt_base, SVNWCDbSchema.BASE_NODE__Fields.last_mod_time);
                 }
                 if (f.contains(InfoField.depth)) {
-                    if (node_kind != SVNWCDbKind.Dir && node_kind != SVNWCDbKind.Subdir) {
+                    if (node_kind != SVNWCDbKind.Dir) {
                         info.depth = SVNDepth.UNKNOWN;
                     } else {
                         String depth_str;
@@ -2093,18 +2052,6 @@ public class SVNWCDb implements ISVNWCDb {
                     if (presence != SVNWCDbStatus.Normal) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS, "Expected node ''{0}'' to be added.", localAbsPath);
                         SVNErrorManager.error(err, SVNLogType.WC);
-                    }
-
-                    /*
-                     * ### in per-dir operation, it is possible that we just
-                     * fetched ### the parent stub. examine the KIND field. ###
-                     * ### scan_addition is NOT allowed for an obstructed_add
-                     * status ### from read_info. there may be key information
-                     * in the ### subdir record (eg. copyfrom_*).
-                     */
-                    {
-                        SVNWCDbKind kind = getColumnToken(stmt, 1, kindMap2);
-                        assert (kind != SVNWCDbKind.Subdir);
                     }
 
                     /*
