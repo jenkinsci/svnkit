@@ -128,18 +128,7 @@ public interface ISVNWCDb {
          * The type of the node is not known, due to its absence, exclusion,
          * deletion, or incomplete status.
          */
-        Unknown,
-
-        /**
-         * This directory node is a placeholder; the actual information is held
-         * within the subdirectory.
-         * <p>
-         * Note: users of this API shouldn't see this kind. It will be handled
-         * internally to wc_db.
-         * <p>
-         * ### only used with per-dir .svn subdirectories.
-         */
-        Subdir;
+        Unknown;
 
         public SVNNodeKind toNodeKind() throws SVNException {
             switch (this) {
@@ -1624,8 +1613,6 @@ public interface ISVNWCDb {
      */
 
     String getFileExternalTemp(File path) throws SVNException;
-
-    boolean determineKeepLocalTemp(File localAbsPath) throws SVNException;
 
     WCDbDirDeletedInfo isDirDeletedTemp(File entryAbspath) throws SVNException;
 

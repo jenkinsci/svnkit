@@ -2510,11 +2510,6 @@ public class SVNWCDb implements ISVNWCDb {
         }
     }
 
-    public boolean determineKeepLocalTemp(File localAbsPath) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
-    }
-
     public WCDbDirDeletedInfo isDirDeletedTemp(File entryAbspath) throws SVNException {
         // TODO
         throw new UnsupportedOperationException();
