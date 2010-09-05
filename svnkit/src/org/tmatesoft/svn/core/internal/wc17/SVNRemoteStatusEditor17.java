@@ -267,7 +267,7 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
                 SVNStatus17 tgt_status = db.statii.get(myTargetAbsPath);
                 if (tgt_status != null) {
                     if (tgt_status.isVersioned() && tgt_status.getKind() == SVNNodeKind.DIR) {
-                        getDirStatus(myTargetAbsPath, null, null, null, null, getDepth(), isReportAll(), isNoIgnore(), true, getDefaultHandler());
+                        getDirStatus(myTargetAbsPath, null, null, null, null, null, getDepth(), isReportAll(), isNoIgnore(), true, getDefaultHandler());
                     }
                     if (isSendableStatus(tgt_status)) {
                         getDefaultHandler().handleStatus(tgt_status.getStatus16());
@@ -341,7 +341,7 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
             File localAbsPath = (File) paths.next();
             SVNStatus17 status = statii.get(localAbsPath);
             if (status.getKind() == SVNNodeKind.DIR && (depth == SVNDepth.UNKNOWN || depth == SVNDepth.INFINITY)) {
-                getDirStatus(localAbsPath, dirReposRootUrl, dirReposRelpath, null, myGlobalIgnores, depth, isReportAll(), isNoIgnore(), true, handler);
+                getDirStatus(localAbsPath, dirReposRootUrl, dirReposRelpath, null, null, myGlobalIgnores, depth, isReportAll(), isNoIgnore(), true, handler);
             }
             if (dirWasDeleted)
                 status.setReposNodeStatus(SVNStatusType.STATUS_DELETED);
@@ -573,8 +573,8 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
                 SVNStatus17 this_dir_status;
                 Collection ignores = myGlobalIgnores;
 
-                getDirStatus(local_abspath, status_in_parent.getReposRootUrl(), status_in_parent.getReposRelpath(), null, ignores, this.depth == SVNDepth.FILES ? SVNDepth.FILES : SVNDepth.IMMEDIATES,
-                        true, true, true, this);
+                getDirStatus(local_abspath, status_in_parent.getReposRootUrl(), status_in_parent.getReposRelpath(), null, null, ignores, this.depth == SVNDepth.FILES ? SVNDepth.FILES
+                        : SVNDepth.IMMEDIATES, true, true, true, this);
 
                 /* If we found a depth here, it should govern. */
                 this_dir_status = this.statii.get(this.localAbsPath);

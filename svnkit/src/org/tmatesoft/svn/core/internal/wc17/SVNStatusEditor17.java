@@ -105,13 +105,25 @@ public class SVNStatusEditor17 {
         final SVNNodeKind localKind = SVNFileType.getNodeKind(SVNFileType.getType(myPath));
         final SVNNodeKind kind = myWCContext.getNodeKind(myPath, false);
 
+        File anchor_abspath;
+        String target_name;
+        boolean skip_root;
+
         if (kind == SVNNodeKind.FILE && localKind == SVNNodeKind.FILE) {
-            getDirStatus(SVNFileUtil.getFileDir(myPath), null, null, SVNFileUtil.getFileName(myPath), myGlobalIgnores, myDepth, myIsReportAll, true, true, myStatusHandler);
+            anchor_abspath = SVNFileUtil.getFileDir(myPath);
+            target_name = SVNFileUtil.getFileName(myPath);
+            skip_root = true;
         } else if (kind == SVNNodeKind.DIR && localKind == SVNNodeKind.DIR) {
-            getDirStatus(myPath, null, null, null, myGlobalIgnores, myDepth, myIsReportAll, myIsNoIgnore, false, myStatusHandler);
+            anchor_abspath = myPath;
+            target_name = null;
+            skip_root = false;
         } else {
-            getDirStatus(SVNFileUtil.getFileDir(myPath), null, null, SVNFileUtil.getFileName(myPath), myGlobalIgnores, myDepth, myIsReportAll, myIsNoIgnore, true, myStatusHandler);
+            anchor_abspath = SVNFileUtil.getFileDir(myPath);
+            target_name = SVNFileUtil.getFileName(myPath);
+            skip_root = false;
         }
+
+        getDirStatus(anchor_abspath, null, null, localKind, target_name, myGlobalIgnores, myDepth, myIsReportAll, true, skip_root, myStatusHandler);
 
         return null;
     }
@@ -173,8 +185,8 @@ public class SVNStatusEditor17 {
         }
     }
 
-    protected void getDirStatus(File localAbsPath, SVNURL parentReposRootUrl, File parentReposRelPath, String selected, Collection ignorePatterns, SVNDepth depth, boolean getAll, boolean noIgnore,
-            boolean skipThisDir, ISVNStatusHandler handler) throws SVNException {
+    protected void getDirStatus(File localAbsPath, SVNURL parentReposRootUrl, File parentReposRelPath, SVNNodeKind pathKind, String selected, Collection ignorePatterns, SVNDepth depth,
+            boolean getAll, boolean noIgnore, boolean skipThisDir, ISVNStatusHandler handler) throws SVNException {
 
         myWCContext.checkCancelled();
 
@@ -248,7 +260,7 @@ public class SVNStatusEditor17 {
         if (selected == null) {
             /* Handle "this-dir" first. */
             if (!skipThisDir) {
-                sendStatusStructure(localAbsPath, parentReposRootUrl, parentReposRelPath, SVNNodeKind.DIR, false, getAll, handler);
+                sendStatusStructure(localAbsPath, parentReposRootUrl, parentReposRelPath, pathKind, false, getAll, handler);
             }
             /* If the requested depth is empty, we only need status on this-dir. */
             if (depth == SVNDepth.EMPTY) {
@@ -419,13 +431,13 @@ public class SVNStatusEditor17 {
              * descend if DEPTH permits it, of course.
              */
             if (depth == SVNDepth.UNKNOWN || depth == SVNDepth.IMMEDIATES || depth == SVNDepth.INFINITY) {
-                getDirStatus(localAbsPath, dirReposRootUrl, dirReposRelPath, null, ignorePatterns, depth, getAll, noIgnore, false, handler);
+                getDirStatus(localAbsPath, dirReposRootUrl, dirReposRelPath, pathKind, null, ignorePatterns, depth, getAll, noIgnore, false, handler);
             } else {
                 /*
                  * ENTRY is a child entry (file or parent stub). Or we have a
                  * directory entry but DEPTH is limiting our recursion.
                  */
-                sendStatusStructure(localAbsPath, dirReposRootUrl, dirReposRelPath, SVNNodeKind.DIR, false, getAll, handler);
+                sendStatusStructure(localAbsPath, dirReposRootUrl, dirReposRelPath, pathKind, false, getAll, handler);
             }
         } else {
             /* This is a file/symlink on-disk. */
