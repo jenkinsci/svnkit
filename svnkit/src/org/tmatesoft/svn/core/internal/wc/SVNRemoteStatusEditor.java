@@ -393,7 +393,7 @@ public class SVNRemoteStatusEditor extends SVNStatusEditor implements ISVNEditor
     }
     
     public void handleStatus(SVNStatus status) throws SVNException {
-        status.setContentsStatus(SVNStatusType.STATUS_DELETED);
+        status.setRemoteStatus(SVNStatusType.STATUS_DELETED, null, null, null);
         getDefaultHandler().handleStatus(status);
     }
     
