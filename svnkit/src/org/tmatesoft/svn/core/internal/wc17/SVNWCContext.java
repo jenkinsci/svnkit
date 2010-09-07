@@ -184,6 +184,7 @@ public class SVNWCContext {
         return db.getConfig();
     }
 
+    // TODO change implementation (see svn_wc_read_kind()) and name to readKind()
     public SVNNodeKind getNodeKind(File path, boolean showHidden) throws SVNException {
         try {
             /* Make sure hidden nodes return SVNNodeKind.NONE. */
@@ -1395,7 +1396,7 @@ public class SVNWCContext {
         return serialized != null;
     }
 
-    private SVNURL getNodeUrl(File path) throws SVNException {
+    public SVNURL getNodeUrl(File path) throws SVNException {
 
         final WCDbInfo readInfo = db.readInfo(path, InfoField.status, InfoField.reposRelPath, InfoField.reposRootUrl, InfoField.haveBase);
 
@@ -2764,7 +2765,21 @@ public class SVNWCContext {
     public static boolean isErrorAccess(SVNException e) {
         final SVNErrorCode errorCode = e.getErrorMessage().getErrorCode();
         return errorCode == SVNErrorCode.FS_NOT_FOUND || errorCode == SVNErrorCode.IO_ERROR;
+    }
+
+    public File acquireWriteLock(File localAbspath, boolean lockAnchor) {
         // TODO
+        return null;
+    }
+
+    public void releaseWriteLock(File localAbspath) {
+        // TODO
+    }
+
+    public void exclude(File localAbspath) {
+    }
+
+    public void cropTree(File localAbspath, SVNDepth depth) {
     }
 
 }

@@ -14,7 +14,10 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNReporter;
 import org.tmatesoft.svn.core.internal.wc16.SVNBasicDelegate;
+import org.tmatesoft.svn.core.io.SVNCapability;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNExternalsHandler;
@@ -371,12 +374,56 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
      * @since 1.2, SVN 1.5
      */
     public long doUpdate(File path, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions, boolean depthIsSticky) throws SVNException {
-        return update(path, revision, depth, allowUnversionedObstructions, depthIsSticky, true);
+        return update(path, revision, depth, allowUnversionedObstructions, depthIsSticky, true, false);
     }
 
-    private long update(File path, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions, boolean depthIsSticky, boolean sendCopyFrom) {
+    private long update(File path, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions, boolean depthIsSticky, boolean sendCopyFrom, boolean innerUpdate) throws SVNException {
+        depth = depth == null ? SVNDepth.UNKNOWN : depth;
+        if (depth == SVNDepth.UNKNOWN) {
+            depthIsSticky = false;
+        }
+        path = path.getAbsoluteFile();
+        final SVNWCContext wcContext = new SVNWCContext(this.getOptions(), getEventDispatcher());
+        final File anchor = wcContext.acquireWriteLock(path, !innerUpdate);
+        try {
+            return updateInternal(wcContext, path, anchor, revision, depth, depthIsSticky, allowUnversionedObstructions, sendCopyFrom, innerUpdate);
+        } finally {
+            wcContext.releaseWriteLock(anchor);
+        }
+    }
+
+    private long updateInternal(SVNWCContext wcContext, File localAbspath, File anchorAbspath, SVNRevision revision, SVNDepth depth, boolean depthIsSticky, boolean allowUnversionedObstructions,
+            boolean sendCopyFrom, boolean innerUpdate) throws SVNException {
+
+        String target;
+        if (!localAbspath.equals(anchorAbspath))
+            target = SVNFileUtil.getFileName(localAbspath);
+        else
+            target = "";
+        final SVNURL anchorUrl = wcContext.getNodeUrl(anchorAbspath);
+
+        if (anchorUrl == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "'{0}' has no URL", anchorAbspath);
+            SVNErrorManager.error(err, SVNLogType.WC);
+            return SVNWCContext.INVALID_REVNUM;
+        }
+
+        /* We may need to crop the tree if the depth is sticky */
+        if (depthIsSticky && depth.compareTo(SVNDepth.INFINITY) < 0) {
+            if (depth == SVNDepth.EXCLUDE) {
+                wcContext.exclude(localAbspath);
+                /* Target excluded, we are done now */
+                return SVNWCContext.INVALID_REVNUM;
+            }
+            final SVNNodeKind targetKind = wcContext.getNodeKind(localAbspath, true);
+            if (targetKind == SVNNodeKind.DIR) {
+                wcContext.cropTree(localAbspath, depth);
+            }
+        }
+
         // TODO
-        return 0;
+
+        return SVNWCContext.INVALID_REVNUM;
     }
 
     /**
