@@ -103,7 +103,7 @@ public class SVNStatusEditor17 {
     public SVNCommitInfo closeEdit() throws SVNException {
 
         final SVNNodeKind localKind = SVNFileType.getNodeKind(SVNFileType.getType(myPath));
-        final SVNNodeKind kind = myWCContext.getNodeKind(myPath, false);
+        final SVNNodeKind kind = myWCContext.readKind(myPath, false);
 
         File anchor_abspath;
         String target_name;

@@ -396,7 +396,7 @@ public class SVNStatusClient17 extends SVNBasicDelegate {
 
             {
                 SVNNodeKind diskKind = SVNFileType.getNodeKind(SVNFileType.getType(targetAbsPath));
-                SVNNodeKind kind = wcContext.getNodeKind(targetAbsPath, false);
+                SVNNodeKind kind = wcContext.readKind(targetAbsPath, false);
 
                 /* Dir must be an existing directory or the status editor fails */
                 if (kind == SVNNodeKind.DIR && diskKind == SVNNodeKind.DIR) {
@@ -408,7 +408,7 @@ public class SVNStatusClient17 extends SVNBasicDelegate {
                     targetBaseName = SVNFileUtil.getFileName(targetAbsPath);
                     dir = SVNFileUtil.getFileDir(path);
                     if (kind != SVNNodeKind.FILE) {
-                        kind = wcContext.getNodeKind(dirAbsPath, false);
+                        kind = wcContext.readKind(dirAbsPath, false);
                         /*
                          * Check for issue #1617 and stat_tests.py 14
                          * "status on '..' where '..' is not versioned".

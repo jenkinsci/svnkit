@@ -184,21 +184,22 @@ public class SVNWCContext {
         return db.getConfig();
     }
 
-    // TODO change implementation (see svn_wc_read_kind()) and name to readKind()
-    public SVNNodeKind getNodeKind(File path, boolean showHidden) throws SVNException {
+    public SVNNodeKind readKind(File localAbsPath, boolean showHidden) throws SVNException {
         try {
-            /* Make sure hidden nodes return SVNNodeKind.NONE. */
+            final WCDbInfo info = db.readInfo(localAbsPath, InfoField.status, InfoField.kind);
+            /* Make sure hidden nodes return svn_node_none. */
             if (!showHidden) {
-                final boolean hidden = db.isNodeHidden(path);
-                if (hidden) {
-                    return SVNNodeKind.NONE;
+                switch (info.status) {
+                    case NotPresent:
+                    case Absent:
+                    case Excluded:
+                        return SVNNodeKind.NONE;
+
+                    default:
+                        break;
                 }
             }
-            final SVNWCDbKind kind = db.readKind(path, false);
-            if (kind == null) {
-                return SVNNodeKind.NONE;
-            }
-            return kind.toNodeKind();
+            return info.kind.toNodeKind();
         } catch (SVNException e) {
             if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND) {
                 return SVNNodeKind.NONE;

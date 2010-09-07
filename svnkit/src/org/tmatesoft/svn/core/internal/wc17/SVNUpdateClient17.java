@@ -415,7 +415,7 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
                 /* Target excluded, we are done now */
                 return SVNWCContext.INVALID_REVNUM;
             }
-            final SVNNodeKind targetKind = wcContext.getNodeKind(localAbspath, true);
+            final SVNNodeKind targetKind = wcContext.readKind(localAbspath, true);
             if (targetKind == SVNNodeKind.DIR) {
                 wcContext.cropTree(localAbspath, depth);
             }
