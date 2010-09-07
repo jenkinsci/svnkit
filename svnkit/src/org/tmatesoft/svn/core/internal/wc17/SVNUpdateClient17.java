@@ -1,20 +1,27 @@
 package org.tmatesoft.svn.core.internal.wc17;
 
 import java.io.File;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.LinkedList;
 
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc16.SVNBasicDelegate;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNExternalsHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.ISVNRepositoryPool;
+import org.tmatesoft.svn.core.wc.SVNEvent;
+import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.util.SVNLogType;
@@ -52,7 +59,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * <td>'svn export'</td>
  * </tr>
  * </table>
- * 
+ *
  * @version 1.3
  * @author TMate Software Ltd.
  * @since 1.2
@@ -80,7 +87,7 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
      * {@link SVNWCUtil#createDefaultAuthenticationManager()}) which uses
      * server-side settings and auth storage from the default SVN's run-time
      * configuration area (or system properties if that area is not found).
-     * 
+     *
      * @param authManager
      *            an authentication and network layers driver
      * @param options
@@ -104,7 +111,7 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
      * If <code>repositoryPool</code> is <span class="javakeyword">null</span>,
      * then {@link org.tmatesoft.svn.core.io.SVNRepositoryFactory} will be used
      * to create {@link SVNRepository repository access objects}.
-     * 
+     *
      * @param repositoryPool
      *            a repository pool object
      * @param options
@@ -117,7 +124,7 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
 
     /**
      * Sets an externals handler to be used by this client object.
-     * 
+     *
      * @param externalsHandler
      *            user's implementation of {@link ISVNExternalsHandler}
      * @see #getExternalsHandler()
@@ -136,7 +143,7 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
      * <p/>
      * For more information what externals handlers are for, please, refer to
      * {@link ISVNExternalsHandler}.
-     * 
+     *
      * @return externals handler being in use
      * @see #setExternalsHandler(ISVNExternalsHandler)
      * @since 1.2
@@ -155,7 +162,7 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
      * As a revision <b>SVNRevision</b>'s pre-defined constant fields can be
      * used. For example, to update the Working Copy to the latest revision of
      * the repository use {@link SVNRevision#HEAD HEAD}.
-     * 
+     *
      * @param file
      *            the Working copy item to be updated
      * @param revision
@@ -172,9 +179,7 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
      *             instead
      */
     public long doUpdate(File file, SVNRevision revision, boolean recursive) throws SVNException {
-        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT);
-        SVNErrorManager.error(err, SVNLogType.CLIENT);
-        return 0;
+        return doUpdate(file, revision, SVNDepth.fromRecurse(recursive), false, false);
     }
 
     /**
@@ -189,9 +194,7 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
      *             instead
      */
     public long doUpdate(File file, SVNRevision revision, boolean recursive, boolean force) throws SVNException {
-        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT);
-        SVNErrorManager.error(err, SVNLogType.CLIENT);
-        return 0;
+        return doUpdate(file, revision, SVNDepth.fromRecurse(recursive), force, false);
     }
 
     /**
@@ -250,7 +253,7 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
      * <p/>
      * This operation requires repository access (in case the repository is not
      * on the same machine, network connection is established).
-     * 
+     *
      * @param paths
      *            working copy paths
      * @param revision
@@ -268,9 +271,39 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
      * @since 1.2, SVN 1.5
      */
     public long[] doUpdate(File[] paths, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions, boolean depthIsSticky) throws SVNException {
-        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT);
-        SVNErrorManager.error(err, SVNLogType.CLIENT);
-        return null;
+        if (paths == null) {
+            return new long[0];
+        }
+        Collection revisions = new LinkedList();
+        for (int i = 0; i < paths.length; i++) {
+            checkCancelled();
+            File path = paths[i];
+            try {
+                setEventPathPrefix("");
+                handlePathListItem(path);
+                long rev = doUpdate(path, revision, depth, allowUnversionedObstructions, depthIsSticky);
+                revisions.add(new Long(rev));
+            } catch (SVNException svne) {
+                if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
+                    SVNEvent skipEvent = SVNEventFactory.createSVNEvent(path, SVNNodeKind.UNKNOWN, null, SVNRepository.INVALID_REVISION, SVNEventAction.SKIP, SVNEventAction.UPDATE_COMPLETED, null,
+                            null);
+                    dispatchEvent(skipEvent);
+                    revisions.add(new Long(-1));
+                    continue;
+                }
+                throw svne;
+            } finally {
+                setEventPathPrefix(null);
+            }
+        }
+        sleepForTimeStamp();
+        long[] result = new long[revisions.size()];
+        int i = 0;
+        for (Iterator revs = revisions.iterator(); revs.hasNext();) {
+            Long value = (Long) revs.next();
+            result[i++] = value.longValue();
+        }
+        return result;
     }
 
     /**
@@ -321,7 +354,7 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
      * <p/>
      * This operation requires repository access (in case the repository is not
      * on the same machine, network connection is established).
-     * 
+     *
      * @param path
      *            working copy path
      * @param revision
@@ -338,8 +371,11 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
      * @since 1.2, SVN 1.5
      */
     public long doUpdate(File path, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions, boolean depthIsSticky) throws SVNException {
-        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT);
-        SVNErrorManager.error(err, SVNLogType.CLIENT);
+        return update(path, revision, depth, allowUnversionedObstructions, depthIsSticky, true);
+    }
+
+    private long update(File path, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions, boolean depthIsSticky, boolean sendCopyFrom) {
+        // TODO
         return 0;
     }
 
@@ -349,7 +385,7 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
      * <p>
      * For additional description, please, refer to
      * {@link #isUpdateLocksOnDemand()}.
-     * 
+     *
      * @param locksOnDemand
      *            <span class="javakeyword">true</span> to make update lock a
      *            working copy tree on demand only (for those subdirectories
@@ -378,7 +414,7 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
      * for all subdirectories involved. This makes an update process work
      * slower. Locking wc on demand feature suggests such a workaround to
      * enhance update performance.
-     * 
+     *
      * @return <span class="javakeyword">true</span> when locking wc on demand
      */
     public boolean isUpdateLocksOnDemand() {
@@ -394,7 +430,7 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
      * <p>
      * Calling this method is equivalent to
      * <code>doSwitch(file, url, SVNRevision.UNDEFINED, revision, recursive)</code>.
-     * 
+     *
      * @param file
      *            the Working copy item to be switched
      * @param url
@@ -425,7 +461,7 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
      * As a revision <b>SVNRevision</b>'s pre-defined constant fields can be
      * used. For example, to update the Working Copy to the latest revision of
      * the repository use {@link SVNRevision#HEAD HEAD}.
-     * 
+     *
      * @param file
      *            the Working copy item to be switched
      * @param url
@@ -522,7 +558,7 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
      * <p/>
      * This operation requires repository access (in case the repository is not
      * on the same machine, network connection is established).
-     * 
+     *
      * @param path
      *            the Working copy item to be switched
      * @param url
@@ -561,7 +597,7 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
      * As a revision <b>SVNRevision</b>'s pre-defined constant fields can be
      * used. For example, to check out a Working Copy at the latest revision of
      * the repository use {@link SVNRevision#HEAD HEAD}.
-     * 
+     *
      * @param url
      *            a repository location from where a Working Copy will be
      *            checked out
@@ -664,7 +700,7 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
      * <p/>
      * This operation requires repository access (in case the repository is not
      * on the same machine, network connection is established).
-     * 
+     *
      * @param url
      *            a repository location from where a Working Copy will be
      *            checked out
@@ -716,7 +752,7 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
      * <li>"native" - this causes files to contain the EOL markers that are
      * native to the operating system on which SVNKit is run.
      * </ul>
-     * 
+     *
      * @param url
      *            a repository location from where the unversioned
      *            directory/file will be exported
@@ -774,7 +810,7 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
      * {@link SVNDepth#FILES}, exports <code>url</code> and its immediate file
      * children (if any) only. If <code>depth</code> is {@link SVNDepth#EMPTY},
      * then exports exactly <code>url</code> and none of its children.
-     * 
+     *
      * @param url
      *            repository url to export from
      * @param dstPath
@@ -835,7 +871,7 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
      * <li>"native" - this causes files to contain the EOL markers that are
      * native to the operating system on which SVNKit is run.
      * </ul>
-     * 
+     *
      * @param srcPath
      *            a repository location from where the unversioned
      *            directory/file will be exported
@@ -905,7 +941,7 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
      * file children (if any) only. If <code>depth</code> is
      * {@link SVNDepth#EMPTY}, then exports exactly <code>srcPath</code> and
      * none of its children.
-     * 
+     *
      * @param srcPath
      *            working copy path
      * @param dstPath
@@ -939,7 +975,7 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
      * When a repository root location or a URL schema is changed the old URL of
      * the Working Copy which starts with <code>oldURL</code> should be
      * substituted for a new URL beginning - <code>newURL</code>.
-     * 
+     *
      * @param dst
      *            a Working Copy item's path
      * @param oldURL
@@ -962,7 +998,7 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
 
     /**
      * Canonicalizes all urls in the specified Working Copy.
-     * 
+     *
      * @param dst
      *            a WC path
      * @param omitDefaultPort
@@ -980,7 +1016,7 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
 
     /**
      * Sets whether keywords must be expanded during an export operation.
-     * 
+     *
      * @param expand
      *            <span class="javakeyword">true</span> to expand; otherwise
      *            <span class="javakeyword">false</span>
@@ -993,7 +1029,7 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
     /**
      * Says whether keywords expansion during export operations is turned on or
      * not.
-     * 
+     *
      * @return <span class="javakeyword">true</span> if expanding keywords;
      *         <span class="javakeyword">false</span> otherwise
      * @since 1.3
