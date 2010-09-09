@@ -455,9 +455,9 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
             };
 
             SVNExternalsStore externalsStore = new SVNExternalsStore();
-            ISVNUpdateEditor editor = createUpdateEditor(anchorAbspath, target, reposRoot, null, externalsStore, allowUnversionedObstructions, depthIsSticky, depth, preservedExts, fileFetcher,
+            ISVNUpdateEditor editor = createUpdateEditor(wcContext, anchorAbspath, target, reposRoot, externalsStore, allowUnversionedObstructions, depthIsSticky, depth, preservedExts, fileFetcher,
                     isUpdateLocksOnDemand());
-            ISVNEditor filterEditor = SVNAmbientDepthFilterEditor17.wrap(editor, externalsStore, depthIsSticky);
+            ISVNEditor filterEditor = SVNAmbientDepthFilterEditor17.wrap(wcContext, anchorAbspath, target, editor, externalsStore, depthIsSticky);
             try {
                 repos.update(revNumber, target, depth, sendCopyFrom, reporter, SVNCancellableEditor.newInstance(filterEditor, this, getDebugLog()));
             } finally {
@@ -496,10 +496,10 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
         return createRepository(baseUrl, uuid, mayReuse);
     }
 
-    private ISVNUpdateEditor createUpdateEditor(File anchorAbspath, String target, SVNURL reposRoot, Object object, SVNExternalsStore externalsStore, boolean allowUnversionedObstructions,
-            boolean depthIsSticky, SVNDepth depth, String[] preservedExts, ISVNFileFetcher fileFetcher, boolean updateLocksOnDemand) {
-        // TODO
-        return null;
+    private ISVNUpdateEditor createUpdateEditor(SVNWCContext wcContext, File anchorAbspath, String target, SVNURL reposRoot, SVNExternalsStore externalsStore, boolean allowUnversionedObstructions, boolean depthIsSticky,
+            SVNDepth depth, String[] preservedExts, ISVNFileFetcher fileFetcher, boolean updateLocksOnDemand) {
+        return SVNUpdateEditor17.createUpdateEditor(wcContext, anchorAbspath, target, reposRoot, null, externalsStore, allowUnversionedObstructions, depthIsSticky, depth, preservedExts, fileFetcher,
+                updateLocksOnDemand);
     }
 
     private void handleExternals(Map oldExternals, Map newExternals, Map depths, SVNURL anchorUrl, File anchorAbspath, SVNURL reposRoot, SVNDepth depth) {

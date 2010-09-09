@@ -15,48 +15,24 @@ import java.io.File;
 import java.io.OutputStream;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.wc.ISVNFileFetcher;
 import org.tmatesoft.svn.core.internal.wc.ISVNUpdateEditor;
-import org.tmatesoft.svn.core.internal.wc.SVNAmbientDepthFilterEditor;
-import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
+
 
 /**
  * @version 1.3
- * @author TMate Software Ltd.
+ * @author  TMate Software Ltd.
  */
-public class SVNAmbientDepthFilterEditor17 implements ISVNEditor {
+public class SVNUpdateEditor17 implements ISVNUpdateEditor {
 
-    private ISVNEditor myDelegate;
-    private SVNWCContext myWcContext;
-    private File myAnchor;
-    private String myTarget;
-    private SVNExternalsStore myExternalsStore;
-
-    public SVNAmbientDepthFilterEditor17(ISVNUpdateEditor editor, SVNWCContext wcContext, File anchor, String target, SVNExternalsStore externalsStore) {
-        myDelegate = editor;
-        myWcContext = wcContext;
-        myAnchor = anchor;
-        myTarget = target;
-        myExternalsStore = externalsStore;
-    }
-
-    public static ISVNEditor wrap(SVNWCContext wcContext, File anchor, String target, ISVNUpdateEditor editor, SVNExternalsStore externalsStore, boolean depthIsSticky) {
-        if (!depthIsSticky) {
-            return new SVNAmbientDepthFilterEditor17(editor, wcContext, anchor, target, externalsStore);
-        }
-        return editor;
-    }
-
-    public void applyTextDelta(String path, String baseChecksum) throws SVNException {
-    }
-
-    public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
+    public static ISVNUpdateEditor createUpdateEditor(SVNWCContext wcContext, File anchorAbspath, String target, SVNURL reposRoot, Object object, SVNExternalsStore externalsStore, boolean allowUnversionedObstructions,
+            boolean depthIsSticky, SVNDepth depth, String[] preservedExts, ISVNFileFetcher fileFetcher, boolean updateLocksOnDemand) {
         return null;
-    }
-
-    public void textDeltaEnd(String path) throws SVNException {
     }
 
     public void targetRevision(long revision) throws SVNException {
@@ -103,6 +79,20 @@ public class SVNAmbientDepthFilterEditor17 implements ISVNEditor {
     }
 
     public void abortEdit() throws SVNException {
+    }
+
+    public void applyTextDelta(String path, String baseChecksum) throws SVNException {
+    }
+
+    public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
+        return null;
+    }
+
+    public void textDeltaEnd(String path) throws SVNException {
+    }
+
+    public long getTargetRevision() {
+        return 0;
     }
 
 }
