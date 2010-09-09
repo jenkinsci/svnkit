@@ -2778,9 +2778,21 @@ public class SVNWCContext {
     }
 
     public void exclude(File localAbspath) {
+        // TODO
     }
 
     public void cropTree(File localAbspath, SVNDepth depth) {
+        // TODO
+    }
+
+    public class SVNWCNodeReposInfo {
+        public SVNURL reposRootUrl;
+        public String reposUuid;
+    }
+
+    public SVNWCNodeReposInfo getNodeReposInfo(File baseDirAbspath, boolean scanAdded, boolean scanDeleted) throws SVNException {
+        // TODO
+        return null;
     }
 
 }

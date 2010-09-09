@@ -1,22 +1,32 @@
 package org.tmatesoft.svn.core.internal.wc17;
 
 import java.io.File;
+import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.ISVNFileFetcher;
+import org.tmatesoft.svn.core.internal.wc.ISVNUpdateEditor;
+import org.tmatesoft.svn.core.internal.wc.SVNAmbientDepthFilterEditor;
+import org.tmatesoft.svn.core.internal.wc.SVNCancellableEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNReporter;
 import org.tmatesoft.svn.core.internal.wc16.SVNBasicDelegate;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.SVNWCNodeReposInfo;
+import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNCapability;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
@@ -408,22 +418,92 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
             return SVNWCContext.INVALID_REVNUM;
         }
 
-        /* We may need to crop the tree if the depth is sticky */
-        if (depthIsSticky && depth.compareTo(SVNDepth.INFINITY) < 0) {
-            if (depth == SVNDepth.EXCLUDE) {
-                wcContext.exclude(localAbspath);
-                /* Target excluded, we are done now */
-                return SVNWCContext.INVALID_REVNUM;
+        try {
+            /* We may need to crop the tree if the depth is sticky */
+            if (depthIsSticky && depth.compareTo(SVNDepth.INFINITY) < 0) {
+                if (depth == SVNDepth.EXCLUDE) {
+                    wcContext.exclude(localAbspath);
+                    /* Target excluded, we are done now */
+                    return SVNWCContext.INVALID_REVNUM;
+                }
+                final SVNNodeKind targetKind = wcContext.readKind(localAbspath, true);
+                if (targetKind == SVNNodeKind.DIR) {
+                    wcContext.cropTree(localAbspath, depth);
+                }
             }
-            final SVNNodeKind targetKind = wcContext.readKind(localAbspath, true);
-            if (targetKind == SVNNodeKind.DIR) {
-                wcContext.cropTree(localAbspath, depth);
+
+            String[] preservedExts = getOptions().getPreservedConflictFileExtensions();
+            boolean useCommitTimes = getOptions().isUseCommitTimes();
+            SVNRepository repos = createRepository(anchorUrl, anchorAbspath, true, wcContext);
+            boolean serverSupportsDepth = repos.hasCapability(SVNCapability.DEPTH);
+            final SVNReporter17 reporter = new SVNReporter17(anchorAbspath, wcContext, true, !serverSupportsDepth, depth, isUpdateLocksOnDemand(), false, useCommitTimes, !depthIsSticky, getDebugLog());
+            long revNumber = getRevisionNumber(revision, repos, localAbspath);
+            final SVNURL reposRoot = repos.getRepositoryRoot(true);
+
+            final SVNRepository[] repos2 = new SVNRepository[1];
+            ISVNFileFetcher fileFetcher = new ISVNFileFetcher() {
+
+                public long fetchFile(String path, long revision, OutputStream os, SVNProperties properties) throws SVNException {
+                    SVNURL url = reposRoot.appendPath(SVNPathUtil.removeTail(path), false);
+                    if (repos2[0] == null) {
+                        repos2[0] = createRepository(url, null, null, false);
+                    } else {
+                        repos2[0].setLocation(url, false);
+                    }
+                    return repos2[0].getFile(SVNPathUtil.tail(path), revision, properties, os);
+                }
+            };
+
+            SVNExternalsStore externalsStore = new SVNExternalsStore();
+            ISVNUpdateEditor editor = createUpdateEditor(anchorAbspath, target, reposRoot, null, externalsStore, allowUnversionedObstructions, depthIsSticky, depth, preservedExts, fileFetcher,
+                    isUpdateLocksOnDemand());
+            ISVNEditor filterEditor = SVNAmbientDepthFilterEditor17.wrap(editor, externalsStore, depthIsSticky);
+            try {
+                repos.update(revNumber, target, depth, sendCopyFrom, reporter, SVNCancellableEditor.newInstance(filterEditor, this, getDebugLog()));
+            } finally {
+                if (repos2[0] != null) {
+                    repos2[0].closeSession();
+                }
+            }
+
+            long targetRevision = editor.getTargetRevision();
+            if (targetRevision >= 0) {
+                if ((depth == SVNDepth.INFINITY || depth == SVNDepth.UNKNOWN) && !isIgnoreExternals()) {
+                    handleExternals(externalsStore.getOldExternals(), externalsStore.getNewExternals(), externalsStore.getDepths(), anchorUrl, anchorAbspath, reposRoot, depth);
+                }
+                dispatchEvent(SVNEventFactory.createSVNEvent(anchorAbspath, SVNNodeKind.NONE, null, targetRevision, SVNEventAction.UPDATE_COMPLETED, null, null, null,
+                        reporter.getReportedFilesCount(), reporter.getTotalFilesCount()));
+            }
+            return targetRevision;
+        } finally {
+            sleepForTimeStamp();
+        }
+    }
+
+    private SVNRepository createRepository(SVNURL baseUrl, File baseDirAbspath, boolean mayReuse, SVNWCContext wcContext) throws SVNException {
+        String uuid = null;
+        if (baseDirAbspath != null) {
+            try {
+                SVNWCNodeReposInfo nodeReposInfo = wcContext.getNodeReposInfo(baseDirAbspath, false, false);
+                uuid = nodeReposInfo.reposUuid;
+            } catch (SVNException e) {
+                if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_WORKING_COPY && e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND
+                        || e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_UPGRADE_REQUIRED) {
+                    throw e;
+                }
             }
         }
+        return createRepository(baseUrl, uuid, mayReuse);
+    }
 
+    private ISVNUpdateEditor createUpdateEditor(File anchorAbspath, String target, SVNURL reposRoot, Object object, SVNExternalsStore externalsStore, boolean allowUnversionedObstructions,
+            boolean depthIsSticky, SVNDepth depth, String[] preservedExts, ISVNFileFetcher fileFetcher, boolean updateLocksOnDemand) {
         // TODO
+        return null;
+    }
 
-        return SVNWCContext.INVALID_REVNUM;
+    private void handleExternals(Map oldExternals, Map newExternals, Map depths, SVNURL anchorUrl, File anchorAbspath, SVNURL reposRoot, SVNDepth depth) {
+        // TODO
     }
 
     /**
