@@ -21,8 +21,10 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.wc.ISVNUpdateEditor;
+import org.tmatesoft.svn.core.internal.wc.SVNAmbientDepthFilterEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbBaseInfo;
@@ -46,7 +48,7 @@ public class SVNAmbientDepthFilterEditor17 implements ISVNEditor {
     private SVNExternalsStore myExternalsStore;
     private boolean myReadBase;
     private LinkedList<DirBaton> myDirs;
-    private org.tmatesoft.svn.core.internal.wc17.SVNAmbientDepthFilterEditor17.DirBaton myCurrentDirBaton;
+    private DirBaton myCurrentDirBaton;
 
     public SVNAmbientDepthFilterEditor17(ISVNUpdateEditor editor, SVNWCContext wcContext, File anchor, String target, SVNExternalsStore externalsStore, boolean readBase) {
         myDelegate = editor;
@@ -96,24 +98,82 @@ public class SVNAmbientDepthFilterEditor17 implements ISVNEditor {
     }
 
     public void deleteEntry(String path, long revision) throws SVNException {
+        if (myCurrentDirBaton.myIsAmbientlyExcluded) {
+            return;
+        }
+
+        if (myCurrentDirBaton.myAmbientDepth.compareTo(SVNDepth.IMMEDIATES) < 0) {
+            File abspath = SVNFileUtil.createFilePath(myAnchor, SVNWCContext.getPathAsChild(myAnchor, SVNFileUtil.createFilePath(path)));
+            AmbientReadInfo aInfo = ambientReadInfo(abspath, myReadBase);
+            if (aInfo.kind == SVNWCDbKind.Unknown || aInfo.hidden) {
+                return;
+            }
+        }
+
+        myDelegate.deleteEntry(path, revision);
     }
 
     public void absentDir(String path) throws SVNException {
+        if (myCurrentDirBaton.myIsAmbientlyExcluded) {
+            return;
+        }
+        myDelegate.absentDir(path);
     }
 
     public void absentFile(String path) throws SVNException {
     }
 
     public void addDir(String path, String copyFromPath, long copyFromRevision) throws SVNException {
+        DirBaton parentBaton = myCurrentDirBaton;
+        myCurrentDirBaton = makeDirBaton(path, parentBaton);
+        if (myCurrentDirBaton.myIsAmbientlyExcluded) {
+            return;
+        }
+
+        if (path.equals(myTarget)) {
+            myCurrentDirBaton.myAmbientDepth = SVNDepth.INFINITY;
+        } else if (parentBaton.myAmbientDepth == SVNDepth.IMMEDIATES) {
+            myCurrentDirBaton.myAmbientDepth = SVNDepth.EMPTY;
+        } else {
+            myCurrentDirBaton.myAmbientDepth = SVNDepth.INFINITY;
+        }
+
+        myDelegate.addDir(path, copyFromPath, copyFromRevision);
     }
 
     public void openDir(String path, long revision) throws SVNException {
+        DirBaton parentBaton = myCurrentDirBaton;
+        myCurrentDirBaton = makeDirBaton(path, parentBaton);
+
+        if (myCurrentDirBaton.myIsAmbientlyExcluded) {
+            return;
+        }
+
+        File abspath = SVNFileUtil.createFilePath(myAnchor, SVNWCContext.getPathAsChild(myAnchor, SVNFileUtil.createFilePath(path)));
+        AmbientReadInfo aInfo = ambientReadInfo(abspath, myReadBase);
+        if (aInfo.kind != SVNWCDbKind.Unknown && !aInfo.hidden) {
+            myCurrentDirBaton.myAmbientDepth = aInfo.depth;
+        }
     }
 
     public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
+        if (myCurrentDirBaton.myIsAmbientlyExcluded) {
+            return;
+        }
+        myDelegate.changeDirProperty(name, value);
     }
 
     public void closeDir() throws SVNException {
+        DirBaton closedDir = myDirs.removeLast();
+        if (myDirs.isEmpty()) {
+            myCurrentDirBaton = null;
+        } else {
+            myCurrentDirBaton = myDirs.getLast();
+        }
+        if (closedDir.myIsAmbientlyExcluded) {
+            return;
+        }
+        myDelegate.closeDir();
     }
 
     public void addFile(String path, String copyFromPath, long copyFromRevision) throws SVNException {
