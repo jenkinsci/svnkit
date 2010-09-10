@@ -121,6 +121,7 @@ class HTTPConnection implements IHTTPConnection {
     private boolean myIsSpoolAll;
     private File mySpoolDirectory;
     private long myNextRequestTimeout;
+    private Collection myCookies;
 
     public HTTPConnection(SVNRepository repository, String charset, File spoolDirectory, boolean spoolAll) throws SVNException {
         myRepository = repository;
@@ -253,6 +254,7 @@ class HTTPConnection implements IHTTPConnection {
     }
     
     public void clearAuthenticationCache() {
+        myCookies = null;
         myLastValidAuth = null;
         myTrustManager = null;
         myKeyManager = null;
@@ -343,7 +345,10 @@ class HTTPConnection implements IHTTPConnection {
                         request.setAuthentication(httpAuthResponse);
                     }
 
-                    try {
+                    if (myCookies != null && !myCookies.isEmpty()) {
+                        request.setCookies(myCookies);
+                    }
+                    try {                        
                         request.dispatch(method, path, header, ok1, ok2, context);
                         break;
                     } catch (EOFException pe) {
@@ -356,6 +361,9 @@ class HTTPConnection implements IHTTPConnection {
                     } finally {
                         retryCount--;
                     }
+                }
+                if (request.getResponseHeader().hasHeader(HTTPHeader.SET_COOKIE)) {
+                    myCookies = request.getResponseHeader().getHeaderValues(HTTPHeader.COOKIE);
                 }
                 myNextRequestTimeout = request.getNextRequestTimeout();
                 status = request.getStatus();
