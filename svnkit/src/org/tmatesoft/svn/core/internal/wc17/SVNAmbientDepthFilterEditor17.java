@@ -45,29 +45,32 @@ public class SVNAmbientDepthFilterEditor17 implements ISVNEditor {
     private SVNWCContext myWcContext;
     private File myAnchor;
     private String myTarget;
-    private SVNExternalsStore myExternalsStore;
     private boolean myReadBase;
     private LinkedList<DirBaton> myDirs;
     private DirBaton myCurrentDirBaton;
+    private FileBaton myCurrentFileBaton;
 
-    public SVNAmbientDepthFilterEditor17(ISVNUpdateEditor editor, SVNWCContext wcContext, File anchor, String target, SVNExternalsStore externalsStore, boolean readBase) {
+    public SVNAmbientDepthFilterEditor17(ISVNUpdateEditor editor, SVNWCContext wcContext, File anchor, String target, boolean readBase) {
         myDelegate = editor;
         myWcContext = wcContext;
         myAnchor = anchor;
         myTarget = target;
-        myExternalsStore = externalsStore;
         myReadBase = readBase;
         myDirs = new LinkedList<DirBaton>();
     }
 
-    public static ISVNEditor wrap(SVNWCContext wcContext, File anchor, String target, ISVNUpdateEditor editor, SVNExternalsStore externalsStore, boolean depthIsSticky) {
+    public static ISVNEditor wrap(SVNWCContext wcContext, File anchor, String target, ISVNUpdateEditor editor, boolean depthIsSticky) {
         if (!depthIsSticky) {
-            return new SVNAmbientDepthFilterEditor17(editor, wcContext, anchor, target, externalsStore, true);
+            return new SVNAmbientDepthFilterEditor17(editor, wcContext, anchor, target, true);
         }
         return editor;
     }
 
     public void applyTextDelta(String path, String baseChecksum) throws SVNException {
+        if (myCurrentFileBaton.myIsAmbientlyExcluded) {
+            return;
+        }
+        myDelegate.applyTextDelta(path, baseChecksum);
     }
 
     public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
@@ -121,6 +124,10 @@ public class SVNAmbientDepthFilterEditor17 implements ISVNEditor {
     }
 
     public void absentFile(String path) throws SVNException {
+        if (myCurrentDirBaton.myIsAmbientlyExcluded) {
+            return;
+        }
+        myDelegate.absentFile(path);
     }
 
     public void addDir(String path, String copyFromPath, long copyFromRevision) throws SVNException {
@@ -177,19 +184,37 @@ public class SVNAmbientDepthFilterEditor17 implements ISVNEditor {
     }
 
     public void addFile(String path, String copyFromPath, long copyFromRevision) throws SVNException {
+        myCurrentFileBaton = makeFileBaton(myCurrentDirBaton, path);
+        if (myCurrentFileBaton.myIsAmbientlyExcluded) {
+            return;
+        }
+        myDelegate.addFile(path, copyFromPath, copyFromRevision);
     }
 
     public void openFile(String path, long revision) throws SVNException {
+        myCurrentFileBaton = makeFileBaton(myCurrentDirBaton, path);
+        if (myCurrentFileBaton.myIsAmbientlyExcluded) {
+            return;
+        }
+        myDelegate.openFile(path, revision);
     }
 
     public void changeFileProperty(String path, String propertyName, SVNPropertyValue propertyValue) throws SVNException {
+        if (myCurrentFileBaton.myIsAmbientlyExcluded) {
+            return;
+        }
+        myDelegate.changeFileProperty(path, propertyName, propertyValue);
     }
 
     public void closeFile(String path, String textChecksum) throws SVNException {
+        if (myCurrentFileBaton.myIsAmbientlyExcluded) {
+            return;
+        }
+        myDelegate.closeFile(path, textChecksum);
     }
 
     public SVNCommitInfo closeEdit() throws SVNException {
-        return null;
+        return myDelegate.closeEdit();
     }
 
     public void abortEdit() throws SVNException {
@@ -239,6 +264,34 @@ public class SVNAmbientDepthFilterEditor17 implements ISVNEditor {
         return dirBaton;
     }
 
+    private FileBaton makeFileBaton(DirBaton parentBaton, String path) throws SVNException {
+        if (path == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "aborting in SVNAmbientDepthFilterEditor.makeFileBation(): path == null");
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
+        }
+
+        FileBaton fileBaton = new FileBaton();
+        if (parentBaton.myIsAmbientlyExcluded) {
+            fileBaton.myIsAmbientlyExcluded = true;
+            return fileBaton;
+        }
+
+        File abspath = SVNFileUtil.createFilePath(myAnchor, SVNWCContext.getPathAsChild(myAnchor, SVNFileUtil.createFilePath(path)));
+        AmbientReadInfo aInfo = ambientReadInfo(abspath, myReadBase);
+
+        if (parentBaton.myAmbientDepth == SVNDepth.EMPTY) {
+            if (aInfo.hidden || aInfo.kind == SVNWCDbKind.Unknown) {
+                fileBaton.myIsAmbientlyExcluded = true;
+            }
+        }
+
+        if (parentBaton.myAmbientDepth != SVNDepth.UNKNOWN && aInfo.status == SVNWCDbStatus.Excluded) {
+            fileBaton.myIsAmbientlyExcluded = true;
+        }
+
+        return fileBaton;
+    }
+
     private class AmbientReadInfo {
 
         public boolean hidden;
@@ -247,10 +300,6 @@ public class SVNAmbientDepthFilterEditor17 implements ISVNEditor {
         public SVNDepth depth;
     }
 
-    /*
-     * Helper to call either svn_wc__db_base_get_info or svn_wc__db_read_info
-     * for obtaining information for the ambient depth editor
-     */
     private AmbientReadInfo ambientReadInfo(File localAbspath, boolean readBase) throws SVNException {
 
         final AmbientReadInfo info = new AmbientReadInfo();

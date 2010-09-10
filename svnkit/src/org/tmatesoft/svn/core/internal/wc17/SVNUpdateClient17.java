@@ -457,7 +457,7 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
             SVNExternalsStore externalsStore = new SVNExternalsStore();
             ISVNUpdateEditor editor = createUpdateEditor(wcContext, anchorAbspath, target, reposRoot, externalsStore, allowUnversionedObstructions, depthIsSticky, depth, preservedExts, fileFetcher,
                     isUpdateLocksOnDemand());
-            ISVNEditor filterEditor = SVNAmbientDepthFilterEditor17.wrap(wcContext, anchorAbspath, target, editor, externalsStore, depthIsSticky);
+            ISVNEditor filterEditor = SVNAmbientDepthFilterEditor17.wrap(wcContext, anchorAbspath, target, editor, depthIsSticky);
             try {
                 repos.update(revNumber, target, depth, sendCopyFrom, reporter, SVNCancellableEditor.newInstance(filterEditor, this, getDebugLog()));
             } finally {
