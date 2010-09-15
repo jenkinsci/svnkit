@@ -77,6 +77,9 @@ public class SVNDiffCallback extends AbstractDiffCallback {
 
     public SVNStatusType[] fileAdded(String path, File file1, File file2, long revision1, long revision2, String mimeType1, 
             String mimeType2, SVNProperties originalProperties, SVNProperties diff, boolean[] isTreeConflicted) throws SVNException {
+        if (!myGenerator.isDiffAdded()) {
+            return EMPTY_STATUS;
+        }
         if (file2 != null) {
             displayFileDiff(path, null, file2, revision1, revision2, mimeType1, mimeType2, originalProperties, diff);
         }
@@ -99,6 +102,9 @@ public class SVNDiffCallback extends AbstractDiffCallback {
 
     public SVNStatusType fileDeleted(String path, File file1, File file2, String mimeType1, String mimeType2, SVNProperties originalProperties,
             boolean[] isTreeConflicted) throws SVNException {
+        if (!myGenerator.isDiffDeleted()) {
+            return SVNStatusType.UNKNOWN;
+        }
         if (file1 != null) {
             displayFileDiff(path, file1, file2, myRevision1, myRevision2, mimeType1, mimeType2, originalProperties, null);
         }
