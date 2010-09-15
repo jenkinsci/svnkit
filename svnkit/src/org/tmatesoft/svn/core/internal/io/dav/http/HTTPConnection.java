@@ -745,6 +745,7 @@ class HTTPConnection implements IHTTPConnection {
                 xmlReader.parse(new InputSource(reader));
             }
         } catch (SAXException e) {
+            mySAXParser = null;
             if (e instanceof SAXParseException) {
                 if (handler instanceof DAVErrorHandler) {
                     // failed to read svn-specific error, return null.
@@ -757,6 +758,7 @@ class HTTPConnection implements IHTTPConnection {
             } 
             return SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Processing {0} request response failed: {1} ({2}) ",  new Object[] {method, e.getMessage(), path});
         } catch (ParserConfigurationException e) {
+            mySAXParser = null;
             return SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "XML parser configuration error while processing {0} request response: {1} ({2}) ",  new Object[] {method, e.getMessage(), path});
         } catch (EOFException e) {
             // skip it.
