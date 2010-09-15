@@ -2683,4 +2683,13 @@ public class SVNWCDb implements ISVNWCDb {
         return pdh.getWCRoot().getSDb();
     }
 
+    public void runWorkQueue(File localAbspath) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    public void opStartDirectoryUpdateTemp(File localAbspath, File newRelpath, long targetRevision) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
 }

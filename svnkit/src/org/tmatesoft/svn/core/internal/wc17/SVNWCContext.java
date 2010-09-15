@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -84,6 +85,10 @@ public class SVNWCContext {
     public static final long INVALID_REVNUM = -1;
     private static final int STREAM_CHUNK_SIZE = 16384;
 
+    public interface CleanupHandler {
+        void cleanup() throws SVNException;
+    }
+
     public static boolean isAdminDirectory(String name) {
         return name != null && (SVNFileUtil.isWindows) ? SVNFileUtil.getAdminDirectoryName().equalsIgnoreCase(name) : SVNFileUtil.getAdminDirectoryName().equals(name);
     }
@@ -142,6 +147,7 @@ public class SVNWCContext {
     private ISVNWCDb db;
     private boolean closeDb;
     private ISVNEventHandler eventHandler;
+    private List<CleanupHandler> cleanupHandlers = new LinkedList<CleanupHandler>();
 
     public SVNWCContext(ISVNOptions config, ISVNEventHandler eventHandler) throws SVNException {
         this(SVNWCDbOpenMode.ReadWrite, config, false, true, eventHandler);
@@ -165,9 +171,24 @@ public class SVNWCContext {
     }
 
     public void close() throws SVNException {
-        if (closeDb) {
-            db.close();
+        try{
+            cleanup();
+        } finally {
+            if (closeDb) {
+                db.close();
+            }
         }
+    }
+
+    public void registerCleanupHandler(CleanupHandler ch) {
+        cleanupHandlers.add(ch);
+    }
+
+    private void cleanup() throws SVNException {
+        for(CleanupHandler ch : cleanupHandlers) {
+            ch.cleanup();
+        }
+        cleanupHandlers.clear();
     }
 
     public ISVNWCDb getDb() {

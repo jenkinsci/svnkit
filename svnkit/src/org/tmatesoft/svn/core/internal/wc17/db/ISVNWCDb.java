@@ -1602,6 +1602,8 @@ public interface ISVNWCDb {
 
     void removeWCLock(File localAbspath) throws SVNException;
 
+    void runWorkQueue(File localAbspath);
+
     /** temp function. return the FORMAT for the directory LOCAL_ABSPATH. */
     int getFormatTemp(File localDirAbsPath) throws SVNException;
 
@@ -1615,12 +1617,14 @@ public interface ISVNWCDb {
 
     WCDbDirDeletedInfo isDirDeletedTemp(File entryAbspath) throws SVNException;
 
-    public static class WCDbDirDeletedInfo {
+    static class WCDbDirDeletedInfo {
 
         public boolean notPresent;
         public long baseRevision;
     }
 
-    public SVNSqlJetDb borrowDbTemp(File dirAbsPath, SVNWCDbOpenMode mode) throws SVNException;
+    SVNSqlJetDb borrowDbTemp(File dirAbsPath, SVNWCDbOpenMode mode) throws SVNException;
+
+    void opStartDirectoryUpdateTemp(File localAbspath, File newRelpath, long targetRevision);
 
 }
