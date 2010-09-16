@@ -103,10 +103,6 @@ public interface ISVNDiffGenerator {
     /**
      * Enables or disables generating differences for deleted
      * files.
-     *
-     * <p>
-     * Like the <i>'--no-diff-deleted'</i> option of the <i>'svn diff'</i> 
-     * or <i>'svnlook diff'</i> commands.
      * 
      * @param isDiffDeleted if <span class="javakeyword">true</span> then
      *                      deleted files will be diffed, otherwise not
@@ -127,13 +123,8 @@ public interface ISVNDiffGenerator {
     
     /**
      * Enables or disables generating differences for added
-     * files. This switch is relevant to  
-     * {@link org.tmatesoft.svn.core.wc.admin.SVNLookClient}'s diff 
-     * operations. 
+     * files.   
      *
-     * <p>
-     * Like the <i>'--no-diff-added'</i> option of the <i>'svnlook diff'</i> command.
-     * 
      * @param isDiffAdded   if <span class="javakeyword">true</span> then
      *                      added files will be diffed, otherwise not
      * @see                 #isDiffAdded()
@@ -142,9 +133,6 @@ public interface ISVNDiffGenerator {
 
     /**
      * Tells whether added files are enabled to be diffed. 
-     * This switch is relevant to  
-     * {@link org.tmatesoft.svn.core.wc.admin.SVNLookClient}'s diff 
-     * operations. 
      * 
      * @return <span class="javakeyword">true</span> if added files
      *         should be diffed, otherwise 
