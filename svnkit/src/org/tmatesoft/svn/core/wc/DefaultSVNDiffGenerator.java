@@ -87,9 +87,10 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
      *
      */
     public DefaultSVNDiffGenerator() {
-        myIsDiffDeleted = true;
         myAnchorPath1 = "";
         myAnchorPath2 = "";
+        setDiffDeleted(true);
+        setDiffAdded(true);
     }
 
     /**
