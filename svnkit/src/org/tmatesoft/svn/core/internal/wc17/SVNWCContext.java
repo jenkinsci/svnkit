@@ -38,6 +38,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
 import org.tmatesoft.svn.core.internal.wc.SVNChecksumKind;
@@ -2791,19 +2792,22 @@ public class SVNWCContext {
 
     public File acquireWriteLock(File localAbspath, boolean lockAnchor) {
         // TODO
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     public void releaseWriteLock(File localAbspath) {
         // TODO
+        throw new UnsupportedOperationException();
     }
 
     public void exclude(File localAbspath) {
         // TODO
+        throw new UnsupportedOperationException();
     }
 
     public void cropTree(File localAbspath, SVNDepth depth) {
         // TODO
+        throw new UnsupportedOperationException();
     }
 
     public class SVNWCNodeReposInfo {
@@ -2813,7 +2817,22 @@ public class SVNWCContext {
 
     public SVNWCNodeReposInfo getNodeReposInfo(File baseDirAbspath, boolean scanAdded, boolean scanDeleted) throws SVNException {
         // TODO
-        return null;
+        throw new UnsupportedOperationException();
+    }
+
+    public SVNSkel wqBuildBaseRemove(File localAbspath, boolean b) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    public void wqAdd(File dir_abspath, SVNSkel workItem) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    public void wqRun(File dir_abspath) {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
 }

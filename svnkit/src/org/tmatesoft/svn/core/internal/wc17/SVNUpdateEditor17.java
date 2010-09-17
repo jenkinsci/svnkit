@@ -13,7 +13,8 @@ package org.tmatesoft.svn.core.internal.wc17;
 
 import java.io.File;
 import java.io.OutputStream;
-
+import java.util.LinkedList;
+import java.util.List;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -25,11 +26,13 @@ import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.ISVNFileFetcher;
 import org.tmatesoft.svn.core.internal.wc.ISVNUpdateEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbBaseInfo;
@@ -39,9 +42,12 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo.RepositoryInfoField;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaProcessor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
+import org.tmatesoft.svn.core.wc.SVNConflictAction;
 import org.tmatesoft.svn.core.wc.SVNConflictDescription;
+import org.tmatesoft.svn.core.wc.SVNConflictReason;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
+import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -69,6 +75,8 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
     private String myTargetBasename;
     private boolean myIsRootOpened;
     private SVNDirectoryInfo myCurrentDirectory;
+    private List<File> mySkippedTrees = new LinkedList<File>();
+    private boolean myIsTargetDeleted;
 
     public static ISVNUpdateEditor createUpdateEditor(SVNWCContext wcContext, File anchorAbspath, String target, SVNURL reposRoot, SVNURL switchURL, SVNExternalsStore externalsStore,
             boolean allowUnversionedObstructions, boolean depthIsSticky, SVNDepth depth, String[] preservedExts, ISVNFileFetcher fileFetcher, boolean updateLocksOnDemand) throws SVNException {
@@ -127,19 +135,18 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         return myTargetRevision;
     }
 
+    private void rememberSkippedTree(File localAbspath) {
+        assert (SVNFileUtil.isAbsolute(localAbspath));
+        mySkippedTrees.add(localAbspath);
+        return;
+    }
+
     public void openRoot(long revision) throws SVNException {
-
         boolean already_conflicted;
-
-        /*
-         * Note that something interesting is actually happening in this edit
-         * run.
-         */
         myIsRootOpened = true;
         myCurrentDirectory = createDirectoryInfo(null, null, false);
 
         SVNWCDbKind kind = myWcContext.getDb().readKind(myCurrentDirectory.getLocalAbspath(), true);
-
         if (kind == SVNWCDbKind.Dir) {
             try {
                 already_conflicted = alreadyInATreeConflict(myCurrentDirectory.getLocalAbspath());
@@ -158,11 +165,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             myCurrentDirectory.setSkipDescendants(true);
             myCurrentDirectory.setAlreadyNotified(true);
             myCurrentDirectory.getBumpInfo().setSkipped(true);
-
-            if (myWcContext.getEventHandler() != null) {
-                myWcContext.getEventHandler().handleEvent(new SVNEvent(myTargetPath, SVNNodeKind.UNKNOWN, null, -1, null, null, null, null, SVNEventAction.SKIP, null, null, null, null), 0);
-            }
-
+            doNotification(myTargetPath, SVNNodeKind.UNKNOWN, SVNEventAction.SKIP);
             return;
         }
 
@@ -171,12 +174,16 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             WCDbBaseInfo baseInfo = myWcContext.getDb().getBaseInfo(myCurrentDirectory.getLocalAbspath(), BaseInfoField.status, BaseInfoField.depth);
             myCurrentDirectory.setAmbientDepth(baseInfo.depth);
             myCurrentDirectory.setWasIncomplete(baseInfo.status == SVNWCDbStatus.Incomplete);
-
             /* ### TODO: Skip if inside a conflicted tree. */
-
             myWcContext.getDb().opStartDirectoryUpdateTemp(myCurrentDirectory.getLocalAbspath(), myCurrentDirectory.getNewRelpath(), myTargetRevision);
         }
 
+    }
+
+    private void doNotification(File localAbspath, SVNNodeKind kind, SVNEventAction action) throws SVNException {
+        if (myWcContext.getEventHandler() != null) {
+            myWcContext.getEventHandler().handleEvent(new SVNEvent(localAbspath, kind, null, -1, null, null, null, null, action, null, null, null, null), 0);
+        }
     }
 
     private boolean alreadyInATreeConflict(File localAbspath) throws SVNException {
@@ -218,8 +225,105 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
     }
 
     public void deleteEntry(String path, long revision) throws SVNException {
+        String base = SVNFileUtil.getBasePath(SVNFileUtil.createFilePath(path));
+        File localAbspath = SVNFileUtil.createFilePath(myCurrentDirectory.getLocalAbspath(), base);
+        if (myCurrentDirectory.isSkipDescendants()) {
+            if (!myCurrentDirectory.isSkipThis())
+                rememberSkippedTree(localAbspath);
+            return;
+        }
+        checkIfPathIsUnderRoot(path);
+        File theirRelpath = SVNFileUtil.createFilePath(myCurrentDirectory.getNewRelpath(), base);
+        doEntryDeletion(localAbspath, theirRelpath, myCurrentDirectory.isInDeletedAndTreeConflictedSubtree());
+    }
+
+    private void doEntryDeletion(File localAbspath, File theirRelpath, boolean inDeletedAndTreeConflictedSubtree) throws SVNException {
+        ISVNWCDb db = myWcContext.getDb();
+        boolean conflicted = db.readInfo(localAbspath, InfoField.conflicted).conflicted;
+        if (conflicted)
+            conflicted = isNodeAlreadyConflicted(localAbspath);
+        if (conflicted) {
+            rememberSkippedTree(localAbspath);
+            /* ### TODO: Also print victim_path in the skip msg. */
+            doNotification(localAbspath, SVNNodeKind.UNKNOWN, SVNEventAction.SKIP);
+            return;
+        }
+        boolean hidden = db.isNodeHidden(localAbspath);
+        if (hidden) {
+            db.removeBase(localAbspath);
+            if (localAbspath.equals(myTargetPath))
+                myIsTargetDeleted = true;
+            return;
+        }
+        SVNTreeConflictDescription tree_conflict = null;
+        if (!inDeletedAndTreeConflictedSubtree)
+            tree_conflict = checkTreeConflict(localAbspath, SVNConflictAction.DELETE, SVNNodeKind.NONE, theirRelpath);
+        if (tree_conflict != null) {
+            db.opSetTreeConflict(tree_conflict.getPath(), tree_conflict);
+            rememberSkippedTree(localAbspath);
+            doNotification(localAbspath, SVNNodeKind.UNKNOWN, SVNEventAction.TREE_CONFLICT);
+            if (tree_conflict.getConflictReason() == SVNConflictReason.EDITED) {
+                db.opMakeCopyTemp(localAbspath, false);
+            } else if (tree_conflict.getConflictReason() == SVNConflictReason.DELETED) {
+            } else if (tree_conflict.getConflictReason() == SVNConflictReason.REPLACED) {
+            } else {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ASSERTION_FAIL);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+        }
+        File dirAbspath = SVNFileUtil.getParentFile(localAbspath);
+        if (!localAbspath.equals(myTargetPath)) {
+            SVNSkel workItem = myWcContext.wqBuildBaseRemove(localAbspath, false);
+            myWcContext.wqAdd(dirAbspath, workItem);
+        } else {
+            SVNSkel workItem = myWcContext.wqBuildBaseRemove(localAbspath, true);
+            myWcContext.wqAdd(dirAbspath, workItem);
+            myIsTargetDeleted = true;
+        }
+        myWcContext.wqRun(dirAbspath);
+        if (tree_conflict == null)
+            doNotification(localAbspath, SVNNodeKind.UNKNOWN, SVNEventAction.UPDATE_DELETE);
+        return;
+    }
+
+    private SVNTreeConflictDescription checkTreeConflict(File localAbspath, SVNConflictAction delete, SVNNodeKind none, File theirRelpath) {
         // TODO
         throw new UnsupportedOperationException();
+    }
+
+    private boolean isNodeAlreadyConflicted(File localAbspath) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    private void checkIfPathIsUnderRoot(String path) throws SVNException {
+        if (SVNFileUtil.isWindows && path != null) {
+            String testPath = path.replace(File.separatorChar, '/');
+            int ind = -1;
+
+            while (testPath.length() > 0 && (ind = testPath.indexOf("..")) != -1) {
+                if (ind == 0 || testPath.charAt(ind - 1) == '/') {
+                    int i;
+                    for (i = ind + 2; i < testPath.length(); i++) {
+                        if (testPath.charAt(i) == '.') {
+                            continue;
+                        } else if (testPath.charAt(i) == '/') {
+                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "Path ''{0}'' is not in the working copy", path);
+                            SVNErrorManager.error(err, SVNLogType.WC);
+                        } else {
+                            break;
+                        }
+                    }
+                    if (i == testPath.length()) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "Path ''{0}'' is not in the working copy", path);
+                        SVNErrorManager.error(err, SVNLogType.WC);
+                    }
+                    testPath = testPath.substring(i);
+                } else {
+                    testPath = testPath.substring(ind + 2);
+                }
+            }
+        }
     }
 
     public void absentDir(String path) throws SVNException {

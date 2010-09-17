@@ -1627,4 +1627,6 @@ public interface ISVNWCDb {
 
     void opStartDirectoryUpdateTemp(File localAbspath, File newRelpath, long targetRevision);
 
+    void opMakeCopyTemp(File localAbspath, boolean removeBase);
+
 }
