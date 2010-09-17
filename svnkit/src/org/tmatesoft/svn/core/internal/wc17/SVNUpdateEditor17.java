@@ -32,6 +32,7 @@ import org.tmatesoft.svn.core.internal.wc.ISVNUpdateEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc17.SVNStatus17.ConflictedInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
@@ -286,12 +287,20 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         return;
     }
 
-    private SVNTreeConflictDescription checkTreeConflict(File localAbspath, SVNConflictAction delete, SVNNodeKind none, File theirRelpath) {
-        // TODO
-        throw new UnsupportedOperationException();
+    private boolean isNodeAlreadyConflicted(File localAbspath) throws SVNException {
+        List<SVNConflictDescription> conflicts = myWcContext.getDb().readConflicts(localAbspath);
+        for (SVNConflictDescription cd : conflicts) {
+            if (cd.isTreeConflict()) {
+                return true;
+            } else if (cd.isTreeConflict() || cd.isTextConflict()) {
+                ConflictedInfo info = myWcContext.getConflicted(localAbspath, true, true, true);
+                return (info.textConflicted || info.propConflicted || info.treeConflicted);
+            }
+        }
+        return false;
     }
 
-    private boolean isNodeAlreadyConflicted(File localAbspath) {
+    private SVNTreeConflictDescription checkTreeConflict(File localAbspath, SVNConflictAction delete, SVNNodeKind none, File theirRelpath) {
         // TODO
         throw new UnsupportedOperationException();
     }
