@@ -474,6 +474,7 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
             }
             return targetRevision;
         } finally {
+            wcContext.close();
             sleepForTimeStamp();
         }
     }

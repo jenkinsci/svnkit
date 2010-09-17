@@ -519,7 +519,7 @@ public class SVNWCDb implements ISVNWCDb {
                 SVNWCDbKind node_kind = getColumnToken(stmt, SVNWCDbSchema.BASE_NODE__Fields.kind, kindMap2);
 
                 if (f.contains(BaseInfoField.kind)) {
-                        info.kind = node_kind;
+                    info.kind = node_kind;
                 }
                 if (f.contains(BaseInfoField.status)) {
                     info.status = getColumnToken(stmt, SVNWCDbSchema.BASE_NODE__Fields.presence, presenceMap2);
@@ -2683,6 +2683,19 @@ public class SVNWCDb implements ISVNWCDb {
         return pdh.getWCRoot().getSDb();
     }
 
+    public boolean isWCRoot(File localAbspath) throws SVNException {
+        assert (SVNFileUtil.isAbsolute(localAbspath));
+        DirParsedInfo parsed = parseDir(localAbspath, Mode.ReadWrite);
+        SVNWCDbDir pdh = parsed.wcDbDir;
+        File localRelPath = parsed.localRelPath;
+        verifyDirUsable(pdh);
+        if (localRelPath != null && !localRelPath.getPath().equals("")) {
+            /* Node is a file, or has a parent directory within the same wcroot */
+            return false;
+        }
+        return true;
+    }
+
     public void runWorkQueue(File localAbspath) {
         // TODO
         throw new UnsupportedOperationException();
@@ -2692,4 +2705,5 @@ public class SVNWCDb implements ISVNWCDb {
         // TODO
         throw new UnsupportedOperationException();
     }
+
 }

@@ -39,6 +39,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo.RepositoryInfoField;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaProcessor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
+import org.tmatesoft.svn.core.wc.SVNConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.util.SVNLogType;
@@ -179,8 +180,41 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
     }
 
     private boolean alreadyInATreeConflict(File localAbspath) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+        assert (SVNFileUtil.isAbsolute(localAbspath));
+        File ancestorAbspath = localAbspath;
+        boolean conflicted = false;
+        while (true) {
+            SVNWCDbStatus status;
+            boolean isWcRoot, hasConflict;
+            SVNConflictDescription conflict;
+            try {
+                WCDbInfo readInfo = myWcContext.getDb().readInfo(ancestorAbspath, InfoField.status, InfoField.conflicted);
+                status = readInfo.status;
+                hasConflict = readInfo.conflicted;
+            } catch (SVNException e) {
+                if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND && e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_WORKING_COPY
+                        && e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_UPGRADE_REQUIRED) {
+                    throw e;
+                }
+                break;
+            }
+            if (status == SVNWCDbStatus.NotPresent || status == SVNWCDbStatus.Absent || status == SVNWCDbStatus.Excluded)
+                break;
+            if (hasConflict) {
+                conflict = myWcContext.getDb().opReadTreeConflict(ancestorAbspath);
+                if (conflict != null) {
+                    conflicted = true;
+                    break;
+                }
+            }
+            if (SVNFileUtil.getParentFile(ancestorAbspath) == null)
+                break;
+            isWcRoot = myWcContext.getDb().isWCRoot(ancestorAbspath);
+            if (isWcRoot)
+                break;
+            ancestorAbspath = SVNFileUtil.getParentFile(ancestorAbspath);
+        }
+        return conflicted;
     }
 
     public void deleteEntry(String path, long revision) throws SVNException {

@@ -58,8 +58,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * BASE should be what we get from the server. The *absolute* pristine copy.
  * Nothing can change it -- it is always a reflection of the repository. You
  * need to use checkout, update, switch, or commit to alter your view of the
- * repository.
- * </li>
+ * repository.</li>
  * <li>(*Pristine*) <b> Pristine ("text base") management </b></li>
  * <li>(*Repository) <b> Repository information management </b></li>
  *
@@ -72,8 +71,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * <p>
  * For example, asking for the checksum of the pristine version will return the
  * one recorded in WORKING, or if no WORKING node exists, then the checksum
- * comes from BASE.
- * </li>
+ * comes from BASE.</li>
  *
  * <li>(global*) <b> Operations that alter multiple trees</b></li>
  *
@@ -1603,6 +1601,8 @@ public interface ISVNWCDb {
     void removeWCLock(File localAbspath) throws SVNException;
 
     void runWorkQueue(File localAbspath);
+
+    boolean isWCRoot(File localAbspath) throws SVNException;
 
     /** temp function. return the FORMAT for the directory LOCAL_ABSPATH. */
     int getFormatTemp(File localDirAbsPath) throws SVNException;
