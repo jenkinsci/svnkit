@@ -1041,7 +1041,7 @@ public class SVNWCContext {
         return diff != null && !diff.isEmpty();
     }
 
-    private boolean isTextModified(File localAbsPath, boolean forceComparison, boolean compareTextBases) throws SVNException {
+    public boolean isTextModified(File localAbsPath, boolean forceComparison, boolean compareTextBases) throws SVNException {
 
         /* No matter which way you look at it, the file needs to exist. */
         if (!localAbsPath.exists() || !localAbsPath.isFile()) {
@@ -2790,6 +2790,10 @@ public class SVNWCContext {
         return errorCode == SVNErrorCode.FS_NOT_FOUND || errorCode == SVNErrorCode.IO_ERROR;
     }
 
+    public boolean isPropsModified(File localAbspath) throws SVNException {
+        return db.readInfo(localAbspath, InfoField.propsMod).propsMod;
+    }
+
     public File acquireWriteLock(File localAbspath, boolean lockAnchor) {
         // TODO
         throw new UnsupportedOperationException();
@@ -2834,5 +2838,6 @@ public class SVNWCContext {
         // TODO
         throw new UnsupportedOperationException();
     }
+
 
 }

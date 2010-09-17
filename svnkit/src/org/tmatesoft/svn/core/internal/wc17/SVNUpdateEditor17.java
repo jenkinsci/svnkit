@@ -48,6 +48,7 @@ import org.tmatesoft.svn.core.wc.SVNConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNConflictReason;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
+import org.tmatesoft.svn.core.wc.SVNOperation;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -300,7 +301,106 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         return false;
     }
 
-    private SVNTreeConflictDescription checkTreeConflict(File localAbspath, SVNConflictAction delete, SVNNodeKind none, File theirRelpath) {
+    private SVNTreeConflictDescription checkTreeConflict(File localAbspath, SVNConflictAction action, SVNNodeKind theirNodeKind, File theirRelpath) throws SVNException {
+        WCDbInfo readInfo = myWcContext.getDb().readInfo(localAbspath, InfoField.status, InfoField.kind, InfoField.haveBase);
+        SVNWCDbStatus status = readInfo.status;
+        SVNWCDbKind db_node_kind = readInfo.kind;
+        boolean have_base = readInfo.haveBase;
+        SVNConflictReason reason = null;
+        boolean locally_replaced = false;
+        boolean modified = false;
+        boolean all_mods_are_deletes = false;
+        switch (status) {
+            case Added:
+            case MovedHere:
+            case Copied:
+                if (have_base) {
+                    SVNWCDbStatus base_status = myWcContext.getDb().getBaseInfo(localAbspath, BaseInfoField.status).status;
+                    if (base_status != SVNWCDbStatus.NotPresent)
+                        locally_replaced = true;
+                }
+                if (!locally_replaced) {
+                    assert (action == SVNConflictAction.ADD);
+                    reason = SVNConflictReason.ADDED;
+                } else {
+                    reason = SVNConflictReason.REPLACED;
+                }
+                break;
+
+            case Deleted:
+                reason = SVNConflictReason.DELETED;
+                break;
+
+            case Incomplete:
+            case Normal:
+                if (action == SVNConflictAction.EDIT)
+                    return null;
+                switch (db_node_kind) {
+                    case File:
+                    case Symlink:
+                        all_mods_are_deletes = false;
+                        modified = hasEntryLocalMods(localAbspath, db_node_kind);
+                        break;
+
+                    case Dir:
+                        TreeLocalModsInfo info = hasTreeLocalMods(localAbspath);
+                        modified = info.modified;
+                        all_mods_are_deletes = info.allModsAreDeletes;
+                        break;
+
+                    default:
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ASSERTION_FAIL);
+                        SVNErrorManager.error(err, SVNLogType.WC);
+                        break;
+                }
+
+                if (modified) {
+                    if (all_mods_are_deletes)
+                        reason = SVNConflictReason.DELETED;
+                    else
+                        reason = SVNConflictReason.EDITED;
+                }
+                break;
+
+            case Absent:
+            case Excluded:
+            case NotPresent:
+                return null;
+
+            case BaseDeleted:
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ASSERTION_FAIL);
+                SVNErrorManager.error(err, SVNLogType.WC);
+                break;
+
+        }
+
+        if (reason == null)
+            return null;
+        if (reason == SVNConflictReason.EDITED || reason == SVNConflictReason.DELETED || reason == SVNConflictReason.REPLACED)
+            assert (action == SVNConflictAction.EDIT || action == SVNConflictAction.DELETE || action == SVNConflictAction.REPLACE);
+        else if (reason == SVNConflictReason.ADDED)
+            assert (action == SVNConflictAction.ADD);
+        return new SVNTreeConflictDescription(localAbspath, theirNodeKind, action, reason, SVNOperation.UPDATE, null, null);
+    }
+
+    private boolean hasEntryLocalMods(File localAbspath, SVNWCDbKind kind) throws SVNException {
+        boolean text_modified;
+        if (kind == SVNWCDbKind.File || kind == SVNWCDbKind.Symlink) {
+            text_modified = myWcContext.isTextModified(localAbspath, false, true);
+        } else {
+            text_modified = false;
+        }
+        boolean props_modified = myWcContext.isPropsModified(localAbspath);
+        return (text_modified || props_modified);
+    }
+
+    private static class TreeLocalModsInfo {
+
+        public boolean modified;
+        public boolean allModsAreDeletes;
+    }
+
+    private TreeLocalModsInfo hasTreeLocalMods(File localAbspath) {
         // TODO
         throw new UnsupportedOperationException();
     }
