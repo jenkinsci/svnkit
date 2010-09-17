@@ -2795,6 +2795,59 @@ public class SVNWCContext {
         return db.readInfo(localAbspath, InfoField.propsMod).propsMod;
     }
 
+    public interface ISVNWCNodeHandler {
+
+        void nodeFound(File localAbspath) throws SVNException;
+    }
+
+    public void nodeWalkChildren(File localAbspath, ISVNWCNodeHandler nodeHandler, boolean showHidden, SVNDepth walkDepth) throws SVNException {
+        assert (walkDepth != null && walkDepth.getId() >= SVNDepth.EMPTY.getId() && walkDepth.getId() <= SVNDepth.INFINITY.getId());
+        WCDbInfo readInfo = db.readInfo(localAbspath, InfoField.status, InfoField.kind);
+        SVNWCDbKind kind = readInfo.kind;
+        SVNWCDbStatus status = readInfo.status;
+        nodeHandler.nodeFound(localAbspath);
+        if (kind == SVNWCDbKind.File || status == SVNWCDbStatus.NotPresent || status == SVNWCDbStatus.Excluded || status == SVNWCDbStatus.Absent)
+            return;
+        if (kind == SVNWCDbKind.Dir) {
+            walkerHelper(localAbspath, nodeHandler, showHidden, walkDepth);
+            return;
+        }
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNKNOWN_KIND, "''{0}'' has an unrecognized node kind", localAbspath);
+        SVNErrorManager.error(err, SVNLogType.WC);
+    }
+
+    private void walkerHelper(File dirAbspath, ISVNWCNodeHandler nodeHandler, boolean showHidden, SVNDepth depth) throws SVNException {
+        if (depth == SVNDepth.EMPTY)
+            return;
+        final List<String> relChildren = db.readChildren(dirAbspath);
+        for (final String child : relChildren) {
+            checkCancelled();
+            File childAbspath = SVNFileUtil.createFilePath(dirAbspath, child);
+            WCDbInfo childInfo = db.readInfo(childAbspath, InfoField.status, InfoField.kind);
+            SVNWCDbStatus childStatus = childInfo.status;
+            SVNWCDbKind childKind = childInfo.kind;
+            if (!showHidden)
+                switch (childStatus) {
+                    case NotPresent:
+                    case Absent:
+                    case Excluded:
+                        continue;
+                    default:
+                        break;
+                }
+            if (childKind == SVNWCDbKind.File || depth.getId() >= SVNDepth.IMMEDIATES.getId()) {
+                nodeHandler.nodeFound(childAbspath);
+            }
+            if (childKind == SVNWCDbKind.Dir && depth.getId() >= SVNDepth.IMMEDIATES.getId()) {
+                SVNDepth depth_below_here = depth;
+
+                if (depth.getId() == SVNDepth.IMMEDIATES.getId())
+                    depth_below_here = SVNDepth.EMPTY;
+                walkerHelper(childAbspath, nodeHandler, showHidden, depth_below_here);
+            }
+        }
+    }
+
     public File acquireWriteLock(File localAbspath, boolean lockAnchor) {
         // TODO
         throw new UnsupportedOperationException();
@@ -2837,16 +2890,6 @@ public class SVNWCContext {
     }
 
     public void wqRun(File dir_abspath) {
-        // TODO
-        throw new UnsupportedOperationException();
-    }
-
-    public interface ISVNWCNodeHandler {
-
-        void nodeFound(File localAbspath) throws SVNException;
-    }
-
-    public void nodeWalkChildren(File localAbspath, ISVNWCNodeHandler nodeHandler, boolean showHidden, SVNDepth walkDepth) throws SVNException {
         // TODO
         throw new UnsupportedOperationException();
     }
