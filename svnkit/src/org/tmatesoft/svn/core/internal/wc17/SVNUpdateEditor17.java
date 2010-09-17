@@ -33,6 +33,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNStatus17.ConflictedInfo;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.ISVNWCNodeHandler;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
@@ -400,9 +401,29 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         public boolean allModsAreDeletes;
     }
 
-    private TreeLocalModsInfo hasTreeLocalMods(File localAbspath) {
-        // TODO
-        throw new UnsupportedOperationException();
+    private TreeLocalModsInfo hasTreeLocalMods(File localAbspath) throws SVNException {
+        final TreeLocalModsInfo modInfo = new TreeLocalModsInfo();
+        ISVNWCNodeHandler nodeHandler = new ISVNWCNodeHandler() {
+
+            public void nodeFound(File localAbspath) throws SVNException {
+                WCDbInfo readInfo = myWcContext.getDb().readInfo(localAbspath, InfoField.status, InfoField.kind);
+                SVNWCDbStatus status = readInfo.status;
+                SVNWCDbKind kind = readInfo.kind;
+                boolean modified = false;
+                if (status != SVNWCDbStatus.Normal)
+                    modified = true;
+                else if (!modInfo.modified || modInfo.allModsAreDeletes)
+                    modified = hasEntryLocalMods(localAbspath, kind);
+                if (modified) {
+                    modInfo.modified = true;
+                    if (status != SVNWCDbStatus.Deleted)
+                        modInfo.allModsAreDeletes = false;
+                }
+                return;
+            }
+        };
+        myWcContext.nodeWalkChildren(localAbspath, nodeHandler, false, SVNDepth.INFINITY);
+        return modInfo;
     }
 
     private void checkIfPathIsUnderRoot(String path) throws SVNException {

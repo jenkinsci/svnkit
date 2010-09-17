@@ -87,6 +87,7 @@ public class SVNWCContext {
     private static final int STREAM_CHUNK_SIZE = 16384;
 
     public interface CleanupHandler {
+
         void cleanup() throws SVNException;
     }
 
@@ -172,7 +173,7 @@ public class SVNWCContext {
     }
 
     public void close() throws SVNException {
-        try{
+        try {
             cleanup();
         } finally {
             if (closeDb) {
@@ -186,7 +187,7 @@ public class SVNWCContext {
     }
 
     private void cleanup() throws SVNException {
-        for(CleanupHandler ch : cleanupHandlers) {
+        for (CleanupHandler ch : cleanupHandlers) {
             ch.cleanup();
         }
         cleanupHandlers.clear();
@@ -2815,6 +2816,7 @@ public class SVNWCContext {
     }
 
     public class SVNWCNodeReposInfo {
+
         public SVNURL reposRootUrl;
         public String reposUuid;
     }
@@ -2839,5 +2841,14 @@ public class SVNWCContext {
         throw new UnsupportedOperationException();
     }
 
+    public interface ISVNWCNodeHandler {
+
+        void nodeFound(File localAbspath) throws SVNException;
+    }
+
+    public void nodeWalkChildren(File localAbspath, ISVNWCNodeHandler nodeHandler, boolean showHidden, SVNDepth walkDepth) throws SVNException {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
 
 }
