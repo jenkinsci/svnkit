@@ -22,6 +22,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
@@ -724,8 +725,9 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
     }
 
     public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+        if (!myCurrentDirectory.isSkipThis()) {
+            myCurrentDirectory.propertyChanged(name, value);
+        }
     }
 
     public void closeDir() throws SVNException {
@@ -822,7 +824,6 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             bdi.getParent().setRefCount(bdi.getParent().getRefCount() + 1);
 
         d.setParentDir(parent);
-        d.setPropChanges(new SVNProperties());
         d.setObstructionFound(false);
         d.setAddExisted(false);
         d.setBumpInfo(bdi);
@@ -888,8 +889,11 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         private boolean alreadyNotified;
         private boolean obstructionFound;
         private boolean addExisted;
-        private SVNProperties propChanges;
         private SVNBumpDirInfo bumpInfo;
+
+        private SVNProperties myChangedProperties = new SVNProperties();
+        private SVNProperties myChangedEntryProperties = new SVNProperties();
+        private SVNProperties myChangedWCProperties = new SVNProperties();
 
         public String getName() {
             return name;
@@ -963,20 +967,33 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             this.addExisted = addExisted;
         }
 
-        public SVNProperties getPropChanges() {
-            return propChanges;
-        }
-
-        public void setPropChanges(SVNProperties propChanges) {
-            this.propChanges = propChanges;
-        }
-
         public SVNBumpDirInfo getBumpInfo() {
             return bumpInfo;
         }
 
         public void setBumpInfo(SVNBumpDirInfo bumpInfo) {
             this.bumpInfo = bumpInfo;
+        }
+
+        public void propertyChanged(String name, SVNPropertyValue value) {
+            if (name.startsWith(SVNProperty.SVN_ENTRY_PREFIX)) {
+                myChangedEntryProperties = myChangedEntryProperties == null ? new SVNProperties() : myChangedEntryProperties;
+                // trim value of svn:entry property
+                if (value != null) {
+                    String strValue = value.getString();
+                    if (strValue != null) {
+                        strValue = strValue.trim();
+                        value = SVNPropertyValue.create(strValue);
+                    }
+                }
+                myChangedEntryProperties.put(name.substring(SVNProperty.SVN_ENTRY_PREFIX.length()), value);
+            } else if (name.startsWith(SVNProperty.SVN_WC_PREFIX)) {
+                myChangedWCProperties = myChangedWCProperties == null ? new SVNProperties() : myChangedWCProperties;
+                myChangedWCProperties.put(name, value);
+            } else {
+                myChangedProperties = myChangedProperties == null ? new SVNProperties() : myChangedProperties;
+                myChangedProperties.put(name, value);
+            }
         }
 
     }
@@ -1046,7 +1063,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         private SVNChecksum copiedTextBaseSha1Checksum;
         private File copiedWorkingText;
         private SVNProperties copiedBaseProps;
-        private SVNProperties copied_working_props;
+        private SVNProperties copiedWorkingProps;
         private boolean receivedTextdelta;
         private SVNDate lastChangedDate;
         private boolean addingBaseUnderLocalAdd;
@@ -1123,12 +1140,12 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             this.copiedBaseProps = copiedBaseProps;
         }
 
-        public SVNProperties getCopied_working_props() {
-            return copied_working_props;
+        public SVNProperties getCopiedWorkingProps() {
+            return copiedWorkingProps;
         }
 
-        public void setCopied_working_props(SVNProperties copied_working_props) {
-            this.copied_working_props = copied_working_props;
+        public void setCopiedWorkingProps(SVNProperties copiedWorkingProps) {
+            this.copiedWorkingProps = copiedWorkingProps;
         }
 
         public boolean isReceivedTextdelta() {
