@@ -29,8 +29,6 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.ISVNFileFetcher;
 import org.tmatesoft.svn.core.internal.wc.ISVNUpdateEditor;
-import org.tmatesoft.svn.core.internal.wc.SVNAdminHelper;
-import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
@@ -663,8 +661,66 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
     }
 
     public void openDir(String path, long revision) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+        SVNDirectoryInfo pb = myCurrentDirectory;
+        myCurrentDirectory = createDirectoryInfo(myCurrentDirectory, new File(path), false);
+        SVNDirectoryInfo db = myCurrentDirectory;
+        myWcContext.writeCheck(db.getLocalAbspath());
+        if (pb.isSkipDescendants()) {
+            if (!pb.isSkipThis()) {
+                rememberSkippedTree(db.getLocalAbspath());
+            }
+            db.setSkipThis(true);
+            db.setSkipDescendants(true);
+            db.setAlreadyNotified(true);
+            db.getBumpInfo().setSkipped(true);
+            return;
+        }
+        checkPathUnderRoot(pb.getLocalAbspath(), db.getName());
+        WCDbInfo readInfo = myWcContext.getDb().readInfo(db.getLocalAbspath(), InfoField.status, InfoField.revision, InfoField.depth, InfoField.haveWork, InfoField.conflicted);
+        SVNWCDbStatus status = readInfo.status;
+        db.setOldRevision(readInfo.revision);
+        db.setAmbientDepth(readInfo.depth);
+        boolean have_work = readInfo.haveWork;
+        boolean conflicted = readInfo.conflicted;
+        SVNTreeConflictDescription treeConflict = null;
+        SVNWCDbStatus baseStatus;
+        if (!have_work) {
+            baseStatus = status;
+        } else {
+            WCDbBaseInfo baseInfo = myWcContext.getDb().getBaseInfo(db.getLocalAbspath(), BaseInfoField.status, BaseInfoField.revision, BaseInfoField.depth);
+            baseStatus = baseInfo.status;
+            db.setOldRevision(baseInfo.revision);
+            db.setAmbientDepth(baseInfo.depth);
+        }
+        db.setWasIncomplete(baseStatus == SVNWCDbStatus.Incomplete);
+        if (conflicted) {
+            conflicted = isNodeAlreadyConflicted(db.getLocalAbspath());
+        }
+        if (conflicted) {
+            rememberSkippedTree(db.getLocalAbspath());
+            db.setSkipThis(true);
+            db.setSkipDescendants(true);
+            db.setAlreadyNotified(true);
+            doNotification(db.getLocalAbspath(), SVNNodeKind.UNKNOWN, SVNEventAction.SKIP);
+            return;
+        }
+        if (!db.isInDeletedAndTreeConflictedSubtree()) {
+            treeConflict = checkTreeConflict(db.getLocalAbspath(), SVNConflictAction.EDIT, SVNNodeKind.DIR, db.getNewRelpath());
+        }
+        if (treeConflict != null) {
+            myWcContext.getDb().opSetTreeConflict(db.getLocalAbspath(), treeConflict);
+            doNotification(db.getLocalAbspath(), SVNNodeKind.DIR, SVNEventAction.TREE_CONFLICT);
+            db.setAlreadyNotified(true);
+            if (treeConflict.getConflictReason() != SVNConflictReason.DELETED && treeConflict.getConflictReason() != SVNConflictReason.REPLACED) {
+                rememberSkippedTree(db.getLocalAbspath());
+                db.setSkipDescendants(true);
+                db.setSkipThis(true);
+                return;
+            } else {
+                db.setInDeletedAndTreeConflictedSubtree(true);
+            }
+        }
+        myWcContext.getDb().opStartDirectoryUpdateTemp(db.getLocalAbspath(), db.getNewRelpath(), myTargetRevision);
     }
 
     public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {

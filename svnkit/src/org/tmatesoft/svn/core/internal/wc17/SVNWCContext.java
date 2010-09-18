@@ -2899,4 +2899,9 @@ public class SVNWCContext {
         throw new UnsupportedOperationException();
     }
 
+    public void writeCheck(File localAbspath) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
 }
