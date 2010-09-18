@@ -203,7 +203,7 @@ public class SVNWCContext {
         }
     }
 
-    private ISVNOptions getOptions() {
+    public ISVNOptions getOptions() {
         return db.getConfig();
     }
 
