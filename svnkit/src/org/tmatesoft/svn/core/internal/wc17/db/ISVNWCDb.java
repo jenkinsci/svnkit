@@ -1600,7 +1600,7 @@ public interface ISVNWCDb {
 
     void removeWCLock(File localAbspath) throws SVNException;
 
-    void runWorkQueue(File localAbspath);
+    void runWorkQueue(File localAbspath) throws SVNException;
 
     boolean isWCRoot(File localAbspath) throws SVNException;
 
@@ -1625,8 +1625,12 @@ public interface ISVNWCDb {
 
     SVNSqlJetDb borrowDbTemp(File dirAbsPath, SVNWCDbOpenMode mode) throws SVNException;
 
-    void opStartDirectoryUpdateTemp(File localAbspath, File newRelpath, long targetRevision);
+    void opStartDirectoryUpdateTemp(File localAbspath, File newRelpath, long targetRevision) throws SVNException;
 
-    void opMakeCopyTemp(File localAbspath, boolean removeBase);
+    void opMakeCopyTemp(File localAbspath, boolean removeBase) throws SVNException;
+
+    void opSetNewDirToIncompleteTemp(File localAbspath, File reposRelpath, SVNURL reposRootURL, String reposUuid, long revision, SVNDepth depth) throws SVNException;
+
+    void opDeleteTemp(File localAbspath) throws SVNException;
 
 }

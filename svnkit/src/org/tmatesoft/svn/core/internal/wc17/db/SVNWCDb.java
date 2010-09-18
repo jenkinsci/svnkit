@@ -2696,17 +2696,27 @@ public class SVNWCDb implements ISVNWCDb {
         return true;
     }
 
-    public void runWorkQueue(File localAbspath) {
+    public void runWorkQueue(File localAbspath) throws SVNException {
         // TODO
         throw new UnsupportedOperationException();
     }
 
-    public void opStartDirectoryUpdateTemp(File localAbspath, File newRelpath, long targetRevision) {
+    public void opStartDirectoryUpdateTemp(File localAbspath, File newRelpath, long targetRevision) throws SVNException {
         // TODO
         throw new UnsupportedOperationException();
     }
 
-    public void opMakeCopyTemp(File localAbspath, boolean removeBase) {
+    public void opMakeCopyTemp(File localAbspath, boolean removeBase) throws SVNException {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    public void opSetNewDirToIncompleteTemp(File localAbspath, File reposRelpath, SVNURL reposRootURL, String reposUuid, long revision, SVNDepth depth) throws SVNException {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    public void opDeleteTemp(File localAbspath) throws SVNException {
         // TODO
         throw new UnsupportedOperationException();
     }

@@ -2894,4 +2894,9 @@ public class SVNWCContext {
         throw new UnsupportedOperationException();
     }
 
+    public SVNTreeConflictDescription getTreeConflict(File localAbspath) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
 }

@@ -29,11 +29,15 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.ISVNFileFetcher;
 import org.tmatesoft.svn.core.internal.wc.ISVNUpdateEditor;
+import org.tmatesoft.svn.core.internal.wc.SVNAdminHelper;
+import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNStatus17.ConflictedInfo;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.ISVNWCNodeHandler;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.NodeCopyFromField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
@@ -50,6 +54,7 @@ import org.tmatesoft.svn.core.wc.SVNConflictReason;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNOperation;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -72,6 +77,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
     private ISVNFileFetcher myFileFetcher;
     private File myTargetPath;
     private SVNURL myRootURL;
+    private String myReposUuid;
     private boolean myIsLockOnDemand;
     private SVNExternalsStore myExternalsStore;
     private File mySwitchRelpath;
@@ -98,12 +104,12 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             }
         }
 
-        return new SVNUpdateEditor17(wcContext, anchorAbspath, target, info.reposRootUrl, switchURL, externalsStore, allowUnversionedObstructions, depthIsSticky, depth, preservedExts, fileFetcher,
-                updateLocksOnDemand);
+        return new SVNUpdateEditor17(wcContext, anchorAbspath, target, info.reposRootUrl, info.reposUuid, switchURL, externalsStore, allowUnversionedObstructions, depthIsSticky, depth, preservedExts,
+                fileFetcher, updateLocksOnDemand);
     }
 
-    public SVNUpdateEditor17(SVNWCContext wcContext, File anchorAbspath, String target, SVNURL reposRootUrl, SVNURL switchURL, SVNExternalsStore externalsStore, boolean allowUnversionedObstructions,
-            boolean depthIsSticky, SVNDepth depth, String[] preservedExts, ISVNFileFetcher fileFetcher, boolean lockOnDemand) {
+    public SVNUpdateEditor17(SVNWCContext wcContext, File anchorAbspath, String target, SVNURL reposRootUrl, String reposUuid, SVNURL switchURL, SVNExternalsStore externalsStore,
+            boolean allowUnversionedObstructions, boolean depthIsSticky, SVNDepth depth, String[] preservedExts, ISVNFileFetcher fileFetcher, boolean lockOnDemand) {
 
         myWcContext = wcContext;
         myAnchor = anchorAbspath;
@@ -118,6 +124,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         myFileFetcher = fileFetcher;
         myTargetPath = anchorAbspath;
         myRootURL = reposRootUrl;
+        myReposUuid = reposUuid;
         myIsLockOnDemand = lockOnDemand;
         myExternalsStore = externalsStore;
 
@@ -467,6 +474,190 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
     }
 
     public void addDir(String path, String copyFromPath, long copyFromRevision) throws SVNException {
+        assert ((copyFromPath != null && SVNRevision.isValidRevisionNumber(copyFromRevision)) || (copyFromPath == null && !SVNRevision.isValidRevisionNumber(copyFromRevision)));
+        if (copyFromPath != null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Failed to add directory ''{0}'': copyfrom arguments not yet supported", path);
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+        SVNDirectoryInfo pb = myCurrentDirectory;
+        myCurrentDirectory = createDirectoryInfo(myCurrentDirectory, new File(path), true);
+        SVNDirectoryInfo db = myCurrentDirectory;
+        SVNTreeConflictDescription treeConflict = null;
+        if (pb.isSkipDescendants()) {
+            if (!pb.isSkipThis())
+                rememberSkippedTree(db.getLocalAbspath());
+            db.setSkipThis(true);
+            db.setSkipDescendants(true);
+            db.setAlreadyNotified(true);
+            return;
+        }
+        checkPathUnderRoot(pb.getLocalAbspath(), db.getName());
+        if (myTargetPath.equals(db.getLocalAbspath())) {
+            db.setAmbientDepth((myRequestedDepth == SVNDepth.UNKNOWN) ? SVNDepth.INFINITY : myRequestedDepth);
+        } else if (myRequestedDepth == SVNDepth.IMMEDIATES || (myRequestedDepth == SVNDepth.UNKNOWN && pb.getAmbientDepth() == SVNDepth.IMMEDIATES)) {
+            db.setAmbientDepth(SVNDepth.EMPTY);
+        } else {
+            db.setAmbientDepth(SVNDepth.INFINITY);
+        }
+        if (SVNFileUtil.getAdminDirectoryName().equals(db.getName())) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "Failed to add directory ''{0}'': object of the same name as the administrative directory",
+                    db.getLocalAbspath());
+            SVNErrorManager.error(err, SVNLogType.WC);
+            return;
+        }
+        SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(db.getLocalAbspath()));
+        SVNWCDbStatus status;
+        SVNWCDbKind wc_kind;
+        boolean conflicted;
+        boolean versionedLocallyAndPresent;
+        try {
+            WCDbInfo readInfo = myWcContext.getDb().readInfo(db.getLocalAbspath(), InfoField.status, InfoField.kind, InfoField.conflicted);
+            status = readInfo.status;
+            wc_kind = readInfo.kind;
+            conflicted = readInfo.conflicted;
+            versionedLocallyAndPresent = isNodePresent(status);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND) {
+                throw e;
+            }
+            wc_kind = SVNWCDbKind.Unknown;
+            status = SVNWCDbStatus.Normal;
+            conflicted = true;
+            versionedLocallyAndPresent = false;
+        }
+        if (conflicted) {
+            conflicted = isNodeAlreadyConflicted(db.getLocalAbspath());
+        }
+        if (conflicted && status == SVNWCDbStatus.NotPresent && kind == SVNNodeKind.NONE) {
+            SVNTreeConflictDescription previous_tc = myWcContext.getTreeConflict(db.getLocalAbspath());
+            if (previous_tc != null && previous_tc.getConflictReason() == SVNConflictReason.UNVERSIONED) {
+                myWcContext.getDb().opSetTreeConflict(db.getLocalAbspath(), null);
+                conflicted = false;
+            }
+        }
+        if (conflicted) {
+            rememberSkippedTree(db.getLocalAbspath());
+            db.setSkipThis(true);
+            db.setSkipDescendants(true);
+            db.setAlreadyNotified(true);
+            doNotification(db.getLocalAbspath(), SVNNodeKind.UNKNOWN, SVNEventAction.SKIP);
+            return;
+        }
+        if (versionedLocallyAndPresent) {
+            boolean local_is_dir;
+            boolean local_is_non_dir;
+            SVNURL local_is_copy = null;
+            if (status == SVNWCDbStatus.Added) {
+                local_is_copy = myWcContext.getNodeCopyFromInfo(db.getLocalAbspath(), NodeCopyFromField.rootUrl).rootUrl;
+            }
+            local_is_dir = (wc_kind == SVNWCDbKind.Dir && status != SVNWCDbStatus.Deleted);
+            local_is_non_dir = (wc_kind != SVNWCDbKind.Dir && status != SVNWCDbStatus.Deleted);
+            if (local_is_dir) {
+                boolean wc_root = false;
+                boolean switched = false;
+                try {
+                    CheckWCRootInfo info = checkWCRoot(db.getLocalAbspath());
+                    wc_root = info.wcRoot;
+                    switched = info.switched;
+                } catch (SVNException e) {
+                }
+                SVNErrorMessage err = null;
+                if (wc_root) {
+                    err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "Failed to add directory ''{0}'': a separate working copy " + "with the same name already exists",
+                            db.getLocalAbspath());
+                }
+                if (err == null && switched && mySwitchRelpath == null) {
+                    err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "Switched directory ''{0}'' does not match expected URL ''{1}''", new Object[] {
+                            db.getLocalAbspath(), myRootURL.appendPath(db.getNewRelpath().getPath(), false)
+                    });
+                }
+                if (err != null) {
+                    db.setAlreadyNotified(true);
+                    doNotification(db.getLocalAbspath(), SVNNodeKind.DIR, SVNEventAction.UPDATE_OBSTRUCTION);
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                    return;
+                }
+            }
+            if (local_is_non_dir) {
+                db.setAlreadyNotified(true);
+                doNotification(db.getLocalAbspath(), SVNNodeKind.DIR, SVNEventAction.UPDATE_OBSTRUCTION);
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "Failed to add directory ''{0}'': a non-directory object " + "of the same name already exists",
+                        db.getLocalAbspath());
+                SVNErrorManager.error(err, SVNLogType.WC);
+                return;
+            }
+            if (!pb.isInDeletedAndTreeConflictedSubtree() && (mySwitchRelpath != null || local_is_non_dir || local_is_copy != null)) {
+                treeConflict = checkTreeConflict(db.getLocalAbspath(), SVNConflictAction.ADD, SVNNodeKind.DIR, db.getNewRelpath());
+            }
+            if (treeConflict == null) {
+                db.setAddExisted(true);
+            }
+        } else if (kind != SVNNodeKind.NONE) {
+            db.setObstructionFound(true);
+            if (!(kind == SVNNodeKind.DIR && myIsUnversionedObstructionsAllowed)) {
+                db.setSkipThis(true);
+                myWcContext.getDb().addBaseAbsentNode(db.getLocalAbspath(), db.getNewRelpath(), myRootURL, myReposUuid, myTargetRevision != 0 ? myTargetRevision : SVNWCContext.INVALID_REVNUM,
+                        SVNWCDbKind.Dir, SVNWCDbStatus.NotPresent, null, null);
+                rememberSkippedTree(db.getLocalAbspath());
+                treeConflict = createTreeConflict(db.getLocalAbspath(), SVNConflictReason.UNVERSIONED, SVNConflictAction.ADD, SVNNodeKind.DIR, db.getNewRelpath());
+                assert (treeConflict != null);
+            }
+        }
+        if (treeConflict != null) {
+            myWcContext.getDb().opSetTreeConflict(db.getLocalAbspath(), treeConflict);
+            rememberSkippedTree(db.getLocalAbspath());
+            db.setSkipThis(true);
+            db.setSkipDescendants(true);
+            db.setAlreadyNotified(true);
+            doNotification(db.getLocalAbspath(), SVNNodeKind.UNKNOWN, SVNEventAction.TREE_CONFLICT);
+            return;
+        }
+        myWcContext.getDb().opSetNewDirToIncompleteTemp(db.getLocalAbspath(), db.getNewRelpath(), myRootURL, myReposUuid, myTargetRevision, db.getAmbientDepth());
+        prepareDirectory(db, myRootURL.appendPath(db.getNewRelpath().getPath(), false), myTargetRevision);
+        if (pb.isInDeletedAndTreeConflictedSubtree()) {
+            myWcContext.getDb().opDeleteTemp(db.getLocalAbspath());
+        }
+        if (myWcContext.getEventHandler() != null && !db.isAlreadyNotified() && !db.isAddExisted()) {
+            SVNEventAction action;
+            if (db.isInDeletedAndTreeConflictedSubtree())
+                action = SVNEventAction.UPDATE_ADD_DELETED;
+            else if (db.isObstructionFound())
+                action = SVNEventAction.UPDATE_EXISTS;
+            else
+                action = SVNEventAction.UPDATE_ADD;
+            db.setAlreadyNotified(true);
+            doNotification(db.getLocalAbspath(), SVNNodeKind.DIR, action);
+        }
+        return;
+    }
+
+    private void prepareDirectory(SVNDirectoryInfo db, SVNURL ancestorUrl, long ancestorRevision) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    private SVNTreeConflictDescription createTreeConflict(File localAbspath, SVNConflictReason unversioned, SVNConflictAction add, SVNNodeKind dir, File newRelpath) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    private static class CheckWCRootInfo {
+
+        public boolean wcRoot;
+        public SVNWCDbKind kind;
+        public boolean switched;
+    }
+
+    private CheckWCRootInfo checkWCRoot(File localAbspath) throws SVNException {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    private boolean isNodePresent(SVNWCDbStatus status) {
+        return status != SVNWCDbStatus.Absent && status != SVNWCDbStatus.Excluded && status != SVNWCDbStatus.NotPresent;
+    }
+
+    private void checkPathUnderRoot(File localAbspath, String name) {
         // TODO
         throw new UnsupportedOperationException();
     }
