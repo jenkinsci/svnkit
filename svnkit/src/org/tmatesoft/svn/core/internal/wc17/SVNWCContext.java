@@ -1415,7 +1415,7 @@ public class SVNWCContext {
         return SVNTranslator.computeKeywords(list, url.toString(), Long.toString(readInfo.changedRev), readInfo.changedDate.toString(), readInfo.changedAuthor, getOptions());
     }
 
-    private boolean isFileExternal(File path) throws SVNException {
+    public boolean isFileExternal(File path) throws SVNException {
         final String serialized = db.getFileExternalTemp(path);
         return serialized != null;
     }

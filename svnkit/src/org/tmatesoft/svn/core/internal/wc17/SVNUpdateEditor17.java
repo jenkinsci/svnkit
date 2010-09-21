@@ -16,8 +16,6 @@ import java.io.OutputStream;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -29,7 +27,6 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.ISVNFileFetcher;
@@ -38,8 +35,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc17.SVNStatus17.ConflictedInfo;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.ISVNWCNodeHandler;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.NodeCopyFromField;
@@ -94,6 +89,8 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
     private ISVNFileFetcher myFileFetcher;
     private SVNExternalsStore myExternalsStore;
     private SVNDirectoryInfo myCurrentDirectory;
+
+    private SVNFileInfo myCurrentFile;
 
     public static ISVNUpdateEditor createUpdateEditor(SVNWCContext wcContext, File anchorAbspath, String target, SVNURL reposRoot, SVNURL switchURL, SVNExternalsStore externalsStore,
             boolean allowUnversionedObstructions, boolean depthIsSticky, SVNDepth depth, String[] preservedExts, ISVNFileFetcher fileFetcher, boolean updateLocksOnDemand) throws SVNException {
@@ -858,6 +855,134 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
     }
 
     public void addFile(String path, String copyFromPath, long copyFromRevision) throws SVNException {
+        assert ((copyFromPath != null && SVNRevision.isValidRevisionNumber(copyFromRevision)) || (copyFromPath == null && !SVNRevision.isValidRevisionNumber(copyFromRevision)));
+        SVNDirectoryInfo pb = myCurrentDirectory;
+        SVNFileInfo fb = createFileInfo(pb, new File(path), true);
+        myCurrentFile = fb;
+        SVNTreeConflictDescription treeConflict = null;
+        if (pb.isSkipDescendants()) {
+            if (!pb.isSkipThis()) {
+                rememberSkippedTree(fb.getLocalAbspath());
+            }
+            fb.setSkipThis(true);
+            fb.setAlreadyNotified(true);
+            return;
+        }
+        checkPathUnderRoot(pb.getLocalAbspath(), fb.getName());
+        fb.setDeleted(pb.isInDeletedAndTreeConflictedSubtree());
+        if (SVNFileUtil.getAdminDirectoryName().equals(fb.getName())) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "Failed to add file ''{0}'' : object of the same name as the administrative directory",
+                    fb.getLocalAbspath());
+            SVNErrorManager.error(err, SVNLogType.WC);
+            return;
+        }
+        SVNNodeKind kind;
+        SVNWCDbKind wcKind;
+        SVNWCDbStatus status;
+        boolean conflicted;
+        boolean versionedLocallyAndPresent;
+        kind = SVNFileType.getNodeKind(SVNFileType.getType(fb.getLocalAbspath()));
+        try {
+            WCDbInfo readInfo = myWcContext.getDb().readInfo(fb.getLocalAbspath(), InfoField.status, InfoField.kind, InfoField.conflicted);
+            status = readInfo.status;
+            wcKind = readInfo.kind;
+            conflicted = readInfo.conflicted;
+            versionedLocallyAndPresent = isNodePresent(status);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND) {
+                throw e;
+            }
+            wcKind = SVNWCDbKind.Unknown;
+            status = SVNWCDbStatus.Normal;
+            conflicted = true;
+            versionedLocallyAndPresent = false;
+        }
+        if (conflicted) {
+            conflicted = isNodeAlreadyConflicted(fb.getLocalAbspath());
+        }
+        if (conflicted && status == SVNWCDbStatus.NotPresent && kind == SVNNodeKind.NONE) {
+            SVNTreeConflictDescription previousTc = myWcContext.getTreeConflict(fb.getLocalAbspath());
+            if (previousTc != null && previousTc.getConflictReason() == SVNConflictReason.UNVERSIONED) {
+                myWcContext.getDb().opSetTreeConflict(fb.getLocalAbspath(), null);
+                conflicted = isNodeAlreadyConflicted(fb.getLocalAbspath());
+            }
+        }
+        if (conflicted) {
+            rememberSkippedTree(fb.getLocalAbspath());
+            fb.setSkipThis(true);
+            fb.setAlreadyNotified(true);
+            doNotification(fb.getLocalAbspath(), SVNNodeKind.UNKNOWN, SVNEventAction.SKIP);
+            return;
+        }
+        if (versionedLocallyAndPresent) {
+            boolean localIsFile;
+            boolean isFileExternal;
+
+            if (status == SVNWCDbStatus.Added) {
+                status = myWcContext.getDb().scanAddition(fb.getLocalAbspath(), AdditionInfoField.status).status;
+            }
+            localIsFile = (wcKind == SVNWCDbKind.File || wcKind == SVNWCDbKind.Symlink);
+            if (localIsFile) {
+                boolean wcRoot = false;
+                boolean switched = false;
+                try {
+                    CheckWCRootInfo checkWCRoot = checkWCRoot(fb.getLocalAbspath());
+                    wcRoot = checkWCRoot.wcRoot;
+                    switched = checkWCRoot.switched;
+                } catch (SVNException e) {
+
+                }
+                if (switched && mySwitchRelpath == null) {
+                    fb.setAlreadyNotified(true);
+                    doNotification(fb.getLocalAbspath(), SVNNodeKind.FILE, SVNEventAction.UPDATE_OBSTRUCTION);
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "Switched file ''{0}'' does not match expected URL ''{1}''", new Object[] {
+                            fb.getLocalAbspath(), fb.getNewRelpath()
+                    });
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                    return;
+                }
+            }
+            try {
+                isFileExternal = myWcContext.isFileExternal(fb.getLocalAbspath());
+            } catch (SVNException e) {
+                if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND) {
+                    isFileExternal = false;
+                } else {
+                    throw e;
+                }
+            }
+            if (!pb.isInDeletedAndTreeConflictedSubtree() && !isFileExternal && (mySwitchRelpath != null || !localIsFile || status != SVNWCDbStatus.Added)) {
+                treeConflict = checkTreeConflict(fb.getLocalAbspath(), SVNConflictAction.ADD, SVNNodeKind.FILE, fb.getNewRelpath());
+            }
+            if (treeConflict == null) {
+                fb.setAddExisted(true);
+            } else {
+                fb.setAddingBaseUnderLocalAdd(true);
+            }
+        } else if (kind != SVNNodeKind.NONE) {
+            fb.setObstructionFound(true);
+            if (!(kind == SVNNodeKind.FILE && myIsUnversionedObstructionsAllowed)) {
+                fb.setSkipThis(true);
+                myWcContext.getDb().addBaseAbsentNode(fb.getLocalAbspath(), fb.getNewRelpath(), myReposRootURL, myReposUuid, myTargetRevision != 0 ? myTargetRevision : SVNWCContext.INVALID_REVNUM,
+                        SVNWCDbKind.File, SVNWCDbStatus.NotPresent, null, null);
+                rememberSkippedTree(fb.getLocalAbspath());
+                treeConflict = createTreeConflict(fb.getLocalAbspath(), SVNConflictReason.UNVERSIONED, SVNConflictAction.ADD, SVNNodeKind.FILE, fb.getNewRelpath());
+                assert (treeConflict != null);
+            }
+        }
+        if (treeConflict != null) {
+            fb.setObstructionFound(true);
+            myWcContext.getDb().opSetTreeConflict(fb.getLocalAbspath(), treeConflict);
+            fb.setAlreadyNotified(true);
+            doNotification(fb.getLocalAbspath(), SVNNodeKind.UNKNOWN, SVNEventAction.TREE_CONFLICT);
+        }
+        if (copyFromPath != null && !fb.isSkipThis()) {
+            addFileWithHistory(pb, copyFromPath, copyFromRevision, fb);
+        }
+        return;
+    }
+
+    private void addFileWithHistory(SVNDirectoryInfo pb, String copyFromPath, long copyFromRevision, SVNFileInfo fb) {
         // TODO
         throw new UnsupportedOperationException();
     }
@@ -950,6 +1075,30 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         d.setWasIncomplete(false);
         myWcContext.registerCleanupHandler(d);
         return d;
+    }
+
+    private SVNFileInfo createFileInfo(SVNDirectoryInfo parent, File path, boolean added) throws SVNException {
+        assert (path != null);
+        SVNFileInfo f = new SVNFileInfo();
+        f.setName(SVNFileUtil.getFileName(path));
+        f.setOldRevision(SVNWCContext.INVALID_REVNUM);
+        f.setLocalAbspath(SVNFileUtil.createFilePath(parent.getLocalAbspath(), f.getName()));
+        if (mySwitchRelpath != null) {
+            f.setNewRelpath(SVNFileUtil.createFilePath(parent.getNewRelpath(), f.getName()));
+        } else {
+            f.setNewRelpath(getNodeRelpathIgnoreErrors(f.getLocalAbspath()));
+        }
+        if (f.getNewRelpath() == null) {
+            f.setNewRelpath(SVNFileUtil.createFilePath(parent.getNewRelpath(), f.getName()));
+        }
+        f.setBumpInfo(parent.getBumpInfo());
+        f.setAddingFile(added);
+        f.setObstructionFound(false);
+        f.setAddExisted(false);
+        f.setDeleted(false);
+        f.setParentDir(parent);
+        f.getBumpInfo().setRefCount(f.getBumpInfo().getRefCount() + 1);
+        return f;
     }
 
     private class SVNBumpDirInfo {
@@ -1374,6 +1523,11 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
     }
 
     private SVNProperties propDiffs(SVNProperties newActualProps, SVNProperties newBaseProps) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    private File getNodeRelpathIgnoreErrors(File localAbspath) {
         // TODO
         throw new UnsupportedOperationException();
     }
