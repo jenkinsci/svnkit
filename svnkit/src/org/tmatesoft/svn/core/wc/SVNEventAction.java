@@ -372,4 +372,9 @@ public class SVNEventAction {
      */
     public static final SVNEventAction UPDATE_ADD_DELETED = new SVNEventAction(44, "update_add_deleted");
 
+    /**
+     * @since 1.4, SVN 1.7
+     */
+    public static final SVNEventAction UPDATE_UPDATE_DELETED = new SVNEventAction(45, "update_update_deleted");
+
 }

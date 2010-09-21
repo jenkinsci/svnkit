@@ -447,7 +447,7 @@ public interface ISVNWCDb {
      * be passed in WORK_ITEMS.
      */
     void addBaseDirectory(File localAbsPath, File reposRelPath, SVNURL reposRootUrl, String reposUuid, long revision, SVNProperties props, long changedRev, Date changedDate, String changedAuthor,
-            List<File> children, SVNDepth depth, SVNSkel conflict, SVNSkel workItems) throws SVNException;
+            List<File> children, SVNDepth depth, SVNProperties davCache, SVNSkel conflict, SVNSkel workItems) throws SVNException;
 
     /**
      * Add or replace a file in the BASE tree.

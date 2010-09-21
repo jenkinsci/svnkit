@@ -435,7 +435,7 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     public void addBaseDirectory(File localAbsPath, File reposRelPath, SVNURL reposRootUrl, String reposUuid, long revision, SVNProperties props, long changedRev, Date changedDate,
-            String changedAuthor, List<File> children, SVNDepth depth, SVNSkel conflict, SVNSkel workItems) throws SVNException {
+            String changedAuthor, List<File> children, SVNDepth depth, SVNProperties davCache, SVNSkel conflict, SVNSkel workItems) throws SVNException {
         // TODO
         throw new UnsupportedOperationException();
     }

@@ -2904,4 +2904,20 @@ public class SVNWCContext {
         throw new UnsupportedOperationException();
     }
 
+    public SVNProperties getPristineProps(File localAbspath) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    public SVNProperties getActualProps(File localAbspath) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    public SVNStatusType mergeProperties(SVNProperties newBaseProps, SVNProperties newActualProps, File localAbspath, SVNWCDbKind dir, Object object, Object object2, Object object3,
+            SVNProperties baseProps, SVNProperties actualProps, SVNProperties regularProps, boolean b, boolean c) throws SVNException {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
 }

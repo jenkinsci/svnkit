@@ -13,6 +13,8 @@ package org.tmatesoft.svn.core.internal.wc17;
 
 import java.io.File;
 import java.io.OutputStream;
+import java.util.Date;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import org.tmatesoft.svn.core.SVNCommitInfo;
@@ -54,6 +56,7 @@ import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNOperation;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -693,8 +696,141 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
     }
 
     public void closeDir() throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+        SVNDirectoryInfo db = myCurrentDirectory;
+        if (db.isSkipThis()) {
+            db.getBumpInfo().setSkipped(true);
+            maybeBumpDirInfo(db.getBumpInfo());
+            return;
+        }
+        SVNProperties entryProps = db.getChangedEntryProperties();
+        SVNProperties davProps = db.getChangedWCProperties();
+        SVNProperties regularProps = db.getChangedProperties();
+
+        SVNProperties baseProps = myWcContext.getPristineProps(db.getLocalAbspath());
+        SVNProperties actualProps = myWcContext.getActualProps(db.getLocalAbspath());
+
+        if (baseProps == null) {
+            baseProps = new SVNProperties();
+        }
+        if (actualProps == null) {
+            actualProps = new SVNProperties();
+        }
+        SVNStatusType propStatus = SVNStatusType.UNKNOWN;
+        SVNProperties newBaseProps = null;
+        SVNProperties newActualProps = null;
+        long newChangedRev = -1;
+        Date newChangedDate = null;
+        String newChangedAuthor = null;
+        if (db.isWasIncomplete()) {
+            if (regularProps == null) {
+                regularProps = new SVNProperties();
+            }
+            for (Iterator names = baseProps.nameSet().iterator(); names.hasNext();) {
+                String name = (String) names.next();
+                if (!regularProps.containsName(name)) {
+                    regularProps.put(name, SVNPropertyValue.create(null));
+                }
+            }
+        }
+        if ((regularProps != null && !regularProps.isEmpty()) || (entryProps != null && !entryProps.isEmpty()) || (davProps != null && !davProps.isEmpty())) {
+            if (regularProps != null && !regularProps.isEmpty()) {
+                if (myExternalsStore != null) {
+                    if (regularProps.containsName(SVNProperty.EXTERNALS)) {
+                        File path = db.getLocalAbspath();
+                        String newValue = regularProps.getStringValue(SVNProperty.EXTERNALS);
+                        String oldValue = myWcContext.getProperty(path, SVNProperty.EXTERNALS);
+                        if (oldValue == null && newValue == null)
+                            ;
+                        else if (oldValue != null && newValue != null && oldValue.equals(newValue))
+                            ;
+                        else if (oldValue != null || newValue != null) {
+                            myExternalsStore.addExternal(path, oldValue, newValue);
+                            myExternalsStore.addDepth(path, db.getAmbientDepth());
+                        }
+                    }
+                }
+                try {
+                    newBaseProps = new SVNProperties();
+                    newActualProps = new SVNProperties();
+                    propStatus = myWcContext.mergeProperties(newBaseProps, newActualProps, db.getLocalAbspath(), SVNWCDbKind.Dir, null, null, null, baseProps, actualProps, regularProps, true, false);
+                } catch (SVNException e) {
+                    SVNErrorMessage err = e.getErrorMessage().wrap("Couldn't do property merge");
+                    SVNErrorManager.error(err, e, SVNLogType.WC);
+                }
+            }
+            AccumulatedChangeInfo change = accumulateLastChange(db.getLocalAbspath(), entryProps);
+            newChangedRev = change.changedRev;
+            newChangedDate = change.changedDate;
+            newChangedAuthor = change.changedAuthor;
+        }
+
+        if (db.getParentDir() == null && myTargetBasename != null && !myTargetBasename.equals("")) {
+            assert (db.getChangedEntryProperties() == null && db.getChangedWCProperties() == null && db.getChangedProperties() == null);
+        } else {
+
+            WCDbBaseInfo baseInfo = myWcContext.getDb().getBaseInfo(db.getLocalAbspath(), BaseInfoField.changedRev, BaseInfoField.changedDate, BaseInfoField.changedAuthor, BaseInfoField.depth);
+            long changedRev = baseInfo.changedRev;
+            Date changedDate = baseInfo.changedDate;
+            String changedAuthor = baseInfo.changedAuthor;
+            SVNDepth depth = baseInfo.depth;
+
+            if (SVNRevision.isValidRevisionNumber(newChangedRev)) {
+                changedRev = newChangedRev;
+            }
+            if (newChangedDate != null && newChangedDate.getTime() != 0) {
+                changedDate = newChangedDate;
+            }
+            if (newChangedAuthor != null) {
+                changedAuthor = newChangedAuthor;
+            }
+
+            if (depth == SVNDepth.UNKNOWN) {
+                depth = SVNDepth.INFINITY;
+            }
+
+            /*
+             * Do we have new properties to install? Or shall we simply retain
+             * the prior set of properties? If we're installing new properties,
+             * then we also want to write them to an old-style props file.
+             */
+            SVNProperties props = newBaseProps;
+            if (props == null) {
+                props = myWcContext.getDb().getBaseProps(db.getLocalAbspath());
+            }
+
+            myWcContext.getDb().addBaseDirectory(db.getLocalAbspath(), db.getNewRelpath(), myReposRootURL, myReposUuid, myTargetRevision, props, changedRev, changedDate, changedAuthor, null, depth,
+                    (davProps != null && !davProps.isEmpty() ? davProps : null), null, null);
+            if (newBaseProps != null) {
+                assert (newActualProps != null);
+                props = newActualProps;
+                SVNProperties propDiffs = propDiffs(newActualProps, newBaseProps);
+                if (propDiffs.isEmpty()) {
+                    props = null;
+                }
+                myWcContext.getDb().opSetProps(db.getLocalAbspath(), props, null, null);
+            }
+        }
+        myWcContext.wqRun(db.getLocalAbspath());
+        maybeBumpDirInfo(db.getBumpInfo());
+        if (db.isAlreadyNotified() && myWcContext.getEventHandler() != null) {
+            SVNEventAction action;
+            if (db.isInDeletedAndTreeConflictedSubtree()) {
+                action = SVNEventAction.UPDATE_UPDATE_DELETED;
+            } else if (db.isObstructionFound() || db.isAddExisted()) {
+                action = SVNEventAction.UPDATE_EXISTS;
+            } else {
+                action = SVNEventAction.UPDATE_UPDATE;
+            }
+            SVNEvent event = new SVNEvent(db.getLocalAbspath(), SVNNodeKind.DIR, null, myTargetRevision, null, propStatus, null, null, action, null, null, null, null);
+            event.setPreviousRevision(db.getOldRevision());
+            myWcContext.getEventHandler().handleEvent(event, 0);
+        }
+        SVNBumpDirInfo bdi = db.getBumpInfo();
+        while (bdi != null && bdi.getRefCount() == 0) {
+            bdi.getEntryInfo().cleanup();
+            bdi = bdi.getParent();
+        }
+        return;
     }
 
     public void addFile(String path, String copyFromPath, long copyFromRevision) throws SVNException {
@@ -773,7 +909,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                 d.setNewRelpath(myWcContext.getDb().scanBaseRepository(d.getLocalAbspath(), RepositoryInfoField.relPath).relPath);
             }
         }
-        SVNBumpDirInfo bdi = new SVNBumpDirInfo();
+        SVNBumpDirInfo bdi = new SVNBumpDirInfo(d);
         bdi.setParent(parent != null ? parent.getBumpInfo() : null);
         bdi.setRefCount(1);
         bdi.setLocalAbspath(d.getLocalAbspath());
@@ -794,10 +930,20 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
 
     private class SVNBumpDirInfo {
 
+        private final SVNEntryInfo entryInfo;
+
         private SVNBumpDirInfo parent;
         private int refCount;
         private File localAbspath;
         private boolean skipped;
+
+        public SVNBumpDirInfo(SVNEntryInfo entryInfo) {
+            this.entryInfo = entryInfo;
+        }
+
+        public SVNEntryInfo getEntryInfo() {
+            return entryInfo;
+        }
 
         public SVNBumpDirInfo getParent() {
             return parent;
@@ -832,7 +978,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         }
     };
 
-    private class SVNEntryInfo {
+    private class SVNEntryInfo implements SVNWCContext.CleanupHandler {
 
         private String name;
         private File localAbspath;
@@ -845,9 +991,9 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         private boolean addExisted;
         private SVNBumpDirInfo bumpInfo;
 
-        private SVNProperties myChangedProperties = new SVNProperties();
-        private SVNProperties myChangedEntryProperties = new SVNProperties();
-        private SVNProperties myChangedWCProperties = new SVNProperties();
+        private SVNProperties myChangedProperties;
+        private SVNProperties myChangedEntryProperties;
+        private SVNProperties myChangedWCProperties;
 
         public String getName() {
             return name;
@@ -950,9 +1096,36 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             }
         }
 
+        public SVNProperties getChangedProperties() {
+            return myChangedProperties;
+        }
+
+        public void setChangedProperties(SVNProperties changedProperties) {
+            myChangedProperties = changedProperties;
+        }
+
+        public SVNProperties getChangedEntryProperties() {
+            return myChangedEntryProperties;
+        }
+
+        public void setChangedEntryProperties(SVNProperties changedEntryProperties) {
+            myChangedEntryProperties = changedEntryProperties;
+        }
+
+        public SVNProperties getChangedWCProperties() {
+            return myChangedWCProperties;
+        }
+
+        public void setChangedWCProperties(SVNProperties changedWCProperties) {
+            myChangedWCProperties = changedWCProperties;
+        }
+
+        public void cleanup() throws SVNException {
+        }
+
     }
 
-    private class SVNDirectoryInfo extends SVNEntryInfo implements SVNWCContext.CleanupHandler {
+    private class SVNDirectoryInfo extends SVNEntryInfo {
 
         private boolean skipDescendants;
         private boolean addingDir;
@@ -1155,6 +1328,28 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
     }
 
     private void checkPathUnderRoot(File localAbspath, String name) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    private void maybeBumpDirInfo(SVNBumpDirInfo bumpInfo) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    private static class AccumulatedChangeInfo {
+
+        public long changedRev;
+        public Date changedDate;
+        public String changedAuthor;
+    }
+
+    private AccumulatedChangeInfo accumulateLastChange(File localAbspath, SVNProperties entryProps) throws SVNException {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    private SVNProperties propDiffs(SVNProperties newActualProps, SVNProperties newBaseProps) {
         // TODO
         throw new UnsupportedOperationException();
     }
