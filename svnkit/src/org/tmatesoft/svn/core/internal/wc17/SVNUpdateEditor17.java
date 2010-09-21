@@ -13,10 +13,10 @@ package org.tmatesoft.svn.core.internal.wc17;
 
 import java.io.File;
 import java.io.OutputStream;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -719,7 +719,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         SVNProperties newBaseProps = null;
         SVNProperties newActualProps = null;
         long newChangedRev = -1;
-        Date newChangedDate = null;
+        SVNDate newChangedDate = null;
         String newChangedAuthor = null;
         if (db.isWasIncomplete()) {
             if (regularProps == null) {
@@ -770,7 +770,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
 
             WCDbBaseInfo baseInfo = myWcContext.getDb().getBaseInfo(db.getLocalAbspath(), BaseInfoField.changedRev, BaseInfoField.changedDate, BaseInfoField.changedAuthor, BaseInfoField.depth);
             long changedRev = baseInfo.changedRev;
-            Date changedDate = baseInfo.changedDate;
+            SVNDate changedDate = baseInfo.changedDate;
             String changedAuthor = baseInfo.changedAuthor;
             SVNDepth depth = baseInfo.depth;
 
@@ -1340,7 +1340,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
     private static class AccumulatedChangeInfo {
 
         public long changedRev;
-        public Date changedDate;
+        public SVNDate changedDate;
         public String changedAuthor;
     }
 

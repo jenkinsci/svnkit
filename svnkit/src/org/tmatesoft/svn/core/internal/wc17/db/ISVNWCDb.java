@@ -13,7 +13,6 @@ package org.tmatesoft.svn.core.internal.wc17.db;
 
 import java.io.File;
 import java.io.InputStream;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -26,6 +25,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -325,7 +325,7 @@ public interface ISVNWCDb {
         public String comment;
 
         /** The date the lock was created */
-        public Date date;
+        public SVNDate date;
     }
 
     /**
@@ -446,7 +446,7 @@ public interface ISVNWCDb {
      * Any work items that are necessary as part of this node construction may
      * be passed in WORK_ITEMS.
      */
-    void addBaseDirectory(File localAbsPath, File reposRelPath, SVNURL reposRootUrl, String reposUuid, long revision, SVNProperties props, long changedRev, Date changedDate, String changedAuthor,
+    void addBaseDirectory(File localAbsPath, File reposRelPath, SVNURL reposRootUrl, String reposUuid, long revision, SVNProperties props, long changedRev, SVNDate changedDate, String changedAuthor,
             List<File> children, SVNDepth depth, SVNProperties davCache, SVNSkel conflict, SVNSkel workItems) throws SVNException;
 
     /**
@@ -474,7 +474,7 @@ public interface ISVNWCDb {
      * Any work items that are necessary as part of this node construction may
      * be passed in WORK_ITEMS.
      */
-    void addBaseFile(File localAbspath, File reposRelpath, SVNURL reposRootUrl, String reposUuid, long revision, SVNProperties props, long changedRev, Date changedDate, String changedAuthor,
+    void addBaseFile(File localAbspath, File reposRelpath, SVNURL reposRootUrl, String reposUuid, long revision, SVNProperties props, long changedRev, SVNDate changedDate, String changedAuthor,
             SVNChecksum checksum, long translatedSize, SVNSkel conflict, SVNSkel workItems) throws SVNException;
 
     /**
@@ -497,7 +497,7 @@ public interface ISVNWCDb {
      * Any work items that are necessary as part of this node construction may
      * be passed in WORK_ITEMS.
      */
-    void addBaseSymlink(File localAbsPath, File reposRelPath, SVNURL reposRootUrl, String reposUuid, long revision, SVNProperties props, long changedRev, Date changedDate, String changedAuthor,
+    void addBaseSymlink(File localAbsPath, File reposRelPath, SVNURL reposRootUrl, String reposUuid, long revision, SVNProperties props, long changedRev, SVNDate changedDate, String changedAuthor,
             File target, SVNSkel conflict, SVNSkel workItem) throws SVNException;
 
     /**
@@ -644,9 +644,9 @@ public interface ISVNWCDb {
         public SVNURL reposRootUrl;
         public String reposUuid;
         public long changedRev;
-        public Date changedDate;
+        public SVNDate changedDate;
         public String changedAuthor;
-        public Date lastModTime;
+        public SVNDate lastModTime;
         public SVNDepth depth;
         public SVNChecksum checksum;
         public long translatedSize;
@@ -789,14 +789,14 @@ public interface ISVNWCDb {
      * This copy is NOT recursive. It simply establishes this one node. CHILDREN
      * must be provided, and incomplete nodes will be constructed for them.
      */
-    void opCopyDir(File localAbsPath, SVNProperties props, long changedRev, Date changedDate, String changedAuthor, File originalReposRelPath, SVNURL originalRootUrl, String originalUuid,
+    void opCopyDir(File localAbsPath, SVNProperties props, long changedRev, SVNDate changedDate, String changedAuthor, File originalReposRelPath, SVNURL originalRootUrl, String originalUuid,
             long originalRevision, List<File> children, SVNDepth depth, SVNSkel conflict, SVNSkel workItems) throws SVNException;
 
     /** Record a copy at LOCAL_ABSPATH from a repository file. */
-    void opCopyFile(File localAbsPath, SVNProperties props, long changedRev, Date changedDate, String changedAuthor, File originalReposRelPath, SVNURL originalRootUrl, String originalUuid,
+    void opCopyFile(File localAbsPath, SVNProperties props, long changedRev, SVNDate changedDate, String changedAuthor, File originalReposRelPath, SVNURL originalRootUrl, String originalUuid,
             long originalRevision, SVNChecksum checksum, SVNSkel conflict, SVNSkel workItems) throws SVNException;
 
-    void opCopySymlink(File localAbsPath, SVNProperties props, long changedRev, Date changedDate, String changedAuthor, File originalReposRelPath, SVNURL originalRootUrl, String originalUuid,
+    void opCopySymlink(File localAbsPath, SVNProperties props, long changedRev, SVNDate changedDate, String changedAuthor, File originalReposRelPath, SVNURL originalRootUrl, String originalUuid,
             long originalRevision, File target, SVNSkel conflict, SVNSkel workItems) throws SVNException;
 
     /**
@@ -1127,7 +1127,7 @@ public interface ISVNWCDb {
         public SVNURL reposRootUrl;
         public String reposUuid;
         public long changedRev;
-        public Date changedDate;
+        public SVNDate changedDate;
         public String changedAuthor;
         public long lastModTime;
 
@@ -1274,7 +1274,7 @@ public interface ISVNWCDb {
      *
      * WORK_ITEMS will be place into the work queue.
      */
-    void globalCommit(File localAbspath, long newRevision, Date newDate, String newAuthor, SVNChecksum newChecksum, List<File> newChildren, SVNProperties newDavCache, boolean keepChangelist,
+    void globalCommit(File localAbspath, long newRevision, SVNDate newDate, String newAuthor, SVNChecksum newChecksum, List<File> newChildren, SVNProperties newDavCache, boolean keepChangelist,
             SVNSkel workItems) throws SVNException;
 
     /**
@@ -1297,7 +1297,7 @@ public interface ISVNWCDb {
      * We do not update a file's TRANSLATED_SIZE here. at some future point,
      * when the file is installed, then a TRANSLATED_SIZE will be set.
      */
-    void globalUpdate(File localAbsPath, SVNWCDbKind newKind, File newReposRelpath, long newRevision, SVNProperties newProps, long newChangedRev, Date newChangedDate, String newChangedAuthor,
+    void globalUpdate(File localAbsPath, SVNWCDbKind newKind, File newReposRelpath, long newRevision, SVNProperties newProps, long newChangedRev, SVNDate newChangedDate, String newChangedAuthor,
             List<File> newChildren, SVNChecksum newChecksum, File newTarget, SVNProperties newDavCache, SVNSkel conflict, SVNSkel workItems) throws SVNException;
 
     /**
@@ -1313,7 +1313,7 @@ public interface ISVNWCDb {
      * LAST_MOD_TIME may be 0, which will be recorded as such, implying
      * "unknown last mod time".
      */
-    void globalRecordFileinfo(File local_abspath, long translated_size, Date last_mod_time) throws SVNException;
+    void globalRecordFileinfo(File local_abspath, long translated_size, SVNDate last_mod_time) throws SVNException;
 
     /** Add or replace LOCK for LOCAL_ABSPATH to DB. */
     void addLock(File localAbsPath, SVNWCDbLock lock) throws SVNException;
