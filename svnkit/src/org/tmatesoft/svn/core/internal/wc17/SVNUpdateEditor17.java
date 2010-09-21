@@ -16,6 +16,7 @@ import java.io.OutputStream;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
@@ -28,6 +29,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.ISVNFileFetcher;
@@ -36,16 +38,20 @@ import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc17.SVNStatus17.ConflictedInfo;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.ISVNWCNodeHandler;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.NodeCopyFromField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbAdditionInfo.AdditionInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbBaseInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbBaseInfo.BaseInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo.RepositoryInfoField;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaProcessor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
@@ -459,13 +465,31 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
     }
 
     public void absentDir(String path) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+        absentEntry(path, SVNNodeKind.DIR);
     }
 
     public void absentFile(String path) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+        absentEntry(path, SVNNodeKind.FILE);
+    }
+
+    private void absentEntry(String path, SVNNodeKind kind) throws SVNException {
+        String name = SVNPathUtil.tail(path);
+        SVNWCDbKind dbKind = kind == SVNNodeKind.DIR ? SVNWCDbKind.Dir : SVNWCDbKind.File;
+        File localAbspath = SVNFileUtil.createFilePath(myCurrentDirectory.getLocalAbspath(), name);
+        SVNNodeKind existing_kind = myWcContext.readKind(localAbspath, true);
+        if (existing_kind != SVNNodeKind.NONE) {
+            if (myWcContext.isNodeAdded(localAbspath)) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "Failed to mark ''{0}'' absent: item of the same name is already scheduled for addition", path);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+        }
+        WCDbRepositoryInfo baseReposInfo = myWcContext.getDb().scanBaseRepository(myCurrentDirectory.getLocalAbspath(), RepositoryInfoField.relPath, RepositoryInfoField.rootUrl,
+                RepositoryInfoField.uuid);
+        File reposRelpath = baseReposInfo.relPath;
+        SVNURL reposRootUrl = baseReposInfo.rootUrl;
+        String reposUuid = baseReposInfo.uuid;
+        reposRelpath = SVNFileUtil.createFilePath(reposRelpath, name);
+        myWcContext.getDb().addBaseAbsentNode(localAbspath, reposRelpath, reposRootUrl, reposUuid, myTargetRevision, dbKind, SVNWCDbStatus.Absent, null, null);
     }
 
     public void addDir(String path, String copyFromPath, long copyFromRevision) throws SVNException {
