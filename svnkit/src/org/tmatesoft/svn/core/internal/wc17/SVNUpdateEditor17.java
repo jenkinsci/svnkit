@@ -1040,8 +1040,50 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
     }
 
     public void openFile(String path, long revision) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+        SVNDirectoryInfo pb = myCurrentDirectory;
+        SVNFileInfo fb = createFileInfo(pb, new File(path), false);
+        myCurrentFile = fb;
+        if (pb.isSkipDescendants()) {
+            if (!pb.isSkipThis()) {
+                rememberSkippedTree(fb.getLocalAbspath());
+            }
+            fb.setSkipThis(true);
+            fb.setAlreadyNotified(true);
+            return;
+        }
+        checkPathUnderRoot(pb.getLocalAbspath(), fb.getName());
+        SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(fb.getLocalAbspath()));
+        WCDbInfo readInfo = myWcContext.getDb().readInfo(fb.getLocalAbspath(), InfoField.revision, InfoField.conflicted);
+        fb.setOldRevision(readInfo.revision);
+        boolean conflicted = readInfo.conflicted;
+        if (conflicted) {
+            conflicted = isNodeAlreadyConflicted(fb.getLocalAbspath());
+        }
+        if (conflicted) {
+            rememberSkippedTree(fb.getLocalAbspath());
+            fb.setSkipThis(true);
+            fb.setAlreadyNotified(true);
+            doNotification(fb.getLocalAbspath(), SVNNodeKind.UNKNOWN, SVNEventAction.SKIP);
+            return;
+        }
+        fb.setDeleted(pb.isInDeletedAndTreeConflictedSubtree());
+        SVNTreeConflictDescription treeConflict = null;
+        if (!pb.isInDeletedAndTreeConflictedSubtree()) {
+            treeConflict = checkTreeConflict(fb.getLocalAbspath(), SVNConflictAction.EDIT, SVNNodeKind.FILE, fb.getNewRelpath());
+        }
+        if (treeConflict != null) {
+            myWcContext.getDb().opSetTreeConflict(fb.getLocalAbspath(), treeConflict);
+            if (treeConflict.getConflictReason() == SVNConflictReason.DELETED || treeConflict.getConflictReason() == SVNConflictReason.REPLACED) {
+                fb.setDeleted(true);
+            } else {
+                rememberSkippedTree(fb.getLocalAbspath());
+            }
+            if (!fb.isDeleted()) {
+                fb.setSkipThis(true);
+            }
+            fb.setAlreadyNotified(true);
+            doNotification(fb.getLocalAbspath(), SVNNodeKind.UNKNOWN, SVNEventAction.TREE_CONFLICT);
+        }
     }
 
     public void changeFileProperty(String path, String propertyName, SVNPropertyValue propertyValue) throws SVNException {
