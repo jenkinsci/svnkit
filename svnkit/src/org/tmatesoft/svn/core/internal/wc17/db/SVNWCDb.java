@@ -2719,4 +2719,8 @@ public class SVNWCDb implements ISVNWCDb {
         throw new UnsupportedOperationException();
     }
 
+    public File getWCRootTempDir(File localAbspath) {
+        return null;
+    }
+
 }

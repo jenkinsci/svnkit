@@ -1633,4 +1633,6 @@ public interface ISVNWCDb {
 
     void opDeleteTemp(File localAbspath) throws SVNException;
 
+    File getWCRootTempDir(File localAbspath);
+
 }

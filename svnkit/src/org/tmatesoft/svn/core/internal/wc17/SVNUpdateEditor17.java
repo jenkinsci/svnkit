@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.core.internal.wc17;
 
 import java.io.File;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -26,6 +27,7 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryUtil;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
@@ -38,6 +40,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNStatus17.ConflictedInfo;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.ISVNWCNodeHandler;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.NodeCopyFromField;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.WritableBaseInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
@@ -977,14 +980,63 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             doNotification(fb.getLocalAbspath(), SVNNodeKind.UNKNOWN, SVNEventAction.TREE_CONFLICT);
         }
         if (copyFromPath != null && !fb.isSkipThis()) {
-            addFileWithHistory(pb, copyFromPath, copyFromRevision, fb);
+            addFileWithHistory(pb, fb, copyFromPath, copyFromRevision);
         }
         return;
     }
 
-    private void addFileWithHistory(SVNDirectoryInfo pb, String copyFromPath, long copyFromRevision, SVNFileInfo fb) {
-        // TODO
-        throw new UnsupportedOperationException();
+    private void addFileWithHistory(SVNDirectoryInfo pb, SVNFileInfo tfb, String copyFromPath, long copyFromRevision) throws SVNException {
+        assert (copyFromPath.charAt(0) == '/');
+        tfb.setAddedWithHistory(true);
+        LocateCopyFromInfo locateCopyFrom = locateCopyFrom(pb.getLocalAbspath(), copyFromPath.substring(1), copyFromRevision);
+        InputStream newBaseContents = locateCopyFrom.newBaseContents;
+        InputStream newContents = locateCopyFrom.newContents;
+        SVNProperties newBaseProps = locateCopyFrom.newBaseProps;
+        SVNProperties newProps = locateCopyFrom.newProps;
+        WritableBaseInfo openWritableBase = myWcContext.openWritableBase(pb.getLocalAbspath(), true, true);
+        OutputStream copiedStream = openWritableBase.stream;
+        File copiedTempBaseAbspath = openWritableBase.tempBaseAbspath;
+        if (newBaseContents != null && newBaseProps != null) {
+            try {
+                FSRepositoryUtil.copy(newBaseContents, copiedStream, myWcContext.getEventHandler());
+                tfb.setCopiedTextBaseMd5Checksum(openWritableBase.getMD5Checksum());
+                tfb.setCopiedTextBaseSha1Checksum(openWritableBase.getSHA1Checksum());
+            } finally {
+                SVNFileUtil.closeFile(newBaseContents);
+                SVNFileUtil.closeFile(copiedStream);
+            }
+            if (newProps == null)
+                newProps = newBaseProps;
+        } else {
+            if (myFileFetcher == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_OP_ON_CWD, "No fetch_func supplied to update_editor.");
+                SVNErrorManager.error(err, SVNLogType.DEFAULT);
+            }
+            newBaseProps = new SVNProperties();
+            try {
+                myFileFetcher.fetchFile(copyFromPath.substring(1), copyFromRevision, copiedStream, newBaseProps);
+                tfb.setCopiedTextBaseMd5Checksum(openWritableBase.getMD5Checksum());
+                tfb.setCopiedTextBaseSha1Checksum(openWritableBase.getSHA1Checksum());
+            } finally {
+                SVNFileUtil.closeFile(copiedStream);
+            }
+            newBaseProps = newBaseProps.getRegularProperties();
+            newProps = newBaseProps;
+        }
+        myWcContext.getDb().installPristine(copiedTempBaseAbspath, tfb.getCopiedTextBaseMd5Checksum(), tfb.getCopiedTextBaseSha1Checksum());
+        tfb.setCopiedBaseProps(newBaseProps);
+        tfb.setCopiedWorkingProps(newProps);
+        if (newContents != null) {
+            File tempDirAbspath = myWcContext.getDb().getWCRootTempDir(pb.getLocalAbspath());
+            tfb.setCopiedWorkingText(SVNFileUtil.createUniqueFile(tempDirAbspath, "svn-", null, false));
+            OutputStream tmpContents = SVNFileUtil.openFileForWriting(tfb.getCopiedWorkingText());
+            try {
+                FSRepositoryUtil.copy(newContents, tmpContents, myWcContext.getEventHandler());
+            } finally {
+                SVNFileUtil.closeFile(tmpContents);
+            }
+        }
+        return;
     }
 
     public void openFile(String path, long revision) throws SVNException {
@@ -1528,6 +1580,19 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
     }
 
     private File getNodeRelpathIgnoreErrors(File localAbspath) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    private static class LocateCopyFromInfo {
+
+        public InputStream newBaseContents;
+        public InputStream newContents;
+        public SVNProperties newBaseProps;
+        public SVNProperties newProps;
+    }
+
+    private LocateCopyFromInfo locateCopyFrom(File localAbspath, String copyFromPath, long copyFromRevision) {
         // TODO
         throw new UnsupportedOperationException();
     }

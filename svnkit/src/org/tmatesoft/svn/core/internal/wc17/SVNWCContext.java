@@ -17,6 +17,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.EnumSet;
@@ -46,6 +47,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumInputStream;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumOutputStream;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 import org.tmatesoft.svn.core.internal.wc17.SVNStatus17.ConflictedInfo;
@@ -2916,6 +2918,28 @@ public class SVNWCContext {
 
     public SVNStatusType mergeProperties(SVNProperties newBaseProps, SVNProperties newActualProps, File localAbspath, SVNWCDbKind dir, Object object, Object object2, Object object3,
             SVNProperties baseProps, SVNProperties actualProps, SVNProperties regularProps, boolean b, boolean c) throws SVNException {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    public static class WritableBaseInfo {
+
+        public OutputStream stream;
+        public File tempBaseAbspath;
+        public SVNChecksumOutputStream md5ChecksumStream;
+        public SVNChecksumOutputStream sha1ChecksumStream;
+
+        public SVNChecksum getMD5Checksum() {
+            return md5ChecksumStream == null ? null : new SVNChecksum(SVNChecksumKind.MD5, md5ChecksumStream.getDigest());
+        }
+
+        public SVNChecksum getSHA1Checksum() {
+            return sha1ChecksumStream == null ? null : new SVNChecksum(SVNChecksumKind.SHA1, sha1ChecksumStream.getDigest());
+        }
+
+    }
+
+    public WritableBaseInfo openWritableBase(File localAbspath, boolean md5Checksum, boolean sha1Checksum) {
         // TODO
         throw new UnsupportedOperationException();
     }
