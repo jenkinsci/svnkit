@@ -284,7 +284,7 @@ public class SVNSaslAuthenticator extends SVNAuthenticator {
                     continue;
                 }
                 SVNAuthentication auth = null;
-                if ("ANONYMOUS".equals(mech) || "PLAIN".equals(mech)) {
+                if ("ANONYMOUS".equals(mech)) {
                     auth = new SVNPasswordAuthentication("", "", false);
                 } else if ("EXTERNAL".equals(mech)) {
                     String name = repos.getExternalUserName();
