@@ -34,9 +34,11 @@ import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.ISVNFileFetcher;
 import org.tmatesoft.svn.core.internal.wc.ISVNUpdateEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
+import org.tmatesoft.svn.core.internal.wc.SVNChecksumKind;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumInputStream;
 import org.tmatesoft.svn.core.internal.wc17.SVNStatus17.ConflictedInfo;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.ISVNWCNodeHandler;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.NodeCopyFromField;
@@ -1107,8 +1109,53 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
     }
 
     public void applyTextDelta(String path, String baseChecksum) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+        SVNFileInfo fb = myCurrentFile;
+        if (fb.isSkipThis()) {
+            return;
+        }
+        fb.setReceivedTextdelta(true);
+        String recordedBaseChecksum;
+        {
+            SVNChecksum checksum = getUltimateBaseChecksums(fb.getLocalAbspath()).md5Checksum;
+            recordedBaseChecksum = checksum != null ? checksum.getDigest() : null;
+            if (recordedBaseChecksum != null && baseChecksum != null && baseChecksum.equals(baseChecksum)) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT_TEXT_BASE, "Checksum mismatch for ''{0}'':\n " + "   expected:  ''{1}''\n" + "   recorded:  ''{2}''\n",
+                        new Object[] {
+                                myCurrentDirectory.getLocalAbspath(), baseChecksum, recordedBaseChecksum
+                        });
+                SVNErrorManager.error(err, SVNLogType.WC);
+                return;
+            }
+        }
+        InputStream source;
+        if (!fb.isAddingFile()) {
+            source = getUltimateBaseContents(fb.getLocalAbspath());
+            if (source == null) {
+                source = SVNFileUtil.DUMMY_IN;
+            }
+        } else {
+            if (fb.getCopiedTextBaseSha1Checksum() != null) {
+                source = myWcContext.getDb().readPristine(fb.getLocalAbspath(), fb.getCopiedTextBaseSha1Checksum());
+            } else {
+                source = SVNFileUtil.DUMMY_IN;
+            }
+        }
+        if (recordedBaseChecksum == null) {
+            recordedBaseChecksum = baseChecksum;
+        }
+        if (recordedBaseChecksum != null) {
+            fb.setExpectedSourceMd5Checksum(new SVNChecksum(SVNChecksumKind.MD5, recordedBaseChecksum));
+            if (source != SVNFileUtil.DUMMY_IN) {
+                fb.setSourceChecksumStream(new SVNChecksumInputStream(source, SVNChecksumInputStream.MD5_ALGORITHM));
+                source = fb.getSourceChecksumStream();
+            }
+
+        }
+        WritableBaseInfo openWritableBase = myWcContext.openWritableBase(fb.getLocalAbspath(), false, true);
+        OutputStream target = openWritableBase.stream;
+        fb.setNewTextBaseTmpAbspath(openWritableBase.tempBaseAbspath);
+        myDeltaProcessor.applyTextDelta(source, target, true);
+        fb.setNewTextBaseSha1Checksum(openWritableBase.getSHA1Checksum());
     }
 
     public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
@@ -1461,9 +1508,40 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         private boolean receivedTextdelta;
         private SVNDate lastChangedDate;
         private boolean addingBaseUnderLocalAdd;
+        private SVNChecksum expectedSourceMd5Checksum;
+        private SVNChecksumInputStream sourceChecksumStream;
+        private File newTextBaseTmpAbspath;
 
         public boolean isAddingFile() {
             return addingFile;
+        }
+
+        public void setNewTextBaseTmpAbspath(File tempBaseAbspath) {
+            this.newTextBaseTmpAbspath = tempBaseAbspath;
+        }
+
+        public File getNewTextBaseTmpAbspath() {
+            return newTextBaseTmpAbspath;
+        }
+
+        public void setSourceChecksumStream(SVNChecksumInputStream source) {
+            sourceChecksumStream = source;
+        }
+
+        public SVNChecksumInputStream getSourceChecksumStream() {
+            return sourceChecksumStream;
+        }
+
+        public SVNChecksum getActualSourceMd5Checksum() {
+            return sourceChecksumStream != null ? new SVNChecksum(SVNChecksumKind.MD5, sourceChecksumStream.getDigest()) : null;
+        }
+
+        public void setExpectedSourceMd5Checksum(SVNChecksum checksum) {
+            this.expectedSourceMd5Checksum = checksum;
+        }
+
+        public SVNChecksum getExpectedSourceMd5Checksum() {
+            return expectedSourceMd5Checksum;
         }
 
         public void setAddingFile(boolean addingFile) {
@@ -1638,5 +1716,22 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         // TODO
         throw new UnsupportedOperationException();
     }
+
+    private static class UltimateBaseChecksumsInfo {
+
+        public SVNChecksum sha1Checksum;
+        public SVNChecksum md5Checksum;
+    }
+
+    private UltimateBaseChecksumsInfo getUltimateBaseChecksums(File localAbspath) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    private InputStream getUltimateBaseContents(File localAbspath) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
 
 }
