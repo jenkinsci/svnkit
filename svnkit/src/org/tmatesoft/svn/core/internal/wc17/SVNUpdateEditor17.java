@@ -1089,8 +1089,18 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
     }
 
     public void changeFileProperty(String path, String propertyName, SVNPropertyValue propertyValue) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+        SVNFileInfo fb = myCurrentFile;
+        if (fb.isSkipThis()) {
+            return;
+        }
+        fb.getChangedProperties().put(propertyName, propertyValue);
+        if (myIsUseCommitTimes && SVNProperty.COMMITTED_DATE.equals(propertyName)) {
+            fb.setLastChangedDate(propertyValue.getString());
+            if (fb.getLastChangedDate() != null) {
+                fb.setLastChangedDate(fb.getLastChangedDate().trim());
+            }
+        }
+        return;
     }
 
     public void closeFile(String path, String textChecksum) throws SVNException {
@@ -1506,7 +1516,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         private SVNProperties copiedBaseProps;
         private SVNProperties copiedWorkingProps;
         private boolean receivedTextdelta;
-        private SVNDate lastChangedDate;
+        private String lastChangedDate;
         private boolean addingBaseUnderLocalAdd;
         private SVNChecksum expectedSourceMd5Checksum;
         private SVNChecksumInputStream sourceChecksumStream;
@@ -1628,11 +1638,11 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             this.receivedTextdelta = receivedTextdelta;
         }
 
-        public SVNDate getLastChangedDate() {
+        public String getLastChangedDate() {
             return lastChangedDate;
         }
 
-        public void setLastChangedDate(SVNDate lastChangedDate) {
+        public void setLastChangedDate(String lastChangedDate) {
             this.lastChangedDate = lastChangedDate;
         }
 
@@ -1732,6 +1742,5 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         // TODO
         throw new UnsupportedOperationException();
     }
-
 
 }
