@@ -713,9 +713,8 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                 db.setSkipDescendants(true);
                 db.setSkipThis(true);
                 return;
-            } else {
-                db.setInDeletedAndTreeConflictedSubtree(true);
             }
+            db.setInDeletedAndTreeConflictedSubtree(true);
         }
         myWcContext.getDb().opStartDirectoryUpdateTemp(db.getLocalAbspath(), db.getNewRelpath(), myTargetRevision);
     }
@@ -819,11 +818,6 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                 depth = SVNDepth.INFINITY;
             }
 
-            /*
-             * Do we have new properties to install? Or shall we simply retain
-             * the prior set of properties? If we're installing new properties,
-             * then we also want to write them to an old-style props file.
-             */
             SVNProperties props = newBaseProps;
             if (props == null) {
                 props = myWcContext.getDb().getBaseProps(db.getLocalAbspath());
