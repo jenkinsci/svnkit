@@ -2944,4 +2944,20 @@ public class SVNWCContext {
         throw new UnsupportedOperationException();
     }
 
+    public SVNSkel wqBuildFileInstall(File localAbspath, File installFrom, boolean isUseCommitTimes, boolean recordFileinfo) {
+        return null;
+    }
+
+    public SVNSkel wqMerge(SVNSkel allWorkItems, SVNSkel workItem) {
+        return null;
+    }
+
+    public SVNSkel wqBuildSyncFileFlags(File localAbspath) {
+        return null;
+    }
+
+    public SVNSkel wqBuildFileRemove(File installFrom) {
+        return null;
+    }
+
 }

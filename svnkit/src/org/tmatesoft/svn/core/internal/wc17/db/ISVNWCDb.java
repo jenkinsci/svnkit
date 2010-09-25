@@ -36,6 +36,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo.RepositoryInfoField;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNConflictDescription;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -473,9 +474,10 @@ public interface ISVNWCDb {
      * <p>
      * Any work items that are necessary as part of this node construction may
      * be passed in WORK_ITEMS.
+     * @param svnProperties
      */
     void addBaseFile(File localAbspath, File reposRelpath, SVNURL reposRootUrl, String reposUuid, long revision, SVNProperties props, long changedRev, SVNDate changedDate, String changedAuthor,
-            SVNChecksum checksum, long translatedSize, SVNSkel conflict, SVNSkel workItems) throws SVNException;
+            SVNChecksum checksum, long translatedSize, SVNProperties properties, SVNSkel conflict, SVNSkel workItems) throws SVNException;
 
     /**
      * Add or replace a symlink in the BASE tree.
@@ -1634,5 +1636,9 @@ public interface ISVNWCDb {
     void opDeleteTemp(File localAbspath) throws SVNException;
 
     File getWCRootTempDir(File localAbspath);
+
+    void opSetFileExternal(File localAbspath, File fileExternalReposRelpath, SVNRevision fileExternalPegRev, SVNRevision fileExternalRev);
+
+    void opRemoveWorkingTemp(File localAbspath);
 
 }

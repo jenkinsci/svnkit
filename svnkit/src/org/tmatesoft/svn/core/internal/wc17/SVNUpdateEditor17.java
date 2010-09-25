@@ -14,9 +14,12 @@ package org.tmatesoft.svn.core.internal.wc17;
 import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -33,9 +36,11 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.ISVNFileFetcher;
 import org.tmatesoft.svn.core.internal.wc.ISVNUpdateEditor;
+import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
 import org.tmatesoft.svn.core.internal.wc.SVNChecksumKind;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumInputStream;
@@ -1103,9 +1108,240 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         return;
     }
 
-    public void closeFile(String path, String textChecksum) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+    public void closeFile(String path, String expectedMd5Digest) throws SVNException {
+        SVNFileInfo fb = myCurrentFile;
+        if (fb.isSkipThis()) {
+            maybeBumpDirInfo(fb.getBumpInfo());
+            return;
+        }
+
+        SVNChecksum expectedMd5Checksum = null;
+        if (expectedMd5Digest != null) {
+            expectedMd5Checksum = new SVNChecksum(SVNChecksumKind.MD5, expectedMd5Digest);
+        }
+
+        SVNChecksum newTextBaseMd5Checksum;
+        SVNChecksum newTextBaseSha1Checksum;
+        if (fb.isReceivedTextdelta()) {
+            newTextBaseMd5Checksum = fb.getNewTextBaseMd5Checksum();
+            newTextBaseSha1Checksum = fb.getNewTextBaseSha1Checksum();
+            assert (newTextBaseMd5Checksum != null && newTextBaseSha1Checksum != null);
+        } else if (fb.isAddedWithHistory()) {
+            assert (fb.getNewTextBaseSha1Checksum() == null);
+            newTextBaseMd5Checksum = fb.getCopiedTextBaseMd5Checksum();
+            newTextBaseSha1Checksum = fb.getCopiedTextBaseSha1Checksum();
+            assert (newTextBaseMd5Checksum != null && newTextBaseSha1Checksum != null);
+        } else {
+            assert (fb.getNewTextBaseSha1Checksum() == null && fb.getCopiedTextBaseSha1Checksum() == null);
+            newTextBaseMd5Checksum = null;
+            newTextBaseSha1Checksum = null;
+        }
+
+        if (newTextBaseMd5Checksum != null && expectedMd5Checksum != null && !newTextBaseMd5Checksum.getDigest().equals(expectedMd5Checksum.getDigest())) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CHECKSUM_MISMATCH, "Checksum mismatch for ''{0}''; expected: ''{1}'', actual: ''{2}''", new Object[] {
+                    fb.getLocalAbspath(), expectedMd5Checksum, newTextBaseMd5Checksum
+            });
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+
+        SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(fb.getLocalAbspath()));
+        if (kind == SVNNodeKind.NONE && !fb.isAddingFile()) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' is not under version control", fb.getLocalAbspath());
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+
+        SVNProperties entryProps = fb.getChangedEntryProperties();
+        SVNProperties davProps = fb.getChangedWCProperties();
+        SVNProperties regularProps = fb.getChangedProperties();
+
+        AccumulatedChangeInfo lastChange = accumulateLastChange(fb.getLocalAbspath(), entryProps);
+        long newChangedRev = lastChange.changedRev;
+        SVNDate newChangedDate = lastChange.changedDate;
+        String newChangedAuthor = lastChange.changedAuthor;
+
+        SVNStatusType lockState = SVNStatusType.LOCK_UNCHANGED;
+        {
+            for (Iterator i = entryProps.nameSet().iterator(); i.hasNext();) {
+                String name = (String) i.next();
+                if (SVNProperty.LOCK_TOKEN.equals(name)) {
+                    assert (entryProps.getStringValue(name) == null);
+                    myWcContext.getDb().removeLock(fb.getLocalAbspath());
+                    lockState = SVNStatusType.LOCK_UNLOCKED;
+                    break;
+                }
+            }
+        }
+
+        SVNProperties localActualProps = null;
+        if (kind != SVNNodeKind.NONE) {
+            localActualProps = myWcContext.getActualProps(fb.getLocalAbspath());
+        }
+        if (localActualProps == null)
+            localActualProps = new SVNProperties();
+
+        SVNProperties currentBaseProps = null;
+        SVNProperties currentActualProps = null;
+        if (fb.getCopiedBaseProps() != null) {
+            currentBaseProps = fb.getCopiedBaseProps();
+            currentActualProps = fb.getCopiedWorkingProps();
+        } else if (kind != SVNNodeKind.NONE) {
+            currentBaseProps = myWcContext.getPristineProps(fb.getLocalAbspath());
+            currentActualProps = localActualProps;
+        }
+        if (currentBaseProps == null) {
+            currentBaseProps = new SVNProperties();
+        }
+        if (currentActualProps == null) {
+            currentActualProps = new SVNProperties();
+        }
+
+        if (fb.isAddingFile() && fb.isAddExisted()) {
+            boolean localIsLink = localActualProps.getStringValue(SVNProperty.SPECIAL) != null;
+            boolean incomingIsLink = false;
+            if (fb.getCopiedBaseProps() != null) {
+                incomingIsLink = fb.getCopiedWorkingProps() != null && fb.getCopiedWorkingProps().getStringValue(SVNProperty.SPECIAL) != null;
+            } else {
+                for (Iterator i = regularProps.nameSet().iterator(); i.hasNext();) {
+                    String propName = (String) i.next();
+                    if (SVNProperty.SPECIAL.equals(propName)) {
+                        incomingIsLink = true;
+                    }
+                }
+            }
+            if (localIsLink != incomingIsLink) {
+                fb.setAddingBaseUnderLocalAdd(true);
+                fb.setObstructionFound(true);
+                fb.setAddExisted(false);
+                SVNTreeConflictDescription treeConflict = checkTreeConflict(fb.getLocalAbspath(), SVNConflictAction.ADD, SVNNodeKind.FILE, fb.getNewRelpath());
+                assert (treeConflict != null);
+                myWcContext.getDb().opSetTreeConflict(fb.getLocalAbspath(), treeConflict);
+                fb.setAlreadyNotified(true);
+                doNotification(fb.getLocalAbspath(), SVNNodeKind.UNKNOWN, SVNEventAction.TREE_CONFLICT);
+            }
+        }
+
+        SVNStatusType propState = SVNStatusType.UNKNOWN;
+        SVNProperties newBaseProps = new SVNProperties();
+        SVNProperties newActualProps = new SVNProperties();
+
+        SVNSkel workItem;
+        SVNSkel allWorkItems = null;
+        boolean installPristine;
+        File installFrom = null;
+        SVNStatusType contentState = null;
+
+        if (!fb.isAddingBaseUnderLocalAdd()) {
+            propState = myWcContext.mergeProperties(newBaseProps, newActualProps, fb.getLocalAbspath(), SVNWCDbKind.File, null, null, null, currentBaseProps, currentActualProps, regularProps, true,
+                    false);
+            assert (!newBaseProps.isEmpty() && !newActualProps.isEmpty());
+
+            MergeFileInfo mergeFile = mergeFile(fb, newTextBaseSha1Checksum);
+            allWorkItems = mergeFile.workItems;
+            installPristine = mergeFile.installPristine;
+            installFrom = mergeFile.installFrom;
+            contentState = mergeFile.contentState;
+
+            if (installPristine) {
+                boolean recordFileinfo = installFrom == null;
+                workItem = myWcContext.wqBuildFileInstall(fb.getLocalAbspath(), installFrom, myIsUseCommitTimes, recordFileinfo);
+                allWorkItems = myWcContext.wqMerge(allWorkItems, workItem);
+            }
+
+        } else {
+            SVNProperties noNewActualProps = new SVNProperties();
+            SVNProperties noWorkingProps = new SVNProperties();
+            SVNProperties copiedBaseProps = fb.getCopiedBaseProps();
+            if (copiedBaseProps == null) {
+                copiedBaseProps = new SVNProperties();
+            }
+            SVNStatusType noPropState = myWcContext.mergeProperties(newBaseProps, noNewActualProps, fb.getLocalAbspath(), SVNWCDbKind.File, null, null, null, copiedBaseProps, noWorkingProps,
+                    regularProps, true, false);
+            propState = SVNStatusType.UNCHANGED;
+            newActualProps = localActualProps;
+        }
+
+        if (newTextBaseSha1Checksum == null && lockState == SVNStatusType.LOCK_UNLOCKED) {
+            workItem = myWcContext.wqBuildSyncFileFlags(fb.getLocalAbspath());
+            allWorkItems = myWcContext.wqMerge(allWorkItems, allWorkItems);
+        }
+
+        if (installFrom != null && !installFrom.equals(fb.getLocalAbspath())) {
+            workItem = myWcContext.wqBuildFileRemove(installFrom);
+            allWorkItems = myWcContext.wqMerge(allWorkItems, workItem);
+        }
+
+        if (fb.getCopiedTextBaseSha1Checksum() != null) {
+            /*
+             * ### TODO: Add a WQ item to remove this pristine if unreferenced:
+             * svn_wc__wq_build_pristine_remove(&work_item, eb->db,
+             * fb->local_abspath, fb->copied_text_base_sha1_checksum, pool);
+             * all_work_items = svn_wc__wq_merge(all_work_items, work_item,
+             * pool);
+             */
+        }
+
+        {
+            SVNChecksum newChecksum = newTextBaseSha1Checksum;
+            String serialised = null;
+
+            if (newChecksum == null) {
+                newChecksum = myWcContext.getDb().getBaseInfo(fb.getLocalAbspath(), BaseInfoField.checksum).checksum;
+            }
+
+            if (kind != SVNNodeKind.NONE) {
+                serialised = myWcContext.getDb().getFileExternalTemp(fb.getLocalAbspath());
+            }
+
+            myWcContext.getDb().addBaseFile(fb.getLocalAbspath(), fb.getNewRelpath(), myReposRootURL, myReposUuid, myTargetRevision, newBaseProps, newChangedRev, newChangedDate, newChangedAuthor,
+                    newChecksum, -1, (davProps != null && !davProps.isEmpty()) ? davProps : null, null, allWorkItems);
+
+            if (kind != SVNNodeKind.NONE && serialised != null) {
+                Map map = new HashMap();
+                SVNAdminUtil.unserializeExternalFileData(map, serialised);
+                File fileExternalReposRelpath = SVNFileUtil.createFilePath((String) map.get(SVNProperty.FILE_EXTERNAL_PATH));
+                SVNRevision fileExternalPegRev = (SVNRevision) map.get(SVNProperty.FILE_EXTERNAL_PEG_REVISION);
+                SVNRevision fileExternalRev = (SVNRevision) map.get(SVNProperty.FILE_EXTERNAL_REVISION);
+                myWcContext.getDb().opSetFileExternal(fb.getLocalAbspath(), fileExternalReposRelpath, fileExternalPegRev, fileExternalRev);
+            }
+        }
+
+        if (fb.getParentDir().isInDeletedAndTreeConflictedSubtree() && fb.isAddingFile()) {
+            myWcContext.getDb().opDeleteTemp(fb.getLocalAbspath());
+        }
+
+        if (fb.isAddExisted() && fb.isAddingFile()) {
+            myWcContext.getDb().opRemoveWorkingTemp(fb.getLocalAbspath());
+        }
+
+        if (!fb.isAddingBaseUnderLocalAdd()) {
+            assert (newActualProps != null);
+            SVNProperties props = newActualProps;
+            SVNProperties prop_diffs = propDiffs(newActualProps, newBaseProps);
+            if (prop_diffs.isEmpty()) {
+                props = null;
+            }
+            myWcContext.getDb().opSetProps(fb.getLocalAbspath(), props, null, null);
+        }
+
+        myWcContext.wqRun(fb.getParentDir().getLocalAbspath());
+        maybeBumpDirInfo(fb.getBumpInfo());
+
+        if (myWcContext.getEventHandler() != null && !fb.isAlreadyNotified()) {
+            SVNEventAction action = SVNEventAction.UPDATE_UPDATE;
+            if (fb.isDeleted())
+                action = SVNEventAction.UPDATE_ADD_DELETED;
+            else if (fb.isObstructionFound() || fb.isAddExisted()) {
+                if (contentState != SVNStatusType.CONFLICTED)
+                    action = SVNEventAction.UPDATE_EXISTS;
+            } else if (fb.isAddingFile()) {
+                action = SVNEventAction.UPDATE_ADD;
+            }
+            String mimeType = myWcContext.getProperty(fb.getLocalAbspath(), SVNProperty.MIME_TYPE);
+            SVNEvent event = SVNEventFactory.createSVNEvent(fb.getLocalAbspath(), SVNNodeKind.FILE, mimeType, myTargetRevision, contentState, propState, lockState, action, null, null, null);
+            event.setPreviousRevision(fb.getOldRevision());
+            myWcContext.getEventHandler().handleEvent(event, 0);
+        }
+
     }
 
     public SVNCommitInfo closeEdit() throws SVNException {
@@ -1739,6 +1975,19 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
     }
 
     private InputStream getUltimateBaseContents(File localAbspath) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    private static class MergeFileInfo {
+
+        public SVNSkel workItems;
+        public boolean installPristine;
+        public File installFrom;
+        public SVNStatusType contentState;
+    }
+
+    private MergeFileInfo mergeFile(SVNFileInfo fb, SVNChecksum newTextBaseSha1Checksum) {
         // TODO
         throw new UnsupportedOperationException();
     }

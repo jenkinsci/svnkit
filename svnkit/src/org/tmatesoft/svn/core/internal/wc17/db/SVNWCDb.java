@@ -439,7 +439,7 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     public void addBaseFile(File localAbspath, File reposRelpath, SVNURL reposRootUrl, String reposUuid, long revision, SVNProperties props, long changedRev, SVNDate changedDate, String changedAuthor,
-            SVNChecksum checksum, long translatedSize, SVNSkel conflict, SVNSkel workItems) throws SVNException {
+            SVNChecksum checksum, long translatedSize, SVNProperties properties, SVNSkel conflict, SVNSkel workItems) throws SVNException {
         // TODO
         throw new UnsupportedOperationException();
     }
@@ -2720,7 +2720,18 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     public File getWCRootTempDir(File localAbspath) {
-        return null;
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    public void opSetFileExternal(File localAbspath, File fileExternalReposRelpath, SVNRevision fileExternalPegRev, SVNRevision fileExternalRev) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    public void opRemoveWorkingTemp(File localAbspath) {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
 }
