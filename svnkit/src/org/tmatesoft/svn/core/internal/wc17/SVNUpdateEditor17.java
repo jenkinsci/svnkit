@@ -1345,8 +1345,13 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
     }
 
     public SVNCommitInfo closeEdit() throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+        if (!myIsRootOpened) {
+            completeDirectory(myAnchorAbspath, true);
+        }
+        if (!myIsTargetDeleted) {
+            doUpdateCleanup();
+        }
+        return null;
     }
 
     public void abortEdit() throws SVNException {
@@ -1988,6 +1993,16 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
     }
 
     private MergeFileInfo mergeFile(SVNFileInfo fb, SVNChecksum newTextBaseSha1Checksum) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    private void completeDirectory(File anchorAbspath, boolean b) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    private void doUpdateCleanup() {
         // TODO
         throw new UnsupportedOperationException();
     }
