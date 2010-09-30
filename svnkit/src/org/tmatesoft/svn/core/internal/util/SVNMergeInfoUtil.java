@@ -48,6 +48,42 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @author  TMate Software Ltd.
  */
 public class SVNMergeInfoUtil {
+    
+    public static void mergeCatalog(Map catalog, Map changes) throws SVNException {
+        int i = 0;
+        int j = 0;
+        
+        Object[] catalogKeys = catalog.keySet().toArray();
+        Object[] changesKeys = catalog.keySet().toArray();
+        while(i < catalog.size() && j < changes.size()) {
+            String catalogKey = (String) catalogKeys[i];
+            String changeKey = (String) changesKeys[j];
+            int compare = catalogKey.compareTo(changeKey);
+            
+            if (compare == 0) {
+                Map catalogMergeinfo = (Map) catalog.get(catalogKey);
+                Map changesMergeinfo= (Map) changes.get(changeKey);
+                
+                Map mergedMergeinfo = mergeMergeInfos(catalogMergeinfo, changesMergeinfo);
+                catalog.put(catalogKey, mergedMergeinfo);
+                i++;
+                j++;
+            } else if (compare < 0) {
+                i++;
+            } else {
+                Map changesMergeinfo= (Map) changes.get(changeKey);
+                changesMergeinfo = dupMergeInfo(changesMergeinfo, null);
+                catalog.put(changeKey, changesMergeinfo);
+                j++;
+            }
+        }
+        for(; j < changes.size(); j++) {
+            String changeKey = (String) changesKeys[j];
+            Map changesMergeinfo= (Map) changes.get(changeKey);
+            changesMergeinfo = dupMergeInfo(changesMergeinfo, null);
+            catalog.put(changeKey, changesMergeinfo);
+        }
+    }
 
     public static Map filterCatalogByRanges(Map catalog, long youngestRev, long oldestRev) {
         Map filteredCatalog = new TreeMap();

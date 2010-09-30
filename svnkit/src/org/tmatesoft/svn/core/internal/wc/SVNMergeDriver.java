@@ -566,7 +566,7 @@ public abstract class SVNMergeDriver extends SVNBasicDelegate implements ISVNMer
             	repository.closeSession();
             }
             
-            doMerge(mergeSources, targetWCPath, targetEntry, adminArea, true, true, 
+            doMerge(null, mergeSources, targetWCPath, targetEntry, adminArea, true, true, 
             		wcReposRoot.equals(sourceReposRoot), ignoreAncestry, force, dryRun, recordOnly, false, depth);
             
         } finally {
@@ -658,7 +658,7 @@ public abstract class SVNMergeDriver extends SVNBasicDelegate implements ISVNMer
     		repository1.closeSession();
     		repository2.closeSession();
             
-    		doMerge(mergeSources, targetWCPath, entry, adminArea, ancestral, related, sameRepos, 
+    		doMerge(null, mergeSources, targetWCPath, entry, adminArea, ancestral, related, sameRepos, 
     				ignoreAncestry, force, dryRun, recordOnly, false, depth);
         } finally {
         	if (repository1 != null) {
@@ -764,7 +764,7 @@ public abstract class SVNMergeDriver extends SVNBasicDelegate implements ISVNMer
         }
     }
 
-    protected void doMerge(List mergeSources, File target, SVNEntry targetEntry, SVNAdminArea adminArea, 
+    protected void doMerge(Map resultCatalog, List mergeSources, File target, SVNEntry targetEntry, SVNAdminArea adminArea, 
             boolean sourcesAncestral, boolean sourcesRelated, boolean sameRepository, boolean ignoreAncestry, 
             boolean force, boolean dryRun, boolean recordOnly, boolean reintegrateMerge, SVNDepth depth) throws SVNException {
         
@@ -836,9 +836,9 @@ public abstract class SVNMergeDriver extends SVNBasicDelegate implements ISVNMer
                 }
                 
                 if (targetEntry.isFile()) {
-                    doFileMerge(url1, revision1, url2, revision2, target, adminArea, sourcesRelated);
+                    doFileMerge(resultCatalog, url1, revision1, url2, revision2, target, adminArea, sourcesRelated);
                 } else if (targetEntry.isDirectory()) {
-                    doDirectoryMerge(url1, revision1, url2, revision2, targetEntry, adminArea, depth);
+                    doDirectoryMerge(resultCatalog, url1, revision1, url2, revision2, targetEntry, adminArea, depth);
                 }
                 
                 if (!dryRun) {
@@ -960,7 +960,13 @@ public abstract class SVNMergeDriver extends SVNBasicDelegate implements ISVNMer
         }
     }
 
+    @Deprecated
     protected void doFileMerge(SVNURL url1, long revision1, SVNURL url2, long revision2,
+            File targetWCPath, SVNAdminArea adminArea, boolean sourcesRelated) throws SVNException {
+        doFileMerge(null, url1, revision1, url2, revision2, targetWCPath, adminArea, sourcesRelated);
+    }
+
+    protected void doFileMerge(Map resultCatalog, SVNURL url1, long revision1, SVNURL url2, long revision2,
             File targetWCPath, SVNAdminArea adminArea, boolean sourcesRelated) throws SVNException {
         boolean isRollBack = revision1 > revision2;
         SVNURL primaryURL = isRollBack ? url1 : url2;
@@ -1081,7 +1087,7 @@ public abstract class SVNMergeDriver extends SVNBasicDelegate implements ISVNMer
                 }
                 Map merges = new TreeMap();
                 merges.put(targetWCPath, filteredRangeList);
-                updateWCMergeInfo(targetWCPath, mergeInfoPath, entry, merges, isRollBack);
+                updateWCMergeInfo(resultCatalog, targetWCPath, mergeInfoPath, entry, merges, isRollBack);
             }
         }
 
@@ -1108,7 +1114,7 @@ public abstract class SVNMergeDriver extends SVNBasicDelegate implements ISVNMer
         
     }
     
-    protected void recordMergeInfoForDirectoryMerge(SVNEntry targetEntry, SVNMergeRange range, String mergeInfoPath, SVNDepth depth) throws SVNException {
+    protected void recordMergeInfoForDirectoryMerge(Map resultCatalog, SVNEntry targetEntry, SVNMergeRange range, String mergeInfoPath, SVNDepth depth) throws SVNException {
         boolean isRollBack = range.getStartRevision() > range.getEndRevision();
         removeAbsentChildren(myTarget, myChildrenWithMergeInfo);
         for (int i = 0; i < myChildrenWithMergeInfo.size(); i++) {
@@ -1153,7 +1159,7 @@ public abstract class SVNMergeDriver extends SVNBasicDelegate implements ISVNMer
             }
             Map childMerges = new TreeMap();
             childMerges.put(child.myPath, childMergeRangeList);
-            updateWCMergeInfo(child.myPath, childMergeSourcePath, childEntry, childMerges, isRollBack);
+            updateWCMergeInfo(resultCatalog, child.myPath, childMergeSourcePath, childEntry, childMerges, isRollBack);
 
             if (i > 0) {
                 boolean isInSwitchedSubTree = false;
@@ -1219,8 +1225,14 @@ public abstract class SVNMergeDriver extends SVNBasicDelegate implements ISVNMer
             }
         }
     }
-    
+
+    @Deprecated
     protected void doDirectoryMerge(SVNURL url1, long revision1, SVNURL url2, long revision2,
+            SVNEntry parentEntry, SVNAdminArea adminArea, SVNDepth depth) throws SVNException {
+        doDirectoryMerge(null, url1, revision1, url2, revision2, parentEntry, adminArea, depth);
+    }
+    
+    protected void doDirectoryMerge(Map resultCatalog, SVNURL url1, long revision1, SVNURL url2, long revision2,
     		SVNEntry parentEntry, SVNAdminArea adminArea, SVNDepth depth) throws SVNException {        
     	boolean isRollBack = revision1 > revision2;
     	SVNURL primaryURL = isRollBack ? url1 : url2;
@@ -1311,7 +1323,7 @@ public abstract class SVNMergeDriver extends SVNBasicDelegate implements ISVNMer
         }
 
         if (recordMergeInfo) {
-            recordMergeInfoForDirectoryMerge(parentEntry, range, mergeInfoPath, depth);
+            recordMergeInfoForDirectoryMerge(resultCatalog, parentEntry, range, mergeInfoPath, depth);
             recordMergeInfoForAddedSubtrees(range, mergeInfoPath, depth);
         }
         
@@ -1848,7 +1860,7 @@ public abstract class SVNMergeDriver extends SVNBasicDelegate implements ISVNMer
 			fauxSource.myRevision2 = rev2;
 			List fauxSources = new LinkedList();
 			fauxSources.add(fauxSource);
-			doMerge(fauxSources, targetWCPath, entry, adminArea, false, true, 
+			doMerge(null, fauxSources, targetWCPath, entry, adminArea, false, true, 
 					sourceReposRoot.equals(wcReposRoot), ignoreAncestry, force, dryRun, 
 					false, true, depth);
 		} else if (!sameRepos) {
@@ -1858,10 +1870,30 @@ public abstract class SVNMergeDriver extends SVNBasicDelegate implements ISVNMer
 		}
 		
 		if (sameRepos) {
-		    doMerge(addSources, targetWCPath, entry, adminArea, true, true, sameRepos, 
+		    Map addResultsCatalog = new TreeMap();
+            Map removeResultsCatalog = new TreeMap();
+		    doMerge(addResultsCatalog, addSources, targetWCPath, entry, adminArea, true, true, sameRepos, 
 	                ignoreAncestry, force, dryRun, true, true, depth);
-	        doMerge(removeSources, targetWCPath, entry, adminArea, true, true, sameRepos, 
+	        doMerge(removeResultsCatalog, removeSources, targetWCPath, entry, adminArea, true, true, sameRepos, 
 	                ignoreAncestry, force, dryRun, true, true, depth);
+	        SVNMergeInfoUtil.mergeCatalog(addResultsCatalog, removeResultsCatalog);
+
+	        if (!addResultsCatalog.isEmpty()) {
+	            for (Iterator paths = addResultsCatalog.keySet().iterator(); paths.hasNext();) {
+                    String path = (String) paths.next();
+                    Map mergeinfo = (Map) addResultsCatalog.get(path);
+                    File file = new File(path);
+                    try {
+                        SVNPropertiesManager.recordWCMergeInfo(file, mergeinfo, myWCAccess);
+                    } catch (SVNException e) {
+                        if (e.getErrorMessage().getErrorCode() == SVNErrorCode.ENTRY_NOT_FOUND) {
+                            continue;
+                        }
+                        throw e;
+                    }
+                    //SVNMergeInfoManager.
+                }
+	        }
 		}
     }
 
@@ -2811,11 +2843,11 @@ public abstract class SVNMergeDriver extends SVNBasicDelegate implements ISVNMer
                 }
                 merges.put(skippedPath, new SVNMergeRangeList(new SVNMergeRange[0]));
             }
-            updateWCMergeInfo(myTarget, mergeInfoPath, targetEntry, merges, isRollback);
+            updateWCMergeInfo(null, myTarget, mergeInfoPath, targetEntry, merges, isRollback);
         }
     }
     
-    private void updateWCMergeInfo(File targetPath, String parentReposPath, SVNEntry entry, Map merges, boolean isRollBack) throws SVNException {
+    private void updateWCMergeInfo(Map resultCatalog, File targetPath, String parentReposPath, SVNEntry entry, Map merges, boolean isRollBack) throws SVNException {
         
         for (Iterator mergesEntries = merges.entrySet().iterator(); mergesEntries.hasNext();) {
             
@@ -2881,14 +2913,21 @@ public abstract class SVNMergeDriver extends SVNBasicDelegate implements ISVNMer
             }
             
             SVNMergeInfoUtil.removeEmptyRangeLists(mergeInfo);
-            
-            try {
-                SVNPropertiesManager.recordWCMergeInfo(path, mergeInfo, myWCAccess);
-            } catch (SVNException svne) {
-                if (svne.getErrorMessage().getErrorCode() != SVNErrorCode.ENTRY_NOT_FOUND) {
-                    throw svne;
+            if (resultCatalog != null) {
+                Map existingMerginfo = (Map) resultCatalog.get(child);
+                if (existingMerginfo != null) {
+                    mergeInfo = SVNMergeInfoUtil.mergeMergeInfos(mergeInfo, existingMerginfo);
                 }
-                SVNDebugLog.getDefaultLog().logFine(SVNLogType.WC, svne);
+                resultCatalog.put(child, mergeInfo);
+            } else {
+                try {
+                    SVNPropertiesManager.recordWCMergeInfo(path, mergeInfo, myWCAccess);
+                } catch (SVNException svne) {
+                    if (svne.getErrorMessage().getErrorCode() != SVNErrorCode.ENTRY_NOT_FOUND) {
+                        throw svne;
+                    }
+                    SVNDebugLog.getDefaultLog().logFine(SVNLogType.WC, svne);
+                }
             }
         }
     }
