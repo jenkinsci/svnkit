@@ -39,6 +39,7 @@ import org.tmatesoft.svn.core.internal.wc.ISVNUpdateEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
 import org.tmatesoft.svn.core.internal.wc.SVNChecksumKind;
+import org.tmatesoft.svn.core.internal.wc.SVNConflictVersion;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
@@ -51,6 +52,7 @@ import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.WritableBaseInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbAdditionInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbAdditionInfo.AdditionInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbBaseInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbBaseInfo.BaseInfoField;
@@ -1417,8 +1419,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
 
     public void textDeltaEnd(String path) throws SVNException {
         if (!myCurrentFile.isSkipThis()) {
-            myCurrentFile.setNewTextBaseMd5Checksum(new SVNChecksum(SVNChecksumKind.MD5,
-                    myDeltaProcessor.textDeltaEnd()));
+            myCurrentFile.setNewTextBaseMd5Checksum(new SVNChecksum(SVNChecksumKind.MD5, myDeltaProcessor.textDeltaEnd()));
         }
 
         if (myCurrentFile.getExpectedSourceMd5Checksum() != null) {
@@ -1915,12 +1916,70 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
     }
 
     private void prepareDirectory(SVNDirectoryInfo db, SVNURL ancestorUrl, long ancestorRevision) throws SVNException {
-       SVNFileUtil.ensureDirectoryExists(db.getLocalAbspath());
+        SVNFileUtil.ensureDirectoryExists(db.getLocalAbspath());
     }
 
-    private SVNTreeConflictDescription createTreeConflict(File localAbspath, SVNConflictReason unversioned, SVNConflictAction add, SVNNodeKind dir, File newRelpath) {
-        // TODO
-        throw new UnsupportedOperationException();
+    private SVNTreeConflictDescription createTreeConflict(File localAbspath, SVNConflictReason reason, SVNConflictAction action, SVNNodeKind theirNodeKind, File theirRelpath) throws SVNException {
+        assert (reason != null);
+        File leftReposRelpath;
+        long leftRevision;
+        SVNNodeKind leftKind = null;
+        File addedReposRelpath = null;
+        SVNURL reposRootUrl;
+        if (reason == SVNConflictReason.ADDED) {
+            leftKind = SVNNodeKind.NONE;
+            leftRevision = SVNWCContext.INVALID_REVNUM;
+            leftReposRelpath = null;
+            WCDbAdditionInfo scanAddition = myWcContext.getDb().scanAddition(localAbspath, AdditionInfoField.status, AdditionInfoField.reposRelPath, AdditionInfoField.reposRootUrl);
+            SVNWCDbStatus addedStatus = scanAddition.status;
+            addedReposRelpath = scanAddition.reposRelPath;
+            reposRootUrl = scanAddition.reposRootUrl;
+            assert (addedStatus == SVNWCDbStatus.Added || addedStatus == SVNWCDbStatus.Copied || addedStatus == SVNWCDbStatus.MovedHere);
+        } else if (reason == SVNConflictReason.UNVERSIONED) {
+            leftKind = SVNNodeKind.NONE;
+            leftRevision = SVNWCContext.INVALID_REVNUM;
+            leftReposRelpath = null;
+            reposRootUrl = myReposRootURL;
+        } else {
+            assert (reason == SVNConflictReason.EDITED || reason == SVNConflictReason.DELETED || reason == SVNConflictReason.REPLACED || reason == SVNConflictReason.OBSTRUCTED);
+            WCDbBaseInfo baseInfo = myWcContext.getDb().getBaseInfo(localAbspath, BaseInfoField.kind, BaseInfoField.revision, BaseInfoField.reposRelPath, BaseInfoField.reposRootUrl);
+            SVNWCDbKind baseKind = baseInfo.kind;
+            leftRevision = baseInfo.revision;
+            leftReposRelpath = baseInfo.reposRelPath;
+            reposRootUrl = baseInfo.reposRootUrl;
+            if (baseKind == SVNWCDbKind.File || baseKind == SVNWCDbKind.Symlink)
+                leftKind = SVNNodeKind.FILE;
+            else if (baseKind == SVNWCDbKind.Dir)
+                leftKind = SVNNodeKind.DIR;
+            else {
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.ASSERTION_FAIL), SVNLogType.WC);
+            }
+        }
+        assert (reposRootUrl.equals(myReposRootURL));
+        File rightReposRelpath;
+        if (mySwitchRelpath != null) {
+            if (theirRelpath != null)
+                rightReposRelpath = theirRelpath;
+            else {
+                rightReposRelpath = mySwitchRelpath;
+                rightReposRelpath = SVNFileUtil.createFilePath(rightReposRelpath.getPath() + "_THIS_IS_INCOMPLETE");
+            }
+        } else {
+            rightReposRelpath = (reason == SVNConflictReason.ADDED ? addedReposRelpath : leftReposRelpath);
+            if (rightReposRelpath == null)
+                rightReposRelpath = theirRelpath;
+        }
+        assert (rightReposRelpath != null);
+        SVNNodeKind conflictNodeKind = (action == SVNConflictAction.DELETE ? leftKind : theirNodeKind);
+        assert (conflictNodeKind == SVNNodeKind.FILE || conflictNodeKind == SVNNodeKind.DIR);
+        SVNConflictVersion srcLeftVersion;
+        if (leftReposRelpath == null) {
+            srcLeftVersion = null;
+        } else {
+            srcLeftVersion = new SVNConflictVersion(reposRootUrl, leftReposRelpath.getPath(), leftRevision, leftKind);
+        }
+        SVNConflictVersion srcRightVersion = new SVNConflictVersion(reposRootUrl, rightReposRelpath.getPath(), myTargetRevision, theirNodeKind);
+        return new SVNTreeConflictDescription(localAbspath, conflictNodeKind, action, reason, mySwitchRelpath != null ? SVNOperation.SWITCH : SVNOperation.UPDATE, srcLeftVersion, srcRightVersion);
     }
 
     private static class CheckWCRootInfo {
