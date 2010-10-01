@@ -2046,9 +2046,34 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         return info;
     }
 
-    private void checkPathUnderRoot(File localAbspath, String name) {
-        // TODO
-        throw new UnsupportedOperationException();
+    private void checkPathUnderRoot(File localAbspath, String name) throws SVNException {
+        if (SVNFileUtil.isWindows && localAbspath != null) {
+            String path = name!=null ? SVNFileUtil.createFilePath(localAbspath, name).toString() : localAbspath.toString();
+            String testPath = path.replace(File.separatorChar, '/');
+            int ind = -1;
+            while (testPath.length() > 0 && (ind = testPath.indexOf("..")) != -1) {
+                if (ind == 0 || testPath.charAt(ind - 1) == '/') {
+                    int i;
+                    for (i = ind + 2; i < testPath.length(); i++) {
+                        if (testPath.charAt(i) == '.') {
+                            continue;
+                        } else if (testPath.charAt(i) == '/') {
+                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "Path ''{0}'' is not in the working copy", path);
+                            SVNErrorManager.error(err, SVNLogType.WC);
+                        } else {
+                            break;
+                        }
+                    }
+                    if (i == testPath.length()) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "Path ''{0}'' is not in the working copy", path);
+                        SVNErrorManager.error(err, SVNLogType.WC);
+                    }
+                    testPath = testPath.substring(i);
+                } else {
+                    testPath = testPath.substring(ind + 2);
+                }
+            }
+        }
     }
 
     private void maybeBumpDirInfo(SVNBumpDirInfo bumpInfo) {
