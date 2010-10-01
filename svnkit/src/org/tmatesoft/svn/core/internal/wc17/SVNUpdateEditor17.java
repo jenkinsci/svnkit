@@ -1349,8 +1349,6 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
     }
 
     public void abortEdit() throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
     }
 
     public void applyTextDelta(String path, String baseChecksum) throws SVNException {
@@ -1404,13 +1402,34 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
     }
 
     public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+        if (!myCurrentFile.isSkipThis()) {
+            try {
+                myDeltaProcessor.textDeltaChunk(diffWindow);
+            } catch (SVNException svne) {
+                myDeltaProcessor.textDeltaEnd();
+                SVNFileUtil.deleteFile(myCurrentFile.getNewTextBaseTmpAbspath());
+                myCurrentFile.setNewTextBaseTmpAbspath(null);
+                throw svne;
+            }
+        }
+        return SVNFileUtil.DUMMY_OUT;
     }
 
     public void textDeltaEnd(String path) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+        if (!myCurrentFile.isSkipThis()) {
+            myCurrentFile.setNewTextBaseMd5Checksum(new SVNChecksum(SVNChecksumKind.MD5,
+                    myDeltaProcessor.textDeltaEnd()));
+        }
+
+        if (myCurrentFile.getExpectedSourceMd5Checksum() != null) {
+            String actualSourceChecksum = myCurrentFile.sourceChecksumStream != null ? myCurrentFile.sourceChecksumStream.getDigest() : null;
+            if (!myCurrentFile.getExpectedSourceMd5Checksum().getDigest().equals(actualSourceChecksum)) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT_TEXT_BASE, "Checksum mismatch while updating ''{0}''; expected: ''{1}'', actual: ''{2}''", new Object[] {
+                        myCurrentFile.getLocalAbspath(), myCurrentFile.getExpectedSourceMd5Checksum().getDigest(), actualSourceChecksum
+                });
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+        }
     }
 
     private SVNDirectoryInfo createDirectoryInfo(SVNDirectoryInfo parent, File path, boolean added) throws SVNException {
