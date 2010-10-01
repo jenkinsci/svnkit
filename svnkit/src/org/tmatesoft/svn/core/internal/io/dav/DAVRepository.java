@@ -31,6 +31,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNLogEntry;
+import org.tmatesoft.svn.core.SVNMergeInfo;
 import org.tmatesoft.svn.core.SVNMergeInfoInheritance;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
@@ -1205,8 +1206,11 @@ public class DAVRepository extends SVNRepository {
         if (paths == null || paths.length == 0) {
             paths = new String[]{""};
         }
-        StringBuffer request = DAVMergeInfoHandler.generateMergeInfoRequest(null, revision, paths,
-                inherit, includeDescendants);
+        String[] repositoryPaths = new String[paths.length];
+        for (int i = 0; i < paths.length; i++) {
+            repositoryPaths[i] = getRepositoryPath(paths[i]);
+        }
+        StringBuffer request = DAVMergeInfoHandler.generateMergeInfoRequest(null, revision, repositoryPaths, inherit, includeDescendants);
         DAVMergeInfoHandler handler = new DAVMergeInfoHandler();
         HTTPStatus status = connection.doReport(path, request, handler);
         if (status.getCode() == 501) {
@@ -1223,9 +1227,15 @@ public class DAVRepository extends SVNRepository {
 	    Map mergeInfoWithPath = new HashMap();
         for (Iterator items = mergeInfo.entrySet().iterator(); items.hasNext();) {
             Map.Entry item = (Map.Entry) items.next();
-            String repositoryPath = doGetRepositoryPath((String) item.getKey());
-            Object value = item.getValue();
-            mergeInfoWithPath.put(repositoryPath, value);
+            SVNMergeInfo value = (SVNMergeInfo) item.getValue();
+            if (value != null) {
+                String repositoryPath = (String) item.getKey();
+                if (repositoryPath.startsWith("/")) {
+                    repositoryPath = repositoryPath.substring("/".length());
+                }
+                repositoryPath = doGetRepositoryPath(repositoryPath);
+                mergeInfoWithPath.put(repositoryPath, new SVNMergeInfo(repositoryPath, value.getMergeSourcesToMergeLists()));
+            }
         }
         return mergeInfoWithPath;
     }
