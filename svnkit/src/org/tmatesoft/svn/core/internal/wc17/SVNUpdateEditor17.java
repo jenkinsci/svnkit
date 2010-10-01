@@ -584,7 +584,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                 boolean wc_root = false;
                 boolean switched = false;
                 try {
-                    CheckWCRootInfo info = checkWCRoot(db.getLocalAbspath());
+                    CheckWCRootInfo info = checkWCRoot(db.getLocalAbspath(), true);
                     wc_root = info.wcRoot;
                     switched = info.switched;
                 } catch (SVNException e) {
@@ -932,7 +932,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                 boolean wcRoot = false;
                 boolean switched = false;
                 try {
-                    CheckWCRootInfo checkWCRoot = checkWCRoot(fb.getLocalAbspath());
+                    CheckWCRootInfo checkWCRoot = checkWCRoot(fb.getLocalAbspath(), true);
                     wcRoot = checkWCRoot.wcRoot;
                     switched = checkWCRoot.switched;
                 } catch (SVNException e) {
@@ -1989,9 +1989,61 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         public boolean switched;
     }
 
-    private CheckWCRootInfo checkWCRoot(File localAbspath) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+    private CheckWCRootInfo checkWCRoot(File localAbspath, boolean fetchSwitched) throws SVNException {
+        File parentAbspath;
+        String name;
+        File reposRelpath;
+        SVNURL reposRoot;
+        String reposUuid;
+        SVNWCDbStatus status;
+        CheckWCRootInfo info = new CheckWCRootInfo();
+        info.wcRoot = true;
+        info.switched = false;
+        WCDbInfo readInfo = myWcContext.getDb().readInfo(localAbspath, InfoField.status, InfoField.kind, InfoField.reposRelPath, InfoField.reposRootUrl, InfoField.reposUuid);
+        status = readInfo.status;
+        info.kind = readInfo.kind;
+        reposRelpath = readInfo.reposRelPath;
+        reposRoot = readInfo.reposRootUrl;
+        reposUuid = readInfo.reposUuid;
+        if (reposRelpath == null) {
+            info.wcRoot = false;
+            return info;
+        }
+        if (info.kind != SVNWCDbKind.Dir) {
+            info.wcRoot = false;
+        } else if (status == SVNWCDbStatus.Added || status == SVNWCDbStatus.Deleted) {
+            info.wcRoot = false;
+        } else if (status == SVNWCDbStatus.Absent || status == SVNWCDbStatus.Excluded || status == SVNWCDbStatus.NotPresent) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{0}'' was not found.", localAbspath);
+            SVNErrorManager.error(err, SVNLogType.WC);
+            return null;
+        } else if (SVNFileUtil.getParentFile(localAbspath) == null) {
+            return info;
+        }
+
+        if (!info.wcRoot && !fetchSwitched) {
+            return info;
+        }
+        parentAbspath = SVNFileUtil.getParentFile(localAbspath);
+        name = SVNFileUtil.getFileName(localAbspath);
+        if (info.wcRoot) {
+            boolean isRoot = myWcContext.getDb().isWCRoot(localAbspath);
+            if (isRoot) {
+                return info;
+            }
+        }
+        {
+            WCDbRepositoryInfo parent = myWcContext.getDb().scanBaseRepository(parentAbspath, RepositoryInfoField.relPath, RepositoryInfoField.rootUrl, RepositoryInfoField.uuid);
+            if (!reposRoot.equals(parent.rootUrl) || !reposUuid.equals(parent.uuid)) {
+                return info;
+            }
+            info.wcRoot = false;
+            if (fetchSwitched) {
+                File expectedRelpath = SVNFileUtil.createFilePath(parent.relPath, name);
+                info.switched = !expectedRelpath.equals(reposRelpath);
+            }
+        }
+        return info;
     }
 
     private void checkPathUnderRoot(File localAbspath, String name) {
