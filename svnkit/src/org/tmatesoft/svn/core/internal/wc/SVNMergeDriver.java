@@ -979,7 +979,9 @@ public abstract class SVNMergeDriver extends SVNBasicDelegate implements ISVNMer
         }
     }
 
-    @Deprecated
+    /**
+     * @deprecated
+     */
     protected void doFileMerge(SVNURL url1, long revision1, SVNURL url2, long revision2,
             File targetWCPath, SVNAdminArea adminArea, boolean sourcesRelated) throws SVNException {
         doFileMerge(null, url1, revision1, url2, revision2, targetWCPath, adminArea, sourcesRelated);
@@ -1245,7 +1247,9 @@ public abstract class SVNMergeDriver extends SVNBasicDelegate implements ISVNMer
         }
     }
 
-    @Deprecated
+    /**
+     * @deprecated
+     */
     protected void doDirectoryMerge(SVNURL url1, long revision1, SVNURL url2, long revision2,
             SVNEntry parentEntry, SVNAdminArea adminArea, SVNDepth depth) throws SVNException {
         doDirectoryMerge(null, url1, revision1, url2, revision2, parentEntry, adminArea, depth);
