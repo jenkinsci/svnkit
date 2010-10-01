@@ -1914,9 +1914,8 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         return status != SVNWCDbStatus.Absent && status != SVNWCDbStatus.Excluded && status != SVNWCDbStatus.NotPresent;
     }
 
-    private void prepareDirectory(SVNDirectoryInfo db, SVNURL ancestorUrl, long ancestorRevision) {
-        // TODO
-        throw new UnsupportedOperationException();
+    private void prepareDirectory(SVNDirectoryInfo db, SVNURL ancestorUrl, long ancestorRevision) throws SVNException {
+       SVNFileUtil.ensureDirectoryExists(db.getLocalAbspath());
     }
 
     private SVNTreeConflictDescription createTreeConflict(File localAbspath, SVNConflictReason unversioned, SVNConflictAction add, SVNNodeKind dir, File newRelpath) {
