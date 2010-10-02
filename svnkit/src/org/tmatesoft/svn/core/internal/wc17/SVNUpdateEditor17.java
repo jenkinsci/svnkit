@@ -2048,7 +2048,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
 
     private void checkPathUnderRoot(File localAbspath, String name) throws SVNException {
         if (SVNFileUtil.isWindows && localAbspath != null) {
-            String path = name!=null ? SVNFileUtil.createFilePath(localAbspath, name).toString() : localAbspath.toString();
+            String path = name != null ? SVNFileUtil.createFilePath(localAbspath, name).toString() : localAbspath.toString();
             String testPath = path.replace(File.separatorChar, '/');
             int ind = -1;
             while (testPath.length() > 0 && (ind = testPath.indexOf("..")) != -1) {
@@ -2076,9 +2076,17 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         }
     }
 
-    private void maybeBumpDirInfo(SVNBumpDirInfo bumpInfo) {
-        // TODO
-        throw new UnsupportedOperationException();
+    private void maybeBumpDirInfo(SVNBumpDirInfo bdi) {
+        while (bdi != null) {
+            if (--bdi.refCount > 0) {
+                return;
+            }
+            if (!bdi.isSkipped()) {
+                completeDirectory(bdi.getLocalAbspath(), bdi.getParent() == null);
+            }
+            bdi = bdi.getParent();
+        }
+        return;
     }
 
     private static class AccumulatedChangeInfo {
