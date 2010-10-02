@@ -20,6 +20,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.tmatesoft.svn.cli.SVN;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -2118,9 +2119,29 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         return info;
     }
 
-    private SVNProperties propDiffs(SVNProperties newActualProps, SVNProperties newBaseProps) {
-        // TODO
-        throw new UnsupportedOperationException();
+    private SVNProperties propDiffs(SVNProperties targetProps, SVNProperties sourceProps) {
+        SVNProperties propdiffs = new SVNProperties();
+        for (Iterator i = sourceProps.nameSet().iterator(); i.hasNext();) {
+            String key = (String) i.next();
+            String propVal1 = sourceProps.getStringValue(key);
+            String propVal2 = targetProps.getStringValue(key);
+            if (propVal2 == null) {
+                SVNPropertyValue p = SVNPropertyValue.create(null);
+                propdiffs.put(key, p);
+            } else if (!propVal1.equals(propVal2)) {
+                SVNPropertyValue p = SVNPropertyValue.create(propVal2);
+                propdiffs.put(key, p);
+            }
+        }
+        for (Iterator i = targetProps.nameSet().iterator(); i.hasNext();) {
+            String key = (String) i.next();
+            String propVal = targetProps.getStringValue(key);
+            if (null == sourceProps.getStringValue(key)) {
+                SVNPropertyValue p = SVNPropertyValue.create(propVal);
+                propdiffs.put(key, p);
+            }
+        }
+        return propdiffs;
     }
 
     private File getNodeRelpathIgnoreErrors(File localAbspath) {
