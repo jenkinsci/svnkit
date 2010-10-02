@@ -2145,8 +2145,32 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
     }
 
     private File getNodeRelpathIgnoreErrors(File localAbspath) {
-        // TODO
-        throw new UnsupportedOperationException();
+        SVNWCDbStatus status;
+        File relpath = null;
+        try {
+            WCDbInfo readInfo = myWcContext.getDb().readInfo(localAbspath, InfoField.status, InfoField.reposRelPath);
+            status = readInfo.status;
+            relpath = readInfo.reposRelPath;
+        } catch (SVNException e) {
+            return null;
+        }
+        if (relpath != null) {
+            return relpath;
+        }
+        if (status == SVNWCDbStatus.Added) {
+            try {
+                relpath = myWcContext.getDb().scanAddition(localAbspath, AdditionInfoField.reposRelPath).reposRelPath;
+            } catch (SVNException e) {
+
+            }
+        } else if (status != SVNWCDbStatus.Deleted) {
+            try {
+                relpath = myWcContext.getDb().scanBaseRepository(localAbspath, RepositoryInfoField.relPath).relPath;
+            } catch (SVNException e) {
+
+            }
+        }
+        return relpath;
     }
 
     private static class LocateCopyFromInfo {
