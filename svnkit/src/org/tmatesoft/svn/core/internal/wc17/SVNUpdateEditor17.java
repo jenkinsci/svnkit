@@ -2097,8 +2097,25 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
     }
 
     private AccumulatedChangeInfo accumulateLastChange(File localAbspath, SVNProperties entryProps) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+        AccumulatedChangeInfo info = new AccumulatedChangeInfo();
+        info.changedRev = SVNWCContext.INVALID_REVNUM;
+        info.changedDate = null;
+        info.changedAuthor = null;
+        for (Iterator i = entryProps.nameSet().iterator(); i.hasNext();) {
+            String propertyName = (String) i.next();
+            String propertyValue = entryProps.getStringValue(propertyName);
+            if (propertyValue == null) {
+                continue;
+            }
+            if (SVNProperty.LAST_AUTHOR.equals(propertyName)) {
+                info.changedAuthor = propertyValue;
+            } else if (SVNProperty.COMMITTED_REVISION.equals(propertyName)) {
+                info.changedRev = Long.valueOf(propertyValue);
+            } else if (SVNProperty.COMMITTED_DATE.equals(propertyName)) {
+                info.changedDate = SVNDate.parseDate(propertyValue);
+            }
+        }
+        return info;
     }
 
     private SVNProperties propDiffs(SVNProperties newActualProps, SVNProperties newBaseProps) {
