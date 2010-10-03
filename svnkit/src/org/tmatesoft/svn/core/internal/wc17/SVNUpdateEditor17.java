@@ -1304,7 +1304,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         fb.setReceivedTextdelta(true);
         String recordedBaseChecksum;
         {
-            SVNChecksum checksum = getUltimateBaseChecksums(fb.getLocalAbspath()).md5Checksum;
+            SVNChecksum checksum = getUltimateBaseChecksums(fb.getLocalAbspath(), false, true).md5Checksum;
             recordedBaseChecksum = checksum != null ? checksum.getDigest() : null;
             if (recordedBaseChecksum != null && baseChecksum != null && baseChecksum.equals(baseChecksum)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT_TEXT_BASE, "Checksum mismatch for ''{0}'':\n " + "   expected:  ''{1}''\n" + "   recorded:  ''{2}''\n",
@@ -2121,9 +2121,30 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         public SVNChecksum md5Checksum;
     }
 
-    private UltimateBaseChecksumsInfo getUltimateBaseChecksums(File localAbspath) {
-        // TODO
-        throw new UnsupportedOperationException();
+    private UltimateBaseChecksumsInfo getUltimateBaseChecksums(File localAbspath, boolean fetchSHA1, boolean fetchMD5) throws SVNException {
+        UltimateBaseChecksumsInfo info = new UltimateBaseChecksumsInfo();
+        SVNChecksum checksum = null;
+        try {
+            checksum = myWcContext.getDb().getBaseInfo(localAbspath, BaseInfoField.checksum).checksum;
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND) {
+                info.md5Checksum = null;
+                info.sha1Checksum = null;
+                return info;
+            }
+        }
+        if (checksum.getKind() == SVNChecksumKind.SHA1) {
+            info.sha1Checksum = checksum;
+            if (fetchMD5) {
+                info.md5Checksum = myWcContext.getDb().getPristineMD5(localAbspath, checksum);
+            }
+        } else {
+            if (fetchSHA1) {
+                info.sha1Checksum = myWcContext.getDb().getPristineSHA1(localAbspath, checksum);
+            }
+            info.md5Checksum = checksum;
+        }
+        return info;
     }
 
     private InputStream getUltimateBaseContents(File localAbspath) {
