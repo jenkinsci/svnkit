@@ -2147,9 +2147,24 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         return info;
     }
 
-    private InputStream getUltimateBaseContents(File localAbspath) {
-        // TODO
-        throw new UnsupportedOperationException();
+    private InputStream getUltimateBaseContents(File localAbspath) throws SVNException {
+        SVNWCDbKind kind;
+        SVNWCDbStatus status;
+        SVNChecksum checksum;
+        WCDbBaseInfo baseInfo = myWcContext.getDb().getBaseInfo(localAbspath, BaseInfoField.status, BaseInfoField.kind, BaseInfoField.checksum);
+        status = baseInfo.status;
+        kind = baseInfo.kind;
+        checksum = baseInfo.checksum;
+        if (kind != SVNWCDbKind.File) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_FILE, "Base node of ''{0}'' is not a file", localAbspath);
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+        if (status != SVNWCDbStatus.Normal) {
+            assert (checksum == null);
+            return null;
+        }
+        assert (checksum != null);
+        return myWcContext.getDb().readPristine(localAbspath, checksum);
     }
 
     private static class MergeFileInfo {
