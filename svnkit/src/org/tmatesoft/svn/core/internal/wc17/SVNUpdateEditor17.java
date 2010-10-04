@@ -2343,12 +2343,30 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         return info;
     }
 
-    private File getUltimateBaseTextPathToRead(File localAbspath) {
-        return null;
+    private File getUltimateBaseTextPathToRead(File localAbspath) throws SVNException {
+        File resultAbspath = getUltimateBaseTextPath(localAbspath);
+        {
+            SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(resultAbspath));
+            if (kind != SVNNodeKind.FILE) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS, "File ''{0}'' has no text base", localAbspath);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+        }
+        return resultAbspath;
     }
 
-    private File getEmptyTmpFile(File localAbspath) {
-        return null;
+    private File getUltimateBaseTextPath(File localAbspath) throws SVNException {
+        SVNChecksum checksum = myWcContext.getDb().getBaseInfo(localAbspath, BaseInfoField.checksum).checksum;
+        if (checksum == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS, "Node ''{0}'' has no pristine base text", localAbspath);
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+        return myWcContext.getDb().getPristinePath(localAbspath, checksum);
+    }
+
+    private File getEmptyTmpFile(File localAbspath) throws SVNException {
+        File tempDirPath = myWcContext.getDb().getWCRootTempDir(localAbspath);
+        return SVNFileUtil.createUniqueFile(tempDirPath, "tempfile", ".tmp", false).getAbsoluteFile();
     }
 
     private boolean modcheckVersionedFile(File localAbspath, InputStream pristineStream, boolean b) {
