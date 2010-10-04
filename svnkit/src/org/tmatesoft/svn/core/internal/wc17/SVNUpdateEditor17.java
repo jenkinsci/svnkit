@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.internal.wc17;
 import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -34,6 +35,7 @@ import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryUtil;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.ISVNFileFetcher;
 import org.tmatesoft.svn.core.internal.wc.ISVNUpdateEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
@@ -1183,7 +1185,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             if (installPristine) {
                 boolean recordFileinfo = installFrom == null;
                 workItem = myWcContext.wqBuildFileInstall(fb.getLocalAbspath(), installFrom, myIsUseCommitTimes, recordFileinfo);
-                allWorkItems = myWcContext.wqMerge(allWorkItems, workItem);
+                allWorkItems = myWcContext.wqMerge(workItem);
             }
 
         } else {
@@ -1201,12 +1203,12 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
 
         if (newTextBaseSha1Checksum == null && lockState == SVNStatusType.LOCK_UNLOCKED) {
             workItem = myWcContext.wqBuildSyncFileFlags(fb.getLocalAbspath());
-            allWorkItems = myWcContext.wqMerge(allWorkItems, allWorkItems);
+            allWorkItems = myWcContext.wqMerge(allWorkItems);
         }
 
         if (installFrom != null && !installFrom.equals(fb.getLocalAbspath())) {
             workItem = myWcContext.wqBuildFileRemove(installFrom);
-            allWorkItems = myWcContext.wqMerge(allWorkItems, workItem);
+            allWorkItems = myWcContext.wqMerge(workItem);
         }
 
         if (fb.getCopiedTextBaseSha1Checksum() != null) {
@@ -2175,9 +2177,182 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         public SVNStatusType contentState;
     }
 
-    private MergeFileInfo mergeFile(SVNFileInfo fb, SVNChecksum newTextBaseSha1Checksum) {
-        // TODO
-        throw new UnsupportedOperationException();
+    private MergeFileInfo mergeFile(SVNFileInfo fb, SVNChecksum newTextBaseSha1Checksum) throws SVNException {
+        SVNDirectoryInfo pb = fb.getParentDir();
+        boolean isLocallyModified;
+        boolean isReplaced = false;
+        boolean magicPropsChanged;
+        SVNStatusType mergeOutcome = SVNStatusType.UNCHANGED;
+        SVNSkel workItem;
+        File newTextBaseTmpAbspath;
+        boolean fileExists = true;
+        SVNWCDbStatus status;
+        boolean haveBase;
+        long revision;
+        String fileExternal = null;
+        MergeFileInfo info = new MergeFileInfo();
+        info.workItems = null;
+        info.installPristine = false;
+        info.installFrom = null;
+        if (newTextBaseSha1Checksum != null) {
+            newTextBaseTmpAbspath = myWcContext.getDb().getPristinePath(fb.getLocalAbspath(), newTextBaseSha1Checksum);
+        } else {
+            newTextBaseTmpAbspath = null;
+        }
+        try {
+            WCDbInfo readInfo = myWcContext.getDb().readInfo(fb.getLocalAbspath(), InfoField.status, InfoField.revision, InfoField.haveBase);
+            status = readInfo.status;
+            revision = readInfo.revision;
+            haveBase = readInfo.haveBase;
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND) {
+                fileExists = false;
+                status = SVNWCDbStatus.NotPresent;
+                revision = SVNWCContext.INVALID_REVNUM;
+                haveBase = false;
+            } else {
+                throw e;
+            }
+        }
+        if (fileExists) {
+            fileExternal = myWcContext.getDb().getFileExternalTemp(fb.getLocalAbspath());
+        }
+        magicPropsChanged = myWcContext.hasMagicProperty(fb.getChangedProperties());
+        if (fb.getCopiedWorkingText() != null) {
+            isLocallyModified = true;
+        } else if (fileExternal != null && status == SVNWCDbStatus.Added) {
+            isLocallyModified = false;
+        } else if (!fb.isObstructionFound()) {
+            isLocallyModified = myWcContext.isTextModified(fb.getLocalAbspath(), false, false);
+        } else if (newTextBaseSha1Checksum != null && !fb.isObstructionFound()) {
+            InputStream pristineStream = myWcContext.getDb().readPristine(fb.getLocalAbspath(), newTextBaseSha1Checksum);
+            isLocallyModified = modcheckVersionedFile(fb.getLocalAbspath(), pristineStream, false);
+        } else {
+            if (fb.isObstructionFound()) {
+                isLocallyModified = true;
+            } else {
+                isLocallyModified = false;
+            }
+        }
+        if (haveBase) {
+            SVNWCDbStatus baseStatus;
+
+            WCDbBaseInfo baseInfo = myWcContext.getDb().getBaseInfo(fb.getLocalAbspath(), BaseInfoField.status, BaseInfoField.revision);
+            baseStatus = baseInfo.status;
+            revision = baseInfo.revision;
+            if (status == SVNWCDbStatus.Added && baseStatus != SVNWCDbStatus.NotPresent) {
+                isReplaced = true;
+            }
+        }
+        if (newTextBaseSha1Checksum != null) {
+            if (isReplaced) {
+            } else if (!isLocallyModified) {
+                if (!fb.isDeleted()) {
+                    info.installPristine = true;
+                    if (fileExternal != null) {
+                        assert (status == SVNWCDbStatus.Added || status == SVNWCDbStatus.Normal);
+                    }
+                }
+            } else {
+                SVNNodeKind wfileKind = SVNFileType.getNodeKind(SVNFileType.getType(fb.getLocalAbspath()));
+                if (wfileKind == SVNNodeKind.NONE && !fb.isAddedWithHistory()) {
+                    info.installPristine = true;
+                } else if (!fb.isObstructionFound()) {
+                    String oldrevStr, newrevStr, mineStr;
+                    File mergeLeft;
+                    boolean deleteLeft = false;
+                    String pathExt = null;
+                    if (myExtensionPatterns != null && myExtensionPatterns.length > 0) {
+                        pathExt = SVNFileUtil.getFileExtension(fb.getLocalAbspath());
+                        if (pathExt != null && !"".equals(pathExt)) {
+                            boolean matches = false;
+                            for (int i = 0; i < myExtensionPatterns.length; i++) {
+                                String extPattern = myExtensionPatterns[i];
+                                matches = DefaultSVNOptions.matches(extPattern, pathExt);
+                                if (matches) {
+                                    break;
+                                }
+                            }
+                            if (!matches) {
+                                pathExt = null;
+                            }
+                        }
+                    }
+                    if (fb.isAddedWithHistory()) {
+                        oldrevStr = String.format(".copied%s%s", pathExt != null ? "." : "", pathExt != null ? pathExt : "");
+                    } else {
+                        long oldRev = revision;
+                        if (!SVNRevision.isValidRevisionNumber(oldRev)) {
+                            oldRev = 0;
+                        }
+                        oldrevStr = String.format(".r%d%s%s", oldRev, pathExt != null ? "." : "", pathExt != null ? pathExt : "");
+                    }
+                    newrevStr = String.format(".r%d%s%s", myTargetRevision, pathExt != null ? "." : "", pathExt != null ? pathExt : "");
+                    mineStr = String.format(".mine%s%s", pathExt != null ? "." : "", pathExt != null ? pathExt : "");
+                    if (fb.isAddExisted() && !isReplaced) {
+                        mergeLeft = getEmptyTmpFile(pb.getLocalAbspath());
+                        deleteLeft = true;
+                    } else if (fb.getCopiedTextBaseSha1Checksum() != null) {
+                        mergeLeft = myWcContext.getDb().getPristinePath(fb.getLocalAbspath(), fb.getCopiedTextBaseSha1Checksum());
+                    } else {
+                        mergeLeft = getUltimateBaseTextPathToRead(fb.getLocalAbspath());
+                    }
+                    SVNWCContext.MergeInfo mergeInfo = myWcContext.merge(mergeLeft, null, newTextBaseTmpAbspath, null, fb.getLocalAbspath(), fb.getCopiedWorkingText(), oldrevStr, newrevStr, mineStr,
+                            false, null);
+                    workItem = mergeInfo.workItem;
+                    mergeOutcome = mergeInfo.mergeOutcome;
+                    info.workItems = myWcContext.wqMerge(workItem);
+                    if (deleteLeft) {
+                        workItem = myWcContext.wqBuildFileRemove(mergeLeft);
+                        info.workItems = myWcContext.wqMerge(workItem);
+                    }
+                    if (fb.getCopiedWorkingText() != null) {
+                        workItem = myWcContext.wqBuildFileRemove(fb.getCopiedWorkingText());
+                        info.workItems = myWcContext.wqMerge(workItem);
+                    }
+                }
+            }
+        } else {
+            Map keywords = myWcContext.getKeyWords(fb.getLocalAbspath(), null);
+            if (magicPropsChanged || keywords != null) {
+                File tmptext = myWcContext.getTranslatedFile(fb.getLocalAbspath(), fb.getLocalAbspath(), true, false, false, false);
+                info.installPristine = true;
+                info.installFrom = tmptext;
+            }
+        }
+        if (!info.installPristine && !isLocallyModified && (fb.isAddingFile() || status == SVNWCDbStatus.Normal)) {
+            SVNDate setDate = null;
+            if (fb.getLastChangedDate() != null && !fb.isObstructionFound()) {
+                setDate = SVNDate.parseDate(fb.getLastChangedDate());
+            }
+
+            workItem = myWcContext.wqBuildRecordFileinfo(fb.getLocalAbspath(), setDate);
+            info.workItems = myWcContext.wqMerge(workItem);
+        }
+        if (mergeOutcome == SVNStatusType.CONFLICTED) {
+            info.contentState = SVNStatusType.CONFLICTED;
+        } else if (newTextBaseSha1Checksum != null) {
+            if (isLocallyModified) {
+                info.contentState = SVNStatusType.MERGED;
+            } else {
+                info.contentState = SVNStatusType.CHANGED;
+            }
+        } else {
+            info.contentState = SVNStatusType.UNCHANGED;
+        }
+        return info;
+    }
+
+    private File getUltimateBaseTextPathToRead(File localAbspath) {
+        return null;
+    }
+
+    private File getEmptyTmpFile(File localAbspath) {
+        return null;
+    }
+
+    private boolean modcheckVersionedFile(File localAbspath, InputStream pristineStream, boolean b) {
+        return false;
     }
 
     private void completeDirectory(File anchorAbspath, boolean b) {

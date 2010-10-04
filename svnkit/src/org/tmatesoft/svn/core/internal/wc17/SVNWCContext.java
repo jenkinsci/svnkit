@@ -38,6 +38,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
@@ -51,6 +52,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumOutputStream;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 import org.tmatesoft.svn.core.internal.wc17.SVNStatus17.ConflictedInfo;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.MergeInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbOpenMode;
@@ -1028,11 +1030,6 @@ public class SVNWCContext {
         return db.readPristineProperties(localAbsPath);
     }
 
-    private boolean isSpecial(File path) throws SVNException {
-        final String property = getProperty(path, SVNProperty.SPECIAL);
-        return property != null;
-    }
-
     private boolean isPropertiesDiff(SVNProperties pristineProperties, SVNProperties actualProperties) {
         if (pristineProperties == null && actualProperties == null) {
             return false;
@@ -1383,7 +1380,14 @@ public class SVNWCContext {
 
     }
 
-    private SVNEolStyleInfo getEolStyle(File localAbsPath) throws SVNException {
+    // TODO merget isSpecial()/getEOLStyle()/getKeyWords() into getTranslateInfo()
+    public boolean isSpecial(File path) throws SVNException {
+        final String property = getProperty(path, SVNProperty.SPECIAL);
+        return property != null;
+    }
+
+    // TODO merget isSpecial()/getEOLStyle()/getKeyWords() into getTranslateInfo()
+    public SVNEolStyleInfo getEolStyle(File localAbsPath) throws SVNException {
         assert (isAbsolute(localAbsPath));
 
         /* Get the property value. */
@@ -1393,7 +1397,8 @@ public class SVNWCContext {
         return SVNEolStyleInfo.fromValue(propVal);
     }
 
-    private Map getKeyWords(File localAbsPath, String forceList) throws SVNException {
+    // TODO merget isSpecial()/getEOLStyle()/getKeyWords() into getTranslateInfo()
+    public Map getKeyWords(File localAbsPath, String forceList) throws SVNException {
         assert (isAbsolute(localAbsPath));
 
         String list;
@@ -2948,7 +2953,7 @@ public class SVNWCContext {
         return null;
     }
 
-    public SVNSkel wqMerge(SVNSkel allWorkItems, SVNSkel workItem) {
+    public SVNSkel wqMerge(SVNSkel workItem) {
         return null;
     }
 
@@ -2959,5 +2964,30 @@ public class SVNWCContext {
     public SVNSkel wqBuildFileRemove(File installFrom) {
         return null;
     }
+
+    public boolean hasMagicProperty(SVNProperties changedProperties) {
+        return false;
+    }
+
+    public static class MergeInfo {
+
+        public SVNSkel workItem;
+        public SVNStatusType mergeOutcome;
+
+    }
+
+    public MergeInfo merge(File mergeLeft, Object object, File newTextBaseTmpAbspath, Object object2, File localAbspath, File copiedWorkingText, String oldrevStr, String newrevStr, String mineStr,
+            boolean b, Object object3) {
+        return null;
+    }
+
+    public File getTranslatedFile(File src, File versioned, boolean toNormalFormat, boolean forceEOLRepair, boolean useGlobalTmp, boolean forceCopy) {
+        return null;
+    }
+
+    public SVNSkel wqBuildRecordFileinfo(File localAbspath, SVNDate setDate) {
+        return null;
+    }
+
 
 }
