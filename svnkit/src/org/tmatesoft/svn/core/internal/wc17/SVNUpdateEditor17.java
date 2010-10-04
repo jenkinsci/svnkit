@@ -2369,8 +2369,8 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         return SVNFileUtil.createUniqueFile(tempDirPath, "tempfile", ".tmp", false).getAbsoluteFile();
     }
 
-    private boolean modcheckVersionedFile(File localAbspath, InputStream pristineStream, boolean b) {
-        return false;
+    private boolean modcheckVersionedFile(File versioned, InputStream pristineStream, boolean compareTextbases) throws SVNException {
+        return myWcContext.compareAndVerify(versioned, pristineStream, compareTextbases, false);
     }
 
     private void completeDirectory(File anchorAbspath, boolean b) {

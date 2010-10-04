@@ -1210,7 +1210,7 @@ public class SVNWCContext {
      * PRISTINE_STREAM will be closed before a successful return.
      *
      */
-    private boolean compareAndVerify(File versionedFileAbsPath, InputStream pristineStream, boolean compareTextBases, boolean verifyChecksum) throws SVNException {
+    public boolean compareAndVerify(File versionedFileAbsPath, InputStream pristineStream, boolean compareTextBases, boolean verifyChecksum) throws SVNException {
         InputStream vStream = null; /* versioned_file */
         try {
             boolean same = false;
