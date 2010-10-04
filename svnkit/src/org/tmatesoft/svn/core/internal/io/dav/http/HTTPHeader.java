@@ -57,6 +57,8 @@ public class HTTPHeader {
     public static final String OVERWRITE_HEADER = "Overwrite";
     
     public static final String SVNDIFF_MIME_TYPE = "application/vnd.svn-svndiff";
+    public static final String SET_COOKIE = "Set-Cookie";
+    public static final String COOKIE = "Cookie";
     
     private Map myHeaders;
 

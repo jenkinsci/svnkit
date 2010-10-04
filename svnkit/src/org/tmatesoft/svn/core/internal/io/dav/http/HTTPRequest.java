@@ -58,6 +58,8 @@ class HTTPRequest {
 
     private long myTimeout;
 
+    private Collection myCookies;
+
     public HTTPRequest(String charset) {
         myCharset = charset;
     }
@@ -377,6 +379,18 @@ class HTTPRequest {
         if (header != null) {
             sb.append(header.toString());
         }
+
+        if (myCookies != null) {
+            for (Iterator cookies = myCookies.iterator(); cookies.hasNext();) {
+                String cookie = (String) cookies.next();
+                if (cookie != null) {
+                    sb.append(HTTPHeader.COOKIE);
+                    sb.append(": ");
+                    sb.append(cookie);
+                    sb.append(HTTPRequest.CRLF);
+                }
+            }
+        }
         sb.append(HTTPRequest.CRLF);
         return sb;
     }
@@ -428,6 +442,10 @@ class HTTPRequest {
 
     public void setKeepAlive(boolean isKeepAlive) {
         myIsKeepAlive = isKeepAlive;
+    }
+
+    public void setCookies(Collection cookie) {
+        myCookies = cookie;
     }
     
 }
