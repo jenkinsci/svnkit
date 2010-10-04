@@ -2734,4 +2734,13 @@ public class SVNWCDb implements ISVNWCDb {
         throw new UnsupportedOperationException();
     }
 
+    public void opSetBaseIncompleteTemp(File localAbspath) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    public void opSetDirDepthTemp(File localAbspath, SVNDepth requestedDepth) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
 }

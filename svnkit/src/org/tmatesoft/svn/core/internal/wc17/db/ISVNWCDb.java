@@ -1641,4 +1641,8 @@ public interface ISVNWCDb {
 
     void opRemoveWorkingTemp(File localAbspath);
 
+    void opSetBaseIncompleteTemp(File localAbspath);
+
+    void opSetDirDepthTemp(File localAbspath, SVNDepth requestedDepth);
+
 }

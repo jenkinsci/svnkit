@@ -2021,7 +2021,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         }
     }
 
-    private void maybeBumpDirInfo(SVNBumpDirInfo bdi) {
+    private void maybeBumpDirInfo(SVNBumpDirInfo bdi) throws SVNException {
         while (bdi != null) {
             if (--bdi.refCount > 0) {
                 return;
@@ -2373,9 +2373,47 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         return myWcContext.compareAndVerify(versioned, pristineStream, compareTextbases, false);
     }
 
-    private void completeDirectory(File anchorAbspath, boolean b) {
-        // TODO
-        throw new UnsupportedOperationException();
+    private void completeDirectory(File localAbspath, boolean isRootDir) throws SVNException {
+        if (isRootDir && myTargetBasename != null) {
+            SVNWCDbStatus status;
+            assert (localAbspath != null && localAbspath.equals(myAnchorAbspath));
+            try {
+                status = myWcContext.getDb().getBaseInfo(myTargetAbspath, BaseInfoField.status).status;
+                if (status == SVNWCDbStatus.Excluded) {
+                    doEntryDeletion(myTargetAbspath, null, false);
+                }
+                return;
+            } catch (SVNException e) {
+                if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND) {
+                    throw e;
+                }
+            }
+        }
+        myWcContext.getDb().opSetBaseIncompleteTemp(localAbspath);
+        if (myIsDepthSticky) {
+            SVNDepth depth = myWcContext.getDb().getBaseInfo(localAbspath, BaseInfoField.depth).depth;
+            if (depth != myRequestedDepth) {
+                if (myRequestedDepth == SVNDepth.INFINITY || localAbspath.equals(myTargetAbspath) && myRequestedDepth.getId() > depth.getId()) {
+                    myWcContext.getDb().opSetDirDepthTemp(localAbspath, myRequestedDepth);
+                }
+            }
+        }
+        List<String> children = myWcContext.getDb().getBaseChildren(localAbspath);
+        for (String name : children) {
+            File nodeAbspath = SVNFileUtil.createFilePath(localAbspath, name);
+            WCDbBaseInfo baseInfo = myWcContext.getDb().getBaseInfo(nodeAbspath, BaseInfoField.status, BaseInfoField.kind, BaseInfoField.revision);
+            SVNWCDbStatus status = baseInfo.status;
+            SVNWCDbKind kind = baseInfo.kind;
+            long revnum = baseInfo.revision;
+            if (status == SVNWCDbStatus.NotPresent) {
+                SVNConflictDescription treeConflict = myWcContext.getDb().opReadTreeConflict(nodeAbspath);
+                if (treeConflict == null || treeConflict.getConflictReason() != SVNConflictReason.UNVERSIONED) {
+                    myWcContext.getDb().removeBase(nodeAbspath);
+                }
+            } else if (status == SVNWCDbStatus.Absent && revnum != myTargetRevision) {
+                myWcContext.getDb().removeBase(nodeAbspath);
+            }
+        }
     }
 
     private void doUpdateCleanup() {
