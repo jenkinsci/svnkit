@@ -1012,12 +1012,20 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
             mergeInfoPath = getPathRelativeToRoot(null, primaryURL, sourceRootURL, null, null);            
         }
         SVNMergeRange range = new SVNMergeRange(revision1, revision2, true);
-
+        
+        SVNDebugLog.getDefaultLog().logFinest(SVNLogType.WC, "File merge: url1@rev1: " + url1 + "@" + revision1);
+        SVNDebugLog.getDefaultLog().logFinest(SVNLogType.WC, "File merge: url2@rev2: " + url2 + "@" + revision2);
+        SVNDebugLog.getDefaultLog().logFinest(SVNLogType.WC, "File merge: range: " + range);
+        
         Object[] mergeInfoBundle = calculateRemainingRangeList(targetWCPath, entry, sourceRootURL, indirect,
                 url1, revision1, url2, revision2, range);
         SVNMergeRangeList remainingRangeList = (SVNMergeRangeList) mergeInfoBundle[0];
         targetMergeInfo = (Map) mergeInfoBundle[1];
         implicitMergeInfo = (Map) mergeInfoBundle[1];
+
+        SVNDebugLog.getDefaultLog().logFinest(SVNLogType.WC, "File merge: remaining ranges: " + remainingRangeList);
+        SVNDebugLog.getDefaultLog().logFinest(SVNLogType.WC, "File merge: target mergeinfo: " + targetMergeInfo);
+        SVNDebugLog.getDefaultLog().logFinest(SVNLogType.WC, "File merge: implicit mergeinfo: " + implicitMergeInfo);
 
         SVNMergeRange[] remainingRanges = remainingRangeList.getRanges();
         AbstractDiffCallback callback = getMergeCallback(adminArea);
@@ -1037,6 +1045,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
             
             for (int i = 0; i < rangesToMerge.length; i++) {
                 SVNMergeRange nextRange = rangesToMerge[i];
+                SVNDebugLog.getDefaultLog().logFinest(SVNLogType.WC, "File merge: merging range: " + nextRange);
                 boolean headerSent = false;
                 SVNEvent event = SVNEventFactory.createSVNEvent(targetWCPath, SVNNodeKind.UNKNOWN, null, 
                         SVNRepository.INVALID_REVISION, myIsSameRepository ? SVNEventAction.MERGE_BEGIN : SVNEventAction.FOREIGN_MERGE_BEGIN, null, null, 
@@ -1073,6 +1082,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
                     SVNProperties propsDiff = computePropsDiff(props1, props2);
                     
                     if (!(myIsIgnoreAncestry || sourcesRelated)) {
+                        SVNDebugLog.getDefaultLog().logFinest(SVNLogType.WC, "File merge: merging as replace.");
                         SVNStatusType cstatus = callback.fileDeleted(targetName, f1, f2, mimeType1, 
                                 mimeType2, props1, isTreeConflict);
                         headerSent = notifySingleFileMerge(targetWCPath, isTreeConflict[0] ? SVNEventAction.TREE_CONFLICT : 
@@ -1083,6 +1093,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
                         headerSent = notifySingleFileMerge(targetWCPath, isTreeConflict[0] ? SVNEventAction.TREE_CONFLICT : 
                             SVNEventAction.UPDATE_ADD, mergeResult[0], mergeResult[1], event, headerSent);
                     } else {
+                        SVNDebugLog.getDefaultLog().logFinest(SVNLogType.WC, "File merge: merging as modification.");
                         mergeResult = callback.fileChanged(targetName, f1, f2, nextRange.getStartRevision(), 
                                                            nextRange.getEndRevision(), mimeType1, 
                                                            mimeType2, props1, propsDiff, isTreeConflict);
