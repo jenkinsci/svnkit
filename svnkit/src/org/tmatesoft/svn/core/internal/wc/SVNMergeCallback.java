@@ -104,7 +104,7 @@ public class SVNMergeCallback extends AbstractDiffCallback {
             }
             
             MergeSource mergeSource = myMergeDriver.getCurrentMergeSource();
-            if (mergeSource.getRevision1() < mergeSource.getRevision2()) {
+            if (mergeSource.getRevision1() < mergeSource.getRevision2() || !myMergeDriver.myAreSourcesAncestral) {
                 SVNProperties filteredProps = myMergeDriver.filterSelfReferentialMergeInfo(regularProps, file); 
                 if (filteredProps != null) {
                     regularProps = filteredProps; 

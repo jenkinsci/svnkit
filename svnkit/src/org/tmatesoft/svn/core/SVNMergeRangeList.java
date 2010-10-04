@@ -451,7 +451,12 @@ public class SVNMergeRangeList {
         }
         return SVNMergeRangeList.fromCollection(ranges);
     }
+
+    public SVNMergeRangeList remove(SVNMergeRangeList remove, boolean considerInheritance) {
+        return removeOrIntersect(remove, true, considerInheritance);
+    }
     
+
     private SVNMergeRange combineWithLastRange(Collection rangeList, SVNMergeRange lastRange, SVNMergeRange mRange, boolean dupMRange, boolean considerInheritance) {
         SVNMergeRange pushedMRange1 = null;
         SVNMergeRange pushedMRange2 = null;
@@ -601,5 +606,4 @@ public class SVNMergeRangeList {
         }
         return lastRange;
     }
-    
 }
