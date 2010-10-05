@@ -16,10 +16,12 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
@@ -98,7 +100,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
     private File mySwitchRelpath;
     private SVNURL myReposRootURL;
     private String myReposUuid;
-    private List<File> mySkippedTrees = new LinkedList<File>();
+    private Set<File> mySkippedTrees = new HashSet<File>();
     private SVNDeltaProcessor myDeltaProcessor;
     private ISVNFileFetcher myFileFetcher;
     private SVNExternalsStore myExternalsStore;
@@ -1290,7 +1292,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             completeDirectory(myAnchorAbspath, true);
         }
         if (!myIsTargetDeleted) {
-            doUpdateCleanup();
+            doUpdateCleanup(myTargetAbspath, myRequestedDepth, mySwitchRelpath, myReposRootURL, myReposUuid, myTargetRevision, mySkippedTrees);
         }
         return null;
     }
@@ -2416,9 +2418,126 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         }
     }
 
-    private void doUpdateCleanup() {
-        // TODO
-        throw new UnsupportedOperationException();
+    private void doUpdateCleanup(File localAbspath, SVNDepth depth, File newReposRelpath, SVNURL newReposRootUrl, String newReposUuid, long newRevision, Set<File> excludePaths) throws SVNException {
+        if (excludePaths.contains(localAbspath)) {
+            return;
+        }
+        SVNWCDbStatus status = null;
+        SVNWCDbKind kind = null;
+        try {
+            WCDbInfo readInfo = myWcContext.getDb().readInfo(localAbspath, InfoField.status, InfoField.kind);
+            status = readInfo.status;
+            kind = readInfo.kind;
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND) {
+                throw e;
+            }
+        }
+        switch (status) {
+            case Excluded:
+            case Absent:
+            case NotPresent:
+                return;
+            default:
+                break;
+        }
+        if (kind == SVNWCDbKind.File || kind == SVNWCDbKind.Symlink) {
+            tweakNode(localAbspath, kind, newReposRelpath, newReposRootUrl, newReposUuid, newRevision, false);
+        } else if (kind == SVNWCDbKind.Dir) {
+            tweakEntries(localAbspath, newReposRelpath, newReposRootUrl, newReposUuid, newRevision, depth, excludePaths);
+        } else {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNKNOWN_KIND, "Unrecognized node kind: ''{0}''", localAbspath);
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+        return;
     }
 
+    private void tweakNode(File localAbspath, SVNWCDbKind kind, File newReposRelpath, SVNURL newReposRootUrl, String newReposUuid, long newRevision, boolean allowRemoval) throws SVNException {
+        SVNWCDbStatus status = null;
+        SVNWCDbKind dbKind = null;
+        long revision = SVNWCContext.INVALID_REVNUM;
+        File reposRelpath = null;
+        SVNURL reposRootUrl = null;
+        String reposUuid = null;
+        boolean setReposRelpath = false;
+        try {
+            WCDbBaseInfo baseInfo = myWcContext.getDb().getBaseInfo(localAbspath, BaseInfoField.status, BaseInfoField.kind, BaseInfoField.revision, BaseInfoField.reposRelPath,
+                    BaseInfoField.reposRootUrl, BaseInfoField.reposUuid);
+            status = baseInfo.status;
+            dbKind = baseInfo.kind;
+            revision = baseInfo.revision;
+            reposRelpath = baseInfo.reposRelPath;
+            reposRootUrl = baseInfo.reposRootUrl;
+            reposUuid = baseInfo.reposUuid;
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND) {
+                throw e;
+            }
+        }
+        assert (dbKind == kind);
+        if (allowRemoval && (status == SVNWCDbStatus.NotPresent || (status == SVNWCDbStatus.Absent && revision != newRevision))) {
+            myWcContext.getDb().opRemoveEntryTemp(localAbspath);
+            return;
+        }
+        if (newReposRelpath != null) {
+            if (reposRelpath == null) {
+                WCDbRepositoryInfo reposInfo = myWcContext.getDb().scanBaseRepository(localAbspath, RepositoryInfoField.relPath, RepositoryInfoField.rootUrl, RepositoryInfoField.uuid);
+                reposRelpath = reposInfo.relPath;
+                reposRootUrl = reposInfo.rootUrl;
+                reposUuid = reposInfo.uuid;
+            }
+            if (!reposRelpath.equals(newReposRelpath)) {
+                setReposRelpath = true;
+            }
+        }
+        if (SVNRevision.isValidRevisionNumber(newRevision) && newRevision == revision) {
+            newRevision = SVNWCContext.INVALID_REVNUM;
+        }
+        if (SVNRevision.isValidRevisionNumber(newRevision) || setReposRelpath) {
+            myWcContext.getDb().opSetRevAndReposRelpathTemp(localAbspath, newRevision, setReposRelpath, newReposRelpath, reposRootUrl, reposUuid);
+        }
+        return;
+    }
+
+    private void tweakEntries(File dirAbspath, File newReposRelpath, SVNURL newReposRootUrl, String newReposUuid, long newRevision, SVNDepth depth, Set<File> excludePaths) throws SVNException {
+        if (excludePaths.contains(dirAbspath)) {
+            return;
+        }
+        tweakNode(dirAbspath, SVNWCDbKind.Dir, newReposRelpath, newReposRootUrl, newReposUuid, newRevision, false);
+        if (depth == SVNDepth.UNKNOWN) {
+            depth = SVNDepth.INFINITY;
+        }
+        if (depth.getId() <= SVNDepth.EMPTY.getId()) {
+            return;
+        }
+        List<String> children = myWcContext.getDb().getBaseChildren(dirAbspath);
+        for (String childBaseName : children) {
+            File childAbspath;
+            SVNWCDbKind kind;
+            SVNWCDbStatus status;
+            File childReposRelpath = null;
+            boolean excluded;
+            if (newReposRelpath != null) {
+                childReposRelpath = SVNFileUtil.createFilePath(newReposRelpath, childBaseName);
+            }
+            childAbspath = SVNFileUtil.createFilePath(dirAbspath, childBaseName);
+            excluded = excludePaths.contains(childAbspath);
+            if (excluded) {
+                continue;
+            }
+            WCDbInfo readInfo = myWcContext.getDb().readInfo(childAbspath, InfoField.status, InfoField.kind);
+            status = readInfo.status;
+            kind = readInfo.kind;
+            if (kind == SVNWCDbKind.File || status == SVNWCDbStatus.NotPresent || status == SVNWCDbStatus.Absent || status == SVNWCDbStatus.Excluded) {
+                tweakNode(childAbspath, kind, childReposRelpath, newReposRootUrl, newReposUuid, newRevision, true);
+            } else if ((depth == SVNDepth.INFINITY || depth == SVNDepth.IMMEDIATES) && (kind == SVNWCDbKind.Dir)) {
+                SVNDepth depthBelowHere = depth;
+                if (depth == SVNDepth.IMMEDIATES) {
+                    depthBelowHere = SVNDepth.EMPTY;
+                }
+                tweakEntries(childAbspath, childReposRelpath, newReposRootUrl, newReposUuid, newRevision, depthBelowHere, excludePaths);
+            }
+        }
+        return;
+    }
 }

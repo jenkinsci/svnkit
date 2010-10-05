@@ -2743,4 +2743,15 @@ public class SVNWCDb implements ISVNWCDb {
         // TODO
         throw new UnsupportedOperationException();
     }
+
+    public void opRemoveEntryTemp(File localAbspath) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    public void opSetRevAndReposRelpathTemp(File localAbspath, long newRevision, boolean setReposRelpath, File newReposRelpath, SVNURL reposRootUrl, String reposUuid) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
 }
