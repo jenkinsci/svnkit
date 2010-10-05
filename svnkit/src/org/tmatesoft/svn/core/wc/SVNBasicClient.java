@@ -632,6 +632,7 @@ public class SVNBasicClient implements ISVNEventHandler {
 
         if (!reposOnly) {
             mergeInfo = getWCMergeInfo(path, entry, null, inherit, false, indirect);
+            SVNDebugLog.getDefaultLog().logFinest(SVNLogType.WC, "merge: mergeinfo fetched from the working copy: " + mergeInfo);
         }
         
         if (mergeInfo == null) {            
@@ -656,6 +657,7 @@ public class SVNBasicClient implements ISVNEventHandler {
                             repository.setLocation(url, false);
                         }
                         reposMergeInfo = getReposMergeInfo(repository, repositoryPath, revision, inherit, true);
+                        SVNDebugLog.getDefaultLog().logFinest(SVNLogType.WC, "merge: mergeinfo fetched from repository: " + reposMergeInfo);
                     } finally {
                         if (closeRepository) {
                             repository.closeSession();
@@ -694,6 +696,7 @@ public class SVNBasicClient implements ISVNEventHandler {
                     inherit = SVNMergeInfoInheritance.INHERITED;
                 } else {
                     wcMergeInfo = SVNPropertiesManager.parseMergeInfo(path, entry, base);
+                    SVNDebugLog.getDefaultLog().logFinest(SVNLogType.WC, "merge: mergeinfo fetched from the working copy path: " + path + " = " + wcMergeInfo);
                 }
 
                 if (SVNWCManager.isEntrySwitched(path, entry)) {

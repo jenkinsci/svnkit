@@ -2149,6 +2149,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
 
     protected Map[] getFullMergeInfo(SVNEntry entry, boolean getRecorded, boolean getImplicit, boolean[] indirect, SVNMergeInfoInheritance inherit,
             SVNRepository repos, File target, long start, long end) throws SVNException {
+        SVNDebugLog.getDefaultLog().logFinest(SVNLogType.WC, "merge: fetching mergeinfo for: " + target);
         Map[] result = new Map[2];
         if (!SVNRevision.isValidRevisionNumber(start) || !SVNRevision.isValidRevisionNumber(end) || 
                 start <= end) {
@@ -2160,6 +2161,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
         //get recorded merge info
         if (getRecorded) {
             result[0] = getWCOrRepositoryMergeInfo(target, entry, inherit, indirect, false, repos);
+            SVNDebugLog.getDefaultLog().logFinest(SVNLogType.WC, "merge: target mergeinfo " + result[0]);
         }
         if (getImplicit) {
             long[] targetRev = new long[1];
@@ -2169,9 +2171,11 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
                 result[1] = new TreeMap();
                 return result;
             }
-    
+
+            SVNDebugLog.getDefaultLog().logFinest(SVNLogType.WC, "merge: fetching implicit mergeinfo for: " + url + "@" + start + ":" + end);
             Map implicitMergeInfo = calculateImplicitMergeInfo(repos, url, targetRev, start, end);
             if (implicitMergeInfo != null) {
+                SVNDebugLog.getDefaultLog().logFinest(SVNLogType.WC, "merge: implicit mergeinfo: " + implicitMergeInfo);
                 result[1] = implicitMergeInfo;
             }
         }
@@ -2981,6 +2985,11 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
         SVNURL primaryURL = revision1 < revision2 ? url2 : url1;
         Map adjustedTargetMergeInfo = null;
 
+        SVNDebugLog.getDefaultLog().logFinest(SVNLogType.WC, "merge: calculating remaining merge ranges for: " + child.myPath);
+        SVNDebugLog.getDefaultLog().logFinest(SVNLogType.WC, "merge: target merge info: " + targetMergeInfo);
+        SVNDebugLog.getDefaultLog().logFinest(SVNLogType.WC, "merge: implicit src gap: " + implicitSrcGap);
+        SVNDebugLog.getDefaultLog().logFinest(SVNLogType.WC, "merge: target pre-merge info: " + child.myPreMergeMergeInfo);
+
         String mergeInfoPath = getPathRelativeToRoot(null, primaryURL, sourceRootURL, null, repository);
         if (implicitSrcGap != null && child.myPreMergeMergeInfo != null) {
             SVNMergeRangeList explicitMergeInfoGapRanges = (SVNMergeRangeList) child.myPreMergeMergeInfo.get(mergeInfoPath);
@@ -2993,8 +3002,10 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
             adjustedTargetMergeInfo = targetMergeInfo;
         }
         
+        SVNDebugLog.getDefaultLog().logFinest(SVNLogType.WC, "merge: filtering already merged revisions for target with mergeinfo: " + adjustedTargetMergeInfo);
         filterMergedRevisions(parent, child, entry, repository, mergeInfoPath, 
                 adjustedTargetMergeInfo, revision1, revision2, childInheritsImplicit); 
+        SVNDebugLog.getDefaultLog().logFinest(SVNLogType.WC, "merge: remaining range after filtering: " + child.myRemainingRanges);
         
         if (isSubtree) {
             boolean isRollback = revision2 < revision1;
