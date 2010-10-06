@@ -392,7 +392,7 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
         }
         path = path.getAbsoluteFile();
         final SVNWCContext wcContext = new SVNWCContext(this.getOptions(), getEventDispatcher());
-        final File anchor = wcContext.acquireWriteLock(path, !innerUpdate);
+        final File anchor = wcContext.acquireWriteLock(path, !innerUpdate, true);
         try {
             return updateInternal(wcContext, path, anchor, revision, depth, depthIsSticky, allowUnversionedObstructions, sendCopyFrom, innerUpdate);
         } finally {

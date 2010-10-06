@@ -1649,4 +1649,6 @@ public interface ISVNWCDb {
 
     void opSetRevAndReposRelpathTemp(File localAbspath, long newRevision, boolean setReposRelpath, File newReposRelpath, SVNURL reposRootUrl, String reposUuid);
 
+    void obtainWCLock(File localAbspath, int i, boolean b);
+
 }

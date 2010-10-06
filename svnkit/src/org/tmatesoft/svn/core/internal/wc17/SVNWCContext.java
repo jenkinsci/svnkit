@@ -1380,13 +1380,15 @@ public class SVNWCContext {
 
     }
 
-    // TODO merget isSpecial()/getEOLStyle()/getKeyWords() into getTranslateInfo()
+    // TODO merget isSpecial()/getEOLStyle()/getKeyWords() into
+    // getTranslateInfo()
     public boolean isSpecial(File path) throws SVNException {
         final String property = getProperty(path, SVNProperty.SPECIAL);
         return property != null;
     }
 
-    // TODO merget isSpecial()/getEOLStyle()/getKeyWords() into getTranslateInfo()
+    // TODO merget isSpecial()/getEOLStyle()/getKeyWords() into
+    // getTranslateInfo()
     public SVNEolStyleInfo getEolStyle(File localAbsPath) throws SVNException {
         assert (isAbsolute(localAbsPath));
 
@@ -1397,7 +1399,8 @@ public class SVNWCContext {
         return SVNEolStyleInfo.fromValue(propVal);
     }
 
-    // TODO merget isSpecial()/getEOLStyle()/getKeyWords() into getTranslateInfo()
+    // TODO merget isSpecial()/getEOLStyle()/getKeyWords() into
+    // getTranslateInfo()
     public Map getKeyWords(File localAbsPath, String forceList) throws SVNException {
         assert (isAbsolute(localAbsPath));
 
@@ -2855,9 +2858,91 @@ public class SVNWCContext {
         }
     }
 
-    public File acquireWriteLock(File localAbspath, boolean lockAnchor) {
-        // TODO
-        throw new UnsupportedOperationException();
+    public File acquireWriteLock(File localAbspath, boolean lockAnchor, boolean returnLockRoot) throws SVNException {
+        SVNWCDbKind kind = db.readKind(localAbspath, returnLockRoot);
+        if (returnLockRoot && kind != SVNWCDbKind.Dir) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "Can't obtain lock on non-directory ''{0}''", localAbspath);
+            SVNErrorManager.error(err, SVNLogType.WC);
+            return null;
+        }
+        if (lockAnchor) {
+            assert (returnLockRoot);
+            File parentAbspath = SVNFileUtil.getFileDir(localAbspath);
+            SVNWCDbKind parentKind = SVNWCDbKind.Unknown;
+            try {
+                parentKind = db.readKind(parentAbspath, true);
+            } catch (SVNException e) {
+                if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_WORKING_COPY) {
+                    throw e;
+                }
+            }
+            if (kind == SVNWCDbKind.Dir && parentKind == SVNWCDbKind.Dir) {
+                boolean disjoint = isChildDisjoint(localAbspath);
+                if (!disjoint) {
+                    localAbspath = parentAbspath;
+                }
+            } else if (parentKind == SVNWCDbKind.Dir) {
+                localAbspath = parentAbspath;
+            } else if (kind != SVNWCDbKind.Dir) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_WORKING_COPY, "''{0}'' is not a working copy", localAbspath);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+        } else if (kind != SVNWCDbKind.Dir) {
+            localAbspath = SVNFileUtil.getFileDir(localAbspath);
+            if (kind == SVNWCDbKind.Unknown) {
+                kind = db.readKind(localAbspath, false);
+                if (kind != SVNWCDbKind.Dir) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "Can't obtain lock on non-directory ''{0}''", localAbspath);
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                }
+            }
+        }
+        db.obtainWCLock(localAbspath, -1, false);
+        if (returnLockRoot) {
+            return localAbspath;
+        }
+        return null;
+    }
+
+    private boolean isChildDisjoint(File localAbspath) throws SVNException {
+        boolean disjoint = db.isWCRoot(localAbspath);
+        if (disjoint) {
+            return disjoint;
+        }
+        File parentAbspath = SVNFileUtil.getFileDir(localAbspath);
+        String base = SVNFileUtil.getFileName(localAbspath);
+        WCDbInfo readInfo = db.readInfo(localAbspath, InfoField.reposRelPath, InfoField.reposRootUrl, InfoField.reposUuid);
+        SVNURL nodeReposRoot = readInfo.reposRootUrl;
+        File nodeReposRelpath = readInfo.reposRelPath;
+        String nodeReposUuid = readInfo.reposUuid;
+        if (nodeReposRelpath == null) {
+            disjoint = false;
+            return disjoint;
+        }
+        readInfo = db.readInfo(parentAbspath, InfoField.status, InfoField.reposRelPath, InfoField.reposRootUrl, InfoField.reposUuid);
+        SVNWCDbStatus parentStatus = readInfo.status;
+        SVNURL parentReposRoot = readInfo.reposRootUrl;
+        File parentReposRelpath = readInfo.reposRelPath;
+        String parentReposUuid = readInfo.reposUuid;
+        if (parentReposRelpath == null) {
+            if (parentStatus == SVNWCDbStatus.Added) {
+                WCDbAdditionInfo scanAddition = db.scanAddition(parentAbspath, AdditionInfoField.reposRelPath, AdditionInfoField.reposRelPath, AdditionInfoField.reposUuid);
+                parentReposRelpath = scanAddition.reposRelPath;
+                parentReposRoot = scanAddition.reposRootUrl;
+                parentReposUuid = scanAddition.reposUuid;
+            } else {
+                WCDbRepositoryInfo scanBaseRepository = db.scanBaseRepository(parentAbspath, RepositoryInfoField.values());
+                parentReposRelpath = scanBaseRepository.relPath;
+                parentReposRoot = scanBaseRepository.rootUrl;
+                parentReposUuid = scanBaseRepository.uuid;
+            }
+        }
+        if (!parentReposRoot.equals(nodeReposRoot) || !parentReposUuid.equals(nodeReposUuid) || !SVNFileUtil.createFilePath(parentReposRelpath, base).equals(nodeReposRelpath)) {
+            disjoint = true;
+        } else {
+            disjoint = false;
+        }
+        return disjoint;
     }
 
     public void releaseWriteLock(File localAbspath) {
@@ -2988,6 +3073,5 @@ public class SVNWCContext {
     public SVNSkel wqBuildRecordFileinfo(File localAbspath, SVNDate setDate) {
         return null;
     }
-
 
 }

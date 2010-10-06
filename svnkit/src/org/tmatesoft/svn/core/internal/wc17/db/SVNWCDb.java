@@ -2754,4 +2754,9 @@ public class SVNWCDb implements ISVNWCDb {
         throw new UnsupportedOperationException();
     }
 
+    public void obtainWCLock(File localAbspath, int i, boolean b) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
 }
