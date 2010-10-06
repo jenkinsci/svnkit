@@ -68,6 +68,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo.RepositoryInfoField;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbWorkQueueInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -2945,9 +2946,13 @@ public class SVNWCContext {
         return disjoint;
     }
 
-    public void releaseWriteLock(File localAbspath) {
-        // TODO
-        throw new UnsupportedOperationException();
+    public void releaseWriteLock(File localAbspath) throws SVNException {
+        WCDbWorkQueueInfo wqInfo = db.fetchWorkQueue(localAbspath);
+        if (wqInfo.workItem != null) {
+            return;
+        }
+        db.releaseWCLock(localAbspath);
+        return;
     }
 
     public void exclude(File localAbspath) {
