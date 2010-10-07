@@ -50,6 +50,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumInputStream;
 import org.tmatesoft.svn.core.internal.wc17.SVNStatus17.ConflictedInfo;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.CheckWCRootInfo;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.ISVNWCNodeHandler;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.NodeCopyFromField;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.WritableBaseInfo;
@@ -588,7 +589,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                 boolean wc_root = false;
                 boolean switched = false;
                 try {
-                    CheckWCRootInfo info = checkWCRoot(db.getLocalAbspath(), true);
+                    CheckWCRootInfo info = myWcContext.checkWCRoot(db.getLocalAbspath(), true);
                     wc_root = info.wcRoot;
                     switched = info.switched;
                 } catch (SVNException e) {
@@ -936,7 +937,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                 boolean wcRoot = false;
                 boolean switched = false;
                 try {
-                    CheckWCRootInfo checkWCRoot = checkWCRoot(fb.getLocalAbspath(), true);
+                    CheckWCRootInfo checkWCRoot = myWcContext.checkWCRoot(fb.getLocalAbspath(), true);
                     wcRoot = checkWCRoot.wcRoot;
                     switched = checkWCRoot.switched;
                 } catch (SVNException e) {
@@ -1927,70 +1928,6 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         }
         SVNConflictVersion srcRightVersion = new SVNConflictVersion(reposRootUrl, rightReposRelpath.getPath(), myTargetRevision, theirNodeKind);
         return new SVNTreeConflictDescription(localAbspath, conflictNodeKind, action, reason, mySwitchRelpath != null ? SVNOperation.SWITCH : SVNOperation.UPDATE, srcLeftVersion, srcRightVersion);
-    }
-
-    private static class CheckWCRootInfo {
-
-        public boolean wcRoot;
-        public SVNWCDbKind kind;
-        public boolean switched;
-    }
-
-    private CheckWCRootInfo checkWCRoot(File localAbspath, boolean fetchSwitched) throws SVNException {
-        File parentAbspath;
-        String name;
-        File reposRelpath;
-        SVNURL reposRoot;
-        String reposUuid;
-        SVNWCDbStatus status;
-        CheckWCRootInfo info = new CheckWCRootInfo();
-        info.wcRoot = true;
-        info.switched = false;
-        WCDbInfo readInfo = myWcContext.getDb().readInfo(localAbspath, InfoField.status, InfoField.kind, InfoField.reposRelPath, InfoField.reposRootUrl, InfoField.reposUuid);
-        status = readInfo.status;
-        info.kind = readInfo.kind;
-        reposRelpath = readInfo.reposRelPath;
-        reposRoot = readInfo.reposRootUrl;
-        reposUuid = readInfo.reposUuid;
-        if (reposRelpath == null) {
-            info.wcRoot = false;
-            return info;
-        }
-        if (info.kind != SVNWCDbKind.Dir) {
-            info.wcRoot = false;
-        } else if (status == SVNWCDbStatus.Added || status == SVNWCDbStatus.Deleted) {
-            info.wcRoot = false;
-        } else if (status == SVNWCDbStatus.Absent || status == SVNWCDbStatus.Excluded || status == SVNWCDbStatus.NotPresent) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{0}'' was not found.", localAbspath);
-            SVNErrorManager.error(err, SVNLogType.WC);
-            return null;
-        } else if (SVNFileUtil.getParentFile(localAbspath) == null) {
-            return info;
-        }
-
-        if (!info.wcRoot && !fetchSwitched) {
-            return info;
-        }
-        parentAbspath = SVNFileUtil.getParentFile(localAbspath);
-        name = SVNFileUtil.getFileName(localAbspath);
-        if (info.wcRoot) {
-            boolean isRoot = myWcContext.getDb().isWCRoot(localAbspath);
-            if (isRoot) {
-                return info;
-            }
-        }
-        {
-            WCDbRepositoryInfo parent = myWcContext.getDb().scanBaseRepository(parentAbspath, RepositoryInfoField.relPath, RepositoryInfoField.rootUrl, RepositoryInfoField.uuid);
-            if (!reposRoot.equals(parent.rootUrl) || !reposUuid.equals(parent.uuid)) {
-                return info;
-            }
-            info.wcRoot = false;
-            if (fetchSwitched) {
-                File expectedRelpath = SVNFileUtil.createFilePath(parent.relPath, name);
-                info.switched = !expectedRelpath.equals(reposRelpath);
-            }
-        }
-        return info;
     }
 
     private void checkPathUnderRoot(File localAbspath, String name) throws SVNException {

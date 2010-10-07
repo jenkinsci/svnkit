@@ -75,6 +75,8 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNConflictDescription;
+import org.tmatesoft.svn.core.wc.SVNEvent;
+import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNMergeFileSet;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
@@ -2955,9 +2957,147 @@ public class SVNWCContext {
         return;
     }
 
-    public void exclude(File localAbspath) {
-        // TODO
-        throw new UnsupportedOperationException();
+    public static class CheckWCRootInfo {
+
+        public boolean wcRoot;
+        public SVNWCDbKind kind;
+        public boolean switched;
+    }
+
+    public CheckWCRootInfo checkWCRoot(File localAbspath, boolean fetchSwitched) throws SVNException {
+        File parentAbspath;
+        String name;
+        File reposRelpath;
+        SVNURL reposRoot;
+        String reposUuid;
+        SVNWCDbStatus status;
+        CheckWCRootInfo info = new CheckWCRootInfo();
+        info.wcRoot = true;
+        info.switched = false;
+        WCDbInfo readInfo = db.readInfo(localAbspath, InfoField.status, InfoField.kind, InfoField.reposRelPath, InfoField.reposRootUrl, InfoField.reposUuid);
+        status = readInfo.status;
+        info.kind = readInfo.kind;
+        reposRelpath = readInfo.reposRelPath;
+        reposRoot = readInfo.reposRootUrl;
+        reposUuid = readInfo.reposUuid;
+        if (reposRelpath == null) {
+            info.wcRoot = false;
+            return info;
+        }
+        if (info.kind != SVNWCDbKind.Dir) {
+            info.wcRoot = false;
+        } else if (status == SVNWCDbStatus.Added || status == SVNWCDbStatus.Deleted) {
+            info.wcRoot = false;
+        } else if (status == SVNWCDbStatus.Absent || status == SVNWCDbStatus.Excluded || status == SVNWCDbStatus.NotPresent) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{0}'' was not found.", localAbspath);
+            SVNErrorManager.error(err, SVNLogType.WC);
+            return null;
+        } else if (SVNFileUtil.getParentFile(localAbspath) == null) {
+            return info;
+        }
+
+        if (!info.wcRoot && !fetchSwitched) {
+            return info;
+        }
+        parentAbspath = SVNFileUtil.getParentFile(localAbspath);
+        name = SVNFileUtil.getFileName(localAbspath);
+        if (info.wcRoot) {
+            boolean isRoot = db.isWCRoot(localAbspath);
+            if (isRoot) {
+                return info;
+            }
+        }
+        {
+            WCDbRepositoryInfo parent = db.scanBaseRepository(parentAbspath, RepositoryInfoField.relPath, RepositoryInfoField.rootUrl, RepositoryInfoField.uuid);
+            if (!reposRoot.equals(parent.rootUrl) || !reposUuid.equals(parent.uuid)) {
+                return info;
+            }
+            info.wcRoot = false;
+            if (fetchSwitched) {
+                File expectedRelpath = SVNFileUtil.createFilePath(parent.relPath, name);
+                info.switched = !expectedRelpath.equals(reposRelpath);
+            }
+        }
+        return info;
+    }
+
+    public void exclude(File localAbspath) throws SVNException {
+        boolean isRoot, isSwitched;
+        SVNWCDbStatus status;
+        SVNWCDbKind kind;
+        long revision;
+        File reposRelpath;
+        SVNURL reposRoot;
+        String reposUuid;
+        boolean haveBase;
+        CheckWCRootInfo checkWCRoot = checkWCRoot(localAbspath, true);
+        isRoot = checkWCRoot.wcRoot;
+        isSwitched = checkWCRoot.wcRoot;
+        if (isRoot) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Cannot exclude ''{0}'': it is a working copy root", localAbspath);
+            SVNErrorManager.error(err, SVNLogType.WC);
+            return;
+        }
+        if (isSwitched) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Cannot exclude ''{0}'': it is a switched path", localAbspath);
+            SVNErrorManager.error(err, SVNLogType.WC);
+            return;
+        }
+        WCDbInfo readInfo = db.readInfo(localAbspath, InfoField.status, InfoField.kind, InfoField.revision, InfoField.reposRelPath, InfoField.reposRootUrl, InfoField.reposUuid, InfoField.haveBase);
+        status = readInfo.status;
+        kind = readInfo.kind;
+        revision = readInfo.revision;
+        reposRelpath = readInfo.reposRelPath;
+        reposRoot = readInfo.reposRootUrl;
+        reposUuid = readInfo.reposUuid;
+        haveBase = readInfo.haveBase;
+        switch (status) {
+            case Absent:
+            case Excluded:
+            case NotPresent: {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ASSERTION_FAIL);
+                SVNErrorManager.error(err, SVNLogType.WC);
+                return;
+            }
+            case Added: {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Cannot exclude ''{0}'': it is to be added to the repository. Try commit instead", localAbspath);
+                SVNErrorManager.error(err, SVNLogType.WC);
+                return;
+            }
+            case Deleted: {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Cannot exclude ''{0}'': it is to be deleted from the repository. Try commit instead", localAbspath);
+                SVNErrorManager.error(err, SVNLogType.WC);
+                return;
+            }
+            case Normal:
+            case Incomplete:
+            default:
+                break;
+        }
+        if (haveBase) {
+            WCDbBaseInfo baseInfo = db.getBaseInfo(localAbspath, BaseInfoField.kind, BaseInfoField.revision, BaseInfoField.reposRelPath, BaseInfoField.reposRootUrl, BaseInfoField.reposUuid);
+            kind = baseInfo.kind;
+            revision = baseInfo.revision;
+            reposRelpath = baseInfo.reposRelPath;
+            reposRoot = baseInfo.reposRootUrl;
+            reposUuid = baseInfo.reposUuid;
+        }
+        try {
+            removeFromRevisionControl(localAbspath, true, false);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_LEFT_LOCAL_MOD) {
+                throw e;
+            }
+        }
+        db.addBaseAbsentNode(localAbspath, reposRelpath, reposRoot, reposUuid, revision, kind, SVNWCDbStatus.Excluded, null, null);
+        if (eventHandler != null) {
+            SVNEvent event = new SVNEvent(localAbspath, null, null, 0, null, null, null, null, SVNEventAction.DELETE, null, null, null, null);
+            eventHandler.handleEvent(event, 0);
+        }
+        return;
+    }
+
+    private void removeFromRevisionControl(File localAbspath, boolean b, boolean c) throws SVNException {
     }
 
     public void cropTree(File localAbspath, SVNDepth depth) {
