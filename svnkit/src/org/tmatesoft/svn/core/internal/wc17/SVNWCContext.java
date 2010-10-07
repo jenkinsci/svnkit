@@ -3091,7 +3091,7 @@ public class SVNWCContext {
         }
         db.addBaseAbsentNode(localAbspath, reposRelpath, reposRoot, reposUuid, revision, kind, SVNWCDbStatus.Excluded, null, null);
         if (eventHandler != null) {
-            SVNEvent event = new SVNEvent(localAbspath, null, null, 0, null, null, null, null, SVNEventAction.DELETE, null, null, null, null);
+            SVNEvent event = new SVNEvent(localAbspath, null, null, -1, null, null, null, null, SVNEventAction.DELETE, null, null, null, null);
             eventHandler.handleEvent(event, 0);
         }
         return;
@@ -3217,9 +3217,107 @@ public class SVNWCContext {
         }
     }
 
-    public void cropTree(File localAbspath, SVNDepth depth) {
-        // TODO
-        throw new UnsupportedOperationException();
+    public void cropTree(File localAbspath, SVNDepth depth) throws SVNException {
+
+        if (depth == SVNDepth.INFINITY) {
+            return;
+        }
+        if (!(depth.getId() > SVNDepth.EXCLUDE.getId() && depth.getId() < SVNDepth.INFINITY.getId())) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Can only crop a working copy with a restrictive depth");
+            SVNErrorManager.error(err, SVNLogType.WC);
+            return;
+        }
+
+        {
+            WCDbInfo readInfo = db.readInfo(localAbspath, InfoField.status, InfoField.kind);
+            SVNWCDbStatus status = readInfo.status;
+            SVNWCDbKind kind = readInfo.kind;
+
+            if (kind != SVNWCDbKind.Dir) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Can only crop directories");
+                SVNErrorManager.error(err, SVNLogType.WC);
+                return;
+            }
+
+            if (status == SVNWCDbStatus.NotPresent || status == SVNWCDbStatus.Absent) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{0}'' was not found.", localAbspath);
+                SVNErrorManager.error(err, SVNLogType.WC);
+                return;
+            }
+
+            if (status == SVNWCDbStatus.Deleted) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Cannot crop ''{0}'': it is going to be removed from repository. Try commit instead", localAbspath);
+                SVNErrorManager.error(err, SVNLogType.WC);
+                return;
+            }
+
+            if (status == SVNWCDbStatus.Added) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Cannot crop ''{0}'': it is to be added to the repository. Try commit instead", localAbspath);
+                SVNErrorManager.error(err, SVNLogType.WC);
+                return;
+            }
+        }
+        cropChildren(localAbspath, depth);
+    }
+
+    private void cropChildren(File localAbspath, SVNDepth depth) throws SVNException {
+        assert (depth.getId() >= SVNDepth.EMPTY.getId() && depth.getId() <= SVNDepth.INFINITY.getId());
+        checkCancelled();
+        SVNDepth dirDepth = db.readInfo(localAbspath, InfoField.depth).depth;
+        if (dirDepth == SVNDepth.UNKNOWN) {
+            dirDepth = SVNDepth.INFINITY;
+        }
+        if (dirDepth.getId() > depth.getId()) {
+            db.opSetDirDepthTemp(localAbspath, depth);
+        }
+        List<String> children = db.readChildren(localAbspath);
+        for (String childName : children) {
+            File childAbspath = SVNFileUtil.createFilePath(localAbspath, childName);
+            WCDbInfo readInfo = db.readInfo(childAbspath, InfoField.status, InfoField.kind, InfoField.depth);
+            SVNWCDbStatus childStatus = readInfo.status;
+            SVNWCDbKind kind = readInfo.kind;
+            SVNDepth childDepth = readInfo.depth;
+            if (childStatus == SVNWCDbStatus.Absent || childStatus == SVNWCDbStatus.Excluded || childStatus == SVNWCDbStatus.NotPresent) {
+                SVNDepth removeBelow = (kind == SVNWCDbKind.Dir) ? SVNDepth.IMMEDIATES : SVNDepth.FILES;
+                if (depth.getId() < removeBelow.getId()) {
+                    db.opRemoveEntryTemp(localAbspath);
+                }
+                continue;
+            } else if (kind == SVNWCDbKind.File) {
+                if (depth == SVNDepth.EMPTY) {
+                    try {
+                        removeFromRevisionControl(childAbspath, true, false);
+                    } catch (SVNException e) {
+                        if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_LEFT_LOCAL_MOD) {
+                            throw e;
+                        }
+                    }
+                } else {
+                    continue;
+                }
+            } else if (kind == SVNWCDbKind.Dir) {
+                if (depth.getId() < SVNDepth.IMMEDIATES.getId()) {
+                    try {
+                        removeFromRevisionControl(childAbspath, true, false);
+                    } catch (SVNException e) {
+                        if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_LEFT_LOCAL_MOD) {
+                            throw e;
+                        }
+                    }
+                } else {
+                    cropChildren(childAbspath, SVNDepth.EMPTY);
+                    continue;
+                }
+            } else {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNKNOWN_KIND, "Unknown node kind for ''{0}''", childAbspath);
+                SVNErrorManager.error(err, SVNLogType.WC);
+                return;
+            }
+            if (eventHandler != null) {
+                SVNEvent event = new SVNEvent(childAbspath, null, null, -1, null, null, null, null, SVNEventAction.DELETE, null, null, null, null);
+                eventHandler.handleEvent(event, 0);
+            }
+        }
     }
 
     public class SVNWCNodeReposInfo {
