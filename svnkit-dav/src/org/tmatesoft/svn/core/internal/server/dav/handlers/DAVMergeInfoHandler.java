@@ -74,7 +74,9 @@ public class DAVMergeInfoHandler extends DAVReportHandler {
         for (int i = 0; i < getMergeInfoRequest().getTargetPaths().length; i++) {
             String currentPath = getMergeInfoRequest().getTargetPaths()[i];
             DAVPathUtil.testCanonical(currentPath);
-            getMergeInfoRequest().getTargetPaths()[i] = SVNPathUtil.append(getDAVResource().getResourceURI().getPath(), currentPath);
+            if (currentPath.length() == 0 || currentPath.charAt(0) != '/') {
+                getMergeInfoRequest().getTargetPaths()[i] = SVNPathUtil.append(getDAVResource().getResourceURI().getPath(), currentPath);
+            }
         }
 
         //TODO: fixme - add includeDescendants parameter
