@@ -3207,7 +3207,14 @@ public class SVNWCContext {
         }
     }
 
-    private void destroyAdm(File localAbspath) {
+    private void destroyAdm(File dirAbspath) throws SVNException {
+        assert (SVNFileUtil.isAbsolute(dirAbspath));
+        writeCheck(dirAbspath);
+        File admAbspath = db.getWCRoot(dirAbspath);
+        db.forgetDirectoryTemp(dirAbspath);
+        if (admAbspath.equals(dirAbspath)) {
+            SVNFileUtil.deleteAll(SVNWCDb.admChild(admAbspath, null), true, this.eventHandler);
+        }
     }
 
     public void cropTree(File localAbspath, SVNDepth depth) {

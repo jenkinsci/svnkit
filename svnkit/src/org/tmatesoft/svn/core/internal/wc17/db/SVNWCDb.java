@@ -438,8 +438,8 @@ public class SVNWCDb implements ISVNWCDb {
         throw new UnsupportedOperationException();
     }
 
-    public void addBaseFile(File localAbspath, File reposRelpath, SVNURL reposRootUrl, String reposUuid, long revision, SVNProperties props, long changedRev, SVNDate changedDate, String changedAuthor,
-            SVNChecksum checksum, long translatedSize, SVNProperties properties, SVNSkel conflict, SVNSkel workItems) throws SVNException {
+    public void addBaseFile(File localAbspath, File reposRelpath, SVNURL reposRootUrl, String reposUuid, long revision, SVNProperties props, long changedRev, SVNDate changedDate,
+            String changedAuthor, SVNChecksum checksum, long translatedSize, SVNProperties properties, SVNSkel conflict, SVNSkel workItems) throws SVNException {
         // TODO
         throw new UnsupportedOperationException();
     }
@@ -711,8 +711,8 @@ public class SVNWCDb implements ISVNWCDb {
         throw new UnsupportedOperationException();
     }
 
-    public void globalCommit(File localAbspath, long newRevision, SVNDate newDate, String newAuthor, SVNChecksum newChecksum, List<File> newChildren, SVNProperties newDavCache, boolean keepChangelist,
-            SVNSkel workItems) throws SVNException {
+    public void globalCommit(File localAbspath, long newRevision, SVNDate newDate, String newAuthor, SVNChecksum newChecksum, List<File> newChildren, SVNProperties newDavCache,
+            boolean keepChangelist, SVNSkel workItems) throws SVNException {
         // TODO
         throw new UnsupportedOperationException();
     }
@@ -727,8 +727,8 @@ public class SVNWCDb implements ISVNWCDb {
         throw new UnsupportedOperationException();
     }
 
-    public void globalUpdate(File localAbsPath, SVNWCDbKind newKind, File newReposRelpath, long newRevision, SVNProperties newProps, long newChangedRev, SVNDate newChangedDate, String newChangedAuthor,
-            List<File> newChildren, SVNChecksum newChecksum, File newTarget, SVNProperties newDavCache, SVNSkel conflict, SVNSkel workItems) throws SVNException {
+    public void globalUpdate(File localAbsPath, SVNWCDbKind newKind, File newReposRelpath, long newRevision, SVNProperties newProps, long newChangedRev, SVNDate newChangedDate,
+            String newChangedAuthor, List<File> newChildren, SVNChecksum newChecksum, File newTarget, SVNProperties newDavCache, SVNSkel conflict, SVNSkel workItems) throws SVNException {
         // TODO
         throw new UnsupportedOperationException();
     }
@@ -1206,8 +1206,8 @@ public class SVNWCDb implements ISVNWCDb {
         throw new UnsupportedOperationException();
     }
 
-    public void opCopySymlink(File localAbsPath, SVNProperties props, long changedRev, SVNDate changedDate, String changedAuthor, File originalReposRelPath, SVNURL originalRootUrl, String originalUuid,
-            long originalRevision, File target, SVNSkel conflict, SVNSkel workItems) throws SVNException {
+    public void opCopySymlink(File localAbsPath, SVNProperties props, long changedRev, SVNDate changedDate, String changedAuthor, File originalReposRelPath, SVNURL originalRootUrl,
+            String originalUuid, long originalRevision, File target, SVNSkel conflict, SVNSkel workItems) throws SVNException {
         // TODO
         throw new UnsupportedOperationException();
     }
@@ -2573,7 +2573,7 @@ public class SVNWCDb implements ISVNWCDb {
         return SVNSqlJetDb.open(admChild(dirAbsPath, sdbFileName), sMode);
     }
 
-    private static File admChild(File dirAbsPath, String sdbFileName) {
+    public static File admChild(File dirAbsPath, String sdbFileName) {
         return SVNFileUtil.createFilePath(SVNFileUtil.createFilePath(dirAbsPath, SVNFileUtil.getAdminDirectoryName()), sdbFileName);
     }
 
@@ -2760,6 +2760,16 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     public void releaseWCLock(File localAbspath) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    public File getWCRoot(File dirAbspath) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    public void forgetDirectoryTemp(File dirAbspath) {
         // TODO
         throw new UnsupportedOperationException();
     }

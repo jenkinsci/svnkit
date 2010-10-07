@@ -1653,4 +1653,8 @@ public interface ISVNWCDb {
 
     void releaseWCLock(File localAbspath);
 
+    File getWCRoot(File dirAbspath);
+
+    void forgetDirectoryTemp(File dirAbspath);
+
 }

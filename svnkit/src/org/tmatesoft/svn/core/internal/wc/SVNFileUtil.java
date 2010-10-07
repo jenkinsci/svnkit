@@ -1919,7 +1919,7 @@ public class SVNFileUtil {
 
     public static File createFilePath(File parent, String child) {
         if (child == null)
-            return null;
+            return parent;
         if (parent == null)
             return createFilePath(child);
         return createFilePath(parent.toString(), child.toString());
