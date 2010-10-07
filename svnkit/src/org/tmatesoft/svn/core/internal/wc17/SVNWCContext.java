@@ -3097,7 +3097,117 @@ public class SVNWCContext {
         return;
     }
 
-    private void removeFromRevisionControl(File localAbspath, boolean b, boolean c) throws SVNException {
+    public static class CheckSpecialInfo {
+
+        SVNNodeKind kind;
+        boolean isSpecial;
+    }
+
+    public static CheckSpecialInfo checkSpecialPath(File localAbspath) {
+        CheckSpecialInfo info = new CheckSpecialInfo();
+        SVNFileType fileType = SVNFileType.getType(localAbspath);
+        info.kind = SVNFileType.getNodeKind(fileType);
+        info.isSpecial = !SVNFileUtil.symlinksSupported() ? false : fileType == SVNFileType.SYMLINK;
+        return info;
+    }
+
+    public void removeFromRevisionControl(File localAbspath, boolean destroyWf, boolean instantError) throws SVNException {
+        assert (SVNFileUtil.isAbsolute(localAbspath));
+        checkCancelled();
+        boolean leftSomething = false;
+        WCDbInfo readInfo = db.readInfo(localAbspath, InfoField.status, InfoField.kind);
+        SVNWCDbStatus status = readInfo.status;
+        SVNWCDbKind kind = readInfo.kind;
+        if (kind == SVNWCDbKind.File || kind == SVNWCDbKind.Symlink) {
+            boolean textModified = false;
+            SVNChecksum baseSha1Checksum = null;
+            SVNChecksum workingSha1Checksum = null;
+            boolean wcSpecial = isSpecial(localAbspath);
+            CheckSpecialInfo checkSpecialPath = checkSpecialPath(localAbspath);
+            SVNNodeKind onDisk = checkSpecialPath.kind;
+            boolean localSpecial = checkSpecialPath.isSpecial;
+            if (wcSpecial || !localSpecial) {
+                textModified = isTextModified(localAbspath, false, true);
+                if (textModified && instantError) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LEFT_LOCAL_MOD, "File ''{0}'' has local modifications", localAbspath);
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                    return;
+                }
+            }
+            try {
+                baseSha1Checksum = db.getBaseInfo(localAbspath, BaseInfoField.checksum).checksum;
+            } catch (SVNException e) {
+                if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND) {
+                    throw e;
+                }
+            }
+            try {
+                workingSha1Checksum = db.readInfo(localAbspath, InfoField.checksum).checksum;
+            } catch (SVNException e) {
+                if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND) {
+                    throw e;
+                }
+            }
+            db.opRemoveEntryTemp(localAbspath);
+            if (baseSha1Checksum != null) {
+                db.removePristine(localAbspath, baseSha1Checksum);
+            }
+            if (workingSha1Checksum != null && !workingSha1Checksum.equals(baseSha1Checksum)) {
+                db.removePristine(localAbspath, workingSha1Checksum);
+            }
+            if (destroyWf) {
+                if ((!wcSpecial && localSpecial) || textModified) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LEFT_LOCAL_MOD);
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                    return;
+                }
+                SVNFileUtil.deleteFile(localAbspath);
+            }
+        } else {
+            List<String> children = db.readChildren(localAbspath);
+            for (String entryName : children) {
+                File entryAbspath = SVNFileUtil.createFilePath(localAbspath, entryName);
+                boolean hidden = db.isNodeHidden(entryAbspath);
+                if (hidden) {
+                    db.opRemoveEntryTemp(entryAbspath);
+                    continue;
+                }
+                try {
+                    removeFromRevisionControl(entryAbspath, destroyWf, instantError);
+                } catch (SVNException e) {
+                    if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_LEFT_LOCAL_MOD) {
+                        if (instantError) {
+                            throw e;
+                        }
+                        leftSomething = true;
+                    } else {
+                        throw e;
+                    }
+                }
+            }
+            {
+                boolean isRoot = checkWCRoot(localAbspath, false).wcRoot;
+                if (!isRoot) {
+                    db.opRemoveEntryTemp(localAbspath);
+                }
+            }
+            destroyAdm(localAbspath);
+            if (destroyWf && (!leftSomething)) {
+                try {
+                    SVNFileUtil.deleteAll(localAbspath, false, this.getEventHandler());
+                } catch (SVNException e) {
+                    leftSomething = true;
+                }
+            }
+
+        }
+        if (leftSomething) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LEFT_LOCAL_MOD);
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+    }
+
+    private void destroyAdm(File localAbspath) {
     }
 
     public void cropTree(File localAbspath, SVNDepth depth) {
