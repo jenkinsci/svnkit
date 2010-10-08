@@ -3326,9 +3326,36 @@ public class SVNWCContext {
         public String reposUuid;
     }
 
-    public SVNWCNodeReposInfo getNodeReposInfo(File baseDirAbspath, boolean scanAdded, boolean scanDeleted) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+    public SVNWCNodeReposInfo getNodeReposInfo(File localAbspath, boolean scanAdded, boolean scanDeleted) throws SVNException {
+        SVNWCNodeReposInfo info = new SVNWCNodeReposInfo();
+        info.reposRootUrl = null;
+        info.reposUuid = null;
+        SVNWCDbStatus status;
+        try {
+            WCDbInfo readInfo = db.readInfo(localAbspath, InfoField.status, InfoField.reposRootUrl, InfoField.reposUuid);
+            status = readInfo.status;
+            info.reposRootUrl = readInfo.reposRootUrl;
+            info.reposUuid = readInfo.reposUuid;
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND && e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_WORKING_COPY) {
+                throw e;
+            }
+            return info;
+        }
+        if (scanAdded && (status == SVNWCDbStatus.Added)) {
+            WCDbAdditionInfo scanAddition = db.scanAddition(localAbspath, AdditionInfoField.status, AdditionInfoField.reposRootUrl, AdditionInfoField.reposUuid);
+            status = scanAddition.status;
+            info.reposRootUrl = scanAddition.reposRootUrl;
+            info.reposUuid = scanAddition.reposUuid;
+            return info;
+        }
+        if (status == SVNWCDbStatus.Normal || status == SVNWCDbStatus.Absent || status == SVNWCDbStatus.Excluded || status == SVNWCDbStatus.NotPresent
+                || (scanDeleted && (status == SVNWCDbStatus.Deleted))) {
+            WCDbRepositoryInfo scanBaseRepository = db.scanBaseRepository(localAbspath, RepositoryInfoField.rootUrl, RepositoryInfoField.uuid);
+            info.reposRootUrl = scanBaseRepository.rootUrl;
+            info.reposUuid = scanBaseRepository.uuid;
+        }
+        return info;
     }
 
     public SVNSkel wqBuildBaseRemove(File localAbspath, boolean b) {
