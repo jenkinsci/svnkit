@@ -247,7 +247,7 @@ public class SVNSkel {
         return (SVNSkel) myList.get(i);
     }
 
-    private void appendChild(SVNSkel child) throws SVNException {
+    public void appendChild(SVNSkel child) throws SVNException {
         if (isAtom()) {
             SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.FS_MALFORMED_SKEL, "Unable to add a child to atom");
             SVNErrorManager.error(error, SVNLogType.DEFAULT);
@@ -267,7 +267,7 @@ public class SVNSkel {
         SVNSkel skel = SVNSkel.createAtom(str);
         addChild(skel);
     }
-    
+
     public int getListSize() {
         if (isAtom()) {
             return -1;
@@ -374,7 +374,7 @@ public class SVNSkel {
                 }
                 buffer = allocate(buffer, sizeBytes.length + 1 + data.length);
                 buffer.put(sizeBytes);
-                
+
                 try {
                     buffer.put(" ".getBytes("UTF-8"));
                 } catch (UnsupportedEncodingException e) {

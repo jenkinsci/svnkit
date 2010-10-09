@@ -78,7 +78,9 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.ISVNConflictHandler;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
+import org.tmatesoft.svn.core.wc.SVNConflictAction;
 import org.tmatesoft.svn.core.wc.SVNConflictDescription;
+import org.tmatesoft.svn.core.wc.SVNConflictReason;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNMergeFileSet;
@@ -94,15 +96,18 @@ import org.tmatesoft.svn.util.SVNLogType;
  */
 public class SVNWCContext {
 
-    /**
-     * @version 1.3
-     * @author TMate Software Ltd.
-     */
-    private static class MergePropStatusInfo {
+    public static enum ConflictKind {
+        TEXT("text"), PROP("prop"), TREE("tree"), REJECT("reject"), OBSTRUCTED("obstructed");
 
-        public SVNStatusType state;
-        public boolean conflictRemains;
+        private final String name;
 
+        private ConflictKind(String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
     }
 
     public static final long INVALID_REVNUM = -1;
@@ -3509,14 +3514,36 @@ public class SVNWCContext {
         return null;
     }
 
-    private void conflictSkelAddPropConflict(SVNSkel conflictSkel, String propname, String baseVal, String mineVal, String toVal, String fromVal) {
-        // TODO
-        throw new UnsupportedOperationException();
+    private void conflictSkelAddPropConflict(SVNSkel skel, String propName, String originalValue, String mineValue, String incomingValue, String incomingBaseValue) throws SVNException {
+        SVNSkel propSkel = SVNSkel.createEmptyList();
+        prependPropValue(incomingBaseValue, propSkel);
+        prependPropValue(incomingValue, propSkel);
+        prependPropValue(mineValue, propSkel);
+        prependPropValue(originalValue, propSkel);
+        propSkel.prependString(propName);
+        propSkel.prependString(ConflictKind.PROP.getName());
+        skel.appendChild(propSkel);
     }
 
-    private SVNSkel newConflictSkel() {
-        // TODO
-        throw new UnsupportedOperationException();
+    private void prependPropValue(String value, SVNSkel skel) throws SVNException {
+        SVNSkel valueSkel = SVNSkel.createEmptyList();
+        if (value != null) {
+            valueSkel.prependString(value);
+        }
+        skel.addChild(valueSkel);
+    }
+
+    private SVNSkel newConflictSkel() throws SVNException {
+        SVNSkel operation = SVNSkel.createEmptyList();
+        SVNSkel result = SVNSkel.createEmptyList();
+        result.addChild(operation);
+        return result;
+    }
+
+    private static class MergePropStatusInfo {
+
+        public SVNStatusType state;
+        public boolean conflictRemains;
     }
 
     private MergePropStatusInfo applySinglePropChange(SVNStatusType state, File localAbspath, SVNConflictVersion leftVersion, SVNConflictVersion rightVersion, boolean isDir,
