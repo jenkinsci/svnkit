@@ -3358,24 +3358,9 @@ public class SVNWCContext {
         return info;
     }
 
-    public SVNSkel wqBuildBaseRemove(File localAbspath, boolean b) {
-        // TODO
-        throw new UnsupportedOperationException();
-    }
-
-    public void wqAdd(File dir_abspath, SVNSkel workItem) {
-        // TODO
-        throw new UnsupportedOperationException();
-    }
-
-    public void wqRun(File dir_abspath) {
-        // TODO
-        throw new UnsupportedOperationException();
-    }
-
-    public SVNTreeConflictDescription getTreeConflict(File localAbspath) {
-        // TODO
-        throw new UnsupportedOperationException();
+    public SVNTreeConflictDescription getTreeConflict(File victimAbspath) throws SVNException {
+        assert (SVNFileUtil.isAbsolute(victimAbspath));
+        return db.opReadTreeConflict(victimAbspath);
     }
 
     public void writeCheck(File localAbspath) {
@@ -3421,22 +3406,6 @@ public class SVNWCContext {
         throw new UnsupportedOperationException();
     }
 
-    public SVNSkel wqBuildFileInstall(File localAbspath, File installFrom, boolean isUseCommitTimes, boolean recordFileinfo) {
-        return null;
-    }
-
-    public SVNSkel wqMerge(SVNSkel workItem) {
-        return null;
-    }
-
-    public SVNSkel wqBuildSyncFileFlags(File localAbspath) {
-        return null;
-    }
-
-    public SVNSkel wqBuildFileRemove(File installFrom) {
-        return null;
-    }
-
     public boolean hasMagicProperty(SVNProperties changedProperties) {
         return false;
     }
@@ -3457,7 +3426,38 @@ public class SVNWCContext {
         return null;
     }
 
+    public SVNSkel wqBuildBaseRemove(File localAbspath, boolean b) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    public void wqAdd(File dir_abspath, SVNSkel workItem) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    public void wqRun(File dir_abspath) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
     public SVNSkel wqBuildRecordFileinfo(File localAbspath, SVNDate setDate) {
+        return null;
+    }
+
+    public SVNSkel wqBuildFileInstall(File localAbspath, File installFrom, boolean isUseCommitTimes, boolean recordFileinfo) {
+        return null;
+    }
+
+    public SVNSkel wqMerge(SVNSkel workItem) {
+        return null;
+    }
+
+    public SVNSkel wqBuildSyncFileFlags(File localAbspath) {
+        return null;
+    }
+
+    public SVNSkel wqBuildFileRemove(File installFrom) {
         return null;
     }
 
