@@ -2779,4 +2779,14 @@ public class SVNWCDb implements ISVNWCDb {
         throw new UnsupportedOperationException();
     }
 
+    public SVNSkel buildSetPropertyConflictMarkerWorkQueueTemp(File localAbspath, String fileExtension) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    public SVNSkel buildPrejInstallWorkQueue(File localAbspath, SVNSkel conflictSkel) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
 }

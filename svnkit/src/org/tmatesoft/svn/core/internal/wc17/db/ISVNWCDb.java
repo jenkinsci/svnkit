@@ -1659,4 +1659,8 @@ public interface ISVNWCDb {
 
     boolean isWCLockOwns(File localAbspath, boolean exact);
 
+    SVNSkel buildSetPropertyConflictMarkerWorkQueueTemp(File localAbspath, String fileExtension);
+
+    SVNSkel buildPrejInstallWorkQueue(File localAbspath, SVNSkel conflictSkel);
+
 }

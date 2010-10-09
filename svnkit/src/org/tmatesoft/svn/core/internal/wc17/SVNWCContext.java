@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +36,7 @@ import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
@@ -44,6 +46,7 @@ import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
 import org.tmatesoft.svn.core.internal.wc.SVNChecksumKind;
+import org.tmatesoft.svn.core.internal.wc.SVNConflictVersion;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -72,6 +75,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbWorkQueueInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.wc.ISVNConflictHandler;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNConflictDescription;
@@ -90,8 +94,22 @@ import org.tmatesoft.svn.util.SVNLogType;
  */
 public class SVNWCContext {
 
+    /**
+     * @version 1.3
+     * @author TMate Software Ltd.
+     */
+    private static class MergePropStatusInfo {
+
+        public SVNStatusType state;
+        public boolean conflictRemains;
+
+    }
+
     public static final long INVALID_REVNUM = -1;
     private static final int STREAM_CHUNK_SIZE = 16384;
+
+    private static final String THIS_DIR_PREJ = "dir_conflicts";
+    private static final String PROP_REJ_EXT = ".prej";
 
     public interface CleanupHandler {
 
@@ -3388,8 +3406,129 @@ public class SVNWCContext {
         return db.readProperties(localAbspath);
     }
 
-    public SVNStatusType mergeProperties(SVNProperties newBaseProps, SVNProperties newActualProps, File localAbspath, SVNWCDbKind dir, Object object, Object object2, Object object3,
-            SVNProperties baseProps, SVNProperties actualProps, SVNProperties regularProps, boolean b, boolean c) throws SVNException {
+    public SVNStatusType mergeProperties(SVNProperties newBaseProps, SVNProperties newActualProps, File localAbspath, SVNWCDbKind kind, SVNConflictVersion leftVersion,
+            SVNConflictVersion rightVersion, SVNProperties serverBaseprops, SVNProperties baseProps, SVNProperties workingProps, SVNProperties propChanges, boolean baseMerge, boolean dryRun)
+            throws SVNException {
+        assert (baseProps != null);
+        assert (workingProps != null);
+        SVNSkel conflictSkel = null;
+        boolean isDir = (kind == SVNWCDbKind.Dir);
+        SVNStatusType state = SVNStatusType.UNCHANGED;
+        ISVNConflictHandler conflictResolver = getOptions().getConflictResolver();
+        if (serverBaseprops == null) {
+            serverBaseprops = baseProps;
+        }
+        for (Iterator<String> i = propChanges.nameSet().iterator(); i.hasNext();) {
+            checkCancelled();
+            String propname = i.next();
+            String toVal = propChanges.getStringValue(propname);
+            String fromVal = serverBaseprops.getStringValue(propname);
+            String baseVal = baseProps.getStringValue(propname);
+            boolean conflictRemains;
+            if (baseMerge) {
+                baseProps.put(propname, toVal);
+            }
+            String mineVal = workingProps.getStringValue(propname);
+            state = setPropMergeState(state, SVNStatusType.CHANGED);
+            if (fromVal == null) {
+                MergePropStatusInfo mergePropStatus = applySinglePropAdd(state, localAbspath, leftVersion, rightVersion, isDir, workingProps, propname, baseVal, toVal, conflictResolver, dryRun);
+                state = mergePropStatus.state;
+                conflictRemains = mergePropStatus.conflictRemains;
+            } else if (toVal == null) {
+                MergePropStatusInfo mergePropStatus = applySinglePropDelete(state, localAbspath, leftVersion, rightVersion, isDir, workingProps, propname, baseVal, toVal, conflictResolver, dryRun);
+                state = mergePropStatus.state;
+                conflictRemains = mergePropStatus.conflictRemains;
+            } else {
+                MergePropStatusInfo mergePropStatus = applySinglePropChange(state, localAbspath, leftVersion, rightVersion, isDir, workingProps, propname, baseVal, toVal, conflictResolver, dryRun);
+                state = mergePropStatus.state;
+                conflictRemains = mergePropStatus.conflictRemains;
+            }
+            if (conflictRemains) {
+                state = setPropMergeState(state, SVNStatusType.CONFLICTED);
+                if (dryRun) {
+                    continue;
+                }
+                if (conflictSkel == null) {
+                    conflictSkel = newConflictSkel();
+                }
+                conflictSkelAddPropConflict(conflictSkel, propname, baseVal, mineVal, toVal, fromVal);
+            }
+        }
+        if (dryRun) {
+            return state;
+        }
+        if (newBaseProps == null) {
+            newBaseProps = new SVNProperties(baseProps);
+        } else {
+            newBaseProps.clear();
+            newBaseProps.putAll(baseProps);
+        }
+        if (newActualProps == null) {
+            newActualProps = new SVNProperties(workingProps);
+        } else {
+            newActualProps.clear();
+            newActualProps.putAll(workingProps);
+        }
+        if (conflictSkel != null) {
+            File rejectPath = getPrejfileAbspath(localAbspath);
+            if (rejectPath == null) {
+                File rejectDirpath;
+                String rejectFilename;
+                if (isDir) {
+                    rejectDirpath = localAbspath;
+                    rejectFilename = THIS_DIR_PREJ;
+                } else {
+                    rejectDirpath = SVNFileUtil.getFileDir(localAbspath);
+                    rejectFilename = SVNFileUtil.getFileName(localAbspath);
+                }
+                rejectPath = SVNFileUtil.createUniqueFile(rejectDirpath, rejectFilename, PROP_REJ_EXT, false);
+            }
+            {
+                SVNSkel workItem = db.buildSetPropertyConflictMarkerWorkQueueTemp(localAbspath, SVNFileUtil.getFileExtension(rejectPath));
+                db.addWorkQueue(localAbspath, workItem);
+            }
+            {
+                SVNSkel workItem = db.buildPrejInstallWorkQueue(localAbspath, conflictSkel);
+                db.addWorkQueue(localAbspath, workItem);
+            }
+        }
+        return state;
+    }
+
+    private File getPrejfileAbspath(File localAbspath) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    private void conflictSkelAddPropConflict(SVNSkel conflictSkel, String propname, String baseVal, String mineVal, String toVal, String fromVal) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    private SVNSkel newConflictSkel() {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    private MergePropStatusInfo applySinglePropChange(SVNStatusType state, File localAbspath, SVNConflictVersion leftVersion, SVNConflictVersion rightVersion, boolean isDir,
+            SVNProperties workingProps, String propname, String baseVal, String toVal, ISVNConflictHandler conflictResolver, boolean dryRun) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    private MergePropStatusInfo applySinglePropDelete(SVNStatusType state, File localAbspath, SVNConflictVersion leftVersion, SVNConflictVersion rightVersion, boolean isDir,
+            SVNProperties workingProps, String propname, String baseVal, String toVal, ISVNConflictHandler conflictResolver, boolean dryRun) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    private MergePropStatusInfo applySinglePropAdd(SVNStatusType state, File localAbspath, SVNConflictVersion leftVersion, SVNConflictVersion rightVersion, boolean isDir, SVNProperties workingProps,
+            String propname, String baseVal, String toVal, ISVNConflictHandler conflictResolver, boolean dryRun) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    private SVNStatusType setPropMergeState(SVNStatusType state, SVNStatusType changed) {
         // TODO
         throw new UnsupportedOperationException();
     }
