@@ -3495,9 +3495,18 @@ public class SVNWCContext {
         return state;
     }
 
-    private File getPrejfileAbspath(File localAbspath) {
-        // TODO
-        throw new UnsupportedOperationException();
+    private File getPrejfileAbspath(File localAbspath) throws SVNException {
+        List<SVNConflictDescription> conflicts = db.readConflicts(localAbspath);
+        for (SVNConflictDescription cd : conflicts) {
+            if (cd.isPropertyConflict()) {
+                if (cd.getMergeFiles().getRepositoryPath().equals(THIS_DIR_PREJ + PROP_REJ_EXT)) {
+                    return SVNFileUtil.createFilePath(localAbspath, THIS_DIR_PREJ + PROP_REJ_EXT);
+                }
+                return SVNFileUtil.createFilePath(SVNFileUtil.getFileDir(localAbspath), cd.getMergeFiles().getRepositoryPath());
+
+            }
+        }
+        return null;
     }
 
     private void conflictSkelAddPropConflict(SVNSkel conflictSkel, String propname, String baseVal, String mineVal, String toVal, String fromVal) {
