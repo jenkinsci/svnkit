@@ -3366,15 +3366,21 @@ public class SVNWCContext {
     public void writeCheck(File localAbspath) throws SVNException {
         boolean locked = db.isWCLockOwns(localAbspath, false);
         if (!locked) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE,
-                    "No write-lock in ''{0}''", localAbspath);
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "No write-lock in ''{0}''", localAbspath);
             SVNErrorManager.error(err, SVNLogType.WC);
         }
     }
 
-    public SVNProperties getPristineProps(File localAbspath) {
-        // TODO
-        throw new UnsupportedOperationException();
+    public SVNProperties getPristineProps(File localAbspath) throws SVNException {
+        assert (SVNFileUtil.isAbsolute(localAbspath));
+        SVNWCDbStatus status = db.readInfo(localAbspath, InfoField.status).status;
+        if (status == SVNWCDbStatus.Added) {
+            status = db.scanAddition(localAbspath, AdditionInfoField.status).status;
+        }
+        if (status == SVNWCDbStatus.Added || status == SVNWCDbStatus.Excluded || status == SVNWCDbStatus.Absent || status == SVNWCDbStatus.NotPresent) {
+            return null;
+        }
+        return db.readPristineProperties(localAbspath);
     }
 
     public SVNProperties getActualProps(File localAbspath) {
