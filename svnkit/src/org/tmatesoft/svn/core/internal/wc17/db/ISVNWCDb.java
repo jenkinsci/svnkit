@@ -1657,4 +1657,6 @@ public interface ISVNWCDb {
 
     void forgetDirectoryTemp(File dirAbspath);
 
+    boolean isWCLockOwns(File localAbspath, boolean exact);
+
 }

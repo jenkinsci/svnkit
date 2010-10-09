@@ -3363,9 +3363,13 @@ public class SVNWCContext {
         return db.opReadTreeConflict(victimAbspath);
     }
 
-    public void writeCheck(File localAbspath) {
-        // TODO
-        throw new UnsupportedOperationException();
+    public void writeCheck(File localAbspath) throws SVNException {
+        boolean locked = db.isWCLockOwns(localAbspath, false);
+        if (!locked) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE,
+                    "No write-lock in ''{0}''", localAbspath);
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
     }
 
     public SVNProperties getPristineProps(File localAbspath) {
