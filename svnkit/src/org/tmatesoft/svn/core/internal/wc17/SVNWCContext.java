@@ -96,6 +96,17 @@ import org.tmatesoft.svn.util.SVNLogType;
  */
 public class SVNWCContext {
 
+    private static List STATUS_ORDERING = new LinkedList();
+    static {
+        STATUS_ORDERING.add(SVNStatusType.UNKNOWN);
+        STATUS_ORDERING.add(SVNStatusType.UNCHANGED);
+        STATUS_ORDERING.add(SVNStatusType.INAPPLICABLE);
+        STATUS_ORDERING.add(SVNStatusType.CHANGED);
+        STATUS_ORDERING.add(SVNStatusType.MERGED);
+        STATUS_ORDERING.add(SVNStatusType.OBSTRUCTED);
+        STATUS_ORDERING.add(SVNStatusType.CONFLICTED);
+    }
+
     public static enum ConflictKind {
         TEXT("text"), PROP("prop"), TREE("tree"), REJECT("reject"), OBSTRUCTED("obstructed");
 
@@ -3540,14 +3551,26 @@ public class SVNWCContext {
         return result;
     }
 
+    private SVNStatusType setPropMergeState(SVNStatusType state, SVNStatusType newValue) {
+        if (state == null) {
+            return null;
+        }
+        int statusInd = STATUS_ORDERING.indexOf(state);
+        int newStatusInd = STATUS_ORDERING.indexOf(newValue);
+        if (newStatusInd <= statusInd) {
+            return state;
+        }
+        return newValue;
+    }
+
     private static class MergePropStatusInfo {
 
         public SVNStatusType state;
         public boolean conflictRemains;
     }
 
-    private MergePropStatusInfo applySinglePropChange(SVNStatusType state, File localAbspath, SVNConflictVersion leftVersion, SVNConflictVersion rightVersion, boolean isDir,
-            SVNProperties workingProps, String propname, String baseVal, String toVal, ISVNConflictHandler conflictResolver, boolean dryRun) {
+    private MergePropStatusInfo applySinglePropAdd(SVNStatusType state, File localAbspath, SVNConflictVersion leftVersion, SVNConflictVersion rightVersion, boolean isDir, SVNProperties workingProps,
+            String propname, String baseVal, String toVal, ISVNConflictHandler conflictResolver, boolean dryRun) {
         // TODO
         throw new UnsupportedOperationException();
     }
@@ -3558,13 +3581,8 @@ public class SVNWCContext {
         throw new UnsupportedOperationException();
     }
 
-    private MergePropStatusInfo applySinglePropAdd(SVNStatusType state, File localAbspath, SVNConflictVersion leftVersion, SVNConflictVersion rightVersion, boolean isDir, SVNProperties workingProps,
-            String propname, String baseVal, String toVal, ISVNConflictHandler conflictResolver, boolean dryRun) {
-        // TODO
-        throw new UnsupportedOperationException();
-    }
-
-    private SVNStatusType setPropMergeState(SVNStatusType state, SVNStatusType changed) {
+    private MergePropStatusInfo applySinglePropChange(SVNStatusType state, File localAbspath, SVNConflictVersion leftVersion, SVNConflictVersion rightVersion, boolean isDir,
+            SVNProperties workingProps, String propname, String baseVal, String toVal, ISVNConflictHandler conflictResolver, boolean dryRun) {
         // TODO
         throw new UnsupportedOperationException();
     }
