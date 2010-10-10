@@ -41,6 +41,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
@@ -3575,7 +3576,7 @@ public class SVNWCContext {
     }
 
     private MergePropStatusInfo applySinglePropAdd(SVNStatusType state, File localAbspath, SVNConflictVersion leftVersion, SVNConflictVersion rightVersion, boolean isDir, SVNProperties workingProps,
-            String propname, String baseVal, String newVal, ISVNConflictHandler conflictResolver, boolean dryRun) {
+            String propname, String baseVal, String newVal, ISVNConflictHandler conflictResolver, boolean dryRun) throws SVNException {
         boolean conflictRemains = false;
         String workingVal = workingProps.getStringValue(propname);
         if (workingVal != null) {
@@ -3583,7 +3584,7 @@ public class SVNWCContext {
                 setPropMergeState(state, SVNStatusType.MERGED);
             } else {
                 if (SVNProperty.MERGE_INFO.equals(propname)) {
-                    String mergedVal = combineMergeInfoProps(workingVal, newVal);
+                    String mergedVal = SVNMergeInfoUtil.combineMergeInfoProperties(workingVal, newVal);
                     workingProps.put(propname, mergedVal);
                     setPropMergeState(state, SVNStatusType.MERGED);
                 } else {
@@ -3600,11 +3601,8 @@ public class SVNWCContext {
 
     private boolean maybeGeneragePropConflict(File localAbspath, SVNConflictVersion leftVersion, SVNConflictVersion rightVersion, boolean isDir, String propname, SVNProperties workingProps,
             Object object, String newVal, String baseVal, String workingVal, ISVNConflictHandler conflictResolver, boolean dryRun) {
-        return false;
-    }
-
-    private String combineMergeInfoProps(String workingVal, String newVal) {
-        return null;
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     private MergePropStatusInfo applySinglePropDelete(SVNStatusType state, File localAbspath, SVNConflictVersion leftVersion, SVNConflictVersion rightVersion, boolean isDir,
