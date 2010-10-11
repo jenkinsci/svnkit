@@ -3737,9 +3737,32 @@ public class SVNWCContext {
     }
 
     private MergePropStatusInfo applySinglePropDelete(SVNStatusType state, File localAbspath, SVNConflictVersion leftVersion, SVNConflictVersion rightVersion, boolean isDir,
-            SVNProperties workingProps, String propname, SVNPropertyValue baseVal, SVNPropertyValue toVal, ISVNConflictHandler conflictResolver, boolean dryRun) {
-        // TODO
-        throw new UnsupportedOperationException();
+            SVNProperties workingProps, String propname, SVNPropertyValue baseVal, SVNPropertyValue oldVal, ISVNConflictHandler conflictResolver, boolean dryRun) throws SVNException {
+        boolean conflictRemains = false;
+        SVNPropertyValue workingVal = workingProps.getSVNPropertyValue(propname);
+        if (baseVal == null) {
+            if (workingVal != null && !workingVal.equals(oldVal)) {
+                conflictRemains = maybeGeneratePropConflict(localAbspath, leftVersion, rightVersion, isDir, propname, workingProps, oldVal, null, baseVal, workingVal, conflictResolver, dryRun);
+            } else {
+                workingProps.put(propname, SVNPropertyValue.create(null));
+                if (oldVal != null) {
+                    state = setPropMergeState(state, SVNStatusType.MERGED);
+                }
+            }
+        } else if (baseVal.equals(oldVal)) {
+            if (workingVal != null) {
+                if (workingVal.equals(oldVal)) {
+                    workingProps.put(propname, SVNPropertyValue.create(null));
+                } else {
+                    conflictRemains = maybeGeneratePropConflict(localAbspath, leftVersion, rightVersion, isDir, propname, workingProps, oldVal, null, baseVal, workingVal, conflictResolver, dryRun);
+                }
+            } else {
+                state = setPropMergeState(state, SVNStatusType.MERGED);
+            }
+        } else {
+            conflictRemains = maybeGeneratePropConflict(localAbspath, leftVersion, rightVersion, isDir, propname, workingProps, oldVal, null, baseVal, workingVal, conflictResolver, dryRun);
+        }
+        return new MergePropStatusInfo(state, conflictRemains);
     }
 
     private MergePropStatusInfo applySinglePropChange(SVNStatusType state, File localAbspath, SVNConflictVersion leftVersion, SVNConflictVersion rightVersion, boolean isDir,
