@@ -1475,6 +1475,27 @@ public class SVNWCContext {
         return SVNTranslator.computeKeywords(list, url.toString(), Long.toString(readInfo.changedRev), readInfo.changedDate.toString(), readInfo.changedAuthor, getOptions());
     }
 
+    public static class TranslateInfo {
+
+        public SVNEolStyleInfo eolStyleInfo;
+        public Map keywords;
+        public boolean special;
+    }
+
+    public TranslateInfo getTranslateInfo(File localAbspath, boolean fetchEolStyle, boolean fetchKeywords, boolean fetchSpecial) throws SVNException {
+        TranslateInfo info = new TranslateInfo();
+        if (fetchEolStyle) {
+            info.eolStyleInfo = getEolStyle(localAbspath);
+        }
+        if (fetchKeywords) {
+            info.keywords = getKeyWords(localAbspath, null);
+        }
+        if (fetchSpecial) {
+            info.special = isSpecial(localAbspath);
+        }
+        return info;
+    }
+
     public boolean isFileExternal(File path) throws SVNException {
         final String serialized = db.getFileExternalTemp(path);
         return serialized != null;
@@ -3869,6 +3890,45 @@ public class SVNWCContext {
         return false;
     }
 
+    public File getTranslatedFile(File src, File versionedAbspath, boolean toNormalFormat, boolean forceEOLRepair, boolean useGlobalTmp, boolean forceCopy) throws SVNException {
+        assert (SVNFileUtil.isAbsolute(versionedAbspath));
+        TranslateInfo translateInfo = getTranslateInfo(versionedAbspath, true, true, true);
+        SVNEolStyle style = translateInfo.eolStyleInfo.eolStyle;
+        byte[] eol = translateInfo.eolStyleInfo.eolStr;
+        Map keywords = translateInfo.keywords;
+        boolean special = translateInfo.special;
+        File xlated_path;
+        if (!isTranslationRequired(style, eol, keywords, special, true) && !forceCopy) {
+            xlated_path = src;
+        } else {
+            File tmpDir;
+            File tmpVFile;
+            boolean repairForced = forceEOLRepair;
+            boolean expand = toNormalFormat;
+            if (useGlobalTmp) {
+                tmpDir = null;
+            } else {
+                tmpDir = db.getWCRootTempDir(versionedAbspath);
+            }
+            tmpVFile = SVNFileUtil.createUniqueFile(tmpDir, "svn", ".tmp", true);
+            if (expand) {
+                repairForced = true;
+            } else {
+                if (style == SVNEolStyle.Native) {
+                    eol = SVNEolStyleInfo.NATIVE_EOL_STR;
+                } else if (style == SVNEolStyle.Fixed) {
+                    repairForced = true;
+                } else if (style != SVNEolStyle.None) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_UNKNOWN_EOL);
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                }
+            }
+            SVNTranslator.copyAndTranslate(src, tmpVFile, null, eol, keywords, special, expand, repairForced);
+            xlated_path = tmpVFile;
+        }
+        return xlated_path.getAbsoluteFile();
+    }
+
     public static class MergeInfo {
 
         public SVNSkel workItem;
@@ -3878,10 +3938,6 @@ public class SVNWCContext {
 
     public MergeInfo merge(File mergeLeft, Object object, File newTextBaseTmpAbspath, Object object2, File localAbspath, File copiedWorkingText, String oldrevStr, String newrevStr, String mineStr,
             boolean b, Object object3) {
-        return null;
-    }
-
-    public File getTranslatedFile(File src, File versioned, boolean toNormalFormat, boolean forceEOLRepair, boolean useGlobalTmp, boolean forceCopy) {
         return null;
     }
 
