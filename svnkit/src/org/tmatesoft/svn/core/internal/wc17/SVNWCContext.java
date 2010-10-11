@@ -26,6 +26,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNDepth;
@@ -3767,7 +3768,8 @@ public class SVNWCContext {
     }
 
     private MergePropStatusInfo applySinglePropChange(SVNStatusType state, File localAbspath, SVNConflictVersion leftVersion, SVNConflictVersion rightVersion, boolean isDir,
-            SVNProperties workingProps, String propname, SVNPropertyValue baseVal, SVNPropertyValue oldVal, SVNPropertyValue newVal, ISVNConflictHandler conflictResolver, boolean dryRun) {
+            SVNProperties workingProps, String propname, SVNPropertyValue baseVal, SVNPropertyValue oldVal, SVNPropertyValue newVal, ISVNConflictHandler conflictResolver, boolean dryRun)
+            throws SVNException {
         if (SVNProperty.MERGE_INFO.equals(propname)) {
             return applySingleMergeinfoPropChange(localAbspath, leftVersion, rightVersion, isDir, workingProps, propname, baseVal, oldVal, newVal, conflictResolver, dryRun);
         }
@@ -3775,7 +3777,41 @@ public class SVNWCContext {
     }
 
     private MergePropStatusInfo applySingleGenericPropChange(File localAbspath, SVNConflictVersion leftVersion, SVNConflictVersion rightVersion, boolean isDir, SVNProperties workingProps,
-            String propname, SVNPropertyValue baseVal, SVNPropertyValue oldVal, SVNPropertyValue newVal, ISVNConflictHandler conflictResolver, boolean dryRun) {
+            String propname, SVNPropertyValue baseVal, SVNPropertyValue oldVal, SVNPropertyValue newVal, ISVNConflictHandler conflictResolver, boolean dryRun) throws SVNException {
+        SVNPropertyValue workingVal = workingProps.getSVNPropertyValue(propname);
+        SVNStatusType state = SVNStatusType.UNCHANGED;
+        boolean conflictRemains = false;
+        if ((workingVal != null && baseVal == null) || (workingVal == null && baseVal != null) || (workingVal != null && baseVal != null && !workingVal.equals(baseVal))) {
+            if (workingVal != null) {
+                if (workingVal.equals(newVal)) {
+                    state = setPropMergeState(state, SVNStatusType.MERGED);
+                } else {
+                    newVal = combineForkedMergeinfoProps(oldVal, workingVal, newVal);
+                    workingProps.put(propname, newVal);
+                    state = setPropMergeState(state, SVNStatusType.MERGED);
+                }
+            } else {
+                conflictRemains = maybeGeneratePropConflict(localAbspath, leftVersion, rightVersion, isDir, propname, workingProps, oldVal, newVal, baseVal, workingVal, conflictResolver, dryRun);
+            }
+        } else if (workingVal == null) {
+            Map deletedMergeInfo = new TreeMap();
+            Map addedMergeInfo = new TreeMap();
+            SVNMergeInfoUtil.diffMergeInfoProperties(deletedMergeInfo, addedMergeInfo, oldVal.getString(), null, newVal.getString(), null);
+            String mergeinfoString = SVNMergeInfoUtil.formatMergeInfoToString(addedMergeInfo, null);
+            workingProps.put(propname, mergeinfoString);
+        } else {
+            if (oldVal.equals(baseVal)) {
+                workingProps.put(propname, newVal);
+            } else {
+                newVal = combineForkedMergeinfoProps(oldVal, workingVal, newVal);
+                workingProps.put(propname, newVal);
+                state = setPropMergeState(state, SVNStatusType.MERGED);
+            }
+        }
+        return new MergePropStatusInfo(state, conflictRemains);
+    }
+
+    private SVNPropertyValue combineForkedMergeinfoProps(SVNPropertyValue oldVal, SVNPropertyValue workingVal, SVNPropertyValue newVal) {
         return null;
     }
 
