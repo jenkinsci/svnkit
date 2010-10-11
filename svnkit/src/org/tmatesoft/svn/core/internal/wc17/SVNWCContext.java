@@ -3842,9 +3842,21 @@ public class SVNWCContext {
 
     }
 
-    public WritableBaseInfo openWritableBase(File localAbspath, boolean md5Checksum, boolean sha1Checksum) {
-        // TODO
-        throw new UnsupportedOperationException();
+    public WritableBaseInfo openWritableBase(File localAbspath, boolean md5Checksum, boolean sha1Checksum) throws SVNException {
+        assert (SVNFileUtil.isAbsolute(localAbspath));
+        WritableBaseInfo info = new WritableBaseInfo();
+        File tempDirAbspath = db.getPristineTempDir(localAbspath);
+        info.tempBaseAbspath = SVNFileUtil.createUniqueFile(tempDirAbspath, "svn", ".tmp", true);
+        info.stream = SVNFileUtil.openFileForWriting(info.tempBaseAbspath);
+        if (md5Checksum) {
+            info.md5ChecksumStream = new SVNChecksumOutputStream(info.stream, SVNChecksumOutputStream.MD5_ALGORITHM, true);
+            info.stream = info.md5ChecksumStream;
+        }
+        if (sha1Checksum) {
+            info.sha1ChecksumStream = new SVNChecksumOutputStream(info.stream, "SHA1", true);
+            info.stream = info.sha1ChecksumStream;
+        }
+        return info;
     }
 
     public boolean hasMagicProperty(SVNProperties changedProperties) {
