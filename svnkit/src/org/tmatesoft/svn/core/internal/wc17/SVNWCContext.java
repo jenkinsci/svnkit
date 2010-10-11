@@ -3859,7 +3859,13 @@ public class SVNWCContext {
         return info;
     }
 
-    public boolean hasMagicProperty(SVNProperties changedProperties) {
+    public boolean hasMagicProperty(SVNProperties properties) {
+        for (Iterator i = properties.nameSet().iterator(); i.hasNext();) {
+            String property = (String) i.next();
+            if (SVNProperty.EXECUTABLE.equals(property) || SVNProperty.KEYWORDS.equals(property) || SVNProperty.EOL_STYLE.equals(property) || SVNProperty.SPECIAL.equals(property)
+                    || SVNProperty.NEEDS_LOCK.equals(property))
+                return true;
+        }
         return false;
     }
 
