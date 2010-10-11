@@ -3463,11 +3463,12 @@ public class SVNWCContext {
                 state = mergePropStatus.state;
                 conflictRemains = mergePropStatus.conflictRemains;
             } else if (toVal == null) {
-                MergePropStatusInfo mergePropStatus = applySinglePropDelete(state, localAbspath, leftVersion, rightVersion, isDir, workingProps, propname, baseVal, toVal, conflictResolver, dryRun);
+                MergePropStatusInfo mergePropStatus = applySinglePropDelete(state, localAbspath, leftVersion, rightVersion, isDir, workingProps, propname, baseVal, fromVal, conflictResolver, dryRun);
                 state = mergePropStatus.state;
                 conflictRemains = mergePropStatus.conflictRemains;
             } else {
-                MergePropStatusInfo mergePropStatus = applySinglePropChange(state, localAbspath, leftVersion, rightVersion, isDir, workingProps, propname, baseVal, toVal, conflictResolver, dryRun);
+                MergePropStatusInfo mergePropStatus = applySinglePropChange(state, localAbspath, leftVersion, rightVersion, isDir, workingProps, propname, baseVal, fromVal, toVal, conflictResolver,
+                        dryRun);
                 state = mergePropStatus.state;
                 conflictRemains = mergePropStatus.conflictRemains;
             }
@@ -3766,9 +3767,21 @@ public class SVNWCContext {
     }
 
     private MergePropStatusInfo applySinglePropChange(SVNStatusType state, File localAbspath, SVNConflictVersion leftVersion, SVNConflictVersion rightVersion, boolean isDir,
-            SVNProperties workingProps, String propname, SVNPropertyValue baseVal, SVNPropertyValue toVal, ISVNConflictHandler conflictResolver, boolean dryRun) {
-        // TODO
-        throw new UnsupportedOperationException();
+            SVNProperties workingProps, String propname, SVNPropertyValue baseVal, SVNPropertyValue oldVal, SVNPropertyValue newVal, ISVNConflictHandler conflictResolver, boolean dryRun) {
+        if (SVNProperty.MERGE_INFO.equals(propname)) {
+            return applySingleMergeinfoPropChange(localAbspath, leftVersion, rightVersion, isDir, workingProps, propname, baseVal, oldVal, newVal, conflictResolver, dryRun);
+        }
+        return applySingleGenericPropChange(localAbspath, leftVersion, rightVersion, isDir, workingProps, propname, baseVal, oldVal, newVal, conflictResolver, dryRun);
+    }
+
+    private MergePropStatusInfo applySingleGenericPropChange(File localAbspath, SVNConflictVersion leftVersion, SVNConflictVersion rightVersion, boolean isDir, SVNProperties workingProps,
+            String propname, SVNPropertyValue baseVal, SVNPropertyValue oldVal, SVNPropertyValue newVal, ISVNConflictHandler conflictResolver, boolean dryRun) {
+        return null;
+    }
+
+    private MergePropStatusInfo applySingleMergeinfoPropChange(File localAbspath, SVNConflictVersion leftVersion, SVNConflictVersion rightVersion, boolean isDir, SVNProperties workingProps,
+            String propname, SVNPropertyValue baseVal, SVNPropertyValue oldVal, SVNPropertyValue newVal, ISVNConflictHandler conflictResolver, boolean dryRun) {
+        return null;
     }
 
     public static class WritableBaseInfo {
