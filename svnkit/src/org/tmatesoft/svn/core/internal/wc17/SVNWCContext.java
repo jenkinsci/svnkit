@@ -3786,7 +3786,7 @@ public class SVNWCContext {
                 if (workingVal.equals(newVal)) {
                     state = setPropMergeState(state, SVNStatusType.MERGED);
                 } else {
-                    newVal = combineForkedMergeinfoProps(oldVal, workingVal, newVal);
+                    newVal = SVNPropertyValue.create(SVNMergeInfoUtil.combineForkedMergeInfoProperties(oldVal.toString(), workingVal.toString(), newVal.toString()));
                     workingProps.put(propname, newVal);
                     state = setPropMergeState(state, SVNStatusType.MERGED);
                 }
@@ -3803,16 +3803,12 @@ public class SVNWCContext {
             if (oldVal.equals(baseVal)) {
                 workingProps.put(propname, newVal);
             } else {
-                newVal = combineForkedMergeinfoProps(oldVal, workingVal, newVal);
+                newVal = SVNPropertyValue.create(SVNMergeInfoUtil.combineForkedMergeInfoProperties(oldVal.getString(), workingVal.getString(), newVal.getString()));
                 workingProps.put(propname, newVal);
                 state = setPropMergeState(state, SVNStatusType.MERGED);
             }
         }
         return new MergePropStatusInfo(state, conflictRemains);
-    }
-
-    private SVNPropertyValue combineForkedMergeinfoProps(SVNPropertyValue oldVal, SVNPropertyValue workingVal, SVNPropertyValue newVal) {
-        return null;
     }
 
     private MergePropStatusInfo applySingleMergeinfoPropChange(File localAbspath, SVNConflictVersion leftVersion, SVNConflictVersion rightVersion, boolean isDir, SVNProperties workingProps,
