@@ -132,6 +132,7 @@ svnkit/src/org/tmatesoft/svn/core/internal/wc/config/config eol=lf
 svnkit/src/org/tmatesoft/svn/core/internal/wc/config/servers eol=lf
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/SVNAmbientDepthFilterEditor17.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/SVNUpdateEditor17.java -text
+svnkit/src/org/tmatesoft/svn/core/internal/wc17/SVNWCConflictDescription17.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbSelectNotPresent.java -text
 svnkit/src/org/tmatesoft/svn/core/io/repository/template.jar -text
 svnkit/src/org/tmatesoft/svn/core/wc/ISVNFileFilter.java -text
