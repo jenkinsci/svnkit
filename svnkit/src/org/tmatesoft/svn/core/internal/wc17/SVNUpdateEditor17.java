@@ -1188,7 +1188,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             if (installPristine) {
                 boolean recordFileinfo = installFrom == null;
                 workItem = myWcContext.wqBuildFileInstall(fb.getLocalAbspath(), installFrom, myIsUseCommitTimes, recordFileinfo);
-                allWorkItems = myWcContext.wqMerge(workItem);
+                allWorkItems = myWcContext.wqMerge(allWorkItems, workItem);
             }
 
         } else {
@@ -1206,12 +1206,12 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
 
         if (newTextBaseSha1Checksum == null && lockState == SVNStatusType.LOCK_UNLOCKED) {
             workItem = myWcContext.wqBuildSyncFileFlags(fb.getLocalAbspath());
-            allWorkItems = myWcContext.wqMerge(allWorkItems);
+            allWorkItems = myWcContext.wqMerge(allWorkItems, workItem);
         }
 
         if (installFrom != null && !installFrom.equals(fb.getLocalAbspath())) {
             workItem = myWcContext.wqBuildFileRemove(installFrom);
-            allWorkItems = myWcContext.wqMerge(workItem);
+            allWorkItems = myWcContext.wqMerge(allWorkItems, workItem);
         }
 
         if (fb.getCopiedTextBaseSha1Checksum() != null) {
@@ -2237,17 +2237,17 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                         mergeLeft = getUltimateBaseTextPathToRead(fb.getLocalAbspath());
                     }
                     SVNWCContext.MergeInfo mergeInfo = myWcContext.merge(mergeLeft, null, newTextBaseTmpAbspath, null, fb.getLocalAbspath(), fb.getCopiedWorkingText(), oldrevStr, newrevStr, mineStr,
-                            false, null);
-                    workItem = mergeInfo.workItem;
+                            false, null, fb.getChangedProperties());
+                    workItem = mergeInfo.workItems;
                     mergeOutcome = mergeInfo.mergeOutcome;
-                    info.workItems = myWcContext.wqMerge(workItem);
+                    info.workItems = myWcContext.wqMerge(info.workItems, workItem);
                     if (deleteLeft) {
                         workItem = myWcContext.wqBuildFileRemove(mergeLeft);
-                        info.workItems = myWcContext.wqMerge(workItem);
+                        info.workItems = myWcContext.wqMerge(info.workItems, workItem);
                     }
                     if (fb.getCopiedWorkingText() != null) {
                         workItem = myWcContext.wqBuildFileRemove(fb.getCopiedWorkingText());
-                        info.workItems = myWcContext.wqMerge(workItem);
+                        info.workItems = myWcContext.wqMerge(info.workItems, workItem);
                     }
                 }
             }
@@ -2266,7 +2266,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             }
 
             workItem = myWcContext.wqBuildRecordFileinfo(fb.getLocalAbspath(), setDate);
-            info.workItems = myWcContext.wqMerge(workItem);
+            info.workItems = myWcContext.wqMerge(info.workItems, workItem);
         }
         if (mergeOutcome == SVNStatusType.CONFLICTED) {
             info.contentState = SVNStatusType.CONFLICTED;

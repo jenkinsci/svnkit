@@ -3931,14 +3931,82 @@ public class SVNWCContext {
 
     public static class MergeInfo {
 
-        public SVNSkel workItem;
+        public SVNSkel workItems;
         public SVNStatusType mergeOutcome;
 
     }
 
-    public MergeInfo merge(File mergeLeft, Object object, File newTextBaseTmpAbspath, Object object2, File localAbspath, File copiedWorkingText, String oldrevStr, String newrevStr, String mineStr,
-            boolean b, Object object3) {
+    public MergeInfo merge(File leftAbspath, SVNConflictVersion leftVersion, File rightAbspath, SVNConflictVersion rightVersion, File targetAbspath, File copyfromAbspath, String leftLabel,
+            String rightLabel, String targetLabel, boolean dryRun, ISVNOptions options, SVNProperties propDiff) throws SVNException {
+        assert (SVNFileUtil.isAbsolute(leftAbspath));
+        assert (SVNFileUtil.isAbsolute(rightAbspath));
+        assert (SVNFileUtil.isAbsolute(targetAbspath));
+        assert (copyfromAbspath == null || SVNFileUtil.isAbsolute(copyfromAbspath));
+        MergeInfo info = new MergeInfo();
+        info.workItems = null;
+        if (copyfromAbspath == null) {
+            SVNWCDbKind kind = db.readKind(targetAbspath, true);
+            boolean hidden;
+
+            if (kind == SVNWCDbKind.Unknown) {
+                info.mergeOutcome = SVNStatusType.UNCHANGED; // svn_wc_merge_no_merge;
+                return info;
+            }
+
+            hidden = db.isNodeHidden(targetAbspath);
+            if (hidden) {
+                info.mergeOutcome = SVNStatusType.UNCHANGED; // svn_wc_merge_no_merge;
+                return info;
+            }
+        }
+        boolean isBinary = false;
+        SVNPropertyValue mimeprop = propDiff.getSVNPropertyValue(SVNProperty.MIME_TYPE);
+        if (mimeprop != null && mimeprop.isString()) {
+            isBinary = mimeTypeIsBinary(mimeprop.getString());
+        } else if (copyfromAbspath == null) {
+            isBinary = isMarkedAsBinary(targetAbspath);
+        }
+        File workingAbspath = copyfromAbspath != null ? copyfromAbspath : targetAbspath;
+        File detranslatedTargetAbspath = detranslateWcFile(targetAbspath, !isBinary, propDiff, workingAbspath);
+        leftAbspath = maybeUpdateTargetEols(leftAbspath, propDiff);
+        if (isBinary) {
+            if (dryRun) {
+                info.mergeOutcome = SVNStatusType.CONFLICTED;
+            } else {
+                info = mergeBinaryFile(leftAbspath, rightAbspath, targetAbspath, leftLabel, rightLabel, targetLabel, leftVersion, rightVersion, detranslatedTargetAbspath, mimeprop,
+                        options.getConflictResolver());
+            }
+        } else {
+            info = mergeTextFile(leftAbspath, rightAbspath, targetAbspath, leftLabel, rightLabel, targetLabel, dryRun, options, leftVersion, rightVersion, copyfromAbspath, detranslatedTargetAbspath,
+                    mimeprop, options.getConflictResolver());
+        }
+        if (!dryRun) {
+            SVNSkel workItem = wqBuildSyncFileFlags(targetAbspath);
+            info.workItems = wqMerge(info.workItems, workItem);
+        }
+        return info;
+    }
+
+    private MergeInfo mergeTextFile(File leftAbspath, File rightAbspath, File targetAbspath, String leftLabel, String rightLabel, String targetLabel, boolean dryRun, ISVNOptions options,
+            SVNConflictVersion leftVersion, SVNConflictVersion rightVersion, File copyfromAbspath, File detranslatedTargetAbspath, SVNPropertyValue mimeprop, ISVNConflictHandler conflictResolver) {
         return null;
+    }
+
+    private MergeInfo mergeBinaryFile(File leftAbspath, File rightAbspath, File targetAbspath, String leftLabel, String rightLabel, String targetLabel, SVNConflictVersion leftVersion,
+            SVNConflictVersion rightVersion, File detranslatedTargetAbspath, SVNPropertyValue mimeprop, ISVNConflictHandler conflictResolver) {
+        return null;
+    }
+
+    private File maybeUpdateTargetEols(File leftAbspath, SVNProperties propDiff) {
+        return null;
+    }
+
+    private File detranslateWcFile(File targetAbspath, boolean b, SVNProperties propDiff, File workingAbspath) {
+        return null;
+    }
+
+    private boolean isMarkedAsBinary(File targetAbspath) {
+        return false;
     }
 
     public SVNSkel wqBuildBaseRemove(File localAbspath, boolean b) {
@@ -3964,7 +4032,7 @@ public class SVNWCContext {
         return null;
     }
 
-    public SVNSkel wqMerge(SVNSkel workItem) {
+    public SVNSkel wqMerge(SVNSkel workItems, SVNSkel workItem) {
         return null;
     }
 
