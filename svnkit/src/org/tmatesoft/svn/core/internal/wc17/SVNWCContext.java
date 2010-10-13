@@ -4076,8 +4076,13 @@ public class SVNWCContext {
         public OutputStream stream;
     }
 
-    private UniqueFileInfo openUniqueFile(File dirPath, boolean openStream) {
-        return null;
+    private UniqueFileInfo openUniqueFile(File dirPath, boolean openStream) throws SVNException {
+        UniqueFileInfo info = new UniqueFileInfo();
+        info.path = SVNFileUtil.createUniqueFile(dirPath, "svn", ".tmp", true);
+        if (openStream) {
+            info.stream = SVNFileUtil.openFileForWriting(info.path);
+        }
+        return info;
     }
 
     private MergeInfo mergeTextFile(File leftAbspath, File rightAbspath, File targetAbspath, String leftLabel, String rightLabel, String targetLabel, boolean dryRun, ISVNOptions options,
