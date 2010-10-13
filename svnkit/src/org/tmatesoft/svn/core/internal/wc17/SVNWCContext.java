@@ -3987,6 +3987,14 @@ public class SVNWCContext {
         return info;
     }
 
+    private boolean isMarkedAsBinary(File localAbsPath) throws SVNException {
+        String value = getProperty(localAbsPath, SVNProperty.MIME_TYPE);
+        if(value!=null && mimeTypeIsBinary(value)){
+            return true;
+        }
+        return false;
+    }
+
     private MergeInfo mergeTextFile(File leftAbspath, File rightAbspath, File targetAbspath, String leftLabel, String rightLabel, String targetLabel, boolean dryRun, ISVNOptions options,
             SVNConflictVersion leftVersion, SVNConflictVersion rightVersion, File copyfromAbspath, File detranslatedTargetAbspath, SVNPropertyValue mimeprop, ISVNConflictHandler conflictResolver) {
         return null;
@@ -4003,10 +4011,6 @@ public class SVNWCContext {
 
     private File detranslateWcFile(File targetAbspath, boolean b, SVNProperties propDiff, File workingAbspath) {
         return null;
-    }
-
-    private boolean isMarkedAsBinary(File targetAbspath) {
-        return false;
     }
 
     public SVNSkel wqBuildBaseRemove(File localAbspath, boolean b) {
