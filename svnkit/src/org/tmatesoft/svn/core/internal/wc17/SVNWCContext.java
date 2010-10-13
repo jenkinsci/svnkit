@@ -87,6 +87,7 @@ import org.tmatesoft.svn.core.wc.SVNConflictChoice;
 import org.tmatesoft.svn.core.wc.SVNConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNConflictReason;
 import org.tmatesoft.svn.core.wc.SVNConflictResult;
+import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNMergeFileSet;
@@ -1384,10 +1385,7 @@ public class SVNWCContext {
                 break;
             }
 
-            if ((bytes_read1 != bytes_read2) || !(Arrays.equals(buf1, buf2 /*
-                                                                            * ,
-                                                                            * bytes_read1
-                                                                            */))) {
+            if ((bytes_read1 != bytes_read2) || !(Arrays.equals(buf1, buf2))) {
                 same = false;
                 break;
             }
@@ -3937,7 +3935,7 @@ public class SVNWCContext {
     }
 
     public MergeInfo merge(File leftAbspath, SVNConflictVersion leftVersion, File rightAbspath, SVNConflictVersion rightVersion, File targetAbspath, File copyfromAbspath, String leftLabel,
-            String rightLabel, String targetLabel, boolean dryRun, ISVNOptions options, SVNProperties propDiff) throws SVNException {
+            String rightLabel, String targetLabel, boolean dryRun, SVNDiffOptions options, SVNProperties propDiff) throws SVNException {
         assert (SVNFileUtil.isAbsolute(leftAbspath));
         assert (SVNFileUtil.isAbsolute(rightAbspath));
         assert (SVNFileUtil.isAbsolute(targetAbspath));
@@ -3973,12 +3971,12 @@ public class SVNWCContext {
             if (dryRun) {
                 info.mergeOutcome = SVNStatusType.CONFLICTED;
             } else {
-                info = mergeBinaryFile(leftAbspath, rightAbspath, targetAbspath, leftLabel, rightLabel, targetLabel, leftVersion, rightVersion, detranslatedTargetAbspath, mimeprop,
-                        options.getConflictResolver());
+                info = mergeBinaryFile(leftAbspath, rightAbspath, targetAbspath, leftLabel, rightLabel, targetLabel, leftVersion, rightVersion, detranslatedTargetAbspath, mimeprop, getOptions()
+                        .getConflictResolver());
             }
         } else {
             info = mergeTextFile(leftAbspath, rightAbspath, targetAbspath, leftLabel, rightLabel, targetLabel, dryRun, options, leftVersion, rightVersion, copyfromAbspath, detranslatedTargetAbspath,
-                    mimeprop, options.getConflictResolver());
+                    mimeprop, getOptions().getConflictResolver());
         }
         if (!dryRun) {
             SVNSkel workItem = wqBuildSyncFileFlags(targetAbspath);
@@ -4096,14 +4094,84 @@ public class SVNWCContext {
         return oldTargetAbspath;
     }
 
-    private MergeInfo mergeTextFile(File leftAbspath, File rightAbspath, File targetAbspath, String leftLabel, String rightLabel, String targetLabel, boolean dryRun, ISVNOptions options,
-            SVNConflictVersion leftVersion, SVNConflictVersion rightVersion, File copyfromAbspath, File detranslatedTargetAbspath, SVNPropertyValue mimeprop, ISVNConflictHandler conflictResolver) {
-        return null;
+    private MergeInfo mergeTextFile(File leftAbspath, File rightAbspath, File targetAbspath, String leftLabel, String rightLabel, String targetLabel, boolean dryRun, SVNDiffOptions options,
+            SVNConflictVersion leftVersion, SVNConflictVersion rightVersion, File copyfromText, File detranslatedTargetAbspath, SVNPropertyValue mimeprop, ISVNConflictHandler conflictResolver)
+            throws SVNException {
+        MergeInfo info = new MergeInfo();
+        info.workItems = null;
+        File dirAbspath = SVNFileUtil.getFileDir(targetAbspath);
+        String baseName = SVNFileUtil.getFileName(targetAbspath);
+        File tempDir = db.getWCRootTempDir(targetAbspath);
+        File resultTarget = SVNFileUtil.createUniqueFile(tempDir, baseName, ".tmp", false);
+        boolean containsConflicts = doTextMerge(resultTarget, detranslatedTargetAbspath, leftAbspath, rightAbspath, targetLabel, leftLabel, rightLabel, options);
+        if (containsConflicts && !dryRun) {
+            info = maybeResolveConflicts(leftAbspath, rightAbspath, targetAbspath, copyfromText, leftLabel, rightLabel, targetLabel, leftVersion, rightVersion, resultTarget,
+                    detranslatedTargetAbspath, mimeprop, options, conflictResolver);
+            if (info.mergeOutcome == SVNStatusType.CONFLICTED) {
+                PresevePreMergeFileInfo preserveInfo = preservePreMergeFiles(leftAbspath, rightAbspath, targetAbspath, leftLabel, rightLabel, targetLabel, detranslatedTargetAbspath);
+                SVNSkel workItem = preserveInfo.workItem;
+                File leftCopy = preserveInfo.leftCopy;
+                File rightCopy = preserveInfo.rightCopy;
+                File targetCopy = preserveInfo.targetCopy;
+                info.workItems = wqMerge(info.workItems, workItem);
+                workItem = wqBuildSetTextConflictMarkersTmp(targetAbspath, SVNFileUtil.getFileName(leftCopy), SVNFileUtil.getFileName(rightCopy), SVNFileUtil.getFileName(targetCopy));
+                info.workItems = wqMerge(info.workItems, workItem);
+            }
+            if (info.mergeOutcome == SVNStatusType.MERGED) {
+                return info;
+            }
+        } else if (containsConflicts && dryRun) {
+            info.mergeOutcome = SVNStatusType.CONFLICTED;
+        } else if (copyfromText != null) {
+            info.mergeOutcome = SVNStatusType.MERGED;
+        } else {
+            boolean special = getTranslateInfo(targetAbspath, false, false, true).special;
+            boolean same = SVNFileUtil.compareFiles(resultTarget, (special ? detranslatedTargetAbspath : targetAbspath), null);
+            info.mergeOutcome = same ? SVNStatusType.UNCHANGED : SVNStatusType.MERGED;
+        }
+        if (info.mergeOutcome != SVNStatusType.UNCHANGED && !dryRun) {
+            SVNSkel workItem = wqBuildFileInstall(targetAbspath, resultTarget, false, false);
+            info.workItems = wqMerge(info.workItems, workItem);
+        }
+        return info;
+    }
+
+    public class PresevePreMergeFileInfo {
+
+        public SVNSkel workItem;
+        public File leftCopy;
+        public File rightCopy;
+        public File targetCopy;
+
+    }
+
+    private PresevePreMergeFileInfo preservePreMergeFiles(File leftAbspath, File rightAbspath, File targetAbspath, String leftLabel, String rightLabel, String targetLabel,
+            File detranslatedTargetAbspath) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    private MergeInfo maybeResolveConflicts(File leftAbspath, File rightAbspath, File targetAbspath, File copyfromText, String leftLabel, String rightLabel, String targetLabel,
+            SVNConflictVersion leftVersion, SVNConflictVersion rightVersion, File resultTarget, File detranslatedTargetAbspath, SVNPropertyValue mimeprop, SVNDiffOptions options,
+            ISVNConflictHandler conflictResolver) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    private boolean doTextMerge(File resultTarget, File detranslatedTargetAbspath, File leftAbspath, File rightAbspath, String targetLabel, String leftLabel, String rightLabel, SVNDiffOptions options) {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     private MergeInfo mergeBinaryFile(File leftAbspath, File rightAbspath, File targetAbspath, String leftLabel, String rightLabel, String targetLabel, SVNConflictVersion leftVersion,
             SVNConflictVersion rightVersion, File detranslatedTargetAbspath, SVNPropertyValue mimeprop, ISVNConflictHandler conflictResolver) {
-        return null;
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    private SVNSkel wqBuildSetTextConflictMarkersTmp(File targetAbspath, String fileName, String fileName2, String fileName3) {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public SVNSkel wqBuildBaseRemove(File localAbspath, boolean b) {
