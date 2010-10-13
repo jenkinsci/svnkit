@@ -4045,7 +4045,7 @@ public class SVNWCContext {
                 style = SVNEolStyle.None;
             } else {
                 if ((prop = propDiff.getSVNPropertyValue(SVNProperty.EOL_STYLE)) != null && prop.isString()) {
-                    style = SVNEolStyle.valueOf(prop.getString());
+                    style = SVNEolStyleInfo.fromValue(prop.getString()).eolStyle;
                 } else if (!isBinary) {
                 } else {
                     eol = null;
@@ -4085,6 +4085,17 @@ public class SVNWCContext {
         return info;
     }
 
+    private File maybeUpdateTargetEols(File oldTargetAbspath, SVNProperties propDiff) throws SVNException {
+        SVNPropertyValue prop = propDiff.getSVNPropertyValue(SVNProperty.EOL_STYLE);
+        if (prop != null && prop.isString()) {
+            byte[] eol = SVNEolStyleInfo.fromValue(prop.getString()).eolStr;
+            File tmpNew = openUniqueFile(null, false).path;
+            SVNTranslator.copyAndTranslate(oldTargetAbspath, tmpNew, null, eol, null, false, false, true);
+            return tmpNew;
+        }
+        return oldTargetAbspath;
+    }
+
     private MergeInfo mergeTextFile(File leftAbspath, File rightAbspath, File targetAbspath, String leftLabel, String rightLabel, String targetLabel, boolean dryRun, ISVNOptions options,
             SVNConflictVersion leftVersion, SVNConflictVersion rightVersion, File copyfromAbspath, File detranslatedTargetAbspath, SVNPropertyValue mimeprop, ISVNConflictHandler conflictResolver) {
         return null;
@@ -4092,10 +4103,6 @@ public class SVNWCContext {
 
     private MergeInfo mergeBinaryFile(File leftAbspath, File rightAbspath, File targetAbspath, String leftLabel, String rightLabel, String targetLabel, SVNConflictVersion leftVersion,
             SVNConflictVersion rightVersion, File detranslatedTargetAbspath, SVNPropertyValue mimeprop, ISVNConflictHandler conflictResolver) {
-        return null;
-    }
-
-    private File maybeUpdateTargetEols(File leftAbspath, SVNProperties propDiff) {
         return null;
     }
 
