@@ -96,6 +96,7 @@ import org.tmatesoft.svn.core.wc.SVNMergeFileSet;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.wc.SVNTextConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -4255,19 +4256,60 @@ public class SVNWCContext {
         return info;
     }
 
-    private SVNSkel wqBuildFileCopyTranslated(File targetAbspath, File tmpLeft, File leftCopy) {
+    private MergeInfo maybeResolveConflicts(File leftAbspath, File rightAbspath, File targetAbspath, File copyfromText, String leftLabel, String rightLabel, String targetLabel,
+            SVNConflictVersion leftVersion, SVNConflictVersion rightVersion, File resultTarget, File detranslatedTarget, SVNPropertyValue mimeprop, SVNDiffOptions options,
+            ISVNConflictHandler conflictResolver) throws SVNException {
+        MergeInfo info = new MergeInfo();
+        info.workItems = null;
+        SVNConflictResult result;
+        File dirAbspath = SVNFileUtil.getFileDir(targetAbspath);
+        if (conflictResolver == null) {
+            result = new SVNConflictResult(SVNConflictChoice.POSTPONE, null);
+        } else {
+            SVNConflictDescription cdesc = setupTextConflictDesc(leftAbspath, rightAbspath, targetAbspath, leftVersion, rightVersion, resultTarget, detranslatedTarget, mimeprop, false);
+            result = conflictResolver.handleConflict(cdesc);
+            if (result == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CONFLICT_RESOLVER_FAILURE, "Conflict callback violated API: returned no results");
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+
+            if (result.isIsSaveMerged()) {
+                info.workItems = saveMergeResult(targetAbspath, result.isIsSaveMerged() ? result.getMergedFile() : resultTarget);
+            }
+        }
+        MergeInfo evalInfo = evalConflictResolverResult(result.getConflictChoice(), dirAbspath, leftAbspath, rightAbspath, targetAbspath, copyfromText,
+                result.isIsSaveMerged() ? result.getMergedFile() : resultTarget, detranslatedTarget, options);
+        info.mergeOutcome = evalInfo.mergeOutcome;
+        SVNSkel workItem = evalInfo.workItems;
+        info.workItems = wqMerge(info.workItems, workItem);
+        if (result.getConflictChoice() != SVNConflictChoice.POSTPONE) {
+            return info;
+        }
+        info.mergeOutcome = SVNStatusType.CONFLICTED;
+        return info;
+    }
+
+    private MergeInfo evalConflictResolverResult(SVNConflictChoice conflictChoice, File dirAbspath, File leftAbspath, File rightAbspath, File targetAbspath, File copyfromText, File file,
+            File detranslatedTarget, SVNDiffOptions options) {
         return null;
     }
 
-    private MergeInfo maybeResolveConflicts(File leftAbspath, File rightAbspath, File targetAbspath, File copyfromText, String leftLabel, String rightLabel, String targetLabel,
-            SVNConflictVersion leftVersion, SVNConflictVersion rightVersion, File resultTarget, File detranslatedTargetAbspath, SVNPropertyValue mimeprop, SVNDiffOptions options,
-            ISVNConflictHandler conflictResolver) {
-        // TODO
-        throw new UnsupportedOperationException();
+    private SVNSkel saveMergeResult(File targetAbspath, File file) {
+        return null;
+    }
+
+    private SVNConflictDescription setupTextConflictDesc(File leftAbspath, File rightAbspath, File targetAbspath, SVNConflictVersion leftVersion, SVNConflictVersion rightVersion, File resultTarget,
+            File detranslatedTarget, SVNPropertyValue mimeprop, boolean b) {
+        return null;
     }
 
     private MergeInfo mergeBinaryFile(File leftAbspath, File rightAbspath, File targetAbspath, String leftLabel, String rightLabel, String targetLabel, SVNConflictVersion leftVersion,
             SVNConflictVersion rightVersion, File detranslatedTargetAbspath, SVNPropertyValue mimeprop, ISVNConflictHandler conflictResolver) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    private SVNSkel wqBuildFileCopyTranslated(File targetAbspath, File tmpLeft, File leftCopy) {
         // TODO
         throw new UnsupportedOperationException();
     }
@@ -4282,12 +4324,12 @@ public class SVNWCContext {
         throw new UnsupportedOperationException();
     }
 
-    public void wqAdd(File dir_abspath, SVNSkel workItem) {
+    public void wqAdd(File dirAbspath, SVNSkel workItem) {
         // TODO
         throw new UnsupportedOperationException();
     }
 
-    public void wqRun(File dir_abspath) {
+    public void wqRun(File dirAbspath) {
         // TODO
         throw new UnsupportedOperationException();
     }
