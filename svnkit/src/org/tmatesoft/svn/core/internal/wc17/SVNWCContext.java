@@ -4185,7 +4185,23 @@ public class SVNWCContext {
     }
 
     private ConflictMarkersInfo initConflictMarkers(String targetLabel, String leftLabel, String rightLabel) {
-        return null;
+        ConflictMarkersInfo info = new ConflictMarkersInfo();
+        if (targetLabel != null) {
+            info.targetMarker = String.format("<<<<<<< %s", targetLabel);
+        } else {
+            info.targetMarker = "<<<<<<< .working";
+        }
+        if (leftLabel != null) {
+            info.leftMarker = String.format("||||||| %s", leftLabel);
+        } else {
+            info.leftMarker = "||||||| .old";
+        }
+        if (rightLabel != null) {
+            info.rightMarker = String.format(">>>>>>> %s", rightLabel);
+        } else {
+            info.rightMarker = ">>>>>>> .new";
+        }
+        return info;
     }
 
     public static class PresevePreMergeFileInfo {
