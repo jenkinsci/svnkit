@@ -4303,13 +4303,78 @@ public class SVNWCContext {
         return cdesc.toConflictDescription();
     }
 
-    private MergeInfo evalConflictResolverResult(SVNConflictChoice conflictChoice, File dirAbspath, File leftAbspath, File rightAbspath, File targetAbspath, File copyfromText, File file,
-            File detranslatedTarget, SVNDiffOptions options) {
-        return null;
+    private SVNSkel saveMergeResult(File versionedAbspath, File source) throws SVNException {
+        File dirAbspath = SVNFileUtil.getFileDir(versionedAbspath);
+        String filename = SVNFileUtil.getFileName(versionedAbspath);
+        File editedCopyAbspath = SVNFileUtil.createUniqueFile(dirAbspath, filename, ".edited", false);
+        return wqBuildFileCopyTranslated(versionedAbspath, source, editedCopyAbspath);
     }
 
-    private SVNSkel saveMergeResult(File targetAbspath, File file) {
-        return null;
+    private MergeInfo evalConflictResolverResult(SVNConflictChoice choice, File wriAbspath, File leftAbspath, File rightAbspath, File targetAbspath, File copyfromText, File mergedFile,
+            File detranslatedTarget, SVNDiffOptions options) throws SVNException {
+        File installFrom = null;
+        boolean removeSource = false;
+        MergeInfo info = new MergeInfo();
+        info.workItems = null;
+        if (choice == SVNConflictChoice.BASE) {
+            installFrom = leftAbspath;
+            info.mergeOutcome = SVNStatusType.MERGED;
+        } else if (choice == SVNConflictChoice.THEIRS_FULL) {
+            installFrom = rightAbspath;
+            info.mergeOutcome = SVNStatusType.MERGED;
+        } else if (choice == SVNConflictChoice.MINE_FULL) {
+            info.mergeOutcome = SVNStatusType.MERGED;
+            return info;
+        } else if (choice == SVNConflictChoice.THEIRS_CONFLICT || choice == SVNConflictChoice.MINE_CONFLICT) {
+            SVNDiffConflictChoiceStyle style = choice == SVNConflictChoice.THEIRS_CONFLICT ? SVNDiffConflictChoiceStyle.CHOOSE_LATEST : SVNDiffConflictChoiceStyle.CHOOSE_MODIFIED;
+            File tempDir = db.getWCRootTempDir(wriAbspath);
+            FSMergerBySequence merger = new FSMergerBySequence(null, null, null);
+            RandomAccessFile localIS = null;
+            RandomAccessFile latestIS = null;
+            RandomAccessFile baseIS = null;
+            UniqueFileInfo uniqFile = openUniqueFile(tempDir, true);
+            File chosenPath = uniqFile.path;
+            OutputStream chosenStream = uniqFile.stream;
+            try {
+                localIS = new RandomAccessFile(detranslatedTarget, "r");
+                latestIS = new RandomAccessFile(rightAbspath, "r");
+                baseIS = new RandomAccessFile(leftAbspath, "r");
+                QSequenceLineRAData baseData = new QSequenceLineRAFileData(baseIS);
+                QSequenceLineRAData localData = new QSequenceLineRAFileData(localIS);
+                QSequenceLineRAData latestData = new QSequenceLineRAFileData(latestIS);
+                merger.merge(baseData, localData, latestData, options, chosenStream, style);
+            } catch (IOException e) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
+                SVNErrorManager.error(err, e, SVNLogType.WC);
+            } finally {
+                SVNFileUtil.closeFile(chosenStream);
+                SVNFileUtil.closeFile(localIS);
+                SVNFileUtil.closeFile(baseIS);
+                SVNFileUtil.closeFile(latestIS);
+            }
+            installFrom = chosenPath;
+            removeSource = true;
+            info.mergeOutcome = SVNStatusType.MERGED;
+        } else if (choice == SVNConflictChoice.MERGED) {
+            installFrom = mergedFile;
+            info.mergeOutcome = SVNStatusType.MERGED;
+        } else {
+            if (copyfromText != null) {
+                installFrom = copyfromText;
+            } else {
+                return info;
+            }
+        }
+        assert (installFrom != null);
+        {
+            SVNSkel workItem = wqBuildFileInstall(targetAbspath, installFrom, false, false);
+            info.workItems = wqMerge(info.workItems, workItem);
+            if (removeSource) {
+                workItem = wqBuildFileRemove(installFrom);
+                info.workItems = wqMerge(info.workItems, workItem);
+            }
+        }
+        return info;
     }
 
     private MergeInfo mergeBinaryFile(File leftAbspath, File rightAbspath, File targetAbspath, String leftLabel, String rightLabel, String targetLabel, SVNConflictVersion leftVersion,
