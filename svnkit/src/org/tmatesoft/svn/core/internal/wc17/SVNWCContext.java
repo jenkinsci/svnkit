@@ -4112,7 +4112,7 @@ public class SVNWCContext {
                     detranslatedTargetAbspath, mimeprop, options, conflictResolver);
             if (info.mergeOutcome == SVNStatusType.CONFLICTED) {
                 PresevePreMergeFileInfo preserveInfo = preservePreMergeFiles(leftAbspath, rightAbspath, targetAbspath, leftLabel, rightLabel, targetLabel, detranslatedTargetAbspath);
-                SVNSkel workItem = preserveInfo.workItem;
+                SVNSkel workItem = preserveInfo.workItems;
                 File leftCopy = preserveInfo.leftCopy;
                 File rightCopy = preserveInfo.rightCopy;
                 File targetCopy = preserveInfo.targetCopy;
@@ -4206,7 +4206,7 @@ public class SVNWCContext {
 
     public static class PresevePreMergeFileInfo {
 
-        public SVNSkel workItem;
+        public SVNSkel workItems;
         public File leftCopy;
         public File rightCopy;
         public File targetCopy;
@@ -4214,9 +4214,49 @@ public class SVNWCContext {
     }
 
     private PresevePreMergeFileInfo preservePreMergeFiles(File leftAbspath, File rightAbspath, File targetAbspath, String leftLabel, String rightLabel, String targetLabel,
-            File detranslatedTargetAbspath) {
-        // TODO
-        throw new UnsupportedOperationException();
+            File detranslatedTargetAbspath) throws SVNException {
+        PresevePreMergeFileInfo info = new PresevePreMergeFileInfo();
+        info.workItems = null;
+        File dirAbspath = SVNFileUtil.getFileDir(targetAbspath);
+        String targetName = SVNFileUtil.getFileName(targetAbspath);
+        File tempDir = db.getWCRootTempDir(targetAbspath);
+        info.leftCopy = SVNFileUtil.createUniqueFile(dirAbspath, targetName, leftLabel, false);
+        info.rightCopy = SVNFileUtil.createUniqueFile(dirAbspath, targetName, rightLabel, false);
+        info.targetCopy = SVNFileUtil.createUniqueFile(dirAbspath, targetName, targetLabel, false);
+        File tmpLeft, tmpRight, detranslatedTargetCopy;
+        if (!SVNPathUtil.isAncestor(dirAbspath.getPath(), leftAbspath.getPath())) {
+            tmpLeft = openUniqueFile(tempDir, false).path;
+            SVNFileUtil.copyFile(leftAbspath, tmpLeft, true);
+        } else {
+            tmpLeft = leftAbspath;
+        }
+        if (!SVNPathUtil.isAncestor(dirAbspath.getPath(), rightAbspath.getPath())) {
+            tmpRight = openUniqueFile(tempDir, false).path;
+            SVNFileUtil.copyFile(rightAbspath, tmpRight, true);
+        } else {
+            tmpRight = rightAbspath;
+        }
+        SVNSkel workItem;
+        workItem = wqBuildFileCopyTranslated(targetAbspath, tmpLeft, info.leftCopy);
+        info.workItems = wqMerge(info.workItems, workItem);
+        workItem = wqBuildFileCopyTranslated(targetAbspath, tmpRight, info.rightCopy);
+        info.workItems = wqMerge(info.workItems, workItem);
+        try {
+            detranslatedTargetCopy = getTranslatedFile(targetAbspath, targetAbspath, true, false, false, false);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND) {
+                detranslatedTargetCopy = detranslatedTargetAbspath;
+            } else {
+                throw e;
+            }
+        }
+        workItem = wqBuildFileCopyTranslated(targetAbspath, detranslatedTargetCopy, info.targetCopy);
+        info.workItems = wqMerge(info.workItems, workItem);
+        return info;
+    }
+
+    private SVNSkel wqBuildFileCopyTranslated(File targetAbspath, File tmpLeft, File leftCopy) {
+        return null;
     }
 
     private MergeInfo maybeResolveConflicts(File leftAbspath, File rightAbspath, File targetAbspath, File copyfromText, String leftLabel, String rightLabel, String targetLabel,
