@@ -4289,17 +4289,26 @@ public class SVNWCContext {
         return info;
     }
 
+    private SVNConflictDescription setupTextConflictDesc(File leftAbspath, File rightAbspath, File targetAbspath, SVNConflictVersion leftVersion, SVNConflictVersion rightVersion, File resultTarget,
+            File detranslatedTarget, SVNPropertyValue mimeprop, boolean isBinary) {
+        SVNWCConflictDescription17 cdesc = SVNWCConflictDescription17.createText(targetAbspath);
+        cdesc.setBinary(false);
+        cdesc.setMimeType((mimeprop != null && mimeprop.isString()) ? mimeprop.getString() : null);
+        cdesc.setBaseFile(leftAbspath);
+        cdesc.setTheirFile(rightAbspath);
+        cdesc.setMyFile(detranslatedTarget);
+        cdesc.setMergedFile(resultTarget);
+        cdesc.setSrcLeftVersion(leftVersion);
+        cdesc.setSrcRightVersion(rightVersion);
+        return cdesc.toConflictDescription();
+    }
+
     private MergeInfo evalConflictResolverResult(SVNConflictChoice conflictChoice, File dirAbspath, File leftAbspath, File rightAbspath, File targetAbspath, File copyfromText, File file,
             File detranslatedTarget, SVNDiffOptions options) {
         return null;
     }
 
     private SVNSkel saveMergeResult(File targetAbspath, File file) {
-        return null;
-    }
-
-    private SVNConflictDescription setupTextConflictDesc(File leftAbspath, File rightAbspath, File targetAbspath, SVNConflictVersion leftVersion, SVNConflictVersion rightVersion, File resultTarget,
-            File detranslatedTarget, SVNPropertyValue mimeprop, boolean b) {
         return null;
     }
 
