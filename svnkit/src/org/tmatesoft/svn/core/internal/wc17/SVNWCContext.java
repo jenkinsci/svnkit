@@ -18,6 +18,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.RandomAccessFile;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.EnumSet;
@@ -50,6 +51,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
 import org.tmatesoft.svn.core.internal.wc.SVNChecksumKind;
 import org.tmatesoft.svn.core.internal.wc.SVNConflictVersion;
+import org.tmatesoft.svn.core.internal.wc.SVNDiffConflictChoiceStyle;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -99,6 +101,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 import de.regnis.q.sequence.line.QSequenceLineRAByteData;
 import de.regnis.q.sequence.line.QSequenceLineRAData;
+import de.regnis.q.sequence.line.QSequenceLineRAFileData;
 
 /**
  * @version 1.4
@@ -4136,7 +4139,56 @@ public class SVNWCContext {
         return info;
     }
 
-    public class PresevePreMergeFileInfo {
+    private boolean doTextMerge(File resultFile, File detranslatedTargetAbspath, File leftAbspath, File rightAbspath, String targetLabel, String leftLabel, String rightLabel, SVNDiffOptions options)
+            throws SVNException {
+        ConflictMarkersInfo markersInfo = initConflictMarkers(targetLabel, leftLabel, rightLabel);
+        String targetMarker = markersInfo.targetMarker;
+        String leftMarker = markersInfo.leftMarker;
+        String rightMarker = markersInfo.rightMarker;
+        FSMergerBySequence merger = new FSMergerBySequence(leftMarker.getBytes(), "=======".getBytes(), targetMarker.getBytes(), rightMarker.getBytes());
+        int mergeResult = 0;
+        RandomAccessFile localIS = null;
+        RandomAccessFile latestIS = null;
+        RandomAccessFile baseIS = null;
+        OutputStream result = null;
+        try {
+            result = SVNFileUtil.openFileForWriting(resultFile);
+            localIS = new RandomAccessFile(detranslatedTargetAbspath, "r");
+            latestIS = new RandomAccessFile(rightAbspath, "r");
+            baseIS = new RandomAccessFile(leftAbspath, "r");
+
+            QSequenceLineRAData baseData = new QSequenceLineRAFileData(baseIS);
+            QSequenceLineRAData localData = new QSequenceLineRAFileData(localIS);
+            QSequenceLineRAData latestData = new QSequenceLineRAFileData(latestIS);
+            mergeResult = merger.merge(baseData, localData, latestData, options, result, SVNDiffConflictChoiceStyle.CHOOSE_MODIFIED_LATEST);
+        } catch (IOException e) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
+            SVNErrorManager.error(err, e, SVNLogType.WC);
+        } finally {
+            SVNFileUtil.closeFile(result);
+            SVNFileUtil.closeFile(localIS);
+            SVNFileUtil.closeFile(baseIS);
+            SVNFileUtil.closeFile(latestIS);
+        }
+        if (mergeResult == FSMergerBySequence.CONFLICTED) {
+            return true;
+        }
+        return false;
+    }
+
+    public static class ConflictMarkersInfo {
+
+        public String rightMarker;
+        public String leftMarker;
+        public String targetMarker;
+
+    }
+
+    private ConflictMarkersInfo initConflictMarkers(String targetLabel, String leftLabel, String rightLabel) {
+        return null;
+    }
+
+    public static class PresevePreMergeFileInfo {
 
         public SVNSkel workItem;
         public File leftCopy;
@@ -4154,11 +4206,6 @@ public class SVNWCContext {
     private MergeInfo maybeResolveConflicts(File leftAbspath, File rightAbspath, File targetAbspath, File copyfromText, String leftLabel, String rightLabel, String targetLabel,
             SVNConflictVersion leftVersion, SVNConflictVersion rightVersion, File resultTarget, File detranslatedTargetAbspath, SVNPropertyValue mimeprop, SVNDiffOptions options,
             ISVNConflictHandler conflictResolver) {
-        // TODO
-        throw new UnsupportedOperationException();
-    }
-
-    private boolean doTextMerge(File resultTarget, File detranslatedTargetAbspath, File leftAbspath, File rightAbspath, String targetLabel, String leftLabel, String rightLabel, SVNDiffOptions options) {
         // TODO
         throw new UnsupportedOperationException();
     }
