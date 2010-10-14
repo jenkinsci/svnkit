@@ -13,6 +13,7 @@ package org.tmatesoft.svn.core.javahl;
 
 import java.io.File;
 import java.security.cert.X509Certificate;
+import java.text.MessageFormat;
 
 import org.tigris.subversion.javahl.PromptUserPassword;
 import org.tigris.subversion.javahl.PromptUserPassword2;
@@ -170,6 +171,7 @@ class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
             String prompt = "The ''{0}'' server''s key fingerprint is:\n{1}\n" +
             		"If you trust this host, select ''Yes'' to add the key to the SVN cache and carry on connecting.\n" +
             		"If you do not trust this host, select ''No'' to abandon the connection.";            
+            prompt = MessageFormat.format(prompt, new Object[] {url.getHost(), SVNSSLUtil.getFingerprint((byte[]) serverAuth)});
             if (!myPrompt.askYesNo(realm, prompt, false)) {
                 return REJECTED;
             }                
