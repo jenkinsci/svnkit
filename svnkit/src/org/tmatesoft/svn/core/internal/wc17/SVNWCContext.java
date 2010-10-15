@@ -4378,9 +4378,69 @@ public class SVNWCContext {
     }
 
     private MergeInfo mergeBinaryFile(File leftAbspath, File rightAbspath, File targetAbspath, String leftLabel, String rightLabel, String targetLabel, SVNConflictVersion leftVersion,
-            SVNConflictVersion rightVersion, File detranslatedTargetAbspath, SVNPropertyValue mimeprop, ISVNConflictHandler conflictResolver) {
-        // TODO
-        throw new UnsupportedOperationException();
+            SVNConflictVersion rightVersion, File detranslatedTargetAbspath, SVNPropertyValue mimeprop, ISVNConflictHandler conflictResolver) throws SVNException {
+        assert (SVNFileUtil.isAbsolute(targetAbspath));
+        MergeInfo info = new MergeInfo();
+        info.workItems = null;
+        File leftCopy, rightCopy;
+        String leftBase, rightBase;
+        String conflictWrk;
+        SVNSkel workItem;
+        File mergeDirpath = SVNFileUtil.getFileDir(targetAbspath);
+        String mergeFilename = SVNFileUtil.getFileName(targetAbspath);
+        if (conflictResolver != null) {
+            File installFrom = null;
+            SVNConflictDescription cdesc = setupTextConflictDesc(leftAbspath, rightAbspath, targetAbspath, leftVersion, rightVersion, null, detranslatedTargetAbspath, mimeprop, true);
+            SVNConflictResult result = conflictResolver.handleConflict(cdesc);
+            if (result == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CONFLICT_RESOLVER_FAILURE, "Conflict callback violated API: returned no results");
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+            if (result.getConflictChoice() == SVNConflictChoice.BASE) {
+                installFrom = leftAbspath;
+                info.mergeOutcome = SVNStatusType.MERGED;
+            } else if (result.getConflictChoice() == SVNConflictChoice.THEIRS_FULL) {
+                installFrom = rightAbspath;
+                info.mergeOutcome = SVNStatusType.MERGED;
+            } else if (result.getConflictChoice() == SVNConflictChoice.MINE_FULL) {
+                info.mergeOutcome = SVNStatusType.MERGED;
+                return info;
+            } else if (result.getConflictChoice() == SVNConflictChoice.MERGED) {
+                if (result.getMergedFile() == null) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CONFLICT_RESOLVER_FAILURE, "Conflict callback violated API: returned no results");
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                } else {
+                    installFrom = result.getMergedFile();
+                    info.mergeOutcome = SVNStatusType.MERGED;
+                }
+            } else {
+            }
+            if (installFrom != null) {
+                info.workItems = wqBuildFileInstall(targetAbspath, installFrom, false, false);
+                return info;
+            }
+        }
+        leftCopy = SVNFileUtil.createUniqueFile(mergeDirpath, mergeFilename, leftLabel, false);
+        rightCopy = SVNFileUtil.createUniqueFile(mergeDirpath, mergeFilename, rightLabel, false);
+        SVNFileUtil.copyFile(leftAbspath, leftCopy, true);
+        SVNFileUtil.copyFile(rightAbspath, rightCopy, true);
+        if (!targetAbspath.equals(detranslatedTargetAbspath)) {
+            File mineCopy = SVNFileUtil.createUniqueFile(mergeDirpath, mergeFilename, targetLabel, true);
+            info.workItems = wqBuildFileMove(detranslatedTargetAbspath, mineCopy);
+            conflictWrk = SVNPathUtil.getRelativePath(mergeDirpath.getPath(), mineCopy.getPath());
+        } else {
+            conflictWrk = null;
+        }
+        leftBase = SVNFileUtil.getFileName(leftCopy);
+        rightBase = SVNFileUtil.getFileName(rightCopy);
+        workItem = wqBuildSetTextConflictMarkersTmp(targetAbspath, leftBase, rightBase, conflictWrk);
+        info.workItems = wqMerge(info.workItems, workItem);
+        info.mergeOutcome = SVNStatusType.CONFLICTED;
+        return info;
+    }
+
+    private SVNSkel wqBuildFileMove(File detranslatedTargetAbspath, File mineCopy) {
+        return null;
     }
 
     private SVNSkel wqBuildFileCopyTranslated(File targetAbspath, File tmpLeft, File leftCopy) {
