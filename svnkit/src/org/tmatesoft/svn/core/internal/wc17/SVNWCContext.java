@@ -4273,12 +4273,12 @@ public class SVNWCContext {
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
 
-            if (result.isIsSaveMerged()) {
-                info.workItems = saveMergeResult(targetAbspath, result.isIsSaveMerged() ? result.getMergedFile() : resultTarget);
+            if (result.getMergedFile()!=null) {
+                info.workItems = saveMergeResult(targetAbspath, result.getMergedFile()!=null ? result.getMergedFile() : resultTarget);
             }
         }
         MergeInfo evalInfo = evalConflictResolverResult(result.getConflictChoice(), dirAbspath, leftAbspath, rightAbspath, targetAbspath, copyfromText,
-                result.isIsSaveMerged() ? result.getMergedFile() : resultTarget, detranslatedTarget, options);
+                result.getMergedFile()!=null ? result.getMergedFile() : resultTarget, detranslatedTarget, options);
         info.mergeOutcome = evalInfo.mergeOutcome;
         SVNSkel workItem = evalInfo.workItems;
         info.workItems = wqMerge(info.workItems, workItem);
