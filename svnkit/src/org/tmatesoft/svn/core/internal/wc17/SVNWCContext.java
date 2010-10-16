@@ -4440,7 +4440,8 @@ public class SVNWCContext {
     }
 
     private SVNSkel wqBuildFileMove(File detranslatedTargetAbspath, File mineCopy) {
-        return null;
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     private SVNSkel wqBuildFileCopyTranslated(File targetAbspath, File tmpLeft, File leftCopy) {
@@ -4469,23 +4470,28 @@ public class SVNWCContext {
     }
 
     public SVNSkel wqBuildRecordFileinfo(File localAbspath, SVNDate setDate) {
-        return null;
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public SVNSkel wqBuildFileInstall(File localAbspath, File installFrom, boolean isUseCommitTimes, boolean recordFileinfo) {
-        return null;
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public SVNSkel wqMerge(SVNSkel workItems, SVNSkel workItem) {
-        return null;
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public SVNSkel wqBuildSyncFileFlags(File localAbspath) {
-        return null;
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public SVNSkel wqBuildFileRemove(File installFrom) {
-        return null;
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
 }
