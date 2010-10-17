@@ -4531,14 +4531,18 @@ public class SVNWCContext {
         return workItem;
     }
 
-    public SVNSkel wqBuildSyncFileFlags(File localAbspath) {
-        // TODO
-        throw new UnsupportedOperationException();
+    public SVNSkel wqBuildSyncFileFlags(File localAbspath) throws SVNException {
+        SVNSkel workItem = SVNSkel.createEmptyList();
+        workItem.prependString(localAbspath.getPath());
+        workItem.prependString(WorkQueueOperation.SYNC_FILE_FLAGS.getOpName());
+        return workItem;
     }
 
-    public SVNSkel wqBuildFileRemove(File installFrom) {
-        // TODO
-        throw new UnsupportedOperationException();
+    public SVNSkel wqBuildFileRemove(File localAbspath) throws SVNException {
+        SVNSkel workItem = SVNSkel.createEmptyList();
+        workItem.prependString(localAbspath.getPath());
+        workItem.prependString(WorkQueueOperation.FILE_REMOVE.getOpName());
+        return workItem;
     }
 
     public void wqAdd(File dirAbspath, SVNSkel workItem) {
