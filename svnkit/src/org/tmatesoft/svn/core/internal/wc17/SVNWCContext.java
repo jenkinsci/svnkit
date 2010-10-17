@@ -4591,9 +4591,26 @@ public class SVNWCContext {
         return workItem1;
     }
 
-    public void wqRun(File dirAbspath) {
-        // TODO
-        throw new UnsupportedOperationException();
+    public void wqRun(File wcRootAbspath) throws SVNException {
+        // #ifdef DEBUG_WORK_QUEUE
+        // SVN_DBG(("wq_run: wri='%s'\n", wri_abspath));
+        // #endif
+        while (true) {
+            checkCancelled();
+            SVNWCDbKind kind = db.readKind(wcRootAbspath, true);
+            if (kind == SVNWCDbKind.Unknown) {
+                break;
+            }
+            WCDbWorkQueueInfo fetchWorkQueue = db.fetchWorkQueue(wcRootAbspath);
+            if (fetchWorkQueue.workItem == null) {
+                break;
+            }
+            dispatchWorkItem(wcRootAbspath, fetchWorkQueue.workItem);
+            db.completedWorkQueue(wcRootAbspath, fetchWorkQueue.id);
+        }
+    }
+
+    private void dispatchWorkItem(File wcRootAbspath, SVNSkel workItem) {
     }
 
 }
