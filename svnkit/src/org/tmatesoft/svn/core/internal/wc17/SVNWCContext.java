@@ -4460,21 +4460,33 @@ public class SVNWCContext {
     public SVNSkel wqBuildFileMove(File srcAbspath, File dstAbspath) throws SVNException {
         assert (SVNFileUtil.isAbsolute(srcAbspath));
         assert (SVNFileUtil.isAbsolute(dstAbspath));
-        SVNSkel workItem = SVNSkel.createEmptyList();
         SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(srcAbspath));
         if (kind == SVNNodeKind.NONE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "''{0}'' not found", srcAbspath);
             SVNErrorManager.error(err, SVNLogType.WC);
         }
+        SVNSkel workItem = SVNSkel.createEmptyList();
         workItem.prependString(dstAbspath.getPath());
         workItem.prependString(srcAbspath.getPath());
         workItem.prependString(WorkQueueOperation.FILE_MOVE.getOpName());
         return workItem;
     }
 
-    private SVNSkel wqBuildFileCopyTranslated(File targetAbspath, File tmpLeft, File leftCopy) {
-        // TODO
-        throw new UnsupportedOperationException();
+    public SVNSkel wqBuildFileCopyTranslated(File localAbspath, File srcAbspath, File dstAbspath) throws SVNException {
+        assert (SVNFileUtil.isAbsolute(localAbspath));
+        assert (SVNFileUtil.isAbsolute(srcAbspath));
+        assert (SVNFileUtil.isAbsolute(dstAbspath));
+        SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(srcAbspath));
+        if (kind == SVNNodeKind.NONE) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "''{0}'' not found", srcAbspath);
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+        SVNSkel workItem = SVNSkel.createEmptyList();
+        workItem.prependString(dstAbspath.getPath());
+        workItem.prependString(srcAbspath.getPath());
+        workItem.prependString(localAbspath.getPath());
+        workItem.prependString(WorkQueueOperation.FILE_COPY_TRANSLATED.getOpName());
+        return workItem;
     }
 
     private SVNSkel wqBuildSetTextConflictMarkersTmp(File targetAbspath, String fileName, String fileName2, String fileName3) {
