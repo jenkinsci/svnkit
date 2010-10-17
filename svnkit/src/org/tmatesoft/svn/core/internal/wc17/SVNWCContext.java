@@ -4508,27 +4508,18 @@ public class SVNWCContext {
         return workItem;
     }
 
-    public void wqAdd(File dirAbspath, SVNSkel workItem) {
-        // TODO
-        throw new UnsupportedOperationException();
-    }
-
-    public void wqRun(File dirAbspath) {
-        // TODO
-        throw new UnsupportedOperationException();
-    }
-
-    public SVNSkel wqBuildRecordFileinfo(File localAbspath, SVNDate setDate) {
-        // TODO
-        throw new UnsupportedOperationException();
+    public SVNSkel wqBuildRecordFileinfo(File localAbspath, SVNDate setTime) throws SVNException {
+        assert (SVNFileUtil.isAbsolute(localAbspath));
+        SVNSkel workItem = SVNSkel.createEmptyList();
+        if(setTime!=null) {
+            workItem.prependString(String.format("%d", setTime.getTimeInMicros()));
+        }
+        workItem.prependString(localAbspath.getPath());
+        workItem.prependString(WorkQueueOperation.RECORD_FILEINFO.getOpName());
+        return workItem;
     }
 
     public SVNSkel wqBuildFileInstall(File localAbspath, File installFrom, boolean isUseCommitTimes, boolean recordFileinfo) {
-        // TODO
-        throw new UnsupportedOperationException();
-    }
-
-    public SVNSkel wqMerge(SVNSkel workItems, SVNSkel workItem) {
         // TODO
         throw new UnsupportedOperationException();
     }
@@ -4539,6 +4530,21 @@ public class SVNWCContext {
     }
 
     public SVNSkel wqBuildFileRemove(File installFrom) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    public void wqAdd(File dirAbspath, SVNSkel workItem) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    public void wqRun(File dirAbspath) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    public SVNSkel wqMerge(SVNSkel workItems, SVNSkel workItem) {
         // TODO
         throw new UnsupportedOperationException();
     }
