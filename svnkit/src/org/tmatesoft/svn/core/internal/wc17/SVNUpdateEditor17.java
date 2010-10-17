@@ -1701,7 +1701,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         }
 
         public void cleanup() throws SVNException {
-            SVNUpdateEditor17.this.myWcContext.getDb().runWorkQueue(getLocalAbspath());
+            SVNUpdateEditor17.this.myWcContext.wqRun(getLocalAbspath());
         }
 
     }

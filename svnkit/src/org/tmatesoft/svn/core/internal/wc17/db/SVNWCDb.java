@@ -2694,11 +2694,6 @@ public class SVNWCDb implements ISVNWCDb {
         return true;
     }
 
-    public void runWorkQueue(File localAbspath) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
-    }
-
     public void opStartDirectoryUpdateTemp(File localAbspath, File newRelpath, long targetRevision) throws SVNException {
         // TODO
         throw new UnsupportedOperationException();
@@ -2775,16 +2770,6 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     public boolean isWCLockOwns(File localAbspath, boolean exact) {
-        // TODO
-        throw new UnsupportedOperationException();
-    }
-
-    public SVNSkel buildSetPropertyConflictMarkerWorkQueueTemp(File localAbspath, String fileExtension) {
-        // TODO
-        throw new UnsupportedOperationException();
-    }
-
-    public SVNSkel buildPrejInstallWorkQueue(File localAbspath, SVNSkel conflictSkel) {
         // TODO
         throw new UnsupportedOperationException();
     }

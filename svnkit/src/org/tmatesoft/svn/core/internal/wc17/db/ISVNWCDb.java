@@ -1603,8 +1603,6 @@ public interface ISVNWCDb {
 
     void removeWCLock(File localAbspath) throws SVNException;
 
-    void runWorkQueue(File localAbspath) throws SVNException;
-
     boolean isWCRoot(File localAbspath) throws SVNException;
 
     /** temp function. return the FORMAT for the directory LOCAL_ABSPATH. */
@@ -1659,9 +1657,5 @@ public interface ISVNWCDb {
     void forgetDirectoryTemp(File dirAbspath);
 
     boolean isWCLockOwns(File localAbspath, boolean exact);
-
-    SVNSkel buildSetPropertyConflictMarkerWorkQueueTemp(File localAbspath, String fileExtension);
-
-    SVNSkel buildPrejInstallWorkQueue(File localAbspath, SVNSkel conflictSkel);
 
 }

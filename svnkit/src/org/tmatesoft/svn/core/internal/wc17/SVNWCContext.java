@@ -3555,11 +3555,11 @@ public class SVNWCContext {
                 rejectPath = SVNFileUtil.createUniqueFile(rejectDirpath, rejectFilename, PROP_REJ_EXT, false);
             }
             {
-                SVNSkel workItem = db.buildSetPropertyConflictMarkerWorkQueueTemp(localAbspath, SVNFileUtil.getFileExtension(rejectPath));
+                SVNSkel workItem = wqBuildSetPropertyConflictMarkerTemp(localAbspath, SVNFileUtil.getFileExtension(rejectPath));
                 db.addWorkQueue(localAbspath, workItem);
             }
             {
-                SVNSkel workItem = db.buildPrejInstallWorkQueue(localAbspath, conflictSkel);
+                SVNSkel workItem = wqBuildPrejInstall(localAbspath, conflictSkel);
                 db.addWorkQueue(localAbspath, workItem);
             }
         }
@@ -4543,6 +4543,16 @@ public class SVNWCContext {
         workItem.prependString(localAbspath.getPath());
         workItem.prependString(WorkQueueOperation.FILE_REMOVE.getOpName());
         return workItem;
+    }
+
+    public SVNSkel wqBuildSetPropertyConflictMarkerTemp(File localAbspath, String fileExtension) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    public SVNSkel wqBuildPrejInstall(File localAbspath, SVNSkel conflictSkel) {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public void wqRun(File dirAbspath) {
