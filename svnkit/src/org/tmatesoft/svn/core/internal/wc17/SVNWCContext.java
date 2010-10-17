@@ -4545,12 +4545,16 @@ public class SVNWCContext {
         return workItem;
     }
 
-    public SVNSkel wqBuildSetPropertyConflictMarkerTemp(File localAbspath, String fileExtension) {
-        // TODO
-        throw new UnsupportedOperationException();
+    public SVNSkel wqBuildPrejInstall(File localAbspath, SVNSkel conflictSkel) throws SVNException {
+        assert (conflictSkel != null);
+        SVNSkel workItem = SVNSkel.createEmptyList();
+        workItem.addChild(conflictSkel);
+        workItem.prependString(localAbspath.getPath());
+        workItem.prependString(WorkQueueOperation.PREJ_INSTALL.getOpName());
+        return workItem;
     }
 
-    public SVNSkel wqBuildPrejInstall(File localAbspath, SVNSkel conflictSkel) {
+    public SVNSkel wqBuildSetPropertyConflictMarkerTemp(File localAbspath, String fileExtension) {
         // TODO
         throw new UnsupportedOperationException();
     }
