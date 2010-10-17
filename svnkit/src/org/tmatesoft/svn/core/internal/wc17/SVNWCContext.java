@@ -4563,12 +4563,35 @@ public class SVNWCContext {
         return workItem;
     }
 
-    public void wqRun(File dirAbspath) {
-        // TODO
-        throw new UnsupportedOperationException();
+    public SVNSkel wqMerge(SVNSkel workItem1, SVNSkel workItem2) throws SVNException {
+        if (workItem1 == null) {
+            return workItem2;
+        }
+        if (workItem2 == null) {
+            return workItem1;
+        }
+        if (workItem1.isAtom()) {
+            if (workItem2.isAtom()) {
+                SVNSkel result = SVNSkel.createEmptyList();
+                result.addChild(workItem2);
+                result.addChild(workItem1);
+                return result;
+            }
+            workItem2.addChild(workItem1);
+            return workItem2;
+        }
+        if (workItem2.isAtom()) {
+            workItem1.appendChild(workItem2);
+            return workItem1;
+        }
+        int listSize = workItem2.getListSize();
+        for (int i = 0; i < listSize; i++) {
+            workItem1.appendChild(workItem2.getChild(i));
+        }
+        return workItem1;
     }
 
-    public SVNSkel wqMerge(SVNSkel workItems, SVNSkel workItem) {
+    public void wqRun(File dirAbspath) {
         // TODO
         throw new UnsupportedOperationException();
     }
