@@ -299,10 +299,10 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         File dirAbspath = SVNFileUtil.getParentFile(localAbspath);
         if (!localAbspath.equals(myTargetAbspath)) {
             SVNSkel workItem = myWcContext.wqBuildBaseRemove(localAbspath, false);
-            myWcContext.wqAdd(dirAbspath, workItem);
+            myWcContext.getDb().addWorkQueue(dirAbspath, workItem);
         } else {
             SVNSkel workItem = myWcContext.wqBuildBaseRemove(localAbspath, true);
-            myWcContext.wqAdd(dirAbspath, workItem);
+            myWcContext.getDb().addWorkQueue(dirAbspath, workItem);
             myIsTargetDeleted = true;
         }
         myWcContext.wqRun(dirAbspath);

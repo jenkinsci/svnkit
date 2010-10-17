@@ -4511,7 +4511,7 @@ public class SVNWCContext {
     public SVNSkel wqBuildRecordFileinfo(File localAbspath, SVNDate setTime) throws SVNException {
         assert (SVNFileUtil.isAbsolute(localAbspath));
         SVNSkel workItem = SVNSkel.createEmptyList();
-        if(setTime!=null) {
+        if (setTime != null) {
             workItem.prependString(String.format("%d", setTime.getTimeInMicros()));
         }
         workItem.prependString(localAbspath.getPath());
@@ -4543,11 +4543,6 @@ public class SVNWCContext {
         workItem.prependString(localAbspath.getPath());
         workItem.prependString(WorkQueueOperation.FILE_REMOVE.getOpName());
         return workItem;
-    }
-
-    public void wqAdd(File dirAbspath, SVNSkel workItem) {
-        // TODO
-        throw new UnsupportedOperationException();
     }
 
     public void wqRun(File dirAbspath) {

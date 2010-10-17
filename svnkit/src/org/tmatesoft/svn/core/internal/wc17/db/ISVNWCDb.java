@@ -474,6 +474,7 @@ public interface ISVNWCDb {
      * <p>
      * Any work items that are necessary as part of this node construction may
      * be passed in WORK_ITEMS.
+     *
      * @param svnProperties
      */
     void addBaseFile(File localAbspath, File reposRelpath, SVNURL reposRootUrl, String reposUuid, long revision, SVNProperties props, long changedRev, SVNDate changedDate, String changedAuthor,
