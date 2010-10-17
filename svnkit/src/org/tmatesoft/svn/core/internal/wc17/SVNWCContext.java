@@ -4489,9 +4489,15 @@ public class SVNWCContext {
         return workItem;
     }
 
-    private SVNSkel wqBuildSetTextConflictMarkersTmp(File targetAbspath, String fileName, String fileName2, String fileName3) {
-        // TODO
-        throw new UnsupportedOperationException();
+    public SVNSkel wqBuildSetTextConflictMarkersTmp(File localAbspath, String oldBasename, String newBasename, String wrkBasename) throws SVNException {
+        assert (SVNFileUtil.isAbsolute(localAbspath));
+        SVNSkel workItem = SVNSkel.createEmptyList();
+        workItem.prependString(wrkBasename != null ? wrkBasename : "");
+        workItem.prependString(newBasename != null ? newBasename : "");
+        workItem.prependString(oldBasename != null ? oldBasename : "");
+        workItem.prependString(localAbspath.getPath());
+        workItem.prependString(WorkQueueOperation.TMP_SET_TEXT_CONFLICT_MARKERS.getOpName());
+        return workItem;
     }
 
     public SVNSkel wqBuildBaseRemove(File localAbspath, boolean b) {
