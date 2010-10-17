@@ -4714,7 +4714,7 @@ public class SVNWCContext {
         public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) throws SVNException {
             File srcAbspath = SVNFileUtil.createFilePath(workItem.getChild(1).getValue());
             File dstAbspath = SVNFileUtil.createFilePath(workItem.getChild(2).getValue());
-            if(srcAbspath.exists()) {
+            if (srcAbspath.exists()) {
                 SVNFileUtil.rename(srcAbspath, dstAbspath);
             }
         }
@@ -4722,9 +4722,12 @@ public class SVNWCContext {
 
     public static class RunFileTranslate implements RunWorkQueueOperation {
 
-        public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) {
-            // TODO
-            throw new UnsupportedOperationException();
+        public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) throws SVNException {
+            File localAbspath = SVNFileUtil.createFilePath(workItem.getChild(1).getValue());
+            File srcAbspath = SVNFileUtil.createFilePath(workItem.getChild(2).getValue());
+            File dstAbspath = SVNFileUtil.createFilePath(workItem.getChild(3).getValue());
+            TranslateInfo tinf = ctx.getTranslateInfo(localAbspath, true, true, true);
+            SVNTranslator.copyAndTranslate(srcAbspath, dstAbspath, null, tinf.eolStyleInfo.eolStr, tinf.keywords, tinf.special, true, true);
         }
     }
 
