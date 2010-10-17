@@ -245,10 +245,6 @@ public class SVNWCContext {
         private final String opName;
         private final RunWorkQueueOperation operation;
 
-        private WorkQueueOperation(String opName) {
-            this(opName, null);
-        }
-
         private WorkQueueOperation(String opName, RunWorkQueueOperation operation) {
             this.opName = opName;
             this.operation = operation;
@@ -256,6 +252,10 @@ public class SVNWCContext {
 
         public String getOpName() {
             return opName;
+        }
+
+        public RunWorkQueueOperation getOperation() {
+            return operation;
         }
 
     }
@@ -4647,9 +4647,18 @@ public class SVNWCContext {
         }
     }
 
-    private void dispatchWorkItem(File wcRootAbspath, SVNSkel workItem) {
-        // TODO
-        throw new UnsupportedOperationException();
+    private void dispatchWorkItem(File wcRootAbspath, SVNSkel workItem) throws SVNException {
+        for (WorkQueueOperation scan : WorkQueueOperation.values()) {
+            if (scan.getOpName().equals(workItem.getValue())) {
+                // #ifdef DEBUG_WORK_QUEUE
+                // SVN_DBG(("dispatch: operation='%s'\n", scan->name));
+                // #endif
+                scan.getOperation().runOperation(this, wcRootAbspath, workItem);
+                return;
+            }
+        }
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_BAD_ADM_LOG, "Unrecognized work item in the queue associated with ''{0}''", wcRootAbspath);
+        SVNErrorManager.error(err, SVNLogType.WC);
     }
 
     public static class RunRevert implements RunWorkQueueOperation {
