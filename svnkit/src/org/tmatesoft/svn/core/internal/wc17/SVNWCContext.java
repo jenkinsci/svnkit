@@ -205,6 +205,24 @@ public class SVNWCContext {
         Fixed
     }
 
+    public static enum WorkQueueOperation {
+
+        REVERT("revert"), BASE_REMOVE("base-remove"), DELETION_POSTCOMMIT("deletion-postcommit"), POSTCOMMIT("postcommit"), FILE_INSTALL("file-install"), FILE_REMOVE("file-remove"), FILE_MOVE(
+                "file-move"), FILE_COPY_TRANSLATED("file-translate"), SYNC_FILE_FLAGS("sync-file-flags"), PREJ_INSTALL("prej-install"), RECORD_FILEINFO("record-fileinfo"), TMP_SET_TEXT_CONFLICT_MARKERS(
+                "tmp-set-text-conflict-markers"), TMP_SET_PROPERTY_CONFLICT_MARKER("tmp-set-property-conflict-marker"), PRISTINE_GET_TRANSLATED("pristine-get-translated"), POSTUPGRADE("postupgrade");
+
+        private final String opName;
+
+        private WorkQueueOperation(String opName) {
+            this.opName = opName;
+        }
+
+        public String getOpName() {
+            return opName;
+        }
+
+    }
+
     private ISVNWCDb db;
     private boolean closeDb;
     private ISVNEventHandler eventHandler;
@@ -4273,12 +4291,12 @@ public class SVNWCContext {
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
 
-            if (result.getMergedFile()!=null) {
-                info.workItems = saveMergeResult(targetAbspath, result.getMergedFile()!=null ? result.getMergedFile() : resultTarget);
+            if (result.getMergedFile() != null) {
+                info.workItems = saveMergeResult(targetAbspath, result.getMergedFile() != null ? result.getMergedFile() : resultTarget);
             }
         }
         MergeInfo evalInfo = evalConflictResolverResult(result.getConflictChoice(), dirAbspath, leftAbspath, rightAbspath, targetAbspath, copyfromText,
-                result.getMergedFile()!=null ? result.getMergedFile() : resultTarget, detranslatedTarget, options);
+                result.getMergedFile() != null ? result.getMergedFile() : resultTarget, detranslatedTarget, options);
         info.mergeOutcome = evalInfo.mergeOutcome;
         SVNSkel workItem = evalInfo.workItems;
         info.workItems = wqMerge(info.workItems, workItem);
@@ -4439,9 +4457,19 @@ public class SVNWCContext {
         return info;
     }
 
-    private SVNSkel wqBuildFileMove(File detranslatedTargetAbspath, File mineCopy) {
-        // TODO
-        throw new UnsupportedOperationException();
+    public SVNSkel wqBuildFileMove(File srcAbspath, File dstAbspath) throws SVNException {
+        assert (SVNFileUtil.isAbsolute(srcAbspath));
+        assert (SVNFileUtil.isAbsolute(dstAbspath));
+        SVNSkel workItem = SVNSkel.createEmptyList();
+        SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(srcAbspath));
+        if (kind == SVNNodeKind.NONE) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "''{0}'' not found", srcAbspath);
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+        workItem.prependString(dstAbspath.getPath());
+        workItem.prependString(srcAbspath.getPath());
+        workItem.prependString(WorkQueueOperation.FILE_MOVE.getOpName());
+        return workItem;
     }
 
     private SVNSkel wqBuildFileCopyTranslated(File targetAbspath, File tmpLeft, File leftCopy) {
