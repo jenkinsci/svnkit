@@ -205,16 +205,53 @@ public class SVNWCContext {
         Fixed
     }
 
+    public interface RunWorkQueueOperation {
+
+        void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem);
+    }
+
     public static enum WorkQueueOperation {
 
-        REVERT("revert"), BASE_REMOVE("base-remove"), DELETION_POSTCOMMIT("deletion-postcommit"), POSTCOMMIT("postcommit"), FILE_INSTALL("file-install"), FILE_REMOVE("file-remove"), FILE_MOVE(
-                "file-move"), FILE_COPY_TRANSLATED("file-translate"), SYNC_FILE_FLAGS("sync-file-flags"), PREJ_INSTALL("prej-install"), RECORD_FILEINFO("record-fileinfo"), TMP_SET_TEXT_CONFLICT_MARKERS(
-                "tmp-set-text-conflict-markers"), TMP_SET_PROPERTY_CONFLICT_MARKER("tmp-set-property-conflict-marker"), PRISTINE_GET_TRANSLATED("pristine-get-translated"), POSTUPGRADE("postupgrade");
+        REVERT("revert", new RunRevert()),
+
+        BASE_REMOVE("base-remove", new RunBaseRemove()),
+
+        DELETION_POSTCOMMIT("deletion-postcommit", new RunDeletionPostCommit()),
+
+        POSTCOMMIT("postcommit", new RunPostCommit()),
+
+        FILE_INSTALL("file-install", new RunFileInstall()),
+
+        FILE_REMOVE("file-remove", new RunFileRemove()),
+
+        FILE_MOVE("file-move", new RunFileMove()),
+
+        FILE_COPY_TRANSLATED("file-translate", new RunFileTranslate()),
+
+        SYNC_FILE_FLAGS("sync-file-flags", new RunSyncFileFlags()),
+
+        PREJ_INSTALL("prej-install", new RunPrejInstall()),
+
+        RECORD_FILEINFO("record-fileinfo", new RunRecordFileInfo()),
+
+        TMP_SET_TEXT_CONFLICT_MARKERS("tmp-set-text-conflict-markers", new RunSetTextConflictMarkersTemp()),
+
+        TMP_SET_PROPERTY_CONFLICT_MARKER("tmp-set-property-conflict-marker", new RunSetPropertyConflictMarkerTemp()),
+
+        PRISTINE_GET_TRANSLATED("pristine-get-translated", new RunPristineGetTranslated()),
+
+        POSTUPGRADE("postupgrade", new RunPostUpgrade());
 
         private final String opName;
+        private final RunWorkQueueOperation operation;
 
         private WorkQueueOperation(String opName) {
+            this(opName, null);
+        }
+
+        private WorkQueueOperation(String opName, RunWorkQueueOperation operation) {
             this.opName = opName;
+            this.operation = operation;
         }
 
         public String getOpName() {
@@ -4611,6 +4648,128 @@ public class SVNWCContext {
     }
 
     private void dispatchWorkItem(File wcRootAbspath, SVNSkel workItem) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    public static class RunRevert implements RunWorkQueueOperation {
+
+        public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) {
+            // TODO
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    public static class RunBaseRemove implements RunWorkQueueOperation {
+
+        public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) {
+            // TODO
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    public static class RunDeletionPostCommit implements RunWorkQueueOperation {
+
+        public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) {
+            // TODO
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    public static class RunPostCommit implements RunWorkQueueOperation {
+
+        public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) {
+            // TODO
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    public static class RunFileInstall implements RunWorkQueueOperation {
+
+        public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) {
+            // TODO
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    public static class RunFileRemove implements RunWorkQueueOperation {
+
+        public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) {
+            // TODO
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    public static class RunFileMove implements RunWorkQueueOperation {
+
+        public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) {
+            // TODO
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    public static class RunFileTranslate implements RunWorkQueueOperation {
+
+        public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) {
+            // TODO
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    public static class RunSyncFileFlags implements RunWorkQueueOperation {
+
+        public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) {
+            // TODO
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    public static class RunPrejInstall implements RunWorkQueueOperation {
+
+        public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) {
+            // TODO
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    public static class RunRecordFileInfo implements RunWorkQueueOperation {
+
+        public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) {
+            // TODO
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    public static class RunSetTextConflictMarkersTemp implements RunWorkQueueOperation {
+
+        public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) {
+            // TODO
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    public static class RunSetPropertyConflictMarkerTemp implements RunWorkQueueOperation {
+
+        public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) {
+            // TODO
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    public static class RunPristineGetTranslated implements RunWorkQueueOperation {
+
+        public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) {
+            // TODO
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    public static class RunPostUpgrade implements RunWorkQueueOperation {
+
+        public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) {
+            // TODO
+            throw new UnsupportedOperationException();
+        }
     }
 
 }
