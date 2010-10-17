@@ -207,7 +207,7 @@ public class SVNWCContext {
 
     public interface RunWorkQueueOperation {
 
-        void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem);
+        void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) throws SVNException;
     }
 
     public static enum WorkQueueOperation {
@@ -4711,9 +4711,12 @@ public class SVNWCContext {
 
     public static class RunFileMove implements RunWorkQueueOperation {
 
-        public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) {
-            // TODO
-            throw new UnsupportedOperationException();
+        public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) throws SVNException {
+            File srcAbspath = SVNFileUtil.createFilePath(workItem.getChild(1).getValue());
+            File dstAbspath = SVNFileUtil.createFilePath(workItem.getChild(2).getValue());
+            if(srcAbspath.exists()) {
+                SVNFileUtil.rename(srcAbspath, dstAbspath);
+            }
         }
     }
 
