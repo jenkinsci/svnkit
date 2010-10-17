@@ -4519,9 +4519,16 @@ public class SVNWCContext {
         return workItem;
     }
 
-    public SVNSkel wqBuildFileInstall(File localAbspath, File installFrom, boolean isUseCommitTimes, boolean recordFileinfo) {
-        // TODO
-        throw new UnsupportedOperationException();
+    public SVNSkel wqBuildFileInstall(File localAbspath, File sourceAbspath, boolean useCommitTimes, boolean recordFileinfo) throws SVNException {
+        SVNSkel workItem = SVNSkel.createEmptyList();
+        if (sourceAbspath != null) {
+            workItem.prependString(sourceAbspath.getPath());
+        }
+        workItem.prependString(recordFileinfo ? "1" : "0");
+        workItem.prependString(useCommitTimes ? "1" : "0");
+        workItem.prependString(localAbspath.getPath());
+        workItem.prependString(WorkQueueOperation.FILE_INSTALL.getOpName());
+        return workItem;
     }
 
     public SVNSkel wqBuildSyncFileFlags(File localAbspath) {
