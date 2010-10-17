@@ -4500,9 +4500,12 @@ public class SVNWCContext {
         return workItem;
     }
 
-    public SVNSkel wqBuildBaseRemove(File localAbspath, boolean b) {
-        // TODO
-        throw new UnsupportedOperationException();
+    public SVNSkel wqBuildBaseRemove(File localAbspath, boolean keepNotPresent) throws SVNException {
+        SVNSkel workItem = SVNSkel.createEmptyList();
+        workItem.prependString(keepNotPresent ? "1" : "0");
+        workItem.prependString(localAbspath.getPath());
+        workItem.prependString(WorkQueueOperation.BASE_REMOVE.getOpName());
+        return workItem;
     }
 
     public void wqAdd(File dirAbspath, SVNSkel workItem) {
