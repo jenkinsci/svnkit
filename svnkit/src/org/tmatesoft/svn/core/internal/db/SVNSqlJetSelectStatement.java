@@ -64,7 +64,7 @@ public class SVNSqlJetSelectStatement extends SVNSqlJetStatement {
         this.indexName = indexName;
     }
 
-    protected Object[] getWhere() {
+    protected Object[] getWhere() throws SVNException {
         if (binds.size() == 0) {
             return null;
         }

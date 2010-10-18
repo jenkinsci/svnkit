@@ -28,18 +28,45 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
  */
 public class SVNWCDbSelectDeletionInfo extends SVNSqlJetSelectStatement {
 
+    public static final String NODES_BASE = "nodes_base";
+
     public SVNWCDbSelectDeletionInfo(SVNSqlJetDb sDb) throws SVNException {
-        super(sDb, SVNWCDbSchema.WORKING_NODE);
+        super(sDb, SVNWCDbSchema.NODES);
     }
 
     public SVNSqlJetStatement getJoinedStatement(String joinedTable) throws SVNException {
-        if (!eof() && SVNWCDbSchema.BASE_NODE.toString().equals(joinedTable)) {
-            SVNSqlJetSelectStatement baseNodeStmt = new SVNSqlJetSelectStatement(sDb, SVNWCDbSchema.BASE_NODE);
-            baseNodeStmt.bindLong(1, getColumnLong(SVNWCDbSchema.WORKING_NODE__Fields.wc_id));
-            baseNodeStmt.bindString(2, getColumnString(SVNWCDbSchema.WORKING_NODE__Fields.local_relpath));
+        if (!eof() && NODES_BASE.equalsIgnoreCase(joinedTable)) {
+            SVNSqlJetSelectStatement baseNodeStmt = new SVNSqlJetSelectStatement(sDb, SVNWCDbSchema.NODES);
+            baseNodeStmt.bindLong(1, getColumnLong(SVNWCDbSchema.NODES__Fields.wc_id));
+            baseNodeStmt.bindString(2, getColumnString(SVNWCDbSchema.NODES__Fields.local_relpath));
+            baseNodeStmt.bindLong(3, 0);
             return baseNodeStmt;
         }
         return super.getJoinedStatement(joinedTable);
+    }
+
+    protected Object[] getWhere() throws SVNException {
+        bindLong(3, getMaxOpDepth((Long)binds.get(0), (String)binds.get(1)));
+        return super.getWhere();
+    }
+
+    private long getMaxOpDepth(Long wcId, String localRelpath) throws SVNException {
+        SVNSqlJetSelectStatement maxOpDepthStmt = new SVNSqlJetSelectStatement(sDb, SVNWCDbSchema.NODES);
+        try{
+            maxOpDepthStmt.bindLong(1, wcId);
+            maxOpDepthStmt.bindString(2, localRelpath);
+            long maxOpDepth = 0;
+            while(!maxOpDepthStmt.eof()){
+                long opDepth = maxOpDepthStmt.getColumnLong(SVNWCDbSchema.NODES__Fields.op_depth);
+                if(maxOpDepth<opDepth){
+                    maxOpDepth = opDepth;
+                }
+                maxOpDepthStmt.next();
+            }
+            return maxOpDepth;
+        } finally {
+            maxOpDepthStmt.reset();
+        }
     }
 
 }

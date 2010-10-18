@@ -49,6 +49,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbDeletionInfo.Deletio
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo.RepositoryInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSelectDeletionInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNConflictDescription;
@@ -2347,7 +2348,7 @@ public class SVNWCDb implements ISVNWCDb {
                  * We need the presence of the WORKING node. Note that legal
                  * values are: normal, not-present, base-deleted.
                  */
-                SVNWCDbStatus work_presence = getColumnToken(stmt, SVNWCDbSchema.WORKING_NODE__Fields.presence, presenceMap2);
+                SVNWCDbStatus work_presence = getColumnToken(stmt, SVNWCDbSchema.NODES__Fields.presence, presenceMap2);
 
                 /* The starting node should be deleted. */
                 if (current_abspath == localAbsPath && work_presence != SVNWCDbStatus.NotPresent && work_presence != SVNWCDbStatus.BaseDeleted) {
@@ -2356,12 +2357,12 @@ public class SVNWCDb implements ISVNWCDb {
                 }
                 assert (work_presence == SVNWCDbStatus.Normal || work_presence == SVNWCDbStatus.NotPresent || work_presence == SVNWCDbStatus.BaseDeleted);
 
-                SVNSqlJetStatement baseStmt = stmt.getJoinedStatement(SVNWCDbSchema.BASE_NODE);
+                SVNSqlJetStatement baseStmt = stmt.getJoinedStatement(SVNWCDbSelectDeletionInfo.NODES_BASE);
                 try {
-                    boolean have_base = baseStmt != null && baseStmt.next() && !isColumnNull(baseStmt, SVNWCDbSchema.BASE_NODE__Fields.presence);
+                    boolean have_base = baseStmt != null && baseStmt.next() && !isColumnNull(baseStmt, SVNWCDbSchema.NODES__Fields.presence);
 
                     if (have_base) {
-                        SVNWCDbStatus base_presence = getColumnToken(baseStmt, SVNWCDbSchema.BASE_NODE__Fields.presence, presenceMap2);
+                        SVNWCDbStatus base_presence = getColumnToken(baseStmt, SVNWCDbSchema.NODES__Fields.presence, presenceMap2);
 
                         /* Only "normal" and "not-present" are allowed. */
                         assert (base_presence == SVNWCDbStatus.Normal || base_presence == SVNWCDbStatus.NotPresent
@@ -2399,7 +2400,7 @@ public class SVNWCDb implements ISVNWCDb {
 
                     /* Only grab the nearest ancestor. */
                     if (!found_moved_to && (f.contains(DeletionInfoField.movedToAbsPath) || f.contains(DeletionInfoField.baseDelAbsPath))
-                            && !isColumnNull(stmt, SVNWCDbSchema.WORKING_NODE__Fields.moved_to)) {
+                            && !isColumnNull(stmt, SVNWCDbSchema.NODES__Fields.moved_to)) {
                         /* There better be a BASE_NODE (that was moved-away). */
                         assert (have_base);
 
@@ -2410,7 +2411,7 @@ public class SVNWCDb implements ISVNWCDb {
                             deletionInfo.baseDelAbsPath = current_abspath;
 
                         if (f.contains(DeletionInfoField.movedToAbsPath))
-                            deletionInfo.movedToAbsPath = SVNFileUtil.createFilePath(pdh.getWCRoot().getAbsPath(), getColumnText(stmt, SVNWCDbSchema.WORKING_NODE__Fields.moved_to));
+                            deletionInfo.movedToAbsPath = SVNFileUtil.createFilePath(pdh.getWCRoot().getAbsPath(), getColumnText(stmt, SVNWCDbSchema.NODES__Fields.moved_to));
                     }
 
                     if (f.contains(DeletionInfoField.workDelAbsPath) && work_presence == SVNWCDbStatus.Normal && child_presence == SVNWCDbStatus.NotPresent) {
