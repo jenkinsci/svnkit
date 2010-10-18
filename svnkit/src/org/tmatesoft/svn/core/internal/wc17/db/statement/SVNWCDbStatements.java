@@ -46,7 +46,6 @@ public enum SVNWCDbStatements {
     SELECT_PRISTINE_SHA1_CHECKSUM(SVNWCDbSelectSHA1Checksum.class),
     SELECT_PRISTINE_MD5_CHECKSUM(SVNWCDbSelectPristineMD5Checksum.class),
     SELECT_DELETION_INFO(SVNWCDbSelectDeletionInfo.class),
-    SELECT_SUBDIR_WORKING(SVNWCDbSelectSubDirWorking.class),
     SELECT_WORKING_IS_FILE(SVNWCDbSelectWorkingIsFile.class),
     SELECT_CONFLICT_DETAILS(SVNWCDbSelectConflictDetails.class),
     SELECT_NOT_PRESENT(SVNWCDbSelectNotPresent.class),
