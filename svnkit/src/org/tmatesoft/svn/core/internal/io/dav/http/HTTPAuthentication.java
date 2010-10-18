@@ -25,6 +25,7 @@ import java.util.TreeMap;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.util.SVNLogType;
@@ -100,7 +101,7 @@ abstract class HTTPAuthentication {
     }
     
     public static HTTPAuthentication parseAuthParameters(Collection authHeaderValues, HTTPAuthentication prevResponse, String charset, 
-            Collection authTypes) throws SVNException {
+            Collection authTypes, ISVNAuthenticationManager authManager, int requestID) throws SVNException {
         if (authHeaderValues == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
                     "Missing HTTP authorization method"); 
@@ -203,19 +204,42 @@ abstract class HTTPAuthentication {
                 auth = ntlmAuth;
                 break;
             } else if ("Negotiate".equalsIgnoreCase(method)) {
-                if (HTTPNegotiateAuthentication.isSupported()) {
+                
                     HTTPNegotiateAuthentication negoAuth = null;
+
                     if (source.length() == 0) {
-                        if (prevResponse instanceof HTTPNegotiateAuthentication) {
-                            negoAuth = new HTTPNegotiateAuthentication((HTTPNegotiateAuthentication)prevResponse);
+                    
+                    // Check for a custom negotiation implementation, created by the auth manager
+                    
+                    if (authManager instanceof IHTTPNegotiateAuthenticationFactory) {
+                        negoAuth = ((IHTTPNegotiateAuthenticationFactory) authManager).createNegotiateAuthentication(
+                                prevResponse instanceof HTTPNegotiateAuthentication ? (HTTPNegotiateAuthentication) prevResponse : null, requestID); 
                         } else {
-                            negoAuth = new HTTPNegotiateAuthentication();
+                    
+                        if (DefaultHTTPNegotiateAuthentication.isSupported()) {
+                            if (prevResponse instanceof DefaultHTTPNegotiateAuthentication) {
+                                negoAuth = new DefaultHTTPNegotiateAuthentication((DefaultHTTPNegotiateAuthentication)prevResponse);
+                            } else {
+                                negoAuth = new DefaultHTTPNegotiateAuthentication();
+                            }
                         }
+                    }
+                    
+                    if (negoAuth != null) {
                         negoAuth.respondTo(null);
+                    }
                     } else {
+                
+                    // If this is a server response with a token, then negotiate authentication is already in progress.
+                    // NOTE: this should never happen in practice since negotiate authentication should be completed with a 
+                    // single token.  After successful authentication at the server end, the token from the server is sent
+                    // in a Authentication-Info header.
+                    
                         negoAuth = (HTTPNegotiateAuthentication)prevResponse;
                         negoAuth.respondTo(source);
                     }
+                
+                if (negoAuth != null) {
                     auth = negoAuth;
                     break;
                 }
