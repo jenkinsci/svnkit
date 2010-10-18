@@ -20,9 +20,6 @@ public enum SVNWCDbSchema {
     WCROOT(WCROOT__Fields.class, WCROOT__Indices.class),
 
     @Deprecated
-    BASE_NODE(BASE_NODE__Fields.class, BASE_NODE__Indices.class),
-
-    @Deprecated
     WORKING_NODE(WORKING_NODE__Fields.class, WORKING_NODE__Indices.class),
 
     LOCK(LOCK__Fields.class),
@@ -61,16 +58,6 @@ public enum SVNWCDbSchema {
 
     public enum WCROOT__Indices {
         I_LOCAL_ABSPATH;
-    }
-
-    @Deprecated
-    public enum BASE_NODE__Fields {
-        wc_id, local_relpath, repos_id, repos_relpath, parent_relpath, presence, kind, revnum, checksum, translated_size, changed_rev, changed_date, changed_author, depth, symlink_target, last_mod_time, properties, dav_cache, incomplete_children, file_external;
-    }
-
-    @Deprecated
-    public enum BASE_NODE__Indices {
-        I_PARENT;
     }
 
     @Deprecated

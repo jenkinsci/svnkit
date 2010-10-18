@@ -1521,11 +1521,11 @@ public class SVNWCDb implements ISVNWCDb {
                 if (have_work)
                     node_kind = getColumnToken(stmt_work, SVNWCDbSchema.WORKING_NODE__Fields.kind, kindMap2);
                 else
-                    node_kind = getColumnToken(stmt_base, SVNWCDbSchema.BASE_NODE__Fields.kind, kindMap2);
+                    node_kind = getColumnToken(stmt_base, SVNWCDbSchema.NODES__Fields.kind, kindMap2);
 
                 if (f.contains(InfoField.status)) {
                     if (have_base) {
-                        info.status = getColumnToken(stmt_base, SVNWCDbSchema.BASE_NODE__Fields.presence, presenceMap2);
+                        info.status = getColumnToken(stmt_base, SVNWCDbSchema.NODES__Fields.presence, presenceMap2);
 
                         /*
                          * We have a presence that allows a WORKING_NODE
@@ -1581,7 +1581,7 @@ public class SVNWCDb implements ISVNWCDb {
                     if (have_work)
                         info.revision = INVALID_REVNUM;
                     else
-                        info.revision = getColumnRevNum(stmt_base, SVNWCDbSchema.BASE_NODE__Fields.revnum);
+                        info.revision = getColumnRevNum(stmt_base, SVNWCDbSchema.NODES__Fields.revision);
                 }
                 if (f.contains(InfoField.reposRelPath)) {
                     if (have_work) {
@@ -1592,7 +1592,7 @@ public class SVNWCDb implements ISVNWCDb {
                          */
                         info.reposRelPath = null;
                     } else
-                        info.reposRelPath = SVNFileUtil.createFilePath(getColumnText(stmt_base, SVNWCDbSchema.BASE_NODE__Fields.repos_relpath));
+                        info.reposRelPath = SVNFileUtil.createFilePath(getColumnText(stmt_base, SVNWCDbSchema.NODES__Fields.repos_path));
                 }
                 if (f.contains(InfoField.reposRootUrl) || f.contains(InfoField.reposUuid)) {
                     /*
@@ -1601,13 +1601,13 @@ public class SVNWCDb implements ISVNWCDb {
                      * we're being added to will be dependent upon a parent. The
                      * caller can scan upwards to locate the repository.
                      */
-                    if (have_work || isColumnNull(stmt_base, SVNWCDbSchema.BASE_NODE__Fields.repos_id)) {
+                    if (have_work || isColumnNull(stmt_base, SVNWCDbSchema.NODES__Fields.repos_id)) {
                         if (f.contains(InfoField.reposRootUrl))
                             info.reposRootUrl = null;
                         if (f.contains(InfoField.reposUuid))
                             info.reposUuid = null;
                     } else {
-                        final ReposInfo reposInfo = fetchReposInfo(pdh.getWCRoot().getSDb(), getColumnInt64(stmt_base, SVNWCDbSchema.BASE_NODE__Fields.repos_id));
+                        final ReposInfo reposInfo = fetchReposInfo(pdh.getWCRoot().getSDb(), getColumnInt64(stmt_base, SVNWCDbSchema.NODES__Fields.repos_id));
                         info.reposRootUrl = SVNURL.parseURIEncoded(reposInfo.reposRootUrl);
                         info.reposUuid = reposInfo.reposUuid;
                     }
@@ -1616,25 +1616,25 @@ public class SVNWCDb implements ISVNWCDb {
                     if (have_work)
                         info.changedRev = getColumnRevNum(stmt_work, SVNWCDbSchema.WORKING_NODE__Fields.changed_rev);
                     else
-                        info.changedRev = getColumnRevNum(stmt_base, SVNWCDbSchema.BASE_NODE__Fields.changed_rev);
+                        info.changedRev = getColumnRevNum(stmt_base, SVNWCDbSchema.NODES__Fields.changed_revision);
                 }
                 if (f.contains(InfoField.changedDate)) {
                     if (have_work)
                         info.changedDate = readDate(getColumnInt64(stmt_work, SVNWCDbSchema.WORKING_NODE__Fields.changed_date));
                     else
-                        info.changedDate = readDate(getColumnInt64(stmt_base, SVNWCDbSchema.BASE_NODE__Fields.changed_date));
+                        info.changedDate = readDate(getColumnInt64(stmt_base, SVNWCDbSchema.NODES__Fields.changed_date));
                 }
                 if (f.contains(InfoField.changedAuthor)) {
                     if (have_work)
                         info.changedAuthor = getColumnText(stmt_work, SVNWCDbSchema.WORKING_NODE__Fields.changed_author);
                     else
-                        info.changedAuthor = getColumnText(stmt_base, SVNWCDbSchema.BASE_NODE__Fields.changed_author);
+                        info.changedAuthor = getColumnText(stmt_base, SVNWCDbSchema.NODES__Fields.changed_author);
                 }
                 if (f.contains(InfoField.lastModTime)) {
                     if (have_work)
                         info.lastModTime = getColumnInt64(stmt_work, SVNWCDbSchema.WORKING_NODE__Fields.last_mod_time);
                     else
-                        info.lastModTime = getColumnInt64(stmt_base, SVNWCDbSchema.BASE_NODE__Fields.last_mod_time);
+                        info.lastModTime = getColumnInt64(stmt_base, SVNWCDbSchema.NODES__Fields.last_mod_time);
                 }
                 if (f.contains(InfoField.depth)) {
                     if (node_kind != SVNWCDbKind.Dir) {
@@ -1645,7 +1645,7 @@ public class SVNWCDb implements ISVNWCDb {
                         if (have_work)
                             depth_str = getColumnText(stmt_work, SVNWCDbSchema.WORKING_NODE__Fields.depth);
                         else
-                            depth_str = getColumnText(stmt_base, SVNWCDbSchema.BASE_NODE__Fields.depth);
+                            depth_str = getColumnText(stmt_base, SVNWCDbSchema.NODES__Fields.depth);
 
                         if (depth_str == null)
                             info.depth = SVNDepth.UNKNOWN;
@@ -1661,7 +1661,7 @@ public class SVNWCDb implements ISVNWCDb {
                             if (have_work)
                                 info.checksum = getColumnChecksum(stmt_work, SVNWCDbSchema.WORKING_NODE__Fields.checksum);
                             else
-                                info.checksum = getColumnChecksum(stmt_base, SVNWCDbSchema.BASE_NODE__Fields.checksum);
+                                info.checksum = getColumnChecksum(stmt_base, SVNWCDbSchema.NODES__Fields.checksum);
                         } catch (SVNException e) {
                             SVNErrorMessage err = SVNErrorMessage.create(e.getErrorMessage().getErrorCode(), "The node ''{0}'' has a corrupt checksum value.", localAbsPath);
                             SVNErrorManager.error(err, SVNLogType.WC);
@@ -1672,7 +1672,7 @@ public class SVNWCDb implements ISVNWCDb {
                     if (have_work)
                         info.translatedSize = getTranslatedSize(stmt_work, SVNWCDbSchema.WORKING_NODE__Fields.translated_size);
                     else
-                        info.translatedSize = getTranslatedSize(stmt_base, SVNWCDbSchema.BASE_NODE__Fields.translated_size);
+                        info.translatedSize = getTranslatedSize(stmt_base, SVNWCDbSchema.NODES__Fields.translated_size);
                 }
                 if (f.contains(InfoField.target)) {
                     if (node_kind != SVNWCDbKind.Symlink)
@@ -1680,7 +1680,7 @@ public class SVNWCDb implements ISVNWCDb {
                     else if (have_work)
                         info.target = SVNFileUtil.createFilePath(getColumnText(stmt_work, SVNWCDbSchema.WORKING_NODE__Fields.symlink_target));
                     else
-                        info.target = SVNFileUtil.createFilePath(getColumnText(stmt_base, SVNWCDbSchema.BASE_NODE__Fields.symlink_target));
+                        info.target = SVNFileUtil.createFilePath(getColumnText(stmt_base, SVNWCDbSchema.NODES__Fields.symlink_target));
                 }
                 if (f.contains(InfoField.changelist)) {
                     if (have_act)
