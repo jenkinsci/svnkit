@@ -17,10 +17,12 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 
 /**
- * select base_node.presence, working_node.presence, moved_to from working_node
- * left outer join base_node on base_node.wc_id = working_node.wc_id and
- * base_node.local_relpath = working_node.local_relpath where working_node.wc_id
- * = ?1 and working_node.local_relpath = ?2;
+ * SELECT nodes_base.presence, nodes_work.presence, nodes_work.moved_to FROM
+ * nodes nodes_work LEFT OUTER JOIN nodes nodes_base ON nodes_base.wc_id =
+ * nodes_work.wc_id AND nodes_base.local_relpath = nodes_work.local_relpath AND
+ * nodes_base.op_depth = 0 WHERE nodes_work.wc_id = ?1 AND
+ * nodes_work.local_relpath = ?2 AND nodes_work.op_depth = (SELECT MAX(op_depth)
+ * FROM nodes WHERE wc_id = ?1 AND local_relpath = ?2 AND op_depth > 0);
  *
  * @author TMate Software Ltd.
  */

@@ -14,21 +14,26 @@ package org.tmatesoft.svn.core.internal.wc17.db.statement;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectFieldsStatement;
-import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.BASE_NODE__Fields;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODES__Fields;
 
 /**
- * select file_external from base_node where wc_id = ?1 and local_relpath = ?2;
- * 
+ * SELECT file_external FROM nodes WHERE wc_id = ?1 AND local_relpath = ?2 AND
+ * op_depth = 0;
+ *
  * @author TMate Software Ltd.
  */
-public class SVNWCDBSelectFileExternal extends SVNSqlJetSelectFieldsStatement<SVNWCDbSchema.BASE_NODE__Fields> {
+public class SVNWCDBSelectFileExternal extends SVNSqlJetSelectFieldsStatement<SVNWCDbSchema.NODES__Fields> {
 
     public SVNWCDBSelectFileExternal(SVNSqlJetDb sDb) throws SVNException {
-        super(sDb, SVNWCDbSchema.BASE_NODE);
+        super(sDb, SVNWCDbSchema.NODES);
     }
 
     protected void defineFields() {
-        fields.add(BASE_NODE__Fields.file_external);
+        fields.add(NODES__Fields.file_external);
+    }
+
+    protected boolean isFilterPassed() throws SVNException {
+        return getColumnLong(SVNWCDbSchema.NODES__Fields.op_depth) == 0;
     }
 
 }
