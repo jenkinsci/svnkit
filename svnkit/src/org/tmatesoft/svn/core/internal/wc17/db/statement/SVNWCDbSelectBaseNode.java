@@ -16,34 +16,38 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectFieldsStatement;
 
 /**
- * select repos_id, repos_relpath, presence, kind, revnum, checksum,
- * translated_size, changed_rev, changed_date, changed_author, depth,
- * symlink_target, last_mod_time, properties from base_node where wc_id = ?1 and
- * local_relpath = ?2;
- * 
+ * SELECT repos_id, repos_path, presence, kind, revision, checksum,
+ * translated_size, changed_revision, changed_date, changed_author, depth,
+ * symlink_target, last_mod_time, properties FROM nodes WHERE wc_id = ?1 AND
+ * local_relpath = ?2 AND op_depth = 0;
+ *
  * @author TMate Software Ltd.
  */
-public class SVNWCDbSelectBaseNode extends SVNSqlJetSelectFieldsStatement<SVNWCDbSchema.BASE_NODE__Fields> {
+public class SVNWCDbSelectBaseNode extends SVNSqlJetSelectFieldsStatement<SVNWCDbSchema.NODES__Fields> {
 
     public SVNWCDbSelectBaseNode(SVNSqlJetDb sDb) throws SVNException {
-        super(sDb, SVNWCDbSchema.BASE_NODE);
+        super(sDb, SVNWCDbSchema.NODES);
     }
 
     protected void defineFields() {
-        fields.add(SVNWCDbSchema.BASE_NODE__Fields.repos_id);
-        fields.add(SVNWCDbSchema.BASE_NODE__Fields.repos_relpath);
-        fields.add(SVNWCDbSchema.BASE_NODE__Fields.presence);
-        fields.add(SVNWCDbSchema.BASE_NODE__Fields.kind);
-        fields.add(SVNWCDbSchema.BASE_NODE__Fields.revnum);
-        fields.add(SVNWCDbSchema.BASE_NODE__Fields.checksum);
-        fields.add(SVNWCDbSchema.BASE_NODE__Fields.translated_size);
-        fields.add(SVNWCDbSchema.BASE_NODE__Fields.changed_rev);
-        fields.add(SVNWCDbSchema.BASE_NODE__Fields.changed_date);
-        fields.add(SVNWCDbSchema.BASE_NODE__Fields.changed_author);
-        fields.add(SVNWCDbSchema.BASE_NODE__Fields.depth);
-        fields.add(SVNWCDbSchema.BASE_NODE__Fields.symlink_target);
-        fields.add(SVNWCDbSchema.BASE_NODE__Fields.last_mod_time);
-        fields.add(SVNWCDbSchema.BASE_NODE__Fields.properties);
+        fields.add(SVNWCDbSchema.NODES__Fields.repos_id);
+        fields.add(SVNWCDbSchema.NODES__Fields.repos_path);
+        fields.add(SVNWCDbSchema.NODES__Fields.presence);
+        fields.add(SVNWCDbSchema.NODES__Fields.kind);
+        fields.add(SVNWCDbSchema.NODES__Fields.revision);
+        fields.add(SVNWCDbSchema.NODES__Fields.checksum);
+        fields.add(SVNWCDbSchema.NODES__Fields.translated_size);
+        fields.add(SVNWCDbSchema.NODES__Fields.changed_revision);
+        fields.add(SVNWCDbSchema.NODES__Fields.changed_date);
+        fields.add(SVNWCDbSchema.NODES__Fields.changed_author);
+        fields.add(SVNWCDbSchema.NODES__Fields.depth);
+        fields.add(SVNWCDbSchema.NODES__Fields.symlink_target);
+        fields.add(SVNWCDbSchema.NODES__Fields.last_mod_time);
+        fields.add(SVNWCDbSchema.NODES__Fields.properties);
+    }
+
+    protected boolean isFilterPassed() throws SVNException {
+        return getColumnLong(SVNWCDbSchema.NODES__Fields.op_depth) == 0;
     }
 
 }

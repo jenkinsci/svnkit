@@ -17,9 +17,27 @@ package org.tmatesoft.svn.core.internal.wc17.db.statement;
  */
 public enum SVNWCDbSchema {
 
-    WCROOT(WCROOT__Fields.class, WCROOT__Indices.class), BASE_NODE(BASE_NODE__Fields.class, BASE_NODE__Indices.class), WORKING_NODE(WORKING_NODE__Fields.class, WORKING_NODE__Indices.class), LOCK(
-            LOCK__Fields.class), REPOSITORY(REPOSITORY__Fields.class, REPOSITORY__Indices.class), ACTUAL_NODE(ACTUAL_NODE__Fields.class, ACTUAL_NODE__Indices.class), WC_LOCK(WC_LOCK__Fields.class), PRISTINE(
-            PRISTINE__Fields.class);
+    WCROOT(WCROOT__Fields.class, WCROOT__Indices.class),
+
+    @Deprecated
+    BASE_NODE(BASE_NODE__Fields.class, BASE_NODE__Indices.class),
+
+    @Deprecated
+    WORKING_NODE(WORKING_NODE__Fields.class, WORKING_NODE__Indices.class),
+
+    LOCK(LOCK__Fields.class),
+
+    REPOSITORY(REPOSITORY__Fields.class, REPOSITORY__Indices.class),
+
+    ACTUAL_NODE(ACTUAL_NODE__Fields.class, ACTUAL_NODE__Indices.class),
+
+    WC_LOCK(WC_LOCK__Fields.class),
+
+    PRISTINE(PRISTINE__Fields.class),
+
+    NODES(NODES__Fields.class, NODES__Indices.class)
+
+    ;
 
     final public Class<? extends Enum> fields;
     final public Class<? extends Enum> indices;
@@ -45,18 +63,22 @@ public enum SVNWCDbSchema {
         I_LOCAL_ABSPATH;
     }
 
+    @Deprecated
     public enum BASE_NODE__Fields {
         wc_id, local_relpath, repos_id, repos_relpath, parent_relpath, presence, kind, revnum, checksum, translated_size, changed_rev, changed_date, changed_author, depth, symlink_target, last_mod_time, properties, dav_cache, incomplete_children, file_external;
     }
 
+    @Deprecated
     public enum BASE_NODE__Indices {
         I_PARENT;
     }
 
+    @Deprecated
     public enum WORKING_NODE__Fields {
         wc_id, local_relpath, parent_relpath, presence, kind, checksum, translated_size, changed_rev, changed_date, changed_author, depth, symlink_target, copyfrom_repos_id, copyfrom_repos_path, copyfrom_revnum, moved_here, moved_to, last_mod_time, properties, keep_local;
     }
 
+    @Deprecated
     public enum WORKING_NODE__Indices {
         I_WORKING_PARENT;
     }
@@ -87,6 +109,14 @@ public enum SVNWCDbSchema {
 
     public enum PRISTINE__Fields {
         checksum, compression, size, refcount, md5_checksum
+    }
+
+    public enum NODES__Fields {
+        wc_id, local_relpath, op_depth, parent_relpath, repos_id, repos_path, revision, presence, moved_here, moved_to, kind, properties, depth, checksum, symlink_target, changed_revision, changed_date, changed_author, translated_size, last_mod_time, dav_cache, file_external;
+    }
+
+    public enum NODES__Indices {
+        I_NODES_PARENT;
     }
 
 }

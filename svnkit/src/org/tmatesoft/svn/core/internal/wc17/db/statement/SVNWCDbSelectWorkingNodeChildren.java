@@ -16,23 +16,27 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectFieldsStatement;
 
 /**
- * select local_relpath from working_node where wc_id = ?1 and parent_relpath =
- * ?2;
- * 
+ * SELECT DISTINCT local_relpath FROM nodes WHERE wc_id = ?1 AND parent_relpath
+ * = ?2 AND op_depth > 0;
+ *
  * @author TMate Software Ltd.
  */
-public class SVNWCDbSelectWorkingNodeChildren extends SVNSqlJetSelectFieldsStatement<SVNWCDbSchema.WORKING_NODE__Fields> {
+public class SVNWCDbSelectWorkingNodeChildren extends SVNSqlJetSelectFieldsStatement<SVNWCDbSchema.NODES__Fields> {
 
     public SVNWCDbSelectWorkingNodeChildren(SVNSqlJetDb sDb) throws SVNException {
-        super(sDb, SVNWCDbSchema.WORKING_NODE);
+        super(sDb, SVNWCDbSchema.NODES);
     }
 
     protected String getIndexName() {
-        return SVNWCDbSchema.WORKING_NODE__Indices.I_WORKING_PARENT.toString();
+        return SVNWCDbSchema.NODES__Indices.I_NODES_PARENT.toString();
     }
-    
+
     protected void defineFields() {
-        fields.add(SVNWCDbSchema.WORKING_NODE__Fields.local_relpath);
+        fields.add(SVNWCDbSchema.NODES__Fields.local_relpath);
+    }
+
+    protected boolean isFilterPassed() throws SVNException {
+        return getColumnLong(SVNWCDbSchema.NODES__Fields.op_depth) > 0;
     }
 
 }

@@ -14,21 +14,26 @@ package org.tmatesoft.svn.core.internal.wc17.db.statement;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectFieldsStatement;
-import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.BASE_NODE__Fields;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODES__Fields;
 
 /**
- * select properties from base_node where wc_id = ?1 and local_relpath = ?2;
- * 
+ * SELECT properties FROM nodes WHERE wc_id = ?1 AND local_relpath = ?2 AND
+ * op_depth = 0;
+ *
  * @author TMate Software Ltd.
  */
-public class SVNWCDbSelectBaseProperties extends SVNSqlJetSelectFieldsStatement<SVNWCDbSchema.BASE_NODE__Fields> {
+public class SVNWCDbSelectBaseProperties extends SVNSqlJetSelectFieldsStatement<SVNWCDbSchema.NODES__Fields> {
 
     public SVNWCDbSelectBaseProperties(SVNSqlJetDb sDb) throws SVNException {
-        super(sDb, SVNWCDbSchema.BASE_NODE);
+        super(sDb, SVNWCDbSchema.NODES);
     }
 
     protected void defineFields() {
-        fields.add(BASE_NODE__Fields.properties);
+        fields.add(NODES__Fields.properties);
+    }
+
+    protected boolean isFilterPassed() throws SVNException {
+        return getColumnLong(SVNWCDbSchema.NODES__Fields.op_depth) == 0;
     }
 
 }

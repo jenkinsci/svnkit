@@ -17,13 +17,13 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectFieldsStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 
 /**
- * select base_node.repos_id, base_node.repos_relpath, presence, kind, revnum,
- * checksum, translated_size, changed_rev, changed_date, changed_author, depth,
+ * SELECT nodes.repos_id, nodes.repos_path, presence, kind, revision, checksum,
+ * translated_size, changed_revision, changed_date, changed_author, depth,
  * symlink_target, last_mod_time, properties, lock_token, lock_owner,
- * lock_comment, lock_date from base_node left outer join lock on
- * base_node.repos_id = lock.repos_id and base_node.repos_relpath =
- * lock.repos_relpath where wc_id = ?1 and local_relpath = ?2;
- * 
+ * lock_comment, lock_date FROM nodes LEFT OUTER JOIN lock ON nodes.repos_id =
+ * lock.repos_id AND nodes.repos_path = lock.repos_relpath WHERE wc_id = ?1 AND
+ * local_relpath = ?2 AND op_depth = 0;
+ *
  * @author TMate Software Ltd.
  */
 public class SVNWCDbSelectBaseNodeWithLock extends SVNWCDbSelectBaseNode {
@@ -58,8 +58,8 @@ public class SVNWCDbSelectBaseNodeWithLock extends SVNWCDbSelectBaseNode {
         lockStatement.reset();
         final boolean next = super.next();
         if (next) {
-            lockStatement.bindLong(1, getColumnLong(SVNWCDbSchema.BASE_NODE__Fields.repos_id.toString()));
-            lockStatement.bindString(2, getColumnString(SVNWCDbSchema.BASE_NODE__Fields.repos_relpath.toString()));
+            lockStatement.bindLong(1, getColumnLong(SVNWCDbSchema.NODES__Fields.repos_id.toString()));
+            lockStatement.bindString(2, getColumnString(SVNWCDbSchema.NODES__Fields.repos_path.toString()));
             lockStatement.next();
         }
         return next;

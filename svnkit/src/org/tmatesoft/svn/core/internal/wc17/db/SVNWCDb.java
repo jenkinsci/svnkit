@@ -514,19 +514,19 @@ public class SVNWCDb implements ISVNWCDb {
             have_row = stmt.next();
 
             if (have_row) {
-                SVNWCDbKind node_kind = getColumnToken(stmt, SVNWCDbSchema.BASE_NODE__Fields.kind, kindMap2);
+                SVNWCDbKind node_kind = getColumnToken(stmt, SVNWCDbSchema.NODES__Fields.kind, kindMap2);
 
                 if (f.contains(BaseInfoField.kind)) {
                     info.kind = node_kind;
                 }
                 if (f.contains(BaseInfoField.status)) {
-                    info.status = getColumnToken(stmt, SVNWCDbSchema.BASE_NODE__Fields.presence, presenceMap2);
+                    info.status = getColumnToken(stmt, SVNWCDbSchema.NODES__Fields.presence, presenceMap2);
                 }
                 if (f.contains(BaseInfoField.revision)) {
-                    info.revision = getColumnRevNum(stmt, SVNWCDbSchema.BASE_NODE__Fields.revnum);
+                    info.revision = getColumnRevNum(stmt, SVNWCDbSchema.NODES__Fields.revision);
                 }
                 if (f.contains(BaseInfoField.reposRelPath)) {
-                    info.reposRelPath = SVNFileUtil.createFilePath(getColumnText(stmt, SVNWCDbSchema.BASE_NODE__Fields.repos_relpath));
+                    info.reposRelPath = SVNFileUtil.createFilePath(getColumnText(stmt, SVNWCDbSchema.NODES__Fields.repos_path));
                 }
                 if (f.contains(BaseInfoField.lock)) {
                     final SVNSqlJetStatement lockStmt = stmt.getJoinedStatement(SVNWCDbSchema.LOCK);
@@ -545,34 +545,34 @@ public class SVNWCDb implements ISVNWCDb {
                 }
                 if (f.contains(BaseInfoField.reposRootUrl) || f.contains(BaseInfoField.reposUuid)) {
                     /* Fetch repository information via REPOS_ID. */
-                    if (isColumnNull(stmt, SVNWCDbSchema.BASE_NODE__Fields.repos_id)) {
+                    if (isColumnNull(stmt, SVNWCDbSchema.NODES__Fields.repos_id)) {
                         if (f.contains(BaseInfoField.reposRootUrl))
                             info.reposRootUrl = null;
                         if (f.contains(BaseInfoField.reposUuid))
                             info.reposUuid = null;
                     } else {
-                        final ReposInfo reposInfo = fetchReposInfo(pdh.getWCRoot().getSDb(), getColumnInt64(stmt, SVNWCDbSchema.BASE_NODE__Fields.repos_id));
+                        final ReposInfo reposInfo = fetchReposInfo(pdh.getWCRoot().getSDb(), getColumnInt64(stmt, SVNWCDbSchema.NODES__Fields.repos_id));
                         info.reposRootUrl = SVNURL.parseURIEncoded(reposInfo.reposRootUrl);
                     }
                 }
                 if (f.contains(BaseInfoField.changedRev)) {
-                    info.changedRev = getColumnRevNum(stmt, SVNWCDbSchema.BASE_NODE__Fields.changed_rev);
+                    info.changedRev = getColumnRevNum(stmt, SVNWCDbSchema.NODES__Fields.changed_revision);
                 }
                 if (f.contains(BaseInfoField.changedDate)) {
-                    info.changedDate = readDate(getColumnInt64(stmt, SVNWCDbSchema.BASE_NODE__Fields.changed_date));
+                    info.changedDate = readDate(getColumnInt64(stmt, SVNWCDbSchema.NODES__Fields.changed_date));
                 }
                 if (f.contains(BaseInfoField.changedAuthor)) {
                     /* Result may be NULL. */
-                    info.changedAuthor = getColumnText(stmt, SVNWCDbSchema.BASE_NODE__Fields.changed_author);
+                    info.changedAuthor = getColumnText(stmt, SVNWCDbSchema.NODES__Fields.changed_author);
                 }
                 if (f.contains(BaseInfoField.lastModTime)) {
-                    info.lastModTime = readDate(getColumnInt64(stmt, SVNWCDbSchema.BASE_NODE__Fields.last_mod_time));
+                    info.lastModTime = readDate(getColumnInt64(stmt, SVNWCDbSchema.NODES__Fields.last_mod_time));
                 }
                 if (f.contains(BaseInfoField.depth)) {
                     if (node_kind != SVNWCDbKind.Dir) {
                         info.depth = SVNDepth.UNKNOWN;
                     } else {
-                        String depth_str = getColumnText(stmt, SVNWCDbSchema.BASE_NODE__Fields.depth);
+                        String depth_str = getColumnText(stmt, SVNWCDbSchema.NODES__Fields.depth);
 
                         if (depth_str == null)
                             info.depth = SVNDepth.UNKNOWN;
@@ -585,7 +585,7 @@ public class SVNWCDb implements ISVNWCDb {
                         info.checksum = null;
                     } else {
                         try {
-                            info.checksum = getColumnChecksum(stmt, SVNWCDbSchema.BASE_NODE__Fields.checksum);
+                            info.checksum = getColumnChecksum(stmt, SVNWCDbSchema.NODES__Fields.checksum);
                         } catch (SVNException e) {
                             SVNErrorMessage err = SVNErrorMessage.create(e.getErrorMessage().getErrorCode(), "The node ''{0}'' has a corrupt checksum value.", localAbsPath);
                             SVNErrorManager.error(err, SVNLogType.WC);
@@ -593,13 +593,13 @@ public class SVNWCDb implements ISVNWCDb {
                     }
                 }
                 if (f.contains(BaseInfoField.translatedSize)) {
-                    info.translatedSize = getTranslatedSize(stmt, SVNWCDbSchema.BASE_NODE__Fields.translated_size);
+                    info.translatedSize = getTranslatedSize(stmt, SVNWCDbSchema.NODES__Fields.translated_size);
                 }
                 if (f.contains(BaseInfoField.target)) {
                     if (node_kind != SVNWCDbKind.Symlink)
                         info.target = null;
                     else
-                        info.target = SVNFileUtil.createFilePath(getColumnText(stmt, SVNWCDbSchema.BASE_NODE__Fields.symlink_target));
+                        info.target = SVNFileUtil.createFilePath(getColumnText(stmt, SVNWCDbSchema.NODES__Fields.symlink_target));
                 }
             } else {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{0}'' was not found.", localAbsPath);
@@ -1349,7 +1349,7 @@ public class SVNWCDb implements ISVNWCDb {
     private void addChildren(List<String> children, SVNSqlJetStatement stmt) throws SVNException {
         try {
             while (stmt.next()) {
-                String child_relpath = getColumnText(stmt, SVNWCDbSchema.BASE_NODE__Fields.local_relpath);
+                String child_relpath = getColumnText(stmt, SVNWCDbSchema.NODES__Fields.local_relpath);
                 String name = SVNFileUtil.getFileName(SVNFileUtil.createFilePath(child_relpath));
                 children.add(name);
             }
