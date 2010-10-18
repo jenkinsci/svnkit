@@ -1658,4 +1658,6 @@ public interface ISVNWCDb {
 
     boolean isWCLockOwns(File localAbspath, boolean exact);
 
+    void opSetTextConflictMarkerFilesTemp(File localAbspath, File oldBasename, File newBasename, File wrkBasename);
+
 }

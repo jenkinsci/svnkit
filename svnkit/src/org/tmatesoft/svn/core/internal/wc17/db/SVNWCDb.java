@@ -2774,4 +2774,9 @@ public class SVNWCDb implements ISVNWCDb {
         throw new UnsupportedOperationException();
     }
 
+    public void opSetTextConflictMarkerFilesTemp(File localAbspath, File oldBasename, File newBasename, File wrkBasename) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
 }
