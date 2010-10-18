@@ -35,8 +35,9 @@ public class SVNWCDbSelectBaseNodeChildren extends SVNSqlJetSelectFieldsStatemen
         fields.add(SVNWCDbSchema.NODES__Fields.local_relpath);
     }
 
-    protected boolean isFilterPassed() throws SVNException {
-        return getColumnLong(SVNWCDbSchema.NODES__Fields.op_depth) == 0;
+    protected Object[] getWhere() throws SVNException {
+        bindLong(3, 0);
+        return super.getWhere();
     }
 
 }

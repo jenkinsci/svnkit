@@ -32,8 +32,9 @@ public class SVNWCDbSelectBaseProperties extends SVNSqlJetSelectFieldsStatement<
         fields.add(NODES__Fields.properties);
     }
 
-    protected boolean isFilterPassed() throws SVNException {
-        return getColumnLong(SVNWCDbSchema.NODES__Fields.op_depth) == 0;
+    protected Object[] getWhere() throws SVNException {
+        bindLong(3, 0);
+        return super.getWhere();
     }
 
 }
