@@ -51,17 +51,20 @@ public class SVNWCDbSelectDeletionInfo extends SVNSqlJetSelectStatement {
     }
 
     private long getMaxOpDepth(Long wcId, String localRelpath) throws SVNException {
-        SVNSqlJetSelectStatement maxOpDepthStmt = new SVNSqlJetSelectStatement(sDb, SVNWCDbSchema.NODES);
+        SVNSqlJetSelectStatement maxOpDepthStmt = new SVNSqlJetSelectStatement(sDb, SVNWCDbSchema.NODES){
+            protected boolean isFilterPassed() throws SVNException {
+                return getColumnLong(SVNWCDbSchema.NODES__Fields.op_depth) > 0;
+            }
+        };
         try{
             maxOpDepthStmt.bindLong(1, wcId);
             maxOpDepthStmt.bindString(2, localRelpath);
             long maxOpDepth = 0;
-            while(!maxOpDepthStmt.eof()){
+            while(maxOpDepthStmt.next()){
                 long opDepth = maxOpDepthStmt.getColumnLong(SVNWCDbSchema.NODES__Fields.op_depth);
                 if(maxOpDepth<opDepth){
                     maxOpDepth = opDepth;
                 }
-                maxOpDepthStmt.next();
             }
             return maxOpDepth;
         } finally {
