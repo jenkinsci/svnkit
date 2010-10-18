@@ -16,21 +16,26 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectStatement;
 
 /**
- * select 1 from base_node where wc_id = ?1 and local_relpath = ?2 and presence
- * = 'not-present';
- * 
- * 
- * @version 1.3
+ * SELECT 1 FROM nodes WHERE wc_id = ?1 AND local_relpath = ?2 AND presence =
+ * 'not-present' AND op_depth = 0;
+ *
+ *
+ * @version 1.4
  * @author TMate Software Ltd.
  */
 public class SVNWCDbSelectNotPresent extends SVNSqlJetSelectStatement {
 
     public SVNWCDbSelectNotPresent(SVNSqlJetDb sDb) throws SVNException {
-        super(sDb, SVNWCDbSchema.BASE_NODE);
+        super(sDb, SVNWCDbSchema.NODES);
+    }
+
+    protected Object[] getWhere() throws SVNException {
+        bindLong(3, 0);
+        return super.getWhere();
     }
 
     protected boolean isFilterPassed() throws SVNException {
-        return "not-present".equals(getColumnString(SVNWCDbSchema.BASE_NODE__Fields.presence));
+        return "not-present".equals(getColumnString(SVNWCDbSchema.NODES__Fields.presence));
     }
 
 }
