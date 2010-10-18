@@ -1893,7 +1893,9 @@ public class SVNWCContext {
 
         EntryPair pair = new EntryPair();
 
-        pair.parentEntry = readOneEntry(dirAbspath, "" /* name */, null /* parent_entry */);
+        long wcId = 1; // hack
+
+        pair.parentEntry = readOneEntry(dirAbspath, "" /* name */, null /* parent_entry */, wcId);
 
         /*
          * If we need the entry for "this dir", then return the parent_entry in
@@ -1932,7 +1934,7 @@ public class SVNWCContext {
             for (String child : db.readChildren(dirAbspath)) {
                 if (name.equals(child)) {
                     try {
-                        pair.entry = readOneEntry(dirAbspath, name, pair.parentEntry);
+                        pair.entry = readOneEntry(dirAbspath, name, pair.parentEntry, wcId);
                         /* Found it. No need to keep searching. */
                         break;
                     } catch (SVNException e) {
@@ -1955,7 +1957,7 @@ public class SVNWCContext {
         return pair;
     }
 
-    private SVNEntry readOneEntry(File dirAbsPath, String name, SVNEntry parentEntry) throws SVNException {
+    private SVNEntry readOneEntry(File dirAbsPath, String name, SVNEntry parentEntry, long wcId) throws SVNException {
 
         final File entryAbsPath = (name != null && !"".equals(name)) ? SVNFileUtil.createFilePath(dirAbsPath, name) : dirAbsPath;
 
@@ -2013,6 +2015,7 @@ public class SVNWCContext {
             if (info.kind == SVNWCDbKind.Dir) {
                 SVNSqlJetDb sdb = db.borrowDbTemp(dirAbsPath, SVNWCDbOpenMode.ReadOnly);
                 SVNSqlJetStatement stmt = sdb.getStatement(SVNWCDbStatements.SELECT_NOT_PRESENT);
+                stmt.bindf("is", wcId, entry.getName());
                 try {
                     haveRow = stmt.next();
                 } finally {
