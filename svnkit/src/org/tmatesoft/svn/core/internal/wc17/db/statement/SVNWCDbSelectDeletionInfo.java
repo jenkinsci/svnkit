@@ -59,7 +59,7 @@ public class SVNWCDbSelectDeletionInfo extends SVNSqlJetSelectStatement {
         try{
             maxOpDepthStmt.bindLong(1, wcId);
             maxOpDepthStmt.bindString(2, localRelpath);
-            long maxOpDepth = 0;
+            long maxOpDepth = -1;
             while(maxOpDepthStmt.next()){
                 long opDepth = maxOpDepthStmt.getColumnLong(SVNWCDbSchema.NODES__Fields.op_depth);
                 if(maxOpDepth<opDepth){
