@@ -4817,9 +4817,44 @@ public class SVNWCContext {
         }
     }
 
-    public void removeBaseNode(File localAbspath) {
-        // TODO
-        throw new UnsupportedOperationException();
+    public void removeBaseNode(File localAbspath) throws SVNException {
+        checkCancelled();
+        WCDbInfo readInfo = db.readInfo(localAbspath, InfoField.status, InfoField.kind, InfoField.haveBase, InfoField.haveWork);
+        SVNWCDbStatus wrkStatus = readInfo.status;
+        SVNWCDbKind wrkKind = readInfo.kind;
+        boolean haveBase = readInfo.haveBase;
+        boolean haveWork = readInfo.haveWork;
+        assert (haveBase);
+        SVNWCDbStatus baseStatus;
+        SVNWCDbKind baseKind;
+        if (wrkStatus == SVNWCDbStatus.Normal || wrkStatus == SVNWCDbStatus.NotPresent || wrkStatus == SVNWCDbStatus.Absent) {
+            baseStatus = wrkStatus;
+            baseKind = wrkKind;
+        } else {
+            WCDbBaseInfo baseInfo = db.getBaseInfo(localAbspath, BaseInfoField.status, BaseInfoField.kind);
+            baseStatus = baseInfo.status;
+            baseKind = baseInfo.kind;
+        }
+        if (baseKind == SVNWCDbKind.Dir && baseStatus == SVNWCDbStatus.Normal) {
+            List<String> children = db.getBaseChildren(localAbspath);
+
+            for (String childName : children) {
+                File childAbspath = SVNFileUtil.createFilePath(localAbspath, childName);
+                removeBaseNode(childAbspath);
+            }
+        }
+        if (baseStatus == SVNWCDbStatus.Normal && wrkStatus != SVNWCDbStatus.Added && wrkStatus != SVNWCDbStatus.Excluded) {
+            if (wrkStatus != SVNWCDbStatus.Deleted && (baseKind == SVNWCDbKind.File || baseKind == SVNWCDbKind.Symlink)) {
+                SVNFileUtil.deleteFile(localAbspath);
+            } else if (baseKind == SVNWCDbKind.Dir && wrkStatus != SVNWCDbStatus.Deleted) {
+                SVNFileUtil.deleteAll(localAbspath, true);
+            }
+            db.opRemoveEntryTemp(localAbspath);
+        } else if (wrkStatus == SVNWCDbStatus.Added || (haveWork && wrkStatus == SVNWCDbStatus.Excluded)) {
+            db.removeBase(localAbspath);
+        } else {
+            db.opRemoveEntryTemp(localAbspath);
+        }
     }
 
 }
