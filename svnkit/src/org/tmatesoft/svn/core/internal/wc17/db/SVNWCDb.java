@@ -2779,4 +2779,9 @@ public class SVNWCDb implements ISVNWCDb {
         throw new UnsupportedOperationException();
     }
 
+    public void addBaseNotPresentNode(File localAbspath, File reposRelPath, SVNURL reposRootUrl, String reposUuid, long revision, SVNWCDbKind kind, Object object, Object object2) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
 }

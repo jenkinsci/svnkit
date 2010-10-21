@@ -60,8 +60,6 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumOutputStream;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 import org.tmatesoft.svn.core.internal.wc17.SVNStatus17.ConflictedInfo;
-import org.tmatesoft.svn.core.internal.wc17.SVNWCConflictDescription17.ConflictKind;
-import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.MergeInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbOpenMode;
@@ -96,7 +94,6 @@ import org.tmatesoft.svn.core.wc.SVNMergeFileSet;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
-import org.tmatesoft.svn.core.wc.SVNTextConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -4651,13 +4648,15 @@ public class SVNWCContext {
     }
 
     private void dispatchWorkItem(File wcRootAbspath, SVNSkel workItem) throws SVNException {
-        for (WorkQueueOperation scan : WorkQueueOperation.values()) {
-            if (scan.getOpName().equals(workItem.getValue())) {
-                // #ifdef DEBUG_WORK_QUEUE
-                // SVN_DBG(("dispatch: operation='%s'\n", scan->name));
-                // #endif
-                scan.getOperation().runOperation(this, wcRootAbspath, workItem);
-                return;
+        if (!workItem.isAtom()) {
+            for (WorkQueueOperation scan : WorkQueueOperation.values()) {
+                if (scan.getOpName().equals(workItem.getChild(0).getValue())) {
+                    // #ifdef DEBUG_WORK_QUEUE
+                    // SVN_DBG(("dispatch: operation='%s'\n", scan->name));
+                    // #endif
+                    scan.getOperation().runOperation(this, wcRootAbspath, workItem);
+                    return;
+                }
             }
         }
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_BAD_ADM_LOG, "Unrecognized work item in the queue associated with ''{0}''", wcRootAbspath);
@@ -4674,9 +4673,33 @@ public class SVNWCContext {
 
     public static class RunBaseRemove implements RunWorkQueueOperation {
 
-        public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) {
-            // TODO
-            throw new UnsupportedOperationException();
+        public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) throws SVNException {
+            File localAbspath = SVNFileUtil.createFilePath(workItem.getChild(1).getValue());
+            boolean keepNotPresent = "1".equals(workItem.getChild(2).getValue());
+            long revision = 0;
+            File reposRelPath = null;
+            SVNURL reposRootUrl = null;
+            String reposUuid = null;
+            SVNWCDbKind kind = null;
+            if (keepNotPresent) {
+                WCDbBaseInfo baseInfo = ctx.getDb().getBaseInfo(localAbspath, BaseInfoField.kind, BaseInfoField.revision, BaseInfoField.reposRelPath, BaseInfoField.reposRootUrl,
+                        BaseInfoField.reposUuid);
+                kind = baseInfo.kind;
+                revision = baseInfo.revision;
+                reposRelPath = baseInfo.reposRelPath;
+                reposRootUrl = baseInfo.reposRootUrl;
+                reposUuid = baseInfo.reposUuid;
+                if (reposRelPath == null) {
+                    WCDbRepositoryInfo repInfo = ctx.getDb().scanBaseRepository(localAbspath, RepositoryInfoField.relPath, RepositoryInfoField.rootUrl, RepositoryInfoField.uuid);
+                    reposRelPath = repInfo.relPath;
+                    reposRootUrl = repInfo.rootUrl;
+                    reposUuid = repInfo.uuid;
+                }
+            }
+            ctx.removeBaseNode(localAbspath);
+            if (keepNotPresent) {
+                ctx.getDb().addBaseNotPresentNode(localAbspath, reposRelPath, reposRootUrl, reposUuid, revision, kind, null, null);
+            }
         }
     }
 
@@ -4792,6 +4815,11 @@ public class SVNWCContext {
             // TODO
             throw new UnsupportedOperationException();
         }
+    }
+
+    public void removeBaseNode(File localAbspath) {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
 }
