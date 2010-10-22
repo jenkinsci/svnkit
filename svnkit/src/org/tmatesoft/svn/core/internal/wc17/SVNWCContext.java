@@ -1232,7 +1232,7 @@ public class SVNWCContext {
          */
         InputStream pristineStream;
         try {
-            pristineStream = getPristineContents(localAbsPath);
+            pristineStream = getPristineContents(localAbsPath, true, false).stream;
         } catch (SVNException e) {
             if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND) {
                 return true;
@@ -1252,7 +1252,15 @@ public class SVNWCContext {
         return SVNFileUtil.roundTimeStamp(readInfo.lastModTime) != SVNFileUtil.roundTimeStamp(localAbsPath.lastModified() * (SVNFileUtil.isWindows ? 1000 : 1));
     }
 
-    private InputStream getPristineContents(File localAbspath) throws SVNException {
+    public static class PristineContentsInfo {
+
+        public InputStream stream;
+        public File path;
+    }
+
+    private PristineContentsInfo getPristineContents(File localAbspath, boolean openStream, boolean getPath) throws SVNException {
+        assert (openStream || getPath);
+        PristineContentsInfo info = new PristineContentsInfo();
 
         final WCDbInfo readInfo = db.readInfo(localAbspath, InfoField.status, InfoField.kind, InfoField.checksum);
 
@@ -1272,7 +1280,7 @@ public class SVNWCContext {
 
             if (scanAddition.status == SVNWCDbStatus.Added) {
                 /* Simply added. The pristine base does not exist. */
-                return null;
+                return info;
             }
         } else if (readInfo.status == SVNWCDbStatus.NotPresent) {
             /*
@@ -1294,10 +1302,16 @@ public class SVNWCContext {
         }
 
         if (readInfo.checksum == null) {
-            return null;
+            return info;
         }
 
-        return db.readPristine(localAbspath, readInfo.checksum);
+        if (getPath) {
+            info.path = db.getPristinePath(localAbspath, readInfo.checksum);
+        }
+        if (openStream) {
+            info.stream = db.readPristine(localAbspath, readInfo.checksum);
+        }
+        return info;
     }
 
     /**
@@ -4721,9 +4735,33 @@ public class SVNWCContext {
 
     public static class RunFileInstall implements RunWorkQueueOperation {
 
-        public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) {
-            // TODO
-            throw new UnsupportedOperationException();
+        public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) throws SVNException {
+            File localAbspath = SVNFileUtil.createFilePath(workItem.getChild(1).getValue());
+            boolean useCommitTimes = "1".equals(workItem.getChild(2).getValue());
+            boolean recordFileInfo = "1".equals(workItem.getChild(3).getValue());
+            File srcPath;
+            if (workItem.getListSize() <= 4) {
+                srcPath = ctx.getPristineContents(localAbspath, false, true).path;
+                assert (srcPath != null);
+            } else {
+                srcPath = SVNFileUtil.createFilePath(workItem.getChild(4).getValue());
+            }
+            TranslateInfo tinfo = ctx.getTranslateInfo(localAbspath, true, true, true);
+            SVNTranslator.translate(srcPath, localAbspath, null, tinfo.eolStyleInfo.eolStr, tinfo.keywords, tinfo.special, true);
+            if (tinfo.special) {
+                return;
+            }
+            ctx.syncFileFlags(localAbspath);
+            if (useCommitTimes) {
+                SVNDate changedDate = ctx.getDb().readInfo(localAbspath, InfoField.changedDate).changedDate;
+                if (changedDate != null) {
+                    localAbspath.setLastModified(changedDate.getTime());
+                }
+            }
+            if (recordFileInfo) {
+                ctx.getAndRecordFileInfo(localAbspath, false);
+                ctx.getDb().elideCopyFromTemp(localAbspath);
+            }
         }
     }
 
@@ -4873,6 +4911,52 @@ public class SVNWCContext {
             long length = localAbspath.length();
             db.globalRecordFileinfo(localAbspath, length, lastModified);
         }
+    }
+
+    public void syncFileFlags(File localAbspath) throws SVNException {
+        SVNFileUtil.setReadonly(localAbspath, false);
+        SVNFileUtil.setExecutable(localAbspath, false);
+        maybeSetReadOnly(localAbspath);
+        maybeSetExecutable(localAbspath);
+    }
+
+    private boolean maybeSetReadOnly(File localAbspath) throws SVNException {
+        assert (SVNFileUtil.isAbsolute(localAbspath));
+        boolean didSet = false;
+        SVNWCDbStatus status = null;
+        ISVNWCDb.SVNWCDbLock lock = null;
+        try {
+            WCDbInfo readInfo = db.readInfo(localAbspath, InfoField.status, InfoField.lock);
+            status = readInfo.status;
+            lock = readInfo.lock;
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND) {
+                throw e;
+            }
+        }
+        if (lock != null) {
+            return didSet;
+        }
+        if (status == SVNWCDbStatus.Added) {
+            return didSet;
+        }
+        String needsLock = getProperty(localAbspath, SVNProperty.NEEDS_LOCK);
+        if (needsLock != null) {
+            SVNFileUtil.setReadonly(localAbspath, true);
+            didSet = true;
+        }
+        return didSet;
+    }
+
+    private boolean maybeSetExecutable(File localAbspath) throws SVNException {
+        assert (SVNFileUtil.isAbsolute(localAbspath));
+        boolean didSet = false;
+        String propval = getProperty(localAbspath, SVNProperty.EXECUTABLE);
+        if (propval != null) {
+            SVNFileUtil.setExecutable(localAbspath, true);
+            didSet = true;
+        }
+        return didSet;
     }
 
 }

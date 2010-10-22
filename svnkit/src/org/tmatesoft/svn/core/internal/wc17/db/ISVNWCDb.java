@@ -1670,4 +1670,6 @@ public interface ISVNWCDb {
 
     void addBaseNotPresentNode(File localAbspath, File reposRelPath, SVNURL reposRootUrl, String reposUuid, long revision, SVNWCDbKind kind, Object object, Object object2);
 
+    void elideCopyFromTemp(File localAbspath);
+
 }

@@ -2781,4 +2781,8 @@ public class SVNWCDb implements ISVNWCDb {
         throw new UnsupportedOperationException();
     }
 
+    public void elideCopyFromTemp(File localAbspath) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
 }
