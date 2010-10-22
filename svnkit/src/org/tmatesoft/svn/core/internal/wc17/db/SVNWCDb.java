@@ -11,6 +11,8 @@
  */
 package org.tmatesoft.svn.core.internal.wc17.db;
 
+import static org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.Utils.readDate;
+
 import java.io.File;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -2665,11 +2667,6 @@ public class SVNWCDb implements ISVNWCDb {
 
     private static <T extends Enum<T>> T getColumnToken(SVNSqlJetStatement stmt, int f, Map<String, T> tokenMap) throws SVNException {
         return tokenMap.get(getColumnText(stmt, f));
-    }
-
-    private SVNDate readDate(long date) {
-        long time = date / 1000;
-        return new SVNDate(time, (int) (date - time * 1000));
     }
 
     public SVNSqlJetDb borrowDbTemp(File localDirAbsPath, SVNWCDbOpenMode mode) throws SVNException {

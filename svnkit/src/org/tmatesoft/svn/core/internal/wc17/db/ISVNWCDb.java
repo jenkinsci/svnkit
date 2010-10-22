@@ -100,6 +100,13 @@ public interface ISVNWCDb {
     String PRISTINE_TEMPDIR_RELPATH = "";
     String WCROOT_TEMPDIR_RELPATH = "tmp";
 
+    class Utils {
+        public static SVNDate readDate(long date) {
+            long time = date / 1000;
+            return new SVNDate(time, (int) (date - time * 1000));
+        }
+    }
+
     /** Enumerated constants for how to open a WC datastore. */
     enum SVNWCDbOpenMode {
         /** Open in the default mode (r/w now). */

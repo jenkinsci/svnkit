@@ -4775,9 +4775,19 @@ public class SVNWCContext {
 
     public static class RunRecordFileInfo implements RunWorkQueueOperation {
 
-        public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) {
-            // TODO
-            throw new UnsupportedOperationException();
+        public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) throws NumberFormatException, SVNException {
+            File localAbspath = SVNFileUtil.createFilePath(workItem.getChild(1).getValue());
+            SVNDate setTime = null;
+            if (workItem.getListSize() > 2) {
+                long val = Long.parseLong(workItem.getChild(1).getValue());
+                setTime = ISVNWCDb.Utils.readDate(val);
+            }
+            if (setTime != null) {
+                if (SVNFileType.getType(localAbspath).isFile()) {
+                    localAbspath.setLastModified(setTime.getTime());
+                }
+            }
+            ctx.getAndRecordFileInfo(localAbspath, true);
         }
     }
 
@@ -4854,6 +4864,14 @@ public class SVNWCContext {
             db.removeBase(localAbspath);
         } else {
             db.opRemoveEntryTemp(localAbspath);
+        }
+    }
+
+    public void getAndRecordFileInfo(File localAbspath, boolean ignoreError) throws SVNException {
+        if (localAbspath.exists()) {
+            SVNDate lastModified = ISVNWCDb.Utils.readDate(localAbspath.lastModified());
+            long length = localAbspath.length();
+            db.globalRecordFileinfo(localAbspath, length, lastModified);
         }
     }
 
