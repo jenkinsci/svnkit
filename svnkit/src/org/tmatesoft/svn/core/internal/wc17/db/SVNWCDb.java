@@ -35,6 +35,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb.Mode;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetTransaction;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
@@ -2691,9 +2692,40 @@ public class SVNWCDb implements ISVNWCDb {
         return true;
     }
 
-    public void opStartDirectoryUpdateTemp(File localAbspath, File newRelpath, long targetRevision) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+    public void opStartDirectoryUpdateTemp(File localAbspath, File newReposRelpath, long newRevision) throws SVNException {
+        assert (SVNFileUtil.isAbsolute(localAbspath));
+        assert (SVNRevision.isValidRevisionNumber(newRevision));
+        // SVN_ERR_ASSERT(svn_relpath_is_canonical(new_repos_relpath,
+        // scratch_pool));
+        DirParsedInfo parsed = parseDir(localAbspath, Mode.ReadWrite);
+        SVNWCDbDir pdh = parsed.wcDbDir;
+        File localRelPath = parsed.localRelPath;
+        verifyDirUsable(pdh);
+        final StartDirectoryUpdate du = new StartDirectoryUpdate();
+        du.wcId = pdh.getWCRoot().getWcId();
+        du.localAbspath = localAbspath;
+        du.newRevision = newRevision;
+        du.newReposRelpath = newReposRelpath;
+        du.localRelpath = localRelPath;
+        pdh.getWCRoot().getSDb().runTransaction(du);
+        pdh.flushEntries(localAbspath);
+        return;
+    }
+
+    private class StartDirectoryUpdate implements SVNSqlJetTransaction {
+
+        public File localAbspath;
+        public long wcId;
+        public File localRelpath;
+        public long newRevision;
+        public File newReposRelpath;
+
+        public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
+            SVNSqlJetStatement stmt = db.getStatement(SVNWCDbStatements.UPDATE_BASE_NODE_PRESENCE_REVNUM_AND_REPOS_PATH);
+            stmt.bindf("istis", wcId, localRelpath, presenceMap.get(SVNWCDbStatus.Incomplete), newRevision, newReposRelpath);
+            stmt.done();
+        }
+
     }
 
     public void opMakeCopyTemp(File localAbspath, boolean removeBase) throws SVNException {

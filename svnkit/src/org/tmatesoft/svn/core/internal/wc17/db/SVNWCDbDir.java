@@ -78,4 +78,7 @@ public class SVNWCDbDir {
         return SVNFileUtil.createFilePath(relativePath);
     }
 
+    public void flushEntries(File localAbspath2) {
+    }
+
 }

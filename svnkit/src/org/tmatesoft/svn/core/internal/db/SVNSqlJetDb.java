@@ -14,9 +14,6 @@ package org.tmatesoft.svn.core.internal.db;
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.Map;
-
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
@@ -60,7 +57,7 @@ public class SVNSqlJetDb {
             try {
                 db.close();
             } catch (SqlJetException e) {
-                SVNErrorMessage err = SVNErrorMessage.create( SVNErrorCode.SQLITE_ERROR, e );
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SQLITE_ERROR, e);
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
         }
@@ -157,6 +154,25 @@ public class SVNSqlJetDb {
     }
 
     public void verifyNoWork() {
+    }
+
+    public void runTransaction(final SVNSqlJetTransaction transaction) throws SVNException {
+        try {
+            beginTransaction(SqlJetTransactionMode.WRITE);
+            transaction.transaction(SVNSqlJetDb.this);
+        } catch (SqlJetException e) {
+            try {
+                db.rollback();
+            } catch (SqlJetException e1) {
+                e1.initCause(e);
+                SVNErrorMessage err1 = SVNErrorMessage.create(SVNErrorCode.SQLITE_ERROR, e1 );
+                SVNErrorManager.error(err1, SVNLogType.DEFAULT);
+            }
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SQLITE_ERROR, e);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
+        } finally {
+            commit();
+        }
     }
 
 }

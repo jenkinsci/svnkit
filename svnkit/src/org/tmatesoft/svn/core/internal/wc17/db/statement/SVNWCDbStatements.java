@@ -50,7 +50,8 @@ public enum SVNWCDbStatements {
     SELECT_NOT_PRESENT(SVNWCDbSelectNotPresent.class),
     REVPROP_CREATE_SCHEMA(SVNFSFSRevPropCreateSchema.class),
     FSFS_GET_REVPROP(SVNFSFSRevPropGet.class),
-    FSFS_SET_REVPROP(SVNFSFSRevPropSet.class);
+    FSFS_SET_REVPROP(SVNFSFSRevPropSet.class),
+    UPDATE_BASE_NODE_PRESENCE_REVNUM_AND_REPOS_PATH;
 
     private Class<? extends SVNSqlJetStatement> statementClass;
 

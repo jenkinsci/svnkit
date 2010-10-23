@@ -109,6 +109,7 @@ public abstract class SVNSqlJetStatement {
 
             switch (fmt) {
                 case 's':
+                case 't':
                     if(data[i]==null) {
                         bindString(i + 1, "");
                     } else if(data[i] instanceof File) {
@@ -130,12 +131,6 @@ public abstract class SVNSqlJetStatement {
                     if (data[i] instanceof byte[]) {
                         bindBlob(i + 1, (byte[]) data[i]);
                     }
-                    break;
-
-                case 't':
-                    // map = va_arg(ap, const svn_token_map_t *);
-                    // SVN_ERR(svn_sqlite__bind_token(stmt, count, map,
-                    // va_arg(ap, int)));
                     break;
 
                 default:
@@ -287,6 +282,11 @@ public abstract class SVNSqlJetStatement {
             SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         return SVNProperties.wrap(skel.parsePropList());
+    }
+
+    public void done() {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
 }
