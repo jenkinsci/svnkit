@@ -4852,10 +4852,10 @@ public class SVNWCContext {
     }
 
     public static class RunSetPropertyConflictMarkerTemp implements RunWorkQueueOperation {
-
-        public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) {
-            // TODO
-            throw new UnsupportedOperationException();
+        public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) throws SVNException {
+            File localAbspath = SVNFileUtil.createFilePath(workItem.getChild(1).getValue());
+            String prejBasename = workItem.getListSize() > 2 ? workItem.getChild(2).getValue() : null;
+            ctx.getDb().opSetPropertyConflictMarkerFileTemp(localAbspath, prejBasename);
         }
     }
 

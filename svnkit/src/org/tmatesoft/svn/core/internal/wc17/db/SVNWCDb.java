@@ -2785,4 +2785,9 @@ public class SVNWCDb implements ISVNWCDb {
         // TODO
         throw new UnsupportedOperationException();
     }
+
+    public void opSetPropertyConflictMarkerFileTemp(File localAbspath, String prejBasename) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
 }
