@@ -284,9 +284,12 @@ public abstract class SVNSqlJetStatement {
         return SVNProperties.wrap(skel.parsePropList());
     }
 
-    public void done() {
-        // TODO
-        throw new UnsupportedOperationException();
+    public void done() throws SVNException {
+        try{
+            exec();
+        } finally {
+            reset();
+        }
     }
 
 }
