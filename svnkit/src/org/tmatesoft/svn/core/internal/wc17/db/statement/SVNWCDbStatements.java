@@ -51,7 +51,7 @@ public enum SVNWCDbStatements {
     REVPROP_CREATE_SCHEMA(SVNFSFSRevPropCreateSchema.class),
     FSFS_GET_REVPROP(SVNFSFSRevPropGet.class),
     FSFS_SET_REVPROP(SVNFSFSRevPropSet.class),
-    UPDATE_BASE_NODE_PRESENCE_REVNUM_AND_REPOS_PATH;
+    UPDATE_BASE_NODE_PRESENCE_REVNUM_AND_REPOS_PATH(SVNUpdateBaseNodePresenceRevnumAndReposPath.class);
 
     private Class<? extends SVNSqlJetStatement> statementClass;
 

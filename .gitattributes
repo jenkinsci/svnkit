@@ -107,6 +107,7 @@ svnkit-test/test.windows.properties eol=crlf
 svnkit-test/tomcat/logging.properties -text
 svnkit-test/tomcat/tomcat.jar -text
 svnkit/src/org/tmatesoft/svn/core/internal/db/SVNSqlJetTransaction.java -text
+svnkit/src/org/tmatesoft/svn/core/internal/db/SVNSqlJetUpdateStatement.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http/DefaultHTTPNegotiateAuthentication.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http/IHTTPNegotiateAuthenticationFactory.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/fs/IFSRepresentationCacheManager.java -text
@@ -137,6 +138,7 @@ svnkit/src/org/tmatesoft/svn/core/internal/wc/config/servers eol=lf
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/SVNAmbientDepthFilterEditor17.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/SVNUpdateEditor17.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/SVNWCConflictDescription17.java -text
+svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNUpdateBaseNodePresenceRevnumAndReposPath.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbSelectNotPresent.java -text
 svnkit/src/org/tmatesoft/svn/core/io/repository/template.jar -text
 svnkit/src/org/tmatesoft/svn/core/wc/ISVNFileFilter.java -text

@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.internal.db;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
@@ -162,6 +163,10 @@ public abstract class SVNSqlJetStatement {
 
     public void bindBlob(int i, byte[] serialized) {
         binds.add(i - 1, serialized);
+    }
+
+    protected Object getBind(int i) {
+        return binds.get(i-1);
     }
 
     public long count() throws SVNException {
