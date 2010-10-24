@@ -2878,9 +2878,49 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     public void opSetNewDirToIncompleteTemp(File localAbspath, File reposRelpath, SVNURL reposRootURL, String reposUuid, long revision, SVNDepth depth) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+
+        assert (SVNFileUtil.isAbsolute(localAbspath));
+        assert (SVNRevision.isValidRevisionNumber(revision));
+        assert (reposRelpath != null && reposRootURL != null && reposUuid != null);
+        DirParsedInfo parsed = parseDir(localAbspath, Mode.ReadWrite);
+        SVNWCDbDir pdh = parsed.wcDbDir;
+        verifyDirUsable(pdh);
+        final SetNewDirToIncomplete baton = new SetNewDirToIncomplete();
+        baton.pdh = pdh;
+        baton.localRelpath = parsed.localRelPath;
+        baton.reposRelpath = reposRelpath;
+        baton.reposRootUrl = reposRootURL;
+        baton.reposUuid = reposUuid;
+        baton.revision = revision;
+        baton.depth = depth;
+        pdh.getWCRoot().getSDb().runTransaction(baton);
+        pdh.flushEntries(localAbspath);
     }
+
+    private class SetNewDirToIncomplete implements SVNSqlJetTransaction {
+
+        public SVNWCDbDir pdh;
+        public File localRelpath;
+        public File reposRelpath;
+        public SVNURL reposRootUrl;
+        public String reposUuid;
+        public long revision;
+        public SVNDepth depth;
+
+        public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
+            File parentRelpath = SVNFileUtil.getFileDir(localRelpath);
+            long reposId = createReposId(db, reposRootUrl, reposUuid);
+            SVNSqlJetStatement stmt = db.getStatement(SVNWCDbStatements.DELETE_NODES);
+            stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelpath);
+            stmt.done();
+            stmt = db.getStatement(SVNWCDbStatements.INSERT_NODE);
+            stmt.bindf("isisisrsns", pdh.getWCRoot().getWcId(), localRelpath, 0, parentRelpath, reposId, reposRelpath, revision, "incomplete", "dir");
+            if (depth.getId() >= SVNDepth.EMPTY.getId() && depth.getId() <= SVNDepth.INFINITY.getId()) {
+                stmt.bindString(9, SVNDepth.asString(depth));
+            }
+            stmt.done();
+        }
+    };
 
     public void opDeleteTemp(File localAbspath) throws SVNException {
         // TODO

@@ -56,7 +56,9 @@ public enum SVNWCDbStatements {
     INSERT_WORKING_NODE_NORMAL_FROM_BASE,
     INSERT_WORKING_NODE_NOT_PRESENT_FROM_BASE,
     UPDATE_COPYFROM,
-    DELETE_BASE_NODE;
+    DELETE_BASE_NODE,
+    DELETE_NODES,
+    INSERT_NODE;
 
     private Class<? extends SVNSqlJetStatement> statementClass;
 
