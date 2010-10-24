@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2010 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -95,6 +95,7 @@ public class JavaHLObjectFactory {
         STATUS_CONVERSION_MAP.put(SVNStatusType.STATUS_OBSTRUCTED, new Integer(StatusKind.obstructed));
         STATUS_CONVERSION_MAP.put(SVNStatusType.STATUS_REPLACED, new Integer(StatusKind.replaced));
         STATUS_CONVERSION_MAP.put(SVNStatusType.STATUS_UNVERSIONED, new Integer(StatusKind.unversioned));
+        STATUS_CONVERSION_MAP.put(SVNStatusType.STATUS_NAME_CONFLICT, new Integer(StatusKind.unversioned));
 
         STATUS_CONVERSION_MAP.put(SVNStatusType.CHANGED, new Integer(NotifyStatus.changed));
         STATUS_CONVERSION_MAP.put(SVNStatusType.CONFLICTED, new Integer(NotifyStatus.conflicted));
@@ -310,7 +311,7 @@ public class JavaHLObjectFactory {
         	op = getConflictOperation(tc.getOperation());
         }
 
-        return new ConflictDescriptor(mergeFiles.getLocalPath(),
+        return new ConflictDescriptor(mergeFiles.getWCPath(),
                 getConflictKind(conflictDescription.isPropertyConflict()),
                 getNodeKind(conflictDescription.getNodeKind()),
                 conflictDescription.getPropertyName(),

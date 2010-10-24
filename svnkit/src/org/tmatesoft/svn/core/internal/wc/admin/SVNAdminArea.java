@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2010 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -42,7 +42,9 @@ import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNMerger;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNDiffConflictChoiceStyle;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -127,7 +129,7 @@ public abstract class SVNAdminArea {
 
     public abstract SVNAdminArea createVersionedDirectory(File dir, String url, String rootURL, String uuid, long revNumber, boolean createMyself, SVNDepth depth) throws SVNException;
 
-    public abstract void postCommit(String fileName, long revisionNumber, boolean implicit, SVNErrorCode errorCode) throws SVNException;
+    public abstract void postCommit(String fileName, long revisionNumber, boolean implicit, boolean rerun, SVNErrorCode errorCode) throws SVNException;
 
     public abstract void handleKillMe() throws SVNException;
 
@@ -303,21 +305,66 @@ public abstract class SVNAdminArea {
         }
 
         String autoResolveSource = null;
+        File autoResolveSourceFile = null;
+        boolean removeSource = false;
         if (conflictChoice == SVNConflictChoice.BASE) {
             autoResolveSource = entry.getConflictOld();
         } else if (conflictChoice == SVNConflictChoice.MINE_FULL) {
             autoResolveSource = entry.getConflictWorking();
         } else if (conflictChoice == SVNConflictChoice.THEIRS_FULL) {
             autoResolveSource = entry.getConflictNew();
+        } else if (conflictChoice == SVNConflictChoice.THEIRS_CONFLICT || conflictChoice == SVNConflictChoice.MINE_CONFLICT) {
+            if (entry.getConflictOld() != null && entry.getConflictNew() != null && entry.getConflictWorking() != null) {
+                String conflictOld = entry.getConflictOld();
+                String conflictNew = entry.getConflictNew();
+                String conflictWorking = entry.getConflictWorking();
+                
+                ISVNMergerFactory factory = myWCAccess.getOptions().getMergerFactory();
+                
+                File conflictOldFile = SVNPathUtil.isAbsolute(conflictOld) ? new File(conflictOld) : getFile(conflictOld);
+                File conflictNewFile = SVNPathUtil.isAbsolute(conflictNew) ? new File(conflictNew) : getFile(conflictNew);
+                File conflictWorkingFile = SVNPathUtil.isAbsolute(conflictWorking) ? new File(conflictWorking) : getFile(conflictWorking);
+                    
+                byte[] conflictStart = ("<<<<<<< " + conflictWorking).getBytes();
+                byte[] conflictEnd = (">>>>>>> " + conflictNew).getBytes();
+                byte[] separator = ("=======").getBytes();
+
+                ISVNMerger merger = factory.createMerger(conflictStart, separator, conflictEnd);
+                SVNDiffConflictChoiceStyle style = conflictChoice == SVNConflictChoice.THEIRS_CONFLICT ? SVNDiffConflictChoiceStyle.CHOOSE_LATEST : 
+                    SVNDiffConflictChoiceStyle.CHOOSE_MODIFIED;
+                if (merger instanceof DefaultSVNMerger) {
+                    DefaultSVNMerger defaultMerger = (DefaultSVNMerger) merger;
+                    defaultMerger.setDiffConflictStyle(style);
+                }
+                
+                autoResolveSourceFile = SVNAdminUtil.createTmpFile(this);
+
+                SVNMergeFileSet mergeFileSet = new SVNMergeFileSet(this, null, conflictOldFile, conflictWorkingFile, name, conflictNewFile, 
+                        autoResolveSourceFile, null, null);
+
+                String localLabel = ".working";
+                String baseLabel = ".old";
+                String latestLabel = ".new";
+                
+                mergeFileSet.setMergeLabels(baseLabel, localLabel, latestLabel);
+                merger.mergeText(mergeFileSet, false, null);
+                mergeFileSet.dispose();
+                removeSource = true;
+            }
         } else if (conflictChoice != SVNConflictChoice.MERGED) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS,
-                    "Invalid 'conflict_result' argument");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS, "Invalid 'conflict_result' argument");
             SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
-
+        
         if (autoResolveSource != null) {
-            File autoResolveSourceFile = getFile(autoResolveSource);
+            autoResolveSourceFile = getFile(autoResolveSource);
+        }
+        
+        if (autoResolveSourceFile != null) {
             SVNFileUtil.copyFile(autoResolveSourceFile, getFile(name), false);
+            if (removeSource) {
+                SVNFileUtil.deleteFile(autoResolveSourceFile);
+            }
         }
 
         if (!text && !props) {
@@ -559,7 +606,11 @@ public abstract class SVNAdminArea {
     }
 
     public void runLogs() throws SVNException {
-        SVNLogRunner runner = new SVNLogRunner();
+        runLogs(false);
+    }
+
+    public void runLogs(boolean rerun) throws SVNException {
+        SVNLogRunner runner = new SVNLogRunner(rerun);
         int index = 0;
         SVNLog log = null;
         runner.logStarted(this);
@@ -965,7 +1016,7 @@ public abstract class SVNAdminArea {
         if (isKillMe()) {
             removeFromRevisionControl(getThisDirName(), true, false);
         } else {
-            runLogs();
+            runLogs(true);
         }
         SVNFileUtil.deleteAll(getAdminFile("tmp"), false);
     }
@@ -1068,7 +1119,7 @@ public abstract class SVNAdminArea {
         myAdminRoot = new File(dir, SVNFileUtil.getAdminDirectoryName());
     }
 
-    protected File getBasePropertiesFile(String name, boolean tmp) {
+    public File getBasePropertiesFile(String name, boolean tmp) {
         String path = !tmp ? "" : "tmp/";
         path += getThisDirName().equals(name) ? "dir-prop-base" : "prop-base/" + name + ".svn-base";
         File propertiesFile = getAdminFile(path);
@@ -1352,11 +1403,13 @@ public abstract class SVNAdminArea {
     }
 
     private boolean compareAndVerify(File text, File baseFile, boolean compareTextBase, boolean checksum) throws SVNException {
-        String charsetProp = getProperties(text.getName()).getStringPropertyValue(SVNProperty.CHARSET);
-        String charset = SVNTranslator.getCharset(charsetProp, text.getPath(), getWCAccess().getOptions());
-        String eolStyle = getProperties(text.getName()).getStringPropertyValue(SVNProperty.EOL_STYLE);
-        String keywords = getProperties(text.getName()).getStringPropertyValue(SVNProperty.KEYWORDS);
-        boolean special = getProperties(text.getName()).getStringPropertyValue(SVNProperty.SPECIAL) != null && SVNFileUtil.symlinksSupported();
+        SVNVersionedProperties versionedProperties = getProperties(text.getName());
+        String charsetProp = versionedProperties.getStringPropertyValue(SVNProperty.CHARSET);
+        String mimeType = versionedProperties.getStringPropertyValue(SVNProperty.MIME_TYPE);
+        String charset = SVNTranslator.getCharset(charsetProp, mimeType, text.getPath(), getWCAccess().getOptions());
+        String eolStyle = versionedProperties.getStringPropertyValue(SVNProperty.EOL_STYLE);
+        String keywords = versionedProperties.getStringPropertyValue(SVNProperty.KEYWORDS);
+        boolean special = versionedProperties.getStringPropertyValue(SVNProperty.SPECIAL) != null && SVNFileUtil.symlinksSupported();
 
         if (special) {
             compareTextBase = true;
@@ -1379,11 +1432,13 @@ public abstract class SVNAdminArea {
                         baseStream = checksumStream;
                     }
                 }
+                File pathToTranslate = text;
                 if (compareTextBase && needsTranslation) {
                     if (!special) {
                         Map keywordsMap = SVNTranslator.computeKeywords(keywords, null, entry.getAuthor(), entry.getCommittedDate(), entry.getRevision() + "", getWCAccess().getOptions());
                         byte[] eols = SVNTranslator.getBaseEOL(eolStyle);
                         textStream = SVNTranslator.getTranslatingInputStream(textStream, charset, eols, true, keywordsMap, false);
+                        pathToTranslate = text;
                     } else {
                         String linkPath = SVNFileUtil.getSymlinkName(text);
                         if (linkPath == null) {
@@ -1397,6 +1452,7 @@ public abstract class SVNAdminArea {
                     Map keywordsMap = SVNTranslator.computeKeywords(keywords, entry.getURL(), entry.getAuthor(), entry.getCommittedDate(), entry.getRevision() + "", getWCAccess().getOptions());
                     byte[] eols = SVNTranslator.getEOL(eolStyle, getWCAccess().getOptions());
                     baseStream = SVNTranslator.getTranslatingInputStream(baseStream, charset, eols, false, keywordsMap, true);
+                    pathToTranslate = baseFile;
                 }
                 byte[] buffer1 = new byte[8192];
                 byte[] buffer2 = new byte[8192];
@@ -1418,8 +1474,7 @@ public abstract class SVNAdminArea {
                         }
                     }
                 } catch (IOException e) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
-                    SVNErrorManager.error(err, SVNLogType.WC);
+                    SVNTranslator.translationError(pathToTranslate, e);
                 }
             } finally {
                 SVNFileUtil.closeFile(baseStream);
@@ -1565,8 +1620,9 @@ public abstract class SVNAdminArea {
     private void handleCharsetProperty(SVNAdminArea adminArea, SVNLog log, SVNEntry entry, SVNVersionedProperties baseProps) throws SVNException {
         SVNProperties command = new SVNProperties();
         SVNPropertyValue charsetProp = baseProps.getPropertyValue(SVNProperty.CHARSET);
+        String mimeType = baseProps.getStringPropertyValue(SVNProperty.MIME_TYPE);
         String currentCharset = charsetProp == null ? null : charsetProp.getString();
-        currentCharset = SVNTranslator.getCharset(currentCharset, getAdminFile(entry.getName()).toString(), getWCAccess().getOptions());
+        currentCharset = SVNTranslator.getCharset(currentCharset, mimeType, getAdminFile(entry.getName()).toString(), getWCAccess().getOptions());
         if (currentCharset != null && !SVNProperty.isUTF8(currentCharset)) {
             File detranslatedFile = SVNAdminUtil.createTmpFile(this, "detranslated", ".tmp", true);
             String detranslatedPath = SVNPathUtil.getRelativePath(getRoot().getAbsolutePath(), detranslatedFile.getAbsolutePath());

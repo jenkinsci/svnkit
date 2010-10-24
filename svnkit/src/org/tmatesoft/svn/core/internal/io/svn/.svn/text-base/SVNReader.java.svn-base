@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2010 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -139,7 +139,13 @@ public class SVNReader {
     }
 
     public static SVNLock getLock(Collection items) throws SVNException {
+        if (items == null || items.isEmpty()) {
+            return null;
+        }
         List values = parseTuple("sss(?s)s(?s)", items, null);
+        if (values.isEmpty()) {
+            return null;
+        }
         String path = SVNPathUtil.canonicalizePath(getString(values, 0));
         String token = getString(values, 1);
         String owner = getString(values, 2);

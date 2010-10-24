@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2010 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -59,7 +59,7 @@ public class SVNWCUtil {
      *         run-time configuration area location
      */
     public static File getDefaultConfigurationDirectory() {
-        if (SVNFileUtil.isWindows) {
+        if (SVNFileUtil.isWindows && !SVNFileUtil.isOS2) {
             return new File(SVNFileUtil.getApplicationDataPath(), "Subversion");
         } else if (SVNFileUtil.isOpenVMS) {
             return new File("/sys$login", ".subversion").getAbsoluteFile();
@@ -344,8 +344,11 @@ public class SVNWCUtil {
      */
     public static File getWorkingCopyRoot(File versionedDir, boolean stopOnExtenrals) throws SVNException {
         versionedDir = versionedDir.getAbsoluteFile();
-        if (versionedDir == null || (!isVersionedDirectory(versionedDir) && !isVersionedDirectory(versionedDir.getParentFile()))) {
-            // both this dir and its parent are not versioned.
+        if (versionedDir == null || 
+                (!isVersionedDirectory(versionedDir) && 
+                (versionedDir.getParentFile() == null || !isVersionedDirectory(versionedDir.getParentFile())))) {
+            // both this dir and its parent are not versioned, 
+            // or dir is root and not versioned
             return null;
         }
 
@@ -373,7 +376,7 @@ public class SVNWCUtil {
                     SVNAdminArea dir = parentAccess.open(parent, false, 0);
                     SVNVersionedProperties props = dir.getProperties(dir.getThisDirName());
 	                final String externalsProperty = props.getStringPropertyValue(SVNProperty.EXTERNALS);
-	                SVNExternal[] externals = externalsProperty != null ? SVNExternal.parseExternals(dir.getRoot().getAbsolutePath(), externalsProperty) : new SVNExternal[0];
+	                SVNExternal[] externals = externalsProperty != null ? SVNExternal.parseExternals(dir.getRoot(), externalsProperty) : new SVNExternal[0];
                     // now externals could point to our dir.
                     for (int i = 0; i < externals.length; i++) {
                         SVNExternal external = externals[i];

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2010 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -77,6 +77,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @see     <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>
  */
 public class SVNStatusClient extends SVNBasicClient {
+    private ISVNStatusFileProvider myFilesProvider;
 
     /**
      * Constructs and initializes an <b>SVNStatusClient</b> object
@@ -373,6 +374,9 @@ public class SVNStatusClient extends SVNBasicClient {
                 }
             } else {
                 editor = new SVNStatusEditor(getOptions(), wcAccess, info, includeIgnored, reportAll, depth, handler);
+                if (myFilesProvider != null) {
+                    editor.setFileProvider(myFilesProvider);
+                }
                 editor.closeEdit();
             }         
             if (!isIgnoreExternals() && (depth == SVNDepth.INFINITY || depth == SVNDepth.UNKNOWN)) {
@@ -471,5 +475,9 @@ public class SVNStatusClient extends SVNBasicClient {
         };
         doStatus(absPath, SVNRevision.HEAD, SVNDepth.EMPTY, remote, true, true, collectParentExternals, handler, null);
         return result[0];
+    }
+
+    public void setFilesProvider(ISVNStatusFileProvider filesProvider) {
+        myFilesProvider = filesProvider;
     }
 }

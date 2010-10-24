@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2010 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -227,7 +227,7 @@ public class SVNMergeInfoUtil {
         } 
         fromMergeInfo = fromMergeInfo == null ? parseMergeInfo(new StringBuffer(fromPropValue), null) : fromMergeInfo;
         toMergeInfo = toMergeInfo == null ? parseMergeInfo(new StringBuffer(toPropValue), null) : toMergeInfo;
-        diffMergeInfo(deleted, added, fromMergeInfo, toMergeInfo, false);
+        diffMergeInfo(deleted, added, fromMergeInfo, toMergeInfo, true);
     }
     
     public static void diffMergeInfo(Map deleted, Map added, Map from, Map to, 
@@ -285,10 +285,16 @@ public class SVNMergeInfoUtil {
                 }
                 if (ind == 0) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MERGE_INFO_PARSE_ERROR, 
-                    "No path preceeding ':'");
+                    "No pathname preceding ':'");
                     SVNErrorManager.error(err, SVNLogType.DEFAULT);                    
                 }
-                String path = mergeInfo.substring(0, ind);
+                String path = null;
+                if (mergeInfo.charAt(0) =='/') {
+                    path = mergeInfo.substring(0, ind);
+                } else {
+                    String relativePath = mergeInfo.substring(0, ind);
+                    path = "/" + relativePath;
+                }
                 mergeInfo = mergeInfo.delete(0, ind + 1);
                 SVNMergeRange[] ranges = parseRevisionList(mergeInfo, path);
                 if (mergeInfo.length() != 0 && mergeInfo.charAt(0) != '\n') {
@@ -329,6 +335,10 @@ public class SVNMergeInfoUtil {
                         lastRange = ranges[i];
                     }
                     ranges = (SVNMergeRange[]) newRanges.toArray(new SVNMergeRange[newRanges.size()]); 
+                }
+                SVNMergeRangeList existingRange = (SVNMergeRangeList) srcPathsToRangeLists.get(path);
+                if (existingRange != null) {
+                    ranges = existingRange.merge(new SVNMergeRangeList(ranges)).getRanges();
                 }
                 srcPathsToRangeLists.put(path, new SVNMergeRangeList(ranges));
             }
@@ -380,7 +390,7 @@ public class SVNMergeInfoUtil {
         for (Iterator paths = srcsToRangeLists.keySet().iterator(); paths.hasNext();) {
             String path = (String) paths.next();
             SVNMergeRangeList rangeList = (SVNMergeRangeList) srcsToRangeLists.get(path);
-            String output = (prefix != null ? prefix : "") + path + ':' + rangeList;  
+            String output = (prefix != null ? prefix : "") + (path.startsWith("/") ? "" : "/") + path + ':' + rangeList;  
             pathRanges[k++] = output;
         }
         return pathRanges;

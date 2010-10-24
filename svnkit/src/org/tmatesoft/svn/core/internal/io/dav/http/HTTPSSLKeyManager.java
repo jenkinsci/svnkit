@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2010 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -11,16 +11,15 @@
  */
 package org.tmatesoft.svn.core.internal.io.dav.http;
 
-import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;
 import java.security.KeyStore;
 import java.security.Principal;
 import java.security.PrivateKey;
+import java.security.Provider;
+import java.security.Security;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -46,246 +45,320 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @author  TMate Software Ltd.
  */
 public final class HTTPSSLKeyManager implements X509KeyManager {
-    public static KeyManager[] loadClientCertificate(File clientCertFile, String clientCertPassword) throws SVNException {
+
+
+    public static KeyManager[] loadClientCertificate() throws SVNException {
+        Provider pjacapi = Security.getProvider("CAPI");
+        Provider pmscapi = Security.getProvider("SunMSCAPI");
+
+        KeyManager[] result = null;
+        SVNDebugLog.getDefaultLog().logError(SVNLogType.CLIENT,"using mscapi");
+        // get key store
+        KeyStore keyStore = null;
+        // Note: When a security manager is installed,
+        // the following call requires SecurityPermission
+        // "authProvider.SunMSCAPI".
         try {
-            FileInputStream in = new FileInputStream(clientCertFile);
-            try {
-                return loadClientCertificate(in,clientCertPassword);
-            } finally {
-                in.close();
+            if (pmscapi != null) {
+                pmscapi.setProperty("Signature.SHA1withRSA","sun.security.mscapi.RSASignature$SHA1");
+                keyStore = KeyStore.getInstance("Windows-MY",pmscapi);
+            } else if (pjacapi != null) {
+                keyStore = KeyStore.getInstance("CAPI");
             }
-        } catch (IOException e) {
-            throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, e.getMessage(), null, SVNErrorMessage.TYPE_ERROR, e), e);
+            if (keyStore != null) {
+                keyStore.load(null, null);
+            }
+        } catch (Throwable th) {
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, th);
+            throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Problems, when connecting with ms capi! "+th.getMessage(), null, SVNErrorMessage.TYPE_ERROR, th), th);
+        }
+
+        KeyManagerFactory kmf = null;
+
+        if (keyStore != null) {
+            try {
+                kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+                if (kmf != null) {
+                    kmf.init(keyStore, null);
+                    result = kmf.getKeyManagers();
+                }
+            }
+            catch (Throwable th) {
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, th);
+                throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "MS Capi error: "+th.getMessage()), th);
+            }
+        }
+        return result;
+    }
+
+    public static KeyManager[] loadClientCertificate(File clientCertFile, String clientCertPassword) throws SVNException {
+        char[] passphrase = null;
+        if (clientCertPassword != null) {
+            passphrase = clientCertPassword.toCharArray();
+        }
+        if (clientCertFile != null && clientCertFile.getName().startsWith(SVNSSLAuthentication.MSCAPI)) {
+            SVNDebugLog.getDefaultLog().logError(SVNLogType.CLIENT,"using mscapi");
+            try {
+                KeyStore keyStore = KeyStore.getInstance("Windows-MY");
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "using my windows store");
+                if (keyStore != null) {
+                    keyStore.load(null, null);
+                }
+                KeyManagerFactory kmf = null;
+                if (keyStore != null) {
+                    kmf = KeyManagerFactory.getInstance("SunX509");
+                    if (kmf != null) {
+                        kmf.init(keyStore, passphrase);
+                        return kmf.getKeyManagers();
+                    }
+                }
+                return null;
+            }
+            catch (Throwable th) {
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, th);
+                throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "loadClientCertificate ms capi with file - should not be called: "+th.getMessage(), null, SVNErrorMessage.TYPE_ERROR, th), th);
+            }
+
+        }
+        final InputStream is = SVNFileUtil.openFileForReading(clientCertFile, SVNLogType.NETWORK);
+        return loadClientCertificate(is,clientCertPassword);
+    }
+
+    public static KeyManager[] loadClientCertificate(InputStream clientCertFile, String clientCertPassword) throws SVNException {
+        char[] passphrase = null;
+        if (clientCertPassword != null) {
+            passphrase = clientCertPassword.toCharArray();
+        }
+        KeyStore keyStore;
+        try {
+            keyStore = KeyStore.getInstance("PKCS12");
+            if (keyStore != null) {
+                keyStore.load(clientCertFile, passphrase);
+            }
+        }
+        catch (Throwable th) {
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, th);
+            throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, th.getMessage(), null, SVNErrorMessage.TYPE_ERROR, th), th);
+        }
+        finally {
+            SVNFileUtil.closeFile(clientCertFile);
+        }
+
+        if (keyStore != null) {
+            try {
+                KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
+                if (kmf != null) {
+                    kmf.init(keyStore, passphrase);
+                    return kmf.getKeyManagers();
+                }
+            }
+            catch (Throwable th) {
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, th);
+                throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, th.getMessage()), th);
+            }
+        }
+
+        return null;
+    }
+
+    private final ISVNAuthenticationManager authenticationManager;
+    private final String realm;
+    private final SVNURL url;
+
+    private KeyManager[] myKeyManagers;
+    private SVNSSLAuthentication myAuthentication;
+    private Exception myException;
+    private String chooseAlias = null;
+
+    public HTTPSSLKeyManager(ISVNAuthenticationManager authenticationManager, String realm, SVNURL url) {
+        this.authenticationManager = authenticationManager;
+        this.realm = realm;
+        this.url = url;
+    }
+
+    public String[] getClientAliases(String location, Principal[] principals) {
+        if (!initializeNoException()) {
+            return null;
+        }
+
+        for (Iterator it = getX509KeyManagers(myKeyManagers).iterator(); it.hasNext();) {
+            final X509KeyManager keyManager = (X509KeyManager)it.next();
+            final String[] clientAliases = keyManager.getClientAliases(location, principals);
+            if (clientAliases != null) {
+                return clientAliases;
+            }
+        }
+
+        return null;
+    }
+
+    public String chooseClientAlias(String[] strings, Principal[] principals, Socket socket) {
+        if (!initializeNoException()) {
+            return null;
+        }
+        if (chooseAlias != null) {
+            return chooseAlias;
+        }
+        for (Iterator it = getX509KeyManagers(myKeyManagers).iterator(); it.hasNext();) {
+            final X509KeyManager keyManager = (X509KeyManager)it.next();
+            final String clientAlias = keyManager.chooseClientAlias(strings, principals, socket);
+            if (clientAlias != null) {
+                return clientAlias;
+            }
+        }
+        return null;
+    }
+
+    public String[] getServerAliases(String location, Principal[] principals) {
+        if (!initializeNoException()) {
+            return null;
+        }
+
+        for (Iterator it = getX509KeyManagers(myKeyManagers).iterator(); it.hasNext();) {
+            final X509KeyManager keyManager = (X509KeyManager)it.next();
+            final String[] serverAliases = keyManager.getServerAliases(location, principals);
+            if (serverAliases != null) {
+                return serverAliases;
+            }
+        }
+
+        return null;
+    }
+
+    public String chooseServerAlias(String location, Principal[] principals, Socket socket) {
+        if (!initializeNoException()) {
+            return null;
+        }
+
+        for (Iterator it = getX509KeyManagers(myKeyManagers).iterator(); it.hasNext();) {
+            final X509KeyManager keyManager = (X509KeyManager)it.next();
+            final String serverAlias = keyManager.chooseServerAlias(location, principals, socket);
+            if (serverAlias != null) {
+                return serverAlias;
+            }
+        }
+
+        return null;
+    }
+
+    public X509Certificate[] getCertificateChain(String location) {
+        if (!initializeNoException()) {
+            return null;
+        }
+        for (Iterator it = getX509KeyManagers(myKeyManagers).iterator(); it.hasNext();) {
+            final X509KeyManager keyManager = (X509KeyManager)it.next();
+            final X509Certificate[] certificateChain = keyManager.getCertificateChain(location);
+            if (certificateChain != null) {
+                return certificateChain;
+            }
+        }
+        return null;
+    }
+
+    public PrivateKey getPrivateKey(String string) {
+        if (!initializeNoException()) {
+            return null;
+        }
+
+        for (Iterator it = getX509KeyManagers(myKeyManagers).iterator(); it.hasNext();) {
+            final X509KeyManager keyManager = (X509KeyManager)it.next();
+            final PrivateKey privateKey = keyManager.getPrivateKey(string);
+            if (privateKey != null) {
+                return privateKey;
+            }
+        }
+        return null;
+    }
+
+    public Exception getException() {
+        return myException;
+    }
+
+    public void acknowledgeAndClearAuthentication(SVNErrorMessage errorMessage) throws SVNException {
+        if (myAuthentication != null) {
+            authenticationManager.acknowledgeAuthentication(errorMessage == null, ISVNAuthenticationManager.SSL, realm, errorMessage, myAuthentication);
+        }
+
+        myAuthentication = null;
+
+        if (errorMessage != null) {
+            myKeyManagers = null;
+            chooseAlias = null;
+        }
+
+        final Exception exception = myException;
+        myException = null;
+        if (exception instanceof SVNException) {
+            throw (SVNException)exception;
+        }
+        else if (exception != null) {
+            throw new SVNException(SVNErrorMessage.UNKNOWN_ERROR_MESSAGE, exception);
         }
     }
 
-	public static KeyManager[] loadClientCertificate(InputStream clientCertFile, String clientCertPassword) throws SVNException {
-		char[] passphrase = null;
-		if (clientCertPassword != null) {
-			passphrase = clientCertPassword.toCharArray();
-		}
-		KeyStore keyStore = null;
-		final InputStream is = new BufferedInputStream(clientCertFile);
-		try {
-			keyStore = KeyStore.getInstance("PKCS12");
-			if (keyStore != null) {
-				keyStore.load(is, passphrase);
-			}
-		}
-		catch (Throwable th) {
-			SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, th);
-			throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, th.getMessage(), null, SVNErrorMessage.TYPE_ERROR, th), th);
-		}
-		finally {
-			SVNFileUtil.closeFile(is);
-		}
-		KeyManagerFactory kmf = null;
-		KeyManager[] result = null;
-		if (keyStore != null) {
-			try {
-				kmf = KeyManagerFactory.getInstance("SunX509");
-				if (kmf != null) {
-					kmf.init(keyStore, passphrase);
-					result = kmf.getKeyManagers();
-				}
-			}
-			catch (Throwable th) {
-				SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, th);
-				throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, th.getMessage()), th);
-			}
-		}
-		return result;
-	}
+    private boolean initializeNoException() {
+        try {
+            final boolean result = initialize();
+            myException = null;
+            return result;
+        }
+        catch (Exception exception) {
+            myException = exception;
+            return false;
+        }
+    }
 
-	private final ISVNAuthenticationManager authenticationManager;
-	private final String realm;
-	private final SVNURL url;
+    private boolean initialize() throws SVNException {
+        if (myKeyManagers != null) {
+            return true;
+        }
 
-	private KeyManager[] myKeyManagers;
-	private SVNSSLAuthentication myAuthentication;
-	private Exception myException;
+        boolean isFirstAuthentication = true;
+        for (; ;) {
+            if (isFirstAuthentication) {
+                myAuthentication = (SVNSSLAuthentication)authenticationManager.getFirstAuthentication(ISVNAuthenticationManager.SSL, realm, url);
+                isFirstAuthentication = false;
+            }
+            else {
+                myAuthentication = (SVNSSLAuthentication)authenticationManager.getNextAuthentication(ISVNAuthenticationManager.SSL, realm, url);
+            }
 
-	public HTTPSSLKeyManager(ISVNAuthenticationManager authenticationManager, String realm, SVNURL url) {
-		this.authenticationManager = authenticationManager;
-		this.realm = realm;
-		this.url = url;
-	}
+            if (myAuthentication == null) {
+                SVNErrorManager.cancel("SSL authentication with client certificate cancelled", SVNLogType.NETWORK);
+            }
 
-	public String[] getClientAliases(String location, Principal[] principals) {
-		if (!initializeNoException()) {
-			return null;
-		}
+            final KeyManager[] keyManagers;
+            try {
+                if (isMSCAPI(myAuthentication)) {
+                    keyManagers = loadClientCertificate();
+                    chooseAlias = myAuthentication.getAlias();
+                } else {
+                    keyManagers = loadClientCertificate(new ByteArrayInputStream(myAuthentication.getCertificateFile()), myAuthentication.getPassword());
+                }
+            }
+            catch (SVNException ex) {
+                final SVNErrorMessage sslErr = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "SSL handshake failed: ''{0}''", new Object[] { ex.getMessage() }, SVNErrorMessage.TYPE_ERROR, ex.getCause());
+                authenticationManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.SSL, realm, sslErr, myAuthentication);
+                continue;
+            }
 
-		for (Iterator it = getX509KeyManagers(myKeyManagers).iterator(); it.hasNext();) {
-			final X509KeyManager keyManager = (X509KeyManager)it.next();
-			final String[] clientAliases = keyManager.getClientAliases(location, principals);
-			if (clientAliases != null) {
-				return clientAliases;
-			}
-		}
+            myKeyManagers = keyManagers;
+            return true;
+        }
+    }
 
-		return null;
-	}
-
-	public String chooseClientAlias(String[] strings, Principal[] principals, Socket socket) {
-		if (!initializeNoException()) {
-			return null;
-		}
-
-		for (Iterator it = getX509KeyManagers(myKeyManagers).iterator(); it.hasNext();) {
-			final X509KeyManager keyManager = (X509KeyManager)it.next();
-			final String clientAlias = keyManager.chooseClientAlias(strings, principals, socket);
-			if (clientAlias != null) {
-				return clientAlias;
-			}
-		}
-
-		return null;
-	}
-
-	public String[] getServerAliases(String location, Principal[] principals) {
-		if (!initializeNoException()) {
-			return null;
-		}
-
-		for (Iterator it = getX509KeyManagers(myKeyManagers).iterator(); it.hasNext();) {
-			final X509KeyManager keyManager = (X509KeyManager)it.next();
-			final String[] serverAliases = keyManager.getServerAliases(location, principals);
-			if (serverAliases != null) {
-				return serverAliases;
-			}
-		}
-
-		return null;
-	}
-
-	public String chooseServerAlias(String location, Principal[] principals, Socket socket) {
-		if (!initializeNoException()) {
-			return null;
-		}
-
-		for (Iterator it = getX509KeyManagers(myKeyManagers).iterator(); it.hasNext();) {
-			final X509KeyManager keyManager = (X509KeyManager)it.next();
-			final String serverAlias = keyManager.chooseServerAlias(location, principals, socket);
-			if (serverAlias != null) {
-				return serverAlias;
-			}
-		}
-
-		return null;
-	}
-
-	public X509Certificate[] getCertificateChain(String location) {
-		if (!initializeNoException()) {
-			return null;
-		}
-
-		for (Iterator it = getX509KeyManagers(myKeyManagers).iterator(); it.hasNext();) {
-			final X509KeyManager keyManager = (X509KeyManager)it.next();
-			final X509Certificate[] certificateChain = keyManager.getCertificateChain(location);
-			if (certificateChain != null) {
-				return certificateChain;
-			}
-		}
-
-		return null;
-	}
-
-	public PrivateKey getPrivateKey(String string) {
-		if (!initializeNoException()) {
-			return null;
-		}
-
-		for (Iterator it = getX509KeyManagers(myKeyManagers).iterator(); it.hasNext();) {
-			final X509KeyManager keyManager = (X509KeyManager)it.next();
-			final PrivateKey privateKey = keyManager.getPrivateKey(string);
-			if (privateKey != null) {
-				return privateKey;
-			}
-		}
-
-		return null;
-	}
-
-	public Exception getException() {
-		return myException;
-	}
-
-	public void acknowledgeAndClearAuthentication(SVNErrorMessage errorMessage) throws SVNException {
-		if (myAuthentication != null) {
-			authenticationManager.acknowledgeAuthentication(errorMessage == null, ISVNAuthenticationManager.SSL, realm, errorMessage, myAuthentication);
-		}
-
-		myAuthentication = null;
-
-		if (errorMessage != null) {
-			myKeyManagers = null;
-		}
-
-		final Exception exception = myException;
-		myException = null;
-		if (exception instanceof SVNException) {
-			throw (SVNException)exception;
-		}
-		else if (exception != null) {
-			throw new SVNException(SVNErrorMessage.UNKNOWN_ERROR_MESSAGE, exception);
-		}
-	}
-
-	private boolean initializeNoException() {
-		try {
-			final boolean result = initialize();
-			myException = null;
-			return result;
-		}
-		catch (Exception exception) {
-			myException = exception;
-			return false;
-		}
-	}
-
-	private boolean initialize() throws SVNException {
-		if (myKeyManagers != null) {
-			return true;
-		}
-
-		boolean isFirstAuthentication = true;
-		for (; ;) {
-			if (isFirstAuthentication) {
-				myAuthentication = (SVNSSLAuthentication)authenticationManager.getFirstAuthentication(ISVNAuthenticationManager.SSL, realm, url);
-				isFirstAuthentication = false;
-			}
-			else {
-				myAuthentication = (SVNSSLAuthentication)authenticationManager.getNextAuthentication(ISVNAuthenticationManager.SSL, realm, url);
-			}
-
-			if (myAuthentication == null) {
-				SVNErrorManager.cancel("SSL authentication with client certificate cancelled", SVNLogType.NETWORK);
-			}
-
-			final KeyManager[] keyManagers;
-			try {
-				keyManagers = loadClientCertificate(new ByteArrayInputStream(myAuthentication.getCertificateFile()), myAuthentication.getPassword());
-			}
-			catch (SVNException ex) {
-				final SVNErrorMessage sslErr = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "SSL handshake failed: ''{0}''", new Object[] { ex.getMessage() }, SVNErrorMessage.TYPE_ERROR, ex.getCause());
-				authenticationManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.SSL, realm, sslErr, myAuthentication);
-				continue;
-			}
-
-			myKeyManagers = keyManagers;
-			return true;
-		}
-	}
-
-	private static List getX509KeyManagers(KeyManager[] keyManagers) {
-		final List x509KeyManagers = new ArrayList();
-		for (int index = 0; index < keyManagers.length; index++) {
-			final KeyManager keyManager = keyManagers[index];
-			if (keyManager instanceof X509KeyManager) {
-				x509KeyManagers.add(keyManager);
-			}
-		}
-		return x509KeyManagers;
-	}
+    private static List getX509KeyManagers(KeyManager[] keyManagers) {
+        final List x509KeyManagers = new ArrayList();
+        for (int index = 0; index < keyManagers.length; index++) {
+            final KeyManager keyManager = keyManagers[index];
+            if (keyManager instanceof X509KeyManager) {
+                x509KeyManagers.add(keyManager);
+            }
+        }
+        return x509KeyManagers;
+    }
+    
+    private static boolean isMSCAPI(SVNSSLAuthentication sslAuthentication) {
+        return sslAuthentication != null && SVNSSLAuthentication.MSCAPI.equals(sslAuthentication.getSSLKind());
+    }
 }

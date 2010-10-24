@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2010 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -29,8 +29,9 @@ import org.tmatesoft.svn.core.wc.SVNStatusType;
  */
 public class SVNEventFactory {
 
-    public static SVNEvent createErrorEvent(SVNErrorMessage error){
-        return new SVNEvent(error);
+    public static SVNEvent createErrorEvent(SVNErrorMessage error, SVNEventAction expectedAction){
+        SVNEvent event = new SVNEvent(error, expectedAction);
+        return event;
     }
 
     public static SVNEvent createLockEvent(File file, SVNEventAction action, SVNLock lock, SVNErrorMessage error){

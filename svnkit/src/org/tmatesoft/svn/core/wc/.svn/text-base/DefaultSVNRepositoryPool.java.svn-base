@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2010 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -147,7 +147,16 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
             }
             if (myIsKeepConnection) {
                 myTimer = ourTimer;
-                ourTimer.schedule(new TimeoutTask(), 10000);
+                try {
+                    myTimer.schedule(new TimeoutTask(), 10000);
+                } catch (IllegalStateException e) {
+                    // Timer already cancelled error.
+                    SVNDebugLog.getDefaultLog().logError(SVNLogType.DEFAULT, e);
+                    
+                    ourTimer = new Timer(true);
+                    myTimer = ourTimer;
+                    myTimer.schedule(new TimeoutTask(), 10000);
+                }
             }
             ourInstanceCount++;
         }

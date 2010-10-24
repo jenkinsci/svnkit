@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2010 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -11,14 +11,14 @@
  */
 package org.tmatesoft.svn.core.internal.util;
 
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.wc.IOExceptionWrapper;
+
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
-
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.wc.IOExceptionWrapper;
 
 
 /**
@@ -92,5 +92,13 @@ public class SVNCharsetInputStream extends FilterInputStream {
             readed += r;
         }
         return readed;
+    }
+
+    public String toString() {
+        final StringBuffer buffer = new StringBuffer();
+        buffer.append("SVNCharsetInputStream");
+        buffer.append("[").append(myCharsetConvertor);
+        buffer.append(']');
+        return buffer.toString();
     }
 }

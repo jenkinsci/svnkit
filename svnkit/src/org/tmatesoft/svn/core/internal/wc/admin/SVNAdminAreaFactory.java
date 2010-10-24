@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2010 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -25,6 +25,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
+import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
@@ -93,7 +94,9 @@ public abstract class SVNAdminAreaFactory implements Comparable {
                 
                 if (version > factory.getSupportedVersion()) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, 
-                            "This client is too old to work with working copy ''{0}''; please get a newer Subversion client", 
+                            "The path ''{0}'' appears to be part of a Subversion 1.7 or greater\n" +
+                            "working copy.  Please upgrade your Subversion client to use this\n" +
+                            "working copy.", 
                             path);
                     SVNErrorManager.error(err, SVNLogType.WC);
                 } else if (version < factory.getSupportedVersion()) {
@@ -113,10 +116,33 @@ public abstract class SVNAdminAreaFactory implements Comparable {
             return version;
         }
         if (error == null) {
+            if (path != null) {
+                checkWCNG(path.getAbsoluteFile(), path);
+            }
             error = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "''{0}'' is not a working copy", path);
+        }
+        if (error.getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+            error.setChildErrorMessage(null);
         }
         SVNErrorManager.error(error, logLevel, SVNLogType.WC);
         return 0;
+    }
+    
+    private static void checkWCNG(File path, File targetPath) throws SVNException {
+        if (path == null) {
+            return;
+        }
+        File dbFile = new File(path, ".svn/wc.db");
+        SVNFileType type = SVNFileType.getType(dbFile);
+        if (type == SVNFileType.FILE) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, 
+                    "The path ''{0}'' appears to be part of Subversion 1.7 (SVNKit 1.4) or greater\n" +
+                    "working copy rooted at ''{1}''.\n" +
+                    "Please upgrade your Subversion (SVNKit) client to use this working copy.", 
+                    new Object[] {targetPath, path});
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }        
+        checkWCNG(path.getParentFile(), targetPath);
     }
     
     public static SVNAdminArea open(File path, Level logLevel) throws SVNException {
@@ -131,8 +157,10 @@ public abstract class SVNAdminAreaFactory implements Comparable {
                 try {
                     wcFormatVersion = factory.getVersion(path);
                     if (wcFormatVersion > factory.getSupportedVersion()) {                        
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT,
-                                "This client is too old to work with working copy ''{0}''; please get a newer Subversion client",
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, 
+                                "The path ''{0}'' appears to be part of a Subversion 1.7 or greater\n" +
+                                "working copy.  Please upgrade your Subversion client to use this\n" +
+                                "working copy.", 
                                 path);
                         SVNErrorManager.error(err, SVNLogType.WC);
                     } else if (wcFormatVersion < factory.getSupportedVersion()) {                        
@@ -158,7 +186,13 @@ public abstract class SVNAdminAreaFactory implements Comparable {
             }
         }
         if (error == null) {
+            if (path != null) {
+                checkWCNG(path.getAbsoluteFile(), path);
+            }
             error = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "''{0}'' is not a working copy", path);
+        }
+        if (error.getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+            error.setChildErrorMessage(null);
         }
         SVNErrorManager.error(error, logLevel, SVNLogType.WC);
         return null;

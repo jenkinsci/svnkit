@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2010 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -49,7 +49,7 @@ import org.tmatesoft.svn.core.SVNCancelException;
 public class SVNSocketFactory {
 
     private static boolean ourIsSocketStaleCheck = false;
-    private static int ourSocketReceiveBufferSize = 32*1024;
+    private static int ourSocketReceiveBufferSize = 0; // default
 
     public static Socket createPlainSocket(String host, int port, int connectTimeout, int readTimeout, ISVNCanceller cancel) throws IOException, SVNCancelException {
         InetAddress address = createAddres(host);

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2010 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -403,7 +403,6 @@ public class SVNCommitUtil {
             baseAccess.checkCancelled();
             // get entry for target
             File targetFile = new File(baseAccess.getAnchor(), target);
-            String targetName = "".equals(target) ? "" : SVNPathUtil.tail(target);
             String parentPath = SVNPathUtil.removeTail(target);
             SVNAdminArea dir = baseAccess.probeRetrieve(targetFile);
             SVNEntry entry = null;
@@ -486,15 +485,14 @@ public class SVNCommitUtil {
                 }
             } else if (entry.isScheduledForDeletion() && force && depth != SVNDepth.INFINITY) {
                 // if parent is also deleted -> skip this entry
-                if (!"".equals(targetName)) {
-                    parentEntry = dir.getEntry("", false);
-                } else {
-                    File parentFile = targetFile.getParentFile();
+                File parentFile = targetFile.getParentFile();
+                parentEntry = baseAccess.getEntry(parentFile, false);
+                if (parentEntry == null) {
                     try {
                         baseAccess.retrieve(parentFile);
                     } catch (SVNException e) {
                         if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_LOCKED) {
-                            baseAccess.open(targetFile.getParentFile(), true, 0);
+                            baseAccess.open(parentFile, true, 0);
                         } else {
                             throw e;
                         }
@@ -548,6 +546,10 @@ public class SVNCommitUtil {
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
         }
+        
+        // filter out file externals that were not explicitly specified.
+        filterOutFileExternals(paths, commitables, baseAccess);
+        
         if (isRecursionForced) {
             // if commit is non-recursive and forced and there are elements included into commit 
             // that not only 'copied' but also has local mods (modified or deleted), remove those items?
@@ -581,6 +583,20 @@ public class SVNCommitUtil {
             }
         }
         return (SVNCommitItem[]) commitables.values().toArray(new SVNCommitItem[commitables.values().size()]);
+    }
+    
+    public static void filterOutFileExternals(Collection explicitPaths, Map commitables, SVNWCAccess baseAccess) throws SVNException {
+        for (Iterator items = commitables.values().iterator(); items.hasNext();) {
+            baseAccess.checkCancelled();
+            SVNCommitItem item = (SVNCommitItem) items.next();
+            SVNEntry entry = baseAccess.getEntry(item.getFile(), false);
+            if (entry != null && entry.isFile() && entry.getExternalFilePath() != null) {
+                if (!explicitPaths.contains(item.getPath())) {
+                    items.remove();
+                }
+            }
+        }
+
     }
 
     public static SVNURL translateCommitables(SVNCommitItem[] items, Map decodedPaths) throws SVNException {

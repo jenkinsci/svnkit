@@ -1,14 +1,14 @@
 10
 
 dir
-6331
-http://svn.svnkit.com/repos/svnkit/tags/1.3.2/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/handlers
+7113
+http://svn.svnkit.com/repos/svnkit/tags/1.3.4/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/handlers
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2009-11-25T19:04:28.439946Z
-6255
+2010-07-16T12:09:15.732957Z
+6833
 alex
 
 
@@ -26,50 +26,16 @@ alex
 
 0a862816-5deb-0310-9199-c792c6ae6c6e
 
-DAVGetLocksHandler.java
-file
-
-
-
-
-2010-01-28T00:13:48.000000Z
-f98bf1decf372097e9d8a47a15c87722
-2009-04-21T14:43:00.959095Z
-5772
-alex
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-5391
-
 DAVMergeInfoHandler.java
 file
 
 
 
 
-2010-01-28T00:13:48.000000Z
-c2bbc1f35108851b4560e69aa4d3fef5
-2009-04-21T14:43:00.959095Z
-5772
+2010-10-24T13:32:26.071484Z
+b02471a0acc6ffc3b9c216a42ed6bfd3
+2010-04-29T10:24:01.294533Z
+6642
 alex
 has-props
 
@@ -94,16 +60,50 @@ has-props
 
 3465
 
+DAVGetLocksHandler.java
+file
+
+
+
+
+2010-10-24T13:32:26.071484Z
+0921d09305ca86f42cb5cd6ab125ba32
+2010-04-29T10:24:01.294533Z
+6642
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+5391
+
 DAVLocationSegmentsHandler.java
 file
 
 
 
 
-2010-01-28T00:17:37.000000Z
-d373f539b2cae3d83a5ec22186c9b3ab
-2009-09-11T13:17:55.976471Z
-6090
+2010-10-24T13:32:26.071484Z
+04ce8f43f4b65447dd3a464adc7cf1b3
+2010-04-29T10:24:01.294533Z
+6642
 alex
 has-props
 
@@ -128,50 +128,16 @@ has-props
 
 5299
 
-BasicDAVHandler.java
-file
-
-
-
-
-2010-01-28T00:13:48.000000Z
-4447861dfd2028b68b4db853ca250e1d
-2009-04-21T14:43:00.959095Z
-5772
-alex
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-5873
-
 DAVLogHandler.java
 file
 
 
 
 
-2010-01-28T00:13:48.000000Z
-3d3bed27286e0d8d97acec97e2a5883b
-2009-04-21T14:43:00.959095Z
-5772
+2010-10-24T13:32:26.071484Z
+f4ac9cca932580edbe7e204b94c418e8
+2010-04-29T10:24:01.294533Z
+6642
 alex
 has-props
 
@@ -196,17 +162,51 @@ has-props
 
 11902
 
+BasicDAVHandler.java
+file
+
+
+
+
+2010-10-24T13:32:26.071484Z
+06674aafa25d438a2a615591118da618
+2010-04-29T10:24:01.294533Z
+6642
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+6013
+
 DAVDeletedRevisionHandler.java
 file
 
 
 
 
-2010-01-28T00:13:48.000000Z
-c1c7616a78d11a94a996186988a0007c
-2009-03-31T13:42:55.285723Z
-5628
-sa
+2010-10-24T13:32:26.071484Z
+8ec9c64fb1ef0bfbedec47b492535f5f
+2010-04-29T10:24:01.294533Z
+6642
+alex
 has-props
 
 
@@ -236,10 +236,10 @@ file
 
 
 
-2010-01-28T00:13:48.000000Z
-52f356af2c5b5be6d90b7203a210d98d
-2009-04-21T14:43:00.959095Z
-5772
+2010-10-24T13:32:26.071484Z
+4dd4931dee95c4c8bd819358ca63e4bd
+2010-07-16T12:09:15.732957Z
+6833
 alex
 has-props
 
@@ -262,7 +262,7 @@ has-props
 
 
 
-35094
+35540
 
 DAVLockHandler.java
 file
@@ -270,10 +270,10 @@ file
 
 
 
-2010-01-28T00:13:48.000000Z
-1dc5cf49dec17f4914e28a64381767b1
-2009-04-21T14:43:00.959095Z
-5772
+2010-10-24T13:32:26.071484Z
+b8b48499ec84b5543055d3ec299c5117
+2010-04-29T10:24:01.294533Z
+6642
 alex
 has-props
 
@@ -304,10 +304,10 @@ file
 
 
 
-2010-01-28T00:13:48.000000Z
-39b35f767dbbb205f9c9c2abd232ab32
-2009-04-21T14:43:00.959095Z
-5772
+2010-10-24T13:32:26.071484Z
+976c42b00c9258980b7b51427fea37c8
+2010-04-29T10:24:01.294533Z
+6642
 alex
 has-props
 
@@ -332,84 +332,16 @@ has-props
 
 2864
 
-BasicDAVDeltaHandler.java
-file
-
-
-
-
-2010-01-28T00:13:48.000000Z
-866b771acbb4d54d94ac177c9bbb09db
-2009-04-21T14:43:00.959095Z
-5772
-alex
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-4091
-
-DAVLocationsHandler.java
-file
-
-
-
-
-2010-01-28T00:17:37.000000Z
-26dc708406af3c417ad75b17e68631a8
-2009-07-29T19:44:21.534317Z
-5999
-sa
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-3730
-
 DAVOptionsHandler.java
 file
 
 
 
 
-2010-01-28T00:13:48.000000Z
-d51c90ad380bec67e0fef6cd05be3d7b
-2009-04-21T14:43:00.959095Z
-5772
+2010-10-24T13:32:26.071484Z
+262a0c2ea7be192169d77db6a855aeb0
+2010-04-29T10:24:01.294533Z
+6642
 alex
 has-props
 
@@ -434,16 +366,16 @@ has-props
 
 2015
 
-DAVReplayHandler.java
+DAVLocationsHandler.java
 file
 
 
 
 
-2010-01-28T00:13:48.000000Z
-53c948df11df5276cd54c3d86d5aeb09
-2009-04-21T14:43:00.959095Z
-5772
+2010-10-24T13:32:26.071484Z
+5f341343fbba048012f738c0c39d90f0
+2010-04-29T10:24:01.294533Z
+6642
 alex
 has-props
 
@@ -466,18 +398,18 @@ has-props
 
 
 
-12796
+3730
 
-DAVDateRevisionHandler.java
+BasicDAVDeltaHandler.java
 file
 
 
 
 
-2010-01-28T00:13:48.000000Z
-0d2b2d010ba452ba06597d96fedd0d64
-2009-04-21T14:43:00.959095Z
-5772
+2010-10-24T13:32:26.071484Z
+3537b34ccd813d12ee332c29957a8a8e
+2010-04-29T10:24:01.294533Z
+6642
 alex
 has-props
 
@@ -500,7 +432,7 @@ has-props
 
 
 
-2563
+4091
 
 DAVPropertiesHandler.java
 file
@@ -508,10 +440,10 @@ file
 
 
 
-2010-01-28T00:13:48.000000Z
-13685581487a71ad3910755e89883af1
-2009-04-21T14:43:00.959095Z
-5772
+2010-10-24T13:32:26.071484Z
+1d7ca82ae1f5d94f479c75d8fd79c1b8
+2010-04-29T10:24:01.294533Z
+6642
 alex
 has-props
 
@@ -536,16 +468,84 @@ has-props
 
 7195
 
+DAVDateRevisionHandler.java
+file
+
+
+
+
+2010-10-24T13:32:26.071484Z
+d762fadeb540231458dad2462a98684d
+2010-04-29T10:24:01.294533Z
+6642
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2563
+
+DAVReplayHandler.java
+file
+
+
+
+
+2010-10-24T13:32:26.071484Z
+3fc25b4cb9acd0a70f181232dbce3354
+2010-04-29T10:24:01.294533Z
+6642
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+12796
+
 DAVFileRevisionHandler.java
 file
 
 
 
 
-2010-01-28T00:17:37.000000Z
-d4a130ec195898737437c5cf8470d508
-2009-06-05T11:48:19.567506Z
-5893
+2010-10-24T13:32:26.081774Z
+b9c547e9e53898c9deee1d6488e9b4ce
+2010-04-29T10:24:01.294533Z
+6642
 alex
 has-props
 
@@ -576,10 +576,10 @@ file
 
 
 
-2010-01-28T00:17:37.000000Z
-d72092d97281e208a74b7c0b0a9bbaf6
-2009-06-04T16:03:51.201810Z
-5884
+2010-10-24T13:32:26.081774Z
+56d15f933d352b925de4e1f70ccc5307
+2010-07-16T12:09:15.732957Z
+6833
 alex
 has-props
 
@@ -602,7 +602,7 @@ has-props
 
 
 
-9130
+9358
 
 DAVProppatchHandler.java
 file
@@ -610,10 +610,10 @@ file
 
 
 
-2010-01-28T00:17:37.000000Z
-7552f04da3ffc672ff5acb02e37178b8
-2009-11-25T19:04:28.439946Z
-6255
+2010-10-24T13:32:26.081774Z
+d949f603252b295308070fd1599c1417
+2010-04-29T10:24:01.294533Z
+6642
 alex
 has-props
 

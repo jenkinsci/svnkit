@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2010 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -85,7 +85,7 @@ class DAVResource {
             return;
         }
         if (!force) {
-            if (myMediator != null) {
+            if (myMediator != null && DAVUtil.isUseDAVWCURL()) {
                 SVNPropertyValue value = myMediator.getWorkspaceProperty(SVNEncodingUtil.uriDecode(myPath), SVNProperty.WC_URL);
                 myVURL = value == null ? null : value.getString();
                 if (myVURL != null) {
@@ -118,7 +118,8 @@ class DAVResource {
             throw e;
         }
         if (myMediator != null) {
-            myMediator.setWorkspaceProperty(SVNEncodingUtil.uriDecode(myPath), SVNProperty.WC_URL, SVNPropertyValue.create(myURL));            
+            SVNPropertyValue urlPropertyValue = DAVUtil.isUseDAVWCURL() ? SVNPropertyValue.create(myVURL) : null;
+            myMediator.setWorkspaceProperty(SVNEncodingUtil.uriDecode(myPath), SVNProperty.WC_URL, urlPropertyValue);            
         }
     }
 

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2010 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -472,4 +472,22 @@ public class SVNPathUtil {
                 path.charAt(basePath.length()) == '/'));
     }
 
+    public static boolean isAbsolute(String path) {
+        if (path == null) {
+            return false;
+        }
+        
+        if (path.startsWith("/")) {
+            return true;
+        }
+        
+        if (SVNFileUtil.isWindows && path.length() > 1) {
+            char ch0 = path.charAt(0);
+            char ch1 = path.charAt(1);
+            if (((ch0 >= 'A' && ch0 <= 'Z') || (ch0 >= 'a' && ch0 <= 'z')) && ch1 == ':') {
+                return true;
+            }
+        }
+        return false;
+    }
 }

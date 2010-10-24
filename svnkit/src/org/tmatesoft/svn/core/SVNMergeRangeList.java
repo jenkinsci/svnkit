@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2010 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -84,6 +84,14 @@ public class SVNMergeRangeList {
      */
     public void setRanges(SVNMergeRange[] ranges) {
         myRanges = ranges;
+    }
+    
+    public void setInheritable(boolean inheritable) {
+        if (myRanges != null) {
+            for (int i = 0; i < myRanges.length; i++) {
+                myRanges[i].setInheritable(inheritable);                
+            }
+        }
     }
     
     /**

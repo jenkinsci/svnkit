@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2010 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -539,13 +539,19 @@ public class SVNUpdateClient extends SVNBasicClient {
             
             String target = "".equals(adminInfo.getTargetName()) ? null : adminInfo.getTargetName();
             long revNumber = getRevisionNumber(revision, repos, path);
-            SVNURL reposRoot = repos.getRepositoryRoot(true);
+            final SVNURL reposRoot = repos.getRepositoryRoot(true);
             wcAccess.setRepositoryRoot(path, reposRoot);
             
-            final SVNRepository repos2 = createRepository(reposRoot, null, null, false);
+            final SVNRepository[] repos2 = new SVNRepository[1];
             ISVNFileFetcher fileFetcher = new ISVNFileFetcher() {
                 public long fetchFile(String path, long revision, OutputStream os, SVNProperties properties) throws SVNException {
-                    return repos2.getFile(path, revision, properties, os);
+                    SVNURL url = reposRoot.appendPath(SVNPathUtil.removeTail(path), false);
+                    if (repos2[0] == null) {
+                        repos2[0] = createRepository(url, null, null, false);
+                    } else {
+                        repos2[0].setLocation(url, false);
+                    }
+                    return repos2[0].getFile(SVNPathUtil.tail(path), revision, properties, os);
                 }
             };
             
@@ -557,7 +563,9 @@ public class SVNUpdateClient extends SVNBasicClient {
             try {
                 repos.update(revNumber, target, depth, sendCopyFrom, reporter, SVNCancellableEditor.newInstance(filterEditor, this, getDebugLog()));
             } finally {
-                repos2.closeSession();
+                if (repos2[0] != null) {
+                    repos2[0].closeSession();
+                }
             }
 
             long targetRevision = editor.getTargetRevision();
@@ -1311,7 +1319,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                 SVNVersionedProperties properties = adminArea.getProperties(adminArea.getThisDirName());
                 String externalsValue = properties.getStringPropertyValue(SVNProperty.EXTERNALS);
                 if (externalsValue != null) {
-                    SVNExternal[] externals = SVNExternal.parseExternals(adminArea.getRoot().getAbsolutePath(), externalsValue);
+                    SVNExternal[] externals = SVNExternal.parseExternals(adminArea.getRoot(), externalsValue);
                     for (int i = 0; i < externals.length; i++) {
                         SVNExternal info = externals[i];
                         File srcPath = new File(adminArea.getRoot(), info.getPath());
@@ -1353,7 +1361,8 @@ public class SVNUpdateClient extends SVNBasicClient {
         boolean executable = props.getPropertyValue(SVNProperty.EXECUTABLE) != null;
         String keywords = props.getStringPropertyValue(SVNProperty.KEYWORDS);
         String charsetProp = props.getStringPropertyValue(SVNProperty.CHARSET);
-        String charset = SVNTranslator.getCharset(charsetProp, adminArea.getFile(fileName).getPath(), getOptions());
+        String mimeType = props.getStringPropertyValue(SVNProperty.MIME_TYPE);
+        String charset = SVNTranslator.getCharset(charsetProp, mimeType, adminArea.getFile(fileName).getPath(), getOptions());
         byte[] eols = eol != null ? SVNTranslator.getEOL(eol, getOptions()) : null;
         if (eols == null) {
             eol = props.getStringPropertyValue(SVNProperty.EOL_STYLE);
@@ -1447,8 +1456,9 @@ public class SVNUpdateClient extends SVNBasicClient {
                 if (!isExportExpandsKeywords()) {
                     properties.put(SVNProperty.MIME_TYPE, "application/octet-stream");
                 }
-                boolean binary = SVNProperty.isBinaryMimeType(properties.getStringValue(SVNProperty.MIME_TYPE));
-                String charset = SVNTranslator.getCharset(properties.getStringValue(SVNProperty.CHARSET), url, getOptions());
+                String mimeType = properties.getStringValue(SVNProperty.MIME_TYPE);
+                boolean binary = SVNProperty.isBinaryMimeType(mimeType);
+                String charset = SVNTranslator.getCharset(properties.getStringValue(SVNProperty.CHARSET), mimeType, url, getOptions());
                 Map keywords = SVNTranslator.computeKeywords(properties.getStringValue(SVNProperty.KEYWORDS), url,
                         properties.getStringValue(SVNProperty.LAST_AUTHOR),
                         properties.getStringValue(SVNProperty.COMMITTED_DATE),
@@ -1773,7 +1783,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         if (newURL != null) {
             long[] rev = { SVNRepository.INVALID_REVISION };
             repository = createRepository(newURL, null, null, externalPegRevision, externalRevision, rev);
-            reposRootURL = repository.getRepositoryRoot(false);
+            reposRootURL = repository.getRepositoryRoot(true);
             kind = repository.checkPath("", rev[0]);
             if (kind == SVNNodeKind.NONE) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "URL ''{0}'' at revision {1} doesn''t exist", 

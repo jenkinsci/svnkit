@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2010 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -21,6 +21,7 @@ import java.util.StringTokenizer;
 
 import javax.net.ssl.TrustManager;
 
+import org.tmatesoft.svn.core.SVNAuthenticationException;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -30,6 +31,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
 import org.tmatesoft.svn.core.auth.ISVNProxyManager;
+import org.tmatesoft.svn.core.auth.ISVNSSHHostVerifier;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
 import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
@@ -45,7 +47,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @version 1.3
  * @author  TMate Software Ltd.
  */
-public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManager {
+public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManager, ISVNSSHHostVerifier {
 
     private boolean myIsStoreAuth;
     private ISVNAuthenticationProvider[] myProviders;
@@ -81,7 +83,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         myProviders[1] = createRuntimeAuthenticationProvider();
         myProviders[2] = createCacheAuthenticationProvider(new File(myConfigDirectory, "auth"), userName);
     }
-    
+
     public void setAuthStoreHandler(ISVNAuthStoreHandler authStoreHandler) {
         myAuthStoreHandler = authStoreHandler;
     }
@@ -491,6 +493,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
     protected ISVNAuthenticationProvider createDefaultAuthenticationProvider(String userName, String password, File privateKey, String passphrase, boolean allowSave) {
         return new DumbAuthenticationProvider(userName, password, privateKey, passphrase, allowSave);
     }
+
     protected ISVNAuthenticationProvider createRuntimeAuthenticationProvider() {
         return new CacheAuthenticationProvider();
     }
@@ -521,7 +524,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         private boolean myIsStore;
         private String myPassphrase;
         private File myPrivateKey;
-        
+
         public DumbAuthenticationProvider(String userName, String password, File privateKey, String passphrase, boolean store) {
             myUserName = userName;
             myPassword = password;
@@ -529,8 +532,8 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             myPassphrase = passphrase;
             myIsStore = store;
         }
-        
-        public SVNAuthentication requestClientAuthentication(String kind, SVNURL url, String realm, SVNErrorMessage errorMessage, 
+
+        public SVNAuthentication requestClientAuthentication(String kind, SVNURL url, String realm, SVNErrorMessage errorMessage,
                 SVNAuthentication previousAuth, boolean authMayBeStored) {
             if (previousAuth == null) {
                 if (ISVNAuthenticationManager.SSH.equals(kind)) {
@@ -615,7 +618,10 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
      * @author  TMate Software Ltd.
      */
     public interface IPersistentAuthenticationProvider {
-        public void saveAuthentication(SVNAuthentication auth, String kind, String realm) throws SVNException;        
+        public void saveAuthentication(SVNAuthentication auth, String kind, String realm) throws SVNException;
+
+        public void saveFingerprints(String realm, byte[] fingerprints);
+        public byte[] loadFingerprints(String realm);
     }
 
     private class PersistentAuthenticationProvider implements ISVNAuthenticationProvider, IPersistentAuthenticationProvider {
@@ -635,6 +641,13 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
 		        Map properties = getHostProperties(host);
 		        String sslClientCert = (String) properties.get("ssl-client-cert-file"); // PKCS#12
 		        if (sslClientCert != null && !"".equals(sslClientCert)) {
+		            if (isMSCapi(sslClientCert)) {
+		                String alias = null;
+		                if (sslClientCert.lastIndexOf(';') > 0) {
+		                    alias = sslClientCert.substring(sslClientCert.lastIndexOf(';') + 1);		                    
+		                }
+	                    return new SVNSSLAuthentication(SVNSSLAuthentication.MSCAPI, alias, authMayBeStored, url, false);
+	                }
 	                String sslClientCertPassword = (String) properties.get("ssl-client-cert-password");
 	                File clientCertFile = sslClientCert != null ? new File(sslClientCert) : null;
 	                return new SVNSSLAuthentication(clientCertFile, sslClientCertPassword, authMayBeStored, url, false);
@@ -681,6 +694,8 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                     passphrase = cipher.decrypt(passphrase);
                     String port = SVNPropertyValue.getPropertyAsString(values.getSVNPropertyValue("port"));
                     port = port == null ? ("" + getDefaultSSHPortNumber()) : port;
+                    String sslKind = SVNPropertyValue.getPropertyAsString(values.getSVNPropertyValue("ssl-kind"));
+                    
                     if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {
                         if (password == null) {
                             return new SVNPasswordAuthentication(userName, password, authMayBeStored, null, true);
@@ -702,6 +717,10 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                     } else if (ISVNAuthenticationManager.USERNAME.equals(kind)) {
                         return new SVNUserNameAuthentication(userName, authMayBeStored, url, false);
                     } else if (ISVNAuthenticationManager.SSL.equals(kind)) {
+                        if (isMSCapi(sslKind)) {
+                            String alias = SVNPropertyValue.getPropertyAsString(values.getSVNPropertyValue("alias"));
+                            return new SVNSSLAuthentication(SVNSSLAuthentication.MSCAPI, alias, authMayBeStored, url, false);
+                        }
                         return new SVNSSLAuthentication(new File(path), passphrase, authMayBeStored, url, false);
                     }
                 } catch (SVNException e) {
@@ -710,7 +729,14 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             }
             return null;
         }
-        
+
+        public boolean isMSCapi(String filepath) {
+            if (filepath != null && filepath.startsWith(SVNSSLAuthentication.MSCAPI)) {
+                return true;
+            }
+            return false;
+        }
+
         public void saveAuthentication(SVNAuthentication auth, String kind, String realm) throws SVNException {
             File dir = new File(myDirectory, kind);
             if (!dir.exists()) {
@@ -866,11 +892,55 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             if (maySavePassphrase) {
                 values.put("passphrase", cipher.encrypt(sslAuth.getPassword()));
             }
-            if (sslAuth.getCertificateFile() != null) {
-                String path = sslAuth.getCertificateFile().getAbsolutePath();
-                values.put("key", path);
+            if (SVNSSLAuthentication.SSL.equals(sslAuth.getSSLKind())) {
+                if (sslAuth.getCertificateFile() != null) {
+                    String path = sslAuth.getCertificateFile().getAbsolutePath();
+                    values.put("key", path);
+                }
+            } else if (SVNSSLAuthentication.MSCAPI.equals(sslAuth.getSSLKind())) {
+                values.put("ssl-kind", sslAuth.getSSLKind());
+                values.put("alias", sslAuth.getAlias());
             }
 
+        }
+
+        public byte[] loadFingerprints(String realm) {
+            File dir = new File(myDirectory, "svn.ssh.server");
+            if (!dir.isDirectory()) {
+                return null;
+            }
+            File file = new File(dir, SVNFileUtil.computeChecksum(realm));
+            if (!file.isFile()) {
+                return null;
+            }
+            SVNWCProperties props = new SVNWCProperties(file, "");
+            SVNProperties values;
+            try {
+                values = props.asMap();
+                String storedRealm = values.getStringValue("svn:realmstring");
+                if (!realm.equals(storedRealm)) {
+                    return null;
+                }
+                return values.getBinaryValue("hostkey");
+            } catch (SVNException e) {
+                return null;
+            }
+        }
+
+        public void saveFingerprints(String realm, byte[] fingerprints) {
+            File dir = new File(myDirectory, "svn.ssh.server");
+            if (!dir.isDirectory()) {
+                dir.mkdirs();
+            }
+            File file = new File(dir, SVNFileUtil.computeChecksum(realm));
+
+            SVNProperties values = new SVNProperties();
+            values.put("svn:realmstring", realm);
+            values.put("hostkey", fingerprints);
+            try {
+                SVNWCProperties.setProperties(values, file, null, SVNWCProperties.SVN_HASH_TERMINATOR);
+            } catch (SVNException e) {
+            }
         }
     }
     
@@ -953,5 +1023,50 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             return 60*1000;
         }
         return 0; 
+    }
+
+    public void verifyHostKey(String hostName, int port, String keyAlgorithm, byte[] hostKey) throws SVNException {
+        String realm = hostName + ":" + port + " <" + keyAlgorithm + ">";
+        
+        byte[] existingFingerprints = (byte[]) getRuntimeAuthStorage().getData("svn.ssh.server", realm);
+        if (existingFingerprints == null && myProviders[2] instanceof IPersistentAuthenticationProvider) {
+            existingFingerprints = ((IPersistentAuthenticationProvider) myProviders[2]).loadFingerprints(realm);
+        }
+
+        if (existingFingerprints == null || !equals(existingFingerprints, hostKey)) {
+            SVNURL url = SVNURL.create("svn+ssh", null, hostName, port, "", true);
+            boolean storageEnabled = isAuthStorageEnabled(url);
+            if (getAuthenticationProvider() != null) {
+                int accepted = getAuthenticationProvider().acceptServerAuthentication(url, realm, hostKey, isAuthStorageEnabled(url));
+                if (accepted == ISVNAuthenticationProvider.ACCEPTED && isAuthStorageEnabled(url)) {
+                    if (storageEnabled && hostKey != null && myProviders[2] instanceof IPersistentAuthenticationProvider) {
+                        ((IPersistentAuthenticationProvider) myProviders[2]).saveFingerprints(realm, hostKey);
+                    }
+                } else if (accepted == ISVNAuthenticationProvider.REJECTED) {
+                    throw new SVNAuthenticationException(SVNErrorMessage.create(SVNErrorCode.AUTHN_CREDS_NOT_SAVED, "Host key ('" + realm + "') can not be verified."));
+                }
+                if (hostKey != null) {
+                    getRuntimeAuthStorage().putData("svn.ssh.server", realm, hostKey);
+                }
+            }
+        }
+    }
+    
+    private static boolean equals(byte[] b1, byte[] b2) {
+        if (b1 == null && b2 == b1) {
+            return true;
+        }
+        if (b1 == null || b2 == null) {
+            return false;
+        }
+        if (b1.length != b2.length) {
+            return false;
+        }
+        for (int i = 0; i < b2.length; i++) {
+            if (b1[i] != b2[i]) {
+                return false;
+            }
+        }
+        return true;
     }
 }

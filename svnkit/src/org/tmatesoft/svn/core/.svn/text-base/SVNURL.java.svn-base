@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2010 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -279,6 +279,11 @@ public class SVNURL {
                 return;
             }
             myHost = httpURL.getHost();
+            if ("".equals(myHost)) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, "Malformed URL: ''{0}''", url);
+                SVNErrorManager.error(err, SVNLogType.DEFAULT);
+                return;
+            }
             String httpPath = norlmalizeURLPath(url, getPath(httpURL));
             if (uriEncoded) {
                 // autoencode it.

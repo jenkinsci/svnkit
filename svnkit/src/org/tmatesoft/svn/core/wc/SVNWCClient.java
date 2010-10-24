@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2010 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -364,7 +364,8 @@ public class SVNWCClient extends SVNBasicClient {
 
                 String keywords = properties.getStringValue(SVNProperty.KEYWORDS);
                 String eol = properties.getStringValue(SVNProperty.EOL_STYLE);
-                String charset = SVNTranslator.getCharset(properties.getStringValue(SVNProperty.CHARSET), path.getPath(), getOptions());
+                String mimeType = properties.getStringValue(SVNProperty.MIME_TYPE);
+                String charset = SVNTranslator.getCharset(properties.getStringValue(SVNProperty.CHARSET), mimeType, path.getPath(), getOptions());
                 if (keywords != null || eol != null || charset != null) {
                     String cmtRev = properties.getStringValue(SVNProperty.COMMITTED_REVISION);
                     String cmtDate = properties.getStringValue(SVNProperty.COMMITTED_DATE);
@@ -435,7 +436,8 @@ public class SVNWCClient extends SVNBasicClient {
             SVNProperties properties = new SVNProperties();
             repos.getFile("", revNumber, properties, null);
             checkCancelled();
-            String charset = SVNTranslator.getCharset(properties.getStringValue(SVNProperty.CHARSET), repos.getLocation().toDecodedString(), getOptions());
+            String mimeType = properties.getStringValue(SVNProperty.MIME_TYPE);
+            String charset = SVNTranslator.getCharset(properties.getStringValue(SVNProperty.CHARSET), mimeType, repos.getLocation().toDecodedString(), getOptions());
             String keywords = properties.getStringValue(SVNProperty.KEYWORDS);
             String eol = properties.getStringValue(SVNProperty.EOL_STYLE);
             if (charset != null || keywords != null || eol != null) {
@@ -820,7 +822,7 @@ public class SVNWCClient extends SVNBasicClient {
         if (propValue != null && SVNProperty.isSVNProperty(propName)) {
             final long baseRev = revNumber;
             
-            propValue = SVNPropertiesManager.validatePropertyValue(url.toString(), kind, propName, propValue, 
+            propValue = SVNPropertiesManager.validatePropertyValue(url, kind, propName, propValue, 
                     skipChecks, getOptions(), new ISVNFileContentFetcher() {
 
                 Boolean isBinary = null;
@@ -1755,7 +1757,8 @@ public class SVNWCClient extends SVNBasicClient {
                 dir = wcAccess.open(path.getParentFile(), true, 0);
             }
             if (fileType == SVNFileType.DIRECTORY && depth.compareTo(SVNDepth.FILES) >= 0) {
-                addDirectory(path, dir, force, includeIgnored, depth, depthIsSticky);
+                File wcRoot = SVNWCUtil.getWorkingCopyRoot(dir.getRoot(), true);
+                addDirectory(wcRoot, path, dir, force, includeIgnored, depth, depthIsSticky);
             } else if (fileType == SVNFileType.FILE || fileType == SVNFileType.SYMLINK) {
                 addFile(path, fileType, dir);
             } else {
@@ -2556,13 +2559,6 @@ public class SVNWCClient extends SVNBasicClient {
     public void doInfo(SVNURL url, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, 
             ISVNInfoHandler handler) throws SVNException {
         depth = depth == null ? SVNDepth.UNKNOWN : depth;
-        if (revision == null || !revision.isValid()) {
-            revision = SVNRevision.HEAD;
-        }
-        if (pegRevision == null || !pegRevision.isValid()) {
-            pegRevision = revision;
-        }
-
         long[] revNum = { SVNRepository.INVALID_REVISION };
         SVNRepository repos = createRepository(url, null, null, pegRevision, revision, revNum);
         
@@ -2655,8 +2651,7 @@ public class SVNWCClient extends SVNBasicClient {
         SVNLock lock = null;
         if (rootEntry.getKind() == SVNNodeKind.FILE) {
             try {
-                SVNRepositoryLocation[] locations = getLocations(url, null, null, revision, SVNRevision.HEAD, 
-                        SVNRevision.UNDEFINED);
+                SVNRepositoryLocation[] locations = getLocations(url, null, null, SVNRevision.create(revNum[0]), SVNRevision.HEAD, SVNRevision.UNDEFINED);
                 if (locations != null && locations.length > 0) {
                     SVNURL headURL = locations[0].getURL();
                     if (headURL.equals(url)) {
@@ -2679,8 +2674,7 @@ public class SVNWCClient extends SVNBasicClient {
             }
         }
 
-        SVNInfo info = SVNInfo.createInfo(baseName, reposRoot, reposUUID, url, SVNRevision.create(revNum[0]), 
-                rootEntry, lock);
+        SVNInfo info = SVNInfo.createInfo(baseName, reposRoot, reposUUID, url, SVNRevision.create(revNum[0]), rootEntry, lock);
         handler.handleInfo(info);
         
         if (depth.compareTo(SVNDepth.EMPTY) > 0 && rootEntry.getKind() == SVNNodeKind.DIR) {
@@ -3103,7 +3097,7 @@ public class SVNWCClient extends SVNBasicClient {
         }
     }
 
-    private void addDirectory(File path, SVNAdminArea parentDir, boolean force, boolean noIgnore, SVNDepth depth, boolean setDepth) throws SVNException {
+    private void addDirectory(File wcRoot, File path, SVNAdminArea parentDir, boolean force, boolean noIgnore, SVNDepth depth, boolean setDepth) throws SVNException {
         checkCancelled();
         try {
             SVNWCManager.add(path, parentDir, null, SVNRevision.UNDEFINED, setDepth ? SVNDepth.INFINITY : null);
@@ -3118,14 +3112,20 @@ public class SVNWCClient extends SVNBasicClient {
         if (!noIgnore) {
             ignores = SVNStatusEditor.getIgnorePatterns(dir, SVNStatusEditor.getGlobalIgnores(getOptions()));
         }
+        String relativePath = SVNPathUtil.getRelativePath(wcRoot.getAbsolutePath().replace(File.separatorChar, '/'), dir.getRoot().getAbsolutePath().replace(File.separatorChar, '/'));
+        relativePath = relativePath != null ? "/" + relativePath : null;
+
         File[] children = SVNFileListUtil.listFiles(dir.getRoot());
         for (int i = 0; children != null && i < children.length; i++) {
             checkCancelled();
             if (SVNFileUtil.getAdminDirectoryName().equals(children[i].getName())) {
                 continue;
             }
-            if (!noIgnore && SVNStatusEditor.isIgnored(ignores, children[i])) {
-                continue;
+            if (!noIgnore) {
+                String rootRelativePath = relativePath != null ? SVNPathUtil.append(relativePath, children[i].getName()): null;
+                if (SVNStatusEditor.isIgnored(ignores, children[i], rootRelativePath)) {
+                    continue;
+                }
             }
             SVNFileType childType = SVNFileType.getType(children[i]);
             if (childType == SVNFileType.DIRECTORY && depth.compareTo(SVNDepth.IMMEDIATES) >= 0) {
@@ -3133,7 +3133,7 @@ public class SVNWCClient extends SVNBasicClient {
                 if (depth == SVNDepth.IMMEDIATES) {
                     depthBelowHere = SVNDepth.EMPTY;
                 }
-                addDirectory(children[i], dir, force, noIgnore, depthBelowHere, setDepth);
+                addDirectory(wcRoot, children[i], dir, force, noIgnore, depthBelowHere, setDepth);
             } else if (childType != SVNFileType.UNKNOWN && childType != SVNFileType.DIRECTORY && 
                     depth.compareTo(SVNDepth.FILES) >= 0) {
                 try {
@@ -3250,8 +3250,8 @@ public class SVNWCClient extends SVNBasicClient {
                 if (!stealLock && entry.getLockToken() == null) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_MISSING_LOCK_TOKEN, "''{0}'' is not locked in this working copy", file);
                     SVNErrorManager.error(err, SVNLogType.WC);
-                }
-                lockInfo.put(entry.getSVNURL(), new LockInfo(file, entry.getLockToken()));
+                }                
+                lockInfo.put(entry.getSVNURL(), new LockInfo(file, stealLock ? null : entry.getLockToken()));
             }
         }
         checkCancelled();
@@ -3884,13 +3884,14 @@ public class SVNWCClient extends SVNBasicClient {
                 properties = area.getProperties(name);
             }
             String charsetProp = properties.getStringPropertyValue(SVNProperty.CHARSET);
+            String mimeType = properties.getStringPropertyValue(SVNProperty.MIME_TYPE);
             String eolStyle = properties.getStringPropertyValue(SVNProperty.EOL_STYLE);
             String keywords = properties.getStringPropertyValue(SVNProperty.KEYWORDS);
             boolean special = properties.getPropertyValue(SVNProperty.SPECIAL) != null;
             byte[] eols = null;
             Map keywordsMap = null;
             String time = null;
-            String charset = SVNTranslator.getCharset(charsetProp, path.getPath(), getOptions());
+            String charset = SVNTranslator.getCharset(charsetProp, mimeType, path.getPath(), getOptions());
             eols = SVNTranslator.getEOL(eolStyle, getOptions());
             if (hasMods && !special) {
                 time = SVNDate.formatDate(new Date(path.lastModified()));
@@ -3916,7 +3917,7 @@ public class SVNWCClient extends SVNBasicClient {
                 if (e instanceof SVNCancellableOutputStream.IOCancelException) {
                     SVNErrorManager.cancel(e.getMessage(), SVNLogType.NETWORK);
                 }
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage()), SVNLogType.WC);
+                SVNTranslator.translationError(path, e);
             }
         } finally {
             SVNFileUtil.closeFile(input);

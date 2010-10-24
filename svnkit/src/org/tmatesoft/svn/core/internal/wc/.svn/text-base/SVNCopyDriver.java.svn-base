@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2010 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -15,6 +15,8 @@ import java.io.File;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -61,12 +63,18 @@ import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 public class SVNCopyDriver extends SVNBasicClient {
 
     private SVNWCAccess myWCAccess;
+    private boolean myIsDisableLocalModificationsCopying;
+    
+    public void setDisableLocalModificationCopying(boolean disable) {
+        myIsDisableLocalModificationsCopying = disable;
+    }
     
     protected SVNCopyDriver(ISVNAuthenticationManager authManager, ISVNOptions options) {
         super(authManager, options);
@@ -716,9 +724,19 @@ public class SVNCopyDriver extends SVNBasicClient {
 
                 pathsToExternalsProps.clear();
 
-                SVNCommitUtil.harvestCommitables(allCommitables, dirArea, srcFile,
+                Map sourceCommittables = new HashMap();
+                SVNCommitUtil.harvestCommitables(sourceCommittables, dirArea, srcFile,
                         null, entry, source.myDst, entry.getURL(), true, false, false, null, SVNDepth.INFINITY,
                         false, null, commitParameters, pathsToExternalsProps);
+                
+                // filter out file externals.
+                // path of the source relative to wcAccess anchor.
+                String basePath = SVNPathUtil.canonicalizePath(wcAccess.getAnchor().getAbsolutePath());
+                String sourcePath = SVNPathUtil.canonicalizePath(srcFile.getAbsolutePath());
+                String path = SVNPathUtil.getRelativePath(basePath, sourcePath);
+                SVNCommitUtil.filterOutFileExternals(Collections.singletonList(path), sourceCommittables, wcAccess);
+                
+                allCommitables.putAll(sourceCommittables);
 
                 SVNCommitItem item = (SVNCommitItem) allCommitables.get(srcFile);
                 SVNURL srcURL = entry.getSVNURL();
@@ -742,16 +760,17 @@ public class SVNCopyDriver extends SVNBasicClient {
                     for (Iterator pathsIter = pathsToExternalsProps.keySet().iterator(); pathsIter.hasNext();) {
                         File localPath = (File) pathsIter.next();
                         String externalsPropString = (String) pathsToExternalsProps.get(localPath);
-                        SVNExternal[] externals = SVNExternal.parseExternals(localPath.getAbsolutePath(),
-                                externalsPropString);
+                        SVNExternal[] externals = SVNExternal.parseExternals(localPath, externalsPropString);
                         boolean introduceVirtualExternalChange = false;
                         newExternals.clear();
                         for (int k = 0; k < externals.length; k++) {
                             File externalWC = new File(localPath, externals[k].getPath());
                             SVNEntry externalEntry = null;
+                            SVNRevision externalsWCRevision = SVNRevision.UNDEFINED;
+
                             try {
                                 wcAccess.open(externalWC, false, 0);
-                                externalEntry = wcAccess.getVersionedEntry(externalWC, false);
+                                externalEntry = wcAccess.getEntry(externalWC, false);
                             } catch (SVNException svne) {
                                 if (svne instanceof SVNCancelException) {
                                     throw svne;
@@ -759,11 +778,14 @@ public class SVNCopyDriver extends SVNBasicClient {
                             } finally {
                                 wcAccess.closeAdminArea(externalWC);
                             }
-
-                            SVNRevision externalsWCRevision = SVNRevision.UNDEFINED;
-                            if (externalEntry != null) {
+                            
+                            if (externalEntry == null) {
+                                externalEntry = wcAccess.getEntry(externalWC, false);
+                            }                            
+                            if (externalEntry != null && (externalEntry.isThisDir() || externalEntry.getExternalFilePath() != null)) {
                                 externalsWCRevision = SVNRevision.create(externalEntry.getRevision());
                             }
+                            
                             SVNEntry ownerEntry = wcAccess.getEntry(localPath, false);
                             SVNURL ownerURL = null;
                             if (ownerEntry != null) {
@@ -774,9 +796,21 @@ public class SVNCopyDriver extends SVNBasicClient {
                                 // property or no url in it?
                                 continue;
                             }
+                            
+                            SVNURL resolvedURL = externals[k].resolveURL(repos.getRepositoryRoot(true), ownerURL);
+                            String unresolvedURL = externals[k].getUnresolvedUrl();
+                            if (unresolvedURL != null && !SVNPathUtil.isURL(unresolvedURL) && unresolvedURL.startsWith("../"))  {
+                                unresolvedURL = SVNURLUtil.getRelativeURL(repos.getRepositoryRoot(true), resolvedURL);
+                                if (unresolvedURL.startsWith("/")) {
+                                    unresolvedURL = "^" + unresolvedURL;
+                                } else {
+                                    unresolvedURL = "^/" + unresolvedURL;
+                                }
+                            }
+
                             SVNRevision[] revs = externalsHandler.handleExternal(
                                     externalWC,
-                                    externals[k].resolveURL(repos.getRepositoryRoot(true), ownerURL),
+                                    resolvedURL,
                                     externals[k].getRevision(),
                                     externals[k].getPegRevision(),
                                     externals[k].getRawValue(),
@@ -784,10 +818,13 @@ public class SVNCopyDriver extends SVNBasicClient {
 
                             if (revs != null && revs[0].equals(externals[k].getRevision())) {
                                 newExternals.add(externals[k].getRawValue());
-                            } else if (revs != null) {
+                            } else if (revs != null) {                                
                                 SVNExternal newExternal = new SVNExternal(externals[k].getPath(),
-                                        externals[k].getUnresolvedUrl(), revs[1],
-                                        revs[0], true, externals[k].isPegRevisionExplicit(),
+                                        unresolvedURL,
+                                        revs[1],
+                                        revs[0], 
+                                        true, 
+                                        externals[k].isPegRevisionExplicit(),
                                         externals[k].isNewFormat());
 
                                 newExternals.add(newExternal.toString());
@@ -825,6 +862,42 @@ public class SVNCopyDriver extends SVNBasicClient {
             }
 
             commitItems = new ArrayList(allCommitables.values());
+            // in case of 'base' commit, remove all 'deletions', mark all other items as non-modified, remove additions and copies from other urls.
+            
+            if (myIsDisableLocalModificationsCopying) {
+                ArrayList harmlessItems = new ArrayList();
+                for(int i = 0 ; i < commitItems.size(); i++) {
+                    SVNCommitItem item = (SVNCommitItem) commitItems.get(i);
+                    if (item.isDeleted()) {
+                        // deletion or replacement, skip it.
+                        continue;
+                    }                
+                    if (item.isAdded()) {
+                        if (!item.isCopied()) {
+                            // this is just new file or directory
+                            continue;
+                        }
+                        SVNURL copyFromURL = item.getCopyFromURL();
+                        if (copyFromURL == null) {
+                            // also skip.
+                            continue;
+                        }                    
+                        SVNEntry entry = wcAccess.getEntry(item.getFile(), false);
+                        if (entry == null) {
+                            continue;
+                        }
+                        SVNURL expectedURL = entry.getSVNURL();
+                        if (!copyFromURL.equals(expectedURL)) {
+                            // copied from some other location.
+                            continue;
+                        }
+                    }
+                    setCommitItemFlags(item, false, false);
+                    harmlessItems.add(item);                
+                }
+                commitItems = harmlessItems;
+            }
+            
             // add parents to commits hash?
             if (makeParents) {
                 for (int i = 0; i < newDirs.size(); i++) {
@@ -1072,10 +1145,16 @@ public class SVNCopyDriver extends SVNBasicClient {
     private void copyWCToWC(List copyPairs, boolean isMove, boolean makeParents) throws SVNException {
         for (Iterator pairs = copyPairs.iterator(); pairs.hasNext();) {
             CopyPair pair = (CopyPair) pairs.next();
-            SVNFileType srcFileType = SVNFileType.getType(new File(pair.mySource));
+            File source = new File(pair.mySource);
+            SVNFileType srcFileType = SVNFileType.getType(source);
             if (srcFileType == SVNFileType.NONE) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNKNOWN_KIND,
-                        "Path ''{0}'' does not exist", new File(pair.mySource));
+                        "Path ''{0}'' does not exist", source);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+            if (isMove && SVNWCUtil.isWorkingCopyRoot(source)) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
+                        "Cannot move ''{0}'' as it is the root of the working copy", source);
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
             SVNFileType dstFileType = SVNFileType.getType(new File(pair.myDst));
@@ -1282,6 +1361,9 @@ public class SVNCopyDriver extends SVNBasicClient {
                     if (srcType == SVNFileType.DIRECTORY &&
                             SVNPathUtil.isAncestor(srcParentPath, dstParentPath)) {
                         dstAccess = srcAccess;
+                        if (dstAccess.getAdminArea(dstParent) == null) {
+                            dstAccess.open(dstParent, true, 0);
+                        }
                     } else {
                         dstAccess = createWCAccess();
                         dstAccess.open(dstParent, true, 0);
@@ -1293,7 +1375,7 @@ public class SVNCopyDriver extends SVNBasicClient {
             } finally {
                 if (dstAccess != null && dstAccess != srcAccess) {
                     dstAccess.close();
-                }
+                } 
                 srcAccess.close();
             }
         }
@@ -1375,16 +1457,21 @@ public class SVNCopyDriver extends SVNBasicClient {
         SVNVersionedProperties srcBaseProps = srcDir.getBaseProperties(src.getName());
         SVNVersionedProperties srcWorkingProps = srcDir.getProperties(src.getName());
 
-        // copy wc file.
         SVNAdminArea dstDir = dstAccess.getAdminArea(dstParent);
-        File tmpWCFile = SVNAdminUtil.createTmpFile(dstDir);
         if (srcWorkingProps.getPropertyValue(SVNProperty.SPECIAL) != null) {
-            // TODO create symlink there?
-            SVNFileUtil.copyFile(src, tmpWCFile, false);
+            SVNWCManager.addRepositoryFile(dstDir, dstName, null, srcBaseFile, srcBaseProps.asMap(), srcWorkingProps.asMap(), copyFromURL, copyFromRevision);
+
+            String sourceLinkTarget = SVNFileUtil.getSymlinkName(src);
+            String targetLinkTarget = SVNFileUtil.getSymlinkName(dst);
+            if (sourceLinkTarget != null && !sourceLinkTarget.equals(targetLinkTarget)) {
+                SVNFileUtil.deleteFile(dst);
+                SVNFileUtil.createSymlink(dst, sourceLinkTarget);
+            }
         } else {
+            File tmpWCFile = SVNAdminUtil.createTmpFile(dstDir);
             SVNFileUtil.copyFile(src, tmpWCFile, false);
+            SVNWCManager.addRepositoryFile(dstDir, dstName, tmpWCFile, null, srcBaseProps.asMap(), srcWorkingProps.asMap(), copyFromURL, copyFromRevision);
         }
-        SVNWCManager.addRepositoryFile(dstDir, dstName, tmpWCFile, null, srcBaseProps.asMap(), srcWorkingProps.asMap(), copyFromURL, copyFromRevision);
 
         SVNEvent event = SVNEventFactory.createSVNEvent(dst, SVNNodeKind.FILE, null, SVNRepository.INVALID_REVISION, SVNEventAction.ADD, null, null, null);
         dstAccess.handleEvent(event);
@@ -1392,7 +1479,13 @@ public class SVNCopyDriver extends SVNBasicClient {
 
     private void copyAddedFileAdm(File src, SVNWCAccess srcAccess, SVNWCAccess dstAccess, File dstParent, String dstName, boolean isAdded) throws SVNException {
         File dst = new File(dstParent, dstName);
-        SVNFileUtil.copyFile(src, dst, false);
+        SVNFileType srcType = SVNFileType.getType(src);
+        if (srcType == SVNFileType.SYMLINK) {
+            String linkName = SVNFileUtil.getSymlinkName(src);
+            SVNFileUtil.createSymlink(dst, linkName);
+        } else {
+            SVNFileUtil.copyFile(src, dst, false);
+        }
         if (isAdded) {
             SVNWCManager.add(dst, dstAccess.getAdminArea(dstParent), null, SVNRepository.INVALID_REVISION, SVNDepth.INFINITY);
             copyProps(src, dst, srcAccess, dstAccess);

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2010 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -138,6 +138,8 @@ public class SVNAdminClient extends SVNBasicClient {
     private FSHotCopier myHotCopier;
     private SVNDumpStreamParser myDumpStreamParser;
     private SVNDumpEditor myDumpEditor;
+    
+    private static final int LOCK_RETRY_COUNT = 10;
 
     /**
      * Creates a new admin client.
@@ -1387,6 +1389,7 @@ public class SVNAdminClient extends SVNBasicClient {
             ISVNEditor editor = getDumpEditor(fsfs, toRoot, rev, startRev, "/", SVNFileUtil.DUMMY_OUT, false, true);
             editor = SVNCancellableEditor.newInstance(editor, getEventDispatcher(), getDebugLog());
             FSRepositoryUtil.replay(fsfs, toRoot, "", SVNRepository.INVALID_REVISION, false, editor);
+            fsfs.getRevisionProperties(rev);
             String message = "* Verified revision " + rev + ".";
         
             if (myEventHandler != null) {
@@ -1631,7 +1634,7 @@ public class SVNAdminClient extends SVNBasicClient {
         String lockToken = hostName + ":" + SVNUUIDGenerator.formatUUID(SVNUUIDGenerator.generateUUID());
         int i = 0;
         SVNErrorMessage childError = null;
-        for (i = 0; i < 10; i++) {
+        for (i = 0; i < LOCK_RETRY_COUNT; i++) {
             checkCancelled();
             SVNPropertyValue reposLockToken = repos.getRevisionPropertyValue(0, SVNRevisionProperty.LOCK);
             if (reposLockToken != null) {
@@ -1645,7 +1648,7 @@ public class SVNAdminClient extends SVNBasicClient {
                 } catch (InterruptedException e) {
                     //
                 }
-            } else {
+            } else if (i < LOCK_RETRY_COUNT - 1) {
                 repos.setRevisionPropertyValue(0, SVNRevisionProperty.LOCK, SVNPropertyValue.create(lockToken));
             }
         }

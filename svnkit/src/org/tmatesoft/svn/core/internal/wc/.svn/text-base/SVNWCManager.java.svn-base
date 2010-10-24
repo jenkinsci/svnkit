@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2010 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -137,15 +137,15 @@ public class SVNWCManager {
         }
         if (replace) {
             SVNProperties props = new SVNProperties();
-            SVNLog log = parentDir.getLog();
             if (entry.getKind() == SVNNodeKind.FILE) {
+                SVNLog log = parentDir.getLog();
                 props.put(SVNLog.NAME_ATTR, SVNAdminUtil.getTextBasePath(entry.getName(), false));
                 props.put(SVNLog.DEST_ATTR, SVNAdminUtil.getTextRevertPath(entry.getName(), false));
                 log.addCommand(SVNLog.MOVE, props, false);
+                log.save();
+                parentDir.runLogs();
             }
-            createRevertProperties(parentDir, log, entry.getName(), true);
-            log.save();
-            parentDir.runLogs();
+            createRevertProperties(wcAccess, path, true);
         }
         if (kind == SVNNodeKind.DIR) {
             if (copyFromURL == null) {
@@ -482,10 +482,24 @@ public class SVNWCManager {
         }
         
         if (entry.getExternalFilePath() != null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CANNOT_DELETE_FILE_EXTERNAL, 
-                    "Cannot remove the file external at ''{0}''; please propedit or propdel the svn:externals description that created it", 
-                    path);
-            SVNErrorManager.error(err, SVNLogType.WC);
+            // check if there is an external property.
+            String externalProperty = dir.getProperties(dir.getThisDirName()).getStringPropertyValue(SVNProperty.EXTERNALS);
+            String name = entry.getName();
+            if (externalProperty != null) {
+                SVNExternal[] externals = SVNExternal.parseExternals("", externalProperty);
+                for (int i = 0; i < externals.length; i++) {
+                    if (name.equals(externals[i].getPath())) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CANNOT_DELETE_FILE_EXTERNAL, 
+                                "Cannot remove the file external at ''{0}''; please propedit or propdel the svn:externals description that created it", 
+                                path);
+                        SVNErrorManager.error(err, SVNLogType.WC);
+                    }
+                }
+            }
+            dir.removeFromRevisionControl(name, deleteFiles, false);
+            SVNEvent event = SVNEventFactory.createSVNEvent(path, SVNNodeKind.UNKNOWN, null, 0, SVNEventAction.DELETE, null, null, null);
+            wcAccess.handleEvent(event);
+            return;
         }
         
         String schedule = entry.getSchedule();
@@ -872,10 +886,13 @@ public class SVNWCManager {
         return "";
     }
     
-    public static void createRevertProperties(SVNAdminArea area, SVNLog log, String entryName, boolean removeBase) throws SVNException {
-        SVNEntry entry = area.getEntry(entryName, false);
-        String revertPropPath = SVNAdminUtil.getPropRevertPath(entryName, entry.getKind(), false);
-        String basePropPath = SVNAdminUtil.getPropBasePath(entryName, entry.getKind(), false);
+    public static void createRevertProperties(SVNWCAccess access, File path, /*SVNAdminArea area, SVNLog log, String entryName,*/ boolean removeBase) throws SVNException {
+        SVNEntry entry = access.getVersionedEntry(path, false);
+        String revertPropPath = SVNAdminUtil.getPropRevertPath(entry.getName(), entry.getKind(), false);
+        String basePropPath = SVNAdminUtil.getPropBasePath(entry.getName(), entry.getKind(), false);
+        
+        SVNAdminArea area = entry.getAdminArea();
+        SVNLog log = area.getLog();
         
         File basePropFile = area.getFile(basePropPath);
         if (basePropFile.isFile()) {
@@ -889,7 +906,7 @@ public class SVNWCManager {
             }
         } else {
             // create empty props file and move it to revert props.
-            String tmpPath = SVNAdminUtil.getPropRevertPath(entryName, entry.getKind(), true);
+            String tmpPath = SVNAdminUtil.getPropRevertPath(entry.getName(), entry.getKind(), true);
             File tmpFile = area.getFile(tmpPath);
             SVNWCProperties.setProperties(new SVNProperties(), tmpFile, null, SVNWCProperties.SVN_HASH_TERMINATOR);
             SVNProperties command = new SVNProperties();
@@ -897,6 +914,8 @@ public class SVNWCManager {
             command.put(SVNLog.DEST_ATTR, revertPropPath);
             log.addCommand(SVNLog.MOVE, command, false);
         }
+        log.save();
+        area.runLogs();
     }
 
     private static void cropChildren(SVNWCAccess wcAccess, File path, SVNDepth depth) throws SVNException {

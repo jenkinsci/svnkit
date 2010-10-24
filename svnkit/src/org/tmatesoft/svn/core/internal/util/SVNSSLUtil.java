@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2010 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -51,10 +51,18 @@ public class SVNSSLUtil {
     }
     
     private static String getFingerprint(X509Certificate cert) {
+        try  {
+           return getFingerprint(cert.getEncoded());
+        } catch (Exception e)  {
+        } 
+        return null;
+    }
+
+    public static String getFingerprint(byte[] key) {
         StringBuffer s = new StringBuffer();
         try  {
            MessageDigest md = MessageDigest.getInstance("SHA1");
-           md.update(cert.getEncoded());
+           md.update(key);
            byte[] digest = md.digest();
            for (int i= 0; i < digest.length; i++)  {
               if (i != 0) {
@@ -70,7 +78,7 @@ public class SVNSSLUtil {
         } catch (Exception e)  {
         } 
         return s.toString();
-     }
+    }
 
   private static void getServerCertificateInfo(X509Certificate cert, StringBuffer info) {
       info.append("Certificate information:");
@@ -98,8 +106,9 @@ public class SVNSSLUtil {
           mask |= 2;
       }
       String certHostName = cert.getSubjectDN().getName();
-      int index = certHostName.indexOf("CN=") + 3;
+      int index = certHostName.indexOf("CN=");
       if (index >= 0) {
+          index += 3;
           certHostName = certHostName.substring(index);
           if (certHostName.indexOf(' ') >= 0) {
               certHostName = certHostName.substring(0, certHostName.indexOf(' '));

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2010 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -50,6 +50,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNWCProperties;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
+import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 
@@ -1215,7 +1216,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
             url = (String)entry.get(SVNProperty.URL);
         } else if (!isSubDir) {
             url = (String)entry.get(SVNProperty.URL);
-            String expectedURL = SVNPathUtil.append((String)rootEntry.get(SVNProperty.URL), name);
+            String expectedURL = SVNPathUtil.append((String)rootEntry.get(SVNProperty.URL), SVNEncodingUtil.uriEncode(name));
             if (url != null && url.equals(expectedURL)) {
                 url = null;
             }
@@ -1647,7 +1648,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
         }
     }
 
-    public void postCommit(String fileName, long revisionNumber, boolean implicit, SVNErrorCode errorCode) throws SVNException {
+    public void postCommit(String fileName, long revisionNumber, boolean implicit, boolean rerun, SVNErrorCode errorCode) throws SVNException {
         SVNEntry entry = getEntry(fileName, true);
         if (entry == null || (!getThisDirName().equals(fileName) && entry.getKind() != SVNNodeKind.FILE)) {
             SVNErrorMessage err = SVNErrorMessage.create(errorCode, "Log command for directory ''{0}'' is mislocated", getRoot()); 
@@ -1658,6 +1659,12 @@ public class SVNAdminArea14 extends SVNAdminArea {
             if (getThisDirName().equals(fileName)) {
                 entry.setRevision(revisionNumber);
                 entry.setKind(SVNNodeKind.DIR);
+                if (rerun) {
+                    File killMe = getAdminFile(ADM_KILLME);
+                    if (killMe.isFile()) {
+                        return;
+                    }
+                }
                 makeKillMe(entry.isKeepLocal());
             } else {
                 removeFromRevisionControl(fileName, false, false);
@@ -1901,7 +1908,11 @@ public class SVNAdminArea14 extends SVNAdminArea {
         for (int i = 0; logs != null && i < logs.length; i++) {
             File log = logs[i];
             if ("log".equals(log.getName()) || log.getName().startsWith("log.")) {
-                return false;
+                if (log.isFile() && log.exists()) {
+                    SVNDebugLog.getDefaultLog().logFiner(SVNLogType.WC, "unlock: log file: '" + log.getName() + "', listed, and exists.");
+                    return false;
+                }
+                SVNDebugLog.getDefaultLog().logFiner(SVNLogType.WC, "unlock: log file: '" + log.getName() + "', listed, but does not exist.");
             }
         }
         boolean deleted = SVNFileUtil.deleteFile(myLockFile);
