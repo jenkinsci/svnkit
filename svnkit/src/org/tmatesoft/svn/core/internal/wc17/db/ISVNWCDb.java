@@ -1667,7 +1667,7 @@ public interface ISVNWCDb {
 
     void opSetTextConflictMarkerFilesTemp(File localAbspath, File oldBasename, File newBasename, File wrkBasename);
 
-    void addBaseNotPresentNode(File localAbspath, File reposRelPath, SVNURL reposRootUrl, String reposUuid, long revision, SVNWCDbKind kind, Object object, Object object2);
+    void addBaseNotPresentNode(File localAbspath, File reposRelPath, SVNURL reposRootUrl, String reposUuid, long revision, SVNWCDbKind kind, SVNSkel conflict, SVNSkel workItems) throws SVNException;
 
     void elideCopyFromTemp(File localAbspath);
 
