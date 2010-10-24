@@ -49,6 +49,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNTreeConflictUtil;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbAdditionInfo.AdditionInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbBaseInfo.BaseInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbDeletionInfo.DeletionInfoField;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo.RepositoryInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
@@ -2923,6 +2924,95 @@ public class SVNWCDb implements ISVNWCDb {
     };
 
     public void opDeleteTemp(File localAbspath) throws SVNException {
+        boolean baseNone, workingNone, newWorkingNone;
+        SVNWCDbStatus baseStatus = null, workingStatus, newWorkingStatus;
+        boolean haveWork;
+
+        try {
+            baseStatus = getBaseInfo(localAbspath, BaseInfoField.status).status;
+            baseNone = false;
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND) {
+                baseNone = true;
+            } else {
+                throw e;
+            }
+        }
+
+        if (!baseNone && baseStatus == SVNWCDbStatus.Absent) {
+            return;
+        }
+
+        WCDbInfo readInfo = readInfo(localAbspath, InfoField.status, InfoField.haveWork);
+        workingStatus = readInfo.status;
+        haveWork = readInfo.haveWork;
+
+        if (workingStatus == SVNWCDbStatus.Deleted) {
+            return;
+        }
+
+        workingNone = !haveWork;
+
+        newWorkingNone = workingNone;
+        newWorkingStatus = workingStatus;
+
+        if (workingStatus == SVNWCDbStatus.Normal || workingStatus == SVNWCDbStatus.NotPresent) {
+            assert (workingNone);
+            newWorkingNone = false;
+            newWorkingStatus = SVNWCDbStatus.BaseDeleted;
+        } else if (workingNone) {
+            if (baseStatus == SVNWCDbStatus.Normal || baseStatus == SVNWCDbStatus.Incomplete || baseStatus == SVNWCDbStatus.Excluded) {
+                newWorkingNone = false;
+                newWorkingStatus = SVNWCDbStatus.BaseDeleted;
+            }
+        } else if (workingStatus == SVNWCDbStatus.Added && (baseNone || baseStatus == SVNWCDbStatus.NotPresent)) {
+            boolean addOrRootOfCopy = isAddOrRootOfCopy(localAbspath);
+            if (addOrRootOfCopy) {
+                newWorkingNone = true;
+            } else {
+                newWorkingStatus = SVNWCDbStatus.NotPresent;
+            }
+        } else if (workingStatus == SVNWCDbStatus.Added) {
+            boolean addOrRootOfCopy = isAbsolute(localAbspath);
+            if (addOrRootOfCopy) {
+                newWorkingStatus = SVNWCDbStatus.BaseDeleted;
+            } else {
+                newWorkingStatus = SVNWCDbStatus.NotPresent;
+            }
+        } else if (workingStatus == SVNWCDbStatus.Incomplete) {
+            boolean addOrRootOfCopy = isAddOrRootOfCopy(localAbspath);
+            if (addOrRootOfCopy) {
+                newWorkingNone = true;
+            }
+        }
+
+        if (newWorkingNone && !workingNone) {
+            workingActualRemove(localAbspath);
+            forgetDirectoryTemp(localAbspath);
+        } else if (!newWorkingNone && workingNone) {
+            workingInsert(newWorkingStatus, localAbspath);
+        } else if (!newWorkingNone && !workingNone && newWorkingStatus != workingStatus) {
+            workingUpdatePresence(newWorkingStatus, localAbspath);
+        }
+
+    }
+
+    private void workingUpdatePresence(SVNWCDbStatus newWorkingStatus, File localAbspath) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    private void workingInsert(SVNWCDbStatus newWorkingStatus, File localAbspath) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    private void workingActualRemove(File localAbspath) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    private boolean isAddOrRootOfCopy(File localAbspath) {
         // TODO
         throw new UnsupportedOperationException();
     }
