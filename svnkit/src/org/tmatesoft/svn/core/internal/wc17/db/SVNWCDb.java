@@ -2709,7 +2709,6 @@ public class SVNWCDb implements ISVNWCDb {
         du.localRelpath = localRelPath;
         pdh.getWCRoot().getSDb().runTransaction(du);
         pdh.flushEntries(localAbspath);
-        return;
     }
 
     private class StartDirectoryUpdate implements SVNSqlJetTransaction {
@@ -2729,11 +2728,150 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     public void opMakeCopyTemp(File localAbspath, boolean removeBase) throws SVNException {
+        assert (SVNFileUtil.isAbsolute(localAbspath));
+        DirParsedInfo parsed = parseDir(localAbspath, Mode.ReadWrite);
+        SVNWCDbDir pdh = parsed.wcDbDir;
+        File localRelPath = parsed.localRelPath;
+        verifyDirUsable(pdh);
+        final MakeCopy mcb = new MakeCopy();
+        mcb.pdh = pdh;
+        mcb.localRelpath = localRelPath;
+        mcb.localAbspath = localAbspath;
+        mcb.removeBase = removeBase;
+        mcb.isRoot = true;
+        pdh.getWCRoot().getSDb().runTransaction(mcb);
+        pdh.flushEntries(localAbspath);
+    }
+
+    private class MakeCopy implements SVNSqlJetTransaction {
+
+        File localAbspath;
+        SVNWCDbDir pdh;
+        File localRelpath;
+        boolean removeBase;
+        boolean isRoot;
+
+        public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
+            SVNSqlJetStatement stmt;
+            boolean haveRow;
+            boolean removeWorking = false;
+            boolean checkBase = true;
+            boolean addWorkingNormal = false;
+            boolean addWorkingNotPresent = false;
+            List<String> children;
+
+            stmt = db.getStatement(SVNWCDbStatements.SELECT_WORKING_NODE);
+            stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelpath);
+            try {
+                haveRow = stmt.next();
+
+                if (haveRow) {
+                    SVNWCDbStatus workingStatus = presenceMap2.get(stmt.getColumnString(SVNWCDbSchema.NODES__Fields.presence));
+                    stmt.reset();
+
+                    assert (workingStatus == SVNWCDbStatus.Normal || workingStatus == SVNWCDbStatus.BaseDeleted || workingStatus == SVNWCDbStatus.NotPresent || workingStatus == SVNWCDbStatus.Incomplete);
+
+                    if (workingStatus == SVNWCDbStatus.BaseDeleted) {
+                        removeWorking = true;
+                        addWorkingNotPresent = true;
+                    }
+
+                    checkBase = false;
+                }
+            } finally {
+                stmt.reset();
+            }
+
+            if (checkBase) {
+                SVNWCDbStatus baseStatus;
+
+                stmt = db.getStatement(SVNWCDbStatements.SELECT_BASE_NODE);
+                try {
+                    stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelpath);
+                    haveRow = stmt.next();
+                    if (!haveRow)
+                        return;
+                    baseStatus = presenceMap2.get(stmt.getColumnString(SVNWCDbSchema.NODES__Fields.presence));
+                } finally {
+                    stmt.reset();
+                }
+
+                switch (baseStatus) {
+                    case Normal:
+                    case Incomplete:
+                        addWorkingNormal = true;
+                        break;
+                    case NotPresent:
+                        addWorkingNotPresent = true;
+                        break;
+                    case Excluded:
+                    case Absent:
+                        addWorkingNotPresent = true;
+                        break;
+                    default:
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ASSERTION_FAIL);
+                        SVNErrorManager.error(err, SVNLogType.WC);
+                }
+            }
+
+            children = getBaseChildren(localAbspath);
+
+            for (String name : children) {
+                MakeCopy cbt = new MakeCopy();
+                cbt.localAbspath = SVNFileUtil.createFilePath(localAbspath, name);
+                DirParsedInfo parseDir = parseDir(cbt.localAbspath, Mode.ReadWrite);
+                cbt.pdh = parseDir.wcDbDir;
+                cbt.localRelpath = parseDir.localRelPath;
+                verifyDirUsable(cbt.pdh);
+                cbt.removeBase = removeBase;
+                cbt.isRoot = false;
+                cbt.transaction(db);
+            }
+
+            if (removeWorking) {
+                stmt = db.getStatement(SVNWCDbStatements.DELETE_WORKING_NODES);
+                stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelpath);
+                stmt.done();
+            }
+
+            if (addWorkingNormal) {
+                stmt = db.getStatement(SVNWCDbStatements.INSERT_WORKING_NODE_NORMAL_FROM_BASE);
+                stmt.bindf("isi", pdh.getWCRoot().getWcId(), localRelpath, 2);
+                stmt.done();
+            } else if (addWorkingNotPresent) {
+                stmt = db.getStatement(SVNWCDbStatements.INSERT_WORKING_NODE_NOT_PRESENT_FROM_BASE);
+                stmt.bindf("isi", pdh.getWCRoot().getWcId(), localRelpath, 2);
+                stmt.done();
+            }
+
+            if (isRoot && (addWorkingNormal || addWorkingNotPresent)) {
+                WCDbRepositoryInfo repInfo = scanBaseRepository(localAbspath, RepositoryInfoField.values());
+                File reposRelpath = repInfo.relPath;
+                SVNURL reposRootUrl = repInfo.rootUrl;
+                String reposUuid = repInfo.uuid;
+                long reposId = fetchReposId(reposRootUrl, reposUuid);
+                stmt = db.getStatement(SVNWCDbStatements.UPDATE_COPYFROM);
+                stmt.bindf("isis", pdh.getWCRoot().getWcId(), localRelpath, reposId, reposRelpath);
+                stmt.done();
+            }
+
+            if (removeBase) {
+                stmt = db.getStatement(SVNWCDbStatements.DELETE_BASE_NODE);
+                stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelpath);
+                stmt.done();
+            }
+
+            pdh.flushEntries(localAbspath);
+        }
+
+    };
+
+    public void opSetNewDirToIncompleteTemp(File localAbspath, File reposRelpath, SVNURL reposRootURL, String reposUuid, long revision, SVNDepth depth) throws SVNException {
         // TODO
         throw new UnsupportedOperationException();
     }
 
-    public void opSetNewDirToIncompleteTemp(File localAbspath, File reposRelpath, SVNURL reposRootURL, String reposUuid, long revision, SVNDepth depth) throws SVNException {
+    public long fetchReposId(SVNURL reposRootUrl, String reposUuid) {
         // TODO
         throw new UnsupportedOperationException();
     }
