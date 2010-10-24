@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2010 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -25,6 +25,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.auth.ISVNSSHHostVerifier;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
 import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
@@ -89,11 +90,13 @@ public class SVNSSHConnector implements ISVNConnector {
             try {
                 while (authentication != null) {
                     try {
-                        connection = SVNSSHSession.getConnection(repository.getLocation(), authentication, authManager.getConnectTimeout(repository), myIsUseConnectionPing);
+                        ISVNSSHHostVerifier verifier = (ISVNSSHHostVerifier) (authManager instanceof ISVNSSHHostVerifier ? authManager : null);
+                        connection = SVNSSHSession.getConnection(repository.getLocation(), verifier, authentication, authManager.getConnectTimeout(repository), myIsUseConnectionPing);
                         if (connection == null) {
                             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED, "Cannot connect to ''{0}''", repository.getLocation().setPath("", false));
                             SVNErrorManager.error(err, SVNLogType.NETWORK);
                         }
+                        
                         authManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.SSH, realm, null, authentication);
                         break;
                     } catch (SVNAuthenticationException e) {
@@ -172,9 +175,9 @@ public class SVNSSHConnector implements ISVNConnector {
         if (mySession != null) {
             // close session and close owning connection if necessary.
             // close session and connection in atomic way.
-            SVNSSHSession.lock(Thread.currentThread());
             SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, 
                     Thread.currentThread() + ": ABOUT TO CLOSE SESSION IN : " + myConnection);
+            SVNSSHSession.lock(Thread.currentThread());
             try {
                 if (myConnection != null) {
                     if (myConnection.closeSession(mySession)) {

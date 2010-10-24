@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2010 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -138,7 +138,8 @@ public abstract class FSRoot {
         try {
             revNode = getRevisionNode(path);
         } catch (SVNException svne) {
-            if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.FS_NOT_FOUND) {
+            if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.FS_NOT_FOUND ||
+                    svne.getErrorMessage().getErrorCode() == SVNErrorCode.FS_NOT_DIRECTORY) {
                 return SVNNodeKind.NONE;
             }
             throw svne;
@@ -355,11 +356,6 @@ public abstract class FSRoot {
                 return myCache.get(key);
             }
             return null;
-        }
-
-        public void clear() {
-            myKeys.clear();
-            myCache.clear();
         }
     }
 

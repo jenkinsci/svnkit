@@ -16,6 +16,7 @@ import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
 
 import org.ietf.jgss.GSSContext;
+import org.ietf.jgss.GSSCredential;
 import org.ietf.jgss.GSSException;
 import org.ietf.jgss.GSSManager;
 import org.ietf.jgss.GSSName;
@@ -51,15 +52,15 @@ public class HTTPNegotiateAuthentication extends HTTPAuthentication {
     }
     
     private static Oid getDefaultOID() {
-        String defaultOid = System.getProperty(NEGOTIATE_TYPE_PROPERTY, NEGOTIATE_TYPE_SPNEGO);
+        String defaultOid = System.getProperty(NEGOTIATE_TYPE_PROPERTY, NEGOTIATE_TYPE_KERBEROS);
         if (defaultOid == null || "".equals(defaultOid)) {
-            defaultOid = NEGOTIATE_TYPE_SPNEGO;
+            defaultOid = NEGOTIATE_TYPE_KERBEROS;
         }
         Oid oid = (Oid) ourOids.get(defaultOid);
         if (oid != null) {
             return oid;
         }
-        return (Oid) ourOids.get(NEGOTIATE_TYPE_SPNEGO);
+        return (Oid) ourOids.get(NEGOTIATE_TYPE_KERBEROS);
     }
 
     private class SVNKitCallbackHandler implements CallbackHandler {
@@ -150,9 +151,10 @@ public class HTTPNegotiateAuthentication extends HTTPAuthentication {
             mySpnegoOid = getDefaultOID();
         }
         SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "NEGOTIATE: initialize context, OID: " + mySpnegoOid);
+        GSSCredential credentials = myGSSManager.createCredential(GSSCredential.INITIATE_ONLY);
         GSSName serverName = myGSSManager.createName(getServerPrincipalName(), GSSName.NT_HOSTBASED_SERVICE);
         SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "NEGOTIATE: initialize context, server name: " + serverName);
-        myGSSContext = myGSSManager.createContext(serverName, mySpnegoOid, null, GSSContext.DEFAULT_LIFETIME);
+        myGSSContext = myGSSManager.createContext(serverName, mySpnegoOid, credentials, GSSContext.DEFAULT_LIFETIME);
         SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "NEGOTIATE: initialize context, GSS Context: " + myGSSContext);
     }
 
@@ -179,6 +181,7 @@ public class HTTPNegotiateAuthentication extends HTTPAuthentication {
                 byte[] outtoken;
         
                 try {
+                    myGSSContext.requestCredDeleg(true);
                     outtoken = myGSSContext.initSecContext(myToken, 0, myTokenLength);
                     SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "NEGOTIATE: authenticate action: out token: " + outtoken);
                     if (outtoken != null) {

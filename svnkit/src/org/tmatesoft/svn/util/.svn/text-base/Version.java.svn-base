@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2010 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -31,14 +31,14 @@ public class Version {
     private static final String VERSION_MICRO_PROPERTY = "svnkit.version.micro";
     private static final String VERSION_REVISION_PROPERTY = "svnkit.version.revision";
 
-    private static final String VERSION_STRING_DEFAULT = "SVN/1.6.6 SVNKit/1.3.2 (http://svnkit.com/) rSNAPSHOT";
+    private static final String VERSION_STRING_DEFAULT = "SVN/1.6.12 SVNKit/1.3.4 (http://svnkit.com/) rSNAPSHOT";
     private static final String SVN_VERSION_PROPERTY = "svnkit.svn.version";  
     
     private static final String VERSION_MAJOR_DEFAULT = "1";
     private static final String VERSION_MINOR_DEFAULT = "3";
-    private static final String VERSION_MICRO_DEFAULT = "2";
+    private static final String VERSION_MICRO_DEFAULT = "4";
     private static final String VERSION_REVISION_DEFAULT = "SNAPSHOT";
-    private static final String SVN_VERSION_DEFAULT = "1.6.6";
+    private static final String SVN_VERSION_DEFAULT = "1.6.12";
     private static String ourUserAgent;
 
     private static Properties ourProperties;

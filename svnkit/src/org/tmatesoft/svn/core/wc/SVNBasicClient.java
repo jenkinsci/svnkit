@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2010 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -806,7 +806,7 @@ public class SVNBasicClient implements ISVNEventHandler {
         return absPath;
     }
 
-    protected String getPathRelativeToSession(SVNURL url, SVNURL sessionURL, SVNRepository repos) throws SVNException {
+    protected String getPathRelativeToSession(SVNURL url, SVNURL sessionURL, SVNRepository repos) {
         if (sessionURL == null) {
             sessionURL = repos.getLocation();
         }
@@ -1085,6 +1085,11 @@ public class SVNBasicClient implements ISVNEventHandler {
 
     protected void setCommitItemProperty(SVNCommitItem item, String name, SVNPropertyValue value) {
         item.setProperty(name, value);
+    }
+
+    protected void setCommitItemFlags(SVNCommitItem item, boolean contentModified, boolean propertiesModified) {
+        item.setContentsModified(contentModified);
+        item.setPropertiesModified(propertiesModified);
     }
     
     private static final class LocationsLogEntryHandler implements ISVNLogEntryHandler {

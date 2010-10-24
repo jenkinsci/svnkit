@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2010 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -230,10 +230,13 @@ public class SVNReporter implements ISVNReporterBaton {
                 }
             } else if (entry.isDirectory() && (depth.compareTo(SVNDepth.FILES) > 0 || depth == SVNDepth.UNKNOWN)) {
                 if (missing) {
-                    if (myIsRestore && entry.isScheduledForDeletion() || entry.isScheduledForReplacement()) {
-                        // remove dir schedule if it is 'scheduled for deletion' but missing.
-                        entry.setSchedule(null);
-                        adminArea.saveEntries(false);
+                    if (myIsRestore) {
+                        boolean dropDeletedSchedule = myInfo.getAnchor().getWCAccess().getMaxFormatVersion() < SVNAdminArea16.WC_FORMAT; 
+                        if (entry.isScheduledForReplacement()  || (dropDeletedSchedule && entry.isScheduledForDeletion())) {
+                            // remove dir schedule if it is 'scheduled for deletion' but missing.
+                            entry.setSchedule(null);
+                            adminArea.saveEntries(false);
+                        }
                     }
                     if (!reportAll) {
                         reporter.deletePath(path);

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2010 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -41,6 +41,7 @@ import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaProcessor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
+import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.util.SVNLogType;
 
 
@@ -64,6 +65,7 @@ public class SVNDiffEditor implements ISVNEditor {
     private File myTempDirectory;
     private AbstractDiffCallback myDiffCallback;
     private Collection myChangeLists;
+    private String myWCRootPath;
     
     public SVNDiffEditor(SVNWCAccess wcAccess, SVNAdminAreaInfo info, AbstractDiffCallback callback,
             boolean useAncestry, boolean reverseDiff, boolean compareToBase, SVNDepth depth,
@@ -209,11 +211,12 @@ public class SVNDiffEditor implements ISVNEditor {
         }
         if (!entry.isScheduledForDeletion()) {
             if (getDiffCallback().isDiffCopiedAsAdded() && entry.isCopied()) {
+                baseProps = new SVNProperties();
                 propDiff = dir.getProperties(fileName).asMap();
             } else {
+                baseProps = dir.getBaseProperties(fileName).asMap();
                 boolean modified = dir.hasPropModifications(fileName);
                 if (modified) {
-                    baseProps = dir.getBaseProperties(fileName).asMap();
                     propDiff = computePropsDiff(baseProps, dir.getProperties(fileName).asMap());
                 } else {
                     propDiff = new SVNProperties();
@@ -546,7 +549,30 @@ public class SVNDiffEditor implements ISVNEditor {
             } else if (dir != null) {// && SVNStatusEditor.isIgnored(, name)dir.isIgnored(file.getName())) {
                 Collection globalIgnores = SVNStatusEditor.getGlobalIgnores(myWCAccess.getOptions());
                 Collection ignores = SVNStatusEditor.getIgnorePatterns(dir, globalIgnores);
-                if (SVNStatusEditor.isIgnored(ignores, file)) {
+                
+                String rootRelativePath = null;
+                boolean needToComputeRelativePath = false;
+                for (Iterator patterns = ignores.iterator(); patterns.hasNext();) {
+                    String pattern = (String) patterns.next();
+                    if (pattern.startsWith("/")) {
+                        needToComputeRelativePath = true;
+                        break;
+                    }
+                }
+                if (needToComputeRelativePath) {
+                    if (myWCRootPath == null) {
+                        File wcRoot = SVNWCUtil.getWorkingCopyRoot(dir.getRoot(), true);
+                        myWCRootPath = wcRoot.getAbsolutePath().replace(File.separatorChar, '/');
+                    }
+                    if (myWCRootPath != null) {
+                        rootRelativePath = file.getAbsolutePath().replace(File.separatorChar, '/');
+                        rootRelativePath = SVNPathUtil.getPathAsChild(myWCRootPath, rootRelativePath);
+                        if (rootRelativePath != null && !rootRelativePath.startsWith("/")) {
+                            rootRelativePath = "/" + rootRelativePath;
+                        }
+                    }
+                }
+                if (SVNStatusEditor.isIgnored(ignores, file, rootRelativePath)) {
                     continue;
                 }
             }
@@ -591,8 +617,9 @@ public class SVNDiffEditor implements ISVNEditor {
         String keywords = properties.getStringPropertyValue(SVNProperty.KEYWORDS);
         String eolStyle = properties.getStringPropertyValue(SVNProperty.EOL_STYLE);
         String charsetProp = properties.getStringPropertyValue(SVNProperty.CHARSET);
+        String mimeType = properties.getStringPropertyValue(SVNProperty.MIME_TYPE);
         ISVNOptions options = dir.getWCAccess().getOptions();
-        String charset = SVNTranslator.getCharset(charsetProp, dir.getFile(name).getPath(), options);
+        String charset = SVNTranslator.getCharset(charsetProp, mimeType, dir.getFile(name).getPath(), options);
         boolean special = properties.getPropertyValue(SVNProperty.SPECIAL) != null;
         if (charset == null && keywords == null && eolStyle == null && (!special || !SVNFileUtil.symlinksSupported())) {
             return dir.getFile(name);

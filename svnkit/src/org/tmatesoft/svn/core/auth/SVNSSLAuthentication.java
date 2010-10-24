@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2010 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -26,9 +26,14 @@ import org.tmatesoft.svn.core.SVNURL;
  */
 public class SVNSSLAuthentication extends SVNAuthentication {
 
+    public static final String MSCAPI = "MSCAPI";
+    public static final String SSL = "SSL";
+    
     private File myCertificate;
     private String myPassword;
-    
+    private String mySSLKind;
+    private String myAlias;
+
     /**
      * Creates an SSL credentials object. 
      * 
@@ -55,6 +60,13 @@ public class SVNSSLAuthentication extends SVNAuthentication {
         super(ISVNAuthenticationManager.SSL, null, storageAllowed, url, isPartial);
         myCertificate = certFile;
         myPassword = password;
+        mySSLKind = SSL;
+    }
+
+    public SVNSSLAuthentication(String sslKind, String alias, boolean storageAllowed, SVNURL url, boolean isPartial) {
+        this((File) null, null, storageAllowed, url, isPartial);
+        mySSLKind = sslKind;
+        myAlias = alias;
     }
 
     /**
@@ -73,5 +85,16 @@ public class SVNSSLAuthentication extends SVNAuthentication {
      */
     public File getCertificateFile() {
         return myCertificate;
+    }
+
+    public String getSSLKind() {
+        return mySSLKind;
+    }
+    
+    /**
+     * Only used for MSCAPI
+     */
+    public String getAlias() {
+        return myAlias;
     }
 }

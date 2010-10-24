@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2010 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -131,8 +131,10 @@ public class SVNEvent {
      * 
      * @param errorMessage the message describing the operation fault
      */
-    public SVNEvent(SVNErrorMessage errorMessage) {
+    public SVNEvent(SVNErrorMessage errorMessage, SVNEventAction expected) {
         myErrorMessage = errorMessage;
+        myAction = SVNEventAction.SKIP;
+        myExpectedAction = expected;
     }
     
 
@@ -424,6 +426,5 @@ public class SVNEvent {
         }
         return sb.toString();
     }
-	
-	
+    
 }

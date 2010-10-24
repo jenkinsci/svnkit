@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2010 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -29,7 +29,6 @@ import org.tmatesoft.svn.util.SVNLogType;
  */
 public class SVNPath {
     
-    private boolean myHasPegRevision;
     private String myTarget;
     private SVNRevision myPegRevision = SVNRevision.UNDEFINED;
     private File myFile;
@@ -38,13 +37,17 @@ public class SVNPath {
         this(target, false);
     }
 
-    public SVNPath(String target, boolean hasPegRevision) throws SVNException {
+    public SVNPath(String target, boolean keepPegRevision) throws SVNException {
         myTarget = target;
-        myHasPegRevision = hasPegRevision;
-        if (myHasPegRevision) {
-            parsePegRevision(true);
-        } else {
-            parsePegRevision(false);
+        parsePegRevision(keepPegRevision);
+        myTarget = SVNPathUtil.canonicalizePath(myTarget);
+        assertControlChars(isURL() ? SVNEncodingUtil.uriDecode(myTarget) : myTarget);
+    }
+
+    public SVNPath(String target, boolean keepPegRevision, boolean parsePegRevision) throws SVNException {
+        myTarget = target;
+        if (parsePegRevision) {
+            parsePegRevision(keepPegRevision);
         }
         myTarget = SVNPathUtil.canonicalizePath(myTarget);
         assertControlChars(isURL() ? SVNEncodingUtil.uriDecode(myTarget) : myTarget);

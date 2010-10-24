@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2010 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -32,7 +32,7 @@ public class SVNEventExt extends SVNEvent {
     private long myTotalItemsCount;
 
     public SVNEventExt(SVNErrorMessage errorMessage) {
-        super(errorMessage);
+        super(errorMessage, null);
     }
 
     public SVNEventExt(File file, SVNNodeKind kind, String mimetype, long revision, SVNStatusType cstatus, SVNStatusType pstatus, SVNStatusType lstatus, SVNLock lock, SVNEventAction action, SVNEventAction expected, SVNErrorMessage error, SVNMergeRange range, String changelistName, long processedItemsCount, long totalItemsCount) {

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2010 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -363,7 +363,7 @@ public class SVNDiffClient extends SVNMergeDriver {
             try {
                 doDiff(path, pegRevision, rN, rM, depth, useAncestry, result, changeLists);
             } catch (SVNException svne) {
-                dispatchEvent(SVNEventFactory.createErrorEvent(svne.getErrorMessage()));
+                dispatchEvent(SVNEventFactory.createErrorEvent(svne.getErrorMessage(), null));
             }
         }
     }
@@ -2945,7 +2945,7 @@ public class SVNDiffClient extends SVNMergeDriver {
         repository2 = createRepository(url1, null, null, false); 
         File tmpFile = getDiffGenerator().createTempDirectory();
         try {
-            SVNDiffStatusEditor editor = new SVNDiffStatusEditor(basePath, repository2, rev1, handler);
+            SVNDiffStatusEditor editor = new SVNDiffStatusEditor(basePath, target1, repository2, rev1, handler);
             ISVNReporterBaton reporter = new ISVNReporterBaton() {
                 public void report(ISVNReporter reporter) throws SVNException {
                     //TODO(sd): dynamic depth here

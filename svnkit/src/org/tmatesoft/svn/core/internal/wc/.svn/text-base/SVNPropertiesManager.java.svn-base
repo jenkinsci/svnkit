@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2010 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -10,15 +10,6 @@
  * ====================================================================
  */
 package org.tmatesoft.svn.core.internal.wc;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.StringTokenizer;
 
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -44,6 +35,15 @@ import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.util.SVNLogType;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.StringTokenizer;
 
 
 /**
@@ -161,7 +161,7 @@ public class SVNPropertiesManager {
 
 
         if (propValue != null && SVNProperty.isSVNProperty(propName)) {
-            propValue = validatePropertyValue(path.getAbsolutePath(), entry.getKind(), propName, propValue, skipChecks, access.getOptions(), new ISVNFileContentFetcher() {
+            propValue = validatePropertyValue(path, entry.getKind(), propName, propValue, skipChecks, access.getOptions(), new ISVNFileContentFetcher() {
 
                 public void fetchFileContent(OutputStream os) throws SVNException {
                     InputStream is = SVNFileUtil.openFileForReading(path, SVNLogType.WC);
@@ -412,7 +412,7 @@ public class SVNPropertiesManager {
         return false;
     }
 
-    public static SVNPropertyValue validatePropertyValue(String path, SVNNodeKind kind, String name, SVNPropertyValue value, boolean force, ISVNOptions options, ISVNFileContentFetcher fileContentFetcher) throws SVNException {
+    public static SVNPropertyValue validatePropertyValue(Object path, SVNNodeKind kind, String name, SVNPropertyValue value, boolean force, ISVNOptions options, ISVNFileContentFetcher fileContentFetcher) throws SVNException {
         if (value == null) {
             return value;
         }
@@ -436,7 +436,7 @@ public class SVNPropertiesManager {
         } else if (!force && SVNProperty.CHARSET.equals(name)) {
             value = SVNPropertyValue.create(value.getString().trim());
             try {
-                SVNTranslator.getCharset(value.getString(), path, options);
+                SVNTranslator.getCharset(value.getString(), null, path, options);
             } catch (SVNException e) {
                 SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Charset ''{0}'' is not supported on this computer", value.getString());
                 SVNErrorManager.error(error, SVNLogType.DEFAULT);
@@ -479,7 +479,7 @@ public class SVNPropertiesManager {
         return false;
     }
 
-    private static void validatePropertyName(String path, String name, SVNNodeKind kind) throws SVNException {
+    private static void validatePropertyName(Object path, String name, SVNNodeKind kind) throws SVNException {
         SVNErrorMessage err = null;
         if (kind == SVNNodeKind.DIR) {
             if (NOT_ALLOWED_FOR_DIR.contains(name)) {
@@ -512,7 +512,29 @@ public class SVNPropertiesManager {
         }
     }
 
-    public static void validateEOLProperty(String path, ISVNFileContentFetcher fetcher) throws SVNException {
+    public static String determineEncodingByMimeType(String mimeType) {
+        if (mimeType == null) {
+            return null;
+        }
+        if (!SVNProperty.isTextMimeType(mimeType)) {
+            return null;
+        }
+        for (StringTokenizer tokenizer = new StringTokenizer(mimeType, ";", false); tokenizer.hasMoreTokens();) {
+            String token = tokenizer.nextToken();
+            token = token.trim();
+            if (!token.startsWith("charset")) {
+                continue;
+            }
+            token = token.substring("charset".length()).trim();
+            if (!token.startsWith("=")) {
+                continue;
+            }
+            return token.substring("=".length()).trim();
+        }
+        return null;
+    }
+
+    public static void validateEOLProperty(Object path, ISVNFileContentFetcher fetcher) throws SVNException {
         SVNTranslatorOutputStream out = new SVNTranslatorOutputStream(SVNFileUtil.DUMMY_OUT, new byte[0], false, null, false);
 
         try {
@@ -537,7 +559,7 @@ public class SVNPropertiesManager {
         }
     }
 
-    private static void handleInconsistentEOL(SVNException svne, String path) throws SVNException {
+    private static void handleInconsistentEOL(SVNException svne, Object path) throws SVNException {
         SVNErrorMessage errorMessage = svne.getErrorMessage();
         while (errorMessage != null && errorMessage.getErrorCode() != SVNErrorCode.IO_INCONSISTENT_EOL) {
             errorMessage = errorMessage.getChildErrorMessage();

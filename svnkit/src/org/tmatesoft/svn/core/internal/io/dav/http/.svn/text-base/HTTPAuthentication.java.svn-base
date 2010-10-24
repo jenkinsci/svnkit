@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2010 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -146,7 +146,7 @@ abstract class HTTPAuthentication {
             } else if ("Digest".equalsIgnoreCase(method)) {
                 auth = new HTTPDigestAuthentication();
                 
-                char[] chars = source.toCharArray();
+                char[] chars = (source + " ").toCharArray();
                 int tokenIndex = 0;
                 boolean parsingToken = true;
                 String name = null;

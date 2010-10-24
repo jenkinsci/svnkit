@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2010 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -698,7 +698,7 @@ public class SVNCommitClient extends SVNBasicClient {
                 changed |= importDir(deltaGenerator, path, newDirPath, useGlobalIgnores, 
                         ignoreUnknownNodeTypes, depth, commitEditor);
             } else if (srcKind == SVNFileType.FILE || srcKind == SVNFileType.SYMLINK) {
-                if (!useGlobalIgnores || !SVNStatusEditor.isIgnored(ignores, path)) {
+                if (!useGlobalIgnores || !SVNStatusEditor.isIgnored(ignores, path, "/" + path.getName())) {
                     changed |= importFile(deltaGenerator, path, srcKind, filePath, commitEditor);
                 }
             } else if (srcKind == SVNFileType.NONE || srcKind == SVNFileType.UNKNOWN) {
@@ -1084,7 +1084,7 @@ public class SVNCommitClient extends SVNBasicClient {
                 }
                 SVNErrorMessage err = e.getErrorMessage().wrap("Commit failed (details follow):");
                 infos.add(new SVNCommitInfo(-1, null, null, err));
-                dispatchEvent(SVNEventFactory.createErrorEvent(err), ISVNEventHandler.UNKNOWN);
+                dispatchEvent(SVNEventFactory.createErrorEvent(err, SVNEventAction.COMMIT_COMPLETED), ISVNEventHandler.UNKNOWN);
                 continue;
             } finally {
                 if (info == null && commitEditor != null) {
@@ -1483,13 +1483,13 @@ public class SVNCommitClient extends SVNBasicClient {
                 handleEvent(skippedEvent, ISVNEventHandler.UNKNOWN);
                 continue;
             }
-            if (useGlobalIgnores && SVNStatusEditor.isIgnored(ignores, file)) {
-                continue;
-            }
             if (filter != null && !filter.accept(file)) {
                 continue;
             }
             String path = importPath == null ? file.getName() : SVNPathUtil.append(importPath, file.getName());
+            if (useGlobalIgnores && SVNStatusEditor.isIgnored(ignores, file, "/" + path)) {
+                continue;
+            }
             SVNFileType fileType = SVNFileType.getType(file);
             if (fileType == SVNFileType.DIRECTORY && depth.compareTo(SVNDepth.IMMEDIATES) >= 0) {
                 editor.addDir(path, null, -1);
@@ -1534,22 +1534,23 @@ public class SVNCommitClient extends SVNBasicClient {
         } else {
             autoProperties.put(SVNProperty.SPECIAL, "*");
         }
+        String mimeTypeProperty = (String) autoProperties.get(SVNProperty.MIME_TYPE);
         for (Iterator names = autoProperties.keySet().iterator(); names.hasNext();) {
             String name = (String) names.next();
             String value = (String) autoProperties.get(name);
             if (SVNProperty.EOL_STYLE.equals(name) && value != null) {
-                if (SVNProperty.isBinaryMimeType((String) autoProperties.get(SVNProperty.MIME_TYPE))) {
+                if (SVNProperty.isBinaryMimeType(mimeTypeProperty)) {
                     continue;
                 } else if (!SVNTranslator.checkNewLines(file)) {
                     continue;
                 } 
             }
             if (SVNProperty.CHARSET.equals(name) && value != null) {
-                if (SVNProperty.isBinaryMimeType((String) autoProperties.get(SVNProperty.MIME_TYPE))) {
+                if (SVNProperty.isBinaryMimeType(mimeTypeProperty)) {
                     continue;
                 }
                 try {
-                    SVNTranslator.getCharset(value, filePath, getOptions());
+                    SVNTranslator.getCharset(value, mimeTypeProperty, filePath, getOptions());
                 } catch (SVNException e) {
                     continue;
                 }
@@ -1557,10 +1558,10 @@ public class SVNCommitClient extends SVNBasicClient {
             editor.changeFileProperty(filePath, name, SVNPropertyValue.create(value));
         }
         // send "adding"
-        SVNEvent addedEvent = SVNEventFactory.createSVNEvent(file, SVNNodeKind.FILE, mimeType, SVNRepository.INVALID_REVISION, SVNEventAction.COMMIT_ADDED, null, null, null);
+        SVNEvent addedEvent = SVNEventFactory.createSVNEvent(file, SVNNodeKind.FILE, mimeTypeProperty, SVNRepository.INVALID_REVISION, SVNEventAction.COMMIT_ADDED, null, null, null);
         handleEvent(addedEvent, ISVNEventHandler.UNKNOWN);
         // translate and send file.
-        String charset = SVNTranslator.getCharset((String) autoProperties.get(SVNProperty.CHARSET), file.getPath(), getOptions());
+        String charset = SVNTranslator.getCharset((String) autoProperties.get(SVNProperty.CHARSET), mimeTypeProperty, file.getPath(), getOptions());
         String eolStyle = (String) autoProperties.get(SVNProperty.EOL_STYLE);
         String keywords = (String) autoProperties.get(SVNProperty.KEYWORDS);
         boolean special = autoProperties.get(SVNProperty.SPECIAL) != null;

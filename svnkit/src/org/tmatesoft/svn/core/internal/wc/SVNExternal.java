@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2010 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -154,29 +154,32 @@ public class SVNExternal {
 
     public String toString() {
         String value = "";
+        String path = quotePath(myPath);
+        String url = quotePath(myURL);
+        
         if (myIsPegRevisionExplicit && SVNRevision.isValidRevisionNumber(myPegRevision.getNumber())) {
             if (myIsRevisionExplicit && SVNRevision.isValidRevisionNumber(myRevision.getNumber())) {
                 value += "-r" + myRevision + " ";
             }
-            value += myURL + "@" + myPegRevision + " " + myPath;
+            value += url + "@" + myPegRevision + " " + path;
         } else {
             if (myIsNewFormat) {
                 if (myIsRevisionExplicit && SVNRevision.isValidRevisionNumber(myRevision.getNumber())) {
                     value += "-r" + myRevision + " ";
                 }
-                value += myURL + " " + myPath;
+                value += url + " " + path;
             } else {
-                value += myPath; 
+                value += path; 
                 if (myIsRevisionExplicit && SVNRevision.isValidRevisionNumber(myRevision.getNumber())) {
                     value += " -r" + myRevision;
                 }            
-                value += " " + myURL;
+                value += " " + url;
             }
         }
         return value;
     }
 
-    public static SVNExternal[] parseExternals(String owner, String description) throws SVNException {
+    public static SVNExternal[] parseExternals(Object owner, String description) throws SVNException {
         List lines = new ArrayList();
         for(StringTokenizer tokenizer = new StringTokenizer(description, "\r\n"); tokenizer.hasMoreTokens();) {
             lines.add(tokenizer.nextToken());
@@ -255,20 +258,37 @@ public class SVNExternal {
             
             external.myPath = SVNPathUtil.canonicalizePath(external.myPath.replace(File.separatorChar, '/'));
             
-            if (external.myPath.length() == 0 || external.myPath.startsWith("/") || external.myPath.indexOf("/../") > 0 || external.myPath.endsWith("/..")) {
+            if (external.myPath.length() == 0 || 
+                    external.myPath.equals(".") || 
+                    external.myPath.equals("..") || 
+                    external.myPath.startsWith("../") || 
+                    external.myPath.startsWith("/") || 
+                    external.myPath.indexOf("/../") > 0 || 
+                    external.myPath.endsWith("/..")) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_INVALID_EXTERNALS_DESCRIPTION,
                         "Invalid {0} property on ''{1}'': target ''{2}'' is an absolute path or involves ''..''", new Object[] {SVNProperty.EXTERNALS, owner, external.myPath});
                 SVNErrorManager.error(err, SVNLogType.DEFAULT);
             }
             
             external.myRawValue = line;
-            
+            if (external.myURL != null && SVNPathUtil.isURL(external.myURL)) {
+                SVNURL.parseURIEncoded(external.myURL);
+            }
             externals.add(external);
         }
         return (SVNExternal[]) externals.toArray(new SVNExternal[externals.size()]);
     }
     
-    private static int fetchRevision(SVNExternal external, String owner, String line, List tokens) throws SVNException {
+    private static String quotePath(String path) {
+        for(int i = 0; i < path.length(); i++) {
+            if (Character.isWhitespace(path.charAt(i))) {
+                return "\"" + path + "\"";
+            }
+        }
+        return path;
+    }
+    
+    private static int fetchRevision(SVNExternal external, Object owner, String line, List tokens) throws SVNException {
         for (int i = 0; i < tokens.size() && i < 2; i++) {
             String token = (String) tokens.get(i);
             String revisionStr = null;
@@ -308,7 +328,7 @@ public class SVNExternal {
         return -1;
     }
     
-    private static void reportParsingError(String owner, String line) throws SVNException {
+    private static void reportParsingError(Object owner, String line) throws SVNException {
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_INVALID_EXTERNALS_DESCRIPTION,
                 "Error parsing {0} property on ''{1}'': ''{2}''", new Object[] {SVNProperty.EXTERNALS, owner, line});
         SVNErrorManager.error(err, SVNLogType.DEFAULT);

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2010 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -83,7 +83,22 @@ public class SVNConfigFile {
                 if (matchGroup(line, null)) {
                     return null;
                 } else if (matchProperty(line, propertyName)) {
-                    return getPropertyValue(line);
+                    String firstLine = getPropertyValue(line);
+                    
+                    if (firstLine != null) {
+                        int j = i + 1;
+                        while(j < myLines.length && myLines[j] != null) {
+                            String nextLine = myLines[j++];
+                            if (!matchGroup(nextLine, null) && !matchProperty(nextLine, null)) {
+                                if (nextLine.length() > 0 && Character.isWhitespace(nextLine.charAt(0))) {
+                                    firstLine += nextLine;
+                                    continue;
+                                } 
+                            } 
+                            break;
+                        }
+                    }
+                    return firstLine;
                 }
             }
         }
@@ -141,6 +156,29 @@ public class SVNConfigFile {
             if (save) {
                 save();
             }
+        }
+    }
+
+    public void deleteGroup(String groupName, boolean save) {
+        load();
+        boolean groupMatched = false;
+        for (int i = 0; i < myLines.length; i++) {
+            String line = myLines[i];
+            if (line == null) {
+                continue;
+            }
+            if (!groupMatched && matchGroup(line, groupName)) {
+                groupMatched = true;
+                myLines[i] = null;
+            } else if (groupMatched) {
+                if (matchGroup(line, null) /* or last line found*/) {
+                    break;
+                }
+                myLines[i] = null;
+            }
+        }
+        if (save) {
+            save();
         }
     }
 

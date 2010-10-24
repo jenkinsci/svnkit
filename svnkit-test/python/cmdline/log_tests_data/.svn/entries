@@ -1,7 +1,7 @@
 10
 
 dir
-903915
+1026796
 http://svn.apache.org/repos/asf/subversion/tags/1.6.6/subversion/tests/cmdline/log_tests_data
 http://svn.apache.org/repos/asf
 
@@ -32,7 +32,7 @@ file
 
 
 
-2010-01-28T00:20:33.000000Z
+2010-05-06T23:29:53.030733Z
 bdd8e477b5b7976c8c8b487d4bbed144
 2007-10-03T23:21:06.707076Z
 866992
@@ -66,7 +66,7 @@ file
 
 
 
-2010-01-28T00:20:33.000000Z
+2010-05-06T23:30:16.370189Z
 b19d245d1008fc0e8627387b6345378c
 2008-10-14T09:20:20.876437Z
 873704

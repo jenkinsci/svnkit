@@ -1,7 +1,7 @@
 10
 
 dir
-903915
+1026796
 http://svn.apache.org/repos/asf/subversion/tags/1.6.6/subversion/tests/cmdline/svndumpfilter_tests_data
 http://svn.apache.org/repos/asf
 
@@ -32,7 +32,7 @@ file
 
 
 
-2010-01-28T00:20:34.000000Z
+2010-05-06T23:30:16.370189Z
 d29c5bac9d64d0c3b0c3d1691b7fb52e
 2008-07-29T00:40:18.170497Z
 872392
@@ -66,7 +66,7 @@ file
 
 
 
-2010-01-28T00:20:34.000000Z
+2010-05-06T23:29:53.030733Z
 e8567ec3cd87f5781cdedc5a12221a2b
 2007-11-23T12:38:48.720991Z
 868062

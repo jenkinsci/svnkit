@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2010 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -11,14 +11,6 @@
  */
 package org.tmatesoft.svn.core.internal.wc;
 
-import java.io.File;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.StringTokenizer;
-import java.util.TreeMap;
-
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
@@ -26,6 +18,7 @@ import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -34,10 +27,21 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
+import org.tmatesoft.svn.core.wc.ISVNStatusFileProvider;
 import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
+import org.tmatesoft.svn.core.wc.SVNWCUtil;
+
+import java.io.File;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.StringTokenizer;
+import java.util.TreeMap;
 
 
 /**
@@ -61,7 +65,10 @@ public class SVNStatusEditor {
     private SVNURL myRepositoryRoot;
     private Map myRepositoryLocks;
     private long myTargetRevision;
-    
+    private String myWCRootPath;
+    private ISVNStatusFileProvider myFileProvider;
+    private ISVNStatusFileProvider myDefaultFileProvider;
+
     public SVNStatusEditor(ISVNOptions options, SVNWCAccess wcAccess, SVNAdminAreaInfo info, boolean noIgnore, boolean reportAll, SVNDepth depth,
             ISVNStatusHandler handler) {
         myWCAccess = wcAccess;
@@ -73,6 +80,8 @@ public class SVNStatusEditor {
         myExternalsMap = new SVNHashMap();
         myGlobalIgnores = getGlobalIgnores(options);
         myTargetRevision = -1;
+        myDefaultFileProvider = new DefaultSVNStatusFileProvider();
+        myFileProvider = myDefaultFileProvider;
     }
     
     public long getTargetRevision() {
@@ -121,7 +130,7 @@ public class SVNStatusEditor {
             ISVNStatusHandler handler) throws SVNException {
         myWCAccess.checkCancelled();
         depth = depth == SVNDepth.UNKNOWN ? SVNDepth.INFINITY : depth;
-        Map childrenFiles = getChildrenFiles(dir.getRoot());
+        Map childrenFiles = myFileProvider.getChildrenFiles(dir.getRoot());
         SVNEntry dirEntry = myWCAccess.getEntry(dir.getRoot(), false);
 
         String externals = dir.getProperties(dir.getThisDirName()).getStringPropertyValue(SVNProperty.EXTERNALS);
@@ -130,7 +139,7 @@ public class SVNStatusEditor {
             myAdminInfo.addExternal(path, externals, externals);
             myAdminInfo.addDepth(path, dirEntry.getDepth());
             
-            SVNExternal[] externalsInfo = SVNExternal.parseExternals(dir.getRelativePath(myAdminInfo.getAnchor()), externals);
+            SVNExternal[] externalsInfo = SVNExternal.parseExternals(myAdminInfo.getAnchor(), externals);
             for (int i = 0; i < externalsInfo.length; i++) {
                 SVNExternal external = externalsInfo[i];
                 myExternalsMap.put(SVNPathUtil.append(path, external.getPath()), external);
@@ -181,10 +190,13 @@ public class SVNStatusEditor {
         childrenFiles = new TreeMap(childrenFiles);
         for (Iterator files = childrenFiles.keySet().iterator(); files.hasNext();) {
             String fileName = (String) files.next();
-            if (dir.getEntry(fileName, false) != null || SVNFileUtil.getAdminDirectoryName().equals(fileName)) {
+            SVNEntry entry = dir.getEntry(fileName, true);
+            if (isNameConflict(entry)) {
                 continue;
             }
-
+            if ((entry != null && !entry.isHidden()) || SVNFileUtil.getAdminDirectoryName().equals(fileName)) {
+                continue;
+            }
             File file = (File) childrenFiles.get(fileName);
             if (depth == SVNDepth.FILES && file.isDirectory()) {
                 continue;
@@ -212,8 +224,22 @@ public class SVNStatusEditor {
                     handler);
         }
        
-        for(Iterator entries = dir.entries(false); entries.hasNext();) {
+        for(Iterator entries = dir.entries(true); entries.hasNext();) {
             SVNEntry entry = (SVNEntry) entries.next();
+            if (isNameConflict(entry)) {
+                SVNStatus status = new SVNStatus(entry.getSVNURL(), dir.getFile(entry.getName()), entry.getKind(),
+                        SVNRevision.create(entry.getRevision()), SVNRevision.create(entry.getCommittedRevision()),
+                        SVNDate.parseDate(entry.getCommittedDate()), entry.getAuthor(),
+                        SVNStatusType.STATUS_NAME_CONFLICT,  SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, 
+                        false, entry.isCopied(), false, false, null, null, null, null, 
+                        entry.getCopyFromURL(), SVNRevision.create(entry.getCopyFromRevision()),
+                        null, null, entry.asMap(), entry.getChangelistName(), dir.getFormatVersion(), null);                
+                status.setEntry(entry);
+                handler.handleStatus(status);                
+                continue;
+            } else if (entry.isHidden()) {
+                continue;
+            }
             if (dir.getThisDirName().equals(entry.getName())) {
                 continue;
             }
@@ -228,6 +254,10 @@ public class SVNStatusEditor {
                     fileKind, special, depth == SVNDepth.INFINITY ? depth : SVNDepth.EMPTY, 
                             getAll, noIgnore, handler);
         }
+    }
+
+    public static boolean isNameConflict(SVNEntry entry) {        
+        return entry != null && entry.isAbsent() && "nameconflict".equals(entry.getChecksum());
     }
 
     protected void cleanup() {
@@ -312,9 +342,11 @@ public class SVNStatusEditor {
     
     private void sendUnversionedStatus(File file, String name, SVNNodeKind fileType, boolean special, 
             SVNAdminArea dir, Collection ignorePatterns, boolean noIgnore, ISVNStatusHandler handler) throws SVNException {
-        boolean isIgnored = isIgnored(ignorePatterns, file);
         String path = dir.getRelativePath(myAdminInfo.getAnchor());
         path = SVNPathUtil.append(path, name);  
+
+        boolean isIgnored = isIgnored(ignorePatterns, file, getWCRootRelativePath(ignorePatterns, file));
+        
         boolean isExternal = isExternal(path);
         SVNStatus status = assembleStatus(file, dir, null, null, fileType, special, true, 
         		isIgnored);
@@ -334,6 +366,43 @@ public class SVNStatusEditor {
 
     	return SVNStatusUtil.assembleStatus(file, dir, entry, parentEntry, fileKind, special, reportAll, 
     			isIgnored, myRepositoryLocks, myRepositoryRoot, myWCAccess);
+    }
+    
+    protected String getWCRootPath() {
+        if (myWCRootPath == null) {
+            try {
+                File root = SVNWCUtil.getWorkingCopyRoot(myAdminInfo.getAnchor().getRoot(), true);
+                if (root != null) {
+                    myWCRootPath = root.getAbsolutePath().replace(File.separatorChar, '/');
+                }
+            } catch (SVNException e) {
+                // ignore.
+            }
+        }
+        return myWCRootPath;
+    }
+    
+    protected String getWCRootRelativePath(Collection ignorePatterns, File file) {
+        boolean needToComputeWCRelativePath = false;
+        for (Iterator patterns = ignorePatterns.iterator(); patterns.hasNext();) {
+            String pattern = (String) patterns.next();
+            if (pattern.startsWith("/")) {
+                needToComputeWCRelativePath = true;
+                break;
+            }
+        }
+        if (!needToComputeWCRelativePath) {
+            return null;
+        }
+        String rootRelativePath = null;
+        if (getWCRootPath() != null) {
+            rootRelativePath = file.getAbsolutePath().replace(File.separatorChar, '/');
+            rootRelativePath = SVNPathUtil.getPathAsChild(getWCRootPath(), rootRelativePath);
+            if (rootRelativePath != null && !rootRelativePath.startsWith("/")) {
+                rootRelativePath = "/" + rootRelativePath;
+            }
+        }
+        return rootRelativePath;
     }
     
     private boolean isExternal(String path) {
@@ -381,14 +450,27 @@ public class SVNStatusEditor {
     }
     
     public static boolean isIgnored(Collection patterns, File file) {
+        return isIgnored(patterns, file, null);
+    }
+    
+    public static boolean isIgnored(Collection patterns, File file, String relativePath) {
         String name = file.getName();
         String dirName = null;
         boolean isDirectory = SVNFileType.getType(file) == SVNFileType.DIRECTORY;
         if (isDirectory) {
             dirName = name + "/";
         }
+        
         for (Iterator ps = patterns.iterator(); ps.hasNext();) {
             String pattern = (String) ps.next();
+            if (pattern.startsWith("/") && relativePath != null) {
+                if (DefaultSVNOptions.matches(pattern, relativePath) || 
+                   (isDirectory && DefaultSVNOptions.matches(pattern, relativePath + "/"))) {
+                    return true;
+                }
+                continue;
+            }
+            
             if (DefaultSVNOptions.matches(pattern, name)) {
                 return true;
             } else if (isDirectory && DefaultSVNOptions.matches(pattern, dirName)) {
@@ -397,17 +479,40 @@ public class SVNStatusEditor {
         }
         return false;
     }
-    
-    private static Map getChildrenFiles(File parent) {
-        File[] children = SVNFileListUtil.listFiles(parent);
-        if (children != null) {
-            Map map = new SVNHashMap();
-            for (int i = 0; i < children.length; i++) {
-                map.put(children[i].getName(), children[i]);
-            }
-            return map;
-        }
-        return Collections.EMPTY_MAP;
+
+    public void setFileProvider(ISVNStatusFileProvider fileProvider) {
+        myFileProvider = new WrapperSVNStatusFileProvider(myDefaultFileProvider, fileProvider);
     }
-    
+
+    private static class WrapperSVNStatusFileProvider implements ISVNStatusFileProvider {
+        private final ISVNStatusFileProvider myDefault;
+        private final ISVNStatusFileProvider myDelegate;
+
+        private WrapperSVNStatusFileProvider(ISVNStatusFileProvider defaultProvider, ISVNStatusFileProvider delegate) {
+            myDefault = defaultProvider;
+            myDelegate = delegate;
+        }
+
+        public Map getChildrenFiles(File parent) {
+            final Map result = myDelegate.getChildrenFiles(parent);
+            if (result != null) {
+                return result;
+            }
+            return myDefault.getChildrenFiles(parent);
+        }
+    }
+
+    private static class DefaultSVNStatusFileProvider implements ISVNStatusFileProvider {
+        public Map getChildrenFiles(File parent) {
+            File[] children = SVNFileListUtil.listFiles(parent);
+            if (children != null) {
+                Map map = new SVNHashMap();
+                for (int i = 0; i < children.length; i++) {
+                    map.put(children[i].getName(), children[i]);
+                }
+                return map;
+            }
+            return Collections.EMPTY_MAP;
+        }
+    }
 }

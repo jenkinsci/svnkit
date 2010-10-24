@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2010 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -18,6 +18,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Stack;
 
+import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -506,9 +507,11 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
                 } else if (myIsDirectory) {
                     if (myDirs.size() != 1 || !myHasTarget) {
                         try {
-                            myEditor.changeDirProperty(SVNProperty.WC_URL, 
-                                    SVNPropertyValue.create(myHref));
-                        } catch (SVNException svne) {
+                            SVNPropertyValue davWCURL = DAVUtil.isUseDAVWCURL() ? SVNPropertyValue.create(myHref) : null;
+                            myEditor.changeDirProperty(SVNProperty.WC_URL, davWCURL);
+                        } catch (SVNCancelException ce) {
+                            throw ce;
+                        } catch (SVNException svne) {                        
                             SVNErrorManager.error(svne.getErrorMessage().wrap("Could not save the URL of the version resource"), SVNLogType.NETWORK);
                         }
                         DirInfo topDirInfo = (DirInfo) myDirs.peek();
@@ -516,8 +519,10 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
                     }
                 } else {
                     try {
-                        myEditor.changeFileProperty(myPath, SVNProperty.WC_URL, 
-                                SVNPropertyValue.create(myHref));
+                        SVNPropertyValue davWCURL = DAVUtil.isUseDAVWCURL() ? SVNPropertyValue.create(myHref) : null;
+                        myEditor.changeFileProperty(myPath, SVNProperty.WC_URL, davWCURL);
+                    } catch (SVNCancelException ce) {
+                        throw ce;
                     } catch (SVNException svne) {
                         SVNErrorManager.error(svne.getErrorMessage().wrap("Could not save the URL of the version resource"), SVNLogType.NETWORK);
                     }
@@ -569,6 +574,8 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
         setDeltaProcessing(true);
         try {
             myEditor.applyTextDelta(myPath, baseChecksum);
+        } catch (SVNCancelException ce) {
+            throw ce;
         } catch (SVNException svne) {
             SVNErrorManager.error(svne.getErrorMessage().wrap("Could not save file"), SVNLogType.NETWORK);
         }
