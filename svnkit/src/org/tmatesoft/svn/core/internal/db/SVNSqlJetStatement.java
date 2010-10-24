@@ -297,4 +297,12 @@ public abstract class SVNSqlJetStatement {
         }
     }
 
+    public void nextRow() throws SVNException {
+        if(!next()){
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SQLITE_ERROR,
+                    "Expected database row missing");
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
+        }
+    }
+
 }

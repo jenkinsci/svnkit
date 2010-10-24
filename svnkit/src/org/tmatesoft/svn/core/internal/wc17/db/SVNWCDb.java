@@ -2849,7 +2849,7 @@ public class SVNWCDb implements ISVNWCDb {
                 File reposRelpath = repInfo.relPath;
                 SVNURL reposRootUrl = repInfo.rootUrl;
                 String reposUuid = repInfo.uuid;
-                long reposId = fetchReposId(reposRootUrl, reposUuid);
+                long reposId = fetchReposId(db, reposRootUrl, reposUuid);
                 stmt = db.getStatement(SVNWCDbStatements.UPDATE_COPYFROM);
                 stmt.bindf("isis", pdh.getWCRoot().getWcId(), localRelpath, reposId, reposRelpath);
                 stmt.done();
@@ -2866,12 +2866,18 @@ public class SVNWCDb implements ISVNWCDb {
 
     };
 
-    public void opSetNewDirToIncompleteTemp(File localAbspath, File reposRelpath, SVNURL reposRootURL, String reposUuid, long revision, SVNDepth depth) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+    public long fetchReposId(SVNSqlJetDb db, SVNURL reposRootUrl, String reposUuid) throws SVNException {
+        SVNSqlJetStatement getStmt = db.getStatement(SVNWCDbStatements.SELECT_REPOSITORY);
+        try {
+            getStmt.bindf("s", reposRootUrl);
+            getStmt.nextRow();
+            return getStmt.getColumnLong(SVNWCDbSchema.REPOSITORY__Fields.id);
+        } finally {
+            getStmt.reset();
+        }
     }
 
-    public long fetchReposId(SVNURL reposRootUrl, String reposUuid) {
+    public void opSetNewDirToIncompleteTemp(File localAbspath, File reposRelpath, SVNURL reposRootURL, String reposUuid, long revision, SVNDepth depth) throws SVNException {
         // TODO
         throw new UnsupportedOperationException();
     }
