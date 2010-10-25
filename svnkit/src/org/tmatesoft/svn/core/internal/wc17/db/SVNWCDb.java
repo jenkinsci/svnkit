@@ -647,8 +647,14 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     public void completedWorkQueue(File wcRootAbsPath, long id) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+        assert (SVNFileUtil.isAbsolute(wcRootAbsPath));
+        assert(id != 0);
+        DirParsedInfo parseDir = parseDir(wcRootAbsPath, Mode.ReadWrite);
+        SVNWCDbDir pdh = parseDir.wcDbDir;
+        verifyDirUsable(pdh);
+        SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.DELETE_WORK_ITEM);
+        stmt.bindLong(1, id);
+        stmt.done();
     }
 
     public long ensureRepository(File localAbsPath, SVNURL reposRootUrl, String reposUuid) throws SVNException {
