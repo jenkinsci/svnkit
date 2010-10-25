@@ -968,6 +968,51 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     public void globalRecordFileinfo(File localAbspath, long translatedSize, SVNDate lastModTime) throws SVNException {
+        assert (SVNFileUtil.isAbsolute(localAbspath));
+        final DirParsedInfo parsed = parseDir(localAbspath, Mode.ReadWrite);
+        SVNWCDbDir pdh = parsed.wcDbDir;
+        verifyDirUsable(pdh);
+        RecordFileinfo rb = new RecordFileinfo();
+        rb.wcRoot = pdh.getWCRoot();
+        rb.localRelpath = parsed.localRelPath;
+        rb.translatedSize = translatedSize;
+        rb.lastModTime = lastModTime;
+        pdh.getWCRoot().getSDb().runTransaction(rb);
+        pdh.flushEntries(localAbspath);
+    }
+
+    private class RecordFileinfo implements SVNSqlJetTransaction {
+
+        public SVNDate lastModTime;
+        public long translatedSize;
+        public File localRelpath;
+        public SVNWCDbRoot wcRoot;
+
+        public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
+            TreesExistInfo whichTreesExist = whichTreesExist(db,wcRoot.getWcId(),localRelpath);
+            boolean baseExists = whichTreesExist.baseExists;
+            boolean workingExists = whichTreesExist.workingExists;
+            if(!baseExists && !workingExists) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND,
+                        "Could not find node ''{0}'' for recording file information.",
+                        SVNFileUtil.createFilePath(wcRoot.getAbsPath(),localRelpath) );
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+            SVNSqlJetStatement stmt = db.getStatement(workingExists ? SVNWCDbStatements.UPDATE_WORKING_NODE_FILEINFO :
+                SVNWCDbStatements.UPDATE_BASE_NODE_FILEINFO );
+            stmt.bindf("isii", wcRoot.getWcId(), localRelpath,
+                    translatedSize, lastModTime);
+            int affectedRows = stmt.done();
+            assert(affectedRows==1);
+        }
+    }
+
+    public static class TreesExistInfo {
+        public boolean baseExists;
+        public boolean workingExists;
+    }
+
+    public TreesExistInfo whichTreesExist(SVNSqlJetDb db, long wcId, File localRelpath) {
         // TODO
         throw new UnsupportedOperationException();
     }

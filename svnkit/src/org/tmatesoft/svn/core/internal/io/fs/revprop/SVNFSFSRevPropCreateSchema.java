@@ -33,7 +33,7 @@ public class SVNFSFSRevPropCreateSchema extends SVNSqlJetStatement {
         super(sDb);
     }
 
-    public void exec() throws SVNException {
+    public int exec() throws SVNException {
         try {
             sDb.getDb().getOptions().setAutovacuum(true);
             sDb.getDb().runWriteTransaction(new ISqlJetTransaction() {
@@ -48,8 +48,8 @@ public class SVNFSFSRevPropCreateSchema extends SVNSqlJetStatement {
         } catch (SqlJetException e) {
            SVNErrorMessage err = SVNErrorMessage.create( SVNErrorCode.SQLITE_ERROR,e);
            SVNErrorManager.error(err, SVNLogType.FSFS);
-
         }
+        return 0;
     }
 
 }
