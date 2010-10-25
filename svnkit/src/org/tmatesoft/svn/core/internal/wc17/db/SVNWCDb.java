@@ -648,7 +648,7 @@ public class SVNWCDb implements ISVNWCDb {
 
     public void completedWorkQueue(File wcRootAbsPath, long id) throws SVNException {
         assert (SVNFileUtil.isAbsolute(wcRootAbsPath));
-        assert(id != 0);
+        assert (id != 0);
         DirParsedInfo parseDir = parseDir(wcRootAbsPath, Mode.ReadWrite);
         SVNWCDbDir pdh = parseDir.wcDbDir;
         verifyDirUsable(pdh);
@@ -663,8 +663,25 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     public WCDbWorkQueueInfo fetchWorkQueue(File wcRootAbsPath) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+        assert (SVNFileUtil.isAbsolute(wcRootAbsPath));
+        WCDbWorkQueueInfo info = new WCDbWorkQueueInfo();
+        DirParsedInfo parseDir = parseDir(wcRootAbsPath, Mode.ReadOnly);
+        SVNWCDbDir pdh = parseDir.wcDbDir;
+        verifyDirUsable(pdh);
+        SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_WORK_ITEM);
+        try {
+            boolean haveRow = stmt.next();
+            if (!haveRow) {
+                info.id = 0;
+                info.workItem = null;
+                return info;
+            }
+            info.id = stmt.getColumnLong(SVNWCDbSchema.WORK_QUEUE__Fields.id);
+            info.workItem = SVNSkel.parse(stmt.getColumnBlob(SVNWCDbSchema.WORK_QUEUE__Fields.work));
+            return info;
+        } finally {
+            stmt.reset();
+        }
     }
 
     public File fromRelPath(File wcRootAbsPath, File localRelPath) throws SVNException {

@@ -59,7 +59,8 @@ public enum SVNWCDbStatements {
     DELETE_BASE_NODE,
     DELETE_NODES,
     INSERT_NODE,
-    DELETE_WORK_ITEM;
+    DELETE_WORK_ITEM,
+    SELECT_WORK_ITEM;
 
     private Class<? extends SVNSqlJetStatement> statementClass;
 

@@ -29,7 +29,9 @@ public enum SVNWCDbSchema {
 
     PRISTINE(PRISTINE__Fields.class),
 
-    NODES(NODES__Fields.class, NODES__Indices.class)
+    NODES(NODES__Fields.class, NODES__Indices.class),
+
+    WORK_QUEUE(WORK_QUEUE__Fields.class)
 
     ;
 
@@ -91,6 +93,10 @@ public enum SVNWCDbSchema {
 
     public enum NODES__Indices {
         I_NODES_PARENT;
+    }
+
+    public enum WORK_QUEUE__Fields {
+        id, work;
     }
 
 }
