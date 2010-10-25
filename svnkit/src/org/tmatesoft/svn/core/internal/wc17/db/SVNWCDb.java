@@ -46,6 +46,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNTreeConflictUtil;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbAdditionInfo.AdditionInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbBaseInfo.BaseInfoField;
@@ -536,9 +537,48 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     public void addBaseFile(File localAbspath, File reposRelpath, SVNURL reposRootUrl, String reposUuid, long revision, SVNProperties props, long changedRev, SVNDate changedDate,
-            String changedAuthor, SVNChecksum checksum, long translatedSize, SVNProperties properties, SVNSkel conflict, SVNSkel workItems) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+            String changedAuthor, SVNChecksum checksum, long translatedSize, SVNProperties davCache, SVNSkel conflict, SVNSkel workItems) throws SVNException {
+
+        assert (SVNFileUtil.isAbsolute(localAbspath));
+        assert (reposRelpath != null);
+        // assert(svn_uri_is_absolute(repos_root_url));
+        assert (reposUuid != null);
+        assert (SVNRevision.isValidRevisionNumber(revision));
+        assert (props != null);
+        assert (SVNRevision.isValidRevisionNumber(changedRev));
+        assert (checksum != null);
+
+        DirParsedInfo parseDir = parseDir(localAbspath, Mode.ReadWrite);
+        SVNWCDbDir pdh = parseDir.wcDbDir;
+        File localRelpath = parseDir.localRelPath;
+        verifyDirUsable(pdh);
+
+        long reposId = createReposId(pdh.getWCRoot().getSDb(), reposRootUrl, reposUuid);
+
+        InsertBase ibb = new InsertBase();
+
+        ibb.status = SVNWCDbStatus.Normal;
+        ibb.kind = SVNWCDbKind.File;
+        ibb.wcId = pdh.getWCRoot().getWcId();
+        ibb.localRelpath = localRelpath;
+        ibb.reposId = reposId;
+        ibb.reposRelpath = reposRelpath;
+        ibb.revision = revision;
+
+        ibb.props = props;
+        ibb.changedRev = changedRev;
+        ibb.changedDate = changedDate;
+        ibb.changedAuthor = changedAuthor;
+
+        ibb.checksum = checksum;
+        ibb.translatedSize = translatedSize;
+
+        ibb.davCache = davCache;
+        ibb.conflict = conflict;
+        ibb.workItems = workItems;
+
+        pdh.getWCRoot().getSDb().runTransaction(ibb);
+        pdh.flushEntries(localAbspath);
     }
 
     public void addBaseSymlink(File localAbsPath, File reposRelPath, SVNURL reposRootUrl, String reposUuid, long revision, SVNProperties props, long changedRev, SVNDate changedDate,
