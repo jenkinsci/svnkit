@@ -63,7 +63,8 @@ public enum SVNWCDbStatements {
     SELECT_WORK_ITEM,
     SELECT_BASE_DAV_CACHE,
     UPDATE_WORKING_NODE_FILEINFO,
-    UPDATE_BASE_NODE_FILEINFO;
+    UPDATE_BASE_NODE_FILEINFO,
+    DETERMINE_TREE_FOR_RECORDING;
 
     private Class<? extends SVNSqlJetStatement> statementClass;
 

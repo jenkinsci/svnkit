@@ -989,32 +989,53 @@ public class SVNWCDb implements ISVNWCDb {
         public SVNWCDbRoot wcRoot;
 
         public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
-            TreesExistInfo whichTreesExist = whichTreesExist(db,wcRoot.getWcId(),localRelpath);
+            TreesExistInfo whichTreesExist = whichTreesExist(db, wcRoot.getWcId(), localRelpath);
             boolean baseExists = whichTreesExist.baseExists;
             boolean workingExists = whichTreesExist.workingExists;
-            if(!baseExists && !workingExists) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND,
-                        "Could not find node ''{0}'' for recording file information.",
-                        SVNFileUtil.createFilePath(wcRoot.getAbsPath(),localRelpath) );
+            if (!baseExists && !workingExists) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "Could not find node ''{0}'' for recording file information.",
+                        SVNFileUtil.createFilePath(wcRoot.getAbsPath(), localRelpath));
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
-            SVNSqlJetStatement stmt = db.getStatement(workingExists ? SVNWCDbStatements.UPDATE_WORKING_NODE_FILEINFO :
-                SVNWCDbStatements.UPDATE_BASE_NODE_FILEINFO );
-            stmt.bindf("isii", wcRoot.getWcId(), localRelpath,
-                    translatedSize, lastModTime);
+            SVNSqlJetStatement stmt = db.getStatement(workingExists ? SVNWCDbStatements.UPDATE_WORKING_NODE_FILEINFO : SVNWCDbStatements.UPDATE_BASE_NODE_FILEINFO);
+            stmt.bindf("isii", wcRoot.getWcId(), localRelpath, translatedSize, lastModTime);
             int affectedRows = stmt.done();
-            assert(affectedRows==1);
+            assert (affectedRows == 1);
         }
     }
 
     public static class TreesExistInfo {
+
         public boolean baseExists;
         public boolean workingExists;
     }
 
-    public TreesExistInfo whichTreesExist(SVNSqlJetDb db, long wcId, File localRelpath) {
-        // TODO
-        throw new UnsupportedOperationException();
+    public TreesExistInfo whichTreesExist(SVNSqlJetDb db, long wcId, File localRelpath) throws SVNException {
+        TreesExistInfo info = new TreesExistInfo();
+        info.baseExists = false;
+        info.workingExists = false;
+        SVNSqlJetStatement stmt = db.getStatement(SVNWCDbStatements.DETERMINE_TREE_FOR_RECORDING);
+        try {
+            stmt.bindf("is", wcId, localRelpath);
+            boolean haveRow = stmt.next();
+            if (haveRow) {
+                long value = stmt.getColumnLong(0);
+
+                if (value != 0) {
+                    info.workingExists = true;
+                } else {
+                    info.baseExists = true;
+                }
+                haveRow = stmt.next();
+                if (haveRow) {
+                    info.workingExists = true;
+                    info.baseExists = true;
+                }
+            }
+            return info;
+        } finally {
+            stmt.reset();
+        }
     }
 
     public void globalRelocate(File localDirAbspath, SVNURL reposRootUrl, boolean singleDb) throws SVNException {
