@@ -277,6 +277,10 @@ public abstract class SVNSqlJetStatement {
         return getJoinedStatement(joinedTable.toString());
     }
 
+    public SVNProperties getColumnProperties(Enum f) throws SVNException {
+        return getColumnProperties(f);
+    }
+
     public SVNProperties getColumnProperties(String f) throws SVNException {
         if(isColumnNull(f)) return null;
         final byte[] val = getColumnBlob(f);

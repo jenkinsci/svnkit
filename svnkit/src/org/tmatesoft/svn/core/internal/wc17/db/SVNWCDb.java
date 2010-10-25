@@ -694,8 +694,17 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     public SVNProperties getBaseDavCache(File localAbsPath) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+        SVNSqlJetStatement stmt = getStatementForPath(localAbsPath, SVNWCDbStatements.SELECT_BASE_DAV_CACHE);
+        try {
+            boolean haveRow = stmt.next();
+            if (!haveRow) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{0}'' was not found.", localAbsPath);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+            return stmt.getColumnProperties(SVNWCDbSchema.NODES__Fields.dav_cache);
+        } finally {
+            stmt.reset();
+        }
     }
 
     public WCDbBaseInfo getBaseInfo(File localAbsPath, BaseInfoField... fields) throws SVNException {
