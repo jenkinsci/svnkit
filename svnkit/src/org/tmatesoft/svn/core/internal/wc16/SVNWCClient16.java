@@ -3782,7 +3782,7 @@ public class SVNWCClient16 extends SVNBasicDelegate {
                 displayPath = path;
             }
             SVNLock lock = (SVNLock) locks.get(path);
-            SVNInfo info = SVNInfo.createInfo(displayPath, root, uuid, url, rev, child, lock);
+            SVNInfo info = SVNInfo.createInfo(displayPath, root, uuid, childURL, rev, child, lock);
             if (depth.compareTo(SVNDepth.IMMEDIATES) >= 0 || (depth == SVNDepth.FILES && child.getKind() == SVNNodeKind.FILE)) {
                 handler.handleInfo(info);
             }
