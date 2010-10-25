@@ -642,8 +642,29 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     public boolean checkPristine(File wcRootAbsPath, SVNChecksum sha1Checksum) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+        assert (SVNFileUtil.isAbsolute(wcRootAbsPath));
+        assert (sha1Checksum != null);
+        if (sha1Checksum.getKind() != SVNChecksumKind.SHA1) {
+            sha1Checksum = getPristineSHA1(wcRootAbsPath, sha1Checksum);
+        }
+        assert (sha1Checksum.getKind() == SVNChecksumKind.SHA1);
+        DirParsedInfo parseDir = parseDir(wcRootAbsPath, Mode.ReadWrite);
+        SVNWCDbDir pdh = parseDir.wcDbDir;
+        verifyDirUsable(pdh);
+        boolean haveRow = false;
+        SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_PRISTINE_MD5_CHECKSUM);
+        try {
+            haveRow = stmt.next();
+        } finally {
+            stmt.reset();
+        }
+        File pristineAbspath = getPristineFileName(pdh, sha1Checksum, false);
+        SVNNodeKind kindOnDisk = SVNFileType.getNodeKind(SVNFileType.getType(pristineAbspath));
+        if (kindOnDisk != (haveRow ? SVNNodeKind.FILE : SVNNodeKind.NONE)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_DB_ERROR, "The pristine text with checksum ''{0}'' was found in the DB or on disk but not both", sha1Checksum);
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+        return haveRow;
     }
 
     public void completedWorkQueue(File wcRootAbsPath, long id) throws SVNException {
