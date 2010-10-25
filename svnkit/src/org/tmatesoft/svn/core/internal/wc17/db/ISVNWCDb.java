@@ -508,7 +508,7 @@ public interface ISVNWCDb {
      * be passed in WORK_ITEMS.
      */
     void addBaseSymlink(File localAbsPath, File reposRelPath, SVNURL reposRootUrl, String reposUuid, long revision, SVNProperties props, long changedRev, SVNDate changedDate, String changedAuthor,
-            File target, SVNSkel conflict, SVNSkel workItem) throws SVNException;
+            File target, SVNProperties davCache, SVNSkel conflict, SVNSkel workItem) throws SVNException;
 
     /**
      * Create a node in the BASE tree that is present in name only.

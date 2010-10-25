@@ -582,9 +582,48 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     public void addBaseSymlink(File localAbsPath, File reposRelPath, SVNURL reposRootUrl, String reposUuid, long revision, SVNProperties props, long changedRev, SVNDate changedDate,
-            String changedAuthor, File target, SVNSkel conflict, SVNSkel workItem) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+            String changedAuthor, File target, SVNProperties davCache, SVNSkel conflict, SVNSkel workItems) throws SVNException {
+
+
+        assert (SVNFileUtil.isAbsolute(localAbsPath));
+        assert (reposRelPath != null);
+        // assert(svn_uri_is_absolute(repos_root_url));
+        assert (reposUuid != null);
+        assert (SVNRevision.isValidRevisionNumber(revision));
+        assert (props != null);
+        assert (SVNRevision.isValidRevisionNumber(changedRev));
+        assert(target != null);
+
+        DirParsedInfo parseDir = parseDir(localAbsPath, Mode.ReadWrite);
+        SVNWCDbDir pdh = parseDir.wcDbDir;
+        File localRelpath = parseDir.localRelPath;
+        verifyDirUsable(pdh);
+
+        long reposId = createReposId(pdh.getWCRoot().getSDb(), reposRootUrl, reposUuid);
+
+        InsertBase ibb = new InsertBase();
+
+        ibb.status = SVNWCDbStatus.Normal;
+        ibb.kind = SVNWCDbKind.Symlink;
+        ibb.wcId = pdh.getWCRoot().getWcId();
+        ibb.localRelpath = localRelpath;
+        ibb.reposId = reposId;
+        ibb.reposRelpath = reposRelPath;
+        ibb.revision = revision;
+
+        ibb.props = props;
+        ibb.changedRev = changedRev;
+        ibb.changedDate = changedDate;
+        ibb.changedAuthor = changedAuthor;
+
+        ibb.target = target;
+
+        ibb.davCache = davCache;
+        ibb.conflict = conflict;
+        ibb.workItems = workItems;
+
+        pdh.getWCRoot().getSDb().runTransaction(ibb);
+        pdh.flushEntries(localAbsPath);
     }
 
     public void addLock(File localAbsPath, SVNWCDbLock lock) throws SVNException {
