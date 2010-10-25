@@ -641,7 +641,7 @@ public class SVNWCDb implements ISVNWCDb {
         addWorkItems(pdh.getWCRoot().getSDb(), workItem);
     }
 
-    public boolean checkPristine(File wcRootAbsPath, SVNChecksum sha1Checksum, SVNWCDbCheckMode mode) throws SVNException {
+    public boolean checkPristine(File wcRootAbsPath, SVNChecksum sha1Checksum) throws SVNException {
         // TODO
         throw new UnsupportedOperationException();
     }
@@ -890,8 +890,21 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     public File getPristinePath(File wcRootAbsPath, SVNChecksum sha1Checksum) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+        assert (SVNFileUtil.isAbsolute(wcRootAbsPath));
+        assert (sha1Checksum != null);
+        if (sha1Checksum.getKind() != SVNChecksumKind.SHA1) {
+            sha1Checksum = getPristineSHA1(wcRootAbsPath, sha1Checksum);
+        }
+        assert (sha1Checksum.getKind() == SVNChecksumKind.SHA1);
+        final DirParsedInfo parsed = parseDir(wcRootAbsPath, Mode.ReadOnly);
+        final SVNWCDbDir pdh = parsed.wcDbDir;
+        verifyDirUsable(pdh);
+        boolean present = checkPristine(wcRootAbsPath, sha1Checksum);
+        if (!present) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_DB_ERROR, "Pristine text not found");
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+        return getPristineFileName(pdh, sha1Checksum, false);
     }
 
     public SVNChecksum getPristineSHA1(File wcRootAbsPath, SVNChecksum md5Checksum) throws SVNException {

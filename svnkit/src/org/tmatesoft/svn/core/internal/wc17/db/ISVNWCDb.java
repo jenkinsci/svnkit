@@ -259,65 +259,6 @@ public interface ISVNWCDb {
     }
 
     /**
-     * Enumerated constants for how hard
-     * {@link ISVNWCDb#checkPristine(File, SVNChecksum, SVNWCDbCheckMode)}
-     * should work on checking for the pristine file.
-     *
-     * <p>
-     * Note: this is bogus. we open the sqlite database "all the time", and
-     * don't worry about optimizing that. so: given the db is always open, then
-     * the following modes are overengineered, premature optimizations. ... will
-     * clean up in a future rev.
-     */
-    enum SVNWCDbCheckMode {
-
-        /**
-         * The caller wants to be sure the pristine file is present and usable.
-         * This is the typical mode to use.
-         * <p>
-         * Implementation note: the SQLite database is opened (if not already)
-         * and its state is verified against the file in the filesystem.
-         */
-        Usable,
-
-        /**
-         * The caller is performing just this one check. The implementation will
-         * optimize around the assumption no further calls to
-         * {@link ISVNWCDb#checkPristine(File, SVNChecksum, WCDbCheckMode)} will
-         * occur (but of course has no problem if they do).
-         * <p>
-         * Note: this test is best used for detecting a *missing* file rather
-         * than for detecting a usable file.
-         * <p>
-         * Implementation note: this will examine the presence of the pristine
-         * file in the filesystem. The SQLite database is untouched, though if
-         * it is (already) open, then it will be used instead.
-         */
-        Single,
-
-        /**
-         * The caller is going to perform multiple calls, so the implementation
-         * should optimize its operation around that.
-         * <p>
-         * Note: this test is best used for detecting a *missing* file rather
-         * than for detecting a usable file.
-         * <p>
-         * Implementation note: the SQLite database will be opened (if not
-         * already), and all checks will simply look in the TEXT_BASE table to
-         * see if the given key is present. Note that the file may not be
-         * present.
-         */
-        Multi,
-
-        /**
-         * Similar to {@link #Usable}, but the file is checksum'd to ensure that
-         * it has not been corrupted in some way.
-         */
-        Validate
-
-    }
-
-    /**
      * Lock information. We write/read it all as one, so let's use a struct for
      * convenience.
      */
@@ -772,7 +713,7 @@ public interface ISVNWCDb {
      * Check for presence, according to the given mode (on how hard we should
      * examine things)
      */
-    boolean checkPristine(File wcRootAbsPath, SVNChecksum sha1Checksum, SVNWCDbCheckMode mode) throws SVNException;
+    boolean checkPristine(File wcRootAbsPath, SVNChecksum sha1Checksum) throws SVNException;
 
     /**
      * If {@link #checkPristine(File, SVNChecksum, SVNWCDbCheckMode)} returns
