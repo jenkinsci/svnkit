@@ -437,8 +437,102 @@ public class SVNWCDb implements ISVNWCDb {
 
     public void addBaseDirectory(File localAbsPath, File reposRelPath, SVNURL reposRootUrl, String reposUuid, long revision, SVNProperties props, long changedRev, SVNDate changedDate,
             String changedAuthor, List<File> children, SVNDepth depth, SVNProperties davCache, SVNSkel conflict, SVNSkel workItems) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+        assert (SVNFileUtil.isAbsolute(localAbsPath));
+        assert (reposRelPath != null);
+        // assert(svn_uri_is_absolute(repos_root_url));
+        assert (reposUuid != null);
+        assert (SVNRevision.isValidRevisionNumber(revision));
+        assert (props != null);
+        assert (SVNRevision.isValidRevisionNumber(changedRev));
+
+        DirParsedInfo parseDir = parseDir(localAbsPath, Mode.ReadWrite);
+        SVNWCDbDir pdh = parseDir.wcDbDir;
+        File localRelpath = parseDir.localRelPath;
+        verifyDirUsable(pdh);
+
+        long reposId = createReposId(pdh.getWCRoot().getSDb(), reposRootUrl, reposUuid);
+
+        InsertBase ibb = new InsertBase();
+        ibb.status = SVNWCDbStatus.Normal;
+        ibb.kind = SVNWCDbKind.Dir;
+        ibb.wcId = pdh.getWCRoot().getWcId();
+        ibb.localRelpath = localRelpath;
+        ibb.reposId = reposId;
+        ibb.reposRelpath = reposRelPath;
+        ibb.revision = revision;
+        ibb.props = props;
+        ibb.changedRev = changedRev;
+        ibb.changedDate = changedDate;
+        ibb.changedAuthor = changedAuthor;
+        ibb.children = children;
+        ibb.depth = depth;
+        ibb.davCache = davCache;
+        ibb.conflict = conflict;
+        ibb.workItems = workItems;
+
+        pdh.getWCRoot().getSDb().runTransaction(ibb);
+        pdh.flushEntries(localAbsPath);
+    }
+
+    private class InsertBase implements SVNSqlJetTransaction {
+
+        public SVNSkel workItems;
+        public SVNSkel conflict;
+        public SVNProperties davCache;
+        public SVNDepth depth = SVNDepth.INFINITY;
+        public List<File> children;
+        public String changedAuthor;
+        public SVNDate changedDate;
+        public long changedRev = INVALID_REVNUM;
+        public SVNProperties props;
+        public long revision = INVALID_REVNUM;
+        public File reposRelpath;
+        public long reposId;
+        public File localRelpath;
+        public long wcId;
+        public SVNWCDbKind kind;
+        public SVNWCDbStatus status;
+        public SVNChecksum checksum;
+        public long translatedSize = INVALID_FILESIZE;
+        public File target;
+
+        public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
+            assert (conflict == null);
+            File parentRelpath = SVNFileUtil.getFileDir(localRelpath);
+            SVNSqlJetStatement stmt = db.getStatement(SVNWCDbStatements.INSERT_NODE);
+            stmt.bindf("isisisrtstrisnnnnns", wcId, localRelpath, 0, parentRelpath, reposId, reposRelpath, revision, presenceMap.get(status), (kind == SVNWCDbKind.Dir) ? SVNDepth.asString(depth)
+                    : null, kindMap.get(kind), changedRev, changedDate, changedAuthor, (kind == SVNWCDbKind.Symlink) ? target : null);
+
+            if (kind == SVNWCDbKind.File) {
+                stmt.bindChecksum(14, checksum);
+                if (translatedSize != INVALID_FILESIZE) {
+                    stmt.bindLong(16, translatedSize);
+                }
+            }
+
+            stmt.bindProperties(15, props);
+            if (davCache != null) {
+                stmt.bindProperties(18, davCache);
+            }
+
+            stmt.done();
+
+            if (kind == SVNWCDbKind.Dir && children != null) {
+                insertIncompleteChildren(db, wcId, localRelpath, revision, children, 0);
+            }
+
+            addWorkItems(db, workItems);
+        }
+
+    }
+
+    public void insertIncompleteChildren(SVNSqlJetDb db, long wcId, File localRelpath, long revision, List<File> children, int opDepth) throws SVNException {
+        SVNSqlJetStatement stmt = db.getStatement(SVNWCDbStatements.INSERT_NODE);
+        for (File name : children) {
+            stmt.bindf("isisnnrsns", wcId, SVNFileUtil.createFilePath(localRelpath, name), opDepth, localRelpath, revision, "incomplete", "unknown");
+            stmt.done();
+        }
+        return;
     }
 
     public void addBaseFile(File localAbspath, File reposRelpath, SVNURL reposRootUrl, String reposUuid, long revision, SVNProperties props, long changedRev, SVNDate changedDate,
