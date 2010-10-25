@@ -954,8 +954,11 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     public File getPristineTempDir(File wcRootAbsPath) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+        assert (SVNFileUtil.isAbsolute(wcRootAbsPath));
+        final DirParsedInfo parsed = parseDir(wcRootAbsPath, Mode.ReadOnly);
+        SVNWCDbDir pdh = parsed.wcDbDir;
+        verifyDirUsable(pdh);
+        return SVNFileUtil.createFilePath(SVNFileUtil.createFilePath(pdh.getWCRoot().getAbsPath(), SVNFileUtil.getAdminDirectoryName()), PRISTINE_TEMPDIR_RELPATH);
     }
 
     public void globalCommit(File localAbspath, long newRevision, SVNDate newDate, String newAuthor, SVNChecksum newChecksum, List<File> newChildren, SVNProperties newDavCache,
