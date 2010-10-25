@@ -584,7 +584,6 @@ public class SVNWCDb implements ISVNWCDb {
     public void addBaseSymlink(File localAbsPath, File reposRelPath, SVNURL reposRootUrl, String reposUuid, long revision, SVNProperties props, long changedRev, SVNDate changedDate,
             String changedAuthor, File target, SVNProperties davCache, SVNSkel conflict, SVNSkel workItems) throws SVNException {
 
-
         assert (SVNFileUtil.isAbsolute(localAbsPath));
         assert (reposRelPath != null);
         // assert(svn_uri_is_absolute(repos_root_url));
@@ -592,7 +591,7 @@ public class SVNWCDb implements ISVNWCDb {
         assert (SVNRevision.isValidRevisionNumber(revision));
         assert (props != null);
         assert (SVNRevision.isValidRevisionNumber(changedRev));
-        assert(target != null);
+        assert (target != null);
 
         DirParsedInfo parseDir = parseDir(localAbsPath, Mode.ReadWrite);
         SVNWCDbDir pdh = parseDir.wcDbDir;
@@ -632,8 +631,14 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     public void addWorkQueue(File wcRootAbsPath, SVNSkel workItem) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+        assert (SVNFileUtil.isAbsolute(wcRootAbsPath));
+        if (workItem == null) {
+            return;
+        }
+        DirParsedInfo parseDir = parseDir(wcRootAbsPath, Mode.ReadWrite);
+        SVNWCDbDir pdh = parseDir.wcDbDir;
+        verifyDirUsable(pdh);
+        addWorkItems(pdh.getWCRoot().getSDb(), workItem);
     }
 
     public boolean checkPristine(File wcRootAbsPath, SVNChecksum sha1Checksum, SVNWCDbCheckMode mode) throws SVNException {
