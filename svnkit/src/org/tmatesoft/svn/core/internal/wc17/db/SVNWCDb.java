@@ -1652,9 +1652,23 @@ public class SVNWCDb implements ISVNWCDb {
 
     };
 
-    public void setActualProperties(SVNSqlJetDb db, long wcId, File localRelpath, SVNProperties props) {
-        // TODO
-        throw new UnsupportedOperationException();
+    public void setActualProperties(SVNSqlJetDb db, long wcId, File localRelpath, SVNProperties props) throws SVNException {
+        SVNSqlJetStatement stmt = db.getStatement(SVNWCDbStatements.UPDATE_ACTUAL_PROPS);
+        stmt.bindf("is", wcId, localRelpath);
+        stmt.bindProperties(3, props);
+        int affectedRows = stmt.done();
+        if(affectedRows==1 || props==null){
+            return;
+        }
+        stmt = db.getStatement(SVNWCDbStatements.INSERT_ACTUAL_PROPS);
+        stmt.bindf("is", wcId, localRelpath);
+        if(localRelpath!=null&&!"".equals(SVNFileUtil.getFilePath(localRelpath))) {
+            stmt.bindString(3, SVNFileUtil.getFilePath(SVNFileUtil.getFileDir(localRelpath)));
+        } else {
+            stmt.bindNull(3);
+        }
+        stmt.bindProperties(4, props);
+        stmt.done();
     }
 
     public SVNProperties readPristineProperties(SVNWCDbDir pdh, File localRelpath) {
