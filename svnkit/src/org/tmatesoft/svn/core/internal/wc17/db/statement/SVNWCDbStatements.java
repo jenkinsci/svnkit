@@ -66,7 +66,8 @@ public enum SVNWCDbStatements {
     UPDATE_BASE_NODE_FILEINFO,
     DETERMINE_TREE_FOR_RECORDING,
     UPDATE_ACTUAL_PROPS,
-    INSERT_ACTUAL_PROPS;
+    INSERT_ACTUAL_PROPS,
+    SELECT_NODE_PROPS;
 
     private Class<? extends SVNSqlJetStatement> statementClass;
 
