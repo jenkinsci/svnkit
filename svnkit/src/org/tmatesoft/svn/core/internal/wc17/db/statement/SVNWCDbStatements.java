@@ -33,7 +33,6 @@ public enum SVNWCDbStatements {
     SELECT_ACTUAL_CONFLICT_VICTIMS(SVNWCDbSelectActualConflictVictims.class),
     SELECT_ACTUAL_TREE_CONFLICT(SVNWCDbSelectActualTreeConflict.class),
     SELECT_ACTUAL_PROPS(SVNWCDbSelectActualProperties.class),
-    SELECT_WORKING_PROPS(SVNWCDbSelectWorkingProperties.class),
     SELECT_BASE_PROPS(SVNWCDbSelectBaseProperties.class),
     SELECT_FILE_EXTERNAL(SVNWCDBSelectFileExternal.class),
     SELECT_WC_LOCK(SVNWCDbSelectWCLock.class),
