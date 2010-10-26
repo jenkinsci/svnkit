@@ -46,6 +46,7 @@ public enum SVNWCDbStatements {
     FSFS_GET_REVPROP(SVNFSFSRevPropGet.class),
     FSFS_SET_REVPROP(SVNFSFSRevPropSet.class),
     UPDATE_BASE_NODE_PRESENCE_REVNUM_AND_REPOS_PATH(SVNUpdateBaseNodePresenceRevnumAndReposPath.class),
+    SELECT_NODE_PROPS(SVNWCDbSelectNodeProps.class),
     INSERT_WCROOT,
     SELECT_REPOSITORY,
     INSERT_REPOSITORY,
@@ -66,8 +67,7 @@ public enum SVNWCDbStatements {
     UPDATE_BASE_NODE_FILEINFO,
     DETERMINE_TREE_FOR_RECORDING,
     UPDATE_ACTUAL_PROPS,
-    INSERT_ACTUAL_PROPS,
-    SELECT_NODE_PROPS;
+    INSERT_ACTUAL_PROPS;
 
     private Class<? extends SVNSqlJetStatement> statementClass;
 
