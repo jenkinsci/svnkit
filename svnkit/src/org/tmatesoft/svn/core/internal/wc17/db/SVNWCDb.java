@@ -2261,9 +2261,17 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     public SVNProperties readProperties(File localAbsPath) throws SVNException {
+        assert (isAbsolute(localAbsPath));
+        final DirParsedInfo parseDir = parseDir(localAbsPath, Mode.ReadWrite);
+        SVNWCDbDir pdh = parseDir.wcDbDir;
+        File localRelPath = parseDir.localRelPath;
+        verifyDirUsable(pdh);
+
+
         SVNProperties props = null;
         boolean have_row = false;
-        SVNSqlJetStatement stmt = getStatementForPath(localAbsPath, SVNWCDbStatements.SELECT_ACTUAL_PROPS);
+        SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_ACTUAL_PROPS);
+        stmt.bindf("is", pdh.getWCRoot().getWcId(),localRelPath);
         try {
             have_row = stmt.next();
 
@@ -2275,11 +2283,12 @@ public class SVNWCDb implements ISVNWCDb {
             stmt.reset();
         }
 
-        if (have_row && props != null)
+        if (have_row) {
             return props;
+        }
 
         /* No local changes. Return the pristine props for this node. */
-        props = readPristineProperties(localAbsPath);
+        props = readPristineProperties(pdh,localRelPath);
         if (props == null) {
             /*
              * Pristine properties are not defined for this node. ### we need to
