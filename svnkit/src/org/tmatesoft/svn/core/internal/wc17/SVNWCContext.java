@@ -4828,7 +4828,7 @@ public class SVNWCContext {
             SVNDate setTime = null;
             if (workItem.getListSize() > 2) {
                 long val = Long.parseLong(workItem.getChild(1).getValue());
-                setTime = ISVNWCDb.Utils.readDate(val);
+                setTime = SVNWCUtils.readDate(val);
             }
             if (setTime != null) {
                 if (SVNFileType.getType(localAbspath).isFile()) {
@@ -4917,7 +4917,7 @@ public class SVNWCContext {
 
     public void getAndRecordFileInfo(File localAbspath, boolean ignoreError) throws SVNException {
         if (localAbspath.exists()) {
-            SVNDate lastModified = ISVNWCDb.Utils.readDate(localAbspath.lastModified());
+            SVNDate lastModified = SVNWCUtils.readDate(localAbspath.lastModified());
             long length = localAbspath.length();
             db.globalRecordFileinfo(localAbspath, length, lastModified);
         }

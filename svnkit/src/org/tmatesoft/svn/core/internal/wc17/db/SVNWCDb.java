@@ -11,8 +11,6 @@
  */
 package org.tmatesoft.svn.core.internal.wc17.db;
 
-import static org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.Utils.readDate;
-
 import java.io.File;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -46,6 +44,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNTreeConflictUtil;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbAdditionInfo.AdditionInfoField;
@@ -774,7 +773,7 @@ public class SVNWCDb implements ISVNWCDb {
                         if (!isColumnNull(lockStmt, SVNWCDbSchema.LOCK__Fields.lock_comment))
                             info.lock.comment = getColumnText(lockStmt, SVNWCDbSchema.LOCK__Fields.lock_comment);
                         if (!isColumnNull(lockStmt, SVNWCDbSchema.LOCK__Fields.lock_date))
-                            info.lock.date = readDate(getColumnInt64(lockStmt, SVNWCDbSchema.LOCK__Fields.lock_date));
+                            info.lock.date = SVNWCUtils.readDate(getColumnInt64(lockStmt, SVNWCDbSchema.LOCK__Fields.lock_date));
                     }
                 }
                 if (f.contains(BaseInfoField.reposRootUrl) || f.contains(BaseInfoField.reposUuid)) {
@@ -793,14 +792,14 @@ public class SVNWCDb implements ISVNWCDb {
                     info.changedRev = getColumnRevNum(stmt, SVNWCDbSchema.NODES__Fields.changed_revision);
                 }
                 if (f.contains(BaseInfoField.changedDate)) {
-                    info.changedDate = readDate(getColumnInt64(stmt, SVNWCDbSchema.NODES__Fields.changed_date));
+                    info.changedDate = SVNWCUtils.readDate(getColumnInt64(stmt, SVNWCDbSchema.NODES__Fields.changed_date));
                 }
                 if (f.contains(BaseInfoField.changedAuthor)) {
                     /* Result may be NULL. */
                     info.changedAuthor = getColumnText(stmt, SVNWCDbSchema.NODES__Fields.changed_author);
                 }
                 if (f.contains(BaseInfoField.lastModTime)) {
-                    info.lastModTime = readDate(getColumnInt64(stmt, SVNWCDbSchema.NODES__Fields.last_mod_time));
+                    info.lastModTime = SVNWCUtils.readDate(getColumnInt64(stmt, SVNWCDbSchema.NODES__Fields.last_mod_time));
                 }
                 if (f.contains(BaseInfoField.depth)) {
                     if (node_kind != SVNWCDbKind.Dir) {
@@ -1617,6 +1616,48 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     public void opSetProps(File localAbsPath, SVNProperties props, SVNSkel conflict, SVNSkel workItems) throws SVNException {
+        assert (SVNFileUtil.isAbsolute(localAbsPath));
+        final DirParsedInfo parsed = parseDir(localAbsPath, Mode.ReadWrite);
+        SVNWCDbDir pdh = parsed.wcDbDir;
+        verifyDirUsable(pdh);
+        SetProperties spb = new SetProperties();
+        spb.props = props;
+        spb.pdh = pdh;
+        spb.conflict = conflict;
+        spb.workItems = workItems;
+        spb.localRelpath = parsed.localRelPath;
+        pdh.getWCRoot().getSDb().runTransaction(spb);
+    }
+
+    private class SetProperties implements SVNSqlJetTransaction {
+
+        SVNProperties props;
+        SVNWCDbDir pdh;
+        File localRelpath;
+        SVNSkel conflict;
+        SVNSkel workItems;
+
+        public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
+            assert(conflict == null);
+            addWorkItems(db, workItems);
+            SVNProperties pristineProps = readPristineProperties(pdh, localRelpath);
+            if(props!=null && pristineProps!=null){
+                SVNProperties propDiffs = SVNWCUtils.propDiffs(props, pristineProps);
+                if(propDiffs.isEmpty()){
+                    props=null;
+                }
+            }
+            setActualProperties(db, pdh.getWCRoot().getWcId(), localRelpath, props);
+        }
+
+    };
+
+    public void setActualProperties(SVNSqlJetDb db, long wcId, File localRelpath, SVNProperties props) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    public SVNProperties readPristineProperties(SVNWCDbDir pdh, File localRelpath) {
         // TODO
         throw new UnsupportedOperationException();
     }
@@ -1935,9 +1976,9 @@ public class SVNWCDb implements ISVNWCDb {
                 }
                 if (f.contains(InfoField.changedDate)) {
                     if (have_work)
-                        info.changedDate = readDate(getColumnInt64(stmt_work, SVNWCDbSchema.NODES__Fields.changed_date));
+                        info.changedDate = SVNWCUtils.readDate(getColumnInt64(stmt_work, SVNWCDbSchema.NODES__Fields.changed_date));
                     else
-                        info.changedDate = readDate(getColumnInt64(stmt_base, SVNWCDbSchema.NODES__Fields.changed_date));
+                        info.changedDate = SVNWCUtils.readDate(getColumnInt64(stmt_base, SVNWCDbSchema.NODES__Fields.changed_date));
                 }
                 if (f.contains(InfoField.changedAuthor)) {
                     if (have_work)
@@ -2059,7 +2100,7 @@ public class SVNWCDb implements ISVNWCDb {
                         if (!isColumnNull(stmt_base_lock, SVNWCDbSchema.LOCK__Fields.lock_comment))
                             info.lock.comment = getColumnText(stmt_base_lock, SVNWCDbSchema.LOCK__Fields.lock_comment);
                         if (!isColumnNull(stmt_base_lock, SVNWCDbSchema.LOCK__Fields.lock_date))
-                            info.lock.date = readDate(getColumnInt64(stmt_base_lock, SVNWCDbSchema.LOCK__Fields.lock_date));
+                            info.lock.date = SVNWCUtils.readDate(getColumnInt64(stmt_base_lock, SVNWCDbSchema.LOCK__Fields.lock_date));
                     }
                 }
             } else if (have_act) {

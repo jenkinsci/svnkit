@@ -835,7 +835,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             if (newBaseProps != null) {
                 assert (newActualProps != null);
                 props = newActualProps;
-                SVNProperties propDiffs = propDiffs(newActualProps, newBaseProps);
+                SVNProperties propDiffs = SVNWCUtils.propDiffs(newActualProps, newBaseProps);
                 if (propDiffs.isEmpty()) {
                     props = null;
                 }
@@ -1260,7 +1260,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         if (!fb.isAddingBaseUnderLocalAdd()) {
             assert (newActualProps != null);
             SVNProperties props = newActualProps;
-            SVNProperties prop_diffs = propDiffs(newActualProps, newBaseProps);
+            SVNProperties prop_diffs = SVNWCUtils.propDiffs(newActualProps, newBaseProps);
             if (prop_diffs.isEmpty()) {
                 props = null;
             }
@@ -2000,31 +2000,6 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             }
         }
         return info;
-    }
-
-    private SVNProperties propDiffs(SVNProperties targetProps, SVNProperties sourceProps) {
-        SVNProperties propdiffs = new SVNProperties();
-        for (Iterator i = sourceProps.nameSet().iterator(); i.hasNext();) {
-            String key = (String) i.next();
-            String propVal1 = sourceProps.getStringValue(key);
-            String propVal2 = targetProps.getStringValue(key);
-            if (propVal2 == null) {
-                SVNPropertyValue p = SVNPropertyValue.create(null);
-                propdiffs.put(key, p);
-            } else if (!propVal1.equals(propVal2)) {
-                SVNPropertyValue p = SVNPropertyValue.create(propVal2);
-                propdiffs.put(key, p);
-            }
-        }
-        for (Iterator i = targetProps.nameSet().iterator(); i.hasNext();) {
-            String key = (String) i.next();
-            String propVal = targetProps.getStringValue(key);
-            if (null == sourceProps.getStringValue(key)) {
-                SVNPropertyValue p = SVNPropertyValue.create(propVal);
-                propdiffs.put(key, p);
-            }
-        }
-        return propdiffs;
     }
 
     private File getNodeRelpathIgnoreErrors(File localAbspath) {
