@@ -278,7 +278,7 @@ public abstract class SVNSqlJetStatement {
     }
 
     public SVNProperties getColumnProperties(Enum f) throws SVNException {
-        return getColumnProperties(f);
+        return getColumnProperties(f.name());
     }
 
     public SVNProperties getColumnProperties(String f) throws SVNException {

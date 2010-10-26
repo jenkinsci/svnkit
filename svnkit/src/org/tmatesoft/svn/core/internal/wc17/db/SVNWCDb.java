@@ -2247,48 +2247,12 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     public SVNProperties readPristineProperties(File localAbsPath) throws SVNException {
-        boolean have_row;
-
-        SVNSqlJetStatement stmt = getStatementForPath(localAbsPath, SVNWCDbStatements.SELECT_WORKING_PROPS);
-        try {
-
-            have_row = stmt.next();
-
-            /*
-             * If there is a WORKING row, then examine its status:
-             *
-             * For adds/copies/moves, then pristine properties are in this row.
-             *
-             * For deletes, the pristines may be located here (as a result of a
-             * copy/move-here), or they are located in BASE. ### right now, we
-             * don't have a strong definition yet. moving to the ### proposed
-             * NODE_DATA system will create more determinism around ### where
-             * props are located and their relation to layered operations.
-             */
-            if (have_row) {
-                SVNWCDbStatus presence;
-
-                /*
-                 * For "base-deleted", it is obvious the pristine props are
-                 * located in the BASE table. Fall through to fetch them.
-                 *
-                 * ### for regular deletes, the properties should be in the
-                 * WORKING ### row. though operation layering and the suggested
-                 * NODE_DATA may ### really be needed to ensure the props are
-                 * always available, ### and what "pristine" really means.
-                 */
-                presence = getColumnToken(stmt, 1, presenceMap2);
-                if (presence != SVNWCDbStatus.BaseDeleted) {
-                    return getColumnProperties(stmt, 0);
-                }
-            }
-        } finally {
-            stmt.reset();
-        }
-
-        /* No WORKING node, so the props must be in the BASE node. */
-        return getBaseProps(localAbsPath);
-
+        assert (isAbsolute(localAbsPath));
+        final DirParsedInfo parseDir = parseDir(localAbsPath, Mode.ReadWrite);
+        SVNWCDbDir pdh = parseDir.wcDbDir;
+        File localRelPath = parseDir.localRelPath;
+        verifyDirUsable(pdh);
+        return readPristineProperties(pdh,localRelPath);
     }
 
     public String readProperty(File localAbsPath, String propname) throws SVNException {
