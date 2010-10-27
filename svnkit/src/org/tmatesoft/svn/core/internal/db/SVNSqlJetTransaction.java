@@ -16,7 +16,6 @@ import org.tmatesoft.svn.core.SVNException;
 
 
 /**
- * @version 1.3
  * @author  TMate Software Ltd.
  */
 public interface SVNSqlJetTransaction {
