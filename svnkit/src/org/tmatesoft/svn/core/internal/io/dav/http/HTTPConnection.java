@@ -289,14 +289,15 @@ class HTTPConnection implements IHTTPConnection {
         HTTPSSLKeyManager keyManager = myKeyManager == null && authManager != null ? createKeyManager() : myKeyManager;
         TrustManager trustManager = myTrustManager == null && authManager != null ? authManager.getTrustManager(myRepository.getLocation()) : myTrustManager;
 
-        String sslRealm = "<" + myHost.getProtocol() + "://" + myHost.getHost() + ":" + myHost.getPort() + ">";
+        String realm = null;
+
         SVNAuthentication httpAuth = myLastValidAuth;
         boolean isAuthForced = authManager != null ? authManager.isAuthenticationForced() : false;
         if (httpAuth == null && isAuthForced) {
-            httpAuth = authManager.getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, sslRealm, null);
+            realm = "<" + myHost.getProtocol() + "://" + myHost.getHost() + ":" + myHost.getPort() + ">";
+            httpAuth = authManager.getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, realm, null);
             myChallengeCredentials = new HTTPBasicAuthentication((SVNPasswordAuthentication)httpAuth, myCharset);
         } 
-        String realm = null;
 
         // 2. create request instance.
         HTTPRequest request = new HTTPRequest(myCharset);
