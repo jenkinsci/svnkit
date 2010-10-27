@@ -51,6 +51,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbAdditionInfo.Additio
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbBaseInfo.BaseInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbDeletionInfo.DeletionInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo.RepositoryInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSelectDeletionInfo;
@@ -2445,8 +2446,17 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     public void removeLock(File localAbsPath) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+        assert (isAbsolute(localAbsPath));
+        DirParsedInfo parseDir = parseDir(localAbsPath, Mode.ReadWrite);
+        SVNWCDbDir pdh = parseDir.wcDbDir;
+        File localRelpath = parseDir.localRelPath;
+        verifyDirUsable(pdh);
+        WCDbRepositoryInfo reposInfo = new WCDbRepositoryInfo();
+        long reposId = scanUpwardsForRepos(reposInfo, pdh.getWCRoot(), localAbsPath, localRelpath);
+        SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.DELETE_LOCK);
+        stmt.bindf("is", reposId, reposInfo.relPath);
+        stmt.done();
+        pdh.flushEntries(localAbsPath);
     }
 
     public void removePristine(File wcRootAbsPath, SVNChecksum sha1Checksum) throws SVNException {

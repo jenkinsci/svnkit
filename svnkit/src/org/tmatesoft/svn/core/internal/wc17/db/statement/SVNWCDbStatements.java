@@ -71,7 +71,8 @@ public enum SVNWCDbStatements {
     INSERT_ACTUAL_TREE_CONFLICTS,
     UPDATE_ACTUAL_CONFLICT_DATA,
     INSERT_ACTUAL_CONFLICT_DATA,
-    DELETE_ACTUAL_EMPTY;
+    DELETE_ACTUAL_EMPTY,
+    DELETE_LOCK;
 
     private Class<? extends SVNSqlJetStatement> statementClass;
 
