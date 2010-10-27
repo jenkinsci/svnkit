@@ -2433,8 +2433,15 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     public void removeBase(File localAbsPath) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+        assert (isAbsolute(localAbsPath));
+        DirParsedInfo parseDir = parseDir(localAbsPath, Mode.ReadWrite);
+        SVNWCDbDir pdh = parseDir.wcDbDir;
+        File localRelpath = parseDir.localRelPath;
+        verifyDirUsable(pdh);
+        SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.DELETE_BASE_NODE);
+        stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelpath);
+        stmt.done();
+        pdh.flushEntries(localAbsPath);
     }
 
     public void removeLock(File localAbsPath) throws SVNException {
