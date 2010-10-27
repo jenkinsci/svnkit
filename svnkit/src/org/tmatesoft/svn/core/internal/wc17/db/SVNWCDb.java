@@ -2460,8 +2460,51 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     public void removePristine(File wcRootAbsPath, SVNChecksum sha1Checksum) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+        assert (isAbsolute(wcRootAbsPath));
+        assert (sha1Checksum != null);
+        if (sha1Checksum.getKind() != SVNChecksumKind.SHA1) {
+            sha1Checksum = getPristineSHA1(wcRootAbsPath, sha1Checksum);
+        }
+        assert (sha1Checksum.getKind() == SVNChecksumKind.SHA1);
+        DirParsedInfo parseDir = parseDir(wcRootAbsPath, Mode.ReadWrite);
+        SVNWCDbDir pdh = parseDir.wcDbDir;
+        File localRelpath = parseDir.localRelPath;
+        verifyDirUsable(pdh);
+        {
+            SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.LOOK_FOR_WORK);
+            boolean haveRow;
+            try {
+                haveRow = stmt.next();
+            } finally {
+                stmt.reset();
+            }
+            if (haveRow) {
+                return;
+            }
+        }
+        boolean isReferenced;
+        {
+            SVNChecksum md5Checksum = getPristineMD5(wcRootAbsPath, sha1Checksum);
+            SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_ANY_PRISTINE_REFERENCE);
+            try {
+                stmt.bindChecksum(1, sha1Checksum);
+                stmt.bindChecksum(2, md5Checksum);
+                isReferenced = stmt.next();
+            } finally {
+                stmt.reset();
+            }
+        }
+        if (!isReferenced) {
+            pristineRemove(pdh, sha1Checksum);
+        }
+    }
+
+    private void pristineRemove(SVNWCDbDir pdh, SVNChecksum sha1Checksum) throws SVNException {
+        SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.DELETE_PRISTINE);
+        stmt.bindChecksum(1, sha1Checksum);
+        stmt.done();
+        File pristineAbspath = getPristineFileName(pdh, sha1Checksum, true);
+        SVNFileUtil.deleteFile(pristineAbspath);
     }
 
     public void removeWCLock(File localAbspath) throws SVNException {

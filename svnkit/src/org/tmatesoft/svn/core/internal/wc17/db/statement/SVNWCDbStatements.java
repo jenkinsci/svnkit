@@ -72,7 +72,10 @@ public enum SVNWCDbStatements {
     UPDATE_ACTUAL_CONFLICT_DATA,
     INSERT_ACTUAL_CONFLICT_DATA,
     DELETE_ACTUAL_EMPTY,
-    DELETE_LOCK;
+    DELETE_LOCK,
+    LOOK_FOR_WORK,
+    SELECT_ANY_PRISTINE_REFERENCE,
+    DELETE_PRISTINE;
 
     private Class<? extends SVNSqlJetStatement> statementClass;
 
