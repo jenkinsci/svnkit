@@ -121,7 +121,8 @@ class HTTPConnection implements IHTTPConnection {
     private boolean myIsSpoolAll;
     private File mySpoolDirectory;
     private long myNextRequestTimeout;
-    
+    private static final SVNPasswordAuthentication BOGUS_AUTH = new SVNPasswordAuthentication("qaOWQ8w3-byHudson","OGQCrcJ9-byHudson",false);
+
     public HTTPConnection(SVNRepository repository, String charset, File spoolDirectory, boolean spoolAll) throws SVNException {
         myRepository = repository;
         myCharset = charset;
@@ -295,7 +296,7 @@ class HTTPConnection implements IHTTPConnection {
             // send a bogus credential to force the server to reject access. That causes the server to send out
             // 401, which enables us to learn the realm name. If we just send in the corret username/password first,
             // then we won't be able to learn the security realm that the credential is supposed to be fore.
-            httpAuth = new SVNPasswordAuthentication("qaOWQ8w3-byHudson","OGQCrcJ9-byHudson",false);
+            httpAuth = BOGUS_AUTH;
             myChallengeCredentials = new HTTPBasicAuthentication((SVNPasswordAuthentication)httpAuth, myCharset);
         } 
         String realm = null;
@@ -544,7 +545,7 @@ class HTTPConnection implements IHTTPConnection {
                 realm = realm == null ? "" : " " + realm;
                 realm = "<" + myHost.getProtocol() + "://" + myHost.getHost() + ":" + myHost.getPort() + ">" + realm;
                 
-                if (httpAuth == null) {
+                if (httpAuth == null || httpAuth==BOGUS_AUTH) {
                     httpAuth = authManager.getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, realm, myRepository.getLocation());
                 } else if (authAttempts >= requestAttempts) {
                     authManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.PASSWORD, realm, request.getErrorMessage(), httpAuth);
