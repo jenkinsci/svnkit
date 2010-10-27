@@ -289,15 +289,16 @@ class HTTPConnection implements IHTTPConnection {
         HTTPSSLKeyManager keyManager = myKeyManager == null && authManager != null ? createKeyManager() : myKeyManager;
         TrustManager trustManager = myTrustManager == null && authManager != null ? authManager.getTrustManager(myRepository.getLocation()) : myTrustManager;
 
-        String realm = null;
-
         SVNAuthentication httpAuth = myLastValidAuth;
         boolean isAuthForced = authManager != null ? authManager.isAuthenticationForced() : false;
         if (httpAuth == null && isAuthForced) {
-            realm = "<" + myHost.getProtocol() + "://" + myHost.getHost() + ":" + myHost.getPort() + ">";
-            httpAuth = authManager.getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, realm, null);
+            // send a bogus credential to force the server to reject access. That causes the server to send out
+            // 401, which enables us to learn the realm name. If we just send in the corret username/password first,
+            // then we won't be able to learn the security realm that the credential is supposed to be fore.
+            httpAuth = new SVNPasswordAuthentication("qaOWQ8w3-byHudson","OGQCrcJ9-byHudson",false);
             myChallengeCredentials = new HTTPBasicAuthentication((SVNPasswordAuthentication)httpAuth, myCharset);
         } 
+        String realm = null;
 
         // 2. create request instance.
         HTTPRequest request = new HTTPRequest(myCharset);
