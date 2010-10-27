@@ -3619,9 +3619,19 @@ public class SVNWCDb implements ISVNWCDb {
         }
     }
 
-    private void workingActualRemove(File localAbspath) {
-        // TODO
-        throw new UnsupportedOperationException();
+    private void workingActualRemove(File localAbspath) throws SVNException {
+        assert (isAbsolute(localAbspath));
+        DirParsedInfo parseDir = parseDir(localAbspath, Mode.ReadWrite);
+        SVNWCDbDir pdh = parseDir.wcDbDir;
+        File localRelpath = parseDir.localRelPath;
+        verifyDirUsable(pdh);
+        SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.DELETE_WORKING_NODES);
+        stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelpath);
+        stmt.done();
+        stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.DELETE_ACTUAL_NODE);
+        stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelpath);
+        stmt.done();
+        pdh.flushEntries(localAbspath);
     }
 
     private boolean isAddOrRootOfCopy(File localAbspath) {
