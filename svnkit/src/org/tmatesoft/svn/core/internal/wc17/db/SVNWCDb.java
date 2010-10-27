@@ -3524,14 +3524,20 @@ public class SVNWCDb implements ISVNWCDb {
         } else if (!newWorkingNone && workingNone) {
             workingInsert(newWorkingStatus, localAbspath);
         } else if (!newWorkingNone && !workingNone && newWorkingStatus != workingStatus) {
-            workingUpdatePresence(newWorkingStatus, localAbspath);
+            workingUpdatePresence(localAbspath, newWorkingStatus);
         }
 
     }
 
-    private void workingUpdatePresence(SVNWCDbStatus newWorkingStatus, File localAbspath) {
-        // TODO
-        throw new UnsupportedOperationException();
+    private void workingUpdatePresence(File localAbspath, SVNWCDbStatus status) throws SVNException {
+        assert(isAbsolute(localAbspath));
+        DirParsedInfo parsed = parseDir(localAbspath, Mode.ReadWrite);
+        SVNWCDbDir pdh = parsed.wcDbDir;
+        File localRelpath = parsed.localRelPath;
+        verifyDirUsable(pdh);
+        SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.UPDATE_NODE_WORKING_PRESENCE);
+        stmt.bindf("ist", pdh.getWCRoot().getWcId(), localRelpath, presenceMap.get(status));
+        stmt.done();
     }
 
     private void workingInsert(SVNWCDbStatus newWorkingStatus, File localAbspath) {

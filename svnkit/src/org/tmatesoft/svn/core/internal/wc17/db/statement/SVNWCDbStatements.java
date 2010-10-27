@@ -75,7 +75,8 @@ public enum SVNWCDbStatements {
     DELETE_LOCK,
     LOOK_FOR_WORK,
     SELECT_ANY_PRISTINE_REFERENCE,
-    DELETE_PRISTINE;
+    DELETE_PRISTINE,
+    UPDATE_NODE_WORKING_PRESENCE;
 
     private Class<? extends SVNSqlJetStatement> statementClass;
 
