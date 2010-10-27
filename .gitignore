@@ -1,3 +1,7 @@
 *.iml
 *.ipr
 *.iws
+build
+target
+m2repo
+bin
