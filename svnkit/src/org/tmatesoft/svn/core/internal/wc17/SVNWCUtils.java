@@ -11,15 +11,15 @@
  */
 package org.tmatesoft.svn.core.internal.wc17;
 
+import java.io.File;
 import java.util.Iterator;
 
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 
-
 /**
- * @author  TMate Software Ltd.
+ * @author TMate Software Ltd.
  */
 public class SVNWCUtils {
 
@@ -51,6 +51,26 @@ public class SVNWCUtils {
             }
         }
         return propdiffs;
+    }
+
+    public static long relpathDepth(File relpath) {
+        if (relpath == null) {
+            return 0;
+        }
+        return relpathDepth(relpath.getPath());
+    }
+
+    public static long relpathDepth(String relpath) {
+        int n = 1;
+        if (relpath == null) {
+            return 0;
+        }
+        int length = relpath.length();
+        for (int i = 0; i < length; i++) {
+            if (relpath.charAt(i) == '/')
+                n++;
+        }
+        return n;
     }
 
 }

@@ -18,6 +18,7 @@ import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -35,6 +36,7 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb.Mode;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetTransaction;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
@@ -3522,7 +3524,7 @@ public class SVNWCDb implements ISVNWCDb {
             workingActualRemove(localAbspath);
             forgetDirectoryTemp(localAbspath);
         } else if (!newWorkingNone && workingNone) {
-            workingInsert(newWorkingStatus, localAbspath);
+            workingInsert(localAbspath, newWorkingStatus);
         } else if (!newWorkingNone && !workingNone && newWorkingStatus != workingStatus) {
             workingUpdatePresence(localAbspath, newWorkingStatus);
         }
@@ -3530,7 +3532,7 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     private void workingUpdatePresence(File localAbspath, SVNWCDbStatus status) throws SVNException {
-        assert(isAbsolute(localAbspath));
+        assert (isAbsolute(localAbspath));
         DirParsedInfo parsed = parseDir(localAbspath, Mode.ReadWrite);
         SVNWCDbDir pdh = parsed.wcDbDir;
         File localRelpath = parsed.localRelPath;
@@ -3540,9 +3542,81 @@ public class SVNWCDb implements ISVNWCDb {
         stmt.done();
     }
 
-    private void workingInsert(SVNWCDbStatus newWorkingStatus, File localAbspath) {
-        // TODO
-        throw new UnsupportedOperationException();
+    private void workingInsert(File localAbspath, SVNWCDbStatus status) throws SVNException {
+        assert (isAbsolute(localAbspath));
+        DirParsedInfo parseDir = parseDir(localAbspath, Mode.ReadWrite);
+        SVNWCDbDir pdh = parseDir.wcDbDir;
+        File localRelpath = parseDir.localRelPath;
+        verifyDirUsable(pdh);
+        CopyWorkingFromBase iwb = new CopyWorkingFromBase();
+        iwb.wcId = pdh.getWCRoot().getWcId();
+        iwb.localRelpath = localRelpath;
+        iwb.presence = status;
+        iwb.opDepth = SVNWCUtils.relpathDepth(localRelpath);
+        pdh.getWCRoot().getSDb().runTransaction(iwb);
+        pdh.flushEntries(localAbspath);
+    }
+
+    private abstract class InsertWorking implements SVNSqlJetTransaction {
+
+        public SVNWCDbStatus presence;
+        public SVNWCDbKind kind;
+        public long wcId;
+        public File localRelpath;
+        public long opDepth;
+        public SVNProperties props;
+        public long changedRev = INVALID_REVNUM;
+        public SVNDate changedDate;
+        public String changedAuthor;
+        public long originalReposId;
+        public File originalReposRelpath;
+        public long originalRevnum;
+        public boolean movedHere;
+        public List<File> children;
+        public SVNDepth depth = SVNDepth.INFINITY;
+        public SVNChecksum checksum;
+        public String target;
+        public SVNSkel work_items;
+    }
+
+    private static class RelpathOpDepth {
+
+        public File localRelpath;
+        public long opDepth;
+    };
+
+    private class CopyWorkingFromBase extends InsertWorking {
+
+        public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
+            SVNSqlJetStatement stmt = db.getStatement(SVNWCDbStatements.INSERT_WORKING_NODE_FROM_BASE);
+            stmt.bindf("isit", wcId, localRelpath, opDepth, presenceMap.get(presence));
+            stmt.done();
+            boolean haveRow;
+            List<RelpathOpDepth> nodes = new LinkedList<SVNWCDb.RelpathOpDepth>();
+            stmt = db.getStatement(SVNWCDbStatements.SELECT_WORKING_OP_DEPTH_RECURSIVE);
+            try {
+                stmt.bindf("is", wcId, localRelpath);
+                haveRow = stmt.next();
+                while (haveRow) {
+                    long opDepth = stmt.getColumnLong(SVNWCDbSchema.NODES__Fields.op_depth);
+                    SVNWCDbStatus status = presenceMap2.get(stmt.getColumnString(SVNWCDbSchema.NODES__Fields.presence));
+                    if (status != SVNWCDbStatus.Excluded) {
+                        RelpathOpDepth rod = new RelpathOpDepth();
+                        rod.localRelpath = SVNFileUtil.createFilePath(stmt.getColumnString(SVNWCDbSchema.NODES__Fields.local_relpath));
+                        rod.opDepth = opDepth;
+                        nodes.add(rod);
+                    }
+                    haveRow = stmt.next();
+                }
+            } finally {
+                stmt.reset();
+            }
+            for (RelpathOpDepth rod : nodes) {
+                stmt = db.getStatement(SVNWCDbStatements.UPDATE_OP_DEPTH);
+                stmt.bindf("isii", wcId, rod.localRelpath, rod.opDepth, opDepth);
+                stmt.done();
+            }
+        }
     }
 
     private void workingActualRemove(File localAbspath) {
