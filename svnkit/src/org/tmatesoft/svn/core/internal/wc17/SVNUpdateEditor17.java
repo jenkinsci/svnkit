@@ -2303,7 +2303,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                 }
             }
         }
-        myWcContext.getDb().opSetBaseIncompleteTemp(localAbspath);
+        myWcContext.getDb().opSetBaseIncompleteTemp(localAbspath, false);
         if (myIsDepthSticky) {
             SVNDepth depth = myWcContext.getDb().getBaseInfo(localAbspath, BaseInfoField.depth).depth;
             if (depth != myRequestedDepth) {

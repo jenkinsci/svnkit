@@ -3729,7 +3729,22 @@ public class SVNWCDb implements ISVNWCDb {
         stmt.done();
     }
 
-    public void opSetBaseIncompleteTemp(File localAbspath) {
+    public void opSetBaseIncompleteTemp(File localDirAbspath, boolean incomplete) throws SVNException {
+        SVNWCDbStatus baseStatus = getBaseInfo(localDirAbspath, BaseInfoField.status).status;
+        assert(baseStatus == SVNWCDbStatus.Normal || baseStatus == SVNWCDbStatus.Incomplete);
+        SVNSqlJetStatement stmt = getStatementForPath(localDirAbspath, SVNWCDbStatements.UPDATE_NODE_BASE_PRESENCE);
+        stmt.bindString(3, incomplete ? "incomplete" : "normal");
+        int affectedNodeRows = stmt.done();
+        int affectedRows = affectedNodeRows;
+        if(affectedRows>0) {
+            SVNWCDbDir pdh = getOrCreateDir(localDirAbspath);
+            if(pdh!=null) {
+                pdh.flushEntries(localDirAbspath);
+            }
+        }
+    }
+
+    private SVNWCDbDir getOrCreateDir(File localDirAbspath) {
         // TODO
         throw new UnsupportedOperationException();
     }
