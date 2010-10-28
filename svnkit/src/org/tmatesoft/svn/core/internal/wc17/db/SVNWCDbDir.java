@@ -13,6 +13,8 @@ package org.tmatesoft.svn.core.internal.wc17.db;
 
 import java.io.File;
 
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb.Mode;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
@@ -78,7 +80,16 @@ public class SVNWCDbDir {
         return SVNFileUtil.createFilePath(relativePath);
     }
 
-    public void flushEntries(File localAbspath) {
+    public void flushEntries(File localAbspath) throws SVNException {
+        if (admAccess != null) {
+            admAccess.close();
+        }
+        if (localAbspath != null && localAbspath.equals(this.localAbsPath) && !localAbspath.equals(wcRoot.getAbsPath())) {
+            SVNWCDbDir parentPdh = wcRoot.getDb().navigateToParent(this, Mode.ReadOnly);
+            if (parentPdh != null && parentPdh.getAdmAccess() != null) {
+                parentPdh.getAdmAccess().close();
+            }
+        }
     }
 
 }

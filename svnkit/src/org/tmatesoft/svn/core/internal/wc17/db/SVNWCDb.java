@@ -224,7 +224,7 @@ public class SVNWCDb implements ISVNWCDb {
         SVNWCDbDir pdh = new SVNWCDbDir(localAbsPath);
 
         /* Create the WCROOT for this directory. */
-        pdh.setWCRoot(new SVNWCDbRoot(localAbsPath, createDb.sDb, createDb.wcId, WC_FORMAT_17, false, false));
+        pdh.setWCRoot(new SVNWCDbRoot(this, localAbsPath, createDb.sDb, createDb.wcId, WC_FORMAT_17, false, false));
 
         /* The PDH is complete. Stash it into DB. */
         dirData.put(localAbsPath, pdh);
@@ -1317,11 +1317,11 @@ public class SVNWCDb implements ISVNWCDb {
              * inside the wcroot, but we know the abspath is this directory (ie.
              * where we found it).
              */
-            info.wcDbDir.setWCRoot(new SVNWCDbRoot(localAbsPath, sDb, wcId, FORMAT_FROM_SDB, autoUpgrade, enforceEmptyWQ));
+            info.wcDbDir.setWCRoot(new SVNWCDbRoot(this, localAbsPath, sDb, wcId, FORMAT_FROM_SDB, autoUpgrade, enforceEmptyWQ));
 
         } else {
             /* We found a wc-1 working copy directory. */
-            info.wcDbDir.setWCRoot(new SVNWCDbRoot(localAbsPath, null, UNKNOWN_WC_ID, wc_format, autoUpgrade, enforceEmptyWQ));
+            info.wcDbDir.setWCRoot(new SVNWCDbRoot(this, localAbsPath, null, UNKNOWN_WC_ID, wc_format, autoUpgrade, enforceEmptyWQ));
 
             /*
              * Don't test for a directory obstructing a versioned file. The wc-1
@@ -1387,7 +1387,7 @@ public class SVNWCDb implements ISVNWCDb {
                     /*
                      * wcID = 1 ## # it is hack .
                      */
-                    parent_pdh.setWCRoot(new SVNWCDbRoot(parent_pdh.getLocalAbsPath(), sDb, 1, FORMAT_FROM_SDB, autoUpgrade, enforceEmptyWQ));
+                    parent_pdh.setWCRoot(new SVNWCDbRoot(this, parent_pdh.getLocalAbsPath(), sDb, 1, FORMAT_FROM_SDB, autoUpgrade, enforceEmptyWQ));
 
                     dirData.put(parent_pdh.getLocalAbsPath(), parent_pdh);
 
@@ -2988,7 +2988,7 @@ public class SVNWCDb implements ISVNWCDb {
 
     }
 
-    private SVNWCDbDir navigateToParent(SVNWCDbDir childPdh, Mode sMode) throws SVNException {
+    public SVNWCDbDir navigateToParent(SVNWCDbDir childPdh, Mode sMode) throws SVNException {
         SVNWCDbDir parentPdh = childPdh.getParent();
         if (parentPdh != null && parentPdh.getWCRoot() != null)
             return parentPdh;
@@ -3725,28 +3725,32 @@ public class SVNWCDb implements ISVNWCDb {
         verifyDirUsable(pdh);
         pdh.flushEntries(localAbspath);
         SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.DELETE_WORKING_NODES);
-        stmt.bindf("is",pdh.getWCRoot().getWcId(),localRelpath);
+        stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelpath);
         stmt.done();
     }
 
     public void opSetBaseIncompleteTemp(File localDirAbspath, boolean incomplete) throws SVNException {
         SVNWCDbStatus baseStatus = getBaseInfo(localDirAbspath, BaseInfoField.status).status;
-        assert(baseStatus == SVNWCDbStatus.Normal || baseStatus == SVNWCDbStatus.Incomplete);
+        assert (baseStatus == SVNWCDbStatus.Normal || baseStatus == SVNWCDbStatus.Incomplete);
         SVNSqlJetStatement stmt = getStatementForPath(localDirAbspath, SVNWCDbStatements.UPDATE_NODE_BASE_PRESENCE);
         stmt.bindString(3, incomplete ? "incomplete" : "normal");
         int affectedNodeRows = stmt.done();
         int affectedRows = affectedNodeRows;
-        if(affectedRows>0) {
-            SVNWCDbDir pdh = getOrCreateDir(localDirAbspath);
-            if(pdh!=null) {
+        if (affectedRows > 0) {
+            SVNWCDbDir pdh = getOrCreateDir(localDirAbspath, false);
+            if (pdh != null) {
                 pdh.flushEntries(localDirAbspath);
             }
         }
     }
 
-    private SVNWCDbDir getOrCreateDir(File localDirAbspath) {
-        // TODO
-        throw new UnsupportedOperationException();
+    private SVNWCDbDir getOrCreateDir(File localDirAbspath, boolean createAllowed) {
+        SVNWCDbDir pdh = dirData.get(localDirAbspath);
+        if (pdh == null && createAllowed) {
+            pdh = new SVNWCDbDir(localDirAbspath);
+            dirData.put(localDirAbspath, pdh);
+        }
+        return pdh;
     }
 
     public void opSetDirDepthTemp(File localAbspath, SVNDepth requestedDepth) {

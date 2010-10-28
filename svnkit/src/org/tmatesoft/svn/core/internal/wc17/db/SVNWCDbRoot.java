@@ -20,17 +20,16 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
-import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbLock;
-import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
- * @version 1.3
  * @author TMate Software Ltd.
  */
 public class SVNWCDbRoot {
+
+    private SVNWCDb db;
 
     /** Location of this wcroot in the filesystem. */
     private File absPath;
@@ -55,7 +54,7 @@ public class SVNWCDbRoot {
      */
     private List<SVNWCDbLock> ownedLocks = new ArrayList<ISVNWCDb.SVNWCDbLock>();
 
-    public SVNWCDbRoot(File absPath, SVNSqlJetDb sDb, long wcId, int format, boolean autoUpgrade, boolean enforceEmptyWQ) throws SVNException {
+    public SVNWCDbRoot(SVNWCDb db, File absPath, SVNSqlJetDb sDb, long wcId, int format, boolean autoUpgrade, boolean enforceEmptyWQ) throws SVNException {
         if (sDb != null) {
             try {
                 format = sDb.getDb().getOptions().getSchemaVersion();
@@ -103,11 +102,16 @@ public class SVNWCDbRoot {
             sDb.verifyNoWork();
         }
 
+        this.db = db;
         this.absPath = absPath;
         this.sDb = sDb;
         this.wcId = wcId;
         this.format = format;
 
+    }
+
+    public SVNWCDb getDb() {
+        return db;
     }
 
     public File getAbsPath() {
