@@ -1583,7 +1583,7 @@ public interface ISVNWCDb {
 
     void opSetBaseIncompleteTemp(File localDirAbspath, boolean incomplete) throws SVNException;
 
-    void opSetDirDepthTemp(File localAbspath, SVNDepth requestedDepth);
+    void opSetDirDepthTemp(File localAbspath, SVNDepth requestedDepth) throws SVNException;
 
     void opRemoveEntryTemp(File localAbspath);
 

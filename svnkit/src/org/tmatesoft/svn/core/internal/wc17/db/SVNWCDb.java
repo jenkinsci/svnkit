@@ -3753,9 +3753,35 @@ public class SVNWCDb implements ISVNWCDb {
         return pdh;
     }
 
-    public void opSetDirDepthTemp(File localAbspath, SVNDepth requestedDepth) {
-        // TODO
-        throw new UnsupportedOperationException();
+    public void opSetDirDepthTemp(File localAbspath, SVNDepth depth) throws SVNException {
+        assert (isAbsolute(localAbspath));
+        assert (depth.getId() >= SVNDepth.EMPTY.getId() && depth.getId() <= SVNDepth.INFINITY.getId());
+        DirParsedInfo parseDir = parseDir(localAbspath, Mode.ReadWrite);
+        SVNWCDbDir pdh = parseDir.wcDbDir;
+        File localRelpath = parseDir.localRelPath;
+        verifyDirUsable(pdh);
+        updateDepthValues(localAbspath, pdh, localRelpath, depth);
+    }
+
+    private void updateDepthValues(File localAbspath, SVNWCDbDir pdh, File localRelpath, SVNDepth depth) throws SVNException {
+        boolean excluded = (depth == SVNDepth.EXCLUDE);
+        pdh.flushEntries(localAbspath);
+        SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(excluded ? SVNWCDbStatements.UPDATE_NODE_BASE_EXCLUDED : SVNWCDbStatements.UPDATE_NODE_BASE_DEPTH);
+        stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelpath);
+        if (!excluded) {
+            stmt.bindString(3, SVNDepth.asString(depth));
+        } else {
+            stmt.bindNull(3);
+        }
+        stmt.done();
+        stmt = pdh.getWCRoot().getSDb().getStatement(excluded ? SVNWCDbStatements.UPDATE_NODE_WORKING_EXCLUDED : SVNWCDbStatements.UPDATE_NODE_WORKING_DEPTH);
+        stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelpath);
+        if (!excluded) {
+            stmt.bindString(3, SVNDepth.asString(depth));
+        } else {
+            stmt.bindNull(3);
+        }
+        stmt.done();
     }
 
     public void opRemoveEntryTemp(File localAbspath) {
