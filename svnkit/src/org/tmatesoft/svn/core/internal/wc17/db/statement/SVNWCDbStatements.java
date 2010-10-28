@@ -86,7 +86,9 @@ public enum SVNWCDbStatements {
     UPDATE_NODE_BASE_EXCLUDED,
     UPDATE_NODE_BASE_DEPTH,
     UPDATE_NODE_WORKING_EXCLUDED,
-    UPDATE_NODE_WORKING_DEPTH;
+    UPDATE_NODE_WORKING_DEPTH,
+    UPDATE_BASE_REVISION,
+    UPDATE_BASE_REPOS;
 
     private Class<? extends SVNSqlJetStatement> statementClass;
 

@@ -1587,7 +1587,7 @@ public interface ISVNWCDb {
 
     void opRemoveEntryTemp(File localAbspath) throws SVNException;
 
-    void opSetRevAndReposRelpathTemp(File localAbspath, long newRevision, boolean setReposRelpath, File newReposRelpath, SVNURL reposRootUrl, String reposUuid);
+    void opSetRevAndReposRelpathTemp(File localAbspath, long newRevision, boolean setReposRelpath, File newReposRelpath, SVNURL reposRootUrl, String reposUuid) throws SVNException;
 
     void obtainWCLock(File localAbspath, int i, boolean b);
 

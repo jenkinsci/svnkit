@@ -3801,10 +3801,48 @@ public class SVNWCDb implements ISVNWCDb {
         stmt.done();
     }
 
-    public void opSetRevAndReposRelpathTemp(File localAbspath, long newRevision, boolean setReposRelpath, File newReposRelpath, SVNURL reposRootUrl, String reposUuid) {
-        // TODO
-        throw new UnsupportedOperationException();
+    public void opSetRevAndReposRelpathTemp(File localAbspath, long revision, boolean setReposRelpath, File reposRelpath, SVNURL reposRootUrl, String reposUuid) throws SVNException {
+        assert (isAbsolute(localAbspath));
+        assert (SVNRevision.isValidRevisionNumber(revision) || setReposRelpath);
+        DirParsedInfo parseDir = parseDir(localAbspath, Mode.ReadWrite);
+        SVNWCDbDir pdh = parseDir.wcDbDir;
+        File localRelpath = parseDir.localRelPath;
+        verifyDirUsable(pdh);
+        SetRevRelpath baton = new SetRevRelpath();
+        baton.rev = revision;
+        baton.setReposRelpath = setReposRelpath;
+        baton.reposRelpath = reposRelpath;
+        baton.reposRootUrl = reposRootUrl;
+        baton.reposUuid = reposUuid;
+        pdh.flushEntries(localAbspath);
+        pdh.getWCRoot().getSDb().runTransaction(baton);
     }
+
+    private class SetRevRelpath implements SVNSqlJetTransaction {
+
+        public SVNWCDbDir pdh;
+        public File localRelpath;
+        public long rev;
+        public boolean setReposRelpath;
+        public File reposRelpath;
+        public SVNURL reposRootUrl;
+        public String reposUuid;
+
+        public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
+            SVNSqlJetStatement stmt;
+            if (SVNRevision.isValidRevisionNumber(rev)) {
+                stmt = db.getStatement(SVNWCDbStatements.UPDATE_BASE_REVISION);
+                stmt.bindf("isi", pdh.getWCRoot().getWcId(), localRelpath, rev);
+                stmt.done();
+            }
+            if (setReposRelpath) {
+                long reposId = createReposId(pdh.getWCRoot().getSDb(), reposRootUrl, reposUuid);
+                stmt = db.getStatement(SVNWCDbStatements.UPDATE_BASE_REPOS);
+                stmt.bindf("isis", pdh.getWCRoot().getWcId(), localRelpath, reposId, reposRelpath);
+                stmt.done();
+            }
+        }
+    };
 
     public void obtainWCLock(File localAbspath, int i, boolean b) {
         // TODO
