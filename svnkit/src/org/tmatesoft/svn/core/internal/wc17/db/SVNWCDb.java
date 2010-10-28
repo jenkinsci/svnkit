@@ -3634,9 +3634,40 @@ public class SVNWCDb implements ISVNWCDb {
         pdh.flushEntries(localAbspath);
     }
 
-    private boolean isAddOrRootOfCopy(File localAbspath) {
-        // TODO
-        throw new UnsupportedOperationException();
+    private boolean isAddOrRootOfCopy(File localAbspath) throws SVNException {
+        WCDbAdditionInfo scanAddition = scanAddition(localAbspath, AdditionInfoField.status, AdditionInfoField.opRootAbsPath, AdditionInfoField.originalReposRelPath,
+                AdditionInfoField.originalRootUrl, AdditionInfoField.originalUuid, AdditionInfoField.originalRevision);
+        SVNWCDbStatus status = scanAddition.status;
+        File opRootAbspath = scanAddition.opRootAbsPath;
+        File originalReposRelpath = scanAddition.originalReposRelPath;
+        SVNURL originalReposRoot = scanAddition.originalRootUrl;
+        String originalReposUuid = scanAddition.originalUuid;
+        long originalRevision = scanAddition.originalRevision;
+        assert (status == SVNWCDbStatus.Added || status == SVNWCDbStatus.Copied);
+        assert (opRootAbspath != null);
+        boolean addOrRootOfCopy = (status == SVNWCDbStatus.Added || localAbspath.equals(opRootAbspath));
+        if (addOrRootOfCopy && status == SVNWCDbStatus.Copied) {
+            File parentAbspath = SVNFileUtil.getFileDir(localAbspath);
+            String name = SVNFileUtil.getFileName(localAbspath);
+            try {
+                scanAddition = scanAddition(parentAbspath, AdditionInfoField.status, AdditionInfoField.originalReposRelPath, AdditionInfoField.originalRootUrl, AdditionInfoField.originalUuid,
+                        AdditionInfoField.originalRevision);
+                SVNWCDbStatus parentStatus = scanAddition.status;
+                File parentOriginalReposRelpath = scanAddition.originalReposRelPath;
+                SVNURL parentOriginalReposRoot = scanAddition.originalRootUrl;
+                String parentOriginalReposUuid = scanAddition.originalUuid;
+                long parentOriginalRevision = scanAddition.originalRevision;
+                if (parentStatus == SVNWCDbStatus.Copied && originalRevision == parentOriginalRevision && originalReposUuid.equals(parentOriginalReposUuid)
+                        && originalReposRoot.equals(parentOriginalReposRoot) && originalReposRelpath.equals(SVNFileUtil.createFilePath(parentOriginalReposRelpath, name))) {
+                    addOrRootOfCopy = false;
+                }
+            } catch (SVNException e) {
+                if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND) {
+                    throw e;
+                }
+            }
+        }
+        return addOrRootOfCopy;
     }
 
     public File getWCRootTempDir(File localAbspath) {
