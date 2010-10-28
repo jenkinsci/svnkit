@@ -1585,7 +1585,7 @@ public interface ISVNWCDb {
 
     void opSetDirDepthTemp(File localAbspath, SVNDepth requestedDepth) throws SVNException;
 
-    void opRemoveEntryTemp(File localAbspath);
+    void opRemoveEntryTemp(File localAbspath) throws SVNException;
 
     void opSetRevAndReposRelpathTemp(File localAbspath, long newRevision, boolean setReposRelpath, File newReposRelpath, SVNURL reposRootUrl, String reposUuid);
 

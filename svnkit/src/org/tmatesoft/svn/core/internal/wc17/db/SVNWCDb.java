@@ -3784,9 +3784,21 @@ public class SVNWCDb implements ISVNWCDb {
         stmt.done();
     }
 
-    public void opRemoveEntryTemp(File localAbspath) {
-        // TODO
-        throw new UnsupportedOperationException();
+    public void opRemoveEntryTemp(File localAbspath) throws SVNException {
+        assert (isAbsolute(localAbspath));
+        DirParsedInfo parseDir = parseDir(localAbspath, Mode.ReadWrite);
+        SVNWCDbDir pdh = parseDir.wcDbDir;
+        File localRelpath = parseDir.localRelPath;
+        verifyDirUsable(pdh);
+        pdh.flushEntries(localAbspath);
+        SVNSqlJetDb sdb = pdh.getWCRoot().getSDb();
+        long wcId = pdh.getWCRoot().getWcId();
+        SVNSqlJetStatement stmt = sdb.getStatement(SVNWCDbStatements.DELETE_NODES);
+        stmt.bindf("is", wcId, localRelpath);
+        stmt.done();
+        stmt = sdb.getStatement(SVNWCDbStatements.DELETE_ACTUAL_NODE);
+        stmt.bindf("is", wcId, localRelpath);
+        stmt.done();
     }
 
     public void opSetRevAndReposRelpathTemp(File localAbspath, long newRevision, boolean setReposRelpath, File newReposRelpath, SVNURL reposRootUrl, String reposUuid) {
