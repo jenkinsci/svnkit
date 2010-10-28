@@ -3844,7 +3844,123 @@ public class SVNWCDb implements ISVNWCDb {
         }
     };
 
-    public void obtainWCLock(File localAbspath, int i, boolean b) {
+    public void obtainWCLock(File localAbspath, int levelsToLock, boolean stealLock) throws SVNException {
+        assert (isAbsolute(localAbspath));
+        assert (levelsToLock >= -1);
+        DirParsedInfo parseDir = parseDir(localAbspath, Mode.ReadWrite);
+        SVNWCDbDir pdh = parseDir.wcDbDir;
+        File localRelpath = parseDir.localRelPath;
+        verifyDirUsable(pdh);
+        WCLockObtain baton = new WCLockObtain();
+        baton.pdh = pdh;
+        baton.localRelpath = localRelpath;
+        if (!stealLock) {
+            SVNWCDbRoot wcroot = pdh.getWCRoot();
+            int depth = SVNWCUtils.relpathDepth(localRelpath);
+            for (SVNWCDbLock lock : wcroot.getOwnedLocks()) {
+                if (SVNPathUtil.isAncestor(SVNFileUtil.getFilePath(lock.localRelpath), SVNFileUtil.getFilePath(localRelpath))
+                        && (lock.levels == -1 || (lock.levels + SVNWCUtils.relpathDepth(lock.localRelpath)) >= depth)) {
+                    File lockAbspath = SVNFileUtil.createFilePath(pdh.getWCRoot().getAbsPath(), lock.localRelpath);
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LOCKED, "''{0}'' is already locked via ''{1}''", new Object[] {
+                            localAbspath, lockAbspath
+                    });
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                }
+            }
+        }
+        baton.stealLock = stealLock;
+        baton.levelsToLock = levelsToLock;
+        pdh.getWCRoot().getSDb().runTransaction(baton);
+    }
+
+    private class WCLockObtain implements SVNSqlJetTransaction {
+
+        SVNWCDbDir pdh;
+        File localRelpath;
+        int levelsToLock;
+        boolean stealLock;
+
+        public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
+            SVNWCDbRoot wcroot = pdh.getWCRoot();
+            if (localRelpath != null) {
+                TreesExistInfo whichTreesExist = whichTreesExist(db, pdh.getWCRoot().getWcId(), localRelpath);
+                boolean haveBase = whichTreesExist.baseExists;
+                boolean haveWorking = whichTreesExist.workingExists;
+                if (!haveBase && !haveWorking) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{0}'' was not found.",
+                            SVNFileUtil.createFilePath(pdh.getWCRoot().getAbsPath(), localRelpath));
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                }
+            }
+            int lockDepth = SVNWCUtils.relpathDepth(localRelpath);
+            int maxDepth = lockDepth + levelsToLock;
+            File lockRelpath;
+            SVNSqlJetStatement stmt = wcroot.getSDb().getStatement(SVNWCDbStatements.FIND_WC_LOCK);
+            try {
+                stmt.bindf("is", wcroot.getWcId(), localRelpath);
+                boolean gotRow = stmt.next();
+                while (gotRow) {
+                    lockRelpath = SVNFileUtil.createFilePath(stmt.getColumnString(SVNWCDbSchema.WC_LOCK__Fields.local_dir_relpath));
+                    if (levelsToLock >= 0 && SVNWCUtils.relpathDepth(lockRelpath) > maxDepth) {
+                        gotRow = stmt.next();
+                        continue;
+                    }
+                    File lockAbspath = SVNFileUtil.createFilePath(wcroot.getAbsPath(), lockRelpath);
+                    boolean ownLock = isWCLockOwns(lockAbspath, true);
+                    if (!ownLock && !stealLock) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LOCKED, "''{0}'' is already locked.", lockAbspath);
+                        SVNErrorManager.error(err, SVNLogType.WC);
+                    } else if (!ownLock) {
+                        stealWCLock(wcroot, lockRelpath);
+                    }
+                    gotRow = stmt.next();
+                }
+            } finally {
+                stmt.reset();
+            }
+            if (stealLock) {
+                stealWCLock(wcroot, localRelpath);
+            }
+            stmt = wcroot.getSDb().getStatement(SVNWCDbStatements.SELECT_WC_LOCK);
+            lockRelpath = localRelpath;
+            while (true) {
+                stmt.bindf("is", wcroot.getWcId(), lockRelpath);
+                boolean gotRow = stmt.next();
+                if (gotRow) {
+                    long levels = stmt.getColumnLong(SVNWCDbSchema.WC_LOCK__Fields.locked_levels);
+                    if (levels >= 0) {
+                        levels += SVNWCUtils.relpathDepth(lockRelpath);
+                    }
+                    stmt.reset();
+                    if (levels == -1 || levels >= lockDepth) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LOCKED, "''{0}'' is already locked.", SVNFileUtil.createFilePath(wcroot.getAbsPath(), lockRelpath));
+                        SVNErrorManager.error(err, SVNLogType.WC);
+                    }
+                    break;
+                }
+                stmt.reset();
+                if (lockRelpath == null) {
+                    break;
+                }
+                lockRelpath = SVNFileUtil.getFileDir(lockRelpath);
+            }
+            stmt = wcroot.getSDb().getStatement(SVNWCDbStatements.INSERT_WC_LOCK);
+            stmt.bindf("isi", wcroot.getWcId(), localRelpath, levelsToLock);
+            try {
+                stmt.done();
+            } catch (SVNException e) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LOCKED, "Working copy ''{0}'' locked", SVNFileUtil.createFilePath(wcroot.getAbsPath(), localRelpath));
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+            SVNWCDbLock lock = new SVNWCDbLock();
+            lock.localRelpath = localRelpath;
+            lock.levels = levelsToLock;
+            wcroot.getOwnedLocks().add(lock);
+        }
+
+    };
+
+    private void stealWCLock(SVNWCDbRoot wcroot, File lockRelpath) {
         // TODO
         throw new UnsupportedOperationException();
     }

@@ -57,14 +57,14 @@ public class SVNWCUtils {
         return propdiffs;
     }
 
-    public static long relpathDepth(File relpath) {
+    public static int relpathDepth(File relpath) {
         if (relpath == null) {
             return 0;
         }
         return relpathDepth(relpath.getPath());
     }
 
-    public static long relpathDepth(String relpath) {
+    public static int relpathDepth(String relpath) {
         int n = 1;
         if (relpath == null) {
             return 0;

@@ -257,6 +257,11 @@ public interface ISVNWCDb {
      */
     class SVNWCDbLock {
 
+        /** Relative path of the lock root */
+        public File localRelpath;
+        /** Number of levels locked (0 for infinity) */
+        public int levels;
+
         /** The lock token */
         public String token;
 
@@ -1589,7 +1594,7 @@ public interface ISVNWCDb {
 
     void opSetRevAndReposRelpathTemp(File localAbspath, long newRevision, boolean setReposRelpath, File newReposRelpath, SVNURL reposRootUrl, String reposUuid) throws SVNException;
 
-    void obtainWCLock(File localAbspath, int i, boolean b);
+    void obtainWCLock(File localAbspath, int i, boolean b) throws SVNException;
 
     void releaseWCLock(File localAbspath);
 
