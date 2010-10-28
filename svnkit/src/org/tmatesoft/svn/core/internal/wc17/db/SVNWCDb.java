@@ -3678,9 +3678,43 @@ public class SVNWCDb implements ISVNWCDb {
         return SVNFileUtil.createFilePath(SVNFileUtil.createFilePath(pdh.getWCRoot().getAbsPath(), SVNFileUtil.getAdminDirectoryName()), WCROOT_TEMPDIR_RELPATH);
     }
 
-    public void opSetFileExternal(File localAbspath, File fileExternalReposRelpath, SVNRevision fileExternalPegRev, SVNRevision fileExternalRev) {
-        // TODO
-        throw new UnsupportedOperationException();
+    public void opSetFileExternal(File localAbspath, File reposRelpath, SVNRevision pegRev, SVNRevision rev) throws SVNException {
+        assert (isAbsolute(localAbspath));
+        DirParsedInfo parseDir = parseDir(localAbspath, Mode.ReadWrite);
+        SVNWCDbDir pdh = parseDir.wcDbDir;
+        File localRelpath = parseDir.localRelPath;
+        verifyDirUsable(pdh);
+        boolean gotRow;
+        SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_BASE_NODE);
+        try {
+            stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelpath);
+            gotRow = stmt.next();
+        } finally {
+            stmt.reset();
+        }
+        if (!gotRow) {
+            if (reposRelpath == null) {
+                return;
+            }
+            WCDbRepositoryInfo baseRep = scanBaseRepository(pdh.getLocalAbsPath(), RepositoryInfoField.rootUrl, RepositoryInfoField.uuid);
+            SVNURL reposRootUrl = baseRep.rootUrl;
+            String reposUuid = baseRep.uuid;
+            long reposId = fetchReposId(pdh.getWCRoot().getSDb(), reposRootUrl, reposUuid);
+            stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.INSERT_NODE);
+            stmt.bindf("isisisntnt", pdh.getWCRoot().getWcId(), localRelpath, 0, SVNFileUtil.getFileDir(localRelpath), reposId, reposRelpath, presenceMap.get(SVNWCDbStatus.NotPresent),
+                    kindMap.get(SVNWCDbKind.File));
+            stmt.done();
+        }
+        stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.UPDATE_FILE_EXTERNAL);
+        stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelpath);
+        if (reposRelpath != null) {
+            String str = SVNWCUtils.serializeFileExternal(SVNFileUtil.getFilePath(reposRelpath), pegRev, rev);
+            stmt.bindString(3, str);
+        } else {
+            stmt.bindNull(3);
+        }
+        stmt.done();
+        pdh.flushEntries(localAbspath);
     }
 
     public void opRemoveWorkingTemp(File localAbspath) {

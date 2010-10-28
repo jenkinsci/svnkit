@@ -2487,29 +2487,11 @@ public class SVNWCContext {
     private void checkFileExternal(SVNEntry17 entry, File localAbsPath) throws SVNException {
         final String serialized = db.getFileExternalTemp(localAbsPath);
         if (serialized != null) {
-            final UnserializedFileExternalInfo info = unserializeFileExternal(serialized);
+            final SVNWCUtils.UnserializedFileExternalInfo info = SVNWCUtils.unserializeFileExternal(serialized);
             entry.setExternalFilePath(info.path);
             entry.setExternalFilePegRevision(info.pegRevision);
             entry.setExternalFileRevision(info.revision);
         }
-    }
-
-    private UnserializedFileExternalInfo unserializeFileExternal(String str) throws SVNException {
-        final UnserializedFileExternalInfo info = new UnserializedFileExternalInfo();
-        if (str != null) {
-            StringBuffer buffer = new StringBuffer(str);
-            info.pegRevision = SVNAdminUtil.parseRevision(buffer);
-            info.revision = SVNAdminUtil.parseRevision(buffer);
-            info.path = buffer.toString();
-        }
-        return info;
-    }
-
-    private class UnserializedFileExternalInfo {
-
-        public String path = null;
-        public SVNRevision pegRevision = SVNRevision.UNDEFINED;
-        public SVNRevision revision = SVNRevision.UNDEFINED;
     }
 
     private class DeletedBaseInfo {

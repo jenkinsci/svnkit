@@ -14,9 +14,13 @@ package org.tmatesoft.svn.core.internal.wc17;
 import java.io.File;
 import java.util.Iterator;
 
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 
 /**
  * @author TMate Software Ltd.
@@ -71,6 +75,34 @@ public class SVNWCUtils {
                 n++;
         }
         return n;
+    }
+
+    public static class UnserializedFileExternalInfo {
+
+        public String path = null;
+        public SVNRevision pegRevision = SVNRevision.UNDEFINED;
+        public SVNRevision revision = SVNRevision.UNDEFINED;
+    }
+
+    public static UnserializedFileExternalInfo unserializeFileExternal(String str) throws SVNException {
+        final UnserializedFileExternalInfo info = new UnserializedFileExternalInfo();
+        if (str != null) {
+            StringBuffer buffer = new StringBuffer(str);
+            info.pegRevision = SVNAdminUtil.parseRevision(buffer);
+            info.revision = SVNAdminUtil.parseRevision(buffer);
+            info.path = buffer.toString();
+        }
+        return info;
+    }
+
+    public static String serializeFileExternal(String path, SVNRevision pegRevision, SVNRevision revision) throws SVNException {
+        String representation = null;
+        if (path != null) {
+            String revStr = SVNAdminUtil.asString(revision, path);
+            String pegRevStr = SVNAdminUtil.asString(pegRevision, path);
+            representation = pegRevStr + ":" + revStr + ":" + path;
+        }
+        return representation;
     }
 
 }

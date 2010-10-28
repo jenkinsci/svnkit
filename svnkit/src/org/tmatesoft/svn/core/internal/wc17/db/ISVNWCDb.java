@@ -1577,7 +1577,7 @@ public interface ISVNWCDb {
 
     File getWCRootTempDir(File localAbspath) throws SVNException;
 
-    void opSetFileExternal(File localAbspath, File fileExternalReposRelpath, SVNRevision fileExternalPegRev, SVNRevision fileExternalRev);
+    void opSetFileExternal(File localAbspath, File fileExternalReposRelpath, SVNRevision fileExternalPegRev, SVNRevision fileExternalRev) throws SVNException;
 
     void opRemoveWorkingTemp(File localAbspath);
 

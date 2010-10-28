@@ -80,7 +80,8 @@ public enum SVNWCDbStatements {
     INSERT_WORKING_NODE_FROM_BASE,
     SELECT_WORKING_OP_DEPTH_RECURSIVE,
     UPDATE_OP_DEPTH,
-    DELETE_ACTUAL_NODE;
+    DELETE_ACTUAL_NODE,
+    UPDATE_FILE_EXTERNAL;
 
     private Class<? extends SVNSqlJetStatement> statementClass;
 
