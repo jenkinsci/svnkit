@@ -1579,7 +1579,7 @@ public interface ISVNWCDb {
 
     void opSetFileExternal(File localAbspath, File fileExternalReposRelpath, SVNRevision fileExternalPegRev, SVNRevision fileExternalRev) throws SVNException;
 
-    void opRemoveWorkingTemp(File localAbspath);
+    void opRemoveWorkingTemp(File localAbspath) throws SVNException;
 
     void opSetBaseIncompleteTemp(File localAbspath);
 

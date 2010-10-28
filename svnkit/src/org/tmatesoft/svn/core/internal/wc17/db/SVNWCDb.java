@@ -3717,9 +3717,16 @@ public class SVNWCDb implements ISVNWCDb {
         pdh.flushEntries(localAbspath);
     }
 
-    public void opRemoveWorkingTemp(File localAbspath) {
-        // TODO
-        throw new UnsupportedOperationException();
+    public void opRemoveWorkingTemp(File localAbspath) throws SVNException {
+        assert (isAbsolute(localAbspath));
+        DirParsedInfo parseDir = parseDir(localAbspath, Mode.ReadWrite);
+        SVNWCDbDir pdh = parseDir.wcDbDir;
+        File localRelpath = parseDir.localRelPath;
+        verifyDirUsable(pdh);
+        pdh.flushEntries(localAbspath);
+        SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.DELETE_WORKING_NODES);
+        stmt.bindf("is",pdh.getWCRoot().getWcId(),localRelpath);
+        stmt.done();
     }
 
     public void opSetBaseIncompleteTemp(File localAbspath) {
