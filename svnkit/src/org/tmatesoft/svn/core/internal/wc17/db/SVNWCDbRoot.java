@@ -21,13 +21,23 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbLock;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @author TMate Software Ltd.
  */
 public class SVNWCDbRoot {
+
+    public static class WCLock {
+
+        /** Relative path of the lock root */
+        public File localRelpath;
+
+        /** Number of levels locked (0 for infinity) */
+        public int levels;
+
+    }
+
 
     private SVNWCDb db;
 
@@ -52,7 +62,7 @@ public class SVNWCDbRoot {
     /**
      * Array of SVNWCDbLock fields. Typically just one or two locks maximum.
      */
-    private List<SVNWCDbLock> ownedLocks = new ArrayList<ISVNWCDb.SVNWCDbLock>();
+    private List<WCLock> ownedLocks = new ArrayList<WCLock>();
 
     public SVNWCDbRoot(SVNWCDb db, File absPath, SVNSqlJetDb sDb, long wcId, int format, boolean autoUpgrade, boolean enforceEmptyWQ) throws SVNException {
         if (sDb != null) {
@@ -130,7 +140,7 @@ public class SVNWCDbRoot {
         return format;
     }
 
-    public List<SVNWCDbLock> getOwnedLocks() {
+    public List<WCLock> getOwnedLocks() {
         return ownedLocks;
     }
 

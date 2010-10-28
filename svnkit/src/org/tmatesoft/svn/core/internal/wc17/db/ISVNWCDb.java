@@ -257,11 +257,6 @@ public interface ISVNWCDb {
      */
     class SVNWCDbLock {
 
-        /** Relative path of the lock root */
-        public File localRelpath;
-        /** Number of levels locked (0 for infinity) */
-        public int levels;
-
         /** The lock token */
         public String token;
 

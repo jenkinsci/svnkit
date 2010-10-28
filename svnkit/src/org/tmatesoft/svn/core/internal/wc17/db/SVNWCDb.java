@@ -55,6 +55,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbDeletionInfo.Deletio
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo.RepositoryInfoField;
+import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDbRoot.WCLock;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSelectDeletionInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
@@ -3857,7 +3858,7 @@ public class SVNWCDb implements ISVNWCDb {
         if (!stealLock) {
             SVNWCDbRoot wcroot = pdh.getWCRoot();
             int depth = SVNWCUtils.relpathDepth(localRelpath);
-            for (SVNWCDbLock lock : wcroot.getOwnedLocks()) {
+            for (WCLock lock : wcroot.getOwnedLocks()) {
                 if (SVNPathUtil.isAncestor(SVNFileUtil.getFilePath(lock.localRelpath), SVNFileUtil.getFilePath(localRelpath))
                         && (lock.levels == -1 || (lock.levels + SVNWCUtils.relpathDepth(lock.localRelpath)) >= depth)) {
                     File lockAbspath = SVNFileUtil.createFilePath(pdh.getWCRoot().getAbsPath(), lock.localRelpath);
@@ -3952,7 +3953,7 @@ public class SVNWCDb implements ISVNWCDb {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LOCKED, "Working copy ''{0}'' locked", SVNFileUtil.createFilePath(wcroot.getAbsPath(), localRelpath));
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
-            SVNWCDbLock lock = new SVNWCDbLock();
+            WCLock lock = new WCLock();
             lock.localRelpath = localRelpath;
             lock.levels = levelsToLock;
             wcroot.getOwnedLocks().add(lock);
