@@ -3670,9 +3670,12 @@ public class SVNWCDb implements ISVNWCDb {
         return addOrRootOfCopy;
     }
 
-    public File getWCRootTempDir(File localAbspath) {
-        // TODO
-        throw new UnsupportedOperationException();
+    public File getWCRootTempDir(File localAbspath) throws SVNException {
+        assert (isAbsolute(localAbspath));
+        DirParsedInfo parseDir = parseDir(localAbspath, Mode.ReadWrite);
+        SVNWCDbDir pdh = parseDir.wcDbDir;
+        verifyDirUsable(pdh);
+        return SVNFileUtil.createFilePath(SVNFileUtil.createFilePath(pdh.getWCRoot().getAbsPath(), SVNFileUtil.getAdminDirectoryName()), WCROOT_TEMPDIR_RELPATH);
     }
 
     public void opSetFileExternal(File localAbspath, File fileExternalReposRelpath, SVNRevision fileExternalPegRev, SVNRevision fileExternalRev) {
