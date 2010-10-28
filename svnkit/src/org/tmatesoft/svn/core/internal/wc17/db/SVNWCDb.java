@@ -3967,9 +3967,27 @@ public class SVNWCDb implements ISVNWCDb {
         stmt.done();
     }
 
-    public void releaseWCLock(File localAbspath) {
-        // TODO
-        throw new UnsupportedOperationException();
+    public void releaseWCLock(File localAbspath) throws SVNException {
+        DirParsedInfo parseDir = parseDir(localAbspath, Mode.ReadWrite);
+        SVNWCDbDir pdh = parseDir.wcDbDir;
+        File localRelpath = parseDir.localRelPath;
+        verifyDirUsable(pdh);
+        WCLock foundLock = null;
+        List<WCLock> ownedLocks = pdh.getWCRoot().getOwnedLocks();
+        for (WCLock lock : ownedLocks) {
+            if (lock.localRelpath.equals(localRelpath)) {
+                foundLock = lock;
+                break;
+            }
+        }
+        if (foundLock == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_LOCKED, "Working copy not locked at ''{0}''", localAbspath);
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+        ownedLocks.remove(foundLock);
+        SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.DELETE_WC_LOCK);
+        stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelpath);
+        stmt.done();
     }
 
     public File getWCRoot(File dirAbspath) {
