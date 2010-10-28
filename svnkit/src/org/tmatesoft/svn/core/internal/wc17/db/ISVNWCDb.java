@@ -1593,7 +1593,7 @@ public interface ISVNWCDb {
 
     void releaseWCLock(File localAbspath) throws SVNException;
 
-    File getWCRoot(File dirAbspath);
+    File getWCRoot(File dirAbspath) throws SVNException;
 
     void forgetDirectoryTemp(File dirAbspath);
 

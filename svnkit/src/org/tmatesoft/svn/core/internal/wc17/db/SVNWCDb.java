@@ -3990,9 +3990,14 @@ public class SVNWCDb implements ISVNWCDb {
         stmt.done();
     }
 
-    public File getWCRoot(File dirAbspath) {
-        // TODO
-        throw new UnsupportedOperationException();
+    public File getWCRoot(File wcRootAbspath) throws SVNException {
+        DirParsedInfo parseDir = parseDir(wcRootAbspath, Mode.ReadOnly);
+        SVNWCDbDir pdh = parseDir.wcDbDir;
+        if (pdh.getWCRoot() == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_WORKING_COPY, "The node ''{0}'' is not in the working copy", wcRootAbspath);
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+        return pdh.getWCRoot().getAbsPath();
     }
 
     public void forgetDirectoryTemp(File dirAbspath) {
