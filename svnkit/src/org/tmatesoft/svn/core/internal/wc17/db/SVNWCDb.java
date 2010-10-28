@@ -3960,9 +3960,10 @@ public class SVNWCDb implements ISVNWCDb {
 
     };
 
-    private void stealWCLock(SVNWCDbRoot wcroot, File lockRelpath) {
-        // TODO
-        throw new UnsupportedOperationException();
+    private void stealWCLock(SVNWCDbRoot wcroot, File localRelpath) throws SVNException {
+        SVNSqlJetStatement stmt = wcroot.getSDb().getStatement(SVNWCDbStatements.DELETE_WC_LOCK);
+        stmt.bindf("is", wcroot.getWcId(), localRelpath);
+        stmt.done();
     }
 
     public void releaseWCLock(File localAbspath) {
