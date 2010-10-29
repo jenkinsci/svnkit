@@ -1605,6 +1605,6 @@ public interface ISVNWCDb {
 
     void elideCopyFromTemp(File localAbspath) throws SVNException;
 
-    void opSetPropertyConflictMarkerFileTemp(File localAbspath, String prejBasename);
+    void opSetPropertyConflictMarkerFileTemp(File localAbspath, String prejBasename) throws SVNException;
 
 }

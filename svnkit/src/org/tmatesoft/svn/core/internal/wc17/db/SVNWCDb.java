@@ -4187,9 +4187,34 @@ public class SVNWCDb implements ISVNWCDb {
         }
     }
 
-    public void opSetPropertyConflictMarkerFileTemp(File localAbspath, String prejBasename) {
-        // TODO
-        throw new UnsupportedOperationException();
+    public void opSetPropertyConflictMarkerFileTemp(File localAbspath, String prejBasename) throws SVNException {
+        assert (isAbsolute(localAbspath));
+        DirParsedInfo parseDir = parseDir(localAbspath, Mode.ReadWrite);
+        SVNWCDbDir pdh = parseDir.wcDbDir;
+        File localRelpath = parseDir.localRelPath;
+        verifyDirUsable(pdh);
+        boolean gotRow = false;
+        SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_ACTUAL_NODE);
+        try {
+            stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelpath);
+            gotRow = stmt.next();
+        } finally {
+            stmt.reset();
+        }
+        if (gotRow) {
+            stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.UPDATE_ACTUAL_PROPERTY_CONFLICTS);
+        } else if (prejBasename == null) {
+            return;
+        } else {
+            stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.INSERT_ACTUAL_PROPERTY_CONFLICTS);
+            if (localRelpath != null && !"".equals(SVNFileUtil.getFilePath(localRelpath))) {
+                stmt.bindString(4, SVNFileUtil.getFilePath(SVNFileUtil.getFileDir(localRelpath)));
+            } else {
+                stmt.bindNull(4);
+            }
+        }
+        stmt.bindf("iss", pdh.getWCRoot().getWcId(), localRelpath, prejBasename);
+        stmt.done();
     }
 
     private void addAbsentExcludedNotPresentNode(File localAbsPath, File reposRelPath, SVNURL reposRootUrl, String reposUuid, long revision, SVNWCDbKind kind, SVNWCDbStatus status, SVNSkel conflict,
