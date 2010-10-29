@@ -4217,10 +4217,64 @@ public class SVNWCDb implements ISVNWCDb {
         stmt.done();
     }
 
-    private void addAbsentExcludedNotPresentNode(File localAbsPath, File reposRelPath, SVNURL reposRootUrl, String reposUuid, long revision, SVNWCDbKind kind, SVNWCDbStatus status, SVNSkel conflict,
+    private void addAbsentExcludedNotPresentNode(File localAbspath, File reposRelpath, SVNURL reposRootUrl, String reposUuid, long revision, SVNWCDbKind kind, SVNWCDbStatus status, SVNSkel conflict,
             SVNSkel workItems) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+        assert (isAbsolute(localAbspath));
+        assert (reposRelpath != null);
+        // SVN_ERR_ASSERT(svn_uri_is_absolute(repos_root_url));
+        assert (reposUuid != null);
+        assert (SVNRevision.isValidRevisionNumber(revision));
+        assert (status == SVNWCDbStatus.Absent || status == SVNWCDbStatus.Excluded || status == SVNWCDbStatus.NotPresent);
+        DirParsedInfo parseDir = parseDir(localAbspath, Mode.ReadWrite);
+        SVNWCDbDir pdh = parseDir.wcDbDir;
+        File localRelpath = parseDir.localRelPath;
+        verifyDirUsable(pdh);
+        long reposId = createReposId(pdh.getWCRoot().getSDb(), reposRootUrl, reposUuid);
+        InsertBaseNode ibb = new InsertBaseNode();
+        ibb.status = status;
+        ibb.kind = kind;
+        ibb.wcId = pdh.getWCRoot().getWcId();
+        ibb.localRelpath = localRelpath;
+        ibb.reposId = reposId;
+        ibb.reposRelpath = reposRelpath;
+        ibb.revision = revision;
+        ibb.children = null;
+        ibb.depth = SVNDepth.UNKNOWN;
+        ibb.checksum = null;
+        ibb.translatedSize = INVALID_FILESIZE;
+        ibb.target = null;
+        ibb.conflict = conflict;
+        ibb.workItems = workItems;
+        pdh.getWCRoot().getSDb().runTransaction(ibb);
+        pdh.flushEntries(localAbspath);
+    }
+
+    private class InsertBaseNode extends InsertBase {
+
+        public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
+            assert (conflict == null);
+            File parentRelpath = SVNFileUtil.getFileDir(localRelpath);
+            SVNSqlJetStatement stmt = db.getStatement(SVNWCDbStatements.INSERT_NODE);
+            stmt.bindf("isisisrtstrisnnnnns", wcId, localRelpath, 0, parentRelpath, reposId, reposRelpath, revision, presenceMap, status, (kind == SVNWCDbKind.Dir) ? SVNDepth.asString(depth) : null,
+                    kindMap, kind, changedRev, changedDate, changedAuthor, (kind == SVNWCDbKind.Symlink) ? target : null
+
+            );
+            if (kind == SVNWCDbKind.File) {
+                stmt.bindChecksum(14, checksum);
+                if (translatedSize != INVALID_FILESIZE) {
+                    stmt.bindLong(16, translatedSize);
+                }
+            }
+            stmt.bindProperties(15, props);
+            if (davCache != null) {
+                stmt.bindProperties(18, davCache);
+            }
+            stmt.done();
+            if (kind == SVNWCDbKind.Dir && children != null) {
+                insertIncompleteChildren(db, wcId, localRelpath, revision, children, 0);
+            }
+            addWorkItems(db, workItems);
+        }
     }
 
 }
