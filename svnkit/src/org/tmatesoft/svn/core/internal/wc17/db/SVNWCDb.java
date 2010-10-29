@@ -4055,9 +4055,25 @@ public class SVNWCDb implements ISVNWCDb {
         return ownLock;
     }
 
-    public void opSetTextConflictMarkerFilesTemp(File localAbspath, File oldBasename, File newBasename, File wrkBasename) {
-        // TODO
-        throw new UnsupportedOperationException();
+    public void opSetTextConflictMarkerFilesTemp(File localAbspath, File oldBasename, File newBasename, File wrkBasename) throws SVNException {
+        assert (isAbsolute(localAbspath));
+        DirParsedInfo parseDir = parseDir(localAbspath, Mode.ReadWrite);
+        SVNWCDbDir pdh = parseDir.wcDbDir;
+        File localRelpath = parseDir.localRelPath;
+        verifyDirUsable(pdh);
+        SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_ACTUAL_NODE);
+        stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelpath);
+        boolean gotRow = stmt.next();
+        if (gotRow) {
+            stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.UPDATE_ACTUAL_TEXT_CONFLICTS);
+        } else if (oldBasename == null && newBasename == null && wrkBasename == null) {
+            return;
+        } else {
+            stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.INSERT_ACTUAL_TEXT_CONFLICTS);
+            stmt.bindString(6, SVNFileUtil.getFilePath(SVNFileUtil.getFileDir(localRelpath)));
+        }
+        stmt.bindf("issss", pdh.getWCRoot().getWcId(), localRelpath, oldBasename, newBasename, wrkBasename);
+        stmt.done();
     }
 
     public void addBaseNotPresentNode(File localAbspath, File reposRelPath, SVNURL reposRootUrl, String reposUuid, long revision, SVNWCDbKind kind, SVNSkel conflict, SVNSkel workItems)

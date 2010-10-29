@@ -91,7 +91,9 @@ public enum SVNWCDbStatements {
     UPDATE_BASE_REPOS,
     FIND_WC_LOCK,
     INSERT_WC_LOCK,
-    DELETE_WC_LOCK;
+    DELETE_WC_LOCK,
+    UPDATE_ACTUAL_TEXT_CONFLICTS,
+    INSERT_ACTUAL_TEXT_CONFLICTS;
 
     private Class<? extends SVNSqlJetStatement> statementClass;
 

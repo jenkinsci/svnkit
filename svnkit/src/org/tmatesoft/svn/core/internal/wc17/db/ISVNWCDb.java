@@ -1599,7 +1599,7 @@ public interface ISVNWCDb {
 
     boolean isWCLockOwns(File localAbspath, boolean exact) throws SVNException;
 
-    void opSetTextConflictMarkerFilesTemp(File localAbspath, File oldBasename, File newBasename, File wrkBasename);
+    void opSetTextConflictMarkerFilesTemp(File localAbspath, File oldBasename, File newBasename, File wrkBasename) throws SVNException;
 
     void addBaseNotPresentNode(File localAbspath, File reposRelPath, SVNURL reposRootUrl, String reposUuid, long revision, SVNWCDbKind kind, SVNSkel conflict, SVNSkel workItems) throws SVNException;
 
