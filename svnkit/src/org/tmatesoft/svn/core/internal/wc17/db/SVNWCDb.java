@@ -3862,8 +3862,7 @@ public class SVNWCDb implements ISVNWCDb {
             SVNWCDbRoot wcroot = pdh.getWCRoot();
             int depth = SVNWCUtils.relpathDepth(localRelpath);
             for (WCLock lock : wcroot.getOwnedLocks()) {
-                if (SVNPathUtil.isAncestor(SVNFileUtil.getFilePath(lock.localRelpath), SVNFileUtil.getFilePath(localRelpath))
-                        && (lock.levels == -1 || (lock.levels + SVNWCUtils.relpathDepth(lock.localRelpath)) >= depth)) {
+                if (SVNWCUtils.isAncestor(lock.localRelpath, localRelpath) && (lock.levels == -1 || (lock.levels + SVNWCUtils.relpathDepth(lock.localRelpath)) >= depth)) {
                     File lockAbspath = SVNFileUtil.createFilePath(pdh.getWCRoot().getAbsPath(), lock.localRelpath);
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LOCKED, "''{0}'' is already locked via ''{1}''", new Object[] {
                             localAbspath, lockAbspath
@@ -4008,7 +4007,7 @@ public class SVNWCDb implements ISVNWCDb {
         for (Iterator<Entry<File, SVNWCDbDir>> i = dirData.entrySet().iterator(); i.hasNext();) {
             Entry<File, SVNWCDbDir> entry = i.next();
             SVNWCDbDir pdh = entry.getValue();
-            if (!SVNPathUtil.isAncestor(SVNFileUtil.getFilePath(localDirAbspath), SVNFileUtil.getFilePath(pdh.getLocalAbsPath()))) {
+            if (!SVNWCUtils.isAncestor(localDirAbspath, pdh.getLocalAbsPath())) {
                 continue;
             }
             try {
@@ -4019,7 +4018,7 @@ public class SVNWCDb implements ISVNWCDb {
                 }
             }
             i.remove();
-            if (pdh.getWCRoot() != null && pdh.getWCRoot().getSDb() != null && SVNPathUtil.isAncestor(SVNFileUtil.getFilePath(localDirAbspath), SVNFileUtil.getFilePath(pdh.getWCRoot().getAbsPath()))) {
+            if (pdh.getWCRoot() != null && pdh.getWCRoot().getSDb() != null && SVNWCUtils.isAncestor(localDirAbspath, pdh.getWCRoot().getAbsPath())) {
                 roots.add(pdh.getWCRoot());
             }
         }
@@ -4047,8 +4046,7 @@ public class SVNWCDb implements ISVNWCDb {
             }
         else
             for (WCLock lock : ownedLocks) {
-                if (SVNPathUtil.isAncestor(SVNFileUtil.getFilePath(lock.localRelpath), SVNFileUtil.getFilePath(localRelpath))
-                        && (lock.levels == -1 || ((SVNWCUtils.relpathDepth(lock.localRelpath) + lock.levels) >= lockLevel))) {
+                if (SVNWCUtils.isAncestor(lock.localRelpath, localRelpath) && (lock.levels == -1 || ((SVNWCUtils.relpathDepth(lock.localRelpath) + lock.levels) >= lockLevel))) {
                     ownLock = true;
                     return ownLock;
                 }
