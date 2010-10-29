@@ -18,9 +18,11 @@ import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
@@ -4000,9 +4002,27 @@ public class SVNWCDb implements ISVNWCDb {
         return pdh.getWCRoot().getAbsPath();
     }
 
-    public void forgetDirectoryTemp(File dirAbspath) {
-        // TODO
-        throw new UnsupportedOperationException();
+    public void forgetDirectoryTemp(File localDirAbspath) throws SVNException {
+        Set<SVNWCDbRoot> roots = new HashSet<SVNWCDbRoot>();
+        for (Iterator<Entry<File, SVNWCDbDir>> i = dirData.entrySet().iterator(); i.hasNext();) {
+            Entry<File, SVNWCDbDir> entry = i.next();
+            SVNWCDbDir pdh = entry.getValue();
+            if (!SVNPathUtil.isAncestor(SVNFileUtil.getFilePath(localDirAbspath), SVNFileUtil.getFilePath(pdh.getLocalAbsPath()))) {
+                continue;
+            }
+            try {
+                releaseWCLock(pdh.getLocalAbsPath());
+            } catch (SVNException e) {
+                if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_WORKING_COPY && e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_LOCKED) {
+                    throw e;
+                }
+            }
+            i.remove();
+            if (pdh.getWCRoot() != null && pdh.getWCRoot().getSDb() != null && SVNPathUtil.isAncestor(SVNFileUtil.getFilePath(localDirAbspath), SVNFileUtil.getFilePath(pdh.getWCRoot().getAbsPath()))) {
+                roots.add(pdh.getWCRoot());
+            }
+        }
+        closeManyWCRoots(roots);
     }
 
     public boolean isWCLockOwns(File localAbspath, boolean exact) {

@@ -1595,7 +1595,7 @@ public interface ISVNWCDb {
 
     File getWCRoot(File dirAbspath) throws SVNException;
 
-    void forgetDirectoryTemp(File dirAbspath);
+    void forgetDirectoryTemp(File dirAbspath) throws SVNException;
 
     boolean isWCLockOwns(File localAbspath, boolean exact);
 
