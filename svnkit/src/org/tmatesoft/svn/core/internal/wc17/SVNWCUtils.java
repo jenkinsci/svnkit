@@ -105,4 +105,30 @@ public class SVNWCUtils {
         return representation;
     }
 
+    public static String getPathAsChild(File parent, File child) {
+        if (parent == null || child == null)
+            return null;
+        if (parent.equals(child))
+            return null;
+        final String parentPath = parent.toString();
+        final String childPath = child.toString();
+        if (!childPath.startsWith(parentPath))
+            return null;
+        final String restPath = childPath.substring(parentPath.length());
+        if (restPath.startsWith(File.separator)) {
+            return restPath.substring(1);
+        }
+        return restPath;
+    }
+
+    public static boolean isAncestor(File parent, File child) {
+        if (parent == null || child == null)
+            return false;
+        if (parent.equals(child))
+            return false;
+        final String parentPath = parent.toString();
+        final String childPath = child.toString();
+        return childPath.startsWith(parentPath);
+    }
+
 }

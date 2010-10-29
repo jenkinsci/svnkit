@@ -448,7 +448,7 @@ public class SVNStatusEditor17 {
     private void handleExternals(File localAbsPath, SVNDepth depth) throws SVNException {
         String externals = myWCContext.getProperty(localAbsPath, SVNProperty.EXTERNALS);
         if (externals != null) {
-            if (SVNWCContext.isAncestor(myPath, localAbsPath)) {
+            if (SVNWCUtils.isAncestor(myPath, localAbsPath)) {
                 storeExternals(localAbsPath, externals, externals, depth);
             }
             /*

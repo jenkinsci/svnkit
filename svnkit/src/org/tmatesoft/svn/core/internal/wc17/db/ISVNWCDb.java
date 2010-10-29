@@ -1603,7 +1603,7 @@ public interface ISVNWCDb {
 
     void addBaseNotPresentNode(File localAbspath, File reposRelPath, SVNURL reposRootUrl, String reposUuid, long revision, SVNWCDbKind kind, SVNSkel conflict, SVNSkel workItems) throws SVNException;
 
-    void elideCopyFromTemp(File localAbspath);
+    void elideCopyFromTemp(File localAbspath) throws SVNException;
 
     void opSetPropertyConflictMarkerFileTemp(File localAbspath, String prejBasename);
 

@@ -27,6 +27,7 @@ import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODES__Fields;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -111,10 +112,10 @@ public abstract class SVNSqlJetStatement {
             switch (fmt) {
                 case 's':
                 case 't':
-                    if(data[i]==null) {
+                    if (data[i] == null) {
                         bindString(i + 1, "");
-                    } else if(data[i] instanceof File) {
-                        bindString(i + 1, SVNFileUtil.getFilePath((File)data[i]));
+                    } else if (data[i] instanceof File) {
+                        bindString(i + 1, SVNFileUtil.getFilePath((File) data[i]));
                     } else {
                         bindString(i + 1, data[i].toString());
                     }
@@ -166,7 +167,7 @@ public abstract class SVNSqlJetStatement {
     }
 
     protected Object getBind(int i) {
-        return binds.get(i-1);
+        return binds.get(i - 1);
     }
 
     public long count() throws SVNException {
@@ -241,11 +242,11 @@ public abstract class SVNSqlJetStatement {
     }
 
     public boolean getColumnBoolean(int f) throws SVNException {
-        return getColumnLong(f)!=0;
+        return getColumnLong(f) != 0;
     }
 
     public boolean getColumnBoolean(Enum f) throws SVNException {
-        return getColumnLong(f)!=0;
+        return getColumnLong(f) != 0;
     }
 
     public long getColumnLong(int f) throws SVNException {
@@ -282,19 +283,21 @@ public abstract class SVNSqlJetStatement {
     }
 
     public SVNProperties getColumnProperties(String f) throws SVNException {
-        if(isColumnNull(f)) return null;
+        if (isColumnNull(f))
+            return null;
         final byte[] val = getColumnBlob(f);
-        if(val==null) return null;
+        if (val == null)
+            return null;
         final SVNSkel skel = SVNSkel.parse(val);
-        if(!skel.isValidPropList()){
-            SVNErrorMessage err = SVNErrorMessage.create( SVNErrorCode.FS_MALFORMED_SKEL, "proplist");
+        if (!skel.isValidPropList()) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_MALFORMED_SKEL, "proplist");
             SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         return SVNProperties.wrap(skel.parsePropList());
     }
 
     public int done() throws SVNException {
-        try{
+        try {
             return exec();
         } finally {
             reset();
@@ -302,11 +305,17 @@ public abstract class SVNSqlJetStatement {
     }
 
     public void nextRow() throws SVNException {
-        if(!next()){
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SQLITE_ERROR,
-                    "Expected database row missing");
+        if (!next()) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SQLITE_ERROR, "Expected database row missing");
             SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
+    }
+
+    public long getColumnRevnum(Enum f) throws SVNException {
+        if (isColumnNull(f)) {
+            return -1;
+        }
+        return getColumnLong(f);
     }
 
 }

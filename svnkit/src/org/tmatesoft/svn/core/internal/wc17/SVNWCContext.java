@@ -757,7 +757,7 @@ public class SVNWCContext {
             switched_p = false;
         } else {
             /* A node is switched if it doesn't have the implied repos_relpath */
-            final String name = getPathAsChild(parentReposRelPath, info.reposRelPath);
+            final String name = SVNWCUtils.getPathAsChild(parentReposRelPath, info.reposRelPath);
             switched_p = name == null || !name.equals(SVNFileUtil.getFileName(localAbsPath));
         }
 
@@ -2893,32 +2893,6 @@ public class SVNWCContext {
         }
 
         return copyFrom;
-    }
-
-    public static String getPathAsChild(File parent, File child) {
-        if (parent == null || child == null)
-            return null;
-        if (parent.equals(child))
-            return null;
-        final String parentPath = parent.toString();
-        final String childPath = child.toString();
-        if (!childPath.startsWith(parentPath))
-            return null;
-        final String restPath = childPath.substring(parentPath.length());
-        if (restPath.startsWith(File.separator)) {
-            return restPath.substring(1);
-        }
-        return restPath;
-    }
-
-    public static boolean isAncestor(File parent, File child) {
-        if (parent == null || child == null)
-            return false;
-        if (parent.equals(child))
-            return false;
-        final String parentPath = parent.toString();
-        final String childPath = child.toString();
-        return childPath.startsWith(parentPath);
     }
 
     public static boolean isErrorAccess(SVNException e) {

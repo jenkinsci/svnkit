@@ -93,7 +93,8 @@ public enum SVNWCDbStatements {
     INSERT_WC_LOCK,
     DELETE_WC_LOCK,
     UPDATE_ACTUAL_TEXT_CONFLICTS,
-    INSERT_ACTUAL_TEXT_CONFLICTS;
+    INSERT_ACTUAL_TEXT_CONFLICTS,
+    UPDATE_COPYFROM_TO_INHERIT;
 
     private Class<? extends SVNSqlJetStatement> statementClass;
 

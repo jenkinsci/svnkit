@@ -104,7 +104,7 @@ public class SVNAmbientDepthFilterEditor17 implements ISVNEditor {
         }
 
         if (myCurrentDirBaton.myAmbientDepth.compareTo(SVNDepth.IMMEDIATES) < 0) {
-            File abspath = SVNFileUtil.createFilePath(myAnchor, SVNWCContext.getPathAsChild(myAnchor, SVNFileUtil.createFilePath(path)));
+            File abspath = SVNFileUtil.createFilePath(myAnchor, SVNWCUtils.getPathAsChild(myAnchor, SVNFileUtil.createFilePath(path)));
             AmbientReadInfo aInfo = ambientReadInfo(abspath, myReadBase);
             if (aInfo.kind == SVNWCDbKind.Unknown || aInfo.hidden) {
                 return;
@@ -154,7 +154,7 @@ public class SVNAmbientDepthFilterEditor17 implements ISVNEditor {
             return;
         }
 
-        File abspath = SVNFileUtil.createFilePath(myAnchor, SVNWCContext.getPathAsChild(myAnchor, SVNFileUtil.createFilePath(path)));
+        File abspath = SVNFileUtil.createFilePath(myAnchor, SVNWCUtils.getPathAsChild(myAnchor, SVNFileUtil.createFilePath(path)));
         AmbientReadInfo aInfo = ambientReadInfo(abspath, myReadBase);
         if (aInfo.kind != SVNWCDbKind.Unknown && !aInfo.hidden) {
             myCurrentDirBaton.myAmbientDepth = aInfo.depth;
@@ -238,7 +238,7 @@ public class SVNAmbientDepthFilterEditor17 implements ISVNEditor {
 
         if (parentBaton != null && parentBaton.myAmbientDepth != SVNDepth.UNKNOWN) {
 
-            File abspath = SVNFileUtil.createFilePath(myAnchor, SVNWCContext.getPathAsChild(myAnchor, SVNFileUtil.createFilePath(path)));
+            File abspath = SVNFileUtil.createFilePath(myAnchor, SVNWCUtils.getPathAsChild(myAnchor, SVNFileUtil.createFilePath(path)));
 
             AmbientReadInfo aInfo = ambientReadInfo(abspath, myReadBase);
             SVNWCDbStatus status = aInfo.status;
@@ -274,7 +274,7 @@ public class SVNAmbientDepthFilterEditor17 implements ISVNEditor {
             return fileBaton;
         }
 
-        File abspath = SVNFileUtil.createFilePath(myAnchor, SVNWCContext.getPathAsChild(myAnchor, SVNFileUtil.createFilePath(path)));
+        File abspath = SVNFileUtil.createFilePath(myAnchor, SVNWCUtils.getPathAsChild(myAnchor, SVNFileUtil.createFilePath(path)));
         AmbientReadInfo aInfo = ambientReadInfo(abspath, myReadBase);
 
         if (parentBaton.myAmbientDepth == SVNDepth.EMPTY) {
