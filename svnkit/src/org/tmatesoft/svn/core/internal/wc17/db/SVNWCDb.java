@@ -4025,9 +4025,34 @@ public class SVNWCDb implements ISVNWCDb {
         closeManyWCRoots(roots);
     }
 
-    public boolean isWCLockOwns(File localAbspath, boolean exact) {
-        // TODO
-        throw new UnsupportedOperationException();
+    public boolean isWCLockOwns(File localAbspath, boolean exact) throws SVNException {
+        DirParsedInfo parseDir = parseDir(localAbspath, Mode.ReadWrite);
+        SVNWCDbDir pdh = parseDir.wcDbDir;
+        File localRelpath = parseDir.localRelPath;
+        if (pdh.getWCRoot() == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_WORKING_COPY, "The node ''{0}'' was not found.", localAbspath);
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+        verifyDirUsable(pdh);
+        boolean ownLock = false;
+        List<WCLock> ownedLocks = pdh.getWCRoot().getOwnedLocks();
+        int lockLevel = SVNWCUtils.relpathDepth(localRelpath);
+        if (exact)
+            for (WCLock lock : ownedLocks) {
+                if (lock.localRelpath.equals(localRelpath)) {
+                    ownLock = true;
+                    return ownLock;
+                }
+            }
+        else
+            for (WCLock lock : ownedLocks) {
+                if (SVNPathUtil.isAncestor(SVNFileUtil.getFilePath(lock.localRelpath), SVNFileUtil.getFilePath(localRelpath))
+                        && (lock.levels == -1 || ((SVNWCUtils.relpathDepth(lock.localRelpath) + lock.levels) >= lockLevel))) {
+                    ownLock = true;
+                    return ownLock;
+                }
+            }
+        return ownLock;
     }
 
     public void opSetTextConflictMarkerFilesTemp(File localAbspath, File oldBasename, File newBasename, File wrkBasename) {

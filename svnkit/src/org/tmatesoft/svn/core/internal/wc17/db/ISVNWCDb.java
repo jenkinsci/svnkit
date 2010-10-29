@@ -1597,7 +1597,7 @@ public interface ISVNWCDb {
 
     void forgetDirectoryTemp(File dirAbspath) throws SVNException;
 
-    boolean isWCLockOwns(File localAbspath, boolean exact);
+    boolean isWCLockOwns(File localAbspath, boolean exact) throws SVNException;
 
     void opSetTextConflictMarkerFilesTemp(File localAbspath, File oldBasename, File newBasename, File wrkBasename);
 
