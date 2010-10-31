@@ -11,8 +11,12 @@
  */
 package org.tmatesoft.svn.core.internal.db;
 
+import java.util.List;
+
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
 
 /**
  * @author TMate Software Ltd.
@@ -62,4 +66,51 @@ public class SVNSqlJetUnionStatement extends SVNSqlJetStatement {
             stmt.reset();
         }
     }
+
+    private void updateBinds() {
+        if (statements == null) {
+            return;
+        }
+        for (SVNSqlJetStatement stmt : statements) {
+            List stmtBinds = stmt.getBinds();
+            stmtBinds.clear();
+            stmtBinds.addAll(getBinds());
+        }
+    }
+
+    public void bindf(String format, Object... data) throws SVNException {
+        super.bindf(format, data);
+        updateBinds();
+    }
+
+    public void bindLong(int i, long v) {
+        super.bindLong(i, v);
+        updateBinds();
+    }
+
+    public void bindString(int i, String string) {
+        super.bindString(i, string);
+        updateBinds();
+    }
+
+    public void bindNull(int i) {
+        super.bindNull(i);
+        updateBinds();
+    }
+
+    public void bindBlob(int i, byte[] serialized) {
+        super.bindBlob(i, serialized);
+        updateBinds();
+    }
+
+    public void bindChecksum(int i, SVNChecksum checksum) {
+        super.bindChecksum(i, checksum);
+        updateBinds();
+    }
+
+    public void bindProperties(int i, SVNProperties props) throws SVNException {
+        super.bindProperties(i, props);
+        updateBinds();
+    }
+
 }
