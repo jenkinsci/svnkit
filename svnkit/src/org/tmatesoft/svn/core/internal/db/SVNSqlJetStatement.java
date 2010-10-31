@@ -247,23 +247,47 @@ public abstract class SVNSqlJetStatement {
     }
 
     public long getColumnLong(int f) throws SVNException {
-        SVNErrorManager.assertionFailure(false, "unsupported", SVNLogType.WC);
-        return 0;
+        try {
+            if (getCursor() == null || getCursor().eof())
+                return 0;
+            return getCursor().getInteger(f);
+        } catch (SqlJetException e) {
+            SVNSqlJetDb.createSqlJetError(e);
+            return 0;
+        }
     }
 
     public String getColumnString(int f) throws SVNException {
-        SVNErrorManager.assertionFailure(false, "unsupported", SVNLogType.WC);
-        return null;
+        try {
+            if (getCursor() == null || getCursor().eof())
+                return null;
+            return getCursor().getString(f);
+        } catch (SqlJetException e) {
+            SVNSqlJetDb.createSqlJetError(e);
+            return null;
+        }
     }
 
     public boolean isColumnNull(int f) throws SVNException {
-        SVNErrorManager.assertionFailure(false, "unsupported", SVNLogType.WC);
-        return true;
+        try {
+            if (getCursor() == null || getCursor().eof())
+                return true;
+            return getCursor().isNull(f);
+        } catch (SqlJetException e) {
+            SVNSqlJetDb.createSqlJetError(e);
+            return true;
+        }
     }
 
     public byte[] getColumnBlob(int f) throws SVNException {
-        SVNErrorManager.assertionFailure(false, "unsupported", SVNLogType.WC);
-        return null;
+        try {
+            if (getCursor() == null || getCursor().eof())
+                return null;
+            return getCursor().getBlobAsArray(f);
+        } catch (SqlJetException e) {
+            SVNSqlJetDb.createSqlJetError(e);
+            return null;
+        }
     }
 
     public SVNSqlJetStatement getJoinedStatement(String joinedTable) throws SVNException {
@@ -314,7 +338,6 @@ public abstract class SVNSqlJetStatement {
         }
         return getColumnLong(f);
     }
-
 
     protected ISqlJetCursor getCursor() {
         return cursor;
