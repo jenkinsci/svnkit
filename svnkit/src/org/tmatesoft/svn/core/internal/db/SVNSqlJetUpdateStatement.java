@@ -40,11 +40,11 @@ public class SVNSqlJetUpdateStatement extends SVNSqlJetSelectStatement {
     }
 
     public void update(final Map<String, Object> values) throws SVNException {
-        if(cursor==null){
+        if(getCursor()==null){
             throw new UnsupportedOperationException();
         }
         try {
-            cursor.updateByFieldNames(values);
+            getCursor().updateByFieldNames(values);
         } catch (SqlJetException e) {
             SVNErrorMessage err = SVNErrorMessage.create( SVNErrorCode.SQLITE_ERROR, e );
             SVNErrorManager.error(err, SVNLogType.FSFS);

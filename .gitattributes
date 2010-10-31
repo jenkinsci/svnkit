@@ -107,6 +107,7 @@ svnkit-test/test.windows.properties eol=crlf
 svnkit-test/tomcat/logging.properties -text
 svnkit-test/tomcat/tomcat.jar -text
 svnkit/src/org/tmatesoft/svn/core/internal/db/SVNSqlJetTransaction.java -text
+svnkit/src/org/tmatesoft/svn/core/internal/db/SVNSqlJetUnionStatement.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/db/SVNSqlJetUpdateStatement.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http/DefaultHTTPNegotiateAuthentication.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http/IHTTPNegotiateAuthenticationFactory.java -text

@@ -14,8 +14,6 @@ package org.tmatesoft.svn.core.internal.db;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
@@ -27,7 +25,6 @@ import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODES__Fields;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -36,7 +33,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 public abstract class SVNSqlJetStatement {
 
     protected SVNSqlJetDb sDb;
-    protected ISqlJetCursor cursor;
+    private ISqlJetCursor cursor;
     protected List binds = new ArrayList();
 
     protected ISqlJetCursor openCursor() throws SVNException {
@@ -53,7 +50,7 @@ public abstract class SVNSqlJetStatement {
 
     public SVNSqlJetStatement(SVNSqlJetDb sDb) {
         this.sDb = sDb;
-        cursor = null;
+        setCursor(null);
     }
 
     public List getBinds() {
@@ -61,18 +58,18 @@ public abstract class SVNSqlJetStatement {
     }
 
     public boolean isNeedsReset() {
-        return cursor != null;
+        return getCursor() != null;
     }
 
     public void reset() throws SVNException {
         binds.clear();
         if (isNeedsReset()) {
             try {
-                cursor.close();
+                getCursor().close();
             } catch (SqlJetException e) {
                 SVNSqlJetDb.createSqlJetError(e);
             } finally {
-                cursor = null;
+                setCursor(null);
                 sDb.commit();
             }
         }
@@ -80,12 +77,12 @@ public abstract class SVNSqlJetStatement {
 
     public boolean next() throws SVNException {
         try {
-            if (cursor == null) {
+            if (getCursor() == null) {
                 sDb.beginTransaction(SqlJetTransactionMode.READ_ONLY);
-                cursor = openCursor();
-                return !cursor.eof();
+                setCursor(openCursor());
+                return !getCursor().eof();
             }
-            return cursor.next();
+            return getCursor().next();
         } catch (SqlJetException e) {
             SVNSqlJetDb.createSqlJetError(e);
             return false;
@@ -94,7 +91,7 @@ public abstract class SVNSqlJetStatement {
 
     public boolean eof() throws SVNException {
         try {
-            return cursor.eof();
+            return getCursor().eof();
         } catch (SqlJetException e) {
             SVNSqlJetDb.createSqlJetError(e);
             return false;
@@ -172,9 +169,9 @@ public abstract class SVNSqlJetStatement {
 
     public long count() throws SVNException {
         try {
-            if (cursor == null || cursor.eof())
+            if (getCursor() == null || getCursor().eof())
                 return 0;
-            return cursor.getRowCount();
+            return getCursor().getRowCount();
         } catch (SqlJetException e) {
             SVNSqlJetDb.createSqlJetError(e);
             return 0;
@@ -187,9 +184,9 @@ public abstract class SVNSqlJetStatement {
 
     public long getColumnLong(String f) throws SVNException {
         try {
-            if (cursor == null || cursor.eof())
+            if (getCursor() == null || getCursor().eof())
                 return 0;
-            return cursor.getInteger(f);
+            return getCursor().getInteger(f);
         } catch (SqlJetException e) {
             SVNSqlJetDb.createSqlJetError(e);
             return 0;
@@ -202,9 +199,9 @@ public abstract class SVNSqlJetStatement {
 
     public String getColumnString(String f) throws SVNException {
         try {
-            if (cursor == null || cursor.eof())
+            if (getCursor() == null || getCursor().eof())
                 return null;
-            return cursor.getString(f);
+            return getCursor().getString(f);
         } catch (SqlJetException e) {
             SVNSqlJetDb.createSqlJetError(e);
             return null;
@@ -217,9 +214,9 @@ public abstract class SVNSqlJetStatement {
 
     public boolean isColumnNull(String f) throws SVNException {
         try {
-            if (cursor == null || cursor.eof())
+            if (getCursor() == null || getCursor().eof())
                 return true;
-            return cursor.isNull(f);
+            return getCursor().isNull(f);
         } catch (SqlJetException e) {
             SVNSqlJetDb.createSqlJetError(e);
             return false;
@@ -232,9 +229,9 @@ public abstract class SVNSqlJetStatement {
 
     public byte[] getColumnBlob(String f) throws SVNException {
         try {
-            if (cursor == null || cursor.eof())
+            if (getCursor() == null || getCursor().eof())
                 return null;
-            return cursor.getBlobAsArray(f);
+            return getCursor().getBlobAsArray(f);
         } catch (SqlJetException e) {
             SVNSqlJetDb.createSqlJetError(e);
             return null;
@@ -316,6 +313,15 @@ public abstract class SVNSqlJetStatement {
             return -1;
         }
         return getColumnLong(f);
+    }
+
+
+    protected ISqlJetCursor getCursor() {
+        return cursor;
+    }
+
+    protected void setCursor(ISqlJetCursor cursor) {
+        this.cursor = cursor;
     }
 
 }
