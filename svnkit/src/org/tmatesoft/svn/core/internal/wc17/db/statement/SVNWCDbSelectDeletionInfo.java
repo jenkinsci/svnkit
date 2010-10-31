@@ -46,30 +46,18 @@ public class SVNWCDbSelectDeletionInfo extends SVNSqlJetSelectStatement {
     }
 
     protected Object[] getWhere() throws SVNException {
-        bindLong(3, getMaxOpDepth((Long)binds.get(0), (String)binds.get(1)));
+        Long maxOpDepth = getMaxOpDepth((Long) binds.get(0), (String) binds.get(1));
+        if (maxOpDepth != null) {
+            bindLong(3, maxOpDepth);
+        } else {
+            bindNull(3);
+        }
         return super.getWhere();
     }
 
-    private long getMaxOpDepth(Long wcId, String localRelpath) throws SVNException {
-        SVNSqlJetSelectStatement maxOpDepthStmt = new SVNSqlJetSelectStatement(sDb, SVNWCDbSchema.NODES){
-            protected boolean isFilterPassed() throws SVNException {
-                return getColumnLong(SVNWCDbSchema.NODES__Fields.op_depth) > 0;
-            }
-        };
-        try{
-            maxOpDepthStmt.bindLong(1, wcId);
-            maxOpDepthStmt.bindString(2, localRelpath);
-            long maxOpDepth = -1;
-            while(maxOpDepthStmt.next()){
-                long opDepth = maxOpDepthStmt.getColumnLong(SVNWCDbSchema.NODES__Fields.op_depth);
-                if(maxOpDepth<opDepth){
-                    maxOpDepth = opDepth;
-                }
-            }
-            return maxOpDepth;
-        } finally {
-            maxOpDepthStmt.reset();
-        }
+    private Long getMaxOpDepth(Long wcId, String localRelpath) throws SVNException {
+        SVNWCDbNodesMaxOpDepth maxOpDepth = new SVNWCDbNodesMaxOpDepth(sDb, wcId, localRelpath);
+        return maxOpDepth.getMaxOpDepth();
     }
 
 }
