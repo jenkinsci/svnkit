@@ -21,20 +21,15 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectStatement;
  */
 public class SVNWCDbNodesMaxOpDepth extends SVNSqlJetSelectStatement {
 
-    private Long wcId;
-    private String localRelpath;
-
-    public SVNWCDbNodesMaxOpDepth(SVNSqlJetDb sDb, Long wcId, String localRelpath) throws SVNException {
+    public SVNWCDbNodesMaxOpDepth(SVNSqlJetDb sDb) throws SVNException {
         super(sDb, SVNWCDbSchema.NODES);
-        this.wcId = wcId;
-        this.localRelpath = localRelpath;
     }
 
     protected boolean isFilterPassed() throws SVNException {
         return getColumnLong(SVNWCDbSchema.NODES__Fields.op_depth) > 0;
     }
 
-    public Long getMaxOpDepth() throws SVNException {
+    public Long getMaxOpDepth(Long wcId, String localRelpath) throws SVNException {
         try {
             bindLong(1, wcId);
             bindString(2, localRelpath);

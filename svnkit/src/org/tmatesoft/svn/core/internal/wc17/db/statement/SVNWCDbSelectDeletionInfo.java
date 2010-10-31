@@ -29,9 +29,11 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 public class SVNWCDbSelectDeletionInfo extends SVNSqlJetSelectStatement {
 
     public static final String NODES_BASE = "nodes_base";
+    private SVNWCDbNodesMaxOpDepth myMaxOpDepth;
 
     public SVNWCDbSelectDeletionInfo(SVNSqlJetDb sDb) throws SVNException {
         super(sDb, SVNWCDbSchema.NODES);
+        myMaxOpDepth = new SVNWCDbNodesMaxOpDepth(sDb);
     }
 
     public SVNSqlJetStatement getJoinedStatement(String joinedTable) throws SVNException {
@@ -46,18 +48,13 @@ public class SVNWCDbSelectDeletionInfo extends SVNSqlJetSelectStatement {
     }
 
     protected Object[] getWhere() throws SVNException {
-        Long maxOpDepth = getMaxOpDepth((Long) binds.get(0), (String) binds.get(1));
+        Long maxOpDepth = myMaxOpDepth.getMaxOpDepth((Long) binds.get(0), (String) binds.get(1));
         if (maxOpDepth != null) {
             bindLong(3, maxOpDepth);
         } else {
             bindNull(3);
         }
         return super.getWhere();
-    }
-
-    private Long getMaxOpDepth(Long wcId, String localRelpath) throws SVNException {
-        SVNWCDbNodesMaxOpDepth maxOpDepth = new SVNWCDbNodesMaxOpDepth(sDb, wcId, localRelpath);
-        return maxOpDepth.getMaxOpDepth();
     }
 
 }
