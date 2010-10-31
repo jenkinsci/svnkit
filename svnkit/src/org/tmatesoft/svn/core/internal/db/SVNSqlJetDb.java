@@ -126,7 +126,7 @@ public class SVNSqlJetDb {
     public void beginTransaction(SqlJetTransactionMode mode) throws SVNException {
         if (mode != null) {
             openCount++;
-            if (!db.isInTransaction() || mode != db.getTransactionMode()) {
+            if (isNeedStartTransaction(mode)) {
                 try {
                     db.beginTransaction(mode);
                 } catch (SqlJetException e) {
@@ -136,6 +136,14 @@ public class SVNSqlJetDb {
         } else {
             SVNErrorManager.assertionFailure(mode != null, "transaction mode is null", SVNLogType.WC);
         }
+    }
+
+    private boolean isNeedStartTransaction(SqlJetTransactionMode mode) {
+        if (!db.isInTransaction()) {
+            return true;
+        }
+        SqlJetTransactionMode dbMode = db.getTransactionMode();
+        return mode != dbMode && (SqlJetTransactionMode.WRITE == mode || SqlJetTransactionMode.EXCLUSIVE == mode) && SqlJetTransactionMode.READ_ONLY == dbMode;
     }
 
     public void commit() throws SVNException {
@@ -165,7 +173,7 @@ public class SVNSqlJetDb {
                 db.rollback();
             } catch (SqlJetException e1) {
                 e1.initCause(e);
-                SVNErrorMessage err1 = SVNErrorMessage.create(SVNErrorCode.SQLITE_ERROR, e1 );
+                SVNErrorMessage err1 = SVNErrorMessage.create(SVNErrorCode.SQLITE_ERROR, e1);
                 SVNErrorManager.error(err1, SVNLogType.DEFAULT);
             }
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SQLITE_ERROR, e);
