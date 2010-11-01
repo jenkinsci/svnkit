@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.internal.db;
 import java.util.Map;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
+import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -29,14 +30,17 @@ public class SVNSqlJetUpdateStatement extends SVNSqlJetSelectStatement {
 
     public SVNSqlJetUpdateStatement(SVNSqlJetDb sDb, Enum fromTable) throws SVNException {
         super(sDb, fromTable);
+        transactionMode = SqlJetTransactionMode.WRITE;
     }
 
     public SVNSqlJetUpdateStatement(SVNSqlJetDb sDb, Enum fromTable, Enum indexName) throws SVNException {
         super(sDb, fromTable, indexName);
+        transactionMode = SqlJetTransactionMode.WRITE;
     }
 
     public SVNSqlJetUpdateStatement(SVNSqlJetDb sDb, String fromTable) throws SVNException {
         super(sDb,fromTable);
+        transactionMode = SqlJetTransactionMode.WRITE;
     }
 
     public void update(final Map<String, Object> values) throws SVNException {

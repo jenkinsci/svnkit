@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.core.internal.wc17.db.statement;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
+import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectStatement;
@@ -26,6 +27,7 @@ public class SVNWCDbDeleteWCLock extends SVNSqlJetSelectStatement {
 
     public SVNWCDbDeleteWCLock(SVNSqlJetDb sDb) throws SVNException {
         super(sDb, SVNWCDbSchema.WC_LOCK);
+        transactionMode = SqlJetTransactionMode.WRITE;
     }
 
     public long exec() throws SVNException {

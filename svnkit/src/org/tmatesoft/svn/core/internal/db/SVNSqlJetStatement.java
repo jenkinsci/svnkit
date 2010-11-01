@@ -35,6 +35,7 @@ public abstract class SVNSqlJetStatement {
     protected SVNSqlJetDb sDb;
     private ISqlJetCursor cursor;
     protected List binds = new ArrayList();
+    protected SqlJetTransactionMode transactionMode = SqlJetTransactionMode.READ_ONLY;
 
     protected ISqlJetCursor openCursor() throws SVNException {
         throw new UnsupportedOperationException();
@@ -78,7 +79,7 @@ public abstract class SVNSqlJetStatement {
     public boolean next() throws SVNException {
         try {
             if (getCursor() == null) {
-                sDb.beginTransaction(SqlJetTransactionMode.READ_ONLY);
+                sDb.beginTransaction(transactionMode);
                 setCursor(openCursor());
                 return !getCursor().eof();
             }
