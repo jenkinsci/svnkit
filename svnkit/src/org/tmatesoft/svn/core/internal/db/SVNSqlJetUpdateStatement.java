@@ -50,8 +50,7 @@ public class SVNSqlJetUpdateStatement extends SVNSqlJetSelectStatement {
         try {
             getCursor().updateByFieldNames(values);
         } catch (SqlJetException e) {
-            SVNErrorMessage err = SVNErrorMessage.create( SVNErrorCode.SQLITE_ERROR, e );
-            SVNErrorManager.error(err, SVNLogType.FSFS);
+            SVNSqlJetDb.createSqlJetError(e);
         }
     }
 

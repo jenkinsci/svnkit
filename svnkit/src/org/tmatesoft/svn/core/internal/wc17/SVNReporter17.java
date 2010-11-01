@@ -318,6 +318,7 @@ public class SVNReporter17 implements ISVNReporterBaton {
             // abort_report:
             /* Clean up the fs transaction. */
             reporter.abortReport();
+            throw e;
         }
 
     }
@@ -464,14 +465,14 @@ public class SVNReporter17 implements ISVNReporterBaton {
                 /*
                  * THIS_ABSPATH was listed as a BASE child of DIR_ABSPATH. Yet,
                  * we just got an error trying to read it. What gives? :-P
-                 * 
+                 *
                  * This happens when THIS_ABSPATH is a subdirectory that is
                  * marked in the parent stub as "not-present". The subdir is
                  * then removed. Later, an addition is scheduled, putting the
                  * subdirectory back, but ONLY containing WORKING nodes.
-                 * 
+                 *
                  * Thus, the BASE fetch comes out of the subdir, and fails.
-                 * 
+                 *
                  * For this case, we go ahead and treat this as a simple
                  * not-present, and ignore whatever is in the subdirectory.
                  */
@@ -489,7 +490,7 @@ public class SVNReporter17 implements ISVNReporterBaton {
              * subdirectories for the not-present state. That check was
              * redundant since a not-present directory has no BASE nodes within
              * it which may report another status.
-             * 
+             *
              * There might be NO BASE node (per the condition above), but the
              * typical case is that base_get_info() reads the parent stub
              * because there is no subdir (with administrative data). Thus, we
@@ -532,7 +533,7 @@ public class SVNReporter17 implements ISVNReporterBaton {
                  * server knows it's gone... ...unless we're reporting
                  * everything, in which case we're going to report it missing
                  * later anyway.
-                 * 
+                 *
                  * This instructs the server to send it back to us, if it is now
                  * available (an addition after a not-present state), or if it
                  * is now authorized (change in authz for the absent item).
@@ -597,7 +598,7 @@ public class SVNReporter17 implements ISVNReporterBaton {
 
             /*
              * Obstructed nodes might report SVN_INVALID_REVNUM. Tweak it.
-             * 
+             *
              * ### it seems that obstructed nodes should be handled quite a ###
              * bit differently. maybe reported as missing, like not-present ###
              * or absent nodes?
@@ -637,10 +638,10 @@ public class SVNReporter17 implements ISVNReporterBaton {
                  * If the subdir and its administrative area are not present,
                  * then do NOT bother to report this node, much less recurse
                  * into the thing.
-                 * 
+                 *
                  * Note: if the there is nothing on the disk, then we may have
                  * reported it missing further above.
-                 * 
+                 *
                  * ### hmm. but what if we have a *file* obstructing the dir?
                  * ### the code above will not report it, and we'll simply ###
                  * skip it right here. I guess with an obstruction, we ### can't
@@ -692,14 +693,14 @@ public class SVNReporter17 implements ISVNReporterBaton {
 
     /**
      * Helper for report_revisions_and_depths().
-     * 
+     *
      * Perform an atomic restoration of the file LOCAL_ABSPATH; that is, copy
      * the file's text-base to the administrative tmp area, and then move that
      * file to LOCAL_ABSPATH with possible translations/expansions. If
      * USE_COMMIT_TIMES is set, then set working file's timestamp to
      * last-commit-time. Either way, set entry-timestamp to match that of the
      * working file when all is finished.
-     * 
+     *
      * Not that a valid access baton with a write lock to the directory of
      * LOCAL_ABSPATH must be available in DB.
      */
