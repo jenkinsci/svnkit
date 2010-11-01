@@ -298,7 +298,7 @@ public class SVNWCContext {
         cleanupHandlers.add(ch);
     }
 
-    private void cleanup() throws SVNException {
+    public void cleanup() throws SVNException {
         for (CleanupHandler ch : cleanupHandlers) {
             ch.cleanup();
         }

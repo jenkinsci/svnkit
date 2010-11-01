@@ -392,11 +392,15 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
         }
         path = path.getAbsoluteFile();
         final SVNWCContext wcContext = new SVNWCContext(this.getOptions(), getEventDispatcher());
-        final File anchor = wcContext.acquireWriteLock(path, !innerUpdate, true);
         try {
-            return updateInternal(wcContext, path, anchor, revision, depth, depthIsSticky, allowUnversionedObstructions, sendCopyFrom, innerUpdate);
+            final File anchor = wcContext.acquireWriteLock(path, !innerUpdate, true);
+            try {
+                return updateInternal(wcContext, path, anchor, revision, depth, depthIsSticky, allowUnversionedObstructions, sendCopyFrom, innerUpdate);
+            } finally {
+                wcContext.releaseWriteLock(anchor);
+            }
         } finally {
-            wcContext.releaseWriteLock(anchor);
+            wcContext.close();
         }
     }
 
@@ -474,7 +478,7 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
             }
             return targetRevision;
         } finally {
-            wcContext.close();
+            wcContext.cleanup();
             sleepForTimeStamp();
         }
     }
@@ -495,8 +499,8 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
         return createRepository(baseUrl, uuid, mayReuse);
     }
 
-    private ISVNUpdateEditor createUpdateEditor(SVNWCContext wcContext, File anchorAbspath, String target, SVNURL reposRoot, SVNExternalsStore externalsStore, boolean allowUnversionedObstructions, boolean depthIsSticky,
-            SVNDepth depth, String[] preservedExts, ISVNFileFetcher fileFetcher, boolean updateLocksOnDemand) throws SVNException {
+    private ISVNUpdateEditor createUpdateEditor(SVNWCContext wcContext, File anchorAbspath, String target, SVNURL reposRoot, SVNExternalsStore externalsStore, boolean allowUnversionedObstructions,
+            boolean depthIsSticky, SVNDepth depth, String[] preservedExts, ISVNFileFetcher fileFetcher, boolean updateLocksOnDemand) throws SVNException {
         return SVNUpdateEditor17.createUpdateEditor(wcContext, anchorAbspath, target, reposRoot, null, externalsStore, allowUnversionedObstructions, depthIsSticky, depth, preservedExts, fileFetcher,
                 updateLocksOnDemand);
     }
