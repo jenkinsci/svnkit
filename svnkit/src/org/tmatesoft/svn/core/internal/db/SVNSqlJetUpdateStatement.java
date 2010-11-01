@@ -56,16 +56,16 @@ public class SVNSqlJetUpdateStatement extends SVNSqlJetSelectStatement {
     }
 
     public long exec() throws SVNException {
-        Map<String, Object> values = getUpdateValues();
         long n=0;
         while (next()) {
+            Map<String, Object> values = getUpdateValues();
             update(values);
             n++;
         }
         return n;
     }
 
-    public Map<String, Object> getUpdateValues() {
+    public Map<String, Object> getUpdateValues() throws SVNException {
         throw new UnsupportedOperationException();
     }
 

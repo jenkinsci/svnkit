@@ -30,11 +30,11 @@ public class SVNUpdateBaseNodePresenceRevnumAndReposPath extends SVNSqlJetUpdate
         super(sDb, SVNWCDbSchema.NODES);
     }
 
-    public Map<String, Object> getUpdateValues() {
-        HashMap<String, Object> v = new HashMap<String, Object>();
+    public Map<String, Object> getUpdateValues() throws SVNException {
+        Map<String, Object> v = getRowValues();
         v.put(SVNWCDbSchema.NODES__Fields.presence.toString(), getBind(3));
         v.put(SVNWCDbSchema.NODES__Fields.revision.toString(), getBind(4));
-        v.put(SVNWCDbSchema.NODES__Fields.revision.toString(), getBind(5));
+        v.put(SVNWCDbSchema.NODES__Fields.repos_path.toString(), getBind(5));
         return v;
     }
 

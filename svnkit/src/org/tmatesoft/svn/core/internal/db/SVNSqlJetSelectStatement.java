@@ -11,7 +11,14 @@
  */
 package org.tmatesoft.svn.core.internal.db;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.tmatesoft.sqljet.core.SqlJetException;
+import org.tmatesoft.sqljet.core.SqlJetValueType;
+import org.tmatesoft.sqljet.core.schema.ISqlJetColumnDef;
+import org.tmatesoft.sqljet.core.schema.ISqlJetTypeDef;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
 import org.tmatesoft.sqljet.core.table.ISqlJetTable;
 import org.tmatesoft.svn.core.SVNException;
@@ -84,6 +91,28 @@ public class SVNSqlJetSelectStatement extends SVNSqlJetStatement {
      */
     protected boolean isFilterPassed() throws SVNException {
         return true;
+    }
+
+    public Map<String, Object> getRowValues() throws SVNException {
+        HashMap<String, Object> v = new HashMap<String, Object>();
+        try {
+            List<ISqlJetColumnDef> columns = table.getDefinition().getColumns();
+            for (ISqlJetColumnDef column : columns) {
+                String colName = column.getName();
+                SqlJetValueType fieldType = getCursor().getFieldType(colName);
+                if (fieldType == SqlJetValueType.NULL) {
+                    v.put(colName, null);
+                } else if (fieldType == SqlJetValueType.BLOB) {
+                    v.put(colName, getCursor().getBlobAsArray(colName));
+                } else {
+                    v.put(colName, getCursor().getValue(colName));
+                }
+            }
+            return v;
+        } catch (SqlJetException e) {
+            SVNSqlJetDb.createSqlJetError(e);
+            return null;
+        }
     }
 
 }
