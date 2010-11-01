@@ -1005,7 +1005,7 @@ public class SVNWCDb implements ISVNWCDb {
             }
             SVNSqlJetStatement stmt = db.getStatement(workingExists ? SVNWCDbStatements.UPDATE_WORKING_NODE_FILEINFO : SVNWCDbStatements.UPDATE_BASE_NODE_FILEINFO);
             stmt.bindf("isii", wcRoot.getWcId(), localRelpath, translatedSize, lastModTime);
-            int affectedRows = stmt.done();
+            long affectedRows = stmt.done();
             assert (affectedRows == 1);
         }
     }
@@ -1663,7 +1663,7 @@ public class SVNWCDb implements ISVNWCDb {
         SVNSqlJetStatement stmt = db.getStatement(SVNWCDbStatements.UPDATE_ACTUAL_PROPS);
         stmt.bindf("is", wcId, localRelpath);
         stmt.bindProperties(3, props);
-        int affectedRows = stmt.done();
+        long affectedRows = stmt.done();
         if (affectedRows == 1 || props == null) {
             return;
         }
@@ -3732,8 +3732,8 @@ public class SVNWCDb implements ISVNWCDb {
         assert (baseStatus == SVNWCDbStatus.Normal || baseStatus == SVNWCDbStatus.Incomplete);
         SVNSqlJetStatement stmt = getStatementForPath(localDirAbspath, SVNWCDbStatements.UPDATE_NODE_BASE_PRESENCE);
         stmt.bindString(3, incomplete ? "incomplete" : "normal");
-        int affectedNodeRows = stmt.done();
-        int affectedRows = affectedNodeRows;
+        long affectedNodeRows = stmt.done();
+        long affectedRows = affectedNodeRows;
         if (affectedRows > 0) {
             SVNWCDbDir pdh = getOrCreateDir(localDirAbspath, false);
             if (pdh != null) {

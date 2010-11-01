@@ -33,7 +33,7 @@ public class SVNFSFSRevPropCreateSchema extends SVNSqlJetStatement {
         super(sDb);
     }
 
-    public int exec() throws SVNException {
+    public long exec() throws SVNException {
         try {
             sDb.getDb().getOptions().setAutovacuum(true);
             sDb.getDb().runWriteTransaction(new ISqlJetTransaction() {

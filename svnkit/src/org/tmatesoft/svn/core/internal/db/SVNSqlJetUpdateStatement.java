@@ -51,9 +51,9 @@ public class SVNSqlJetUpdateStatement extends SVNSqlJetSelectStatement {
         }
     }
 
-    public int exec() throws SVNException {
+    public long exec() throws SVNException {
         Map<String, Object> values = getUpdateValues();
-        int n=0;
+        long n=0;
         while (next()) {
             update(values);
             n++;

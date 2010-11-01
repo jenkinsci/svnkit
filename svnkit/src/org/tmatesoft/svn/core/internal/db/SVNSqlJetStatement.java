@@ -44,7 +44,7 @@ public abstract class SVNSqlJetStatement {
         throw new UnsupportedOperationException();
     }
 
-    public int exec() throws SVNException {
+    public long exec() throws SVNException {
         throw new UnsupportedOperationException();
     }
 
@@ -317,7 +317,7 @@ public abstract class SVNSqlJetStatement {
         return SVNProperties.wrap(skel.parsePropList());
     }
 
-    public int done() throws SVNException {
+    public long done() throws SVNException {
         try {
             return exec();
         } finally {
