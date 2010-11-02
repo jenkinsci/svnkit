@@ -14,6 +14,8 @@ package org.tmatesoft.svn.core.internal.db;
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.util.EnumMap;
+import java.util.logging.Level;
+
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
@@ -22,6 +24,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
+import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -81,8 +84,15 @@ public class SVNSqlJetDb {
         }
     }
 
+    private class StackTraceLog extends Exception {
+        public StackTraceLog(String msg) {
+            super(msg);
+        }
+    }
+
     public SVNSqlJetStatement getStatement(SVNWCDbStatements statementIndex) throws SVNException {
         assert (statementIndex != null);
+        //SVNDebugLog.getDefaultLog().log(SVNLogType.WC, new StackTraceLog(statementIndex.toString()), Level.INFO);
         SVNSqlJetStatement stmt = statements.get(statementIndex);
         if (stmt == null) {
             stmt = prepareStatement(statementIndex);

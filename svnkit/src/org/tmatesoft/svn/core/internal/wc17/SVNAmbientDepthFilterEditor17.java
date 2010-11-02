@@ -149,11 +149,10 @@ public class SVNAmbientDepthFilterEditor17 implements ISVNEditor {
     public void openDir(String path, long revision) throws SVNException {
         DirBaton parentBaton = myCurrentDirBaton;
         myCurrentDirBaton = makeDirBaton(path, parentBaton);
-
         if (myCurrentDirBaton.myIsAmbientlyExcluded) {
             return;
         }
-
+        myDelegate.openDir(path, revision);
         File abspath = SVNFileUtil.createFilePath(myAnchor, SVNWCUtils.skipAncestor(myAnchor, SVNFileUtil.createFilePath(path)));
         AmbientReadInfo aInfo = ambientReadInfo(abspath, myReadBase);
         if (aInfo.kind != SVNWCDbKind.Unknown && !aInfo.hidden) {
