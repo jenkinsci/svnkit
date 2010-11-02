@@ -162,11 +162,10 @@ public abstract class SVNSqlJetStatement {
     }
 
     private void adjustBinds(int i) {
-        i--;
         int size = binds.size();
+        i--;
         if (size < i) {
-            int j = i - size;
-            for (int n = size; n < j; n++) {
+            for (int n = size; n < i; n++) {
                 binds.add(n, null);
             }
         }
