@@ -2424,6 +2424,9 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         }
         List<String> children = myWcContext.getDb().getBaseChildren(dirAbspath);
         for (String childBaseName : children) {
+            if (childBaseName == null || "".equals(childBaseName)) {
+                continue;
+            }
             File childAbspath;
             SVNWCDbKind kind;
             SVNWCDbStatus status;
