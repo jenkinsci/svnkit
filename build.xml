@@ -1044,6 +1044,18 @@
     	<unwar src="build/lib/svnkit.war" dest="${python.test.home}/tomcat/webapps/svnkit" />
     	<replace token="%python.test.home%" file="${python.test.home}/tomcat/webapps/svnkit/WEB-INF/web.xml" value="${python.test.home}" />
 
+    	<condition property="jvmarg.debug.suspend" value="y" else="n">
+    		<and>
+    			<isset property="debug"/>
+    			<equals arg1="${debug}" arg2="suspend" casesensitive="false" trim="true"/>
+    		</and>
+    	</condition>
+
+    	<condition property="jvmarg.debug" else="-Ddummy=dummy"
+   			value="-agentlib:jdwp=transport=dt_socket,suspend=${jvmarg.debug.suspend},server=y,address=1729">
+   			<isset property="debug"/>
+    	</condition>
+
     	<java classpathref="python.classpath"
               dir="${python.test.home}"
               fork="true"
@@ -1057,6 +1069,7 @@
 <!--         <jvmarg value="-agentlib:yjpagent=port=1729,disablecounts,disablealloc,disablej2ee,sampling,onexit=snapshot" /> -->
 <!--     Uncomment to enable remote debugging -->
 <!--         <jvmarg value="-agentlib:jdwp=transport=dt_socket,suspend=n,server=y,address=1729" /> -->
+         <jvmarg value="${jvmarg.debug}" />
          <arg line="${test.properties}" />
          <arg path="${basedir}/build/lib" />
     	</java>
