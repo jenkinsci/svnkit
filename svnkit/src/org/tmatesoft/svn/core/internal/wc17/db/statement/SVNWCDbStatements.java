@@ -47,7 +47,7 @@ public enum SVNWCDbStatements {
     UPDATE_BASE_NODE_PRESENCE_REVNUM_AND_REPOS_PATH(SVNUpdateBaseNodePresenceRevnumAndReposPath.class),
     SELECT_NODE_PROPS(SVNWCDbSelectNodeProps.class),
     INSERT_WCROOT,
-    SELECT_REPOSITORY,
+    SELECT_REPOSITORY(SVNWCDbSelectRepository.class),
     INSERT_REPOSITORY,
     INSERT_BASE_NODE,
     INSERT_BASE_NODE_INCOMPLETE,

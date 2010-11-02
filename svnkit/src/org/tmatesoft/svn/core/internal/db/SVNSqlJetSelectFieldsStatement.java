@@ -36,6 +36,13 @@ public abstract class SVNSqlJetSelectFieldsStatement<E extends Enum<E>> extends 
         defineFields();
     }
 
+    public SVNSqlJetSelectFieldsStatement(SVNSqlJetDb sDb, Enum fromTable, Enum indexName) throws SVNException {
+        super(sDb, fromTable, indexName);
+        fields = new ArrayList<E>();
+        defineFields();
+    }
+
+
     protected abstract void defineFields();
 
     public long getColumnLong(int f) throws SVNException {
