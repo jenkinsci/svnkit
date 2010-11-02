@@ -92,7 +92,7 @@ public class SVNSqlJetDb {
 
     public SVNSqlJetStatement getStatement(SVNWCDbStatements statementIndex) throws SVNException {
         assert (statementIndex != null);
-        //SVNDebugLog.getDefaultLog().log(SVNLogType.WC, new StackTraceLog(statementIndex.toString()), Level.INFO);
+        SVNDebugLog.getDefaultLog().log(SVNLogType.WC, new StackTraceLog(statementIndex.toString()), Level.INFO);
         SVNSqlJetStatement stmt = statements.get(statementIndex);
         if (stmt == null) {
             stmt = prepareStatement(statementIndex);
