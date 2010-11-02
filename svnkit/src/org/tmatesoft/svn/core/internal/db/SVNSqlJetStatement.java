@@ -21,6 +21,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -123,6 +124,8 @@ public abstract class SVNSqlJetStatement {
                 case 'i':
                     if (data[i] instanceof Number) {
                         bindLong(i + 1, ((Number) data[i]).longValue());
+                    } else if (data[i] instanceof SVNDate) {
+                        bindLong(i + 1, ((SVNDate) data[i]).getTimeInMicros());
                     } else {
                         SVNErrorManager.assertionFailure(false, "Number argument required", SVNLogType.WC);
                     }
