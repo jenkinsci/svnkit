@@ -2425,7 +2425,8 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         List<String> children = myWcContext.getDb().getBaseChildren(dirAbspath);
         for (String childBaseName : children) {
             if (childBaseName == null || "".equals(childBaseName)) {
-                continue;
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ASSERTION_FAIL, "''{0}'' has empty childs", dirAbspath);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
             File childAbspath;
             SVNWCDbKind kind;
