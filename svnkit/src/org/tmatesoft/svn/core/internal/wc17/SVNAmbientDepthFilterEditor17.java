@@ -154,7 +154,7 @@ public class SVNAmbientDepthFilterEditor17 implements ISVNEditor {
             return;
         }
 
-        File abspath = SVNFileUtil.createFilePath(myAnchor, SVNWCUtils.getPathAsChild(myAnchor, SVNFileUtil.createFilePath(path)));
+        File abspath = SVNFileUtil.createFilePath(myAnchor, SVNWCUtils.skipAncestor(myAnchor, SVNFileUtil.createFilePath(path)));
         AmbientReadInfo aInfo = ambientReadInfo(abspath, myReadBase);
         if (aInfo.kind != SVNWCDbKind.Unknown && !aInfo.hidden) {
             myCurrentDirBaton.myAmbientDepth = aInfo.depth;

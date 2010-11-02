@@ -20,6 +20,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 /**
@@ -129,6 +130,13 @@ public class SVNWCUtils {
         final String parentPath = parent.toString();
         final String childPath = child.toString();
         return childPath.startsWith(parentPath);
+    }
+
+    public static File skipAncestor(File parent, File child) {
+        if (!isAncestor(parent, child)) {
+            return child;
+        }
+        return SVNFileUtil.createFilePath(getPathAsChild(parent, child));
     }
 
 }
