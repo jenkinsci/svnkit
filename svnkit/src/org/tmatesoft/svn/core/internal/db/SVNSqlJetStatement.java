@@ -115,20 +115,20 @@ public abstract class SVNSqlJetStatement {
                 case 's':
                 case 't':
                     if (data[n] == null) {
-                        bindString(n + 1, "");
+                        bindString(i + 1, "");
                     } else if (data[n] instanceof File) {
-                        bindString(n + 1, SVNFileUtil.getFilePath((File) data[n]));
+                        bindString(i + 1, SVNFileUtil.getFilePath((File) data[n]));
                     } else {
-                        bindString(n + 1, data[n].toString());
+                        bindString(i + 1, data[n].toString());
                     }
                     n++;
                     break;
 
                 case 'i':
                     if (data[n] instanceof Number) {
-                        bindLong(n + 1, ((Number) data[n]).longValue());
+                        bindLong(i + 1, ((Number) data[n]).longValue());
                     } else if (data[n] instanceof SVNDate) {
-                        bindLong(n + 1, ((SVNDate) data[n]).getTimeInMicros());
+                        bindLong(i + 1, ((SVNDate) data[n]).getTimeInMicros());
                     } else {
                         SVNErrorManager.assertionFailure(false, "Number argument required", SVNLogType.WC);
                     }
@@ -137,7 +137,7 @@ public abstract class SVNSqlJetStatement {
 
                 case 'r':
                     if (data[n] instanceof Number) {
-                        bindRevision(n + 1, ((Number) data[n]).longValue());
+                        bindRevision(i + 1, ((Number) data[n]).longValue());
                     } else {
                         SVNErrorManager.assertionFailure(false, "Number argument required", SVNLogType.WC);
                     }
@@ -146,7 +146,7 @@ public abstract class SVNSqlJetStatement {
 
                 case 'b':
                     if (data[n] instanceof byte[]) {
-                        bindBlob(n + 1, (byte[]) data[n]);
+                        bindBlob(i + 1, (byte[]) data[n]);
                     }
                     n++;
                     break;
