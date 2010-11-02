@@ -514,12 +514,19 @@ public class SVNWCDb implements ISVNWCDb {
                 stmt.bindChecksum(14, checksum);
                 if (translatedSize != INVALID_FILESIZE) {
                     stmt.bindLong(16, translatedSize);
+                } else {
+                    stmt.bindNull(16);
                 }
+            } else {
+                stmt.bindNull(14);
+                stmt.bindNull(16);
             }
 
             stmt.bindProperties(15, props);
             if (davCache != null) {
                 stmt.bindProperties(18, davCache);
+            } else {
+                stmt.bindNull(18);
             }
 
             stmt.done();

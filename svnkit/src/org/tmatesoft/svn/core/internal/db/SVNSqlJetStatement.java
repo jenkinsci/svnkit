@@ -105,6 +105,8 @@ public abstract class SVNSqlJetStatement {
         // TODO check formats
         // binds.addAll(Arrays.asList(data));
 
+        int n = 0;
+
         for (int i = 0; i < format.length(); i++) {
 
             char fmt = format.charAt(i);
@@ -112,37 +114,44 @@ public abstract class SVNSqlJetStatement {
             switch (fmt) {
                 case 's':
                 case 't':
-                    if (data[i] == null) {
-                        bindString(i + 1, "");
-                    } else if (data[i] instanceof File) {
-                        bindString(i + 1, SVNFileUtil.getFilePath((File) data[i]));
+                    if (data[n] == null) {
+                        bindString(n + 1, "");
+                    } else if (data[n] instanceof File) {
+                        bindString(n + 1, SVNFileUtil.getFilePath((File) data[n]));
                     } else {
-                        bindString(i + 1, data[i].toString());
+                        bindString(n + 1, data[n].toString());
                     }
+                    n++;
                     break;
 
                 case 'i':
-                    if (data[i] instanceof Number) {
-                        bindLong(i + 1, ((Number) data[i]).longValue());
-                    } else if (data[i] instanceof SVNDate) {
-                        bindLong(i + 1, ((SVNDate) data[i]).getTimeInMicros());
+                    if (data[n] instanceof Number) {
+                        bindLong(n + 1, ((Number) data[n]).longValue());
+                    } else if (data[n] instanceof SVNDate) {
+                        bindLong(n + 1, ((SVNDate) data[n]).getTimeInMicros());
                     } else {
                         SVNErrorManager.assertionFailure(false, "Number argument required", SVNLogType.WC);
                     }
+                    n++;
                     break;
 
                 case 'r':
-                    if (data[i] instanceof Number) {
-                        bindRevision(i + 1, ((Number) data[i]).longValue());
+                    if (data[n] instanceof Number) {
+                        bindRevision(n + 1, ((Number) data[n]).longValue());
                     } else {
                         SVNErrorManager.assertionFailure(false, "Number argument required", SVNLogType.WC);
                     }
+                    n++;
                     break;
 
                 case 'b':
-                    if (data[i] instanceof byte[]) {
-                        bindBlob(i + 1, (byte[]) data[i]);
+                    if (data[n] instanceof byte[]) {
+                        bindBlob(n + 1, (byte[]) data[n]);
                     }
+                    n++;
+                    break;
+
+                case 'n':
                     break;
 
                 default:
