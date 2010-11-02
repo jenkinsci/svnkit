@@ -58,7 +58,7 @@ public enum SVNWCDbStatements {
     UPDATE_COPYFROM,
     DELETE_BASE_NODE,
     DELETE_NODES,
-    INSERT_NODE,
+    INSERT_NODE(SVNWCDbInsertNode.class),
     DELETE_WORK_ITEM,
     SELECT_WORK_ITEM(SVNWCDbSelectWorkItem.class),
     SELECT_BASE_DAV_CACHE,
