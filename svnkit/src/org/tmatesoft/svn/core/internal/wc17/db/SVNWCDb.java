@@ -3813,6 +3813,8 @@ public class SVNWCDb implements ISVNWCDb {
         SVNWCDbDir pdh = parseDir.wcDbDir;
         verifyDirUsable(pdh);
         SetRevRelpath baton = new SetRevRelpath();
+        baton.pdh = pdh;
+        baton.localRelpath = parseDir.localRelPath;
         baton.rev = revision;
         baton.setReposRelpath = setReposRelpath;
         baton.reposRelpath = reposRelpath;
