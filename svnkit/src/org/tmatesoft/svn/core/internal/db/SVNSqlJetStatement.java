@@ -25,6 +25,7 @@ import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -127,6 +128,14 @@ public abstract class SVNSqlJetStatement {
                     }
                     break;
 
+                case 'r':
+                    if (data[i] instanceof Number) {
+                        bindRevision(i + 1, ((Number) data[i]).longValue());
+                    } else {
+                        SVNErrorManager.assertionFailure(false, "Number argument required", SVNLogType.WC);
+                    }
+                    break;
+
                 case 'b':
                     if (data[i] instanceof byte[]) {
                         bindBlob(i + 1, (byte[]) data[i]);
@@ -162,6 +171,14 @@ public abstract class SVNSqlJetStatement {
 
     public void bindBlob(int i, byte[] serialized) {
         binds.add(i - 1, serialized);
+    }
+
+    public void bindRevision(int i, long revision) {
+        if (SVNRevision.isValidRevisionNumber(revision)) {
+            bindLong(i, revision);
+        } else {
+            bindNull(i);
+        }
     }
 
     protected Object getBind(int i) {
