@@ -72,10 +72,17 @@ public class SVNAmbientDepthFilterEditor17 implements ISVNEditor {
     }
 
     public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
-        return null;
+        if (myCurrentFileBaton.myIsAmbientlyExcluded) {
+            return SVNFileUtil.DUMMY_OUT;
+        }
+        return myDelegate.textDeltaChunk(path, diffWindow);
     }
 
     public void textDeltaEnd(String path) throws SVNException {
+        if (myCurrentFileBaton.myIsAmbientlyExcluded) {
+            return;
+        }
+        myDelegate.textDeltaEnd(path);
     }
 
     public void targetRevision(long revision) throws SVNException {
