@@ -1518,9 +1518,9 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         private boolean addExisted;
         private SVNBumpDirInfo bumpInfo;
 
-        private SVNProperties myChangedProperties;
-        private SVNProperties myChangedEntryProperties;
-        private SVNProperties myChangedWCProperties;
+        private SVNProperties myChangedProperties = new SVNProperties();
+        private SVNProperties myChangedEntryProperties = new SVNProperties();
+        private SVNProperties myChangedWCProperties = new SVNProperties();
 
         public String getName() {
             return name;
