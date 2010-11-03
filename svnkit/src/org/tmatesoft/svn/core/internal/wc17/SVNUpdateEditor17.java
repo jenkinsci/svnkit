@@ -1311,7 +1311,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         {
             SVNChecksum checksum = getUltimateBaseChecksums(fb.getLocalAbspath(), false, true).md5Checksum;
             recordedBaseChecksum = checksum != null ? checksum.getDigest() : null;
-            if (recordedBaseChecksum != null && baseChecksum != null && baseChecksum.equals(baseChecksum)) {
+            if (recordedBaseChecksum != null && baseChecksum != null && !baseChecksum.equals(recordedBaseChecksum)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT_TEXT_BASE, "Checksum mismatch for ''{0}'':\n " + "   expected:  ''{1}''\n" + "   recorded:  ''{2}''\n",
                         new Object[] {
                                 myCurrentDirectory.getLocalAbspath(), baseChecksum, recordedBaseChecksum
