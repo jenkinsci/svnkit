@@ -49,6 +49,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumInputStream;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumOutputStream;
 import org.tmatesoft.svn.core.internal.wc17.SVNStatus17.ConflictedInfo;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.CheckWCRootInfo;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.ISVNWCNodeHandler;
@@ -1348,7 +1349,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         OutputStream target = openWritableBase.stream;
         fb.setNewTextBaseTmpAbspath(openWritableBase.tempBaseAbspath);
         myDeltaProcessor.applyTextDelta(source, target, true);
-        fb.setNewTextBaseSha1Checksum(openWritableBase.getSHA1Checksum());
+        fb.setNewTextBaseSha1ChecksumStream(openWritableBase.sha1ChecksumStream);
     }
 
     public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
@@ -1368,6 +1369,10 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
     public void textDeltaEnd(String path) throws SVNException {
         if (!myCurrentFile.isSkipThis()) {
             myCurrentFile.setNewTextBaseMd5Checksum(new SVNChecksum(SVNChecksumKind.MD5, myDeltaProcessor.textDeltaEnd()));
+        }
+
+        if (myCurrentFile.getNewTextBaseSha1ChecksumStream() != null) {
+            myCurrentFile.setNewTextBaseSha1Checksum(new SVNChecksum(SVNChecksumKind.SHA1, myCurrentFile.getNewTextBaseSha1ChecksumStream().getDigest()));
         }
 
         if (myCurrentFile.getExpectedSourceMd5Checksum() != null) {
@@ -1725,6 +1730,8 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         private SVNChecksumInputStream sourceChecksumStream;
         private File newTextBaseTmpAbspath;
 
+        private SVNChecksumOutputStream newTextBaseSha1ChecksumStream;
+
         public boolean isAddingFile() {
             return addingFile;
         }
@@ -1855,6 +1862,14 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
 
         public void setAddingBaseUnderLocalAdd(boolean addingBaseUnderLocalAdd) {
             this.addingBaseUnderLocalAdd = addingBaseUnderLocalAdd;
+        }
+
+        public SVNChecksumOutputStream getNewTextBaseSha1ChecksumStream() {
+            return newTextBaseSha1ChecksumStream;
+        }
+
+        public void setNewTextBaseSha1ChecksumStream(SVNChecksumOutputStream newTextBaseSha1ChecksumStream) {
+            this.newTextBaseSha1ChecksumStream = newTextBaseSha1ChecksumStream;
         }
 
     }
