@@ -85,6 +85,7 @@ public class SVNSqlJetDb {
     }
 
     private class StackTraceLog extends Exception {
+        private static final long serialVersionUID = -3341807332809688950L;
         public StackTraceLog(String msg) {
             super(msg);
         }
