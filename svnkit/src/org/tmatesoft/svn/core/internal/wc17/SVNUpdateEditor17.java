@@ -1384,6 +1384,11 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
         }
+
+        if (myCurrentFile.getNewTextBaseTmpAbspath() != null && myCurrentFile.getNewTextBaseSha1Checksum() != null && myCurrentFile.getNewTextBaseMd5Checksum() != null) {
+            myWcContext.getDb().installPristine(myCurrentFile.getNewTextBaseTmpAbspath(), myCurrentFile.getNewTextBaseSha1Checksum(), myCurrentFile.getNewTextBaseMd5Checksum());
+        }
+
     }
 
     private SVNDirectoryInfo createDirectoryInfo(SVNDirectoryInfo parent, File path, boolean added) throws SVNException {
