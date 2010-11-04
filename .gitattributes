@@ -144,6 +144,7 @@ svnkit/src/org/tmatesoft/svn/core/internal/wc17/SVNUpdateEditor17.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/SVNWCConflictDescription17.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/SVNWCUtils.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNUpdateBaseNodePresenceRevnumAndReposPath.java -text
+svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbDeleteActualNode.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbDeleteNodes.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbDeleteWCLock.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbDeleteWorkItem.java -text

@@ -23,7 +23,7 @@ public enum SVNWCDbStatements {
 
     CREATE_SCHEMA,
     DELETE_ACTUAL_EMPTY,
-    DELETE_ACTUAL_NODE,
+    DELETE_ACTUAL_NODE(SVNWCDbDeleteActualNode.class),
     DELETE_BASE_NODE,
     DELETE_LOCK,
     DELETE_NODES(SVNWCDbDeleteNodes.class),
