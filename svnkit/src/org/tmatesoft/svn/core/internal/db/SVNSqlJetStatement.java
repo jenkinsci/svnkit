@@ -102,10 +102,9 @@ public abstract class SVNSqlJetStatement {
     }
 
     public void bindf(String format, Object... data) throws SVNException {
-        // TODO check formats
-        // binds.addAll(Arrays.asList(data));
 
         int n = 0;
+        int length = data.length;
 
         for (int i = 0; i < format.length(); i++) {
 
@@ -114,8 +113,8 @@ public abstract class SVNSqlJetStatement {
             switch (fmt) {
                 case 's':
                 case 't':
-                    if (data[n] == null) {
-                        bindString(i + 1, "");
+                    if (n > length || data[n] == null) {
+                        bindNull(i + 1);
                     } else if (data[n] instanceof File) {
                         bindString(i + 1, SVNFileUtil.getFilePath((File) data[n]));
                     } else {
@@ -125,7 +124,9 @@ public abstract class SVNSqlJetStatement {
                     break;
 
                 case 'i':
-                    if (data[n] instanceof Number) {
+                    if (n > length || data[n] == null) {
+                        bindNull(i + 1);
+                    } else if (data[n] instanceof Number) {
                         bindLong(i + 1, ((Number) data[n]).longValue());
                     } else if (data[n] instanceof SVNDate) {
                         bindLong(i + 1, ((SVNDate) data[n]).getTimeInMicros());
@@ -136,7 +137,9 @@ public abstract class SVNSqlJetStatement {
                     break;
 
                 case 'r':
-                    if (data[n] instanceof Number) {
+                    if (n > length || data[n] == null) {
+                        bindNull(i + 1);
+                    } else if (data[n] instanceof Number) {
                         bindRevision(i + 1, ((Number) data[n]).longValue());
                     } else {
                         SVNErrorManager.assertionFailure(false, "Number argument required", SVNLogType.WC);
@@ -145,13 +148,18 @@ public abstract class SVNSqlJetStatement {
                     break;
 
                 case 'b':
-                    if (data[n] instanceof byte[]) {
+                    if (n > length || data[n] == null) {
+                        bindNull(i + 1);
+                    } else if (data[n] instanceof byte[]) {
                         bindBlob(i + 1, (byte[]) data[n]);
+                    } else {
+                        SVNErrorManager.assertionFailure(false, "Byte array argument required", SVNLogType.WC);
                     }
                     n++;
                     break;
 
                 case 'n':
+                    bindNull(i + 1);
                     break;
 
                 default:
