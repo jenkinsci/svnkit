@@ -18,18 +18,15 @@ import java.util.Map;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetValueType;
 import org.tmatesoft.sqljet.core.schema.ISqlJetColumnDef;
-import org.tmatesoft.sqljet.core.schema.ISqlJetTypeDef;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
-import org.tmatesoft.sqljet.core.table.ISqlJetTable;
 import org.tmatesoft.svn.core.SVNException;
 
 /**
  * @version 1.3
  * @author TMate Software Ltd.
  */
-public class SVNSqlJetSelectStatement extends SVNSqlJetStatement {
+public class SVNSqlJetSelectStatement extends SVNSqlJetTableStatement {
 
-    private ISqlJetTable table;
     private String indexName;
 
     public SVNSqlJetSelectStatement(SVNSqlJetDb sDb, Enum fromTable) throws SVNException {
@@ -41,12 +38,7 @@ public class SVNSqlJetSelectStatement extends SVNSqlJetStatement {
     }
 
     public SVNSqlJetSelectStatement(SVNSqlJetDb sDb, String fromTable) throws SVNException {
-        super(sDb);
-        try {
-            table = sDb.getDb().getTable(fromTable);
-        } catch (SqlJetException e) {
-            SVNSqlJetDb.createSqlJetError(e);
-        }
+        super(sDb, fromTable);
     }
 
     public SVNSqlJetSelectStatement(SVNSqlJetDb sDb, String fromTable, String indexName) throws SVNException {
@@ -56,7 +48,7 @@ public class SVNSqlJetSelectStatement extends SVNSqlJetStatement {
 
     protected ISqlJetCursor openCursor() throws SVNException {
         try {
-            return table.lookup(getIndexName(), getWhere());
+            return getTable().lookup(getIndexName(), getWhere());
         } catch (SqlJetException e) {
             SVNSqlJetDb.createSqlJetError(e);
             return null;
@@ -86,9 +78,6 @@ public class SVNSqlJetSelectStatement extends SVNSqlJetStatement {
         return next;
     }
 
-    /**
-     * @throws SVNException
-     */
     protected boolean isFilterPassed() throws SVNException {
         return true;
     }
@@ -96,7 +85,7 @@ public class SVNSqlJetSelectStatement extends SVNSqlJetStatement {
     public Map<String, Object> getRowValues() throws SVNException {
         HashMap<String, Object> v = new HashMap<String, Object>();
         try {
-            List<ISqlJetColumnDef> columns = table.getDefinition().getColumns();
+            List<ISqlJetColumnDef> columns = getTable().getDefinition().getColumns();
             for (ISqlJetColumnDef column : columns) {
                 String colName = column.getName();
                 SqlJetValueType fieldType = getCursor().getFieldType(colName);
