@@ -204,7 +204,7 @@ public class SVNSkel {
         for (Iterator iterator = props.entrySet().iterator(); iterator.hasNext();) {
             Map.Entry entry = (Map.Entry) iterator.next();
             SVNSkel name = createAtom((String) entry.getKey());
-            SVNSkel value = createAtom((String) entry.getValue());
+            SVNSkel value = createAtom(entry.getValue().toString());
             list.addChild(value);
             list.addChild(name);
         }
