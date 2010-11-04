@@ -17,7 +17,7 @@ import java.util.Map;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
-import org.tmatesoft.svn.core.internal.db.SVNSqlJetTableStatement;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetInsertStatement;
 
 /**
  * INSERT INTO actual_node ( wc_id, local_relpath, conflict_old, conflict_new,
@@ -27,7 +27,7 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetTableStatement;
  * @version 1.4
  * @author TMate Software Ltd.
  */
-public class SVNWCDbInsertActualTextConflicts extends SVNSqlJetTableStatement {
+public class SVNWCDbInsertActualTextConflicts extends SVNSqlJetInsertStatement {
 
     public SVNWCDbInsertActualTextConflicts(SVNSqlJetDb sDb) throws SVNException {
         super(sDb, SVNWCDbSchema.ACTUAL_NODE);

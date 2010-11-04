@@ -15,32 +15,28 @@ import java.util.Map;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
-import org.tmatesoft.sqljet.core.table.ISqlJetTable;
 import org.tmatesoft.svn.core.SVNException;
 
 /**
  * @version 1.4
  * @author TMate Software Ltd.
  */
-public abstract class SVNSqlJetTableStatement extends SVNSqlJetStatement {
+public abstract class SVNSqlJetInsertStatement extends SVNSqlJetTableStatement {
 
-    protected ISqlJetTable table;
-
-    public SVNSqlJetTableStatement(SVNSqlJetDb sDb, Enum tableName) throws SVNException {
-        this(sDb, tableName.toString());
+    public SVNSqlJetInsertStatement(SVNSqlJetDb sDb, Enum tableName) throws SVNException {
+        super(sDb, tableName);
+        transactionMode = SqlJetTransactionMode.WRITE;
     }
 
-    public SVNSqlJetTableStatement(SVNSqlJetDb sDb, String tableName) throws SVNException {
-        super(sDb);
+    public long exec() throws SVNException {
         try {
-            table = sDb.getDb().getTable(tableName);
+            return table.insertByFieldNames(getInsertValues());
         } catch (SqlJetException e) {
             SVNSqlJetDb.createSqlJetError(e);
+            return -1;
         }
     }
 
-    public ISqlJetTable getTable() {
-        return table;
-    }
+    protected abstract Map<String, Object> getInsertValues();
 
 }
