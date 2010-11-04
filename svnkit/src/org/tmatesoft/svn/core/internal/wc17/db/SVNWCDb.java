@@ -1063,8 +1063,25 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     public void installPristine(File tempfileAbspath, SVNChecksum sha1Checksum, SVNChecksum md5Checksum) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+
+        assert (SVNFileUtil.isAbsolute(tempfileAbspath));
+        File wriAbspath = SVNFileUtil.getFileDir(tempfileAbspath);
+        final DirParsedInfo parsed = parseDir(wriAbspath, Mode.ReadWrite);
+        SVNWCDbDir pdh = parsed.wcDbDir;
+        verifyDirUsable(pdh);
+        File pristineAbspath = getPristineFileName(pdh, sha1Checksum, true);
+        SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(pristineAbspath));
+        if (kind == SVNNodeKind.FILE) {
+            SVNFileUtil.deleteFile(tempfileAbspath);
+            return;
+        }
+        SVNFileUtil.rename(tempfileAbspath, pristineAbspath);
+        long size = pristineAbspath.length();
+        SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.INSERT_PRISTINE);
+        stmt.bindChecksum(1, sha1Checksum);
+        stmt.bindChecksum(2, md5Checksum);
+        stmt.bindLong(3, size);
+        stmt.done();
     }
 
     public boolean isNodeHidden(File localAbsPath) throws SVNException {
