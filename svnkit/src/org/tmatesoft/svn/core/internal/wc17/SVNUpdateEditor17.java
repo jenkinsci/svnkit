@@ -252,7 +252,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
     }
 
     public void deleteEntry(String path, long revision) throws SVNException {
-        String base = SVNFileUtil.getBasePath(SVNFileUtil.createFilePath(path));
+        String base = SVNFileUtil.getFileName(SVNFileUtil.createFilePath(path));
         File localAbspath = SVNFileUtil.createFilePath(myCurrentDirectory.getLocalAbspath(), base);
         if (myCurrentDirectory.isSkipDescendants()) {
             if (!myCurrentDirectory.isSkipThis())
