@@ -4079,9 +4079,14 @@ public class SVNWCDb implements ISVNWCDb {
         SVNWCDbDir pdh = parseDir.wcDbDir;
         File localRelpath = parseDir.localRelPath;
         verifyDirUsable(pdh);
+        boolean gotRow = false;
         SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_ACTUAL_NODE);
-        stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelpath);
-        boolean gotRow = stmt.next();
+        try {
+            stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelpath);
+            gotRow = stmt.next();
+        } finally {
+            stmt.reset();
+        }
         if (gotRow) {
             stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.UPDATE_ACTUAL_TEXT_CONFLICTS);
         } else if (oldBasename == null && newBasename == null && wrkBasename == null) {

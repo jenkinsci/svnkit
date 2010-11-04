@@ -32,7 +32,6 @@ public abstract class SVNSqlJetTableStatement extends SVNSqlJetStatement {
 
     public SVNSqlJetTableStatement(SVNSqlJetDb sDb, String tableName) throws SVNException {
         super(sDb);
-        transactionMode = SqlJetTransactionMode.WRITE;
         try {
             table = sDb.getDb().getTable(tableName);
         } catch (SqlJetException e) {

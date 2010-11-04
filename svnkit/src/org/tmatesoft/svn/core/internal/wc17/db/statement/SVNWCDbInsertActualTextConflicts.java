@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.internal.wc17.db.statement;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetTableStatement;
@@ -30,6 +31,7 @@ public class SVNWCDbInsertActualTextConflicts extends SVNSqlJetTableStatement {
 
     public SVNWCDbInsertActualTextConflicts(SVNSqlJetDb sDb) throws SVNException {
         super(sDb, SVNWCDbSchema.ACTUAL_NODE);
+        transactionMode = SqlJetTransactionMode.WRITE;
     }
 
     protected Map<String, Object> getInsertValues() {
