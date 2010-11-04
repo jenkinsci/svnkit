@@ -59,6 +59,7 @@ public class SVNSqlJetUnionStatement extends SVNSqlJetStatement {
     }
 
     public void reset() throws SVNException {
+        current = 0;
         if (statements == null) {
             return;
         }
