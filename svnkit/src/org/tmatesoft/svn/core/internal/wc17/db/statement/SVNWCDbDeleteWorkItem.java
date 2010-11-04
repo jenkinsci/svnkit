@@ -15,16 +15,17 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDeleteStatement;
 
+
 /**
- * DELETE FROM wc_lock WHERE wc_id = ?1 AND local_dir_relpath = ?2;
+ * DELETE FROM work_queue WHERE id = ?1;
  *
  * @version 1.4
- * @author TMate Software Ltd.
+ * @author  TMate Software Ltd.
  */
-public class SVNWCDbDeleteWCLock extends SVNSqlJetDeleteStatement {
+public class SVNWCDbDeleteWorkItem extends SVNSqlJetDeleteStatement {
 
-    public SVNWCDbDeleteWCLock(SVNSqlJetDb sDb) throws SVNException {
-        super(sDb, SVNWCDbSchema.WC_LOCK);
+    public SVNWCDbDeleteWorkItem(SVNSqlJetDb sDb) throws SVNException {
+        super(sDb, SVNWCDbSchema.WORK_QUEUE);
     }
 
 }

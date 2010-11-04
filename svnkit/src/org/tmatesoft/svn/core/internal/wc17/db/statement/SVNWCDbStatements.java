@@ -29,7 +29,7 @@ public enum SVNWCDbStatements {
     DELETE_NODES,
     DELETE_PRISTINE,
     DELETE_WC_LOCK(SVNWCDbDeleteWCLock.class),
-    DELETE_WORK_ITEM,
+    DELETE_WORK_ITEM(SVNWCDbDeleteWorkItem.class),
     DELETE_WORKING_NODES,
     DETERMINE_TREE_FOR_RECORDING(SVNWCDbDetermineTreeForRecording.class),
     FIND_WC_LOCK(SVNWCDbFindWCLock.class),
