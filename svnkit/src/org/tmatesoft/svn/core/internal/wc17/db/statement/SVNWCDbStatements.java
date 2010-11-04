@@ -26,7 +26,7 @@ public enum SVNWCDbStatements {
     DELETE_ACTUAL_NODE,
     DELETE_BASE_NODE,
     DELETE_LOCK,
-    DELETE_NODES,
+    DELETE_NODES(SVNWCDbDeleteNodes.class),
     DELETE_PRISTINE,
     DELETE_WC_LOCK(SVNWCDbDeleteWCLock.class),
     DELETE_WORK_ITEM(SVNWCDbDeleteWorkItem.class),
