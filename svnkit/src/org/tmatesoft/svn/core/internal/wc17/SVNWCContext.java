@@ -286,12 +286,8 @@ public class SVNWCContext {
     }
 
     public void close() throws SVNException {
-        try {
-            cleanup();
-        } finally {
-            if (closeDb) {
-                db.close();
-            }
+        if (closeDb) {
+            db.close();
         }
     }
 
