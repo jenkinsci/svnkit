@@ -476,9 +476,9 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
                 dispatchEvent(SVNEventFactory.createSVNEvent(anchorAbspath, SVNNodeKind.NONE, null, targetRevision, SVNEventAction.UPDATE_COMPLETED, null, null, null,
                         reporter.getReportedFilesCount(), reporter.getTotalFilesCount()));
             }
+            wcContext.cleanup();
             return targetRevision;
         } finally {
-            wcContext.cleanup();
             sleepForTimeStamp();
         }
     }
