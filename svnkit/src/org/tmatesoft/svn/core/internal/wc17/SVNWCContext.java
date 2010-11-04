@@ -96,6 +96,7 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
+import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 import de.regnis.q.sequence.line.QSequenceLineRAByteData;
@@ -4619,9 +4620,7 @@ public class SVNWCContext {
     }
 
     public void wqRun(File wcRootAbspath) throws SVNException {
-        // #ifdef DEBUG_WORK_QUEUE
-        // SVN_DBG(("wq_run: wri='%s'\n", wri_abspath));
-        // #endif
+        SVNDebugLog.getDefaultLog().log(SVNLogType.WC, String.format("work queue run: wcroot='%s'", wcRootAbspath), Level.INFO);
         while (true) {
             checkCancelled();
             SVNWCDbKind kind = db.readKind(wcRootAbspath, true);
@@ -4641,9 +4640,7 @@ public class SVNWCContext {
         if (!workItem.isAtom()) {
             for (WorkQueueOperation scan : WorkQueueOperation.values()) {
                 if (scan.getOpName().equals(workItem.getChild(0).getValue())) {
-                    // #ifdef DEBUG_WORK_QUEUE
-                    // SVN_DBG(("dispatch: operation='%s'\n", scan->name));
-                    // #endif
+                    SVNDebugLog.getDefaultLog().log(SVNLogType.WC, String.format("work queue dispatch: operation='%s'", scan.getOpName()), Level.INFO);
                     scan.getOperation().runOperation(this, wcRootAbspath, workItem);
                     return;
                 }
@@ -4828,6 +4825,7 @@ public class SVNWCContext {
     }
 
     public static class RunSetPropertyConflictMarkerTemp implements RunWorkQueueOperation {
+
         public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) throws SVNException {
             File localAbspath = SVNFileUtil.createFilePath(workItem.getChild(1).getValue());
             String prejBasename = workItem.getListSize() > 2 ? workItem.getChild(2).getValue() : null;
