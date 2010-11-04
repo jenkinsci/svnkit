@@ -196,12 +196,12 @@ public abstract class SVNSqlJetStatement {
 
     public void bindProperties(int i, SVNProperties props) throws SVNException {
         adjustBinds(i);
-        binds.add(i - 1, SVNSkel.createPropList(props.asMap()).getData());
+        binds.add(i - 1, props!=null? SVNSkel.createPropList(props.asMap()).getData() : null );
     }
 
     public void bindChecksum(int i, SVNChecksum checksum) {
         adjustBinds(i);
-        binds.add(i - 1, checksum.toString());
+        binds.add(i - 1, checksum!=null ? checksum.toString() : null);
     }
 
     public void bindBlob(int i, byte[] serialized) {
