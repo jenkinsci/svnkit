@@ -19,9 +19,9 @@ import org.tmatesoft.svn.core.SVNException;
 
 /**
  *
- * @author  TMate Software Ltd.
+ * @author TMate Software Ltd.
  */
-public class SVNSqlJetUpdateStatement extends SVNSqlJetSelectStatement {
+public abstract class SVNSqlJetUpdateStatement extends SVNSqlJetSelectStatement {
 
     public SVNSqlJetUpdateStatement(SVNSqlJetDb sDb, Enum fromTable) throws SVNException {
         super(sDb, fromTable);
@@ -34,12 +34,12 @@ public class SVNSqlJetUpdateStatement extends SVNSqlJetSelectStatement {
     }
 
     public SVNSqlJetUpdateStatement(SVNSqlJetDb sDb, String fromTable) throws SVNException {
-        super(sDb,fromTable);
+        super(sDb, fromTable);
         transactionMode = SqlJetTransactionMode.WRITE;
     }
 
     public void update(final Map<String, Object> values) throws SVNException {
-        if(getCursor()==null){
+        if (getCursor() == null) {
             throw new UnsupportedOperationException();
         }
         try {
@@ -50,7 +50,7 @@ public class SVNSqlJetUpdateStatement extends SVNSqlJetSelectStatement {
     }
 
     public long exec() throws SVNException {
-        long n=0;
+        long n = 0;
         while (next()) {
             Map<String, Object> values = getUpdateValues();
             update(values);
@@ -59,8 +59,6 @@ public class SVNSqlJetUpdateStatement extends SVNSqlJetSelectStatement {
         return n;
     }
 
-    public Map<String, Object> getUpdateValues() throws SVNException {
-        throw new UnsupportedOperationException();
-    }
+    public abstract Map<String, Object> getUpdateValues() throws SVNException;
 
 }

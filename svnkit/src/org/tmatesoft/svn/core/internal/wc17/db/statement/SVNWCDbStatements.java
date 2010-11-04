@@ -97,7 +97,7 @@ public enum SVNWCDbStatements {
     UPDATE_NODE_WORKING_EXCLUDED,
     UPDATE_NODE_WORKING_PRESENCE,
     UPDATE_OP_DEPTH,
-    UPDATE_WORKING_NODE_FILEINFO;
+    UPDATE_WORKING_NODE_FILEINFO(SVNWCDbUpdateWorkingNodeFileinfo.class);
 
     private Class<? extends SVNSqlJetStatement> statementClass;
 
