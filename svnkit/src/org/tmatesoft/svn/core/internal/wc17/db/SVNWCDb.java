@@ -433,7 +433,7 @@ public class SVNWCDb implements ISVNWCDb {
         final byte[] serialized = workItem.unparse();
         final SVNSqlJetStatement stmt = sDb.getStatement(SVNWCDbStatements.INSERT_WORK_ITEM);
         stmt.bindBlob(1, serialized);
-        stmt.insert();
+        stmt.done();
     }
 
     public void addBaseAbsentNode(File localAbsPath, File reposRelPath, SVNURL reposRootUrl, String reposUuid, long revision, SVNWCDbKind kind, SVNWCDbStatus status, SVNSkel conflict,
