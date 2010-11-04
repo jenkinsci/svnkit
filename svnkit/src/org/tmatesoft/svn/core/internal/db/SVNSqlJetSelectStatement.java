@@ -22,7 +22,7 @@ import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
 import org.tmatesoft.svn.core.SVNException;
 
 /**
- * @version 1.3
+ * @version 1.4
  * @author TMate Software Ltd.
  */
 public class SVNSqlJetSelectStatement extends SVNSqlJetTableStatement {
