@@ -4102,6 +4102,9 @@ public class SVNWCContext {
 
     private UniqueFileInfo openUniqueFile(File dirPath, boolean openStream) throws SVNException {
         UniqueFileInfo info = new UniqueFileInfo();
+        if(dirPath==null) {
+            dirPath = SVNFileUtil.createFilePath(System.getProperty("java.io.tmpdir"));
+        }
         info.path = SVNFileUtil.createUniqueFile(dirPath, "svn", ".tmp", true);
         if (openStream) {
             info.stream = SVNFileUtil.openFileForWriting(info.path);
