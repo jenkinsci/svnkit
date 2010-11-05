@@ -3578,7 +3578,7 @@ public class SVNWCContext {
                 if (cd.getMergeFiles().getRepositoryPath().equals(THIS_DIR_PREJ + PROP_REJ_EXT)) {
                     return SVNFileUtil.createFilePath(localAbspath, THIS_DIR_PREJ + PROP_REJ_EXT);
                 }
-                return SVNFileUtil.createFilePath(SVNFileUtil.getFileDir(localAbspath), cd.getMergeFiles().getRepositoryPath());
+                return SVNFileUtil.createFilePath(cd.getMergeFiles().getRepositoryPath());
             }
         }
         return null;
