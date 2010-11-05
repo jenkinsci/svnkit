@@ -3525,7 +3525,7 @@ public class SVNWCContext {
                     continue;
                 }
                 if (conflictSkel == null) {
-                    conflictSkel = newConflictSkel();
+                    conflictSkel = SVNSkel.createEmptyList();
                 }
                 conflictSkelAddPropConflict(conflictSkel, propname, baseVal, mineVal, toVal, fromVal);
             }
@@ -3601,13 +3601,6 @@ public class SVNWCContext {
             valueSkel.prependString(fromVal.getString());
         }
         skel.addChild(valueSkel);
-    }
-
-    private SVNSkel newConflictSkel() throws SVNException {
-        SVNSkel operation = SVNSkel.createEmptyList();
-        SVNSkel result = SVNSkel.createEmptyList();
-        result.addChild(operation);
-        return result;
     }
 
     private SVNStatusType setPropMergeState(SVNStatusType state, SVNStatusType newValue) {
@@ -4971,11 +4964,11 @@ public class SVNWCContext {
     }
 
     private String messageFromSkel(SVNSkel skel) throws SVNException {
-        String propname = skel.getChild(0).getValue();
-        String original = maybePropValue(skel.getChild(1));
-        String mine = maybePropValue(skel.getChild(2));
-        String incoming = maybePropValue(skel.getChild(3));
-        String incomingBase = maybePropValue(skel.getChild(4));
+        String propname = skel.getChild(1).getValue();
+        String original = maybePropValue(skel.getChild(2));
+        String mine = maybePropValue(skel.getChild(3));
+        String incoming = maybePropValue(skel.getChild(4));
+        String incomingBase = maybePropValue(skel.getChild(5));
         return generateConflictMessage(propname, original, mine, incoming, incomingBase);
     }
 
