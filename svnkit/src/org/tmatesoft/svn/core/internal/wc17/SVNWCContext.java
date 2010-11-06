@@ -1264,7 +1264,7 @@ public class SVNWCContext {
 
         /* Sanity */
         if (readInfo.kind != SVNWCDbKind.File) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNEXPECTED_KIND, "Can only get the pristine contents of files;" + "  '{0}' is not a file", localAbspath);
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNEXPECTED_KIND, "Can only get the pristine contents of files;" + "  ''{0}'' is not a file", localAbspath);
             SVNErrorManager.error(err, SVNLogType.WC);
         }
 
@@ -1285,10 +1285,10 @@ public class SVNWCContext {
              * We know that the delete of this node has been committed. This
              * should be the same as if called on an unknown path.
              */
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "Cannot get the pristine contents of '{0}' " + "because its delete is already committed", localAbspath);
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "Cannot get the pristine contents of ''{0}'' " + "because its delete is already committed", localAbspath);
             SVNErrorManager.error(err, SVNLogType.WC);
         } else if (readInfo.status == SVNWCDbStatus.Absent || readInfo.status == SVNWCDbStatus.Excluded || readInfo.status == SVNWCDbStatus.Incomplete) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS, "Cannot get the pristine contents of '{0}' " + "because it has an unexpected status", localAbspath);
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS, "Cannot get the pristine contents of ''{0}'' " + "because it has an unexpected status", localAbspath);
             SVNErrorManager.error(err, SVNLogType.WC);
         } else {
             /*
