@@ -2956,8 +2956,8 @@ public class SVNWCContext {
 
     public File acquireWriteLock(File localAbspath, boolean lockAnchor, boolean returnLockRoot) throws SVNException {
         SVNWCDbKind kind = db.readKind(localAbspath, returnLockRoot);
-        if (returnLockRoot && kind != SVNWCDbKind.Dir) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "Can't obtain lock on non-directory ''{0}''", localAbspath);
+        if (!returnLockRoot && kind != SVNWCDbKind.Dir) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "Can''t obtain lock on non-directory ''{0}''", localAbspath);
             SVNErrorManager.error(err, SVNLogType.WC);
             return null;
         }
