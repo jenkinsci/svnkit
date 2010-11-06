@@ -25,6 +25,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
@@ -46,6 +47,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbBaseInfo.BaseInfoFie
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
+import org.tmatesoft.svn.core.wc.SVNConflictChoice;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.ISVNDebugLog;
@@ -332,7 +334,7 @@ public class SVNReporter17 implements ISVNReporterBaton {
          */
         if (kind == SVNWCDbKind.File || kind == SVNWCDbKind.Symlink) {
             /* ... recreate file from text-base, and ... */
-            restoreFile(local_abspath);
+            restoreFile(local_abspath, true);
             restored = true;
         } else if (kind == SVNWCDbKind.Dir) {
             /* Recreating a directory is just a mkdir */
@@ -704,8 +706,16 @@ public class SVNReporter17 implements ISVNReporterBaton {
      * Not that a valid access baton with a write lock to the directory of
      * LOCAL_ABSPATH must be available in DB.
      */
-    private void restoreFile(File localAbsPath) throws SVNException {
-        throw new UnsupportedOperationException();
+    private void restoreFile(File localAbsPath, boolean removeTextConflicts) throws SVNException {
+        SVNSkel workItem = wcContext.wqBuildFileInstall(localAbsPath, null, isUseCommitTimes, true);
+        wcContext.getDb().addWorkQueue(localAbsPath, workItem);
+        if(removeTextConflicts) {
+            resolveTextConflict(localAbsPath);
+        }
+    }
+
+    private void resolveTextConflict(File localAbsPath) {
+        wcContext.resolveConflictOnNode(localAbsPath, true, false, SVNConflictChoice.MERGED);
     }
 
 }

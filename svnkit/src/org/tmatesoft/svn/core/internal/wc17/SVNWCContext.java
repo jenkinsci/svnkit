@@ -4095,7 +4095,7 @@ public class SVNWCContext {
 
     private UniqueFileInfo openUniqueFile(File dirPath, boolean openStream) throws SVNException {
         UniqueFileInfo info = new UniqueFileInfo();
-        if(dirPath==null) {
+        if (dirPath == null) {
             dirPath = SVNFileUtil.createFilePath(System.getProperty("java.io.tmpdir"));
         }
         info.path = SVNFileUtil.createUniqueFile(dirPath, "svn", ".tmp", true);
@@ -5020,6 +5020,11 @@ public class SVNWCContext {
             return String.format("Trying to change property '%s' from '%s' to '%s',\nbut property has been locally " + "added with value '%s'.", propname, incomingBase, incoming, mine);
         }
         return String.format("Trying to change property '%s' from '%s' to '%s',\nbut the property does not exist.", propname, incomingBase, incoming);
+    }
+
+    public boolean resolveConflictOnNode(File localAbsPath, boolean resolveText, boolean resolveProps, SVNConflictChoice conflictChoice) {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
 }
