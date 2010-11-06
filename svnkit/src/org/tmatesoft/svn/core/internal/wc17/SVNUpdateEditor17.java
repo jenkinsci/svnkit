@@ -2069,16 +2069,18 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                 return info;
             }
         }
-        if (checksum.getKind() == SVNChecksumKind.SHA1) {
-            info.sha1Checksum = checksum;
-            if (fetchMD5) {
-                info.md5Checksum = myWcContext.getDb().getPristineMD5(localAbspath, checksum);
+        if (checksum != null) {
+            if (checksum.getKind() == SVNChecksumKind.SHA1) {
+                info.sha1Checksum = checksum;
+                if (fetchMD5) {
+                    info.md5Checksum = myWcContext.getDb().getPristineMD5(localAbspath, checksum);
+                }
+            } else {
+                if (fetchSHA1) {
+                    info.sha1Checksum = myWcContext.getDb().getPristineSHA1(localAbspath, checksum);
+                }
+                info.md5Checksum = checksum;
             }
-        } else {
-            if (fetchSHA1) {
-                info.sha1Checksum = myWcContext.getDb().getPristineSHA1(localAbspath, checksum);
-            }
-            info.md5Checksum = checksum;
         }
         return info;
     }

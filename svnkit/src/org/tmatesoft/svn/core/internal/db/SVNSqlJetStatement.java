@@ -14,6 +14,8 @@ package org.tmatesoft.svn.core.internal.db;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
@@ -401,6 +403,10 @@ public abstract class SVNSqlJetStatement {
 
     protected void setCursor(ISqlJetCursor cursor) {
         this.cursor = cursor;
+    }
+
+    public Map<String, Object> getRowValues() throws SVNException {
+        throw new UnsupportedOperationException();
     }
 
 }
