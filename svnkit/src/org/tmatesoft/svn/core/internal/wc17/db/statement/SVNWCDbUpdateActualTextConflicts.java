@@ -41,7 +41,7 @@ public class SVNWCDbUpdateActualTextConflicts extends SVNSqlJetUpdateStatement {
         rowValues.put(SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_old.toString(), getBind(3));
         rowValues.put(SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_new.toString(), getBind(4));
         rowValues.put(SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_working.toString(), getBind(5));
-        return null;
+        return rowValues;
     }
 
 }
