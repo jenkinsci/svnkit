@@ -1914,6 +1914,8 @@ public class SVNFileUtil {
     public static File createFilePath(File parent, File child) {
         if (child == null)
             return null;
+        if (isAbsolute(child))
+            return child;
         return createFilePath(parent, child.toString());
     }
 
@@ -1930,16 +1932,20 @@ public class SVNFileUtil {
             return null;
         if (parent == null || "".equals(parent))
             return createFilePath(child);
+        if (SVNPathUtil.isAbsolute(child))
+            return createFilePath(child);
         return new File(parent, child.toString());
     }
 
-    public static String getFileExtension(File path){
-        if(path==null) return null;
+    public static String getFileExtension(File path) {
+        if (path == null)
+            return null;
         return getFileNameExtension(path.getName());
     }
 
-    public static String getFileNameExtension(String name){
-        if(name==null) return null;
+    public static String getFileNameExtension(String name) {
+        if (name == null)
+            return null;
         int dotInd = name.lastIndexOf('.');
         if (dotInd != -1 && dotInd != 0 && dotInd != name.length() - 1) {
             return name.substring(dotInd + 1);

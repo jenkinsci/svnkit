@@ -5022,9 +5022,121 @@ public class SVNWCContext {
         return String.format("Trying to change property '%s' from '%s' to '%s',\nbut the property does not exist.", propname, incomingBase, incoming);
     }
 
-    public boolean resolveConflictOnNode(File localAbsPath, boolean resolveText, boolean resolveProps, SVNConflictChoice conflictChoice) {
-        // TODO
-        throw new UnsupportedOperationException();
+    public boolean resolveConflictOnNode(File localAbsPath, boolean resolveText, boolean resolveProps, SVNConflictChoice conflictChoice) throws SVNException {
+        boolean foundFile;
+        File conflictOld = null;
+        File conflictNew = null;
+        File conflictWorking = null;
+        File propRejectFile = null;
+        SVNWCDbKind kind;
+        List<SVNConflictDescription> conflicts;
+        File conflictDirAbspath;
+        boolean didResolve = false;
+        kind = getDb().readKind(localAbsPath, true);
+        conflicts = getDb().readConflicts(localAbsPath);
+        for (SVNConflictDescription desc : conflicts) {
+            if (desc.isTextConflict()) {
+                conflictOld = desc.getMergeFiles().getBaseFile();
+                conflictNew = desc.getMergeFiles().getRepositoryFile();
+                conflictWorking = desc.getMergeFiles().getLocalFile();
+            } else if (desc.isPropertyConflict()) {
+                propRejectFile = desc.getMergeFiles().getRepositoryFile();
+            }
+        }
+        if (kind == SVNWCDbKind.Dir) {
+            conflictDirAbspath = localAbsPath;
+        } else {
+            conflictDirAbspath = SVNFileUtil.getFileDir(localAbsPath);
+        }
+        if (resolveText) {
+            File autoResolveSrc = null;
+            if (conflictChoice == SVNConflictChoice.BASE) {
+                autoResolveSrc = conflictOld;
+            } else if (conflictChoice == SVNConflictChoice.MINE_FULL) {
+                autoResolveSrc = conflictWorking;
+            } else if (conflictChoice == SVNConflictChoice.THEIRS_FULL) {
+                autoResolveSrc = conflictNew;
+            } else if (conflictChoice == SVNConflictChoice.MERGED) {
+                autoResolveSrc = null;
+            } else if (conflictChoice == SVNConflictChoice.THEIRS_CONFLICT || conflictChoice == SVNConflictChoice.MINE_CONFLICT) {
+                if (conflictOld != null && conflictWorking != null && conflictNew != null) {
+                    File tempDir = getDb().getWCRootTempDir(conflictDirAbspath);
+                    SVNDiffConflictChoiceStyle style = conflictChoice == SVNConflictChoice.THEIRS_CONFLICT ? SVNDiffConflictChoiceStyle.CHOOSE_LATEST : SVNDiffConflictChoiceStyle.CHOOSE_MODIFIED;
+                    UniqueFileInfo openUniqueFile = openUniqueFile(tempDir, false);
+                    autoResolveSrc = openUniqueFile.path;
+                    if (!SVNFileUtil.isAbsolute(conflictOld)) {
+                        conflictOld = SVNFileUtil.createFilePath(conflictDirAbspath, conflictOld);
+                    }
+                    if (!SVNFileUtil.isAbsolute(conflictWorking)) {
+                        conflictWorking = SVNFileUtil.createFilePath(conflictDirAbspath, conflictWorking);
+                    }
+                    if (!SVNFileUtil.isAbsolute(conflictNew)) {
+                        conflictNew = SVNFileUtil.createFilePath(conflictDirAbspath, conflictNew);
+                    }
+                    byte[] nullBytes = new byte[] {};
+                    FSMergerBySequence merger = new FSMergerBySequence(nullBytes, nullBytes, nullBytes);
+                    RandomAccessFile localIS = null;
+                    RandomAccessFile latestIS = null;
+                    RandomAccessFile baseIS = null;
+                    OutputStream result = null;
+                    try {
+                        result = SVNFileUtil.openFileForWriting(autoResolveSrc);
+                        localIS = new RandomAccessFile(conflictOld, "r");
+                        latestIS = new RandomAccessFile(conflictWorking, "r");
+                        baseIS = new RandomAccessFile(conflictNew, "r");
+                        QSequenceLineRAData baseData = new QSequenceLineRAFileData(baseIS);
+                        QSequenceLineRAData localData = new QSequenceLineRAFileData(localIS);
+                        QSequenceLineRAData latestData = new QSequenceLineRAFileData(latestIS);
+                        merger.merge(baseData, localData, latestData, null, result, style);
+                    } catch (IOException e) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
+                        SVNErrorManager.error(err, e, SVNLogType.WC);
+                    } finally {
+                        SVNFileUtil.closeFile(result);
+                        SVNFileUtil.closeFile(localIS);
+                        SVNFileUtil.closeFile(baseIS);
+                        SVNFileUtil.closeFile(latestIS);
+                    }
+                } else {
+                    autoResolveSrc = null;
+                }
+            } else {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS, "Invalid 'conflict_result' argument");
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+            if (autoResolveSrc != null) {
+                SVNFileUtil.copyFile(SVNFileUtil.createFilePath(conflictDirAbspath, autoResolveSrc), localAbsPath, true);
+            }
+        }
+        foundFile = false;
+        if (resolveText) {
+            foundFile = attemptDeletion(conflictDirAbspath, conflictOld);
+            foundFile = attemptDeletion(conflictDirAbspath, conflictNew);
+            foundFile = attemptDeletion(conflictDirAbspath, conflictWorking);
+            resolveText = conflictOld != null || conflictNew != null || conflictWorking != null;
+        }
+        if (resolveProps) {
+            if (propRejectFile != null) {
+                foundFile = attemptDeletion(conflictDirAbspath, propRejectFile);
+            } else {
+                resolveProps = false;
+            }
+        }
+        if (resolveText || resolveProps) {
+            getDb().opMarkResolved(localAbsPath, resolveText, resolveProps, false);
+            if (foundFile) {
+                didResolve = true;
+            }
+        }
+        return didResolve;
+    }
+
+    private boolean attemptDeletion(File parentDir, File baseName) throws SVNException {
+        if (baseName == null) {
+            return false;
+        }
+        File fullPath = SVNFileUtil.createFilePath(parentDir, baseName);
+        return SVNFileUtil.deleteFile(fullPath);
     }
 
 }

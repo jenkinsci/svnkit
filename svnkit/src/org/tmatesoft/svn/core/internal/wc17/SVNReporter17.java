@@ -714,7 +714,7 @@ public class SVNReporter17 implements ISVNReporterBaton {
         }
     }
 
-    private void resolveTextConflict(File localAbsPath) {
+    private void resolveTextConflict(File localAbsPath) throws SVNException {
         wcContext.resolveConflictOnNode(localAbsPath, true, false, SVNConflictChoice.MERGED);
     }
 
