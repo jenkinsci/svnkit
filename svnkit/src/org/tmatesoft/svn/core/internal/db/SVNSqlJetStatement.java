@@ -173,42 +173,41 @@ public abstract class SVNSqlJetStatement {
 
     private void adjustBinds(int i) {
         int size = binds.size();
-        i--;
         if (size < i) {
             for (int n = size; n < i; n++) {
-                binds.add(n, null);
+                binds.add(null);
             }
         }
     }
 
     public void bindNull(int i) {
         adjustBinds(i);
-        binds.add(i - 1, null);
+        binds.set(i - 1, null);
     }
 
     public void bindLong(int i, long v) {
         adjustBinds(i);
-        binds.add(i - 1, v);
+        binds.set(i - 1, v);
     }
 
     public void bindString(int i, String string) {
         adjustBinds(i);
-        binds.add(i - 1, string);
+        binds.set(i - 1, string);
     }
 
     public void bindProperties(int i, SVNProperties props) throws SVNException {
         adjustBinds(i);
-        binds.add(i - 1, props!=null? SVNSkel.createPropList(props.asMap()).getData() : null );
+        binds.set(i - 1, props!=null? SVNSkel.createPropList(props.asMap()).getData() : null );
     }
 
     public void bindChecksum(int i, SVNChecksum checksum) {
         adjustBinds(i);
-        binds.add(i - 1, checksum!=null ? checksum.toString() : null);
+        binds.set(i - 1, checksum!=null ? checksum.toString() : null);
     }
 
     public void bindBlob(int i, byte[] serialized) {
         adjustBinds(i);
-        binds.add(i - 1, serialized);
+        binds.set(i - 1, serialized);
     }
 
     public void bindRevision(int i, long revision) {
