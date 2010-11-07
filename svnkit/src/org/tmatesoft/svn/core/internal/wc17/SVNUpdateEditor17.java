@@ -1043,7 +1043,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         if (fb.isSkipThis()) {
             return;
         }
-        fb.getChangedProperties().put(propertyName, propertyValue);
+        fb.propertyChanged(propertyName, propertyValue);
         if (myIsUseCommitTimes && SVNProperty.COMMITTED_DATE.equals(propertyName)) {
             fb.setLastChangedDate(propertyValue.getString());
             if (fb.getLastChangedDate() != null) {
