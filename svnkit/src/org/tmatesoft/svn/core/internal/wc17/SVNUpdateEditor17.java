@@ -1623,7 +1623,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                         value = SVNPropertyValue.create(strValue);
                     }
                 }
-                myChangedEntryProperties.put(name.substring(SVNProperty.SVN_ENTRY_PREFIX.length()), value);
+                myChangedEntryProperties.put(name, value);
             } else if (name.startsWith(SVNProperty.SVN_WC_PREFIX)) {
                 myChangedWCProperties = myChangedWCProperties == null ? new SVNProperties() : myChangedWCProperties;
                 myChangedWCProperties.put(name, value);
