@@ -55,21 +55,25 @@ public class HTTPStatus {
                 throw new ParseException("Status-Line '" + statusLine + "' does not start with HTTP", 0);
             }
             //handle the HTTP-Version
-            at = statusLine.indexOf(" ", at);
-            if (at <= 0) {
+            while (!Character.isWhitespace(statusLine.charAt(at)) && at < statusLine.length()) {
+                at++;
+            }
+            if (at == statusLine.length()) {
                 throw new ParseException("Unable to parse HTTP-Version from the status line: '" + statusLine + "'", 0);
             }
             version = (statusLine.substring(start, at)).toUpperCase();
 
             //advance through spaces
-            while (statusLine.charAt(at) == ' ') {
+            while (Character.isWhitespace(statusLine.charAt(at)) && at < statusLine.length()) {
                 at++;
             }
-
+            if (at == statusLine.length()) {
+                throw new ParseException("Status-Line '" + statusLine + "' is not valid", 0); 
+            }
             //handle the Status-Code
-            int to = statusLine.indexOf(" ", at);
-            if (to < 0) {
-                to = length;
+            int to = at;
+            while(!Character.isWhitespace(statusLine.charAt(to)) && to < statusLine.length()) {
+                to++;
             }
             try {
                 code = Integer.parseInt(statusLine.substring(at, to));
