@@ -48,7 +48,7 @@ public enum SVNWCDbStatements {
     INSERT_WC_LOCK(SVNWCDbInsertWCLock.class),
     INSERT_WCROOT,
     INSERT_WORK_ITEM(SVNWCDbInsertWorkItem.class),
-    INSERT_WORKING_NODE_FROM_BASE,
+    INSERT_WORKING_NODE_FROM_BASE(SVNWCDbInsertWorkingNodeFromBase.class),
     INSERT_WORKING_NODE_NORMAL_FROM_BASE,
     INSERT_WORKING_NODE_NOT_PRESENT_FROM_BASE,
     LOOK_FOR_WORK,
@@ -97,7 +97,8 @@ public enum SVNWCDbStatements {
     UPDATE_NODE_WORKING_EXCLUDED,
     UPDATE_NODE_WORKING_PRESENCE,
     UPDATE_OP_DEPTH,
-    UPDATE_WORKING_NODE_FILEINFO(SVNWCDbUpdateWorkingNodeFileinfo.class);
+    UPDATE_WORKING_NODE_FILEINFO(SVNWCDbUpdateWorkingNodeFileinfo.class),
+    SELECT_LOWEST_WORKING_NODE(SVNWCDbSelectLowestWorkingNode.class);
 
     private Class<? extends SVNSqlJetStatement> statementClass;
 

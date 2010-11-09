@@ -37,6 +37,6 @@ public abstract class SVNSqlJetInsertStatement extends SVNSqlJetTableStatement {
         }
     }
 
-    protected abstract Map<String, Object> getInsertValues();
+    protected abstract Map<String, Object> getInsertValues() throws SVNException;
 
 }

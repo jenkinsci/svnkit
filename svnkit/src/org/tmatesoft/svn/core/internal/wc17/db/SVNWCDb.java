@@ -535,6 +535,10 @@ public class SVNWCDb implements ISVNWCDb {
                 insertIncompleteChildren(db, wcId, localRelpath, revision, children, 0);
             }
 
+            if (parentRelpath != null) {
+                extendParentDelete(db, wcId, localRelpath);
+            }
+
             addWorkItems(db, workItems);
         }
 
@@ -547,6 +551,42 @@ public class SVNWCDb implements ISVNWCDb {
             stmt.done();
         }
         return;
+    }
+
+    public void extendParentDelete(SVNSqlJetDb db, long wcId, File localRelpath) throws SVNException {
+        assert (localRelpath != null);
+        boolean haveRow;
+        SVNSqlJetStatement stmt;
+        long parentOpDepth = 0;
+        File parentRelpath = SVNFileUtil.getFileDir(localRelpath);
+        assert (parentRelpath != null);
+        stmt = db.getStatement(SVNWCDbStatements.SELECT_LOWEST_WORKING_NODE);
+        try {
+            stmt.bindf("is", wcId, parentRelpath);
+            haveRow = stmt.next();
+            if (haveRow) {
+                parentOpDepth = stmt.getColumnLong(SVNWCDbSchema.NODES__Fields.op_depth);
+            }
+        } finally {
+            stmt.reset();
+        }
+        if (haveRow) {
+            long opDepth = 0;
+            try {
+                stmt.bindf("is", wcId, localRelpath);
+                haveRow = stmt.next();
+                if (haveRow) {
+                    opDepth = stmt.getColumnLong(SVNWCDbSchema.NODES__Fields.op_depth);
+                }
+            } finally {
+                stmt.reset();
+            }
+            if (!haveRow || parentOpDepth < opDepth) {
+                stmt = db.getStatement(SVNWCDbStatements.INSERT_WORKING_NODE_FROM_BASE);
+                stmt.bindf("isit", wcId, localRelpath, parentOpDepth, presenceMap.get(SVNWCDbStatus.BaseDeleted));
+                stmt.done();
+            }
+        }
     }
 
     public void addBaseFile(File localAbspath, File reposRelpath, SVNURL reposRootUrl, String reposUuid, long revision, SVNProperties props, long changedRev, SVNDate changedDate,
