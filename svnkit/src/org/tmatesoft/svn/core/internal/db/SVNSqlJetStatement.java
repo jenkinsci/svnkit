@@ -197,12 +197,12 @@ public abstract class SVNSqlJetStatement {
 
     public void bindProperties(int i, SVNProperties props) throws SVNException {
         adjustBinds(i);
-        binds.set(i - 1, props!=null? SVNSkel.createPropList(props.asMap()).unparse() : null );
+        binds.set(i - 1, props != null ? SVNSkel.createPropList(props.asMap()).unparse() : null);
     }
 
     public void bindChecksum(int i, SVNChecksum checksum) {
         adjustBinds(i);
-        binds.set(i - 1, checksum!=null ? checksum.toString() : null);
+        binds.set(i - 1, checksum != null ? checksum.toString() : null);
     }
 
     public void bindBlob(int i, byte[] serialized) {
@@ -232,6 +232,21 @@ public abstract class SVNSqlJetStatement {
         } catch (SqlJetException e) {
             SVNSqlJetDb.createSqlJetError(e);
             return 0;
+        }
+    }
+
+    public Object getColumn(Enum f) throws SVNException {
+        return getColumn(f.toString());
+    }
+
+    public Object getColumn(String f) throws SVNException {
+        try {
+            if (getCursor() == null || getCursor().eof())
+                return null;
+            return getCursor().getValue(f);
+        } catch (SqlJetException e) {
+            SVNSqlJetDb.createSqlJetError(e);
+            return null;
         }
     }
 

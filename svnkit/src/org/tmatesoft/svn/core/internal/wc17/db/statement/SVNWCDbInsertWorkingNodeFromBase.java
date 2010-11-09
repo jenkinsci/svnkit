@@ -62,21 +62,21 @@ public class SVNWCDbInsertWorkingNodeFromBase extends SVNSqlJetInsertStatement {
 
     protected Map<String, Object> getInsertValues() throws SVNException {
         Map<String, Object> rowValues = select.getRowValues();
-        rowValues.put(SVNWCDbSchema.NODES__Fields.wc_id.toString(), select.getColumnLong(SVNWCDbSchema.NODES__Fields.wc_id));
-        rowValues.put(SVNWCDbSchema.NODES__Fields.local_relpath.toString(), select.getColumnLong(SVNWCDbSchema.NODES__Fields.local_relpath));
+        rowValues.put(SVNWCDbSchema.NODES__Fields.wc_id.toString(), select.getColumn(SVNWCDbSchema.NODES__Fields.wc_id));
+        rowValues.put(SVNWCDbSchema.NODES__Fields.local_relpath.toString(), select.getColumn(SVNWCDbSchema.NODES__Fields.local_relpath));
         rowValues.put(SVNWCDbSchema.NODES__Fields.op_depth.toString(), getBind(3));
-        rowValues.put(SVNWCDbSchema.NODES__Fields.parent_relpath.toString(), select.getColumnLong(SVNWCDbSchema.NODES__Fields.parent_relpath));
+        rowValues.put(SVNWCDbSchema.NODES__Fields.parent_relpath.toString(), select.getColumn(SVNWCDbSchema.NODES__Fields.parent_relpath));
         rowValues.put(SVNWCDbSchema.NODES__Fields.presence.toString(), getBind(4));
-        rowValues.put(SVNWCDbSchema.NODES__Fields.kind.toString(), select.getColumnLong(SVNWCDbSchema.NODES__Fields.kind));
-        rowValues.put(SVNWCDbSchema.NODES__Fields.checksum.toString(), select.getColumnLong(SVNWCDbSchema.NODES__Fields.checksum));
-        rowValues.put(SVNWCDbSchema.NODES__Fields.changed_revision.toString(), select.getColumnLong(SVNWCDbSchema.NODES__Fields.changed_revision));
-        rowValues.put(SVNWCDbSchema.NODES__Fields.changed_date.toString(), select.getColumnLong(SVNWCDbSchema.NODES__Fields.changed_date));
-        rowValues.put(SVNWCDbSchema.NODES__Fields.changed_author.toString(), select.getColumnLong(SVNWCDbSchema.NODES__Fields.changed_author));
-        rowValues.put(SVNWCDbSchema.NODES__Fields.depth.toString(), select.getColumnLong(SVNWCDbSchema.NODES__Fields.depth));
-        rowValues.put(SVNWCDbSchema.NODES__Fields.symlink_target.toString(), select.getColumnLong(SVNWCDbSchema.NODES__Fields.symlink_target));
-        rowValues.put(SVNWCDbSchema.NODES__Fields.translated_size.toString(), select.getColumnLong(SVNWCDbSchema.NODES__Fields.translated_size));
-        rowValues.put(SVNWCDbSchema.NODES__Fields.last_mod_time.toString(), select.getColumnLong(SVNWCDbSchema.NODES__Fields.last_mod_time));
-        rowValues.put(SVNWCDbSchema.NODES__Fields.properties.toString(), select.getColumnLong(SVNWCDbSchema.NODES__Fields.properties));
+        rowValues.put(SVNWCDbSchema.NODES__Fields.kind.toString(), select.getColumn(SVNWCDbSchema.NODES__Fields.kind));
+        rowValues.put(SVNWCDbSchema.NODES__Fields.checksum.toString(), select.getColumn(SVNWCDbSchema.NODES__Fields.checksum));
+        rowValues.put(SVNWCDbSchema.NODES__Fields.changed_revision.toString(), select.getColumn(SVNWCDbSchema.NODES__Fields.changed_revision));
+        rowValues.put(SVNWCDbSchema.NODES__Fields.changed_date.toString(), select.getColumn(SVNWCDbSchema.NODES__Fields.changed_date));
+        rowValues.put(SVNWCDbSchema.NODES__Fields.changed_author.toString(), select.getColumn(SVNWCDbSchema.NODES__Fields.changed_author));
+        rowValues.put(SVNWCDbSchema.NODES__Fields.depth.toString(), select.getColumn(SVNWCDbSchema.NODES__Fields.depth));
+        rowValues.put(SVNWCDbSchema.NODES__Fields.symlink_target.toString(), select.getColumn(SVNWCDbSchema.NODES__Fields.symlink_target));
+        rowValues.put(SVNWCDbSchema.NODES__Fields.translated_size.toString(), select.getColumn(SVNWCDbSchema.NODES__Fields.translated_size));
+        rowValues.put(SVNWCDbSchema.NODES__Fields.last_mod_time.toString(), select.getColumn(SVNWCDbSchema.NODES__Fields.last_mod_time));
+        rowValues.put(SVNWCDbSchema.NODES__Fields.properties.toString(), select.getColumn(SVNWCDbSchema.NODES__Fields.properties));
         return rowValues;
     }
 
