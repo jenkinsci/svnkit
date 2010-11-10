@@ -98,7 +98,9 @@ public enum SVNWCDbStatements {
     UPDATE_NODE_WORKING_PRESENCE,
     UPDATE_OP_DEPTH,
     UPDATE_WORKING_NODE_FILEINFO(SVNWCDbUpdateWorkingNodeFileinfo.class),
-    SELECT_LOWEST_WORKING_NODE(SVNWCDbSelectLowestWorkingNode.class);
+    SELECT_LOWEST_WORKING_NODE(SVNWCDbSelectLowestWorkingNode.class),
+    CLEAR_TEXT_CONFLICT(SVNWCDbClearTextConflict.class),
+    CLEAR_PROPS_CONFLICT(SVNWCDbClearPropsConflict.class);
 
     private Class<? extends SVNSqlJetStatement> statementClass;
 

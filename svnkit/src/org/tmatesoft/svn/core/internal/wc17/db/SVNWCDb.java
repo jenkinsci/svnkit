@@ -1609,8 +1609,32 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     public void opMarkResolved(File localAbspath, boolean resolvedText, boolean resolvedProps, boolean resolvedTree) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+        assert (isAbsolute(localAbspath));
+        assert(!resolvedTree);
+
+        final DirParsedInfo parsed = parseDir(localAbspath, Mode.ReadWrite);
+        final SVNWCDbDir pdh = parsed.wcDbDir;
+        final File localRelpath = parsed.localRelPath;
+        verifyDirUsable(pdh);
+
+        if (resolvedText)
+          {
+            SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(
+                    SVNWCDbStatements.CLEAR_TEXT_CONFLICT);
+            stmt.bindf("is",pdh.getWCRoot().getWcId(), localRelpath);
+            stmt.done();
+          }
+        if (resolvedProps)
+          {
+            SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(
+                    SVNWCDbStatements.CLEAR_PROPS_CONFLICT);
+            stmt.bindf("is",pdh.getWCRoot().getWcId(), localRelpath);
+            stmt.done();
+          }
+
+        pdh.flushEntries(localAbspath);
+
+        return;
     }
 
     public void opModified(File localAbsPath) throws SVNException {
