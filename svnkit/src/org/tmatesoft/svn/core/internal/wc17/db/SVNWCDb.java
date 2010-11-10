@@ -1610,27 +1610,23 @@ public class SVNWCDb implements ISVNWCDb {
 
     public void opMarkResolved(File localAbspath, boolean resolvedText, boolean resolvedProps, boolean resolvedTree) throws SVNException {
         assert (isAbsolute(localAbspath));
-        assert(!resolvedTree);
+        assert (!resolvedTree);
 
         final DirParsedInfo parsed = parseDir(localAbspath, Mode.ReadWrite);
         final SVNWCDbDir pdh = parsed.wcDbDir;
         final File localRelpath = parsed.localRelPath;
         verifyDirUsable(pdh);
 
-        if (resolvedText)
-          {
-            SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(
-                    SVNWCDbStatements.CLEAR_TEXT_CONFLICT);
-            stmt.bindf("is",pdh.getWCRoot().getWcId(), localRelpath);
+        if (resolvedText) {
+            SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.CLEAR_TEXT_CONFLICT);
+            stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelpath);
             stmt.done();
-          }
-        if (resolvedProps)
-          {
-            SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(
-                    SVNWCDbStatements.CLEAR_PROPS_CONFLICT);
-            stmt.bindf("is",pdh.getWCRoot().getWcId(), localRelpath);
+        }
+        if (resolvedProps) {
+            SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.CLEAR_PROPS_CONFLICT);
+            stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelpath);
             stmt.done();
-          }
+        }
 
         pdh.flushEntries(localAbspath);
 
@@ -2794,78 +2790,23 @@ public class SVNWCDb implements ISVNWCDb {
      * NULL). Use LOCAL_ABSPATH for diagnostics
      */
     private static long scanUpwardsForRepos(WCDbRepositoryInfo reposInfo, SVNWCDbRoot wcroot, File localAbsPath, File localRelPath) throws SVNException {
-        assert (reposInfo != null);
-        assert (wcroot != null);
         assert (wcroot.getSDb() != null && wcroot.getWcId() != UNKNOWN_WC_ID);
-
-        File relpath_suffix = SVNFileUtil.createFilePath("");
-        String current_basename = SVNFileUtil.getFileName(localRelPath);
-        File current_relpath = localRelPath;
-
-        /* ### is it faster to fetch fewer columns? */
+        assert (reposInfo != null);
         SVNSqlJetStatement stmt = wcroot.getSDb().getStatement(SVNWCDbStatements.SELECT_BASE_NODE);
-        while (true) {
-            try {
-                /* Get the current node's repository information. */
-                stmt.bindf("is", wcroot.getWcId(), SVNFileUtil.getFilePath(current_relpath));
-                boolean have_row = stmt.next();
-                if (!have_row) {
-                    /*
-                     * If we moved upwards at least once, or we're looking at
-                     * the root directory of this WCROOT, then something is
-                     * wrong.
-                     */
-                    if ((relpath_suffix != null && !"".equals(relpath_suffix.getPath())) || localRelPath == null) {
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "Parent(s) of ''{0}'' should have been present.", localAbsPath);
-                        SVNErrorManager.error(err, SVNLogType.WC);
-                    } else {
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{0}'' was not found.", localAbsPath);
-                        SVNErrorManager.error(err, SVNLogType.WC);
-                    }
-                }
-
-                /* Did we find some non-NULL repository columns? */
-                if (!isColumnNull(stmt, 0)) {
-                    /* If one is non-NULL, then so should the other. */
-                    assert (!isColumnNull(stmt, 1));
-                    /*
-                     * Given the node's relpath, append all the segments that we
-                     * stripped as we scanned upwards.
-                     */
-                    reposInfo.relPath = SVNFileUtil.createFilePath(getColumnText(stmt, 1), relpath_suffix.getPath());
-                    long repos_id = getColumnInt64(stmt, 0);
-                    return repos_id;
-                }
-
-            } finally {
-                stmt.reset();
-            }
-
-            if (current_relpath == null) {
-                /*
-                 * We scanned all the way up, and did not find the information.
-                 * Something is corrupt in the database.
-                 */
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "Parent(s) of ''{0}'' should have repository information.", localAbsPath);
+        try {
+            stmt.bindf("is", wcroot.getWcId(), localRelPath);
+            boolean haveRow = stmt.next();
+            if (!haveRow) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{0}'' was not found.", localAbsPath);
                 SVNErrorManager.error(err, SVNLogType.WC);
+                return 0;
             }
-
-            /*
-             * Strip a path segment off the end, and append it to the suffix
-             * that we'll use when we finally find a base relpath.
-             */
-            current_basename = SVNFileUtil.getFileName(current_relpath);
-            current_relpath = SVNFileUtil.getFileDir(current_relpath);
-            relpath_suffix = SVNFileUtil.createFilePath(relpath_suffix, current_basename);
-
-            /* Loop to try the parent. */
-
-            /*
-             * ### strictly speaking, moving to the parent could send us to a
-             * ### different SDB, and (thus) we would need to fetch STMT again.
-             * ### but we happen to know the parent is *always* in the same db,
-             * ### and will have the repos info.
-             */
+            assert (!stmt.isColumnNull(SVNWCDbSchema.NODES__Fields.repos_id));
+            assert (!stmt.isColumnNull(SVNWCDbSchema.NODES__Fields.repos_path));
+            reposInfo.relPath = SVNFileUtil.createFilePath(stmt.getColumnString(SVNWCDbSchema.NODES__Fields.repos_path));
+            return stmt.getColumnLong(SVNWCDbSchema.NODES__Fields.repos_id);
+        } finally {
+            stmt.reset();
         }
     }
 
