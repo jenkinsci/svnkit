@@ -738,6 +738,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         if (db.isSkipThis()) {
             db.getBumpInfo().setSkipped(true);
             maybeBumpDirInfo(db.getBumpInfo());
+            myCurrentDirectory = myCurrentDirectory.getParentDir();
             return;
         }
         SVNProperties entryProps = db.getChangedEntryProperties();
@@ -863,6 +864,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             bdi.getEntryInfo().cleanup();
             bdi = bdi.getParent();
         }
+        myCurrentDirectory = myCurrentDirectory.getParentDir();
         return;
     }
 
