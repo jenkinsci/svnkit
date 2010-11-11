@@ -404,7 +404,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             assert (action == SVNConflictAction.EDIT || action == SVNConflictAction.DELETE || action == SVNConflictAction.REPLACE);
         else if (reason == SVNConflictReason.ADDED)
             assert (action == SVNConflictAction.ADD);
-        return new SVNTreeConflictDescription(localAbspath, theirNodeKind, action, reason, SVNOperation.UPDATE, null, null);
+        return createTreeConflict(localAbspath, reason, action, theirNodeKind, theirRelpath);
     }
 
     private boolean hasEntryLocalMods(File localAbspath, SVNWCDbKind kind) throws SVNException {
