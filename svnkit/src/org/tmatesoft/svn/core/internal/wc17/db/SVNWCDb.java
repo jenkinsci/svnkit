@@ -4279,8 +4279,8 @@ public class SVNWCDb implements ISVNWCDb {
             assert (conflict == null);
             File parentRelpath = SVNFileUtil.getFileDir(localRelpath);
             SVNSqlJetStatement stmt = db.getStatement(SVNWCDbStatements.INSERT_NODE);
-            stmt.bindf("isisisrtstrisnnnnns", wcId, localRelpath, 0, parentRelpath, reposId, reposRelpath, revision, presenceMap, status, (kind == SVNWCDbKind.Dir) ? SVNDepth.asString(depth) : null,
-                    kindMap, kind, changedRev, changedDate, changedAuthor, (kind == SVNWCDbKind.Symlink) ? target : null
+            stmt.bindf("isisisrtstrisnnnnns", wcId, localRelpath, 0, parentRelpath, reposId, reposRelpath, revision, presenceMap.get(status), (kind == SVNWCDbKind.Dir) ? SVNDepth.asString(depth) : null,
+                    kindMap.get(kind), changedRev, changedDate, changedAuthor, (kind == SVNWCDbKind.Symlink) ? target : null
 
             );
             if (kind == SVNWCDbKind.File) {
