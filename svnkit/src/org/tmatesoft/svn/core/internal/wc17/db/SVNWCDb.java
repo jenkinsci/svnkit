@@ -3121,7 +3121,7 @@ public class SVNWCDb implements ISVNWCDb {
             }
 
             info.reposRootUrl = getColumnText(stmt, SVNWCDbSchema.REPOSITORY__Fields.root);
-            info.reposUuid = getColumnText(stmt, SVNWCDbSchema.REPOSITORY__Fields.root);
+            info.reposUuid = getColumnText(stmt, SVNWCDbSchema.REPOSITORY__Fields.uuid);
 
         } finally {
             stmt.reset();
