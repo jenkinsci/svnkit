@@ -1091,7 +1091,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             SVNErrorManager.error(err, SVNLogType.WC);
         }
 
-        SVNNodeKind kind = myWcContext.readKind(fb.getLocalAbspath(),true);
+        SVNNodeKind kind = myWcContext.readKind(fb.getLocalAbspath(), true);
         if (kind == SVNNodeKind.NONE && !fb.isAddingFile()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' is not under version control", fb.getLocalAbspath());
             SVNErrorManager.error(err, SVNLogType.WC);
@@ -1615,6 +1615,9 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         }
 
         public void propertyChanged(String name, SVNPropertyValue value) {
+            if (value == null) {
+                return;
+            }
             if (name.startsWith(SVNProperty.SVN_ENTRY_PREFIX)) {
                 myChangedEntryProperties = myChangedEntryProperties == null ? new SVNProperties() : myChangedEntryProperties;
                 // trim value of svn:entry property
