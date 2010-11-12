@@ -163,6 +163,7 @@ svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbInsertWCLock
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbInsertWorkItem.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbInsertWorkingNodeFromBase.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbInsertWorkingNodeNormalFromBase.java -text
+svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbInsertWorkingNodeNotPresentFromBase.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbLookForWork.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbNodesMaxOpDepth.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbSelectAnyPristineReference.java -text
