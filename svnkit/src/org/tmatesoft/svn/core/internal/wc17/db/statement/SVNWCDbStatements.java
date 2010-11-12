@@ -82,7 +82,7 @@ public enum SVNWCDbStatements {
     UPDATE_ACTUAL_PROPERTY_CONFLICTS(SVNWCDbUpdateActualPropertyConflicts.class),
     UPDATE_ACTUAL_PROPS(SVNWCDbUpdateActualProps.class),
     UPDATE_ACTUAL_TEXT_CONFLICTS(SVNWCDbUpdateActualTextConflicts.class),
-    UPDATE_ACTUAL_TREE_CONFLICTS,
+    UPDATE_ACTUAL_TREE_CONFLICTS(SVNWCDbUpdateActualTreeConflicts.class),
     UPDATE_BASE_NODE_FILEINFO,
     UPDATE_BASE_NODE_PRESENCE_REVNUM_AND_REPOS_PATH(SVNUpdateBaseNodePresenceRevnumAndReposPath.class),
     UPDATE_BASE_REPOS,
