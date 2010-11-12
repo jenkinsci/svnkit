@@ -57,7 +57,7 @@ public enum SVNWCDbStatements {
     SELECT_ACTUAL_NODE(SVNWCDbSelectActualNode.class),
     SELECT_ACTUAL_PROPS(SVNWCDbSelectActualProperties.class),
     SELECT_ACTUAL_TREE_CONFLICT(SVNWCDbSelectActualTreeConflict.class),
-    SELECT_ANY_PRISTINE_REFERENCE,
+    SELECT_ANY_PRISTINE_REFERENCE(SVNWCDbSelectAnyPristineReference.class),
     SELECT_BASE_DAV_CACHE,
     SELECT_BASE_NODE(SVNWCDbSelectBaseNode.class),
     SELECT_BASE_NODE_CHILDREN(SVNWCDbSelectBaseNodeChildren.class),
