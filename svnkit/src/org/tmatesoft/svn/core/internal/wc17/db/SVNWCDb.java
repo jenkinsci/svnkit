@@ -3386,7 +3386,7 @@ public class SVNWCDb implements ISVNWCDb {
             }
 
             if (removeWorking) {
-                stmt = db.getStatement(SVNWCDbStatements.DELETE_WORKING_NODES);
+                stmt = db.getStatement(SVNWCDbStatements.DELETE_WORKING_NODE);
                 stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelpath);
                 stmt.done();
             }
@@ -3647,7 +3647,7 @@ public class SVNWCDb implements ISVNWCDb {
         SVNWCDbDir pdh = parseDir.wcDbDir;
         File localRelpath = parseDir.localRelPath;
         verifyDirUsable(pdh);
-        SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.DELETE_WORKING_NODES);
+        SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.DELETE_WORKING_NODE);
         stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelpath);
         stmt.done();
         stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.DELETE_ACTUAL_NODE);
@@ -3746,7 +3746,7 @@ public class SVNWCDb implements ISVNWCDb {
         File localRelpath = parseDir.localRelPath;
         verifyDirUsable(pdh);
         pdh.flushEntries(localAbspath);
-        SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.DELETE_WORKING_NODES);
+        SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.DELETE_WORKING_NODE);
         stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelpath);
         stmt.done();
     }

@@ -30,7 +30,7 @@ public enum SVNWCDbStatements {
     DELETE_PRISTINE(SVNWCDbDeletePristine.class),
     DELETE_WC_LOCK(SVNWCDbDeleteWCLock.class),
     DELETE_WORK_ITEM(SVNWCDbDeleteWorkItem.class),
-    DELETE_WORKING_NODES,
+    DELETE_WORKING_NODE(SVNWCDbDeleteWorkingNode.class),
     DETERMINE_TREE_FOR_RECORDING(SVNWCDbDetermineTreeForRecording.class),
     FIND_WC_LOCK(SVNWCDbFindWCLock.class),
     FSFS_GET_REVPROP(SVNFSFSRevPropGet.class),
