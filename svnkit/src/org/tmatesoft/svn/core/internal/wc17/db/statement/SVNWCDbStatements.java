@@ -51,7 +51,7 @@ public enum SVNWCDbStatements {
     INSERT_WORKING_NODE_FROM_BASE(SVNWCDbInsertWorkingNodeFromBase.class),
     INSERT_WORKING_NODE_NORMAL_FROM_BASE(SVNWCDbInsertWorkingNodeNormalFromBase.class),
     INSERT_WORKING_NODE_NOT_PRESENT_FROM_BASE,
-    LOOK_FOR_WORK,
+    LOOK_FOR_WORK(SVNWCDbLookForWork.class),
     REVPROP_CREATE_SCHEMA(SVNFSFSRevPropCreateSchema.class),
     SELECT_ACTUAL_CONFLICT_VICTIMS(SVNWCDbSelectActualConflictVictims.class),
     SELECT_ACTUAL_NODE(SVNWCDbSelectActualNode.class),
