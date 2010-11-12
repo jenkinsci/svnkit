@@ -177,6 +177,7 @@ svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbUpdateBaseRe
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbUpdateCopyfrom.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbUpdateNodeBaseDepth.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbUpdateNodeBasePresence.java -text
+svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbUpdateNodeWorkingDepth.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbUpdateWorkingNodeFileinfo.java -text
 svnkit/src/org/tmatesoft/svn/core/io/repository/template.jar -text
 svnkit/src/org/tmatesoft/svn/core/wc/ISVNFileFilter.java -text
