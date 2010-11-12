@@ -133,7 +133,7 @@ public abstract class SVNSqlJetStatement {
                     } else if (data[n] instanceof SVNDate) {
                         bindLong(i + 1, ((SVNDate) data[n]).getTimeInMicros());
                     } else {
-                        SVNErrorManager.assertionFailure(false, String.format("Number argument required in %d", i), SVNLogType.WC);
+                        SVNErrorManager.assertionFailure(false, String.format("Number argument required in %d", i + 1), SVNLogType.WC);
                     }
                     n++;
                     break;
@@ -144,7 +144,7 @@ public abstract class SVNSqlJetStatement {
                     } else if (data[n] instanceof Number) {
                         bindRevision(i + 1, ((Number) data[n]).longValue());
                     } else {
-                        SVNErrorManager.assertionFailure(false, String.format("Number argument required in %d", i), SVNLogType.WC);
+                        SVNErrorManager.assertionFailure(false, String.format("Number argument required in %d", i + 1), SVNLogType.WC);
                     }
                     n++;
                     break;
@@ -155,7 +155,7 @@ public abstract class SVNSqlJetStatement {
                     } else if (data[n] instanceof byte[]) {
                         bindBlob(i + 1, (byte[]) data[n]);
                     } else {
-                        SVNErrorManager.assertionFailure(false, String.format("Byte array argument required in %d", i), SVNLogType.WC);
+                        SVNErrorManager.assertionFailure(false, String.format("Byte array argument required in %d", i + 1), SVNLogType.WC);
                     }
                     n++;
                     break;
@@ -165,7 +165,7 @@ public abstract class SVNSqlJetStatement {
                     break;
 
                 default:
-                    SVNErrorManager.assertionFailure(false, String.format("Unknown format '%s' in %d", fmt, i), SVNLogType.WC);
+                    SVNErrorManager.assertionFailure(false, String.format("Unknown format '%s' in %d", fmt, i + 1), SVNLogType.WC);
             }
         }
 
