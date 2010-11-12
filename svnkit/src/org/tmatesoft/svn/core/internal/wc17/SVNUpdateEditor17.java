@@ -1091,7 +1091,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             SVNErrorManager.error(err, SVNLogType.WC);
         }
 
-        SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(fb.getLocalAbspath()));
+        SVNNodeKind kind = myWcContext.readKind(fb.getLocalAbspath(),true);
         if (kind == SVNNodeKind.NONE && !fb.isAddingFile()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' is not under version control", fb.getLocalAbspath());
             SVNErrorManager.error(err, SVNLogType.WC);
