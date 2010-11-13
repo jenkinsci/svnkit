@@ -147,7 +147,9 @@ svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNUpdateBaseNodePr
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbClearPropsConflict.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbClearTextConflict.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbDeleteActualNode.java -text
+svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbDeleteActualNodeWithoutConflict.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbDeleteBaseNode.java -text
+svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbDeleteLowestWorkingNode.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbDeleteNodes.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbDeletePristine.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbDeleteWCLock.java -text

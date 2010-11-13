@@ -100,7 +100,9 @@ public enum SVNWCDbStatements {
     UPDATE_WORKING_NODE_FILEINFO(SVNWCDbUpdateWorkingNodeFileinfo.class),
     SELECT_LOWEST_WORKING_NODE(SVNWCDbSelectLowestWorkingNode.class),
     CLEAR_TEXT_CONFLICT(SVNWCDbClearTextConflict.class),
-    CLEAR_PROPS_CONFLICT(SVNWCDbClearPropsConflict.class);
+    CLEAR_PROPS_CONFLICT(SVNWCDbClearPropsConflict.class),
+    DELETE_LOWEST_WORKING_NODE(SVNWCDbDeleteLowestWorkingNode.class),
+    DELETE_ACTUAL_NODE_WITHOUT_CONFLICT(SVNWCDbDeleteActualNodeWithoutConflict.class);
 
     private Class<? extends SVNSqlJetStatement> statementClass;
 

@@ -2519,10 +2519,43 @@ public class SVNWCDb implements ISVNWCDb {
         SVNWCDbDir pdh = parseDir.wcDbDir;
         File localRelpath = parseDir.localRelPath;
         verifyDirUsable(pdh);
-        SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.DELETE_BASE_NODE);
-        stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelpath);
-        stmt.done();
+        BaseRemove brb = new BaseRemove();
+        brb.localRelpath = localRelpath;
+        brb.wcId = pdh.getWCRoot().getWcId();
+        pdh.getWCRoot().getSDb().runTransaction(brb);
         pdh.flushEntries(localAbsPath);
+    }
+
+    private class BaseRemove implements SVNSqlJetTransaction {
+
+        public long wcId;
+        public File localRelpath;
+
+        public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
+            boolean haveRow = false;
+            SVNSqlJetStatement stmt = db.getStatement(SVNWCDbStatements.DELETE_BASE_NODE);
+            stmt.bindf("is", wcId, localRelpath);
+            stmt.done();
+            retractParentDelete(db);
+            stmt = db.getStatement(SVNWCDbStatements.SELECT_WORKING_NODE);
+            try{
+                stmt.bindf("is", wcId, localRelpath);
+                haveRow = stmt.next();
+            } finally {
+                stmt.reset();
+            }
+            if(!haveRow) {
+                stmt = db.getStatement(SVNWCDbStatements.DELETE_ACTUAL_NODE_WITHOUT_CONFLICT);
+                stmt.bindf("is", wcId, localRelpath);
+                stmt.done();
+            }
+        }
+
+        private void retractParentDelete(SVNSqlJetDb db) throws SVNException {
+            SVNSqlJetStatement stmt = db.getStatement(SVNWCDbStatements.DELETE_LOWEST_WORKING_NODE);
+            stmt.bindf("is", wcId, localRelpath);
+            stmt.done();
+        }
     }
 
     public void removeLock(File localAbsPath) throws SVNException {
