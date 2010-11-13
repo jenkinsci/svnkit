@@ -2349,15 +2349,6 @@ public class SVNWCDb implements ISVNWCDb {
             }
         }
 
-        /*
-         * ### And finally, check for tree conflicts via parent. This reuses
-         * stmt_act and throws an error in Sqlite if we do it directly
-         */
-        if (f.contains(InfoField.conflicted) && !info.conflicted) {
-            final SVNTreeConflictDescription cd = opReadTreeConflict(localAbsPath);
-            info.conflicted = (cd != null);
-        }
-
         return info;
     }
 
