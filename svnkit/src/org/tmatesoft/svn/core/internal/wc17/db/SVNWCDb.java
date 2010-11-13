@@ -1798,9 +1798,10 @@ public class SVNWCDb implements ISVNWCDb {
         stb.treeConflict = treeConflict;
         DirParsedInfo parseDir = parseDir(stb.parentAbspath, Mode.ReadWrite);
         SVNWCDbDir pdh = parseDir.wcDbDir;
-        stb.parentRelpath = parseDir.localRelPath;
         verifyDirUsable(pdh);
         stb.wcId = pdh.getWCRoot().getWcId();
+        stb.localRelpath = parseDir.localRelPath;
+        stb.parentRelpath = SVNFileUtil.getFileDir(stb.localRelpath);
         pdh.getWCRoot().getSDb().runTransaction(stb);
         pdh.flushEntries(localAbspath);
     }
@@ -2489,13 +2490,13 @@ public class SVNWCDb implements ISVNWCDb {
             stmt.done();
             retractParentDelete(db);
             stmt = db.getStatement(SVNWCDbStatements.SELECT_WORKING_NODE);
-            try{
+            try {
                 stmt.bindf("is", wcId, localRelpath);
                 haveRow = stmt.next();
             } finally {
                 stmt.reset();
             }
-            if(!haveRow) {
+            if (!haveRow) {
                 stmt = db.getStatement(SVNWCDbStatements.DELETE_ACTUAL_NODE_WITHOUT_CONFLICT);
                 stmt.bindf("is", wcId, localRelpath);
                 stmt.done();
@@ -4263,8 +4264,8 @@ public class SVNWCDb implements ISVNWCDb {
             assert (conflict == null);
             File parentRelpath = SVNFileUtil.getFileDir(localRelpath);
             SVNSqlJetStatement stmt = db.getStatement(SVNWCDbStatements.INSERT_NODE);
-            stmt.bindf("isisisrtstrisnnnnns", wcId, localRelpath, 0, parentRelpath, reposId, reposRelpath, revision, presenceMap.get(status), (kind == SVNWCDbKind.Dir) ? SVNDepth.asString(depth) : null,
-                    kindMap.get(kind), changedRev, changedDate, changedAuthor, (kind == SVNWCDbKind.Symlink) ? target : null
+            stmt.bindf("isisisrtstrisnnnnns", wcId, localRelpath, 0, parentRelpath, reposId, reposRelpath, revision, presenceMap.get(status), (kind == SVNWCDbKind.Dir) ? SVNDepth.asString(depth)
+                    : null, kindMap.get(kind), changedRev, changedDate, changedAuthor, (kind == SVNWCDbKind.Symlink) ? target : null
 
             );
             if (kind == SVNWCDbKind.File) {
