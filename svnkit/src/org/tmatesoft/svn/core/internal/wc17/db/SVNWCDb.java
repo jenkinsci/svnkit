@@ -3629,7 +3629,10 @@ public class SVNWCDb implements ISVNWCDb {
         SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.DELETE_WORKING_NODE);
         stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelpath);
         stmt.done();
-        stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.DELETE_ACTUAL_NODE);
+        stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.CLEAR_ACTUAL_NODE_LEAVING_CONFLICT);
+        stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelpath);
+        stmt.done();
+        stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.DELETE_ACTUAL_NODE_WITHOUT_CONFLICT);
         stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelpath);
         stmt.done();
         pdh.flushEntries(localAbspath);
@@ -3797,7 +3800,7 @@ public class SVNWCDb implements ISVNWCDb {
         SVNSqlJetStatement stmt = sdb.getStatement(SVNWCDbStatements.DELETE_NODES);
         stmt.bindf("is", wcId, localRelpath);
         stmt.done();
-        stmt = sdb.getStatement(SVNWCDbStatements.DELETE_ACTUAL_NODE);
+        stmt = sdb.getStatement(SVNWCDbStatements.DELETE_ACTUAL_NODE_WITHOUT_CONFLICT);
         stmt.bindf("is", wcId, localRelpath);
         stmt.done();
     }

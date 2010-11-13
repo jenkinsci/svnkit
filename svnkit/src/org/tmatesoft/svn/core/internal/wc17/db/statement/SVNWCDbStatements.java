@@ -103,7 +103,8 @@ public enum SVNWCDbStatements {
     CLEAR_PROPS_CONFLICT(SVNWCDbClearPropsConflict.class),
     DELETE_LOWEST_WORKING_NODE(SVNWCDbDeleteLowestWorkingNode.class),
     DELETE_ACTUAL_NODE_WITHOUT_CONFLICT(SVNWCDbDeleteActualNodeWithoutConflict.class),
-    SELECT_ACTUAL_CHILDREN_TREE_CONFLICT(SVNWCDbSelectActualChildrenTreeConflict.class);
+    SELECT_ACTUAL_CHILDREN_TREE_CONFLICT(SVNWCDbSelectActualChildrenTreeConflict.class),
+    CLEAR_ACTUAL_NODE_LEAVING_CONFLICT(SVNWCDbClearActualNodeLeavingConflict.class);
 
     private Class<? extends SVNSqlJetStatement> statementClass;
 
