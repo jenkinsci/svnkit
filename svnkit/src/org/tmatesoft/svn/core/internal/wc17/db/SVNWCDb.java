@@ -2251,17 +2251,14 @@ public class SVNWCDb implements ISVNWCDb {
                 }
                 if (f.contains(InfoField.conflicted)) {
                     if (have_act) {
-                        info.conflicted = getColumnText(stmt_act, SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_old) != null || /* old */
-                        getColumnText(stmt_act, SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_new) != null || /* new */
-                        getColumnText(stmt_act, SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_working) != null || /* working */
-                        getColumnText(stmt_act, SVNWCDbSchema.ACTUAL_NODE__Fields.prop_reject) != null; /* prop_reject */
-
-                        /*
-                         * At the end of this function we check for tree
-                         * conflicts
-                         */
-                    } else
+                        info.conflicted = !isColumnNull(stmt_act, SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_old) || /* old */
+                        !isColumnNull(stmt_act, SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_new) || /* new */
+                        !isColumnNull(stmt_act, SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_working) || /* working */
+                        !isColumnNull(stmt_act, SVNWCDbSchema.ACTUAL_NODE__Fields.prop_reject) || /* prop_reject */
+                        !isColumnNull(stmt_act, SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_data) /* conflict_data */;
+                    } else {
                         info.conflicted = false;
+                    }
                 }
                 if (f.contains(InfoField.lock)) {
                     final SVNSqlJetStatement stmt_base_lock = stmt_base.getJoinedStatement(SVNWCDbSchema.LOCK.toString());
