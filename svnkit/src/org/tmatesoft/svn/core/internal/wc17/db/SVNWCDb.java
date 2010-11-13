@@ -2280,8 +2280,59 @@ public class SVNWCDb implements ISVNWCDb {
                  * A row in ACTUAL_NODE should never exist without a
                  * corresponding node in BASE_NODE and/or WORKING_NODE.
                  */
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "Corrupt data for ''{0}''", localAbsPath);
-                SVNErrorManager.error(err, SVNLogType.WC);
+                if (isColumnNull(stmt_act, SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_data)) /* conflict_data */{
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "Corrupt data for ''{0}''", localAbsPath);
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                }
+
+                assert (f.contains(InfoField.conflicted));
+
+                if (f.contains(InfoField.status))
+                    info.status = SVNWCDbStatus.Normal; /* What! No it's not! */
+                if (f.contains(InfoField.kind))
+                    info.kind = SVNWCDbKind.Unknown;
+                if (f.contains(InfoField.revision))
+                    info.revision = INVALID_REVNUM;
+                if (f.contains(InfoField.reposRelPath))
+                    info.reposRelPath = null;
+                if (f.contains(InfoField.reposRootUrl))
+                    info.reposRootUrl = null;
+                if (f.contains(InfoField.reposUuid))
+                    info.reposUuid = null;
+                if (f.contains(InfoField.changedRev))
+                    info.changedRev = INVALID_REVNUM;
+                if (f.contains(InfoField.changedDate))
+                    info.changedDate = null;
+                if (f.contains(InfoField.lastModTime))
+                    info.lastModTime = 0;
+                if (f.contains(InfoField.depth))
+                    info.depth = SVNDepth.UNKNOWN;
+                if (f.contains(InfoField.checksum))
+                    info.checksum = null;
+                if (f.contains(InfoField.translatedSize))
+                    info.translatedSize = 0;
+                if (f.contains(InfoField.target))
+                    info.target = null;
+                if (f.contains(InfoField.changelist))
+                    info.changelist = stmt_act.getColumnString(SVNWCDbSchema.ACTUAL_NODE__Fields.changelist);
+                if (f.contains(InfoField.originalReposRelpath))
+                    info.originalReposRelpath = null;
+                if (f.contains(InfoField.originalRootUrl))
+                    info.originalRootUrl = null;
+                if (f.contains(InfoField.originalUuid))
+                    info.originalUuid = null;
+                if (f.contains(InfoField.originalRevision))
+                    info.originalRevision = INVALID_REVNUM;
+                if (f.contains(InfoField.propsMod))
+                    info.propsMod = !stmt_act.isColumnNull(SVNWCDbSchema.ACTUAL_NODE__Fields.properties);
+                if (f.contains(InfoField.haveBase))
+                    info.haveBase = false;
+                if (f.contains(InfoField.haveWork))
+                    info.haveWork = false;
+                if (f.contains(InfoField.conflicted))
+                    info.conflicted = true;
+                if (f.contains(InfoField.lock))
+                    info.lock = null;
             } else {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{0}'' was not found.", localAbsPath);
                 SVNErrorManager.error(err, SVNLogType.WC);
