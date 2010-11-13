@@ -168,6 +168,7 @@ svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbInsertWorkin
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbInsertWorkingNodeNotPresentFromBase.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbLookForWork.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbNodesMaxOpDepth.java -text
+svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbSelectActualChildrenTreeConflict.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbSelectAnyPristineReference.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbSelectLowestWorkingNode.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbSelectNodeProps.java -text

@@ -1645,38 +1645,32 @@ public class SVNWCDb implements ISVNWCDb {
 
     public Map<String, SVNTreeConflictDescription> opReadAllTreeConflicts(File localAbsPath) throws SVNException {
         assert (isAbsolute(localAbsPath));
-
         final DirParsedInfo parsed = parseDir(localAbsPath, Mode.ReadWrite);
         final SVNWCDbDir pdh = parsed.wcDbDir;
-        final File local_relpath = parsed.localRelPath;
+        final File localRelpath = parsed.localRelPath;
         verifyDirUsable(pdh);
+        return readAllTreeConflicts(pdh, localRelpath);
+    }
 
-        String tree_conflict_data;
-
-        /* Get the conflict information for the parent of LOCAL_ABSPATH. */
-
-        SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_ACTUAL_NODE);
+    private Map<String, SVNTreeConflictDescription> readAllTreeConflicts(SVNWCDbDir pdh, File localRelpath) throws SVNException {
+        Map<String, SVNTreeConflictDescription> treeConflicts = new HashMap<String, SVNTreeConflictDescription>();
+        SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_ACTUAL_CHILDREN_TREE_CONFLICT);
         try {
-            stmt.bindf("is", pdh.getWCRoot().getWcId(), SVNFileUtil.getFilePath(local_relpath));
-            boolean have_row = stmt.next();
-
-            /* No ACTUAL node, no conflict info, no problem. */
-            if (!have_row) {
-                return null;
+            stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelpath);
+            boolean haveRow = stmt.next();
+            while (haveRow) {
+                File childRelpath = SVNFileUtil.createFilePath(stmt.getColumnString(SVNWCDbSchema.ACTUAL_NODE__Fields.local_relpath));
+                String childBaseName = SVNFileUtil.getFileName(childRelpath);
+                byte[] conflictData = stmt.getColumnBlob(SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_data);
+                SVNSkel skel = SVNSkel.parse(conflictData);
+                SVNTreeConflictDescription treeConflict = SVNTreeConflictUtil.readSingleTreeConflict(skel, pdh.getWCRoot().getAbsPath());
+                treeConflicts.put(childBaseName, treeConflict);
+                haveRow = stmt.next();
             }
-
-            tree_conflict_data = getColumnText(stmt, 5);
         } finally {
             stmt.reset();
         }
-
-        /* No tree conflict data? no problem. */
-        if (tree_conflict_data == null) {
-            return null;
-        }
-
-        return SVNTreeConflictUtil.readTreeConflicts(localAbsPath, tree_conflict_data);
-
+        return treeConflicts;
     }
 
     public SVNTreeConflictDescription opReadTreeConflict(File localAbsPath) throws SVNException {

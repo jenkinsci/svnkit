@@ -40,7 +40,7 @@ public class SVNTreeConflictUtil {
         if (conflictData == null) {
             return new SVNHashMap();
         }
-        
+
         byte[] data;
         try {
             data = conflictData.getBytes("UTF-8");
@@ -70,7 +70,7 @@ public class SVNTreeConflictUtil {
         return conflicts;
     }
 
-    private static SVNTreeConflictDescription readSingleTreeConflict(SVNSkel skel, File dirPath) throws SVNException {
+    public static SVNTreeConflictDescription readSingleTreeConflict(SVNSkel skel, File dirPath) throws SVNException {
         if (!isValidConflict(skel)) {
             SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "Invalid conflict info in tree conflict description");
             SVNErrorManager.error(error, SVNLogType.WC);
@@ -167,7 +167,7 @@ public class SVNTreeConflictUtil {
             conflictSkel.addChild(SVNSkel.createAtom(conflict.getOperation().toString()));
 
             if (conflict.getNodeKind() != SVNNodeKind.DIR && conflict.getNodeKind() != SVNNodeKind.FILE) {
-                SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, 
+                SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT,
                         "Invalid \'node_kind\' field in tree conflict description");
                 SVNErrorManager.error(error, SVNLogType.WC);
             }
@@ -175,7 +175,7 @@ public class SVNTreeConflictUtil {
 
             String path = conflict.getPath().getName();
             if (path.length() == 0) {
-                SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, 
+                SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT,
                         "Empty path basename in tree conflict description");
                 SVNErrorManager.error(error, SVNLogType.WC);
             }
@@ -183,7 +183,7 @@ public class SVNTreeConflictUtil {
             conflictSkel.addChild(SVNSkel.createAtom("conflict"));
 
             if (!isValidConflict(conflictSkel)) {
-                SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, 
+                SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT,
                         "Failed to create valid conflict description skel: ''{0}''", skel.toString());
                 SVNErrorManager.error(error, SVNLogType.WC);
             }
@@ -205,7 +205,7 @@ public class SVNTreeConflictUtil {
     	if (url != null && version.getPath() != null) {
     		url = url + "/" + version.getPath();
     	} else if (url != null) {
-    		url = url + "/..."; 
+    		url = url + "/...";
     	} else if (version.getPath() != null) {
     		url = version.getPath();
     	} else {
@@ -213,7 +213,7 @@ public class SVNTreeConflictUtil {
     	}
         return "(" + getNodeKindString(version.getKind()) + ") " + url + "@" + version.getPegRevision();
     }
-    
+
     private static String getReasonString(SVNTreeConflictDescription treeConflict) {
         SVNConflictReason reason = treeConflict.getConflictReason();
         if (reason == SVNConflictReason.EDITED) {
@@ -228,10 +228,10 @@ public class SVNTreeConflictUtil {
             return "missing";
         } else if (reason == SVNConflictReason.UNVERSIONED) {
             return "unversioned";
-        } 
+        }
         return null;
     }
-    
+
     private static String getActionString(SVNTreeConflictDescription treeConflict) {
         SVNConflictAction action = treeConflict.getConflictAction();
         if (action == SVNConflictAction.ADD) {
@@ -243,7 +243,7 @@ public class SVNTreeConflictUtil {
         }
         return null;
     }
-    
+
     private static SVNSkel prependVersionInfo(SVNSkel parent, SVNConflictVersion versionInfo) throws SVNException {
         parent = parent == null ? SVNSkel.createEmptyList() : parent;
         SVNSkel skel = SVNSkel.createEmptyList();
