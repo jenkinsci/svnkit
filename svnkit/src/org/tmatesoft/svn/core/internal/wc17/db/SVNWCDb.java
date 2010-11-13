@@ -1815,55 +1815,6 @@ public class SVNWCDb implements ISVNWCDb {
         public SVNTreeConflictDescription treeConflict;
 
         public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
-            String treeConflictData;
-            boolean haveRow;
-            SVNSqlJetStatement stmt = db.getStatement(SVNWCDbStatements.SELECT_ACTUAL_NODE);
-            try {
-                stmt.bindf("is", wcId, parentRelpath);
-                haveRow = stmt.next();
-
-                if (!haveRow) {
-                    treeConflictData = null;
-                } else {
-                    treeConflictData = stmt.getColumnString(SVNWCDbSchema.ACTUAL_NODE__Fields.tree_conflict_data);
-                }
-            } finally {
-                stmt.reset();
-            }
-            Map<File, SVNTreeConflictDescription> conflicts = SVNTreeConflictUtil.readTreeConflicts(localAbspath, treeConflictData);
-            conflicts.put(SVNFileUtil.createFilePath(SVNFileUtil.getFileName(localAbspath)), treeConflict);
-            if (conflicts.isEmpty() && !haveRow) {
-                return;
-            }
-            treeConflictData = SVNTreeConflictUtil.getTreeConflictData(conflicts);
-            if (haveRow) {
-                stmt = db.getStatement(SVNWCDbStatements.UPDATE_ACTUAL_TREE_CONFLICTS);
-            } else {
-                stmt = db.getStatement(SVNWCDbStatements.INSERT_ACTUAL_TREE_CONFLICTS);
-            }
-            stmt.bindf("iss", wcId, parentRelpath, treeConflictData);
-            if (!haveRow && parentRelpath != null) {
-                stmt.bindString(4, SVNFileUtil.getFilePath(SVNFileUtil.getFileDir(parentRelpath)));
-            } else {
-                stmt.bindNull(4);
-            }
-            stmt.done();
-        }
-
-    };
-
-    private class SetTreeConflict2 extends SetTreeConflict {
-
-        public SetTreeConflict2(SetTreeConflict copy) {
-            this.localAbspath = copy.localAbspath;
-            this.localRelpath = copy.localRelpath;
-            this.wcId = copy.wcId;
-            this.parentRelpath = copy.parentRelpath;
-            this.parentAbspath = copy.parentAbspath;
-            this.treeConflict = copy.treeConflict;
-        }
-
-        public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
             boolean haveRow;
             SVNSqlJetStatement stmt = db.getStatement(SVNWCDbStatements.SELECT_ACTUAL_NODE);
             try {
