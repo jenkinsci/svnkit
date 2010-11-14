@@ -30,6 +30,7 @@ public class SVNWCDbDeleteLowestWorkingNode extends SVNSqlJetDeleteStatement {
 
     public SVNWCDbDeleteLowestWorkingNode(SVNSqlJetDb sDb) throws SVNException {
         super(sDb, SVNWCDbSchema.NODES);
+        maxOpDepthSelect = new SVNWCDbNodesMaxOpDepth(sDb);
     }
 
     public void reset() throws SVNException {
