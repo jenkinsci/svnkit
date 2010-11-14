@@ -1996,17 +1996,18 @@ public class SVNWCDb implements ISVNWCDb {
                     SVNTextConflictDescription desc = new SVNTextConflictDescription(mergeFiles, SVNNodeKind.UNKNOWN, null, null);
                     conflicts.add(desc);
                 }
+
+                byte[] conflict_data = getColumnBlob(stmt, 4);
+                if (conflict_data!=null)
+                  {
+                    SVNSkel skel = SVNSkel.parse(conflict_data);
+                    SVNTreeConflictDescription desc = SVNTreeConflictUtil.readSingleTreeConflict(skel, SVNFileUtil.getFileDir(localAbsPath));
+                    conflicts.add(desc);
+                  }
+
             }
         } finally {
             stmt.reset();
-        }
-
-        /* ### Tree conflicts are still stored on the directory */
-        {
-            SVNTreeConflictDescription desc = opReadTreeConflict(localAbsPath);
-            if (desc != null) {
-                conflicts.add(desc);
-            }
         }
 
         return conflicts;
