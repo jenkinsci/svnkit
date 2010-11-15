@@ -28,6 +28,7 @@ import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
 import org.tmatesoft.svn.core.auth.SVNSSLAuthentication;
 import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
 import org.tmatesoft.svn.core.internal.util.SVNSSLUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 
 /**
  * @version 1.3
@@ -71,7 +72,12 @@ class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
                 }
             }
             return null;
-        } else if (ISVNAuthenticationManager.SSL.equals(kind) && myPrompt instanceof PromptUserPasswordSSL) {
+        } else if (ISVNAuthenticationManager.SSL.equals(kind) && isCertFile(realm) && myPrompt instanceof PromptUserPassword3) {
+            String passphrase = ((PromptUserPassword3) myPrompt).askQuestion(realm, "SSL Certificate Passphrase", authMayBeStored);
+            if (passphrase != null) {
+                return new SVNPasswordAuthentication("", passphrase, ((PromptUserPassword3) myPrompt).userAllowedSave());
+            }
+        } else if (ISVNAuthenticationManager.SSL.equals(kind) && !isCertFile(realm) && myPrompt instanceof PromptUserPasswordSSL) {
             PromptUserPasswordSSL prompt4 = (PromptUserPasswordSSL) myPrompt;
             if (prompt4.promptSSL(realm, authMayBeStored)) {
                 String cert = prompt4.getSSLClientCertPath();
@@ -92,7 +98,7 @@ class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
                 }
             }
             return null;
-        }
+        } 
         if (ISVNAuthenticationManager.SSH.equals(kind) && previousAuth == null) {
             // use configuration file here? but it was already used once...
             String keyPath = System.getProperty("svnkit.ssh2.key", System.getProperty("javasvn.ssh2.key"));
@@ -148,6 +154,10 @@ class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
             }
         }
         return null;
+    }
+
+    private boolean isCertFile(String realm) {
+        return SVNFileType.getType(new File(realm)).isFile();
     }
 
     private SVNAuthentication getDefaultUserNameCredentials(String userName) {

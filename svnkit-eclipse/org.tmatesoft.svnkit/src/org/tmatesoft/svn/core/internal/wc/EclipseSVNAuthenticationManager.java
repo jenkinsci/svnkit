@@ -62,6 +62,10 @@ public class EclipseSVNAuthenticationManager extends DefaultSVNAuthenticationMan
 
     static class KeyringAuthenticationProvider implements ISVNAuthenticationProvider, IPersistentAuthenticationProvider {
 
+        private boolean isCertFile(String realm) {
+            return SVNFileType.getType(new File(realm)).isFile();
+        }
+
         public SVNAuthentication requestClientAuthentication(String kind, SVNURL url, String realm, SVNErrorMessage errorMessage, SVNAuthentication previousAuth, boolean authMayBeStored) {
             // get from key-ring, use realm.
             realm = realm == null ? DEFAULT_URL.toString() : realm;
@@ -74,9 +78,15 @@ public class EclipseSVNAuthenticationManager extends DefaultSVNAuthenticationMan
                     return new SVNSSLAuthentication(sslKind, alias, authMayBeStored, url, false);
                 }
                 String password = (String) info.get("password");
-                String path = (String) info.get("cert");
-                if (path != null) {
-                    return new SVNSSLAuthentication(new File(path), password, authMayBeStored, url, false);
+                if (isCertFile(realm)) {
+                    if (password != null) {
+                        return new SVNPasswordAuthentication("", password, authMayBeStored);
+                    }
+                } else {
+                    String path = (String) info.get("cert");
+                    if (path != null) {
+                        return new SVNSSLAuthentication(new File(path), password, authMayBeStored, url, false);
+                    }
                 }
             } else if (info != null && !info.isEmpty() && info.get("username") != null) {
                 if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {
