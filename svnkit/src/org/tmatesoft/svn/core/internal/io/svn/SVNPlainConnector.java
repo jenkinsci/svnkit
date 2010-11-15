@@ -69,6 +69,16 @@ public class SVNPlainConnector implements ISVNConnector {
     public void close(SVNRepositoryImpl repository) throws SVNException {
         if (mySocket != null) {
             try {
+                mySocket.shutdownInput();
+            } catch (IOException e) {
+                //  
+            }
+            try {
+                mySocket.shutdownOutput();
+            } catch (IOException e) {
+                //  
+            }
+            try {
                 mySocket.close();
             } catch (IOException ex) {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, ex.getMessage(), ex), SVNLogType.NETWORK);
