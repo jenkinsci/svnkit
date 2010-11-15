@@ -34,6 +34,7 @@ import org.tmatesoft.svn.core.auth.SVNSSLAuthentication;
 import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
 import org.tmatesoft.svn.core.internal.util.SVNSSLUtil;
 import org.tmatesoft.svn.core.internal.wc.ISVNAuthStoreHandler;
+import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
 
@@ -344,6 +345,13 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
             }            
             return new SVNUserNameAuthentication(name, authMayBeStored, url, false);
         } else if (ISVNAuthenticationManager.SSL.equals(kind)) {
+            if (isSSLCertFile(realm)) {
+                String passphrase = promptPassword("Passphrase for '" + realm + "'");
+                if (passphrase == null) {
+                    return null;
+                }
+                return new SVNPasswordAuthentication("", passphrase, authMayBeStored);
+            }
             boolean isMSCAPI = false;
             printRealm(realm);
             String path = null;
@@ -374,7 +382,7 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
                 }
                 return new SVNSSLAuthentication(SVNSSLAuthentication.MSCAPI, alias, authMayBeStored, url, false);
             }
-            String password = promptPassword("Passphrase for '" + realm + "'");
+            String password = promptPassword("Passphrase for '" + path + "'");
             if (password == null) {
                 return null;
             } else if ("".equals(password)) {
@@ -383,6 +391,10 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
             return new SVNSSLAuthentication(new File(path), password, authMayBeStored, url, false);
         }
         return null;
+    }
+
+    private boolean isSSLCertFile(String realm) {
+        return SVNFileType.getType(new File(realm)).isFile();
     }
 
     public boolean canStorePlainTextPasswords(String realm, SVNAuthentication auth) throws SVNException {

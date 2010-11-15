@@ -33,6 +33,7 @@ public class SVNSSLAuthentication extends SVNAuthentication {
     private String myPassword;
     private String mySSLKind;
     private String myAlias;
+    private String myCertificatePath;
 
     /**
      * Creates an SSL credentials object. 
@@ -96,5 +97,16 @@ public class SVNSSLAuthentication extends SVNAuthentication {
      */
     public String getAlias() {
         return myAlias;
+    }
+    
+    public String getCertificatePath() {
+        if (myCertificatePath != null) {
+            return myCertificatePath;
+        }
+        return myCertificate.getAbsolutePath();
+    }
+    
+    public void setCertificatePath(String path) {
+        myCertificatePath = path;
     }
 }
