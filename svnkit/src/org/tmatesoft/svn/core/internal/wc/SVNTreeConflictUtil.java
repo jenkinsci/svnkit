@@ -329,11 +329,14 @@ public class SVNTreeConflictUtil {
 
     private static SVNConflictReason getConflictReason(String name) throws SVNException {
         SVNConflictReason reason;
+        /*
         if (SVNConflictReason.UNVERSIONED.getName().equals(name)) {
             reason = null;
         } else {
             reason = SVNConflictReason.fromString(name);
         }
+        */
+        reason = SVNConflictReason.fromString(name);
         if (reason == null) {
             mappingError("conflict reason");
         }

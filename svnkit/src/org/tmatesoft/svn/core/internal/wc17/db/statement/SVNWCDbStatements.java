@@ -22,7 +22,7 @@ import org.tmatesoft.svn.core.internal.io.fs.revprop.SVNFSFSRevPropSet;
 public enum SVNWCDbStatements {
 
     CREATE_SCHEMA,
-    DELETE_ACTUAL_EMPTY,
+    DELETE_ACTUAL_EMPTY(SVNWCDbDeleteActualEmpty.class),
     DELETE_ACTUAL_NODE(SVNWCDbDeleteActualNode.class),
     DELETE_BASE_NODE(SVNWCDbDeleteBaseNode.class),
     DELETE_LOCK,
@@ -78,7 +78,7 @@ public enum SVNWCDbStatements {
     SELECT_WORKING_NODE(SVNWCDbSelectWorkingNode.class),
     SELECT_WORKING_NODE_CHILDREN(SVNWCDbSelectWorkingNodeChildren.class),
     SELECT_WORKING_OP_DEPTH_RECURSIVE,
-    UPDATE_ACTUAL_CONFLICT_DATA,
+    UPDATE_ACTUAL_CONFLICT_DATA(SVNWCDbUpdateActualConflictData.class),
     UPDATE_ACTUAL_PROPERTY_CONFLICTS(SVNWCDbUpdateActualPropertyConflicts.class),
     UPDATE_ACTUAL_PROPS(SVNWCDbUpdateActualProps.class),
     UPDATE_ACTUAL_TEXT_CONFLICTS(SVNWCDbUpdateActualTextConflicts.class),
