@@ -1798,11 +1798,11 @@ public class SVNWCDb implements ISVNWCDb {
         stb.localAbspath = localAbspath;
         stb.parentAbspath = SVNFileUtil.getFileDir(localAbspath);
         stb.treeConflict = treeConflict;
-        DirParsedInfo parseDir = parseDir(stb.parentAbspath, Mode.ReadWrite);
+        DirParsedInfo parseDir = parseDir(localAbspath, Mode.ReadWrite);
+        stb.localRelpath = parseDir.localRelPath;
         SVNWCDbDir pdh = parseDir.wcDbDir;
         verifyDirUsable(pdh);
         stb.wcId = pdh.getWCRoot().getWcId();
-        stb.localRelpath = parseDir.localRelPath;
         stb.parentRelpath = SVNFileUtil.getFileDir(stb.localRelpath);
         pdh.getWCRoot().getSDb().runTransaction(stb);
         pdh.flushEntries(localAbspath);
@@ -1828,9 +1828,7 @@ public class SVNWCDb implements ISVNWCDb {
             }
             String treeConflictData;
             if (treeConflict != null) {
-                Map<File, SVNTreeConflictDescription> conflicts = new HashMap<File, SVNTreeConflictDescription>();
-                conflicts.put(SVNFileUtil.createFilePath(""), treeConflict);
-                treeConflictData = SVNTreeConflictUtil.getTreeConflictData(conflicts);
+                treeConflictData = SVNTreeConflictUtil.getSingleTreeConflictData(treeConflict);
             } else {
                 treeConflictData = null;
             }
