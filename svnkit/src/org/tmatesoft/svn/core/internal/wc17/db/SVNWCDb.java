@@ -1675,18 +1675,26 @@ public class SVNWCDb implements ISVNWCDb {
 
     public SVNTreeConflictDescription opReadTreeConflict(File localAbsPath) throws SVNException {
         assert (isAbsolute(localAbsPath));
-        File parentAbsPath = SVNFileUtil.getFileDir(localAbsPath);
+        final DirParsedInfo parsed = parseDir(localAbsPath, Mode.ReadWrite);
+        final SVNWCDbDir pdh = parsed.wcDbDir;
+        final File localRelpath = parsed.localRelPath;
+        verifyDirUsable(pdh);
+        return readTreeConflict(pdh, localRelpath);
+    }
+
+    private SVNTreeConflictDescription readTreeConflict(SVNWCDbDir pdh, File localRelpath) throws SVNException {
+        SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_ACTUAL_TREE_CONFLICT);
         try {
-            Map<String, SVNTreeConflictDescription> tree_conflicts = opReadAllTreeConflicts(parentAbsPath);
-            if (tree_conflicts != null)
-                return tree_conflicts.get(localAbsPath);
-            return null;
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_WORKING_COPY) {
-                /* We walked off the top of a working copy. */
+            stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelpath);
+            boolean haveRow = stmt.next();
+            if (!haveRow) {
                 return null;
             }
-            throw e;
+            byte[] conflictData = stmt.getColumnBlob(SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_data);
+            SVNSkel skel = SVNSkel.parse(conflictData);
+            return SVNTreeConflictUtil.readSingleTreeConflict(skel, pdh.getWCRoot().getAbsPath());
+        } finally {
+            stmt.reset();
         }
     }
 
@@ -1977,12 +1985,11 @@ public class SVNWCDb implements ISVNWCDb {
                 }
 
                 byte[] conflict_data = getColumnBlob(stmt, 4);
-                if (conflict_data!=null)
-                  {
+                if (conflict_data != null) {
                     SVNSkel skel = SVNSkel.parse(conflict_data);
                     SVNTreeConflictDescription desc = SVNTreeConflictUtil.readSingleTreeConflict(skel, SVNFileUtil.getFileDir(localAbsPath));
                     conflicts.add(desc);
-                  }
+                }
 
             }
         } finally {

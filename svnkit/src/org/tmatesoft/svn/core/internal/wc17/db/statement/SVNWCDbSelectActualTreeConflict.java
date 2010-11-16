@@ -16,9 +16,9 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectFieldsStatement;
 
 /**
- * SELECT tree_conflict_data FROM actual_node WHERE wc_id = ?1 AND local_relpath
- * = ?2;
- * 
+ * SELECT conflict_data FROM actual_node WHERE wc_id = ?1 AND local_relpath = ?2
+ * AND conflict_data IS NOT NULL;
+ *
  * @author TMate Software Ltd.
  */
 public class SVNWCDbSelectActualTreeConflict extends SVNSqlJetSelectFieldsStatement<SVNWCDbSchema.ACTUAL_NODE__Fields> {
@@ -27,8 +27,27 @@ public class SVNWCDbSelectActualTreeConflict extends SVNSqlJetSelectFieldsStatem
         super(sDb, SVNWCDbSchema.ACTUAL_NODE);
     }
 
+    protected Object[] getWhere() throws SVNException {
+        return new Object[] {
+                getBind(1), getBind(2)
+        };
+    }
+
     protected void defineFields() {
-        fields.add(SVNWCDbSchema.ACTUAL_NODE__Fields.tree_conflict_data);
+        fields.add(SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_data);
+    }
+
+    protected boolean isFilterPassed() throws SVNException {
+        if (isColumnNull(SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_data)) {
+            return false;
+        }
+        if (isColumnNull(SVNWCDbSchema.ACTUAL_NODE__Fields.wc_id)) {
+            return false;
+        }
+        if (isColumnNull(SVNWCDbSchema.ACTUAL_NODE__Fields.local_relpath)) {
+            return false;
+        }
+        return getColumn(SVNWCDbSchema.ACTUAL_NODE__Fields.wc_id).equals(getBind(1)) && getColumn(SVNWCDbSchema.ACTUAL_NODE__Fields.local_relpath).equals(getBind(2));
     }
 
 }
