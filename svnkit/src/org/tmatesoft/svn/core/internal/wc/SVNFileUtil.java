@@ -1900,9 +1900,10 @@ public class SVNFileUtil {
     }
 
     public static File getFileDir(File file) {
-        if (file == null)
+        if (file == null || "".equals(file.getPath()))
             return null;
-        return file.getParentFile();
+        File parentFile = file.getParentFile();
+        return parentFile != null ? parentFile : new File("");
     }
 
     public static File createFilePath(String path) {
