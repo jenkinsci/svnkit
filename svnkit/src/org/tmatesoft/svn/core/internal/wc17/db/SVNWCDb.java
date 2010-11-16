@@ -1926,27 +1926,6 @@ public class SVNWCDb implements ISVNWCDb {
             stmt.reset();
         }
 
-        /* And add tree conflicts */
-        stmt = sDb.getStatement(SVNWCDbStatements.SELECT_ACTUAL_TREE_CONFLICT);
-        try {
-            stmt.bindf("is", pdh.getWCRoot().getWcId(), SVNFileUtil.getFilePath(localRelPath));
-            if (stmt.next())
-                tree_conflict_data = getColumnText(stmt, SVNWCDbSchema.ACTUAL_NODE__Fields.tree_conflict_data);
-            else
-                tree_conflict_data = null;
-        } finally {
-            stmt.reset();
-        }
-
-        if (tree_conflict_data != null) {
-            Map<File, SVNTreeConflictDescription> conflict_items = SVNTreeConflictUtil.readTreeConflicts(localAbsPath, tree_conflict_data);
-            for (File conflict : conflict_items.keySet()) {
-                String child_name = SVNFileUtil.getFileName(conflict);
-                /* Using a hash avoids duplicates */
-                found.add(child_name);
-            }
-        }
-
         victims.addAll(found);
         return victims;
     }

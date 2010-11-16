@@ -18,8 +18,8 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectFieldsStatement;
 /**
  * SELECT local_relpath FROM actual_node WHERE wc_id = ?1 AND parent_relpath =
  * ?2 AND NOT((prop_reject IS NULL) AND (conflict_old IS NULL) AND (conflict_new
- * IS NULL) AND (conflict_working IS NULL))
- * 
+ * IS NULL) AND (conflict_working IS NULL) AND (conflict_data IS NULL))
+ *
  * @author TMate Software Ltd.
  */
 public class SVNWCDbSelectActualConflictVictims extends SVNSqlJetSelectFieldsStatement<SVNWCDbSchema.ACTUAL_NODE__Fields> {
@@ -34,7 +34,8 @@ public class SVNWCDbSelectActualConflictVictims extends SVNSqlJetSelectFieldsSta
 
     protected boolean isFilterPassed() throws SVNException {
         return !(isColumnNull(SVNWCDbSchema.ACTUAL_NODE__Fields.prop_reject.toString()) && isColumnNull(SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_old.toString())
-                && isColumnNull(SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_new.toString()) && isColumnNull(SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_working.toString()));
+                && isColumnNull(SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_new.toString()) && isColumnNull(SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_working.toString()) && isColumnNull(SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_data
+                .toString()));
     }
 
     protected void defineFields() {
