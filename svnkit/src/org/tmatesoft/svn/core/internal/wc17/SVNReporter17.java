@@ -586,7 +586,7 @@ public class SVNReporter17 implements ISVNReporterBaton {
                 this_switched = false;
                 this_repos_relpath = SVNFileUtil.createFilePath(dir_repos_relpath, child);
             } else {
-                final String childname = SVNPathUtil.getPathAsChild(dir_repos_relpath.getPath(), this_repos_relpath.getPath());
+                final String childname = SVNWCUtils.getPathAsChild(dir_repos_relpath, this_repos_relpath);
 
                 if (childname == null || !childname.equals(child))
                     this_switched = true;
