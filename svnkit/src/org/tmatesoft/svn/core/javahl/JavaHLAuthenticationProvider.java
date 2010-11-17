@@ -94,7 +94,9 @@ class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
                         }
                         return new SVNSSLAuthentication(SVNSSLAuthentication.MSCAPI, alias, save, url, false);
                     }
-                    return new SVNSSLAuthentication(new File(cert), password, save, url, false);
+                    SVNSSLAuthentication sslAuth = new SVNSSLAuthentication(new File(cert), password, save, url, false);
+                    sslAuth.setCertificatePath(cert);
+                    return sslAuth;
                 }
             }
             return null;

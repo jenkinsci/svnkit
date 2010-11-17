@@ -85,7 +85,9 @@ public class EclipseSVNAuthenticationManager extends DefaultSVNAuthenticationMan
                 } else {
                     String path = (String) info.get("cert");
                     if (path != null) {
-                        return new SVNSSLAuthentication(new File(path), password, authMayBeStored, url, false);
+                        SVNSSLAuthentication auth = new SVNSSLAuthentication(new File(path), password, authMayBeStored, url, false);
+                        auth.setCertificatePath(path);
+                        return auth;
                     }
                 }
             } else if (info != null && !info.isEmpty() && info.get("username") != null) {
@@ -147,9 +149,9 @@ public class EclipseSVNAuthenticationManager extends DefaultSVNAuthenticationMan
                     info.put("password", password);
                 }
                 if (SVNSSLAuthentication.SSL.equals(sslAuth.getSSLKind())) {
-                    File path = sslAuth.getCertificateFile();
+                    String path = sslAuth.getCertificatePath();
                     if (path != null) {
-                        info.put("cert", path.getAbsolutePath());
+                        info.put("cert", path);
                     }
                 } else if (SVNSSLAuthentication.MSCAPI.equals(sslAuth.getSSLKind())) {
                     info.put("ssl-kind", sslAuth.getSSLKind());

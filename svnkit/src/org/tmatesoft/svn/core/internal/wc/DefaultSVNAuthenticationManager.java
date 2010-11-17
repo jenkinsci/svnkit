@@ -957,7 +957,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                 SVNSSLAuthentication sslAuth = (SVNSSLAuthentication) auth;
                 if (SVNSSLAuthentication.SSL.equals(sslAuth.getSSLKind())) {
                     if (sslAuth.getCertificateFile() != null) {
-                        String path = sslAuth.getCertificateFile().getAbsolutePath();
+                        String path = sslAuth.getCertificatePath();
                         values.put("key", path);
                     }
                 } else if (SVNSSLAuthentication.MSCAPI.equals(sslAuth.getSSLKind())) {
