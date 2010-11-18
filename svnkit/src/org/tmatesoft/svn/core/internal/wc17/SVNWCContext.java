@@ -4062,7 +4062,9 @@ public class SVNWCContext {
                 style = SVNEolStyle.None;
             } else {
                 if ((prop = propDiff.getSVNPropertyValue(SVNProperty.EOL_STYLE)) != null && prop.isString()) {
-                    style = SVNEolStyleInfo.fromValue(prop.getString()).eolStyle;
+                    SVNEolStyleInfo propEolStyle = SVNEolStyleInfo.fromValue(prop.getString());
+                    style = propEolStyle.eolStyle;
+                    eol = propEolStyle.eolStr;
                 } else if (!isBinary) {
                 } else {
                     eol = null;
