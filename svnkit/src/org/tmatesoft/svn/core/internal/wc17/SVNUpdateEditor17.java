@@ -1262,12 +1262,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
 
         if (!fb.isAddingBaseUnderLocalAdd()) {
             assert (newActualProps != null);
-            SVNProperties props = newActualProps;
-            SVNProperties prop_diffs = SVNWCUtils.propDiffs(newActualProps, newBaseProps);
-            if (prop_diffs.isEmpty()) {
-                props = null;
-            }
-            myWcContext.getDb().opSetProps(fb.getLocalAbspath(), props, null, null);
+            myWcContext.getDb().opSetProps(fb.getLocalAbspath(), newActualProps, null, null);
         }
 
         myWcContext.wqRun(fb.getParentDir().getLocalAbspath());
@@ -1615,9 +1610,6 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         }
 
         public void propertyChanged(String name, SVNPropertyValue value) {
-            if (value == null) {
-                return;
-            }
             if (name.startsWith(SVNProperty.SVN_ENTRY_PREFIX)) {
                 myChangedEntryProperties = myChangedEntryProperties == null ? new SVNProperties() : myChangedEntryProperties;
                 // trim value of svn:entry property

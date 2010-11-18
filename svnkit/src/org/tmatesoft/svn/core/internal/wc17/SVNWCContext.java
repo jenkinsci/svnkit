@@ -3501,7 +3501,11 @@ public class SVNWCContext {
             SVNPropertyValue baseVal = baseProps.getSVNPropertyValue(propname);
             boolean conflictRemains;
             if (baseMerge) {
-                baseProps.put(propname, toVal);
+                if(toVal!=null) {
+                    baseProps.put(propname, toVal);
+                } else {
+                    baseProps.remove(propname);
+                }
             }
             SVNPropertyValue mineVal = workingProps.getSVNPropertyValue(propname);
             state = setPropMergeState(state, SVNStatusType.CHANGED);
@@ -3784,7 +3788,7 @@ public class SVNWCContext {
             if (workingVal != null && !workingVal.equals(oldVal)) {
                 conflictRemains = maybeGeneratePropConflict(localAbspath, leftVersion, rightVersion, isDir, propname, workingProps, oldVal, null, baseVal, workingVal, conflictResolver, dryRun);
             } else {
-                workingProps.put(propname, SVNPropertyValue.create(null));
+                workingProps.remove(propname);
                 if (oldVal != null) {
                     state = setPropMergeState(state, SVNStatusType.MERGED);
                 }
@@ -3792,7 +3796,7 @@ public class SVNWCContext {
         } else if (baseVal.equals(oldVal)) {
             if (workingVal != null) {
                 if (workingVal.equals(oldVal)) {
-                    workingProps.put(propname, SVNPropertyValue.create(null));
+                    workingProps.remove(propname);
                 } else {
                     conflictRemains = maybeGeneratePropConflict(localAbspath, leftVersion, rightVersion, isDir, propname, workingProps, oldVal, null, baseVal, workingVal, conflictResolver, dryRun);
                 }
