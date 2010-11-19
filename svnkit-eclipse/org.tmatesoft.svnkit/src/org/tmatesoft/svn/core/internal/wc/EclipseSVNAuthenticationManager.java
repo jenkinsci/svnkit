@@ -78,7 +78,7 @@ public class EclipseSVNAuthenticationManager extends DefaultSVNAuthenticationMan
                     return new SVNSSLAuthentication(sslKind, alias, authMayBeStored, url, false);
                 }
                 String password = (String) info.get("password");
-                if (isCertFile(realm)) {
+                if (SVNSSLAuthentication.isCertificatePath(realm)) {
                     if (password != null) {
                         return new SVNPasswordAuthentication("", password, authMayBeStored);
                     }

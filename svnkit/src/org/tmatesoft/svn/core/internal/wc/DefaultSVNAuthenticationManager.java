@@ -634,11 +634,6 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             myUserName = userName;
         }
         
-        private boolean isCertFile(String realm) {
-            File file = new File(realm);
-            return SVNFileType.getType(file).isFile();
-        }
-        
         private SVNPasswordAuthentication readSSLPassphrase(String kind, String realm, boolean storageAllowed) {
             File dir = new File(myDirectory, kind);
             if (!dir.isDirectory()) {
@@ -674,7 +669,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         public SVNAuthentication requestClientAuthentication(String kind, SVNURL url, String realm, SVNErrorMessage errorMessage, 
                 SVNAuthentication previousAuth, boolean authMayBeStored) {
 	        if (ISVNAuthenticationManager.SSL.equals(kind)) {
-	            if (isCertFile(realm)) {
+	            if (SVNSSLAuthentication.isCertificatePath(realm)) {
 	                return readSSLPassphrase(kind, realm, authMayBeStored);
 	            }
 		        String host = url.getHost();
@@ -688,6 +683,9 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
 		                }
 	                    return new SVNSSLAuthentication(SVNSSLAuthentication.MSCAPI, alias, authMayBeStored, url, false);
 	                }
+	                
+		            sslClientCert = SVNSSLAuthentication.formatCertificatePath(sslClientCert);
+	                
 	                String sslClientCertPassword = (String) properties.get("ssl-client-cert-password");
 	                File clientCertFile = sslClientCert != null ? new File(sslClientCert) : null;
 	                SVNSSLAuthentication sslAuth = new SVNSSLAuthentication(clientCertFile, sslClientCertPassword, authMayBeStored, url, false); 
