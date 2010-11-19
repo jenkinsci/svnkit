@@ -381,14 +381,7 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
                 }
                 return new SVNSSLAuthentication(SVNSSLAuthentication.MSCAPI, alias, authMayBeStored, url, false);
             }
-            // TODO test if there is any sort of cached passphrase:
-            String password = promptPassword("Passphrase for '" + SVNSSLAuthentication.formatCertificatePath(path) + "'");
-            if (password == null) {
-                return null;
-            } else if ("".equals(password)) {
-                password = null;
-            }
-            SVNSSLAuthentication sslAuth = new SVNSSLAuthentication(new File(path), password, authMayBeStored, url, false);
+            SVNSSLAuthentication sslAuth = new SVNSSLAuthentication(new File(path), null, authMayBeStored, url, false);
             sslAuth.setCertificatePath(path);
             return sslAuth;
         }
