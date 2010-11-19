@@ -1557,14 +1557,6 @@ public interface ISVNWCDb {
 
     String getFileExternalTemp(File path) throws SVNException;
 
-    WCDbDirDeletedInfo isDirDeletedTemp(File entryAbspath) throws SVNException;
-
-    static class WCDbDirDeletedInfo {
-
-        public boolean notPresent;
-        public long baseRevision;
-    }
-
     SVNSqlJetDb borrowDbTemp(File dirAbsPath, SVNWCDbOpenMode mode) throws SVNException;
 
     void opStartDirectoryUpdateTemp(File localAbspath, File newRelpath, long targetRevision) throws SVNException;

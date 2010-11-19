@@ -38,7 +38,6 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbAdditionInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbAdditionInfo.AdditionInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbBaseInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbDeletionInfo.DeletionInfoField;
-import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbDirDeletedInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo.RepositoryInfoField;
@@ -142,34 +141,6 @@ public class SVNReporter17 implements ISVNReporterBaton {
             else
                 status = SVNWCDbStatus.NotPresent; /* As checkout */
 
-        }
-
-        /*
-         * ### Check the parentstub if we don't find a BASE. But don't do this
-         * if we already have the info we want or we break some copy scenarios.
-         */
-        if (!has_base && target_kind == SVNWCDbKind.Dir) {
-            boolean not_present = false;
-            long rev = SVNWCContext.INVALID_REVNUM;
-
-            try {
-                final WCDbDirDeletedInfo dirDeleted = wcContext.getDb().isDirDeletedTemp(path);
-                not_present = dirDeleted.notPresent;
-                rev = dirDeleted.baseRevision;
-            } catch (SVNException e) {
-
-                if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND || e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_WORKING_COPY) {
-                    not_present = false;
-                } else
-                    throw e;
-
-            }
-
-            if (not_present)
-                status = SVNWCDbStatus.NotPresent;
-
-            if (!SVNRevision.isValidRevisionNumber(target_rev))
-                target_rev = rev;
         }
 
         if ((status == SVNWCDbStatus.NotPresent) || (target_kind == SVNWCDbKind.Dir && status != SVNWCDbStatus.Normal && status != SVNWCDbStatus.Incomplete)) {
@@ -709,7 +680,7 @@ public class SVNReporter17 implements ISVNReporterBaton {
     private void restoreFile(File localAbsPath, boolean removeTextConflicts) throws SVNException {
         SVNSkel workItem = wcContext.wqBuildFileInstall(localAbsPath, null, isUseCommitTimes, true);
         wcContext.getDb().addWorkQueue(localAbsPath, workItem);
-        if(removeTextConflicts) {
+        if (removeTextConflicts) {
             resolveTextConflict(localAbsPath);
         }
     }

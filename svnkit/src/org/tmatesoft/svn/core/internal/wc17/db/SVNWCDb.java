@@ -3071,11 +3071,6 @@ public class SVNWCDb implements ISVNWCDb {
         }
     }
 
-    public WCDbDirDeletedInfo isDirDeletedTemp(File entryAbspath) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
-    }
-
     public void cleanupPristine(File wcRootAbsPath) throws SVNException {
         // TODO
         throw new UnsupportedOperationException();
