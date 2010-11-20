@@ -846,7 +846,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         }
         myWcContext.wqRun(db.getLocalAbspath());
         maybeBumpDirInfo(db.getBumpInfo());
-        if (db.isAlreadyNotified() && myWcContext.getEventHandler() != null) {
+        if (!db.isAlreadyNotified() && myWcContext.getEventHandler() != null) {
             SVNEventAction action;
             if (db.isInDeletedAndTreeConflictedSubtree()) {
                 action = SVNEventAction.UPDATE_UPDATE_DELETED;
