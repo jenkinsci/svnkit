@@ -2623,12 +2623,12 @@ public class SVNWCContext {
         SVNPropertyValue workingVal = workingProps.getSVNPropertyValue(propname);
         if (workingVal != null) {
             if (workingVal.equals(toVal)) {
-                setPropMergeState(state, SVNStatusType.MERGED);
+                state = setPropMergeState(state, SVNStatusType.MERGED);
             } else {
                 if (SVNProperty.MERGE_INFO.equals(propname)) {
                     String mergedVal = SVNMergeInfoUtil.combineMergeInfoProperties(workingVal.getString(), toVal.getString());
                     workingProps.put(propname, mergedVal);
-                    setPropMergeState(state, SVNStatusType.MERGED);
+                    state = setPropMergeState(state, SVNStatusType.MERGED);
                 } else {
                     conflictRemains = maybeGeneratePropConflict(localAbspath, leftVersion, rightVersion, isDir, propname, workingProps, null, toVal, baseVal, workingVal, conflictResolver, dryRun);
                 }
