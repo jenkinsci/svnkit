@@ -1962,7 +1962,12 @@ public class SVNWCDb implements ISVNWCDb {
                 /* ### Store in description! */
                 String prop_reject = getColumnText(stmt, 0);
                 if (prop_reject != null) {
-                    File reposFile = SVNFileUtil.createFilePath(SVNFileUtil.getFileDir(localAbsPath), prop_reject);
+                    File reposFile;
+                    if (localAbsPath.isDirectory()) {
+                        reposFile = SVNFileUtil.createFilePath(localAbsPath, prop_reject);
+                    } else {
+                        reposFile = SVNFileUtil.createFilePath(SVNFileUtil.getFileDir(localAbsPath), prop_reject);
+                    }
                     SVNMergeFileSet mergeFiles = new SVNMergeFileSet(null, null, null, localAbsPath, null, reposFile, null, null, null);
                     SVNPropertyConflictDescription desc = new SVNPropertyConflictDescription(mergeFiles, SVNNodeKind.UNKNOWN, "", null, null);
                     conflicts.add(desc);
