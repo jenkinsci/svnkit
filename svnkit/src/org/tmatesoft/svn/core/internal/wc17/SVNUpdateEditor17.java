@@ -317,7 +317,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         for (SVNConflictDescription cd : conflicts) {
             if (cd.isTreeConflict()) {
                 return true;
-            } else if (cd.isTreeConflict() || cd.isTextConflict()) {
+            } else if (cd.isPropertyConflict() || cd.isTextConflict()) {
                 ConflictedInfo info = myWcContext.getConflicted(localAbspath, true, true, true);
                 return (info.textConflicted || info.propConflicted || info.treeConflicted);
             }
