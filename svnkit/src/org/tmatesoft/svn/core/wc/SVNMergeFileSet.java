@@ -270,7 +270,10 @@ public class SVNMergeFileSet {
      * @return working copy file
      */
     public File getWCFile() {
-        return myAdminArea.getFile(myWCFilePath);
+        if(myAdminArea!=null) {
+            return myAdminArea.getFile(myWCFilePath);
+        }
+        return myWCFilePath!=null? new File(myWCFilePath) : null;
     }
 
     /**
