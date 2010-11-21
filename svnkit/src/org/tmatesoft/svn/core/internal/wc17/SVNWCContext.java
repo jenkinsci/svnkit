@@ -2808,34 +2808,13 @@ public class SVNWCContext {
     private MergePropStatusInfo applySingleGenericPropChange(SVNStatusType state, File localAbspath, SVNConflictVersion leftVersion, SVNConflictVersion rightVersion, boolean isDir,
             SVNProperties workingProps, String propname, SVNPropertyValue baseVal, SVNPropertyValue oldVal, SVNPropertyValue newVal, ISVNConflictHandler conflictResolver, boolean dryRun)
             throws SVNException {
-        SVNPropertyValue workingVal = workingProps.getSVNPropertyValue(propname);
+        assert (oldVal != null);
         boolean conflictRemains = false;
-        if ((workingVal != null && baseVal == null) || (workingVal == null && baseVal != null) || (workingVal != null && baseVal != null && !workingVal.equals(baseVal))) {
-            if (workingVal != null) {
-                if (workingVal.equals(newVal)) {
-                    state = setPropMergeState(state, SVNStatusType.MERGED);
-                } else {
-                    newVal = SVNPropertyValue.create(SVNMergeInfoUtil.combineForkedMergeInfoProperties(oldVal.toString(), workingVal.toString(), newVal.toString()));
-                    workingProps.put(propname, newVal);
-                    state = setPropMergeState(state, SVNStatusType.MERGED);
-                }
-            } else {
-                conflictRemains = maybeGeneratePropConflict(localAbspath, leftVersion, rightVersion, isDir, propname, workingProps, oldVal, newVal, baseVal, workingVal, conflictResolver, dryRun);
-            }
-        } else if (workingVal == null) {
-            Map deletedMergeInfo = new TreeMap();
-            Map addedMergeInfo = new TreeMap();
-            SVNMergeInfoUtil.diffMergeInfoProperties(deletedMergeInfo, addedMergeInfo, oldVal.getString(), null, newVal.getString(), null);
-            String mergeinfoString = SVNMergeInfoUtil.formatMergeInfoToString(addedMergeInfo, null);
-            workingProps.put(propname, mergeinfoString);
+        SVNPropertyValue workingVal = workingProps.getSVNPropertyValue(propname);
+        if (workingVal != null && oldVal != null && workingVal.equals(oldVal)) {
+            workingProps.put(propname, newVal);
         } else {
-            if (oldVal.equals(baseVal)) {
-                workingProps.put(propname, newVal);
-            } else {
-                newVal = SVNPropertyValue.create(SVNMergeInfoUtil.combineForkedMergeInfoProperties(oldVal.getString(), workingVal.getString(), newVal.getString()));
-                workingProps.put(propname, newVal);
-                state = setPropMergeState(state, SVNStatusType.MERGED);
-            }
+            conflictRemains = maybeGeneratePropConflict(localAbspath, leftVersion, rightVersion, isDir, propname, workingProps, oldVal, newVal, baseVal, workingVal, conflictResolver, dryRun);
         }
         return new MergePropStatusInfo(state, conflictRemains);
     }
