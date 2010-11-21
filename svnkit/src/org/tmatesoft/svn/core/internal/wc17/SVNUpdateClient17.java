@@ -382,7 +382,7 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
      * @since 1.2, SVN 1.5
      */
     public long doUpdate(File path, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions, boolean depthIsSticky) throws SVNException {
-        return update(path, revision, depth, allowUnversionedObstructions, depthIsSticky, true, false);
+        return update(path, revision, depth, allowUnversionedObstructions, depthIsSticky, false, false);
     }
 
     private long update(File path, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions, boolean depthIsSticky, boolean sendCopyFrom, boolean innerUpdate) throws SVNException {
