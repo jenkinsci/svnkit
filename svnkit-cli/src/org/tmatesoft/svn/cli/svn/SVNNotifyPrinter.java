@@ -101,7 +101,7 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
             } else {
                 buffer.append("Skipped '" + path + "'\n");
             }
-        } else if (event.getAction() == SVNEventAction.UPDATE_DELETE || event.getAction() == SVNEventAction.UPDATE_ADD_DELETED) {
+        } else if (event.getAction() == SVNEventAction.UPDATE_DELETE || event.getAction() == SVNEventAction.UPDATE_ADD_DELETED || event.getAction() == SVNEventAction.UPDATE_UPDATE_DELETED ) {
             myIsChangesReceived = true;
             buffer.append("D    " + path + "\n");
         } else if (event.getAction() == SVNEventAction.UPDATE_REPLACE) {
