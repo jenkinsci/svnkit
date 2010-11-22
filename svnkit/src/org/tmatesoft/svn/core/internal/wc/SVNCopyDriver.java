@@ -1121,6 +1121,7 @@ public class SVNCopyDriver extends SVNBasicDelegate {
             try {
                 os = SVNFileUtil.openFileForWriting(tmpFile);
                 revision = topSrcRepos.getFile(path, srcRevNum, props, new SVNCancellableOutputStream(os, this));
+                props = SVNMergeDriver.filterProperties(props, true, false, false);
             } finally {
                 SVNFileUtil.closeFile(os);
             }

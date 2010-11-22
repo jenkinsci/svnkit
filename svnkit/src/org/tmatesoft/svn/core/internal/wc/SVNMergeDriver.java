@@ -3203,7 +3203,7 @@ public abstract class SVNMergeDriver extends SVNBasicDelegate implements ISVNMer
         return propsDiff;
     }
 
-    private static SVNProperties filterProperties(SVNProperties props1, boolean leftRegular,
+    public static SVNProperties filterProperties(SVNProperties props1, boolean leftRegular,
             boolean leftEntry, boolean leftWC) {
         SVNProperties result = new SVNProperties();
         for (Iterator names = props1.nameSet().iterator(); names.hasNext();) {
