@@ -76,7 +76,7 @@ public class SVNWCDbInsertWorkingNodeFromBase extends SVNSqlJetInsertStatement {
         rowValues.put(SVNWCDbSchema.NODES__Fields.symlink_target.toString(), select.getColumn(SVNWCDbSchema.NODES__Fields.symlink_target));
         rowValues.put(SVNWCDbSchema.NODES__Fields.translated_size.toString(), select.getColumn(SVNWCDbSchema.NODES__Fields.translated_size));
         rowValues.put(SVNWCDbSchema.NODES__Fields.last_mod_time.toString(), select.getColumn(SVNWCDbSchema.NODES__Fields.last_mod_time));
-        rowValues.put(SVNWCDbSchema.NODES__Fields.properties.toString(), select.getColumn(SVNWCDbSchema.NODES__Fields.properties));
+        rowValues.put(SVNWCDbSchema.NODES__Fields.properties.toString(), select.getColumnBlob(SVNWCDbSchema.NODES__Fields.properties));
         return rowValues;
     }
 
