@@ -647,9 +647,9 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             return;
         }
         myWcContext.getDb().opSetNewDirToIncompleteTemp(db.getLocalAbspath(), db.getNewRelpath(), myReposRootURL, myReposUuid, myTargetRevision, db.getAmbientDepth());
-        prepareDirectory(db, myReposRootURL.appendPath(db.getNewRelpath().getPath(), false), myTargetRevision);
-        if (pb.isInDeletedAndTreeConflictedSubtree()) {
-            myWcContext.getDb().opDeleteTemp(db.getLocalAbspath());
+        SVNFileUtil.ensureDirectoryExists(db.getLocalAbspath());
+        if (!pb.isInDeletedAndTreeConflictedSubtree() && status == SVNWCDbStatus.Added) {
+            myWcContext.getDb().opRemoveWorkingTemp(db.getLocalAbspath());
         }
         if (myWcContext.getEventHandler() != null && !db.isAlreadyNotified() && !db.isAddExisted()) {
             SVNEventAction action;
@@ -1250,10 +1250,6 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                 SVNRevision fileExternalRev = (SVNRevision) map.get(SVNProperty.FILE_EXTERNAL_REVISION);
                 myWcContext.getDb().opSetFileExternal(fb.getLocalAbspath(), fileExternalReposRelpath, fileExternalPegRev, fileExternalRev);
             }
-        }
-
-        if (fb.getParentDir().isInDeletedAndTreeConflictedSubtree() && fb.isAddingFile()) {
-            myWcContext.getDb().opDeleteTemp(fb.getLocalAbspath());
         }
 
         if (fb.isAddExisted() && fb.isAddingFile()) {
@@ -1878,10 +1874,6 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
 
     private static boolean isNodePresent(SVNWCDbStatus status) {
         return status != SVNWCDbStatus.Absent && status != SVNWCDbStatus.Excluded && status != SVNWCDbStatus.NotPresent;
-    }
-
-    private void prepareDirectory(SVNDirectoryInfo db, SVNURL ancestorUrl, long ancestorRevision) throws SVNException {
-        SVNFileUtil.ensureDirectoryExists(db.getLocalAbspath());
     }
 
     private SVNTreeConflictDescription createTreeConflict(File localAbspath, SVNConflictReason reason, SVNConflictAction action, SVNNodeKind theirNodeKind, File theirRelpath) throws SVNException {
