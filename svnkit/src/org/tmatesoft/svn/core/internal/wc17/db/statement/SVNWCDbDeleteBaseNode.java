@@ -33,4 +33,18 @@ public class SVNWCDbDeleteBaseNode extends SVNSqlJetDeleteStatement {
         };
     }
 
+    protected boolean isFilterPassed() throws SVNException {
+        if (isColumnNull(SVNWCDbSchema.NODES__Fields.op_depth)) {
+            return false;
+        }
+        if (isColumnNull(SVNWCDbSchema.NODES__Fields.wc_id)) {
+            return false;
+        }
+        if (isColumnNull(SVNWCDbSchema.NODES__Fields.local_relpath)) {
+            return false;
+        }
+        return getColumnLong(SVNWCDbSchema.NODES__Fields.op_depth) == 0 && getColumn(SVNWCDbSchema.NODES__Fields.wc_id).equals(getBind(1))
+                && getColumn(SVNWCDbSchema.NODES__Fields.local_relpath).equals(getBind(2));
+    }
+
 }

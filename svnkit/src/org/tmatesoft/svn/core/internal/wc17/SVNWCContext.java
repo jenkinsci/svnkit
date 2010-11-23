@@ -3845,12 +3845,8 @@ public class SVNWCContext {
             } else if (baseKind == SVNWCDbKind.Dir && wrkStatus != SVNWCDbStatus.Deleted) {
                 SVNFileUtil.deleteAll(localAbspath, true);
             }
-            db.opRemoveEntryTemp(localAbspath);
-        } else if (wrkStatus == SVNWCDbStatus.Added || (haveWork && wrkStatus == SVNWCDbStatus.Excluded)) {
-            db.removeBase(localAbspath);
-        } else {
-            db.opRemoveEntryTemp(localAbspath);
         }
+        db.removeBase(localAbspath);
     }
 
     public void getAndRecordFileInfo(File localAbspath, boolean ignoreError) throws SVNException {
