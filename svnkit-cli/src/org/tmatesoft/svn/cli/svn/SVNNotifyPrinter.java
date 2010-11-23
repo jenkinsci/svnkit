@@ -263,6 +263,10 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
             myEnvironment.handleWarning(event.getErrorMessage(), new SVNErrorCode[] { event.getErrorMessage().getErrorCode() },
                     myEnvironment.isQuiet());
             return;
+        } else if(event.getAction() == SVNEventAction.UPDATE_STARTED) {
+            if (! (myIsSuppressLastLine || myIsInExternal || myIsCheckout || myIsExport)) {
+                buffer.append("Updating '"+path+"' ...\n");
+            }
         } else if (event.getAction() == SVNEventAction.UPDATE_COMPLETED) {
             if (!myIsSuppressLastLine) {
                 long rev = event.getRevision();

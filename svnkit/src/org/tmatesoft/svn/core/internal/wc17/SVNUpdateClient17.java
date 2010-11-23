@@ -395,7 +395,7 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
         try {
             final File anchor = wcContext.acquireWriteLock(path, !innerUpdate, true);
             try {
-                return updateInternal(wcContext, path, anchor, revision, depth, depthIsSticky, allowUnversionedObstructions, sendCopyFrom, innerUpdate);
+                return updateInternal(wcContext, path, anchor, revision, depth, depthIsSticky, allowUnversionedObstructions, sendCopyFrom, innerUpdate, true);
             } finally {
                 wcContext.releaseWriteLock(anchor);
             }
@@ -405,7 +405,7 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
     }
 
     private long updateInternal(SVNWCContext wcContext, File localAbspath, File anchorAbspath, SVNRevision revision, SVNDepth depth, boolean depthIsSticky, boolean allowUnversionedObstructions,
-            boolean sendCopyFrom, boolean innerUpdate) throws SVNException {
+            boolean sendCopyFrom, boolean innerUpdate, boolean notifySummary) throws SVNException {
 
         String target;
         if (!localAbspath.equals(anchorAbspath))
@@ -436,6 +436,11 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
 
             String[] preservedExts = getOptions().getPreservedConflictFileExtensions();
             boolean useCommitTimes = getOptions().isUseCommitTimes();
+
+            if (notifySummary) {
+                dispatchEvent(SVNEventFactory.createSVNEvent(localAbspath, SVNNodeKind.NONE, null, -1, SVNEventAction.UPDATE_STARTED, null, null, null, 0, 0));
+            }
+
             SVNRepository repos = createRepository(anchorUrl, anchorAbspath, true, wcContext);
             boolean serverSupportsDepth = repos.hasCapability(SVNCapability.DEPTH);
             final SVNReporter17 reporter = new SVNReporter17(localAbspath, wcContext, true, !serverSupportsDepth, depth, isUpdateLocksOnDemand(), false, useCommitTimes, !depthIsSticky, getDebugLog());
@@ -473,8 +478,8 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
                 if ((depth == SVNDepth.INFINITY || depth == SVNDepth.UNKNOWN) && !isIgnoreExternals()) {
                     handleExternals(externalsStore.getOldExternals(), externalsStore.getNewExternals(), externalsStore.getDepths(), anchorUrl, anchorAbspath, reposRoot, depth);
                 }
-                dispatchEvent(SVNEventFactory.createSVNEvent(anchorAbspath, SVNNodeKind.NONE, null, targetRevision, SVNEventAction.UPDATE_COMPLETED, null, null, null,
-                        reporter.getReportedFilesCount(), reporter.getTotalFilesCount()));
+                dispatchEvent(SVNEventFactory.createSVNEvent(localAbspath, SVNNodeKind.NONE, null, targetRevision, SVNEventAction.UPDATE_COMPLETED, null, null, null, reporter.getReportedFilesCount(),
+                        reporter.getTotalFilesCount()));
             }
             wcContext.cleanup();
             return targetRevision;
