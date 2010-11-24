@@ -443,7 +443,7 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
 
             SVNRepository repos = createRepository(anchorUrl, anchorAbspath, true, wcContext);
             boolean serverSupportsDepth = repos.hasCapability(SVNCapability.DEPTH);
-            final SVNReporter17 reporter = new SVNReporter17(localAbspath, wcContext, true, !serverSupportsDepth, depth, isUpdateLocksOnDemand(), false, useCommitTimes, !depthIsSticky, getDebugLog());
+            final SVNReporter17 reporter = new SVNReporter17(localAbspath, wcContext, true, !serverSupportsDepth, depth, isUpdateLocksOnDemand(), false, !depthIsSticky, useCommitTimes, getDebugLog());
             long revNumber = getRevisionNumber(revision, repos, localAbspath);
             final SVNURL reposRoot = repos.getRepositoryRoot(true);
 
