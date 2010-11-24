@@ -2274,7 +2274,7 @@ public class SVNWCContext {
             destroyAdm(localAbspath);
             if (destroyWf && (!leftSomething)) {
                 try {
-                    SVNFileUtil.deleteAll(localAbspath, false, this.getEventHandler());
+                    SVNFileUtil.deleteAll(localAbspath, true, this.getEventHandler());
                 } catch (SVNException e) {
                     leftSomething = true;
                 }
