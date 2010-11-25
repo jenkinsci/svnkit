@@ -426,6 +426,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
 
     private TreeLocalModsInfo hasTreeLocalMods(File localAbspath) throws SVNException {
         final TreeLocalModsInfo modInfo = new TreeLocalModsInfo();
+        modInfo.allModsAreDeletes = true;
         ISVNWCNodeHandler nodeHandler = new ISVNWCNodeHandler() {
 
             public void nodeFound(File localAbspath) throws SVNException {
