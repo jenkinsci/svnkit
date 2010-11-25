@@ -3479,6 +3479,9 @@ public class SVNWCDb implements ISVNWCDb {
                 stmt.bindString(9, SVNDepth.asString(depth));
             }
             stmt.done();
+            if (parentRelpath != null) {
+                extendParentDelete(pdh.getWCRoot().getSDb(), pdh.getWCRoot().getWcId(), localRelpath);
+            }
         }
     };
 
