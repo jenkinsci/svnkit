@@ -22,6 +22,7 @@ import java.io.RandomAccessFile;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -2822,13 +2823,46 @@ public class SVNWCContext {
     private MergePropStatusInfo applySingleMergeinfoPropChange(SVNStatusType state, File localAbspath, SVNConflictVersion leftVersion, SVNConflictVersion rightVersion, boolean isDir,
             SVNProperties workingProps, String propname, SVNPropertyValue baseVal, SVNPropertyValue oldVal, SVNPropertyValue newVal, ISVNConflictHandler conflictResolver, boolean dryRun)
             throws SVNException {
-        assert (oldVal != null);
         boolean conflictRemains = false;
         SVNPropertyValue workingVal = workingProps.getSVNPropertyValue(propname);
-        if (workingVal != null && oldVal != null && workingVal.equals(oldVal)) {
-            workingProps.put(propname, newVal);
+        if ((workingVal != null && baseVal == null) || (workingVal == null && baseVal != null) || (workingVal != null && baseVal != null && !workingVal.equals(baseVal))) {
+            if (workingVal != null) {
+                if (workingVal.equals(newVal)) {
+                    state = setPropMergeState(state, SVNStatusType.MERGED);
+                } else {
+                    newVal = SVNPropertyValue.create(SVNMergeInfoUtil.combineForkedMergeInfoProperties(oldVal.getString(), workingVal.getString(), newVal.getString()));
+                    if (newVal != null) {
+                        workingProps.put(propname, newVal);
+                    } else {
+                        workingProps.remove(propname);
+                    }
+                    state = setPropMergeState(state, SVNStatusType.MERGED);
+                }
+            } else {
+                conflictRemains = maybeGeneratePropConflict(localAbspath, leftVersion, rightVersion, isDir, propname, workingProps, oldVal, newVal, baseVal, workingVal, conflictResolver, dryRun);
+            }
+        } else if (workingVal == null) {
+            Map deleted = new HashMap();
+            Map added = new HashMap();
+            SVNMergeInfoUtil.diffMergeInfoProperties(deleted, added, oldVal.getString(), null, newVal.toString(), null);
+            String mergeinfoString = SVNMergeInfoUtil.formatMergeInfoToString(added, null);
+            workingProps.put(propname, mergeinfoString);
         } else {
-            conflictRemains = maybeGeneratePropConflict(localAbspath, leftVersion, rightVersion, isDir, propname, workingProps, oldVal, newVal, baseVal, workingVal, conflictResolver, dryRun);
+            if (oldVal.equals(baseVal)) {
+                if (newVal != null) {
+                    workingProps.put(propname, newVal);
+                } else {
+                    workingProps.remove(propname);
+                }
+            } else {
+                newVal = SVNPropertyValue.create(SVNMergeInfoUtil.combineForkedMergeInfoProperties(oldVal.getString(), workingVal.getString(), newVal.getString()));
+                if (newVal != null) {
+                    workingProps.put(propname, newVal);
+                } else {
+                    workingProps.remove(propname);
+                }
+                state = setPropMergeState(state, SVNStatusType.MERGED);
+            }
         }
         return new MergePropStatusInfo(state, conflictRemains);
     }
