@@ -59,7 +59,7 @@ public class SVNTranslatorOutputStream extends OutputStream {
         myDstBuffer.clear();
     }
 
-    public void close() throws IOException {        
+    public void flush() throws IOException {
         try {
             myDstBuffer = mySubstitutor.translateChunk(null, myDstBuffer);
         } catch (SVNException svne) {
@@ -71,6 +71,11 @@ public class SVNTranslatorOutputStream extends OutputStream {
             myDst.write(myDstBuffer.array(), myDstBuffer.arrayOffset() + myDstBuffer.position(), myDstBuffer.remaining());
         }
         myDstBuffer.clear();
+        myDst.flush();
+    }
+
+    public void close() throws IOException {
+        flush();
         myDst.close();
     }
 

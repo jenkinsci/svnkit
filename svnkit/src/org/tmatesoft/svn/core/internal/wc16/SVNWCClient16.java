@@ -377,7 +377,7 @@ public class SVNWCClient16 extends SVNBasicDelegate {
                     OutputStream translatingStream = SVNTranslator.getTranslatingOutputStream(dst, charset, SVNTranslator.getEOL(eol, getOptions()), false, keywordsMap, expandKeywords);
                     repos.getFile("", revNumber, null, new SVNCancellableOutputStream(translatingStream, getEventDispatcher()));
                     try {
-                        translatingStream.close();
+                        translatingStream.flush();
                     } catch (IOExceptionWrapper ioew) {
                         throw ioew.getOriginalException();
                     } catch (IOException e) {
@@ -457,7 +457,7 @@ public class SVNWCClient16 extends SVNBasicDelegate {
                 OutputStream translatingStream = SVNTranslator.getTranslatingOutputStream(dst, charset, SVNTranslator.getEOL(eol, getOptions()), false, keywordsMap, expandKeywords);
                 repos.getFile("", revNumber, null, new SVNCancellableOutputStream(translatingStream, getEventDispatcher()));
                 try {
-                    translatingStream.close();
+                    translatingStream.flush();
                 } catch (IOExceptionWrapper ioew) {
                     throw ioew.getOriginalException();
                 } catch (IOException e) {
@@ -3987,9 +3987,6 @@ public class SVNWCClient16 extends SVNBasicDelegate {
                     : dst;
             try {
                 SVNTranslator.copy(input, new SVNCancellableOutputStream(translatingStream, getEventDispatcher()));
-                if (translatingStream != dst) {
-                    SVNFileUtil.closeFile(translatingStream);
-                }
                 dst.flush();
             } catch (IOExceptionWrapper ioew) {
                 throw ioew.getOriginalException();
