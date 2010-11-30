@@ -17,7 +17,7 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetDeleteStatement;
 
 /**
  * DELETE FROM actual_node WHERE wc_id = ?1 AND local_relpath = ?2 AND
- * conflict_data IS NULL;
+ * tree_conflict_data IS NULL;
  *
  * @version 1.4
  * @author TMate Software Ltd.
@@ -29,7 +29,7 @@ public class SVNWCDbDeleteActualNodeWithoutConflict extends SVNSqlJetDeleteState
     }
 
     protected boolean isFilterPassed() throws SVNException {
-        if (!isColumnNull(SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_data)) {
+        if (!isColumnNull(SVNWCDbSchema.ACTUAL_NODE__Fields.tree_conflict_data)) {
             return false;
         }
         if (isColumnNull(SVNWCDbSchema.ACTUAL_NODE__Fields.wc_id)) {

@@ -16,7 +16,7 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectFieldsStatement;
 
 /**
- * SELECT prop_reject, conflict_old, conflict_new, conflict_working, conflict_data FROM
+ * SELECT prop_reject, conflict_old, conflict_new, conflict_working, tree_conflict_data FROM
  * actual_node WHERE wc_id = ?1 AND local_relpath = ?2;
  *
  * @author TMate Software Ltd.
@@ -32,7 +32,7 @@ public class SVNWCDbSelectConflictDetails extends SVNSqlJetSelectFieldsStatement
         fields.add(SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_old);
         fields.add(SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_new);
         fields.add(SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_working);
-        fields.add(SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_data);
+        fields.add(SVNWCDbSchema.ACTUAL_NODE__Fields.tree_conflict_data);
     }
 
 }
