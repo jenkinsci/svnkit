@@ -1690,7 +1690,7 @@ public class SVNWCDb implements ISVNWCDb {
             if (!haveRow) {
                 return null;
             }
-            byte[] conflictData = stmt.getColumnBlob(SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_data);
+            byte[] conflictData = stmt.getColumnBlob(SVNWCDbSchema.ACTUAL_NODE__Fields.tree_conflict_data);
             SVNSkel skel = SVNSkel.parse(conflictData);
             return SVNTreeConflictUtil.readSingleTreeConflict(skel, pdh.getWCRoot().getAbsPath());
         } finally {
@@ -1833,9 +1833,9 @@ public class SVNWCDb implements ISVNWCDb {
                 treeConflictData = null;
             }
             if (haveRow) {
-                stmt = db.getStatement(SVNWCDbStatements.UPDATE_ACTUAL_CONFLICT_DATA);
+                stmt = db.getStatement(SVNWCDbStatements.UPDATE_ACTUAL_TREE_CONFLICTS);
             } else {
-                stmt = db.getStatement(SVNWCDbStatements.INSERT_ACTUAL_CONFLICT_DATA);
+                stmt = db.getStatement(SVNWCDbStatements.INSERT_ACTUAL_TREE_CONFLICTS);
             }
             stmt.bindf("iss", wcId, localRelpath, treeConflictData);
             if (!haveRow) {
@@ -2245,7 +2245,7 @@ public class SVNWCDb implements ISVNWCDb {
                         !isColumnNull(stmt_act, SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_new) || /* new */
                         !isColumnNull(stmt_act, SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_working) || /* working */
                         !isColumnNull(stmt_act, SVNWCDbSchema.ACTUAL_NODE__Fields.prop_reject) || /* prop_reject */
-                        !isColumnNull(stmt_act, SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_data) /* conflict_data */;
+                        !isColumnNull(stmt_act, SVNWCDbSchema.ACTUAL_NODE__Fields.tree_conflict_data) /* tree_conflict_data */;
                     } else {
                         info.conflicted = false;
                     }
@@ -2270,7 +2270,7 @@ public class SVNWCDb implements ISVNWCDb {
                  * A row in ACTUAL_NODE should never exist without a
                  * corresponding node in BASE_NODE and/or WORKING_NODE.
                  */
-                if (isColumnNull(stmt_act, SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_data)) /* conflict_data */{
+                if (isColumnNull(stmt_act, SVNWCDbSchema.ACTUAL_NODE__Fields.tree_conflict_data)) /* tree_conflict_data */{
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "Corrupt data for ''{0}''", localAbsPath);
                     SVNErrorManager.error(err, SVNLogType.WC);
                 }

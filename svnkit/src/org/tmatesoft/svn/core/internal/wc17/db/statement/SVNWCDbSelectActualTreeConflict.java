@@ -34,11 +34,11 @@ public class SVNWCDbSelectActualTreeConflict extends SVNSqlJetSelectFieldsStatem
     }
 
     protected void defineFields() {
-        fields.add(SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_data);
+        fields.add(SVNWCDbSchema.ACTUAL_NODE__Fields.tree_conflict_data);
     }
 
     protected boolean isFilterPassed() throws SVNException {
-        if (isColumnNull(SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_data)) {
+        if (isColumnNull(SVNWCDbSchema.ACTUAL_NODE__Fields.tree_conflict_data)) {
             return false;
         }
         if (isColumnNull(SVNWCDbSchema.ACTUAL_NODE__Fields.wc_id)) {
