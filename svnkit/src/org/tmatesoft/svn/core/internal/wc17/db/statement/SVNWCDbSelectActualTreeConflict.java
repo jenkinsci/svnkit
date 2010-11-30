@@ -16,8 +16,8 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectFieldsStatement;
 
 /**
- * SELECT conflict_data FROM actual_node WHERE wc_id = ?1 AND local_relpath = ?2
- * AND conflict_data IS NOT NULL;
+ * SELECT tree_conflict_data FROM actual_node WHERE wc_id = ?1 AND local_relpath = ?2
+ * AND tree_conflict_data IS NOT NULL;
  *
  * @author TMate Software Ltd.
  */

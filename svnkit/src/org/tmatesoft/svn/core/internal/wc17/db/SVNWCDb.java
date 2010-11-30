@@ -1661,7 +1661,7 @@ public class SVNWCDb implements ISVNWCDb {
             while (haveRow) {
                 File childRelpath = SVNFileUtil.createFilePath(stmt.getColumnString(SVNWCDbSchema.ACTUAL_NODE__Fields.local_relpath));
                 String childBaseName = SVNFileUtil.getFileName(childRelpath);
-                byte[] conflictData = stmt.getColumnBlob(SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_data);
+                byte[] conflictData = stmt.getColumnBlob(SVNWCDbSchema.ACTUAL_NODE__Fields.tree_conflict_data);
                 SVNSkel skel = SVNSkel.parse(conflictData);
                 SVNTreeConflictDescription treeConflict = SVNTreeConflictUtil.readSingleTreeConflict(skel, pdh.getWCRoot().getAbsPath());
                 treeConflicts.put(childBaseName, treeConflict);

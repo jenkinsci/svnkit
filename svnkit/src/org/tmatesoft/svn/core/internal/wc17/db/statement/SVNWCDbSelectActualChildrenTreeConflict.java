@@ -16,8 +16,8 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectFieldsStatement;
 
 /**
- * SELECT local_relpath, conflict_data FROM actual_node WHERE wc_id = ?1 AND
- * parent_relpath = ?2 AND conflict_data IS NOT NULL;
+ * SELECT local_relpath, tree_conflict_data FROM actual_node WHERE wc_id = ?1 AND
+ * parent_relpath = ?2 AND tree_conflict_data IS NOT NULL;
  *
  * @version 1.4
  * @author TMate Software Ltd.
@@ -29,7 +29,7 @@ public class SVNWCDbSelectActualChildrenTreeConflict extends SVNSqlJetSelectFiel
     }
 
     protected boolean isFilterPassed() throws SVNException {
-        if (isColumnNull(SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_data)) {
+        if (isColumnNull(SVNWCDbSchema.ACTUAL_NODE__Fields.tree_conflict_data)) {
             return false;
         }
         if (isColumnNull(SVNWCDbSchema.ACTUAL_NODE__Fields.wc_id)) {
@@ -43,7 +43,7 @@ public class SVNWCDbSelectActualChildrenTreeConflict extends SVNSqlJetSelectFiel
 
     protected void defineFields() {
         fields.add(SVNWCDbSchema.ACTUAL_NODE__Fields.local_relpath);
-        fields.add(SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_data);
+        fields.add(SVNWCDbSchema.ACTUAL_NODE__Fields.tree_conflict_data);
     }
 
 }
