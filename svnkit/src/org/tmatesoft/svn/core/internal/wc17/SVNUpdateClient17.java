@@ -861,9 +861,11 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
      * @since 1.2, SVN 1.5
      */
     public long doCheckout(SVNURL url, File dstPath, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions) throws SVNException {
-        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT);
-        SVNErrorManager.error(err, SVNLogType.CLIENT);
-        return 0;
+        assert(dstPath!=null);
+        File localAbsPath = dstPath.getAbsoluteFile();
+        long resultRev = SVNWCContext.INVALID_REVNUM;
+
+        return resultRev;
     }
 
     /**
