@@ -21,7 +21,12 @@ import org.tmatesoft.svn.core.internal.wc.ISVNUpdateEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNCancellableEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
+import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.internal.wc16.SVNBasicDelegate;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.SVNWCNodeReposInfo;
 import org.tmatesoft.svn.core.io.ISVNEditor;
@@ -862,14 +867,12 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
      * @since 1.2, SVN 1.5
      */
     public long doCheckout(SVNURL url, File dstPath, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions) throws SVNException {
-
         if (dstPath == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_FILENAME, "Checkout destination path can not be NULL");
             SVNErrorManager.error(err, SVNLogType.WC);
         }
-        File localAbsPath = dstPath.getAbsoluteFile();
+        dstPath = dstPath.getAbsoluteFile();
         long resultRev = SVNWCContext.INVALID_REVNUM;
-
         pegRevision = pegRevision == null ? SVNRevision.UNDEFINED : pegRevision;
         if (!revision.isValid() && pegRevision.isValid()) {
             revision = pegRevision;
@@ -877,12 +880,9 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
         if (!revision.isValid()) {
             revision = SVNRevision.HEAD;
         }
-
         final SVNWCContext wcContext = new SVNWCContext(this.getOptions(), getEventDispatcher());
         try {
-
-            SVNRepository repos = createRepository(url, localAbsPath, true, wcContext);
-
+            SVNRepository repos = createRepository(url, dstPath, true, wcContext);
             url = repos.getLocation();
             long revNumber = getRevisionNumber(revision, repos, null);
             SVNNodeKind targetNodeKind = repos.checkPath("", revNumber);
@@ -893,12 +893,41 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "URL ''{0}'' doesn''t exist", url);
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
+            String uuid = repos.getRepositoryUUID(true);
+            SVNURL repositoryRoot = repos.getRepositoryRoot(true);
+            long result = -1;
+            depth = depth == null ? SVNDepth.UNKNOWN : depth;
+            SVNFileType kind = SVNFileType.getType(dstPath);
+            if (kind == SVNFileType.NONE) {
+                depth = depth == SVNDepth.UNKNOWN ? SVNDepth.INFINITY : depth;
+                wcContext.initializeArea(dstPath, url, repositoryRoot, uuid, revNumber, depth);
+                result = update(wcContext, dstPath, revision, depth, allowUnversionedObstructions, true, false, false);
+            } else if (kind == SVNFileType.DIRECTORY) {
+                int formatVersion = wcContext.checkWC(dstPath, true);
+                if (formatVersion != 0) {
+                    SVNURL entryUrl = wcContext.getNodeUrl(dstPath);
+                    if (entryUrl != null && url.equals(entryUrl)) {
+                        result = update(wcContext, dstPath, revision, depth, allowUnversionedObstructions, true, false, false);
+                    } else {
+                        String message = "''{0}'' is already a working copy for a different URL";
+                        message += "; perform update to complete it";
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, message, dstPath);
+                        SVNErrorManager.error(err, SVNLogType.WC);
+                    }
+                } else {
+                    depth = depth == SVNDepth.UNKNOWN ? SVNDepth.INFINITY : depth;
+                    wcContext.initializeArea(dstPath, url, repositoryRoot, uuid, revNumber, depth);
+                    result = update(wcContext, dstPath, revision, depth, allowUnversionedObstructions, true, false, false);
+                }
+            } else {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NODE_KIND_CHANGE, "''{0}'' already exists and is not a directory", dstPath);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+            return result;
 
         } finally {
             wcContext.close();
         }
-
-        return resultRev;
     }
 
     /**

@@ -4141,4 +4141,11 @@ public class SVNWCContext {
         return SVNFileUtil.deleteFile(fullPath);
     }
 
+    public void initializeArea(File dstPath, SVNURL url, SVNURL repositoryRoot, String uuid, long revNumber, SVNDepth depth) {
+    }
+
+    public int checkWC(File dstPath, boolean b) {
+        return 0;
+    }
+
 }
