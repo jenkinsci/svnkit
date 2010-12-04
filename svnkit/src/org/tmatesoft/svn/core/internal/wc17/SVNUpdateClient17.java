@@ -382,25 +382,26 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
      * @since 1.2, SVN 1.5
      */
     public long doUpdate(File path, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions, boolean depthIsSticky) throws SVNException {
-        return update(path, revision, depth, allowUnversionedObstructions, depthIsSticky, false, false);
+        final SVNWCContext wcContext = new SVNWCContext(this.getOptions(), getEventDispatcher());
+        try {
+            return update(wcContext, path, revision, depth, allowUnversionedObstructions, depthIsSticky, false, false);
+        } finally {
+            wcContext.close();
+        }
     }
 
-    private long update(File path, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions, boolean depthIsSticky, boolean sendCopyFrom, boolean innerUpdate) throws SVNException {
+    private long update(SVNWCContext wcContext, File path, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions, boolean depthIsSticky, boolean sendCopyFrom, boolean innerUpdate)
+            throws SVNException {
         depth = depth == null ? SVNDepth.UNKNOWN : depth;
         if (depth == SVNDepth.UNKNOWN) {
             depthIsSticky = false;
         }
         path = path.getAbsoluteFile();
-        final SVNWCContext wcContext = new SVNWCContext(this.getOptions(), getEventDispatcher());
+        final File anchor = wcContext.acquireWriteLock(path, !innerUpdate, true);
         try {
-            final File anchor = wcContext.acquireWriteLock(path, !innerUpdate, true);
-            try {
-                return updateInternal(wcContext, path, anchor, revision, depth, depthIsSticky, allowUnversionedObstructions, sendCopyFrom, innerUpdate, true);
-            } finally {
-                wcContext.releaseWriteLock(anchor);
-            }
+            return updateInternal(wcContext, path, anchor, revision, depth, depthIsSticky, allowUnversionedObstructions, sendCopyFrom, innerUpdate, true);
         } finally {
-            wcContext.close();
+            wcContext.releaseWriteLock(anchor);
         }
     }
 
@@ -861,9 +862,41 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
      * @since 1.2, SVN 1.5
      */
     public long doCheckout(SVNURL url, File dstPath, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions) throws SVNException {
-        assert(dstPath!=null);
+
+        if (dstPath == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_FILENAME, "Checkout destination path can not be NULL");
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
         File localAbsPath = dstPath.getAbsoluteFile();
         long resultRev = SVNWCContext.INVALID_REVNUM;
+
+        pegRevision = pegRevision == null ? SVNRevision.UNDEFINED : pegRevision;
+        if (!revision.isValid() && pegRevision.isValid()) {
+            revision = pegRevision;
+        }
+        if (!revision.isValid()) {
+            revision = SVNRevision.HEAD;
+        }
+
+        final SVNWCContext wcContext = new SVNWCContext(this.getOptions(), getEventDispatcher());
+        try {
+
+            SVNRepository repos = createRepository(url, localAbsPath, true, wcContext);
+
+            url = repos.getLocation();
+            long revNumber = getRevisionNumber(revision, repos, null);
+            SVNNodeKind targetNodeKind = repos.checkPath("", revNumber);
+            if (targetNodeKind == SVNNodeKind.FILE) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "URL ''{0}'' refers to a file, not a directory", url);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            } else if (targetNodeKind == SVNNodeKind.NONE) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "URL ''{0}'' doesn''t exist", url);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+
+        } finally {
+            wcContext.close();
+        }
 
         return resultRev;
     }
