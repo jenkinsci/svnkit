@@ -940,7 +940,9 @@ public class SVNWCDb implements ISVNWCDb {
                 if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_WORKING_COPY) {
                     throw e;
                 }
-                pdh.setWCRoot(null);
+                if (pdh != null) {
+                    pdh.setWCRoot(null);
+                }
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_MISSING, "Path ''{0}'' is not a working copy", localDirAbsPath);
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
