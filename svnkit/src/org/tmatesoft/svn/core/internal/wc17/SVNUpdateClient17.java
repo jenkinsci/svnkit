@@ -903,7 +903,7 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
                 wcContext.initializeArea(dstPath, url, repositoryRoot, uuid, revNumber, depth);
                 result = update(wcContext, dstPath, revision, depth, allowUnversionedObstructions, true, false, false);
             } else if (kind == SVNFileType.DIRECTORY) {
-                int formatVersion = wcContext.checkWC(dstPath, true);
+                int formatVersion = wcContext.checkWC(dstPath);
                 if (formatVersion != 0) {
                     SVNURL entryUrl = wcContext.getNodeUrl(dstPath);
                     if (entryUrl != null && url.equals(entryUrl)) {

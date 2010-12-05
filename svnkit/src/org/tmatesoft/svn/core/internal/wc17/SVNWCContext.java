@@ -138,6 +138,8 @@ public class SVNWCContext {
     private static final byte[] CONFLICT_END = (">>>>>>> " + CONFLICT_LATEST_LABEL).getBytes();
     private static final byte[] CONFLICT_SEPARATOR = ("=======").getBytes();
 
+    private static final int WC_NG_VERSION = 12;
+
     public interface CleanupHandler {
 
         void cleanup() throws SVNException;
@@ -4141,11 +4143,62 @@ public class SVNWCContext {
         return SVNFileUtil.deleteFile(fullPath);
     }
 
-    public void initializeArea(File dstPath, SVNURL url, SVNURL repositoryRoot, String uuid, long revNumber, SVNDepth depth) {
+    public int checkWC(File localAbsPath) throws SVNException {
+        return checkWC(localAbsPath, false);
     }
 
-    public int checkWC(File dstPath, boolean b) {
-        return 0;
+    private int checkWC(File localAbsPath, boolean check) throws SVNException {
+        int wcFormat = 0;
+        try {
+            wcFormat = db.getFormatTemp(localAbsPath);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_MISSING) {
+                throw e;
+            }
+            wcFormat = 0;
+            SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(localAbsPath));
+            if (kind == SVNNodeKind.NONE) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "''{0}'' does not exist", localAbsPath);
+                SVNErrorManager.error(err, SVNLogType.WC);
+                return 0;
+            }
+        }
+        if (wcFormat >= WC_NG_VERSION) {
+            if (check) {
+                SVNNodeKind wcKind = SVNFileType.getNodeKind(SVNFileType.getType(localAbsPath));
+                if (wcKind != SVNNodeKind.DIR) {
+                    return 0;
+                }
+            }
+            SVNWCDbStatus dbStatus;
+            SVNWCDbKind dbKind;
+            try {
+                WCDbInfo readInfo = db.readInfo(localAbsPath, InfoField.status, InfoField.kind);
+                dbStatus = readInfo.status;
+                dbKind = readInfo.kind;
+            } catch (SVNException e) {
+                if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND) {
+                    return 0;
+                }
+                throw e;
+            }
+            if (dbKind != SVNWCDbKind.Dir) {
+                return 0;
+            }
+            switch (dbStatus) {
+                case NotPresent:
+                case Absent:
+                case Excluded:
+                    return 0;
+                default:
+                    break;
+            }
+        }
+        return wcFormat;
+    }
+
+    public void initializeArea(File dstPath, SVNURL url, SVNURL repositoryRoot, String uuid, long revNumber, SVNDepth depth) {
+
     }
 
 }
