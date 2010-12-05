@@ -930,8 +930,24 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     public int getFormatTemp(File localDirAbsPath) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+        assert (isAbsolute(localDirAbsPath));
+        SVNWCDbDir pdh = getOrCreateDir(localDirAbsPath, false);
+        if (pdh == null || pdh.getWCRoot() == null) {
+            try {
+                final DirParsedInfo parsed = parseDir(localDirAbsPath, Mode.ReadOnly);
+                pdh = parsed.wcDbDir;
+            } catch (SVNException e) {
+                if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_WORKING_COPY) {
+                    throw e;
+                }
+                pdh.setWCRoot(null);
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_MISSING, "Path ''{0}'' is not a working copy", localDirAbsPath);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+            assert (pdh.getWCRoot() != null);
+        }
+        assert (pdh.getWCRoot().getFormat() >= 1);
+        return pdh.getWCRoot().getFormat();
     }
 
     public SVNChecksum getPristineMD5(File wcRootAbsPath, SVNChecksum sha1Checksum) throws SVNException {
