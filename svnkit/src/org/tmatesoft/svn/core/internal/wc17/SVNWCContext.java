@@ -4197,8 +4197,62 @@ public class SVNWCContext {
         return wcFormat;
     }
 
-    public void initializeArea(File dstPath, SVNURL url, SVNURL repositoryRoot, String uuid, long revNumber, SVNDepth depth) {
+    public void initializeWC(File localAbspath, SVNURL url, SVNURL repositoryRoot, String uuid, long revision, SVNDepth depth) throws SVNException {
+        assert (isAbsolute(localAbspath));
+        assert (url != null);
+        assert (repositoryRoot != null);
+        assert (uuid != null);
+        // assert(svn_uri_is_ancestor(repos_root_url, url));
 
+        int format = checkWC(localAbspath, true);
+        File reposRelpath = SVNFileUtil.createFilePath(SVNWCUtils.isChild(repositoryRoot, url));
+        if (reposRelpath == null) {
+            reposRelpath = SVNFileUtil.createFilePath("");
+        }
+        if (format == 0) {
+            initWC(localAbspath, reposRelpath, repositoryRoot, uuid, revision, depth);
+        }
+        WCDbInfo readInfo = db.readInfo(localAbspath, InfoField.status, InfoField.revision, InfoField.reposRelPath, InfoField.reposRootUrl, InfoField.reposUuid);
+        SVNWCDbStatus status = readInfo.status;
+        long dbRevision = readInfo.revision;
+        File dbReposRelpath = readInfo.reposRelPath;
+        SVNURL dbReposRootUrl = readInfo.reposRootUrl;
+        String dbReposUuid = readInfo.reposUuid;
+        if (status != SVNWCDbStatus.Deleted && status != SVNWCDbStatus.NotPresent) {
+            if (dbRevision != revision) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "Revision {0} doesn't match existing revision {1} in ''{2}''", new Object[] {
+                        revision, dbRevision, localAbspath
+                });
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+            if (dbReposRootUrl == null) {
+                if (status == SVNWCDbStatus.Added) {
+                    WCDbAdditionInfo scanAddition = db.scanAddition(localAbspath, AdditionInfoField.reposRelPath, AdditionInfoField.reposRootUrl, AdditionInfoField.reposUuid);
+                    dbReposRelpath = scanAddition.reposRelPath;
+                    dbReposRootUrl = scanAddition.reposRootUrl;
+                    dbReposUuid = scanAddition.reposUuid;
+                } else {
+                    WCDbRepositoryInfo scanBase = db.scanBaseRepository(localAbspath, RepositoryInfoField.relPath, RepositoryInfoField.rootUrl, RepositoryInfoField.uuid);
+                    dbReposRelpath = scanBase.relPath;
+                    dbReposRootUrl = scanBase.rootUrl;
+                    dbReposUuid = scanBase.uuid;
+                }
+            }
+            if (!dbReposUuid.equals(uuid) || !dbReposRootUrl.equals(repositoryRoot) || !SVNWCUtils.isAncestor(dbReposRelpath, reposRelpath)) {
+                NodeCopyFromInfo copyFromInfo = getNodeCopyFromInfo(localAbspath, NodeCopyFromField.rootUrl, NodeCopyFromField.reposRelPath);
+                SVNURL copyfromRootUrl = copyFromInfo.rootUrl;
+                File copyfromReposRelpath = copyFromInfo.reposRelPath;
+                if (copyfromRootUrl == null || !copyfromRootUrl.equals(repositoryRoot) || !copyfromReposRelpath.equals(reposRelpath)) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "URL ''{0}'' doesn't match existing URL ''{1}'' in ''{2}''", new Object[] {
+                            url, SVNWCUtils.join(dbReposRootUrl, dbReposRelpath), localAbspath
+                    });
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                }
+            }
+        }
+    }
+
+    private void initWC(File localAbspath, File reposRelpath, SVNURL repositoryRoot, String uuid, long revNumber, SVNDepth depth) {
     }
 
 }

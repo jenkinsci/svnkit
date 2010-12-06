@@ -900,7 +900,7 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
             SVNFileType kind = SVNFileType.getType(dstPath);
             if (kind == SVNFileType.NONE) {
                 depth = depth == SVNDepth.UNKNOWN ? SVNDepth.INFINITY : depth;
-                wcContext.initializeArea(dstPath, url, repositoryRoot, uuid, revNumber, depth);
+                wcContext.initializeWC(dstPath, url, repositoryRoot, uuid, revNumber, depth);
                 result = update(wcContext, dstPath, revision, depth, allowUnversionedObstructions, true, false, false);
             } else if (kind == SVNFileType.DIRECTORY) {
                 int formatVersion = wcContext.checkWC(dstPath);
@@ -916,7 +916,7 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
                     }
                 } else {
                     depth = depth == SVNDepth.UNKNOWN ? SVNDepth.INFINITY : depth;
-                    wcContext.initializeArea(dstPath, url, repositoryRoot, uuid, revNumber, depth);
+                    wcContext.initializeWC(dstPath, url, repositoryRoot, uuid, revNumber, depth);
                     result = update(wcContext, dstPath, revision, depth, allowUnversionedObstructions, true, false, false);
                 }
             } else {
