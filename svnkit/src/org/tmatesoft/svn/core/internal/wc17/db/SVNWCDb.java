@@ -228,7 +228,7 @@ public class SVNWCDb implements ISVNWCDb {
         /* The PDH is complete. Stash it into DB. */
         dirData.put(localAbsPath, pdh);
 
-        InsertBaseInfo ibb = new InsertBaseInfo();
+        InsertBase ibb = new InsertBase();
 
         if (initialRev > 0)
             ibb.status = SVNWCDbStatus.Incomplete;
@@ -236,9 +236,9 @@ public class SVNWCDb implements ISVNWCDb {
             ibb.status = SVNWCDbStatus.Normal;
         ibb.kind = SVNWCDbKind.Dir;
         ibb.wcId = createDb.wcId;
-        ibb.localRelPath = null;
+        ibb.localRelpath = SVNFileUtil.createFilePath("");
         ibb.reposId = createDb.reposId;
-        ibb.reposRelPath = reposRelPath;
+        ibb.reposRelpath = reposRelPath;
         ibb.revision = initialRev;
 
         /* ### what about the children? */
@@ -247,7 +247,7 @@ public class SVNWCDb implements ISVNWCDb {
 
         /* ### no children, conflicts, or work items to install in a txn... */
 
-        insertBaseNode(ibb, createDb.sDb);
+        createDb.sDb.runTransaction(ibb);
     }
 
     private static class CreateDbInfo {
@@ -310,106 +310,6 @@ public class SVNWCDb implements ISVNWCDb {
         final SVNSqlJetStatement insertStmt = sDb.getStatement(SVNWCDbStatements.INSERT_REPOSITORY);
         insertStmt.bindf("ss", reposRootUrl, reposUuid);
         return insertStmt.exec();
-    }
-
-    private static class InsertBaseInfo {
-
-        /* common to all insertions into BASE */
-        public SVNWCDbStatus status;
-        public SVNWCDbKind kind;
-        public long wcId;
-        public File localRelPath;
-        public long reposId;
-        public File reposRelPath;
-        public long revision;
-
-        /* common to all "normal" presence insertions */
-        public SVNProperties props;
-        public long changedRev;
-        public SVNDate changedDate;
-        public String changedAuthor;
-
-        /* for inserting directories */
-        public List<File> children;
-        public SVNDepth depth;
-
-        /* for inserting files */
-        public SVNChecksum checksum;
-        public long translatedSize;
-
-        /* for inserting symlinks */
-        public String target;
-
-        /* may need to insert/update ACTUAL to record a conflict */
-        public SVNSkel conflict;
-
-        /* may have work items to queue in this transaction */
-        public SVNSkel workItems;
-
-        public InsertBaseInfo() {
-            this.revision = INVALID_REVNUM;
-            this.changedRev = INVALID_REVNUM;
-            this.depth = SVNDepth.INFINITY;
-            this.translatedSize = INVALID_FILESIZE;
-        }
-
-    };
-
-    private void insertBaseNode(InsertBaseInfo ibb, SVNSqlJetDb sDb) throws SVNException {
-        /* ### we can't handle this right now */
-        assert (ibb.conflict == null);
-
-        SVNSqlJetStatement stmt = sDb.getStatement(SVNWCDbStatements.INSERT_BASE_NODE);
-        stmt.bindf("is", ibb.wcId, ibb.localRelPath);
-
-        if (true /* maybe_bind_repos() */) {
-            stmt.bindLong(3, ibb.reposId);
-            stmt.bindString(4, ibb.reposRelPath.toString());
-        }
-
-        /*
-         * The directory at the WCROOT has a NULL parent_relpath. Otherwise,
-         * bind the appropriate parent_relpath.
-         */
-        if (ibb.localRelPath != null && !"".equals(ibb.localRelPath.toString()))
-            stmt.bindString(5, ibb.localRelPath.getParent());
-
-        stmt.bindString(6, presenceMap.get(ibb.status));
-        stmt.bindString(7, kindMap.get(ibb.kind));
-        stmt.bindLong(8, ibb.revision);
-        stmt.bindProperties(9, ibb.props);
-
-        if (SVNRevision.isValidRevisionNumber(ibb.changedRev))
-            stmt.bindLong(10, ibb.changedRev);
-        if (ibb.changedDate != null)
-            stmt.bindLong(11, ibb.changedDate.getTime());
-        if (ibb.changedAuthor != null)
-            stmt.bindString(12, ibb.changedAuthor);
-
-        if (ibb.kind == SVNWCDbKind.Dir) {
-            stmt.bindString(13, depthToWord(ibb.depth));
-        } else if (ibb.kind == SVNWCDbKind.File) {
-            stmt.bindChecksum(14, ibb.checksum);
-            if (ibb.translatedSize != INVALID_FILESIZE)
-                stmt.bindLong(15, ibb.translatedSize);
-        } else if (ibb.kind == SVNWCDbKind.Symlink) {
-            /* Note: incomplete nodes may have a NULL target. */
-            if (ibb.target != null)
-                stmt.bindString(16, ibb.target);
-        }
-
-        stmt.insert();
-
-        if (ibb.kind == SVNWCDbKind.Dir && ibb.children != null) {
-            stmt = sDb.getStatement(SVNWCDbStatements.INSERT_BASE_NODE_INCOMPLETE);
-            for (File name : ibb.children) {
-                stmt.bindf("issi", ibb.wcId, SVNFileUtil.getFilePath(SVNFileUtil.createFilePath(ibb.localRelPath, name.toString())), SVNFileUtil.getFilePath(ibb.localRelPath), ibb.revision);
-                stmt.insert();
-            }
-        }
-
-        addWorkItems(sDb, ibb.workItems);
-
     }
 
     private void addWorkItems(SVNSqlJetDb sDb, SVNSkel skel) throws SVNException {
