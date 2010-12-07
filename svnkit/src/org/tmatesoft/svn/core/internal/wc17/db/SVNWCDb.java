@@ -272,7 +272,8 @@ public class SVNWCDb implements ISVNWCDb {
         /* Insert the wcroot. */
         /* ### Right now, this just assumes wc metadata is being stored locally. */
         final SVNSqlJetStatement statement = info.sDb.getStatement(SVNWCDbStatements.INSERT_WCROOT);
-        statement.insert(info.wcId);
+
+        info.wcId = statement.exec();
 
         return info;
     }
