@@ -21,7 +21,7 @@ import org.tmatesoft.svn.core.internal.io.fs.revprop.SVNFSFSRevPropSet;
  */
 public enum SVNWCDbStatements {
 
-    CREATE_SCHEMA,
+    CREATE_SCHEMA(SVNWCDbCreateSchema.class),
     DELETE_ACTUAL_EMPTY(SVNWCDbDeleteActualEmpty.class),
     DELETE_ACTUAL_NODE(SVNWCDbDeleteActualNode.class),
     DELETE_BASE_NODE(SVNWCDbDeleteBaseNode.class),
