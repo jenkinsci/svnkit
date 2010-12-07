@@ -12,6 +12,8 @@
 package org.tmatesoft.svn.core.internal.wc17.db.statement;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
+import org.tmatesoft.sqljet.core.table.ISqlJetTransaction;
+import org.tmatesoft.sqljet.core.table.SqlJetDb;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -82,23 +84,24 @@ public class SVNWCDbCreateSchema extends SVNSqlJetStatement {
 
     public long exec() throws SVNException {
         try {
-            sDb.getDb().getOptions().setUserVersion(ISVNWCDb.WC_FORMAT_17);
-            for (Statement stmt : statements) {
-                switch (stmt.getType()) {
-                    case TABLE:
-                        sDb.getDb().createTable(stmt.getSql());
-                        break;
-
-                    case INDEX:
-                        sDb.getDb().createIndex(stmt.getSql());
-                        break;
-
-                    default:
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ASSERTION_FAIL, "Unknown statement type ''{0}''", stmt.getType().toString());
-                        SVNErrorManager.error(err, SVNLogType.WC);
-                        break;
+            sDb.getDb().runWriteTransaction(new ISqlJetTransaction() {
+                public Object run(SqlJetDb db) throws SqlJetException {
+                    for (Statement stmt : statements) {
+                        switch (stmt.getType()) {
+                            case TABLE:
+                                db.createTable(stmt.getSql());
+                                break;
+                            case INDEX:
+                                db.createIndex(stmt.getSql());
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                    db.getOptions().setUserVersion(ISVNWCDb.WC_FORMAT_17);
+                    return null;
                 }
-            }
+            });
         } catch (SqlJetException e) {
             e.printStackTrace();
         }
