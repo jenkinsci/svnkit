@@ -44,7 +44,7 @@ public enum SVNWCDbStatements {
     INSERT_BASE_NODE_INCOMPLETE,
     INSERT_NODE(SVNWCDbInsertNode.class),
     INSERT_PRISTINE(SVNWCDbInsertPristine.class),
-    INSERT_REPOSITORY,
+    INSERT_REPOSITORY(SVNWCDbInsertRepository.class),
     INSERT_WC_LOCK(SVNWCDbInsertWCLock.class),
     INSERT_WCROOT,
     INSERT_WORK_ITEM(SVNWCDbInsertWorkItem.class),

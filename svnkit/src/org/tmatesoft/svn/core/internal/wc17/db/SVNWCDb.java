@@ -308,7 +308,7 @@ public class SVNWCDb implements ISVNWCDb {
 
         final SVNSqlJetStatement insertStmt = sDb.getStatement(SVNWCDbStatements.INSERT_REPOSITORY);
         insertStmt.bindf("ss", reposRootUrl, reposUuid);
-        return insertStmt.insert();
+        return insertStmt.exec();
     }
 
     private static class InsertBaseInfo {
