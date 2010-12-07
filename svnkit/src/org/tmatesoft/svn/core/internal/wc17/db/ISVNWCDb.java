@@ -331,7 +331,7 @@ public interface ISVNWCDb {
      *
      * @throws SqlJetException
      */
-    void init(File localAbsPath, File reposRelPath, SVNURL reposRootUrl, String reposUuid, long initialRev, SVNDepth depth) throws SVNException, SqlJetException;
+    void init(File localAbsPath, File reposRelPath, SVNURL reposRootUrl, String reposUuid, long initialRev, SVNDepth depth) throws SVNException;
 
     /**
      * Compute the LOCAL_RELPATH for the given LOCAL_ABSPATH.

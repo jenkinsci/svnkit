@@ -30,6 +30,10 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
  */
 public class SVNWCUtils {
 
+    public static File admChild(File dirAbsPath, String admChildFileName) {
+        return SVNFileUtil.createFilePath(SVNFileUtil.createFilePath(dirAbsPath, SVNFileUtil.getAdminDirectoryName()), admChildFileName);
+    }
+
     public static SVNDate readDate(long date) {
         long time = date / 1000;
         return new SVNDate(time, (int) (date - time * 1000));

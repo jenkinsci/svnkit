@@ -126,19 +126,26 @@ public class SVNWCContext {
     }
 
     public static final long INVALID_REVNUM = -1;
-    private static final int STREAM_CHUNK_SIZE = 16384;
+    public static final int STREAM_CHUNK_SIZE = 16384;
 
-    private static final String THIS_DIR_PREJ = "dir_conflicts";
-    private static final String PROP_REJ_EXT = ".prej";
+    public static final String THIS_DIR_PREJ = "dir_conflicts";
+    public static final String PROP_REJ_EXT = ".prej";
 
-    private static final String CONFLICT_LOCAL_LABEL = "(modified)";
-    private static final String CONFLICT_LATEST_LABEL = "(latest)";
+    public static final String CONFLICT_LOCAL_LABEL = "(modified)";
+    public static final String CONFLICT_LATEST_LABEL = "(latest)";
 
-    private static final byte[] CONFLICT_START = ("<<<<<<< " + CONFLICT_LOCAL_LABEL).getBytes();
-    private static final byte[] CONFLICT_END = (">>>>>>> " + CONFLICT_LATEST_LABEL).getBytes();
-    private static final byte[] CONFLICT_SEPARATOR = ("=======").getBytes();
+    public static final byte[] CONFLICT_START = ("<<<<<<< " + CONFLICT_LOCAL_LABEL).getBytes();
+    public static final byte[] CONFLICT_END = (">>>>>>> " + CONFLICT_LATEST_LABEL).getBytes();
+    public static final byte[] CONFLICT_SEPARATOR = ("=======").getBytes();
 
-    private static final int WC_NG_VERSION = 12;
+    public static final int WC_NG_VERSION = 12;
+
+    public static final String WC_ADM_FORMAT            =  "format";
+    public static final String WC_ADM_ENTRIES           =  "entries";
+    public static final String WC_ADM_TMP               =  "tmp";
+    public static final String WC_ADM_PRISTINE          = "pristine";
+    public static final String WC_ADM_NONEXISTENT_PATH  =  "nonexistent-path";
+
 
     public interface CleanupHandler {
 
@@ -2296,7 +2303,7 @@ public class SVNWCContext {
         File admAbspath = db.getWCRoot(dirAbspath);
         db.forgetDirectoryTemp(dirAbspath);
         if (admAbspath.equals(dirAbspath)) {
-            SVNFileUtil.deleteAll(SVNWCDb.admChild(admAbspath, null), true, this.eventHandler);
+            SVNFileUtil.deleteAll(SVNWCUtils.admChild(admAbspath, null), true, this.eventHandler);
         }
     }
 
@@ -4253,9 +4260,13 @@ public class SVNWCContext {
         }
     }
 
-    private void initWC(File localAbspath, File reposRelpath, SVNURL repositoryRoot, String uuid, long revNumber, SVNDepth depth) {
-        // TODO
-        throw new UnsupportedOperationException();
+    private void initWC(File localAbspath, File reposRelpath, SVNURL repositoryRoot, String uuid, long revNumber, SVNDepth depth) throws SVNException {
+        File wcAdmDir = SVNWCUtils.admChild(localAbspath, null);
+        SVNFileUtil.ensureDirectoryExists(wcAdmDir);
+        SVNFileUtil.setHidden(wcAdmDir, true);
+        SVNFileUtil.ensureDirectoryExists(SVNWCUtils.admChild(localAbspath, WC_ADM_PRISTINE));
+        SVNFileUtil.ensureDirectoryExists(SVNWCUtils.admChild(localAbspath, WC_ADM_TMP));
+        db.init(localAbspath, reposRelpath, repositoryRoot, uuid, revNumber, depth);
     }
 
 }

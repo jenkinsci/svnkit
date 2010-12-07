@@ -208,7 +208,7 @@ public class SVNWCDb implements ISVNWCDb {
         return config;
     }
 
-    public void init(File localAbsPath, File reposRelPath, SVNURL reposRootUrl, String reposUuid, long initialRev, SVNDepth depth) throws SVNException, SqlJetException {
+    public void init(File localAbsPath, File reposRelPath, SVNURL reposRootUrl, String reposUuid, long initialRev, SVNDepth depth) throws SVNException {
 
         assert (SVNFileUtil.isAbsolute(localAbsPath));
         assert (reposRelPath != null);
@@ -257,7 +257,7 @@ public class SVNWCDb implements ISVNWCDb {
         public long wcId;
     }
 
-    private CreateDbInfo createDb(File dirAbsPath, SVNURL reposRootUrl, String reposUuid, String sdbFileName) throws SVNException, SqlJetException {
+    private CreateDbInfo createDb(File dirAbsPath, SVNURL reposRootUrl, String reposUuid, String sdbFileName) throws SVNException {
 
         CreateDbInfo info = new CreateDbInfo();
 
@@ -1317,7 +1317,6 @@ public class SVNWCDb implements ISVNWCDb {
             } catch (SVNException e) {
                 if (!isErrorNOENT(e.getErrorMessage().getErrorCode()))
                     throw e;
-            } catch (SqlJetException e) {
             }
 
             /*
@@ -1447,8 +1446,6 @@ public class SVNWCDb implements ISVNWCDb {
                     err = true;
                     if (!isErrorNOENT(e.getErrorMessage().getErrorCode()))
                         throw e;
-                } catch (SqlJetException e) {
-                    err = true;
                 }
 
                 if (err) {
@@ -3150,12 +3147,8 @@ public class SVNWCDb implements ISVNWCDb {
         return info;
     }
 
-    private static SVNSqlJetDb openDb(File dirAbsPath, String sdbFileName, Mode sMode) throws SVNException, SqlJetException {
-        return SVNSqlJetDb.open(admChild(dirAbsPath, sdbFileName), sMode);
-    }
-
-    public static File admChild(File dirAbsPath, String sdbFileName) {
-        return SVNFileUtil.createFilePath(SVNFileUtil.createFilePath(dirAbsPath, SVNFileUtil.getAdminDirectoryName()), sdbFileName);
+    private static SVNSqlJetDb openDb(File dirAbsPath, String sdbFileName, Mode sMode) throws SVNException {
+        return SVNSqlJetDb.open(SVNWCUtils.admChild(dirAbsPath, sdbFileName), sMode);
     }
 
     private static boolean isErrorNOENT(final SVNErrorCode errorCode) {
