@@ -4211,6 +4211,7 @@ public class SVNWCContext {
         }
         if (format == 0) {
             initWC(localAbspath, reposRelpath, repositoryRoot, uuid, revision, depth);
+            return;
         }
         WCDbInfo readInfo = db.readInfo(localAbspath, InfoField.status, InfoField.revision, InfoField.reposRelPath, InfoField.reposRootUrl, InfoField.reposUuid);
         SVNWCDbStatus status = readInfo.status;
@@ -4253,6 +4254,8 @@ public class SVNWCContext {
     }
 
     private void initWC(File localAbspath, File reposRelpath, SVNURL repositoryRoot, String uuid, long revNumber, SVNDepth depth) {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
 }
