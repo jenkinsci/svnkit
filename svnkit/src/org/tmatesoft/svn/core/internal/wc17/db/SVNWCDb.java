@@ -1216,7 +1216,7 @@ public class SVNWCDb implements ISVNWCDb {
                 sDb = openDb(localAbsPath, SDB_FILE, sMode);
                 break;
             } catch (SVNException e) {
-                if (!isErrorNOENT(e.getErrorMessage().getErrorCode()))
+                if (e.getErrorMessage().getErrorCode() != SVNErrorCode.SQLITE_ERROR && !isErrorNOENT(e.getErrorMessage().getErrorCode()))
                     throw e;
             }
 

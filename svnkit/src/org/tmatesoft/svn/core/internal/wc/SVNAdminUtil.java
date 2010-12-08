@@ -34,7 +34,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @author  TMate Software Ltd.
  */
 public class SVNAdminUtil {
-    
+
     private static final byte[] FORMAT_TEXT;
     private static final byte[] README_TEXT;
     private static final boolean SKIP_README;
@@ -42,14 +42,14 @@ public class SVNAdminUtil {
     private static final String BASE_EXT = ".svn-base";
     private static final String REVERT_EXT = ".svn-revert";
     private static final String WORK_EXT = ".svn-work";
-    
+
     private static final String TEXT_BASE_DIR_NAME = "text-base";
     private static final String PROP_BASE_DIR_NAME = "prop-base";
     private static final String PROP_WORK_DIR_NAME = "props";
     private static final String PROP_WC_DIR_NAME = "wcprops";
     private static final String TMP_DIR_NAME = "tmp";
     private static final String SDB_FILE_NAME = "wc.db";
-    
+
     private static final String DIR_PROPS_FILE = "dir-props";
     private static final String DIR_BASE_PROPS_FILE = "dir-prop-base";
     private static final String DIR_REVERT_PROPS_FILE = "dir-prop-revert";
@@ -62,7 +62,7 @@ public class SVNAdminUtil {
             + "Visit http://subversion.tigris.org/ for more information." + eol).getBytes();
         SKIP_README = Boolean.getBoolean("javasvn.skipReadme") ? true : Boolean.getBoolean("svnkit.skipReadme");
     }
-    
+
     public static void createReadmeFile(File adminDir) throws SVNException {
         if (SKIP_README) {
             return;
@@ -70,21 +70,21 @@ public class SVNAdminUtil {
         OutputStream os = null;
         try {
             os = SVNFileUtil.openFileForWriting(new File(adminDir, "README.txt"));
-            os.write(README_TEXT);            
+            os.write(README_TEXT);
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
             SVNErrorManager.error(err, e, SVNLogType.FSFS);
         } finally {
             SVNFileUtil.closeFile(os);
         }
-        
+
     }
 
     public static void createFormatFile(File adminDir) throws SVNException {
         OutputStream os = null;
         try {
             os = SVNFileUtil.openFileForWriting(new File(adminDir, "format"));
-            os.write(FORMAT_TEXT);            
+            os.write(FORMAT_TEXT);
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
             SVNErrorManager.error(err, e, SVNLogType.FSFS);
@@ -92,7 +92,7 @@ public class SVNAdminUtil {
             SVNFileUtil.closeFile(os);
         }
     }
-    
+
     public static String getTextBasePath(String name, boolean tmp) {
         StringBuffer buffer = new StringBuffer();
         buffer.append(SVNFileUtil.getAdminDirectoryName());
@@ -160,7 +160,7 @@ public class SVNAdminUtil {
         }
         return buffer.toString();
     }
-    
+
     public static String getPropRevertPath(String name, SVNNodeKind kind, boolean tmp) {
         StringBuffer buffer = new StringBuffer();
         buffer.append(SVNFileUtil.getAdminDirectoryName());
@@ -199,14 +199,9 @@ public class SVNAdminUtil {
         return buffer.toString();
     }
 
-    public static File getSDBFile(File dir) {
-        File sdbFile = new File(dir, SVNFileUtil.getAdminDirectoryName());
-        return new File(sdbFile, SDB_FILE_NAME);
-    }
-    
     /**
      * Creates "tempfile[.n].tmp" in admin area's /tmp dir
-     *  
+     *
      * @param adminArea
      * @return
      * @throws SVNException
@@ -214,7 +209,7 @@ public class SVNAdminUtil {
     public static File createTmpFile(SVNAdminArea adminArea) throws SVNException {
         return createTmpFile(adminArea, "tempfile", ".tmp", true);
     }
-    
+
     public static File createTmpFile(SVNAdminArea adminArea, String prefix, String suffix, boolean tmp) throws SVNException {
         StringBuffer buffer = new StringBuffer();
         buffer.append(SVNFileUtil.getAdminDirectoryName());
@@ -235,7 +230,7 @@ public class SVNAdminUtil {
 
         BufferedReader reader = null;
         String line = null;
-    
+
         try {
             reader = new BufferedReader(new InputStreamReader(SVNFileUtil.openFileForReading(entriesFile, Level.FINEST, SVNLogType.WC), "UTF-8"));
             line = reader.readLine();
@@ -249,14 +244,14 @@ public class SVNAdminUtil {
         } finally {
             SVNFileUtil.closeFile(reader);
         }
-        
+
         if (line == null || line.length() == 0) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_UNEXPECTED_EOF, "Reading ''{0}''", entriesFile);
             SVNErrorMessage err1 = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "''{0}'' is not a working copy", path);
             err1.setChildErrorMessage(err);
             SVNErrorManager.error(err1, Level.FINEST, SVNLogType.WC);
         }
-        
+
         try {
             formatVersion = Integer.parseInt(line.trim());
         } catch (NumberFormatException e) {
@@ -284,13 +279,13 @@ public class SVNAdminUtil {
     }
 
     public static SVNRevision parseRevision(StringBuffer str) throws SVNException {
-        int ind = str.indexOf(":"); 
+        int ind = str.indexOf(":");
         if ( ind == -1) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS, 
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS,
                     "Found an unexpected \\0 in the file external ''{0}''", str);
             SVNErrorManager.error(err, SVNLogType.WC);
         }
-        
+
         SVNRevision revision = null;
         String subStr = str.substring(0, ind);
         if (subStr.equals(SVNRevision.HEAD.getName())) {
@@ -316,13 +311,13 @@ public class SVNAdminUtil {
     }
 
     public static String asString(SVNRevision revision, String path) throws SVNException {
-        if (revision == SVNRevision.HEAD || 
+        if (revision == SVNRevision.HEAD ||
                 SVNRevision.isValidRevisionNumber(revision.getNumber())) {
             return revision.toString();
         }
-        
-        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS, "Illegal file external revision kind {0} for path ''{1}''", 
-        
+
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS, "Illegal file external revision kind {0} for path ''{1}''",
+
                 new Object[] { revision.toString(), path });
         SVNErrorManager.error(err, SVNLogType.WC);
         return null;
