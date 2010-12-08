@@ -894,6 +894,7 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
             depth = depth == null ? SVNDepth.UNKNOWN : depth;
             SVNFileType kind = SVNFileType.getType(dstPath);
             if (kind == SVNFileType.NONE) {
+                SVNFileUtil.ensureDirectoryExists(dstPath);
                 depth = depth == SVNDepth.UNKNOWN ? SVNDepth.INFINITY : depth;
                 wcContext.initializeWC(dstPath, url, repositoryRoot, uuid, revNumber, depth);
                 result = update(wcContext, dstPath, revision, depth, allowUnversionedObstructions, true, false, false);
