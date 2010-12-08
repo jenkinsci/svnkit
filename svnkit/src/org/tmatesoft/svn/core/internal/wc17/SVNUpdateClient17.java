@@ -877,7 +877,7 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
         }
         final SVNWCContext wcContext = new SVNWCContext(this.getOptions(), getEventDispatcher());
         try {
-            SVNRepository repos = createRepository(url, dstPath, true, wcContext);
+            SVNRepository repos = createRepository(url, null, true);
             url = repos.getLocation();
             long revNumber = getRevisionNumber(revision, repos, null);
             SVNNodeKind targetNodeKind = repos.checkPath("", revNumber);
