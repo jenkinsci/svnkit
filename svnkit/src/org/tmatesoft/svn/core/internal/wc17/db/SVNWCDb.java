@@ -223,7 +223,7 @@ public class SVNWCDb implements ISVNWCDb {
         SVNWCDbDir pdh = new SVNWCDbDir(localAbsPath);
 
         /* Create the WCROOT for this directory. */
-        pdh.setWCRoot(new SVNWCDbRoot(this, localAbsPath, createDb.sDb, createDb.wcId, WC_FORMAT_17, false, false));
+        pdh.setWCRoot(new SVNWCDbRoot(this, localAbsPath, createDb.sDb, createDb.wcId, FORMAT_FROM_SDB, false, false));
 
         /* The PDH is complete. Stash it into DB. */
         dirData.put(localAbsPath, pdh);
