@@ -273,7 +273,7 @@ public class SVNWCDb implements ISVNWCDb {
         /* ### Right now, this just assumes wc metadata is being stored locally. */
         final SVNSqlJetStatement statement = info.sDb.getStatement(SVNWCDbStatements.INSERT_WCROOT);
 
-        info.wcId = statement.exec();
+        info.wcId = statement.done();
 
         return info;
     }
@@ -309,7 +309,7 @@ public class SVNWCDb implements ISVNWCDb {
 
         final SVNSqlJetStatement insertStmt = sDb.getStatement(SVNWCDbStatements.INSERT_REPOSITORY);
         insertStmt.bindf("ss", reposRootUrl, reposUuid);
-        return insertStmt.exec();
+        return insertStmt.done();
     }
 
     private void addWorkItems(SVNSqlJetDb sDb, SVNSkel skel) throws SVNException {

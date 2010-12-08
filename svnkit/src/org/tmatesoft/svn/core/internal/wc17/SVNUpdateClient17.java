@@ -872,7 +872,6 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
             SVNErrorManager.error(err, SVNLogType.WC);
         }
         dstPath = dstPath.getAbsoluteFile();
-        long resultRev = SVNWCContext.INVALID_REVNUM;
         pegRevision = pegRevision == null ? SVNRevision.UNDEFINED : pegRevision;
         if (!revision.isValid() && pegRevision.isValid()) {
             revision = pegRevision;
@@ -895,7 +894,7 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
             }
             String uuid = repos.getRepositoryUUID(true);
             SVNURL repositoryRoot = repos.getRepositoryRoot(true);
-            long result = -1;
+            long result = SVNWCContext.INVALID_REVNUM;
             depth = depth == null ? SVNDepth.UNKNOWN : depth;
             SVNFileType kind = SVNFileType.getType(dstPath);
             if (kind == SVNFileType.NONE) {
@@ -924,7 +923,6 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
             return result;
-
         } finally {
             wcContext.close();
         }

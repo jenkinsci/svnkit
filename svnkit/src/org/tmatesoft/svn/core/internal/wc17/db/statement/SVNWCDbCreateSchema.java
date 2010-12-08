@@ -85,6 +85,7 @@ public class SVNWCDbCreateSchema extends SVNSqlJetStatement {
     public long exec() throws SVNException {
         try {
             sDb.getDb().runWriteTransaction(new ISqlJetTransaction() {
+
                 public Object run(SqlJetDb db) throws SqlJetException {
                     for (Statement stmt : statements) {
                         switch (stmt.getType()) {
@@ -103,7 +104,7 @@ public class SVNWCDbCreateSchema extends SVNSqlJetStatement {
                 }
             });
         } catch (SqlJetException e) {
-            e.printStackTrace();
+            SVNSqlJetDb.createSqlJetError(e);
         }
         return 0;
     }
