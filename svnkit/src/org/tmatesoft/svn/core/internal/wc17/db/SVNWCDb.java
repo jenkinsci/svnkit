@@ -11,8 +11,11 @@
  */
 package org.tmatesoft.svn.core.internal.wc17.db;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.EnumSet;
@@ -23,6 +26,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.logging.Level;
 import java.util.Set;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
@@ -1436,10 +1440,55 @@ public class SVNWCDb implements ISVNWCDb {
 
     private int getOldVersion(File localAbsPath) {
         try {
-            return SVNAdminUtil.getVersion(localAbsPath);
+            int formatVersion = -1;
+            File adminDir = new File(localAbsPath, SVNFileUtil.getAdminDirectoryName());
+            File entriesFile = new File(adminDir, "entries");
+            if (entriesFile.exists()) {
+                formatVersion = readFormatVersion(entriesFile);
+            } else {
+                File formatFile = new File(adminDir, "format");
+                formatVersion = readFormatVersion(formatFile);
+            }
+            return formatVersion;
         } catch (SVNException e) {
             return 0;
         }
+    }
+
+    private int readFormatVersion(File path) throws SVNException {
+        int formatVersion = -1;
+        BufferedReader reader = null;
+        String line = null;
+        try {
+            reader = new BufferedReader(new InputStreamReader(SVNFileUtil.openFileForReading(path, Level.FINEST, SVNLogType.WC), "UTF-8"));
+            line = reader.readLine();
+        } catch (IOException e) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot read entries file ''{0}'': {1}", new Object[] {
+                    path, e.getLocalizedMessage()
+            });
+            SVNErrorManager.error(err, e, SVNLogType.WC);
+        } catch (SVNException svne) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "''{0}'' is not a working copy", path);
+            err.setChildErrorMessage(svne.getErrorMessage());
+            SVNErrorManager.error(err, svne, Level.FINEST, SVNLogType.WC);
+        } finally {
+            SVNFileUtil.closeFile(reader);
+        }
+        if (line == null || line.length() == 0) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_UNEXPECTED_EOF, "Reading ''{0}''", path);
+            SVNErrorMessage err1 = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "''{0}'' is not a working copy", path);
+            err1.setChildErrorMessage(err);
+            SVNErrorManager.error(err1, Level.FINEST, SVNLogType.WC);
+        }
+        try {
+            formatVersion = Integer.parseInt(line.trim());
+        } catch (NumberFormatException e) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_VERSION_FILE_FORMAT, "First line of ''{0}'' contains non-digit", path);
+            SVNErrorMessage err1 = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "''{0}'' is not a working copy", path);
+            err1.setChildErrorMessage(err);
+            SVNErrorManager.error(err1, Level.FINEST, SVNLogType.WC);
+        }
+        return formatVersion;
     }
 
     public boolean isWCLocked(File localAbspath) throws SVNException {
