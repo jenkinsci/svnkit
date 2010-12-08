@@ -766,9 +766,7 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
      *             instead
      */
     public long doCheckout(SVNURL url, File dstPath, SVNRevision pegRevision, SVNRevision revision, boolean recursive) throws SVNException {
-        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT);
-        SVNErrorManager.error(err, SVNLogType.CLIENT);
-        return 0;
+        return doCheckout(url, dstPath, pegRevision, revision, SVNDepth.fromRecurse(recursive), false);
     }
 
     /**
@@ -785,9 +783,7 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
      *             instead
      */
     public long doCheckout(SVNURL url, File dstPath, SVNRevision pegRevision, SVNRevision revision, boolean recursive, boolean force) throws SVNException {
-        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT);
-        SVNErrorManager.error(err, SVNLogType.CLIENT);
-        return 0;
+        return doCheckout(url, dstPath, pegRevision, revision, SVNDepth.fromRecurse(recursive), force);
     }
 
     /**
