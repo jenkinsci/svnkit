@@ -170,6 +170,8 @@ svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbInsertWCLock
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbInsertWCRoot.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbInsertWorkItem.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbInsertWorkingNodeFromBase.java -text
+svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbInsertWorkingNodeFromBaseCopy.java -text
+svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbInsertWorkingNodeFromBaseCopyPresence.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbInsertWorkingNodeNormalFromBase.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbInsertWorkingNodeNotPresentFromBase.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbLookForWork.java -text
@@ -179,6 +181,7 @@ svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbSelectAnyPri
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbSelectLowestWorkingNode.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbSelectNodeProps.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbSelectNotPresent.java -text
+svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbSelectOpDepthChildren.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbSelectRepository.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbSelectWorkItem.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbUpdateActualConflictData.java -text

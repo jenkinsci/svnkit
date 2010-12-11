@@ -3254,14 +3254,32 @@ public class SVNWCDb implements ISVNWCDb {
         SVNWCDbDir pdh = parsed.wcDbDir;
         File localRelPath = parsed.localRelPath;
         verifyDirUsable(pdh);
+        boolean haveRow = false;
+        SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_WORKING_NODE);
+        try {
+            stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelPath);
+            haveRow = stmt.next();
+        } finally {
+            stmt.reset();
+        }
+        if (haveRow) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS, "Modification of ''{0}'' already exists", localAbspath);
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+        catchCopyOfAbsent(pdh, localRelPath);
         final MakeCopy mcb = new MakeCopy();
         mcb.pdh = pdh;
         mcb.localRelpath = localRelPath;
         mcb.localAbspath = localAbspath;
-        mcb.removeBase = removeBase;
-        mcb.isRoot = true;
+        mcb.opDepth = SVNWCUtils.relpathDepth(localRelPath);
         pdh.getWCRoot().getSDb().runTransaction(mcb);
         pdh.flushEntries(localAbspath);
+    }
+
+    private void catchCopyOfAbsent(SVNWCDbDir pdh, File localRelPath) {
+
+        // TODO
+
     }
 
     private class MakeCopy implements SVNSqlJetTransaction {
@@ -3269,74 +3287,29 @@ public class SVNWCDb implements ISVNWCDb {
         File localAbspath;
         SVNWCDbDir pdh;
         File localRelpath;
-        boolean removeBase;
-        boolean isRoot;
+        long opDepth;
 
         public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
             SVNSqlJetStatement stmt;
             boolean haveRow;
             boolean removeWorking = false;
-            boolean checkBase = true;
-            boolean addWorkingNormal = false;
-            boolean addWorkingNotPresent = false;
-            List<String> children;
-
-            stmt = db.getStatement(SVNWCDbStatements.SELECT_WORKING_NODE);
+            boolean addWorkingBaseDeleted = false;
+            stmt = db.getStatement(SVNWCDbStatements.SELECT_LOWEST_WORKING_NODE);
             stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelpath);
             try {
                 haveRow = stmt.next();
-
                 if (haveRow) {
                     SVNWCDbStatus workingStatus = presenceMap2.get(stmt.getColumnString(SVNWCDbSchema.NODES__Fields.presence));
-                    stmt.reset();
-
                     assert (workingStatus == SVNWCDbStatus.Normal || workingStatus == SVNWCDbStatus.BaseDeleted || workingStatus == SVNWCDbStatus.NotPresent || workingStatus == SVNWCDbStatus.Incomplete);
-
                     if (workingStatus == SVNWCDbStatus.BaseDeleted) {
                         removeWorking = true;
-                        addWorkingNotPresent = true;
                     }
-
-                    checkBase = false;
+                    addWorkingBaseDeleted = true;
                 }
             } finally {
                 stmt.reset();
             }
-
-            if (checkBase) {
-                SVNWCDbStatus baseStatus;
-
-                stmt = db.getStatement(SVNWCDbStatements.SELECT_BASE_NODE);
-                try {
-                    stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelpath);
-                    haveRow = stmt.next();
-                    if (!haveRow)
-                        return;
-                    baseStatus = presenceMap2.get(stmt.getColumnString(SVNWCDbSchema.NODES__Fields.presence));
-                } finally {
-                    stmt.reset();
-                }
-
-                switch (baseStatus) {
-                    case Normal:
-                    case Incomplete:
-                        addWorkingNormal = true;
-                        break;
-                    case NotPresent:
-                        addWorkingNotPresent = true;
-                        break;
-                    case Excluded:
-                    case Absent:
-                        addWorkingNotPresent = true;
-                        break;
-                    default:
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ASSERTION_FAIL);
-                        SVNErrorManager.error(err, SVNLogType.WC);
-                }
-            }
-
-            children = getBaseChildren(localAbspath);
-
+            final List<String> children = gatherRepoChildren(pdh, localRelpath, 0);
             for (String name : children) {
                 MakeCopy cbt = new MakeCopy();
                 cbt.localAbspath = SVNFileUtil.createFilePath(localAbspath, name);
@@ -3344,48 +3317,44 @@ public class SVNWCDb implements ISVNWCDb {
                 cbt.pdh = parseDir.wcDbDir;
                 cbt.localRelpath = parseDir.localRelPath;
                 verifyDirUsable(cbt.pdh);
-                cbt.removeBase = removeBase;
-                cbt.isRoot = false;
+                cbt.opDepth = opDepth;
                 cbt.transaction(db);
             }
-
             if (removeWorking) {
-                stmt = db.getStatement(SVNWCDbStatements.DELETE_WORKING_NODE);
+                stmt = db.getStatement(SVNWCDbStatements.DELETE_LOWEST_WORKING_NODE);
                 stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelpath);
                 stmt.done();
             }
-
-            if (addWorkingNormal) {
-                stmt = db.getStatement(SVNWCDbStatements.INSERT_WORKING_NODE_NORMAL_FROM_BASE);
-                stmt.bindf("isi", pdh.getWCRoot().getWcId(), localRelpath, 2);
+            if (addWorkingBaseDeleted) {
+                stmt = db.getStatement(SVNWCDbStatements.INSERT_WORKING_NODE_FROM_BASE_COPY_PRESENCE);
+                stmt.bindf("isit", pdh.getWCRoot().getWcId(), localRelpath, opDepth, presenceMap.get(SVNWCDbStatus.BaseDeleted));
                 stmt.done();
-            } else if (addWorkingNotPresent) {
-                stmt = db.getStatement(SVNWCDbStatements.INSERT_WORKING_NODE_NOT_PRESENT_FROM_BASE);
-                stmt.bindf("isi", pdh.getWCRoot().getWcId(), localRelpath, 2);
-                stmt.done();
-            }
-
-            if (isRoot && (addWorkingNormal || addWorkingNotPresent)) {
-                WCDbRepositoryInfo repInfo = scanBaseRepository(localAbspath, RepositoryInfoField.values());
-                File reposRelpath = repInfo.relPath;
-                SVNURL reposRootUrl = repInfo.rootUrl;
-                String reposUuid = repInfo.uuid;
-                long reposId = fetchReposId(db, reposRootUrl, reposUuid);
-                stmt = db.getStatement(SVNWCDbStatements.UPDATE_COPYFROM);
-                stmt.bindf("isis", pdh.getWCRoot().getWcId(), localRelpath, reposId, reposRelpath);
+            } else {
+                stmt = db.getStatement(SVNWCDbStatements.INSERT_WORKING_NODE_FROM_BASE_COPY);
+                stmt.bindf("isi", pdh.getWCRoot().getWcId(), localRelpath, opDepth);
                 stmt.done();
             }
-
-            if (removeBase) {
-                stmt = db.getStatement(SVNWCDbStatements.DELETE_BASE_NODE);
-                stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelpath);
-                stmt.done();
-            }
-
             pdh.flushEntries(localAbspath);
         }
 
     };
+
+    private List<String> gatherRepoChildren(SVNWCDbDir pdh, File localRelpath, long opDepth) throws SVNException {
+        final List<String> children = new ArrayList<String>();
+        final SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_OP_DEPTH_CHILDREN);
+        try {
+            stmt.bindf("isi", pdh.getWCRoot().getWcId(), localRelpath, opDepth);
+            boolean haveRow = stmt.next();
+            while (haveRow) {
+                String childRelpath = stmt.getColumnString(SVNWCDbSchema.NODES__Fields.local_relpath);
+                children.add(childRelpath);
+                haveRow = stmt.next();
+            }
+        } finally {
+            stmt.reset();
+        }
+        return children;
+    }
 
     public long fetchReposId(SVNSqlJetDb db, SVNURL reposRootUrl, String reposUuid) throws SVNException {
         SVNSqlJetStatement getStmt = db.getStatement(SVNWCDbStatements.SELECT_REPOSITORY);
