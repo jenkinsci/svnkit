@@ -31,6 +31,7 @@ public class SVNWCDbSelectWorkingNode extends SVNSqlJetSelectFieldsStatement<SVN
     }
 
     protected void defineFields() {
+        fields.add(SVNWCDbSchema.NODES__Fields.op_depth);
         fields.add(SVNWCDbSchema.NODES__Fields.presence);
         fields.add(SVNWCDbSchema.NODES__Fields.kind);
         fields.add(SVNWCDbSchema.NODES__Fields.checksum);

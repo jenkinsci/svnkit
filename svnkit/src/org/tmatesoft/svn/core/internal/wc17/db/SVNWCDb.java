@@ -56,6 +56,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbAdditionInfo.Additio
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbBaseInfo.BaseInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbDeletionInfo.DeletionInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo.RepositoryInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDbRoot.WCLock;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
@@ -2507,7 +2508,7 @@ public class SVNWCDb implements ISVNWCDb {
         File localRelpath = parseDir.localRelPath;
         verifyDirUsable(pdh);
         WCDbRepositoryInfo reposInfo = new WCDbRepositoryInfo();
-        long reposId = scanUpwardsForRepos(reposInfo, pdh.getWCRoot(), localAbsPath, localRelpath);
+        long reposId = scanUpwardsForRepos(reposInfo, pdh.getWCRoot(), localRelpath);
         SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.DELETE_LOCK);
         stmt.bindf("is", reposId, reposInfo.relPath);
         stmt.done();
@@ -2573,15 +2574,8 @@ public class SVNWCDb implements ISVNWCDb {
 
     public WCDbAdditionInfo scanAddition(File localAbsPath, AdditionInfoField... fields) throws SVNException {
         assert (isAbsolute(localAbsPath));
-
         EnumSet<AdditionInfoField> f = getInfoFields(AdditionInfoField.class, fields);
-
-        File current_abspath = localAbsPath;
-
-        File child_abspath = null;
-        File build_relpath = SVNFileUtil.createFilePath("");
-
-        boolean found_info = false;
+        File buildRelpath = SVNFileUtil.createFilePath("");
 
         /*
          * Initialize all the OUT parameters. Generally, we'll only be filling
@@ -2594,144 +2588,130 @@ public class SVNWCDb implements ISVNWCDb {
 
         DirParsedInfo parsed = parseDir(localAbsPath, Mode.ReadOnly);
         SVNWCDbDir pdh = parsed.wcDbDir;
-        File current_relpath = parsed.localRelPath;
+        File localRelpath = parsed.localRelPath;
         verifyDirUsable(pdh);
 
-        while (true) {
+        File currentRelpath = localRelpath;
 
-            boolean have_row;
-            SVNWCDbStatus presence;
+        boolean haveRow;
+        SVNWCDbStatus presence;
+        File reposPrefixPath = SVNFileUtil.createFilePath("");
+        int i;
 
-            /* ### is it faster to fetch fewer columns? */
-            SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_WORKING_NODE);
-            try {
-                stmt.bindf("is", pdh.getWCRoot().getWcId(), SVNFileUtil.getFilePath(current_relpath));
-                have_row = stmt.next();
+        SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_WORKING_NODE);
 
-                if (!have_row) {
-                    if (current_abspath == localAbsPath) {
-                        /* ### maybe we should return a usage error instead? */
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{0}'' was not found.", localAbsPath);
+        try {
+            stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelpath);
+            haveRow = stmt.next();
+
+            if (!haveRow) {
+                stmt.reset();
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{0}'' was not found.", localAbsPath);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+
+            presence = presenceMap2.get(stmt.getColumnString(SVNWCDbSchema.NODES__Fields.presence));
+
+            if (presence != SVNWCDbStatus.Normal) {
+                stmt.reset();
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS, "Expected node ''{0}'' to be added.", localAbsPath);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+
+            if (f.contains(AdditionInfoField.originalRevision)) {
+                additionInfo.originalRevision = getColumnRevNum(stmt, 12);
+            }
+
+            if (f.contains(AdditionInfoField.status)) {
+                additionInfo.status = SVNWCDbStatus.Added;
+            }
+
+            long opDepth = stmt.getColumnLong(SVNWCDbSchema.NODES__Fields.op_depth);
+
+            for (i = SVNWCUtils.relpathDepth(localRelpath); i > opDepth; --i) {
+                reposPrefixPath = SVNFileUtil.createFilePath(SVNFileUtil.createFilePath(SVNFileUtil.getFileName(currentRelpath)), reposPrefixPath);
+                currentRelpath = SVNFileUtil.getFileDir(currentRelpath);
+            }
+
+            if (f.contains(AdditionInfoField.opRootAbsPath)) {
+                additionInfo.opRootAbsPath = SVNFileUtil.createFilePath(pdh.getWCRoot().getAbsPath(), currentRelpath);
+            }
+
+            if (f.contains(AdditionInfoField.originalReposRelPath) || f.contains(AdditionInfoField.originalRootUrl) || f.contains(AdditionInfoField.originalUuid)
+                    || (f.contains(AdditionInfoField.originalRevision) && additionInfo.originalRevision == INVALID_REVNUM) || f.contains(AdditionInfoField.status)) {
+                if (!localRelpath.equals(currentRelpath)) {
+                    stmt.reset();
+                    stmt.bindf("is", pdh.getWCRoot().getWcId(), currentRelpath);
+                    haveRow = stmt.next();
+                    if (!haveRow) {
+                        stmt.reset();
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{0}'' was not found.",
+                                SVNFileUtil.createFilePath(pdh.getWCRoot().getAbsPath(), currentRelpath));
                         SVNErrorManager.error(err, SVNLogType.WC);
                     }
 
-                    /*
-                     * We just fell off the top of the WORKING tree. If we
-                     * haven't found the operation root, then the child node
-                     * that we just left was that root.
-                     */
-                    if (f.contains(AdditionInfoField.opRootAbsPath) && additionInfo.opRootAbsPath == null) {
-                        assert (child_abspath != null);
-                        additionInfo.opRootAbsPath = child_abspath;
-                    }
-
-                    /*
-                     * This node was added/copied/moved and has an implicit
-                     * location in the repository. We now need to traverse BASE
-                     * nodes looking for repository info.
-                     */
-                    break;
-                }
-
-                presence = getColumnToken(stmt, 0, presenceMap2);
-
-                /* Record information from the starting node. */
-                if (current_abspath == localAbsPath) {
-                    /* The starting node should exist normally. */
-                    if (presence != SVNWCDbStatus.Normal) {
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS, "Expected node ''{0}'' to be added.", localAbsPath);
-                        SVNErrorManager.error(err, SVNLogType.WC);
-                    }
-
-                    /*
-                     * Provide the default status; we'll override as
-                     * appropriate.
-                     */
-                    if (f.contains(AdditionInfoField.status))
-                        additionInfo.status = SVNWCDbStatus.Added;
+                    if (f.contains(AdditionInfoField.originalRevision) && additionInfo.originalRevision == INVALID_REVNUM)
+                        additionInfo.originalRevision = getColumnRevNum(stmt, 12);
                 }
 
                 /*
-                 * We want the operation closest to the start node, and then we
-                 * ignore any operations on its ancestors.
+                 * current_relpath / current_abspath as well as the record in
+                 * stmt contain the data of the op_root
                  */
-                if (!found_info && presence == SVNWCDbStatus.Normal && !isColumnNull(stmt, 9 /* copyfrom_repos_id */)) {
+                if (f.contains(AdditionInfoField.originalReposRelPath)) {
+                    additionInfo.originalReposRelPath = SVNFileUtil.createFilePath(stmt.getColumnString(11));
+                }
+
+                if (!stmt.isColumnNull(10) && (f.contains(AdditionInfoField.status) || f.contains(AdditionInfoField.originalRootUrl) || f.contains(AdditionInfoField.originalUuid))) {
+                    if(f.contains(AdditionInfoField.originalRootUrl) || f.contains(AdditionInfoField.originalUuid)) {
+                        long originalReposId = stmt.getColumnLong(10);
+                        ReposInfo reposInfo = fetchReposInfo(pdh.getWCRoot().getSDb(), originalReposId);
+                        additionInfo.originalRootUrl = SVNURL.parseURIDecoded(reposInfo.reposRootUrl);
+                        additionInfo.originalUuid = reposInfo.reposUuid;
+                    }
                     if (f.contains(AdditionInfoField.status)) {
-                        if (getColumnBoolean(stmt, 12 /* moved_here */))
+                        /* moved_here */
+                        if (stmt.getColumnBoolean(13))
                             additionInfo.status = SVNWCDbStatus.MovedHere;
                         else
                             additionInfo.status = SVNWCDbStatus.Copied;
                     }
-                    if (f.contains(AdditionInfoField.opRootAbsPath))
-                        additionInfo.opRootAbsPath = current_abspath;
-                    if (f.contains(AdditionInfoField.originalReposRelPath))
-                        additionInfo.originalReposRelPath = isColumnNull(stmt, 10) ? null : SVNFileUtil.createFilePath(getColumnText(stmt, 10));
-                    if (f.contains(AdditionInfoField.originalRootUrl) || f.contains(AdditionInfoField.originalUuid)) {
-                        ReposInfo reposInfo = fetchReposInfo(pdh.getWCRoot().getSDb(), getColumnInt64(stmt, 9));
-                        additionInfo.originalRootUrl = reposInfo.reposRootUrl == null ? null : SVNURL.parseURIEncoded(reposInfo.reposRootUrl);
-                        additionInfo.originalUuid = reposInfo.reposUuid;
-                    }
-                    if (f.contains(AdditionInfoField.originalRevision))
-                        additionInfo.originalRevision = getColumnRevNum(stmt, 11);
-
-                    /*
-                     * We may have to keep tracking upwards for REPOS_* values.
-                     * If they're not needed, then just return.
-                     */
-                    if ((!f.contains(AdditionInfoField.reposRelPath)) && (!f.contains(AdditionInfoField.reposRootUrl)) && (!f.contains(AdditionInfoField.reposUuid)))
-                        return additionInfo;
-
-                    /*
-                     * We've found the info we needed. Scan for the top of the
-                     * WORKING tree, and then the REPOS_* information.
-                     */
-                    found_info = true;
                 }
-            } finally {
+            }
+
+            while (true) {
                 stmt.reset();
+                reposPrefixPath = SVNFileUtil.createFilePath(SVNFileUtil.createFilePath(SVNFileUtil.getFileName(currentRelpath)), reposPrefixPath);
+                currentRelpath = SVNFileUtil.getFileDir(currentRelpath);
+                stmt.bindf("is", pdh.getWCRoot().getWcId(), currentRelpath);
+                haveRow = stmt.next();
+                if (!haveRow) {
+                    break;
+                }
+                opDepth = stmt.getColumnLong(0);
+                for (i = SVNWCUtils.relpathDepth(currentRelpath); i > opDepth; i--) {
+                    reposPrefixPath = SVNFileUtil.createFilePath(SVNFileUtil.createFilePath(SVNFileUtil.getFileName(currentRelpath)), reposPrefixPath);
+                    currentRelpath = SVNFileUtil.getFileDir(currentRelpath);
+                }
             }
 
-            /*
-             * If the caller wants to know the starting node's REPOS_RELPATH,
-             * then keep track of what we're stripping off the ABSPATH as we
-             * traverse up the tree.
-             */
-            if (f.contains(AdditionInfoField.reposRelPath)) {
-                // TODO very weird code, sergey
-                build_relpath = SVNFileUtil.createFilePath(SVNFileUtil.getFileName(current_abspath), build_relpath.getPath());
-            }
-
-            /*
-             * Move to the parent node. Remember the abspath to this node, since
-             * it could be the root of an add/delete.
-             */
-            child_abspath = current_abspath;
-            if (current_abspath.equals(pdh.getLocalAbsPath())) {
-                /* The current node is a directory, so move to the parent dir. */
-                pdh = navigateToParent(pdh, Mode.ReadOnly);
-            }
-            current_abspath = pdh.getLocalAbsPath();
-            current_relpath = pdh.computeRelPath();
+        } finally {
+            stmt.reset();
         }
 
-        /*
-         * If we're here, then we have an added/copied/moved (start) node, and
-         * CURRENT_ABSPATH now points to a BASE node. Figure out the repository
-         * information for the current node, and use that to compute the start
-         * node's repository information.
-         */
-        if (f.contains(AdditionInfoField.reposRelPath) || f.contains(AdditionInfoField.reposRootUrl) || f.contains(AdditionInfoField.reposUuid)) {
-            /*
-             * ### unwrap this. we can optimize away the
-             * svn_wc__db_pdh_parse_local_abspath().
-             */
-            WCDbRepositoryInfo baseReposInfo = scanBaseRepository(current_abspath, RepositoryInfoField.values());
-            File base_relpath = baseReposInfo.relPath;
-            additionInfo.reposRootUrl = baseReposInfo.rootUrl;
-            additionInfo.reposUuid = baseReposInfo.uuid;
+        buildRelpath = reposPrefixPath;
 
-            if (f.contains(AdditionInfoField.reposRelPath))
-                additionInfo.reposRelPath = SVNFileUtil.createFilePath(base_relpath, build_relpath.getPath());
+        if (f.contains(AdditionInfoField.reposRelPath) || f.contains(AdditionInfoField.reposRootUrl) || f.contains(AdditionInfoField.reposUuid)) {
+            WCDbRepositoryInfo rInfo = new WCDbRepositoryInfo();
+            long reposId = scanUpwardsForRepos(rInfo, pdh.getWCRoot(), currentRelpath);
+            if (f.contains(AdditionInfoField.reposRelPath)) {
+                additionInfo.reposRelPath = SVNFileUtil.createFilePath(rInfo.relPath, buildRelpath);
+            }
+            if(f.contains(AdditionInfoField.originalRootUrl) || f.contains(AdditionInfoField.originalUuid)) {
+                ReposInfo reposInfo = fetchReposInfo(pdh.getWCRoot().getSDb(), reposId);
+                additionInfo.originalRootUrl = SVNURL.parseURIDecoded(reposInfo.reposRootUrl);
+                additionInfo.originalUuid = reposInfo.reposUuid;
+            }
         }
 
         return additionInfo;
@@ -2745,7 +2725,7 @@ public class SVNWCDb implements ISVNWCDb {
         final File localRelPath = parsed.localRelPath;
         verifyDirUsable(pdh);
         final WCDbRepositoryInfo reposInfo = new WCDbRepositoryInfo();
-        final long reposId = scanUpwardsForRepos(reposInfo, pdh.getWCRoot(), localAbsPath, localRelPath);
+        final long reposId = scanUpwardsForRepos(reposInfo, pdh.getWCRoot(), localRelPath);
         if (f.contains(RepositoryInfoField.rootUrl) || f.contains(RepositoryInfoField.uuid)) {
             fetchReposInfo(reposInfo, pdh.getWCRoot().getSDb(), reposId);
         }
@@ -2758,7 +2738,7 @@ public class SVNWCDb implements ISVNWCDb {
      * Return that information in REPOS_ID and REPOS_RELPATH (either may be
      * NULL). Use LOCAL_ABSPATH for diagnostics
      */
-    private static long scanUpwardsForRepos(WCDbRepositoryInfo reposInfo, SVNWCDbRoot wcroot, File localAbsPath, File localRelPath) throws SVNException {
+    private static long scanUpwardsForRepos(WCDbRepositoryInfo reposInfo, SVNWCDbRoot wcroot, File localRelPath) throws SVNException {
         assert (wcroot.getSDb() != null && wcroot.getWcId() != UNKNOWN_WC_ID);
         assert (reposInfo != null);
         SVNSqlJetStatement stmt = wcroot.getSDb().getStatement(SVNWCDbStatements.SELECT_BASE_NODE);
@@ -2766,7 +2746,7 @@ public class SVNWCDb implements ISVNWCDb {
             stmt.bindf("is", wcroot.getWcId(), localRelPath);
             boolean haveRow = stmt.next();
             if (!haveRow) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{0}'' was not found.", localAbsPath);
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{0}'' was not found.", SVNFileUtil.createFilePath(wcroot.getAbsPath(), localRelPath));
                 SVNErrorManager.error(err, SVNLogType.WC);
                 return 0;
             }
@@ -3421,219 +3401,8 @@ public class SVNWCDb implements ISVNWCDb {
     };
 
     public void opDeleteTemp(File localAbspath) throws SVNException {
-        boolean baseNone, workingNone, newWorkingNone;
-        SVNWCDbStatus baseStatus = null, workingStatus, newWorkingStatus;
-        boolean haveWork;
-
-        try {
-            baseStatus = getBaseInfo(localAbspath, BaseInfoField.status).status;
-            baseNone = false;
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND) {
-                baseNone = true;
-            } else {
-                throw e;
-            }
-        }
-
-        if (!baseNone && baseStatus == SVNWCDbStatus.Absent) {
-            return;
-        }
-
-        WCDbInfo readInfo = readInfo(localAbspath, InfoField.status, InfoField.haveWork);
-        workingStatus = readInfo.status;
-        haveWork = readInfo.haveWork;
-
-        if (workingStatus == SVNWCDbStatus.Deleted) {
-            return;
-        }
-
-        workingNone = !haveWork;
-
-        newWorkingNone = workingNone;
-        newWorkingStatus = workingStatus;
-
-        if (workingStatus == SVNWCDbStatus.Normal || workingStatus == SVNWCDbStatus.NotPresent) {
-            assert (workingNone);
-            newWorkingNone = false;
-            newWorkingStatus = SVNWCDbStatus.BaseDeleted;
-        } else if (workingNone) {
-            if (baseStatus == SVNWCDbStatus.Normal || baseStatus == SVNWCDbStatus.Incomplete || baseStatus == SVNWCDbStatus.Excluded) {
-                newWorkingNone = false;
-                newWorkingStatus = SVNWCDbStatus.BaseDeleted;
-            }
-        } else if (workingStatus == SVNWCDbStatus.Added && (baseNone || baseStatus == SVNWCDbStatus.NotPresent)) {
-            boolean addOrRootOfCopy = isAddOrRootOfCopy(localAbspath);
-            if (addOrRootOfCopy) {
-                newWorkingNone = true;
-            } else {
-                newWorkingStatus = SVNWCDbStatus.NotPresent;
-            }
-        } else if (workingStatus == SVNWCDbStatus.Added) {
-            boolean addOrRootOfCopy = isAbsolute(localAbspath);
-            if (addOrRootOfCopy) {
-                newWorkingStatus = SVNWCDbStatus.BaseDeleted;
-            } else {
-                newWorkingStatus = SVNWCDbStatus.NotPresent;
-            }
-        } else if (workingStatus == SVNWCDbStatus.Incomplete) {
-            boolean addOrRootOfCopy = isAddOrRootOfCopy(localAbspath);
-            if (addOrRootOfCopy) {
-                newWorkingNone = true;
-            }
-        }
-
-        if (newWorkingNone && !workingNone) {
-            workingActualRemove(localAbspath);
-            forgetDirectoryTemp(localAbspath);
-        } else if (!newWorkingNone && workingNone) {
-            workingInsert(localAbspath, newWorkingStatus);
-        } else if (!newWorkingNone && !workingNone && newWorkingStatus != workingStatus) {
-            workingUpdatePresence(localAbspath, newWorkingStatus);
-        }
-
-    }
-
-    private void workingUpdatePresence(File localAbspath, SVNWCDbStatus status) throws SVNException {
-        assert (isAbsolute(localAbspath));
-        DirParsedInfo parsed = parseDir(localAbspath, Mode.ReadWrite);
-        SVNWCDbDir pdh = parsed.wcDbDir;
-        File localRelpath = parsed.localRelPath;
-        verifyDirUsable(pdh);
-        SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.UPDATE_NODE_WORKING_PRESENCE);
-        stmt.bindf("ist", pdh.getWCRoot().getWcId(), localRelpath, presenceMap.get(status));
-        stmt.done();
-    }
-
-    private void workingInsert(File localAbspath, SVNWCDbStatus status) throws SVNException {
-        assert (isAbsolute(localAbspath));
-        DirParsedInfo parseDir = parseDir(localAbspath, Mode.ReadWrite);
-        SVNWCDbDir pdh = parseDir.wcDbDir;
-        File localRelpath = parseDir.localRelPath;
-        verifyDirUsable(pdh);
-        CopyWorkingFromBase iwb = new CopyWorkingFromBase();
-        iwb.wcId = pdh.getWCRoot().getWcId();
-        iwb.localRelpath = localRelpath;
-        iwb.presence = status;
-        iwb.opDepth = SVNWCUtils.relpathDepth(localRelpath);
-        pdh.getWCRoot().getSDb().runTransaction(iwb);
-        pdh.flushEntries(localAbspath);
-    }
-
-    private abstract class InsertWorking implements SVNSqlJetTransaction {
-
-        public SVNWCDbStatus presence;
-        public SVNWCDbKind kind;
-        public long wcId;
-        public File localRelpath;
-        public long opDepth;
-        public SVNProperties props;
-        public long changedRev = INVALID_REVNUM;
-        public SVNDate changedDate;
-        public String changedAuthor;
-        public long originalReposId;
-        public File originalReposRelpath;
-        public long originalRevnum;
-        public boolean movedHere;
-        public List<File> children;
-        public SVNDepth depth = SVNDepth.INFINITY;
-        public SVNChecksum checksum;
-        public String target;
-        public SVNSkel work_items;
-    }
-
-    private static class RelpathOpDepth {
-
-        public File localRelpath;
-        public long opDepth;
-    };
-
-    private class CopyWorkingFromBase extends InsertWorking {
-
-        public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
-            SVNSqlJetStatement stmt = db.getStatement(SVNWCDbStatements.INSERT_WORKING_NODE_FROM_BASE);
-            stmt.bindf("isit", wcId, localRelpath, opDepth, presenceMap.get(presence));
-            stmt.done();
-            boolean haveRow;
-            List<RelpathOpDepth> nodes = new LinkedList<SVNWCDb.RelpathOpDepth>();
-            stmt = db.getStatement(SVNWCDbStatements.SELECT_WORKING_OP_DEPTH_RECURSIVE);
-            try {
-                stmt.bindf("is", wcId, localRelpath);
-                haveRow = stmt.next();
-                while (haveRow) {
-                    long opDepth = stmt.getColumnLong(SVNWCDbSchema.NODES__Fields.op_depth);
-                    SVNWCDbStatus status = presenceMap2.get(stmt.getColumnString(SVNWCDbSchema.NODES__Fields.presence));
-                    if (status != SVNWCDbStatus.Excluded) {
-                        RelpathOpDepth rod = new RelpathOpDepth();
-                        rod.localRelpath = SVNFileUtil.createFilePath(stmt.getColumnString(SVNWCDbSchema.NODES__Fields.local_relpath));
-                        rod.opDepth = opDepth;
-                        nodes.add(rod);
-                    }
-                    haveRow = stmt.next();
-                }
-            } finally {
-                stmt.reset();
-            }
-            for (RelpathOpDepth rod : nodes) {
-                stmt = db.getStatement(SVNWCDbStatements.UPDATE_OP_DEPTH);
-                stmt.bindf("isii", wcId, rod.localRelpath, rod.opDepth, opDepth);
-                stmt.done();
-            }
-        }
-    }
-
-    private void workingActualRemove(File localAbspath) throws SVNException {
-        assert (isAbsolute(localAbspath));
-        DirParsedInfo parseDir = parseDir(localAbspath, Mode.ReadWrite);
-        SVNWCDbDir pdh = parseDir.wcDbDir;
-        File localRelpath = parseDir.localRelPath;
-        verifyDirUsable(pdh);
-        SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.DELETE_WORKING_NODE);
-        stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelpath);
-        stmt.done();
-        stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.CLEAR_ACTUAL_NODE_LEAVING_CONFLICT);
-        stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelpath);
-        stmt.done();
-        stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.DELETE_ACTUAL_NODE_WITHOUT_CONFLICT);
-        stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelpath);
-        stmt.done();
-        pdh.flushEntries(localAbspath);
-    }
-
-    private boolean isAddOrRootOfCopy(File localAbspath) throws SVNException {
-        WCDbAdditionInfo scanAddition = scanAddition(localAbspath, AdditionInfoField.status, AdditionInfoField.opRootAbsPath, AdditionInfoField.originalReposRelPath,
-                AdditionInfoField.originalRootUrl, AdditionInfoField.originalUuid, AdditionInfoField.originalRevision);
-        SVNWCDbStatus status = scanAddition.status;
-        File opRootAbspath = scanAddition.opRootAbsPath;
-        File originalReposRelpath = scanAddition.originalReposRelPath;
-        SVNURL originalReposRoot = scanAddition.originalRootUrl;
-        String originalReposUuid = scanAddition.originalUuid;
-        long originalRevision = scanAddition.originalRevision;
-        assert (status == SVNWCDbStatus.Added || status == SVNWCDbStatus.Copied);
-        assert (opRootAbspath != null);
-        boolean addOrRootOfCopy = (status == SVNWCDbStatus.Added || localAbspath.equals(opRootAbspath));
-        if (addOrRootOfCopy && status == SVNWCDbStatus.Copied) {
-            File parentAbspath = SVNFileUtil.getFileDir(localAbspath);
-            String name = SVNFileUtil.getFileName(localAbspath);
-            try {
-                scanAddition = scanAddition(parentAbspath, AdditionInfoField.status, AdditionInfoField.originalReposRelPath, AdditionInfoField.originalRootUrl, AdditionInfoField.originalUuid,
-                        AdditionInfoField.originalRevision);
-                SVNWCDbStatus parentStatus = scanAddition.status;
-                File parentOriginalReposRelpath = scanAddition.originalReposRelPath;
-                SVNURL parentOriginalReposRoot = scanAddition.originalRootUrl;
-                String parentOriginalReposUuid = scanAddition.originalUuid;
-                long parentOriginalRevision = scanAddition.originalRevision;
-                if (parentStatus == SVNWCDbStatus.Copied && originalRevision == parentOriginalRevision && originalReposUuid.equals(parentOriginalReposUuid)
-                        && originalReposRoot.equals(parentOriginalReposRoot) && originalReposRelpath.equals(SVNFileUtil.createFilePath(parentOriginalReposRelpath, name))) {
-                    addOrRootOfCopy = false;
-                }
-            } catch (SVNException e) {
-                if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND) {
-                    throw e;
-                }
-            }
-        }
-        return addOrRootOfCopy;
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public File getWCRootTempDir(File localAbspath) throws SVNException {
