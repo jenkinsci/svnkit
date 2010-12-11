@@ -2808,6 +2808,8 @@ public class SVNWCDb implements ISVNWCDb {
         boolean child_has_base = false;
         boolean found_moved_to = false;
 
+        long opDepth = 0, localOpDepth = 0;
+
         /*
          * Initialize to something that won't denote an important parent/child
          * transition.
@@ -2886,7 +2888,7 @@ public class SVNWCDb implements ISVNWCDb {
                 SVNWCDbStatus work_presence = getColumnToken(stmt, SVNWCDbSchema.NODES__Fields.presence, presenceMap2);
 
                 /* The starting node should be deleted. */
-                if (current_abspath == localAbsPath && work_presence != SVNWCDbStatus.NotPresent && work_presence != SVNWCDbStatus.BaseDeleted) {
+                if (current_abspath.equals(localAbsPath) && work_presence != SVNWCDbStatus.NotPresent && work_presence != SVNWCDbStatus.BaseDeleted) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS, "Expected node ''{0}'' to be deleted.", localAbsPath);
                     SVNErrorManager.error(err, SVNLogType.WC);
                 }
@@ -2948,11 +2950,12 @@ public class SVNWCDb implements ISVNWCDb {
                             deletionInfo.movedToAbsPath = SVNFileUtil.createFilePath(pdh.getWCRoot().getAbsPath(), getColumnText(stmt, SVNWCDbSchema.NODES__Fields.moved_to));
                     }
 
-                    if (f.contains(DeletionInfoField.workDelAbsPath) && work_presence == SVNWCDbStatus.Normal && child_presence == SVNWCDbStatus.NotPresent) {
-                        /*
-                         * Parent is normal, but child was deleted. Therefore,
-                         * the child is the root of a WORKING subtree deletion.
-                         */
+                    opDepth = stmt.getColumnLong(SVNWCDbSchema.NODES__Fields.op_depth);
+                    if (current_abspath.equals(localAbsPath)) {
+                        localOpDepth = opDepth;
+                    }
+
+                    if (f.contains(DeletionInfoField.workDelAbsPath) && deletionInfo.workDelAbsPath == null && ((opDepth < localOpDepth && opDepth > 0) || child_presence == SVNWCDbStatus.NotPresent)) {
                         deletionInfo.workDelAbsPath = child_abspath;
                     }
 
