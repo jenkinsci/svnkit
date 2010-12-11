@@ -88,7 +88,8 @@ import org.tmatesoft.svn.util.SVNLogType;
  */
 public interface ISVNWCDb {
 
-    int WC_FORMAT_17 = 22;
+    int WC_FORMAT_17 = 23;
+
     int WC_HAS_WORK_QUEUE = 13;
     long INVALID_FILESIZE = -1;
     long ENTRY_WORKING_SIZE_UNKNOWN = -1;
