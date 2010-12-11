@@ -1440,14 +1440,16 @@ public class SVNWCDb implements ISVNWCDb {
 
     private int getOldVersion(File localAbsPath) {
         try {
-            int formatVersion = -1;
+            int formatVersion = 0;
             File adminDir = new File(localAbsPath, SVNFileUtil.getAdminDirectoryName());
             File entriesFile = new File(adminDir, "entries");
             if (entriesFile.exists()) {
                 formatVersion = readFormatVersion(entriesFile);
             } else {
                 File formatFile = new File(adminDir, "format");
-                formatVersion = readFormatVersion(formatFile);
+                if (formatFile.exists()) {
+                    formatVersion = readFormatVersion(formatFile);
+                }
             }
             return formatVersion;
         } catch (SVNException e) {
