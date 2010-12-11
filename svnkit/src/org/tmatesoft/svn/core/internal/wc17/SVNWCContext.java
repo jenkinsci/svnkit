@@ -3740,7 +3740,6 @@ public class SVNWCContext {
             }
             if (recordFileInfo) {
                 ctx.getAndRecordFileInfo(localAbspath, false);
-                ctx.getDb().elideCopyFromTemp(localAbspath);
             }
         }
     }
