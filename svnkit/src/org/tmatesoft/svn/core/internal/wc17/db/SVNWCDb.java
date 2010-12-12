@@ -2663,7 +2663,7 @@ public class SVNWCDb implements ISVNWCDb {
                 }
 
                 if (!stmt.isColumnNull(10) && (f.contains(AdditionInfoField.status) || f.contains(AdditionInfoField.originalRootUrl) || f.contains(AdditionInfoField.originalUuid))) {
-                    if(f.contains(AdditionInfoField.originalRootUrl) || f.contains(AdditionInfoField.originalUuid)) {
+                    if (f.contains(AdditionInfoField.originalRootUrl) || f.contains(AdditionInfoField.originalUuid)) {
                         long originalReposId = stmt.getColumnLong(10);
                         ReposInfo reposInfo = fetchReposInfo(pdh.getWCRoot().getSDb(), originalReposId);
                         additionInfo.originalRootUrl = SVNURL.parseURIDecoded(reposInfo.reposRootUrl);
@@ -2707,7 +2707,7 @@ public class SVNWCDb implements ISVNWCDb {
             if (f.contains(AdditionInfoField.reposRelPath)) {
                 additionInfo.reposRelPath = SVNFileUtil.createFilePath(rInfo.relPath, buildRelpath);
             }
-            if(f.contains(AdditionInfoField.originalRootUrl) || f.contains(AdditionInfoField.originalUuid)) {
+            if (f.contains(AdditionInfoField.originalRootUrl) || f.contains(AdditionInfoField.originalUuid)) {
                 ReposInfo reposInfo = fetchReposInfo(pdh.getWCRoot().getSDb(), reposId);
                 additionInfo.originalRootUrl = SVNURL.parseURIDecoded(reposInfo.reposRootUrl);
                 additionInfo.originalUuid = reposInfo.reposUuid;
@@ -3331,7 +3331,7 @@ public class SVNWCDb implements ISVNWCDb {
             stmt.bindf("isi", pdh.getWCRoot().getWcId(), localRelpath, opDepth);
             boolean haveRow = stmt.next();
             while (haveRow) {
-                String childRelpath = stmt.getColumnString(SVNWCDbSchema.NODES__Fields.local_relpath);
+                String childRelpath = SVNFileUtil.getFileName(SVNFileUtil.createFilePath(stmt.getColumnString(SVNWCDbSchema.NODES__Fields.local_relpath)));
                 children.add(childRelpath);
                 haveRow = stmt.next();
             }
