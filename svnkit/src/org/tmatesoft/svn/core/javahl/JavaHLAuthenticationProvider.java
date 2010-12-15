@@ -71,7 +71,12 @@ class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
                 }
             }
             return null;
-        } else if (ISVNAuthenticationManager.SSL.equals(kind) && myPrompt instanceof PromptUserPasswordSSL) {
+        } else if (ISVNAuthenticationManager.SSL.equals(kind) && SVNSSLAuthentication.isCertificatePath(realm) && myPrompt instanceof PromptUserPassword3) {
+            String passphrase = ((PromptUserPassword3) myPrompt).askQuestion(realm, "SSL Certificate Passphrase", authMayBeStored);
+            if (passphrase != null) {
+                return new SVNPasswordAuthentication("", passphrase, ((PromptUserPassword3) myPrompt).userAllowedSave());
+            }
+        } else if (ISVNAuthenticationManager.SSL.equals(kind) && !SVNSSLAuthentication.isCertificatePath(realm) && myPrompt instanceof PromptUserPasswordSSL) {
             PromptUserPasswordSSL prompt4 = (PromptUserPasswordSSL) myPrompt;
             if (prompt4.promptSSL(realm, authMayBeStored)) {
                 String cert = prompt4.getSSLClientCertPath();
@@ -88,11 +93,13 @@ class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
                         }
                         return new SVNSSLAuthentication(SVNSSLAuthentication.MSCAPI, alias, save, url, false);
                     }
-                    return new SVNSSLAuthentication(new File(cert), password, save, url, false);
+                    SVNSSLAuthentication sslAuth = new SVNSSLAuthentication(new File(cert), password, save, url, false);
+                    sslAuth.setCertificatePath(cert);
+                    return sslAuth;
                 }
             }
             return null;
-        }
+        } 
         if (ISVNAuthenticationManager.SSH.equals(kind) && previousAuth == null) {
             // use configuration file here? but it was already used once...
             String keyPath = System.getProperty("svnkit.ssh2.key", System.getProperty("javasvn.ssh2.key"));

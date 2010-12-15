@@ -14,6 +14,9 @@ package org.tmatesoft.svn.core.auth;
 import java.io.File;
 
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNFileType;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
 /**
  * The <b>SVNSSLAuthentication</b> class represents user's credentials used 
@@ -33,6 +36,7 @@ public class SVNSSLAuthentication extends SVNAuthentication {
     private String myPassword;
     private String mySSLKind;
     private String myAlias;
+    private String myCertificatePath;
 
     /**
      * Creates an SSL credentials object. 
@@ -96,5 +100,33 @@ public class SVNSSLAuthentication extends SVNAuthentication {
      */
     public String getAlias() {
         return myAlias;
+    }
+    
+    public String getCertificatePath() {
+        if (myCertificatePath != null) {
+            return myCertificatePath;
+        }
+        return myCertificate.getAbsolutePath();
+    }
+    
+    public void setCertificatePath(String path) {
+        path = formatCertificatePath(path);
+        myCertificatePath = path;
+    }
+
+    public static boolean isCertificatePath(String path) {
+        return SVNFileType.getType(new File(formatCertificatePath(path))) == SVNFileType.FILE;
+    }
+
+    public static String formatCertificatePath(String path) {
+        path = new File(path).getAbsolutePath();
+        path = SVNPathUtil.validateFilePath(path);
+        if (SVNFileUtil.isWindows && path.length() >= 3 && 
+                path.charAt(1) == ':' &&
+                path.charAt(2) == '/' &&
+                Character.isLowerCase(path.charAt(0))) {
+            path = Character.toUpperCase(path.charAt(0)) + path.substring(1);
+        }
+        return path;
     }
 }

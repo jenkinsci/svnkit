@@ -344,6 +344,13 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
             }            
             return new SVNUserNameAuthentication(name, authMayBeStored, url, false);
         } else if (ISVNAuthenticationManager.SSL.equals(kind)) {
+            if (SVNSSLAuthentication.isCertificatePath(realm)) {
+                String passphrase = promptPassword("Passphrase for '" + realm + "'");
+                if (passphrase == null) {
+                    return null;
+                }
+                return new SVNPasswordAuthentication("", passphrase, authMayBeStored);
+            }
             boolean isMSCAPI = false;
             printRealm(realm);
             String path = null;
@@ -374,13 +381,9 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
                 }
                 return new SVNSSLAuthentication(SVNSSLAuthentication.MSCAPI, alias, authMayBeStored, url, false);
             }
-            String password = promptPassword("Passphrase for '" + realm + "'");
-            if (password == null) {
-                return null;
-            } else if ("".equals(password)) {
-                password = null;
-            }
-            return new SVNSSLAuthentication(new File(path), password, authMayBeStored, url, false);
+            SVNSSLAuthentication sslAuth = new SVNSSLAuthentication(new File(path), null, authMayBeStored, url, false);
+            sslAuth.setCertificatePath(path);
+            return sslAuth;
         }
         return null;
     }
