@@ -24,6 +24,7 @@ import java.util.TreeSet;
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNAnnotationGenerator;
+import org.tmatesoft.svn.core.SVNAuthenticationException;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -1373,7 +1374,17 @@ public class SVNLogClient extends SVNBasicClient {
             return;
         }
         Collection entries = new TreeSet();
-        entries = repository.getDir(path, rev, null, entryFields, entries);
+        try {
+            entries = repository.getDir(path, rev, null, entryFields, entries);
+        } catch (SVNAuthenticationException e) {
+            return;
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_NOT_AUTHORIZED) {
+                return;
+            }
+            throw e;
+        }
+        
 
         for (Iterator iterator = entries.iterator(); iterator.hasNext();) {
             SVNDirEntry entry = (SVNDirEntry) iterator.next();
