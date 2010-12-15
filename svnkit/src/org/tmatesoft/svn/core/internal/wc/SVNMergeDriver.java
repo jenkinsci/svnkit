@@ -3239,13 +3239,25 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
         return propsDiff;
     }
 
-    private static SVNProperties filterProperties(SVNProperties props1, boolean leftRegular,
+    public static SVNProperties filterProperties(SVNProperties props1, boolean leftRegular,
             boolean leftEntry, boolean leftWC) {
+        return filterProperties(props1, leftRegular, leftEntry, leftWC, leftEntry);
+    }
+
+    public static SVNProperties filterProperties(SVNProperties props1, boolean leftRegular,
+            boolean leftEntry, boolean leftWC, boolean leftKeywords) {
         SVNProperties result = new SVNProperties();
         for (Iterator names = props1.nameSet().iterator(); names.hasNext();) {
             String propName = (String) names.next();
             if (!leftEntry && propName.startsWith(SVNProperty.SVN_ENTRY_PREFIX)) {
-                continue;
+                if (!leftKeywords) {
+                    continue;
+                }
+                if (!(SVNProperty.LAST_AUTHOR.equals(propName) ||
+                        SVNProperty.COMMITTED_REVISION.equals(propName) ||
+                        SVNProperty.COMMITTED_DATE.equals(propName))) {
+                    continue;
+                }
             }
             if (!leftWC && propName.startsWith(SVNProperty.SVN_WC_PREFIX)) {
                 continue;
