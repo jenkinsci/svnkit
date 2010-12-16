@@ -1405,13 +1405,13 @@ public class SVNCopyDriver extends SVNBasicClient {
             }
             SVNFileType srcType = SVNFileType.getType(src);
             if (srcType == SVNFileType.FILE || srcType == SVNFileType.SYMLINK) {
-                if (srcEntry.isScheduledForAddition() && !srcEntry.isCopied()) {
+                if (srcEntry.isScheduledForAddition() && !(srcEntry.isCopied() && srcEntry.getCopyFromURL() != null)) {
                     copyAddedFileAdm(src, srcAccess, dstAccess, dstParent, dstName, true);
                 } else {
                     copyFileAdm(src, srcAccess, dstParent, dstAccess, dstName, move);
                 }
             } else if (srcType == SVNFileType.DIRECTORY) {
-                if (srcEntry.isScheduledForAddition() && !srcEntry.isCopied()) {
+                if (srcEntry.isScheduledForAddition() && !(srcEntry.isCopied() && srcEntry.getCopyFromURL() != null)) {
                     copyAddedDirAdm(src, srcAccess, dstParent, dstAccess, dstName, true);
                 } else {
                     copyDirAdm(src, srcAccess, dstAccess, dstParent, dstName);
