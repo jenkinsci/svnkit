@@ -1,7 +1,24 @@
+Version 1.0.4
+(16 Dec 2010, from /branches/1.0.x)
+
+Repository: http://svn.sqljet.com/repos/sqljet/tags/1.0.4/
+Issues Tracker: http://code.google.com/p/sqljet/issues/list
+
+Bugfixes:
+
+  * Conflicting table, columns and index names should be detected early (issue #143, -r958,959). 
+  * Insert of specific data led to database corruption (issue #133, -r957).
+  * SqlJetTabe.scope(...) and reverse() methods didn't work properly (issue #132, -r945).
+  * InsertOr and delete in the same transaction might corrupt database (issue #131, -r944).
+  * ISqlJetCursor::isNull(int field) returned wrong value (issue #130, -r942).
+  * ISqlJet.getRowCount() assertion failed (issue #129, -r941).
+  * SqlJetTable.insertOr(...) didn't work in certain cases (issue #128, -r937).
+  * Support for 'CHECK(LENGTH(name))' style conditions (-r918).
+
 Version 1.0.3
 (05 May 2010, from /branches/1.0.x)
 
-Repository: http://svn.sqljet.com/repos/sqljet/tags/1.0.x/
+Repository: http://svn.sqljet.com/repos/sqljet/tags/1.0.3/
 Issues Tracker: http://code.google.com/p/sqljet/issues/list
 
  Bugfixes:
