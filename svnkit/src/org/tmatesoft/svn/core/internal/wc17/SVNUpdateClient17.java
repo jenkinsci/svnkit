@@ -77,7 +77,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @since 1.2
  * @see <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>
  */
-public class SVNUpdateClient17 extends SVNBasicDelegate {
+public class SVNUpdateClient17 extends SVNBaseClient17 {
 
     private ISVNExternalsHandler myExternalsHandler;
     private boolean myIsUpdateLocksOnDemand;
@@ -383,11 +383,11 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
      * @since 1.2, SVN 1.5
      */
     public long doUpdate(File path, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions, boolean depthIsSticky) throws SVNException {
-        final SVNWCContext wcContext = new SVNWCContext(this.getOptions(), getEventDispatcher());
+        final SVNWCContext wcContext = getContext();
         try {
             return update(wcContext, path, revision, depth, allowUnversionedObstructions, depthIsSticky, false, false);
         } finally {
-            wcContext.close();
+            closeContext();
         }
     }
 
@@ -871,7 +871,7 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
         if (!revision.isValid()) {
             revision = SVNRevision.HEAD;
         }
-        final SVNWCContext wcContext = new SVNWCContext(this.getOptions(), getEventDispatcher());
+        final SVNWCContext wcContext = getContext();
         try {
             SVNRepository repos = createRepository(url, null, true);
             url = repos.getLocation();
@@ -917,7 +917,7 @@ public class SVNUpdateClient17 extends SVNBasicDelegate {
             }
             return result;
         } finally {
-            wcContext.close();
+            closeContext();
         }
     }
 

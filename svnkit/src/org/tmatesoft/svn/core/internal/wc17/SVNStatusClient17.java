@@ -67,7 +67,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @see SVNStatus
  * @see <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>
  */
-public class SVNStatusClient17 extends SVNBasicDelegate {
+public class SVNStatusClient17 extends SVNBaseClient17 {
 
     /**
      * @author TMate Software Ltd.
@@ -97,7 +97,7 @@ public class SVNStatusClient17 extends SVNBasicDelegate {
             }
             myHandler.handleStatus(status);
         }
-        
+
         public static boolean matchesChangeList(Collection changeLists, SVNStatus17 status) {
             return changeLists == null || changeLists.isEmpty() || (status != null && status.getChangelist() != null && changeLists.contains(status.getChangelist()));
         }
@@ -381,7 +381,7 @@ public class SVNStatusClient17 extends SVNBasicDelegate {
             return -1;
         }
         depth = depth == null ? SVNDepth.UNKNOWN : depth;
-        final SVNWCContext wcContext = new SVNWCContext(this.getOptions(), getEventDispatcher());
+        final SVNWCContext wcContext = getContext();
         SVNStatusEditor17 editor = null;
         TweakHandler tweakHandler = new TweakHandler(changeLists, handler);
 
@@ -452,8 +452,7 @@ public class SVNStatusClient17 extends SVNBasicDelegate {
                     checkCancelled();
                     editor.closeEdit();
                 } else {
-                    editor = new SVNRemoteStatusEditor17(dirAbsPath, targetBaseName,
-                            wcContext, getOptions(), includeIgnored, reportAll, depth, externalsStore, tweakHandler);
+                    editor = new SVNRemoteStatusEditor17(dirAbsPath, targetBaseName, wcContext, getOptions(), includeIgnored, reportAll, depth, externalsStore, tweakHandler);
                     SVNRepository locksRepos = createRepository(url, false);
                     checkCancelled();
                     boolean serverSupportsDepth = repository.hasCapability(SVNCapability.DEPTH);
@@ -477,11 +476,11 @@ public class SVNStatusClient17 extends SVNBasicDelegate {
                 editor.closeEdit();
             }
 
-            if (!isIgnoreExternals() && isRecursiveDepth(depth)) {
+            if (!isIgnoreExternals() && SVNWCUtils.isRecursiveDepth(depth)) {
                 doExternalStatus(externalsStore.getNewExternals(), depth, remote, reportAll, includeIgnored, handler);
             }
         } finally {
-            wcContext.close();
+            closeContext();
         }
         return editor.getTargetRevision();
 
@@ -526,18 +525,6 @@ public class SVNStatusClient17 extends SVNBasicDelegate {
                 }
             }
         }
-    }
-
-    /**
-     * Return a recursion boolean based on @a depth.
-     *
-     * Although much code has been converted to use depth, some code still takes
-     * a recurse boolean. In most cases, it makes sense to treat unknown or
-     * infinite depth as recursive, and any other depth as non-recursive (which
-     * in turn usually translates to #svn_depth_files).
-     */
-    private boolean isRecursiveDepth(SVNDepth depth) {
-        return depth == SVNDepth.INFINITY || depth == SVNDepth.UNKNOWN;
     }
 
     private SVNRepository createRepository(SVNURL url, boolean mayReuse) throws SVNException {

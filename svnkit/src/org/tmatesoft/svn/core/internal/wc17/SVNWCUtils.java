@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.internal.wc17;
 import java.io.File;
 import java.util.Iterator;
 
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
@@ -29,6 +30,18 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
  * @author TMate Software Ltd.
  */
 public class SVNWCUtils {
+
+    /**
+     * Return a recursion boolean based on @a depth.
+     *
+     * Although much code has been converted to use depth, some code still takes
+     * a recurse boolean. In most cases, it makes sense to treat unknown or
+     * infinite depth as recursive, and any other depth as non-recursive (which
+     * in turn usually translates to #svn_depth_files).
+     */
+    public static boolean isRecursiveDepth(SVNDepth depth) {
+        return depth == SVNDepth.INFINITY || depth == SVNDepth.UNKNOWN;
+    }
 
     public static File admChild(File dirAbsPath, String admChildFileName) {
         return SVNFileUtil.createFilePath(SVNFileUtil.createFilePath(dirAbsPath, SVNFileUtil.getAdminDirectoryName()), admChildFileName);

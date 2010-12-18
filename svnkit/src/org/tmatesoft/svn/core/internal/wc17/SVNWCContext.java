@@ -140,12 +140,11 @@ public class SVNWCContext {
 
     public static final int WC_NG_VERSION = 12;
 
-    public static final String WC_ADM_FORMAT            =  "format";
-    public static final String WC_ADM_ENTRIES           =  "entries";
-    public static final String WC_ADM_TMP               =  "tmp";
-    public static final String WC_ADM_PRISTINE          = "pristine";
-    public static final String WC_ADM_NONEXISTENT_PATH  =  "nonexistent-path";
-
+    public static final String WC_ADM_FORMAT = "format";
+    public static final String WC_ADM_ENTRIES = "entries";
+    public static final String WC_ADM_TMP = "tmp";
+    public static final String WC_ADM_PRISTINE = "pristine";
+    public static final String WC_ADM_NONEXISTENT_PATH = "nonexistent-path";
 
     public interface CleanupHandler {
 
