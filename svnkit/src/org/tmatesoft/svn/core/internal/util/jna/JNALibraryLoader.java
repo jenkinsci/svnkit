@@ -29,7 +29,8 @@ class JNALibraryLoader {
     private static ISVNSecurityLibrary ourSecurityLibrary;
     private static ISVNCLibrary ourCLibrary;
     private static ISVNWin32Library ourWin32Library;
-    
+    private static ISVNMacOsSecurityLibrary ourMacOsSecurityLibrary;
+
     private static volatile int ourUID = -1;
     private static volatile int ourGID = -1;
 
@@ -56,6 +57,7 @@ class JNALibraryLoader {
         
         if (SVNFileUtil.isOSX || SVNFileUtil.isLinux || SVNFileUtil.isBSD || SVNFileUtil.isSolaris) {
             try {
+                ourMacOsSecurityLibrary = (ISVNMacOsSecurityLibrary) Native.loadLibrary("Security", ISVNMacOsSecurityLibrary.class);
                 ourCLibrary = (ISVNCLibrary) Native.loadLibrary("c", ISVNCLibrary.class);
                 try {
                     ourUID = ourCLibrary.getuid();
@@ -67,8 +69,10 @@ class JNALibraryLoader {
                 } catch (Throwable th) {
                     ourGID = -1;
                 }
+
             } catch (Throwable th) {
                 ourCLibrary = null;
+                ourMacOsSecurityLibrary = null;
             }
         }
     }
@@ -99,6 +103,10 @@ class JNALibraryLoader {
     
     public static synchronized ISVNCLibrary getCLibrary() {
         return ourCLibrary;
+    }
+
+    public static synchronized ISVNMacOsSecurityLibrary getMacOsSecurityLibrary() {
+        return ourMacOsSecurityLibrary;
     }
 
     private static String getSecurityLibraryName() {

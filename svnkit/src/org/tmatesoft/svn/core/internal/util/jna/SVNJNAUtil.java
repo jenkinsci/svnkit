@@ -141,6 +141,10 @@ public class SVNJNAUtil {
     public synchronized static boolean isWinCryptEnabled() {
         return isJNAPresent() && SVNWinCrypt.isEnabled();
     }
+
+    public synchronized static boolean isMacOsKeychainEnabled() {
+        return isJNAPresent() && SVNMacOsKeychain.isEnabled();
+    }
     
     public static String getApplicationDataPath(boolean common) {
         if (isJNAPresent()) {
