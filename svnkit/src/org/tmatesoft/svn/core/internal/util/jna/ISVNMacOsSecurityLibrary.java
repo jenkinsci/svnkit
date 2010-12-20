@@ -13,6 +13,8 @@ package org.tmatesoft.svn.core.internal.util.jna;
 
 import com.sun.jna.Library;
 import com.sun.jna.Pointer;
+import com.sun.jna.ptr.IntByReference;
+import com.sun.jna.ptr.PointerByReference;
 
 /**
  * @author TMate Software Ltd.
@@ -20,16 +22,16 @@ import com.sun.jna.Pointer;
  */
 interface ISVNMacOsSecurityLibrary extends Library {
 
-    int SecKeychainSetUserInteractionAllowed(int userInteractionAllowed);
+    int SecKeychainSetUserInteractionAllowed(boolean userInteractionAllowed);
 
     int SecKeychainFindGenericPassword(Pointer keychain, int realmLength, byte[] realm,
-                                       int userNameLength, byte[] userName, int[] dataLengthHolder,
-                                       Pointer[] dataHolder, Pointer[] itemHolder);
+                                       int userNameLength, byte[] userName, IntByReference passwordLengthHolder,
+                                       PointerByReference passwordHolder, PointerByReference itemHolder);
 
     int SecKeychainAddGenericPassword(Pointer keychain, int realmLength, byte[] realm, int userNameLength,
-                                      byte[] userName, int dataLength, byte[] data, Pointer item);
+                                      byte[] userName, int pointerLength, byte[] password, Pointer item);
 
-    int SecKeychainItemModifyAttributesAndData(Pointer item, Pointer[] attributesHolder, int dataLength, byte[] data);
+    int SecKeychainItemModifyAttributesAndData(Pointer item, PointerByReference attributesHolder, int passwordLength, byte[] password);
 
     int SecKeychainItemFreeContent(Pointer attributes, Pointer data);
 }

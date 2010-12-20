@@ -127,6 +127,7 @@ svnkit/src/org/tmatesoft/svn/core/internal/util/SVNEmptyTask.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/util/SVNEmptyThreadPool.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/util/SVNTask.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/util/SVNThreadPool.java -text
+svnkit/src/org/tmatesoft/svn/core/internal/util/jna/ISVNMacOsCFLibrary.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/util/jna/ISVNMacOsSecurityLibrary.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/util/jna/SVNMacOsKeychain.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/util/jna/SVNOS2Util.java -text
