@@ -942,6 +942,10 @@ public class SVNWCContext {
         if (node_status == SVNStatusType.STATUS_NORMAL && prop_status != SVNStatusType.STATUS_NONE)
             node_status = prop_status;
 
+        if(node_status == SVNStatusType.STATUS_ADDED) {
+            prop_status = SVNStatusType.STATUS_NONE;
+        }
+
         /*
          * 5. Easy out: unless we're fetching -every- entry, don't bother to
          * allocate a struct for an uninteresting entry.
