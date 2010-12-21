@@ -49,7 +49,7 @@ public class EclipseSVNAuthenticationManager extends DefaultSVNAuthenticationMan
     }
 
     protected ISVNAuthenticationProvider createCacheAuthenticationProvider(File authDir, String userName) {
-        return new KeyringAuthenticationProvider();
+        return new KeyringAuthenticationProvider(authDir, userName, getConnectionOptions());
     }
 
     protected ISVNAuthenticationProvider createDefaultAuthenticationProvider(String userName, String password, File privateKey, String passphrase, boolean allowSave) {
@@ -60,10 +60,10 @@ public class EclipseSVNAuthenticationManager extends DefaultSVNAuthenticationMan
         };
     }
 
-    static class KeyringAuthenticationProvider implements ISVNAuthenticationProvider, IPersistentAuthenticationProvider {
+    static class KeyringAuthenticationProvider extends AbstractSVNPersistentAuthenticationProvider implements ISVNAuthenticationProvider {
 
-        private boolean isCertFile(String realm) {
-            return SVNFileType.getType(new File(realm)).isFile();
+        public KeyringAuthenticationProvider(File directory, String userName, ISVNConnectionOptions connectionOptions) {
+            super(directory, userName, connectionOptions);
         }
 
         public SVNAuthentication requestClientAuthentication(String kind, SVNURL url, String realm, SVNErrorMessage errorMessage, SVNAuthentication previousAuth, boolean authMayBeStored) {
