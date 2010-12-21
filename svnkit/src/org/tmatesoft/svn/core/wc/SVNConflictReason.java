@@ -77,6 +77,9 @@ public class SVNConflictReason {
         if (ADDED.getName().equals(reason)) {
             return ADDED;
         }
+        if (REPLACED.getName().equals(reason)) {
+            return REPLACED;
+        }
         return null;
     }
 
