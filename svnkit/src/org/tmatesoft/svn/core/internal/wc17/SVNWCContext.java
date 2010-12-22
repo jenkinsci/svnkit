@@ -942,7 +942,7 @@ public class SVNWCContext {
         if (node_status == SVNStatusType.STATUS_NORMAL && prop_status != SVNStatusType.STATUS_NONE)
             node_status = prop_status;
 
-        if(node_status == SVNStatusType.STATUS_ADDED) {
+        if (node_status == SVNStatusType.STATUS_ADDED) {
             prop_status = SVNStatusType.STATUS_NONE;
         }
 
@@ -1599,7 +1599,7 @@ public class SVNWCContext {
         }
 
         assert (readInfo.reposRootUrl != null && readInfo.reposRelPath != null);
-        return SVNURL.parseURIDecoded(SVNPathUtil.append(readInfo.reposRootUrl.toDecodedString(), readInfo.reposRelPath.toString()));
+        return SVNWCUtils.join(readInfo.reposRootUrl, readInfo.reposRelPath);
     }
 
     public ConflictedInfo getConflicted(File localAbsPath, boolean isTextNeed, boolean isPropNeed, boolean isTreeNeed) throws SVNException {
@@ -3896,7 +3896,7 @@ public class SVNWCContext {
 
     public void getAndRecordFileInfo(File localAbspath, boolean ignoreError) throws SVNException {
         if (localAbspath.exists()) {
-            SVNDate lastModified = new SVNDate(localAbspath.lastModified(),0);
+            SVNDate lastModified = new SVNDate(localAbspath.lastModified(), 0);
             long length = localAbspath.length();
             db.globalRecordFileinfo(localAbspath, length, lastModified);
         }

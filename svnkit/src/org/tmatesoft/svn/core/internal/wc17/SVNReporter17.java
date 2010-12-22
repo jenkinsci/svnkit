@@ -267,8 +267,7 @@ public class SVNReporter17 implements ISVNReporterBaton {
                      * directory), and that target is a file, we need to pass an
                      * empty string to link_path.
                      */
-                    reporter.linkPath(SVNURL.parseURIDecoded(SVNPathUtil.append(repos_root.toDecodedString(), repos_relpath.getPath())), "", target_lock != null ? target_lock.token : null,
-                            target_rev, target_depth, false);
+                    reporter.linkPath(SVNWCUtils.join(repos_root, repos_relpath), "", target_lock != null ? target_lock.token : null, target_rev, target_depth, false);
                     skip_set_path = true;
                 }
 
