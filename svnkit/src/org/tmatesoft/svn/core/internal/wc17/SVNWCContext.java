@@ -3896,7 +3896,7 @@ public class SVNWCContext {
 
     public void getAndRecordFileInfo(File localAbspath, boolean ignoreError) throws SVNException {
         if (localAbspath.exists()) {
-            SVNDate lastModified = SVNWCUtils.readDate(localAbspath.lastModified());
+            SVNDate lastModified = new SVNDate(localAbspath.lastModified(),0);
             long length = localAbspath.length();
             db.globalRecordFileinfo(localAbspath, length, lastModified);
         }

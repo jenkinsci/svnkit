@@ -966,15 +966,7 @@ public class SVNWCDb implements ISVNWCDb {
         public SVNWCDbRoot wcRoot;
 
         public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
-            TreesExistInfo whichTreesExist = whichTreesExist(db, wcRoot.getWcId(), localRelpath);
-            boolean baseExists = whichTreesExist.baseExists;
-            boolean workingExists = whichTreesExist.workingExists;
-            if (!baseExists && !workingExists) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "Could not find node ''{0}'' for recording file information.",
-                        SVNFileUtil.createFilePath(wcRoot.getAbsPath(), localRelpath));
-                SVNErrorManager.error(err, SVNLogType.WC);
-            }
-            SVNSqlJetStatement stmt = db.getStatement(workingExists ? SVNWCDbStatements.UPDATE_WORKING_NODE_FILEINFO : SVNWCDbStatements.UPDATE_BASE_NODE_FILEINFO);
+            SVNSqlJetStatement stmt = db.getStatement(SVNWCDbStatements.UPDATE_NODE_FILEINFO);
             stmt.bindf("isii", wcRoot.getWcId(), localRelpath, translatedSize, lastModTime);
             long affectedRows = stmt.done();
             assert (affectedRows == 1);

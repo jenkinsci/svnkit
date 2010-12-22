@@ -20,18 +20,23 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetUpdateStatement;
 /**
  * UPDATE nodes SET translated_size = ?3, last_mod_time = ?4 WHERE wc_id = ?1
  * AND local_relpath = ?2 AND op_depth = (SELECT MAX(op_depth) FROM nodes WHERE
- * wc_id = ?1 AND local_relpath = ?2 AND op_depth > 0);
+ * wc_id = ?1 AND local_relpath = ?2);
  *
  * @version 1.4
  * @author TMate Software Ltd.
  */
-public class SVNWCDbUpdateWorkingNodeFileinfo extends SVNSqlJetUpdateStatement {
+public class SVNWCDbUpdateNodeFileinfo extends SVNSqlJetUpdateStatement {
 
     private SVNWCDbNodesMaxOpDepth maxOpDepth;
 
-    public SVNWCDbUpdateWorkingNodeFileinfo(SVNSqlJetDb sDb) throws SVNException {
+    public SVNWCDbUpdateNodeFileinfo(SVNSqlJetDb sDb) throws SVNException {
         super(sDb, SVNWCDbSchema.NODES);
-        maxOpDepth = new SVNWCDbNodesMaxOpDepth(sDb);
+        maxOpDepth = new SVNWCDbNodesMaxOpDepth(sDb) {
+
+            protected boolean isFilterPassed() throws SVNException {
+                return true;
+            };
+        };
     }
 
     protected Object[] getWhere() throws SVNException {
