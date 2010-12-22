@@ -17,6 +17,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.util.SVNLogType;
 
 import com.sun.jna.Pointer;
@@ -29,43 +30,10 @@ import com.sun.jna.ptr.PointerByReference;
  */
 class SVNMacOsKeychain {
 
-    public static void main(String[] args) throws SVNException {
-        final ISVNMacOsSecurityLibrary lib = JNALibraryLoader.getMacOsSecurityLibrary();
-        System.out.println("security library = " + lib);
-
-        boolean nonInteractive = false;
-        String realm = "Test SVN Repository Realm";
-        String userName = "userName";
-        String password1 = "p1";
-        String password2 = "p2";
-        String password3 = "p3";
-
-        String pswd = getPassword(realm, userName, nonInteractive);
-        System.out.println("pswd 0 = " + pswd);
-
-        boolean setOk = setPassword(realm, userName, password1, nonInteractive);
-        System.out.println("setOk 1 = " + setOk);
-
-        pswd = getPassword(realm, userName, nonInteractive);
-        System.out.println("pswd 1 = " + pswd);
-
-        setOk = setPassword(realm, userName, password2, nonInteractive);
-        System.out.println("setOk 2 = " + setOk);
-
-        pswd = getPassword(realm, userName, nonInteractive);
-        System.out.println("pswd 2 = " + pswd);
-
-        setOk = setPassword(realm, userName, password3, nonInteractive);
-        System.out.println("setOk 3 = " + setOk);
-
-        pswd = getPassword(realm, userName, nonInteractive);
-        System.out.println("pswd 3 = " + pswd);
-    }
-
     private static final int ERR_SEC_ITEM_NOT_FOUND = -25300;
 
     static boolean isEnabled() {
-        return true;
+        return SVNFileUtil.isOSX && JNALibraryLoader.getMacOsSecurityLibrary() != null;
     }
 
     public static synchronized boolean setPassword(String realm, String userName, String password, boolean nonInteractive) throws SVNException {
@@ -73,7 +41,7 @@ class SVNMacOsKeychain {
         if (library == null) {
             return false;
         }
-        if (realm == null || userName == null) {
+        if (realm == null) {
             return false;
         }
 
@@ -83,16 +51,17 @@ class SVNMacOsKeychain {
 
         try {
             byte[] rawRealm = realm.getBytes("UTF-8");
-            byte[] rawUserName = userName.getBytes("UTF-8");
+            byte[] rawUserName = userName == null ? null : userName.getBytes("UTF-8");
+            int rawUserNameLength = userName == null ? 0 : rawUserName.length;
             byte[] rawPassword = password.getBytes("UTF-8");
 
             PointerByReference itemHolder = new PointerByReference();
             int status = library.SecKeychainFindGenericPassword(null, rawRealm.length, rawRealm,
-                    rawUserName.length, rawUserName, null, null, itemHolder);
+                    rawUserNameLength, rawUserName, null, null, itemHolder);
 
             if (status == ERR_SEC_ITEM_NOT_FOUND) {
                 status = library.SecKeychainAddGenericPassword(null, rawRealm.length, rawRealm,
-                        rawUserName.length, rawUserName, rawPassword.length, rawPassword, null);
+                        rawUserNameLength, rawUserName, rawPassword.length, rawPassword, null);
             } else {
                 Pointer item = itemHolder.getValue();
                 try {
@@ -121,7 +90,7 @@ class SVNMacOsKeychain {
             return null;
         }
 
-        if (realm == null || userName == null) {
+        if (realm == null) {
             return null;
         }
 
@@ -131,11 +100,12 @@ class SVNMacOsKeychain {
 
         try {
             byte[] rawRealm = realm.getBytes("UTF-8");
-            byte[] rawUserName = userName.getBytes("UTF-8");
+            byte[] rawUserName = userName == null ? null : userName.getBytes("UTF-8");
+            int rawUserNameLength = userName == null ? 0 : rawUserName.length;
             IntByReference passwordLengthHolder = new IntByReference();
             PointerByReference passwordHolder = new PointerByReference();
 
-            int status = library.SecKeychainFindGenericPassword(null, rawRealm.length, rawRealm, rawUserName.length, rawUserName,
+            int status = library.SecKeychainFindGenericPassword(null, rawRealm.length, rawRealm, rawUserNameLength, rawUserName,
                     passwordLengthHolder, passwordHolder, null);
 
             if (status != 0) {
