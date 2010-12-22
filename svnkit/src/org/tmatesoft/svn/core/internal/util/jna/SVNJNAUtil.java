@@ -13,6 +13,7 @@ package org.tmatesoft.svn.core.internal.util.jna;
 
 import java.io.File;
 
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
@@ -134,6 +135,20 @@ public class SVNJNAUtil {
     public static String encrypt(String rawData) {
         if (isJNAPresent()) {
             return SVNWinCrypt.encrypt(rawData);
+        }
+        return null;
+    }
+
+    public static boolean addPasswordToMacOsKeychain(String realm, String userName, String password, boolean nonInteractive) throws SVNException {
+        if (isJNAPresent()) {
+            return SVNMacOsKeychain.setPassword(realm, userName, password, nonInteractive);
+        }
+        return false;
+    }
+
+    public static String getPasswordFromMacOsKeychain(String realm, String userName, boolean nonInteractive) throws SVNException {
+        if (isJNAPresent()) {
+            return SVNMacOsKeychain.getPassword(realm, userName, nonInteractive);
         }
         return null;
     }

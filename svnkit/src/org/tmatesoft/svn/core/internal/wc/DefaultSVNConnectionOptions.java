@@ -29,6 +29,11 @@ import org.tmatesoft.svn.core.auth.SVNAuthentication;
  */
 public class DefaultSVNConnectionOptions implements ISVNConnectionOptions {
 
+    private static final String[] DEFAULT_PASSWORD_STORE_TYPES = new String[]{
+            DefaultSVNPersistentAuthenticationProvider.WINDOWS_CRYPTO_API_PASSWORD_STORAGE,
+            DefaultSVNPersistentAuthenticationProvider.MAC_OS_KEYCHAIN_PASSWORD_STORAGE
+    };
+
     private final SVNCompositeConfigFile myServersFile;
     private final SVNCompositeConfigFile myConfigFile;
 
@@ -82,6 +87,21 @@ public class DefaultSVNConnectionOptions implements ISVNConnectionOptions {
         return "yes".equalsIgnoreCase(storeAuthCreds) || "on".equalsIgnoreCase(storeAuthCreds) || "true".equalsIgnoreCase(storeAuthCreds);
     }
 
+    public String[] getPasswordStorageTypes() {
+        String storeTypesOption = getConfigFile().getPropertyValue("auth", "password-stores");
+        if (storeTypesOption == null) {
+            return DEFAULT_PASSWORD_STORE_TYPES;
+        }
+        List storeTypes = new ArrayList();
+        for (StringTokenizer types = new StringTokenizer(storeTypesOption, " ,"); types.hasMoreTokens();) {
+            String type = types.nextToken();
+            type = type == null ? null : type.trim();
+            if (type != null && !"".equals(type)) {
+                storeTypes.add(type);
+            }
+        }
+        return (String[]) storeTypes.toArray(new String[storeTypes.size()]);
+    }
 
     public boolean isStorePasswords(SVNURL url) {
         boolean store = true;

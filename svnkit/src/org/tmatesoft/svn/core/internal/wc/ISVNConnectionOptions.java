@@ -26,6 +26,8 @@ public interface ISVNConnectionOptions {
 
     Collection getAuthTypes(SVNURL url);
 
+    String[] getPasswordStorageTypes();
+
     boolean isAuthStorageEnabled(SVNURL url);
 
     boolean isStorePasswords(SVNURL url);

@@ -203,10 +203,10 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             myLastLoadedAuth = null;
             return;
         }
-        if (myIsStoreAuth && authentication.isStorageAllowed() && myProviders[2] instanceof AbstractSVNPersistentAuthenticationProvider) {
+        if (myIsStoreAuth && authentication.isStorageAllowed() && myProviders[2] instanceof ISVNPersistentAuthenticationProvider) {
             // compare this authentication with last loaded from provider[2].
             if (myLastLoadedAuth == null || myLastLoadedAuth != authentication) {
-                ((AbstractSVNPersistentAuthenticationProvider) myProviders[2]).saveAuthentication(authentication, kind, realm);
+                ((ISVNPersistentAuthenticationProvider) myProviders[2]).saveAuthentication(authentication, kind, realm);
             }
         }
         myLastLoadedAuth = null;
@@ -342,7 +342,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
     }
 
     protected ISVNAuthenticationProvider createCacheAuthenticationProvider(File authDir, String userName) {
-        return new AbstractSVNPersistentAuthenticationProvider(authDir, userName, getConnectionOptions());
+        return new DefaultSVNPersistentAuthenticationProvider(authDir, userName, getConnectionOptions());
     }
 
     protected class DumbAuthenticationProvider implements ISVNAuthenticationProvider {
@@ -529,8 +529,8 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         String realm = hostName + ":" + port + " <" + keyAlgorithm + ">";
         
         byte[] existingFingerprints = (byte[]) getRuntimeAuthStorage().getData("svn.ssh.server", realm);
-        if (existingFingerprints == null && myProviders[2] instanceof AbstractSVNPersistentAuthenticationProvider) {
-            existingFingerprints = ((AbstractSVNPersistentAuthenticationProvider) myProviders[2]).loadFingerprints(realm);
+        if (existingFingerprints == null && myProviders[2] instanceof ISVNPersistentAuthenticationProvider) {
+            existingFingerprints = ((ISVNPersistentAuthenticationProvider) myProviders[2]).loadFingerprints(realm);
         }
 
         if (existingFingerprints == null || !equals(existingFingerprints, hostKey)) {
@@ -539,8 +539,8 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             if (getAuthenticationProvider() != null) {
                 int accepted = getAuthenticationProvider().acceptServerAuthentication(url, realm, hostKey, isAuthStorageEnabled(url));
                 if (accepted == ISVNAuthenticationProvider.ACCEPTED && isAuthStorageEnabled(url)) {
-                    if (storageEnabled && hostKey != null && myProviders[2] instanceof AbstractSVNPersistentAuthenticationProvider) {
-                        ((AbstractSVNPersistentAuthenticationProvider) myProviders[2]).saveFingerprints(realm, hostKey);
+                    if (storageEnabled && hostKey != null && myProviders[2] instanceof ISVNPersistentAuthenticationProvider) {
+                        ((ISVNPersistentAuthenticationProvider) myProviders[2]).saveFingerprints(realm, hostKey);
                     }
                 } else if (accepted == ISVNAuthenticationProvider.REJECTED) {
                     throw new SVNAuthenticationException(SVNErrorMessage.create(SVNErrorCode.AUTHN_CREDS_NOT_SAVED, "Host key ('" + realm + "') can not be verified."));
