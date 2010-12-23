@@ -166,6 +166,7 @@ svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbDeleteWorkin
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbDetermineTreeForRecording.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbFindWCLock.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbInsertActualConflictData.java -text
+svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbInsertActualProps.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbInsertActualTextConflicts.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbInsertActualTreeConflicts.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbInsertNode.java -text

@@ -37,7 +37,7 @@ public enum SVNWCDbStatements {
     FSFS_SET_REVPROP(SVNFSFSRevPropSet.class),
     INSERT_ACTUAL_CONFLICT_DATA(SVNWCDbInsertActualConflictData.class),
     INSERT_ACTUAL_PROPERTY_CONFLICTS,
-    INSERT_ACTUAL_PROPS,
+    INSERT_ACTUAL_PROPS(SVNWCDbInsertActualProps.class),
     INSERT_ACTUAL_TEXT_CONFLICTS(SVNWCDbInsertActualTextConflicts.class),
     INSERT_ACTUAL_TREE_CONFLICTS(SVNWCDbInsertActualTreeConflicts.class),
     INSERT_BASE_NODE,
