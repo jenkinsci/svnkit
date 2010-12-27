@@ -32,6 +32,8 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
+import org.tmatesoft.svn.core.internal.wc.ISVNAuthStoreHandler;
+import org.tmatesoft.svn.core.internal.wc.ISVNAuthenticationStorageOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.util.SVNLogType;
@@ -113,11 +115,26 @@ public class SVNSyncCommandEnvironment extends AbstractSVNCommandEnvironment {
         File configDir = myConfigDir != null ? new File(myConfigDir) : SVNWCUtil.getDefaultConfigurationDirectory();        
         DefaultSVNAuthenticationManager authManager = (DefaultSVNAuthenticationManager) SVNWCUtil.createDefaultAuthenticationManager(configDir, 
                 myUserName, myPassword, !myIsNoAuthCache);
+
+        final ISVNAuthStoreHandler authStoreHandler;
         if (!myIsNonInteractive) {
-            SVNConsoleAuthenticationProvider authProvider = new SVNConsoleAuthenticationProvider(myIsTrustServerCertificate);
-            authManager.setAuthStoreHandler(authProvider);
-            authManager.setAuthenticationProvider(authProvider);
+            SVNConsoleAuthenticationProvider consoleAuthProvider = new SVNConsoleAuthenticationProvider(myIsTrustServerCertificate);
+            authManager.setAuthenticationProvider(consoleAuthProvider);
+            authStoreHandler = consoleAuthProvider;
+        } else {
+            authStoreHandler = null;
         }
+
+        ISVNAuthenticationStorageOptions authOpts = new ISVNAuthenticationStorageOptions() {
+            public boolean isNonInteractive() throws SVNException {
+                return myIsNonInteractive;
+            }
+
+            public ISVNAuthStoreHandler getAuthStoreHandler() throws SVNException {
+                return authStoreHandler;
+            }
+        };
+        authManager.setAuthenticationStorageOptions(authOpts);
         return authManager;
     }
     

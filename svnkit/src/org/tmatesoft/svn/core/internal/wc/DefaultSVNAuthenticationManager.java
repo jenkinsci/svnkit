@@ -43,17 +43,13 @@ import org.tmatesoft.svn.util.SVNLogType;
 public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManager, ISVNSSHHostVerifier {
 
     private boolean myIsStoreAuth;
-    private ISVNAuthStoreHandler myAuthStoreHandler;
-    private ISVNAuthenticationStorage myRuntimeAuthStorage;
-
-    private ISVNAuthenticationProvider[] myProviders;
-
     private File myConfigDirectory;
-    private SVNCompositeConfigFile myConfigFile;
-    private SVNCompositeConfigFile myServersFile;
-    private Map myServersOptions;
-    private Map myConfigOptions;
-    private ISVNConnectionOptions myAuthOptions;
+    private ISVNAuthenticationStorageOptions myAuthOptions;
+    private DefaultSVNOptions myDefaultOptions;
+    private ISVNHostOptionsProvider myHostOptionsProvider;
+
+    private ISVNAuthenticationStorage myRuntimeAuthStorage;
+    private ISVNAuthenticationProvider[] myProviders;
 
     private SVNAuthentication myPreviousAuthentication;
     private SVNErrorMessage myPreviousErrorMessage;
@@ -72,24 +68,34 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         myConfigDirectory = configDirectory;
         if (myConfigDirectory == null) {
             myConfigDirectory = SVNWCUtil.getDefaultConfigurationDirectory();
-        }   
-        
+        }
+
         myProviders = new ISVNAuthenticationProvider[4];
         myProviders[0] = createDefaultAuthenticationProvider(userName, password, privateKey, passphrase, myIsStoreAuth);
         myProviders[1] = createRuntimeAuthenticationProvider();
         myProviders[2] = createCacheAuthenticationProvider(new File(myConfigDirectory, "auth"), userName);
     }
 
-    public void setAuthStoreHandler(ISVNAuthStoreHandler authStoreHandler) {
-        myAuthStoreHandler = authStoreHandler;
-    }
-    
     public void setInMemoryServersOptions(Map serversOptions) {
-        myServersOptions = serversOptions;
+        if (getHostOptionsProvider() instanceof DefaultSVNHostOptionsProvider) {
+            DefaultSVNHostOptionsProvider defaultHostOptionsProvider = (DefaultSVNHostOptionsProvider) getHostOptionsProvider();
+            defaultHostOptionsProvider.setInMemoryServersOptions(serversOptions);
+        }
     }
 
     public void setInMemoryConfigOptions(Map configOptions) {
-        myConfigOptions = configOptions;
+        getDefaultOptions().setInMemoryConfigOptions(configOptions);
+    }
+
+    public ISVNAuthenticationStorageOptions getAuthenticationStorageOptions() {
+        if (myAuthOptions == null) {
+            return ISVNAuthenticationStorageOptions.DEFAULT;
+        }
+        return myAuthOptions;
+    }
+
+    public void setAuthenticationStorageOptions(ISVNAuthenticationStorageOptions authOptions) {
+        myAuthOptions = authOptions;
     }
 
     public void setAuthenticationProvider(ISVNAuthenticationProvider provider) {
@@ -97,31 +103,44 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         myProviders[3] = provider; 
     }
 
-    public ISVNConnectionOptions getConnectionOptions() {
-        if (myAuthOptions == null) {
-            myAuthOptions = new ExtendedConnectionOptions(getServersFile(), getConfigFile());
+    public DefaultSVNOptions getDefaultOptions() {
+        if (myDefaultOptions == null) {
+            myDefaultOptions = new DefaultSVNOptions(myConfigDirectory, true);
         }
-        return myAuthOptions;
+        return myDefaultOptions;
+    }
+
+    public ISVNHostOptionsProvider getHostOptionsProvider() {
+        if (myHostOptionsProvider == null) {
+            myHostOptionsProvider = new ExtendedHostOptionsProvider();
+        }
+        return myHostOptionsProvider;
+    }
+
+    protected void setHostOptionsProvider(ISVNHostOptionsProvider hostOptionsProvider) {
+        myHostOptionsProvider = hostOptionsProvider;
     }
 
     public Collection getAuthTypes(SVNURL url) {
-        return getConnectionOptions().getAuthTypes(url);
+        return getHostOptionsProvider().getHostOptions(url).getAuthTypes();
     }
     
     public ISVNProxyManager getProxyManager(SVNURL url) throws SVNException {
-        String proxyHost = getConnectionOptions().getProxyHost(url);
+        final ISVNHostOptions hostOptions = getHostOptionsProvider().getHostOptions(url);
+        String proxyHost = hostOptions.getProxyHost();
         if (proxyHost == null) {
             return null;
         }
-        String proxyPort = getConnectionOptions().getProxyPort(url);
-        String proxyUser = getConnectionOptions().getProxyUserName(url);
-        String proxyPassword = getConnectionOptions().getProxyPassword(url);
+        String proxyPort = hostOptions.getProxyPort();
+        String proxyUser = hostOptions.getProxyUserName();
+        String proxyPassword = hostOptions.getProxyPassword();
         return new SimpleProxyManager(proxyHost, proxyPort, proxyUser, proxyPassword);
     }
 
 	public TrustManager getTrustManager(SVNURL url) throws SVNException {
-		boolean trustAll = getConnectionOptions().trustDefaultSSLCertificateAuthority(url);
-		File[] serverCertFiles = getConnectionOptions().getSSLAuthorityFiles(url);
+        final ISVNHostOptions hostOptions = getHostOptionsProvider().getHostOptions(url);
+        boolean trustAll = hostOptions.trustDefaultSSLCertificateAuthority();
+		File[] serverCertFiles = hostOptions.getSSLAuthorityFiles();
 		File authDir = new File(myConfigDirectory, "auth/svn.ssl.server");
 		return new DefaultSVNSSLTrustManager(authDir, url, serverCertFiles, trustAll, this);
 	}
@@ -158,7 +177,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         // report something default.
         if (ISVNAuthenticationManager.USERNAME.equals(kind)) {
             // user auth shouldn't be null.
-            return new SVNUserNameAuthentication("", isAuthStorageEnabled(url), url, false);
+            return new SVNUserNameAuthentication("", getHostOptionsProvider().getHostOptions(url).isAuthStorageEnabled(), url, false);
         }
         SVNErrorManager.authenticationFailed("Authentication required for ''{0}''", realm);
         return null;
@@ -236,28 +255,6 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         }
         return false;
     }
-    
-    protected SVNCompositeConfigFile getServersFile() {
-        if (myServersFile == null) {
-            SVNConfigFile.createDefaultConfiguration(myConfigDirectory);
-            SVNConfigFile userConfig = new SVNConfigFile(new File(myConfigDirectory, "servers"));
-            SVNConfigFile systemConfig = new SVNConfigFile(new File(SVNFileUtil.getSystemConfigurationDirectory(), "servers"));
-            myServersFile = new SVNCompositeConfigFile(systemConfig, userConfig);
-            myServersFile.setGroupsToOptions(myServersOptions);
-        }
-        return myServersFile;
-    }
-
-    protected SVNCompositeConfigFile getConfigFile() {
-        if (myConfigFile == null) {
-            SVNConfigFile.createDefaultConfiguration(myConfigDirectory);
-            SVNConfigFile userConfig = new SVNConfigFile(new File(myConfigDirectory, "config"));
-            SVNConfigFile systemConfig = new SVNConfigFile(new File(SVNFileUtil.getSystemConfigurationDirectory(), "config"));
-            myConfigFile = new SVNCompositeConfigFile(systemConfig, userConfig);
-            myConfigFile.setGroupsToOptions(myConfigOptions);
-        }
-        return myConfigFile;
-    }
 
     /**
      * Sets a specific runtime authentication storage manager. This storage
@@ -286,49 +283,21 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         return myRuntimeAuthStorage;
     }
     
-    protected boolean isAuthStorageEnabled(SVNURL url) {
-        return getConnectionOptions().isAuthStorageEnabled(url);
-    }
-    
-    protected boolean isStorePasswords(SVNURL url) {
-        return getConnectionOptions().isStorePasswords(url);
-    }
-    
-    protected boolean isStorePlainTextPasswords(String realm, SVNAuthentication auth) throws SVNException {
-        return getConnectionOptions().isStorePlainTextPasswords(realm, auth);
-    }
-    
-    protected boolean isStoreSSLClientCertificatePassphrases(SVNURL url) {
-        return getConnectionOptions().isStoreSSLClientCertificatePassphrases(url);
-    }
-
-    protected boolean isStorePlainTextPassphrases(String realm, SVNAuthentication auth) throws SVNException {
-        return getConnectionOptions().isStorePlainTextPassphrases(realm, auth);
-    }
-
-    protected String getUserName(SVNURL url) {
-        return getConnectionOptions().getUserName(url);
-    }
-    
     protected ISVNAuthenticationProvider getAuthenticationProvider() {
         return myProviders[3];
     }
-
-    protected int getDefaultSSHPortNumber() {
-        return getConnectionOptions().getDefaultSSHPortNumber();
-    }
     
     protected SVNSSHAuthentication getDefaultSSHAuthentication() {
-        String userName = getConnectionOptions().getDefaultSSHUserName();
-        String password = getConnectionOptions().getDefaultSSHPassword();
-        String keyFile = getConnectionOptions().getDefaultSSHKeyFile();
-        int port = getConnectionOptions().getDefaultSSHPortNumber();
-        String passphrase = getConnectionOptions().getDefaultSSHPassphrase();
+        String userName = getDefaultOptions().getDefaultSSHUserName();
+        String password = getDefaultOptions().getDefaultSSHPassword();
+        String keyFile = getDefaultOptions().getDefaultSSHKeyFile();
+        int port = getDefaultOptions().getDefaultSSHPortNumber();
+        String passphrase = getDefaultOptions().getDefaultSSHPassphrase();
 
         if (userName != null && password != null) {
-            return new SVNSSHAuthentication(userName, password, port, isAuthStorageEnabled(null), null, false);
+            return new SVNSSHAuthentication(userName, password, port, getHostOptionsProvider().getHostOptions(null).isAuthStorageEnabled(), null, false);
         } else if (userName != null && keyFile != null) {
-            return new SVNSSHAuthentication(userName, new File(keyFile), passphrase, port, isAuthStorageEnabled(null), null, false);
+            return new SVNSSHAuthentication(userName, new File(keyFile), passphrase, port, getHostOptionsProvider().getHostOptions(null).isAuthStorageEnabled(), null, false);
         }
         return null;
     }
@@ -342,7 +311,16 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
     }
 
     protected ISVNAuthenticationProvider createCacheAuthenticationProvider(File authDir, String userName) {
-        return new DefaultSVNPersistentAuthenticationProvider(authDir, userName, getConnectionOptions());
+        ISVNAuthenticationStorageOptions delegatingOptions = new ISVNAuthenticationStorageOptions() {
+            public boolean isNonInteractive() throws SVNException {
+                return getAuthenticationStorageOptions().isNonInteractive();
+            }
+
+            public ISVNAuthStoreHandler getAuthStoreHandler() throws SVNException {
+                return getAuthenticationStorageOptions().getAuthStoreHandler();
+            }
+        };
+        return new DefaultSVNPersistentAuthenticationProvider(authDir, userName, delegatingOptions, getDefaultOptions(), getHostOptionsProvider());
     }
 
     protected class DumbAuthenticationProvider implements ISVNAuthenticationProvider {
@@ -376,7 +354,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                     return new SVNSSHAuthentication(myUserName, myPassword, sshAuth != null ? sshAuth.getPortNumber() : -1, myIsStore, url, false);
                 } else if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {
                     if (myUserName == null || "".equals(myUserName.trim())) {
-                        String defaultUserName = getUserName(url);
+                        String defaultUserName = getHostOptionsProvider().getHostOptions(url).getUserName();
                         defaultUserName = defaultUserName == null ? System.getProperty("user.name") : defaultUserName; 
                         if (defaultUserName != null) {
                             //return new SVNUserNameAuthentication(defaultUserName, false);
@@ -427,23 +405,37 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         }
     }
 
-    public class ExtendedConnectionOptions extends DefaultSVNConnectionOptions {
+    public class ExtendedHostOptionsProvider extends DefaultSVNHostOptionsProvider {
 
-        public ExtendedConnectionOptions(SVNCompositeConfigFile serversFile, SVNCompositeConfigFile configFile) {
-            super(serversFile, configFile);
+        public ExtendedHostOptionsProvider() {
+            super(myConfigDirectory);
         }
 
-        public boolean isAuthStorageEnabled(SVNURL url) {
-            if (!super.hasAuthStorageEnabledOption(url)) {
+        @Override
+        public ISVNHostOptions getHostOptions(SVNURL url) {
+            return new ExtendedHostOptions(getServersFile(), url);
+        }
+    }
+
+    public class ExtendedHostOptions extends DefaultSVNHostOptions {
+
+        public ExtendedHostOptions(SVNCompositeConfigFile serversFile, SVNURL url) {
+            super(serversFile, url);
+        }
+
+        @Override
+        public boolean isAuthStorageEnabled() {
+            if (!super.hasAuthStorageEnabledOption()) {
                 return myIsStoreAuth;
             }
-            return super.isAuthStorageEnabled(url);
+            return super.isAuthStorageEnabled();
         }
 
         public boolean isStorePlainTextPasswords(String realm, SVNAuthentication auth) throws SVNException {
-            if (!super.hasStorePlainTextPasswordsOption(realm, auth)) {
-                if (myAuthStoreHandler != null) {
-                    return myAuthStoreHandler.canStorePlainTextPasswords(realm, auth);
+            if (!super.hasStorePlainTextPasswordsOption()) {
+                ISVNAuthStoreHandler handler = getAuthenticationStorageOptions().getAuthStoreHandler();
+                if (handler != null) {
+                    return handler.canStorePlainTextPasswords(realm, auth);
                 }
                 return false;
             }
@@ -451,9 +443,10 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         }
 
         public boolean isStorePlainTextPassphrases(String realm, SVNAuthentication auth) throws SVNException {
-            if (!super.hasStorePlainTextPassphrasesOption(realm, auth)) {
-                if (myAuthStoreHandler != null) {
-                    return myAuthStoreHandler.canStorePlainTextPassphrases(realm, auth);
+            if (!super.hasStorePlainTextPassphrasesOption()) {
+                ISVNAuthStoreHandler handler = getAuthenticationStorageOptions().getAuthStoreHandler();
+                if (handler != null) {
+                    return handler.canStorePlainTextPassphrases(realm, auth);
                 }
                 return false;
             }
@@ -518,11 +511,11 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
     }
 
     public int getReadTimeout(SVNRepository repository) {
-        return getConnectionOptions().getReadTimeout(repository.getLocation());
+        return getHostOptionsProvider().getHostOptions(repository.getLocation()).getReadTimeout();
     }
 
     public int getConnectTimeout(SVNRepository repository) {
-        return getConnectionOptions().getConnectTimeout(repository.getLocation());
+        return getHostOptionsProvider().getHostOptions(repository.getLocation()).getConnectTimeout();
     }
 
     public void verifyHostKey(String hostName, int port, String keyAlgorithm, byte[] hostKey) throws SVNException {
@@ -535,10 +528,11 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
 
         if (existingFingerprints == null || !equals(existingFingerprints, hostKey)) {
             SVNURL url = SVNURL.create("svn+ssh", null, hostName, port, "", true);
-            boolean storageEnabled = isAuthStorageEnabled(url);
+            final ISVNHostOptions hostOptions = getHostOptionsProvider().getHostOptions(url);
+            boolean storageEnabled = hostOptions.isAuthStorageEnabled();
             if (getAuthenticationProvider() != null) {
-                int accepted = getAuthenticationProvider().acceptServerAuthentication(url, realm, hostKey, isAuthStorageEnabled(url));
-                if (accepted == ISVNAuthenticationProvider.ACCEPTED && isAuthStorageEnabled(url)) {
+                int accepted = getAuthenticationProvider().acceptServerAuthentication(url, realm, hostKey, storageEnabled);
+                if (accepted == ISVNAuthenticationProvider.ACCEPTED && storageEnabled) {
                     if (storageEnabled && hostKey != null && myProviders[2] instanceof ISVNPersistentAuthenticationProvider) {
                         ((ISVNPersistentAuthenticationProvider) myProviders[2]).saveFingerprints(realm, hostKey);
                     }
