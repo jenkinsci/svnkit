@@ -204,41 +204,41 @@ abstract class HTTPAuthentication {
                 auth = ntlmAuth;
                 break;
             } else if ("Negotiate".equalsIgnoreCase(method)) {
-                
-                    HTTPNegotiateAuthentication negoAuth = null;
-
-                    if (source.length() == 0) {
-                    
+                HTTPNegotiateAuthentication negoAuth = null;
+                if (source.length() == 0) {
                     // Check for a custom negotiation implementation, created by the auth manager
-                    
                     if (authManager instanceof IHTTPNegotiateAuthenticationFactory) {
-                        negoAuth = ((IHTTPNegotiateAuthenticationFactory) authManager).createNegotiateAuthentication(
+                            negoAuth = ((IHTTPNegotiateAuthenticationFactory) authManager).createNegotiateAuthentication(
                                 prevResponse instanceof HTTPNegotiateAuthentication ? (HTTPNegotiateAuthentication) prevResponse : null, requestID); 
-                        } else {
-                    
+                    } else {
                         if (DefaultHTTPNegotiateAuthentication.isSupported()) {
                             if (prevResponse instanceof DefaultHTTPNegotiateAuthentication) {
                                 negoAuth = new DefaultHTTPNegotiateAuthentication((DefaultHTTPNegotiateAuthentication)prevResponse);
                             } else {
                                 negoAuth = new DefaultHTTPNegotiateAuthentication();
+                                try {
+                                    negoAuth.needsLogin();
+                                } catch (Throwable th) {
+                                    // SecurityException might be thrown in case configuration file
+                                    // is missing, then consider Negotiate as not supporter
+                                    negoAuth = null;
+                                }
                             }
                         }
                     }
-                    
                     if (negoAuth != null) {
                         negoAuth.respondTo(null);
                     }
-                    } else {
-                
+                } else {
                     // If this is a server response with a token, then negotiate authentication is already in progress.
                     // NOTE: this should never happen in practice since negotiate authentication should be completed with a 
                     // single token.  After successful authentication at the server end, the token from the server is sent
                     // in a Authentication-Info header.
-                    
-                        negoAuth = (HTTPNegotiateAuthentication)prevResponse;
-                        negoAuth.respondTo(source);
-                    }
                 
+                    negoAuth = (HTTPNegotiateAuthentication)prevResponse;
+                    negoAuth.respondTo(source);
+                }
+            
                 if (negoAuth != null) {
                     auth = negoAuth;
                     break;
