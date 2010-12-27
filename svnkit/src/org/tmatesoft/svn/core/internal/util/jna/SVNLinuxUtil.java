@@ -26,7 +26,7 @@ public class SVNLinuxUtil {
 
     private static Memory ourSharedMemory;
     private static final boolean ourIsDashStat = Boolean.getBoolean("svnkit.jna.dash_stat");
-    
+
     static {
         try {
             ourSharedMemory = new Memory(1024);
@@ -55,8 +55,8 @@ public class SVNLinuxUtil {
                     if (ourIsDashStat && SVNFileUtil.isBSD) {
                         rc = cLibrary._lstat(path, ourSharedMemory);
                     } else {
-                        rc = SVNFileUtil.isOSX || SVNFileUtil.isBSD || SVNFileUtil.isSolaris ? 
-                            cLibrary.lstat(path, ourSharedMemory) : 
+                        rc = SVNFileUtil.isOSX || SVNFileUtil.isBSD || SVNFileUtil.isSolaris ?
+                            cLibrary.lstat(path, ourSharedMemory) :
                             cLibrary.__lxstat64(0, path, ourSharedMemory);
                     }
                 }
@@ -108,8 +108,8 @@ public class SVNLinuxUtil {
                     if (ourIsDashStat && SVNFileUtil.isBSD) {
                         rc = cLibrary._lstat(path, ourSharedMemory);
                     } else {
-                        rc = SVNFileUtil.isOSX || SVNFileUtil.isBSD || SVNFileUtil.isSolaris ? 
-                            cLibrary.lstat(path, ourSharedMemory) : 
+                        rc = SVNFileUtil.isOSX || SVNFileUtil.isBSD || SVNFileUtil.isSolaris ?
+                            cLibrary.lstat(path, ourSharedMemory) :
                             cLibrary.__lxstat64(0, path, ourSharedMemory);
                     }
                 }
@@ -120,13 +120,13 @@ public class SVNLinuxUtil {
                 int mode = ourSharedMemory.getInt(getFileModeOffset());
                 int fuid = ourSharedMemory.getInt(getFileUserIDOffset());
                 int fgid = ourSharedMemory.getInt(getFileGroupIDOffset());
-                
+
                 int access = mode & 0777;
                 int mask = 0111;
                 if (JNALibraryLoader.getUID() == fuid) {
                     mask = 0100; // check user
                 } else if (JNALibraryLoader.getGID() == fgid) {
-                    mask = 0010; // check group 
+                    mask = 0010; // check group
                 } else {
                     mask = 0001; // check other.
                 }
@@ -191,8 +191,8 @@ public class SVNLinuxUtil {
                     if (ourIsDashStat && SVNFileUtil.isBSD) {
                         rc = cLibrary._lstat(path, ourSharedMemory);
                     } else {
-                        rc = SVNFileUtil.isOSX || SVNFileUtil.isBSD || SVNFileUtil.isSolaris ? 
-                            cLibrary.lstat(path, ourSharedMemory) : 
+                        rc = SVNFileUtil.isOSX || SVNFileUtil.isBSD || SVNFileUtil.isSolaris ?
+                            cLibrary.lstat(path, ourSharedMemory) :
                             cLibrary.__lxstat64(0, path, ourSharedMemory);
                     }
                 }
@@ -202,21 +202,24 @@ public class SVNLinuxUtil {
 
                 int mode = ourSharedMemory.getInt(getFileModeOffset());
                 int access = mode & 0777;
-                int mask = 0;
-                if ((access & 0400) != 0) {
-                    mask |= 0100;
-                }
-                if ((access & 0040) != 0) {
-                    mask |= 0010;
-                }
-                if ((access & 0004) != 0) {
-                    mask |= 0001;
-                }
-                if (mask == 0) {
-                    return false;
+                int perms = access;
+                if (set) {
+                    if ((access & 0400) != 0)
+                        perms |= 0100;
+                    if ((access & 0040) != 0)
+                        perms |= 0010;
+                    if ((access & 0004) != 0)
+                        perms |= 0001;
+                } else {
+                    if ((access & 0400) != 0)
+                        perms &= ~0100;
+                    if ((access & 0040) != 0)
+                        perms &= ~0010;
+                    if ((access & 0004) != 0)
+                        perms &= ~0001;
                 }
                 synchronized (cLibrary) {
-                    rc = cLibrary.chmod(path, set ? mask | access : mask ^ access);
+                    rc = cLibrary.chmod(path, perms);
                 }
                 return rc < 0 ? false : true;
             }
@@ -246,8 +249,8 @@ public class SVNLinuxUtil {
                     if (ourIsDashStat && SVNFileUtil.isBSD) {
                         rc = cLibrary._lstat(path, ourSharedMemory);
                     } else {
-                        rc = SVNFileUtil.isOSX || SVNFileUtil.isBSD || SVNFileUtil.isSolaris ? 
-                            cLibrary.lstat(path, ourSharedMemory) : 
+                        rc = SVNFileUtil.isOSX || SVNFileUtil.isBSD || SVNFileUtil.isSolaris ?
+                            cLibrary.lstat(path, ourSharedMemory) :
                             cLibrary.__lxstat64(0, path, ourSharedMemory);
                     }
                 }
@@ -301,8 +304,8 @@ public class SVNLinuxUtil {
                     if (ourIsDashStat && SVNFileUtil.isBSD) {
                         rc = cLibrary._stat(path, ourSharedMemory);
                     } else {
-                        rc = SVNFileUtil.isOSX || SVNFileUtil.isBSD || SVNFileUtil.isSolaris ? 
-                            cLibrary.stat(path, ourSharedMemory) : 
+                        rc = SVNFileUtil.isOSX || SVNFileUtil.isBSD || SVNFileUtil.isSolaris ?
+                            cLibrary.stat(path, ourSharedMemory) :
                             cLibrary.__xstat64(0, path, ourSharedMemory);
                     }
                 }
