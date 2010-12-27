@@ -122,6 +122,7 @@ class HTTPConnection implements IHTTPConnection {
     private File mySpoolDirectory;
     private long myNextRequestTimeout;
     private Collection myCookies;
+    private int myRequestCount;
 
     public HTTPConnection(SVNRepository repository, String charset, File spoolDirectory, boolean spoolAll) throws SVNException {
         myRepository = repository;
@@ -281,6 +282,8 @@ class HTTPConnection implements IHTTPConnection {
     }
     
     public HTTPStatus request(String method, String path, HTTPHeader header, InputStream body, int ok1, int ok2, OutputStream dst, DefaultHandler handler, SVNErrorMessage context) throws SVNException {
+        myRequestCount++;
+        
         if ("".equals(path) || path == null) {
             path = "/";
         }
@@ -434,7 +437,7 @@ class HTTPConnection implements IHTTPConnection {
                     authTypes = defaultAuthManager.getAuthTypes(myRepository.getLocation());
                 }
                 try {
-                    myProxyAuthentication = HTTPAuthentication.parseAuthParameters(proxyAuthHeaders, myProxyAuthentication, myCharset, authTypes); 
+                    myProxyAuthentication = HTTPAuthentication.parseAuthParameters(proxyAuthHeaders, myProxyAuthentication, myCharset, authTypes, null, myRequestCount); 
                 } catch (SVNException svne) {
                     myRepository.getDebugLog().logFine(SVNLogType.NETWORK, svne);
                     err = svne.getErrorMessage(); 
@@ -492,7 +495,7 @@ class HTTPConnection implements IHTTPConnection {
                 }
                 
                 try {
-                    myChallengeCredentials = HTTPAuthentication.parseAuthParameters(authHeaderValues, myChallengeCredentials, myCharset, authTypes); 
+                    myChallengeCredentials = HTTPAuthentication.parseAuthParameters(authHeaderValues, myChallengeCredentials, myCharset, authTypes, authManager, myRequestCount); 
                 } catch (SVNException svne) {
                     err = svne.getErrorMessage(); 
                     break;
