@@ -38,6 +38,7 @@ import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
 import org.tmatesoft.svn.core.auth.SVNSSLAuthentication;
+import org.tmatesoft.svn.core.internal.wc.ISVNSSLPasspharsePromptSupport;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.util.SVNDebugLog;
@@ -91,6 +92,75 @@ public final class HTTPSSLKeyManager implements X509KeyManager {
                 throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "MS Capi error: "+th.getMessage()), th);
             }
         }
+        return result;
+    }
+
+    public static KeyManager[] loadClientCertificate(File clientCertFile, String clientCertPassword) throws SVNException {
+        char[] passphrase = null;
+        if (clientCertPassword == null || clientCertPassword.length() == 0) {
+            // Client certificates without an passphrase can't be received from Java Keystores. 
+            throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "No client certificate passphrase supplied (did you forget to specify?).\n" +
+                    "Note that client certificates with empty passphrases can''t be used. In this case please re-create the certificate with a passphrase."));
+        }
+        if (clientCertPassword != null) {
+            passphrase = clientCertPassword.toCharArray();
+        }
+        KeyManager[] result = null;
+        KeyStore keyStore = null;
+        if (clientCertFile != null && clientCertFile.getName().startsWith(SVNSSLAuthentication.MSCAPI)) {
+            SVNDebugLog.getDefaultLog().logError(SVNLogType.CLIENT,"using mscapi");
+            try {
+                keyStore = KeyStore.getInstance("Windows-MY");
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "using my windows store");
+                if (keyStore != null) {
+                    keyStore.load(null, null);
+                }
+                KeyManagerFactory kmf = null;
+                if (keyStore != null) {
+                    kmf = KeyManagerFactory.getInstance("SunX509");
+                    if (kmf != null) {
+                        kmf.init(keyStore, passphrase);
+                        result = kmf.getKeyManagers();
+                    }
+                }
+                return result;
+            }
+            catch (Throwable th) {
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, th);
+                throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "loadClientCertificate ms capi with file - should not be called: "+th.getMessage(), null, SVNErrorMessage.TYPE_ERROR, th), th);
+            }
+
+        }
+        final InputStream is = SVNFileUtil.openFileForReading(clientCertFile, SVNLogType.NETWORK);
+        try {
+            keyStore = KeyStore.getInstance("PKCS12");
+            if (keyStore != null) {
+                keyStore.load(is, passphrase);
+            }
+        }
+        catch (Throwable th) {
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, th);
+            throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, th.getMessage(), null, SVNErrorMessage.TYPE_ERROR, th), th);
+        }
+        finally {
+            SVNFileUtil.closeFile(is);
+        }
+        KeyManagerFactory kmf = null;
+
+        if (keyStore != null) {
+            try {
+                kmf = KeyManagerFactory.getInstance("SunX509");
+                if (kmf != null) {
+                    kmf.init(keyStore, passphrase);
+                    result = kmf.getKeyManagers();
+                }
+            }
+            catch (Throwable th) {
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, th);
+                throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, th.getMessage()), th);
+            }
+        }
+
         return result;
     }
 
@@ -355,7 +425,12 @@ public final class HTTPSSLKeyManager implements X509KeyManager {
                     keyManagers = loadClientCertificate();
                     chooseAlias = myAuthentication.getAlias();
                 } else {
-                    keyManagers = loadClientCertificate(myAuthentication);
+                    if (authenticationManager instanceof ISVNSSLPasspharsePromptSupport &&
+                            ((ISVNSSLPasspharsePromptSupport) authenticationManager).isSSLPassphrasePromtSupported()) {
+                        keyManagers = loadClientCertificate(myAuthentication);
+                    } else {
+                        keyManagers = loadClientCertificate(myAuthentication.getCertificateFile(), myAuthentication.getPassword());
+                    }
                 }
             } catch (SVNException ex) {
                 final SVNErrorMessage sslErr = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "SSL handshake failed: ''{0}''", new Object[] { ex.getMessage() }, SVNErrorMessage.TYPE_ERROR, ex.getCause());

@@ -28,12 +28,13 @@ import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
 import org.tmatesoft.svn.core.auth.SVNSSLAuthentication;
 import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
 import org.tmatesoft.svn.core.internal.util.SVNSSLUtil;
+import org.tmatesoft.svn.core.internal.wc.ISVNSSLPasspharsePromptSupport;
 
 /**
  * @version 1.3
  * @author  TMate Software Ltd.
  */
-class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
+class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider, ISVNSSLPasspharsePromptSupport {
 
     private static final String ADAPTER_DEFAULT_PROMPT_CLASS =
         "org.tigris.subversion.svnclientadapter.javahl.AbstractJhlClientAdapter$DefaultPromptUserPassword";
@@ -184,6 +185,10 @@ class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
             }                
         }
         return ACCEPTED;
+    }
+
+    public boolean isSSLPassphrasePromtSupported() {
+        return true;
     }
 
     private static String getUserName(String userName, SVNURL url) {

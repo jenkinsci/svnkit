@@ -11,11 +11,11 @@
  */
 package org.tmatesoft.svn.core.internal.wc;
 
-import javax.net.ssl.TrustManager;
-
 import java.io.File;
 import java.util.Collection;
 import java.util.Map;
+
+import javax.net.ssl.TrustManager;
 
 import org.tmatesoft.svn.core.SVNAuthenticationException;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -40,7 +40,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @version 1.3
  * @author  TMate Software Ltd.
  */
-public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManager, ISVNSSHHostVerifier {
+public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManager, ISVNSSLPasspharsePromptSupport, ISVNSSHHostVerifier {
 
     private boolean myIsStoreAuth;
     private File myConfigDirectory;
@@ -563,4 +563,13 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         }
         return true;
     }
+
+    public boolean isSSLPassphrasePromtSupported() {
+        if (getAuthenticationProvider() == null) {
+            return true;
+        } else if (getAuthenticationProvider() instanceof ISVNSSLPasspharsePromptSupport) {
+            return ((ISVNSSLPasspharsePromptSupport) getAuthenticationProvider()).isSSLPassphrasePromtSupported();
+        }
+        return false;
+     }
 }

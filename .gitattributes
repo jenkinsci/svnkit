@@ -138,6 +138,7 @@ svnkit/src/org/tmatesoft/svn/core/internal/wc/ISVNAuthenticationStorageOptions.j
 svnkit/src/org/tmatesoft/svn/core/internal/wc/ISVNHostOptions.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc/ISVNHostOptionsProvider.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc/ISVNPersistentAuthenticationProvider.java -text
+svnkit/src/org/tmatesoft/svn/core/internal/wc/ISVNSSLPasspharsePromptSupport.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNChecksum.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNChecksumKind.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNClassLoader.java -text

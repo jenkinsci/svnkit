@@ -34,6 +34,7 @@ import org.tmatesoft.svn.core.auth.SVNSSLAuthentication;
 import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
 import org.tmatesoft.svn.core.internal.util.SVNSSLUtil;
 import org.tmatesoft.svn.core.internal.wc.ISVNAuthStoreHandler;
+import org.tmatesoft.svn.core.internal.wc.ISVNSSLPasspharsePromptSupport;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
 
@@ -41,7 +42,7 @@ import org.tmatesoft.svn.core.wc.SVNWCUtil;
  * @version 1.0
  * @author  TMate Software Ltd.
  */
-public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvider, ISVNAuthStoreHandler {
+public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvider, ISVNSSLPasspharsePromptSupport, ISVNAuthStoreHandler {
     
     private static final String OUR_PASSPHRASE_PROMPT_TEXT = "-----------------------------------------------------------------------\n" +
                                                              "ATTENTION!  Your passphrase for client certificate:\n" +
@@ -466,6 +467,10 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
         } catch (IOException e) {
             return null;
         }
+    }
+
+    public boolean isSSLPassphrasePromtSupported() {
+        return true;
     }
 
 }
