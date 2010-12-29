@@ -112,7 +112,7 @@ public class DefaultSVNPersistentAuthenticationProvider implements ISVNAuthentic
                 }
                 String passphrase;
                 if (passwordStorage != null) {
-                    passphrase = passwordStorage.readPassphrasePassphrase(storedRealm, values);
+                    passphrase = passwordStorage.readPassphrase(storedRealm, values);
                 } else {
                     passphrase = SVNPropertyValue.getPropertyAsString(values.getSVNPropertyValue("passphrase"));
                 }
@@ -133,7 +133,7 @@ public class DefaultSVNPersistentAuthenticationProvider implements ISVNAuthentic
 
     private String readPassphrase(String realm, IPasswordStorage passwordStorage, SVNProperties authValues) throws SVNException {
         if (passwordStorage != null) {
-            return passwordStorage.readPassphrasePassphrase(realm, authValues);
+            return passwordStorage.readPassphrase(realm, authValues);
         }
         return SVNPropertyValue.getPropertyAsString(authValues.getSVNPropertyValue("passphrase"));
     }
@@ -457,7 +457,7 @@ public class DefaultSVNPersistentAuthenticationProvider implements ISVNAuthentic
 
         boolean savePassphrase(String realm, String passphrase, SVNAuthentication auth, SVNProperties authParameters, boolean force) throws SVNException;
 
-        String readPassphrasePassphrase(String realm, SVNProperties authParameters) throws SVNException;
+        String readPassphrase(String realm, SVNProperties authParameters) throws SVNException;
     }
 
     private class SimplePasswordStorage implements IPasswordStorage {
@@ -494,7 +494,7 @@ public class DefaultSVNPersistentAuthenticationProvider implements ISVNAuthentic
             return false;
         }
 
-        public String readPassphrasePassphrase(String realm, SVNProperties authParameters) {
+        public String readPassphrase(String realm, SVNProperties authParameters) {
             return SVNPropertyValue.getPropertyAsString(authParameters.getSVNPropertyValue("passphrase"));
         }
     }
@@ -534,7 +534,7 @@ public class DefaultSVNPersistentAuthenticationProvider implements ISVNAuthentic
             return true;
         }
 
-        public String readPassphrasePassphrase(String realm, SVNProperties authParameters) {
+        public String readPassphrase(String realm, SVNProperties authParameters) {
             String encrypted = SVNPropertyValue.getPropertyAsString(authParameters.getSVNPropertyValue("passphrase"));
             return SVNJNAUtil.decrypt(encrypted);
         }
@@ -564,7 +564,7 @@ public class DefaultSVNPersistentAuthenticationProvider implements ISVNAuthentic
             return SVNJNAUtil.addPasswordToMacOsKeychain(realm, null, passphrase, myAuthOptions.isNonInteractive());
         }
 
-        public String readPassphrasePassphrase(String realm, SVNProperties authParameters) throws SVNException {
+        public String readPassphrase(String realm, SVNProperties authParameters) throws SVNException {
             return SVNJNAUtil.getPasswordFromMacOsKeychain(realm, null, myAuthOptions.isNonInteractive());
         }
     }
