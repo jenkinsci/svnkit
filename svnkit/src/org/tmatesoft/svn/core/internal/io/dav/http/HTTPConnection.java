@@ -622,12 +622,13 @@ class HTTPConnection implements IHTTPConnection {
         close();
         if (err != null && err.getErrorCode().getCategory() != SVNErrorCode.RA_DAV_CATEGORY &&
             err.getErrorCode() != SVNErrorCode.UNSUPPORTED_FEATURE) {
-            SVNErrorManager.error(err, SVNLogType.NETWORK);
+            SVNErrorManager.error(err.wrap(method+" request failed on '"+path+"'"), SVNLogType.NETWORK);
         }
         // err2 is another default context...
-        myRepository.getDebugLog().logFine(SVNLogType.NETWORK, new Exception(err.getMessage()));
-        SVNErrorMessage err2 = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "{0} request failed on ''{1}''", new Object[] {method, path}, err.getType(), err.getCause());
-        SVNErrorManager.error(err, err2, SVNLogType.NETWORK);
+        myRepository.getDebugLog().logFine(SVNLogType.NETWORK, err);
+        SVNErrorMessage err2 = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "{0} request failed on ''{1}''", new Object[] {method, path}, err.getType(), err);
+        err2.setChildErrorMessage(err);
+        SVNErrorManager.error(err2, SVNLogType.NETWORK);
         return null;
     }
 

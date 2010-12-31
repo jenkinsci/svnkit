@@ -324,7 +324,8 @@ public class SVNErrorMessage extends Exception implements Serializable {
         if (this == childMessage) {
             return;
         }
-        
+
+        // avoid forming a cycle
         SVNErrorMessage parent = this;
         SVNErrorMessage child = childMessage;
         while (child != null) {
@@ -335,7 +336,9 @@ public class SVNErrorMessage extends Exception implements Serializable {
             parent = child;
             child = child.getChildErrorMessage();
         }
+
         myChildErrorMessage = childMessage;
+
         if (getCause()==null && child!=null)
             try {
                 initCause(childMessage);
