@@ -487,7 +487,8 @@ class HTTPConnection implements IHTTPConnection {
                 try {
                     myChallengeCredentials = HTTPAuthentication.parseAuthParameters(authHeaderValues, myChallengeCredentials, myCharset, authTypes); 
                 } catch (SVNException svne) {
-                    err = svne.getErrorMessage(); 
+                    myRepository.getDebugLog().logFine(SVNLogType.NETWORK, svne);
+                    err = svne.getErrorMessage();
                     break;
                 }
 
