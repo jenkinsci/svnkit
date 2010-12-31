@@ -32,6 +32,9 @@ public class SVNAuthenticationException extends SVNException {
      * 
      * @param errorMessage an error message
      * @param cause        an original cause
+     *
+     * @deprecated
+     *      Use {@link #SVNAuthenticationException(SVNErrorMessage)} and set the cause to {@link SVNErrorMessage}
      */
     public SVNAuthenticationException(SVNErrorMessage errorMessage, Throwable cause) {
         super(errorMessage, cause);

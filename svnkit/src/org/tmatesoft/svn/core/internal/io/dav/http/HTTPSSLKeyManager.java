@@ -70,7 +70,7 @@ public final class HTTPSSLKeyManager implements X509KeyManager {
             }
         } catch (Throwable th) {
             SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, th);
-            throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Problems, when connecting with ms capi! "+th.getMessage(), null, SVNErrorMessage.TYPE_ERROR, th), th);
+            throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Problems, when connecting with ms capi! "+th.getMessage(), null, SVNErrorMessage.TYPE_ERROR, th));
         }
 
         KeyManagerFactory kmf = null;
@@ -85,7 +85,7 @@ public final class HTTPSSLKeyManager implements X509KeyManager {
             }
             catch (Throwable th) {
                 SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, th);
-                throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "MS Capi error: "+th.getMessage()), th);
+                throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "MS Capi error: "+th.getMessage()).initCause(th));
             }
         }
         return result;
@@ -116,7 +116,7 @@ public final class HTTPSSLKeyManager implements X509KeyManager {
             }
             catch (Throwable th) {
                 SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, th);
-                throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "loadClientCertificate ms capi with file - should not be called: "+th.getMessage(), null, SVNErrorMessage.TYPE_ERROR, th), th);
+                throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "loadClientCertificate ms capi with file - should not be called: "+th.getMessage(), null, SVNErrorMessage.TYPE_ERROR, th));
             }
 
         }
@@ -138,7 +138,7 @@ public final class HTTPSSLKeyManager implements X509KeyManager {
         }
         catch (Throwable th) {
             SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, th);
-            throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, th.getMessage(), null, SVNErrorMessage.TYPE_ERROR, th), th);
+            throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, th.getMessage(), null, SVNErrorMessage.TYPE_ERROR, th));
         }
         finally {
             SVNFileUtil.closeFile(clientCertFile);
@@ -154,7 +154,7 @@ public final class HTTPSSLKeyManager implements X509KeyManager {
             }
             catch (Throwable th) {
                 SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, th);
-                throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, th.getMessage()), th);
+                throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, th));
             }
         }
 
@@ -292,7 +292,7 @@ public final class HTTPSSLKeyManager implements X509KeyManager {
             throw (SVNException)exception;
         }
         else if (exception != null) {
-            throw new SVNException(SVNErrorMessage.UNKNOWN_ERROR_MESSAGE, exception);
+            throw new SVNException(SVNErrorMessage.create(SVNErrorCode.UNKNOWN,exception));
         }
     }
 

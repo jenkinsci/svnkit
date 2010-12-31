@@ -203,8 +203,8 @@ public class SVNLogRunner {
                 }
             } catch (SVNException svne) {
                 SVNErrorCode code = count <= 1 ? SVNErrorCode.WC_BAD_ADM_LOG_START : SVNErrorCode.WC_BAD_ADM_LOG;
-                SVNErrorMessage err = SVNErrorMessage.create(code, "Error removing lock from entry for ''{0}''", fileName);
-                error = new SVNException(err, svne);
+                SVNErrorMessage err = SVNErrorMessage.create(code, "Error removing lock from entry for ''{0}''", fileName).initCause(svne);
+                error = new SVNException(err);
             }
         } else if (SVNLog.DELETE_CHANGELIST.equals(name)) {
             try {
@@ -215,8 +215,8 @@ public class SVNLogRunner {
             } catch (SVNException svne) {
                 SVNErrorCode code = count <= 1 ? SVNErrorCode.WC_BAD_ADM_LOG_START : SVNErrorCode.WC_BAD_ADM_LOG;
                 SVNErrorMessage err = SVNErrorMessage.create(code, 
-                        "Error removing changelist from entry ''{0}''", fileName);
-                error = new SVNException(err, svne);
+                        "Error removing changelist from entry ''{0}''", fileName).initCause(svne);
+                error = new SVNException(err);
             }
         } else if (SVNLog.DELETE.equals(name)) {
             File file = adminArea.getFile(fileName);
@@ -231,7 +231,7 @@ public class SVNLogRunner {
                 SVNFileUtil.rename(src, dst);
             } catch (SVNException svne) {
                 if (!myIsRerun || src.exists()) {
-                    error = new SVNException(svne.getErrorMessage().wrap("Can't move source to dest"), svne);
+                    error = new SVNException(svne.getErrorMessage().wrap("Can't move source to dest").initCause(svne));
                 }
             }
         } else if (SVNLog.APPEND.equals(name)) {
@@ -251,8 +251,8 @@ public class SVNLogRunner {
                 }
             } catch (IOException e) {
                 if (!myIsRerun || !(e instanceof FileNotFoundException)) { 
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot write to ''{0}'': {1}", new Object[] {dst, e.getLocalizedMessage()});
-                    error = new SVNException(err, e);
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot write to ''{0}'': {1}", new Object[] {dst, e.getLocalizedMessage()}).initCause(e);
+                    error = new SVNException(err);
                 } 
             } catch (SVNException svne) {
                 if (!myIsRerun || src.exists()) {

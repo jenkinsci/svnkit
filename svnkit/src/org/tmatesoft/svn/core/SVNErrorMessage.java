@@ -40,7 +40,7 @@ import java.text.MessageFormat;
  * @author  TMate Software Ltd.
  * @since   1.2
  */
-public class SVNErrorMessage implements Serializable {
+public class SVNErrorMessage extends Exception implements Serializable {
     
     private static final long serialVersionUID = 4845L;
     
@@ -56,12 +56,10 @@ public class SVNErrorMessage implements Serializable {
     public static final int TYPE_WARNING = 1;
     
     private Object[] myObjects;
-    private String myMessage;
     private SVNErrorCode myErrorCode;
     private int myType;
     private SVNErrorMessage myChildErrorMessage;
-    private Throwable myThrowable;
-    
+
     private static final Object[] EMPTY_ARRAY = new Object[0];
     
     /**
@@ -204,16 +202,36 @@ public class SVNErrorMessage implements Serializable {
 	}
 
     protected SVNErrorMessage(SVNErrorCode code, String message, Object[] relatedObjects, Throwable th, int type) {
+        super(massageMessage(message,relatedObjects,code,type));
         myErrorCode = code;
+        myObjects = relatedObjects;
+        myType = type;
+        if (th!=null)
+            initCause(th);
+    }
+
+    private static String massageMessage(String message, Object[] args, SVNErrorCode code, int type) {
         if (message != null && message.startsWith("svn: ")) {
             message = message.substring("svn: ".length());
         }
-        myMessage = message;
-        myObjects = relatedObjects;
-        myType = type;
-        myThrowable = th;
+
+        StringBuffer line = new StringBuffer();
+        if (type == TYPE_WARNING && code == SVNErrorCode.REPOS_POST_COMMIT_HOOK_FAILED) {
+            line.append("Warning: ");
+        } else if (type == TYPE_WARNING) {
+            line.append("svn: warning: ");
+        } else {
+            line.append("svn: ");
+        }
+
+        if (message==null || "".equals(message)) {
+            line.append(code.getDescription());
+        } else {
+            line.append(args.length > 0 ? MessageFormat.format(message, args) : message);
+        }
+        return line.toString();
     }
-    
+
     /**
      * Returns the type of the error (whether it's a warning or an error). 
      * 
@@ -230,17 +248,6 @@ public class SVNErrorMessage implements Serializable {
      */
     public SVNErrorCode getErrorCode() {
         return myErrorCode;
-    }
-    
-    /**
-     * Returns an error description formatted with the 
-     * related objects if needed. This call is equivalent to 
-     * a call to {@link #toString()}
-     * 
-     * @return an error message
-     */
-    public String getMessage() {
-        return toString();
     }
     
     /**
@@ -270,7 +277,7 @@ public class SVNErrorMessage implements Serializable {
      * @return an error description
      */
     public String getMessageTemplate() {
-        return myMessage;
+        return super.getMessage();
     }
     
     /**
@@ -309,40 +316,6 @@ public class SVNErrorMessage implements Serializable {
     }
     
     /**
-     * Returns throwable that is cause of the error if any.
-     * 
-     * @return throwable that caused error or null if not applicable or not known.
-     */
-    public Throwable getCause() {
-        return myThrowable;
-    }
-    
-    /**
-     * Returns a string representation of this error message object
-     * formatting (if needed) the error description with the provided related objects. 
-     * If no error description pattern has been provided, the return 
-     * value includes a string representation of the error code (see {@link SVNErrorCode}). 
-     * 
-     * @return  a string representing this object.
-     */
-    public String toString() {
-        StringBuffer line = new StringBuffer();
-        if (getType() == TYPE_WARNING && getErrorCode() == SVNErrorCode.REPOS_POST_COMMIT_HOOK_FAILED) {
-            line.append("Warning: ");
-        } else if (getType() == TYPE_WARNING) {
-            line.append("svn: warning: ");
-        } else {
-            line.append("svn: ");
-        }
-        if ("".equals(myMessage)) {
-            line.append(myErrorCode.getDescription());
-        } else {
-            line.append(myObjects.length > 0 ? MessageFormat.format(myMessage, myObjects) : myMessage);
-        }
-        return line.toString();
-    }
-    
-    /**
      * Sets a child error message for this one.
      * 
      * @param childMessage a child error message
@@ -363,8 +336,20 @@ public class SVNErrorMessage implements Serializable {
             child = child.getChildErrorMessage();
         }
         myChildErrorMessage = childMessage;
+        if (getCause()==null && child!=null)
+            try {
+                initCause(childMessage);
+            } catch (IllegalStateException e) {
+                // failed to set the cause. that's OK.
+            }
     }
-    
+
+    @Override
+    public SVNErrorMessage initCause(Throwable cause) {
+        super.initCause(cause);
+        return this;
+    }
+
     /**
      * Wraps this error message into a new one that is returned as 
      * a parent error message. A parent message is set the error code 

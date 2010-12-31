@@ -637,7 +637,7 @@ public abstract class SVNAdminArea {
             } else if (e instanceof Error) {
                 throw (Error) e;
             }
-            throw new SVNException(SVNErrorMessage.create(SVNErrorCode.UNKNOWN), e);
+            throw new SVNException(SVNErrorMessage.create(SVNErrorCode.UNKNOWN, e));
         }
         runner.logCompleted(this);
         // delete all logs, there shoudn't be left unprocessed.

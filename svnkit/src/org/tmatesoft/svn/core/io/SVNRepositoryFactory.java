@@ -519,7 +519,7 @@ public abstract class SVNRepositoryFactory {
                 uuidOS.write(uuid.getBytes("US-ASCII"));
             } catch (IOException e) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Error writing repository UUID to ''{0}''", uuidFile);
-                err.setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage()));
+                err.setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e));
                 SVNErrorManager.error(err, SVNLogType.FSFS);
             }
             
@@ -533,7 +533,7 @@ public abstract class SVNRepositoryFactory {
                     reposFormatOS.write(format.getBytes("US-ASCII"));
                 } catch (IOException e) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Error writing repository format to ''{0}''", reposFormatFile);
-                    err.setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage()));
+                    err.setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e));
                     SVNErrorManager.error(err, SVNLogType.FSFS);
                 }
             }
@@ -555,7 +555,7 @@ public abstract class SVNRepositoryFactory {
                 } catch (IOException e) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
                             "Error writing fs format to ''{0}''", fsFormatFile);
-                    err.setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage()));
+                    err.setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e));
                     SVNErrorManager.error(err, SVNLogType.FSFS);
                 }
 
@@ -597,7 +597,7 @@ public abstract class SVNRepositoryFactory {
                     fsFormatOS.write(format.getBytes("US-ASCII"));
                 } catch (IOException e) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Error writing fs format to ''{0}''", fsFormatFile);
-                    err.setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage()));
+                    err.setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e));
                     SVNErrorManager.error(err, SVNLogType.FSFS);
                 }
             }
@@ -691,7 +691,7 @@ public abstract class SVNRepositoryFactory {
             }
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can not copy repository template file to ''{0}''", dstFile);
-            err.setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage()));
+            err.setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e));
             SVNErrorManager.error(err, SVNLogType.NETWORK);
         } finally {
             SVNFileUtil.closeFile(os);
@@ -742,7 +742,7 @@ public abstract class SVNRepositoryFactory {
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can not extract repository files from ''{0}'' to ''{1}''", 
                     new Object[] {srcFile, dst});
-            err.setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage()));
+            err.setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e));
             SVNErrorManager.error(err, SVNLogType.NETWORK);
         } finally {
             SVNFileUtil.closeFile(jis);

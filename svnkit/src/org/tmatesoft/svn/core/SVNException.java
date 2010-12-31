@@ -35,7 +35,7 @@ public class SVNException extends Exception {
      * @param errorMessage an error message
      */
     public SVNException(SVNErrorMessage errorMessage) {
-        this(errorMessage, errorMessage.getCause());
+        this(errorMessage, errorMessage);
     }
     
     /**
@@ -43,9 +43,12 @@ public class SVNException extends Exception {
      * 
      * @param errorMessage an error message
      * @param cause        the real cause of the error
+     *
+     * @deprecated
+     *      Use {@link #SVNException(SVNErrorMessage)} and set the cause to {@link SVNErrorMessage}
      */
     public SVNException(SVNErrorMessage errorMessage, Throwable cause) {
-        super(findCause(errorMessage,cause));
+        super(cause!=null?cause:errorMessage);
 //      this can create cyclic reference among messages, if cause already contains errorMessage as a child
 //        if (cause instanceof SVNException) {
 //            SVNErrorMessage childMessages = ((SVNException) cause).getErrorMessage();
@@ -59,17 +62,6 @@ public class SVNException extends Exception {
 //        }
 
         myErrorMessage = errorMessage;
-    }
-
-    private static Throwable findCause(SVNErrorMessage errorMessage, Throwable cause) {
-        if(cause!=null) return cause;
-
-        // SVNErrorMessage has its own chaining mechanism, so if no 'cause' is given, try to pick up
-        // the nearset exception from there, so that printStackTrace() would print the root cause.
-        for( SVNErrorMessage e = errorMessage; e!=null; e=e.getChildErrorMessage() )
-            if(e.getCause()!=null)
-                return e.getCause();
-        return null;
     }
 
     /**

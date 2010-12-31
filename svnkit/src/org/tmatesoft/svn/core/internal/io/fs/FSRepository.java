@@ -742,7 +742,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             openRepositoryRoot();
         } catch (SVNException svne) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_LOCAL_REPOS_OPEN_FAILED, "Unable to open repository ''{0}''", getLocation().toDecodedString());
-            err.setChildErrorMessage(svne.getErrorMessage());
+            err.initCause(svne);
             SVNErrorManager.error(err.wrap("Unable to open an ra_local session to URL"), SVNLogType.FSFS);
         }
     }

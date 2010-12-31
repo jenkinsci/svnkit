@@ -869,7 +869,7 @@ public class FSFS {
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
                     "Error writing repository UUID to ''{0}''", getUUIDFile());
-            err.setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage()));
+            err.initCause(e);
             SVNErrorManager.error(err, SVNLogType.FSFS);
         } finally {
             SVNFileUtil.closeFile(uuidOS);
@@ -1291,7 +1291,7 @@ public class FSFS {
                 FSHooks.runPostUnlockHook(myRepositoryRoot, paths, username);
             } catch (SVNException svne) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_POST_UNLOCK_HOOK_FAILED, "Unlock succeeded, but post-unlock hook failed");
-                err.setChildErrorMessage(svne.getErrorMessage());
+                err.initCause(svne);
                 SVNErrorManager.error(err, svne, SVNLogType.FSFS);
             }
         }
@@ -1328,7 +1328,7 @@ public class FSFS {
             FSHooks.runPostLockHook(myRepositoryRoot, paths, username);
         } catch (SVNException svne) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_POST_LOCK_HOOK_FAILED, "Lock succeeded, but post-lock hook failed");
-            err.setChildErrorMessage(svne.getErrorMessage());
+            err.initCause(svne);
             SVNErrorManager.error(err, svne, SVNLogType.FSFS);
         }
         return lock;

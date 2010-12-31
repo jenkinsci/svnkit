@@ -121,7 +121,7 @@ public class SVNAdminArea14Factory extends SVNAdminAreaFactory {
             SVNErrorManager.error(err, e, SVNLogType.WC);
         } catch (SVNException svne) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "''{0}'' is not a working copy", path);
-            err.setChildErrorMessage(svne.getErrorMessage());
+            err.initCause(svne);
             SVNErrorManager.error(err, svne, Level.FINEST, SVNLogType.WC);
         } finally {
             SVNFileUtil.closeFile(reader);
