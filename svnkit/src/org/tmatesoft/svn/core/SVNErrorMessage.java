@@ -339,7 +339,7 @@ public class SVNErrorMessage extends Exception implements Serializable {
 
         myChildErrorMessage = childMessage;
 
-        if (getCause()==null && child!=null)
+        if (getCause()==null && childMessage!=null)
             try {
                 initCause(childMessage);
             } catch (IllegalStateException e) {
