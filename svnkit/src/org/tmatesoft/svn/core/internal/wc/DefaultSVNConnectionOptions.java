@@ -127,10 +127,6 @@ public class DefaultSVNConnectionOptions implements ISVNConnectionOptions {
         return (String) properties.get("store-plaintext-passwords");
     }
 
-    public boolean hasStorePlainTextPasswordsOption(String realm, SVNAuthentication auth) {
-        return getStorePlainTextPasswordOption(auth) != null;
-    }
-
     public boolean isStorePlainTextPasswords(String realm, SVNAuthentication auth) throws SVNException {
         String storePlainTextPasswords = getStorePlainTextPasswordOption(auth);
         if (storePlainTextPasswords == null) {
@@ -158,11 +154,6 @@ public class DefaultSVNConnectionOptions implements ISVNConnectionOptions {
         String host = url != null ? url.getHost() : null;
         Map properties = getHostProperties(host);
         return (String) properties.get("store-ssl-client-cert-pp-plaintext");
-    }
-
-    public boolean hasStorePlainTextPassphrasesOption(String realm, SVNAuthentication auth) {
-        String storePlainTextPassphrases = getStorePlainTextPassphraseOption(auth);
-        return storePlainTextPassphrases != null;
     }
 
     public boolean isStorePlainTextPassphrases(String realm, SVNAuthentication auth) throws SVNException {
