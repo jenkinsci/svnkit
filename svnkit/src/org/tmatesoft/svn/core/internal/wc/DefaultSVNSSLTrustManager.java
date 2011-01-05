@@ -1,5 +1,9 @@
 package org.tmatesoft.svn.core.internal.wc;
 
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
+
 import java.io.File;
 import java.io.InputStream;
 import java.security.KeyStore;
@@ -13,10 +17,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
-
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.TrustManagerFactory;
-import javax.net.ssl.X509TrustManager;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
@@ -138,7 +138,7 @@ public class DefaultSVNSSLTrustManager implements X509TrustManager {
 			// check dates for 1 and 2
 			// check host name for 4
 			if (authProvider != null) {
-				boolean store = myAuthManager.isAuthStorageEnabled(myURL);
+				boolean store = myAuthManager.getHostOptionsProvider().getHostOptions(myURL).isAuthStorageEnabled();
                 boolean trustServer = checkServerTrustedByDefault(certs, algorithm);
                 int result;
                 if (trustServer) {

@@ -45,6 +45,8 @@ import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
+import org.tmatesoft.svn.core.internal.wc.ISVNAuthStoreHandler;
+import org.tmatesoft.svn.core.internal.wc.ISVNAuthenticationStorageOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -238,13 +240,28 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
     protected ISVNAuthenticationManager createClientAuthenticationManager() {
         File configDir = myConfigDir != null ? new File(myConfigDir) : SVNWCUtil.getDefaultConfigurationDirectory();        
         DefaultSVNAuthenticationManager authManager = (DefaultSVNAuthenticationManager) SVNWCUtil.createDefaultAuthenticationManager(configDir, myUserName, myPassword, !myIsNoAuthCache);
-        
+
+
+        final ISVNAuthStoreHandler authStoreHandler;
         if (!myIsNonInteractive) {
             SVNConsoleAuthenticationProvider consoleAuthProvider = new SVNConsoleAuthenticationProvider(myIsTrustServerCertificate);
-            authManager.setAuthStoreHandler(consoleAuthProvider);
             authManager.setAuthenticationProvider(consoleAuthProvider);
+            authStoreHandler = consoleAuthProvider;
+        } else {
+            authStoreHandler = null;
         }
         
+        ISVNAuthenticationStorageOptions authOpts = new ISVNAuthenticationStorageOptions() {
+            public boolean isNonInteractive() throws SVNException {
+                return myIsNonInteractive;
+            }
+
+            public ISVNAuthStoreHandler getAuthStoreHandler() throws SVNException {
+                return authStoreHandler;
+            }
+        };
+
+        authManager.setAuthenticationStorageOptions(authOpts);
         authManager.setInMemoryConfigOptions(myConfigOptions);
         authManager.setInMemoryServersOptions(myServersOptions);
         return authManager;

@@ -60,10 +60,9 @@ public class EclipseSVNAuthenticationManager extends DefaultSVNAuthenticationMan
         };
     }
 
-    static class KeyringAuthenticationProvider implements ISVNAuthenticationProvider, IPersistentAuthenticationProvider {
+    static class KeyringAuthenticationProvider implements ISVNAuthenticationProvider, ISVNPersistentAuthenticationProvider {
 
-        private boolean isCertFile(String realm) {
-            return SVNFileType.getType(new File(realm)).isFile();
+        public KeyringAuthenticationProvider() {
         }
 
         public SVNAuthentication requestClientAuthentication(String kind, SVNURL url, String realm, SVNErrorMessage errorMessage, SVNAuthentication previousAuth, boolean authMayBeStored) {

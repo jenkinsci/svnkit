@@ -15,7 +15,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.text.DateFormat;
 import java.text.DateFormatSymbols;
 import java.text.SimpleDateFormat;
@@ -26,6 +25,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.StringTokenizer;
@@ -71,12 +71,18 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
     private static final String INTERACTIVE_COFLICTS = "interactive-conflicts";
     private static final String MIME_TYPES_FILE = "mime-types-file";
     private static final String GLOBAL_CHARSET = "global-charset";
+    private static final String PASSWORD_STORES = "password-stores";
     private static final String DEFAULT_IGNORES = "*.o *.lo *.la #*# .*.rej *.rej .*~ *~ .#* .DS_Store";
     private static final String YES = "yes";
-    private static final String NO = "no";
     
+    private static final String NO = "no";
     private static final String DEFAULT_LOCALE = Locale.getDefault().toString();
+
     private static final String DEFAULT_TIMEZONE = TimeZone.getDefault().getID();
+    private static final String[] DEFAULT_PASSWORD_STORE_TYPES = new String[]{
+            DefaultSVNPersistentAuthenticationProvider.WINDOWS_CRYPTO_API_PASSWORD_STORAGE,
+            DefaultSVNPersistentAuthenticationProvider.MAC_OS_KEYCHAIN_PASSWORD_STORAGE
+    };
 
     private boolean myIsReadonly;
     private File myConfigDirectory;
@@ -493,7 +499,7 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
      * Sets a factory object which is responsible for creating
      * merger drivers.
      *
-     * @param merger  a factory that produces merger drivers
+     * @param mergerFactory  a factory that produces merger drivers
      *                for merge operations
      * @see           #getMergerFactory()
      */
@@ -689,6 +695,80 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
         getConfigFile().setPropertyValue(HELPERS_GROUP, DIFF_CMD, diffCmd, !myIsReadonly);
     }
 
+    public String[] getPasswordStorageTypes() {
+        String storeTypesOption = getConfigFile().getPropertyValue(AUTH_GROUP, PASSWORD_STORES);
+        if (storeTypesOption == null) {
+            return DEFAULT_PASSWORD_STORE_TYPES;
+        }
+        List storeTypes = new ArrayList();
+        for (StringTokenizer types = new StringTokenizer(storeTypesOption, " ,"); types.hasMoreTokens();) {
+            String type = types.nextToken();
+            type = type == null ? null : type.trim();
+            if (type != null && !"".equals(type)) {
+                storeTypes.add(type);
+            }
+        }
+        return (String[]) storeTypes.toArray(new String[storeTypes.size()]);
+    }
+
+    private String getDefaultSSHCommandLine() {
+        Map tunnels = getConfigFile().getProperties("tunnels");
+        if (tunnels == null || !tunnels.containsKey("ssh")) {
+            return null;
+        }
+        return (String) tunnels.get("ssh");
+    }
+
+    private String getDefaultSSHOptionValue(String optionName, String systemProperty, String fallbackSystemProperty) {
+        if (optionName != null) {
+            String sshCommandLine = getDefaultSSHCommandLine();
+            if (sshCommandLine != null) {
+                String value = getOptionValue(sshCommandLine, optionName);
+                if (value != null) {
+                    return value;
+                }
+            }
+        }
+        return System.getProperty(systemProperty, System.getProperty(fallbackSystemProperty));
+    }
+
+    public int getDefaultSSHPortNumber() {
+        String sshCommandLine = getDefaultSSHCommandLine();
+        if (sshCommandLine == null) {
+            return -1;
+        }
+        final String portOption = sshCommandLine.toLowerCase().trim().startsWith("plink") ? "-p" : "-P";
+        String port = getDefaultSSHOptionValue(portOption, "svnkit.ssh2.port", "javasvn.ssh2.port");
+        if (port != null) {
+            try {
+                return Integer.parseInt(port);
+            } catch (NumberFormatException e) {
+                //
+            }
+        }
+        return -1;
+    }
+
+    public String getDefaultSSHUserName() {
+        String userName = getDefaultSSHOptionValue("-l", "svnkit.ssh2.username", "javasvn.ssh2.username");
+        if (userName == null) {
+            userName = System.getProperty("user.name");
+        }
+        return userName;
+    }
+
+    public String getDefaultSSHPassword() {
+        return getDefaultSSHOptionValue("-pw", "svnkit.ssh2.password", "javasvn.ssh2.password");
+    }
+
+    public String getDefaultSSHKeyFile() {
+        return getDefaultSSHOptionValue("-i", "svnkit.ssh2.key", "javasvn.ssh2.key");
+    }
+
+    public String getDefaultSSHPassphrase() {
+        return getDefaultSSHOptionValue(null, "svnkit.ssh2.passphrase", "javasvn.ssh2.passphrase");
+    }
+
     private SVNCompositeConfigFile getConfigFile() {
         if (myConfigFile == null) {
             SVNConfigFile.createDefaultConfiguration(myConfigDirectory);
@@ -698,6 +778,21 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
             myConfigFile.setGroupsToOptions(myConfigOptions);
         }
         return myConfigFile;
+    }
+
+    private static String getOptionValue(String commandLine, String optionName) {
+        if (commandLine == null || optionName == null) {
+            return null;
+        }
+        for (StringTokenizer options = new StringTokenizer(commandLine, " \r\n\t"); options.hasMoreTokens();) {
+            String option = options.nextToken().trim();
+            if (optionName.equals(option) && options.hasMoreTokens()) {
+                return options.nextToken();
+            } else if (option.startsWith(optionName)) {
+                return option.substring(optionName.length());
+            }
+        }
+        return null;
     }
 
     private static Pattern compileNamePatter(String wildcard) {
