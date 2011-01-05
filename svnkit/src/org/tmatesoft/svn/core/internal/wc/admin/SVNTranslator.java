@@ -502,7 +502,7 @@ public class SVNTranslator {
         return new SVNCharsetOutputStream(out, cs, UTF8_CHARSET, CodingErrorAction.REPORT, CodingErrorAction.REPORT);
     }
 
-    public static InputStream getTranslatingInputStream(InputStream in, String charset, byte[] eol, boolean repair, Map keywords, boolean expand) throws SVNException {
+    public static InputStream getTranslatingInputStream(InputStream in, String charset, byte[] eol, boolean repair, Map keywords, boolean expand) {
         if (charset == null || SVNProperty.isUTF8(charset)) {
             return new SVNTranslatorInputStream(in, eol, repair, keywords, expand);
         }

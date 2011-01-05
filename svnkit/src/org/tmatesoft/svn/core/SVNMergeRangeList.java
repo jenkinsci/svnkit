@@ -559,12 +559,7 @@ public class SVNMergeRangeList {
                         if (lastRange.getEndRevision() < mRange.getEndRevision()) {
                             if (pushedMRange2 == null) {
                                 pushedMRange2 = new SVNMergeRange(lastRange.getEndRevision(), mRange.getEndRevision(), mRange.isInheritable());
-                            } else {
-                                pushedMRange2.setStartRevision(lastRange.getEndRevision());
-                                pushedMRange2.setEndRevision(mRange.getEndRevision());
-                                pushedMRange2.setInheritable(mRange.isInheritable());
-                            }
-                            
+                            } 
                             tmpRevision = lastRange.getStartRevision();
                             lastRange.setStartRevision(mRange.getStartRevision());
                             lastRange.setEndRevision(tmpRevision);
@@ -576,11 +571,7 @@ public class SVNMergeRangeList {
                         } else {
                             if (pushedMRange2 == null) {
                                 pushedMRange2 = new SVNMergeRange(mRange.getEndRevision(), lastRange.getEndRevision(), lastRange.isInheritable());
-                            } else {
-                                pushedMRange2.setStartRevision(mRange.getEndRevision());
-                                pushedMRange2.setEndRevision(lastRange.getEndRevision());
-                                pushedMRange2.setInheritable(lastRange.isInheritable());
-                            }
+                            } 
                             
                             tmpRevision = lastRange.getStartRevision();
                             lastRange.setStartRevision(mRange.getStartRevision());
