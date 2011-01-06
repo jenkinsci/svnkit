@@ -11,10 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.db;
 
-import java.util.Map;
-
 import org.tmatesoft.sqljet.core.SqlJetException;
-import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.sqljet.core.table.ISqlJetTable;
 import org.tmatesoft.svn.core.SVNException;
 

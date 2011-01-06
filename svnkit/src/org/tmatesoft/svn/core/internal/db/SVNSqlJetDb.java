@@ -14,7 +14,6 @@ package org.tmatesoft.svn.core.internal.db;
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.util.EnumMap;
-import java.util.logging.Level;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
@@ -24,7 +23,6 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
-import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -81,13 +79,6 @@ public class SVNSqlJetDb {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SQLITE_ERROR, e);
             SVNErrorManager.error(err, SVNLogType.WC);
             return null;
-        }
-    }
-
-    private class StackTraceLog extends Exception {
-        private static final long serialVersionUID = -3341807332809688950L;
-        public StackTraceLog(String msg) {
-            super(msg);
         }
     }
 

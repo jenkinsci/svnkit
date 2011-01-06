@@ -237,10 +237,6 @@ public class SVNAmbientDepthFilterEditor17 implements ISVNEditor {
 
         DirBaton dirBaton = new DirBaton();
         myDirs.addLast(dirBaton);
-        dirBaton.myPath = myAnchor;
-        if (path != null) {
-            dirBaton.myPath = new File(myAnchor, path);
-        }
 
         if (parentBaton != null && parentBaton.myAmbientDepth != SVNDepth.UNKNOWN) {
 
@@ -348,7 +344,6 @@ public class SVNAmbientDepthFilterEditor17 implements ISVNEditor {
 
         boolean myIsAmbientlyExcluded;
         SVNDepth myAmbientDepth;
-        File myPath;
     }
 
     private class FileBaton {
