@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PythonTests start="2011.01.05  at 20:26:58 CET" elapsed="2 minutes 40 seconds">
+  <server name="file" url="file:///home/builder/agent2ram/python/cmdline">
+    <suite name="basic" total="49" passed="49" failed="0">
+      <test name="basic checkout of a wc" id="1" result="PASSED"></test>
+      <test name="basic status command" id="2" result="PASSED"></test>
+      <test name="basic commit command" id="3" result="PASSED"></test>
+      <test name="basic update command" id="4" result="PASSED"></test>
+      <test name="basic mkdir URL" id="5" result="PASSED"></test>
+      <test name="basic mkdir URL, including parent directories" id="6" result="PASSED"></test>
+      <test name="basic mkdir, including parent directories" id="7" result="PASSED"></test>
+      <test name="basic corruption detection" id="8" result="PASSED"></test>
+      <test name="receiving text merges as part of an update" id="9" result="PASSED"></test>
+      <test name="basic conflict creation and resolution" id="10" result="PASSED"></test>
+      <test name="basic cleanup command" id="11" result="PASSED"></test>
+      <test name="basic revert command" id="12" result="PASSED"></test>
+      <test name="basic switch command" id="13" result="PASSED"></test>
+      <test name="basic delete command" id="14" result="PASSED"></test>
+      <test name="checkout a path no longer in HEAD" id="15" result="PASSED"></test>
+      <test name="attempt to change node kind" id="16" result="PASSED"></test>
+      <test name="basic import of single new file" id="17" result="PASSED"></test>
+      <test name="basic cat of files" id="18" result="PASSED"></test>
+      <test name="basic ls" id="19" result="PASSED"></test>
+      <test name="'svn log file:///nonexistent_path' should fail" id="20" result="PASSED"></test>
+      <test name="basic auth caching" id="21" result="PASSED"></test>
+      <test name="ignored files in added dirs should not be added" id="22" result="PASSED"></test>
+      <test name="test add --parents" id="23" result="PASSED"></test>
+      <test name="make sure URI syntaxes are parsed correctly" id="24" result="PASSED"></test>
+      <test name="trying to check out a file should fail" id="25" result="PASSED"></test>
+      <test name="basic info command" id="26" result="PASSED"></test>
+      <test name="ignore files matching local ignores in added dirs" id="27" result="PASSED"></test>
+      <test name="add ignored files in added dirs" id="28" result="PASSED"></test>
+      <test name="check that repos root gets set on checkout" id="29" result="PASSED"></test>
+      <test name="checks peg revision on filename with @ sign" id="30" result="PASSED"></test>
+      <test name="info on file not existing in HEAD" id="31" result="PASSED"></test>
+      <test name="ls a path no longer in HEAD" id="32" result="PASSED"></test>
+      <test name="cat added file using -rPREV" id="33" result="PASSED"></test>
+      <test name="basic ls of repos with space in name" id="34" result="PASSED"></test>
+      <test name="delete file and directory with --keep-local" id="35" result="PASSED"></test>
+      <test name="delete file and directory with --keep-local twice" id="36" result="PASSED"></test>
+      <test name="use folders with names like 'c:hi'" id="37" result="PASSED"></test>
+      <test name="remotely remove directories from one repository" id="38" result="PASSED"></test>
+      <test name="remotely remove directories from two repositories" id="39" result="PASSED"></test>
+      <test name="automatic conflict resolution" id="40" result="PASSED"></test>
+      <test name="get info on a file not in the repo" id="41" result="PASSED"></test>
+      <test name="basic relative url target using current dir" id="42" result="PASSED"></test>
+      <test name="basic relative url target using other targets" id="43" result="PASSED"></test>
+      <test name="basic relative url target with multiple repos" id="44" result="PASSED"></test>
+      <test name="basic relative url non-canonical targets" id="45" result="PASSED"></test>
+      <test name="basic relative url targets with peg revisions" id="46" result="PASSED"></test>
+      <test name="basic auth test" id="47" result="PASSED"></test>
+      <test name="test add --parents .svn/format" id="48" result="PASSED"></test>
+      <test name="delete a directory with ' ' using its url" id="49" result="PASSED"></test>
+    </suite>
+  </server>
+  <server name="svnserve" url="svn://localhost:52420">
+    <suite name="basic" total="49" passed="49" failed="0">
+      <test name="basic checkout of a wc" id="1" result="PASSED"></test>
+      <test name="basic status command" id="2" result="PASSED"></test>
+      <test name="basic commit command" id="3" result="PASSED"></test>
+      <test name="basic update command" id="4" result="PASSED"></test>
+      <test name="basic mkdir URL" id="5" result="PASSED"></test>
+      <test name="basic mkdir URL, including parent directories" id="6" result="PASSED"></test>
+      <test name="basic mkdir, including parent directories" id="7" result="PASSED"></test>
+      <test name="basic corruption detection" id="8" result="PASSED"></test>
+      <test name="receiving text merges as part of an update" id="9" result="PASSED"></test>
+      <test name="basic conflict creation and resolution" id="10" result="PASSED"></test>
+      <test name="basic cleanup command" id="11" result="PASSED"></test>
+      <test name="basic revert command" id="12" result="PASSED"></test>
+      <test name="basic switch command" id="13" result="PASSED"></test>
+      <test name="basic delete command" id="14" result="PASSED"></test>
+      <test name="checkout a path no longer in HEAD" id="15" result="PASSED"></test>
+      <test name="attempt to change node kind" id="16" result="PASSED"></test>
+      <test name="basic import of single new file" id="17" result="PASSED"></test>
+      <test name="basic cat of files" id="18" result="PASSED"></test>
+      <test name="basic ls" id="19" result="PASSED"></test>
+      <test name="'svn log file:///nonexistent_path' should fail" id="20" result="PASSED"></test>
+      <test name="basic auth caching" id="21" result="PASSED"></test>
+      <test name="ignored files in added dirs should not be added" id="22" result="PASSED"></test>
+      <test name="test add --parents" id="23" result="PASSED"></test>
+      <test name="make sure URI syntaxes are parsed correctly" id="24" result="PASSED"></test>
+      <test name="trying to check out a file should fail" id="25" result="PASSED"></test>
+      <test name="basic info command" id="26" result="PASSED"></test>
+      <test name="ignore files matching local ignores in added dirs" id="27" result="PASSED"></test>
+      <test name="add ignored files in added dirs" id="28" result="PASSED"></test>
+      <test name="check that repos root gets set on checkout" id="29" result="PASSED"></test>
+      <test name="checks peg revision on filename with @ sign" id="30" result="PASSED"></test>
+      <test name="info on file not existing in HEAD" id="31" result="PASSED"></test>
+      <test name="ls a path no longer in HEAD" id="32" result="PASSED"></test>
+      <test name="cat added file using -rPREV" id="33" result="PASSED"></test>
+      <test name="basic ls of repos with space in name" id="34" result="PASSED"></test>
+      <test name="delete file and directory with --keep-local" id="35" result="PASSED"></test>
+      <test name="delete file and directory with --keep-local twice" id="36" result="PASSED"></test>
+      <test name="use folders with names like 'c:hi'" id="37" result="PASSED"></test>
+      <test name="remotely remove directories from one repository" id="38" result="PASSED"></test>
+      <test name="remotely remove directories from two repositories" id="39" result="PASSED"></test>
+      <test name="automatic conflict resolution" id="40" result="PASSED"></test>
+      <test name="get info on a file not in the repo" id="41" result="PASSED"></test>
+      <test name="basic relative url target using current dir" id="42" result="PASSED"></test>
+      <test name="basic relative url target using other targets" id="43" result="PASSED"></test>
+      <test name="basic relative url target with multiple repos" id="44" result="PASSED"></test>
+      <test name="basic relative url non-canonical targets" id="45" result="PASSED"></test>
+      <test name="basic relative url targets with peg revisions" id="46" result="PASSED"></test>
+      <test name="basic auth test" id="47" result="PASSED"></test>
+      <test name="test add --parents .svn/format" id="48" result="PASSED"></test>
+      <test name="delete a directory with ' ' using its url" id="49" result="PASSED"></test>
+    </suite>
+  </server>
+  <server name="apache" url="http://localhost:50710">
+    <suite name="basic" total="49" passed="49" failed="0">
+      <test name="basic checkout of a wc" id="1" result="PASSED"></test>
+      <test name="basic status command" id="2" result="PASSED"></test>
+      <test name="basic commit command" id="3" result="PASSED"></test>
+      <test name="basic update command" id="4" result="PASSED"></test>
+      <test name="basic mkdir URL" id="5" result="PASSED"></test>
+      <test name="basic mkdir URL, including parent directories" id="6" result="PASSED"></test>
+      <test name="basic mkdir, including parent directories" id="7" result="PASSED"></test>
+      <test name="basic corruption detection" id="8" result="PASSED"></test>
+      <test name="receiving text merges as part of an update" id="9" result="PASSED"></test>
+      <test name="basic conflict creation and resolution" id="10" result="PASSED"></test>
+      <test name="basic cleanup command" id="11" result="PASSED"></test>
+      <test name="basic revert command" id="12" result="PASSED"></test>
+      <test name="basic switch command" id="13" result="PASSED"></test>
+      <test name="basic delete command" id="14" result="PASSED"></test>
+      <test name="checkout a path no longer in HEAD" id="15" result="PASSED"></test>
+      <test name="attempt to change node kind" id="16" result="PASSED"></test>
+      <test name="basic import of single new file" id="17" result="PASSED"></test>
+      <test name="basic cat of files" id="18" result="PASSED"></test>
+      <test name="basic ls" id="19" result="PASSED"></test>
+      <test name="'svn log file:///nonexistent_path' should fail" id="20" result="PASSED"></test>
+      <test name="basic auth caching" id="21" result="PASSED"></test>
+      <test name="ignored files in added dirs should not be added" id="22" result="PASSED"></test>
+      <test name="test add --parents" id="23" result="PASSED"></test>
+      <test name="make sure URI syntaxes are parsed correctly" id="24" result="PASSED"></test>
+      <test name="trying to check out a file should fail" id="25" result="PASSED"></test>
+      <test name="basic info command" id="26" result="PASSED"></test>
+      <test name="ignore files matching local ignores in added dirs" id="27" result="PASSED"></test>
+      <test name="add ignored files in added dirs" id="28" result="PASSED"></test>
+      <test name="check that repos root gets set on checkout" id="29" result="PASSED"></test>
+      <test name="checks peg revision on filename with @ sign" id="30" result="PASSED"></test>
+      <test name="info on file not existing in HEAD" id="31" result="PASSED"></test>
+      <test name="ls a path no longer in HEAD" id="32" result="PASSED"></test>
+      <test name="cat added file using -rPREV" id="33" result="PASSED"></test>
+      <test name="basic ls of repos with space in name" id="34" result="PASSED"></test>
+      <test name="delete file and directory with --keep-local" id="35" result="PASSED"></test>
+      <test name="delete file and directory with --keep-local twice" id="36" result="PASSED"></test>
+      <test name="use folders with names like 'c:hi'" id="37" result="PASSED"></test>
+      <test name="remotely remove directories from one repository" id="38" result="PASSED"></test>
+      <test name="remotely remove directories from two repositories" id="39" result="PASSED"></test>
+      <test name="automatic conflict resolution" id="40" result="PASSED"></test>
+      <test name="get info on a file not in the repo" id="41" result="PASSED"></test>
+      <test name="basic relative url target using current dir" id="42" result="PASSED"></test>
+      <test name="basic relative url target using other targets" id="43" result="PASSED"></test>
+      <test name="basic relative url target with multiple repos" id="44" result="PASSED"></test>
+      <test name="basic relative url non-canonical targets" id="45" result="PASSED"></test>
+      <test name="basic relative url targets with peg revisions" id="46" result="PASSED"></test>
+      <test name="basic auth test" id="47" result="PASSED"></test>
+      <test name="test add --parents .svn/format" id="48" result="PASSED"></test>
+      <test name="delete a directory with ' ' using its url" id="49" result="PASSED"></test>
+    </suite>
+  </server>
+</PythonTests>
