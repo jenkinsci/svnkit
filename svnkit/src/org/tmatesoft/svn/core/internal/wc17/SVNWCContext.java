@@ -1253,7 +1253,11 @@ public class SVNWCContext {
     }
 
     private boolean compareTimestamps(File localAbsPath, WCDbInfo readInfo) {
-        return SVNFileUtil.roundTimeStamp(readInfo.lastModTime) != SVNFileUtil.roundTimeStamp(localAbsPath.lastModified() * (SVNFileUtil.isWindows ? 1000 : 1));
+	    return compareTimestamps(localAbsPath.lastModified(), readInfo.lastModTime);
+    }
+
+	public static boolean compareTimestamps(long ts1, long ts2) {
+        return SVNFileUtil.roundTimeStamp(ts2) != SVNFileUtil.roundTimeStamp(ts1 * (SVNFileUtil.isWindows ? 1000 : 1));
     }
 
     public static class PristineContentsInfo {

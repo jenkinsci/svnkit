@@ -81,7 +81,7 @@ public class SVNWCUtils {
         if (relpath == null) {
             return 0;
         }
-        return relpathDepth(relpath.getPath());
+        return relpathDepth(relpath.getPath().replace(File.separatorChar, '/'));
     }
 
     public static int relpathDepth(String relpath) {

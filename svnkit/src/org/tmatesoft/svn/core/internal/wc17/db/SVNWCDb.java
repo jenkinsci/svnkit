@@ -132,7 +132,7 @@ public class SVNWCDb implements ISVNWCDb {
         }
     }
 
-    private SVNDepth depthFromWord(String depthStr) {
+    public static SVNDepth depthFromWord(String depthStr) {
         if (depthStr.equals("exclude")) {
             return SVNDepth.EXCLUDE;
         } else if (depthStr.equals("unknown")) {
@@ -704,13 +704,13 @@ public class SVNWCDb implements ISVNWCDb {
             have_row = stmt.next();
 
             if (have_row) {
-                SVNWCDbKind node_kind = getColumnToken(stmt, SVNWCDbSchema.NODES__Fields.kind, kindMap2);
+                SVNWCDbKind node_kind = getColumnKind(stmt);
 
                 if (f.contains(BaseInfoField.kind)) {
                     info.kind = node_kind;
                 }
                 if (f.contains(BaseInfoField.status)) {
-                    info.status = getColumnToken(stmt, SVNWCDbSchema.NODES__Fields.presence, presenceMap2);
+                    info.status = getColumnPresence(stmt);
                 }
                 if (f.contains(BaseInfoField.revision)) {
                     info.revision = getColumnRevNum(stmt, SVNWCDbSchema.NODES__Fields.revision);
@@ -803,6 +803,10 @@ public class SVNWCDb implements ISVNWCDb {
         return info;
 
     }
+
+	public static SVNWCDbStatus getColumnPresence(SVNSqlJetStatement stmt) throws SVNException {
+		return getColumnToken(stmt, SVNWCDbSchema.NODES__Fields.presence, presenceMap2);
+	}
 
     public String getBaseProp(File localAbsPath, String propName) throws SVNException {
         // TODO
@@ -1997,13 +2001,13 @@ public class SVNWCDb implements ISVNWCDb {
                 SVNWCDbKind node_kind;
 
                 if (have_work)
-                    node_kind = getColumnToken(stmt_work, SVNWCDbSchema.NODES__Fields.kind, kindMap2);
+                    node_kind = getColumnKind(stmt_work);
                 else
-                    node_kind = getColumnToken(stmt_base, SVNWCDbSchema.NODES__Fields.kind, kindMap2);
+                    node_kind = getColumnKind(stmt_base);
 
                 if (f.contains(InfoField.status)) {
                     if (have_base) {
-                        info.status = getColumnToken(stmt_base, SVNWCDbSchema.NODES__Fields.presence, presenceMap2);
+                        info.status = getColumnPresence(stmt_base);
 
                         /*
                          * We have a presence that allows a WORKING_NODE
@@ -2023,7 +2027,7 @@ public class SVNWCDb implements ISVNWCDb {
                     if (have_work) {
                         SVNWCDbStatus work_status;
 
-                        work_status = getColumnToken(stmt_work, SVNWCDbSchema.NODES__Fields.presence, presenceMap2);
+                        work_status = getColumnPresence(stmt_work);
                         assert (work_status == SVNWCDbStatus.Normal || work_status == SVNWCDbStatus.Excluded || work_status == SVNWCDbStatus.NotPresent || work_status == SVNWCDbStatus.BaseDeleted || work_status == SVNWCDbStatus.Incomplete);
 
                         if (work_status == SVNWCDbStatus.Incomplete) {
@@ -2298,6 +2302,10 @@ public class SVNWCDb implements ISVNWCDb {
 
         return info;
     }
+
+	public static SVNWCDbKind getColumnKind(SVNSqlJetStatement stmt_work) throws SVNException {
+		return getColumnToken(stmt_work, SVNWCDbSchema.NODES__Fields.kind, kindMap2);
+	}
 
     public SVNWCDbKind readKind(File localAbsPath, boolean allowMissing) throws SVNException {
         try {
@@ -2854,7 +2862,7 @@ public class SVNWCDb implements ISVNWCDb {
                  * We need the presence of the WORKING node. Note that legal
                  * values are: normal, not-present, base-deleted.
                  */
-                SVNWCDbStatus work_presence = getColumnToken(stmt, SVNWCDbSchema.NODES__Fields.presence, presenceMap2);
+                SVNWCDbStatus work_presence = getColumnPresence(stmt);
 
                 /* The starting node should be deleted. */
                 if (current_abspath.equals(localAbsPath) && work_presence != SVNWCDbStatus.NotPresent && work_presence != SVNWCDbStatus.BaseDeleted) {
@@ -2868,7 +2876,7 @@ public class SVNWCDb implements ISVNWCDb {
                     boolean have_base = baseStmt != null && baseStmt.next() && !isColumnNull(baseStmt, SVNWCDbSchema.NODES__Fields.presence);
 
                     if (have_base) {
-                        SVNWCDbStatus base_presence = getColumnToken(baseStmt, SVNWCDbSchema.NODES__Fields.presence, presenceMap2);
+                        SVNWCDbStatus base_presence = getColumnPresence(baseStmt);
 
                         /* Only "normal" and "not-present" are allowed. */
                         assert (base_presence == SVNWCDbStatus.Normal || base_presence == SVNWCDbStatus.NotPresent
