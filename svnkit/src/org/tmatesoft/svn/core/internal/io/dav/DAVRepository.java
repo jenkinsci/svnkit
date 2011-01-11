@@ -1290,10 +1290,12 @@ public class DAVRepository extends SVNRepository {
         SVNNodeKind kind = SVNNodeKind.FILE;
         Object revisionStr = child.getPropertyValue(DAVElement.VERSION_NAME);
         long lastRevision = -1;
-        try {
-            lastRevision = Long.parseLong(revisionStr.toString());
-        } catch (NumberFormatException nfe) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, nfe), SVNLogType.NETWORK);
+        if (revisionStr != null) {
+            try {
+                lastRevision = Long.parseLong(revisionStr.toString());
+            } catch (NumberFormatException nfe) {
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, nfe), SVNLogType.NETWORK);
+            }
         }
         SVNPropertyValue sizeValue = child.getPropertyValue(DAVElement.GET_CONTENT_LENGTH);
         
