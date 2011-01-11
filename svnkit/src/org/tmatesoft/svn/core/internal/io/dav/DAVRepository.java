@@ -408,11 +408,13 @@ public class DAVRepository extends SVNRepository {
                     long lastRevision = INVALID_REVISION;
                     if ((entryFields & SVNDirEntry.DIRENT_CREATED_REVISION) != 0) {
                         Object revisionStr = child.getPropertyValue(DAVElement.VERSION_NAME);
-                        try {
-                            lastRevision = Long.parseLong(revisionStr.toString());
-                        } catch (NumberFormatException nfe) {
-                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA);
-                            SVNErrorManager.error(err, SVNLogType.NETWORK);
+                        if (revisionStr != null) {
+                            try {
+                                lastRevision = Long.parseLong(revisionStr.toString());
+                            } catch (NumberFormatException nfe) {
+                                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA);
+                                SVNErrorManager.error(err, SVNLogType.NETWORK);
+                            }
                         }
                     }
 
