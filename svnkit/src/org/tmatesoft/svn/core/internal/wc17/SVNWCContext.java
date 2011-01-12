@@ -3634,7 +3634,7 @@ public class SVNWCContext {
     }
 
     public void wqRun(File wcRootAbspath) throws SVNException {
-        SVNDebugLog.getDefaultLog().log(SVNLogType.WC, String.format("work queue run: wcroot='%s'", wcRootAbspath), Level.INFO);
+        //SVNDebugLog.getDefaultLog().log(SVNLogType.WC, String.format("work queue run: wcroot='%s'", wcRootAbspath), Level.INFO);
         while (true) {
             checkCancelled();
             SVNWCDbKind kind = db.readKind(wcRootAbspath, true);
@@ -3654,7 +3654,7 @@ public class SVNWCContext {
         if (!workItem.isAtom()) {
             for (WorkQueueOperation scan : WorkQueueOperation.values()) {
                 if (scan.getOpName().equals(workItem.getChild(0).getValue())) {
-                    SVNDebugLog.getDefaultLog().log(SVNLogType.WC, String.format("work queue dispatch: operation='%s'", scan.getOpName()), Level.INFO);
+                    //SVNDebugLog.getDefaultLog().log(SVNLogType.WC, String.format("work queue dispatch: operation='%s'", scan.getOpName()), Level.INFO);
                     scan.getOperation().runOperation(this, wcRootAbspath, workItem);
                     return;
                 }
