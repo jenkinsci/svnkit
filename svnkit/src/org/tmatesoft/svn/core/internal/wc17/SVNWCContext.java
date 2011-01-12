@@ -667,7 +667,7 @@ public class SVNWCContext {
          */
         SVNTreeConflictDescription tree_conflict = db.opReadTreeConflict(localAbspath);
 
-        SVNStatus17 stat = new SVNStatus17();
+        SVNStatus17 stat = new SVNStatus17(this);
         stat.setLocalAbsPath(localAbspath);
         stat.setKind(SVNNodeKind.UNKNOWN); /* not versioned */
         stat.setDepth(SVNDepth.UNKNOWN);
@@ -959,7 +959,7 @@ public class SVNWCContext {
 
         /* 6. Build and return a status structure. */
 
-        SVNStatus17 stat = new SVNStatus17();
+        SVNStatus17 stat = new SVNStatus17(this);
         stat.setLocalAbsPath(localAbsPath);
 
         switch (info.kind) {

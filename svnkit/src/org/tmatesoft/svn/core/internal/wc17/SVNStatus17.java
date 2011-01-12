@@ -16,6 +16,7 @@ import java.util.Date;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
@@ -27,14 +28,14 @@ import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 
 /**
  * Structure for holding the "status" of a working copy item.
- * 
+ *
  * The item's entry data is in entry, augmented and possibly shadowed by the
  * other fields. entry is NULL if this item is not under version control.
- * 
+ *
  * Fields may be added to the end of this structure in future versions.
  * Therefore, to preserve binary compatibility, users should not directly
  * allocate structures of this type.
- * 
+ *
  * @since New in SVN1.7.
  * @author TMate Software Ltd.
  */
@@ -49,6 +50,8 @@ public class SVNStatus17 {
         public File localFile;
         public SVNTreeConflictDescription treeConflict;
     }
+
+    private final SVNWCContext context;
 
     private File localAbsPath;
 
@@ -128,7 +131,7 @@ public class SVNStatus17 {
 
     /**
      * WC out-of-date info from the repository
-     * 
+     *
      * When the working copy item is out-of-date compared to the repository, the
      * following fields represent the state of the youngest revision of the item
      * in the repository. If the working copy is not out of date, the fields are
@@ -174,6 +177,11 @@ public class SVNStatus17 {
     private String oodChangedAuthor;
 
     private SVNTreeConflictDescription treeConflict;
+
+
+    public SVNStatus17(SVNWCContext context) {
+        this.context = context;
+    }
 
     public void setLocalAbsPath(File localAbsPath) {
         this.localAbsPath = localAbsPath;
@@ -391,22 +399,26 @@ public class SVNStatus17 {
         this.oodChangedAuthor = oodChangedAuthor;
     }
 
-    public SVNStatus getStatus16() {
+    public SVNStatus getStatus16() throws SVNException {
         return getStatus16(false, null, null, null, null, ISVNWCDb.WC_FORMAT_17);
     }
 
-    public SVNStatus getStatus16(boolean isFileExternal, String copyFromURL, SVNRevision copyFromRevision, SVNLock remoteLock, Map entryProperties, int wcFormatVersion) {
+    public SVNStatus getStatus16(boolean isFileExternal, String copyFromURL, SVNRevision copyFromRevision, SVNLock remoteLock, Map entryProperties, int wcFormatVersion) throws SVNException {
         final SVNStatusType contentStatus = getCombinedStatus();
+        boolean isLocked = false;
+        if(kind==SVNNodeKind.DIR) {
+            isLocked = context.getDb().isWCLocked(localAbsPath);
+        }
         if (conflicted && conflictedInfo != null) {
             final SVNStatus status = new SVNStatus(reposRootUrl, localAbsPath, kind, SVNRevision.create(revision), SVNRevision.create(changedRev), changedDate, changedAuthor, contentStatus,
-                    propStatus, reposTextStatus, reposPropStatus, lock != null, copied, switched, isFileExternal, conflictedInfo.textConflicted ? conflictedInfo.repositoryFile : null,
+                    propStatus, reposTextStatus, reposPropStatus, isLocked, copied, switched, isFileExternal, conflictedInfo.textConflicted ? conflictedInfo.repositoryFile : null,
                     conflictedInfo.textConflicted ? conflictedInfo.baseFile : null, conflictedInfo.textConflicted ? conflictedInfo.localFile : null,
                     conflictedInfo.propConflicted ? conflictedInfo.repositoryFile : null, copyFromURL, copyFromRevision, remoteLock, lock, entryProperties, changelist, wcFormatVersion, treeConflict);
             status.setStatus17(this);
             return status;
         }
         final SVNStatus status = new SVNStatus(reposRootUrl, localAbsPath, kind, SVNRevision.create(revision), SVNRevision.create(changedRev), changedDate, changedAuthor, contentStatus, propStatus,
-                reposTextStatus, reposPropStatus, lock != null, copied, switched, isFileExternal, null, null, null, null, copyFromURL, copyFromRevision, remoteLock, lock, entryProperties, changelist,
+                reposTextStatus, reposPropStatus, isLocked, copied, switched, isFileExternal, null, null, null, null, copyFromURL, copyFromRevision, remoteLock, lock, entryProperties, changelist,
                 wcFormatVersion, treeConflict);
         status.setStatus17(this);
         return status;
