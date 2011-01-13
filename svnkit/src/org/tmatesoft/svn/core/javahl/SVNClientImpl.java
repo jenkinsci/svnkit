@@ -703,6 +703,13 @@ public class SVNClientImpl implements SVNClientInterface {
             }
             resetLog();
         }
+        if (commitResults != null && commitResults.length == 1) {
+            if (commitResults[0].getNewRevision() < 0 && commitResults[0].getErrorMessage() != null) {
+                // commit failed, not just accompanied by a error message
+                // from the post-commit hook.
+                throwException(new SVNException(commitResults[0].getErrorMessage()));
+            }
+        }
         if (commitResults != null && commitResults.length > 0) {
             long[] revisions = new long[commitResults.length];
             for (int i = 0; i < commitResults.length; i++) {
@@ -1670,15 +1677,15 @@ public class SVNClientImpl implements SVNClientInterface {
     }
 
     public static int versionMajor() {
-        return Version.getMajorVersion();
+        return Version.getSVNMajorVersion();
     }
 
     public static int versionMinor() {
-        return Version.getMinorVersion();
+        return Version.getSVNMinorVersion();
     }
 
     public static int versionMicro() {
-        return Version.getMicroVersion();
+        return Version.getSVNMicroVersion();
     }
     
     public static long versionRevisionNumber() {
