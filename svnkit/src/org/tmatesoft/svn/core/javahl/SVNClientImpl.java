@@ -1677,15 +1677,15 @@ public class SVNClientImpl implements SVNClientInterface {
     }
 
     public static int versionMajor() {
-        return Version.getSVNMajorVersion();
+        return Version.getMajorVersion();
     }
 
     public static int versionMinor() {
-        return Version.getSVNMinorVersion();
+        return Version.getMinorVersion();
     }
 
     public static int versionMicro() {
-        return Version.getSVNMicroVersion();
+        return Version.getMicroVersion();
     }
     
     public static long versionRevisionNumber() {
