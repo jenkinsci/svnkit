@@ -694,11 +694,35 @@ public class SVNClientImpl implements SVNClientInterface {
             SVNDepth svnDepth = SVNDepth.fromID(depth);    
             boolean recurse = SVNDepth.recurseFromDepth(svnDepth);
             packets = client.doCollectCommitItems(files, noUnlock, !recurse, svnDepth, atomicCommit, changlelists);
-            commitResults = client.doCommit(packets, noUnlock, keepChangelist, message, revprops != null ? SVNProperties.wrap(revprops) : null);
+            if (packets != null) {
+                if (packets.length == 1) {
+                    client.setEventHandler(new ISVNEventHandler() {
+                        public void checkCancelled() throws SVNCancelException {
+                            getEventListener().checkCancelled();
+                        }
+                        public void handleEvent(SVNEvent event, double progress) throws SVNException {
+                            if (event.getAction() == SVNEventAction.SKIP && event.getErrorMessage() != null) {
+                                return;
+                            }
+                            getEventListener().handleEvent(event, progress);
+                        }
+                    });
+                }
+                commitResults = client.doCommit(packets, noUnlock, keepChangelist, message, revprops != null ? SVNProperties.wrap(revprops) : null);
+            }
         } catch (SVNException e) {
             throwException(e);
         } finally {
+            if (packets != null) {
+                for (int i = 0; i < packets.length; i++) {
+                    try {
+                        packets[i].dispose();
+                    } catch (SVNException e) {
+                    }
+                }
+            }
             if (client != null) {
+                client.setEventHandler(getEventListener());
                 client.setCommitHandler(null);
             }
             resetLog();
