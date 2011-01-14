@@ -1352,9 +1352,6 @@ public class SVNWCContext {
             final boolean needTranslation = isTranslationRequired(eolStyle.eolStyle, eolStyle.eolStr, keywords, special, true);
 
             if (verifyChecksum || needTranslation) {
-                /* Reading files is necessary. */
-                SVNChecksum checksum = null;
-                SVNChecksum nodeChecksum = null;
 
                 if (verifyChecksum) {
                     /*
@@ -1400,31 +1397,11 @@ public class SVNWCContext {
                         pristineStream = SVNTranslator.getTranslatingInputStream(pristineStream, null, eolStyle.eolStr, false, keywords, true);
                     }
                 }
-
-                try {
-                    same = isSameContents(pristineStream, vStream);
-                } catch (IOException e) {
-                    SVNTranslator.translationError(versionedFileAbsPath, e);
-                }
-
-                if (verifyChecksum && nodeChecksum != null) {
-                    // TODO unreachable code
-                    if (checksum != null && !isChecksumMatch(checksum, nodeChecksum)) {
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT_TEXT_BASE, "Checksum mismatch indicates corrupt text base for file: "
-                                + "'{0}':\n   expected:  {1}\n     actual:  {2}\n", new Object[] {
-                                versionedFileAbsPath, nodeChecksum, checksum
-                        });
-                        SVNErrorManager.error(err, SVNLogType.WC);
-                    }
-                }
+                same = isSameContents(pristineStream, vStream);
             } else {
                 /* Translation would be a no-op, so compare the original file. */
                 vStream = SVNFileUtil.openFileForReading(versionedFileAbsPath);
-                try {
-                    same = isSameContents(vStream, pristineStream);
-                } catch (IOException e) {
-                    SVNTranslator.translationError(versionedFileAbsPath, e);
-                }
+                same = isSameContents(vStream, pristineStream);
             }
 
             return (!same);
@@ -1436,40 +1413,27 @@ public class SVNWCContext {
 
     }
 
-    private boolean isChecksumMatch(SVNChecksum checksum1, SVNChecksum checksum2) {
-        if (checksum1 == null || checksum2 == null)
-            return true;
-        if (checksum1.getKind() != checksum2.getKind())
-            return false;
-        return checksum1.getDigest() == null || checksum2.getDigest() == null || checksum1.getDigest() == checksum2.getDigest();
-    }
-
-    private boolean isSameContents(InputStream stream1, InputStream stream2) throws IOException {
-        byte[] buf1 = new byte[STREAM_CHUNK_SIZE];
-        byte[] buf2 = new byte[STREAM_CHUNK_SIZE];
-        long bytes_read1 = STREAM_CHUNK_SIZE;
-        long bytes_read2 = STREAM_CHUNK_SIZE;
-
-        boolean same = true; /* assume TRUE, until disproved below */
-        while (bytes_read1 == STREAM_CHUNK_SIZE && bytes_read2 == STREAM_CHUNK_SIZE) {
-            try {
+    private boolean isSameContents(InputStream stream1, InputStream stream2) throws SVNException {
+        try {
+            byte[] buf1 = new byte[STREAM_CHUNK_SIZE];
+            byte[] buf2 = new byte[STREAM_CHUNK_SIZE];
+            long bytes_read1 = STREAM_CHUNK_SIZE;
+            long bytes_read2 = STREAM_CHUNK_SIZE;
+            boolean same = true; /* assume TRUE, until disproved below */
+            while (bytes_read1 == STREAM_CHUNK_SIZE && bytes_read2 == STREAM_CHUNK_SIZE) {
                 bytes_read1 = stream1.read(buf1);
-            } catch (IOException e) {
-                break;
-            }
-            try {
                 bytes_read2 = stream2.read(buf2);
-            } catch (IOException e) {
-                break;
+                if ((bytes_read1 != bytes_read2) || !(Arrays.equals(buf1, buf2))) {
+                    same = false;
+                    break;
+                }
             }
-
-            if ((bytes_read1 != bytes_read2) || !(Arrays.equals(buf1, buf2))) {
-                same = false;
-                break;
-            }
+            return same;
+        } catch (IOException e) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
+            SVNErrorManager.error(err, e, Level.FINE, SVNLogType.DEFAULT);
+            return false;
         }
-
-        return same;
     }
 
     private InputStream readSpecialFile(File localAbsPath) throws SVNException {
