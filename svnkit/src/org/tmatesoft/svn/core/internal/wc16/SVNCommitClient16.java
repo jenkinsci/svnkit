@@ -94,7 +94,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * <td>'svn mkdir URL'</td>
  * </tr>
  * </table>
- * 
+ *
  * @version 1.3
  * @author TMate Software Ltd.
  * @since 1.2
@@ -121,7 +121,7 @@ public class SVNCommitClient16 extends SVNBasicDelegate {
      * {@link SVNWCUtil#createDefaultAuthenticationManager()}) which uses
      * server-side settings and auth storage from the default SVN's run-time
      * configuration area (or system properties if that area is not found).
-     * 
+     *
      * @param authManager
      *            an authentication and network layers driver
      * @param options
@@ -144,7 +144,7 @@ public class SVNCommitClient16 extends SVNBasicDelegate {
      * If <code>repositoryPool</code> is <span class="javakeyword">null</span>,
      * then {@link org.tmatesoft.svn.core.io.SVNRepositoryFactory} will be used
      * to create {@link SVNRepository repository access objects}.
-     * 
+     *
      * @param repositoryPool
      *            a repository pool object
      * @param options
@@ -172,7 +172,7 @@ public class SVNCommitClient16 extends SVNBasicDelegate {
      * <p>
      * If using <b>SVNCommitClient</b> without specifying any commit handler
      * then a default one will be used - {@link DefaultSVNCommitHandler}.
-     * 
+     *
      * @param handler
      *            an implementor's handler that will be used to handle commit
      *            log messages
@@ -187,7 +187,7 @@ public class SVNCommitClient16 extends SVNBasicDelegate {
      * Returns the specified commit handler (if set) being in use or a default
      * one (<b>DefaultSVNCommitHandler</b>) if no special implementations of
      * <b>ISVNCommitHandler</b> were previously provided.
-     * 
+     *
      * @return the commit handler being in use or a default one
      * @see #setCommitHander(ISVNCommitHandler)
      * @see ISVNCommitHandler
@@ -202,7 +202,7 @@ public class SVNCommitClient16 extends SVNBasicDelegate {
      * <p>
      * When no parameters are set {@link DefaultSVNCommitParameters default}
      * ones are used.
-     * 
+     *
      * @param parameters
      *            commit parameters
      * @see #getCommitParameters()
@@ -216,7 +216,7 @@ public class SVNCommitClient16 extends SVNBasicDelegate {
      * <p>
      * If no user parameters were previously specified, once creates and returns
      * {@link DefaultSVNCommitParameters default} ones.
-     * 
+     *
      * @return commit parameters
      * @see #setCommitParameters(ISVNCommitParameters)
      */
@@ -227,7 +227,7 @@ public class SVNCommitClient16 extends SVNBasicDelegate {
     /**
      * Committs removing specified URL-paths from the repository. This call is
      * equivalent to <code>doDelete(urls, commitMessage, null)</code>.
-     * 
+     *
      * @param urls
      *            an array containing URL-strings that represent repository
      *            locations to be removed
@@ -261,7 +261,7 @@ public class SVNCommitClient16 extends SVNBasicDelegate {
      * If the caller's {@link ISVNEventHandler event handler} is not <span
      * class="javakeyword">null</span> and if the commit succeeds, the handler
      * will be called with {@link SVNEventAction#COMMIT_COMPLETED} event action.
-     * 
+     *
      * @param urls
      *            repository urls to delete
      * @param commitMessage
@@ -347,7 +347,7 @@ public class SVNCommitClient16 extends SVNBasicDelegate {
 
     /**
      * Committs a creation of a new directory/directories in the repository.
-     * 
+     *
      * @param urls
      *            an array containing URL-strings that represent new repository
      *            locations to be created
@@ -379,7 +379,7 @@ public class SVNCommitClient16 extends SVNBasicDelegate {
      * If the caller's {@link ISVNEventHandler event handler} is not <span
      * class="javakeyword">null</span> and if the commit succeeds, the handler
      * will be called with {@link SVNEventAction#COMMIT_COMPLETED} event action.
-     * 
+     *
      * @param urls
      *            repository locations to create
      * @param commitMessage
@@ -488,7 +488,7 @@ public class SVNCommitClient16 extends SVNBasicDelegate {
      * <p/>
      * This method is identical to
      * <code>doImport(path, dstURL, commitMessage, null, true, false, SVNDepth.fromRecurse(recursive))</code>.
-     * 
+     *
      * @param path
      *            a local unversioned file or directory to be imported into the
      *            repository
@@ -525,7 +525,7 @@ public class SVNCommitClient16 extends SVNBasicDelegate {
      * <p/>
      * This method is identical to
      * <code>doImport(path, dstURL, commitMessage, null, useGlobalIgnores, false, SVNDepth.fromRecurse(recursive))</code>.
-     * 
+     *
      * @param path
      *            a local unversioned file or directory to be imported into the
      *            repository
@@ -609,7 +609,7 @@ public class SVNCommitClient16 extends SVNBasicDelegate {
      * If <code>ignoreUnknownNodeTypes</code> is <span
      * class="javakeyword">false</span>, ignores files of which the node type is
      * unknown, such as device files and pipes.
-     * 
+     *
      * @param path
      *            path to import
      * @param dstURL
@@ -741,7 +741,7 @@ public class SVNCommitClient16 extends SVNBasicDelegate {
      * <p/>
      * This method is identical to
      * <code>doCommit(paths, keepLocks, commitMessage, null, null, false, force, SVNDepth.fromRecurse(recursive))</code>.
-     * 
+     *
      * @param paths
      *            an array of local items which should be traversed to commit
      *            changes they have to the repository
@@ -820,7 +820,7 @@ public class SVNCommitClient16 extends SVNBasicDelegate {
      * If no exception is thrown and {@link SVNCommitInfo#getNewRevision()} is
      * invalid (<code>&lt;0</code>), then the commit was a no-op; nothing needed
      * to be committed.
-     * 
+     *
      * @param paths
      *            paths to commit
      * @param keepLocks
@@ -868,7 +868,7 @@ public class SVNCommitClient16 extends SVNBasicDelegate {
      * {@link SVNCommitPacket}by invoking
      * {@link #doCollectCommitItems(File[],boolean,boolean,boolean)
      * doCollectCommitItems()}.
-     * 
+     *
      * @param commitPacket
      *            a single object that contains items to be committed
      * @param keepLocks
@@ -904,7 +904,7 @@ public class SVNCommitClient16 extends SVNBasicDelegate {
      * <p/>
      * For more details on parameters, please, refer to
      * {@link #doCommit(File[],boolean,String,SVNProperties,String[],boolean,boolean,SVNDepth)}.
-     * 
+     *
      * @param commitPacket
      *            a single object that contains items to be committed
      * @param keepLocks
@@ -953,7 +953,7 @@ public class SVNCommitClient16 extends SVNBasicDelegate {
      * <p>
      * This method is identical to
      * <code>doCommit(commitPackets, keepLocks, false, commitMessage, null)</code>.
-     * 
+     *
      * @param commitPackets
      *            logically grouped items to be committed
      * @param keepLocks
@@ -988,7 +988,7 @@ public class SVNCommitClient16 extends SVNBasicDelegate {
      * <p/>
      * For more details on parameters, please, refer to
      * {@link #doCommit(File[],boolean,String,SVNProperties,String[],boolean,boolean,SVNDepth)}.
-     * 
+     *
      * @param commitPackets
      *            commit packets containing commit commit items per one commit
      * @param keepLocks
@@ -1147,7 +1147,7 @@ public class SVNCommitClient16 extends SVNBasicDelegate {
      * <p/>
      * This method is equivalent to
      * <code>doCollectCommitItems(paths, keepLocks, force, SVNDepth.fromRecurse(recursive), null)</code>.
-     * 
+     *
      * @param paths
      *            an array of local items which should be traversed to collect
      *            information on every changed item (one <b>SVNCommitItem</b>
@@ -1187,7 +1187,7 @@ public class SVNCommitClient16 extends SVNBasicDelegate {
      * <p/>
      * For more details on parameters, please, refer to
      * {@link #doCommit(File[],boolean,String,SVNProperties,String[],boolean,boolean,SVNDepth)}.
-     * 
+     *
      * @param paths
      *            an array of local items which should be traversed to collect
      *            information on every changed item (one <b>SVNCommitItem</b>
@@ -1276,7 +1276,7 @@ public class SVNCommitClient16 extends SVNBasicDelegate {
      * <p/>
      * This method is identical to
      * <code>doCollectCommitItems(paths, keepLocks, force, SVNDepth.fromRecurse(recursive), combinePackets, null)</code>.
-     * 
+     *
      * @param paths
      *            an array of local items which should be traversed to collect
      *            information on every changed item (one <b>SVNCommitItem</b>
@@ -1329,7 +1329,7 @@ public class SVNCommitClient16 extends SVNBasicDelegate {
      * <p/>
      * For details on other parameters, please, refer to
      * {@link #doCommit(File[],boolean,String,SVNProperties,String[],boolean,boolean,SVNDepth)}.
-     * 
+     *
      * @param paths
      *            an array of local items which should be traversed to collect
      *            information on every changed item (one <b>SVNCommitItem</b>
@@ -1477,7 +1477,7 @@ public class SVNCommitClient16 extends SVNBasicDelegate {
                 Collection items = (Collection) repoUUIDs.get(uuid);
                 Map lockTokens = (Map) locktokensMap.get(uuid);
                 SVNCommitItem[] itemsArray = (SVNCommitItem[]) items.toArray(new SVNCommitItem[items.size()]);
-                packetsArray[index++] = new SVNCommitPacket(null, itemsArray, lockTokens);
+                packetsArray[index++] = new SVNCommitPacket((SVNWCAccess)null, itemsArray, lockTokens);
             }
         } catch (SVNException e) {
             for (int j = 0; j < wcAccesses.length; j++) {

@@ -1,7 +1,12 @@
 package org.tmatesoft.svn.core.internal.wc17;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
 
+import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -11,8 +16,18 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashSet;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNCommitUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileType;
+import org.tmatesoft.svn.core.internal.wc.SVNWCManager;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.internal.wc16.SVNBasicDelegate;
+import org.tmatesoft.svn.core.internal.wc16.SVNCommitClient16;
+import org.tmatesoft.svn.core.internal.wc16.SVNStatusClient16;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.DefaultSVNCommitHandler;
 import org.tmatesoft.svn.core.wc.DefaultSVNCommitParameters;
@@ -23,6 +38,7 @@ import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.ISVNRepositoryPool;
 import org.tmatesoft.svn.core.wc.SVNCommitItem;
 import org.tmatesoft.svn.core.wc.SVNCommitPacket;
+import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.util.SVNLogType;
@@ -64,7 +80,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @since 1.2
  * @see <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>
  */
-public class SVNCommitClient17 extends SVNBasicDelegate {
+public class SVNCommitClient17 extends SVNBaseClient17 {
 
     private ISVNCommitHandler myCommitHandler;
     private ISVNCommitParameters myCommitParameters;
@@ -605,7 +621,8 @@ public class SVNCommitClient17 extends SVNBasicDelegate {
             packet = packet.removeSkippedItems();
             return doCommit(packet, keepLocks, keepChangelist, commitMessage, revisionProperties);
         } finally {
-            if (packet != null) {
+            if (packet != null && packet.getWCLockBasePath() != null) {
+                getContext().releaseWriteLock(packet.getWCLockBasePath());
                 packet.dispose();
             }
         }
@@ -832,9 +849,88 @@ public class SVNCommitClient17 extends SVNBasicDelegate {
      * @since 1.2.0
      */
     public SVNCommitPacket doCollectCommitItems(File[] paths, boolean keepLocks, boolean force, SVNDepth depth, String[] changelists) throws SVNException {
-        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT);
-        SVNErrorManager.error(err, SVNLogType.CLIENT);
-        return null;
+        depth = depth == null ? SVNDepth.UNKNOWN : depth;
+        if (depth == SVNDepth.UNKNOWN) {
+            depth = SVNDepth.INFINITY;
+        }
+        if (paths == null || paths.length == 0) {
+            return SVNCommitPacket.EMPTY;
+        }
+        Collection<String> targets = new ArrayList();
+
+        String[] validatedPaths = new String[paths.length];
+        for (int i = 0; i < paths.length; i++) {
+            checkCancelled();
+            File file = paths[i];
+            validatedPaths[i] = file.getAbsolutePath().replace(File.separatorChar, '/');
+        }
+        String rootPath = SVNPathUtil.condencePaths(validatedPaths, targets, depth == SVNDepth.INFINITY);
+
+        if (rootPath == null) {
+            return null;
+        }
+
+        File baseDir = new File(rootPath).getAbsoluteFile();
+        rootPath = baseDir.getAbsolutePath().replace(File.separatorChar, '/');
+
+        if (targets.isEmpty()) {
+            checkCancelled();
+            String target = getContext().getActualTarget(baseDir);
+            targets.add(target);
+            if (!"".equals(target)) {
+                baseDir = baseDir.getParentFile();
+            }
+        }
+
+        getContext().acquireWriteLock(baseDir, false, false);
+
+        for (String targetPath : targets) {
+            checkNonrecursiveDirDelete(targetPath, depth);
+        }
+
+        try {
+            Map lockTokens = new SVNHashMap();
+            checkCancelled();
+            Collection changelistsSet = changelists != null ? new SVNHashSet() : null;
+            if (changelists != null) {
+                for (int j = 0; j < changelists.length; j++) {
+                    changelistsSet.add(changelists[j]);
+                }
+            }
+            SVNCommitItem[] commitItems = harvestCommitables(targets, lockTokens, !keepLocks, depth, force, changelistsSet, getCommitParameters());
+            boolean hasModifications = false;
+            checkCancelled();
+            for (int i = 0; commitItems != null && i < commitItems.length; i++) {
+                SVNCommitItem commitItem = commitItems[i];
+                if (commitItem.isAdded() || commitItem.isDeleted() || commitItem.isContentsModified() || commitItem.isPropertiesModified() || commitItem.isCopied()) {
+                    hasModifications = true;
+                    break;
+                }
+            }
+            if (!hasModifications) {
+                getContext().releaseWriteLock(baseDir);
+                return SVNCommitPacket.EMPTY;
+            }
+            return new SVNCommitPacket(baseDir, commitItems, lockTokens);
+        } catch (SVNException e) {
+            getContext().releaseWriteLock(baseDir);
+            if (e instanceof SVNCancelException) {
+                throw e;
+            }
+            SVNErrorMessage nestedErr = e.getErrorMessage();
+            SVNErrorMessage err = SVNErrorMessage.create(nestedErr.getErrorCode(), "Commit failed (details follow):");
+            SVNErrorManager.error(err, e, SVNLogType.DEFAULT);
+            return null;
+        }
+    }
+
+    private void checkNonrecursiveDirDelete(String targetPath, SVNDepth depth) {
+        // TODO
+    }
+
+    private SVNCommitItem[] harvestCommitables(Collection targets, Map lockTokens, boolean b, SVNDepth depth, boolean force, Collection changelistsSet, ISVNCommitParameters commitParameters) {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     /**

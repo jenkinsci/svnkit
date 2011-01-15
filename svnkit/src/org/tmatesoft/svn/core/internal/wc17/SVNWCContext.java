@@ -1253,10 +1253,10 @@ public class SVNWCContext {
     }
 
     private boolean compareTimestamps(File localAbsPath, WCDbInfo readInfo) {
-	    return compareTimestamps(localAbsPath.lastModified(), readInfo.lastModTime);
+        return compareTimestamps(localAbsPath.lastModified(), readInfo.lastModTime);
     }
 
-	public static boolean compareTimestamps(long ts1, long ts2) {
+    public static boolean compareTimestamps(long ts1, long ts2) {
         return SVNFileUtil.roundTimeStamp(ts2) != SVNFileUtil.roundTimeStamp(ts1 * (SVNFileUtil.isWindows ? 1000 : 1));
     }
 
@@ -3598,7 +3598,9 @@ public class SVNWCContext {
     }
 
     public void wqRun(File wcRootAbspath) throws SVNException {
-        //SVNDebugLog.getDefaultLog().log(SVNLogType.WC, String.format("work queue run: wcroot='%s'", wcRootAbspath), Level.INFO);
+        // SVNDebugLog.getDefaultLog().log(SVNLogType.WC,
+        // String.format("work queue run: wcroot='%s'", wcRootAbspath),
+        // Level.INFO);
         while (true) {
             checkCancelled();
             SVNWCDbKind kind = db.readKind(wcRootAbspath, true);
@@ -3618,7 +3620,9 @@ public class SVNWCContext {
         if (!workItem.isAtom()) {
             for (WorkQueueOperation scan : WorkQueueOperation.values()) {
                 if (scan.getOpName().equals(workItem.getChild(0).getValue())) {
-                    //SVNDebugLog.getDefaultLog().log(SVNLogType.WC, String.format("work queue dispatch: operation='%s'", scan.getOpName()), Level.INFO);
+                    // SVNDebugLog.getDefaultLog().log(SVNLogType.WC,
+                    // String.format("work queue dispatch: operation='%s'",
+                    // scan.getOpName()), Level.INFO);
                     scan.getOperation().runOperation(this, wcRootAbspath, workItem);
                     return;
                 }
@@ -4237,6 +4241,26 @@ public class SVNWCContext {
         SVNFileUtil.ensureDirectoryExists(SVNWCUtils.admChild(localAbspath, WC_ADM_PRISTINE));
         SVNFileUtil.ensureDirectoryExists(SVNWCUtils.admChild(localAbspath, WC_ADM_TMP));
         db.init(localAbspath, reposRelpath, repositoryRoot, uuid, revNumber, depth);
+    }
+
+    public String getActualTarget(File path) throws SVNException {
+        boolean wcRoot = false;
+        boolean switched = false;
+        SVNWCDbKind kind = null;
+        try {
+            CheckWCRootInfo checkWCRoot = checkWCRoot(path.getAbsoluteFile(), true);
+            wcRoot = checkWCRoot.wcRoot;
+            kind = checkWCRoot.kind;
+            switched = checkWCRoot.switched;
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND && e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_WORKING_COPY) {
+                throw e;
+            }
+        }
+        if (!(wcRoot || switched) || (kind != SVNWCDbKind.Dir)) {
+            return path.getName();
+        }
+        return "";
     }
 
 }
