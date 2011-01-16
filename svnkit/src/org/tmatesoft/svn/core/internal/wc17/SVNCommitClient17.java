@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNCommitInfo;
@@ -12,6 +13,7 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
@@ -22,6 +24,7 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNCommitUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNWCManager;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
@@ -40,6 +43,7 @@ import org.tmatesoft.svn.core.wc.SVNCommitItem;
 import org.tmatesoft.svn.core.wc.SVNCommitPacket;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
+import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -897,7 +901,7 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
                     changelistsSet.add(changelists[j]);
                 }
             }
-            SVNCommitItem[] commitItems = harvestCommitables(targets, lockTokens, !keepLocks, depth, force, changelistsSet, getCommitParameters());
+            SVNCommitItem[] commitItems = harvestCommitables(baseDir, targets, lockTokens, !keepLocks, depth, force, changelistsSet, getCommitParameters());
             boolean hasModifications = false;
             checkCancelled();
             for (int i = 0; commitItems != null && i < commitItems.length; i++) {
@@ -924,13 +928,89 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
         }
     }
 
-    private void checkNonrecursiveDirDelete(String targetPath, SVNDepth depth) {
+    private void checkNonrecursiveDirDelete(String targetPath, SVNDepth depth) throws SVNException {
         // TODO
     }
 
-    private SVNCommitItem[] harvestCommitables(Collection targets, Map lockTokens, boolean b, SVNDepth depth, boolean force, Collection changelistsSet, ISVNCommitParameters commitParameters) {
+    private SVNCommitItem[] harvestCommitables(File baseDir, Collection paths, Map lockTokens, boolean justLocked, SVNDepth depth, boolean force, Collection changelistsSet,
+            ISVNCommitParameters commitParameters) throws SVNException {
+
+        Map committables = new TreeMap(SVNCommitUtil.FILE_COMPARATOR);
+        Map danglers = new SVNHashMap();
+        Iterator targets = paths.iterator();
+
+        SVNURL reposRootUrl = null;
+
+        while (targets.hasNext()) {
+
+            File targetAbsPath = SVNFileUtil.createFilePath(baseDir, (String) targets.next());
+            SVNNodeKind kind = getContext().readKind(targetAbsPath, false);
+
+            if (kind == SVNNodeKind.NONE) {
+                SVNTreeConflictDescription conflict = getContext().getTreeConflict(targetAbsPath);
+                if (conflict != null) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_FOUND_CONFLICT, "Aborting commit: ''{0}'' remains in conflict", conflict.getPath());
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                } else {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "''{0}'' is not under version control", targetAbsPath);
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                }
+            }
+
+            if (reposRootUrl == null) {
+                reposRootUrl = getContext().getNodeReposInfo(targetAbsPath, true, true).reposRootUrl;
+            }
+
+            File reposRelPath = getContext().getNodeReposRelPath(targetAbsPath);
+            if (reposRelPath == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "Entry for ''{0}'' has no URL", targetAbsPath);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+
+            boolean isAdded = getContext().isNodeAdded(targetAbsPath);
+            if (isAdded) {
+                File parentAbsPath = SVNFileUtil.getFileDir(targetAbsPath);
+                try {
+                    isAdded = getContext().isNodeAdded(parentAbsPath);
+                } catch (SVNException e) {
+                    if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "''{0}'' is scheduled for addition within unversioned parent", targetAbsPath);
+                        SVNErrorManager.error(err, SVNLogType.WC);
+                    }
+                }
+                if (isAdded) {
+                    danglers.put(parentAbsPath, targetAbsPath);
+                }
+            }
+
+            bailOnTreeConflictedAncestor(targetAbsPath);
+
+            harvestCommittables(committables, lockTokens, targetAbsPath, reposRootUrl, null, false, false, false, depth, justLocked, changelistsSet);
+
+        }
+
+        for (Iterator i = danglers.keySet().iterator(); i.hasNext();) {
+            File danglingParent = (File) i.next();
+            File danglingChild = (File) danglers.get(danglingParent);
+            validateDangler(committables, danglingParent, danglingChild);
+        }
+
+        return (SVNCommitItem[]) committables.values().toArray(new SVNCommitItem[committables.values().size()]);
+
+    }
+
+    private void validateDangler(Map committables, File danglingParent, File danglingChild) throws SVNException {
+        // TODO
+    }
+
+    private void harvestCommittables(Map committables, Map lockTokens, File targetAbsPath, SVNURL reposRootUrl, File reposRelpath, boolean addsOnly, boolean copyMode, boolean copyModeRoot,
+            SVNDepth depth, boolean justLocked, Collection changelistsSet) throws SVNException {
         // TODO
         throw new UnsupportedOperationException();
+    }
+
+    private void bailOnTreeConflictedAncestor(File targetAbsPath) throws SVNException {
+        // TODO
     }
 
     /**

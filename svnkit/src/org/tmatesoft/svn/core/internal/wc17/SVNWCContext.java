@@ -4263,4 +4263,29 @@ public class SVNWCContext {
         return "";
     }
 
+    public File getNodeReposRelPath(File localAbsPath) throws SVNException {
+        WCDbInfo readInfo = getDb().readInfo(localAbsPath, InfoField.status, InfoField.reposRelPath, InfoField.haveBase);
+        SVNWCDbStatus status = readInfo.status;
+        File reposRelPath = readInfo.reposRelPath;
+        boolean haveBase = readInfo.haveBase;
+        if (reposRelPath == null) {
+            if (status == SVNWCDbStatus.Added) {
+                reposRelPath = getDb().scanAddition(localAbsPath, AdditionInfoField.reposRelPath).reposRelPath;
+            } else if (haveBase) {
+                reposRelPath = getDb().scanBaseRepository(localAbsPath, RepositoryInfoField.relPath).relPath;
+            } else if (status == SVNWCDbStatus.Excluded || (!haveBase && (status == SVNWCDbStatus.Deleted))) {
+                File parentAbspath = SVNFileUtil.getParentFile(localAbsPath);
+                String name = SVNFileUtil.getFileName(localAbsPath);
+                File parentRelpath = getNodeReposRelPath(parentAbspath);
+                if (parentRelpath != null) {
+                    reposRelPath = SVNFileUtil.createFilePath(parentRelpath, name);
+                }
+            } else {
+                /* Status: obstructed, obstructed_add */
+                reposRelPath = null;
+            }
+        }
+        return reposRelPath;
+    }
+
 }
