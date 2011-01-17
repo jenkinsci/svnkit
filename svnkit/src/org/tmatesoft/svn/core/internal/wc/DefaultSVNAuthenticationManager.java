@@ -103,6 +103,10 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         myProviders[3] = provider; 
     }
 
+    protected File getConfigDirectory() {
+	    return myConfigDirectory;
+    }
+
     public DefaultSVNOptions getDefaultOptions() {
         if (myDefaultOptions == null) {
             myDefaultOptions = new DefaultSVNOptions(myConfigDirectory, true);
