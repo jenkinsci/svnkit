@@ -379,6 +379,10 @@ public abstract class SVNSqlJetStatement {
         if (isColumnNull(f))
             return null;
         final byte[] val = getColumnBlob(f);
+	    return parseProperties(val);
+    }
+
+    public static SVNProperties parseProperties(byte[] val) throws SVNException {
         if (val == null)
             return null;
         final SVNSkel skel = SVNSkel.parse(val);

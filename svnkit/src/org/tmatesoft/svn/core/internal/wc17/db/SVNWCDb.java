@@ -808,6 +808,10 @@ public class SVNWCDb implements ISVNWCDb {
 		return getColumnToken(stmt, SVNWCDbSchema.NODES__Fields.presence, presenceMap2);
 	}
 
+	public static SVNWCDbStatus parsePresence(String presenceString) {
+		return presenceMap2.get(presenceString);
+	}
+
     public String getBaseProp(File localAbsPath, String propName) throws SVNException {
         // TODO
         throw new UnsupportedOperationException();
@@ -2305,6 +2309,10 @@ public class SVNWCDb implements ISVNWCDb {
 
 	public static SVNWCDbKind getColumnKind(SVNSqlJetStatement stmt_work) throws SVNException {
 		return getColumnToken(stmt_work, SVNWCDbSchema.NODES__Fields.kind, kindMap2);
+	}
+
+	public static SVNWCDbKind parseKind(String kindString) throws SVNException {
+		return kindMap2.get(kindString);
 	}
 
     public SVNWCDbKind readKind(File localAbsPath, boolean allowMissing) throws SVNException {
