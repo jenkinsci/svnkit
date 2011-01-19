@@ -15,6 +15,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
@@ -31,6 +32,8 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.internal.wc16.SVNBasicDelegate;
 import org.tmatesoft.svn.core.internal.wc16.SVNCommitClient16;
 import org.tmatesoft.svn.core.internal.wc16.SVNStatusClient16;
+import org.tmatesoft.svn.core.internal.wc17.SVNStatus17.ConflictedInfo;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.CheckSpecialInfo;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.DefaultSVNCommitHandler;
 import org.tmatesoft.svn.core.wc.DefaultSVNCommitParameters;
@@ -1003,14 +1006,73 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
         // TODO
     }
 
-    private void harvestCommittables(Map committables, Map lockTokens, File targetAbsPath, SVNURL reposRootUrl, File reposRelpath, boolean addsOnly, boolean copyMode, boolean copyModeRoot,
-            SVNDepth depth, boolean justLocked, Collection changelistsSet) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
-    }
-
     private void bailOnTreeConflictedAncestor(File targetAbsPath) throws SVNException {
         // TODO
+    }
+
+    private void harvestCommittables(Map committables, Map lockTokens, File localAbsPath, SVNURL reposRootUrl, File reposRelpath, boolean addsOnly, boolean copyMode, boolean copyModeRoot,
+            SVNDepth depth, boolean justLocked, Collection changelistsSet) throws SVNException {
+
+        assert (SVNFileUtil.isAbsolute(localAbsPath));
+        if (committables.containsKey(localAbsPath)) {
+            return;
+        }
+        assert ((copyMode && reposRelpath != null) || (!copyMode && reposRelpath == null));
+        assert ((copyModeRoot && copyMode) || !copyModeRoot);
+        assert ((justLocked && lockTokens != null) || !justLocked);
+        checkCancelled();
+
+        SVNNodeKind dbKind = getContext().readKind(localAbsPath, true);
+        if ((dbKind != SVNNodeKind.FILE) && (dbKind != SVNNodeKind.DIR)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNKNOWN_KIND, "Unknown entry kind for ''{0}''", localAbsPath);
+            SVNErrorManager.error(err, SVNLogType.WC);
+            return;
+        }
+        CheckSpecialInfo checkSpecial = getContext().checkSpecialPath(localAbsPath);
+        SVNNodeKind workingKind = checkSpecial.kind;
+        boolean isSpecial = checkSpecial.isSpecial;
+        if ((workingKind != SVNNodeKind.FILE) && (workingKind != SVNNodeKind.DIR) && (workingKind != SVNNodeKind.NONE)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNKNOWN_KIND, "Unknown entry kind for ''{0}''", localAbsPath);
+            SVNErrorManager.error(err, SVNLogType.WC);
+            return;
+        }
+        boolean matchesChangelists = getContext().isChangelistMatch(localAbsPath, changelistsSet);
+        if (workingKind != SVNNodeKind.DIR && workingKind != SVNNodeKind.NONE && !matchesChangelists) {
+            return;
+        }
+        String propval = getContext().getProperty(localAbsPath, SVNProperty.SPECIAL);
+        if ((((propval == null) && (isSpecial)) || ((propval != null) && (!isSpecial))) && (workingKind != SVNNodeKind.NONE)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNEXPECTED_KIND, "Entry ''{0}'' has unexpectedly changed special status", localAbsPath);
+            SVNErrorManager.error(err, SVNLogType.WC);
+            return;
+        }
+
+        boolean isFileExternal = getContext().isFileExternal(localAbsPath);
+        if (isFileExternal && copyMode) {
+            return;
+        }
+
+        /*
+         * If ENTRY is in our changelist, then examine it for conflicts. We need
+         * to bail out if any conflicts exist.
+         */
+        if (matchesChangelists) {
+            ConflictedInfo conflicted = getContext().getConflicted(localAbsPath, true, true, true);
+            if (conflicted.textConflicted || conflicted.propConflicted || conflicted.treeConflicted) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_FOUND_CONFLICT, "Aborting commit: ''{0}'' remains in conflict", localAbsPath);
+                SVNErrorManager.error(err, SVNLogType.WC);
+                return;
+            }
+        }
+        bailOnTreeConflictedAncestor(localAbsPath);
+
+        File entryRelpath = getContext().getNodeReposRelPath(localAbsPath);
+        if (!copyMode) {
+            reposRelpath = entryRelpath;
+        }
+
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     /**

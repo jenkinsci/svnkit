@@ -20,6 +20,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -4286,6 +4287,18 @@ public class SVNWCContext {
             }
         }
         return reposRelPath;
+    }
+
+    public boolean isChangelistMatch(File localAbsPath, Collection changelistsSet) {
+        if (changelistsSet == null || changelistsSet.isEmpty()) {
+            return true;
+        }
+        try {
+            String changelist = db.readInfo(localAbsPath, InfoField.changelist).changelist;
+            return changelist != null && changelistsSet.contains(changelist);
+        } catch (SVNException e) {
+            return false;
+        }
     }
 
 }
