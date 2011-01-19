@@ -54,7 +54,7 @@ public class SVNMergeInfoUtil {
         int j = 0;
         
         Object[] catalogKeys = catalog.keySet().toArray();
-        Object[] changesKeys = catalog.keySet().toArray();
+        Object[] changesKeys = changes.keySet().toArray();
         while(i < catalog.size() && j < changes.size()) {
             String catalogKey = (String) catalogKeys[i];
             String changeKey = (String) changesKeys[j];
