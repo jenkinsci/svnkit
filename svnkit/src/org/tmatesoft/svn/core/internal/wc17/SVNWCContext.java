@@ -4301,4 +4301,8 @@ public class SVNWCContext {
         }
     }
 
+    public boolean isNodeStatusDeleted(File localAbsPath) throws SVNException {
+        return getDb().readInfo(localAbsPath, InfoField.status).status==SVNWCDbStatus.Deleted;
+    }
+
 }
