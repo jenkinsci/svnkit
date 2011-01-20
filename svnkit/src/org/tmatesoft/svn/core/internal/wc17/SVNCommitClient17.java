@@ -34,6 +34,8 @@ import org.tmatesoft.svn.core.internal.wc16.SVNCommitClient16;
 import org.tmatesoft.svn.core.internal.wc16.SVNStatusClient16;
 import org.tmatesoft.svn.core.internal.wc17.SVNStatus17.ConflictedInfo;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.CheckSpecialInfo;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.NodeCopyFromField;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.NodeCopyFromInfo;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.DefaultSVNCommitHandler;
 import org.tmatesoft.svn.core.wc.DefaultSVNCommitParameters;
@@ -1069,6 +1071,22 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
         File entryRelpath = getContext().getNodeReposRelPath(localAbsPath);
         if (!copyMode) {
             reposRelpath = entryRelpath;
+        }
+
+        boolean isCommitItemDelete = false;
+        if (!addsOnly) {
+            boolean isStatusDeleted = getContext().isNodeStatusDeleted(localAbsPath);
+            boolean isReplaced = getContext().isNodeReplaced(localAbsPath);
+            if (isReplaced) {
+                NodeCopyFromInfo copyFromInfo = getContext().getNodeCopyFromInfo(localAbsPath, NodeCopyFromField.url, NodeCopyFromField.isCopyTarget);
+                if (copyFromInfo.url != null && !copyFromInfo.isCopyTarget) {
+                    isReplaced = false;
+                }
+            }
+
+            if (isStatusDeleted || isReplaced) {
+                isCommitItemDelete = true;
+            }
         }
 
         // TODO
