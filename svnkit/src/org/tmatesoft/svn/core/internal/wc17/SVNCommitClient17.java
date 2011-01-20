@@ -1228,9 +1228,13 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
                 }
             }
         }
+        if (lockTokens != null && dbKind == SVNNodeKind.DIR && isCommitItemDelete) {
+            collectLocks(localAbsPath, lockTokens);
+        }
+    }
 
+    private void collectLocks(File localAbsPath, Map lockTokens) {
         // TODO
-        throw new UnsupportedOperationException();
     }
 
     private static class PropMods {
