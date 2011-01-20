@@ -4302,7 +4302,26 @@ public class SVNWCContext {
     }
 
     public boolean isNodeStatusDeleted(File localAbsPath) throws SVNException {
-        return getDb().readInfo(localAbsPath, InfoField.status).status==SVNWCDbStatus.Deleted;
+        return getDb().readInfo(localAbsPath, InfoField.status).status == SVNWCDbStatus.Deleted;
+    }
+
+    public static class PropDiffs {
+
+        public SVNProperties propChanges;
+        public SVNProperties originalProps;
+    }
+
+    public PropDiffs getPropDiffs(File localAbsPath) throws SVNException {
+        assert (SVNFileUtil.isAbsolute(localAbsPath));
+        PropDiffs propDiffs = new PropDiffs();
+        SVNProperties baseProps = getDb().readPristineProperties(localAbsPath);
+        if (baseProps == null) {
+            baseProps = new SVNProperties();
+        }
+        propDiffs.originalProps = baseProps;
+        SVNProperties actualProps = getDb().readProperties(localAbsPath);
+        propDiffs.propChanges = SVNWCUtils.propDiffs(actualProps, baseProps);
+        return propDiffs;
     }
 
 }

@@ -36,6 +36,7 @@ import org.tmatesoft.svn.core.internal.wc17.SVNStatus17.ConflictedInfo;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.CheckSpecialInfo;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.NodeCopyFromField;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.NodeCopyFromInfo;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.PropDiffs;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.DefaultSVNCommitHandler;
 import org.tmatesoft.svn.core.wc.DefaultSVNCommitParameters;
@@ -1191,9 +1192,19 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
         public boolean eolPropChanged = false;
     }
 
-    private PropMods checkPropMods(File localAbsPath) {
+    private PropMods checkPropMods(File localAbsPath) throws SVNException {
         PropMods propMods = new PropMods();
-        // TODO
+        PropDiffs propDiffs = getContext().getPropDiffs(localAbsPath);
+        if (propDiffs.propChanges == null || propDiffs.propChanges.isEmpty()) {
+            return propMods;
+        }
+        propMods.propsChanged = true;
+        for (Object propName : propDiffs.propChanges.nameSet()) {
+            if (SVNProperty.EOL_STYLE.equals(propName)) {
+                propMods.eolPropChanged = true;
+                break;
+            }
+        }
         return propMods;
     }
 
