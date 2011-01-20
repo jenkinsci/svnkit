@@ -1128,6 +1128,32 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
             nodeCopyFromRev = SVNWCContext.INVALID_REVNUM;
         }
 
+        long entryRev = getContext().getNodeBaseRev(localAbsPath);
+
+        if (copyMode && !isCommitItemDelete) {
+            long pRev = SVNWCContext.INVALID_REVNUM;
+
+            if (!copyModeRoot) {
+                pRev = getContext().getNodeBaseRev(SVNFileUtil.getFileDir(localAbsPath));
+            }
+
+            if (copyModeRoot || entryRev != pRev) {
+                isCommitItemAdd = true;
+                if (nodeCopyFromRelpath != null) {
+                    isCommitItemIsCopy = true;
+                    cfRelpath = nodeCopyFromRelpath;
+                    cfRev = nodeCopyFromRev;
+                    addsOnly = false;
+                } else if (entryRev != SVNWCContext.INVALID_REVNUM) {
+                    isCommitItemIsCopy = true;
+                    cfRelpath = entryRelpath;
+                    cfRev = entryRev;
+                    addsOnly = false;
+                } else
+                    addsOnly = true;
+            }
+        }
+
         // TODO
         throw new UnsupportedOperationException();
     }
