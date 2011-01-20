@@ -1154,8 +1154,47 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
             }
         }
 
+        boolean propMod = false;
+        boolean textMod = false;
+        if (isCommitItemAdd) {
+            if (workingKind == SVNNodeKind.NONE) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "''{0}'' is scheduled for addition, but is missing", localAbsPath);
+                SVNErrorManager.error(err, SVNLogType.WC);
+                return;
+            }
+            PropMods checkPropMods = checkPropMods(localAbsPath);
+            propMod = checkPropMods.propsChanged;
+            boolean eolPropChanged = checkPropMods.eolPropChanged;
+            if (dbKind == SVNNodeKind.FILE) {
+                if (isCommitItemIsCopy) {
+                    textMod = getContext().isTextModified(localAbsPath, eolPropChanged, true);
+                } else {
+                    textMod = true;
+                }
+            }
+        } else if (!isCommitItemDelete) {
+            PropMods checkPropMods = checkPropMods(localAbsPath);
+            propMod = checkPropMods.propsChanged;
+            boolean eolPropChanged = checkPropMods.eolPropChanged;
+            if (dbKind == SVNNodeKind.FILE) {
+                textMod = getContext().isTextModified(localAbsPath, eolPropChanged, true);
+            }
+        }
+
         // TODO
         throw new UnsupportedOperationException();
+    }
+
+    private static class PropMods {
+
+        public boolean propsChanged = false;
+        public boolean eolPropChanged = false;
+    }
+
+    private PropMods checkPropMods(File localAbsPath) {
+        PropMods propMods = new PropMods();
+        // TODO
+        return propMods;
     }
 
     /**
