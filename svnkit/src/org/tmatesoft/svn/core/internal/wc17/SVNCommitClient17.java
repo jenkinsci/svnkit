@@ -50,6 +50,7 @@ import org.tmatesoft.svn.core.wc.SVNCommitItem;
 import org.tmatesoft.svn.core.wc.SVNCommitPacket;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.util.SVNLogType;
@@ -1188,12 +1189,28 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
 
         boolean stateFlags = isCommitItemAdd || isCommitItemDelete || isCommitItemIsCopy || isCommitItemPropMods || isCommitItemTextMods;
         boolean isCommitItemLockToken = false;
-
+        String entryLockToken = null;
         if (lockTokens != null && (stateFlags || justLocked)) {
             SVNWCDbLock entryLock = getContext().getNodeLock(localAbsPath);
             if (entryLock != null && entryLock.token != null) {
+                entryLockToken = entryLock.token;
                 isCommitItemLockToken = true;
                 stateFlags = true;
+            }
+        }
+
+        if (stateFlags) {
+            if (getContext().isChangelistMatch(localAbsPath, changelistsSet)) {
+                SVNURL url = reposRootUrl.appendPath(SVNFileUtil.getFilePath(reposRelpath), false);
+                SVNCommitItem item = new SVNCommitItem(localAbsPath, url, cfRelpath != null ? reposRootUrl.appendPath(SVNFileUtil.getFilePath(cfRelpath), false) : null, dbKind,
+                        SVNRevision.create(entryRev), SVNRevision.create(cfRev), isCommitItemAdd, isCommitItemDelete, isCommitItemPropMods, isCommitItemTextMods, isCommitItemIsCopy,
+                        isCommitItemLockToken);
+                String path = SVNFileUtil.getFilePath(localAbsPath);
+                item.setPath(path);
+                committables.put(path, item);
+                if (isCommitItemLockToken) {
+                    lockTokens.put(url, entryLockToken);
+                }
             }
         }
 
