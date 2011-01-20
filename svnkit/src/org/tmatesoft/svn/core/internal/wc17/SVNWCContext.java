@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
@@ -4327,6 +4328,26 @@ public class SVNWCContext {
 
     public SVNWCDbLock getNodeLock(File localAbsPath) throws SVNException {
         return getDb().getBaseInfo(localAbsPath, BaseInfoField.lock).lock;
+    }
+
+    public List<File> getNodeChildren(File dirAbsPath, boolean showHidden) throws SVNException {
+        List<String> relChildren = getDb().readChildren(dirAbsPath);
+        List<File> childs = new ArrayList<File>();
+        for (String child : relChildren) {
+            File childAbsPath = SVNFileUtil.createFilePath(dirAbsPath, child);
+            if (!showHidden) {
+                boolean childIsHiden = getDb().isNodeHidden(childAbsPath);
+                if (childIsHiden) {
+                    continue;
+                }
+            }
+            childs.add(childAbsPath);
+        }
+        return childs;
+    }
+
+    public SVNDepth getNodeDepth(File localAbsPath) throws SVNException {
+        return getDb().readInfo(localAbsPath, InfoField.depth).depth;
     }
 
 }

@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -1033,7 +1034,8 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
             SVNErrorManager.error(err, SVNLogType.WC);
             return;
         }
-        CheckSpecialInfo checkSpecial = getContext().checkSpecialPath(localAbsPath);
+        getContext();
+        CheckSpecialInfo checkSpecial = SVNWCContext.checkSpecialPath(localAbsPath);
         SVNNodeKind workingKind = checkSpecial.kind;
         boolean isSpecial = checkSpecial.isSpecial;
         if ((workingKind != SVNNodeKind.FILE) && (workingKind != SVNNodeKind.DIR) && (workingKind != SVNNodeKind.NONE)) {
@@ -1051,16 +1053,10 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
             SVNErrorManager.error(err, SVNLogType.WC);
             return;
         }
-
         boolean isFileExternal = getContext().isFileExternal(localAbsPath);
         if (isFileExternal && copyMode) {
             return;
         }
-
-        /*
-         * If ENTRY is in our changelist, then examine it for conflicts. We need
-         * to bail out if any conflicts exist.
-         */
         if (matchesChangelists) {
             ConflictedInfo conflicted = getContext().getConflicted(localAbsPath, true, true, true);
             if (conflicted.textConflicted || conflicted.propConflicted || conflicted.treeConflicted) {
@@ -1070,12 +1066,10 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
             }
         }
         bailOnTreeConflictedAncestor(localAbsPath);
-
         File entryRelpath = getContext().getNodeReposRelPath(localAbsPath);
         if (!copyMode) {
             reposRelpath = entryRelpath;
         }
-
         boolean isCommitItemDelete = false;
         if (!addsOnly) {
             boolean isStatusDeleted = getContext().isNodeStatusDeleted(localAbsPath);
@@ -1090,22 +1084,18 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
                 isCommitItemDelete = true;
             }
         }
-
         File cfRelpath = null;
         long cfRev = SVNWCContext.INVALID_REVNUM;
         File nodeCopyFromRelpath = null;
         long nodeCopyFromRev = SVNWCContext.INVALID_REVNUM;
-
         boolean isCommitItemAdd = false;
         boolean isCommitItemIsCopy = false;
         boolean isAdded = getContext().isNodeAdded(localAbsPath);
         if (isAdded) {
-
             NodeCopyFromInfo copyFrom = getContext().getNodeCopyFromInfo(localAbsPath, NodeCopyFromField.reposRelPath, NodeCopyFromField.rev, NodeCopyFromField.isCopyTarget);
             boolean isCopyTarget = copyFrom.isCopyTarget;
             nodeCopyFromRelpath = copyFrom.reposRelPath;
             nodeCopyFromRev = copyFrom.rev;
-
             if (isCopyTarget) {
                 isCommitItemAdd = true;
                 isCommitItemIsCopy = true;
@@ -1130,16 +1120,12 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
             nodeCopyFromRelpath = null;
             nodeCopyFromRev = SVNWCContext.INVALID_REVNUM;
         }
-
         long entryRev = getContext().getNodeBaseRev(localAbsPath);
-
         if (copyMode && !isCommitItemDelete) {
             long pRev = SVNWCContext.INVALID_REVNUM;
-
             if (!copyModeRoot) {
                 pRev = getContext().getNodeBaseRev(SVNFileUtil.getFileDir(localAbsPath));
             }
-
             if (copyModeRoot || entryRev != pRev) {
                 isCommitItemAdd = true;
                 if (nodeCopyFromRelpath != null) {
@@ -1156,7 +1142,6 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
                     addsOnly = true;
             }
         }
-
         boolean propMod = false;
         boolean textMod = false;
         if (isCommitItemAdd) {
@@ -1183,10 +1168,8 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
                 textMod = getContext().isTextModified(localAbsPath, eolPropChanged, true);
             }
         }
-
         boolean isCommitItemTextMods = textMod;
         boolean isCommitItemPropMods = propMod;
-
         boolean stateFlags = isCommitItemAdd || isCommitItemDelete || isCommitItemIsCopy || isCommitItemPropMods || isCommitItemTextMods;
         boolean isCommitItemLockToken = false;
         String entryLockToken = null;
@@ -1198,7 +1181,6 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
                 stateFlags = true;
             }
         }
-
         if (stateFlags) {
             if (getContext().isChangelistMatch(localAbsPath, changelistsSet)) {
                 SVNURL url = reposRootUrl.appendPath(SVNFileUtil.getFilePath(reposRelpath), false);
@@ -1210,6 +1192,39 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
                 committables.put(path, item);
                 if (isCommitItemLockToken) {
                     lockTokens.put(url, entryLockToken);
+                }
+            }
+        }
+        if ((dbKind == SVNNodeKind.DIR) && (depth.getId() > SVNDepth.EMPTY.getId()) && (!isCommitItemDelete || isCommitItemAdd)) {
+            List<File> children = getContext().getNodeChildren(localAbsPath, copyMode);
+            for (File thisAbsPath : children) {
+                String name = SVNFileUtil.getFileName(thisAbsPath);
+                SVNDepth thisDepth = getContext().getNodeDepth(thisAbsPath);
+                if (thisDepth == SVNDepth.EXCLUDE) {
+                    continue;
+                }
+                boolean thisIsDeleted = getContext().isNodeStatusDeleted(thisAbsPath);
+                boolean isReplaced = getContext().isNodeReplaced(thisAbsPath);
+                if (isReplaced && thisIsDeleted) {
+                    continue;
+                }
+                File thisReposRelpath;
+                if (!copyMode) {
+                    thisReposRelpath = getContext().getNodeReposRelPath(localAbsPath);
+                } else {
+                    thisReposRelpath = SVNFileUtil.createFilePath(reposRelpath, name);
+                }
+                SVNNodeKind thisKind = getContext().readKind(thisAbsPath, true);
+                if (thisKind == SVNNodeKind.DIR) {
+                    if (depth.getId() <= SVNDepth.FILES.getId()) {
+                        continue;
+                    }
+                }
+                {
+                    SVNDepth depthBelowHere = depth;
+                    if (depth == SVNDepth.IMMEDIATES || depth == SVNDepth.FILES)
+                        depthBelowHere = SVNDepth.EMPTY;
+                    harvestCommittables(committables, lockTokens, thisAbsPath, reposRootUrl, copyMode ? thisReposRelpath : null, addsOnly, copyMode, false, depthBelowHere, justLocked, changelistsSet);
                 }
             }
         }
