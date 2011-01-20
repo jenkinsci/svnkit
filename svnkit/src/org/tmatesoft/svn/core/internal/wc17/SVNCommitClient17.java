@@ -37,6 +37,7 @@ import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.CheckSpecialInfo;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.NodeCopyFromField;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.NodeCopyFromInfo;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.PropDiffs;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbLock;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.DefaultSVNCommitHandler;
 import org.tmatesoft.svn.core.wc.DefaultSVNCommitParameters;
@@ -1179,6 +1180,20 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
             boolean eolPropChanged = checkPropMods.eolPropChanged;
             if (dbKind == SVNNodeKind.FILE) {
                 textMod = getContext().isTextModified(localAbsPath, eolPropChanged, true);
+            }
+        }
+
+        boolean isCommitItemTextMods = textMod;
+        boolean isCommitItemPropMods = propMod;
+
+        boolean stateFlags = isCommitItemAdd || isCommitItemDelete || isCommitItemIsCopy || isCommitItemPropMods || isCommitItemTextMods;
+        boolean isCommitItemLockToken = false;
+
+        if (lockTokens != null && (stateFlags || justLocked)) {
+            SVNWCDbLock entryLock = getContext().getNodeLock(localAbsPath);
+            if (entryLock != null && entryLock.token != null) {
+                isCommitItemLockToken = true;
+                stateFlags = true;
             }
         }
 

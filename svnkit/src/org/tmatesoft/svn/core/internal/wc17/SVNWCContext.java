@@ -60,6 +60,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 import org.tmatesoft.svn.core.internal.wc17.SVNStatus17.ConflictedInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbLock;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbOpenMode;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbAdditionInfo;
@@ -4322,6 +4323,10 @@ public class SVNWCContext {
         SVNProperties actualProps = getDb().readProperties(localAbsPath);
         propDiffs.propChanges = SVNWCUtils.propDiffs(actualProps, baseProps);
         return propDiffs;
+    }
+
+    public SVNWCDbLock getNodeLock(File localAbsPath) throws SVNException {
+        return getDb().getBaseInfo(localAbsPath, BaseInfoField.lock).lock;
     }
 
 }
