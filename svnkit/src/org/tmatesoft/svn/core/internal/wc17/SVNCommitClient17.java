@@ -1083,10 +1083,49 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
                     isReplaced = false;
                 }
             }
-
             if (isStatusDeleted || isReplaced) {
                 isCommitItemDelete = true;
             }
+        }
+
+        File cfRelpath = null;
+        long cfRev = SVNWCContext.INVALID_REVNUM;
+        File nodeCopyFromRelpath = null;
+        long nodeCopyFromRev = SVNWCContext.INVALID_REVNUM;
+
+        boolean isCommitItemAdd = false;
+        boolean isCommitItemIsCopy = false;
+        boolean isAdded = getContext().isNodeAdded(localAbsPath);
+        if (isAdded) {
+
+            NodeCopyFromInfo copyFrom = getContext().getNodeCopyFromInfo(localAbsPath, NodeCopyFromField.reposRelPath, NodeCopyFromField.rev, NodeCopyFromField.isCopyTarget);
+            boolean isCopyTarget = copyFrom.isCopyTarget;
+            nodeCopyFromRelpath = copyFrom.reposRelPath;
+            nodeCopyFromRev = copyFrom.rev;
+
+            if (isCopyTarget) {
+                isCommitItemAdd = true;
+                isCommitItemIsCopy = true;
+                cfRelpath = nodeCopyFromRelpath;
+                cfRev = nodeCopyFromRev;
+                addsOnly = false;
+            } else if (copyFrom.reposRelPath == null) {
+                isCommitItemAdd = true;
+                addsOnly = true;
+            } else {
+                File parentAbspath = SVNFileUtil.getFileDir(localAbsPath);
+                long parentCopyFromRev = getContext().getNodeCopyFromInfo(parentAbspath, NodeCopyFromField.rev).rev;
+                if (parentCopyFromRev != nodeCopyFromRev) {
+                    isCommitItemAdd = true;
+                    isCommitItemIsCopy = true;
+                    cfRelpath = nodeCopyFromRelpath;
+                    cfRev = nodeCopyFromRev;
+                    addsOnly = false;
+                }
+            }
+        } else {
+            nodeCopyFromRelpath = null;
+            nodeCopyFromRev = SVNWCContext.INVALID_REVNUM;
         }
 
         // TODO
