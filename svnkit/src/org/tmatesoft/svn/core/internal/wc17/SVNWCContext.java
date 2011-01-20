@@ -479,7 +479,7 @@ public class SVNWCContext {
         return commitBaseRevision;
     }
 
-    private long getNodeBaseRev(File local_abspath) throws SVNException {
+    public long getNodeBaseRev(File local_abspath) throws SVNException {
         final WCDbInfo info = db.readInfo(local_abspath, InfoField.status, InfoField.revision, InfoField.haveBase);
         long baseRevision = info.revision;
         if (SVNRevision.isValidRevisionNumber(baseRevision)) {
