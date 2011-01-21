@@ -35,6 +35,7 @@ import org.tmatesoft.svn.core.internal.wc16.SVNCommitClient16;
 import org.tmatesoft.svn.core.internal.wc16.SVNStatusClient16;
 import org.tmatesoft.svn.core.internal.wc17.SVNStatus17.ConflictedInfo;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.CheckSpecialInfo;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.ISVNWCNodeHandler;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.NodeCopyFromField;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.NodeCopyFromInfo;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.PropDiffs;
@@ -709,9 +710,7 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
      * @since 1.2.0, SVN 1.5.0
      */
     public SVNCommitInfo doCommit(SVNCommitPacket commitPacket, boolean keepLocks, boolean keepChangelist, String commitMessage, SVNProperties revisionProperties) throws SVNException {
-        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT);
-        SVNErrorManager.error(err, SVNLogType.CLIENT);
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     /**
@@ -1233,8 +1232,22 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
         }
     }
 
-    private void collectLocks(File localAbsPath, Map lockTokens) {
-        // TODO
+    private void collectLocks(File path, final Map lockTokens) throws SVNException {
+
+        ISVNWCNodeHandler nodeHandler = new ISVNWCNodeHandler() {
+
+            public void nodeFound(File localAbspath) throws SVNException {
+                SVNWCDbLock nodeLock = getContext().getNodeLock(localAbspath);
+                if (nodeLock == null || nodeLock.token==null) {
+                    return;
+                }
+                SVNURL url = getContext().getNodeUrl(localAbspath);
+                if (url != null) {
+                    lockTokens.put(url, nodeLock.token);
+                }
+            }
+        };
+        getContext().nodeWalkChildren(path, nodeHandler, false, SVNDepth.INFINITY);
     }
 
     private static class PropMods {
