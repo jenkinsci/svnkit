@@ -710,7 +710,16 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
      * @since 1.2.0, SVN 1.5.0
      */
     public SVNCommitInfo doCommit(SVNCommitPacket commitPacket, boolean keepLocks, boolean keepChangelist, String commitMessage, SVNProperties revisionProperties) throws SVNException {
-        throw new UnsupportedOperationException();
+        SVNCommitInfo[] info = doCommit(new SVNCommitPacket[] {
+            commitPacket
+        }, keepLocks, keepChangelist, commitMessage, revisionProperties);
+        if (info != null && info.length > 0) {
+            if (info[0].getErrorMessage() != null && info[0].getErrorMessage().getErrorCode() != SVNErrorCode.REPOS_POST_COMMIT_HOOK_FAILED) {
+                SVNErrorManager.error(info[0].getErrorMessage(), SVNLogType.DEFAULT);
+            }
+            return info[0];
+        }
+        return SVNCommitInfo.NULL;
     }
 
     /**
@@ -787,9 +796,7 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
      * @since 1.2.0, SVN 1.5.0
      */
     public SVNCommitInfo[] doCommit(SVNCommitPacket[] commitPackets, boolean keepLocks, boolean keepChangelist, String commitMessage, SVNProperties revisionProperties) throws SVNException {
-        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT);
-        SVNErrorManager.error(err, SVNLogType.CLIENT);
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     /**
@@ -1238,7 +1245,7 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
 
             public void nodeFound(File localAbspath) throws SVNException {
                 SVNWCDbLock nodeLock = getContext().getNodeLock(localAbspath);
-                if (nodeLock == null || nodeLock.token==null) {
+                if (nodeLock == null || nodeLock.token == null) {
                     return;
                 }
                 SVNURL url = getContext().getNodeUrl(localAbspath);
