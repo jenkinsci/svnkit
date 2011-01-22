@@ -19,6 +19,7 @@ import java.util.Map;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 
 /**
  * The <b>SVNCommitPacket</b> is a storage for <b>SVNCommitItem</b>
@@ -232,6 +233,13 @@ public class SVNCommitPacket {
 
     public File getWCLockBasePath() {
         return myWCLockBasePath;
+    }
+
+    public void unlockWC(SVNWCContext context) throws SVNException {
+        if(myWCLockBasePath!=null) {
+            context.releaseWriteLock(myWCLockBasePath);
+            myWCLockBasePath = null;
+        }
     }
 
 }

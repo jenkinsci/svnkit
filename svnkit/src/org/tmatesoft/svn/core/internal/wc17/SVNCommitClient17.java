@@ -23,10 +23,14 @@ import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNCommitMediator;
 import org.tmatesoft.svn.core.internal.wc.SVNCommitUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNCommitter;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
 import org.tmatesoft.svn.core.internal.wc.SVNWCManager;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
@@ -40,6 +44,7 @@ import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.NodeCopyFromField;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.NodeCopyFromInfo;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.PropDiffs;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbLock;
+import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.DefaultSVNCommitHandler;
 import org.tmatesoft.svn.core.wc.DefaultSVNCommitParameters;
@@ -635,8 +640,8 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
             packet = packet.removeSkippedItems();
             return doCommit(packet, keepLocks, keepChangelist, commitMessage, revisionProperties);
         } finally {
-            if (packet != null && packet.getWCLockBasePath() != null) {
-                getContext().releaseWriteLock(packet.getWCLockBasePath());
+            if (packet != null) {
+                packet.unlockWC(getContext());
                 packet.dispose();
             }
         }
@@ -796,7 +801,79 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
      * @since 1.2.0, SVN 1.5.0
      */
     public SVNCommitInfo[] doCommit(SVNCommitPacket[] commitPackets, boolean keepLocks, boolean keepChangelist, String commitMessage, SVNProperties revisionProperties) throws SVNException {
-        throw new UnsupportedOperationException();
+        if (commitPackets == null || commitPackets.length == 0) {
+            return new SVNCommitInfo[0];
+        }
+        Collection tmpFiles = null;
+        SVNCommitInfo info = null;
+        ISVNEditor commitEditor = null;
+        Collection infos = new ArrayList();
+        boolean needsSleepForTimeStamp = false;
+        for (int p = 0; p < commitPackets.length; p++) {
+            SVNCommitPacket commitPacket = commitPackets[p].removeSkippedItems();
+            if (commitPacket.getCommitItems().length == 0) {
+                continue;
+            }
+            boolean foundChangedPath = false;
+            for (SVNCommitItem item : commitPacket.getCommitItems()) {
+                if (item.isAdded() || item.isDeleted() || item.isCopied() || item.isContentsModified() || item.isPropertiesModified()) {
+                    foundChangedPath = true;
+                }
+            }
+            if (!foundChangedPath) {
+                continue;
+            }
+            try {
+                commitMessage = getCommitHandler().getCommitMessage(commitMessage, commitPacket.getCommitItems());
+                if (commitMessage == null) {
+                    infos.add(SVNCommitInfo.NULL);
+                    continue;
+                }
+                Map committables = new TreeMap();
+                SVNURL baseURL = SVNCommitUtil.translateCommitables(commitPacket.getCommitItems(), committables);
+                Map lockTokens = SVNCommitUtil.translateLockTokens(commitPacket.getLockTokens(), baseURL.toString());
+                SVNCommitItem firstItem = commitPacket.getCommitItems()[0];
+                SVNRepository repository = createRepository(baseURL, firstItem.getFile(), true);
+                SVNCommitMediator17 mediator = new SVNCommitMediator17(committables);
+                tmpFiles = mediator.getTmpFiles();
+                String repositoryRoot = repository.getRepositoryRoot(true).getPath();
+                SVNPropertiesManager.validateRevisionProperties(revisionProperties);
+                commitEditor = repository.getCommitEditor(commitMessage, lockTokens, keepLocks, revisionProperties, mediator);
+                info = SVNCommitter17.commit(mediator.getTmpFiles(), committables, repositoryRoot, commitEditor);
+
+                // TODO
+
+            } catch (SVNException e) {
+                if (e instanceof SVNCancelException) {
+                    throw e;
+                }
+                SVNErrorMessage err = e.getErrorMessage().wrap("Commit failed (details follow):");
+                infos.add(new SVNCommitInfo(-1, null, null, err));
+                dispatchEvent(SVNEventFactory.createErrorEvent(err, SVNEventAction.COMMIT_COMPLETED), ISVNEventHandler.UNKNOWN);
+                continue;
+            } finally {
+                if (info == null && commitEditor != null) {
+                    try {
+                        commitEditor.abortEdit();
+                    } catch (SVNException e) {
+                    }
+                }
+                if (tmpFiles != null) {
+                    for (Iterator files = tmpFiles.iterator(); files.hasNext();) {
+                        File file = (File) files.next();
+                        file.delete();
+                    }
+                }
+                if (commitPacket != null) {
+                    commitPacket.dispose();
+                }
+            }
+            infos.add(info != null ? info : SVNCommitInfo.NULL);
+        }
+        if (needsSleepForTimeStamp) {
+            sleepForTimeStamp();
+        }
+        return (SVNCommitInfo[]) infos.toArray(new SVNCommitInfo[infos.size()]);
     }
 
     /**

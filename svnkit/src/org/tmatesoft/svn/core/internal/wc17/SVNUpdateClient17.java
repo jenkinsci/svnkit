@@ -24,7 +24,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc16.SVNBasicDelegate;
-import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.SVNWCNodeReposInfo;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNCapability;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -443,7 +442,7 @@ public class SVNUpdateClient17 extends SVNBaseClient17 {
                 dispatchEvent(SVNEventFactory.createSVNEvent(localAbspath, SVNNodeKind.NONE, null, -1, SVNEventAction.UPDATE_STARTED, null, null, null, 0, 0));
             }
 
-            SVNRepository repos = createRepository(anchorUrl, anchorAbspath, true, wcContext);
+            SVNRepository repos = createRepository(anchorUrl, anchorAbspath, true);
             boolean serverSupportsDepth = repos.hasCapability(SVNCapability.DEPTH);
             final SVNReporter17 reporter = new SVNReporter17(localAbspath, wcContext, true, !serverSupportsDepth, depth, isUpdateLocksOnDemand(), false, !depthIsSticky, useCommitTimes, getDebugLog());
             long revNumber = getRevisionNumber(revision, repos, localAbspath);
@@ -488,22 +487,6 @@ public class SVNUpdateClient17 extends SVNBaseClient17 {
         } finally {
             sleepForTimeStamp();
         }
-    }
-
-    private SVNRepository createRepository(SVNURL baseUrl, File baseDirAbspath, boolean mayReuse, SVNWCContext wcContext) throws SVNException {
-        String uuid = null;
-        if (baseDirAbspath != null) {
-            try {
-                SVNWCNodeReposInfo nodeReposInfo = wcContext.getNodeReposInfo(baseDirAbspath, false, false);
-                uuid = nodeReposInfo.reposUuid;
-            } catch (SVNException e) {
-                if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_WORKING_COPY && e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND
-                        || e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_UPGRADE_REQUIRED) {
-                    throw e;
-                }
-            }
-        }
-        return createRepository(baseUrl, uuid, mayReuse);
     }
 
     private ISVNUpdateEditor createUpdateEditor(SVNWCContext wcContext, File anchorAbspath, String target, SVNURL reposRoot, SVNExternalsStore externalsStore, boolean allowUnversionedObstructions,
@@ -873,7 +856,7 @@ public class SVNUpdateClient17 extends SVNBaseClient17 {
         }
         final SVNWCContext wcContext = getContext();
         try {
-            SVNRepository repos = createRepository(url, null, true);
+            SVNRepository repos = createRepository(url, (File)null, true);
             url = repos.getLocation();
             long revNumber = getRevisionNumber(revision, repos, null);
             SVNNodeKind targetNodeKind = repos.checkPath("", revNumber);

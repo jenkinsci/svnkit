@@ -11,9 +11,15 @@
  */
 package org.tmatesoft.svn.core.internal.wc17;
 
+import java.io.File;
+
+import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc16.SVNBasicDelegate;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.SVNWCNodeReposInfo;
+import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.ISVNRepositoryPool;
 
@@ -58,6 +64,22 @@ public abstract class SVNBaseClient17 extends SVNBasicDelegate {
         if (myContext != null) {
             myContext.close();
         }
+    }
+
+    protected SVNRepository createRepository(SVNURL baseUrl, File baseDirAbspath, boolean mayReuse) throws SVNException {
+        String uuid = null;
+        if (baseDirAbspath != null) {
+            try {
+                SVNWCNodeReposInfo nodeReposInfo = getContext().getNodeReposInfo(baseDirAbspath, false, false);
+                uuid = nodeReposInfo.reposUuid;
+            } catch (SVNException e) {
+                if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_WORKING_COPY && e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND
+                        || e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_UPGRADE_REQUIRED) {
+                    throw e;
+                }
+            }
+        }
+        return createRepository(baseUrl, uuid, mayReuse);
     }
 
 }
