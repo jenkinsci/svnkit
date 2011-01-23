@@ -3,6 +3,8 @@ package org.tmatesoft.svn.core.internal.wc17;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +25,7 @@ import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
 import org.tmatesoft.svn.core.internal.wc.SVNCommitMediator;
 import org.tmatesoft.svn.core.internal.wc.SVNCommitUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNCommitter;
@@ -830,6 +833,8 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
                     continue;
                 }
                 Map committables = new TreeMap();
+                Map<File, SVNChecksum> md5Checksums = new HashMap<File, SVNChecksum>();
+                Map<File, SVNChecksum> sha1Checksums = new HashMap<File, SVNChecksum>();
                 SVNURL baseURL = SVNCommitUtil.translateCommitables(commitPacket.getCommitItems(), committables);
                 Map lockTokens = SVNCommitUtil.translateLockTokens(commitPacket.getLockTokens(), baseURL.toString());
                 SVNCommitItem firstItem = commitPacket.getCommitItems()[0];
@@ -839,9 +844,15 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
                 String repositoryRoot = repository.getRepositoryRoot(true).getPath();
                 SVNPropertiesManager.validateRevisionProperties(revisionProperties);
                 commitEditor = repository.getCommitEditor(commitMessage, lockTokens, keepLocks, revisionProperties, mediator);
-                info = SVNCommitter17.commit(mediator.getTmpFiles(), committables, repositoryRoot, commitEditor);
+                info = SVNCommitter17.commit(mediator.getTmpFiles(), committables, repositoryRoot, commitEditor, md5Checksums, sha1Checksums);
 
-                // TODO
+                SVNWCCommittedQueue queue = new SVNWCCommittedQueue();
+                for (SVNCommitItem item : commitPacket.getCommitItems()) {
+                    postProcessCommitItem(queue, item, keepChangelist, keepLocks, md5Checksums.get(item.getFile()), sha1Checksums.get(item.getFile()));
+                }
+
+                assert (info != null);
+                processCommittedQueue(queue, info.getNewRevision(), info.getDate(), info.getAuthor());
 
             } catch (SVNException e) {
                 if (e instanceof SVNCancelException) {
@@ -875,6 +886,33 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
         }
         return (SVNCommitInfo[]) infos.toArray(new SVNCommitInfo[infos.size()]);
     }
+
+    private void postProcessCommitItem(SVNWCCommittedQueue queue, SVNCommitItem item, boolean keepChangelist, boolean keepLocks, SVNChecksum svnChecksum, SVNChecksum svnChecksum2) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    private void processCommittedQueue(SVNWCCommittedQueue queue, long newRevision, Date date, String author) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    private static class SVNWCCommittedQueue {
+
+        public Map<File, SVNWCCommittedQueueItem> queue = new HashMap<File, SVNCommitClient17.SVNWCCommittedQueueItem>();
+        public boolean haveRecursive = false;
+    };
+
+    private static class SVNWCCommittedQueueItem {
+
+        public File localAbspath;
+        public boolean recurse;
+        public boolean noUnlock;
+        public boolean keepChangelist;
+        public SVNChecksum md5Checksum;
+        public SVNChecksum sha1Checksum;
+        public Map newDavCache;
+    };
 
     /**
      * Collects commit items (containing detailed information on each Working

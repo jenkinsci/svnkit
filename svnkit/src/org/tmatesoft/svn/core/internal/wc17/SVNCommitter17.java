@@ -11,10 +11,12 @@
  */
 package org.tmatesoft.svn.core.internal.wc17;
 
+import java.io.File;
 import java.util.Collection;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
+import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 
 
@@ -24,7 +26,7 @@ import org.tmatesoft.svn.core.io.ISVNEditor;
  */
 public class SVNCommitter17 {
 
-    public static SVNCommitInfo commit(Collection tmpFiles, Map committables, String repositoryRoot, ISVNEditor commitEditor) {
+    public static SVNCommitInfo commit(Collection tmpFiles, Map committables, String repositoryRoot, ISVNEditor commitEditor, Map<File, SVNChecksum> md5Checksums, Map<File, SVNChecksum> sha1Checksums) {
         // TODO
         throw new UnsupportedOperationException();
     }
