@@ -887,9 +887,28 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
         return (SVNCommitInfo[]) infos.toArray(new SVNCommitInfo[infos.size()]);
     }
 
-    private void postProcessCommitItem(SVNWCCommittedQueue queue, SVNCommitItem item, boolean keepChangelist, boolean keepLocks, SVNChecksum svnChecksum, SVNChecksum svnChecksum2) {
-        // TODO
-        throw new UnsupportedOperationException();
+    private void postProcessCommitItem(SVNWCCommittedQueue queue, SVNCommitItem item, boolean keepChangelists, boolean keepLocks, SVNChecksum md5Checksum, SVNChecksum sha1Checksum) {
+        boolean loopRecurse = false;
+        if (item.isAdded() && (item.getKind() == SVNNodeKind.DIR) && (item.getCopyFromURL() != null)) {
+            loopRecurse = true;
+        }
+        boolean removeLock = !keepLocks && item.isLocked();
+        queueCommitted(queue, item.getFile(), loopRecurse, item.getIncomingProperties(), removeLock, !keepChangelists, md5Checksum, sha1Checksum);
+    }
+
+    private void queueCommitted(SVNWCCommittedQueue queue, File localAbsPath, boolean recurse, Map wcPropChanges, boolean removeLock, boolean removeChangelist, SVNChecksum md5Checksum,
+            SVNChecksum sha1Checksum) {
+        assert (SVNFileUtil.isAbsolute(localAbsPath));
+        queue.haveRecursive |= recurse;
+        SVNWCCommittedQueueItem cqi = new SVNWCCommittedQueueItem();
+        cqi.localAbspath = localAbsPath;
+        cqi.recurse = recurse;
+        cqi.noUnlock = !removeLock;
+        cqi.keepChangelist = !removeChangelist;
+        cqi.md5Checksum = md5Checksum;
+        cqi.sha1Checksum = sha1Checksum;
+        cqi.newDavCache = wcPropChanges;
+        queue.queue.put(localAbsPath, cqi);
     }
 
     private void processCommittedQueue(SVNWCCommittedQueue queue, long newRevision, Date date, String author) {
