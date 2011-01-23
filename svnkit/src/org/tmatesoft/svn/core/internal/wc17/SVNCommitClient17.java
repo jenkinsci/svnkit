@@ -47,7 +47,12 @@ import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.ISVNWCNodeHandler;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.NodeCopyFromField;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.NodeCopyFromInfo;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.PropDiffs;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbLock;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.DefaultSVNCommitHandler;
@@ -936,9 +941,53 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
         return false;
     }
 
-    private void processCommittedInternal(File localAbspath, boolean recurse, boolean b, long newRevision, Date revDate, String revAuthor, Map newDavCache, boolean noUnlock, boolean keepChangelist,
-            SVNChecksum md5Checksum, SVNChecksum sha1Checksum, SVNWCCommittedQueue queue) {
+    private void processCommittedInternal(File localAbspath, boolean recurse, boolean topOfRecurse, long newRevision, Date revDate, String revAuthor, Map newDavCache, boolean noUnlock,
+            boolean keepChangelist, SVNChecksum md5Checksum, SVNChecksum sha1Checksum, SVNWCCommittedQueue queue) throws SVNException {
+        SVNWCContext ctx = getContext();
+        ISVNWCDb db = ctx.getDb();
+        SVNWCDbKind kind = db.readKind(localAbspath, true);
+        processCommittedLeaf(localAbspath, !topOfRecurse, newRevision, revDate, revAuthor, newDavCache, noUnlock, keepChangelist, sha1Checksum);
+        if (recurse && kind == SVNWCDbKind.Dir) {
+            ctx.wqRun(localAbspath);
+            kind = db.readKind(localAbspath, true);
+            if (kind == SVNWCDbKind.Unknown) {
+                return;
+            }
+            List<String> children = db.readChildren(localAbspath);
+            for (String name : children) {
+                File thisAbspath = SVNFileUtil.createFilePath(localAbspath, name);
+                WCDbInfo readInfo = db.readInfo(thisAbspath, InfoField.status);
+                SVNWCDbStatus status = readInfo.status;
+                kind = readInfo.kind;
+                if (status == SVNWCDbStatus.Excluded) {
+                    continue;
+                }
+                md5Checksum = null;
+                sha1Checksum = null;
+                if (kind != SVNWCDbKind.Dir) {
+                    if (status == SVNWCDbStatus.Deleted) {
+                        boolean replaced = ctx.isNodeReplaced(localAbspath);
+                        if (replaced)
+                            continue;
+                    }
+                    if (queue != null) {
+                        SVNWCCommittedQueueItem cqi = queue.queue.get(thisAbspath);
+                        if (cqi != null) {
+                            md5Checksum = cqi.md5Checksum;
+                            sha1Checksum = cqi.sha1Checksum;
+                        }
+                    }
+                }
+                processCommittedInternal(thisAbspath, true, false, newRevision, revDate, revAuthor, null, true, keepChangelist, md5Checksum, sha1Checksum, queue);
+                if (kind == SVNWCDbKind.Dir) {
+                    ctx.wqRun(thisAbspath);
+                }
+            }
+        }
+    }
 
+    private void processCommittedLeaf(File localAbspath, boolean b, long newRevision, Date revDate, String revAuthor, Map newDavCache, boolean noUnlock, boolean keepChangelist,
+            SVNChecksum sha1Checksum) {
         // TODO
         throw new UnsupportedOperationException();
     }
