@@ -22,6 +22,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -911,14 +912,40 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
         queue.queue.put(localAbsPath, cqi);
     }
 
-    private void processCommittedQueue(SVNWCCommittedQueue queue, long newRevision, Date date, String author) {
+    private void processCommittedQueue(SVNWCCommittedQueue queue, long newRevision, Date revDate, String revAuthor) throws SVNException {
+        for (SVNWCCommittedQueueItem cqi : queue.queue.values()) {
+            if (queue.haveRecursive && haveRecursiveParent(queue.queue, cqi)) {
+                continue;
+            }
+            processCommittedInternal(cqi.localAbspath, cqi.recurse, true, newRevision, revDate, revAuthor, cqi.newDavCache, cqi.noUnlock, cqi.keepChangelist, cqi.md5Checksum, cqi.sha1Checksum, queue);
+            getContext().wqRun(cqi.localAbspath);
+        }
+        queue.queue.clear();
+    }
+
+    private boolean haveRecursiveParent(Map<File, SVNWCCommittedQueueItem> queue, SVNWCCommittedQueueItem item) {
+        File localAbspath = item.localAbspath;
+        for (SVNWCCommittedQueueItem qi : queue.values()) {
+            if (qi == item) {
+                continue;
+            }
+            if (qi.recurse && SVNWCUtils.isChild(qi.localAbspath, localAbspath)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void processCommittedInternal(File localAbspath, boolean recurse, boolean b, long newRevision, Date revDate, String revAuthor, Map newDavCache, boolean noUnlock, boolean keepChangelist,
+            SVNChecksum md5Checksum, SVNChecksum sha1Checksum, SVNWCCommittedQueue queue) {
+
         // TODO
         throw new UnsupportedOperationException();
     }
 
     private static class SVNWCCommittedQueue {
 
-        public Map<File, SVNWCCommittedQueueItem> queue = new HashMap<File, SVNCommitClient17.SVNWCCommittedQueueItem>();
+        public Map<File, SVNWCCommittedQueueItem> queue = new TreeMap<File, SVNCommitClient17.SVNWCCommittedQueueItem>(SVNCommitUtil.FILE_COMPARATOR);
         public boolean haveRecursive = false;
     };
 

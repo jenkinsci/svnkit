@@ -135,6 +135,10 @@ public class SVNWCUtils {
         return isChild(parentPath, childPath);
     }
 
+    public static boolean isChild(final File parent, final File child) {
+        return isChild(SVNFileUtil.getFilePath(parent), SVNFileUtil.getFilePath(child)) != null;
+    }
+
     private static String isChild(final String parentPath, final String childPath) {
         if (!childPath.startsWith(parentPath))
             return null;
@@ -173,8 +177,7 @@ public class SVNWCUtils {
     }
 
     public static SVNURL join(SVNURL rootUrl, File relPath) throws SVNException {
-        return SVNURL.parseURIDecoded(SVNPathUtil.append(rootUrl.toDecodedString(),
-                SVNFileUtil.getFilePath(relPath).replace(File.separatorChar, '/')));
+        return SVNURL.parseURIDecoded(SVNPathUtil.append(rootUrl.toDecodedString(), SVNFileUtil.getFilePath(relPath).replace(File.separatorChar, '/')));
     }
 
 }
