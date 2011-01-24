@@ -447,7 +447,7 @@ public class DefaultSVNPersistentAuthenticationProvider implements ISVNAuthentic
         }
     }
 
-    private interface IPasswordStorage {
+    public interface IPasswordStorage {
 
         String getPassType();
 
@@ -460,7 +460,7 @@ public class DefaultSVNPersistentAuthenticationProvider implements ISVNAuthentic
         String readPassphrase(String realm, SVNProperties authParameters) throws SVNException;
     }
 
-    private class SimplePasswordStorage implements IPasswordStorage {
+    protected class SimplePasswordStorage implements IPasswordStorage {
 
         public String getPassType() {
             return SIMPLE_PASSTYPE;
@@ -499,7 +499,7 @@ public class DefaultSVNPersistentAuthenticationProvider implements ISVNAuthentic
         }
     }
 
-    private class WinCryptPasswordStorage implements IPasswordStorage {
+    protected class WinCryptPasswordStorage implements IPasswordStorage {
 
         public String getPassType() {
             return WIN_CRYPT_PASSTYPE;
@@ -540,7 +540,7 @@ public class DefaultSVNPersistentAuthenticationProvider implements ISVNAuthentic
         }
     }
 
-    private class MacOsKeychainPasswordStorage implements IPasswordStorage {
+    protected class MacOsKeychainPasswordStorage implements IPasswordStorage {
 
         public String getPassType() {
             return MAC_OS_KEYCHAIN_PASSTYPE;
