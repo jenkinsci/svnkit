@@ -922,7 +922,8 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
             if (queue.haveRecursive && haveRecursiveParent(queue.queue, cqi)) {
                 continue;
             }
-            processCommittedInternal(cqi.localAbspath, cqi.recurse, true, newRevision, revDate, revAuthor, cqi.newDavCache, cqi.noUnlock, cqi.keepChangelist, cqi.md5Checksum, cqi.sha1Checksum, queue);
+            processCommittedInternal(cqi.localAbspath, cqi.recurse, true, newRevision, new SVNDate(revDate.getTime(), 0), revAuthor, cqi.newDavCache, cqi.noUnlock, cqi.keepChangelist,
+                    cqi.md5Checksum, cqi.sha1Checksum, queue);
             getContext().wqRun(cqi.localAbspath);
         }
         queue.queue.clear();
@@ -941,7 +942,7 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
         return false;
     }
 
-    private void processCommittedInternal(File localAbspath, boolean recurse, boolean topOfRecurse, long newRevision, Date revDate, String revAuthor, Map newDavCache, boolean noUnlock,
+    private void processCommittedInternal(File localAbspath, boolean recurse, boolean topOfRecurse, long newRevision, SVNDate revDate, String revAuthor, Map newDavCache, boolean noUnlock,
             boolean keepChangelist, SVNChecksum md5Checksum, SVNChecksum sha1Checksum, SVNWCCommittedQueue queue) throws SVNException {
         SVNWCContext ctx = getContext();
         ISVNWCDb db = ctx.getDb();
@@ -986,10 +987,57 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
         }
     }
 
-    private void processCommittedLeaf(File localAbspath, boolean b, long newRevision, Date revDate, String revAuthor, Map newDavCache, boolean noUnlock, boolean keepChangelist,
-            SVNChecksum sha1Checksum) {
-        // TODO
-        throw new UnsupportedOperationException();
+    private void processCommittedLeaf(File localAbspath, boolean viaRecurse, long newRevnum, SVNDate newChangedDate, String newChangedAuthor, Map newDavCache, boolean noUnlock,
+            boolean keepChangelist, SVNChecksum checksum) throws SVNException {
+        long newChangedRev = newRevnum;
+        assert (SVNFileUtil.isAbsolute(localAbspath));
+        WCDbInfo readInfo = getContext().getDb().readInfo(localAbspath, InfoField.status, InfoField.kind, InfoField.checksum);
+        SVNWCDbStatus status = readInfo.status;
+        SVNWCDbKind kind = readInfo.kind;
+        SVNChecksum copiedChecksum = readInfo.checksum;
+        File admAbspath;
+        if (kind == SVNWCDbKind.Dir) {
+            admAbspath = localAbspath;
+        } else {
+            admAbspath = SVNFileUtil.getFileDir(localAbspath);
+        }
+        getContext().writeCheck(admAbspath);
+        if (status == SVNWCDbStatus.Deleted) {
+            getContext().wqAddDeletionPostCommit(localAbspath, newRevnum, noUnlock);
+            return;
+        }
+        if (kind != SVNWCDbKind.Dir) {
+            if (checksum == null) {
+                assert (copiedChecksum != null);
+                checksum = copiedChecksum;
+                if (viaRecurse) {
+                    readInfo = getContext().getDb().readInfo(localAbspath, InfoField.changedRev, InfoField.changedDate, InfoField.changedAuthor, InfoField.propsMod);
+                    long changedRev = readInfo.changedRev;
+                    String changedAuthor = readInfo.changedAuthor;
+                    SVNDate changedDate = readInfo.changedDate;
+                    boolean propsModified = readInfo.propsMod;
+                    if (!propsModified) {
+                        newChangedRev = changedRev;
+                        newChangedDate = changedDate;
+                        newChangedAuthor = changedAuthor;
+                    }
+                }
+            }
+        } else {
+            /*
+             * ### If we can determine that nothing below this node was changed
+             * ### via this commit, we should keep new_changed_rev at its old
+             * ### value, like how we handle files.
+             */
+        }
+        /*
+         * Set TMP_TEXT_BASE_ABSPATH to NULL. The new text base will be found in
+         * the pristine store by its checksum.
+         */
+        /* ### TODO: Remove this parameter. */
+        File tmpTextBaseAbspath = null;
+        getContext().wqAddPostCommit(localAbspath, tmpTextBaseAbspath, newRevnum, newChangedRev, newChangedDate, newChangedAuthor, checksum, newDavCache, keepChangelist, noUnlock);
+
     }
 
     private static class SVNWCCommittedQueue {

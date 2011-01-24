@@ -3572,6 +3572,41 @@ public class SVNWCContext {
         return result;
     }
 
+    public void wqAddDeletionPostCommit(File localAbspath, long newRevnum, boolean noUnlock) throws SVNException {
+        SVNSkel workItem = SVNSkel.createEmptyList();
+        workItem.prependString(noUnlock ? "1" : "0");
+        workItem.prependString(Long.toString(newRevnum));
+        workItem.prependString(SVNFileUtil.getFilePath(localAbspath));
+        workItem.prependString(WorkQueueOperation.DELETION_POSTCOMMIT.getOpName());
+        SVNSkel result = SVNSkel.createEmptyList();
+        result.appendChild(workItem);
+        getDb().addWorkQueue(localAbspath, result);
+    }
+
+    public void wqAddPostCommit(File localAbspath, File tmpTextBaseAbspath, long newRevision, long changedRev, SVNDate changedDate, String changedAuthor, SVNChecksum newChecksum, Map newDavCache,
+            boolean keepChangelist, boolean noUnlock) throws SVNException {
+        SVNSkel workItem = SVNSkel.createEmptyList();
+        workItem.prependString(Long.toString(changedRev));
+        workItem.prependString(noUnlock ? "1" : "0");
+        workItem.prependString(tmpTextBaseAbspath != null ? SVNFileUtil.getFilePath(tmpTextBaseAbspath) : "");
+        workItem.prependString(keepChangelist ? "1" : "0");
+        if (newDavCache == null || newDavCache.isEmpty()) {
+            workItem.prependString("");
+        } else {
+            SVNSkel propSkel = SVNSkel.createPropList(newDavCache);
+            workItem.addChild(propSkel);
+        }
+        workItem.prependString(newChecksum != null ? newChecksum.toString() : "");
+        workItem.prependString(changedAuthor != null ? changedAuthor : "");
+        workItem.prependString(String.format("%d", changedDate.getTimeInMicros()));
+        workItem.prependString(Long.toString(newRevision));
+        workItem.prependString(SVNFileUtil.getFilePath(localAbspath));
+        workItem.prependString(WorkQueueOperation.POSTCOMMIT.getOpName());
+        SVNSkel result = SVNSkel.createEmptyList();
+        result.appendChild(workItem);
+        getDb().addWorkQueue(localAbspath, result);
+    }
+
     public SVNSkel wqMerge(SVNSkel workItem1, SVNSkel workItem2) throws SVNException {
         if (workItem1 == null) {
             return workItem2;
