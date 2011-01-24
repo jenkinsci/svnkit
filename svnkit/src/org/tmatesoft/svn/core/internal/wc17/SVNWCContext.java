@@ -848,7 +848,7 @@ public class SVNWCContext {
                 if (props != null && props.size() > 0)
                     has_props = true;
                 else {
-                    props = getActialProperties(localAbsPath);
+                    props = getActualProperties(localAbsPath);
                     has_props = (props != null && props.size() > 0);
                 }
             }
@@ -1634,13 +1634,26 @@ public class SVNWCContext {
     }
 
     public String getProperty(File localAbsPath, String name) throws SVNException {
+        SVNProperties properties = getProperties(localAbsPath, name);
+        if (properties != null) {
+            return properties.getStringValue(name);
+        }
+        return null;
+    }
+
+    public SVNPropertyValue getPropertyValue(File localAbsPath, String name) throws SVNException {
+        SVNProperties properties = getProperties(localAbsPath, name);
+        if (properties != null) {
+            return properties.getSVNPropertyValue(name);
+        }
+        return null;
+    }
+
+    private SVNProperties getProperties(File localAbsPath, String name) throws SVNException {
         assert (isAbsolute(localAbsPath));
         assert (!SVNProperty.isEntryProperty(name));
-
         SVNProperties properties = null;
-
         final SVNWCDbKind wcKind = db.readKind(localAbsPath, true);
-
         if (wcKind == SVNWCDbKind.Unknown) {
             /*
              * The node is not present, or not really "here". Therefore, the
@@ -1648,7 +1661,6 @@ public class SVNWCContext {
              */
             return null;
         }
-
         final boolean hidden = db.isNodeHidden(localAbsPath);
         if (hidden) {
             /*
@@ -1657,7 +1669,6 @@ public class SVNWCContext {
              */
             return null;
         }
-
         if (SVNProperty.isWorkingCopyProperty(name)) {
             /*
              * If no dav cache can be found, just set VALUE to NULL (for
@@ -1673,18 +1684,12 @@ public class SVNWCContext {
             }
         } else {
             /* regular prop */
-            properties = getActialProperties(localAbsPath);
+            properties = getActualProperties(localAbsPath);
         }
-
-        if (properties != null) {
-            return properties.getStringValue(name);
-        }
-
-        return null;
-
+        return properties;
     }
 
-    private SVNProperties getActialProperties(File localAbsPath) throws SVNException {
+    private SVNProperties getActualProperties(File localAbsPath) throws SVNException {
         assert (isAbsolute(localAbsPath));
         /*
          * ### perform some state checking. for example, locally-deleted nodes
