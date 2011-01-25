@@ -27,9 +27,15 @@ public interface ISVNAuthenticationStorageOptions {
         public ISVNAuthStoreHandler getAuthStoreHandler() throws SVNException {
             return null;
         }
+
+        public boolean isSSLPassphrasePromptSupported() {
+            return false;
+        }
     };
 
     boolean isNonInteractive() throws SVNException;
 
     ISVNAuthStoreHandler getAuthStoreHandler() throws SVNException;
+    
+    boolean isSSLPassphrasePromptSupported();
 }

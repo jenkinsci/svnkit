@@ -319,6 +319,13 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             public ISVNAuthStoreHandler getAuthStoreHandler() throws SVNException {
                 return getAuthenticationStorageOptions().getAuthStoreHandler();
             }
+
+            public boolean isSSLPassphrasePromptSupported() {
+                if (getAuthenticationStorageOptions() == ISVNAuthenticationStorageOptions.DEFAULT) {
+                    return DefaultSVNAuthenticationManager.this.isSSLPassphrasePromtSupported();
+                } 
+                return getAuthenticationStorageOptions().isSSLPassphrasePromptSupported();
+            }
         };
         return new DefaultSVNPersistentAuthenticationProvider(authDir, userName, delegatingOptions, getDefaultOptions(), getHostOptionsProvider());
     }
