@@ -379,8 +379,16 @@ public class DefaultSVNPersistentAuthenticationProvider implements ISVNAuthentic
         if (auth instanceof SVNPasswordAuthentication) {
             passphrase = ((SVNPasswordAuthentication) auth).getPassword();
         } else {
-            // do not save passphrase, it have to be saved already.
-            passphrase = null;
+            if (myAuthOptions.isSSLPassphrasePromptSupported()) {
+                // do not save passphrase, it have to be saved already.
+                passphrase = null;
+            } else if (auth instanceof SVNSSLAuthentication) {
+                // otherwise we're in the old-school mode and will save passpharse for host realm,
+                // as we used to do before.
+                passphrase = ((SVNSSLAuthentication) auth).getPassword();
+            } else {
+                passphrase = null;
+            }
         }
         if (storePassphrases && passphrase != null) {
 

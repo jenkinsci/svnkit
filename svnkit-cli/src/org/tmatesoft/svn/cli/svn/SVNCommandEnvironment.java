@@ -241,7 +241,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
 
     protected ISVNAuthenticationManager createClientAuthenticationManager() {
         File configDir = myConfigDir != null ? new File(myConfigDir) : SVNWCUtil.getDefaultConfigurationDirectory();        
-        DefaultSVNAuthenticationManager authManager = (DefaultSVNAuthenticationManager) SVNWCUtil.createDefaultAuthenticationManager(configDir, myUserName, myPassword, !myIsNoAuthCache);
+        final DefaultSVNAuthenticationManager authManager = (DefaultSVNAuthenticationManager) SVNWCUtil.createDefaultAuthenticationManager(configDir, myUserName, myPassword, !myIsNoAuthCache);
 
 
         final ISVNAuthStoreHandler authStoreHandler;
@@ -260,6 +260,10 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
 
             public ISVNAuthStoreHandler getAuthStoreHandler() throws SVNException {
                 return authStoreHandler;
+            }
+
+            public boolean isSSLPassphrasePromptSupported() {
+                return authManager.isSSLPassphrasePromtSupported();
             }
         };
 
