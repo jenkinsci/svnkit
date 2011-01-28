@@ -331,15 +331,18 @@ public class SVNErrorMessage implements Serializable {
         StringBuffer line = new StringBuffer();
         if (getType() == TYPE_WARNING && getErrorCode() == SVNErrorCode.REPOS_POST_COMMIT_HOOK_FAILED) {
             line.append("Warning: ");
-        } else if (getType() == TYPE_WARNING) {
-            line.append("svn: warning: ");
-            if(SVNBasicClient.isWC17Supported()) {
-                line.append("W").append(myErrorCode.getCode()).append(": ");
-            }
         } else {
-            line.append("svn: ");
-            if(SVNBasicClient.isWC17Supported()) {
-                line.append("E").append(myErrorCode.getCode()).append(": ");
+            boolean showErrorCode = SVNBasicClient.isWC17Supported() && SVNErrorCode.EXTERNAL_PROGRAM!=myErrorCode;
+            if (getType() == TYPE_WARNING) {
+                line.append("svn: warning: ");
+                if(showErrorCode) {
+                    line.append("W").append(myErrorCode.getCode()).append(": ");
+                }
+            } else {
+                line.append("svn: ");
+                if(showErrorCode) {
+                    line.append("E").append(myErrorCode.getCode()).append(": ");
+                }
             }
         }
         if ("".equals(myMessage)) {
