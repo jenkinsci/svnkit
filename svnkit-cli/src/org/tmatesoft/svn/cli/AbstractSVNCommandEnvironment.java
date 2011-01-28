@@ -11,6 +11,8 @@
  */
 package org.tmatesoft.svn.cli;
 
+import static org.tmatesoft.svn.core.wc.SVNBasicClient.isWC17Supported;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -43,6 +45,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
+import org.tmatesoft.svn.core.wc.SVNBasicClient;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -367,11 +370,11 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
                 }
                 if (err.getType() == SVNErrorMessage.TYPE_WARNING) {
                     String msg = getCommandLineClientName() +": warning: " +
-                        "W" + err.getErrorCode().getCode() + ": " + message;
+                        (isWC17Supported()? "W" + err.getErrorCode().getCode() + ": " : "") + message;
                     getErr().println(msg);
                 } else {
                     String msg = getCommandLineClientName() + ": " +
-                        "E" + err.getErrorCode().getCode() + ": " + message;
+                        (isWC17Supported()? "E" + err.getErrorCode().getCode() + ": " : "") + message;
                     getErr().println(msg);
                     count++;
                 }

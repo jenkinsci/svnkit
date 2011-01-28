@@ -14,6 +14,8 @@ package org.tmatesoft.svn.core;
 import java.io.Serializable;
 import java.text.MessageFormat;
 
+import org.tmatesoft.svn.core.wc.SVNBasicClient;
+
 
 /**
  * The <b>SVNErrorMessage</b> class represents error and warning messages describing
@@ -331,10 +333,14 @@ public class SVNErrorMessage implements Serializable {
             line.append("Warning: ");
         } else if (getType() == TYPE_WARNING) {
             line.append("svn: warning: ");
-            line.append("W").append(myErrorCode.getCode()).append(": ");
+            if(SVNBasicClient.isWC17Supported()) {
+                line.append("W").append(myErrorCode.getCode()).append(": ");
+            }
         } else {
             line.append("svn: ");
-            line.append("E").append(myErrorCode.getCode()).append(": ");
+            if(SVNBasicClient.isWC17Supported()) {
+                line.append("E").append(myErrorCode.getCode()).append(": ");
+            }
         }
         if ("".equals(myMessage)) {
             line.append(myErrorCode.getDescription());
