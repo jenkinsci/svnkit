@@ -343,12 +343,13 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
         Collection codes = new SVNHashSet();
         int count = 0;
         while(err != null && count < 2) {
-            if ("".equals(err.getMessageTemplate()) && codes.contains(err.getErrorCode())) {
+            SVNErrorCode errorCode = err.getErrorCode();
+            if ("".equals(err.getMessageTemplate()) && codes.contains(errorCode)) {
                 err = err.hasChildErrorMessage() ? err.getChildErrorMessage() : null;
                 continue;
             }
             if ("".equals(err.getMessageTemplate())) {
-                codes.add(err.getErrorCode());
+                codes.add(errorCode);
             }
             Object[] objects = err.getRelatedObjects();
             if (objects != null && objects.length > 0) {
@@ -368,13 +369,14 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
                         message = template;
                     }
                 }
+                boolean showErrorCode = isWC17Supported() && SVNErrorCode.EXTERNAL_PROGRAM!=errorCode;
                 if (err.getType() == SVNErrorMessage.TYPE_WARNING) {
                     String msg = getCommandLineClientName() +": warning: " +
-                        (isWC17Supported()? "W" + err.getErrorCode().getCode() + ": " : "") + message;
+                        (showErrorCode ? "W" + errorCode.getCode() + ": " : "") + message;
                     getErr().println(msg);
                 } else {
                     String msg = getCommandLineClientName() + ": " +
-                        (isWC17Supported()? "E" + err.getErrorCode().getCode() + ": " : "") + message;
+                        (showErrorCode ? "E" + errorCode.getCode() + ": " : "") + message;
                     getErr().println(msg);
                     count++;
                 }
