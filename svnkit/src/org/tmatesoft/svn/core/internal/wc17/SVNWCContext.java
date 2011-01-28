@@ -29,7 +29,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.logging.Level;
 
 import org.tmatesoft.svn.core.SVNCancelException;
@@ -93,7 +92,6 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
-import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 import de.regnis.q.sequence.line.QSequenceLineRAByteData;
@@ -3717,9 +3715,28 @@ public class SVNWCContext {
 
     public static class RunDeletionPostCommit implements RunWorkQueueOperation {
 
-        public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) {
-            // TODO
-            throw new UnsupportedOperationException();
+        public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) throws SVNException {
+            File localAbspath = SVNFileUtil.createFilePath(workItem.getChild(1).getValue());
+            long newRevision = SVNWCUtils.parseLong(workItem.getChild(2).getValue());
+            boolean noUnlock = "1".equals(workItem.getChild(3).getValue());
+            SVNWCDbKind kind = ctx.getDb().readKind(localAbspath, false);
+            long parentRevision = ctx.getDb().getBaseInfo(
+                    SVNFileUtil.getParentFile(localAbspath), BaseInfoField.revision).revision;
+            File reposRelpath = null;
+            SVNURL reposRootUrl = null;
+            String reposUuid = null;
+            if (newRevision > parentRevision) {
+                WCDbRepositoryInfo reposInfo = ctx.getDb().scanBaseRepository(localAbspath, RepositoryInfoField.values());
+                reposRelpath = reposInfo.relPath;
+                reposRootUrl = reposInfo.rootUrl;
+                reposUuid = reposInfo.uuid;
+            }
+            ctx.removeFromRevisionControl(localAbspath, false, false);
+            if (newRevision > parentRevision)
+              {
+                ctx.getDb().addBaseNotPresentNode(localAbspath,
+                        reposRelpath, reposRootUrl, reposUuid, newRevision, kind, null, null);
+              }
         }
     }
 

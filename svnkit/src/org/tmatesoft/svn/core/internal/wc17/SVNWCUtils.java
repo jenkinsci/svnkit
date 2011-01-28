@@ -15,6 +15,8 @@ import java.io.File;
 import java.util.Iterator;
 
 import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
@@ -23,8 +25,10 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @author TMate Software Ltd.
@@ -178,6 +182,16 @@ public class SVNWCUtils {
 
     public static SVNURL join(SVNURL rootUrl, File relPath) throws SVNException {
         return SVNURL.parseURIDecoded(SVNPathUtil.append(rootUrl.toDecodedString(), SVNFileUtil.getFilePath(relPath).replace(File.separatorChar, '/')));
+    }
+
+    public static long parseLong(String value) throws SVNException {
+        try{
+            return Long.parseLong(value);
+        } catch (NumberFormatException e) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS, "Could not convert ''{0}'' into a number", value);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
+            return 0;
+        }
     }
 
 }
