@@ -3720,8 +3720,7 @@ public class SVNWCContext {
             long newRevision = SVNWCUtils.parseLong(workItem.getChild(2).getValue());
             boolean noUnlock = "1".equals(workItem.getChild(3).getValue());
             SVNWCDbKind kind = ctx.getDb().readKind(localAbspath, false);
-            long parentRevision = ctx.getDb().getBaseInfo(
-                    SVNFileUtil.getParentFile(localAbspath), BaseInfoField.revision).revision;
+            long parentRevision = ctx.getDb().getBaseInfo(SVNFileUtil.getParentFile(localAbspath), BaseInfoField.revision).revision;
             File reposRelpath = null;
             SVNURL reposRootUrl = null;
             String reposUuid = null;
@@ -3732,19 +3731,54 @@ public class SVNWCContext {
                 reposUuid = reposInfo.uuid;
             }
             ctx.removeFromRevisionControl(localAbspath, false, false);
-            if (newRevision > parentRevision)
-              {
-                ctx.getDb().addBaseNotPresentNode(localAbspath,
-                        reposRelpath, reposRootUrl, reposUuid, newRevision, kind, null, null);
-              }
+            if (newRevision > parentRevision) {
+                ctx.getDb().addBaseNotPresentNode(localAbspath, reposRelpath, reposRootUrl, reposUuid, newRevision, kind, null, null);
+            }
         }
     }
 
     public static class RunPostCommit implements RunWorkQueueOperation {
 
-        public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) {
-            // TODO
-            throw new UnsupportedOperationException();
+        public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) throws SVNException {
+
+            File localAbspath = SVNFileUtil.createFilePath(workItem.getChild(1).getValue());
+            long newRevision = SVNWCUtils.parseLong(workItem.getChild(2).getValue());
+            SVNDate changedDate = SVNWCUtils.readDate(SVNWCUtils.parseLong(workItem.getChild(3).getValue()));
+            String changedAuthor = null;
+            if (workItem.getListSize() > 4) {
+                changedAuthor = workItem.getChild(4).getValue();
+            }
+            SVNChecksum newChecksum = null;
+            if (workItem.getListSize() > 5) {
+                newChecksum = SVNChecksum.deserializeChecksum(workItem.getChild(5).getValue());
+            }
+            Map newDavCache = null;
+            if (workItem.getListSize() > 6 && workItem.getChild(6).isValidPropList()) {
+                newDavCache = workItem.getChild(6).parsePropList();
+            }
+            boolean keepChangelist = true;
+            if (workItem.getListSize() > 7) {
+                keepChangelist = "1".equals(workItem.getChild(7).getValue());
+            }
+            File tmpTextBaseAbspath = null;
+            if (workItem.getListSize() > 8) {
+                tmpTextBaseAbspath = SVNFileUtil.createFilePath(workItem.getChild(8).getValue());
+            }
+            boolean noUnlock = true;
+            if (workItem.getListSize() > 9) {
+                noUnlock = "1".equals(workItem.getChild(9).getValue());
+            }
+            long changedRev = newRevision;
+            if (workItem.getListSize() > 10) {
+                changedRev = SVNWCUtils.parseLong(workItem.getChild(10).getValue());
+            }
+
+            try {
+                ctx.logDoCommitted(localAbspath, tmpTextBaseAbspath, newRevision, changedRev, changedDate, changedAuthor, newChecksum, newDavCache, keepChangelist, noUnlock);
+            } catch (SVNException e) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_BAD_ADM_LOG, "Error processing post-commit work for ''{0}''", localAbspath);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
         }
     }
 
@@ -3924,6 +3958,12 @@ public class SVNWCContext {
             }
         }
         db.removeBase(localAbspath);
+    }
+
+    public void logDoCommitted(File localAbspath, File tmpTextBaseAbspath, long newRevision, long changedRev, SVNDate changedDate, String changedAuthor, SVNChecksum newChecksum, Map newDavCache,
+            boolean keepChangelist, boolean noUnlock) throws SVNException {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public void getAndRecordFileInfo(File localAbspath, boolean ignoreError) throws SVNException {
