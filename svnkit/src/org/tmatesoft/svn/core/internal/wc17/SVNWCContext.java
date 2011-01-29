@@ -3752,9 +3752,9 @@ public class SVNWCContext {
             if (workItem.getListSize() > 5) {
                 newChecksum = SVNChecksum.deserializeChecksum(workItem.getChild(5).getValue());
             }
-            Map newDavCache = null;
+            SVNProperties newDavCache = null;
             if (workItem.getListSize() > 6 && workItem.getChild(6).isValidPropList()) {
-                newDavCache = workItem.getChild(6).parsePropList();
+                newDavCache = SVNProperties.wrap(workItem.getChild(6).parsePropList());
             }
             boolean keepChangelist = true;
             if (workItem.getListSize() > 7) {
@@ -3960,8 +3960,73 @@ public class SVNWCContext {
         db.removeBase(localAbspath);
     }
 
-    public void logDoCommitted(File localAbspath, File tmpTextBaseAbspath, long newRevision, long changedRev, SVNDate changedDate, String changedAuthor, SVNChecksum newChecksum, Map newDavCache,
-            boolean keepChangelist, boolean noUnlock) throws SVNException {
+    public void logDoCommitted(File localAbspath, File tmpTextBaseAbspath, long newRevision, long changedRev, SVNDate changedDate, String changedAuthor, SVNChecksum newChecksum,
+            SVNProperties newDavCache, boolean keepChangelist, boolean noUnlock) throws SVNException {
+        boolean removeExecutable = false;
+        boolean setReadWrite = false;
+        WCDbInfo info = getDb().readInfo(localAbspath, InfoField.status, InfoField.kind);
+        SVNWCDbKind kind = info.kind;
+        SVNWCDbStatus status = info.status;
+        if (status == SVNWCDbStatus.NotPresent) {
+            return;
+        }
+        assert (status != SVNWCDbStatus.Deleted);
+        if (status == SVNWCDbStatus.Added && kind == SVNWCDbKind.Dir) {
+            List<String> children = getDb().readChildren(localAbspath);
+            for (String childName : children) {
+                File childAbspath = SVNFileUtil.createFilePath(localAbspath, childName);
+                SVNWCDbStatus childStatus = getDb().readInfo(childAbspath, InfoField.status).status;
+                if (childStatus == SVNWCDbStatus.Deleted) {
+                    removeFromRevisionControl(childAbspath, false, false);
+                }
+            }
+        }
+        boolean propMods = isPropsModified(localAbspath);
+        if (propMods) {
+            if (kind == SVNWCDbKind.File) {
+                SVNProperties propChanges = getPropDiffs(localAbspath).propChanges;
+                for (Object i : propChanges.nameSet()) {
+                    String propName = (String) i;
+                    String propChange = propChanges.getStringValue(propName);
+                    if (SVNProperty.EXECUTABLE.equals(propName) && propChange == null) {
+                        removeExecutable = true;
+                    } else if (SVNProperty.NEEDS_LOCK.equals(propName) && propChange == null) {
+                        setReadWrite = true;
+                    }
+                }
+            }
+        }
+        if (kind == SVNWCDbKind.File || kind == SVNWCDbKind.Symlink) {
+            getDb().globalCommit(localAbspath, newRevision, changedRev, changedDate, changedAuthor, newChecksum, null, newDavCache, keepChangelist, noUnlock, null);
+            boolean overwroteWorking = installCommittedFile(localAbspath, tmpTextBaseAbspath, removeExecutable, setReadWrite);
+            long translatedSize = localAbspath.length();
+            long lastModTime = localAbspath.lastModified();
+            if (!overwroteWorking) {
+                File textBasePath = getTextBasePathToRead(localAbspath);
+                boolean modified = localAbspath.length() != textBasePath.length();
+                if (localAbspath.lastModified() != textBasePath.lastModified() && !modified) {
+                    modified = isTextModified(localAbspath, true, false);
+                }
+                lastModTime = modified ? textBasePath.lastModified() : localAbspath.lastModified();
+            }
+            getDb().globalRecordFileinfo(localAbspath, translatedSize, SVNWCUtils.readDate(lastModTime));
+            return;
+        }
+        getDb().globalCommit(localAbspath, newRevision, changedRev, changedDate, changedAuthor, null, null, newDavCache, keepChangelist, noUnlock, null);
+        {
+            CheckWCRootInfo checkWCRoot = checkWCRoot(localAbspath, true);
+            if (checkWCRoot.wcRoot || checkWCRoot.switched)
+                return;
+        }
+        return;
+    }
+
+    private File getTextBasePathToRead(File localAbspath) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    private boolean installCommittedFile(File localAbspath, File tmpTextBaseAbspath, boolean removeExecutable, boolean setReadWrite) {
         // TODO
         throw new UnsupportedOperationException();
     }

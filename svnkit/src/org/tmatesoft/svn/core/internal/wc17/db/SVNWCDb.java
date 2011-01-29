@@ -943,12 +943,6 @@ public class SVNWCDb implements ISVNWCDb {
         return SVNFileUtil.createFilePath(SVNFileUtil.createFilePath(pdh.getWCRoot().getAbsPath(), SVNFileUtil.getAdminDirectoryName()), PRISTINE_TEMPDIR_RELPATH);
     }
 
-    public void globalCommit(File localAbspath, long newRevision, SVNDate newDate, String newAuthor, SVNChecksum newChecksum, List<File> newChildren, SVNProperties newDavCache,
-            boolean keepChangelist, SVNSkel workItems) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
-    }
-
     public void globalRecordFileinfo(File localAbspath, long translatedSize, SVNDate lastModTime) throws SVNException {
         assert (SVNFileUtil.isAbsolute(localAbspath));
         final DirParsedInfo parsed = parseDir(localAbspath, Mode.ReadWrite);
@@ -3910,6 +3904,12 @@ public class SVNWCDb implements ISVNWCDb {
             }
             addWorkItems(db, workItems);
         }
+    }
+
+    public void globalCommit(File localAbspath, long newRevision, long changedRevision, SVNDate newDate, String newAuthor, SVNChecksum newChecksum, List<File> newChildren, SVNProperties newDavCache,
+            boolean keepChangelist, boolean noUnlock, SVNSkel workItems) throws SVNException {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
 }

@@ -1219,8 +1219,8 @@ public interface ISVNWCDb {
      *
      * WORK_ITEMS will be place into the work queue.
      */
-    void globalCommit(File localAbspath, long newRevision, SVNDate newDate, String newAuthor, SVNChecksum newChecksum, List<File> newChildren, SVNProperties newDavCache, boolean keepChangelist,
-            SVNSkel workItems) throws SVNException;
+    void globalCommit(File localAbspath, long newRevision, long changedRevision, SVNDate newDate, String newAuthor, SVNChecksum newChecksum, List<File> newChildren, SVNProperties newDavCache, boolean keepChangelist,
+            boolean noUnlock, SVNSkel workItems) throws SVNException;
 
     /**
      * Perform an "update" operation at this node. It will create/modify a BASE
