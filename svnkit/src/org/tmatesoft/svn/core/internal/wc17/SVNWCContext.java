@@ -1414,6 +1414,22 @@ public class SVNWCContext {
 
     }
 
+    private boolean isSameContents(File file1, File file2) throws SVNException {
+        InputStream stream1 = null;
+        InputStream stream2 = null;
+        try {
+            stream1 = SVNFileUtil.openFileForReading(file1);
+            stream2 = SVNFileUtil.openFileForReading(file2);
+            return isSameContents(stream1, stream2);
+        } finally {
+            try {
+                SVNFileUtil.closeFile(stream1);
+            } finally {
+                SVNFileUtil.closeFile(stream2);
+            }
+        }
+    }
+
     private boolean isSameContents(InputStream stream1, InputStream stream2) throws SVNException {
         try {
             byte[] buf1 = new byte[STREAM_CHUNK_SIZE];
@@ -3998,7 +4014,7 @@ public class SVNWCContext {
         }
         if (kind == SVNWCDbKind.File || kind == SVNWCDbKind.Symlink) {
             getDb().globalCommit(localAbspath, newRevision, changedRev, changedDate, changedAuthor, newChecksum, null, newDavCache, keepChangelist, noUnlock, null);
-            boolean overwroteWorking = installCommittedFile(localAbspath, tmpTextBaseAbspath, removeExecutable, setReadWrite);
+            boolean overwroteWorking = installCommittedFile(localAbspath, removeExecutable, setReadWrite);
             long translatedSize = localAbspath.length();
             long lastModTime = localAbspath.lastModified();
             if (!overwroteWorking) {
@@ -4023,17 +4039,55 @@ public class SVNWCContext {
 
     private File getTextBasePathToRead(File localAbspath) throws SVNException {
         SVNChecksum checksum = getDb().readInfo(localAbspath, InfoField.checksum).checksum;
-        if(checksum==null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS,
-                    "Node ''{0}'' has no pristine text", localAbspath);
+        if (checksum == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS, "Node ''{0}'' has no pristine text", localAbspath);
             SVNErrorManager.error(err, SVNLogType.WC);
         }
         return getDb().getPristinePath(localAbspath, checksum);
     }
 
-    private boolean installCommittedFile(File localAbspath, File tmpTextBaseAbspath, boolean removeExecutable, boolean setReadWrite) {
-        // TODO
-        throw new UnsupportedOperationException();
+    private boolean installCommittedFile(File fileAbspath, boolean removeExecutable, boolean removeReadOnly) throws SVNException {
+        boolean same, didSet;
+        File tmpWfile;
+        boolean special;
+        boolean overwroteWorking = false;
+        {
+            File tmp = fileAbspath;
+            tmpWfile = getTranslatedFile(tmp, fileAbspath, false, false, false, false);
+            special = getTranslateInfo(fileAbspath, false, false, true).special;
+            if (!special && !tmp.equals(tmpWfile)) {
+                same = isSameContents(tmpWfile, fileAbspath);
+            } else {
+                same = true;
+            }
+        }
+        if (!same) {
+            SVNFileUtil.rename(tmpWfile, fileAbspath);
+            overwroteWorking = true;
+        }
+        if (removeExecutable) {
+            if (same) {
+                SVNFileUtil.setExecutable(fileAbspath, false);
+            }
+            overwroteWorking = true;
+        } else {
+            didSet = maybeSetExecutable(fileAbspath);
+            if (didSet) {
+                overwroteWorking = true;
+            }
+        }
+        if (removeReadOnly) {
+            if (same) {
+                SVNFileUtil.setReadonly(fileAbspath, false);
+            }
+            overwroteWorking = true;
+        } else {
+            didSet = maybeSetReadOnly(fileAbspath);
+            if (didSet) {
+                overwroteWorking = true;
+            }
+        }
+        return overwroteWorking;
     }
 
     public void getAndRecordFileInfo(File localAbspath, boolean ignoreError) throws SVNException {
