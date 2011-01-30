@@ -4021,9 +4021,14 @@ public class SVNWCContext {
         return;
     }
 
-    private File getTextBasePathToRead(File localAbspath) {
-        // TODO
-        throw new UnsupportedOperationException();
+    private File getTextBasePathToRead(File localAbspath) throws SVNException {
+        SVNChecksum checksum = getDb().readInfo(localAbspath, InfoField.checksum).checksum;
+        if(checksum==null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS,
+                    "Node ''{0}'' has no pristine text", localAbspath);
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+        return getDb().getPristinePath(localAbspath, checksum);
     }
 
     private boolean installCommittedFile(File localAbspath, File tmpTextBaseAbspath, boolean removeExecutable, boolean setReadWrite) {
