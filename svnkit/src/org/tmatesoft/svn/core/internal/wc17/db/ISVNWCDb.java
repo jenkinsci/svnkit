@@ -1219,7 +1219,7 @@ public interface ISVNWCDb {
      *
      * WORK_ITEMS will be place into the work queue.
      */
-    void globalCommit(File localAbspath, long newRevision, long changedRevision, SVNDate newDate, String newAuthor, SVNChecksum newChecksum, List<File> newChildren, SVNProperties newDavCache, boolean keepChangelist,
+    void globalCommit(File localAbspath, long newRevision, long changedRevision, SVNDate changedDate, String changedAuthor, SVNChecksum newChecksum, List<File> newChildren, SVNProperties newDavCache, boolean keepChangelist,
             boolean noUnlock, SVNSkel workItems) throws SVNException;
 
     /**

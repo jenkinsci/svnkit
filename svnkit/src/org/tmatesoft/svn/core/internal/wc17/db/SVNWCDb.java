@@ -74,6 +74,33 @@ import org.tmatesoft.svn.util.SVNLogType;
  */
 public class SVNWCDb implements ISVNWCDb {
 
+
+    /**
+     * @version 1.4
+     * @author  TMate Software Ltd.
+     */
+    public class Commit implements SVNSqlJetTransaction {
+
+        public SVNWCDbDir pdh;
+        public File localRelpath;
+        public long newRevision;
+        public long changedRev;
+        public SVNDate changedDate;
+        public Object changedAuthor;
+        public SVNChecksum newChecksum;
+        public List<File> newChildren;
+        public SVNProperties newDavCache;
+        public boolean keepChangelist;
+        public boolean noUnlock;
+        public SVNSkel workItems;
+        public long reposId;
+        public File reposRelPath;
+
+        public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
+        }
+
+    }
+
     public static final int FORMAT_FROM_SDB = -1;
     public static final long UNKNOWN_WC_ID = -1;
 
@@ -3906,8 +3933,41 @@ public class SVNWCDb implements ISVNWCDb {
         }
     }
 
-    public void globalCommit(File localAbspath, long newRevision, long changedRevision, SVNDate newDate, String newAuthor, SVNChecksum newChecksum, List<File> newChildren, SVNProperties newDavCache,
+    public void globalCommit(File localAbspath, long newRevision, long changedRevision, SVNDate changedDate, String changedAuthor, SVNChecksum newChecksum, List<File> newChildren, SVNProperties newDavCache,
             boolean keepChangelist, boolean noUnlock, SVNSkel workItems) throws SVNException {
+        assert (isAbsolute(localAbspath));
+        assert (SVNRevision.isValidRevisionNumber(newRevision));
+        assert (newChecksum == null || newChildren == null);
+        DirParsedInfo parseDir = parseDir(localAbspath, Mode.ReadWrite);
+        SVNWCDbDir pdh = parseDir.wcDbDir;
+        File localRelpath = parseDir.localRelPath;
+        verifyDirUsable(pdh);
+        Commit cb = new Commit();
+        cb.pdh = pdh;
+        cb.localRelpath = localRelpath;
+        cb.newRevision = newRevision;
+        cb.changedRev = changedRevision;
+        cb.changedDate = changedDate;
+        cb.changedAuthor = changedAuthor;
+        cb.newChecksum = newChecksum;
+        cb.newChildren = newChildren;
+        cb.newDavCache = newDavCache;
+        cb.keepChangelist = keepChangelist;
+        cb.noUnlock = noUnlock;
+        cb.workItems = workItems;
+        ReposInfo2 reposInfo = determineReposInfo(localRelpath);
+        cb.reposId = reposInfo.reposId;
+        cb.reposRelPath = reposInfo.reposRelPath;
+        pdh.getWCRoot().getSDb().runTransaction(cb);
+        pdh.flushEntries(localAbspath);
+    }
+
+    private static class ReposInfo2 {
+        public long reposId;
+        public File reposRelPath;
+    }
+
+    private ReposInfo2 determineReposInfo(File localRelpath) {
         // TODO
         throw new UnsupportedOperationException();
     }
