@@ -3602,12 +3602,11 @@ public class SVNWCContext {
         getDb().addWorkQueue(localAbspath, result);
     }
 
-    public void wqAddPostCommit(File localAbspath, File tmpTextBaseAbspath, long newRevision, long changedRev, SVNDate changedDate, String changedAuthor, SVNChecksum newChecksum, Map newDavCache,
-            boolean keepChangelist, boolean noUnlock) throws SVNException {
+    public void wqAddPostCommit(File localAbspath, long newRevision, long changedRev, SVNDate changedDate, String changedAuthor, SVNChecksum newChecksum, Map newDavCache, boolean keepChangelist,
+            boolean noUnlock) throws SVNException {
         SVNSkel workItem = SVNSkel.createEmptyList();
         workItem.prependString(Long.toString(changedRev));
         workItem.prependString(noUnlock ? "1" : "0");
-        workItem.prependString(tmpTextBaseAbspath != null ? SVNFileUtil.getFilePath(tmpTextBaseAbspath) : "");
         workItem.prependString(keepChangelist ? "1" : "0");
         if (newDavCache == null || newDavCache.isEmpty()) {
             workItem.prependString("");
@@ -3776,21 +3775,17 @@ public class SVNWCContext {
             if (workItem.getListSize() > 7) {
                 keepChangelist = "1".equals(workItem.getChild(7).getValue());
             }
-            File tmpTextBaseAbspath = null;
-            if (workItem.getListSize() > 8) {
-                tmpTextBaseAbspath = SVNFileUtil.createFilePath(workItem.getChild(8).getValue());
-            }
             boolean noUnlock = true;
-            if (workItem.getListSize() > 9) {
-                noUnlock = "1".equals(workItem.getChild(9).getValue());
+            if (workItem.getListSize() > 8) {
+                noUnlock = "1".equals(workItem.getChild(8).getValue());
             }
             long changedRev = newRevision;
-            if (workItem.getListSize() > 10) {
-                changedRev = SVNWCUtils.parseLong(workItem.getChild(10).getValue());
+            if (workItem.getListSize() > 9) {
+                changedRev = SVNWCUtils.parseLong(workItem.getChild(9).getValue());
             }
 
             try {
-                ctx.logDoCommitted(localAbspath, tmpTextBaseAbspath, newRevision, changedRev, changedDate, changedAuthor, newChecksum, newDavCache, keepChangelist, noUnlock);
+                ctx.logDoCommitted(localAbspath, newRevision, changedRev, changedDate, changedAuthor, newChecksum, newDavCache, keepChangelist, noUnlock);
             } catch (SVNException e) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_BAD_ADM_LOG, "Error processing post-commit work for ''{0}''", localAbspath);
                 SVNErrorManager.error(err, SVNLogType.WC);
@@ -3976,8 +3971,8 @@ public class SVNWCContext {
         db.removeBase(localAbspath);
     }
 
-    public void logDoCommitted(File localAbspath, File tmpTextBaseAbspath, long newRevision, long changedRev, SVNDate changedDate, String changedAuthor, SVNChecksum newChecksum,
-            SVNProperties newDavCache, boolean keepChangelist, boolean noUnlock) throws SVNException {
+    public void logDoCommitted(File localAbspath, long newRevision, long changedRev, SVNDate changedDate, String changedAuthor, SVNChecksum newChecksum, SVNProperties newDavCache,
+            boolean keepChangelist, boolean noUnlock) throws SVNException {
         boolean removeExecutable = false;
         boolean setReadWrite = false;
         WCDbInfo info = getDb().readInfo(localAbspath, InfoField.status, InfoField.kind);

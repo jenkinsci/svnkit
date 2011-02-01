@@ -835,7 +835,7 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
                 Map lockTokens = SVNCommitUtil.translateLockTokens(commitPacket.getLockTokens(), baseURL.toString());
                 SVNCommitItem firstItem = commitPacket.getCommitItems()[0];
                 SVNRepository repository = createRepository(baseURL, firstItem.getFile(), true);
-                SVNCommitMediator17 mediator = new SVNCommitMediator17(getContext(),committables);
+                SVNCommitMediator17 mediator = new SVNCommitMediator17(getContext(), committables);
                 tmpFiles = mediator.getTmpFiles();
                 String repositoryRoot = repository.getRepositoryRoot(true).getPath();
                 SVNPropertiesManager.validateRevisionProperties(revisionProperties);
@@ -1020,14 +1020,7 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
              * ### value, like how we handle files.
              */
         }
-        /*
-         * Set TMP_TEXT_BASE_ABSPATH to NULL. The new text base will be found in
-         * the pristine store by its checksum.
-         */
-        /* ### TODO: Remove this parameter. */
-        File tmpTextBaseAbspath = null;
-        getContext().wqAddPostCommit(localAbspath, tmpTextBaseAbspath, newRevnum, newChangedRev, newChangedDate, newChangedAuthor, checksum, newDavCache, keepChangelist, noUnlock);
-
+        getContext().wqAddPostCommit(localAbspath, newRevnum, newChangedRev, newChangedDate, newChangedAuthor, checksum, newDavCache, keepChangelist, noUnlock);
     }
 
     private static class SVNWCCommittedQueue {
