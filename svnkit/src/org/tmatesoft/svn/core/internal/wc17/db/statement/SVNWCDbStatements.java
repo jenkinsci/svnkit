@@ -106,7 +106,10 @@ public enum SVNWCDbStatements {
     CLEAR_ACTUAL_NODE_LEAVING_CONFLICT(SVNWCDbClearActualNodeLeavingConflict.class),
     INSERT_WORKING_NODE_FROM_BASE_COPY_PRESENCE(SVNWCDbInsertWorkingNodeFromBaseCopyPresence.class),
     INSERT_WORKING_NODE_FROM_BASE_COPY(SVNWCDbInsertWorkingNodeFromBaseCopy.class),
-    SELECT_OP_DEPTH_CHILDREN(SVNWCDbSelectOpDepthChildren.class);
+    SELECT_OP_DEPTH_CHILDREN(SVNWCDbSelectOpDepthChildren.class),
+    APPLY_CHANGES_TO_BASE_NODE,
+    DELETE_ALL_WORKING_NODES,
+    RESET_ACTUAL_WITH_CHANGELIST;
 
     private Class<? extends SVNSqlJetStatement> statementClass;
 

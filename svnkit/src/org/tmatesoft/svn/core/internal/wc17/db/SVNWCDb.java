@@ -86,7 +86,7 @@ public class SVNWCDb implements ISVNWCDb {
         public long newRevision;
         public long changedRev;
         public SVNDate changedDate;
-        public Object changedAuthor;
+        public String changedAuthor;
         public SVNChecksum newChecksum;
         public List<File> newChildren;
         public SVNProperties newDavCache;
@@ -97,6 +97,119 @@ public class SVNWCDb implements ISVNWCDb {
         public File reposRelPath;
 
         public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
+
+            SVNSqlJetStatement stmtBase;
+            SVNSqlJetStatement stmtWork;
+            SVNSqlJetStatement stmtAct;
+            boolean haveBase;
+            boolean haveWork;
+            boolean haveAct;
+            byte[] propBlob = null;
+            String changelist = null;
+            File parentRelpath;
+            SVNWCDbStatus newPresence;
+            SVNWCDbKind newKind;
+            String newDepthStr = null;
+            SVNSqlJetStatement stmt;
+
+            stmtBase = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_BASE_NODE);
+            stmtWork = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_WORKING_NODE);
+            stmtAct = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_ACTUAL_NODE);
+
+            try {
+                stmtBase.bindf("is", pdh.getWCRoot().getWcId(), localRelpath);
+                stmtWork.bindf("is", pdh.getWCRoot().getWcId(), localRelpath);
+                haveBase = stmtBase.next();
+                haveWork = stmtWork.next();
+                stmtAct.bindf("is", pdh.getWCRoot().getWcId(), localRelpath);
+                haveAct = stmtAct.next();
+
+                if (haveWork) {
+                    newKind = getColumnKind(stmtWork);
+                } else {
+                    newKind = getColumnKind(stmtBase);
+                }
+
+                if (newKind == SVNWCDbKind.Dir) {
+                    if (haveWork) {
+                        newDepthStr = stmtWork.getColumnString(SVNWCDbSchema.NODES__Fields.depth);
+                    } else {
+                        newDepthStr = stmtBase.getColumnString(SVNWCDbSchema.NODES__Fields.depth);
+                    }
+                }
+
+                if (haveBase) {
+                    assert (!stmtBase.isColumnNull(SVNWCDbSchema.NODES__Fields.repos_id));
+                    assert (!stmtBase.isColumnNull(SVNWCDbSchema.NODES__Fields.repos_path));
+                    assert (reposId == stmtBase.getColumnLong(SVNWCDbSchema.NODES__Fields.repos_id));
+                    assert (reposRelPath.equals(SVNFileUtil.createFilePath(stmtBase.getColumnString(SVNWCDbSchema.NODES__Fields.repos_path))));
+                }
+
+                if (haveAct) {
+                    propBlob = stmtAct.getColumnBlob(SVNWCDbSchema.ACTUAL_NODE__Fields.properties);
+                }
+                if (haveWork && propBlob == null) {
+                    propBlob = stmtAct.getColumnBlob(SVNWCDbSchema.NODES__Fields.properties);
+                }
+                if (haveBase && propBlob == null) {
+                    propBlob = stmtBase.getColumnBlob(SVNWCDbSchema.NODES__Fields.properties);
+                }
+                if (keepChangelist && haveAct) {
+                    changelist = stmtAct.getColumnString(SVNWCDbSchema.ACTUAL_NODE__Fields.changelist);
+                }
+
+            } finally {
+                stmtBase.reset();
+                stmtWork.reset();
+                stmtAct.reset();
+            }
+
+            if (localRelpath == null) {
+                parentRelpath = null;
+            } else {
+                parentRelpath = SVNFileUtil.getFileDir(localRelpath);
+            }
+
+            newPresence = SVNWCDbStatus.Normal;
+
+            stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.APPLY_CHANGES_TO_BASE_NODE);
+            stmt.bindf("issisrtstrisnbn", pdh.getWCRoot().getWcId(), localRelpath, parentRelpath, reposId, reposRelPath, newRevision, presenceMap.get(newPresence), newDepthStr, kindMap.get(newKind),
+                    changedRev, changedDate, changedAuthor, propBlob);
+            stmt.bindChecksum(13, newChecksum);
+            stmt.bindProperties(15, newDavCache);
+            stmt.done();
+
+            if (haveWork) {
+                stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.DELETE_ALL_WORKING_NODES);
+                stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelpath);
+                stmt.done();
+            }
+
+            if (haveAct) {
+                if (keepChangelist && changelist != null) {
+                    stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.RESET_ACTUAL_WITH_CHANGELIST);
+                    stmt.bindf("isss", pdh.getWCRoot().getWcId(), localRelpath, SVNFileUtil.getFileDir(localRelpath), changelist);
+                    stmt.done();
+                } else {
+                    stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.DELETE_ACTUAL_NODE);
+                    stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelpath);
+                    stmt.done();
+                }
+            }
+
+            if (newKind == SVNWCDbKind.Dir) {
+                /* When committing a directory, we should have its new children.  */
+                /* ### one day. just not today.  */
+                /* ### process the children  */
+            }
+
+            if (!noUnlock) {
+                SVNSqlJetStatement lockStmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.DELETE_LOCK);
+                lockStmt.bindf("is", reposId, reposRelPath);
+                lockStmt.done();
+            }
+
+            addWorkItems(pdh.getWCRoot().getSDb(), workItems);
         }
 
     }
