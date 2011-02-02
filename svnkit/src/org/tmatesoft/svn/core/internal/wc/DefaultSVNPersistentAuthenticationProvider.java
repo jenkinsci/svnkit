@@ -367,6 +367,15 @@ public class DefaultSVNPersistentAuthenticationProvider implements ISVNAuthentic
             if (storage != null) {
                 // Pass 'force == true' not to ask user for plain text storage.
                 storage.savePassphrase(realm, sshAuth.getPassphrase(), sshAuth, values, true);
+            } else {
+                for (int i = 0; i < myPasswordStorages.length; i++) {
+                    IPasswordStorage passwordStorage = myPasswordStorages[i];
+                    boolean saved = passwordStorage.savePassphrase(realm, sshAuth.getPassphrase(), sshAuth, values, false);
+                    if (saved) {
+                        values.put("passtype", passwordStorage.getPassType());
+                        break;
+                    }
+                }
             }
             values.put("key", path);
         }
