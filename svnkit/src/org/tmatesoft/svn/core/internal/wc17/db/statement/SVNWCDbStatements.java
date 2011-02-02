@@ -109,7 +109,7 @@ public enum SVNWCDbStatements {
     SELECT_OP_DEPTH_CHILDREN(SVNWCDbSelectOpDepthChildren.class),
     APPLY_CHANGES_TO_BASE_NODE(SVNWCDbApplyChangesToBaseNode.class),
     DELETE_ALL_WORKING_NODES(SVNWCDbDeleteAllWorkingNodes.class),
-    RESET_ACTUAL_WITH_CHANGELIST;
+    RESET_ACTUAL_WITH_CHANGELIST(SVNWCDbResetActualWithChangelist.class);
 
     private Class<? extends SVNSqlJetStatement> statementClass;
 
