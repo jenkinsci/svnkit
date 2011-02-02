@@ -107,7 +107,7 @@ public enum SVNWCDbStatements {
     INSERT_WORKING_NODE_FROM_BASE_COPY_PRESENCE(SVNWCDbInsertWorkingNodeFromBaseCopyPresence.class),
     INSERT_WORKING_NODE_FROM_BASE_COPY(SVNWCDbInsertWorkingNodeFromBaseCopy.class),
     SELECT_OP_DEPTH_CHILDREN(SVNWCDbSelectOpDepthChildren.class),
-    APPLY_CHANGES_TO_BASE_NODE,
+    APPLY_CHANGES_TO_BASE_NODE(SVNWCDbApplyChangesToBaseNode.class),
     DELETE_ALL_WORKING_NODES,
     RESET_ACTUAL_WITH_CHANGELIST;
 

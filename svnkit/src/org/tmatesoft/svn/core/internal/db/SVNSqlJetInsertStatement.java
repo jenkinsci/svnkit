@@ -15,6 +15,7 @@ import java.util.Map;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
+import org.tmatesoft.sqljet.core.schema.SqlJetConflictAction;
 import org.tmatesoft.svn.core.SVNException;
 
 /**
@@ -23,14 +24,22 @@ import org.tmatesoft.svn.core.SVNException;
  */
 public abstract class SVNSqlJetInsertStatement extends SVNSqlJetTableStatement {
 
+    protected SqlJetConflictAction conflictAction = null;
+
     public SVNSqlJetInsertStatement(SVNSqlJetDb sDb, Enum tableName) throws SVNException {
         super(sDb, tableName);
         transactionMode = SqlJetTransactionMode.WRITE;
     }
 
+
+    public SVNSqlJetInsertStatement(SVNSqlJetDb sDb, Enum tableName, SqlJetConflictAction conflictAction) throws SVNException {
+        this(sDb, tableName);
+        this.conflictAction = conflictAction;
+    }
+
     public long exec() throws SVNException {
         try {
-            return table.insertByFieldNames(getInsertValues());
+            return table.insertByFieldNamesOr(conflictAction, getInsertValues());
         } catch (SqlJetException e) {
             SVNSqlJetDb.createSqlJetError(e);
             return -1;
