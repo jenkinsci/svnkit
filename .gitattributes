@@ -165,6 +165,7 @@ svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbCreateSchema
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbDeleteActualEmpty.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbDeleteActualNode.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbDeleteActualNodeWithoutConflict.java -text
+svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbDeleteAllWorkingNodes.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbDeleteBaseNode.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbDeleteLowestWorkingNode.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbDeleteNodes.java -text
