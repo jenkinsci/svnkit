@@ -4566,7 +4566,7 @@ public class SVNWCContext {
         return getDb().readInfo(localAbsPath, InfoField.depth).depth;
     }
 
-    protected SVNStatus17 internalStatus(File localAbsPath) throws SVNException {
+    public SVNStatus17 internalStatus(File localAbsPath) throws SVNException {
 
         SVNWCDbKind node_kind;
         File parent_repos_relpath;

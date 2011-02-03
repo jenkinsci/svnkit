@@ -57,6 +57,7 @@ import org.tmatesoft.svn.core.wc.SVNCommitItem;
 import org.tmatesoft.svn.core.wc.SVNCommitPacket;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.util.SVNLogType;
@@ -1252,7 +1253,31 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
     }
 
     private void checkNonrecursiveDirDelete(String targetPath, SVNDepth depth) throws SVNException {
-        // TODO
+        File targetAbspath = SVNFileUtil.createFilePath(targetPath).getAbsoluteFile();
+        SVNNodeKind kind = getContext().readKind(targetAbspath, false);
+        File lockAbspath;
+        if (kind == SVNNodeKind.DIR) {
+            lockAbspath = targetAbspath;
+        } else {
+            lockAbspath = SVNFileUtil.getFileDir(targetAbspath);
+        }
+        boolean lockedHere = getContext().getDb().isWCLockOwns(lockAbspath, false);
+        if (!lockedHere) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LOCKED, "Are all targets part of the same working copy?");
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+        if (depth != SVNDepth.INFINITY) {
+            if (kind == SVNNodeKind.DIR) {
+                SVNStatus17 status = getContext().internalStatus(targetAbspath);
+                if (status.getNodeStatus() == SVNStatusType.STATUS_DELETED || status.getNodeStatus() == SVNStatusType.STATUS_REPLACED) {
+                    List<File> children = getContext().getNodeChildren(targetAbspath, true);
+                    if (children.size() > 0) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Cannot non-recursively commit a directory deletion of a directory with child nodes");
+                        SVNErrorManager.error(err, SVNLogType.WC);
+                    }
+                }
+            }
+        }
     }
 
     private void validateDangler(Map committables, File danglingParent, File danglingChild) throws SVNException {
