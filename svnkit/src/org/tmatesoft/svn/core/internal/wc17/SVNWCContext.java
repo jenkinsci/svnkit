@@ -4566,4 +4566,78 @@ public class SVNWCContext {
         return getDb().readInfo(localAbsPath, InfoField.depth).depth;
     }
 
+    protected SVNStatus17 internalStatus(File localAbsPath) throws SVNException {
+
+        SVNWCDbKind node_kind;
+        File parent_repos_relpath;
+        SVNURL parent_repos_root_url;
+        SVNWCDbStatus node_status = null;
+
+        assert (SVNWCDb.isAbsolute(localAbsPath));
+
+        SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(localAbsPath));
+
+        try {
+            WCDbInfo info = getDb().readInfo(localAbsPath, InfoField.status, InfoField.kind);
+            node_status = info.status;
+            node_kind = info.kind;
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND) {
+                throw e;
+            }
+            node_kind = SVNWCDbKind.Unknown;
+        }
+
+        if (node_status == SVNWCDbStatus.Obstructed || node_status == SVNWCDbStatus.ObstructedAdd || node_status == SVNWCDbStatus.ObstructedDelete || node_status == SVNWCDbStatus.NotPresent) {
+            node_kind = SVNWCDbKind.Unknown;
+        }
+
+        if (node_kind != SVNWCDbKind.Unknown) {
+            /* Check for hidden in the parent stub */
+            boolean hidden = getDb().isNodeHidden(localAbsPath);
+
+            if (hidden)
+                node_kind = SVNWCDbKind.Unknown;
+        }
+
+        if (node_kind == SVNWCDbKind.Unknown)
+            return assembleUnversioned17(localAbsPath, kind, false /* is_ignored */);
+
+        if (SVNFileUtil.getFileDir(localAbsPath) != null) {
+
+            File parent_abspath = SVNFileUtil.getFileDir(localAbsPath);
+
+            try {
+                WCDbInfo parent_info = getDb().readInfo(parent_abspath, InfoField.status, InfoField.reposRelPath, InfoField.reposRootUrl);
+                SVNWCDbStatus parent_status = parent_info.status;
+                parent_repos_relpath = parent_info.reposRelPath;
+                parent_repos_root_url = parent_info.reposRootUrl;
+
+                if (parent_repos_relpath == null && parent_status != SVNWCDbStatus.Added && parent_status != SVNWCDbStatus.Deleted) {
+
+                    final WCDbRepositoryInfo baseRepos = getDb().scanBaseRepository(localAbsPath, RepositoryInfoField.relPath, RepositoryInfoField.rootUrl);
+                    parent_repos_relpath = baseRepos.relPath;
+                    parent_repos_root_url = baseRepos.rootUrl;
+                }
+
+            } catch (SVNException e) {
+                if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND || e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_WORKING_COPY
+                // || SVN_WC__ERR_IS_NOT_CURRENT_WC(err)
+                ) {
+                    parent_repos_root_url = null;
+                    parent_repos_relpath = null;
+                } else {
+                    throw e;
+                }
+            }
+
+        } else {
+            parent_repos_root_url = null;
+            parent_repos_relpath = null;
+        }
+
+        return assembleStatus17(localAbsPath, parent_repos_root_url, parent_repos_relpath, kind, false, true /* get_all */, null /* repos_lock */);
+
+    }
+
 }

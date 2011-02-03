@@ -60,7 +60,7 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
     public SVNRemoteStatusEditor17(File anchorAbsPath, String targetBaseName, SVNWCContext wcContext, ISVNOptions options, boolean includeIgnored, boolean reportAll, SVNDepth depth,
             SVNExternalsStore externalsStore, ISVNStatusHandler realHandler) throws SVNException {
         super(SVNFileUtil.createFilePath(anchorAbsPath, targetBaseName), wcContext, options, includeIgnored, reportAll, depth, externalsStore, realHandler);
-        myAnchorStatus = internalStatus(anchorAbsPath);
+        myAnchorStatus = myWCContext.internalStatus(anchorAbsPath);
         myAnchorAbsPath = anchorAbsPath;
         myTargetBaseName = targetBaseName;
         myTargetAbsPath = SVNFileUtil.createFilePath(anchorAbsPath, targetBaseName);
@@ -107,7 +107,7 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
                 return;
 
             /* Use the public API to get a statstruct, and put it into the hash. */
-            statstruct = internalStatus(localAbsPath);
+            statstruct = myWCContext.internalStatus(localAbsPath);
             statstruct.setReposLock(reposLock);
             statushash.put(localAbsPath, statstruct);
         }
@@ -427,7 +427,7 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
         if (statstruct == null) {
             if (reposNodeStatus != SVNStatusType.STATUS_ADDED)
                 return;
-            statstruct = internalStatus(localAbsPath);
+            statstruct = myWCContext.internalStatus(localAbsPath);
             statstruct.setReposLock(reposLock);
             statushash.put(localAbsPath, statstruct);
         }

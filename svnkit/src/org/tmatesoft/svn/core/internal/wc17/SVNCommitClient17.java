@@ -1184,10 +1184,6 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
         }
     }
 
-    private void checkNonrecursiveDirDelete(String targetPath, SVNDepth depth) throws SVNException {
-        // TODO
-    }
-
     private SVNCommitItem[] harvestCommitables(File baseDir, Collection paths, Map lockTokens, boolean justLocked, SVNDepth depth, boolean force, Collection changelistsSet,
             ISVNCommitParameters commitParameters) throws SVNException {
 
@@ -1253,6 +1249,10 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
 
         return (SVNCommitItem[]) committables.values().toArray(new SVNCommitItem[committables.values().size()]);
 
+    }
+
+    private void checkNonrecursiveDirDelete(String targetPath, SVNDepth depth) throws SVNException {
+        // TODO
     }
 
     private void validateDangler(Map committables, File danglingParent, File danglingChild) throws SVNException {
