@@ -1292,8 +1292,26 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
         }
     }
 
-    private void bailOnTreeConflictedAncestor(File targetAbsPath) throws SVNException {
-        // TODO
+    private void bailOnTreeConflictedAncestor(File firstAbspath) throws SVNException {
+        File localAbspath;
+        File parentAbspath;
+        boolean wcRoot;
+        boolean treeConflicted;
+        localAbspath = firstAbspath;
+        while (true) {
+            wcRoot = getContext().checkWCRoot(localAbspath, false).wcRoot;
+            if (wcRoot) {
+                break;
+            }
+            parentAbspath = SVNFileUtil.getFileDir(localAbspath);
+            treeConflicted = getContext().getConflicted(parentAbspath, false, false, true).treeConflicted;
+            if (treeConflicted) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_FOUND_CONFLICT, "Aborting commit: ''{0}'' remains in tree-conflict", localAbspath);
+                SVNErrorManager.error(err, SVNLogType.WC);
+                return;
+            }
+            localAbspath = parentAbspath;
+        }
     }
 
     private void harvestCommittables(Map committables, Map lockTokens, File localAbsPath, SVNURL reposRootUrl, File reposRelpath, boolean addsOnly, boolean copyMode, boolean copyModeRoot,
