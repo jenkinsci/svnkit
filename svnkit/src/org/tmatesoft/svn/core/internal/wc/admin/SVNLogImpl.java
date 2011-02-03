@@ -48,13 +48,14 @@ public class SVNLogImpl extends SVNLog {
     }
 
     public void save() throws SVNException {
-        if (myTmpFile == null || myCache == null) {
+        if (myCache == null) {
             return;
         }
         
         Writer os = null;
+        File tmpFile = myTmpFile != null ? myTmpFile : SVNFileUtil.createUniqueFile(myAdminArea.getAdminDirectory(), "log", ".tmp", false);
         try {
-            os = new OutputStreamWriter(SVNFileUtil.openFileForWriting(myTmpFile), "UTF-8");
+            os = new OutputStreamWriter(SVNFileUtil.openFileForWriting(tmpFile), "UTF-8");
             for (Iterator commands = myCache.iterator(); commands.hasNext();) {
                 SVNProperties command = (SVNProperties) commands.next();
                 SVNPropertyValue name = command.remove("");
@@ -85,7 +86,7 @@ public class SVNLogImpl extends SVNLog {
             SVNFileUtil.closeFile(os);
             myCache = null;
         }
-        SVNFileUtil.rename(myTmpFile, myFile);
+        SVNFileUtil.rename(tmpFile, myFile);
         SVNFileUtil.setReadonly(myFile, true);
     }
 
