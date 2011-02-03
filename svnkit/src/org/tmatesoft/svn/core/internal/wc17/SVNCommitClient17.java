@@ -1188,7 +1188,7 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
     private SVNCommitItem[] harvestCommitables(File baseDir, Collection paths, Map lockTokens, boolean justLocked, SVNDepth depth, boolean force, Collection changelistsSet,
             ISVNCommitParameters commitParameters) throws SVNException {
 
-        Map committables = new TreeMap(SVNCommitUtil.FILE_COMPARATOR);
+        Map<String, SVNCommitItem> committables = new TreeMap<String, SVNCommitItem>(SVNCommitUtil.FILE_COMPARATOR);
         Map danglers = new SVNHashMap();
         Iterator targets = paths.iterator();
 
@@ -1248,7 +1248,7 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
             validateDangler(committables, danglingParent, danglingChild);
         }
 
-        return (SVNCommitItem[]) committables.values().toArray(new SVNCommitItem[committables.values().size()]);
+        return committables.values().toArray(new SVNCommitItem[committables.values().size()]);
 
     }
 
@@ -1273,7 +1273,7 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
                     List<File> children = getContext().getNodeChildren(targetAbspath, true);
                     if (children.size() > 0) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Cannot non-recursively commit a directory deletion of a directory with child nodes");
-                        SVNErrorManager.error(err, SVNLogType.WC);
+                        SVNErrorManager.error(err, SVNLogType.CLIENT);
                         return;
                     }
                 }
@@ -1281,8 +1281,15 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
         }
     }
 
-    private void validateDangler(Map committables, File danglingParent, File danglingChild) throws SVNException {
-        // TODO
+    private void validateDangler(Map<String, SVNCommitItem> committables, File danglingParent, File danglingChild) throws SVNException {
+        if (!committables.containsKey(danglingParent)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET,
+                    "''{0}'' is not under version control and is not part of the commit, yet its child ''{1}'' is part of the commit", new Object[] {
+                            danglingParent, danglingChild
+                    });
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
+            return;
+        }
     }
 
     private void bailOnTreeConflictedAncestor(File targetAbsPath) throws SVNException {
