@@ -1146,7 +1146,7 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
         getContext().acquireWriteLock(baseDir, false, false);
 
         for (String targetPath : targets) {
-            checkNonrecursiveDirDelete(targetPath, depth);
+            checkNonrecursiveDirDelete(SVNFileUtil.createFilePath(baseDir, targetPath), depth);
         }
 
         try {
@@ -1252,8 +1252,7 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
 
     }
 
-    private void checkNonrecursiveDirDelete(String targetPath, SVNDepth depth) throws SVNException {
-        File targetAbspath = SVNFileUtil.createFilePath(targetPath).getAbsoluteFile();
+    private void checkNonrecursiveDirDelete(File targetAbspath, SVNDepth depth) throws SVNException {
         SVNNodeKind kind = getContext().readKind(targetAbspath, false);
         File lockAbspath;
         if (kind == SVNNodeKind.DIR) {
@@ -1265,6 +1264,7 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
         if (!lockedHere) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LOCKED, "Are all targets part of the same working copy?");
             SVNErrorManager.error(err, SVNLogType.WC);
+            return;
         }
         if (depth != SVNDepth.INFINITY) {
             if (kind == SVNNodeKind.DIR) {
@@ -1274,6 +1274,7 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
                     if (children.size() > 0) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Cannot non-recursively commit a directory deletion of a directory with child nodes");
                         SVNErrorManager.error(err, SVNLogType.WC);
+                        return;
                     }
                 }
             }

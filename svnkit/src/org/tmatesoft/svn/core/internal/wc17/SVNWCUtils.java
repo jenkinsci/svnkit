@@ -157,7 +157,7 @@ public class SVNWCUtils {
         if (parent == null || child == null)
             return false;
         if (parent.equals(child))
-            return false;
+            return true;
         final String parentPath = parent.toString();
         final String childPath = child.toString();
         return childPath.startsWith(parentPath);
