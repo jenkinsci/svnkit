@@ -829,7 +829,7 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
                     infos.add(SVNCommitInfo.NULL);
                     continue;
                 }
-                Map committables = new TreeMap();
+                Map<String, SVNCommitItem> committables = new TreeMap();
                 Map<File, SVNChecksum> md5Checksums = new HashMap<File, SVNChecksum>();
                 Map<File, SVNChecksum> sha1Checksums = new HashMap<File, SVNChecksum>();
                 SVNURL baseURL = SVNCommitUtil.translateCommitables(commitPacket.getCommitItems(), committables);
