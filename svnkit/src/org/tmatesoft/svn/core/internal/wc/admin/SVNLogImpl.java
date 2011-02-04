@@ -53,7 +53,7 @@ public class SVNLogImpl extends SVNLog {
         }
         
         Writer os = null;
-        File tmpFile = myTmpFile != null ? myTmpFile : SVNFileUtil.createUniqueFile(myAdminArea.getAdminDirectory(), "log", ".tmp", false);
+        File tmpFile = myTmpFile != null ? myTmpFile : SVNFileUtil.createUniqueFile(myAdminArea.getAdminFile("tmp"), "log", ".tmp", false);
         try {
             os = new OutputStreamWriter(SVNFileUtil.openFileForWriting(tmpFile), "UTF-8");
             for (Iterator commands = myCache.iterator(); commands.hasNext();) {
