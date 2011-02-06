@@ -2940,9 +2940,14 @@ public class SVNWCContext {
         boolean translationRequired = special || keywords != null || eolStyle != null || charset != null;
         if (translationRequired) {
             if (translateToNormalForm) {
-                if (eolStyle != null && eolStr == null) {
+                if (eolStyle == SVNEolStyle.Native)
+                    eolStr = SVNEolStyleInfo.NATIVE_EOL_STR;
+                else if (eolStyle == SVNEolStyle.Fixed)
+                    repairEOL = true;
+                else if (eolStyle != SVNEolStyle.None) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_UNKNOWN_EOL);
                     SVNErrorManager.error(err, SVNLogType.DEFAULT);
+                    return null;
                 }
                 boolean repair = (eolStyle != null && eolStr != null && !SVNProperty.EOL_STYLE_NATIVE.equals(eolStyle)) || repairEOL;
                 return SVNTranslator.getTranslatingInputStream(SVNFileUtil.openFileForReading(localAbspath, SVNLogType.WC), charset, eolStr, repair, keywords, false);
