@@ -38,6 +38,9 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumInputStream;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumOutputStream;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.PristineContentsInfo;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.WritableBaseInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -256,83 +259,96 @@ public class SVNCommitter17 implements ISVNCommitPathHandler {
     }
 
     private void sendTextDeltas(ISVNEditor editor) throws SVNException {
-
         for (String path : myModifiedFiles.keySet()) {
             SVNCommitItem item = myModifiedFiles.get(path);
             myContext.checkCancelled();
-            File localAbspath = item.getFile();
-
-            SVNEvent event = SVNEventFactory.createSVNEvent(localAbspath, SVNNodeKind.FILE, null, SVNRepository.INVALID_REVISION, SVNEventAction.COMMIT_DELTA_SENT, null, null, null);
+            File itemAbspath = item.getFile();
+            SVNEvent event = SVNEventFactory.createSVNEvent(itemAbspath, SVNNodeKind.FILE, null, SVNRepository.INVALID_REVISION, SVNEventAction.COMMIT_DELTA_SENT, null, null, null);
             myContext.getEventHandler().handleEvent(event, ISVNEventHandler.UNKNOWN);
-
-            File tmpFile = SVNWCContext.openUniqueFile(myContext.getDb().getWCRootTempDir(localAbspath), false).path;
-            myTmpFiles.add(tmpFile);
-
-            SVNChecksum expectedChecksum = null;
-            SVNChecksum checksum = null;
-            SVNChecksum newChecksum = null;
-
-            SVNChecksumInputStream baseChecksummedIS = null;
-            InputStream sourceIS = null;
-            InputStream targetIS = null;
-            OutputStream tmpBaseStream = null;
-            File baseFile = myContext.getPristineContents(localAbspath, false, true).path;
-            SVNErrorMessage error = null;
-            boolean useChecksummedStream = false;
-            boolean openSrcStream = false;
-            if (!item.isAdded()) {
-                openSrcStream = true;
-                expectedChecksum = myContext.getDb().readInfo(localAbspath, InfoField.checksum).checksum;
-                if (expectedChecksum != null) {
-                    useChecksummedStream = true;
-                } else {
-                    expectedChecksum = new SVNChecksum(SVNChecksumKind.MD5, SVNFileUtil.computeChecksum(baseFile));
-                }
-            } else {
-                sourceIS = SVNFileUtil.DUMMY_IN;
+            boolean fulltext = item.isAdded();
+            TransmittedChecksums transmitTextDeltas = transmitTextDeltas(path, itemAbspath, fulltext, editor);
+            SVNChecksum newTextBaseMd5Checksum = transmitTextDeltas.md5Checksum;
+            SVNChecksum newTextBaseSha1Checksum = transmitTextDeltas.sha1Checksum;
+            if (myMd5Checksums != null) {
+                myMd5Checksums.put(itemAbspath, newTextBaseMd5Checksum);
             }
+            if (mySha1Checksums != null) {
+                mySha1Checksums.put(itemAbspath, newTextBaseSha1Checksum);
+            }
+        }
+    }
 
-            editor.applyTextDelta(path, expectedChecksum.getDigest());
+    private static class TransmittedChecksums {
+
+        public SVNChecksum md5Checksum;
+        public SVNChecksum sha1Checksum;
+    }
+
+    private TransmittedChecksums transmitTextDeltas(String path, File localAbspath, boolean fulltext, ISVNEditor editor) throws SVNException {
+        InputStream localStream = SVNFileUtil.DUMMY_IN;
+        InputStream baseStream = SVNFileUtil.DUMMY_IN;
+        SVNChecksum expectedMd5Checksum = null;
+        SVNChecksum localMd5Checksum = null;
+        SVNChecksum verifyChecksum = null;
+        SVNChecksumOutputStream localSha1ChecksumStream = null;
+        SVNChecksumInputStream verifyChecksumStream = null;
+        SVNErrorMessage error = null;
+        File newPristineTmpAbspath = null;
+        try {
+            localStream = myContext.getTranslatedStream(localAbspath, localAbspath, true, false);
+            WritableBaseInfo openWritableBase = myContext.openWritableBase(localAbspath, false, true);
+            OutputStream newPristineStream = openWritableBase.stream;
+            newPristineTmpAbspath = openWritableBase.tempBaseAbspath;
+            localSha1ChecksumStream = openWritableBase.sha1ChecksumStream;
+            localStream = new CopyingStream(newPristineStream, localStream);
+            if (!fulltext) {
+                PristineContentsInfo pristineContents = myContext.getPristineContents(localAbspath, true, true);
+                File baseFile = pristineContents.path;
+                baseStream = pristineContents.stream;
+                if (baseStream == null) {
+                    baseStream = SVNFileUtil.DUMMY_IN;
+                }
+                expectedMd5Checksum = myContext.getDb().readInfo(localAbspath, InfoField.checksum).checksum;
+                if (expectedMd5Checksum != null && expectedMd5Checksum.getKind() != SVNChecksumKind.MD5) {
+                    expectedMd5Checksum = myContext.getDb().getPristineMD5(localAbspath, expectedMd5Checksum);
+                }
+                if (expectedMd5Checksum != null) {
+                    verifyChecksumStream = new SVNChecksumInputStream(baseStream, SVNChecksumInputStream.MD5_ALGORITHM);
+                    baseStream = verifyChecksumStream;
+                } else {
+                    expectedMd5Checksum = new SVNChecksum(SVNChecksumKind.MD5, SVNFileUtil.computeChecksum(baseFile));
+                }
+            }
+            editor.applyTextDelta(path, expectedMd5Checksum.getDigest());
             if (myDeltaGenerator == null) {
                 myDeltaGenerator = new SVNDeltaGenerator();
             }
-
-            try {
-                sourceIS = openSrcStream ? SVNFileUtil.openFileForReading(baseFile, SVNLogType.WC) : sourceIS;
-                if (useChecksummedStream) {
-                    baseChecksummedIS = new SVNChecksumInputStream(sourceIS, SVNChecksumInputStream.MD5_ALGORITHM);
-                    sourceIS = baseChecksummedIS;
-                }
-
-                targetIS = myContext.getTranslatedStream(localAbspath, localAbspath, true, false);
-                tmpBaseStream = SVNFileUtil.openFileForWriting(tmpFile);
-                CopyingStream localStream = new CopyingStream(tmpBaseStream, targetIS);
-                newChecksum = new SVNChecksum(SVNChecksumKind.MD5, myDeltaGenerator.sendDelta(path, sourceIS, 0, localStream, editor, true));
-            } catch (SVNException svne) {
-                error = svne.getErrorMessage().wrap("While preparing ''{0}'' for commit", localAbspath);
-            } finally {
-                SVNFileUtil.closeFile(sourceIS);
-                SVNFileUtil.closeFile(targetIS);
-                SVNFileUtil.closeFile(tmpBaseStream);
+            localMd5Checksum = new SVNChecksum(SVNChecksumKind.MD5, myDeltaGenerator.sendDelta(path, baseStream, 0, localStream, editor, true));
+            if (verifyChecksumStream != null) {
+                verifyChecksum = new SVNChecksum(SVNChecksumKind.MD5, verifyChecksumStream.getDigest());
             }
-
-            if (baseChecksummedIS != null) {
-                checksum = new SVNChecksum(SVNChecksumKind.MD5, baseChecksummedIS.getDigest());
-            }
-
-            if (expectedChecksum != null && checksum != null && !expectedChecksum.equals(checksum)) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT_TEXT_BASE, "Checksum mismatch for ''{0}''; expected: ''{1}'', actual: ''{2}''", new Object[] {
-                        localAbspath, expectedChecksum, checksum
-                });
-                SVNErrorManager.error(err, SVNLogType.WC);
-            }
-
-            if (error != null) {
-                SVNErrorManager.error(error, SVNLogType.WC);
-            }
-
-            editor.closeFile(path, newChecksum.getDigest());
+        } catch (SVNException svne) {
+            error = svne.getErrorMessage().wrap("While preparing ''{0}'' for commit", localAbspath);
+        } finally {
+            SVNFileUtil.closeFile(localStream);
+            SVNFileUtil.closeFile(baseStream);
         }
+        if (expectedMd5Checksum != null && verifyChecksum != null && !expectedMd5Checksum.equals(verifyChecksum)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT_TEXT_BASE, "Checksum mismatch for ''{0}''; expected: ''{1}'', actual: ''{2}''", new Object[] {
+                    localAbspath, expectedMd5Checksum, verifyChecksum
+            });
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+        if (error != null) {
+            SVNErrorManager.error(error, SVNLogType.WC);
+        }
+        SVNChecksum localSha1Checksum = new SVNChecksum(SVNChecksumKind.SHA1, localSha1ChecksumStream.getDigest());
+        myContext.getDb().installPristine(newPristineTmpAbspath, localSha1Checksum, localMd5Checksum);
+        editor.closeFile(path, localMd5Checksum.getDigest());
+        TransmittedChecksums result = new TransmittedChecksums();
+        result.md5Checksum = localMd5Checksum;
+        result.sha1Checksum = localSha1Checksum;
+        return result;
     }
 
     private class CopyingStream extends InputStream {
