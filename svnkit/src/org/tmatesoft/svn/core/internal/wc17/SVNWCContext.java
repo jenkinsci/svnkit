@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.internal.wc17;
 import static org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.isAbsolute;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -1453,7 +1454,10 @@ public class SVNWCContext {
         }
     }
 
-    private InputStream readSpecialFile(File localAbsPath) throws SVNException {
+    public static InputStream readSpecialFile(File localAbsPath) throws SVNException {
+        if (!SVNFileUtil.symlinksSupported()) {
+            return SVNFileUtil.openFileForReading(localAbsPath, SVNLogType.WC);
+        }
         /*
          * First determine what type of special file we are detranslating.
          */
@@ -1485,6 +1489,14 @@ public class SVNWCContext {
         // SVN_SUBST_NATIVE_EOL_STR) != 0)
         || (style == SVNEolStyle.Fixed && !Arrays.equals(SVNEolStyleInfo.NATIVE_EOL_STR, eol)));
 
+    }
+
+    // TODO merget isSpecial()/getEOLStyle()/getKeyWords() into
+    // getTranslateInfo()
+    public String getCharset(File path) throws SVNException {
+        SVNProperties properties = getProperties(path, SVNProperty.MIME_TYPE);
+        String mimeType = properties.getStringValue(SVNProperty.MIME_TYPE);
+        return SVNTranslator.getCharset(properties.getStringValue(SVNProperty.CHARSET), mimeType, path, getOptions());
     }
 
     // TODO merget isSpecial()/getEOLStyle()/getKeyWords() into
@@ -2914,10 +2926,29 @@ public class SVNWCContext {
     }
 
     public InputStream getTranslatedStream(File localAbspath, File versionedAbspath, boolean translateToNormalForm, boolean repairEOL) throws SVNException {
-
-        // TODO
-        throw new UnsupportedOperationException();
-
+        assert (SVNFileUtil.isAbsolute(localAbspath));
+        assert (SVNFileUtil.isAbsolute(versionedAbspath));
+        TranslateInfo translateInfo = getTranslateInfo(localAbspath, true, true, true);
+        boolean special = translateInfo.special;
+        SVNEolStyle eolStyle = translateInfo.eolStyleInfo.eolStyle;
+        byte[] eolStr = translateInfo.eolStyleInfo.eolStr;
+        Map keywords = translateInfo.keywords;
+        if (special) {
+            return readSpecialFile(localAbspath);
+        }
+        String charset = getCharset(localAbspath);
+        boolean translationRequired = special || keywords != null || eolStyle != null || charset != null;
+        if (translationRequired) {
+            if (translateToNormalForm) {
+                if (eolStyle != null && eolStr == null) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_UNKNOWN_EOL);
+                    SVNErrorManager.error(err, SVNLogType.DEFAULT);
+                }
+                boolean repair = (eolStyle != null && eolStr != null && !SVNProperty.EOL_STYLE_NATIVE.equals(eolStyle)) || repairEOL;
+                return SVNTranslator.getTranslatingInputStream(SVNFileUtil.openFileForReading(localAbspath, SVNLogType.WC), charset, eolStr, repair, keywords, false);
+            }
+        }
+        return SVNFileUtil.openFileForReading(localAbspath, SVNLogType.WC);
     }
 
     public File getTranslatedFile(File src, File versionedAbspath, boolean toNormalFormat, boolean forceEOLRepair, boolean useGlobalTmp, boolean forceCopy) throws SVNException {
