@@ -1188,7 +1188,7 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
     private SVNCommitItem[] harvestCommitables(File baseDir, Collection paths, Map lockTokens, boolean justLocked, SVNDepth depth, boolean force, Collection changelistsSet,
             ISVNCommitParameters commitParameters) throws SVNException {
 
-        Map<String, SVNCommitItem> committables = new TreeMap<String, SVNCommitItem>(SVNCommitUtil.FILE_COMPARATOR);
+        Map<String, SVNCommitItem> committables = new HashMap<String, SVNCommitItem>();
         Map danglers = new SVNHashMap();
         Iterator targets = paths.iterator();
 
@@ -1314,11 +1314,10 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
         }
     }
 
-    private void harvestCommittables(Map committables, Map lockTokens, File localAbsPath, SVNURL reposRootUrl, File reposRelpath, boolean addsOnly, boolean copyMode, boolean copyModeRoot,
-            SVNDepth depth, boolean justLocked, Collection changelistsSet) throws SVNException {
-
+    private void harvestCommittables(Map<String, SVNCommitItem> committables, Map lockTokens, File localAbsPath, SVNURL reposRootUrl, File reposRelpath, boolean addsOnly, boolean copyMode,
+            boolean copyModeRoot, SVNDepth depth, boolean justLocked, Collection changelistsSet) throws SVNException {
         assert (SVNFileUtil.isAbsolute(localAbsPath));
-        if (committables.containsKey(localAbsPath)) {
+        if (committables.containsKey(SVNFileUtil.getFilePath(localAbsPath))) {
             return;
         }
         assert ((copyMode && reposRelpath != null) || (!copyMode && reposRelpath == null));
