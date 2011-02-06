@@ -1267,7 +1267,7 @@ public class SVNWCContext {
         public File path;
     }
 
-    private PristineContentsInfo getPristineContents(File localAbspath, boolean openStream, boolean getPath) throws SVNException {
+    public PristineContentsInfo getPristineContents(File localAbspath, boolean openStream, boolean getPath) throws SVNException {
         assert (openStream || getPath);
         PristineContentsInfo info = new PristineContentsInfo();
 
@@ -2913,6 +2913,13 @@ public class SVNWCContext {
         return false;
     }
 
+    public InputStream getTranslatedStream(File localAbspath, File versionedAbspath, boolean translateToNormalForm, boolean repairEOL) throws SVNException {
+
+        // TODO
+        throw new UnsupportedOperationException();
+
+    }
+
     public File getTranslatedFile(File src, File versionedAbspath, boolean toNormalFormat, boolean forceEOLRepair, boolean useGlobalTmp, boolean forceCopy) throws SVNException {
         assert (SVNFileUtil.isAbsolute(versionedAbspath));
         TranslateInfo translateInfo = getTranslateInfo(versionedAbspath, true, true, true);
@@ -3095,13 +3102,13 @@ public class SVNWCContext {
         return sourceAbspath;
     }
 
-    private static class UniqueFileInfo {
+    public static class UniqueFileInfo {
 
         public File path;
         public OutputStream stream;
     }
 
-    private UniqueFileInfo openUniqueFile(File dirPath, boolean openStream) throws SVNException {
+    public static UniqueFileInfo openUniqueFile(File dirPath, boolean openStream) throws SVNException {
         UniqueFileInfo info = new UniqueFileInfo();
         if (dirPath == null) {
             dirPath = SVNFileUtil.createFilePath(System.getProperty("java.io.tmpdir"));

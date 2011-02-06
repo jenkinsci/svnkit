@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.wc17;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 
@@ -32,6 +33,7 @@ public class SVNCommitMediator17 implements ISVNWorkspaceMediator {
     public SVNCommitMediator17(SVNWCContext context, Map committables) {
         this.myCommitItems = committables;
         this.myContext = context;
+        myTmpFiles = new ArrayList();
     }
 
     public Collection getTmpFiles() {
