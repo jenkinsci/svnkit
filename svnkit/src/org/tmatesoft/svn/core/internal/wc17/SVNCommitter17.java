@@ -22,6 +22,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
@@ -180,7 +181,7 @@ public class SVNCommitter17 implements ISVNCommitPathHandler {
             }
             if (item.isPropertiesModified()) {
                 try {
-                    sendPropertiesDelta(commitPath, item, commitEditor);
+                    sendPropertiesDelta(localAbspath, commitPath, item, commitEditor);
                 } catch (SVNException e) {
                     fixError(commitPath, e, item.getKind());
                 }
@@ -232,9 +233,18 @@ public class SVNCommitter17 implements ISVNCommitPathHandler {
         return path.substring(myRepositoryRoot.length());
     }
 
-    private void sendPropertiesDelta(String commitPath, SVNCommitItem item, ISVNEditor commitEditor) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+    private void sendPropertiesDelta(File localAbspath, String commitPath, SVNCommitItem item, ISVNEditor commitEditor) throws SVNException {
+        SVNNodeKind kind = myContext.readKind(localAbspath, false);
+        SVNProperties propMods = myContext.getPropDiffs(localAbspath).propChanges;
+        for (Object i : propMods.nameSet()) {
+            String propName = (String) i;
+            SVNPropertyValue propValue = propMods.getSVNPropertyValue(propName);
+            if (kind == SVNNodeKind.FILE) {
+                commitEditor.changeFileProperty(commitPath, propName, propValue);
+            } else {
+                commitEditor.changeDirProperty(propName, propValue);
+            }
+        }
     }
 
     private void sendTextDeltas(ISVNEditor commitEditor) {
