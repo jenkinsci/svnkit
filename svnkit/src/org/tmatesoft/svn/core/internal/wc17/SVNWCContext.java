@@ -4063,7 +4063,7 @@ public class SVNWCContext {
                 }
                 lastModTime = modified ? textBasePath.lastModified() : localAbspath.lastModified();
             }
-            getDb().globalRecordFileinfo(localAbspath, translatedSize, SVNWCUtils.readDate(lastModTime));
+            getDb().globalRecordFileinfo(localAbspath, translatedSize, new SVNDate(lastModTime, 0));
             return;
         }
         getDb().globalCommit(localAbspath, newRevision, changedRev, changedDate, changedAuthor, null, null, newDavCache, keepChangelist, noUnlock, null);
