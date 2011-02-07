@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.core.internal.wc17;
 
 import java.io.File;
+import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -342,27 +343,26 @@ public class SVNCommitter17 implements ISVNCommitPathHandler {
         if (error != null) {
             SVNErrorManager.error(error, SVNLogType.WC);
         }
+        editor.closeFile(path, localMd5Checksum.getDigest());
         SVNChecksum localSha1Checksum = new SVNChecksum(SVNChecksumKind.SHA1, localSha1ChecksumStream.getDigest());
         myContext.getDb().installPristine(newPristineTmpAbspath, localSha1Checksum, localMd5Checksum);
-        editor.closeFile(path, localMd5Checksum.getDigest());
         TransmittedChecksums result = new TransmittedChecksums();
         result.md5Checksum = localMd5Checksum;
         result.sha1Checksum = localSha1Checksum;
         return result;
     }
 
-    private class CopyingStream extends InputStream {
+    private class CopyingStream extends FilterInputStream {
 
-        private InputStream myInput;
         private OutputStream myOutput;
 
-        public CopyingStream(OutputStream os, InputStream is) {
-            myInput = is;
-            myOutput = os;
+        public CopyingStream(OutputStream out, InputStream in) {
+            super(in);
+            myOutput = out;
         }
 
         public int read() throws IOException {
-            int r = myInput.read();
+            int r = super.read();
             if (r != -1) {
                 myOutput.write(r);
             }
@@ -370,7 +370,7 @@ public class SVNCommitter17 implements ISVNCommitPathHandler {
         }
 
         public int read(byte[] b) throws IOException {
-            int r = myInput.read(b);
+            int r = super.read(b);
             if (r != -1) {
                 myOutput.write(b, 0, r);
             }
@@ -378,12 +378,21 @@ public class SVNCommitter17 implements ISVNCommitPathHandler {
         }
 
         public int read(byte[] b, int off, int len) throws IOException {
-            int r = myInput.read(b, off, len);
+            int r = super.read(b, off, len);
             if (r != -1) {
                 myOutput.write(b, off, r);
             }
             return r;
         }
+
+        public void close() throws IOException {
+            try{
+                myOutput.close();
+            } finally {
+                super.close();
+            }
+        }
+
     }
 
 }
