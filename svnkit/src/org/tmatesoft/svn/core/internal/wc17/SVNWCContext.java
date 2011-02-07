@@ -1255,7 +1255,7 @@ public class SVNWCContext {
     }
 
     private boolean compareTimestamps(File localAbsPath, WCDbInfo readInfo) {
-        return SVNFileUtil.roundTimeStamp(localAbsPath.lastModified()) != SVNFileUtil.roundTimeStamp(readInfo.lastModTime/1000);
+        return SVNFileUtil.roundTimeStamp(localAbsPath.lastModified()) != SVNFileUtil.roundTimeStamp(readInfo.lastModTime / 1000);
     }
 
     public static class PristineContentsInfo {
@@ -4582,7 +4582,14 @@ public class SVNWCContext {
     }
 
     public SVNWCDbLock getNodeLock(File localAbsPath) throws SVNException {
-        return getDb().getBaseInfo(localAbsPath, BaseInfoField.lock).lock;
+        try {
+            return getDb().getBaseInfo(localAbsPath, BaseInfoField.lock).lock;
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND) {
+                throw e;
+            }
+            return null;
+        }
     }
 
     public List<File> getNodeChildren(File dirAbsPath, boolean showHidden) throws SVNException {
