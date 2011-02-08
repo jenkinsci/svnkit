@@ -3804,7 +3804,10 @@ public class SVNWCContext {
             }
             SVNChecksum newChecksum = null;
             if (workItem.getListSize() > 5) {
-                newChecksum = SVNChecksum.deserializeChecksum(workItem.getChild(5).getValue());
+                String value = workItem.getChild(5).getValue();
+                if (value != null && !"".equals(value)) {
+                    newChecksum = SVNChecksum.deserializeChecksum(value);
+                }
             }
             SVNProperties newDavCache = null;
             if (workItem.getListSize() > 6 && workItem.getChild(6).isValidPropList()) {
