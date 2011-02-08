@@ -1480,6 +1480,8 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
         }
         if (stateFlags) {
             if (getContext().isChangelistMatch(localAbsPath, changelistsSet)) {
+                assert(SVNFileUtil.isAbsolute(localAbsPath));
+                assert(reposRootUrl!=null && reposRelpath!=null);
                 SVNURL url = reposRootUrl.appendPath(SVNFileUtil.getFilePath(reposRelpath), false);
                 SVNCommitItem item = new SVNCommitItem(localAbsPath, url, cfRelpath != null ? reposRootUrl.appendPath(SVNFileUtil.getFilePath(cfRelpath), false) : null, dbKind,
                         SVNRevision.create(entryRev), SVNRevision.create(cfRev), isCommitItemAdd, isCommitItemDelete, isCommitItemPropMods, isCommitItemTextMods, isCommitItemIsCopy,
