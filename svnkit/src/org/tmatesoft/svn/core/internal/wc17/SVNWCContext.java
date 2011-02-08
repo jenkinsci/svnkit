@@ -3830,6 +3830,7 @@ public class SVNWCContext {
                 ctx.logDoCommitted(localAbspath, newRevision, changedRev, changedDate, changedAuthor, newChecksum, newDavCache, keepChangelist, noUnlock);
             } catch (SVNException e) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_BAD_ADM_LOG, "Error processing post-commit work for ''{0}''", localAbspath);
+                err.setChildErrorMessage(e.getErrorMessage());
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
         }

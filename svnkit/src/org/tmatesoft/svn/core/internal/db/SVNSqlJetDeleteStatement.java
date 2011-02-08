@@ -28,7 +28,7 @@ public class SVNSqlJetDeleteStatement extends SVNSqlJetSelectStatement {
 
     public long exec() throws SVNException {
         long n = 0;
-        while (next()) {
+        while (!eof()) {
             try {
                 getCursor().delete();
             } catch (SqlJetException e) {

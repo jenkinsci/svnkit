@@ -82,6 +82,14 @@ public class SVNSqlJetSelectStatement extends SVNSqlJetTableStatement {
         return true;
     }
 
+    public boolean eof() throws SVNException {
+        boolean eof = super.eof();
+        while (!eof && !isFilterPassed()) {
+            eof = !super.next();
+        }
+        return eof;
+    }
+
     public Map<String, Object> getRowValues() throws SVNException {
         HashMap<String, Object> v = new HashMap<String, Object>();
         try {
