@@ -320,7 +320,7 @@ public class SVNCommitter17 implements ISVNCommitPathHandler {
                     expectedMd5Checksum = new SVNChecksum(SVNChecksumKind.MD5, SVNFileUtil.computeChecksum(baseFile));
                 }
             }
-            editor.applyTextDelta(path, expectedMd5Checksum.getDigest());
+            editor.applyTextDelta(path, expectedMd5Checksum!=null ? expectedMd5Checksum.getDigest() : null);
             if (myDeltaGenerator == null) {
                 myDeltaGenerator = new SVNDeltaGenerator();
             }
@@ -343,7 +343,7 @@ public class SVNCommitter17 implements ISVNCommitPathHandler {
         if (error != null) {
             SVNErrorManager.error(error, SVNLogType.WC);
         }
-        editor.closeFile(path, localMd5Checksum.getDigest());
+        editor.closeFile(path, localMd5Checksum!=null ? localMd5Checksum.getDigest() : null);
         SVNChecksum localSha1Checksum = new SVNChecksum(SVNChecksumKind.SHA1, localSha1ChecksumStream.getDigest());
         myContext.getDb().installPristine(newPristineTmpAbspath, localSha1Checksum, localMd5Checksum);
         TransmittedChecksums result = new TransmittedChecksums();
