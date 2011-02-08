@@ -96,6 +96,10 @@ public abstract class SVNSqlJetStatement {
 
     public boolean eof() throws SVNException {
         try {
+            if (getCursor() == null) {
+                sDb.beginTransaction(transactionMode);
+                setCursor(openCursor());
+            }
             return getCursor().eof();
         } catch (SqlJetException e) {
             SVNSqlJetDb.createSqlJetError(e);
