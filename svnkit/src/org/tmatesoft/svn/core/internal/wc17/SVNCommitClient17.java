@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 import org.tmatesoft.svn.core.SVNCancelException;
@@ -945,7 +946,7 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
             if (kind == SVNWCDbKind.Unknown) {
                 return;
             }
-            List<String> children = db.readChildren(localAbspath);
+            Set<String> children = db.readChildren(localAbspath);
             for (String name : children) {
                 File thisAbspath = SVNFileUtil.createFilePath(localAbspath, name);
                 WCDbInfo readInfo = db.readInfo(thisAbspath, InfoField.status);

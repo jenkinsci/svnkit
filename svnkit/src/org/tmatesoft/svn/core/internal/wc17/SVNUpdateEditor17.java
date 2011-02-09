@@ -2324,7 +2324,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                 }
             }
         }
-        List<String> children = myWcContext.getDb().getBaseChildren(localAbspath);
+        Set<String> children = myWcContext.getDb().getBaseChildren(localAbspath);
         for (String name : children) {
             File nodeAbspath = SVNFileUtil.createFilePath(localAbspath, name);
             WCDbBaseInfo baseInfo = myWcContext.getDb().getBaseInfo(nodeAbspath, BaseInfoField.status, BaseInfoField.kind, BaseInfoField.revision);
@@ -2434,7 +2434,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         if (depth.getId() <= SVNDepth.EMPTY.getId()) {
             return;
         }
-        List<String> children = myWcContext.getDb().getBaseChildren(dirAbspath);
+        Set<String> children = myWcContext.getDb().getBaseChildren(dirAbspath);
         for (String childBaseName : children) {
             if (childBaseName == null || "".equals(childBaseName)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ASSERTION_FAIL, "''{0}'' has empty childs", dirAbspath);

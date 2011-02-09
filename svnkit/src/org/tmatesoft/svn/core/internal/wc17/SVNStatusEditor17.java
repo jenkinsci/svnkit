@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.StringTokenizer;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
@@ -195,7 +196,7 @@ public class SVNStatusEditor17 {
         /* Load list of childnodes. */
         final Map<String, File> nodes = new HashMap<String, File>();
         {
-            final List<String> childNodes = db.readChildren(localAbsPath);
+            final Set<String> childNodes = db.readChildren(localAbsPath);
             if (childNodes != null && childNodes.size() > 0) {
                 for (String childNode : childNodes) {
                     final File file = SVNFileUtil.createFilePath(childNode);

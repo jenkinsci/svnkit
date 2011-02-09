@@ -30,6 +30,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 
 import org.tmatesoft.svn.core.SVNCancelException;
@@ -1923,7 +1924,7 @@ public class SVNWCContext {
     private void walkerHelper(File dirAbspath, ISVNWCNodeHandler nodeHandler, boolean showHidden, SVNDepth depth) throws SVNException {
         if (depth == SVNDepth.EMPTY)
             return;
-        final List<String> relChildren = db.readChildren(dirAbspath);
+        final Set<String> relChildren = db.readChildren(dirAbspath);
         for (final String child : relChildren) {
             checkCancelled();
             File childAbspath = SVNFileUtil.createFilePath(dirAbspath, child);
@@ -2255,7 +2256,7 @@ public class SVNWCContext {
                 SVNFileUtil.deleteFile(localAbspath);
             }
         } else {
-            List<String> children = db.readChildren(localAbspath);
+            Set<String> children = db.readChildren(localAbspath);
             for (String entryName : children) {
                 File entryAbspath = SVNFileUtil.createFilePath(localAbspath, entryName);
                 boolean hidden = db.isNodeHidden(entryAbspath);
@@ -2361,7 +2362,7 @@ public class SVNWCContext {
         if (dirDepth.getId() > depth.getId()) {
             db.opSetDirDepthTemp(localAbspath, depth);
         }
-        List<String> children = db.readChildren(localAbspath);
+        Set<String> children = db.readChildren(localAbspath);
         for (String childName : children) {
             File childAbspath = SVNFileUtil.createFilePath(localAbspath, childName);
             WCDbInfo readInfo = db.readInfo(childAbspath, InfoField.status, InfoField.kind, InfoField.depth);
@@ -3997,7 +3998,7 @@ public class SVNWCContext {
             baseKind = baseInfo.kind;
         }
         if (baseKind == SVNWCDbKind.Dir && baseStatus == SVNWCDbStatus.Normal) {
-            List<String> children = db.getBaseChildren(localAbspath);
+            Set<String> children = db.getBaseChildren(localAbspath);
 
             for (String childName : children) {
                 File childAbspath = SVNFileUtil.createFilePath(localAbspath, childName);
@@ -4026,7 +4027,7 @@ public class SVNWCContext {
         }
         assert (status != SVNWCDbStatus.Deleted);
         if (status == SVNWCDbStatus.Added && kind == SVNWCDbKind.Dir) {
-            List<String> children = getDb().readChildren(localAbspath);
+            Set<String> children = getDb().readChildren(localAbspath);
             for (String childName : children) {
                 File childAbspath = SVNFileUtil.createFilePath(localAbspath, childName);
                 SVNWCDbStatus childStatus = getDb().readInfo(childAbspath, InfoField.status).status;
@@ -4597,7 +4598,7 @@ public class SVNWCContext {
     }
 
     public List<File> getNodeChildren(File dirAbsPath, boolean showHidden) throws SVNException {
-        List<String> relChildren = getDb().readChildren(dirAbsPath);
+        Set<String> relChildren = getDb().readChildren(dirAbsPath);
         List<File> childs = new ArrayList<File>();
         for (String child : relChildren) {
             File childAbsPath = SVNFileUtil.createFilePath(dirAbsPath, child);

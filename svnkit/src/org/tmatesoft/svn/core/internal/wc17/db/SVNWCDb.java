@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.logging.Level;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
@@ -668,7 +669,7 @@ public class SVNWCDb implements ISVNWCDb {
         throw new UnsupportedOperationException();
     }
 
-    public List<String> getBaseChildren(File localAbsPath) throws SVNException {
+    public Set<String> getBaseChildren(File localAbsPath) throws SVNException {
         return gatherChildren(localAbsPath, true);
     }
 
@@ -1813,11 +1814,11 @@ public class SVNWCDb implements ISVNWCDb {
         }
     }
 
-    public List<String> readChildren(File localAbsPath) throws SVNException {
+    public Set<String> readChildren(File localAbsPath) throws SVNException {
         return gatherChildren(localAbsPath, false);
     }
 
-    private List<String> gatherChildren(File localAbsPath, boolean baseOnly) throws SVNException {
+    private Set<String> gatherChildren(File localAbsPath, boolean baseOnly) throws SVNException {
         assert (isAbsolute(localAbsPath));
 
         final DirParsedInfo parsed = parseDir(localAbsPath, Mode.ReadOnly);
@@ -1829,7 +1830,7 @@ public class SVNWCDb implements ISVNWCDb {
         final long wcId = pdh.getWCRoot().getWcId();
         final SVNSqlJetDb sDb = pdh.getWCRoot().getSDb();
 
-        final List<String> names = new ArrayList<String>();
+        final Set<String> names = new TreeSet<String>();
 
         final SVNSqlJetStatement base_stmt = sDb.getStatement(SVNWCDbStatements.SELECT_BASE_NODE_CHILDREN);
         base_stmt.bindf("is", wcId, SVNFileUtil.getFilePath(localRelPath));
@@ -1844,7 +1845,7 @@ public class SVNWCDb implements ISVNWCDb {
         return names;
     }
 
-    private void addChildren(List<String> children, SVNSqlJetStatement stmt) throws SVNException {
+    private void addChildren(Set<String> children, SVNSqlJetStatement stmt) throws SVNException {
         try {
             while (stmt.next()) {
                 String child_relpath = getColumnText(stmt, SVNWCDbSchema.NODES__Fields.local_relpath);

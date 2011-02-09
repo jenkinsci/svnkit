@@ -363,7 +363,7 @@ public class SVNReporter17 implements ISVNReporterBaton {
          */
         File dir_abspath = SVNFileUtil.createFilePath(anchor_abspath, dir_path);
 
-        List<String> base_children = wcContext.getDb().getBaseChildren(dir_abspath);
+        Set<String> base_children = wcContext.getDb().getBaseChildren(dir_abspath);
 
         Set<String> dirents = new HashSet<String>();
         {

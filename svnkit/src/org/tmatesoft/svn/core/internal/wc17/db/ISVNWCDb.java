@@ -15,6 +15,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.svn.core.SVNDepth;
@@ -626,7 +627,7 @@ public interface ISVNWCDb {
      * If the node is not a directory, then
      * {@link SVNErrorCode#WC_NOT_WORKING_COPY} will be thrown.
      */
-    List<String> getBaseChildren(File localAbsPath) throws SVNException;
+    Set<String> getBaseChildren(File localAbsPath) throws SVNException;
 
     /** Set the dav cache for LOCAL_ABSPATH to PROPS. */
     void setBaseDavCache(File localAbsPath, SVNProperties props) throws SVNException;
@@ -1134,7 +1135,7 @@ public interface ISVNWCDb {
     /**
      * Return the basenames of the immediate children of LOCAL_ABSPATH in DB.
      */
-    List<String> readChildren(File localAbspath) throws SVNException;
+    Set<String> readChildren(File localAbspath) throws SVNException;
 
     /**
      * Return the basenames of the immediate children of LOCAL_ABSPATH in DB
