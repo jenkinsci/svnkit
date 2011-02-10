@@ -17,6 +17,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.ISVNGnomeKeyringPasswordProvider;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 import com.sun.jna.Pointer;
@@ -99,8 +100,16 @@ public class SVNGnomeKeyring {
     };
 
     public static boolean isEnabled() {
-        return (SVNFileUtil.isOSX || SVNFileUtil.isLinux || SVNFileUtil.isBSD || SVNFileUtil.isSolaris) &&
-                JNALibraryLoader.getGnomeKeyringLibrary() != null && JNALibraryLoader.getGLibrary() != null;
+        boolean gnomeSupported = SVNFileUtil.isOSX || SVNFileUtil.isLinux || SVNFileUtil.isBSD || SVNFileUtil.isSolaris;
+
+        String gnomeKeyringOption = System.getProperty("svnkit.library.gnome-keyring.enabled", "false");
+        boolean gnomeKeyringEnabled = Boolean.TRUE.toString().equalsIgnoreCase(gnomeKeyringOption);
+
+        boolean librariesLoaded = JNALibraryLoader.getGnomeKeyringLibrary() != null && JNALibraryLoader.getGLibrary() != null;
+
+        final boolean enabled = gnomeSupported && gnomeKeyringEnabled && librariesLoaded;
+        SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, enabled ? "Gnome Keyring enabled" : "Gnome Keyring disabled");
+        return enabled;
     }
 
     public static void initialize() {
