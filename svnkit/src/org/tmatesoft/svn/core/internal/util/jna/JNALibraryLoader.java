@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.core.internal.util.jna;
 
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNMethodCallLogger;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -78,8 +79,21 @@ class JNALibraryLoader {
             }
 
             try {
-                ourGnomeKeyringLibrary = (ISVNGnomeKeyringLibrary) Native.loadLibrary("gnome-keyring", ISVNGnomeKeyringLibrary.class);
-                ourGLibrary = (ISVNGLibrary) Native.loadLibrary("glib", ISVNGLibrary.class);
+                ISVNGnomeKeyringLibrary gnomeKeyringLibrary = (ISVNGnomeKeyringLibrary) Native.loadLibrary("gnome-keyring", ISVNGnomeKeyringLibrary.class);
+                ISVNGLibrary gLibrary = (ISVNGLibrary) Native.loadLibrary("glib", ISVNGLibrary.class);
+
+                Class[] callSites = new Class[]{SVNGnomeKeyring.class, JNALibraryLoader.class};
+                if (gnomeKeyringLibrary != null) {
+                    ourGnomeKeyringLibrary = (ISVNGnomeKeyringLibrary) SVNMethodCallLogger.newInstance(gnomeKeyringLibrary, callSites);
+                } else {
+                    ourGnomeKeyringLibrary = null;
+                }
+
+                if (gLibrary != null) {
+                    ourGLibrary = (ISVNGLibrary) SVNMethodCallLogger.newInstance(gLibrary, callSites);
+                } else {
+                    ourGLibrary = null;
+                }
                 
                 SVNGnomeKeyring.initialize();
             } catch (Throwable th) {
@@ -172,5 +186,4 @@ class JNALibraryLoader {
         }
         return null;
     }
-
 }
