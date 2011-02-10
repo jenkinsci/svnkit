@@ -330,6 +330,10 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                 } 
                 return getAuthenticationStorageOptions().isSSLPassphrasePromptSupported();
             }
+
+            public ISVNGnomeKeyringPasswordProvider getGnomeKeyringPasswordProvider() {
+                return getAuthenticationStorageOptions().getGnomeKeyringPasswordProvider();
+            }
         };
         return new DefaultSVNPersistentAuthenticationProvider(authDir, userName, delegatingOptions, getDefaultOptions(), getHostOptionsProvider());
     }

@@ -37,12 +37,16 @@ import org.tmatesoft.svn.util.SVNLogType;
  */
 public class DefaultSVNPersistentAuthenticationProvider implements ISVNAuthenticationProvider, ISVNPersistentAuthenticationProvider {
 
+    // Constants allowed for '[auth] password-stores' configuration option.
     public static final String WINDOWS_CRYPTO_API_PASSWORD_STORAGE = "windows-cryptoapi";
     public static final String MAC_OS_KEYCHAIN_PASSWORD_STORAGE = "keychain";
+    public static final String GNOME_KEYRING_PASSWORD_STORAGE = "gnome-keyring";
 
+    // Constants used for 'passtype' attribute of .subversion/auth authentication cache area.
     public static final String SIMPLE_PASSTYPE = "simple";
     public static final String WIN_CRYPT_PASSTYPE = "wincrypt";
     public static final String MAC_OS_KEYCHAIN_PASSTYPE = "keychain";
+    public static final String GNOME_KEYRING_PASSTYPE = "gnome-keyring";
 
     private File myDirectory;
     private String myUserName;
@@ -71,6 +75,9 @@ public class DefaultSVNPersistentAuthenticationProvider implements ISVNAuthentic
             }
             if (MAC_OS_KEYCHAIN_PASSWORD_STORAGE.equals(passwordStorageType) && SVNJNAUtil.isMacOsKeychainEnabled()) {
                 storages.add(new MacOsKeychainPasswordStorage());
+            }
+            if (GNOME_KEYRING_PASSWORD_STORAGE.equals(passwordStorageType) && SVNJNAUtil.isGnomeKeyringEnabled()) {
+                storages.add(new GnomeKeyringPasswordStorage());
             }
         }
         storages.add(new SimplePasswordStorage());
@@ -583,6 +590,43 @@ public class DefaultSVNPersistentAuthenticationProvider implements ISVNAuthentic
 
         public String readPassphrase(String realm, SVNProperties authParameters) throws SVNException {
             return SVNJNAUtil.getPasswordFromMacOsKeychain(realm, null, myAuthOptions.isNonInteractive());
+        }
+    }
+
+    protected class GnomeKeyringPasswordStorage implements IPasswordStorage {
+
+        public String getPassType() {
+            return GNOME_KEYRING_PASSTYPE;
+        }
+
+        public boolean savePassword(String realm, String password, SVNAuthentication auth, SVNProperties authParameters) throws SVNException {
+            if (password == null) {
+                return false;
+            }
+            boolean nonInteractive = myAuthOptions.isNonInteractive();
+            ISVNGnomeKeyringPasswordProvider keyringPasswordProvider = myAuthOptions.getGnomeKeyringPasswordProvider();
+            return SVNJNAUtil.addPasswordToGnomeKeyring(realm, auth.getUserName(), password, nonInteractive, keyringPasswordProvider);
+        }
+
+        public String readPassword(String realm, String userName, SVNProperties authParameters) throws SVNException {
+            boolean nonInteractive = myAuthOptions.isNonInteractive();
+            ISVNGnomeKeyringPasswordProvider keyringPasswordProvider = myAuthOptions.getGnomeKeyringPasswordProvider();
+            return SVNJNAUtil.getPasswordFromGnomeKeyring(realm, userName, nonInteractive, keyringPasswordProvider);
+        }
+
+        public boolean savePassphrase(String realm, String passphrase, SVNAuthentication auth, SVNProperties authParameters, boolean force) throws SVNException {
+            if (passphrase == null) {
+                return false;
+            }
+            boolean nonInteractive = myAuthOptions.isNonInteractive();
+            ISVNGnomeKeyringPasswordProvider keyringPasswordProvider = myAuthOptions.getGnomeKeyringPasswordProvider();
+            return SVNJNAUtil.addPasswordToGnomeKeyring(realm, null, passphrase, nonInteractive, keyringPasswordProvider);
+        }
+
+        public String readPassphrase(String realm, SVNProperties authParameters) throws SVNException {
+            boolean nonInteractive = myAuthOptions.isNonInteractive();
+            ISVNGnomeKeyringPasswordProvider keyringPasswordProvider = myAuthOptions.getGnomeKeyringPasswordProvider();
+            return SVNJNAUtil.getPasswordFromGnomeKeyring(realm, null, nonInteractive, keyringPasswordProvider);
         }
     }
 }

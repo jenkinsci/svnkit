@@ -32,6 +32,9 @@ class JNALibraryLoader {
     private static ISVNMacOsSecurityLibrary ourMacOsSecurityLibrary;
     private static ISVNMacOsCFLibrary ourMacOsCFLibrary;
 
+    private static ISVNGnomeKeyringLibrary ourGnomeKeyringLibrary;
+    private static ISVNGLibrary ourGLibrary;
+
     private static volatile int ourUID = -1;
     private static volatile int ourGID = -1;
 
@@ -73,6 +76,16 @@ class JNALibraryLoader {
             } catch (Throwable th) {
                 ourCLibrary = null;
             }
+
+            try {
+                ourGnomeKeyringLibrary = (ISVNGnomeKeyringLibrary) Native.loadLibrary("gnome-keyring", ISVNGnomeKeyringLibrary.class);
+                ourGLibrary = (ISVNGLibrary) Native.loadLibrary("glib", ISVNGLibrary.class);
+                
+                SVNGnomeKeyring.initialize();
+            } catch (Throwable th) {
+                ourGnomeKeyringLibrary = null;
+                ourGLibrary = null;
+            }
         }
 
         if (SVNFileUtil.isOSX) {
@@ -80,13 +93,12 @@ class JNALibraryLoader {
                 ourMacOsSecurityLibrary = (ISVNMacOsSecurityLibrary) Native.loadLibrary("Security", ISVNMacOsSecurityLibrary.class);
                 ourMacOsCFLibrary = (ISVNMacOsCFLibrary) Native.loadLibrary("CoreFoundation", ISVNMacOsCFLibrary.class);
             } catch (Throwable th) {
-                System.out.println(th);
                 ourMacOsSecurityLibrary = null;
                 ourMacOsCFLibrary = null;
             }
         }
     }
-    
+
     public static int getUID() {
         return ourUID;
     }
@@ -121,6 +133,14 @@ class JNALibraryLoader {
 
     public static synchronized ISVNMacOsCFLibrary getMacOsCFLibrary() {
         return ourMacOsCFLibrary;
+    }
+
+    public static synchronized ISVNGnomeKeyringLibrary getGnomeKeyringLibrary() {
+        return ourGnomeKeyringLibrary;
+    }
+
+    public static synchronized ISVNGLibrary getGLibrary() {
+        return ourGLibrary;
     }
 
     private static String getSecurityLibraryName() {

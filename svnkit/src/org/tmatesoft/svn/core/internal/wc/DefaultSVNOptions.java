@@ -81,7 +81,8 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
     private static final String DEFAULT_TIMEZONE = TimeZone.getDefault().getID();
     private static final String[] DEFAULT_PASSWORD_STORE_TYPES = new String[]{
             DefaultSVNPersistentAuthenticationProvider.WINDOWS_CRYPTO_API_PASSWORD_STORAGE,
-            DefaultSVNPersistentAuthenticationProvider.MAC_OS_KEYCHAIN_PASSWORD_STORAGE
+            DefaultSVNPersistentAuthenticationProvider.MAC_OS_KEYCHAIN_PASSWORD_STORAGE,
+            DefaultSVNPersistentAuthenticationProvider.GNOME_KEYRING_PASSWORD_STORAGE
     };
 
     private boolean myIsReadonly;

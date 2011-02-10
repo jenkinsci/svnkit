@@ -34,6 +34,7 @@ import org.tmatesoft.svn.core.auth.SVNSSLAuthentication;
 import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
 import org.tmatesoft.svn.core.internal.util.SVNSSLUtil;
 import org.tmatesoft.svn.core.internal.wc.ISVNAuthStoreHandler;
+import org.tmatesoft.svn.core.internal.wc.ISVNGnomeKeyringPasswordProvider;
 import org.tmatesoft.svn.core.internal.wc.ISVNSSLPasspharsePromptSupport;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
@@ -42,7 +43,7 @@ import org.tmatesoft.svn.core.wc.SVNWCUtil;
  * @version 1.0
  * @author  TMate Software Ltd.
  */
-public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvider, ISVNSSLPasspharsePromptSupport, ISVNAuthStoreHandler {
+public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvider, ISVNSSLPasspharsePromptSupport, ISVNAuthStoreHandler, ISVNGnomeKeyringPasswordProvider {
     
     private static final String OUR_PASSPHRASE_PROMPT_TEXT = "-----------------------------------------------------------------------\n" +
                                                              "ATTENTION!  Your passphrase for client certificate:\n" +
@@ -473,4 +474,7 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
         return true;
     }
 
+    public String getKeyringPassword(String keyringName) throws SVNException {
+        return promptPassword("Password for '" + keyringName + "' GNOME keyring");
+    }
 }
