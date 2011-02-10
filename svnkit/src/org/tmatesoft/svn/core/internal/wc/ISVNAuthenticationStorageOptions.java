@@ -31,11 +31,17 @@ public interface ISVNAuthenticationStorageOptions {
         public boolean isSSLPassphrasePromptSupported() {
             return false;
         }
+
+        public ISVNGnomeKeyringPasswordProvider getGnomeKeyringPasswordProvider() {
+            return null;
+        }
     };
 
     boolean isNonInteractive() throws SVNException;
 
     ISVNAuthStoreHandler getAuthStoreHandler() throws SVNException;
-    
+
     boolean isSSLPassphrasePromptSupported();
+
+    ISVNGnomeKeyringPasswordProvider getGnomeKeyringPasswordProvider();
 }

@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.core.internal.util.jna;
 
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNMethodCallLogger;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -23,6 +24,9 @@ import com.sun.jna.Native;
  * @author  TMate Software Ltd.
  */
 class JNALibraryLoader {
+
+    private static final String GLIB_LIBRARY = "glib-2.0";
+    private static final String GNOME_KEYRING_LIBRARY = "gnome-keyring";
     
     private static ISVNWinCryptLibrary ourWinCryptLibrary;
     private static ISVNKernel32Library ourKenrelLibrary;
@@ -30,9 +34,13 @@ class JNALibraryLoader {
     private static ISVNCLibrary ourCLibrary;
     private static ISVNWin32Library ourWin32Library;
     private static ISVNMacOsSecurityLibrary ourMacOsSecurityLibrary;
-    private static ISVNMacOsCFLibrary ourMacOsCFLibrary;
 
+    private static ISVNMacOsCFLibrary ourMacOsCFLibrary;
+    private static ISVNGnomeKeyringLibrary ourGnomeKeyringLibrary;
+
+    private static ISVNGLibrary ourGLibrary;
     private static volatile int ourUID = -1;
+
     private static volatile int ourGID = -1;
 
     static {
@@ -73,6 +81,29 @@ class JNALibraryLoader {
             } catch (Throwable th) {
                 ourCLibrary = null;
             }
+
+            try {
+                ISVNGnomeKeyringLibrary gnomeKeyringLibrary = (ISVNGnomeKeyringLibrary) Native.loadLibrary(getGnomeKeyringLibraryName(), ISVNGnomeKeyringLibrary.class);
+                ISVNGLibrary gLibrary = (ISVNGLibrary) Native.loadLibrary(getGLibraryName(), ISVNGLibrary.class);
+
+                Class[] callSites = new Class[]{SVNGnomeKeyring.class, JNALibraryLoader.class};
+                if (gnomeKeyringLibrary != null) {
+                    ourGnomeKeyringLibrary = (ISVNGnomeKeyringLibrary) SVNMethodCallLogger.newInstance(gnomeKeyringLibrary, callSites);
+                } else {
+                    ourGnomeKeyringLibrary = null;
+                }
+
+                if (gLibrary != null) {
+                    ourGLibrary = (ISVNGLibrary) SVNMethodCallLogger.newInstance(gLibrary, callSites);
+                } else {
+                    ourGLibrary = null;
+                }
+                
+                SVNGnomeKeyring.initialize();
+            } catch (Throwable th) {
+                ourGnomeKeyringLibrary = null;
+                ourGLibrary = null;
+            }
         }
 
         if (SVNFileUtil.isOSX) {
@@ -80,13 +111,20 @@ class JNALibraryLoader {
                 ourMacOsSecurityLibrary = (ISVNMacOsSecurityLibrary) Native.loadLibrary("Security", ISVNMacOsSecurityLibrary.class);
                 ourMacOsCFLibrary = (ISVNMacOsCFLibrary) Native.loadLibrary("CoreFoundation", ISVNMacOsCFLibrary.class);
             } catch (Throwable th) {
-                System.out.println(th);
                 ourMacOsSecurityLibrary = null;
                 ourMacOsCFLibrary = null;
             }
         }
     }
-    
+
+    private static String getGLibraryName() {
+        return System.getProperty("svnkit.library.glib", GLIB_LIBRARY);
+    }
+
+    private static String getGnomeKeyringLibraryName() {
+        return System.getProperty("svnkit.library.gnome-keyring", GNOME_KEYRING_LIBRARY);
+    }
+
     public static int getUID() {
         return ourUID;
     }
@@ -123,6 +161,14 @@ class JNALibraryLoader {
         return ourMacOsCFLibrary;
     }
 
+    public static synchronized ISVNGnomeKeyringLibrary getGnomeKeyringLibrary() {
+        return ourGnomeKeyringLibrary;
+    }
+
+    public static synchronized ISVNGLibrary getGLibrary() {
+        return ourGLibrary;
+    }
+
     private static String getSecurityLibraryName() {
         ISVNKernel32Library library = getKernelLibrary();
         if (library == null) {
@@ -152,5 +198,4 @@ class JNALibraryLoader {
         }
         return null;
     }
-
 }

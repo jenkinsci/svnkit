@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.internal.util.jna;
 import java.io.File;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.wc.ISVNGnomeKeyringPasswordProvider;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
@@ -153,12 +154,30 @@ public class SVNJNAUtil {
         return null;
     }
 
+    public static boolean addPasswordToGnomeKeyring(String realm, String userName, String password, boolean nonInteractive, ISVNGnomeKeyringPasswordProvider keyringPasswordProvider) throws SVNException {
+        if (isJNAPresent()) {
+            return SVNGnomeKeyring.setPassword(realm, userName, password, nonInteractive, keyringPasswordProvider);
+        }
+        return false;
+    }
+
+    public static String getPasswordFromGnomeKeyring(String realm, String userName, boolean nonInteractive, ISVNGnomeKeyringPasswordProvider keyringPasswordProvider) throws SVNException {
+        if (isJNAPresent()) {
+            return SVNGnomeKeyring.getPassword(realm, userName, nonInteractive, keyringPasswordProvider);
+        }
+        return null;
+    }
+
     public synchronized static boolean isWinCryptEnabled() {
         return isJNAPresent() && SVNWinCrypt.isEnabled();
     }
 
     public synchronized static boolean isMacOsKeychainEnabled() {
         return isJNAPresent() && SVNMacOsKeychain.isEnabled();
+    }
+
+    public synchronized static boolean isGnomeKeyringEnabled() {
+        return isJNAPresent() && SVNGnomeKeyring.isEnabled();
     }
     
     public static String getApplicationDataPath(boolean common) {

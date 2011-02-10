@@ -34,6 +34,7 @@ import org.tmatesoft.svn.core.internal.wc.DefaultSVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.ISVNAuthStoreHandler;
 import org.tmatesoft.svn.core.internal.wc.ISVNAuthenticationStorageOptions;
+import org.tmatesoft.svn.core.internal.wc.ISVNGnomeKeyringPasswordProvider;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.util.SVNLogType;
@@ -117,12 +118,15 @@ public class SVNSyncCommandEnvironment extends AbstractSVNCommandEnvironment {
                 myUserName, myPassword, !myIsNoAuthCache);
 
         final ISVNAuthStoreHandler authStoreHandler;
+        final ISVNGnomeKeyringPasswordProvider gnomeKeyringPasswordProvider;
         if (!myIsNonInteractive) {
             SVNConsoleAuthenticationProvider consoleAuthProvider = new SVNConsoleAuthenticationProvider(myIsTrustServerCertificate);
             authManager.setAuthenticationProvider(consoleAuthProvider);
             authStoreHandler = consoleAuthProvider;
+            gnomeKeyringPasswordProvider = consoleAuthProvider;
         } else {
             authStoreHandler = null;
+            gnomeKeyringPasswordProvider = null;
         }
 
         ISVNAuthenticationStorageOptions authOpts = new ISVNAuthenticationStorageOptions() {
@@ -137,7 +141,10 @@ public class SVNSyncCommandEnvironment extends AbstractSVNCommandEnvironment {
             public boolean isSSLPassphrasePromptSupported() {
                 return authManager.isSSLPassphrasePromtSupported();
             }
-            
+
+            public ISVNGnomeKeyringPasswordProvider getGnomeKeyringPasswordProvider() {
+                return gnomeKeyringPasswordProvider;
+            }
         };
         authManager.setAuthenticationStorageOptions(authOpts);
         return authManager;
