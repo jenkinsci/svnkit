@@ -24,6 +24,9 @@ import com.sun.jna.Native;
  * @author  TMate Software Ltd.
  */
 class JNALibraryLoader {
+
+    private static final String GLIB_LIBRARY = "glib-2.0";
+    private static final String GNOME_KEYRING_LIBRARY = "gnome-keyring";
     
     private static ISVNWinCryptLibrary ourWinCryptLibrary;
     private static ISVNKernel32Library ourKenrelLibrary;
@@ -31,12 +34,13 @@ class JNALibraryLoader {
     private static ISVNCLibrary ourCLibrary;
     private static ISVNWin32Library ourWin32Library;
     private static ISVNMacOsSecurityLibrary ourMacOsSecurityLibrary;
+
     private static ISVNMacOsCFLibrary ourMacOsCFLibrary;
-
     private static ISVNGnomeKeyringLibrary ourGnomeKeyringLibrary;
-    private static ISVNGLibrary ourGLibrary;
 
+    private static ISVNGLibrary ourGLibrary;
     private static volatile int ourUID = -1;
+
     private static volatile int ourGID = -1;
 
     static {
@@ -79,8 +83,8 @@ class JNALibraryLoader {
             }
 
             try {
-                ISVNGnomeKeyringLibrary gnomeKeyringLibrary = (ISVNGnomeKeyringLibrary) Native.loadLibrary("gnome-keyring", ISVNGnomeKeyringLibrary.class);
-                ISVNGLibrary gLibrary = (ISVNGLibrary) Native.loadLibrary("glib", ISVNGLibrary.class);
+                ISVNGnomeKeyringLibrary gnomeKeyringLibrary = (ISVNGnomeKeyringLibrary) Native.loadLibrary(getGnomeKeyringLibraryName(), ISVNGnomeKeyringLibrary.class);
+                ISVNGLibrary gLibrary = (ISVNGLibrary) Native.loadLibrary(getGLibraryName(), ISVNGLibrary.class);
 
                 Class[] callSites = new Class[]{SVNGnomeKeyring.class, JNALibraryLoader.class};
                 if (gnomeKeyringLibrary != null) {
@@ -111,6 +115,14 @@ class JNALibraryLoader {
                 ourMacOsCFLibrary = null;
             }
         }
+    }
+
+    private static String getGLibraryName() {
+        return System.getProperty("svnkit.library.glib", GLIB_LIBRARY);
+    }
+
+    private static String getGnomeKeyringLibraryName() {
+        return System.getProperty("svnkit.library.gnome-keyring", GNOME_KEYRING_LIBRARY);
     }
 
     public static int getUID() {
