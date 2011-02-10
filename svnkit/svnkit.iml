@@ -31,7 +31,12 @@
           <root url="jar://$MODULE_DIR$/../contrib/jna/jna.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MODULE_DIR$/../contrib/jna/jna-src.zip!/contrib/platform/src" />
+          <root url="jar://$MODULE_DIR$/../contrib/jna/jna-src.zip!/contrib/platform/test" />
+          <root url="jar://$MODULE_DIR$/../contrib/jna/jna-src.zip!/test" />
+          <root url="jar://$MODULE_DIR$/../contrib/jna/jna-src.zip!/src" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
