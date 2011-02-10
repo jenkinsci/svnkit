@@ -108,7 +108,7 @@ public class SVNMethodCallLogger implements InvocationHandler {
             if (parameters != null && parameters.length > i) {
                 Class parameterClass = parameters[i];
                 if (parameterClass != null) {
-                    buffer.append(parameterClass.getSimpleName());
+                    buffer.append(getShortClassName(parameterClass));
                     buffer.append(" = ");
                 }
             }
@@ -137,8 +137,22 @@ public class SVNMethodCallLogger implements InvocationHandler {
         return buffer.toString();
     }
 
+    private String getShortClassName(Class cls) {
+        if (cls == null) {
+            return "null";
+        }
+        int dotIdx = cls.getName().lastIndexOf(".");
+        if (dotIdx >= 0 && dotIdx < cls.getName().length() - 1) {
+            return cls.getName().substring(dotIdx + 1);
+        }
+        return cls.getName();
+    }
+
     private String findCallSite() {
-        StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+        Throwable traceProvider = new Throwable();
+        traceProvider = traceProvider.fillInStackTrace();
+        StackTraceElement[] stackTrace = traceProvider.getStackTrace();
+        
         StringBuffer buffer = new StringBuffer();
         for (int i = 0; i < stackTrace.length; i++) {
             StackTraceElement stackTraceElement = stackTrace[i];
@@ -148,7 +162,7 @@ public class SVNMethodCallLogger implements InvocationHandler {
                     Class allowedCallSite = myCallSites[j];
 
                     if (stackTraceElement.getClassName().equalsIgnoreCase(allowedCallSite.getName()) ||
-                            stackTraceElement.getClassName().contains(allowedCallSite.getName())) {
+                            stackTraceElement.getClassName().indexOf(allowedCallSite.getName()) >= 0) {
                         buffer.append(stackTraceElement.toString());
                         buffer.append('\n');
                     }
