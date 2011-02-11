@@ -11,6 +11,8 @@
  */
 package org.tmatesoft.svn.core.internal.wc17.db.statement;
 
+import org.tmatesoft.sqljet.core.SqlJetException;
+import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectFieldsStatement;
@@ -52,6 +54,15 @@ public class SVNWCDbSelectWorkingNode extends SVNSqlJetSelectFieldsStatement<SVN
 
     protected boolean isFilterPassed() throws SVNException {
         return getColumnLong(SVNWCDbSchema.NODES__Fields.op_depth) > 0;
+    }
+
+    protected ISqlJetCursor openCursor() throws SVNException {
+        try {
+            return super.openCursor().reverse();
+        } catch (SqlJetException e) {
+            SVNSqlJetDb.createSqlJetError(e);
+            return null;
+        }
     }
 
 }
