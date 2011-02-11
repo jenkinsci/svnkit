@@ -487,10 +487,12 @@ public class DAVRepository extends SVNRepository {
                 SVNNodeKind kind = SVNNodeKind.FILE;
                 Object revisionStr = child.getPropertyValue(DAVElement.VERSION_NAME);
                 long lastRevision = -1;
-                try {
-                    lastRevision = Long.parseLong(revisionStr.toString());
-                } catch (NumberFormatException nfe) {
-                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, nfe), SVNLogType.NETWORK);
+                if (revisionStr != null) {
+                    try {
+                        lastRevision = Long.parseLong(revisionStr.toString());
+                    } catch (NumberFormatException nfe) {
+                        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, nfe), SVNLogType.NETWORK);
+                    }
                 }
                 SVNPropertyValue sizeValue = child.getPropertyValue(DAVElement.GET_CONTENT_LENGTH);
                 long size = 0;
@@ -522,7 +524,8 @@ public class DAVRepository extends SVNRepository {
                     	entries.add(new SVNDirEntry(childURL, repositoryRoot, name, kind, size, false, lastRevision, 
                     	        date, author));
                     }
-                    vccs.add(child.getPropertyValue(DAVElement.VERSION_CONTROLLED_CONFIGURATION));
+                    SVNPropertyValue vccValue = child.getPropertyValue(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
+                    vccs.add(vccValue);
                 }
             }
 
@@ -533,22 +536,24 @@ public class DAVRepository extends SVNRepository {
                 String vcc = parentVCC[0];
                 int index = 0;
                 while(true) {
-                    String label = Long.toString(entry.getRevision());
-                    if (entry.getDate() != null && getOptions().hasCommitMessage(this, entry.getRevision())) {
-                        String message = getOptions().getCommitMessage(this, entry.getRevision());
-                        entry.setCommitMessage(message);
-                    } else if (entry.getDate() != null) {
-                        final SVNDirEntry currentEntry = entry;
-                        String commitMessage = null;
-                        try {
-                            commitMessage = DAVUtil.getPropertyValue(connection, vcc, label, logProperty);
-                        } catch (SVNException e) {
-                            if (e.getErrorMessage().getErrorCode() != SVNErrorCode.RA_DAV_PROPS_NOT_FOUND) {
-                                throw e;
-                            }
+                    if (entry.getRevision() >= 0 && vcc != null) {
+                        String label = Long.toString(entry.getRevision());
+                        if (entry.getDate() != null && getOptions().hasCommitMessage(this, entry.getRevision())) {
+                            String message = getOptions().getCommitMessage(this, entry.getRevision());
+                            entry.setCommitMessage(message);
+                        } else if (entry.getDate() != null && vcc != null) {
+                            final SVNDirEntry currentEntry = entry;
+                            String commitMessage = null;
+                            try {
+                                commitMessage = DAVUtil.getPropertyValue(connection, vcc, label, logProperty);
+                            } catch (SVNException e) {
+                                if (e.getErrorMessage().getErrorCode() != SVNErrorCode.RA_DAV_PROPS_NOT_FOUND) {
+                                    throw e;
+                                }
+                            }                        
+                            getOptions().saveCommitMessage(DAVRepository.this, currentEntry.getRevision(), commitMessage);
+                            currentEntry.setCommitMessage(commitMessage);
                         }
-                        getOptions().saveCommitMessage(DAVRepository.this, currentEntry.getRevision(), commitMessage);
-                        currentEntry.setCommitMessage(commitMessage);
                     }
                     if (ents != null && ents.hasNext()) {
                         entry = (SVNDirEntry) ents.next();
