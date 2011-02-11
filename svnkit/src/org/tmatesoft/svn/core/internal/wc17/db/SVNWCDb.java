@@ -3659,7 +3659,9 @@ public class SVNWCDb implements ISVNWCDb {
                     File lockAbspath = SVNFileUtil.createFilePath(wcroot.getAbsPath(), lockRelpath);
                     boolean ownLock = isWCLockOwns(lockAbspath, true);
                     if (!ownLock && !stealLock) {
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LOCKED, "''{0}'' is already locked.", lockAbspath);
+                        SVNErrorMessage err1 = SVNErrorMessage.create(SVNErrorCode.WC_LOCKED, "''{0}'' is already locked.", SVNFileUtil.createFilePath(wcroot.getAbsPath(), lockRelpath));
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LOCKED, "Working copy ''{0}'' locked", SVNFileUtil.createFilePath(wcroot.getAbsPath(), localRelpath));
+                        err.setChildErrorMessage(err1);
                         SVNErrorManager.error(err, SVNLogType.WC);
                     } else if (!ownLock) {
                         stealWCLock(wcroot, lockRelpath);
@@ -3684,7 +3686,9 @@ public class SVNWCDb implements ISVNWCDb {
                     }
                     stmt.reset();
                     if (levels == -1 || levels >= lockDepth) {
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LOCKED, "''{0}'' is already locked.", SVNFileUtil.createFilePath(wcroot.getAbsPath(), lockRelpath));
+                        SVNErrorMessage err1 = SVNErrorMessage.create(SVNErrorCode.WC_LOCKED, "''{0}'' is already locked.", SVNFileUtil.createFilePath(wcroot.getAbsPath(), lockRelpath));
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LOCKED, "Working copy ''{0}'' locked", SVNFileUtil.createFilePath(wcroot.getAbsPath(), localRelpath));
+                        err.setChildErrorMessage(err1);
                         SVNErrorManager.error(err, SVNLogType.WC);
                     }
                     break;

@@ -56,4 +56,10 @@ public class SVNWCDbFindWCLock extends SVNSqlJetSelectFieldsStatement<SVNWCDbSch
         return super.isFilterPassed();
     }
 
+    protected Object[] getWhere() throws SVNException {
+        return new Object[] {
+            getBind(1)
+        };
+    }
+
 }
