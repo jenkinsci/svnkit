@@ -94,7 +94,7 @@ public class SVNCommitter17 implements ISVNCommitPathHandler {
             if (item.getCopyFromURL() == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, "Commit item ''{0}'' has copy flag but no copyfrom URL", item.getFile());
                 SVNErrorManager.error(err, SVNLogType.WC);
-            } else if (item.getRevision().getNumber() < 0) {
+            } else if (item.getCopyFromRevision().getNumber() < 0) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Commit item ''{0}'' has copy flag but an invalid revision", item.getFile());
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
