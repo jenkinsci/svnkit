@@ -89,10 +89,10 @@ public class SVNWCUtils {
     }
 
     public static int relpathDepth(String relpath) {
-        int n = 1;
-        if (relpath == null) {
+        if (relpath == null || "".equals(relpath)) {
             return 0;
         }
+        int n = 1;
         int length = relpath.length();
         for (int i = 0; i < length; i++) {
             if (relpath.charAt(i) == '/')
