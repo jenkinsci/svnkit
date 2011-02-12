@@ -369,14 +369,13 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
                         message = template;
                     }
                 }
-                boolean showErrorCode = isWC17Supported() && SVNErrorCode.EXTERNAL_PROGRAM!=errorCode;
                 if (err.getType() == SVNErrorMessage.TYPE_WARNING) {
                     String msg = getCommandLineClientName() +": warning: " +
-                        (showErrorCode ? "W" + errorCode.getCode() + ": " : "") + message;
+                        (err.isErrorCodeShouldShown() ? "W" + errorCode.getCode() + ": " : "") + message;
                     getErr().println(msg);
                 } else {
                     String msg = getCommandLineClientName() + ": " +
-                        (showErrorCode ? "E" + errorCode.getCode() + ": " : "") + message;
+                        (err.isErrorCodeShouldShown() ? "E" + errorCode.getCode() + ": " : "") + message;
                     getErr().println(msg);
                     count++;
                 }

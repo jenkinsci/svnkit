@@ -332,15 +332,14 @@ public class SVNErrorMessage implements Serializable {
         if (getType() == TYPE_WARNING && getErrorCode() == SVNErrorCode.REPOS_POST_COMMIT_HOOK_FAILED) {
             line.append("Warning: ");
         } else {
-            boolean showErrorCode = SVNBasicClient.isWC17Supported() && SVNErrorCode.EXTERNAL_PROGRAM!=myErrorCode;
             if (getType() == TYPE_WARNING) {
                 line.append("svn: warning: ");
-                if(showErrorCode) {
+                if(isErrorCodeShouldShown()) {
                     line.append("W").append(myErrorCode.getCode()).append(": ");
                 }
             } else {
                 line.append("svn: ");
-                if(showErrorCode) {
+                if(isErrorCodeShouldShown()) {
                     line.append("E").append(myErrorCode.getCode()).append(": ");
                 }
             }
@@ -351,6 +350,11 @@ public class SVNErrorMessage implements Serializable {
             line.append(myObjects.length > 0 ? MessageFormat.format(myMessage, myObjects) : myMessage);
         }
         return line.toString();
+    }
+
+    public boolean isErrorCodeShouldShown() {
+        return SVNBasicClient.isWC17Supported()
+            && getErrorCode() != SVNErrorCode.EXTERNAL_PROGRAM;
     }
 
     /**
