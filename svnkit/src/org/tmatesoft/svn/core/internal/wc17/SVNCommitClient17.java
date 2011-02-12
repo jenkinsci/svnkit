@@ -1363,7 +1363,7 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
                 return;
             }
         }
-        bailOnTreeConflictedAncestor(localAbsPath);
+        bailOnTreeConflictedChildren(localAbsPath, dbKind, depth, changelistsSet);
         File entryRelpath = getContext().getNodeReposRelPath(localAbsPath);
         if (!copyMode) {
             reposRelpath = entryRelpath;
@@ -1530,6 +1530,26 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
         }
         if (lockTokens != null && dbKind == SVNNodeKind.DIR && isCommitItemDelete) {
             collectLocks(localAbsPath, lockTokens);
+        }
+    }
+
+    private void bailOnTreeConflictedChildren(File localAbsPath, SVNNodeKind kind, SVNDepth depth, Collection changelistsSet) throws SVNException {
+        if ((depth == SVNDepth.EMPTY) || (kind != SVNNodeKind.DIR)) {
+            return;
+        }
+        Map<String, SVNTreeConflictDescription> conflicts = getContext().getDb().opReadAllTreeConflicts(localAbsPath);
+        if (conflicts == null || conflicts.isEmpty()) {
+            return;
+        }
+        for (SVNTreeConflictDescription conflict : conflicts.values()) {
+            if ((conflict.getNodeKind() == SVNNodeKind.DIR) && (depth == SVNDepth.FILES)) {
+                continue;
+            }
+            if (!getContext().isChangelistMatch(localAbsPath, changelistsSet)) {
+                continue;
+            }
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_FOUND_CONFLICT, "Aborting commit: ''{0}'' remains in conflict", conflict.getPath());
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
     }
 
