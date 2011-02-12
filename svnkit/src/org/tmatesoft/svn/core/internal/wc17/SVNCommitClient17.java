@@ -1283,7 +1283,7 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
     }
 
     private void validateDangler(Map<String, SVNCommitItem> committables, File danglingParent, File danglingChild) throws SVNException {
-        if (!committables.containsKey(danglingParent)) {
+        if (!committables.containsKey(SVNFileUtil.getFilePath(danglingParent))) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET,
                     "''{0}'' is not under version control and is not part of the commit, yet its child ''{1}'' is part of the commit", new Object[] {
                             danglingParent, danglingChild
@@ -1481,8 +1481,8 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
         }
         if (stateFlags) {
             if (getContext().isChangelistMatch(localAbsPath, changelistsSet)) {
-                assert(SVNFileUtil.isAbsolute(localAbsPath));
-                assert(reposRootUrl!=null && reposRelpath!=null);
+                assert (SVNFileUtil.isAbsolute(localAbsPath));
+                assert (reposRootUrl != null && reposRelpath != null);
                 SVNURL url = reposRootUrl.appendPath(SVNFileUtil.getFilePath(reposRelpath), false);
                 SVNCommitItem item = new SVNCommitItem(localAbsPath, url, cfRelpath != null ? reposRootUrl.appendPath(SVNFileUtil.getFilePath(cfRelpath), false) : null, dbKind,
                         SVNRevision.create(entryRev), SVNRevision.create(cfRev), isCommitItemAdd, isCommitItemDelete, isCommitItemPropMods, isCommitItemTextMods, isCommitItemIsCopy,
