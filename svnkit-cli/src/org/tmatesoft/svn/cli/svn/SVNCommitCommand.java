@@ -25,6 +25,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
+import org.tmatesoft.svn.core.wc.SVNBasicClient;
 import org.tmatesoft.svn.core.wc.SVNCommitClient;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -38,7 +39,7 @@ public class SVNCommitCommand extends SVNCommand {
     public SVNCommitCommand() {
         super("commit", new String[] {"ci"});
     }
-    
+
     public boolean isCommitter() {
         return true;
     }
@@ -62,8 +63,13 @@ public class SVNCommitCommand extends SVNCommand {
             String targetName = (String) ts.next();
             SVNPath target = new SVNPath(targetName);
             if (target.isURL()) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_BAD_PATH, "Must give local path (not URL) as the target of commit");
-                SVNErrorManager.error(err, SVNLogType.CLIENT);
+                if(SVNBasicClient.isWC17Supported()) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "''{0}'' is a URL, but URLs cannot be commit targets", targetName);
+                    SVNErrorManager.error(err, SVNLogType.CLIENT);
+                } else {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_BAD_PATH, "Must give local path (not URL) as the target of commit");
+                    SVNErrorManager.error(err, SVNLogType.CLIENT);
+                }
             }
         }
         if (targets.isEmpty()) {
@@ -91,15 +97,15 @@ public class SVNCommitCommand extends SVNCommand {
 
         if (!getSVNEnvironment().isQuiet()) {
             client.setEventHandler(new SVNNotifyPrinter(getSVNEnvironment()));
-        }        
+        }
         client.setCommitHandler(getSVNEnvironment());
         boolean keepLocks = getSVNEnvironment().getOptions().isKeepLocks();
         SVNCommitInfo info = null;
         try {
-            info = client.doCommit(files, keepLocks, getSVNEnvironment().getMessage(), 
+            info = client.doCommit(files, keepLocks, getSVNEnvironment().getMessage(),
                     getSVNEnvironment().getRevisionProperties(),
-                    getSVNEnvironment().getChangelists(), 
-                    getSVNEnvironment().isKeepChangelist(), 
+                    getSVNEnvironment().getChangelists(),
+                    getSVNEnvironment().isKeepChangelist(),
                     getSVNEnvironment().isForce(), depth);
         } catch (SVNException svne) {
             SVNErrorMessage err = svne.getErrorMessage().getRootErrorMessage();
