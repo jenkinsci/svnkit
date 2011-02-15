@@ -273,10 +273,10 @@ public class SVNLogRunner {
                 }
                 Date time = SVNDate.parseDate(timestamp);
                 //TODO: what about special files (do not set for them).
-                if (!file.setLastModified(time.getTime())) {
+                if (!SVNFileUtil.setLastModified(file, time.getTime())) {
                     if (!file.canWrite() && file.isFile()) {
                         SVNFileUtil.setReadonly(file, false);
-                        file.setLastModified(time.getTime());
+                        SVNFileUtil.setLastModified(file, time.getTime());
                         SVNFileUtil.setReadonly(file, true);
                     }
                 }

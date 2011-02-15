@@ -797,7 +797,14 @@ public class SVNFileUtil {
         if (executable) {
             setExecutable(dst, true);
         }
-        dst.setLastModified(src.lastModified());
+        SVNFileUtil.setLastModified(dst, src.lastModified());
+    }
+    
+    public static boolean setLastModified(File file, long timestamp) {
+        if (file != null && timestamp >= 0) {
+            return file.setLastModified(timestamp);
+        }
+        return false;
     }
 
     public static boolean createSymlink(File link, File linkName) throws SVNException {
@@ -1330,7 +1337,7 @@ public class SVNFileUtil {
     public static void copyDirectory(File srcDir, File dstDir, boolean copyAdminDir, ISVNEventHandler cancel) throws SVNException {
         if (!dstDir.exists()) {
             dstDir.mkdirs();
-            dstDir.setLastModified(srcDir.lastModified());
+            SVNFileUtil.setLastModified(dstDir, srcDir.lastModified());
         }
         File[] files = SVNFileListUtil.listFiles(srcDir);
         for (int i = 0; files != null && i < files.length; i++) {

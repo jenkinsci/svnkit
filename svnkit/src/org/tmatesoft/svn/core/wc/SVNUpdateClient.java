@@ -1403,7 +1403,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             SVNFileUtil.setExecutable(dstPath, true);
         }
         if (!special && timestamp > 0) {
-            dstPath.setLastModified(timestamp);
+            SVNFileUtil.setLastModified(dstPath, timestamp);
         }
     }
 
