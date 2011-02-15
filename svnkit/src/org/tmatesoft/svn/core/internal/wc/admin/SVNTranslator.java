@@ -405,16 +405,37 @@ public class SVNTranslator {
         } catch (IOException e) {
             translationError(destination, e);
         } finally {
-            if (dst != null) {
-                try {
-                    dst.flush();
-                } catch (IOException ioe) {
-                    //
+            try {
+                if (dst != null) {
+                    try {
+                        dst.flush();
+                    } catch (IOException ioe) {
+                        checkWrappedException(ioe, source);
+                    }
                 }
+                if (translatingStream != null) {
+                    try {
+                        translatingStream.flush();
+                    } catch (IOException ioe) {
+                        checkWrappedException(ioe, source);
+                    }
+                }
+            } finally {
+                SVNFileUtil.closeFile(src);
+                SVNFileUtil.closeFile(translatingStream);
+                SVNFileUtil.closeFile(dst);
             }
-            SVNFileUtil.closeFile(src);
-            SVNFileUtil.closeFile(translatingStream);
-            SVNFileUtil.closeFile(dst);
+        }
+    }
+
+    private static void checkWrappedException(IOException ioe, File file) throws SVNException {
+        if(ioe instanceof IOExceptionWrapper) {
+            IOExceptionWrapper ew = (IOExceptionWrapper)ioe;
+            if (ew.getOriginalException().getErrorMessage().getErrorCode() == SVNErrorCode.IO_INCONSISTENT_EOL) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_INCONSISTENT_EOL, "File ''{0}'' has inconsistent newlines", file);
+                SVNErrorManager.error(err, SVNLogType.DEFAULT);
+            }
+            throw ew.getOriginalException();
         }
     }
 
