@@ -33,6 +33,7 @@ import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
@@ -44,6 +45,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNBasicClient;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
@@ -439,17 +441,37 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
     }
 
     public boolean isVersioned(String target) throws SVNException {
-        SVNWCAccess wcAccess = null;
         SVNPath commandTarget = new SVNPath(target);
-        try {
-            wcAccess = SVNWCAccess.newInstance(null);
-            wcAccess.probeOpen(commandTarget.getFile(), false, 0);
-            SVNEntry entry = wcAccess.getVersionedEntry(commandTarget.getFile(), false);
-            return entry != null;
-        } catch (SVNException e) {
-            //
-        } finally {
-            wcAccess.close();
+        if (SVNBasicClient.isWC17Supported()) {
+            SVNWCContext context = null;
+            try {
+                context = new SVNWCContext(getOptions(), null);
+                File file = commandTarget.getFile();
+                if (file != null) {
+                    SVNNodeKind kind = context.readKind(file.getAbsoluteFile(), false);
+                    return kind != null && kind != SVNNodeKind.NONE && kind != SVNNodeKind.UNKNOWN;
+                }
+            } catch (SVNException e) {
+                //
+            } finally {
+                if (context != null) {
+                    context.close();
+                }
+            }
+        } else {
+            SVNWCAccess wcAccess = null;
+            try {
+                wcAccess = SVNWCAccess.newInstance(null);
+                wcAccess.probeOpen(commandTarget.getFile(), false, 0);
+                SVNEntry entry = wcAccess.getVersionedEntry(commandTarget.getFile(), false);
+                return entry != null;
+            } catch (SVNException e) {
+                //
+            } finally {
+                if (wcAccess != null) {
+                    wcAccess.close();
+                }
+            }
         }
         return false;
     }
