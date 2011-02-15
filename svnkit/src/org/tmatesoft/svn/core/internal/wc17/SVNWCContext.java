@@ -3859,7 +3859,7 @@ public class SVNWCContext {
             if (useCommitTimes) {
                 SVNDate changedDate = ctx.getDb().readInfo(localAbspath, InfoField.changedDate).changedDate;
                 if (changedDate != null) {
-                    localAbspath.setLastModified(changedDate.getTime());
+                    SVNFileUtil.setLastModified(localAbspath, changedDate.getTime());
                 }
             }
             if (recordFileInfo) {
@@ -3935,7 +3935,7 @@ public class SVNWCContext {
             }
             if (setTime != null) {
                 if (SVNFileType.getType(localAbspath).isFile()) {
-                    localAbspath.setLastModified(setTime.getTime());
+                    SVNFileUtil.setLastModified(localAbspath, setTime.getTime());
                 }
             }
             ctx.getAndRecordFileInfo(localAbspath, true);

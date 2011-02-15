@@ -435,10 +435,10 @@ public abstract class SVNAdminArea {
         if (myWCAccess.getOptions().isUseCommitTimes() && !special) {
             entry.setTextTime(entry.getCommittedDate());
             tstamp = SVNDate.parseDate(entry.getCommittedDate()).getTime();
-            dst.setLastModified(tstamp);
+            SVNFileUtil.setLastModified(dst, tstamp);
         } else {
             tstamp = System.currentTimeMillis();
-            dst.setLastModified(tstamp);
+            SVNFileUtil.setLastModified(dst, tstamp);
             entry.setTextTime(SVNDate.formatDate(new Date(tstamp)));
         }
         saveEntries(false);

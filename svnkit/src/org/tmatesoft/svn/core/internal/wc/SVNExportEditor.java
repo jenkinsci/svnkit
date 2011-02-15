@@ -215,7 +215,7 @@ public class SVNExportEditor implements ISVNEditor {
                 SVNFileUtil.setExecutable(myCurrentFile, true);
             }
             if (!special && date != null) {
-                myCurrentFile.setLastModified(SVNDate.parseDate(date).getTime());
+                SVNFileUtil.setLastModified(myCurrentFile, SVNDate.parseDate(date).getTime());
             }
             myEventDispatcher.handleEvent(SVNEventFactory.createSVNEvent(myCurrentFile, SVNNodeKind.FILE, null, SVNRepository.INVALID_REVISION, SVNEventAction.UPDATE_ADD, null, null, null), ISVNEventHandler.UNKNOWN);
         } finally {

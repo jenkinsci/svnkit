@@ -173,7 +173,7 @@ public class SVNCommandUtil {
         } finally {
             SVNFileUtil.closeFile(os);
         }
-        tmpFile.setLastModified(System.currentTimeMillis() - 2000);
+        SVNFileUtil.setLastModified(tmpFile, System.currentTimeMillis() - 2000);
         long timestamp = tmpFile.lastModified();
         editorCommand = getEditorCommand(env, editorCommand);
         String[] testEnv = SVNFileUtil.getTestEnvironment();
