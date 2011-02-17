@@ -64,6 +64,8 @@ public class SVNErrorMessage implements Serializable {
     private SVNErrorMessage myChildErrorMessage;
     private Throwable myThrowable;
 
+    private boolean dontShowErrorCode;
+
     private static final Object[] EMPTY_ARRAY = new Object[0];
 
     /**
@@ -353,7 +355,7 @@ public class SVNErrorMessage implements Serializable {
     }
 
     public boolean isErrorCodeShouldShown() {
-        return SVNBasicClient.isWC17Supported()
+        return !dontShowErrorCode && SVNBasicClient.isWC17Supported()
             && getErrorCode() != SVNErrorCode.EXTERNAL_PROGRAM;
     }
 
@@ -475,4 +477,15 @@ public class SVNErrorMessage implements Serializable {
         }
         return err;
     }
+
+
+    public boolean isDontShowErrorCode() {
+        return dontShowErrorCode;
+    }
+
+
+    public void setDontShowErrorCode(boolean dontShowErrorCode) {
+        this.dontShowErrorCode = dontShowErrorCode;
+    }
+
 }
