@@ -82,18 +82,14 @@ public class SVNGnomeKeyring {
             context.read();
             if (result == ISVNGnomeKeyringLibrary.GNOME_KEYRING_RESULT_OK && value != null) {
                 String stringValue = value.getString(0);
-                context.keyringName.setString(0, stringValue);
-            } else {
-                Pointer keyringName = context.keyringName;
-                context.keyringName = null;
+                context.keyringName = stringValue;
                 context.write();
-                
+            } else {
 //              if (key_info - > keyring_name != NULL)
 //                  free((void*)key_info - > keyring_name);
-                if (keyringName != null) {
-                    // Actually callback caller destroys context after we quit the loop.
-                    // We have to be careful here: should we free native memory referenced by keyringName or not?
-                }
+//              Does JNA free native memory referenced by keyringName or not?
+                context.keyringName = null;
+                context.write();
             }
             gLibrary.g_main_loop_quit(context.loop);
         }
@@ -142,7 +138,7 @@ public class SVNGnomeKeyring {
             return null;
         }
 
-        String defaultKeyringName = context.keyringName.getString(0);
+        String defaultKeyringName = context.keyringName;
         destroyKeyringContext(context);
         return defaultKeyringName;
     }
@@ -304,15 +300,13 @@ public class SVNGnomeKeyring {
             return;
         }
         ISVNGnomeKeyringLibrary gnomeKeyringLibrary = JNALibraryLoader.getGnomeKeyringLibrary();
-        Pointer keyringName = context.keyringName;
+//      if (key_info - > keyring_name != NULL)
+//          free((void*)key_info - > keyring_name);
+//      Does JNA free native memory referenced by keyringName or not?
+
         context.keyringName = null;
         context.write();
 
-//      if (key_info - > keyring_name != NULL)
-//          free((void*)key_info - > keyring_name);
-        if (keyringName != null) {
-            // We have to be careful here: should we free native memory referenced by keyringName or not?
-        }
         if (context.keyringInfo != null) {
             gnomeKeyringLibrary.gnome_keyring_info_free(context.keyringInfo);
             context.keyringInfo = null;
@@ -334,7 +328,7 @@ public class SVNGnomeKeyring {
             super(p);
         }
 
-        public Pointer keyringName;
+        public String keyringName;
         public Pointer keyringInfo;
         public Pointer loop;
     }
