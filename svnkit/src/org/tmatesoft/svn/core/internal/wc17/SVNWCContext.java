@@ -668,7 +668,15 @@ public class SVNWCContext {
          * Find out whether the path is a tree conflict victim. This function
          * will set tree_conflict to NULL if the path is not a victim.
          */
-        SVNTreeConflictDescription tree_conflict = db.opReadTreeConflict(localAbspath);
+        SVNTreeConflictDescription tree_conflict = null;
+        try {
+            tree_conflict = db.opReadTreeConflict(localAbspath);
+        } catch (SVNException e) {
+            SVNErrorCode errorCode = e.getErrorMessage().getErrorCode();
+            if (!(pathKind == SVNNodeKind.DIR && (errorCode == SVNErrorCode.WC_UPGRADE_REQUIRED || errorCode == SVNErrorCode.WC_UNSUPPORTED_FORMAT))) {
+                throw e;
+            }
+        }
 
         SVNStatus17 stat = new SVNStatus17(this);
         stat.setLocalAbsPath(localAbspath);
