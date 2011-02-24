@@ -1165,8 +1165,6 @@ public class SVNWCContext {
 
     public boolean isTextModified(File localAbsPath, boolean forceComparison, boolean compareTextBases) throws SVNException {
 
-        forceComparison = true; // hack for test
-
         /* No matter which way you look at it, the file needs to exist. */
         if (!localAbsPath.exists() || !localAbsPath.isFile()) {
             /*

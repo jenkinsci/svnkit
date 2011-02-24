@@ -809,7 +809,6 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
         SVNCommitInfo info = null;
         ISVNEditor commitEditor = null;
         Collection infos = new ArrayList();
-        boolean needsSleepForTimeStamp = false;
         for (int p = 0; p < commitPackets.length; p++) {
             SVNCommitPacket commitPacket = commitPackets[p].removeSkippedItems();
             if (commitPacket.getCommitItems().length == 0) {
@@ -879,9 +878,7 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
             }
             infos.add(info != null ? info : SVNCommitInfo.NULL);
         }
-        if (needsSleepForTimeStamp) {
-            sleepForTimeStamp();
-        }
+        sleepForTimeStamp();
         return (SVNCommitInfo[]) infos.toArray(new SVNCommitInfo[infos.size()]);
     }
 
