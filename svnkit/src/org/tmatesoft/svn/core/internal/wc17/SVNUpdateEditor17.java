@@ -2340,12 +2340,12 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                 if (status == SVNWCDbStatus.Excluded) {
                     doEntryDeletion(myTargetAbspath, null, false);
                 }
-                return;
             } catch (SVNException e) {
                 if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND) {
                     throw e;
                 }
             }
+            return;
         }
         myWcContext.getDb().opSetBaseIncompleteTemp(localAbspath, false);
         if (myIsDepthSticky) {
