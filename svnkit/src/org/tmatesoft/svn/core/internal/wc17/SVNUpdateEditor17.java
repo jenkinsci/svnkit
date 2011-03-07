@@ -115,7 +115,15 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         if (depth == SVNDepth.UNKNOWN) {
             depthIsSticky = false;
         }
-        WCDbInfo info = wcContext.getDb().readInfo(anchorAbspath, InfoField.reposRootUrl, InfoField.reposUuid);
+        WCDbInfo info = wcContext.getDb().readInfo(anchorAbspath, InfoField.status, InfoField.reposRootUrl, InfoField.reposUuid);
+
+        /* ### For adds, REPOS_ROOT and REPOS_UUID would be NULL now. */
+        if (info.status == SVNWCDbStatus.Added) {
+            WCDbAdditionInfo addition = wcContext.getDb().scanAddition(anchorAbspath, AdditionInfoField.reposRootUrl, AdditionInfoField.reposUuid);
+            info.reposRootUrl = addition.reposRootUrl;
+            info.reposUuid = addition.reposUuid;
+        }
+
         assert (info.reposRootUrl != null && info.reposUuid != null);
         if (switchURL != null) {
             if (!SVNPathUtil.isAncestor(info.reposRootUrl.toDecodedString(), switchURL.toDecodedString())) {
@@ -1413,7 +1421,31 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                 assert (parent != null);
                 d.setNewRelpath(SVNFileUtil.createFilePath(parent.getNewRelpath(), d.getName()));
             } else {
-                d.setNewRelpath(myWcContext.getDb().scanBaseRepository(d.getLocalAbspath(), RepositoryInfoField.relPath).relPath);
+                //d.setNewRelpath(myWcContext.getDb().scanBaseRepository(d.getLocalAbspath(), RepositoryInfoField.relPath).relPath);
+
+                WCDbInfo readInfo = myWcContext.getDb().readInfo(d.getLocalAbspath(), InfoField.status, InfoField.reposRelPath,
+                        InfoField.originalReposRelpath
+                );
+                SVNWCDbStatus status = readInfo.status;
+                File reposRelPath = readInfo.reposRelPath;
+                File originalReposRelpath = readInfo.originalReposRelpath;
+
+                if (status == SVNWCDbStatus.Added) {
+                    WCDbAdditionInfo addition = myWcContext.getDb().scanAddition(d.getLocalAbspath(), AdditionInfoField.reposRelPath, AdditionInfoField.originalReposRelPath);
+                    reposRelPath = addition.reposRelPath;
+                    originalReposRelpath = addition.originalReposRelPath;
+                }
+
+                if (originalReposRelpath!=null) {
+                    d.setNewRelpath( originalReposRelpath );
+                } else if (reposRelPath!=null) {
+                    d.setNewRelpath( reposRelPath );
+                } else {
+                  d.setNewRelpath(myWcContext.getDb().scanBaseRepository(d.getLocalAbspath(), RepositoryInfoField.relPath).relPath);
+                }
+                assert(d.getNewRelpath()!=null);
+
+
             }
         }
         SVNBumpDirInfo bdi = new SVNBumpDirInfo(d);
