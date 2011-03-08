@@ -1421,11 +1421,10 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                 assert (parent != null);
                 d.setNewRelpath(SVNFileUtil.createFilePath(parent.getNewRelpath(), d.getName()));
             } else {
-                //d.setNewRelpath(myWcContext.getDb().scanBaseRepository(d.getLocalAbspath(), RepositoryInfoField.relPath).relPath);
+                // d.setNewRelpath(myWcContext.getDb().scanBaseRepository(d.getLocalAbspath(),
+                // RepositoryInfoField.relPath).relPath);
 
-                WCDbInfo readInfo = myWcContext.getDb().readInfo(d.getLocalAbspath(), InfoField.status, InfoField.reposRelPath,
-                        InfoField.originalReposRelpath
-                );
+                WCDbInfo readInfo = myWcContext.getDb().readInfo(d.getLocalAbspath(), InfoField.status, InfoField.reposRelPath, InfoField.originalReposRelpath);
                 SVNWCDbStatus status = readInfo.status;
                 File reposRelPath = readInfo.reposRelPath;
                 File originalReposRelpath = readInfo.originalReposRelpath;
@@ -1436,15 +1435,14 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                     originalReposRelpath = addition.originalReposRelPath;
                 }
 
-                if (originalReposRelpath!=null) {
-                    d.setNewRelpath( originalReposRelpath );
-                } else if (reposRelPath!=null) {
-                    d.setNewRelpath( reposRelPath );
+                if (originalReposRelpath != null) {
+                    d.setNewRelpath(originalReposRelpath);
+                } else if (reposRelPath != null) {
+                    d.setNewRelpath(reposRelPath);
                 } else {
-                  d.setNewRelpath(myWcContext.getDb().scanBaseRepository(d.getLocalAbspath(), RepositoryInfoField.relPath).relPath);
+                    d.setNewRelpath(myWcContext.getDb().scanBaseRepository(d.getLocalAbspath(), RepositoryInfoField.relPath).relPath);
                 }
-                assert(d.getNewRelpath()!=null);
-
+                assert (d.getNewRelpath() != null);
 
             }
         }
@@ -2388,14 +2386,17 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND) {
                 throw e;
             }
+            return;
         }
-        switch (status) {
-            case Excluded:
-            case Absent:
-            case NotPresent:
-                return;
-            default:
-                break;
+        if (status != null) {
+            switch (status) {
+                case Excluded:
+                case Absent:
+                case NotPresent:
+                    return;
+                default:
+                    break;
+            }
         }
         if (kind == SVNWCDbKind.File || kind == SVNWCDbKind.Symlink) {
             tweakNode(localAbspath, kind, newReposRelpath, newReposRootUrl, newReposUuid, newRevision, false);
