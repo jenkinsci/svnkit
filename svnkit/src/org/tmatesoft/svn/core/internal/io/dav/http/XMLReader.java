@@ -43,6 +43,9 @@ public class XMLReader extends Reader {
                     ch != '\n' && ch != '\t') {
                 b[off + i] = ' ';
                 continue;
+            } else if (ch == 0xffff || ch == 0xfffe) {
+                b[off + i] = ' ';
+                continue;
             }
             if (myIsEscaping) {
                 if (ch == ':') {
