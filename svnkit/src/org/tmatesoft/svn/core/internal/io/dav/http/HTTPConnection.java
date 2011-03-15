@@ -259,6 +259,9 @@ class HTTPConnection implements IHTTPConnection {
         myLastValidAuth = null;
         myTrustManager = null;
         myKeyManager = null;
+        myChallengeCredentials = null;
+        myProxyAuthentication = null;
+        myRequestCount = 0;
     }
 
     public HTTPStatus request(String method, String path, HTTPHeader header, StringBuffer body, int ok1, int ok2, OutputStream dst, DefaultHandler handler) throws SVNException {
@@ -794,6 +797,9 @@ class HTTPConnection implements IHTTPConnection {
     }
 
     public void close() {
+        if (!(myChallengeCredentials instanceof HTTPBasicAuthentication)) {
+            clearAuthenticationCache();
+        }
         if (mySocket != null) {
             if (myInputStream != null) {
                 try {
