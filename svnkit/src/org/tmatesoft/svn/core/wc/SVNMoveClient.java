@@ -257,11 +257,10 @@ public class SVNMoveClient extends SVNCopyDriver {
                     myWCClient.doDelete(src, true, false);
                     return;
                 } else if (!sameWC) {
-                    SVNEntry dstTmpEntry = dstEntry != null ? dstEntry : dstParentArea.getVersionedEntry(dstParentArea.getThisDirName(), false); 
-                    if (srcEntry.getRepositoryRoot() != null && dstTmpEntry.getRepositoryRoot() != null &&
-                            srcEntry.getRepositoryRoot().equals(dstTmpEntry.getRepositoryRoot())) {
-                        //this is the case when different WCs occur to be from the same repository,
-                        //use SVNCopyClient to move between them
+                    SVNEntry dstTmpEntry = dstEntry != null && dstEntry.isThisDir() ? dstEntry : dstParentArea.getVersionedEntry(dstParentArea.getThisDirName(), false);
+                    SVNEntry srcTmpEntry = srcEntry != null && srcEntry.isThisDir() ? srcEntry : srcParentArea.getVersionedEntry(srcParentArea.getThisDirName(), false);
+                    
+                    if (srcTmpEntry.getRepositoryRoot() != null && dstTmpEntry.getRepositoryRoot() != null && srcTmpEntry.getRepositoryRoot().equals(dstTmpEntry.getRepositoryRoot())) {
                         wcAccess.close();
                         SVNCopySource source = new SVNCopySource(SVNRevision.UNDEFINED, SVNRevision.WORKING, src);
                         myCopyClient.doCopy(new SVNCopySource[] { source }, dst, true, false, true);
