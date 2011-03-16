@@ -277,6 +277,7 @@ public class DefaultSVNHostOptions implements ISVNHostOptions {
             String pattern = (String) groups.get(name);
             for (StringTokenizer tokens = new StringTokenizer(pattern, ","); tokens.hasMoreTokens();) {
                 String token = tokens.nextToken();
+                token = token.trim();
                 if (DefaultSVNOptions.matches(token, getHost())) {
                     return name;
                 }
