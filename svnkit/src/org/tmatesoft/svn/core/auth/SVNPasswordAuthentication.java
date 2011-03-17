@@ -34,6 +34,8 @@ public class SVNPasswordAuthentication extends SVNAuthentication {
     /**
      * Creates a password user credential object given a username and password. 
      * 
+     * @deprecated use constructor with SVNURL parameter instead
+     * 
      * @param userName         the name of a user to authenticate 
      * @param password         the user's password
      * @param storageAllowed   if <span class="javakeyword">true</span> then

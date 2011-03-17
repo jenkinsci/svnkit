@@ -75,7 +75,7 @@ class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider, ISVNSS
         } else if (ISVNAuthenticationManager.SSL.equals(kind) && SVNSSLAuthentication.isCertificatePath(realm) && myPrompt instanceof PromptUserPassword3) {
             String passphrase = ((PromptUserPassword3) myPrompt).askQuestion(realm, "SSL Certificate Passphrase", authMayBeStored);
             if (passphrase != null) {
-                return new SVNPasswordAuthentication("", passphrase, ((PromptUserPassword3) myPrompt).userAllowedSave());
+                return new SVNPasswordAuthentication("", passphrase, ((PromptUserPassword3) myPrompt).userAllowedSave(), url, false);
             }
         } else if (ISVNAuthenticationManager.SSL.equals(kind) && !SVNSSLAuthentication.isCertificatePath(realm) && myPrompt instanceof PromptUserPasswordSSL) {
             PromptUserPasswordSSL prompt4 = (PromptUserPasswordSSL) myPrompt;
