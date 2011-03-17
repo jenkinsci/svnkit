@@ -351,7 +351,7 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
                 if (passphrase == null) {
                     return null;
                 }
-                return new SVNPasswordAuthentication("", passphrase, authMayBeStored);
+                return new SVNPasswordAuthentication("", passphrase, authMayBeStored, url, false);
             }
             boolean isMSCAPI = false;
             printRealm(realm);

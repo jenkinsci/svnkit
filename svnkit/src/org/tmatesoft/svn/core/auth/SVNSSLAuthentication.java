@@ -41,6 +41,8 @@ public class SVNSSLAuthentication extends SVNAuthentication {
     /**
      * Creates an SSL credentials object. 
      * 
+     * @deprecated use constructor with SVNURL parameter instead
+     * 
      * @param certFile         user's certificate file
      * @param password         user's password 
      * @param storageAllowed   to store or not this credential in a 

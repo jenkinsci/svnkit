@@ -214,15 +214,15 @@ public final class HTTPSSLKeyManager implements X509KeyManager {
                     authenticationManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.SSL, realm, null, auth);
                 } else {
                     authenticationManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.SSL, clientCertPath, null, 
-                            new SVNPasswordAuthentication("", clientCertPassword, sslAuthentication.isStorageAllowed()) );
+                            new SVNPasswordAuthentication("", clientCertPassword, sslAuthentication.isStorageAllowed(), sslAuthentication.getURL(), false) );
                 }
                 break;
             } catch (IOException io) {
                 if (auth != null) {
                     authenticationManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.SSL, realm, SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, io.getMessage()), auth);
-                    auth = authenticationManager.getNextAuthentication(ISVNAuthenticationManager.SSL, realm, null);
+                    auth = authenticationManager.getNextAuthentication(ISVNAuthenticationManager.SSL, realm, sslAuthentication.getURL());
                 } else {
-                    auth = authenticationManager.getFirstAuthentication(ISVNAuthenticationManager.SSL, realm, null);
+                    auth = authenticationManager.getFirstAuthentication(ISVNAuthenticationManager.SSL, realm, sslAuthentication.getURL());
                 }
                 if (auth instanceof SVNPasswordAuthentication) {
                     passphrase = ((SVNPasswordAuthentication) auth).getPassword().toCharArray();

@@ -285,13 +285,13 @@ public class SVNSaslAuthenticator extends SVNAuthenticator {
                 }
                 SVNAuthentication auth = null;
                 if ("ANONYMOUS".equals(mech)) {
-                    auth = new SVNPasswordAuthentication("", "", false);
+                    auth = new SVNPasswordAuthentication("", "", false, location, false);
                 } else if ("EXTERNAL".equals(mech)) {
                     String name = repos.getExternalUserName();
                     if (name == null) {
                         name = "";
                     }
-                    auth = new SVNPasswordAuthentication(name, "", false);
+                    auth = new SVNPasswordAuthentication(name, "", false, location, false);
                 } else {                
                     if (myAuthenticationManager == null) {
                         SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Authentication required for ''{0}''", realm),

@@ -41,7 +41,9 @@ public class SVNAuthentication {
     private boolean myIsPartial;
     
     /**
-     * Creates a username user credential object given a username. 
+     * Creates a username user credential object given a username.
+     *  
+     * @deprecated use constructor with SVNURL parameter instead
      * 
      * @param kind              a credential kind
      * @param userName          a repository account username 

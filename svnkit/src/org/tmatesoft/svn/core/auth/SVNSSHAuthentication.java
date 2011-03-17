@@ -43,6 +43,8 @@ public class SVNSSHAuthentication extends SVNAuthentication {
      * This kind of credentials is used when an ssh connection requires 
      * a user password instead of an ssh private key.
      * 
+     * @deprecated use constructor with SVNURL parameter instead
+     * 
      * @param userName         the name of a user to authenticate 
      * @param password         the user's password
      * @param portNumber       the number of a port to establish an ssh tunnel over  
@@ -77,6 +79,8 @@ public class SVNSSHAuthentication extends SVNAuthentication {
      * Creates a user credential object for authenticating over an ssh tunnel. 
      * This kind of credentials is used when an ssh connection requires 
      * an ssh private key.
+     * 
+     * @deprecated use constructor with SVNURL parameter instead
      * 
      * @param userName         the name of a user to authenticate 
      * @param keyFile          the user's ssh private key file 
@@ -115,6 +119,8 @@ public class SVNSSHAuthentication extends SVNAuthentication {
      * Creates a user credential object for authenticating over an ssh tunnel. 
      * This kind of credentials is used when an ssh connection requires 
      * an ssh private key.
+     * 
+     * @deprecated use constructor with SVNURL parameter instead
      * 
      * @param userName         the name of a user to authenticate 
      * @param privateKey       the user's ssh private key 

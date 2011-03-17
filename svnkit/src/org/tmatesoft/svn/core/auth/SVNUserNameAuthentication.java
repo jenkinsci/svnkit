@@ -28,6 +28,8 @@ public class SVNUserNameAuthentication extends SVNAuthentication {
     /**
      * Creates a username authentication credential.
      * 
+     * @deprecated use constructor with SVNURL parameter instead
+     * 
      * @param userName         a user name
      * @param storageAllowed   if <span class="javakeyword">true</span> then
      *                         this credential is allowed to be stored in the 
