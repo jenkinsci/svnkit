@@ -23,6 +23,8 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
+
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Map;
 
@@ -60,13 +62,18 @@ public class SVNConfigFile {
                 groupMatched = true;
             } else if (groupMatched) {
                 if (matchGroup(line, null)) {
-                    return map;
+                    break;
                 } else if (matchProperty(line, null)) {
-                    map.put(getPropertyName(line), getPropertyValue(line));
+                    map.put(getPropertyName(line), null);
                 }
             }
         }
-        return map;
+        Map result = new SVNHashMap();
+        for (Iterator names = map.keySet().iterator(); names.hasNext();) {
+            String propertyName = (String) names.next();
+            result.put(propertyName, getPropertyValue(groupName, propertyName));
+        }
+        return result;
     }
 
     public String getPropertyValue(String groupName, String propertyName) {
