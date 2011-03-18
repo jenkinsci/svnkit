@@ -60,7 +60,7 @@ public class FSUpdateContext {
     private String myTargetPath;
     private boolean isSwitch;
     private boolean mySendCopyFromArgs;
-    private FSRevisionRoot myTargetRoot;
+    private FSRoot myTargetRoot;
     private LinkedList myRootsCache;
     private FSFS myFSFS;
     private FSRepository myRepository;
@@ -100,6 +100,10 @@ public class FSUpdateContext {
         myTargetPath = targetPath;
         this.isSwitch = isSwitch;
         mySendCopyFromArgs = sendCopyFrom;
+    }
+    
+    public void setTargetRoot(FSRoot root) {
+        myTargetRoot = root;
     }
 
     public OutputStream getReportFileForWriting() throws SVNException {
@@ -171,7 +175,7 @@ public class FSUpdateContext {
         return myCurrentPathInfo;
     }
 
-    private FSRevisionRoot getTargetRoot() throws SVNException {
+    private FSRoot getTargetRoot() throws SVNException {
         if (myTargetRoot == null) {
             myTargetRoot = myFSFS.createRevisionRoot(myTargetRevision);
         }
@@ -532,8 +536,8 @@ public class FSUpdateContext {
     private SVNLocationEntry addFileSmartly(String editPath, String originalPath) throws SVNException {
         String copyFromPath = null;
         long copyFromRevision = SVNRepository.INVALID_REVISION;
-        if (mySendCopyFromArgs) {
-            FSClosestCopy closestCopy = getTargetRoot().getClosestCopy(originalPath);
+        if (mySendCopyFromArgs && getTargetRoot() instanceof FSRevisionRoot) {
+            FSClosestCopy closestCopy = ((FSRevisionRoot) getTargetRoot()).getClosestCopy(originalPath);
             if (closestCopy != null) {
                 FSRevisionRoot closestCopyRoot = closestCopy.getRevisionRoot();
                 String closestCopyPath = closestCopy.getPath();
@@ -642,7 +646,7 @@ public class FSUpdateContext {
         }
     }
 
-    private FSEntry fakeDirEntry(String reposPath, FSRevisionRoot root) throws SVNException {
+    private FSEntry fakeDirEntry(String reposPath, FSRoot root) throws SVNException {
         if (root.checkNodeKind(reposPath) == SVNNodeKind.NONE) {
             return null;
         }

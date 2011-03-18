@@ -235,7 +235,7 @@ public class FSRepositoryUtil {
 
     public static void sendTextDelta(ISVNEditor editor, String editPath, String sourcePath, 
             String hexDigest, FSRevisionRoot sourceRoot, String targetPath, 
-            FSRevisionRoot targetRoot, boolean sendDeltas, SVNDeltaCombiner deltaCombiner, 
+            FSRoot targetRoot, boolean sendDeltas, SVNDeltaCombiner deltaCombiner, 
             SVNDeltaGenerator deltaGenerator, FSFS fsfs) throws SVNException {
         editor.applyTextDelta(editPath, hexDigest);
 
