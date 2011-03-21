@@ -699,7 +699,7 @@ public class SVNMoveClient16 extends SVNCopyDriver {
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
             srcRepoRoot = srcEntry.getRepositoryRootURL();
-            if (srcEntry.isCopied() && !srcEntry.isScheduledForAddition()) {
+            if (isCopiedAsAChild(src, srcEntry)) {
                 cfURL = getCopyFromURL(src.getParentFile(), SVNEncodingUtil.uriEncode(src.getName()));
                 cfRevision = getCopyFromRevision(src.getParentFile());
                 if (cfURL == null || cfRevision < 0) {
@@ -775,6 +775,16 @@ public class SVNMoveClient16 extends SVNCopyDriver {
         if (move) {
             myWCClient.doDelete(src, true, false);
         }
+    }
+    
+    private boolean isCopiedAsAChild(File path, SVNEntry entry) throws SVNException {
+        if (!entry.isScheduledForAddition() && entry.isCopied()) {
+            return true;
+        }
+        if (entry.isScheduledForDeletion() && path != null) {
+            return getCopyFromURL(path.getParentFile(), SVNEncodingUtil.uriEncode(entry.getName())) != null;
+        }
+        return false;
     }
 
     private void updateCopiedDirectory(SVNAdminArea dir, String name, String newURL, String reposRootURL, String copyFromURL, long copyFromRevision) throws SVNException {
