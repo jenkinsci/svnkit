@@ -40,6 +40,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -280,6 +281,18 @@ class HTTPConnection implements IHTTPConnection {
     }
     
     public HTTPStatus request(String method, String path, HTTPHeader header, InputStream body, int ok1, int ok2, OutputStream dst, DefaultHandler handler, SVNErrorMessage context) throws SVNException {
+        try {
+            return _request(method,path,header,body,ok1,ok2,dst,handler,context);
+        } catch (SVNCancelException e) {
+            throw new SVNCancelException(SVNErrorMessage.create(SVNErrorCode.CANCELLED, method+' '+path+" failed"), e); // retain the type of the exception
+        } catch (RuntimeException e) {
+            throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, method+' '+path+" failed").initCause(e));
+        } catch (SVNException e) {
+            throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, method+' '+path+" failed").initCause(e));
+        }
+    }
+
+    private HTTPStatus _request(String method, String path, HTTPHeader header, InputStream body, int ok1, int ok2, OutputStream dst, DefaultHandler handler, SVNErrorMessage context) throws SVNException {
         if ("".equals(path) || path == null) {
             path = "/";
         }
