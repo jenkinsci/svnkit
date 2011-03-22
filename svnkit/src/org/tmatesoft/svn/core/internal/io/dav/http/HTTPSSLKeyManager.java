@@ -218,6 +218,7 @@ public final class HTTPSSLKeyManager implements X509KeyManager {
                 }
                 break;
             } catch (IOException io) {
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, io);
                 if (auth != null) {
                     authenticationManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.SSL, realm, SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, io.getMessage()), auth);
                     auth = authenticationManager.getNextAuthentication(ISVNAuthenticationManager.SSL, realm, sslAuthentication.getURL());
