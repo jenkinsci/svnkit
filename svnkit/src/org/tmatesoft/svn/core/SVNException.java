@@ -45,7 +45,7 @@ public class SVNException extends Exception {
      * @param cause        the real cause of the error
      *
      * @deprecated
-     *      Use {@link #SVNException(SVNErrorMessage)} and set the cause to {@link SVNErrorMessage}
+     *      Use {@link #SVNException(SVNErrorMessage)} and set the cause via {@link SVNErrorMessage#initCause(Throwable)}
      */
     public SVNException(SVNErrorMessage errorMessage, Throwable cause) {
         super(cause!=null?cause:errorMessage);
