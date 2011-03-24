@@ -100,7 +100,12 @@ public class SVNExternal {
     }
 
     public SVNURL resolveURL(SVNURL rootURL, SVNURL ownerURL) throws SVNException {
-        String canonicalURL = SVNPathUtil.canonicalizePath(myURL);
+        String canonicalURL;
+        if (myURL != null && myURL.startsWith("^/")) {
+            canonicalURL = "^/" + SVNPathUtil.canonicalizePath(myURL.substring("^/".length()));
+        } else {
+            canonicalURL = SVNPathUtil.canonicalizePath(myURL);
+        }
         if (SVNPathUtil.isURL(canonicalURL)) {
             myResolvedURL = SVNURL.parseURIEncoded(canonicalURL); 
             return getResolvedURL();
