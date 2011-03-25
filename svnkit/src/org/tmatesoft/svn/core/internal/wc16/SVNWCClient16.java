@@ -3137,6 +3137,9 @@ public class SVNWCClient16 extends SVNBasicDelegate {
             for (Iterator paths = externals.keySet().iterator(); paths.hasNext();) {
                 String path = (String) paths.next();
                 String value = (String) externals.get(path);
+                if (value == null) {
+                    continue;
+                }
                 SVNExternal[] externalDefs = SVNExternal.parseExternals("", value);
                 for (int i = 0; i < externalDefs.length; i++) {
                     String externalPath = externalDefs[i].getPath();
