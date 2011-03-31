@@ -3,6 +3,7 @@ package org.tmatesoft.svn.core.internal.wc17;
 import java.io.File;
 import java.io.OutputStream;
 import java.util.Collection;
+import java.util.Iterator;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
@@ -14,9 +15,11 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.admin.ISVNEntryHandler;
-import org.tmatesoft.svn.core.internal.wc16.SVNBasicDelegate;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.ISVNWCNodeHandler;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.DefaultSVNCommitHandler;
 import org.tmatesoft.svn.core.wc.ISVNAddParameters;
@@ -33,6 +36,7 @@ import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -116,13 +120,13 @@ import org.tmatesoft.svn.util.SVNLogType;
  * <td>'svn revert'</td>
  * </tr>
  * </table>
- * 
+ *
  * @version 1.3
  * @author TMate Software Ltd.
  * @since 1.2
  * @see <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>
  */
-public class SVNWCClient17 extends SVNBasicDelegate {
+public class SVNWCClient17 extends SVNBaseClient17 {
 
     private ISVNCommitHandler myCommitHandler;
     private boolean myIsRevertMissingDirectories;
@@ -145,7 +149,7 @@ public class SVNWCClient17 extends SVNBasicDelegate {
      * {@link SVNWCUtil#createDefaultAuthenticationManager()}) which uses
      * server-side settings and auth storage from the default SVN's run-time
      * configuration area (or system properties if that area is not found).
-     * 
+     *
      * @param authManager
      *            an authentication and network layers driver
      * @param options
@@ -170,7 +174,7 @@ public class SVNWCClient17 extends SVNBasicDelegate {
      * If <code>repositoryPool</code> is <span class="javakeyword">null</span>,
      * then {@link org.tmatesoft.svn.core.io.SVNRepositoryFactory} will be used
      * to create {@link SVNRepository repository access objects}.
-     * 
+     *
      * @param repositoryPool
      *            a repository pool object
      * @param options
@@ -182,7 +186,7 @@ public class SVNWCClient17 extends SVNBasicDelegate {
 
     /**
      * Sets custom add parameters to this client object.
-     * 
+     *
      * @param addParameters
      *            extra parameters for add operations
      * @since 1.2
@@ -194,7 +198,7 @@ public class SVNWCClient17 extends SVNBasicDelegate {
      * Returns the specified commit handler (if set) being in use or a default
      * one (<b>DefaultSVNCommitHandler</b>) if no special implementations of
      * <b>ISVNCommitHandler</b> were previousely provided.
-     * 
+     *
      * @return the commit handler being in use or a default one
      * @see #setCommitHandler(ISVNCommitHandler)
      * @see DefaultSVNCommitHandler
@@ -217,7 +221,7 @@ public class SVNWCClient17 extends SVNBasicDelegate {
      * <p/>
      * If using <b>SVNWCClient</b> without specifying any commit handler then a
      * default one will be used - {@link DefaultSVNCommitHandler}.
-     * 
+     *
      * @param handler
      *            an implementor's handler that will be used to handle commit
      *            log messages
@@ -253,7 +257,7 @@ public class SVNWCClient17 extends SVNBasicDelegate {
      * then the file contents are taken from the working copy file item (no
      * network connection is needed). Otherwise the file item's contents are
      * taken from the repository at a particular revision.
-     * 
+     *
      * @param path
      *            working copy path
      * @param pegRevision
@@ -288,7 +292,7 @@ public class SVNWCClient17 extends SVNBasicDelegate {
      * <code>pegRevision</code>. If <code>pegRevision</code> is
      * {@link SVNRevision#UNDEFINED}, then it defaults to
      * {@link SVNRevision#HEAD}.
-     * 
+     *
      * @param url
      *            a file item's repository location
      * @param pegRevision
@@ -320,7 +324,7 @@ public class SVNWCClient17 extends SVNBasicDelegate {
     /**
      * Cleans up a working copy. This method is equivalent to a call to
      * <code>doCleanup(path, false)</code>.
-     * 
+     *
      * @param path
      *            a WC path to start a cleanup from
      * @throws SVNException
@@ -346,7 +350,7 @@ public class SVNWCClient17 extends SVNBasicDelegate {
      * <p>
      * This method operates only on working copies and does not open any network
      * connection.
-     * 
+     *
      * @param path
      *            a WC path to start a cleanup from
      * @param deleteWCProperties
@@ -400,7 +404,7 @@ public class SVNWCClient17 extends SVNBasicDelegate {
      * <p>
      * This method operates only on working copies and does not open any network
      * connection.
-     * 
+     *
      * @param path
      *            working copy path
      * @param propName
@@ -465,7 +469,7 @@ public class SVNWCClient17 extends SVNBasicDelegate {
      * <p>
      * This method operates only on working copies and does not open any network
      * connection.
-     * 
+     *
      * @param path
      *            working copy path
      * @param propertyValueProvider
@@ -529,7 +533,7 @@ public class SVNWCClient17 extends SVNBasicDelegate {
      * mapped to <code>String</code> values) to be set on the new revision in
      * the event that this is a committing operation. This table cannot contain
      * any standard Subversion properties.
-     * 
+     *
      * @param url
      *            versioned item url
      * @param propName
@@ -579,7 +583,7 @@ public class SVNWCClient17 extends SVNBasicDelegate {
      * This method simply obtains a url given a working path and calls
      * {@link #doSetRevisionProperty(SVNURL,SVNRevision,String,SVNPropertyValue,boolean,ISVNPropertyHandler)}
      * passing this url and the rest parameters.
-     * 
+     *
      * @param path
      *            working copy path
      * @param revision
@@ -628,7 +632,7 @@ public class SVNWCClient17 extends SVNBasicDelegate {
      * <p>
      * Also note that unless the administrator creates a pre-revprop-change hook
      * in the repository, this feature will fail.
-     * 
+     *
      * @param url
      *            repository URL
      * @param revision
@@ -663,10 +667,10 @@ public class SVNWCClient17 extends SVNBasicDelegate {
      * <code>path</code>. This method simply creates an implementation of
      * {@link ISVNPropertyHandler} which stores the value only for
      * <code>path</code> which is then used in the following call to
-     * 
+     *
      * <code>doGetProperty(path, propName, pegRevision, revision, SVNDepth.EMPTY, handler, null)</code>
      * .
-     * 
+     *
      * @param path
      *            a WC item's path
      * @param propName
@@ -701,7 +705,7 @@ public class SVNWCClient17 extends SVNBasicDelegate {
      * <code>path</code> which is then used in the following call to
      * <code>doGetProperty(url, propName, pegRevision, revision, SVNDepth.EMPTY, handler)</code>
      * .
-     * 
+     *
      * @param url
      *            an item's repository location
      * @param propName
@@ -741,7 +745,7 @@ public class SVNWCClient17 extends SVNBasicDelegate {
      * </ul>
      * then the result is a WC item's property. Otherwise the property is taken
      * from a repository (using the item's URL).
-     * 
+     *
      * @param path
      *            a WC item's path
      * @param propName
@@ -807,7 +811,7 @@ public class SVNWCClient17 extends SVNBasicDelegate {
      * set; that is, don't set properties on any item unless it's a member
      * of one of those changelists.  If <code>changeLists</code> is empty (or <span class="javakeyword">null</span>), no
      * changelist filtering occurs.
-     * 
+     *
      * @param path
      *            a WC item's path
      * @param propName
@@ -843,7 +847,7 @@ public class SVNWCClient17 extends SVNBasicDelegate {
      * Gets an item's versioned property from a repository and passes it to a
      * provided property handler. This method is useful when having no Working
      * Copy at all.
-     * 
+     *
      * @param url
      *            an item's repository location
      * @param propName
@@ -890,7 +894,7 @@ public class SVNWCClient17 extends SVNBasicDelegate {
      * immediate children (both files and directories); if
      * {@link SVNDepth#INFINITY}, from <code>path</code> and everything beneath
      * it.
-     * 
+     *
      * @param url
      *            versioned item url
      * @param propName
@@ -924,7 +928,7 @@ public class SVNWCClient17 extends SVNBasicDelegate {
      * Gets an unversioned revision property from a repository (getting a
      * repository URL from a Working Copy) and passes it to a provided property
      * handler.
-     * 
+     *
      * @param path
      *            a local Working Copy item which repository location is used to
      *            connect to a repository
@@ -955,7 +959,7 @@ public class SVNWCClient17 extends SVNBasicDelegate {
     /**
      * Gets an unversioned revision property from a repository and passes it to
      * a provided property handler.
-     * 
+     *
      * @param url
      *            a URL pointing to a repository location which revision
      *            property is to be got
@@ -988,7 +992,7 @@ public class SVNWCClient17 extends SVNBasicDelegate {
     /**
      * Schedules a Working Copy item for deletion. This method is equivalent to
      * <code>doDelete(path, force, true, dryRun)</code>.
-     * 
+     *
      * @param path
      *            a WC item to be deleted
      * @param force
@@ -1019,7 +1023,7 @@ public class SVNWCClient17 extends SVNBasicDelegate {
      * <p/>
      * This method deletes only local working copy paths without connecting to
      * the repository.
-     * 
+     *
      * @param path
      *            a WC item to be deleted
      * @param force
@@ -1056,7 +1060,7 @@ public class SVNWCClient17 extends SVNBasicDelegate {
      * <p/>
      * Calling this method is equivalent to
      * <code>doAdd(path, force, mkdir, climbUnversionedParents, recursive, false)</code>.
-     * 
+     *
      * @param path
      *            a path to be put under version control (will be added to a
      *            repository in next commit)
@@ -1099,7 +1103,7 @@ public class SVNWCClient17 extends SVNBasicDelegate {
      * <p/>
      * To create and add to version control a new directory, set
      * <code>mkdir</code> to <span class="javakeyword">true</span>.
-     * 
+     *
      * @param path
      *            a path to be put under version control (will be added to a
      *            repository in next commit)
@@ -1171,7 +1175,7 @@ public class SVNWCClient17 extends SVNBasicDelegate {
      * Important: this is a *scheduling* operation. No changes will happen to
      * the repository until a commit occurs. This scheduling can be removed with
      * a call to {@link #doRevert(File[],SVNDepth,Collection)}.
-     * 
+     *
      * @param path
      *            working copy path
      * @param force
@@ -1235,7 +1239,7 @@ public class SVNWCClient17 extends SVNBasicDelegate {
      * Important: this is a *scheduling* operation. No changes will happen to
      * the repository until a commit occurs. This scheduling can be removed with
      * a call to {@link #doRevert(File[],SVNDepth,Collection)}.
-     * 
+     *
      * @param paths
      *            working copy paths to add
      * @param force
@@ -1305,7 +1309,7 @@ public class SVNWCClient17 extends SVNBasicDelegate {
      * Important: this is a *scheduling* operation. No changes will happen to
      * the repository until a commit occurs. This scheduling can be removed with
      * a call to {@link #doRevert(File[],SVNDepth,Collection)}.
-     * 
+     *
      * @param path
      *            working copy path
      * @param force
@@ -1347,7 +1351,7 @@ public class SVNWCClient17 extends SVNBasicDelegate {
      * perform any deletion\addition in the filesysem nor does it require a
      * connection to the repository. It just marks the current <code>path</code>
      * item as being replaced.
-     * 
+     *
      * @param path
      *            working copy path to mark as
      * @throws SVNException
@@ -1361,7 +1365,7 @@ public class SVNWCClient17 extends SVNBasicDelegate {
     /**
      * Reverts all local changes made to a Working Copy item(s) thus bringing it
      * to a 'pristine' state.
-     * 
+     *
      * @param path
      *            a WC path to perform a revert on
      * @param recursive
@@ -1385,7 +1389,7 @@ public class SVNWCClient17 extends SVNBasicDelegate {
     /**
      * Reverts all local changes made to a Working Copy item(s) thus bringing it
      * to a 'pristine' state.
-     * 
+     *
      * @param paths
      *            a WC paths to perform a revert on
      * @param recursive
@@ -1432,7 +1436,7 @@ public class SVNWCClient17 extends SVNBasicDelegate {
      * If an item specified for reversion is not under version control, then
      * does not fail with an exception, just invokes {@link ISVNEventHandler}
      * using notification code {@link SVNEventAction#SKIP}.
-     * 
+     *
      * @param paths
      *            working copy paths to revert
      * @param depth
@@ -1449,7 +1453,7 @@ public class SVNWCClient17 extends SVNBasicDelegate {
 
     /**
      * Resolves a 'conflicted' state on a Working Copy item.
-     * 
+     *
      * @param path
      *            a WC item to be resolved
      * @param recursive
@@ -1497,7 +1501,7 @@ public class SVNWCClient17 extends SVNBasicDelegate {
      * <p/>
      * This is equivalent to calling
      * <code>doResolve(path, depth, true, true, conflictChoice)</code>.
-     * 
+     *
      * @param path
      *            working copy path
      * @param depth
@@ -1541,7 +1545,7 @@ public class SVNWCClient17 extends SVNBasicDelegate {
      * {@link ISVNEntryHandler} is not <span class="javakeyword">null</span>,
      * then an {@link SVNEventAction#RESOLVED} event is dispatched to the
      * handler.
-     * 
+     *
      * @param path
      *            working copy path
      * @param depth
@@ -1589,7 +1593,7 @@ public class SVNWCClient17 extends SVNBasicDelegate {
      * {@link ISVNEntryHandler} is not <span class="javakeyword">null</span>,
      * then an {@link SVNEventAction#RESOLVED} event is dispatched to the
      * handler.
-     * 
+     *
      * @param path
      *            working copy path
      * @param depth
@@ -1613,7 +1617,7 @@ public class SVNWCClient17 extends SVNBasicDelegate {
     /**
      * Locks file items in a Working Copy as well as in a repository so that no
      * other user can commit changes to them.
-     * 
+     *
      * @param paths
      *            an array of local WC file paths that should be locked
      * @param stealLock
@@ -1640,7 +1644,7 @@ public class SVNWCClient17 extends SVNBasicDelegate {
     /**
      * Locks file items in a repository so that no other user can commit changes
      * to them.
-     * 
+     *
      * @param urls
      *            an array of URLs to be locked
      * @param stealLock
@@ -1658,7 +1662,7 @@ public class SVNWCClient17 extends SVNBasicDelegate {
 
     /**
      * Unlocks file items in a Working Copy as well as in a repository.
-     * 
+     *
      * @param paths
      *            an array of local WC file paths that should be unlocked
      * @param breakLock
@@ -1686,7 +1690,7 @@ public class SVNWCClient17 extends SVNBasicDelegate {
 
     /**
      * Unlocks file items in a repository.
-     * 
+     *
      * @param urls
      *            an array of URLs that should be unlocked
      * @param breakLock
@@ -1709,7 +1713,7 @@ public class SVNWCClient17 extends SVNBasicDelegate {
      * If <code>revision</code> is valid and not local, then information will be
      * collected on remote items (that is taken from a repository). Otherwise
      * information is gathered on local items not accessing a repository.
-     * 
+     *
      * @param path
      *            a WC item on which info should be obtained
      * @param revision
@@ -1746,7 +1750,7 @@ public class SVNWCClient17 extends SVNBasicDelegate {
      * local, then information will be collected on remote items (that is taken
      * from a repository). Otherwise information is gathered on local items not
      * accessing a repository.
-     * 
+     *
      * @param path
      *            a WC item on which info should be obtained
      * @param pegRevision
@@ -1808,7 +1812,7 @@ public class SVNWCClient17 extends SVNBasicDelegate {
      * member of one of those changelists. If <code>changeLists</code> is empty
      * (or <span class="javakeyword">null</span>), no changelist filtering
      * occurs.
-     * 
+     *
      * @param path
      *            a WC item on which info should be obtained
      * @param pegRevision
@@ -1825,14 +1829,75 @@ public class SVNWCClient17 extends SVNBasicDelegate {
      * @since 1.2, SVN 1.5
      */
     public void doInfo(File path, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, Collection changeLists, ISVNInfoHandler handler) throws SVNException {
-        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT);
-        SVNErrorManager.error(err, SVNLogType.CLIENT);
+        if (handler == null) {
+            return;
+        }
+        boolean local = (revision == null || !revision.isValid() || revision.isLocal()) && (pegRevision == null || !pegRevision.isValid() || pegRevision.isLocal());
+        if (!local) {
+            /*
+            SVNWCAccess wcAccess = createWCAccess();
+            SVNRevision wcRevision = null;
+            SVNURL url = null;
+            try {
+                wcAccess.probeOpen(path, false, 0);
+                SVNEntry entry = wcAccess.getVersionedEntry(path, false);
+                url = entry.getSVNURL();
+                if (url == null) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", path);
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                }
+                wcRevision = SVNRevision.create(entry.getRevision());
+            } finally {
+                wcAccess.close();
+            }
+            doInfo(url, pegRevision == null || !pegRevision.isValid() || pegRevision.isLocal() ? wcRevision : pegRevision, revision, depth, handler);
+            return;
+            */
+            throw new UnsupportedOperationException();
+        }
+        Collection changelistsSet = null;
+        if (changeLists != null) {
+            changelistsSet = new SVNHashSet();
+            for (Iterator changeListsIter = changeLists.iterator(); changeListsIter.hasNext();) {
+                String changeList = (String) changeListsIter.next();
+                changelistsSet.add(changeList);
+            }
+        }
+        crawlEntries(path, depth, changelistsSet, handler);
+    }
+
+    private void crawlEntries(final File path, final SVNDepth depth, final Collection changelistsSet, final ISVNInfoHandler handler) throws SVNException {
+        try{
+            final ISVNWCNodeHandler nodeHandler = new ISVNWCNodeHandler() {
+                public void nodeFound(File localAbspath) throws SVNException {
+                    if (getContext().isChangelistMatch(localAbspath, changelistsSet)) {
+                        handler.handleInfo( buildInfoForEntry(path) );
+                    }
+                }
+            };
+            getContext().nodeWalkChildren(path, nodeHandler, false, depth);
+        } catch (SVNException e) {
+            final SVNErrorCode errorCode = e.getErrorMessage().getErrorCode();
+            if(errorCode == SVNErrorCode.WC_PATH_NOT_FOUND || errorCode == SVNErrorCode.UNVERSIONED_RESOURCE ) {
+                final SVNTreeConflictDescription tc = getContext().getTreeConflict(path);
+                if(tc!=null) {
+                    SVNInfo info = SVNInfo.createInfo(path, tc);
+                    handler.handleInfo(info);
+                    return;
+                }
+            }
+            SVNErrorManager.error(e.getErrorMessage(), SVNLogType.WC);
+        }
+    }
+
+    private SVNInfo buildInfoForEntry(File path) throws SVNException {
+        throw new UnsupportedOperationException();
     }
 
     /**
      * Collects information about item(s) in a repository and passes it to an
      * info handler.
-     * 
+     *
      * @param url
      *            a URL of an item which information is to be obtained and
      *            processed
@@ -1886,7 +1951,7 @@ public class SVNWCClient17 extends SVNBasicDelegate {
      * {@link SVNDepth#IMMEDIATES}, the preceding plus on each immediate
      * subdirectory; if {@link SVNDepth#INFINITY}, then recurses fully, invoking
      * <code>handler</code> on <code>url</code> and everything beneath it.
-     * 
+     *
      * @param url
      *            versioned item url
      * @param pegRevision
@@ -1901,8 +1966,7 @@ public class SVNWCClient17 extends SVNBasicDelegate {
      * @since 1.2, SVN 1.5
      */
     public void doInfo(SVNURL url, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, ISVNInfoHandler handler) throws SVNException {
-        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT);
-        SVNErrorManager.error(err, SVNLogType.CLIENT);
+        throw new UnsupportedOperationException();
     }
 
     /**
@@ -1911,7 +1975,7 @@ public class SVNWCClient17 extends SVNBasicDelegate {
      * <p/>
      * This method is the same as
      * <code>doGetWorkingCopyID(path, trailURL, false)</code>.
-     * 
+     *
      * @param path
      *            a local path
      * @param trailURL
@@ -1954,7 +2018,7 @@ public class SVNWCClient17 extends SVNBasicDelegate {
      * <p/>
      * This method operates on local working copies only without accessing a
      * repository.
-     * 
+     *
      * @param path
      *            a local path
      * @param trailURL
@@ -1986,7 +2050,7 @@ public class SVNWCClient17 extends SVNBasicDelegate {
      * <code>doInfo(path, SVNRevision.UNDEFINED, revision, SVNDepth.EMPTY, null, handler)</code>
      * where <code>handler</code> just stores {@link SVNInfo} for the
      * <code>path</code> and then returns it to the caller.
-     * 
+     *
      * @param path
      *            a WC item on which info should be obtained
      * @param revision
@@ -2016,7 +2080,7 @@ public class SVNWCClient17 extends SVNBasicDelegate {
      * <code>doInfo(url, pegRevision, revision, SVNDepth.EMPTY, handler)</code>
      * where <code>handler</code> just stores {@link SVNInfo} for the
      * <code>url</code>.
-     * 
+     *
      * @param url
      *            a URL of an item which information is to be obtained
      * @param pegRevision
@@ -2043,7 +2107,7 @@ public class SVNWCClient17 extends SVNBasicDelegate {
      * This method does not connect to a repository, it's a local operation
      * only. Nor does it change any user's versioned data. Changes are made only
      * in administrative version control files.
-     * 
+     *
      * @param directory
      *            working copy path
      * @throws SVNException
@@ -2065,7 +2129,7 @@ public class SVNWCClient17 extends SVNBasicDelegate {
      * This method does not connect to a repository, it's a local operation
      * only. Nor does it change any user's versioned data. Changes are made only
      * in administrative version control files.
-     * 
+     *
      * @param directory
      *            working copy directory
      * @param format
@@ -2081,7 +2145,7 @@ public class SVNWCClient17 extends SVNBasicDelegate {
 
     /**
      * This method is deprecated.
-     * 
+     *
      * @param path
      *            a WC item which properties are to be modified
      * @param propName
