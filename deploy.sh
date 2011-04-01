@@ -2,6 +2,12 @@
 tiger
 ant clean build-src build-library
 
+animal-sniffer -t Java5 build/lib/svnkit.jar
+if [ $? != 0 ]; then
+    echo "Incompatible classes"
+    exit 1
+fi
+
 version=1.3.4-jenkins-4
 
 # be sure to update pom.xml and svnkit.build.properties
