@@ -8,7 +8,7 @@ if [ $? != 0 ]; then
     exit 1
 fi
 
-version=1.3.4-jenkins-4
+version=1.3.4-jenkins-5
 
 # be sure to update pom.xml and svnkit.build.properties
 
