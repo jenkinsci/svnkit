@@ -445,7 +445,7 @@ public class SVNUpdateClient17 extends SVNBaseClient17 {
             SVNRepository repos = createRepository(anchorUrl, anchorAbspath, true);
             boolean serverSupportsDepth = repos.hasCapability(SVNCapability.DEPTH);
             final SVNReporter17 reporter = new SVNReporter17(localAbspath, wcContext, true, !serverSupportsDepth, depth, isUpdateLocksOnDemand(), false, !depthIsSticky, useCommitTimes, getDebugLog());
-            long revNumber = getRevisionNumber(revision, repos, localAbspath);
+            long revNumber = getContext().getRevisionNumber(revision, null, repos, localAbspath);
             final SVNURL reposRoot = repos.getRepositoryRoot(true);
 
             final SVNRepository[] repos2 = new SVNRepository[1];

@@ -10,6 +10,7 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
@@ -20,6 +21,10 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.admin.ISVNEntryHandler;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.ISVNWCNodeHandler;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.SVNWCNodeReposInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.DefaultSVNCommitHandler;
 import org.tmatesoft.svn.core.wc.ISVNAddParameters;
@@ -1891,6 +1896,27 @@ public class SVNWCClient17 extends SVNBaseClient17 {
     }
 
     private SVNInfo buildInfoForEntry(File path) throws SVNException {
+
+        boolean exclude = false;
+
+        SVNWCContext context = getContext();
+        SVNNodeKind kind = context.readKind(path, false);
+        if(kind==SVNNodeKind.NONE) {
+            exclude = context.getDb().readInfo(path, InfoField.status).status == SVNWCDbStatus.Excluded;
+            if(!exclude) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND,
+                        "The node ''{0}'' was not found.", path);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+        }
+
+        SVNURL url = context.getNodeUrl(path);
+        SVNWCNodeReposInfo reposInfo = context.getNodeReposInfo(path, true, true);
+        WCDbInfo changeInfo = context.getDb().readInfo(path, InfoField.changedAuthor,
+                InfoField.changedDate, InfoField.changedRev);
+        long revnum = context.getNodeBaseRev(path);
+
+
         throw new UnsupportedOperationException();
     }
 

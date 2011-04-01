@@ -433,7 +433,7 @@ public class SVNWCContext {
         return db.readInfo(path, InfoField.changedRev, InfoField.changedDate, InfoField.changedAuthor);
     }
 
-    private long getNodeCommitBaseRev(File local_abspath) throws SVNException {
+    public long getNodeCommitBaseRev(File local_abspath) throws SVNException {
         final WCDbInfo info = db.readInfo(local_abspath, InfoField.status, InfoField.revision, InfoField.haveBase);
         /*
          * If this returned a valid revnum, there is no WORKING node. The node
