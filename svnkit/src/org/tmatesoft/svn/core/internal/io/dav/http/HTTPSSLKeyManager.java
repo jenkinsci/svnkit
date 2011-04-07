@@ -30,6 +30,7 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.X509KeyManager;
 
 import org.tmatesoft.svn.core.SVNAuthenticationException;
+import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -433,6 +434,9 @@ public final class HTTPSSLKeyManager implements X509KeyManager {
                         keyManagers = loadClientCertificate(myAuthentication.getCertificateFile(), myAuthentication.getPassword());
                     }
                 }
+                
+            } catch (SVNCancelException cancel) {
+                throw cancel;
             } catch (SVNException ex) {
                 final SVNErrorMessage sslErr = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "SSL handshake failed: ''{0}''", new Object[] { ex.getMessage() }, SVNErrorMessage.TYPE_ERROR, ex.getCause());
                 authenticationManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.SSL, realm, sslErr, myAuthentication);
