@@ -23,4 +23,135 @@
         </dependency>
     </dependencies>
 
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.tmatesoft.maven.plugins</groupId>
+                <artifactId>copy-dependencies-plugin</artifactId>
+                <version>0.0.2</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <targetDirectory>${project.build.directory}/lib</targetDirectory>
+                            <resources>
+                                <!-- OpenVMS Script -->
+                                <resource>
+                                    <eol>unix</eol>
+                                    <file>${project.build.scriptSourceDirectory}/jsvnsetup.openvms</file>
+                                    <target>${project.build.directory}/bin/jsvnsetup.openvms</target>
+                                </resource>
+
+                                <!-- jsvn -->
+                                <resource>
+                                    <eol>unix</eol>
+                                    <file>${project.build.scriptSourceDirectory}/jsvn</file>
+                                    <target>${project.build.directory}/bin/jsvn</target>
+                                    <replacements>
+                                        <mainClass>org.tmatesoft.svn.cli.svn.SVN</mainClass>
+                                    </replacements>
+                                </resource>
+                                <resource>
+                                    <eol>windows</eol>
+                                    <file>${project.build.scriptSourceDirectory}/jsvn.bat</file>
+                                    <target>${project.build.directory}/bin/jsvn.bat</target>
+                                    <replacements>
+                                        <mainClass>org.tmatesoft.svn.cli.svn.SVN</mainClass>
+                                    </replacements>
+                                </resource>
+                                <!-- jsvnadmin -->
+                                <resource>
+                                    <eol>unix</eol>
+                                    <file>${project.build.scriptSourceDirectory}/jsvn</file>
+                                    <target>${project.build.directory}/bin/jsvnadmin</target>
+                                    <replacements>
+                                        <mainClass>org.tmatesoft.svn.cli.svnadmin.SVNAdmin</mainClass>
+                                    </replacements>
+                                </resource>
+                                <resource>
+                                    <eol>windows</eol>
+                                    <file>${project.build.scriptSourceDirectory}/jsvn.bat</file>
+                                    <target>${project.build.directory}/bin/jsvnadmin.bat</target>
+                                    <replacements>
+                                        <mainClass>org.tmatesoft.svn.cli.svnadmin.SVNAdmin</mainClass>
+                                    </replacements>
+                                </resource>
+                                <!-- jsvndumpfilter -->
+                                <resource>
+                                    <eol>unix</eol>
+                                    <file>${project.build.scriptSourceDirectory}/jsvn</file>
+                                    <target>${project.build.directory}/bin/jsvndumpfilter</target>
+                                    <replacements>
+                                        <mainClass>org.tmatesoft.svn.cli.svndumpfilter.SVNDumpFilter</mainClass>
+                                    </replacements>
+                                </resource>
+                                <resource>
+                                    <eol>windows</eol>
+                                    <file>${project.build.scriptSourceDirectory}/jsvn.bat</file>
+                                    <target>${project.build.directory}/bin/jsvndumpfilter.bat</target>
+                                    <replacements>
+                                        <mainClass>org.tmatesoft.svn.cli.svndumpfilter.SVNDumpFilter</mainClass>
+                                    </replacements>
+                                </resource>
+                                <!-- jsvnlook -->
+                                <resource>
+                                    <eol>unix</eol>
+                                    <file>${project.build.scriptSourceDirectory}/jsvn</file>
+                                    <target>${project.build.directory}/bin/jsvnlook</target>
+                                    <replacements>
+                                        <mainClass>org.tmatesoft.svn.cli.svnlook.SVNLook</mainClass>
+                                    </replacements>
+                                </resource>
+                                <resource>
+                                    <eol>windows</eol>
+                                    <file>${project.build.scriptSourceDirectory}/jsvn.bat</file>
+                                    <target>${project.build.directory}/bin/jsvnlook.bat</target>
+                                    <replacements>
+                                        <mainClass>org.tmatesoft.svn.cli.svnlook.SVNLook</mainClass>
+                                    </replacements>
+                                </resource>
+                                <!-- jsvnsync -->
+                                <resource>
+                                    <eol>unix</eol>
+                                    <file>${project.build.scriptSourceDirectory}/jsvn</file>
+                                    <target>${project.build.directory}/bin/jsvnsync</target>
+                                    <replacements>
+                                        <mainClass>org.tmatesoft.svn.cli.svnsync.SVNSync</mainClass>
+                                    </replacements>
+                                </resource>
+                                <resource>
+                                    <eol>windows</eol>
+                                    <file>${project.build.scriptSourceDirectory}/jsvn.bat</file>
+                                    <target>${project.build.directory}/bin/jsvnsync.bat</target>
+                                    <replacements>
+                                        <mainClass>org.tmatesoft.svn.cli.svnsync.SVNSync</mainClass>
+                                    </replacements>
+                                </resource>
+                                <!-- jsvnversion -->
+                                <resource>
+                                    <eol>unix</eol>
+                                    <file>${project.build.scriptSourceDirectory}/jsvn</file>
+                                    <target>${project.build.directory}/bin/jsvnversion</target>
+                                    <replacements>
+                                        <mainClass>org.tmatesoft.svn.cli.svnversion.SVNVersion</mainClass>
+                                    </replacements>
+                                </resource>
+                                <resource>
+                                    <eol>windows</eol>
+                                    <file>${project.build.scriptSourceDirectory}/jsvn.bat</file>
+                                    <target>${project.build.directory}/bin/jsvnversion.bat</target>
+                                    <replacements>
+                                        <mainClass>org.tmatesoft.svn.cli.svnversion.SVNVersion</mainClass>
+                                    </replacements>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
 </project>
