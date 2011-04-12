@@ -37,9 +37,14 @@
                         <configuration>
                             <targetDirectory>${project.build.directory}/lib</targetDirectory>
                             <resources>
+                                <!-- Configuration files -->
+                                <resource>
+                                    <file>src/main/conf/logging.properties</file>
+                                    <target>${project.build.directory}/conf/logging.properties.disabled</target>
+                                </resource>
+
                                 <!-- OpenVMS Script -->
                                 <resource>
-                                    <eol>unix</eol>
                                     <file>${project.build.scriptSourceDirectory}/jsvnsetup.openvms</file>
                                     <target>${project.build.directory}/bin/jsvnsetup.openvms</target>
                                 </resource>
@@ -147,6 +152,27 @@
                                     </replacements>
                                 </resource>
                             </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>2.2.1</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <attach>false</attach>
+                            <outputDirectory></outputDirectory>
+                            <descriptors>
+                                <descriptor>${project.basedir}/src/main/assembly/cli.xml</descriptor>
+                            </descriptors>
                         </configuration>
                     </execution>
                 </executions>

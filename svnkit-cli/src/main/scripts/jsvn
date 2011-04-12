@@ -54,9 +54,10 @@ then
   SVNKIT_LIB="$BASEDIR"/lib
 fi
 
+CLASSPATH="$BASEDIR/conf"
 ${dependency:CLASSPATH=$CLASSPATH:"$SVNKIT_LIB/${dependency.file}"}
 
-EXTRA_JVM_ARGUMENTS="-Djava.util.logging.config.file=logging.properties -Dsun.io.useCanonCaches=false"
+EXTRA_JVM_ARGUMENTS="-Djava.util.logging.config.file=$BASEDIR/conf/logging.properties -Dsun.io.useCanonCaches=false"
 
 # For Cygwin, switch paths to Windows format before running java
 if $cygwin; then

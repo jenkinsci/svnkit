@@ -36,6 +36,7 @@
     </modules>
 
     <properties>
+        <svn.compatibleVersion>1.6.16</svn.compatibleVersion>
         <ci.buildNumber>local</ci.buildNumber>
         <scmSubversionHost>svn.svnkit.com</scmSubversionHost>
         <scmSubversionRepositoryRoot>repos</scmSubversionRepositoryRoot>
@@ -80,6 +81,23 @@
                         <goals>
                             <goal>jar</goal>
                         </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- parse project version -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>1.5</version>
+                <executions>
+                    <execution>
+                        <id>parse-version</id>
+                        <goals>
+                            <goal>parse-version</goal>
+                        </goals>
+                        <configuration>
+                            <propertyPrefix>svnkit</propertyPrefix>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
