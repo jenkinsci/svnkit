@@ -8,7 +8,7 @@
     
     <dependencySets>
         <dependencySet>
-            <outputDirectory>/</outputDirectory>
+            <outputDirectory></outputDirectory>
             <useProjectArtifact>true</useProjectArtifact>
             <includes>
                 <include>org.tigris.subversion.javahl:*</include>

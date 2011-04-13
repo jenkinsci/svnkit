@@ -7,12 +7,13 @@ svnkit-cli/bin
 svnkit-cli/target
 svnkit-dav/bin
 svnkit-dav/target
-svnkit-eclipse/bin
 svnkit-javahl16/target
+svnkit-osgi/target
 svnkit-test/bin
 svnkit-test/python-tests-log.xml
 svnkit-test/python.log.html
 svnkit-test/test.properties
+svnkit-update-site/target
 svnkit/bin
 svnkit/src/main/java/org/tmatesoft/svn/examples
 svnkit/src/main/java/org/tmatesoft/svn/util/SVNTest.java

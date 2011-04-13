@@ -33,11 +33,18 @@
         <module>svnkit-javahl16</module>
         <module>svnkit-cli</module>
         <module>svnkit-dav</module>
+
+        <module>svnkit-osgi</module>
+        <module>svnkit-update-site</module>
     </modules>
 
     <properties>
         <svn.compatibleVersion>1.6.16</svn.compatibleVersion>
-        <ci.buildNumber>local</ci.buildNumber>
+
+        <scm.revision>local</scm.revision>
+        <maven.build.timestamp.format>yyyyMMddHHmm</maven.build.timestamp.format>
+        <ci.buildNumber>r${scm.revision}-v${maven.build.timestamp}</ci.buildNumber>
+
         <scmSubversionHost>svn.svnkit.com</scmSubversionHost>
         <scmSubversionRepositoryRoot>repos</scmSubversionRepositoryRoot>
         <scmSubversionRepositoryPath>svnkit</scmSubversionRepositoryPath>

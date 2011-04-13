@@ -1,0 +1,92 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <parent>
+        <artifactId>project</artifactId>
+        <groupId>org.tmatesoft.svnkit</groupId>
+        <version>1.7.0-SNAPSHOT</version>
+    </parent>
+
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>org.tmatesoft.svnkit</groupId>
+    <artifactId>svnkit-update-site</artifactId>
+    <name>SVNKit Eclipse Update Site</name>
+    <description></description>
+    <version>1.7.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <dependencies>
+
+        <!-- separate OSGi bundles -->
+        <dependency>
+            <artifactId>jna-osgi</artifactId>
+            <groupId>net.java.dev.jna</groupId>
+            <version>3.2.7-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <artifactId>trilead-ssh2-osgi</artifactId>
+            <groupId>com.trilead</groupId>
+            <version>1.0.0.build214-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <artifactId>sqljet-osgi</artifactId>
+            <groupId>org.tmatesoft.sqljet</groupId>
+            <version>1.0.5-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <artifactId>svnkit-osgi</artifactId>
+            <groupId>org.tmatesoft.svnkit</groupId>
+            <version>1.7.0-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+       <plugins>
+<plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>2.2</version>
+        <executions>
+          <execution>
+            <id>copy-dependencies</id>
+            <phase>package</phase>
+            <goals>
+              <goal>copy-dependencies</goal>
+            </goals>
+            <configuration>
+              <excludeTransitive>true</excludeTransitive>
+              <includeScope>compile</includeScope>
+              <outputDirectory>${project.build.directory}/site/plugins</outputDirectory>
+              <overWriteReleases>false</overWriteReleases>
+              <overWriteSnapshots>false</overWriteSnapshots>
+              <overWriteIfNewer>true</overWriteIfNewer>
+              <stripVersion>true</stripVersion>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.6</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <configuration>
+                            <target>
+                                <ant antfile="src/main/ant/update-site.xml" inheritrefs="true" inheritAll="true" />
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

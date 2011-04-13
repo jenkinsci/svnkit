@@ -3,10 +3,12 @@
    <description url="http://eclipse.svnkit.com/1.3.x">
       TMate Sofware SVNKit Library Update Site
    </description>
-   <feature url="features/org.tmatesoft.svnkit_%svnkit.version%.jar" id="org.tmatesoft.svnkit" version="%svnkit.version%">
+
+   <feature url="features/%svnkit.name%_%svnkit.version%.jar" id="%svnkit.name%" version="%svnkit.version%">
       <category name="SVNKit Library"/>
    </feature>
-   <feature url="features/com.sun.jna_%jna.version%.jar" id="com.sun.jna" version="%jna.version%">
+
+   <feature url="features/%jna.name%_%jna.version%.jar" id="%jna.name%" version="%jna.version%">
       <category name="JNA Library"/>
    </feature>
    

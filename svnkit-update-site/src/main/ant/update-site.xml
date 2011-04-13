@@ -1,0 +1,69 @@
+<project default="run">
+
+    <!--
+    Loads entries from a manifest file.
+    @jar     The jar from where to read
+    @prefix  A prefix to prepend
+    -->
+    <macrodef name="loadmf">
+        <attribute name="jar"/>
+        <attribute name="prefix" default=""/>
+        <sequential>
+            <loadproperties>
+                <!-- Load the manifest entries -->
+                <zipentry zipfile="@{jar}" name="META-INF/MANIFEST.MF"/>
+                <!-- Add the prefix -->
+                <filterchain>
+                    <prefixlines prefix="@{prefix}"/>
+                </filterchain>
+            </loadproperties>
+        </sequential>
+    </macrodef>
+
+    <target name="run">
+       <!-- svnkit -->
+       <loadmf jar="target/site/plugins/svnkit-osgi.jar" prefix="svnkit."/>
+       <move file="target/site/plugins/svnkit-osgi.jar" tofile="target/site/plugins/${svnkit.Bundle-SymbolicName}_${svnkit.Bundle-Version}.jar"/>
+       <!-- sqljet -->
+       <loadmf jar="target/site/plugins/sqljet-osgi.jar" prefix="sqljet."/>
+       <move file="target/site/plugins/sqljet-osgi.jar" tofile="target/site/plugins/${sqljet.Bundle-SymbolicName}_${sqljet.Bundle-Version}.jar"/>
+       <!-- trilead -->
+       <loadmf jar="target/site/plugins/trilead-ssh2-osgi.jar" prefix="trilead."/>
+       <move file="target/site/plugins/trilead-ssh2-osgi.jar" tofile="target/site/plugins/${trilead.Bundle-SymbolicName}_${trilead.Bundle-Version}.jar"/>
+       <!-- jna -->
+       <loadmf jar="target/site/plugins/jna-osgi.jar" prefix="jna."/>
+       <move file="target/site/plugins/jna-osgi.jar" tofile="target/site/plugins/${jna.Bundle-SymbolicName}_${jna.Bundle-Version}.jar"/>
+
+       <!-- copy feature files -->
+       <copy todir="target/site">
+         <fileset dir="src/main/site"/>
+         <filterset begintoken="%" endtoken="%">
+            <filter token="svnkit.version" value="${svnkit.Bundle-Version}"/>
+            <filter token="svnkit.name" value="${svnkit.Bundle-SymbolicName}"/>
+            <filter token="sqljet.version" value="${sqljet.Bundle-Version}"/>
+            <filter token="sqljet.name" value="${sqljet.Bundle-SymbolicName}"/>
+            <filter token="jna.version" value="${jna.Bundle-Version}"/>
+            <filter token="jna.name" value="${jna.Bundle-SymbolicName}"/>
+            <filter token="trilead.version" value="${trilead.Bundle-Version}"/>
+            <filter token="trilead.name" value="${trilead.Bundle-SymbolicName}"/>
+         </filterset>       
+       </copy>
+
+       <!-- build feature jars -->
+       <jar destfile="target/site/features/${svnkit.Bundle-SymbolicName}_${svnkit.Bundle-Version}.jar">
+            <fileset dir="target/site/features/svnkit-osgi-feature"/>
+       </jar>
+       <jar destfile="target/site/features/${jna.Bundle-SymbolicName}_${jna.Bundle-Version}.jar">
+            <fileset dir="target/site/features/jna-osgi-feature"/>
+       </jar>
+       
+       <!-- build update site -->
+       <zip destfile="target/${svnkit.Bundle-SymbolicName}_${svnkit.Bundle-Version}-eclipse.zip">
+            <fileset dir="target/site">
+               <exclude name="features/svnkit-osgi-feature/**"/>
+               <exclude name="features/jna-osgi-feature/**"/>
+            </fileset>
+       </zip>
+    </target>
+
+</project>
