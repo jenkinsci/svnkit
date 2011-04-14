@@ -169,7 +169,7 @@
                             <goal>single</goal>
                         </goals>
                         <configuration>
-                            <attach>false</attach>
+                            <attach>true</attach>
                             <outputDirectory></outputDirectory>
                             <descriptors>
                                 <descriptor>${project.basedir}/src/main/assembly/cli.xml</descriptor>

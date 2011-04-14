@@ -36,6 +36,8 @@
 
         <module>svnkit-osgi</module>
         <module>svnkit-update-site</module>
+
+        <module>svnkit-distribution</module>
     </modules>
 
     <properties>
