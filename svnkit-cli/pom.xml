@@ -28,13 +28,14 @@
             <plugin>
                 <groupId>org.tmatesoft.maven.plugins</groupId>
                 <artifactId>copy-dependencies-plugin</artifactId>
-                <version>0.0.2</version>
+                <version>0.0.3</version>
                 <executions>
                     <execution>
                         <goals>
                             <goal>copy-dependencies</goal>
                         </goals>
                         <configuration>
+                            <includeTransitive>true</includeTransitive>
                             <targetDirectory>${project.build.directory}/lib</targetDirectory>
                             <resources>
                                 <!-- Configuration files -->

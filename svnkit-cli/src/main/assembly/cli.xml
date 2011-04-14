@@ -6,7 +6,8 @@
     <includeBaseDirectory>false</includeBaseDirectory>
     <fileSets>
         <fileSet>
-            <directory>${project.build.directory}</directory>
+            <directory>${project.basedir}</directory>
+            <outputDirectory>svnkit-${project.version}.${ci.buildNumber}</outputDirectory>
             <lineEnding>unix</lineEnding>
             <includes>
                 <include>LICENSE.txt</include>
@@ -14,6 +15,7 @@
         </fileSet>
         <fileSet>
             <directory>${project.build.directory}</directory>
+            <outputDirectory>svnkit-${project.version}.${ci.buildNumber}</outputDirectory>
             <lineEnding>crlf</lineEnding>
             <includes>
                 <include>bin/*.bat</include>
@@ -21,6 +23,7 @@
         </fileSet>
         <fileSet>
             <directory>${project.build.directory}</directory>
+            <outputDirectory>svnkit-${project.version}.${ci.buildNumber}</outputDirectory>
             <lineEnding>unix</lineEnding>
             <fileMode>0755</fileMode>
             <includes>
@@ -32,12 +35,14 @@
         </fileSet>
         <fileSet>
             <directory>${project.build.directory}</directory>
+            <outputDirectory>svnkit-${project.version}.${ci.buildNumber}</outputDirectory>
             <includes>
                 <include>lib/**</include>
             </includes>
         </fileSet>
         <fileSet>
             <directory>${project.build.directory}</directory>
+            <outputDirectory>svnkit-${project.version}.${ci.buildNumber}</outputDirectory>
             <includes>
                 <include>conf/**</include>
             </includes>
