@@ -595,7 +595,8 @@ public class SVNFileUtil {
             }
         }
         try {
-            if (useCopyOnSetWritable() && file.length() < 1024 * 100) {
+            SVNFileType fileType = SVNFileType.getType(file);            
+            if (fileType == SVNFileType.FILE && useCopyOnSetWritable() && file.length() < 1024 * 100) {
                 // faster way for small files.
                 File tmp = createUniqueFile(SVNFileUtil.getFileDir(file), SVNFileUtil.getFileName(file), ".ro", true);
                 copyFile(file, tmp, false);
