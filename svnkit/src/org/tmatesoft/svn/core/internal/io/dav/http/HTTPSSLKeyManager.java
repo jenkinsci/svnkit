@@ -230,6 +230,7 @@ public final class HTTPSSLKeyManager implements X509KeyManager {
                     passphrase = ((SVNPasswordAuthentication) auth).getPassword().toCharArray();
                 } else {
                     auth = null;
+                    SVNErrorManager.cancel("authentication cancelled", SVNLogType.NETWORK);
                     break;
                 }
                 continue;
@@ -435,10 +436,12 @@ public final class HTTPSSLKeyManager implements X509KeyManager {
                     }
                 }
                 
+            } catch (SVNAuthenticationException authenticationException) {
+                throw authenticationException;
             } catch (SVNCancelException cancel) {
                 throw cancel;
             } catch (SVNException ex) {
-                final SVNErrorMessage sslErr = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "SSL handshake failed: ''{0}''", new Object[] { ex.getMessage() }, SVNErrorMessage.TYPE_ERROR, ex.getCause());
+                final SVNErrorMessage sslErr = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Failed to load SSL client certificate: ''{0}''", new Object[] { ex.getMessage() }, SVNErrorMessage.TYPE_ERROR, ex.getCause());
                 authenticationManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.SSL, realm, sslErr, myAuthentication);
                 continue;
             }
