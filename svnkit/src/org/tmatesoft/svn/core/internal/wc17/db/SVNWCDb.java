@@ -1924,25 +1924,20 @@ public class SVNWCDb implements ISVNWCDb {
                 /* ### Store in description! */
                 String prop_reject = getColumnText(stmt, 0);
                 if (prop_reject != null) {
-                    File reposFile;
-                    if (localAbsPath.isDirectory()) {
-                        reposFile = SVNFileUtil.createFilePath(localAbsPath, prop_reject);
-                    } else {
-                        reposFile = SVNFileUtil.createFilePath(SVNFileUtil.getFileDir(localAbsPath), prop_reject);
-                    }
-                    SVNMergeFileSet mergeFiles = new SVNMergeFileSet(null, null, null, localAbsPath, null, reposFile, null, null, null);
-                    SVNPropertyConflictDescription desc = new SVNPropertyConflictDescription(mergeFiles, SVNNodeKind.UNKNOWN, "", null, null);
+                    final File reposFile = SVNFileUtil.createFilePath(pdh.getWCRoot().getAbsPath(), prop_reject);
+                    final SVNMergeFileSet mergeFiles = new SVNMergeFileSet(null, null, null, localAbsPath, null, reposFile, null, null, null);
+                    final SVNPropertyConflictDescription desc = new SVNPropertyConflictDescription(mergeFiles, SVNNodeKind.UNKNOWN, "", null, null);
                     conflicts.add(desc);
                 }
 
-                String conflict_old = getColumnText(stmt, 1);
-                String conflict_new = getColumnText(stmt, 2);
-                String conflict_working = getColumnText(stmt, 3);
+                final String conflict_old = getColumnText(stmt, 1);
+                final String conflict_new = getColumnText(stmt, 2);
+                final String conflict_working = getColumnText(stmt, 3);
 
                 if (conflict_old != null || conflict_new != null || conflict_working != null) {
-                    File baseFile = conflict_old != null ? new File(conflict_old) : null;
-                    File theirFile = conflict_new != null ? new File(conflict_new) : null;
-                    File myFile = conflict_working != null ? new File(conflict_working) : null;
+                    File baseFile = conflict_old != null ? SVNFileUtil.createFilePath(pdh.getWCRoot().getAbsPath(), conflict_old) : null;
+                    File theirFile = conflict_new != null ? SVNFileUtil.createFilePath(pdh.getWCRoot().getAbsPath(), conflict_new) : null;
+                    File myFile = conflict_working != null ? SVNFileUtil.createFilePath(pdh.getWCRoot().getAbsPath(), conflict_working) : null;
                     File mergedFile = new File(SVNFileUtil.getFileName(localAbsPath));
                     SVNMergeFileSet mergeFiles = new SVNMergeFileSet(null, null, baseFile, myFile, null, theirFile, mergedFile, null, null);
                     SVNTextConflictDescription desc = new SVNTextConflictDescription(mergeFiles, SVNNodeKind.UNKNOWN, null, null);
