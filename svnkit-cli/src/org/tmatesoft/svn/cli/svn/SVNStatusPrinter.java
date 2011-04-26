@@ -28,14 +28,14 @@ public class SVNStatusPrinter {
     public SVNStatusPrinter(SVNCommandEnvironment env) {
         myEnvironment = env;
     }
-    
-    public void printStatus(String path, SVNStatus status, 
+
+    public void printStatus(String path, SVNStatus status,
             boolean detailed, boolean showLastCommitted, boolean skipUnrecognized, boolean showReposLocks) {
-        if (status == null || (skipUnrecognized && !(status.isVersioned() || status.getTreeConflict() != null)) || 
+        if (status == null || (skipUnrecognized && !(status.isVersioned() || status.getTreeConflict() != null)) ||
                 (status.getContentsStatus() == SVNStatusType.STATUS_NONE && status.getRemoteContentsStatus() == SVNStatusType.STATUS_NONE)) {
             return;
         }
-        
+
         char treeStatusCode = ' ';
         String treeDescriptionLine = "";
         if (status.getTreeConflict() != null) {
@@ -43,7 +43,7 @@ public class SVNStatusPrinter {
             treeStatusCode = 'C';
             treeDescriptionLine = "\n      >   " + description;
         }
-        
+
         StringBuffer result = new StringBuffer();
         if (detailed) {
             String wcRevision;
@@ -52,7 +52,7 @@ public class SVNStatusPrinter {
                 wcRevision = "";
             } else if (status.isCopied()) {
                 wcRevision = "-";
-            } else if (!status.getRevision().isValid()) {                
+            } else if (!status.getRevision().isValid()) {
                 if(status.getStatus17()!=null) {
                     SVNStatus17 status17 = status.getStatus17();
                     if (status17.getNodeStatus() == SVNStatusType.STATUS_ADDED ||
@@ -61,8 +61,8 @@ public class SVNStatusPrinter {
                     else if(status17.getNodeStatus()==SVNStatusType.STATUS_DELETED)
                         wcRevision = Long.toString(status17.getChangedRev());
                     else
-                        wcRevision = " ? ";
-                } else 
+                        wcRevision = " - ";
+                } else
                     wcRevision = " ? ";
             } else {
                 wcRevision = Long.toString(status.getRevision().getNumber());
@@ -150,7 +150,7 @@ public class SVNStatusPrinter {
         }
         myEnvironment.getOut().println(result);
     }
-    
+
     private static char getSwitchCharacter(SVNStatus status) {
         if (status == null) {
             return ' ';
