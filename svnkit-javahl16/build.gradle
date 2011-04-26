@@ -1,0 +1,67 @@
+srcRoot = file('src/main/java')
+
+testClasses << {
+    def resolvedArtifact = configurations.testCompile.resolvedConfiguration.resolvedArtifacts.find { it.name == 'svn-javahl-tests' }
+    copy {
+        from zipTree(resolvedArtifact.file)
+        into sourceSets.test.classesDir
+    }
+}
+
+classes << {
+    def resolvedArtifact = configurations.testCompile.resolvedConfiguration.resolvedArtifacts.find { it.name == 'svn-javahl-api' }
+    copy {
+        from zipTree(resolvedArtifact.file)
+        into sourceSets.main.classesDir
+        exclude 'META-INF/**'
+        eachFile { details ->
+            if (details.isDirectory()) {
+                return
+            } else if (details.name.endsWith('.class')) {
+                String javaFilePath = details.path            
+                javaFilePath = javaFilePath.substring(0, javaFilePath.lastIndexOf('.'))
+                while (javaFilePath.indexOf('$') > 0) {
+                    javaFilePath = javaFilePath.substring(0, javaFilePath.lastIndexOf('$'))
+                }
+                File candidate = new File(srcRoot, javaFilePath + '.java')
+                if (candidate.exists()) {
+                    details.exclude()
+                }
+            }
+        }
+    }
+}
+
+test {
+    includes = ['**/BasicTests*', '**/SVNAdminTests*']    
+    //does not pass on Windows: BasicTests.testBasicChangelist
+ 
+    ignoreFailures = true
+    workingDir = file('build/tests-working-dir')
+} 
+
+test.doFirst() {
+    mkdir('build/tests-working-dir')
+}
+
+configurations {
+    javahlSources
+}
+
+dependencies {
+    javahlSources group: 'org.tigris.subversion.javahl', name: 'svn-javahl-api', version: '1.6.17-SNAPSHOT', classifier: 'sources'
+}
+
+sourcesJar {
+    into('') {
+        from configurations.javahlSources.files.collect { zipTree(it) }
+        exclude 'META-INF/**' 
+        eachFile { f ->
+            if (new File(srcRoot, f.path).exists()) {
+                f.exclude()
+            }
+        }
+    }
+}
+
+sourcesJar.dependsOn configurations.javahlSources

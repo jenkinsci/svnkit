@@ -1,12 +1,16 @@
 /*.iws
+/.gradle
 /bin
 /build
 doc/examples/bin
 /lib
 svnkit-cli/bin
+svnkit-cli/build
 svnkit-cli/target
 svnkit-dav/bin
+svnkit-dav/build
 svnkit-dav/target
+svnkit-javahl16/build
 svnkit-javahl16/target
 svnkit-osgi/target
 svnkit-test/bin
@@ -15,6 +19,7 @@ svnkit-test/python.log.html
 svnkit-test/test.properties
 svnkit-update-site/target
 svnkit/bin
+svnkit/build
 svnkit/src/main/java/org/tmatesoft/svn/examples
 svnkit/src/main/java/org/tmatesoft/svn/util/SVNTest.java
 svnkit/target

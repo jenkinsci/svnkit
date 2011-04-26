@@ -1,0 +1,107 @@
+version = '1.7.0-SNAPSHOT'
+release = false
+target = '1.5'
+
+buildscript {
+    repositories {
+        mavenRepo(urls: [mavenPublicRepositoryURL]) {
+            snapshotTimeout = org.gradle.api.internal.artifacts.ivyservice.GradleIBiblioResolver.ALWAYS
+        }
+    }
+    dependencies { classpath 'org.tmatesoft.build:build:0.9.5-SNAPSHOT' }
+}
+
+task wrapper(type: Wrapper) {}
+
+def javaProjects() {
+    return subprojects
+}
+
+allprojects {
+    apply plugin : 'base'
+    apply plugin : 'build'
+}
+
+configure(javaProjects()) {
+    apply plugin : 'java'
+
+    sourceCompatibility = target
+    targetCompatibility = target
+
+    configurations {
+        sources
+        javadocs
+    }
+
+    task sourcesJar(type: Jar) {
+        description = 'Builds Java Sources Jar'
+        from sourceSets.main.java.srcDirs
+        classifier = 'sources'
+    }
+
+    jar {
+        metaInf {
+            from rootProject.file('LICENSE.txt')
+        }
+    }
+
+    artifacts { sources sourcesJar }
+}
+
+configure(javaProjects()) {
+    apply plugin : 'eclipse'
+
+    def jreContainer = 'org.eclipse.jdt.launching.JRE_CONTAINER'
+    if (target == '1.4' || target == '1.5') {
+        jreContainer += '/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-' + targetCompatibility
+    } else if (target == '1.6' || target == '1.7') {
+        jreContainer += '/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-' + targetCompatibility
+    }
+
+    eclipseClasspath {
+        variables = [ 'GRADLE_USER_HOME' : project.gradle.gradleUserHomeDir ]
+
+        defaultOutputDir = file('build/classes')
+        containers.clear()
+        containers.add(jreContainer)
+
+        whenConfigured { classpath ->
+            classpath.entries.findAll { it.kind == 'src' && it.path ==~ 'src/test/.*' }.each { it.output = 'build/test-classes' }
+            classpath.entries.findAll { it.kind == 'src' && it.path ==~ 'src/main/.*' }.each { it.output = 'build/classes' }
+        }
+    }
+}
+
+project(':svnkit') {
+    dependencies {
+        compile 'de.regnis.q.sequence:sequence-library:1.0.0'
+        compile 'org.tmatesoft.sqljet:sqljet:1.0.5'
+        compile 'net.java.dev.jna:jna:3.2.7'
+        compile 'com.trilead:trilead-ssh2:1.0.0-build214'
+        
+    }
+}
+
+project(':svnkit-javahl16') {
+    dependencies {
+        compile project(path: ':svnkit')
+        compile 'org.tigris.subversion.javahl:svn-javahl-api:1.6.17-SNAPSHOT'
+        
+        testCompile 'org.tigris.subversion.javahl:svn-javahl-tests:1.6.17-SNAPSHOT'
+    }
+}
+
+project(':svnkit-cli') {
+    dependencies {
+        compile project(path: ':svnkit')
+    }
+}
+
+project(':svnkit-dav') {
+    apply plugin: 'war'
+    
+    dependencies {
+        compile project(path: ':svnkit')
+        compile 'javax.servlet:servlet-api:2.5'
+    }
+}
