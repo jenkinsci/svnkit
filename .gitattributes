@@ -49,6 +49,8 @@ doc/wiki/access_protocols.png -text
 doc/wiki/repository_tree.png -text
 doc/wiki/svnkit_architecture.png -text
 doc/wiki/svnrepository_connection.png -text
+gradle/wrapper/gradle-wrapper.jar -text
+/gradlew eol=lf
 svnkit-cli/.classpath -text
 svnkit-cli/.project -text
 svnkit-cli/.settings/org.eclipse.jdt.core.prefs -text
