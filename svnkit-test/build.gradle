@@ -11,8 +11,9 @@ test.dependsOn configurations.pythonTests16
 test.dependsOn configurations.svnBinaries16
 
 sandboxDir = new File(buildDir, 'sandbox')
-svnBinariesDir = new File(sandboxDir, 'svn')
-pythonTestsDir = new File(sandboxDir, 'python')
+svnBinariesDir = new File(sandboxDir, 'svn-binaries/linux')
+pythonTestsDir = new File(sandboxDir, 'svn-python-tests')
+logsDir = new File(buildDir, 'logs')
 testPropertiesFile = new File(sandboxDir, 'test.properties')
 
 pythonTestsTar = configurations.pythonTests16.files.find {return true}
@@ -23,18 +24,14 @@ test {
 } << {
     // 1. copy (unpack) necessary data and programs to sandbox
     project.mkdir(sandboxDir)
-    ant.untar(src : pythonTestsTar.absolutePath, dest: pythonTestsDir.absolutePath, compression: 'gzip' ) {
-        mapper {
-            cutdirsmapper(dirs:'1')
-        }
+    project.mkdir(logsDir)
+    exec {
+        commandLine 'tar'
+        args '-C', sandboxDir.absolutePath, '-xzf', pythonTestsTar.absolutePath 
     }
-    ant.untar(src : svnBinariesTar.absolutePath, dest: svnBinariesDir.absolutePath, compression: 'gzip' ) {
-        mapper {
-            cutdirsmapper(dirs:'2')
-        }
-        patternset {
-            include(name: 'svn-binaries/linux/**')
-        }
+    exec {
+        commandLine 'tar'
+        args '-C', sandboxDir.absolutePath, '-xzf', svnBinariesTar.absolutePath 
     }
     copy {
         into pythonTestsDir
@@ -69,25 +66,32 @@ test {
         
         args testPropertiesFile.absolutePath, new File(sandboxDir, 'daemon').absolutePath
     }
+
 }
 
 def appendDefaultTestProperties(Map properties) {
     properties.put('python.tests.suite', 'basic')
     properties.put('python.http', 'true')
-    properties.put('python.svn', 'true')
-    properties.put('python.file', 'true')
+    properties.put('python.svn', 'false')
+    properties.put('python.file', 'false')
 }
 
 def generateTestEnvironmentProperties() {
     Properties properties = new Properties()
     
     properties.put('daemon', 'true')
+
+    properties.put('svn.home', svnBinariesDir.absolutePath )
     properties.put('svnserve.path', new File(svnBinariesDir, 'bin/svnserve').absolutePath )
+
     properties.put('apache.path', '/usr/sbin/apache2ctl')
     properties.put('apache.root', '/usr/lib/apache2')
+    properties.put('apache.svn.modules', new File(svnBinariesDir, 'modules').absolutePath )
+
     properties.put('python.launcher', 'python')
+
     properties.put('python.tests', pythonTestsDir.absolutePath )
-    properties.put('svn.home', svnBinariesDir.absolutePath )
+
     
     return properties
 }
