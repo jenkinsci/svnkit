@@ -574,7 +574,6 @@ class HTTPConnection implements IHTTPConnection {
                 }
                 continue;
             } else if (status.getCode() == HttpURLConnection.HTTP_MOVED_PERM || status.getCode() == HttpURLConnection.HTTP_MOVED_TEMP) {
-                close();
                 String newLocation = request.getResponseHeader().getFirstHeaderValue(HTTPHeader.LOCATION_HEADER);
                 if (newLocation == null) {
                     err = request.getErrorMessage();
@@ -595,6 +594,7 @@ class HTTPConnection implements IHTTPConnection {
                     }
                 }
                 err = request.getErrorMessage();
+                close();
             } else if (request.getErrorMessage() != null) {
                 err = request.getErrorMessage();
             } else {
