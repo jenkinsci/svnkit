@@ -131,7 +131,7 @@ class HTTPConnection implements IHTTPConnection {
         myIsSecured = "https".equalsIgnoreCase(myHost.getProtocol());
         myIsSpoolAll = spoolAll;
         mySpoolDirectory = spoolDirectory;
-        myNextRequestTimeout = -1;
+        myNextRequestTimeout = Long.MAX_VALUE;
     }
     
     public SVNURL getHost() {
