@@ -85,9 +85,9 @@ project(':svnkit') {
 project(':svnkit-javahl16') {
     dependencies {
         compile project(path: ':svnkit')
-        compile 'org.tigris.subversion.javahl:svn-javahl-api:1.6.17-SNAPSHOT'
+        compile 'org.tigris.subversion:svn-javahl-api:1.6.17-SNAPSHOT'
         
-        testCompile 'org.tigris.subversion.javahl:svn-javahl-tests:1.6.17-SNAPSHOT'
+        testCompile 'org.tigris.subversion:svn-javahl-tests:1.6.17-SNAPSHOT'
     }
 }
 
@@ -104,4 +104,11 @@ project(':svnkit-dav') {
         compile project(path: ':svnkit')
         compile 'javax.servlet:servlet-api:2.5'
     }
+}
+
+project(':svnkit-test') {
+    dependencies {
+        compile project(path: ':svnkit-cli')
+    }
+    sourcesJar.enabled=false
 }

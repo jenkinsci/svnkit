@@ -40,6 +40,13 @@ test {
         into pythonTestsDir
         from 'patch'
     }    
+    copy {
+        into sandboxDir
+        from project.projectDir 
+        include 'apache/**'
+        include 'daemon/**'
+        include 'python-suite.txt'
+    }
 
     // 2. generate test environment properties and merge them with the test properties
     def testProperties = generateTestEnvironmentProperties()
@@ -48,8 +55,20 @@ test {
         testProperties.save(stream, null)
     }
     
-    // 3. run PythonTest (set proper LD_LIBRARY_PATH to let it start svnserve and use apache modules)
-    // intercept test results...
+    javaexec {
+        workingDir = sandboxDir
+
+        systemProperty 'ant.basedir', project.projectDir.absolutePath
+        systemProperty 'sun.io.useCanonCaches', 'false'
+        systemProperty 'svnkit.compatibleHash', 'true'
+        
+        environment 'LD_LIBRARY_PATH' : new File(svnBinariesDir, 'lib').absolutePath
+        
+        main = 'org.tmatesoft.svn.core.test.PythonTests'
+        classpath = sourceSets.main.runtimeClasspath
+        
+        args testPropertiesFile.absolutePath, new File(sandboxDir, 'daemon').absolutePath
+    }
 }
 
 def appendDefaultTestProperties(Map properties) {
@@ -62,6 +81,7 @@ def appendDefaultTestProperties(Map properties) {
 def generateTestEnvironmentProperties() {
     Properties properties = new Properties()
     
+    properties.put('daemon', 'true')
     properties.put('svnserve.path', new File(svnBinariesDir, 'bin/svnserve').absolutePath )
     properties.put('apache.path', '/usr/sbin/apache2ctl')
     properties.put('apache.root', '/usr/lib/apache2')
