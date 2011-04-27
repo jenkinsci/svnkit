@@ -55,15 +55,12 @@ public class SVNStatusPrinter {
             } else if (!status.getRevision().isValid()) {
                 if(status.getStatus17()!=null) {
                     SVNStatus17 status17 = status.getStatus17();
-                    if (status17.getNodeStatus() == SVNStatusType.STATUS_ADDED ||
-                        status17.getNodeStatus() == SVNStatusType.STATUS_REPLACED)
-                        wcRevision = "0";
-                    else if(status17.getNodeStatus()==SVNStatusType.STATUS_DELETED)
+                    if(status17.getNodeStatus()==SVNStatusType.STATUS_DELETED)
                         wcRevision = Long.toString(status17.getChangedRev());
                     else
-                        wcRevision = " - ";
+                        wcRevision = "-";
                 } else
-                    wcRevision = " ? ";
+                    wcRevision = "?";
             } else {
                 wcRevision = Long.toString(status.getRevision().getNumber());
             }
