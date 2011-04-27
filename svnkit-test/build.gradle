@@ -1,0 +1,73 @@
+configurations {
+    pythonTests16
+    svnBinaries16 
+}
+dependencies {
+    pythonTests16 'org.tigris.subversion:svn-python-tests:1.6.17-SNAPSHOT@tgz'
+    svnBinaries16 'org.tigris.subversion:svn-binaries:1.6.17-SNAPSHOT@tgz'
+}
+
+test.dependsOn configurations.pythonTests16 
+test.dependsOn configurations.svnBinaries16
+
+sandboxDir = new File(buildDir, 'sandbox')
+svnBinariesDir = new File(sandboxDir, 'svn')
+pythonTestsDir = new File(sandboxDir, 'python')
+testPropertiesFile = new File(sandboxDir, 'test.properties')
+
+pythonTestsTar = configurations.pythonTests16.files.find {return true}
+svnBinariesTar = configurations.svnBinaries16.files.find {return true}
+
+test {
+    
+} << {
+    // 1. copy (unpack) necessary data and programs to sandbox
+    project.mkdir(sandboxDir)
+    ant.untar(src : pythonTestsTar.absolutePath, dest: pythonTestsDir.absolutePath, compression: 'gzip' ) {
+        mapper {
+            cutdirsmapper(dirs:'1')
+        }
+    }
+    ant.untar(src : svnBinariesTar.absolutePath, dest: svnBinariesDir.absolutePath, compression: 'gzip' ) {
+        mapper {
+            cutdirsmapper(dirs:'2')
+        }
+        patternset {
+            include(name: 'svn-binaries/linux/**')
+        }
+    }
+    copy {
+        into pythonTestsDir
+        from 'patch'
+    }    
+
+    // 2. generate test environment properties and merge them with the test properties
+    def testProperties = generateTestEnvironmentProperties()
+    appendDefaultTestProperties(testProperties)
+    testPropertiesFile.withOutputStream { stream ->
+        testProperties.save(stream, null)
+    }
+    
+    // 3. run PythonTest (set proper LD_LIBRARY_PATH to let it start svnserve and use apache modules)
+    // intercept test results...
+}
+
+def appendDefaultTestProperties(Map properties) {
+    properties.put('python.tests.suite', 'basic')
+    properties.put('python.http', 'true')
+    properties.put('python.svn', 'true')
+    properties.put('python.file', 'true')
+}
+
+def generateTestEnvironmentProperties() {
+    Properties properties = new Properties()
+    
+    properties.put('svnserve.path', new File(svnBinariesDir, 'bin/svnserve').absolutePath )
+    properties.put('apache.path', '/usr/sbin/apache2ctl')
+    properties.put('apache.root', '/usr/lib/apache2')
+    properties.put('python.launcher', 'python')
+    properties.put('python.tests', pythonTestsDir.absolutePath )
+    properties.put('svn.home', svnBinariesDir.absolutePath )
+    
+    return properties
+}

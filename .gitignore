@@ -14,6 +14,7 @@ svnkit-javahl16/build
 svnkit-javahl16/target
 svnkit-osgi/target
 svnkit-test/bin
+svnkit-test/build
 svnkit-test/python-tests-log.xml
 svnkit-test/python.log.html
 svnkit-test/test.properties

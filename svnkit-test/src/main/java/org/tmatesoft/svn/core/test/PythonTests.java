@@ -544,9 +544,9 @@ public class PythonTests {
         generateClientScript(new File("daemon/template"), new File("daemon/jsvnsync"), "svnsync", portNumber, svnHome);
         generateClientScript(new File("daemon/template"), new File("daemon/jsvndumpfilter"), "svndumpfilter", portNumber, svnHome);
 
-	String pattern = properties.getProperty("python.tests.pattern", null);
+        String pattern = properties.getProperty("python.tests.pattern", null);
         if (pattern != null) {
-	   generateMatcher(new File("daemon/matcher.pl"), new File("daemon/matcher.pl"), pattern);
+            generateMatcher(new File("daemon/matcher.pl"), new File("daemon/matcher.pl"), pattern);
         } else {
            try {
                SVNFileUtil.deleteFile(new File("daemon/matcher.pl"));
