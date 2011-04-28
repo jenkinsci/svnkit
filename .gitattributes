@@ -76,6 +76,13 @@ svnkit-test/apache/users eol=lf
 svnkit-test/daemon/matcher.pl -text
 svnkit-test/daemon/template eol=lf
 svnkit-test/fsfs.conf -text
+svnkit-test/nailgun/Makefile -text
+svnkit-test/nailgun/README.txt -text
+svnkit-test/nailgun/nailgun-0.7.1.jar -text
+svnkit-test/nailgun/nailgun-examples-0.7.1.jar -text
+svnkit-test/nailgun/ng.exe -text
+svnkit-test/nailgun/src/c/ng.c -text
+svnkit-test/nailgun/src/c/ng.c.bak -text
 svnkit-test/patch/entries-dump -text
 svnkit-test/test.mac.properties eol=lf
 svnkit-test/test.unix.properties eol=lf

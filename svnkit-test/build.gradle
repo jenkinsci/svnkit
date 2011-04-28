@@ -26,6 +26,7 @@ test {
     project.mkdir(logsDir)
     untar(pythonTestsTar, sandboxDir)
     untar(svnBinariesTar, sandboxDir)
+    buildNailgun()
 
     copy {
         into pythonTestsDir
@@ -72,9 +73,9 @@ test {
 
 def appendDefaultTestProperties(Map properties) {
     properties.put('python.tests.suite', 'basic')
-    properties.put('python.http', 'true')
+    properties.put('python.http', 'false')
     properties.put('python.svn', 'true')
-    properties.put('python.file', 'true')
+    properties.put('python.file', 'false')
 }
 
 def generateTestEnvironmentProperties() {
@@ -104,6 +105,26 @@ def untar(File tgz, File into) {
     } else {
         ant.untar(src: tgz.absolutePath, dest: into.absolutePath, compression: 'gzip')
     }
+}
+
+def buildNailgun() {
+    copy {
+        from file('nailgun')
+        into new File(sandboxDir, 'daemon')
+
+        include '**/ng.exe'
+        include 'src/**'
+        include 'Makefile'
+    }
+
+    if (getOSName() != 'windows') {
+        exec {
+           commandLine 'make'
+           args 'ng'
+           workingDir = new File(sandboxDir, 'daemon')
+        }
+    }
+   
 }
 
 def getOSName() {
