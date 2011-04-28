@@ -16,10 +16,10 @@ public class NailgunProcessor {
         String programName = context.getArgs()[0];
         
         System.setProperty("user.dir", workingDirectory);
-//        System.setIn(context.in);
         
         String[] programArgs = new String[context.getArgs().length - 1];
         System.arraycopy(context.getArgs(), 1, programArgs, 0, programArgs.length);
+        org.tmatesoft.svn.core.internal.wc.SVNFileUtil.setSleepForTimestamp(false);
 
         if ("svn".equals(programName)) {
             SVN.main(programArgs);
