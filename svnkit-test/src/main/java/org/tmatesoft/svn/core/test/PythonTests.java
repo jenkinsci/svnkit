@@ -724,7 +724,7 @@ public class PythonTests {
         script = script.replaceAll("%name%", name);
         script = script.replaceAll("%port%", Integer.toString(port));
         script = script.replaceAll("%svn_home%", svnHome);
-        script = script.replaceAll("%NG%", new File("daemon/ng.exe").getAbsolutePath().replace(File.separatorChar, '/'));
+        script = script.replaceAll("%NG%", new File("daemon/ng").getAbsolutePath().replace(File.separatorChar, '/'));
         script = script.replace('/', File.separatorChar);
         
         if (SVNFileUtil.isWindows) {

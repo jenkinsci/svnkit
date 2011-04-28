@@ -20,7 +20,7 @@ public class NailgunProcessor {
         
         String[] programArgs = new String[context.getArgs().length - 1];
         System.arraycopy(context.getArgs(), 1, programArgs, 0, programArgs.length);
-        
+
         if ("svn".equals(programName)) {
             SVN.main(programArgs);
         } else if ("svnadmin".equals(programName)) {
