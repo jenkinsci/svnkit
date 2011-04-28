@@ -131,7 +131,7 @@ class HTTPConnection implements IHTTPConnection {
         myIsSecured = "https".equalsIgnoreCase(myHost.getProtocol());
         myIsSpoolAll = spoolAll;
         mySpoolDirectory = spoolDirectory;
-        myNextRequestTimeout = -1;
+        myNextRequestTimeout = Long.MAX_VALUE;
     }
     
     public SVNURL getHost() {
@@ -324,6 +324,7 @@ class HTTPConnection implements IHTTPConnection {
             if (myNextRequestTimeout < 0 || System.currentTimeMillis() >= myNextRequestTimeout) {
                 SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "Keep-Alive timeout detected");
                 close();
+                httpAuth = null;
             }
             int retryCount = 1;
             try {
@@ -574,7 +575,6 @@ class HTTPConnection implements IHTTPConnection {
                 }
                 continue;
             } else if (status.getCode() == HttpURLConnection.HTTP_MOVED_PERM || status.getCode() == HttpURLConnection.HTTP_MOVED_TEMP) {
-                close();
                 String newLocation = request.getResponseHeader().getFirstHeaderValue(HTTPHeader.LOCATION_HEADER);
                 if (newLocation == null) {
                     err = request.getErrorMessage();
@@ -595,6 +595,7 @@ class HTTPConnection implements IHTTPConnection {
                     }
                 }
                 err = request.getErrorMessage();
+                close();
             } else if (request.getErrorMessage() != null) {
                 err = request.getErrorMessage();
             } else {
