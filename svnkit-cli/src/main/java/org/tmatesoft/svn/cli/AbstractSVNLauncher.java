@@ -30,7 +30,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 public abstract class AbstractSVNLauncher {
 
     private static volatile boolean ourIsCompleted;
-    private static Thread ourShutdownHook;
+    private static volatile Thread ourShutdownHook;
 
     protected void run(String[] args) {
         ourIsCompleted = false;
@@ -54,12 +54,14 @@ public abstract class AbstractSVNLauncher {
             return;
         }
         AbstractSVNCommandEnvironment env = createCommandEnvironment();
-        if (ourShutdownHook == null) {
-            ourShutdownHook = new Thread(new Cancellator(env)); 
-        } else {
-            Runtime.getRuntime().removeShutdownHook(ourShutdownHook);
+        synchronized(AbstractSVNLauncher.class) {
+            if (ourShutdownHook == null) {
+                ourShutdownHook = new Thread(new Cancellator(env)); 
+            } else {
+                Runtime.getRuntime().removeShutdownHook(ourShutdownHook);
+            }
+            Runtime.getRuntime().addShutdownHook(ourShutdownHook);
         }
-        Runtime.getRuntime().addShutdownHook(ourShutdownHook);
         
         try {
             try {
