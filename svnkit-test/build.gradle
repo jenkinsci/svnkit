@@ -11,7 +11,7 @@ test.dependsOn configurations.pythonTests16
 test.dependsOn configurations.svnBinaries16
 
 sandboxDir = new File(buildDir, 'sandbox')
-svnBinariesDir = new File(sandboxDir, 'svn-binaries/linux')
+svnBinariesDir = new File(sandboxDir, 'svn-binaries/' + getOSName())
 pythonTestsDir = new File(sandboxDir, 'svn-python-tests')
 logsDir = new File(buildDir, 'logs')
 testPropertiesFile = new File(sandboxDir, 'test.properties')
@@ -22,17 +22,11 @@ svnBinariesTar = configurations.svnBinaries16.files.find {return true}
 test {
     
 } << {
-    // 1. copy (unpack) necessary data and programs to sandbox
     project.mkdir(sandboxDir)
     project.mkdir(logsDir)
-    exec {
-        commandLine 'tar'
-        args '-C', sandboxDir.absolutePath, '-xzf', pythonTestsTar.absolutePath 
-    }
-    exec {
-        commandLine 'tar'
-        args '-C', sandboxDir.absolutePath, '-xzf', svnBinariesTar.absolutePath 
-    }
+    untar(pythonTestsTar, sandboxDir)
+    untar(svnBinariesTar, sandboxDir)
+
     copy {
         into pythonTestsDir
         from 'patch'
@@ -44,7 +38,14 @@ test {
         include 'daemon/**'
         include 'python-suite.txt'
     }
-
+    if (!svnBinariesDir.isDirectory() && System.getenv()['SVN_TEST_HOME'] != null) {
+        svnBinariesDir = new File(System.getenv()['SVN_TEST_HOME'])
+    } 
+    if (svnBinariesDir == null || !svnBinariesDir.isDirectory()) {
+        println "Cannot locate subversion binaries for '${getOSName()}' OS, skipping python tests."
+        return
+    }
+    
     // 2. generate test environment properties and merge them with the test properties
     def testProperties = generateTestEnvironmentProperties()
     appendDefaultTestProperties(testProperties)
@@ -72,8 +73,8 @@ test {
 def appendDefaultTestProperties(Map properties) {
     properties.put('python.tests.suite', 'basic')
     properties.put('python.http', 'true')
-    properties.put('python.svn', 'false')
-    properties.put('python.file', 'false')
+    properties.put('python.svn', 'true')
+    properties.put('python.file', 'true')
 }
 
 def generateTestEnvironmentProperties() {
@@ -91,7 +92,27 @@ def generateTestEnvironmentProperties() {
     properties.put('python.launcher', 'python')
 
     properties.put('python.tests', pythonTestsDir.absolutePath )
-
-    
     return properties
+}
+
+def untar(File tgz, File into) {
+    if (getOSName() != 'windows') {
+        exec {
+            commandLine 'tar'
+            args '-C', into.absolutePath, '-xzf', tgz.absolutePath
+        }
+    } else {
+        ant.untar(src: tgz.absolutePath, dest: into.absolutePath, compression: 'gzip')
+    }
+}
+
+def getOSName() {
+    String osNameProperty = System.getProperty('os.name')
+    osNameProperty = osNameProperty.toLowerCase()
+    if (osNameProperty.indexOf('windows') >= 0) {
+        return 'windows'
+    } else if (osNameProperty.indexOf('mac') >= 0) {
+        return 'osx'
+    }
+    return 'linux'
 }
