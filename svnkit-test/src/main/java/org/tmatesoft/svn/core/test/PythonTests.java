@@ -35,10 +35,17 @@ import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.tmatesoft.svn.cli.svn.SVN;
+import org.tmatesoft.svn.cli.svnadmin.SVNAdmin;
+import org.tmatesoft.svn.cli.svndumpfilter.SVNDumpFilter;
+import org.tmatesoft.svn.cli.svnlook.SVNLook;
+import org.tmatesoft.svn.cli.svnsync.SVNSync;
+import org.tmatesoft.svn.cli.svnversion.SVNVersion;
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.DefaultSVNDebugFormatter;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.test.daemon.SVNCommandDaemon;
-import org.tmatesoft.svn.core.SVNException;
+
+import com.martiansoftware.nailgun.NGServer;
 
 /**
  * @version 1.3
@@ -50,7 +57,7 @@ public class PythonTests {
     private static Process ourSVNServer;
     
     private static AbstractTestLogger[] ourLoggers;
-    private static SVNCommandDaemon ourDaemon;
+    private static NGServer ourDaemon;
 
     public static void main(String[] args) {
 		String fileName = args[0];
@@ -83,7 +90,7 @@ public class PythonTests {
             }
         }
         
-        if (Boolean.TRUE.toString().equals(properties.getProperty("daemon")) && SVNFileUtil.isLinux) {
+        if (Boolean.TRUE.toString().equals(properties.getProperty("daemon"))) {
             try {
                 libPath = startCommandDaemon(properties);
             } catch (IOException e) {
@@ -208,7 +215,7 @@ public class PythonTests {
             ourLoggers[i].endTests(properties);
         }
         if (ourDaemon != null) {
-            ourDaemon.shutdown();
+            ourDaemon.shutdown(false);
         }
 	}
 
@@ -529,20 +536,22 @@ public class PythonTests {
     public static String startCommandDaemon(Properties properties) throws IOException {
         int portNumber = 1729;
         portNumber = findUnoccupiedPort(portNumber);
-        ourDaemon = new SVNCommandDaemon(portNumber);
+
+        ourDaemon = new NGServer(null, portNumber);        
         Thread daemonThread = new Thread(ourDaemon);
         daemonThread.setDaemon(true);
         daemonThread.start();
-        
+
         // create client scripts.
         String svnHome = properties.getProperty("svn.home", "/usr/bin");
-
-        generateClientScript(new File("daemon/template"), new File("daemon/jsvn"), "svn", portNumber, svnHome);
-        generateClientScript(new File("daemon/template"), new File("daemon/jsvnadmin"), "svnadmin", portNumber, svnHome);
-        generateClientScript(new File("daemon/template"), new File("daemon/jsvnversion"), "svnversion", portNumber, svnHome);
-        generateClientScript(new File("daemon/template"), new File("daemon/jsvnlook"), "svnlook", portNumber, svnHome);
-        generateClientScript(new File("daemon/template"), new File("daemon/jsvnsync"), "svnsync", portNumber, svnHome);
-        generateClientScript(new File("daemon/template"), new File("daemon/jsvndumpfilter"), "svndumpfilter", portNumber, svnHome);
+        File template = SVNFileUtil.isWindows ? new File("daemon/template.bat") : new File("daemon/template");
+        
+        generateClientScript(template, new File("daemon/jsvn"), NailgunProcessor.class.getName(), "svn", portNumber, svnHome);
+        generateClientScript(template, new File("daemon/jsvnadmin"), NailgunProcessor.class.getName(), "svnadmin", portNumber, svnHome);
+        generateClientScript(template, new File("daemon/jsvnversion"), NailgunProcessor.class.getName(), "svnversion", portNumber, svnHome);
+        generateClientScript(template, new File("daemon/jsvnlook"), NailgunProcessor.class.getName(), "svnlook", portNumber, svnHome);
+        generateClientScript(template, new File("daemon/jsvnsync"), NailgunProcessor.class.getName(), "svnsync", portNumber, svnHome);
+        generateClientScript(template, new File("daemon/jsvndumpfilter"), NailgunProcessor.class.getName(), "svndumpfilter", portNumber, svnHome);
 
         String pattern = properties.getProperty("python.tests.pattern", null);
         if (pattern != null) {
@@ -704,16 +713,23 @@ public class PythonTests {
         return connectorPort;
     }
 
-    private static void generateClientScript(File src, File destination, String name, int port, String svnHome) throws IOException {
+    private static void generateClientScript(File src, File destination, String mainClass, String name, int port, String svnHome) throws IOException {
         byte[] contents = new byte[(int) src.length()];
         InputStream is = new FileInputStream(src);
         SVNFileUtil.readIntoBuffer(is, contents, 0, contents.length);
         is.close();
 
         String script = new String(contents);
+        script = script.replaceAll("%mainclass%", mainClass);
         script = script.replaceAll("%name%", name);
         script = script.replaceAll("%port%", Integer.toString(port));
         script = script.replaceAll("%svn_home%", svnHome);
+        script = script.replaceAll("%NG%", new File("daemon/ng.exe").getAbsolutePath().replace(File.separatorChar, '/'));
+        script = script.replace('/', File.separatorChar);
+        
+        if (SVNFileUtil.isWindows) {
+            destination = new File(destination.getParentFile(), destination.getName() + ".bat");
+        }
         
         FileOutputStream os = new FileOutputStream(destination);
         os.write(script.getBytes());
