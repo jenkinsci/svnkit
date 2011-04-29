@@ -49,7 +49,7 @@ test.doFirst {
     try {
         runPythonTests()
     } finally {
-        File logsZip = new File(buildDir, "distributions/svnkit-python-${testConfiguration}-logs.zip")
+        File logsZip = new File(buildDir, "distributions/svnkit-${buildVersion.fullVersion}-test-${testConfiguration}-logs.zip")
         logsZip.getParentFile().mkdirs()
         ant.zip(destfile: logsZip.absolutePath, basedir: logsDir.absolutePath)
         
