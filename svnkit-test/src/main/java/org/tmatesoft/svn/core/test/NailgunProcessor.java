@@ -73,26 +73,16 @@ public class NailgunProcessor {
             Logger.getLogger(SVNLogType.FSFS.getName()).addHandler(logHandler);
         }
     }
-    
-    private static void deconfigureLoggers(Handler logHandler) {
-        if (logHandler != null) {
-            logHandler.close();
-            Logger.getLogger(SVNLogType.DEFAULT.getName()).removeHandler(logHandler);
-            Logger.getLogger(SVNLogType.NETWORK.getName()).removeHandler(logHandler);
-            Logger.getLogger(SVNLogType.WC.getName()).removeHandler(logHandler);
-            Logger.getLogger(SVNLogType.CLIENT.getName()).removeHandler(logHandler);
-            Logger.getLogger(SVNLogType.FSFS.getName()).removeHandler(logHandler);
-        }
-
-    }
 
     private static void configureEnvironment(NGContext context) {
         String editor = context.getEnv().getProperty("SVN_EDITOR");
         String mergeTool = context.getEnv().getProperty("SVN_MERGE");
         String editorFunction = context.getEnv().getProperty("SVNTEST_EDITOR_FUNC");
+        String testName = context.getEnv().getProperty("SVN_CURRENT_TEST");
 
         SVNFileUtil.setTestEnvironment(editor, mergeTool, editorFunction);
-        SVNFileUtil.setSleepForTimestamp(false);
+        boolean needsToSleep = testName != null && PythonTests.needsSleepForTimestamp(testName);
+        SVNFileUtil.setSleepForTimestamp(needsToSleep);
         System.setProperty("user.dir", context.getWorkingDirectory());
     }
     

@@ -34,6 +34,7 @@ import java.util.logging.FileHandler;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.DefaultSVNDebugFormatter;
@@ -52,6 +53,7 @@ public class PythonTests {
     
     private static AbstractTestLogger[] ourLoggers;
     private static NGServer ourDaemon;
+    private static Properties ourProperties;
 
     public static void main(String[] args) {
 		String fileName = args[0];
@@ -72,6 +74,7 @@ public class PythonTests {
 			System.exit(1);
 		}
 		
+		ourProperties = properties;
         Loggers loggers = setupLogging();
         
         for (int i = 0; i < ourLoggers.length; i++) {
@@ -212,6 +215,14 @@ public class PythonTests {
             ourDaemon.shutdown(false);
         }
 	}
+    
+    public static boolean needsSleepForTimestamp(String testName) {
+        String sleepyTestsPattern = ourProperties.getProperty("python.tests.sleepy");
+        if (sleepyTestsPattern != null) {
+            return Pattern.matches(sleepyTestsPattern, testName);
+        }
+        return false;
+    }
 
     private static Loggers setupLogging() {
         Loggers loggers = new Loggers();

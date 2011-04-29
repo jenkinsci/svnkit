@@ -107,6 +107,7 @@ def generateTestEnvironmentProperties(File svnBinaries) {
     properties.put('python.launcher', 'python')
 
     properties.put('python.tests', pythonTestsDir.absolutePath )
+    properties.put('python.tests.sleepy', 'diff_tests.py_21')
     return properties
 }
 
