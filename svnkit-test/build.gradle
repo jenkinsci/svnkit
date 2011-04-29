@@ -9,8 +9,8 @@ dependencies {
     pythonTests16 'org.tigris.subversion:svn-python-tests:1.6.17-SNAPSHOT@tgz'
     svnBinaries16 'org.tigris.subversion:svn-binaries:1.6.17-SNAPSHOT@tgz'
     
-    pythonTests17 'org.tigris.subversion:svn-python-tests:1.7.0-SNAPSHOT@tgz'
-    svnBinaries17 'org.tigris.subversion:svn-binaries:1.7.0-SNAPSHOT@tgz'
+    pythonTests17 'org.apache.subversion:svn-python-tests:1.7.0-SNAPSHOT@tgz'
+    svnBinaries17 'org.apache.subversion:svn-binaries:1.7.0-SNAPSHOT@tgz'
 }
 
 sourceSets {
@@ -63,6 +63,8 @@ def runPythonTests() {
     
     untar(pythonTestsTar, sandboxDir)
     untar(svnBinariesTar, sandboxDir)
+
+    ant.chmod(file: new File(sandboxDir, 'svn-python-tests/entries-dump'), perm: 'ugo+x')
 
     copy {
         into sandboxDir
