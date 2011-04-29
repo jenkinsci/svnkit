@@ -520,6 +520,8 @@ public class PythonTests {
                         for (int i = 0; i < ourLoggers.length; i++) {
                             ourLoggers[i].handleTest(testResult);
                         }
+                        System.out.println((testResult.isPass() ? "OK [" : "FAIL [") + testResult.getName() + "]");
+
                     } else {
                         myTestOutput.append(line);
                         myTestOutput.append('\n');
