@@ -18,7 +18,7 @@ sourceSets {
 test.dependsOn configurations.pythonTests16 
 test.dependsOn configurations.svnBinaries16
 
-sandboxDir = new File(buildDir, 'sandbox')
+sandboxDir = getSandboxLocation()
 svnBinariesDir = new File(sandboxDir, 'svn-binaries/' + getOSName())
 pythonTestsDir = new File(sandboxDir, 'svn-python-tests')
 logsDir = new File(buildDir, 'logs')
@@ -150,4 +150,15 @@ def getOSName() {
         return 'osx'
     }
     return 'linux'
+}
+
+
+def getSandboxLocation() {
+    String systemLocation = System.getenv()['SVN_TEST_SANDBOX'];
+    if (systemLocation != null) {
+        File sandbox = File.createTempFile('svnkit.', '.sandbox', new File(systemLocation))
+        sandbox.delete()
+        return sandbox
+    }
+    return new File(buildDir, 'sandbox')
 }
