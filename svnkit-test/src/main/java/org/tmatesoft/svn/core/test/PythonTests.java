@@ -217,6 +217,11 @@ public class PythonTests {
         }
 	}
     
+    public static File getLogsDirectory() {
+        String path = ourProperties.getProperty("python.tests.logDir", "build/logs");
+        return new File(path);
+    }
+    
     public static boolean needsSleepForTimestamp(String testName) {
         String sleepyTestsPattern = ourProperties.getProperty("python.tests.sleepy");
         if (sleepyTestsPattern != null) {
@@ -238,11 +243,12 @@ public class PythonTests {
         return python;
     }
     
-    private static Handler createLogHandler(String logName) throws IOException {
-      FileHandler fileHandler = new FileHandler(System.getProperty("ant.basedir", "") + "/build/logs/" + logName + ".log", 0, 1, false);
-      fileHandler.setLevel(Level.INFO);
-      fileHandler.setFormatter(new DefaultSVNDebugFormatter());
-      return fileHandler;
+    private static Handler createLogHandler(File logDirectory, String logName) throws IOException {
+        String logFilePattern = logDirectory.getAbsolutePath().replace(File.separatorChar, '/') + "/" + logName + ".log";
+        FileHandler fileHandler = new FileHandler(logFilePattern, 0, 1, false);
+        fileHandler.setLevel(Level.INFO);
+        fileHandler.setFormatter(new DefaultSVNDebugFormatter());
+        return fileHandler;
     }
 
 	private static void runPythonTests(Properties properties, String defaultTestSuite, String type, String url, String libPath, Logger pythonLogger) throws IOException {
@@ -253,6 +259,10 @@ public class PythonTests {
         String testsLocation = properties.getProperty("python.tests", "python/cmdline");
         String listOption = properties.getProperty("python.tests.listOption", "list");
 		String fsfsConfig = properties.getProperty("fsfs.config");
+		
+		File logsDirectory = getLogsDirectory();
+        logsDirectory.mkdirs();
+
 		for (StringTokenizer tests = new StringTokenizer(testSuite, ","); tests.hasMoreTokens();) {
 			final String testFileString = tests.nextToken();
 			List tokens = tokenizeTestFileString(testFileString);
@@ -265,7 +275,7 @@ public class PythonTests {
 			final String testFile = suiteName + "_tests.py";
 			tokens = tokens.subList(1, tokens.size());
 			
-			Handler logHandler = createLogHandler(type + "_" + suiteName + "_python");
+			Handler logHandler = createLogHandler(logsDirectory, type + "_" + suiteName + "_python");
 			pythonLogger.addHandler(logHandler);
 			try {
     			if (tokens.isEmpty() || (tokens.size() == 1 && "ALL".equals(tokens.get(0)))) {

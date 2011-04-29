@@ -98,8 +98,8 @@ public class NailgunProcessor {
     
     
     private static Handler createTestLogger(String testName) throws IOException {
-        File logFile = new File(System.getProperty("ant.basedir", ""));
-        String path = getPathFromTestName(null, testName); 
+        File logFile = PythonTests.getLogsDirectory();
+        String path = getPathFromTestName(testName); 
         logFile = new File(logFile, path);
         FileHandler fileHandler = new FileHandler(logFile.getAbsolutePath(), 0, 1, true);
         fileHandler.setLevel(Level.FINEST);
@@ -108,7 +108,7 @@ public class NailgunProcessor {
         return fileHandler;
     }
     
-    private static String getPathFromTestName(String prefix, String testName) {
-        return (prefix != null ? prefix : "") + "build/logs/" + testName.trim() + ".log"; 
+    private static String getPathFromTestName(String testName) {
+        return testName.trim() + ".log"; 
     }
 }

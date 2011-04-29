@@ -74,7 +74,6 @@ test {
         javaexec {
             workingDir = sandboxDir
     
-            systemProperty 'ant.basedir', project.projectDir.absolutePath
             systemProperty 'sun.io.useCanonCaches', 'false'
             systemProperty 'svnkit.compatibleHash', 'true'
             
@@ -86,6 +85,10 @@ test {
             args testPropertiesFile.absolutePath, new File(sandboxDir, 'daemon').absolutePath
         }
     } finally {
+        File logsZip = new File(buildDir, 'distributions/python-test-logs.zip')
+        logsZip.getParentFile().mkdirs()
+        ant.zip(destfile: logsZip.absolutePath, basedir: new File(sandboxDir, 'logs').absolutePath)
+        
         cleanSandbox()
     }
 }
@@ -114,6 +117,7 @@ def generateTestEnvironmentProperties(File svnBinaries) {
     properties.put('python.tests', pythonTestsDir.absolutePath )
     properties.put('python.tests.sleepy', '(diff_tests.py_21)|(stat_tests.py_22)')
     properties.put('python.tests.results', testResultsDir.absolutePath)
+    properties.put('python.tests.logDir', new File(sandboxDir, "logs").absolutePath)
     
     return properties
 }
