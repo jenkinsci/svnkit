@@ -27,6 +27,14 @@ testPropertiesFile = new File(sandboxDir, 'test.properties')
 pythonTestsTar = configurations.pythonTests16.files.find {return true}
 svnBinariesTar = configurations.svnBinaries16.files.find {return true}
 
+classes << {
+    copy {
+        into file('build/classes/main')
+        from file('nailgun/src/java/prod')
+        include '**/*.properties'
+    }
+}
+
 test {
     
 } << {
