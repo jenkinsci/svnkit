@@ -24,6 +24,7 @@ public class TestResult {
     private boolean myIsPass;
     private String myName;
     private int myID;
+    private StringBuffer myOutput;
     
     public static TestResult parse(String line) {
         if (line != null && 
@@ -62,5 +63,13 @@ public class TestResult {
 
     public String getName() {
         return myName;
+    }
+
+    public void setOutput(StringBuffer testOutput) {
+        myOutput = testOutput;
+    }
+
+    public StringBuffer getOutput() {
+        return myOutput;
     }
 }

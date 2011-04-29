@@ -62,7 +62,6 @@ public class PythonTests {
 		    libPath = "";
 		}
 		ourPropertiesFile = new File(fileName);
-        ourLoggers = new AbstractTestLogger[] {new ConsoleLogger(), new XMLLogger()};
 
 		Properties properties = null;
 		String defaultTestSuite = null;
@@ -73,6 +72,8 @@ public class PythonTests {
 			System.out.println("can't load properties, exiting");
 			System.exit(1);
 		}
+		File testResultsDirectory = new File(properties.getProperty("python.tests.results", "build/logs"));
+        ourLoggers = new AbstractTestLogger[] {new JUnitTestLogger(testResultsDirectory)};
 		
 		ourProperties = properties;
         Loggers loggers = setupLogging();
@@ -268,12 +269,12 @@ public class PythonTests {
 			pythonLogger.addHandler(logHandler);
 			try {
     			if (tokens.isEmpty() || (tokens.size() == 1 && "ALL".equals(tokens.get(0)))) {
-                    System.out.println("PROCESSING " + testFile + " [ALL]");
+                    System.out.println("SUITE " + testFile + " [ALL]");
                     processTestCase(pythonLauncher, testsLocation, testFile, options, null, url, libPath, fsfsConfig, pythonLogger);
     			} else {
     	            final List availabledTestCases = getAvailableTestCases(pythonLauncher, testsLocation, testFile, listOption, pythonLogger);
     	            final List testCases = !tokens.isEmpty() ? combineTestCases(tokens, availabledTestCases) : availabledTestCases;
-    	            System.out.println("PROCESSING " + testFile + " " + testCases);
+    	            System.out.println("SUITE " + testFile + " " + testCases);
     	            processTestCase(pythonLauncher, testsLocation, testFile, options, testCases, url, libPath, fsfsConfig, pythonLogger);
     			}
 			} finally {
@@ -469,11 +470,13 @@ public class PythonTests {
 		private final PrintStream myHelpStream;
         private boolean myIsClosed;
         private Logger myPythonLogger;
+        private StringBuffer myTestOutput;
         
 		public ReaderThread(InputStream is, PrintStream helpStream, Logger logger) {
 			myInputStream = new BufferedReader(new InputStreamReader(is));
 			myHelpStream = helpStream;
 			myPythonLogger = logger;
+			myTestOutput = new StringBuffer();
 			setDaemon(false);
 		}
 		
@@ -492,10 +495,17 @@ public class PythonTests {
                     // will be logged to python.log only
                     myPythonLogger.info(line);
                     if (testResult != null) {
+                        testResult.setOutput(myTestOutput);
+                        myTestOutput = new StringBuffer();
+                    
                         for (int i = 0; i < ourLoggers.length; i++) {
                             ourLoggers[i].handleTest(testResult);
                         }
+                    } else {
+                        myTestOutput.append(line);
+                        myTestOutput.append('\n');
                     }
+                    
 					if (myHelpStream != null) {
 						myHelpStream.println(line);
 						myHelpStream.flush();

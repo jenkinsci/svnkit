@@ -19,7 +19,8 @@ test.dependsOn configurations.pythonTests16
 test.dependsOn configurations.svnBinaries16
 
 sandboxDir = getSandboxLocation()
-svnBinariesDir = new File(sandboxDir, 'svn-binaries/' + getOSName())
+svnBinariesDir = getSvnBinariesLocation()
+
 pythonTestsDir = new File(sandboxDir, 'svn-python-tests')
 logsDir = new File(buildDir, 'logs')
 testPropertiesFile = new File(sandboxDir, 'test.properties')
@@ -36,10 +37,11 @@ classes << {
 }
 
 test {
-    
-} << {
+    //testReport = false
+}.doFirst {
     project.mkdir(sandboxDir)
     project.mkdir(logsDir)
+
     untar(pythonTestsTar, sandboxDir)
     untar(svnBinariesTar, sandboxDir)
     buildNailgun()
@@ -68,25 +70,28 @@ test {
         testProperties.save(stream, null)
     }
     
-    javaexec {
-        workingDir = sandboxDir
-
-        systemProperty 'ant.basedir', project.projectDir.absolutePath
-        systemProperty 'sun.io.useCanonCaches', 'false'
-        systemProperty 'svnkit.compatibleHash', 'true'
-        
-        environment 'LD_LIBRARY_PATH' : new File(svnBinariesDir, 'lib').absolutePath
-        
-        main = 'org.tmatesoft.svn.core.test.PythonTests'
-        classpath = sourceSets.main.runtimeClasspath
-        
-        args testPropertiesFile.absolutePath, new File(sandboxDir, 'daemon').absolutePath
+    try {
+        javaexec {
+            workingDir = sandboxDir
+    
+            systemProperty 'ant.basedir', project.projectDir.absolutePath
+            systemProperty 'sun.io.useCanonCaches', 'false'
+            systemProperty 'svnkit.compatibleHash', 'true'
+            
+            environment 'LD_LIBRARY_PATH' : new File(svnBinariesDir, 'lib').absolutePath
+            
+            main = 'org.tmatesoft.svn.core.test.PythonTests'
+            classpath = sourceSets.main.runtimeClasspath
+            
+            args testPropertiesFile.absolutePath, new File(sandboxDir, 'daemon').absolutePath
+        }
+    } finally {
+        cleanSandbox()
     }
-
 }
 
 def appendDefaultTestProperties(Map properties) {
-    properties.put('python.tests.suite', 'basic')
+    properties.put('python.tests.suite', 'basic, stat')
     properties.put('python.http', 'false')
     properties.put('python.svn', 'true')
     properties.put('python.file', 'false')
@@ -107,7 +112,9 @@ def generateTestEnvironmentProperties(File svnBinaries) {
     properties.put('python.launcher', 'python')
 
     properties.put('python.tests', pythonTestsDir.absolutePath )
-    properties.put('python.tests.sleepy', 'diff_tests.py_21')
+    properties.put('python.tests.sleepy', '(diff_tests.py_21)|(stat_tests.py_22)')
+    properties.put('python.tests.results', testResultsDir.absolutePath)
+    
     return properties
 }
 
@@ -153,6 +160,13 @@ def getOSName() {
     return 'linux'
 }
 
+def getSvnBinariesLocation() {
+    if (System.getenv()['SVN_TEST_HOME'] != null) {
+        svnBinariesDir = new File(System.getenv()['SVN_TEST_HOME'])
+    }
+    return new File(sandboxDir, 'svn-binaries/' + getOSName())
+
+}
 
 def getSandboxLocation() {
     String systemLocation = System.getenv()['SVN_TEST_SANDBOX'];
@@ -162,4 +176,11 @@ def getSandboxLocation() {
         return sandbox
     }
     return new File(buildDir, 'sandbox')
+}
+
+def cleanSandbox() {
+    String systemLocation = System.getenv()['SVN_TEST_SANDBOX'];
+    if (systemLocation != null) {
+        project.delete(sandboxDir.absolutePath)
+    }
 }
