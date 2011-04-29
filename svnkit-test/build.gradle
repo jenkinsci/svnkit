@@ -1,10 +1,16 @@
 configurations {
     pythonTests16
     svnBinaries16 
+
+    pythonTests17
+    svnBinaries17 
 }
 dependencies {
     pythonTests16 'org.tigris.subversion:svn-python-tests:1.6.17-SNAPSHOT@tgz'
     svnBinaries16 'org.tigris.subversion:svn-binaries:1.6.17-SNAPSHOT@tgz'
+    
+    pythonTests17 'org.tigris.subversion:svn-python-tests:1.7.0-SNAPSHOT@tgz'
+    svnBinaries17 'org.tigris.subversion:svn-binaries:1.7.0-SNAPSHOT@tgz'
 }
 
 sourceSets {
@@ -15,18 +21,17 @@ sourceSets {
     }
 }
 
-test.dependsOn configurations.pythonTests16 
-test.dependsOn configurations.svnBinaries16
-
 sandboxDir = getSandboxLocation()
+logsDir = new File(sandboxDir, 'logs')
 svnBinariesDir = getSvnBinariesLocation()
 
 pythonTestsDir = new File(sandboxDir, 'svn-python-tests')
-logsDir = new File(buildDir, 'logs')
 testPropertiesFile = new File(sandboxDir, 'test.properties')
+svnVersion  = project.hasProperty('svnVersion') ? project.getProperty('svnVersion') : '16'
+testConfiguration = project.hasProperty('testConfiguration') ? project.getProperty('testConfiguration') : 'default'
 
-pythonTestsTar = configurations.pythonTests16.files.find {return true}
-svnBinariesTar = configurations.svnBinaries16.files.find {return true}
+test.dependsOn configurations."pythonTests${project.svnVersion}"
+test.dependsOn configurations."svnBinaries${project.svnVersion}"
 
 classes << {
     copy {
@@ -36,28 +41,40 @@ classes << {
     }
 }
 
-test {
-    //testReport = false
-}.doFirst {
+test.doFirst {
     project.mkdir(sandboxDir)
     project.mkdir(logsDir)
+    
+    buildNailgun()
+    try {
+        runPythonTests()
+    } finally {
+        File logsZip = new File(buildDir, "distributions/svnkit-python-${testConfiguration}-logs.zip")
+        logsZip.getParentFile().mkdirs()
+        ant.zip(destfile: logsZip.absolutePath, basedir: logsDir.absolutePath)
+        
+        cleanSandbox()
+    }
+}
 
+def runPythonTests() {
+    File pythonTestsTar = configurations."pythonTests${project.svnVersion}".files.find {return true}
+    File svnBinariesTar = configurations."svnBinaries${project.svnVersion}".files.find {return true}
+    
     untar(pythonTestsTar, sandboxDir)
     untar(svnBinariesTar, sandboxDir)
-    buildNailgun()
 
     copy {
         into sandboxDir
-        from project.projectDir 
-        include 'apache/**'
-        include 'daemon/**'
-        include 'python-suite.txt'
+        into('') {
+            from "configurations/shared"
+        }
+        into('') {
+            from "configurations/svn${project.svnVersion}"
+            exclude "**/*.properties"
+        }
     }
-    if (!svnBinariesDir.isDirectory() && System.getenv()['SVN_TEST_HOME'] != null) {
-        svnBinariesDir = new File(System.getenv()['SVN_TEST_HOME'])
-    } 
-    println "Using Subversion binaries at $svnBinariesDir"
-    
+    println "Using Subversion binaries at $svnBinariesDir"    
     if (svnBinariesDir == null || !svnBinariesDir.isDirectory()) {
         println "Cannot locate subversion binaries for '${getOSName()}' OS, skipping python tests."
         return
@@ -65,39 +82,36 @@ test {
     
     // 2. generate test environment properties and merge them with the test properties
     def testProperties = generateTestEnvironmentProperties(svnBinariesDir)
-    appendDefaultTestProperties(testProperties)
+    appendDefaultTestProperties(project.svnVersion, project.testConfiguration, testProperties)
+    
     testPropertiesFile.withOutputStream { stream ->
         testProperties.save(stream, null)
     }
     
-    try {
-        javaexec {
-            workingDir = sandboxDir
-    
-            systemProperty 'sun.io.useCanonCaches', 'false'
-            systemProperty 'svnkit.compatibleHash', 'true'
-            
-            environment 'LD_LIBRARY_PATH' : new File(svnBinariesDir, 'lib').absolutePath
-            
-            main = 'org.tmatesoft.svn.core.test.PythonTests'
-            classpath = sourceSets.main.runtimeClasspath
-            
-            args testPropertiesFile.absolutePath, new File(sandboxDir, 'daemon').absolutePath
+    javaexec {
+        workingDir = sandboxDir
+
+        systemProperty 'sun.io.useCanonCaches', 'false'
+        systemProperty 'svnkit.compatibleHash', 'true'
+        if (project.svnVersion == '17') {
+            systemProperty 'svnkit.wc.17', 'true'
         }
-    } finally {
-        File logsZip = new File(buildDir, 'distributions/python-test-logs.zip')
-        logsZip.getParentFile().mkdirs()
-        ant.zip(destfile: logsZip.absolutePath, basedir: new File(sandboxDir, 'logs').absolutePath)
-        
-        cleanSandbox()
+                
+        environment 'LD_LIBRARY_PATH' : new File(svnBinariesDir, 'lib').absolutePath        
+        main = 'org.tmatesoft.svn.core.test.PythonTests'
+        classpath = sourceSets.main.runtimeClasspath
+                
+        args testPropertiesFile.absolutePath, new File(sandboxDir, 'daemon').absolutePath
     }
+
 }
 
-def appendDefaultTestProperties(Map properties) {
-    properties.put('python.tests.suite', 'basic, stat')
-    properties.put('python.http', 'false')
-    properties.put('python.svn', 'true')
-    properties.put('python.file', 'false')
+def appendDefaultTestProperties(String svnVersion, String configurationName, Properties properties) {
+    File propertiesFile = file("configurations/svn${svnVersion}/${configurationName}.properties")
+    propertiesFile.withInputStream {
+        properties.load(it)
+    }
+    return properties
 }
 
 def generateTestEnvironmentProperties(File svnBinaries) {
@@ -115,9 +129,11 @@ def generateTestEnvironmentProperties(File svnBinaries) {
     properties.put('python.launcher', 'python')
 
     properties.put('python.tests', pythonTestsDir.absolutePath )
-    properties.put('python.tests.sleepy', '(diff_tests.py_21)|(stat_tests.py_22)')
+    if (svnVersion == '16') {
+        properties.put('python.tests.sleepy', '(diff_tests.py_21)|(stat_tests.py_22)')
+    }
     properties.put('python.tests.results', testResultsDir.absolutePath)
-    properties.put('python.tests.logDir', new File(sandboxDir, "logs").absolutePath)
+    properties.put('python.tests.logDir', logsDir.absolutePath)
     
     return properties
 }
@@ -166,7 +182,7 @@ def getOSName() {
 
 def getSvnBinariesLocation() {
     if (System.getenv()['SVN_TEST_HOME'] != null) {
-        svnBinariesDir = new File(System.getenv()['SVN_TEST_HOME'])
+        return new File(System.getenv()['SVN_TEST_HOME'])
     }
     return new File(sandboxDir, 'svn-binaries/' + getOSName())
 

@@ -54,6 +54,7 @@ public class PythonTests {
     private static AbstractTestLogger[] ourLoggers;
     private static NGServer ourDaemon;
     private static Properties ourProperties;
+    private static String ourTestType;
 
     public static void main(String[] args) {
 		String fileName = args[0];
@@ -217,6 +218,14 @@ public class PythonTests {
         }
 	}
     
+    private static void setTestType(String type) {
+        ourTestType = type;
+    }
+    
+    public static String getTestType() {
+        return ourTestType;
+    }
+    
     public static File getLogsDirectory() {
         String path = ourProperties.getProperty("python.tests.logDir", "build/logs");
         return new File(path);
@@ -259,7 +268,7 @@ public class PythonTests {
         String testsLocation = properties.getProperty("python.tests", "python/cmdline");
         String listOption = properties.getProperty("python.tests.listOption", "list");
 		String fsfsConfig = properties.getProperty("fsfs.config");
-		
+		setTestType(type);
 		File logsDirectory = getLogsDirectory();
         logsDirectory.mkdirs();
 
@@ -269,7 +278,7 @@ public class PythonTests {
 
             String suiteName = (String) tokens.get(0);
 			for (int i = 0; i < ourLoggers.length; i++) {
-                ourLoggers[i].startSuite(suiteName);
+                ourLoggers[i].startSuite(getTestType() + "." + suiteName);
             }
 			
 			final String testFile = suiteName + "_tests.py";
@@ -292,7 +301,7 @@ public class PythonTests {
 			    pythonLogger.removeHandler(logHandler);
 			}
             for (int i = 0; i < ourLoggers.length; i++) {
-                ourLoggers[i].endSuite(suiteName);
+                ourLoggers[i].endSuite(getTestType() + "." + suiteName);
             }
 		}
 	}

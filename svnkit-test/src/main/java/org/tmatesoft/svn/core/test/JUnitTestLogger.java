@@ -71,6 +71,7 @@ public class JUnitTestLogger extends AbstractTestLogger {
         suiteAttributes.put("failures", Integer.toString(myFailuresCount));
         suiteAttributes.put("tests", Integer.toString(myTestsCount));
         suiteAttributes.put("time", getTimeString(System.currentTimeMillis() - mySuiteTime));
+        suiteAttributes.put("name", suiteName);
         
         StringBuffer xml = new StringBuffer();
         xml = SVNXMLUtil.addXMLHeader(xml);

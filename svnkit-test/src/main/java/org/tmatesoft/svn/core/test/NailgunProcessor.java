@@ -99,16 +99,12 @@ public class NailgunProcessor {
     
     private static Handler createTestLogger(String testName) throws IOException {
         File logFile = PythonTests.getLogsDirectory();
-        String path = getPathFromTestName(testName); 
+        String path = PythonTests.getTestType() + "_" + testName.trim() + ".log"; 
         logFile = new File(logFile, path);
         FileHandler fileHandler = new FileHandler(logFile.getAbsolutePath(), 0, 1, true);
         fileHandler.setLevel(Level.FINEST);
         fileHandler.setFormatter(new DefaultSVNDebugFormatter());
         
         return fileHandler;
-    }
-    
-    private static String getPathFromTestName(String testName) {
-        return testName.trim() + ".log"; 
     }
 }
