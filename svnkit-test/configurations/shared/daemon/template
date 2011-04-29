@@ -1,5 +1,18 @@
 #!/bin/bash
 
+dir=`dirname $0`
+if [ -x $dir/matcher.pl ] 
+then
+# only run jsvn if matched
+   $dir/matcher.pl "$@"
+   if [ $? -ne 0 ] 
+   then
+   # run native
+       %svn_home%/bin/%name% "$@" < /dev/stdin    
+       exit $?
+   fi
+fi
+
 NG_MAINCLASS=%mainclass%
 NG_PORT=%port%
 
