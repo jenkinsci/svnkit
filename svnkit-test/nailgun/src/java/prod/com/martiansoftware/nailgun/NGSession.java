@@ -306,13 +306,20 @@ class NGSession extends Thread {
                     exit.println(exitEx.getStatus());
                     server.out.println(Thread.currentThread().getName() + " exited with status " + exitEx.getStatus());
 				} catch (Throwable t) {
+				    t.printStackTrace(server.out);
 					t.printStackTrace();
 					exit.println(NGConstants.EXIT_EXCEPTION); // remote exception constant
 				}
+				exit.flush();
+				out.flush();				
+				socket.getOutputStream().flush();
+				socket.shutdownOutput();
+				socket.shutdownInput();
 				
 				socket.close();
 	
 			} catch (Throwable t) {
+                t.printStackTrace(server.out);
 				t.printStackTrace();
 			}
 

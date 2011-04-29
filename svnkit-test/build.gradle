@@ -5,8 +5,14 @@ configurations {
 dependencies {
     pythonTests16 'org.tigris.subversion:svn-python-tests:1.6.17-SNAPSHOT@tgz'
     svnBinaries16 'org.tigris.subversion:svn-binaries:1.6.17-SNAPSHOT@tgz'
-    
-    compile fileTree(dir: 'nailgun', includes: ['*.jar'])
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir file('nailgun/src/java/prod')
+        }
+    }
 }
 
 test.dependsOn configurations.pythonTests16 
@@ -30,10 +36,6 @@ test {
     untar(svnBinariesTar, sandboxDir)
     buildNailgun()
 
-    copy {
-        into pythonTestsDir
-        from 'patch'
-    }    
     copy {
         into sandboxDir
         from project.projectDir 
