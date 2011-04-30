@@ -60,7 +60,13 @@ def runPythonTests() {
     untar(pythonTestsTar, sandboxDir)
     untar(svnBinariesTar, sandboxDir)
 
-    ant.chmod(file: new File(sandboxDir, 'svn-python-tests/entries-dump'), perm: 'ugo+x')
+    if (getOSName() != 'windows' && project.svnVersion == '17') {
+         File link = new File(sandboxDir, 'svn-python-tests/entries-dump')
+         File target = new File(svnBinariesDir, 'bin/entries-dump')
+         if (!link.exists() && target.exists()) {
+             ant.symlink(link: link.absolutePath, resource: target.absolutePath)
+         }
+    }
 
     copy {
         into sandboxDir
@@ -72,11 +78,23 @@ def runPythonTests() {
             exclude "**/*.properties"
         }
     }
-    println "Using Subversion binaries at $svnBinariesDir"    
     if (svnBinariesDir == null || !svnBinariesDir.isDirectory()) {
         println "Cannot locate subversion binaries for '${getOSName()}' OS, skipping python tests."
         return
     }
+
+    exec {
+        commandLine new File(svnBinariesDir, 'bin/svn').absolutePath
+        args '--version'  
+        environment 'LD_LIBRARY_PATH' : new File(svnBinariesDir, 'lib').absolutePath        
+    }
+    if (getOSName() != 'windows') {
+        exec {
+           commandLine 'ldd'
+           args new File(svnBinariesDir, 'bin/svn').absolutePath
+           environment 'LD_LIBRARY_PATH' : new File(svnBinariesDir, 'lib').absolutePath        
+        }
+    }    
     
     // 2. generate test environment properties and merge them with the test properties
     def testProperties = generateTestEnvironmentProperties(svnBinariesDir)
