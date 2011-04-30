@@ -77,7 +77,7 @@ public class PythonTests {
         ourLoggers = new AbstractTestLogger[] {new JUnitTestLogger(testResultsDirectory)};
 		
 		ourProperties = properties;
-        Loggers loggers = setupLogging();
+        Logger logger = setupLogging();
         
         for (int i = 0; i < ourLoggers.length; i++) {
             try{
@@ -113,7 +113,7 @@ public class PythonTests {
                     ourLoggers[i].startServer("file", url);
                 }
                 started = true;
-                runPythonTests(properties, defaultTestSuite, "fsfs", url, libPath, loggers.myPythonLogger);
+                runPythonTests(properties, defaultTestSuite, "fsfs", url, libPath, logger);
             } catch (Throwable th) {
                 th.printStackTrace();
             } finally {
@@ -135,7 +135,7 @@ public class PythonTests {
                     ourLoggers[i].startServer("svnserve", url);
                 }
                 started = true;
-				runPythonTests(properties, defaultTestSuite, "svn", url, libPath, loggers.myPythonLogger);
+				runPythonTests(properties, defaultTestSuite, "svn", url, libPath, logger);
 			} catch (Throwable th) {
 				th.printStackTrace();
 			} finally {
@@ -155,18 +155,18 @@ public class PythonTests {
                 boolean started = false;
                 int port = -1;
                 try {
-                    port = startApache(properties, loggers.myPythonLogger);
+                    port = startApache(properties, logger);
                     url = "http://localhost:" + port;
                     for (int i = 0; i < ourLoggers.length; i++) {
                         ourLoggers[i].startServer("apache", url);
                     }
                     started = true;
-                    runPythonTests(properties, defaultTestSuite, "dav", url, libPath, loggers.myPythonLogger);
+                    runPythonTests(properties, defaultTestSuite, "dav", url, libPath, logger);
                 } catch (Throwable th) {
                     th.printStackTrace();
                 } finally {
                     try {
-                        stopApache(properties, port, loggers.myPythonLogger);
+                        stopApache(properties, port, logger);
                         if (started) {
                             for (int i = 0; i < ourLoggers.length; i++) {
                                 ourLoggers[i].endServer("apache", url);
@@ -184,7 +184,7 @@ public class PythonTests {
 			    boolean started = false;
 	            int port = -1;
 	            try {
-	                port = startTomcat(properties, loggers.myPythonLogger);
+	                port = startTomcat(properties, logger);
 	                url = "http://localhost:" + port + "/svnkit";
 	                for (int i = 0; i < ourLoggers.length; i++) {
 	                    ourLoggers[i].startServer("tomcat", url);
@@ -192,12 +192,12 @@ public class PythonTests {
 	                //wait a little until tomcat
 	                Thread.sleep(1000);
 	                started = true;
-	                runPythonTests(properties, defaultTestSuite, "dav", url, libPath, loggers.myPythonLogger);
+	                runPythonTests(properties, defaultTestSuite, "dav", url, libPath, logger);
 	            } catch (Throwable th) {
 	                th.printStackTrace();
 	            } finally {
 	                try {
-	                    stopTomcat(properties, loggers.myPythonLogger);
+	                    stopTomcat(properties, logger);
 	                    if (started) {
 	                        for (int i = 0; i < ourLoggers.length; i++) {
 	                            ourLoggers[i].endServer("tomcat", url);
@@ -238,11 +238,13 @@ public class PythonTests {
         }
         return false;
     }
+    
+    public static boolean isLoggingEnabled() {
+        return Boolean.TRUE.toString().equalsIgnoreCase(ourProperties.getProperty("python.tests.logging", "false"));
+    }
 
-    private static Loggers setupLogging() {
-        Loggers loggers = new Loggers();
-        loggers.myPythonLogger = setupLogger("python", Level.INFO);
-        return loggers;
+    private static Logger setupLogging() {
+        return setupLogger("python", Level.INFO);
     }
 
     private static Logger setupLogger(String name, Level level) {
@@ -284,8 +286,11 @@ public class PythonTests {
 			final String testFile = suiteName + "_tests.py";
 			tokens = tokens.subList(1, tokens.size());
 			
-			Handler logHandler = createLogHandler(logsDirectory, type + "_" + suiteName + "_python");
-			pythonLogger.addHandler(logHandler);
+            Handler logHandler = null;
+			if (isLoggingEnabled()) {
+                logHandler = createLogHandler(logsDirectory, type + "_" + suiteName + "_python");
+			    pythonLogger.addHandler(logHandler);
+			}
 			try {
     			if (tokens.isEmpty() || (tokens.size() == 1 && "ALL".equals(tokens.get(0)))) {
                     System.out.println("SUITE " + testFile + " [ALL]");
@@ -297,8 +302,10 @@ public class PythonTests {
     	            processTestCase(pythonLauncher, testsLocation, testFile, options, testCases, url, libPath, fsfsConfig, pythonLogger);
     			}
 			} finally {
-			    logHandler.close();
-			    pythonLogger.removeHandler(logHandler);
+			    if (logHandler != null) {
+			        logHandler.close();
+			        pythonLogger.removeHandler(logHandler);
+			    }
 			}
             for (int i = 0; i < ourLoggers.length; i++) {
                 ourLoggers[i].endSuite(getTestType() + "." + suiteName);
@@ -347,6 +354,7 @@ public class PythonTests {
 			    process.destroy();
 			}
 		} catch (Throwable th) {
+		    th.printStackTrace();
 			pythonLogger.log(Level.SEVERE, "", th);
 		}
 	}
@@ -840,9 +848,5 @@ public class PythonTests {
             }
         }
         return process;
-    }
-    
-    private static class Loggers {
-        private Logger myPythonLogger;
     }
 }

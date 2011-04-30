@@ -55,12 +55,16 @@ public class NailgunProcessor {
         }
         
         Handler logHandler = null;        
+        
         setupLogger(Logger.getLogger(SVNLogType.DEFAULT.getName()));
         setupLogger(Logger.getLogger(SVNLogType.NETWORK.getName()));
         setupLogger(Logger.getLogger(SVNLogType.WC.getName()));
         setupLogger(Logger.getLogger(SVNLogType.CLIENT.getName()));
         setupLogger(Logger.getLogger(SVNLogType.FSFS.getName()));
         
+        if (!PythonTests.isLoggingEnabled()) {
+            return;
+        }
         try {
             logHandler = createTestLogger(testName);
         } catch (IOException e) {
