@@ -1,0 +1,52 @@
+packageName = 'org.tmatesoft.svn.cli'
+scripts = ['jsvn' : "${packageName}.SVN",  
+           'jsvnadmin' : "${packageName}.SVNAdmin", 
+           'jsvndumpfilter' : "${packageName}.SVNDumpFilter", 
+           'jsvnlook' : "${packageName}.SVNLook", 
+           'jsvnsync' : "${packageName}.SVNSync", 
+           'jsvnversion' : "${packageName}.SVNVersion"]
+ 
+build << {
+    
+    File scriptsDir = new File(buildDir, 'scripts')
+    scriptsDir.mkdirs()
+    
+    def classpath = []
+    configurations.compile.files.each {
+        classpath += fullJarName(it)
+    }
+    
+    scripts.keySet().each { scriptName ->
+        def mainclassName = scripts[scriptName]
+        copy {
+            from file("src/main/scripts/jsvn")
+            into scriptsDir
+            filter {
+                it = expandClasspath(it, classpath)
+                it = it.replace('@mainclass@', mainclassName)
+            }
+            eachFile {
+                it.name = scriptName
+            }
+        }
+        copy {
+            from file("src/main/scripts/jsvn.bat")
+            into scriptsDir
+            filter {
+                it = expandClasspath(it, classpath)
+                it = it.replace('@mainclass@', mainclassName)
+            }
+            eachFile {
+                it.name = scriptName + '.bat'
+            }
+        }
+    }
+    
+    copy {
+        from file("src/main/scripts/jsvnsetup.openvms")
+        into scriptsDir
+        filter {
+            it = expandClasspath(it, classpath)
+        }
+    }
+}

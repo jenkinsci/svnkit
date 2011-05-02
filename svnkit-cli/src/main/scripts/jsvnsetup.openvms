@@ -20,7 +20,7 @@ $ endif
 $!
 $!
 $ CP = "/svnkit_home/../lib"
-${dependency:$ CP = CP + ":/svnkit_home/../lib/${dependency.file}}
+$ CP = CP + ":/svnkit_home/../lib/${classpathEntry}
 $ OPT = ""
 $! OPT = "-Djava.util.logging.config.file=/svnkit_home/../conf/logging.properties"
 $!

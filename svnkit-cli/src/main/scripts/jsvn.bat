@@ -54,14 +54,14 @@ if "%JAVACMD%"=="" set JAVACMD=java
 
 if "%SVNKIT_LIB%"=="" set SVNKIT_LIB=%BASEDIR%\lib
 
-${dependency:set CLASSPATH=%CLASSPATH%;"%SVNKIT_LIB%\${dependency.file}"}
+set CLASSPATH=%CLASSPATH%;"%SVNKIT_LIB%\${classpathEntry}"
 set EXTRA_JVM_ARGUMENTS=-Djava.util.logging.config.file=%BASEDIR%\conf\logging.properties -Dsun.io.useCanonCaches=false
 goto endInit
 
 @REM Reaching here means variables are defined and arguments have been captured
 :endInit
 
-%JAVACMD% %JAVA_OPTS% %EXTRA_JVM_ARGUMENTS% -classpath %CLASSPATH_PREFIX%;%CLASSPATH% ${mainClass} %CMD_LINE_ARGS%
+%JAVACMD% %JAVA_OPTS% %EXTRA_JVM_ARGUMENTS% -classpath %CLASSPATH_PREFIX%;%CLASSPATH% @mainclass@ %CMD_LINE_ARGS%
 if ERRORLEVEL 1 goto error
 goto end
 

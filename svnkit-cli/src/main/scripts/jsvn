@@ -55,7 +55,7 @@ then
 fi
 
 CLASSPATH="$BASEDIR/conf"
-${dependency:CLASSPATH=$CLASSPATH:"$SVNKIT_LIB/${dependency.file}"}
+CLASSPATH=$CLASSPATH:"$SVNKIT_LIB/${classpathEntry}"
 
 EXTRA_JVM_ARGUMENTS="-Djava.util.logging.config.file=$BASEDIR/conf/logging.properties -Dsun.io.useCanonCaches=false"
 
@@ -71,5 +71,5 @@ fi
 exec "$JAVACMD" $JAVA_OPTS \
   $EXTRA_JVM_ARGUMENTS \
   -classpath "$CLASSPATH" \
-  ${mainClass} \
+  @mainclass@ \
   "$@"

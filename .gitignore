@@ -12,6 +12,7 @@ svnkit-dav/build
 svnkit-dav/target
 svnkit-javahl16/build
 svnkit-javahl16/target
+svnkit-osgi/build
 svnkit-osgi/target
 svnkit-test/bin
 svnkit-test/build
