@@ -1,4 +1,5 @@
-version = '1.7.0-SNAPSHOT'
+group = 'org.tmatesoft.svnkit'
+version = '1.7.0'
 release = false
 target = '1.5'
 
@@ -8,7 +9,7 @@ buildscript {
             snapshotTimeout = org.gradle.api.internal.artifacts.ivyservice.GradleIBiblioResolver.ALWAYS
         }
     }
-    dependencies { classpath 'org.tmatesoft.build:build:0.9.5-SNAPSHOT' }
+    dependencies { classpath 'org.tmatesoft.build:build:0.9.6-SNAPSHOT' }
 }
 
 task wrapper(type: Wrapper) {}
@@ -60,15 +61,8 @@ configure(javaProjects()) {
 
     eclipseClasspath {
         variables = [ 'GRADLE_USER_HOME' : project.gradle.gradleUserHomeDir ]
-
-        defaultOutputDir = file('build/classes')
         containers.clear()
         containers.add(jreContainer)
-
-        whenConfigured { classpath ->
-            classpath.entries.findAll { it.kind == 'src' && it.path ==~ 'src/test/.*' }.each { it.output = 'build/test-classes' }
-            classpath.entries.findAll { it.kind == 'src' && it.path ==~ 'src/main/.*' }.each { it.output = 'build/classes' }
-        }
     }
 }
 
@@ -80,6 +74,9 @@ project(':svnkit') {
         compile 'com.trilead:trilead-ssh2:1.0.0-build214'
         
     }
+    artifacts {
+        maven jar, sourcesJar
+    }
 }
 
 project(':svnkit-javahl16') {
@@ -88,6 +85,9 @@ project(':svnkit-javahl16') {
         compile 'org.tigris.subversion:svn-javahl-api:1.6.17-SNAPSHOT'
         
         testCompile 'org.tigris.subversion:svn-javahl-tests:1.6.17-SNAPSHOT'
+    }
+    artifacts {
+        maven jar, sourcesJar
     }
 }
 
@@ -104,6 +104,9 @@ project(':svnkit-dav') {
         compile project(path: ':svnkit')
         compile 'javax.servlet:servlet-api:2.5'
     }
+    artifacts {
+        maven war
+    }
 }
 
 project(':svnkit-test') {
@@ -111,4 +114,11 @@ project(':svnkit-test') {
         compile project(path: ':svnkit-cli')
     }
     sourcesJar.enabled=false
+}
+
+project(':svnkit-osgi') {
+    sourcesJar.enabled=false
+    artifacts {
+        maven jar
+    }
 }
