@@ -1,0 +1,90 @@
+configurations {
+    binaries
+    sources
+    scripts
+    osgi
+}
+
+dependencies {
+    binaries project(path: ':svnkit')
+    binaries project(path: ':svnkit-cli')
+    binaries project(path: ':svnkit-javahl16', configuration: 'archives')
+
+    sources project(path: ':svnkit', configuration: 'sources')
+    sources project(path: ':svnkit-cli', configuration: 'sources')
+    sources project(path: ':svnkit-javahl16', configuration: 'sources')
+
+    scripts project(path: ':svnkit-cli', configuration: 'scripts')
+    
+    osgi project(path: ':svnkit-osgi', configuration: 'archives')
+    osgi 'com.trilead:trilead-ssh2-osgi:1.0.0-build214'
+    osgi 'org.tmatesoft.sqljet:sqljet-osgi:1.0.5'
+    osgi 'net.java.dev.jna:jna-osgi:3.2.7'
+}
+
+task buildAll(type: Zip) {
+    baseName = 'svnkit'
+    
+    classifier = 'all'
+    into "svnkit-${version}"
+    
+    into('lib') {
+        from configurations.binaries.files
+    }
+    into('src') {
+        from configurations.sources.files
+    }
+    from rootProject.files('LICENSE.txt', 'README.txt', 'CHANGES.txt')
+} << {
+    def scriptsDir = configurations.scripts.files.find { return true } 
+    ant.zip(destfile: buildAll.archivePath.absolutePath, update: true) {
+        zipfileset(dir: scriptsDir.absolutePath, prefix: "svnkit-${version}/bin")
+    }
+}
+
+task buildSources(type: Zip) {
+    baseName = 'svnkit'
+    classifier = 'src'
+
+    into("svnkit-${version}")
+
+    from rootProject.rootDir
+
+    exclude '.*'
+    exclude '**/.*'
+    exclude '**/.*/**'
+
+    exclude '**/build/**'
+    exclude '**/bin/**'
+    exclude '**/target/**'
+}
+
+task buildUpdateSite() {}
+
+buildUpdateSite.doFirst {
+    def tokens = new HashMap()
+    File siteDir = new File(buildDir, 'site')
+    File pluginsDir = new File(siteDir, 'plugins')
+    pluginsDir.mkdirs()
+    copy {
+        from configurations.osgi.files
+        into pluginsDir
+        eachFile {
+            org.tmatesoft.build.BuildVersion fileVersion = org.tmatesoft.build.BuildVersion.fromJarFile(it.file)
+            if (fileVersion != null && 
+                fileVersion.bundleSymbolicName != null && fileVersion.bundleVersion != null) {
+                tokens[fileVersion.bundleSymbolicName + '.version'] = fileVersion.bundleVersion 
+            }
+        }
+        eachFile fullJarNameExpander
+    }
+    println "tokens map: $tokens"
+}
+
+buildAll.dependsOn configurations.binaries
+buildAll.dependsOn configurations.scripts
+buildAll.dependsOn configurations.sources
+
+buildUpdateSite.dependsOn configurations.osgi
+
+task build(dependsOn: [buildAll, buildUpdateSite, buildSources])

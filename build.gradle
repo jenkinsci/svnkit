@@ -15,7 +15,7 @@ buildscript {
 task wrapper(type: Wrapper) {}
 
 def javaProjects() {
-    return subprojects
+    return subprojects - project(':svnkit-distribution')
 }
 
 allprojects {

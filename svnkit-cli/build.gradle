@@ -1,4 +1,9 @@
+configurations {
+    scripts
+}
+
 packageName = 'org.tmatesoft.svn.cli'
+
 scripts = ['jsvn' : "${packageName}.SVN",  
            'jsvnadmin' : "${packageName}.SVNAdmin", 
            'jsvndumpfilter' : "${packageName}.SVNDumpFilter", 
@@ -6,7 +11,7 @@ scripts = ['jsvn' : "${packageName}.SVN",
            'jsvnsync' : "${packageName}.SVNSync", 
            'jsvnversion' : "${packageName}.SVNVersion"]
  
-build << {
+jar << {
     
     File scriptsDir = new File(buildDir, 'scripts')
     scriptsDir.mkdirs()
@@ -15,6 +20,7 @@ build << {
     configurations.compile.files.each {
         classpath += fullJarName(it)
     }
+    classpath += jar.archiveName
     
     scripts.keySet().each { scriptName ->
         def mainclassName = scripts[scriptName]
@@ -49,4 +55,7 @@ build << {
             it = expandClasspath(it, classpath)
         }
     }
+
+    configurations.scripts.addArtifact(new
+        org.gradle.api.internal.artifacts.publish.DefaultPublishArtifact("svn-cli-scripts", "dir", "dir", null, new  Date(), scriptsDir))
 }

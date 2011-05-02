@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature
+      id="%svnkit.name%"
+      label="SVNKit Library"
+      version="%svnkit.version%"
+      provider-name="TMate Software">
+
+   <description url="http://svnkit.com/">%description</description>
+   <copyright url="http://svnkit.com/">(c) 2004-2011, TMate Software Ltd.</copyright>
+   <license url="http://svnkit.com/license.html">%license</license>
+
+   <url>
+      <update label="TMate Software SVNKit 1.7.x Update Site" url="http://eclipse.tmatesoft.com/svnkit/1.7.x/"/>
+      <discovery label="TMate Software SVNKit 1.7.x Update Site" url="http://eclipse.tmatesoft.com/svnkit/1.7.x/"/>
+   </url>
+   <includes
+         id="%jna.name%"
+         version="%jna.version%"
+         name="JNA Library"
+         optional="true"/>
+   <plugin
+         id="%svnkit.name%"
+         download-size="0"
+         install-size="0"
+         version="%svnkit.version%"/>
+   <plugin
+         id="%sqljet.name%"
+         download-size="0"
+         install-size="0"
+         version="%sqljet.version%"/>
+   <plugin
+         id="%trilead.name%"
+         download-size="0"
+         install-size="0"
+         version="%trilead.version%"/>
+
+</feature>
