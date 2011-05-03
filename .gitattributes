@@ -1,6 +1,6 @@
 * text=auto !eol
+/CHANGES.txt eol=lf
 /LICENSE.txt eol=lf
-/changelog.txt eol=lf
 doc/JSPWikiDocs/Authentication/AuthManager_Architecture.png -text
 doc/JSPWikiDocs/Authentication/AuthProvider_In_Work.png -text
 doc/JSPWikiDocs/Authentication/AuthProvider_In_Work_1.png -text
@@ -71,6 +71,12 @@ svnkit-dav/src/main/java/org/tmatesoft/svn/core/internal/server/dav/handlers/DAV
 svnkit-dav/src/main/java/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVLockRequest.java -text
 svnkit-dav/src/main/java/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVLockWalker.java -text
 svnkit-dav/src/main/java/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVUnlockHandler.java -text
+svnkit-distribution/src/main/licenses/LICENSE-ANTLR.txt eol=lf
+svnkit-distribution/src/main/licenses/LICENSE-JAVAHL.txt eol=lf
+svnkit-distribution/src/main/licenses/LICENSE-JNA.txt eol=lf
+svnkit-distribution/src/main/licenses/LICENSE-SEQUENCE.txt eol=lf
+svnkit-distribution/src/main/licenses/LICENSE-SQLJET.txt eol=lf
+svnkit-distribution/src/main/licenses/LICENSE-TRILEAD.txt eol=lf
 svnkit-test/configurations/shared/apache/python.template.conf eol=lf
 svnkit-test/configurations/shared/apache/users eol=lf
 svnkit-test/configurations/shared/daemon/matcher.pl -text

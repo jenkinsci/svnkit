@@ -37,13 +37,16 @@ task buildAll << {
         into('src') {
             from configurations.sources.files
         }
+        into('licenses') {
+            from file('src/main/licenses')
+        }
         from rootProject.files('LICENSE.txt', 'README.txt', 'CHANGES.txt')
     }
     
     File destfile = new File(distsDir, "svnkit-${version}-all.zip")
     ant.zip(destfile: destfile.absolutePath, basedir: dstDir.absolutePath)
     File destfileNoJNA = new File(distsDir, "svnkit-nojna-${version}-all.zip")
-    ant.zip(destfile: destfileNoJNA.absolutePath, basedir: dstDir.absolutePath, excludes: '**/jna*')
+    ant.zip(destfile: destfileNoJNA.absolutePath, basedir: dstDir.absolutePath, excludes: '**/jna*, **/LICENSE-JNA.txt')
 }
 
 task buildSources(type: Zip) {
