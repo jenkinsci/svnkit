@@ -19,6 +19,9 @@ task buildAll << {
         from rootProject.files('LICENSE.txt', 'README.txt', 'CHANGES.txt')
     }
     
+    File binDir = new File(dstDir, "svnkit-${version}/bin")
+    ant.chmod(dir: binDir.absolutePath, perm: 'ugo+rx', includes: '**/*')
+    
     File destfile = new File(distsDir, "svnkit-${version}-all.zip")
     ant.zip(destfile: destfile.absolutePath, basedir: dstDir.absolutePath)
     File destfileNoJNA = new File(distsDir, "svnkit-nojna-${version}-all.zip")

@@ -10,6 +10,7 @@ svnkit-cli/target
 svnkit-dav/bin
 svnkit-dav/build
 svnkit-dav/target
+svnkit-distribution/build
 svnkit-javahl16/build
 svnkit-javahl16/target
 svnkit-osgi/build
