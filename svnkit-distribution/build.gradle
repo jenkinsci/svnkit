@@ -20,7 +20,9 @@ task buildAll << {
     }
     
     File binDir = new File(dstDir, "svnkit-${version}/bin")
-    ant.chmod(dir: binDir.absolutePath, perm: 'ugo+rx', includes: '**/*')
+	binDir.listFiles().each { script ->
+		ant.chmod(file: script.absolutePath, perm: 'ugo+rx')
+	}
     
     File destfile = new File(distsDir, "svnkit-${version}-all.zip")
     ant.zip(destfile: destfile.absolutePath, basedir: dstDir.absolutePath)
