@@ -2,6 +2,7 @@ group = 'org.tmatesoft.svnkit'
 version = '1.7.0'
 release = false
 target = '1.5'
+compatibleSvnVersion = '1.7.0'
 
 buildscript {
     repositories {

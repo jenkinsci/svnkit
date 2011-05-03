@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <feature
-      id="%svnkit.name%"
+      id="${svnkit_osgi_name}"
       label="SVNKit Library"
-      version="%svnkit.version%"
+      version="${svnkit_osgi_version}"
       provider-name="TMate Software">
 
    <description url="http://svnkit.com/">%description</description>
@@ -13,25 +13,20 @@
       <update label="TMate Software SVNKit 1.7.x Update Site" url="http://eclipse.tmatesoft.com/svnkit/1.7.x/"/>
       <discovery label="TMate Software SVNKit 1.7.x Update Site" url="http://eclipse.tmatesoft.com/svnkit/1.7.x/"/>
    </url>
-   <includes
-         id="%jna.name%"
-         version="%jna.version%"
-         name="JNA Library"
-         optional="true"/>
    <plugin
-         id="%svnkit.name%"
+         id="${svnkit_osgi_name}"
          download-size="0"
          install-size="0"
-         version="%svnkit.version%"/>
+         version="${svnkit_osgi_version}"/>
    <plugin
-         id="%sqljet.name%"
+         id="${sqljet_osgi_name}"
          download-size="0"
          install-size="0"
-         version="%sqljet.version%"/>
+         version="${sqljet_osgi_version}"/>
    <plugin
-         id="%trilead.name%"
+         id="${trilead_ssh2_osgi_name}"
          download-size="0"
          install-size="0"
-         version="%trilead.version%"/>
+         version="${trilead_ssh2_osgi_version}"/>
 
 </feature>

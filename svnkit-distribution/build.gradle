@@ -18,28 +18,32 @@ dependencies {
     
     osgi project(path: ':svnkit-osgi', configuration: 'archives')
     osgi 'com.trilead:trilead-ssh2-osgi:1.0.0-build214'
-    osgi 'org.tmatesoft.sqljet:sqljet-osgi:1.0.5'
+    osgi 'org.tmatesoft.sqljet:sqljet-osgi:1.0.6-SNAPSHOT'
     osgi 'net.java.dev.jna:jna-osgi:3.2.7'
 }
 
-task buildAll(type: Zip) {
-    baseName = 'svnkit'
+task buildAll << {
+    File dstDir = new File(buildDir, "all")
+    dstDir.mkdirs()
     
-    classifier = 'all'
-    into "svnkit-${version}"
+    copy {
+        into new File(dstDir, "svnkit-${version}")
+        into('lib') {
+            from configurations.binaries.files
+        }
+        into ('bin') {
+            from configurations.scripts.files
+        } 
+        into('src') {
+            from configurations.sources.files
+        }
+        from rootProject.files('LICENSE.txt', 'README.txt', 'CHANGES.txt')
+    }
     
-    into('lib') {
-        from configurations.binaries.files
-    }
-    into('src') {
-        from configurations.sources.files
-    }
-    from rootProject.files('LICENSE.txt', 'README.txt', 'CHANGES.txt')
-} << {
-    def scriptsDir = configurations.scripts.files.find { return true } 
-    ant.zip(destfile: buildAll.archivePath.absolutePath, update: true) {
-        zipfileset(dir: scriptsDir.absolutePath, prefix: "svnkit-${version}/bin")
-    }
+    File destfile = new File(distsDir, "svnkit-${version}-all.zip")
+    ant.zip(destfile: destfile.absolutePath, basedir: dstDir.absolutePath)
+    File destfileNoJNA = new File(distsDir, "svnkit-nojna-${version}-all.zip")
+    ant.zip(destfile: destfileNoJNA.absolutePath, basedir: dstDir.absolutePath, excludes: '**/jna*')
 }
 
 task buildSources(type: Zip) {
@@ -59,26 +63,58 @@ task buildSources(type: Zip) {
     exclude '**/target/**'
 }
 
-task buildUpdateSite() {}
-
-buildUpdateSite.doFirst {
+task buildUpdateSite << {
     def tokens = new HashMap()
     File siteDir = new File(buildDir, 'site')
     File pluginsDir = new File(siteDir, 'plugins')
+    File featuresDir = new File(siteDir, 'features')
     pluginsDir.mkdirs()
-    copy {
-        from configurations.osgi.files
-        into pluginsDir
-        eachFile {
-            org.tmatesoft.build.BuildVersion fileVersion = org.tmatesoft.build.BuildVersion.fromJarFile(it.file)
-            if (fileVersion != null && 
-                fileVersion.bundleSymbolicName != null && fileVersion.bundleVersion != null) {
-                tokens[fileVersion.bundleSymbolicName + '.version'] = fileVersion.bundleVersion 
+    
+    configurations.osgi.resolvedConfiguration.each { conf ->
+        conf.resolvedArtifacts.each { artifact ->
+            org.tmatesoft.build.BuildVersion fileVersion = org.tmatesoft.build.BuildVersion.fromJarFile(artifact.file)
+            String name = artifact.resolvedDependency.moduleName
+            name = name.replace('-', '_')
+            tokens[name + '_version'] = fileVersion.bundleVersion + '_' + fileVersion.buildNumber
+            tokens[name + '_name'] = fileVersion.bundleSymbolicName
+            tokens[name + '_fullName'] = fileVersion.bundleSymbolicName + '_' + tokens[name + '_version'] + '.jar' 
+            copy {
+                from artifact.file
+                into pluginsDir
+                eachFile fullJarNameExpander
             }
         }
-        eachFile fullJarNameExpander
     }
-    println "tokens map: $tokens"
+    copy {
+        into siteDir
+        from 'src/main/update-site'
+        include 'site.xml'
+        expand(tokens)
+    }
+    file('src/main/update-site/features').listFiles().each {
+        if (it.isDirectory()) {
+            String fullName = tokens[it.name.replace('-', '_') + '_fullName']
+            if (fullName != null) {
+                makeFeatureJar(it, new File(featuresDir, fullName), tokens)
+            }
+        }
+    }
+
+    distsDir.mkdirs()
+    File destfile = new File(distsDir, "svnkit-update-site-${version}.zip")
+    ant.zip(destfile: destfile.absolutePath, basedir: siteDir.absolutePath)
+}
+
+def makeFeatureJar(File dir, File dstFile, Map tokens) {
+    def tmpDir = new File(buildDir, 'tmp/' + dstFile.getName())
+    tmpDir.mkdirs()
+    copy {
+        into tmpDir
+        from dir
+        expand(tokens)
+    }
+    ant.jar(destfile: dstFile.absolutePath, basedir: tmpDir.absolutePath)
+    
 }
 
 buildAll.dependsOn configurations.binaries

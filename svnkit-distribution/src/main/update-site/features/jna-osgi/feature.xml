@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <feature
-      id="%jna.name%"
+      id="${jna_osgi_name}"
       label="JNA Library"
-      version="%jna.version%">
+      version="${jna_osgi_version}">
 
    <description url="http://jna.dev.java.net/">JNA Library</description>
 
@@ -20,10 +20,10 @@
    </url>
 
    <plugin
-         id="%jna.name%"
+         id="${jna_osgi_name}"
          download-size="0"
          install-size="0"
          unpack="true"
-         version="%jna.version%"/>
+         version="${jna_osgi_version}"/>
 
 </feature>

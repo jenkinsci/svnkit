@@ -4,11 +4,11 @@
       TMate Sofware SVNKit Library Update Site
    </description>
 
-   <feature url="features/%svnkit.name%_%svnkit.version%.jar" id="%svnkit.name%" version="%svnkit.version%">
+   <feature url="features/${svnkit_osgi_fullName}" id="${svnkit_osgi_name}" version="${svnkit_osgi_version}">
       <category name="SVNKit Library"/>
    </feature>
 
-   <feature url="features/%jna.name%_%jna.version%.jar" id="%jna.name%" version="%jna.version%">
+   <feature url="features/${jna_osgi_fullName}" id="${jna_osgi_name}" version="${jna_osgi_version}">
       <category name="JNA Library"/>
    </feature>
    

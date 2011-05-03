@@ -89,6 +89,7 @@ svnkit/.project -text
 svnkit/.settings/org.eclipse.core.resources.prefs -text
 svnkit/.settings/org.eclipse.jdt.core.prefs -text
 svnkit/.settings/org.maven.ide.eclipse.prefs -text
+svnkit/build.gradle -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/db/SVNSqlJetDeleteStatement.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/db/SVNSqlJetInsertStatement.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/db/SVNSqlJetTableStatement.java -text

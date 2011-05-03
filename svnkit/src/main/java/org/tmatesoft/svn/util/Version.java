@@ -32,12 +32,12 @@ public class Version {
     private static final String VERSION_REVISION_PROPERTY = "svnkit.version.revision";
     private static final String SVN_VERSION_PROPERTY = "svnkit.svn.version";  
     
-    private static final String VERSION_STRING_DEFAULT = "SVN/1.6.5 SVNKit/1.4.0-dev (http://svnkit.com/) rSNAPSHOT";
+    private static final String VERSION_STRING_DEFAULT = "SVN/1.7.0 SVNKit/1.7.0-dev (http://svnkit.com/) rSNAPSHOT";
     private static final String VERSION_MAJOR_DEFAULT = "1";
-    private static final String VERSION_MINOR_DEFAULT = "4";
+    private static final String VERSION_MINOR_DEFAULT = "7";
     private static final String VERSION_MICRO_DEFAULT = "0";
     private static final String VERSION_REVISION_DEFAULT = "SNAPSHOT";
-    private static final String SVN_VERSION_DEFAULT = "1.6.5";
+    private static final String SVN_VERSION_DEFAULT = "1.7.0";
     private static String ourUserAgent;
 
     private static Properties ourProperties;
@@ -100,6 +100,11 @@ public class Version {
         return Integer.parseInt(VERSION_MICRO_DEFAULT);
     }
 
+    /**
+     * @deprecated use getRevisionString instead
+     * @return
+     */
+    @Deprecated    
     public static long getRevisionNumber() {
         loadProperties();
         try {
@@ -114,6 +119,11 @@ public class Version {
             //
         }
         return -1;
+    }
+
+    public static String getRevisionString() {
+        loadProperties();
+        return ourProperties.getProperty(VERSION_REVISION_PROPERTY, VERSION_REVISION_DEFAULT);
     }
 
     private static void loadProperties() {
