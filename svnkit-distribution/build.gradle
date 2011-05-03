@@ -19,15 +19,18 @@ task buildAll << {
         from rootProject.files('LICENSE.txt', 'README.txt', 'CHANGES.txt')
     }
     
-    File binDir = new File(dstDir, "svnkit-${version}/bin")
-	binDir.listFiles().each { script ->
-		ant.chmod(file: script.absolutePath, perm: 'ugo+rx')
-	}
-    
     File destfile = new File(distsDir, "svnkit-${version}-all.zip")
-    ant.zip(destfile: destfile.absolutePath, basedir: dstDir.absolutePath)
+    ant.zip(destfile: destfile.absolutePath) {
+        zipfileset(dir: dstDir.absolutePath, excludes: '**/bin/**')
+        zipfileset(dir: dstDir.absolutePath, includes: '**/bin/**', excludes: '**/bin/*.bat', filemode: '755')
+        zipfileset(dir: dstDir.absolutePath, includes: '**/bin/*.bat')
+    }
     File destfileNoJNA = new File(distsDir, "svnkit-nojna-${version}-all.zip")
-    ant.zip(destfile: destfileNoJNA.absolutePath, basedir: dstDir.absolutePath, excludes: '**/jna*, **/LICENSE-JNA.txt')
+    ant.zip(destfile: destfileNoJNA.absolutePath) {
+        zipfileset(dir: dstDir.absolutePath, excludes: '**/bin/**,**/jna*,**/LICENSE-JNA.txt')
+        zipfileset(dir: dstDir.absolutePath, includes: '**/bin/**', excludes: '**/bin/*.bat', filemode: '755')
+        zipfileset(dir: dstDir.absolutePath, includes: '**/bin/*.bat')
+    }
 }
 
 task buildSources(type: Zip) {
