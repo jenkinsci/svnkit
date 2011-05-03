@@ -73,23 +73,18 @@ project(':svnkit') {
         compile 'org.tmatesoft.sqljet:sqljet:1.0.5'
         compile 'net.java.dev.jna:jna:3.2.7'
         compile 'com.trilead:trilead-ssh2:1.0.0-build214'
-        
     }
-    artifacts {
-        maven jar, sourcesJar
-    }
+    artifacts { maven jar, sourcesJar }
 }
 
 project(':svnkit-javahl16') {
     dependencies {
         compile project(path: ':svnkit')
         compile 'org.tigris.subversion:svn-javahl-api:1.6.17-SNAPSHOT'
-        
+
         testCompile 'org.tigris.subversion:svn-javahl-tests:1.6.17-SNAPSHOT'
     }
-    artifacts {
-        maven jar, sourcesJar
-    }
+    artifacts { maven jar, sourcesJar }
 }
 
 project(':svnkit-cli') {
@@ -100,14 +95,12 @@ project(':svnkit-cli') {
 
 project(':svnkit-dav') {
     apply plugin: 'war'
-    
+
     dependencies {
         compile project(path: ':svnkit')
         compile 'javax.servlet:servlet-api:2.5'
     }
-    artifacts {
-        maven war
-    }
+    artifacts { maven war }
 }
 
 project(':svnkit-test') {
@@ -119,7 +112,31 @@ project(':svnkit-test') {
 
 project(':svnkit-osgi') {
     sourcesJar.enabled=false
-    artifacts {
-        maven jar
+    artifacts { maven jar }
+}
+
+project(':svnkit-distribution') {
+    configurations {
+        binaries
+        sources
+        scripts
+        osgi
+    }
+
+    dependencies {
+        binaries project(path: ':svnkit')
+        binaries project(path: ':svnkit-cli')
+        binaries project(path: ':svnkit-javahl16', configuration: 'archives')
+
+        sources project(path: ':svnkit', configuration: 'sources')
+        sources project(path: ':svnkit-cli', configuration: 'sources')
+        sources project(path: ':svnkit-javahl16', configuration: 'sources')
+
+        scripts project(path: ':svnkit-cli', configuration: 'scripts')
+
+        osgi project(path: ':svnkit-osgi', configuration: 'archives')
+        osgi 'com.trilead:trilead-ssh2-osgi:1.0.0-build214'
+        osgi 'org.tmatesoft.sqljet:sqljet-osgi:1.0.6-SNAPSHOT'
+        osgi 'net.java.dev.jna:jna-osgi:3.2.7'
     }
 }

@@ -1,27 +1,3 @@
-configurations {
-    binaries
-    sources
-    scripts
-    osgi
-}
-
-dependencies {
-    binaries project(path: ':svnkit')
-    binaries project(path: ':svnkit-cli')
-    binaries project(path: ':svnkit-javahl16', configuration: 'archives')
-
-    sources project(path: ':svnkit', configuration: 'sources')
-    sources project(path: ':svnkit-cli', configuration: 'sources')
-    sources project(path: ':svnkit-javahl16', configuration: 'sources')
-
-    scripts project(path: ':svnkit-cli', configuration: 'scripts')
-    
-    osgi project(path: ':svnkit-osgi', configuration: 'archives')
-    osgi 'com.trilead:trilead-ssh2-osgi:1.0.0-build214'
-    osgi 'org.tmatesoft.sqljet:sqljet-osgi:1.0.6-SNAPSHOT'
-    osgi 'net.java.dev.jna:jna-osgi:3.2.7'
-}
-
 task buildAll << {
     File dstDir = new File(buildDir, "all")
     dstDir.mkdirs()
