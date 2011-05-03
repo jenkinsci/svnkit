@@ -1,0 +1,9 @@
+rootProject.name = 'org.tmatesoft.svnkit'
+
+include 'svnkit'
+include 'svnkit-cli'
+include 'svnkit-javahl16'
+include 'svnkit-dav'
+include 'svnkit-test'
+include 'svnkit-osgi'
+include 'svnkit-distribution'

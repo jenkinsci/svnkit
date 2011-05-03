@@ -1,0 +1,31 @@
+<project>
+
+    <!-- Get a jar -->
+    <copy file="${ant.home}/lib/ant.jar" todir="."/>
+
+    <!--
+    Loads entries from a manifest file.
+    @jar     The jar from where to read
+    @prefix  A prefix to prepend
+    -->
+    <macrodef name="loadmf">
+        <attribute name="jar"/>
+        <attribute name="prefix" default=""/>
+        <sequential>
+            <loadproperties>
+                <!-- Load the manifest entries -->
+                <zipentry zipfile="@{jar}" name="META-INF/MANIFEST.MF"/>
+                <!-- Add the prefix -->
+                <filterchain>
+                    <prefixlines prefix="@{prefix}"/>
+                </filterchain>
+            </loadproperties>
+        </sequential>
+    </macrodef>
+
+    <!-- Read mf entries -->
+    <loadmf jar="ant.jar" prefix="ant-mf."/>
+    <!-- Print them -->
+    <echoproperties prefix="ant-mf."/>
+    
+</project>

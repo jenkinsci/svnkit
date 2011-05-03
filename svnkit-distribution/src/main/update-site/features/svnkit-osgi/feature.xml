@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature
+      id="${svnkit_osgi_name}"
+      label="SVNKit Library"
+      version="${svnkit_osgi_version}"
+      provider-name="TMate Software">
+
+   <description url="http://svnkit.com/">%description</description>
+   <copyright url="http://svnkit.com/">(c) 2004-2011, TMate Software Ltd.</copyright>
+   <license url="http://svnkit.com/license.html">%license</license>
+
+   <url>
+      <update label="TMate Software SVNKit 1.7.x Update Site" url="http://eclipse.tmatesoft.com/svnkit/1.7.x/"/>
+      <discovery label="TMate Software SVNKit 1.7.x Update Site" url="http://eclipse.tmatesoft.com/svnkit/1.7.x/"/>
+   </url>
+   <plugin
+         id="${svnkit_osgi_name}"
+         download-size="0"
+         install-size="0"
+         version="${svnkit_osgi_version}"/>
+   <plugin
+         id="${sqljet_osgi_name}"
+         download-size="0"
+         install-size="0"
+         version="${sqljet_osgi_version}"/>
+   <plugin
+         id="${trilead_ssh2_osgi_name}"
+         download-size="0"
+         install-size="0"
+         version="${trilead_ssh2_osgi_version}"/>
+
+</feature>

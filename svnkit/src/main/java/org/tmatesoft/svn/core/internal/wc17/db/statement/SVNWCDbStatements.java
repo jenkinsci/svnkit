@@ -1,0 +1,127 @@
+/*
+ * ====================================================================
+ * Copyright (c) 2004-2010 TMate Software Ltd.  All rights reserved.
+ *
+ * This software is licensed as described in the file COPYING, which
+ * you should have received as part of this distribution.  The terms
+ * are also available at http://svnkit.com/license.html.
+ * If newer versions of this license are posted there, you may use a
+ * newer version instead, at your option.
+ * ====================================================================
+ */
+package org.tmatesoft.svn.core.internal.wc17.db.statement;
+
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
+import org.tmatesoft.svn.core.internal.io.fs.revprop.SVNFSFSRevPropCreateSchema;
+import org.tmatesoft.svn.core.internal.io.fs.revprop.SVNFSFSRevPropGet;
+import org.tmatesoft.svn.core.internal.io.fs.revprop.SVNFSFSRevPropSet;
+
+/**
+ * @author TMate Software Ltd.
+ */
+public enum SVNWCDbStatements {
+
+    CREATE_SCHEMA(SVNWCDbCreateSchema.class),
+    DELETE_ACTUAL_EMPTY(SVNWCDbDeleteActualEmpty.class),
+    DELETE_ACTUAL_NODE(SVNWCDbDeleteActualNode.class),
+    DELETE_BASE_NODE(SVNWCDbDeleteBaseNode.class),
+    DELETE_LOCK,
+    DELETE_NODES(SVNWCDbDeleteNodes.class),
+    DELETE_PRISTINE(SVNWCDbDeletePristine.class),
+    DELETE_WC_LOCK(SVNWCDbDeleteWCLock.class),
+    DELETE_WORK_ITEM(SVNWCDbDeleteWorkItem.class),
+    DELETE_WORKING_NODE(SVNWCDbDeleteWorkingNode.class),
+    DETERMINE_TREE_FOR_RECORDING(SVNWCDbDetermineTreeForRecording.class),
+    FIND_WC_LOCK(SVNWCDbFindWCLock.class),
+    FSFS_GET_REVPROP(SVNFSFSRevPropGet.class),
+    FSFS_SET_REVPROP(SVNFSFSRevPropSet.class),
+    INSERT_ACTUAL_CONFLICT_DATA(SVNWCDbInsertActualConflictData.class),
+    INSERT_ACTUAL_PROPERTY_CONFLICTS,
+    INSERT_ACTUAL_PROPS(SVNWCDbInsertActualProps.class),
+    INSERT_ACTUAL_TEXT_CONFLICTS(SVNWCDbInsertActualTextConflicts.class),
+    INSERT_ACTUAL_TREE_CONFLICTS(SVNWCDbInsertActualTreeConflicts.class),
+    INSERT_BASE_NODE,
+    INSERT_BASE_NODE_INCOMPLETE,
+    INSERT_NODE(SVNWCDbInsertNode.class),
+    INSERT_PRISTINE(SVNWCDbInsertPristine.class),
+    INSERT_REPOSITORY(SVNWCDbInsertRepository.class),
+    INSERT_WC_LOCK(SVNWCDbInsertWCLock.class),
+    INSERT_WCROOT(SVNWCDbInsertWCRoot.class),
+    INSERT_WORK_ITEM(SVNWCDbInsertWorkItem.class),
+    INSERT_WORKING_NODE_FROM_BASE(SVNWCDbInsertWorkingNodeFromBase.class),
+    INSERT_WORKING_NODE_NORMAL_FROM_BASE(SVNWCDbInsertWorkingNodeNormalFromBase.class),
+    INSERT_WORKING_NODE_NOT_PRESENT_FROM_BASE(SVNWCDbInsertWorkingNodeNotPresentFromBase.class),
+    LOOK_FOR_WORK(SVNWCDbLookForWork.class),
+    REVPROP_CREATE_SCHEMA(SVNFSFSRevPropCreateSchema.class),
+    SELECT_ACTUAL_CONFLICT_VICTIMS(SVNWCDbSelectActualConflictVictims.class),
+    SELECT_ACTUAL_NODE(SVNWCDbSelectActualNode.class),
+    SELECT_ACTUAL_PROPS(SVNWCDbSelectActualProperties.class),
+    SELECT_ACTUAL_TREE_CONFLICT(SVNWCDbSelectActualTreeConflict.class),
+    SELECT_ANY_PRISTINE_REFERENCE(SVNWCDbSelectAnyPristineReference.class),
+    SELECT_BASE_DAV_CACHE,
+    SELECT_BASE_NODE(SVNWCDbSelectBaseNode.class),
+    SELECT_BASE_NODE_CHILDREN(SVNWCDbSelectBaseNodeChildren.class),
+    SELECT_BASE_NODE_WITH_LOCK(SVNWCDbSelectBaseNodeWithLock.class),
+    SELECT_BASE_PROPS(SVNWCDbSelectBaseProperties.class),
+    SELECT_CONFLICT_DETAILS(SVNWCDbSelectConflictDetails.class),
+    SELECT_DELETION_INFO(SVNWCDbSelectDeletionInfo.class),
+    SELECT_FILE_EXTERNAL(SVNWCDBSelectFileExternal.class),
+    SELECT_NODE_PROPS(SVNWCDbSelectNodeProps.class),
+    SELECT_NOT_PRESENT(SVNWCDbSelectNotPresent.class),
+    SELECT_PRISTINE_MD5_CHECKSUM(SVNWCDbSelectPristineMD5Checksum.class),
+    SELECT_PRISTINE_SHA1_CHECKSUM(SVNWCDbSelectSHA1Checksum.class),
+    SELECT_REPOSITORY(SVNWCDbSelectRepository.class),
+    SELECT_REPOSITORY_BY_ID(SVNWCDbSelectRepositoryById.class),
+    SELECT_WC_LOCK(SVNWCDbSelectWCLock.class),
+    SELECT_WCROOT_NULL(SVNWCDbSelectWCRootNull.class),
+    SELECT_WORK_ITEM(SVNWCDbSelectWorkItem.class),
+    SELECT_WORKING_NODE(SVNWCDbSelectWorkingNode.class),
+    SELECT_WORKING_NODE_CHILDREN(SVNWCDbSelectWorkingNodeChildren.class),
+    SELECT_WORKING_OP_DEPTH_RECURSIVE,
+    UPDATE_ACTUAL_CONFLICT_DATA(SVNWCDbUpdateActualConflictData.class),
+    UPDATE_ACTUAL_PROPERTY_CONFLICTS(SVNWCDbUpdateActualPropertyConflicts.class),
+    UPDATE_ACTUAL_PROPS(SVNWCDbUpdateActualProps.class),
+    UPDATE_ACTUAL_TEXT_CONFLICTS(SVNWCDbUpdateActualTextConflicts.class),
+    UPDATE_ACTUAL_TREE_CONFLICTS(SVNWCDbUpdateActualTreeConflicts.class),
+    UPDATE_BASE_NODE_PRESENCE_REVNUM_AND_REPOS_PATH(SVNUpdateBaseNodePresenceRevnumAndReposPath.class),
+    UPDATE_BASE_REPOS,
+    UPDATE_BASE_REVISION(SVNWCDbUpdateBaseRevision.class),
+    UPDATE_COPYFROM(SVNWCDbUpdateCopyfrom.class),
+    UPDATE_COPYFROM_TO_INHERIT,
+    UPDATE_FILE_EXTERNAL,
+    UPDATE_NODE_BASE_DEPTH(SVNWCDbUpdateNodeBaseDepth.class),
+    UPDATE_NODE_BASE_EXCLUDED,
+    UPDATE_NODE_BASE_PRESENCE(SVNWCDbUpdateNodeBasePresence.class),
+    UPDATE_NODE_WORKING_DEPTH(SVNWCDbUpdateNodeWorkingDepth.class),
+    UPDATE_NODE_WORKING_EXCLUDED,
+    UPDATE_NODE_WORKING_PRESENCE,
+    UPDATE_OP_DEPTH,
+    UPDATE_NODE_FILEINFO(SVNWCDbUpdateNodeFileinfo.class),
+    SELECT_LOWEST_WORKING_NODE(SVNWCDbSelectLowestWorkingNode.class),
+    CLEAR_TEXT_CONFLICT(SVNWCDbClearTextConflict.class),
+    CLEAR_PROPS_CONFLICT(SVNWCDbClearPropsConflict.class),
+    DELETE_LOWEST_WORKING_NODE(SVNWCDbDeleteLowestWorkingNode.class),
+    DELETE_ACTUAL_NODE_WITHOUT_CONFLICT(SVNWCDbDeleteActualNodeWithoutConflict.class),
+    SELECT_ACTUAL_CHILDREN_TREE_CONFLICT(SVNWCDbSelectActualChildrenTreeConflict.class),
+    CLEAR_ACTUAL_NODE_LEAVING_CONFLICT(SVNWCDbClearActualNodeLeavingConflict.class),
+    INSERT_WORKING_NODE_FROM_BASE_COPY_PRESENCE(SVNWCDbInsertWorkingNodeFromBaseCopyPresence.class),
+    INSERT_WORKING_NODE_FROM_BASE_COPY(SVNWCDbInsertWorkingNodeFromBaseCopy.class),
+    SELECT_OP_DEPTH_CHILDREN(SVNWCDbSelectOpDepthChildren.class),
+    APPLY_CHANGES_TO_BASE_NODE(SVNWCDbApplyChangesToBaseNode.class),
+    DELETE_ALL_WORKING_NODES(SVNWCDbDeleteAllWorkingNodes.class),
+    RESET_ACTUAL_WITH_CHANGELIST(SVNWCDbResetActualWithChangelist.class);
+
+    private Class<? extends SVNSqlJetStatement> statementClass;
+
+    private SVNWCDbStatements() {
+    }
+
+    private SVNWCDbStatements(Class<? extends SVNSqlJetStatement> statementClass) {
+        this.statementClass = statementClass;
+    }
+
+    public Class<? extends SVNSqlJetStatement> getStatementClass() {
+        return statementClass;
+    }
+
+}

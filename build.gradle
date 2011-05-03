@@ -1,0 +1,161 @@
+group = 'org.tmatesoft.svnkit'
+version = '1.7.0'
+release = false
+target = '1.5'
+compatibleSvnVersion = '1.7.0'
+
+buildscript {
+    repositories {
+        mavenRepo(urls: [mavenPublicRepositoryURL]) {
+            snapshotTimeout = org.gradle.api.internal.artifacts.ivyservice.GradleIBiblioResolver.ALWAYS
+        }
+    }
+    dependencies { classpath 'org.tmatesoft.build:build:0.9.6-SNAPSHOT' }
+}
+
+task wrapper(type: Wrapper) {}
+
+def javaProjects() {
+    return subprojects - project(':svnkit-distribution')
+}
+
+allprojects {
+    apply plugin : 'base'
+    apply plugin : 'build'
+}
+
+configure(javaProjects() + rootProject) {
+    apply plugin: 'eclipse'
+    apply plugin: 'idea'
+
+    eclipseProject {
+        def nameTail = "-${buildVersion.major}.${buildVersion.minor}."
+        nameTail += buildVersion.isSnapshot() ? 'x' : buildVersion.micro
+
+        def nameHead = project == rootProject ? '' : project.group + '.'
+        projectName = nameHead + project.name + nameTail
+    }
+}
+
+
+configure(javaProjects()) {
+    apply plugin : 'java'
+
+    sourceCompatibility = target
+    targetCompatibility = target
+
+    configurations {
+        sources
+        javadocs
+    }
+
+    task sourcesJar(type: Jar) {
+        description = 'Builds Java Sources Jar'
+        from sourceSets.main.java.srcDirs
+        classifier = 'sources'
+    }
+
+    jar {
+        metaInf {
+            from rootProject.file('LICENSE.txt')
+        }
+    }
+
+    artifacts { sources sourcesJar }
+}
+
+configure(javaProjects()) {
+
+    def jreContainer = 'org.eclipse.jdt.launching.JRE_CONTAINER'
+    if (target == '1.4' || target == '1.5') {
+        jreContainer += '/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-' + targetCompatibility
+    } else if (target == '1.6' || target == '1.7') {
+        jreContainer += '/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-' + targetCompatibility
+    }
+
+    eclipseClasspath {
+        variables = [ 'GRADLE_USER_HOME' : project.gradle.gradleUserHomeDir ]
+        containers.clear()
+        containers.add(jreContainer)
+    }
+    gradle.taskGraph.whenReady { taskGraph ->
+       taskGraph.allTasks.each { task ->
+           if (task.name == 'eclipseWtpComponent') { task.enabled = false }
+           if (task.name == 'eclipseWtpFacet') { task.enabled = false }
+       }
+    }    
+}
+
+project(':svnkit') {
+    dependencies {
+        compile 'de.regnis.q.sequence:sequence-library:1.0.0'
+        compile 'org.tmatesoft.sqljet:sqljet:1.0.5'
+        compile 'net.java.dev.jna:jna:3.2.7'
+        compile 'com.trilead:trilead-ssh2:1.0.0-build214'
+    }
+    artifacts { maven jar, sourcesJar }
+}
+
+project(':svnkit-javahl16') {
+    dependencies {
+        compile project(path: ':svnkit')
+        compile 'org.tigris.subversion:svn-javahl-api:1.6.17-SNAPSHOT'
+
+        testCompile 'org.tigris.subversion:svn-javahl-tests:1.6.17-SNAPSHOT'
+    }
+    artifacts { maven jar, sourcesJar }
+}
+
+project(':svnkit-cli') {
+    dependencies {
+        compile project(path: ':svnkit')
+    }
+}
+
+project(':svnkit-dav') {
+    apply plugin: 'war'
+
+    dependencies {
+        compile project(path: ':svnkit')
+        compile 'javax.servlet:servlet-api:2.5'
+    }
+    artifacts { maven war }
+}
+
+project(':svnkit-test') {
+    dependencies {
+        compile project(path: ':svnkit-cli')
+    }
+    sourcesJar.enabled=false
+}
+
+project(':svnkit-osgi') {
+    sourcesJar.enabled=false
+    artifacts { maven jar }
+}
+
+project(':svnkit-distribution') {
+    configurations {
+        binaries
+        sources
+        scripts
+        osgi
+    }
+
+    dependencies {
+        binaries project(path: ':svnkit')
+        binaries project(path: ':svnkit-cli')
+        binaries project(path: ':svnkit-javahl16', configuration: 'archives')
+
+        sources project(path: ':svnkit', configuration: 'sources')
+        sources project(path: ':svnkit-cli', configuration: 'sources')
+        sources project(path: ':svnkit-javahl16', configuration: 'sources')
+
+        scripts project(path: ':svnkit-cli', configuration: 'scripts')
+
+        osgi project(path: ':svnkit-osgi', configuration: 'archives')
+        osgi 'com.trilead:trilead-ssh2-osgi:1.0.0-build214'
+        osgi 'org.tmatesoft.sqljet:sqljet-osgi:1.0.6-SNAPSHOT'
+        osgi 'net.java.dev.jna:jna-osgi:3.2.7'
+    }
+}
