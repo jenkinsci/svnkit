@@ -44,6 +44,4 @@ svnkit/bin
 svnkit/build
 svnkit/src/main/java/org/tmatesoft/svn/examples
 svnkit/src/main/java/org/tmatesoft/svn/util/SVNTest.java
-svnkit/src/org/tmatesoft/svn/examples
-svnkit/src/org/tmatesoft/svn/util/SVNTest.java
 svnkit/target
