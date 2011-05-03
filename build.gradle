@@ -24,6 +24,20 @@ allprojects {
     apply plugin : 'build'
 }
 
+configure(javaProjects() + rootProject) {
+    apply plugin: 'eclipse'
+    apply plugin: 'idea'
+
+    eclipseProject {
+        def nameTail = "-${buildVersion.major}.${buildVersion.minor}."
+        nameTail += buildVersion.isSnapshot() ? 'x' : buildVersion.micro
+
+        def nameHead = project == rootProject ? '' : project.group + '.'
+        projectName = nameHead + project.name + nameTail
+    }
+}
+
+
 configure(javaProjects()) {
     apply plugin : 'java'
 
@@ -51,7 +65,6 @@ configure(javaProjects()) {
 }
 
 configure(javaProjects()) {
-    apply plugin : 'eclipse'
 
     def jreContainer = 'org.eclipse.jdt.launching.JRE_CONTAINER'
     if (target == '1.4' || target == '1.5') {
@@ -65,6 +78,12 @@ configure(javaProjects()) {
         containers.clear()
         containers.add(jreContainer)
     }
+    gradle.taskGraph.whenReady { taskGraph ->
+       taskGraph.allTasks.each { task ->
+           if (task.name == 'eclipseWtpComponent') { task.enabled = false }
+           if (task.name == 'eclipseWtpFacet') { task.enabled = false }
+       }
+    }    
 }
 
 project(':svnkit') {
