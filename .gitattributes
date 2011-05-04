@@ -31,6 +31,7 @@ svnkit-test/nailgun/README.txt -text
 svnkit-test/nailgun/nailgun-0.7.1.jar -text
 svnkit-test/nailgun/ng.exe -text
 svnkit-test/nailgun/src/c/ng.c -text
+svnkit-test/src/main/java/org/tmatesoft/svn/core/test/ConsoleLogger.java -text
 svnkit/build.gradle -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/db/SVNSqlJetDeleteStatement.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/db/SVNSqlJetInsertStatement.java -text

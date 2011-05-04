@@ -70,11 +70,11 @@ public class PythonTests {
 			properties = loadProperties(ourPropertiesFile);
 			defaultTestSuite = loadDefaultTestSuite();
 		} catch (IOException e) {
-			System.out.println("can't load properties, exiting");
+			e.printStackTrace();
 			System.exit(1);
 		}
 		File testResultsDirectory = new File(properties.getProperty("python.tests.results", "build/logs"));
-        ourLoggers = new AbstractTestLogger[] {new JUnitTestLogger(testResultsDirectory)};
+        ourLoggers = new AbstractTestLogger[] {new ConsoleLogger(), new JUnitTestLogger(testResultsDirectory)};
 		
 		ourProperties = properties;
         Logger logger = setupLogging();
@@ -83,7 +83,6 @@ public class PythonTests {
             try{
                 ourLoggers[i].startTests(properties);
             }catch(IOException ioe){
-                ioe.getMessage();
                 ioe.printStackTrace();
                 System.exit(1);
             }
@@ -93,7 +92,6 @@ public class PythonTests {
             try {
                 libPath = startCommandDaemon(properties);
             } catch (IOException e) {
-                e.getMessage();
                 e.printStackTrace();
                 System.exit(1);
             }
@@ -263,7 +261,6 @@ public class PythonTests {
     }
 
 	private static void runPythonTests(Properties properties, String defaultTestSuite, String type, String url, String libPath, Logger pythonLogger) throws IOException {
-		System.out.println("RUNNING TESTS AGAINST '" + url + "'");
 		String pythonLauncher = properties.getProperty("python.launcher");
 		String testSuite = properties.getProperty("python.tests.suite", defaultTestSuite);
 		String options = properties.getProperty("python.tests.options", "");
@@ -291,14 +288,13 @@ public class PythonTests {
                 logHandler = createLogHandler(logsDirectory, type + "_" + suiteName + "_python");
 			    pythonLogger.addHandler(logHandler);
 			}
+			long startTime = System.currentTimeMillis();
 			try {
     			if (tokens.isEmpty() || (tokens.size() == 1 && "ALL".equals(tokens.get(0)))) {
-                    System.out.println("SUITE " + testFile + " [ALL]");
                     processTestCase(pythonLauncher, testsLocation, testFile, options, null, url, libPath, fsfsConfig, pythonLogger);
     			} else {
     	            final List availabledTestCases = getAvailableTestCases(pythonLauncher, testsLocation, testFile, listOption, pythonLogger);
     	            final List testCases = !tokens.isEmpty() ? combineTestCases(tokens, availabledTestCases) : availabledTestCases;
-    	            System.out.println("SUITE " + testFile + " " + testCases);
     	            processTestCase(pythonLauncher, testsLocation, testFile, options, testCases, url, libPath, fsfsConfig, pythonLogger);
     			}
 			} finally {
@@ -528,7 +524,6 @@ public class PythonTests {
                         for (int i = 0; i < ourLoggers.length; i++) {
                             ourLoggers[i].handleTest(testResult);
                         }
-                        System.out.println((testResult.isPass() ? "OK [" : "FAIL [") + testResult.getName() + "]");
 
                     } else {
                         myTestOutput.append(line);
