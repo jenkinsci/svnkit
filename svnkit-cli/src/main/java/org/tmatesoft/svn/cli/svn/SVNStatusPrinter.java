@@ -60,7 +60,7 @@ public class SVNStatusPrinter {
                     else
                         wcRevision = "-";
                 } else
-                    wcRevision = "?";
+                    wcRevision = " ? ";
             } else {
                 wcRevision = Long.toString(status.getRevision().getNumber());
             }
