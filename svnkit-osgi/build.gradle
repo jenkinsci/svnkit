@@ -2,7 +2,7 @@ apply plugin: 'osgi'
 
 bundleName = rootProject.group
 bundleSymbolicName = 'SVNKit pure Java Subversion Library'
-bundleVersion = buildVersion.getBaseOSGIVersion()
+bundleVersion = buildVersion.getFullOSGIVersion()
 bundleVendor = 'TMate Software'
 
 configurations {
@@ -41,9 +41,9 @@ jar {
         'Bundle-Activator' : 'org.tmatesoft.svn.core.SVNKitActivator',
         'Bundle-ActivationPolicy' : 'lazy',
         'Require-Bundle': 'net.java.dev.jna;bundle-version="[3.2.7,4.0.0)";resolution:=optional,' +
-        'com.trilead.ssh2;bundle-version="[1.0.0,2.0.0)",' +
-        'org.tmatesoft.sqljet;bundle-version="[1.0.5,2.0.0)",' +
-        'org.eclipse.core.runtime;bundle-version="[3.0.0,4.0.0)"'
+        	'com.trilead.ssh2;bundle-version="[1.0.0,2.0.0)",' +
+			'org.tmatesoft.sqljet;bundle-version="[1.0.5,2.0.0)",' +
+			'org.eclipse.core.runtime;bundle-version="[3.0.0,4.0.0)"'
 
         instruction 'Export-Package', '!org.tmatesoft.svn.core.internal.*',
         'org.tmatesoft.svn.core.*;version=' + bundleVersion,

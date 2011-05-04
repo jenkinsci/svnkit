@@ -10,7 +10,7 @@ buildscript {
             snapshotTimeout = org.gradle.api.internal.artifacts.ivyservice.GradleIBiblioResolver.ALWAYS
         }
     }
-    dependencies { classpath 'org.tmatesoft.build:build:0.9.6-SNAPSHOT' }
+    dependencies { classpath 'org.tmatesoft.build:build:0.9.7-SNAPSHOT' }
 }
 
 task wrapper(type: Wrapper) {}
@@ -28,13 +28,12 @@ configure(javaProjects() + rootProject) {
     apply plugin: 'eclipse'
     apply plugin: 'idea'
 
-    eclipseProject {
-        def nameTail = "-${buildVersion.major}.${buildVersion.minor}."
-        nameTail += buildVersion.isSnapshot() ? 'x' : buildVersion.micro
-
-        def nameHead = project == rootProject ? '' : project.group + '.'
-        projectName = nameHead + project.name + nameTail
-    }
+    gradle.taskGraph.whenReady { taskGraph ->
+       taskGraph.allTasks.each { task ->
+           if (task.name == 'eclipseWtpComponent') { task.enabled = false }
+           if (task.name == 'eclipseWtpFacet') { task.enabled = false }
+       }
+    }    
 }
 
 
@@ -62,28 +61,6 @@ configure(javaProjects()) {
     }
 
     artifacts { sources sourcesJar }
-}
-
-configure(javaProjects()) {
-
-    def jreContainer = 'org.eclipse.jdt.launching.JRE_CONTAINER'
-    if (target == '1.4' || target == '1.5') {
-        jreContainer += '/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-' + targetCompatibility
-    } else if (target == '1.6' || target == '1.7') {
-        jreContainer += '/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-' + targetCompatibility
-    }
-
-    eclipseClasspath {
-        variables = [ 'GRADLE_USER_HOME' : project.gradle.gradleUserHomeDir ]
-        containers.clear()
-        containers.add(jreContainer)
-    }
-    gradle.taskGraph.whenReady { taskGraph ->
-       taskGraph.allTasks.each { task ->
-           if (task.name == 'eclipseWtpComponent') { task.enabled = false }
-           if (task.name == 'eclipseWtpFacet') { task.enabled = false }
-       }
-    }    
 }
 
 project(':svnkit') {

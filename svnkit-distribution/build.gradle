@@ -62,9 +62,9 @@ task buildUpdateSite << {
             org.tmatesoft.build.BuildVersion fileVersion = org.tmatesoft.build.BuildVersion.fromJarFile(artifact.file)
             String name = artifact.resolvedDependency.moduleName
             name = name.replace('-', '_')
-            tokens[name + '_version'] = fileVersion.bundleVersion + '_' + fileVersion.buildNumber
+            tokens[name + '_version'] = fileVersion.bundleVersion
             tokens[name + '_name'] = fileVersion.bundleSymbolicName
-            tokens[name + '_fullName'] = fileVersion.bundleSymbolicName + '_' + tokens[name + '_version'] + '.jar' 
+            tokens[name + '_fullName'] = fullJarName(artifact.file) 
             copy {
                 from artifact.file
                 into pluginsDir
