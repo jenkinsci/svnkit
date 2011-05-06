@@ -173,7 +173,9 @@ public abstract class SVNAdminArea {
         if (!(fileType == SVNFileType.FILE || fileType == SVNFileType.SYMLINK)) {
             return false;
         }
-
+        if (fileType == SVNFileType.SYMLINK) {
+        	forceComparison = true;
+        }
         SVNEntry entry = null;
         if (!forceComparison) {
             boolean compare = false;
