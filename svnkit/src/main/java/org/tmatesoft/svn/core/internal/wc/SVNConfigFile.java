@@ -24,6 +24,7 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Map;
@@ -50,7 +51,7 @@ public class SVNConfigFile {
     }
 
     public Map getProperties(String groupName) {
-        Map map = new SVNHashMap();
+        Map map = new LinkedHashMap();
         load();
         boolean groupMatched = false;
         for (int i = 0; i < myLines.length; i++) {
@@ -68,7 +69,7 @@ public class SVNConfigFile {
                 }
             }
         }
-        Map result = new SVNHashMap();
+        Map result = new LinkedHashMap();
         for (Iterator names = map.keySet().iterator(); names.hasNext();) {
             String propertyName = (String) names.next();
             result.put(propertyName, getPropertyValue(groupName, propertyName));
