@@ -11,9 +11,6 @@
  */
 package org.tmatesoft.svn.core;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.Map;
 
@@ -41,7 +38,9 @@ import org.tmatesoft.svn.core.internal.util.SVNHashMap;
  */
 public class SVNErrorCode implements Serializable {
     
-    private String myDescription;
+	private static final long serialVersionUID = 1L;
+	
+	private String myDescription;
     private int myCategory;
     private int myCode;
     
@@ -129,14 +128,6 @@ public class SVNErrorCode implements Serializable {
      */
     public boolean isAuthentication() {
         return this == RA_NOT_AUTHORIZED || this == RA_UNKNOWN_AUTH || getCategory() == AUTHZ_CATEGORY || getCategory() == AUTHN_CATEGORY;
-    }
-    
-    private void writeObject(ObjectOutputStream os) throws IOException {
-        os.writeInt(myCode);
-    }
-
-    private void readObject(ObjectInputStream is) throws IOException {
-        myCode = is.readInt();
     }
     
     private Object readResolve() {
