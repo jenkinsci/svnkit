@@ -1,7 +1,11 @@
-if (!project.hasProperty('buildPluginRepositoryURL')) {
-    project.setProperty('buildPluginRepositoryURL', 'http://maven.tmatesoft.com/content/repositories/snapshots/')
-    project.setProperty('mavenTMateSoftSnapshotsRepository.url', 'http://maven.tmatesoft.com/content/repositories/snapshots/')
-    project.setProperty('mavenTMateSoftReleasesRepository.url', 'http://maven.tmatesoft.com/content/repositories/releases/')
-    project.setProperty('mavenCentralRepository.url', 'http://repo1.maven.org/maven2/')
-    project.setProperty('mavenJavaNetRepository.url', 'http://download.java.net/maven/2/')
+setPropertyDefaultValue('buildPluginRepositoryURL', 'http://maven.tmatesoft.com/content/repositories/snapshots/')
+setPropertyDefaultValue('mavenTMateSoftSnapshotsRepository.url', 'http://maven.tmatesoft.com/content/repositories/snapshots/')
+setPropertyDefaultValue('mavenTMateSoftReleasesRepository.url', 'http://maven.tmatesoft.com/content/repositories/releases/')
+setPropertyDefaultValue('mavenCentralRepository.url', 'http://repo1.maven.org/maven2/')
+setPropertyDefaultValue('mavenJavaNetRepository.url', 'http://download.java.net/maven/2/')
+
+def setPropertyDefaultValue(String name, String value) {
+    if (!project.hasProperty(name)) {
+         project.setProperty(name, value)
+    }
 }
