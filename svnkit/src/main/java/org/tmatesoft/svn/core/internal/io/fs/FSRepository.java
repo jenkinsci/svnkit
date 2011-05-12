@@ -444,8 +444,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         }
         // fetch user name!
         String author = getUserName();
-        FSCommitEditor commitEditor = new FSCommitEditor(getRepositoryPath(""), logMessage, author, locks, keepLocks, null, myFSFS, this);
-        return commitEditor;
+        return new FSCommitEditor(getRepositoryPath(""), logMessage, author, locks, keepLocks, null, myFSFS, this);
     }
 
     public SVNLock getLock(String path) throws SVNException {
@@ -915,7 +914,11 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
 
                 while (auth != null) {
                     String userName = auth.getUserName();
-                    if (userName == null || "".equals(userName.trim())) {
+                    if (userName == null) {
+                        // anonymous.
+                        return null;
+                    }
+                    if ("".equals(userName.trim())) {
                         userName = System.getProperty("user.name");
                     }
                     auth = new SVNUserNameAuthentication(userName, auth.isStorageAllowed(), getLocation(), false);
@@ -938,7 +941,8 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                 throw e;
             }
         }
-        return System.getProperty("user.name");
+        // anonymous
+        return null;
     }
 
     private FSLocationsFinder getLocationsFinder() {
