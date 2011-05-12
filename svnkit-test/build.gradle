@@ -87,11 +87,6 @@ def runPythonTests() {
         return
     }
 
-    exec {
-        commandLine new File(svnBinariesDir, 'bin/svn').absolutePath
-        args '--version'  
-        environment 'LD_LIBRARY_PATH' : new File(svnBinariesDir, 'lib').absolutePath        
-    }
     if (getOSName() != 'windows') {
         exec {
            commandLine 'ldd'
@@ -99,6 +94,11 @@ def runPythonTests() {
            environment 'LD_LIBRARY_PATH' : new File(svnBinariesDir, 'lib').absolutePath        
         }
     }    
+    exec {
+        commandLine new File(svnBinariesDir, 'bin/svn').absolutePath
+        args '--version'  
+        environment 'LD_LIBRARY_PATH' : new File(svnBinariesDir, 'lib').absolutePath        
+    }
     
     // 2. generate test environment properties and merge them with the test properties
     def testProperties = generateTestEnvironmentProperties(svnBinariesDir)
