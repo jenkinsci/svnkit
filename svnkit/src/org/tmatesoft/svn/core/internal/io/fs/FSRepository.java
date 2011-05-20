@@ -915,7 +915,10 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
 
                 while (auth != null) {
                     String userName = auth.getUserName();
-                    if (userName == null || "".equals(userName.trim())) {
+                    if (userName == null) {
+                        return null;
+                    }
+                    if ("".equals(userName.trim())) {
                         userName = System.getProperty("user.name");
                     }
                     auth = new SVNUserNameAuthentication(userName, auth.isStorageAllowed(), getLocation(), false);
@@ -938,7 +941,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                 throw e;
             }
         }
-        return System.getProperty("user.name");
+        return null;
     }
 
     private FSLocationsFinder getLocationsFinder() {
