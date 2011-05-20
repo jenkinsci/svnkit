@@ -810,7 +810,16 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
             case '*':
                 result.append(".*");
                 break;
-
+                
+            case '\\':                
+                if (i + 1 < wildcard.length()) {
+                    ch = wildcard.charAt(i + 1);
+                    if (ch == '\\') {
+                        i++;
+                    } else {
+                        break;
+                    }
+                }
             case '.':
             case '!':
             case '$':
@@ -820,7 +829,6 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
             case '<':
             case '>':
             case '|':
-            case '\\':
             case '^':
             case '{':
             case '}':
