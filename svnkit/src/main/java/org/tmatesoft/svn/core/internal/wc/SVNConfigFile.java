@@ -320,9 +320,9 @@ public class SVNConfigFile {
         File serversFile = new File(configDir, "servers");
         File readmeFile = new File(configDir, "README.txt");
         
-        writeFile("/org/tmatesoft/svn/core/internal/wc/config/config", configFile);
-        writeFile("/org/tmatesoft/svn/core/internal/wc/config/servers", serversFile);
-        writeFile("/org/tmatesoft/svn/core/internal/wc/config/README.txt", readmeFile);
+        writeFile("/org/tmatesoft/svn/core/internal/wc/config", configFile);
+        writeFile("/org/tmatesoft/svn/core/internal/wc/servers", serversFile);
+        writeFile("/org/tmatesoft/svn/core/internal/wc/README.txt", readmeFile);
     }
 
     private static void writeFile(String url, File configFile) {
