@@ -1,0 +1,113 @@
+task buildAll << {
+    File dstDir = new File(buildDir, "all")
+    dstDir.mkdirs()
+    
+    copy {
+        into new File(dstDir, "svnkit-${version}")
+        into('lib') {
+            from configurations.binaries.files
+        }
+        into ('bin') {
+            from configurations.scripts.files
+        } 
+        into('src') {
+            from configurations.sources.files
+        }
+        into('licenses') {
+            from file('src/main/licenses')
+        }
+        from rootProject.files('LICENSE.txt', 'README.txt', 'CHANGES.txt')
+    }
+    
+    File destfile = new File(distsDir, "svnkit-${version}-all.zip")
+    ant.zip(destfile: destfile.absolutePath) {
+        zipfileset(dir: dstDir.absolutePath, excludes: '**/bin/**')
+        zipfileset(dir: dstDir.absolutePath, includes: '**/bin/**', excludes: '**/bin/*.bat', filemode: '755')
+        zipfileset(dir: dstDir.absolutePath, includes: '**/bin/*.bat')
+    }
+    File destfileNoJNA = new File(distsDir, "svnkit-nojna-${version}-all.zip")
+    ant.zip(destfile: destfileNoJNA.absolutePath) {
+        zipfileset(dir: dstDir.absolutePath, excludes: '**/bin/**,**/jna*,**/LICENSE-JNA.txt')
+        zipfileset(dir: dstDir.absolutePath, includes: '**/bin/**', excludes: '**/bin/*.bat', filemode: '755')
+        zipfileset(dir: dstDir.absolutePath, includes: '**/bin/*.bat')
+    }
+}
+
+task buildSources(type: Zip) {
+    baseName = 'svnkit'
+    classifier = 'src'
+
+    into("svnkit-${version}")
+
+    from rootProject.rootDir
+
+    exclude '.*'
+    exclude '**/.*'
+    exclude '**/.*/**'
+
+    exclude '**/build/**'
+    exclude '**/bin/**'
+    exclude '**/target/**'
+}
+
+task buildUpdateSite << {
+    def tokens = new HashMap()
+    File siteDir = new File(buildDir, 'site')
+    File pluginsDir = new File(siteDir, 'plugins')
+    File featuresDir = new File(siteDir, 'features')
+    pluginsDir.mkdirs()
+    
+    configurations.osgi.resolvedConfiguration.each { conf ->
+        conf.resolvedArtifacts.each { artifact ->
+            org.tmatesoft.build.BuildVersion fileVersion = org.tmatesoft.build.BuildVersion.fromJarFile(artifact.file)
+            String name = artifact.resolvedDependency.moduleName
+            name = name.replace('-', '_')
+            tokens[name + '_version'] = fileVersion.bundleVersion
+            tokens[name + '_name'] = fileVersion.bundleSymbolicName
+            tokens[name + '_fullName'] = fullJarName(artifact.file) 
+            copy {
+                from artifact.file
+                into pluginsDir
+                eachFile fullJarNameExpander
+            }
+        }
+    }
+    copy {
+        into siteDir
+        from 'src/main/update-site'
+        include 'site.xml'
+        expand(tokens)
+    }
+    file('src/main/update-site/features').listFiles().each {
+        if (it.isDirectory()) {
+            String fullName = tokens[it.name.replace('-', '_') + '_fullName']
+            if (fullName != null) {
+                makeFeatureJar(it, new File(featuresDir, fullName), tokens)
+            }
+        }
+    }
+
+    distsDir.mkdirs()
+    File destfile = new File(distsDir, "svnkit-update-site-${version}.zip")
+    ant.zip(destfile: destfile.absolutePath, basedir: siteDir.absolutePath)
+}
+
+def makeFeatureJar(File dir, File dstFile, Map tokens) {
+    def tmpDir = new File(buildDir, 'tmp/' + dstFile.getName())
+    tmpDir.mkdirs()
+    copy {
+        into tmpDir
+        from dir
+        expand(tokens)
+    }
+    ant.jar(destfile: dstFile.absolutePath, basedir: tmpDir.absolutePath)
+    
+}
+
+buildAll.dependsOn configurations.binaries
+buildAll.dependsOn configurations.scripts
+buildAll.dependsOn configurations.sources
+
+buildUpdateSite.dependsOn configurations.osgi
+
+task build(dependsOn: [buildAll, buildUpdateSite, buildSources])

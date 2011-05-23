@@ -1,0 +1,64 @@
+apply plugin: 'osgi'
+
+bundleName = rootProject.group
+bundleSymbolicName = 'SVNKit pure Java Subversion Library'
+bundleVersion = buildVersion.getFullOSGIVersion()
+bundleVendor = 'TMate Software'
+
+configurations {
+    embedOsgi
+}
+
+dependencies {
+    compile project(path: ':svnkit')
+    compile project(path: ':svnkit-javahl16')
+    compile 'org.eclipse.core:runtime:3.2.0-v20060603'
+
+    embedOsgi project(path: ':svnkit', transitive: false, configuration: 'archives')
+    embedOsgi project(path: ':svnkit-javahl16', transitive: false, configuration: 'archives')
+    embedOsgi 'de.regnis.q.sequence:sequence-library:1.0.0'
+}
+
+classes << {
+    configurations.embedOsgi.files.each {
+        f ->
+        copy {
+            into 'build/classes/main'
+            from zipTree(f)
+            exclude 'META-INF/**'
+        }
+    }
+}
+
+jar {
+    baseName = bundleName
+    manifest {
+        attributes 'Bundle-SymbolicName': bundleName,
+        'Bundle-Version': bundleVersion,
+        'Bundle-Vendor': bundleVendor,
+        'Bundle-Name': bundleSymbolicName,
+        'Bundle-RequiredExecutionEnvironment' : 'J2SE-' + targetCompatibility,
+        'Bundle-Activator' : 'org.tmatesoft.svn.core.SVNKitActivator',
+        'Bundle-ActivationPolicy' : 'lazy',
+        'Require-Bundle': 'net.java.dev.jna;bundle-version="[3.2.7,4.0.0)";resolution:=optional,' +
+        	'com.trilead.ssh2;bundle-version="[1.0.0,2.0.0)",' +
+			'org.tmatesoft.sqljet;bundle-version="[1.0.5,2.0.0)",' +
+			'org.eclipse.core.runtime;bundle-version="[3.0.0,4.0.0)"'
+
+        instruction 'Export-Package', '!org.tmatesoft.svn.core.internal.*',
+        'org.tmatesoft.svn.core.*;version=' + bundleVersion,
+        'org.tigris.subvesion.javahl.*;version=' + bundleVersion,
+        'de.regnis.q.sequence.*;version=' + bundleVersion,
+        'org.tmatesoft.svn.util.*;version=' + bundleVersion
+
+        instruction 'Import-Package', '!*'
+    }
+}
+
+uploadMaven {
+    repositories.mavenDeployer {
+        pom.whenConfigured { p ->
+            p.dependencies.clear()
+        }
+    }
+}

@@ -1,0 +1,220 @@
+configurations {
+    pythonTests16
+    svnBinaries16 
+}
+dependencies {
+    pythonTests16 'org.tigris.subversion:svn-python-tests:1.6.17-SNAPSHOT@tgz'
+    svnBinaries16 'org.tigris.subversion:svn-binaries:1.6.17-SNAPSHOT@tgz'
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir file('nailgun/src/java/prod')
+        }
+    }
+}
+
+sandboxDir = getSandboxLocation()
+logsDir = new File(sandboxDir, 'logs')
+svnBinariesDir = getSvnBinariesLocation()
+
+pythonTestsDir = new File(sandboxDir, 'svn-python-tests')
+testPropertiesFile = new File(sandboxDir, 'test.properties')
+svnVersion  = project.hasProperty('svnVersion') ? project.getProperty('svnVersion') : '16'
+testConfiguration = project.hasProperty('testConfiguration') ? project.getProperty('testConfiguration') : 'default'
+
+test.dependsOn configurations."pythonTests${project.svnVersion}"
+test.dependsOn configurations."svnBinaries${project.svnVersion}"
+
+classes << {
+    copy {
+        into file('build/classes/main')
+        from file('nailgun/src/java/prod')
+        include '**/*.properties'
+    }
+}
+
+test {
+    ignoreFailures = true
+}
+
+test.doFirst {
+    project.mkdir(sandboxDir)
+    project.mkdir(logsDir)
+    
+    buildNailgun()
+    try {
+        runPythonTests()
+    } finally {
+        cleanSandbox()
+    }
+}
+
+def runPythonTests() {
+    File pythonTestsTar = configurations."pythonTests${project.svnVersion}".files.find {return true}
+    File svnBinariesTar = configurations."svnBinaries${project.svnVersion}".files.find {return true}
+    
+    untar(pythonTestsTar, sandboxDir)
+    untar(svnBinariesTar, sandboxDir)
+
+    if (getOSName() != 'windows' && project.svnVersion == '17') {
+         File link = new File(sandboxDir, 'svn-python-tests/entries-dump')
+         File target = new File(svnBinariesDir, 'bin/entries-dump')
+         if (!link.exists() && target.exists()) {
+             ant.symlink(link: link.absolutePath, resource: target.absolutePath)
+         }
+    }
+
+    copy {
+        into sandboxDir
+        into('') {
+            from "configurations/shared"
+        }
+        into('') {
+            from "configurations/svn${project.svnVersion}"
+            exclude "**/*.properties"
+        }
+    }
+    if (svnBinariesDir == null || !svnBinariesDir.isDirectory()) {
+        println "Cannot locate subversion binaries for '${getOSName()}' OS, skipping python tests."
+        return
+    }
+
+    if (getOSName() != 'windows') {
+        exec {
+           commandLine 'ldd'
+           args new File(svnBinariesDir, 'bin/svn').absolutePath
+           environment 'LD_LIBRARY_PATH' : new File(svnBinariesDir, 'lib').absolutePath        
+        }
+    }    
+    exec {
+        commandLine new File(svnBinariesDir, 'bin/svn').absolutePath
+        args '--version'  
+        environment 'LD_LIBRARY_PATH' : new File(svnBinariesDir, 'lib').absolutePath        
+    }
+    
+    // 2. generate test environment properties and merge them with the test properties
+    def testProperties = generateTestEnvironmentProperties(svnBinariesDir)
+    appendDefaultTestProperties(project.svnVersion, project.testConfiguration, testProperties)
+    
+    testPropertiesFile.withOutputStream { stream ->
+        testProperties.save(stream, null)
+    }
+    
+    javaexec {
+        workingDir = sandboxDir
+
+        systemProperty 'sun.io.useCanonCaches', 'false'
+        systemProperty 'svnkit.compatibleHash', 'true'
+        if (project.svnVersion == '17') {
+            systemProperty 'svnkit.wc.17', 'true'
+        }
+                
+        environment 'LD_LIBRARY_PATH' : new File(svnBinariesDir, 'lib').absolutePath        
+        main = 'org.tmatesoft.svn.core.test.PythonTests'
+        classpath = sourceSets.main.runtimeClasspath
+                
+        args testPropertiesFile.absolutePath, new File(sandboxDir, 'daemon').absolutePath
+    }
+
+}
+
+def appendDefaultTestProperties(String svnVersion, String configurationName, Properties properties) {
+    File propertiesFile = file("configurations/svn${svnVersion}/${configurationName}.properties")
+    propertiesFile.withInputStream {
+        properties.load(it)
+    }
+    return properties
+}
+
+def generateTestEnvironmentProperties(File svnBinaries) {
+    Properties properties = new Properties()
+    
+    properties.put('daemon', 'true')
+
+    properties.put('svn.home', svnBinariesDir.absolutePath )
+    properties.put('svnserve.path', new File(svnBinaries, 'bin/svnserve').absolutePath )
+
+    properties.put('apache.path', '/usr/sbin/apache2ctl')
+    properties.put('apache.root', '/usr/lib/apache2')
+    properties.put('apache.svn.modules', new File(svnBinaries, 'modules').absolutePath )
+
+    properties.put('python.launcher', 'python')
+
+    properties.put('python.tests', pythonTestsDir.absolutePath )
+    if (svnVersion == '16') {
+        properties.put('python.tests.sleepy', '(diff_tests.py_21)|(stat_tests.py_22)')
+    }
+    properties.put('python.tests.results', testResultsDir.absolutePath)
+    properties.put('python.tests.logDir', logsDir.absolutePath)
+    
+    return properties
+}
+
+def untar(File tgz, File into) {
+    if (getOSName() != 'windows') {
+        exec {
+            commandLine 'tar'
+            args '-C', into.absolutePath, '-xzf', tgz.absolutePath
+        }
+    } else {
+        ant.untar(src: tgz.absolutePath, dest: into.absolutePath, compression: 'gzip')
+    }
+}
+
+def buildNailgun() {
+    copy {
+        from file('nailgun')
+        into new File(sandboxDir, 'daemon')
+
+        include '**/ng.exe'
+        include 'src/**'
+        include 'Makefile'
+    }
+
+    if (getOSName() != 'windows') {
+        exec {
+           commandLine 'make'
+           args 'ng'
+           workingDir = new File(sandboxDir, 'daemon')
+        }
+    }
+   
+}
+
+def getOSName() {
+    String osNameProperty = System.getProperty('os.name')
+    osNameProperty = osNameProperty.toLowerCase()
+    if (osNameProperty.indexOf('windows') >= 0) {
+        return 'windows'
+    } else if (osNameProperty.indexOf('mac') >= 0) {
+        return 'osx'
+    }
+    return 'linux'
+}
+
+def getSvnBinariesLocation() {
+    if (System.getenv()['SVN_TEST_HOME'] != null) {
+        return new File(System.getenv()['SVN_TEST_HOME'])
+    }
+    return new File(sandboxDir, 'svn-binaries/' + getOSName())
+
+}
+
+def getSandboxLocation() {
+    String systemLocation = System.getenv()['SVN_TEST_SANDBOX'];
+    if (systemLocation != null) {
+        File sandbox = File.createTempFile('svnkit.', '.sandbox', new File(systemLocation))
+        sandbox.delete()
+        return sandbox
+    }
+    return new File(buildDir, 'sandbox')
+}
+
+def cleanSandbox() {
+    String systemLocation = System.getenv()['SVN_TEST_SANDBOX'];
+    if (systemLocation != null) {
+        project.delete(sandboxDir.absolutePath)
+    }
+}
