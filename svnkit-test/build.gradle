@@ -1,16 +1,16 @@
 configurations {
     pythonTests16
-    svnBinaries16 
+    svnBinaries16
 
     pythonTests17
-    svnBinaries17 
+    svnBinaries17
 }
 dependencies {
     pythonTests16 'org.tigris.subversion:svn-python-tests:1.6.17-SNAPSHOT@tgz'
-    svnBinaries16 'org.tigris.subversion:svn-binaries:1.6.17-SNAPSHOT@tgz'
-    
+    if (!project.hasProperty('svn.binaries.local')) { svnBinaries16 'org.tigris.subversion:svn-binaries:1.6.17-SNAPSHOT@tgz' }
+
     pythonTests17 'org.apache.subversion:svn-python-tests:1.7.0-SNAPSHOT@tgz'
-    svnBinaries17 'org.apache.subversion:svn-binaries:1.7.0-SNAPSHOT@tgz'
+    if (!project.hasProperty('svn.binaries.local')) { svnBinaries17 'org.apache.subversion:svn-binaries:1.7.0-SNAPSHOT@tgz' }
 }
 
 sourceSets {
@@ -48,7 +48,7 @@ test {
 test.doFirst {
     project.mkdir(sandboxDir)
     project.mkdir(logsDir)
-    
+
     buildNailgun()
     try {
         runPythonTests()
@@ -60,9 +60,9 @@ test.doFirst {
 def runPythonTests() {
     File pythonTestsTar = configurations."pythonTests${project.svnVersion}".files.find {return true}
     File svnBinariesTar = configurations."svnBinaries${project.svnVersion}".files.find {return true}
-    
+
     untar(pythonTestsTar, sandboxDir)
-    untar(svnBinariesTar, sandboxDir)
+    if (!project.hasProperty('svn.binaries.local')) { untar(svnBinariesTar, sandboxDir) }
 
     if (getOSName() != 'windows' && project.svnVersion == '17') {
          File link = new File(sandboxDir, 'svn-python-tests/entries-dump')
@@ -91,24 +91,27 @@ def runPythonTests() {
         exec {
            commandLine 'ldd'
            args new File(svnBinariesDir, 'bin/svn').absolutePath
-           environment 'LD_LIBRARY_PATH' : new File(svnBinariesDir, 'lib').absolutePath        
+           environment 'LD_LIBRARY_PATH' : new File(svnBinariesDir, 'lib').absolutePath
         }
-    }    
+    }
     exec {
         commandLine new File(svnBinariesDir, 'bin/svn').absolutePath
-        args '--version'  
-        environment 'LD_LIBRARY_PATH' : new File(svnBinariesDir, 'lib').absolutePath        
+        args '--version'
+        environment 'LD_LIBRARY_PATH' : new File(svnBinariesDir, 'lib').absolutePath
     }
-    
+
     // 2. generate test environment properties and merge them with the test properties
     def testProperties = generateTestEnvironmentProperties(svnBinariesDir)
     appendDefaultTestProperties(project.svnVersion, project.testConfiguration, testProperties)
-    
+
     testPropertiesFile.withOutputStream { stream ->
         testProperties.save(stream, null)
     }
-    
+
     javaexec {
+
+    	if (project.hasProperty('debug')) { debug = true }
+
         workingDir = sandboxDir
 
         systemProperty 'sun.io.useCanonCaches', 'false'
@@ -116,11 +119,11 @@ def runPythonTests() {
         if (project.svnVersion == '17') {
             systemProperty 'svnkit.wc.17', 'true'
         }
-                
-        environment 'LD_LIBRARY_PATH' : new File(svnBinariesDir, 'lib').absolutePath        
+
+        environment 'LD_LIBRARY_PATH' : new File(svnBinariesDir, 'lib').absolutePath
         main = 'org.tmatesoft.svn.core.test.PythonTests'
         classpath = sourceSets.main.runtimeClasspath
-                
+
         args testPropertiesFile.absolutePath, new File(sandboxDir, 'daemon').absolutePath
     }
 
@@ -136,7 +139,7 @@ def appendDefaultTestProperties(String svnVersion, String configurationName, Pro
 
 def generateTestEnvironmentProperties(File svnBinaries) {
     Properties properties = new Properties()
-    
+
     properties.put('daemon', 'true')
 
     properties.put('svn.home', svnBinariesDir.absolutePath )
@@ -154,7 +157,7 @@ def generateTestEnvironmentProperties(File svnBinaries) {
     }
     properties.put('python.tests.results', testResultsDir.absolutePath)
     properties.put('python.tests.logDir', logsDir.absolutePath)
-    
+
     return properties
 }
 
@@ -186,7 +189,7 @@ def buildNailgun() {
            workingDir = new File(sandboxDir, 'daemon')
         }
     }
-   
+
 }
 
 def getOSName() {
