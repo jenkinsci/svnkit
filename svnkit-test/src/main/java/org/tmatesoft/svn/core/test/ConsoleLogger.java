@@ -8,6 +8,7 @@ public class ConsoleLogger extends AbstractTestLogger {
 	private long startTime;
 	private int totalTestCount;
 	private int failedTestCount;
+    private String suiteName;
 
 	@Override
 	public void startTests(Properties configuration) throws IOException {
@@ -22,11 +23,17 @@ public class ConsoleLogger extends AbstractTestLogger {
 	public void startSuite(String suiteName) {
         System.out.println("SUITE " + suiteName);
         startTime = System.currentTimeMillis();
+        this.suiteName = suiteName;
 	}
 
 	@Override
 	public void handleTest(TestResult test) {
-        System.out.println((test.isPass() ? "OK [" : "FAIL [") + test.getName() + "]");
+	    String testNumber = Integer.toString(test.getID());
+	    while(testNumber.length() < 3) {
+	        testNumber = "0" + testNumber;
+	    }
+	    String testId = suiteName + "." + testNumber;
+        System.out.println((test.isPass() ? "OK " : "FAIL ") + testId  + " ["+ test.getName() + "]");
         totalTestCount++;
         if (!test.isPass()) {
         	failedTestCount++;
