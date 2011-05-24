@@ -660,14 +660,18 @@ public class SVNCommitUtil {
         if (dir != null && dir.getWCAccess() != null) {
             dir.getWCAccess().checkCancelled();
         }
+        
         long cfRevision = entry.getCopyFromRevision();
         String cfURL = null;
-        if (entry.getKind() != SVNNodeKind.DIR
-                && entry.getKind() != SVNNodeKind.FILE) {
+        if (entry.getKind() != SVNNodeKind.DIR && entry.getKind() != SVNNodeKind.FILE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNKNOWN_KIND, "Unknown entry kind for ''{0}''", path);                    
             SVNErrorManager.error(err, SVNLogType.WC);
         }
         SVNFileType fileType = SVNFileType.getType(path);
+        boolean matchesChangelist = SVNWCAccess.matchesChangeList(changelists, entry);
+        if (fileType != SVNFileType.DIRECTORY && fileType != SVNFileType.NONE && !matchesChangelist) {
+            return;
+        }
         if (fileType == SVNFileType.UNKNOWN) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNKNOWN_KIND, "Unknown entry kind for ''{0}''", path);                    
             SVNErrorManager.error(err, SVNLogType.WC);
