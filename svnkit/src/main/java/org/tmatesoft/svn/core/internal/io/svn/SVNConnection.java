@@ -175,21 +175,31 @@ public class SVNConnection {
     }
     
     private SVNAuthenticator createSASLAuthenticator() throws SVNException {
-        try {
-            Class saslClass = 
-                SVNConnection.class.getClassLoader().loadClass("org.tmatesoft.svn.core.internal.io.svn.sasl.SVNSaslAuthenticator");
-            if (saslClass != null) {
-                Constructor constructor = saslClass.getConstructor(new Class[] {SVNConnection.class});
-                if (constructor != null) {
-                    return (SVNAuthenticator) constructor.newInstance(new Object[] {this});
+        if (isSASLAPIAvailable()) {
+            try {
+                Class saslClass = 
+                    SVNConnection.class.getClassLoader().loadClass("org.tmatesoft.svn.core.internal.io.svn.sasl.SVNSaslAuthenticator");
+                if (saslClass != null) {
+                    Constructor constructor = saslClass.getConstructor(new Class[] {SVNConnection.class});
+                    if (constructor != null) {
+                        return (SVNAuthenticator) constructor.newInstance(new Object[] {this});
+                    }
                 }
+            } catch (Throwable th) {
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, th.getMessage());
             }
-        } catch (Throwable th) {
-            SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, th.getMessage());
         }
         return new SVNPlainAuthenticator(this);
     }
     
+    private static boolean isSASLAPIAvailable() {
+        try {
+            return SVNConnection.class.getClassLoader().loadClass("javax.security.sasl.SaslClient") != null;
+        } catch (ClassNotFoundException e) {
+        }
+        return false;
+    }
+
     private void addCapabilities(List capabilities) throws SVNException {
         if (myCapabilities == null) {
             myCapabilities = new SVNHashSet();
