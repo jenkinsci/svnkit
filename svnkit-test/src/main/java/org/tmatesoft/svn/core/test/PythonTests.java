@@ -643,7 +643,7 @@ public class PythonTests {
     
     private static int apache(Properties props, int port, boolean start, Logger pythonLogger) throws Throwable {
         String[] command = null;
-        File parentFile = new File("build/sandbox");
+        File parentFile = new File("build/sandbox").getAbsoluteFile();
         parentFile.mkdirs();
         File configFile = SVNFileUtil.createUniqueFile(parentFile, "httpd", ".conf", false);
         String path = configFile.getAbsolutePath().replace(File.separatorChar, '/');

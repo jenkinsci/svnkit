@@ -28,21 +28,26 @@ public class NailgunProcessor {
         String[] programArgs = new String[context.getArgs().length - 1];
         System.arraycopy(context.getArgs(), 1, programArgs, 0, programArgs.length);
         String testName = context.getEnv().getProperty("SVN_CURRENT_TEST");
+        String oldUserDir = System.getProperty("user.dir");
         configureEnvironment(context);
         configureLoggers(testName);
         
-        if ("svn".equals(programName)) {
-            SVN.main(programArgs);
-        } else if ("svnadmin".equals(programName)) {
-            SVNAdmin.main(programArgs);
-        } else if ("svnlook".equals(programName)) {
-            SVNLook.main(programArgs);
-        } else if ("svnversion".equals(programName)) {
-            SVNVersion.main(programArgs);
-        } else if ("svnsync".equals(programName)) {
-            SVNSync.main(programArgs);
-        } else if ("svndumpfilter".equals(programName)) {
-            SVNDumpFilter.main(programArgs);
+        try {
+            if ("svn".equals(programName)) {
+                SVN.main(programArgs);
+            } else if ("svnadmin".equals(programName)) {
+                SVNAdmin.main(programArgs);
+            } else if ("svnlook".equals(programName)) {
+                SVNLook.main(programArgs);
+            } else if ("svnversion".equals(programName)) {
+                SVNVersion.main(programArgs);
+            } else if ("svnsync".equals(programName)) {
+                SVNSync.main(programArgs);
+            } else if ("svndumpfilter".equals(programName)) {
+                SVNDumpFilter.main(programArgs);
+            }
+        } finally {
+            System.setProperty("user.dir", oldUserDir);
         }
     }
 
