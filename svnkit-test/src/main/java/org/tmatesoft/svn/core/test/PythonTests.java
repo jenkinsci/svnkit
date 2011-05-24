@@ -643,7 +643,9 @@ public class PythonTests {
     
     private static int apache(Properties props, int port, boolean start, Logger pythonLogger) throws Throwable {
         String[] command = null;
-        File configFile = SVNFileUtil.createUniqueFile(new File("build/sandbox"), "http.", ".conf", false);
+        File parentFile = new File("build/sandbox");
+        parentFile.mkdirs();
+        File configFile = SVNFileUtil.createUniqueFile(parentFile, "httpd", ".conf", false);
         String path = configFile.getAbsolutePath().replace(File.separatorChar, '/');
         port = generateApacheConfig(configFile, props, port);
 
