@@ -3492,7 +3492,9 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
                 if (mergeInfoProp != null) {
                     hasMergeInfo = true;
                 }
-                isSwitched = SVNWCManager.isEntrySwitched(path, entry);
+                if (entry.getExternalFilePath() == null) {
+                    isSwitched = SVNWCManager.isEntrySwitched(path, entry);
+                }
             }
 
             File parent = path.getParentFile();
