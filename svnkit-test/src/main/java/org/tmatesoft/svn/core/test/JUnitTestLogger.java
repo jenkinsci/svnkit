@@ -6,6 +6,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -15,6 +17,8 @@ import java.util.Properties;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 
 public class JUnitTestLogger extends AbstractTestLogger {
+    
+    private static NumberFormat ourTestNumberFormat = new DecimalFormat("000");
     
     private File myResultDirectory;
     
@@ -48,7 +52,7 @@ public class JUnitTestLogger extends AbstractTestLogger {
     @Override
     public void handleTest(TestResult test) {
         TestInfo info = new TestInfo();
-        info.name = test.getName();
+        info.name = ourTestNumberFormat.format(test.getID()) + " [" + test.getName() + " ]";
         info.time = System.currentTimeMillis() - myLastTime;
         info.isFailed = !test.isPass();
         if (!test.isPass() && test.getOutput() != null) {
