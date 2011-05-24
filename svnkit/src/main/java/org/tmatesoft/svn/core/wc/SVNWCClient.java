@@ -2803,7 +2803,7 @@ public class SVNWCClient extends SVNBasicClient {
                 if (status.getEntryProperties() == null || status.getEntryProperties().isEmpty()) {
                     return;
                 }
-                if (status.getContentsStatus() != SVNStatusType.STATUS_ADDED) {
+                if (status.getContentsStatus() != SVNStatusType.STATUS_ADDED && !status.isFileExternal()) {
                     SVNRevision revision = committed ? status.getCommittedRevision() : status.getRevision();
                     if (revision != null) {
                         if (minRevision[0] < 0 || minRevision[0] > revision.getNumber()) {
