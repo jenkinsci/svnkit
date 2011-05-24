@@ -288,7 +288,6 @@ public class PythonTests {
                 logHandler = createLogHandler(logsDirectory, type + "_" + suiteName + "_python");
 			    pythonLogger.addHandler(logHandler);
 			}
-			long startTime = System.currentTimeMillis();
 			try {
     			if (tokens.isEmpty() || (tokens.size() == 1 && "ALL".equals(tokens.get(0)))) {
                     processTestCase(pythonLauncher, testsLocation, testFile, options, null, url, libPath, fsfsConfig, pythonLogger);
@@ -640,15 +639,11 @@ public class PythonTests {
 
     public static void stopApache(Properties props, int port, Logger pythonLogger) throws Throwable {
         apache(props, port, false, pythonLogger);
-        // delete apache log.
-        File file = new File(System.getProperty("user.home"), "httpd." + port + ".error.log");
-        SVNFileUtil.deleteFile(file);
     }
     
     private static int apache(Properties props, int port, boolean start, Logger pythonLogger) throws Throwable {
         String[] command = null;
-        File configFile = File.createTempFile("jsvn.", ".apache.config.tmp");
-        configFile.deleteOnExit();
+        File configFile = SVNFileUtil.createUniqueFile(new File("build/sandbox"), "http.", ".conf", false);
         String path = configFile.getAbsolutePath().replace(File.separatorChar, '/');
         port = generateApacheConfig(configFile, props, port);
 
