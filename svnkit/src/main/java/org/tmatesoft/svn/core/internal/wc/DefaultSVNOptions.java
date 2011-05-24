@@ -72,7 +72,7 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
     private static final String MIME_TYPES_FILE = "mime-types-file";
     private static final String GLOBAL_CHARSET = "global-charset";
     private static final String PASSWORD_STORES = "password-stores";
-    private static final String DEFAULT_IGNORES = "*.o *.lo *.la #*# .*.rej *.rej .*~ *~ .#* .DS_Store";
+    private static final String DEFAULT_IGNORES = "*.o *.lo *.la *.al .libs *.so *.so.[0-9]* *.a *.pyc *.pyo *.rej *~ #*# .#* .*.swp .DS_Store";
     private static final String YES = "yes";
     
     private static final String NO = "no";
