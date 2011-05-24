@@ -1,5 +1,6 @@
 /*.iws
 /.gradle
+/.project
 /bin
 /build
 /lib
@@ -12,6 +13,7 @@ svnkit-distribution/build
 svnkit-javahl16/.classpath
 svnkit-javahl16/.project
 svnkit-javahl16/.settings/org.eclipse.jdt.core.prefs
+svnkit-javahl16/bin
 svnkit-javahl16/build
 svnkit-osgi/.classpath
 svnkit-osgi/.project

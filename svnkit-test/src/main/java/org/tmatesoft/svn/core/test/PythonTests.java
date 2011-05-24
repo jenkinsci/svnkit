@@ -784,7 +784,7 @@ public class PythonTests {
         is.close();
 
         String script = new String(contents);
-        script = script.replace("%pattern%", pattern);
+        script = script.replaceAll("%pattern%", pattern);
         
         FileOutputStream os = new FileOutputStream(destination);
         os.write(script.getBytes());
