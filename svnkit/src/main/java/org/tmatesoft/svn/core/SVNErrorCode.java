@@ -11,9 +11,6 @@
  */
 package org.tmatesoft.svn.core;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.Map;
 
@@ -45,6 +42,7 @@ public class SVNErrorCode implements Serializable {
     private int myCategory;
     private int myCode;
     
+    private static final long serialVersionUID = 1L;
     private static final Map ourErrorCodes = new SVNHashMap();
     
     /**

@@ -27,6 +27,9 @@ import  org.apache.tools.ant.ExitException;
  * @author Pete Kirkham
  */
 public class NGExitException extends ExitException {
+    
+        private static final long serialVersionUID = 1L;
+
         public NGExitException(int status) {
                 super(status);
         }

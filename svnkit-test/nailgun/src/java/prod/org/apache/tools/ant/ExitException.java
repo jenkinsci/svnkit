@@ -64,6 +64,7 @@ package org.apache.tools.ant;
  */
 public class ExitException extends SecurityException {
 
+    private static final long serialVersionUID = 1L;
     /** Status code */
     private int status;
 

@@ -3790,18 +3790,11 @@ public class SVNWCClient extends SVNBasicClient {
         } else if (SVNWCAccess.matchesChangeList(changeLists, entry)) {
             if (propName == null) {//proplist hack for compatibility with subvsersion
                 SVNVersionedProperties properties = base ? area.getBaseProperties(entry.getName()) : area.getProperties(entry.getName());
-                if (propName != null) {
-                    SVNPropertyValue propValue = properties.getPropertyValue(propName);
-                    if (propValue != null) {
-                        handler.handleProperty(target, new SVNPropertyData(propName, propValue, getOptions()));
-                    }
-                } else {
-                    SVNProperties allProps = properties.asMap();
-                    for (Iterator names = allProps.nameSet().iterator(); names.hasNext();) {
-                        String name = (String) names.next();
-                        SVNPropertyValue val = allProps.getSVNPropertyValue(name);
-                        handler.handleProperty(area.getFile(entry.getName()), new SVNPropertyData(name, val, getOptions()));
-                    }
+                SVNProperties allProps = properties.asMap();
+                for (Iterator names = allProps.nameSet().iterator(); names.hasNext();) {
+                    String name = (String) names.next();
+                    SVNPropertyValue val = allProps.getSVNPropertyValue(name);
+                    handler.handleProperty(area.getFile(entry.getName()), new SVNPropertyData(name, val, getOptions()));
                 }
             } else {
                 propGetHandler.handleEntry(target, entry);

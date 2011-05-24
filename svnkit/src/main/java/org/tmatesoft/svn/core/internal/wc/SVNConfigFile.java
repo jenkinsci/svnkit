@@ -25,8 +25,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;

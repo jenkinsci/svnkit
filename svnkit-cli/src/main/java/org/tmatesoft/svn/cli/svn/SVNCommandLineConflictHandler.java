@@ -132,7 +132,6 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
             }
         }
         
-        boolean saveMerged = false;
         SVNConflictChoice choice = SVNConflictChoice.POSTPONE;
         if ((conflictDescription.getNodeKind() == SVNNodeKind.FILE && 
                 conflictDescription.getConflictAction() == SVNConflictAction.EDIT && 
@@ -230,9 +229,6 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
                         continue;
                     }
                     choice = SVNConflictChoice.MINE_CONFLICT;
-                    if (performedEdit) {
-                        saveMerged = true;
-                    }
                     break;
                 } else if ("tc".equals(answer)) {
                     if (files.isBinary()) {
@@ -245,21 +241,12 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
                         continue;
                     }
                     choice = SVNConflictChoice.THEIRS_CONFLICT;
-                    if (performedEdit) {
-                        saveMerged = true;
-                    }
                     break;
                 } else if ("mf".equals(answer)) {
                     choice = SVNConflictChoice.MINE_FULL;
-                    if (performedEdit) {
-                        saveMerged = true;
-                    }
                     break;
                 } else if ("tf".equals(answer)) {
                     choice = SVNConflictChoice.THEIRS_FULL;
-                    if (performedEdit) {
-                        saveMerged = true;
-                    }
                     break;
                 } else if ("dc".equals(answer)) {
                     if (files.isBinary()) {
@@ -276,7 +263,6 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
                         continue;
                     }
                     
-                    //TODO: re-implement in future  
                     showConflictedChunks(files);
                     knowsSmth = true;
                     continue;
