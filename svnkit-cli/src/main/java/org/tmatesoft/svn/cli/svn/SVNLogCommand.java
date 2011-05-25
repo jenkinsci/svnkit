@@ -273,7 +273,9 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
         }
 
         if (!SVNRevision.isValidRevisionNumber(logEntry.getRevision())) {
-            myMergeStack.removeLast();
+            if (!myMergeStack.isEmpty()) {
+                myMergeStack.removeLast();
+            }
             return;
         }
 
@@ -401,7 +403,9 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
         if (!SVNRevision.isValidRevisionNumber(logEntry.getRevision())) {
             buffer = closeXMLTag("logentry", null);
             getSVNEnvironment().getOut().print(buffer.toString());
-            myMergeStack.removeLast();
+            if (!myMergeStack.isEmpty()) {
+                myMergeStack.removeLast();
+            }
             return;
         }
         
