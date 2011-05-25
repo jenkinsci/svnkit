@@ -11,6 +11,8 @@
  */
 package org.tmatesoft.svn.core.internal.io.fs;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -18,6 +20,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
@@ -34,10 +37,14 @@ import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNMergeDriver;
 import org.tmatesoft.svn.core.internal.wc.SVNMergeInfoManager;
+import org.tmatesoft.svn.core.io.ISVNLocationSegmentHandler;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
+import org.tmatesoft.svn.core.io.SVNLocationSegment;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
@@ -107,18 +114,21 @@ public class FSLog {
                 if (myIsDescending) {
                     rev = myEndRevision - i;
                 }
-                sendLog(rev, false);
+                sendLog(rev, null, null, false, false);
             }
             
             return count;
         }
 
-        return doLogs(myPaths, myStartRevision, myEndRevision, myIsIncludeMergedRevisions, myIsDescending, 
-                myLimit);
+        Map logTargetHistoryAsMergeInfo = null;
+        if (myIsIncludeMergedRevisions) {
+            logTargetHistoryAsMergeInfo = getPathsHistoryAsMergeInfo(myPaths, myStartRevision, myEndRevision);
+        }
+        return doLogs(myPaths, logTargetHistoryAsMergeInfo, null, myStartRevision, myEndRevision, myIsIncludeMergedRevisions, false, myIsDescending, myLimit);
     }
     
-    private long doLogs(String[] paths, long startRevision, long endRevision, boolean includeMergedRevisions, 
-            boolean isDescendingOrder, long limit) throws SVNException {
+    private long doLogs(String[] paths, Map logTargetHistoryAsMergeinfo, Set nestedMerges, long startRevision, long endRevision, boolean includeMergedRevisions, 
+            boolean handlingMergedRevisions, boolean isDescendingOrder, long limit) throws SVNException {
         long sendCount = 0;
         PathInfo[] histories = getPathHistories(paths, startRevision, endRevision, myIsStrictNode);
         
@@ -153,10 +163,13 @@ public class FSLog {
                 }
                 
                 if (isDescendingOrder) {
-                    sendLog(currentRev, hasChildren);
+                    sendLog(currentRev, logTargetHistoryAsMergeinfo, nestedMerges, handlingMergedRevisions, hasChildren);
                     sendCount++;
                     if (hasChildren) {
-                        handleMergedRevisions(mergeInfo);
+                        if (nestedMerges == null) {
+                            nestedMerges = new SVNHashSet();
+                        }
+                        handleMergedRevisions(mergeInfo, logTargetHistoryAsMergeinfo, nestedMerges);
                     }
                     if (limit > 0 && sendCount >= limit) {
                         break;
@@ -176,6 +189,8 @@ public class FSLog {
                 }
             }
         }
+        
+        nestedMerges = null;
 
         if (revisions != null) {
             for (int i = 0; i < revisions.size(); i++) {
@@ -187,9 +202,12 @@ public class FSLog {
                     mergeInfo = (Map) revMergeInfo.get(new Long(rev));
                     hasChildren = mergeInfo != null && !mergeInfo.isEmpty();
                 }
-                sendLog(rev, hasChildren);
+                sendLog(rev, logTargetHistoryAsMergeinfo, nestedMerges, handlingMergedRevisions, hasChildren);
                 if (hasChildren) {
-                    handleMergedRevisions(mergeInfo);
+                    if (nestedMerges == null) {
+                        nestedMerges = new SVNHashSet();
+                    }
+                    handleMergedRevisions(mergeInfo, logTargetHistoryAsMergeinfo, nestedMerges);
                 }
                 sendCount++;
                 if (limit > 0 && sendCount >= limit) {
@@ -214,25 +232,65 @@ public class FSLog {
         return nextRevision;
     }
 
-    private void sendLog(long revision, boolean hasChildren) throws SVNException {
-        SVNLogEntry logEntry = fillLogEntry(revision);
+    private void sendLog(long revision, Map logTargetHistoryAsMergeInfo, Set nestedMerges, boolean handlingMergedRevision, boolean hasChildren) throws SVNException {
+        if (myHandler == null) {
+            return;
+        }
+        SVNLogEntry logEntry = fillLogEntry(revision, myIsDiscoverChangedPaths || handlingMergedRevision);
         logEntry.setHasChildren(hasChildren);
-        if (myHandler != null) {
+        boolean revisionIsInteresting = true;
+        if (handlingMergedRevision && !logEntry.getChangedPaths().isEmpty() && logTargetHistoryAsMergeInfo != null && !logTargetHistoryAsMergeInfo.isEmpty()) {
+            boolean pathIsInHistory = false;
+            revisionIsInteresting = false;
+            for (Iterator changedPaths = logEntry.getChangedPaths().keySet().iterator(); changedPaths.hasNext();) {
+                String changedPath = (String) changedPaths.next();
+                for(Iterator mergedPaths = logTargetHistoryAsMergeInfo.keySet().iterator(); mergedPaths.hasNext();) {
+                    String mergedPath = (String) mergedPaths.next();
+                    if (SVNPathUtil.isAncestor(mergedPath, changedPath)) {
+                        SVNMergeRangeList rangeList = (SVNMergeRangeList) logTargetHistoryAsMergeInfo.get(mergedPath);
+                        SVNMergeRange[] ranges = rangeList.getRanges();
+                        for (int i = 0; i < ranges.length; i++) {
+                            if (revision > ranges[i].getStartRevision() && revision <= ranges[i].getEndRevision()) {
+                                pathIsInHistory = true;
+                                break;
+                            }
+                        }
+                        if (pathIsInHistory) {
+                            break;
+                        }
+                    }
+                }
+                if (!pathIsInHistory) {
+                    revisionIsInteresting = true;
+                    break;
+                }
+                
+            }
+        }
+        if (!myIsDiscoverChangedPaths) {
+            logEntry.getChangedPaths().clear();
+        }
+        if (revisionIsInteresting) {
+            if (handlingMergedRevision && nestedMerges != null) {
+                if (nestedMerges.contains(new Long(revision))) {
+                    return;
+                }
+                nestedMerges.add(new Long(revision));
+            }
             myHandler.handleLogEntry(logEntry);
         }
     }
 
-    private SVNLogEntry fillLogEntry(long revision) throws SVNException {
+    private SVNLogEntry fillLogEntry(long revision, boolean discoverChangedPaths) throws SVNException {
         Map changedPaths = null;
         SVNProperties entryRevProps = null;
         boolean getRevProps = true;
         boolean censorRevProps = false;
-        if (revision > 0 && myIsDiscoverChangedPaths) {
+        if (revision > 0 && discoverChangedPaths) {
             FSRevisionRoot root = myFSFS.createRevisionRoot(revision);
             changedPaths = root.detectChanged();
         }
 
-        //TODO: add autz check code later
         if (getRevProps) {
             SVNProperties revisionProps = myFSFS.getRevisionProperties(revision);
 
@@ -287,17 +345,16 @@ public class FSLog {
         return entry;
     }
     
-    private void handleMergedRevisions(Map mergeInfo) throws SVNException {
+    private void handleMergedRevisions(Map mergeInfo, Map logTargetHistoryAsMergeInfo, Set nestedMerges) throws SVNException {
         if (mergeInfo == null || mergeInfo.isEmpty()) {
             return;
-        }
-        
+        }        
         LinkedList combinedList = combineMergeInfoPathLists(mergeInfo);
         for (int i = combinedList.size() - 1; i >= 0; i--) {
             PathListRange pathListRange = (PathListRange) combinedList.get(i);
             try {
-                doLogs(pathListRange.myPaths, pathListRange.myRange.getStartRevision(), 
-                        pathListRange.myRange.getEndRevision(), true, true, 0);
+                doLogs(pathListRange.myPaths, logTargetHistoryAsMergeInfo, nestedMerges, pathListRange.myRange.getStartRevision(), 
+                        pathListRange.myRange.getEndRevision(), true, true, true, 0);
             } catch (SVNException svne) {
                 SVNErrorCode errCode = svne.getErrorMessage().getErrorCode();
                 if (errCode == SVNErrorCode.FS_NOT_FOUND || errCode == SVNErrorCode.FS_NO_SUCH_REVISION) {
@@ -309,6 +366,29 @@ public class FSLog {
         if (myHandler != null) {
             myHandler.handleLogEntry(SVNLogEntry.EMPTY_ENTRY);
         }
+    }
+    
+    private Map getPathsHistoryAsMergeInfo(String[] paths, long startRevision, long endRevision) throws SVNException {
+        if (startRevision < endRevision) {
+            long temp = startRevision;
+            startRevision = endRevision;
+            endRevision = temp;
+        }
+        Map target = new SVNHashMap();
+        FSLocationsFinder locationsFinder = new FSLocationsFinder(myFSFS);
+        final Collection locationSegments = new ArrayList();        
+        ISVNLocationSegmentHandler locationsReceiver = new ISVNLocationSegmentHandler() {
+            public void handleLocationSegment(SVNLocationSegment locationSegment) throws SVNException {
+                locationSegments.add(locationSegment);                    
+            }
+        };
+        
+        for (int i = 0; i < paths.length; i++) {
+            locationsFinder.getNodeLocationSegments(paths[i], startRevision, startRevision, endRevision, locationsReceiver);
+            Map mergeInfo = SVNMergeDriver.getMergeInfoFromSegments(locationSegments);
+            target = SVNMergeInfoUtil.mergeMergeInfos(target, mergeInfo);
+        }
+        return target;
     }
 
     private PathInfo[] getPathHistories(String[] paths, long start, long end, boolean strictNodeHistory) throws SVNException {

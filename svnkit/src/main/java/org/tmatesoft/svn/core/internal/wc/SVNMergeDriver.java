@@ -2233,7 +2233,7 @@ public abstract class SVNMergeDriver extends SVNBasicDelegate implements ISVNMer
         }
     }
 
-    private Map getMergeInfoFromSegments(Collection segments) {
+    public static Map getMergeInfoFromSegments(Collection segments) {
         Map mergeInfo = new TreeMap();
         for (Iterator segmentsIter = segments.iterator(); segmentsIter.hasNext();) {
             SVNLocationSegment segment = (SVNLocationSegment) segmentsIter.next();
