@@ -184,7 +184,6 @@ public class SshHost {
                 }
             }
             myOpenersCount++;
-            System.out.println("number of openers is: " + myOpenersCount);
         }
     }
 
