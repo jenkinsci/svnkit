@@ -153,8 +153,7 @@ public class SVNSSHSession {
             Connection connection = openConnection(location, verifier, credentials, port, connectTimeout);
             connectionInfo = new SSHConnectionInfo(key, id, connection, true);
             connectionsList.add(connectionInfo);
-            SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, ourRequestor + ": NEW CONNECTION OPENED, " +
-            		"TOTAL: " + connectionsList.size());
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, ourRequestor + ": NEW CONNECTION OPENED, " + "TOTAL: " + connectionsList.size());
             return connectionInfo;
         } finally {
             unlock();
@@ -225,28 +224,13 @@ public class SVNSSHSession {
             unlock();
         }
     }
-    
-    public static int getConnectionsCount() {
-        lock(Thread.currentThread());
-        try {
-            int count = 0;
-            for (Iterator keys = ourConnectionsPool.keySet().iterator(); keys.hasNext();) {
-                String key = (String) keys.next();
-                LinkedList list = (LinkedList) ourConnectionsPool.get(key);
-                count += list.size();
-            }
-            return count;
-        } finally {
-            unlock();
-        }
-    }
 
     private static Connection openConnection(final SVNURL location, final ISVNSSHHostVerifier hostVerifier, SVNSSHAuthentication credentials, int port, int connectTimeout) throws SVNException {
         // open and add to the list.
         File privateKeyFile = credentials.getPrivateKeyFile();
         char[] privateKey = credentials.getPrivateKey();
         if (privateKey == null && privateKeyFile != null) {
-            privateKey = readPrivateKey(privateKeyFile);
+            privateKey = SVNSSHPrivateKeyUtil.readPrivateKey(privateKeyFile);
         }
         String passphrase = credentials.getPassphrase();
         String password = credentials.getPassword();
@@ -255,7 +239,7 @@ public class SVNSSHSession {
         password = "".equals(password) && privateKey != null ? null : password;
         passphrase = "".equals(passphrase) ? null : passphrase;
         
-        if (privateKey != null && !isValidPrivateKey(privateKey, passphrase)) {
+        if (privateKey != null && !SVNSSHPrivateKeyUtil.isValidPrivateKey(privateKey, passphrase)) {
             if (password == null) {
                 SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "File ''{0}'' is not valid OpenSSH DSA or RSA private key file", privateKeyFile);
                 SVNErrorManager.error(error, SVNLogType.NETWORK);
@@ -326,42 +310,6 @@ public class SVNSSHSession {
             SVNErrorManager.error(err, e, SVNLogType.NETWORK);
         }
         return null;
-    }
-
-    private static char[] readPrivateKey(File privateKey) {
-        if (privateKey == null || !privateKey.exists() || !privateKey.isFile() || !privateKey.canRead()) {
-            SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "Can not read private key from '" + privateKey + "'");
-            return null;
-        }
-        Reader reader = null;
-        StringWriter buffer = new StringWriter();
-        try {
-            reader = new BufferedReader(new FileReader(privateKey));
-            int ch;
-            while(true) {
-                ch = reader.read();
-                if (ch < 0) {
-                    break;
-                }
-                buffer.write(ch);
-            }
-        } catch (IOException e) {
-            SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, e);
-            return null;
-        } finally {
-            SVNFileUtil.closeFile(reader);
-        }
-        return buffer.toString().toCharArray();
-    }
-    
-    private static boolean isValidPrivateKey(char[] privateKey, String passphrase) {
-        try {
-            PEMDecoder.decode(privateKey, passphrase);
-        } catch (IOException e) {
-            SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, e);
-            return false;
-        }        
-        return true;
     }
     
     static void lock(Object requestor) {
