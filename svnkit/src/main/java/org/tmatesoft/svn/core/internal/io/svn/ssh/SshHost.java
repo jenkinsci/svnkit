@@ -131,20 +131,17 @@ public class SshHost {
     }
     
     public SshSession openSession() throws IOException {
-        lock();
-        try {
-            for (SshConnection connection : myConnections) {
-                if (connection.getSessionsCount() < MAX_SESSIONS_PER_CONNECTION) {
-                    return connection.openSession();
-                }
-            }
-        } finally {
-            unlock();
-        }
-        
+        SshSession session = useExistingConnection();
+        if (session != null) {
+            return session;
+        }        
         SshConnection newConnection = null;
         addOpener();
         try {
+            session = useExistingConnection();
+            if (session != null) {
+                return session;
+            }
             newConnection = openConnection();
         } finally {
             removeOpener();
@@ -156,8 +153,7 @@ public class SshHost {
                 if (isDisposed()) {
                     newConnection.close();
                     throw new SshHostDisposedException();
-                }
-                
+                }                
                 myConnections.add(newConnection);
                 return newConnection.openSession();
             } finally {
@@ -165,6 +161,23 @@ public class SshHost {
             }
         }
         throw new IOException("Cannot establish SSH connection with " + myHost + ":" + myPort);
+    }
+
+    private SshSession useExistingConnection() throws IOException {
+        lock();
+        try {
+            if (isDisposed()) {
+                throw new SshHostDisposedException();
+            }
+            for (SshConnection connection : myConnections) {
+                if (connection.getSessionsCount() < MAX_SESSIONS_PER_CONNECTION) {
+                    return connection.openSession();
+                }
+            }
+        } finally {
+            unlock();
+        }
+        return null;
     }
 
     
