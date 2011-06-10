@@ -88,7 +88,7 @@ public class JUnitTestLogger extends AbstractTestLogger {
                 xml = SVNXMLUtil.openXMLTag(null, "testcase", !test.isFailed ? (SVNXMLUtil.XML_STYLE_SELF_CLOSING | SVNXMLUtil.XML_STYLE_PROTECT_CDATA): SVNXMLUtil.XML_STYLE_NORMAL, 
                         testAttributes, xml);
                 if (test.isFailed) {
-                    Map<String, String> failureAttributes = new HashMap<String, String>();
+                    Map failureAttributes = new HashMap();
                     failureAttributes.put("type", "org.tmatesoft.test.python");
                     if (test.output != null) {
                         xml = SVNXMLUtil.openCDataTag(null, "failure", test.output, failureAttributes, xml);
