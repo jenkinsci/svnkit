@@ -16,9 +16,6 @@ import java.text.MessageFormat;
 import org.tmatesoft.svn.core.SVNAuthenticationException;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
-import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
-import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -40,7 +37,6 @@ public abstract class AbstractSVNLauncher {
             failure();
             return;
         }
-        initRA();
         registerOptions();
         registerCommands();
 
@@ -114,12 +110,6 @@ public abstract class AbstractSVNLauncher {
     protected abstract void registerCommands();
 
     protected abstract void registerOptions();
-    
-    private void initRA() {
-        DAVRepositoryFactory.setup();
-        SVNRepositoryFactoryImpl.setup();
-        FSRepositoryFactory.setup();
-    }
 
     public void handleError(SVNException e) {
         System.err.println(e.getMessage());
