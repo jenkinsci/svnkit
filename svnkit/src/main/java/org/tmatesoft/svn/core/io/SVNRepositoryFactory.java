@@ -32,8 +32,11 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
+import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
+import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepresentationCacheUtil;
+import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNUUIDGenerator;
@@ -105,6 +108,12 @@ public abstract class SVNRepositoryFactory {
 
     private static final Map myFactoriesMap = new SVNHashMap();
     private static final String REPOSITORY_TEMPLATE_PATH = "/org/tmatesoft/svn/core/io/repository/template.jar";
+    
+    static {
+        FSRepositoryFactory.setup();
+        SVNRepositoryFactoryImpl.setup();
+        DAVRepositoryFactory.setup();
+    }
 
     protected static void registerRepositoryFactory(String protocol, SVNRepositoryFactory factory) {
         if (protocol != null && factory != null) {
