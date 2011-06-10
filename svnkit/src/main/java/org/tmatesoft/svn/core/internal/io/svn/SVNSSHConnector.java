@@ -261,4 +261,8 @@ public class SVNSSHConnector implements ISVNConnector {
         }
         return false;
     }
+
+    public static void shutdown() {
+        ourSessionPool.shutdown();
+    }
 }

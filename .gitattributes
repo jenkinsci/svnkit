@@ -48,6 +48,7 @@ svnkit/src/main/java/org/tmatesoft/svn/core/internal/io/fs/repcache/FSRepresenta
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/io/fs/repcache/FSRepresentationCacheManagerFactory.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/io/fs/repcache/FSRepresentationCacheRecord.java svneol=native#text/plain
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/io/fs/repcache/IFSRepresentationCacheManagerFactory.java -text
+svnkit/src/main/java/org/tmatesoft/svn/core/internal/io/svn/SVNSSHConnector.java -text svneol=native#unset
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/util/ISVNTask.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/util/ISVNThreadPool.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/util/SVNEmptyTask.java -text
