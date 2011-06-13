@@ -17,9 +17,6 @@ import org.eclipse.osgi.service.debug.DebugOptions;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.util.tracker.ServiceTracker;
-import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
-import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
-import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.core.internal.io.svn.SVNSSHSession;
 import org.tmatesoft.svn.util.ISVNDebugLog;
 import org.tmatesoft.svn.util.SVNDebugLog;
@@ -37,10 +34,6 @@ public class SVNKitActivator implements BundleActivator {
 
     public void start(BundleContext context) throws Exception {
         myPluginID = context.getBundle().getSymbolicName();
-        
-        DAVRepositoryFactory.setup();
-        SVNRepositoryFactoryImpl.setup();
-        FSRepositoryFactory.setup();
         
         myDebugTracker = new ServiceTracker(context, DebugOptions.class.getName(), null);
         myDebugTracker.open();
