@@ -67,7 +67,7 @@ public class SVNWCDbRoot {
     public SVNWCDbRoot(SVNWCDb db, File absPath, SVNSqlJetDb sDb, long wcId, int format, boolean autoUpgrade, boolean enforceEmptyWQ) throws SVNException {
         if (sDb != null) {
             try {
-                format = sDb.getDb().getOptions().getSchemaVersion();
+                format = sDb.getDb().getOptions().getUserVersion();
             } catch (SqlJetException e) {
                 SVNSqlJetDb.createSqlJetError(e);
             }
