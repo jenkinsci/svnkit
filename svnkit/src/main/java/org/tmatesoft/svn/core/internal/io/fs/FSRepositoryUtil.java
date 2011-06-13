@@ -52,9 +52,14 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @author  TMate Software Ltd.
  */
 public class FSRepositoryUtil {
+    
     public static final int MAX_KEY_SIZE = 200;
 
-    private static final byte[] ourCopyBuffer = new byte[1024*16];
+    private static final ThreadLocal ourCopyBuffer = new ThreadLocal() {
+        protected Object initialValue() {
+            return new byte[1024*16];
+        }
+    };
 
     public static void replay(FSFS fsfs, FSRoot root, String basePath, long lowRevision, boolean sendDeltas, ISVNEditor editor) throws SVNException {
         Map fsChanges = root.getChangedPaths();
@@ -100,15 +105,16 @@ public class FSRepositoryUtil {
         SVNCommitUtil.driveCommitEditor(handler, interestingPaths, editor, -1);
     }
     
-    public synchronized static void copy(InputStream src, OutputStream dst, ISVNCanceller canceller) throws SVNException {
+    public static void copy(InputStream src, OutputStream dst, ISVNCanceller canceller) throws SVNException {
         try {
+            byte[] buffer = (byte[]) ourCopyBuffer.get();
             while (true) {
                 if (canceller != null) {
                     canceller.checkCancelled();
                 }
-                int length = src.read(ourCopyBuffer);
+                int length = src.read(buffer);
                 if (length > 0) {
-                    dst.write(ourCopyBuffer, 0, length);
+                    dst.write(buffer, 0, length);
                 }
                 if (length < 0) {
                     break;
