@@ -52,7 +52,24 @@ public class SVNWCDbCreateSchema extends SVNSqlJetStatement {
                     + "  moved_here  INTEGER, moved_to  TEXT, kind  TEXT NOT NULL, properties  BLOB, depth  TEXT, checksum  TEXT, symlink_target  TEXT, "
                     + "  changed_revision  INTEGER, changed_date INTEGER, changed_author TEXT, translated_size  INTEGER, last_mod_time  INTEGER, "
                     + "  dav_cache  BLOB, file_external  TEXT, PRIMARY KEY (wc_id, local_relpath, op_depth) ); "),
-            new Statement(Type.INDEX, "CREATE INDEX I_NODES_PARENT ON NODES (wc_id, parent_relpath, op_depth); ")
+            new Statement(Type.INDEX, "CREATE INDEX I_NODES_PARENT ON NODES (wc_id, parent_relpath, op_depth); "),
+
+            new Statement(Type.TABLE, "CREATE TABLE EXTERNALS ( " +
+            "  wc_id  INTEGER NOT NULL REFERENCES WCROOT (id), " +
+            "  local_relpath  TEXT NOT NULL, " +
+            "  parent_relpath  TEXT NOT NULL, " +
+            "  repos_id  INTEGER NOT NULL REFERENCES REPOSITORY (id), " +
+            "  presence  TEXT NOT NULL, " +
+            "  kind  TEXT NOT NULL, " +
+            "  def_local_relpath         TEXT NOT NULL, " +
+            "  def_repos_relpath         TEXT NOT NULL, " +
+            "  def_operational_revision  TEXT, " +
+            "  def_revision              TEXT, " +
+            "  PRIMARY KEY (wc_id, local_relpath) " +
+            "); "),
+            new Statement(Type.INDEX, "CREATE INDEX I_EXTERNALS_PARENT ON EXTERNALS (wc_id, parent_relpath); " ),
+            new Statement(Type.INDEX, "CREATE UNIQUE INDEX I_EXTERNALS_DEFINED ON EXTERNALS " +
+            		" (wc_id, def_local_relpath, local_relpath); " )
     };
 
     private enum Type {
