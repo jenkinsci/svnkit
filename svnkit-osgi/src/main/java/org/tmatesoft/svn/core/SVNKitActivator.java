@@ -20,7 +20,7 @@ import org.osgi.util.tracker.ServiceTracker;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
-import org.tmatesoft.svn.core.internal.io.svn.SVNSSHSession;
+import org.tmatesoft.svn.core.internal.io.svn.SVNSSHConnector;
 import org.tmatesoft.svn.util.ISVNDebugLog;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
@@ -81,7 +81,7 @@ public class SVNKitActivator implements BundleActivator {
     }
 
     public void stop(BundleContext context) throws Exception {
-        SVNSSHSession.shutdown();
+        SVNSSHConnector.shutdown();
         
         try {
             if (myDebugTracker != null) {
