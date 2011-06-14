@@ -104,6 +104,7 @@ def makeFeatureJar(File dir, File dstFile, Map tokens) {
     
 }
 
+buildAll.dependsOn tasks.clean
 buildAll.dependsOn configurations.binaries
 buildAll.dependsOn configurations.scripts
 buildAll.dependsOn configurations.sources

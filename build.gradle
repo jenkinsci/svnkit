@@ -142,3 +142,14 @@ project(':svnkit-distribution') {
     }
 }
 
+task publish(dependsOn: [':svnkit-distribution:buildAll']) {
+    enabled = project.hasProperty('to')
+} << {
+    File toDir = new File(project.properties['to'])
+    delete(toDir)
+    toDir.mkdirs()
+    ant.unzip(src: new File(project(':svnkit-distribution').distsDir, "svnkit-${version}-all.zip"), dest: toDir.absolutePath) {
+       cutdirsmapper(dirs: '1')
+    }    
+    ant.chmod(dir: new File(toDir, 'bin').absolutePath, perm: 'ugo+rx', includes: '**/**', excludes: '**/*.bat')
+}
