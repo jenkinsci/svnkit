@@ -235,8 +235,8 @@ public class SVNRemoteStatusEditor extends SVNStatusEditor implements ISVNEditor
         } else {
             contentsStatus = myFileInfo.myIsContentsChanged ? SVNStatusType.STATUS_MODIFIED : SVNStatusType.STATUS_NONE;
             propertiesStatus = myFileInfo.myIsPropertiesChanged ? SVNStatusType.STATUS_MODIFIED : SVNStatusType.STATUS_NONE;
-            remoteLock = getLock(myFileInfo.myURL);
         }
+        remoteLock = getLock(myFileInfo.myURL);
         tweakStatusHash(myFileInfo, myFileInfo.myPath, contentsStatus, propertiesStatus, remoteLock);
         myFileInfo = null;
     }
