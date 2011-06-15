@@ -89,14 +89,17 @@ public class SVNStatusReporter17 implements ISVNReporterBaton, ISVNReporter {
 
         // collect locks
         SVNLock[] locks = null;
+        SVNURL oldLocation = this.repository.getLocation();
         try {
             repositoryRoot = this.repository.getRepositoryRoot(true);
+            this.repository.setLocation(repositoryLocation, false);
             locks = this.repository.getLocks("");
         } catch (SVNException e) {
             if (!(e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_NOT_IMPLEMENTED)) {
                 throw e;
             }
         } finally {
+            this.repository.setLocation(oldLocation, false);
             this.repository.closeSession();
         }
         if (locks != null) {

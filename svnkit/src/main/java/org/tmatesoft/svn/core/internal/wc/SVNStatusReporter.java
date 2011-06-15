@@ -36,7 +36,7 @@ public class SVNStatusReporter implements ISVNReporterBaton, ISVNReporter {
 
     private ISVNReporter myReporter;
     private ISVNReporterBaton myBaton;
-    private SVNURL myRepositoryLocation;
+    private SVNURL myCommonAncestorLocation;
     private SVNRepository myRepository;
     private SVNURL myRepositoryRoot;
     private Map myLocks;
@@ -46,7 +46,7 @@ public class SVNStatusReporter implements ISVNReporterBaton, ISVNReporter {
     public SVNStatusReporter(SVNRepository repos, ISVNReporterBaton baton, SVNStatusEditor editor) {
         myBaton = baton;
         myRepository = repos;
-        myRepositoryLocation = repos.getLocation();
+        myCommonAncestorLocation = repos.getLocation();
         myEditor = editor;
         myLocks = new SVNHashMap();
     }
@@ -87,14 +87,17 @@ public class SVNStatusReporter implements ISVNReporterBaton, ISVNReporter {
     public void finishReport() throws SVNException {
         // collect locks
         SVNLock[] locks = null;
+        SVNURL oldLocation = myRepository.getLocation();
         try {
             myRepositoryRoot = myRepository.getRepositoryRoot(true);
+            myRepository.setLocation(myCommonAncestorLocation, false);
             locks = myRepository.getLocks("");
         } catch (SVNException e) {
             if (!(e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_NOT_IMPLEMENTED)) {
                 throw e;
             }
         } finally {
+            myRepository.setLocation(oldLocation, false);
             myRepository.closeSession();
         }
         if (locks != null) {
@@ -112,15 +115,15 @@ public class SVNStatusReporter implements ISVNReporterBaton, ISVNReporter {
     }
 
     public void linkPath(SVNURL url, String path, String lockToken, long revision, SVNDepth depth, boolean startEmpty) throws SVNException {
-        SVNURL rootURL = SVNURLUtil.getCommonURLAncestor(url, myRepositoryLocation);
+        SVNURL rootURL = SVNURLUtil.getCommonURLAncestor(url, myCommonAncestorLocation);
         if (rootURL == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, 
                     "Can not determine common ancestor of ''{0}'' and ''{1}'';\nprobably these entries belong to different repositories.", 
-                    new Object[] {url, myRepositoryLocation});
+                    new Object[] {url, myCommonAncestorLocation});
             SVNErrorManager.error(err, SVNLogType.WC);
         }
-        if (SVNPathUtil.getPathAsChild(rootURL.getPath(), myRepositoryLocation.getPath()) != null) {
-            myRepositoryLocation = rootURL;
+        if (SVNPathUtil.getPathAsChild(rootURL.getPath(), myCommonAncestorLocation.getPath()) != null) {
+            myCommonAncestorLocation = rootURL;
         }
         myReporter.linkPath(url, path, lockToken, revision, depth, startEmpty);
     }
