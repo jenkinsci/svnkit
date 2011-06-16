@@ -323,7 +323,9 @@ class HTTPConnection implements IHTTPConnection {
             if (myNextRequestTimeout < 0 || System.currentTimeMillis() >= myNextRequestTimeout) {
                 SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "Keep-Alive timeout detected");
                 close();
-                httpAuth = null;
+                if (!(myChallengeCredentials instanceof HTTPBasicAuthentication)) {
+                    httpAuth = null;
+                }
             }
             int retryCount = 1;
             try {
