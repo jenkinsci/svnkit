@@ -92,6 +92,7 @@ project(':svnkit-cli') {
     dependencies {
         compile project(path: ':svnkit')
     }
+    artifacts { maven jar, sourcesJar }
 }
 
 project(':svnkit-dav') {
