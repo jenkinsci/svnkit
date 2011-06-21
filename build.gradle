@@ -74,6 +74,7 @@ project(':svnkit') {
         compile 'org.tmatesoft.sqljet:sqljet:1.0.5'
         compile 'net.java.dev.jna:jna:3.2.7'
         compile 'com.trilead:trilead-ssh2:1.0.0-build214'
+        compile 'org.apache.httpcomponents:httpclient:4.1.1'
     }
     artifacts { maven jar, sourcesJar }
 }

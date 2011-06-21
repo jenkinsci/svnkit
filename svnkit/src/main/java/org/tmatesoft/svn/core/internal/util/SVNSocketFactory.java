@@ -204,7 +204,7 @@ public class SVNSocketFactory {
         return isStale;
     }
 
-	private static SSLContext createSSLContext(KeyManager[] keyManagers, TrustManager trustManager) throws IOException {
+	public static SSLContext createSSLContext(KeyManager[] keyManagers, TrustManager trustManager) throws IOException {
 		if (trustManager == null) {
 			trustManager = new X509TrustManager() {
 				public X509Certificate[] getAcceptedIssuers() {

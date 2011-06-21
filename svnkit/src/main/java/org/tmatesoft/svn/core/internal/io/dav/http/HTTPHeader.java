@@ -94,6 +94,10 @@ public class HTTPHeader {
         }
         values.add(value);
     }
+    
+    public Map getRawHeaders() {
+        return getHeaders();
+    }
 
     public Collection getHeaderValues(String name) {
         if (myHeaders == null) {
