@@ -1,6 +1,7 @@
 package org.tmatesoft.svn.core.internal.io.dav.http2;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -9,8 +10,13 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
+import java.util.StringTokenizer;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLHandshakeException;
@@ -20,63 +26,68 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 
 import org.apache.http.Header;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
-import org.apache.http.ProtocolException;
 import org.apache.http.StatusLine;
 import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.Credentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.auth.params.AuthPNames;
 import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.params.AuthPolicy;
 import org.apache.http.client.protocol.ClientContext;
 import org.apache.http.conn.ClientConnectionManager;
+import org.apache.http.conn.params.ConnRouteParams;
 import org.apache.http.conn.scheme.PlainSocketFactory;
 import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
 import org.apache.http.entity.AbstractHttpEntity;
+import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.BasicAuthCache;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.client.DefaultRedirectStrategy;
 import org.apache.http.impl.conn.SingleClientConnManager;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
+import org.tmatesoft.svn.core.ISVNCanceller;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.auth.ISVNProxyManager;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
-import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVErrorHandler;
 import org.tmatesoft.svn.core.internal.io.dav.http.HTTPHeader;
 import org.tmatesoft.svn.core.internal.io.dav.http.HTTPSSLKeyManager;
 import org.tmatesoft.svn.core.internal.io.dav.http.HTTPStatus;
 import org.tmatesoft.svn.core.internal.io.dav.http.IHTTPConnection;
+import org.tmatesoft.svn.core.internal.io.dav.http.SpoolFile;
 import org.tmatesoft.svn.core.internal.io.dav.http.XMLReader;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSSLUtil;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.SVNCancellableOutputStream;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
+import org.tmatesoft.svn.util.Version;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-public class HttpConnection2 implements IHTTPConnection, CredentialsProvider {
+public class HttpConnection2 implements IHTTPConnection {
     
-    private static final String AUTH_USED_CREDENTIALS = "auth.used.credentials";
-    private static final String AUTH_REALM = "auth.realm";
-    private static final String AUTH_USER_ERROR = "auth.user.exception";
+    private static final String SPOOL_FILE = "spool.file";
     
     private DefaultHttpClient myHttpClient;
     private HttpHost myHttpHost;
@@ -84,62 +95,128 @@ public class HttpConnection2 implements IHTTPConnection, CredentialsProvider {
     private BasicHttpContext myHttpContext;
     private ISVNAuthenticationManager myAuthenticationManager;
     private SVNURL myLocation;
-    private SVNAuthentication myLastValidCredentials;
     private TrustManager myTrustManager;
     private HTTPSSLKeyManager myKeyManager;
+    private HttpCredentialsProvider myCredentialsProvider;
+    private File mySpoolDirectory;
+    private boolean myIsSpoolAllRequests;
+    private boolean myIsSpoolRequest;
+    private ISVNCanceller myCanceller;
 
-    public HttpConnection2(SVNRepository repository) {
+    public HttpConnection2(SVNRepository repository, File spoolDirectory, boolean isSpoolAllRequestes) {
         SVNURL location = repository.getLocation();
         
         myHttpHost = new HttpHost(location.getHost(), location.getPort(), location.getProtocol());
         myHttpContext = new BasicHttpContext();
+        myCredentialsProvider = new HttpCredentialsProvider(getHttpContext(), repository.getLocation(), repository.getAuthenticationManager());
         myAuthenticationManager = repository.getAuthenticationManager();
         myLocation = repository.getLocation();
-
+        mySpoolDirectory = spoolDirectory;
+        myIsSpoolAllRequests = isSpoolAllRequestes;
+        myCanceller = repository.getCanceller();
+        
         clearAuthenticationCache();
     }
-    
     
     private DefaultHttpClient createHttpClient() throws SVNException {
         String sslRealm = "<" + myLocation.getProtocol() + "://" + myLocation.getHost() + ":" + myLocation.getPort() + ">";
 
         SchemeRegistry registry = new SchemeRegistry();
-        if ("http".equalsIgnoreCase(myLocation.getProtocol())) {
-            registry.register(new Scheme("http", myLocation.getPort(), new PlainSocketFactory()));
-        } else {
+        registry.register(new Scheme("http", 80, new PlainSocketFactory()));
+        if ("https".equalsIgnoreCase(myLocation.getProtocol())) {
             myTrustManager = hasAuthenticationManager() ? myAuthenticationManager.getTrustManager(myLocation) : null;
             myKeyManager = hasAuthenticationManager() ? new HTTPSSLKeyManager(myAuthenticationManager, sslRealm, myLocation) : null;
-            registry.register(new Scheme("https", myLocation.getPort(), new HttpSSLSocketFactory(new KeyManager[] {myKeyManager}, myTrustManager)));
+            registry.register(new Scheme("https", 443, new HttpSSLSocketFactory(new KeyManager[] {myKeyManager}, myTrustManager)));
         }
         
         ClientConnectionManager connectionManager = new SingleClientConnManager(registry);
         DefaultHttpClient client = new DefaultHttpClient(connectionManager);
-        client.setCredentialsProvider(this);
-        client.setRedirectStrategy(new DefaultRedirectStrategy() {            
-            public HttpUriRequest getRedirect(HttpRequest request, HttpResponse response, HttpContext context) throws ProtocolException {
-                if (request instanceof HttpDAVRequest) {
-                    HttpDAVRequest davRequest = (HttpDAVRequest) request;
-                    URI uri = getLocationURI(request, response, context);
-                    URI oldURI = davRequest.getURI();
-                    try {
-                        oldURI = new URI(oldURI.getScheme(), oldURI.getUserInfo(), oldURI.getHost(), oldURI.getPort(), oldURI.getPath() + "/", oldURI.getQuery(), oldURI.getFragment());
-                    } catch (URISyntaxException e) {
-                        throw new ProtocolException(e.getMessage());
-                    }
-                    if (oldURI.equals(uri)) {
-                        davRequest = new HttpDAVRequest(davRequest.getMethod());
-                        davRequest.setURI(uri);
-                        return davRequest;
-                    }
-                }
-                throw new ProtocolException(response.getStatusLine().toString());
-            }
-        });
+        client.setCredentialsProvider(myCredentialsProvider);
+        client.setRedirectStrategy(new HttpRedirectStrategy());
+        
+        Collection<String> authPreferences = computeAuthenticationSchemesList();
+        
+        client.getParams().setParameter(AuthPNames.TARGET_AUTH_PREF, authPreferences);
+        client.getParams().setParameter(AuthPNames.PROXY_AUTH_PREF, authPreferences);
         
         return client;
     }
+    
+    private void configureProxy() throws SVNException {
+        if (hasAuthenticationManager()) {
+            ISVNProxyManager proxyManager = myAuthenticationManager.getProxyManager(myLocation);
+            if (proxyManager != null && proxyManager.getProxyHost() != null) {
+                HttpHost proxyHost = new HttpHost(proxyManager.getProxyHost(), proxyManager.getProxyPort());
+                getHttpClient().getParams().setParameter(ConnRouteParams.DEFAULT_PROXY, proxyHost);
+                if (proxyManager.getProxyUserName() != null) {
+                    getHttpClient().getCredentialsProvider().setCredentials(new AuthScope(proxyHost.getHostName(), proxyHost.getPort()), 
+                            new UsernamePasswordCredentials(proxyManager.getProxyUserName(), proxyManager.getProxyPassword()));
+                }
+            }
+        }
+    }
 
+    private Collection<String> computeAuthenticationSchemesList() {
+        List<String> schemesList = new ArrayList<String>();
+        schemesList.add(AuthPolicy.BASIC);
+        schemesList.add(AuthPolicy.DIGEST);
+        schemesList.add(AuthPolicy.SPNEGO);
+        schemesList.add(AuthPolicy.NTLM);
+        
+        List<String> schemesOrder = getUserAuthenticationSchemesOrder();
+        if (schemesOrder == null) {
+            schemesOrder = getConfigAuthenticationSchemesOrder();
+            if (schemesOrder == null) {
+                return schemesList;
+            }
+        }
+        final List<String> order = schemesOrder;
+        Collections.sort(schemesList, new Comparator<String>() {
+            public int compare(String o1, String o2) {
+                int i1 = order.indexOf(o1.trim().toLowerCase());
+                int i2 = order.indexOf(o2.trim().toLowerCase());
+                i1 = i1 < 0 ? Integer.MAX_VALUE : i1;
+                i2 = i2 < 0 ? Integer.MAX_VALUE : i2;
+                if (i1 == i2) {
+                    return 0;
+                }
+                return i1 > i2 ? 1 : -1;
+            }
+        });
+        return schemesList;
+    }
+    
+    private List<String> getUserAuthenticationSchemesOrder() {
+        String usersList = System.getProperty("svnkit.http.methods", System.getProperty("javasvn.http.methods", null));
+        if (usersList == null || "".equals(usersList)) {
+            return null;
+        }
+        final List<String> schemesOrder = new ArrayList<String>();
+        for(StringTokenizer tokens = new StringTokenizer(usersList, ",;"); tokens.hasMoreTokens();) {
+            schemesOrder.add(tokens.nextToken().trim().toLowerCase());
+        }
+        return schemesOrder.isEmpty() ? null : schemesOrder;
+    }
+
+    private List<String> getConfigAuthenticationSchemesOrder() {
+        if (myAuthenticationManager instanceof DefaultSVNAuthenticationManager) {
+            Collection<?> configSchemes = ((DefaultSVNAuthenticationManager) myAuthenticationManager).getAuthTypes(myLocation);
+            if (configSchemes != null && !configSchemes.isEmpty()) {
+                final List<String> schemesOrder = new ArrayList<String>();
+                for (Object scheme : configSchemes) {
+                    schemesOrder.add(scheme.toString().trim().toLowerCase());
+                }
+                return schemesOrder;
+            }
+        }
+        return null;
+    }
     public void setSpoolResponse(boolean spoolResponse) {
+        myIsSpoolRequest = spoolResponse;
+    }
+    
+    private boolean isSpoolResponse() {
+        return myIsSpoolAllRequests || myIsSpoolRequest;
     }
 
     public HTTPStatus request(String method, String path, HTTPHeader header,
@@ -152,7 +229,7 @@ public class HttpConnection2 implements IHTTPConnection, CredentialsProvider {
             StringBuffer body, int ok1, int ok2, OutputStream dst,
             DefaultHandler handler, SVNErrorMessage context)
             throws SVNException {
-        return request(method, path, header, (Object) body, ok1, ok2, dst, handler, null);
+        return request(method, path, header, (Object) body, ok1, ok2, dst, handler, context);
     }
 
     public HTTPStatus request(String method, String path, HTTPHeader header,
@@ -172,14 +249,15 @@ public class HttpConnection2 implements IHTTPConnection, CredentialsProvider {
             Object body, int ok1, int ok2, OutputStream dst,
             DefaultHandler handler, SVNErrorMessage context)
             throws SVNException {
-        HttpDAVRequest request = createHttpRequest(method, path);
-        addDefaultAndCustomHeaders(header, request);
+        
+        HttpDAVRequest request = createHttpRequest(method, path, header);
         
         HTTPStatus httpStatus = null;        
         HttpResponse response = null;
         SVNErrorMessage error = null;
         
         resetAuthenticationState();
+        configureProxy();
         
         while (true) {
             try {
@@ -212,7 +290,7 @@ public class HttpConnection2 implements IHTTPConnection, CredentialsProvider {
             } 
          
             if (error == null) {
-                error = (SVNErrorMessage) getHttpContext().getAttribute(AUTH_USER_ERROR);
+                error = myCredentialsProvider.getAuthenticationError();
             }
             if (error != null) {
                 consumeResponse(response);
@@ -245,18 +323,24 @@ public class HttpConnection2 implements IHTTPConnection, CredentialsProvider {
                 }
                 acknowledgeCredentials(null);
 
-                InputStream is = response.getEntity().getContent();
+                HttpEntity entity = new BasicHttpEntity();
+                if (response.getEntity() != null) {
+                    entity = response.getEntity();
+                    if (isSpoolResponse()) {
+                        entity = spoolEntity(entity);
+                    }
+                }
                 if (!isExpectedCode(method, code, ok1, ok2)) {
-                    error = readError(method, path, response.getStatusLine(), is, context);
+                    error = readError(method, path, response.getStatusLine(), entity.getContent(), context);
                 } else if (code >= 300) {
-                    SVNErrorMessage serverError = readError(method, path, response.getStatusLine(), is, context);
+                    SVNErrorMessage serverError = readError(method, path, response.getStatusLine(), entity.getContent(), context);
                     httpStatus.setError(serverError);
                     error = null;
                 } else if (dst != null) {
                     response.getEntity().writeTo(dst);
                     error = null;
                 } else if (handler != null) {
-                    error = parseXMLEntity(method, path, handler, response.getEntity().getContent());
+                    error = parseXMLEntity(method, path, handler, entity.getContent());
                 } else {
                     error = null;
                 }
@@ -274,15 +358,40 @@ public class HttpConnection2 implements IHTTPConnection, CredentialsProvider {
         }
         return httpStatus;
     }
+    
+    private HttpEntity spoolEntity(HttpEntity entity) throws IOException {
+        SpoolFile spoolFile = new SpoolFile(mySpoolDirectory);
+        OutputStream os = null;
+        try {
+            os = new SVNCancellableOutputStream(spoolFile.openForWriting(), myCanceller);
+            entity.writeTo(os);
+        } finally {
+            SVNFileUtil.closeFile(os);
+        }
+        getHttpContext().setAttribute(SPOOL_FILE, spoolFile);
+        return new InputStreamEntity(spoolFile.openForReading(), -1);
+    }
 
+
+    private void resetAuthenticationState() {
+        myCredentialsProvider.reset();
+    }
 
     private void consumeResponse(HttpResponse response) {
         try {
             EntityUtils.consume(response.getEntity());
         } catch (IOException e) {
         }
+        SpoolFile spoolFile = (SpoolFile) getHttpContext().getAttribute(SPOOL_FILE);
+        if (spoolFile != null) {
+            getHttpContext().removeAttribute(SPOOL_FILE);
+            try {
+                spoolFile.delete();
+            } catch (SVNException e) {
+                SVNDebugLog.getDefaultLog().logError(SVNLogType.NETWORK, e);
+            }
+        }
     }
-
 
     private SVNErrorMessage createErrorFromStatus(StatusLine statusLine, String path, SVNErrorMessage context) {
         SVNErrorCode errorCode = SVNErrorCode.RA_DAV_REQUEST_FAILED;
@@ -303,11 +412,14 @@ public class HttpConnection2 implements IHTTPConnection, CredentialsProvider {
         // extend context object to include host:port (empty location).
         Object[] messageObjects = contextObjects == null ? new Object[1] : new Object[contextObjects.length + 1];
         int index = messageObjects.length - 1;
-        messageObjects[messageObjects.length - 1] = myLocation.getHost() + ":" + myLocation.getPort();
+        messageObjects[messageObjects.length - 1] = myLocation;
         if (messageObjects.length > 1) {
             System.arraycopy(contextObjects, 0, messageObjects, 0, contextObjects.length);
         }
-        return SVNErrorMessage.create(errorCode, contextMessage + ": " + message + " ({" + index + "})", messageObjects);
+        if (contextMessage != null) {
+            return SVNErrorMessage.create(errorCode, contextMessage + ": " + message + " ({" + index + "})", messageObjects);
+        } 
+        return SVNErrorMessage.create(errorCode, message + " ({" + index + "})", messageObjects);
     }
 
 
@@ -338,23 +450,7 @@ public class HttpConnection2 implements IHTTPConnection, CredentialsProvider {
     }
 
     private void acknowledgeCredentials(SVNErrorMessage error) throws SVNException {
-        if (hasAuthenticationManager()) {
-            SVNAuthentication credentials = (SVNAuthentication) getHttpContext().getAttribute(AUTH_USED_CREDENTIALS);
-            String realm = (String) getHttpContext().getAttribute(AUTH_REALM);
-            if (credentials != null && realm != null) {
-                myAuthenticationManager.acknowledgeAuthentication(error == null, ISVNAuthenticationManager.PASSWORD, realm, error, credentials);
-                if (error == null) {
-                    myLastValidCredentials = credentials;
-                }
-            }
-        }
-        
-    }
-
-    private void resetAuthenticationState() {
-        getHttpContext().setAttribute(AUTH_REALM, null);
-        getHttpContext().setAttribute(AUTH_USED_CREDENTIALS, null);
-        getHttpContext().setAttribute(AUTH_USER_ERROR, null);
+        myCredentialsProvider.acknowledgeCredentials(error);
     }
 
     private boolean isExpectedCode(String method, int code, int ok1, int ok2) {
@@ -381,13 +477,20 @@ public class HttpConnection2 implements IHTTPConnection, CredentialsProvider {
     }
 
 
-    private HttpDAVRequest createHttpRequest(String method, String path) throws SVNException {
+    private HttpDAVRequest createHttpRequest(String method, String path, HTTPHeader header) throws SVNException {
         HttpDAVRequest request = new HttpDAVRequest(method);
+        if (path == null || "".equals(path)) {
+            path = "/";
+        }
+        if (!path.startsWith("/")) {
+            path = "/" + path;
+        }
         try {
-            request.setURI(new URI(null, null, path, null));
+            request.setURI(new URI(null, null, SVNEncodingUtil.uriDecode(path), null));
         } catch (URISyntaxException e) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), SVNLogType.NETWORK);
         }
+        addDefaultAndCustomHeaders(header, request);
         return request;
     }
 
@@ -409,6 +512,7 @@ public class HttpConnection2 implements IHTTPConnection, CredentialsProvider {
         if (!request.containsHeader(HTTP.CONTENT_TYPE)) {
             request.addHeader(HTTP.CONTENT_TYPE, "text/xml; charset=\"utf-8\"");
         }
+        request.addHeader(HTTP.USER_AGENT, Version.getUserAgent());
     }
 
     private AbstractHttpEntity createRequestEntity(Object body) throws UnsupportedEncodingException {
@@ -500,21 +604,19 @@ public class HttpConnection2 implements IHTTPConnection, CredentialsProvider {
     }
 
     public SVNAuthentication getLastValidCredentials() {
-        return myLastValidCredentials;
+        return myCredentialsProvider.getLastValidCredentials();
     }
 
     public void clearAuthenticationCache() {
-        myLastValidCredentials = null;
-        
+        myCredentialsProvider.clear();
         myHttpContext.setAttribute(ClientContext.AUTH_CACHE, new BasicAuthCache());
-        myHttpContext.setAttribute(AUTH_USED_CREDENTIALS, null);
-        myHttpContext.setAttribute(AUTH_REALM, null);
-        myHttpContext.setAttribute(AUTH_USER_ERROR, null);
     }
 
     public void close() {
         clearAuthenticationCache();
-        myHttpClient.getConnectionManager().shutdown();
+        if (myHttpClient != null && myHttpClient.getConnectionManager() != null) {
+            myHttpClient.getConnectionManager().shutdown();
+        }
     }
 
     private HttpHost getHttpHost() {
@@ -526,49 +628,5 @@ public class HttpConnection2 implements IHTTPConnection, CredentialsProvider {
             myHttpClient = createHttpClient();
         }
         return myHttpClient;
-    }
-
-    public void setCredentials(AuthScope authscope, Credentials credentials) {
-    }
-
-    public Credentials getCredentials(AuthScope authscope) {
-        if (authscope.getRealm() == null && myLastValidCredentials instanceof SVNPasswordAuthentication) {
-            return new UsernamePasswordCredentials(myLastValidCredentials.getUserName(), ((SVNPasswordAuthentication) myLastValidCredentials).getPassword());
-        }
-        String realm = null;
-        if (authscope.getRealm() != null) {
-            realm = "<" + myLocation.getProtocol() + "://" + authscope.getHost() + ":" + authscope.getPort() + "> " + authscope.getRealm();
-        } else {
-            return null;
-        }
-        
-        SVNAuthentication credentials = null;
-        if (realm != null) {
-            try {
-                if (getHttpContext().getAttribute(AUTH_USED_CREDENTIALS) == null) {
-                    credentials = myAuthenticationManager.getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, realm, myLocation);
-                } else {
-                    credentials = myAuthenticationManager.getNextAuthentication(ISVNAuthenticationManager.PASSWORD, realm, myLocation);
-                }
-            } catch (SVNException e) {
-                getHttpContext().setAttribute(AUTH_USER_ERROR, e);
-                getHttpContext().setAttribute(AUTH_REALM, null);
-                getHttpContext().setAttribute(AUTH_USED_CREDENTIALS, null);
-            }
-        }
-        getHttpContext().setAttribute(AUTH_REALM, realm);
-        getHttpContext().setAttribute(AUTH_USED_CREDENTIALS, credentials);
-        if (credentials != null && credentials instanceof SVNPasswordAuthentication) {
-            getHttpContext().setAttribute(AUTH_USER_ERROR, null);
-            return new UsernamePasswordCredentials(credentials.getUserName(), ((SVNPasswordAuthentication) credentials).getPassword());
-        }
-        getHttpContext().setAttribute(AUTH_USER_ERROR, SVNErrorMessage.create(SVNErrorCode.CANCELLED, "authentication cancelled"));
-        return null;
-    }
-
-    public void clear() {
-        getHttpContext().setAttribute(AUTH_USER_ERROR, null);
-        getHttpContext().setAttribute(AUTH_REALM, null);
-        getHttpContext().setAttribute(AUTH_USED_CREDENTIALS, null);
     }
 }
