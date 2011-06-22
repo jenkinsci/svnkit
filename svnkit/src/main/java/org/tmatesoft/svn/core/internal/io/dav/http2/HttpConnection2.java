@@ -50,6 +50,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.BasicAuthCache;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.SingleClientConnManager;
+import org.apache.http.params.CoreProtocolPNames;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.protocol.HttpContext;
@@ -102,11 +103,13 @@ public class HttpConnection2 implements IHTTPConnection {
     private boolean myIsSpoolAllRequests;
     private boolean myIsSpoolRequest;
     private ISVNCanceller myCanceller;
+    private String myHttpCharset;
 
-    public HttpConnection2(SVNRepository repository, File spoolDirectory, boolean isSpoolAllRequestes) {
+    public HttpConnection2(SVNRepository repository, String charset, File spoolDirectory, boolean isSpoolAllRequestes) {
         SVNURL location = repository.getLocation();
         
         myHttpHost = new HttpHost(location.getHost(), location.getPort(), location.getProtocol());
+        myHttpCharset = charset;
         myHttpContext = new BasicHttpContext();
         myCredentialsProvider = new HttpCredentialsProvider(getHttpContext(), repository.getLocation(), repository.getAuthenticationManager());
         myAuthenticationManager = repository.getAuthenticationManager();
@@ -138,7 +141,8 @@ public class HttpConnection2 implements IHTTPConnection {
         
         client.getParams().setParameter(AuthPNames.TARGET_AUTH_PREF, authPreferences);
         client.getParams().setParameter(AuthPNames.PROXY_AUTH_PREF, authPreferences);
-        
+        client.getParams().setParameter(CoreProtocolPNames.HTTP_ELEMENT_CHARSET, myHttpCharset);
+        client.getParams().setParameter(CoreProtocolPNames.USER_AGENT, Version.getUserAgent());
         return client;
     }
     
@@ -512,7 +516,6 @@ public class HttpConnection2 implements IHTTPConnection {
         if (!request.containsHeader(HTTP.CONTENT_TYPE)) {
             request.addHeader(HTTP.CONTENT_TYPE, "text/xml; charset=\"utf-8\"");
         }
-        request.addHeader(HTTP.USER_AGENT, Version.getUserAgent());
     }
 
     private AbstractHttpEntity createRequestEntity(Object body) throws UnsupportedEncodingException {
