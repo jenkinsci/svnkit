@@ -19,7 +19,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -34,7 +33,7 @@ public class SVNThreadPool implements ISVNThreadPool {
     private CustomThreadFactory myThreadFactory;
     private ISVNThreadPool myFailSafePool;
     
-    public ISVNTask run(Runnable task, boolean daemon) throws SVNException {
+    public ISVNTask run(Runnable task, boolean daemon) {
         ThreadPoolExecutor threadPool = getThreadPool(daemon);
         try {
             Future<?> future = threadPool.submit(task);

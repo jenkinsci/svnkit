@@ -11,7 +11,6 @@
  */
 package org.tmatesoft.svn.core.internal.util;
 
-import org.tmatesoft.svn.core.SVNException;
 
 
 /**
@@ -20,6 +19,6 @@ import org.tmatesoft.svn.core.SVNException;
  */
 public interface ISVNThreadPool {
     
-    public ISVNTask run(Runnable task, boolean daemon) throws SVNException;
+    public ISVNTask run(Runnable task, boolean daemon);
     
 }

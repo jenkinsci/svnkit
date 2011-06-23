@@ -18,15 +18,17 @@ public class HttpRedirectStrategy extends DefaultRedirectStrategy {
             HttpDAVRequest davRequest = (HttpDAVRequest) request;
             URI uri = getLocationURI(request, response, context);
             URI oldURI = davRequest.getURI();
-            try {
-                oldURI = new URI(oldURI.getScheme(), oldURI.getUserInfo(), oldURI.getHost(), oldURI.getPort(), oldURI.getPath() + "/", oldURI.getQuery(), oldURI.getFragment());
-            } catch (URISyntaxException e) {
-                throw new ProtocolException(e.getMessage());
-            }
-            if (oldURI.equals(uri)) {
-                davRequest = new HttpDAVRequest(davRequest.getMethod());
-                davRequest.setURI(uri);
-                return davRequest;
+            if (!oldURI.getPath().endsWith("/") && uri.getPath().endsWith("/")) {
+                try {
+                    oldURI = new URI(oldURI.getScheme(), oldURI.getUserInfo(), oldURI.getHost(), oldURI.getPort(), oldURI.getPath() + "/", oldURI.getQuery(), oldURI.getFragment());
+                } catch (URISyntaxException e) {
+                    throw new ProtocolException(e.getMessage());
+                }
+                if (oldURI.equals(uri)) {
+                    davRequest = new HttpDAVRequest(davRequest.getMethod());
+                    davRequest.setURI(uri);
+                    return davRequest;
+                }
             }
         }
         throw new ProtocolException(response.getStatusLine().toString());

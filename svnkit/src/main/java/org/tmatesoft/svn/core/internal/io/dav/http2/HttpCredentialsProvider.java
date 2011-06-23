@@ -1,22 +1,44 @@
 package org.tmatesoft.svn.core.internal.io.dav.http2;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.StringTokenizer;
 
+import javax.net.ssl.TrustManager;
+
+import org.apache.http.HttpHost;
+import org.apache.http.HttpRequest;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.Credentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.auth.params.AuthPNames;
 import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.params.AuthPolicy;
+import org.apache.http.client.protocol.ClientContext;
+import org.apache.http.conn.params.ConnRouteParams;
+import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.protocol.HttpContext;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.auth.ISVNProxyManager;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
+import org.tmatesoft.svn.core.internal.io.dav.http.HTTPSSLKeyManager;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNAuthenticationManager;
+import org.tmatesoft.svn.core.io.SVNRepository;
 
 public class HttpCredentialsProvider implements CredentialsProvider {
+
+    private static final int DEFAULT_HTTP_READ_TIMEOUT = 3600*1000;
+    private static final int DEFAULT_HTTP_CONNECT_TIMEOUT = 0;
 
     private static final String AUTH_USED_CREDENTIALS = "auth.used.credentials";
     private static final String AUTH_REALM = "auth.realm";
@@ -27,15 +49,24 @@ public class HttpCredentialsProvider implements CredentialsProvider {
     private HttpContext myContext;
     private SVNURL myLocation;
     private Map<AuthScope, Credentials> myCredentialsMap;
+    private TrustManager myTrustManager;
+    private HTTPSSLKeyManager myKeyManager;
+    private UsernamePasswordCredentials myProxyCredentials;
+    private AuthScope myProxyAuthScope;
+    private SVNRepository myRepository;
 
-    public HttpCredentialsProvider(HttpContext context, SVNURL location, ISVNAuthenticationManager authenticationManager) {
+    public HttpCredentialsProvider(HttpContext context, SVNRepository repository, ISVNAuthenticationManager authenticationManager) {
         myContext = context;
-        myLocation = location;
+        myContext.setAttribute(ClientContext.CREDS_PROVIDER, this);
+        myLocation = repository.getLocation();
+        myRepository = repository;
         myAuthenticationManager = authenticationManager;
         myCredentialsMap = new HashMap<AuthScope, Credentials>();
     }
 
     public void clear() {
+        myProxyAuthScope = null;
+        myProxyCredentials = null;
         setContextAttribute(AUTH_VALID_CREDENTIALS, null);
         myCredentialsMap.clear();
         reset();
@@ -56,11 +87,38 @@ public class HttpCredentialsProvider implements CredentialsProvider {
     }
     
     public void setCredentials(AuthScope authscope, Credentials credentials) {
-        if (authscope != null) {
-            if (credentials != null) {
-                myCredentialsMap.put(authscope, credentials);
-            } else {
-                myCredentialsMap.remove(authscope);
+    }
+    
+    public void configureRequest(HttpRequest request) throws SVNException {
+        if (myAuthenticationManager != null) {
+            ISVNProxyManager proxyManager = myAuthenticationManager.getProxyManager(myLocation);
+            myProxyCredentials = null;
+            if (proxyManager != null && proxyManager.getProxyHost() != null) {
+                HttpHost proxyHost = new HttpHost(proxyManager.getProxyHost(), proxyManager.getProxyPort());
+                request.getParams().setParameter(ConnRouteParams.DEFAULT_PROXY, proxyHost);
+                if (proxyManager.getProxyUserName() != null) {
+                    myProxyAuthScope = new AuthScope(proxyManager.getProxyHost(), proxyManager.getProxyPort());
+                    myProxyCredentials = new UsernamePasswordCredentials(proxyManager.getProxyUserName(), proxyManager.getProxyPassword());
+                }
+            }
+        }
+        
+        Collection<String> authPreferences = computeAuthenticationSchemesList();        
+        request.getParams().setParameter(AuthPNames.TARGET_AUTH_PREF, authPreferences);
+        request.getParams().setParameter(AuthPNames.PROXY_AUTH_PREF, authPreferences);
+        
+        int connectTimeout = myAuthenticationManager != null ? myAuthenticationManager.getConnectTimeout(myRepository) : DEFAULT_HTTP_CONNECT_TIMEOUT;
+        int readTimeout = myAuthenticationManager != null ? myAuthenticationManager.getReadTimeout(myRepository) : DEFAULT_HTTP_READ_TIMEOUT;
+        
+        HttpConnectionParams.setConnectionTimeout(request.getParams(), connectTimeout);
+        HttpConnectionParams.setSoTimeout(request.getParams(), readTimeout);
+    }
+    
+    public void acknowledgeProxyContext(SVNErrorMessage error) throws SVNException {
+        if (myAuthenticationManager != null) {
+            ISVNProxyManager proxyManager = myAuthenticationManager.getProxyManager(myLocation);
+            if (proxyManager != null) {
+                proxyManager.acknowledgeProxyContext(error == null, error);
             }
         }
     }
@@ -73,11 +131,37 @@ public class HttpCredentialsProvider implements CredentialsProvider {
             }
         }
     }
+    
+    public boolean hasMoreCredentials() {
+        return myAuthenticationManager != null && getContextAttribute(AUTH_USER_ERROR) != null;
+    }
+    
+    public boolean acknowledgeSSLContext(SVNErrorMessage error) throws SVNException {
+        if (myKeyManager != null) {
+            myKeyManager.acknowledgeAndClearAuthentication(error);
+            return true;
+        } 
+        return false;
+    }
+    
+    public HTTPSSLKeyManager getSSLKeyManager() {
+        if (myKeyManager == null && myAuthenticationManager != null) {
+            String sslRealm = "<" + myLocation.getProtocol() + "://" + myLocation.getHost() + ":" + myLocation.getPort() + ">";
+            myKeyManager = new HTTPSSLKeyManager(myAuthenticationManager, sslRealm, myLocation);
+        }
+        return myKeyManager;
+    }
+    
+    public TrustManager getSSLTrustManager() throws SVNException {
+        if (myTrustManager == null && myAuthenticationManager != null) {
+            myTrustManager = myAuthenticationManager.getTrustManager(myLocation);
+        }
+        return myTrustManager;
+    }
 
     public Credentials getCredentials(AuthScope authscope) {
-        Credentials proxyCredentials = findMatchingCredentials(authscope);
-        if (proxyCredentials != null) {
-            return proxyCredentials;
+        if (myProxyAuthScope != null && myProxyAuthScope.match(authscope) > 0 && myProxyCredentials != null) {
+            return myProxyCredentials;
         }
         
         SVNPasswordAuthentication lastValidCredentials = (SVNPasswordAuthentication) getContextAttribute(AUTH_VALID_CREDENTIALS);
@@ -121,20 +205,6 @@ public class HttpCredentialsProvider implements CredentialsProvider {
         return null;
     }
 
-    private Credentials findMatchingCredentials(AuthScope authscope) {
-        int bestFactor = -1;
-        Credentials matchingCredentials = null;
-        
-        for (AuthScope scope : myCredentialsMap.keySet()) {
-            int factor = scope.match(authscope);
-            if (factor >= 0 && factor > bestFactor) {
-                bestFactor = factor;
-                matchingCredentials = myCredentialsMap.get(scope);
-            }
-        }
-        return matchingCredentials;
-    }
-
     private ISVNAuthenticationManager getAuthenticationManager() {
         return myAuthenticationManager;
     }
@@ -166,4 +236,62 @@ public class HttpCredentialsProvider implements CredentialsProvider {
     private Object getContextAttribute(String attributeName) {
         return getHttpContext().getAttribute(attributeName);
     }
+
+
+    private Collection<String> computeAuthenticationSchemesList() {
+        List<String> schemesList = new ArrayList<String>();
+        schemesList.add(AuthPolicy.BASIC);
+        schemesList.add(AuthPolicy.DIGEST);
+        schemesList.add(AuthPolicy.SPNEGO);
+        schemesList.add(AuthPolicy.NTLM);
+        
+        List<String> schemesOrder = getUserAuthenticationSchemesOrder();
+        if (schemesOrder == null) {
+            schemesOrder = getConfigAuthenticationSchemesOrder();
+            if (schemesOrder == null) {
+                return schemesList;
+            }
+        }
+        final List<String> order = schemesOrder;
+        Collections.sort(schemesList, new Comparator<String>() {
+            public int compare(String o1, String o2) {
+                int i1 = order.indexOf(o1.trim().toLowerCase());
+                int i2 = order.indexOf(o2.trim().toLowerCase());
+                i1 = i1 < 0 ? Integer.MAX_VALUE : i1;
+                i2 = i2 < 0 ? Integer.MAX_VALUE : i2;
+                if (i1 == i2) {
+                    return 0;
+                }
+                return i1 > i2 ? 1 : -1;
+            }
+        });
+        return schemesList;
+    }
+  
+    private List<String> getUserAuthenticationSchemesOrder() {
+        String usersList = System.getProperty("svnkit.http.methods", System.getProperty("javasvn.http.methods", null));
+        if (usersList == null || "".equals(usersList)) {
+            return null;
+        }
+        final List<String> schemesOrder = new ArrayList<String>();
+        for(StringTokenizer tokens = new StringTokenizer(usersList, ",;"); tokens.hasMoreTokens();) {
+            schemesOrder.add(tokens.nextToken().trim().toLowerCase());
+        }
+        return schemesOrder.isEmpty() ? null : schemesOrder;
+    }
+
+    private List<String> getConfigAuthenticationSchemesOrder() {
+        if (myAuthenticationManager instanceof DefaultSVNAuthenticationManager) {
+            Collection<?> configSchemes = ((DefaultSVNAuthenticationManager) myAuthenticationManager).getAuthTypes(myLocation);
+            if (configSchemes != null && !configSchemes.isEmpty()) {
+                final List<String> schemesOrder = new ArrayList<String>();
+                for (Object scheme : configSchemes) {
+                    schemesOrder.add(scheme.toString().trim().toLowerCase());
+                }
+                return schemesOrder;
+            }
+        }
+        return null;
+    }
+
 }

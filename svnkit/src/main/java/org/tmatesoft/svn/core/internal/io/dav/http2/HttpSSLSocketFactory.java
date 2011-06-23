@@ -7,6 +7,7 @@ import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 
 import javax.net.ssl.KeyManager;
+import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.TrustManager;
 
@@ -18,16 +19,18 @@ import org.tmatesoft.svn.core.internal.util.SVNSocketFactory;
 
 public class HttpSSLSocketFactory implements LayeredSchemeSocketFactory {
     
-    private TrustManager myTrustManager;
-    private KeyManager[] myKeyManagers;
+    private SSLContext mySSLContext;
 
-    public HttpSSLSocketFactory(KeyManager[] keyManagers, TrustManager trustManager) {
-        myKeyManagers = keyManagers;
-        myTrustManager = trustManager;
+    public HttpSSLSocketFactory(KeyManager[] keyManagers, TrustManager trustManager) throws IOException {
+        this(SVNSocketFactory.createSSLContext(keyManagers, trustManager));
+    }
+
+    public HttpSSLSocketFactory(SSLContext context) {
+        mySSLContext = context;
     }
 
     public Socket createSocket(HttpParams params) throws IOException {
-        return SVNSocketFactory.createSSLContext(myKeyManagers, myTrustManager).getSocketFactory().createSocket();
+        return mySSLContext.getSocketFactory().createSocket();
     }
 
     public Socket connectSocket(Socket socket, InetSocketAddress remoteAddress,
@@ -53,7 +56,7 @@ public class HttpSSLSocketFactory implements LayeredSchemeSocketFactory {
         if (sock instanceof SSLSocket) {
             sslsock = (SSLSocket) sock;
         } else {
-            sslsock = (SSLSocket) SVNSocketFactory.createSSLContext(myKeyManagers, myTrustManager).getSocketFactory().createSocket(sock, remoteAddress.getHostName(), remoteAddress.getPort(), true);
+            sslsock = (SSLSocket) mySSLContext.getSocketFactory().createSocket(sock, remoteAddress.getHostName(), remoteAddress.getPort(), true);
         }
         return sslsock;
     }
@@ -63,7 +66,7 @@ public class HttpSSLSocketFactory implements LayeredSchemeSocketFactory {
     }
 
     public Socket createLayeredSocket(Socket socket, String target, int port, boolean autoClose) throws IOException, UnknownHostException {
-        return SVNSocketFactory.createSSLContext(myKeyManagers, myTrustManager).getSocketFactory().createSocket(socket, target, port, autoClose);
+        return mySSLContext.getSocketFactory().createSocket(socket, target, port, autoClose);
     }
 
 }

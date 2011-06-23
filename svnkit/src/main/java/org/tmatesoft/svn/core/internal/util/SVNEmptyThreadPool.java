@@ -11,7 +11,6 @@
  */
 package org.tmatesoft.svn.core.internal.util;
 
-import org.tmatesoft.svn.core.SVNException;
 
 
 /**
@@ -20,7 +19,7 @@ import org.tmatesoft.svn.core.SVNException;
  */
 public class SVNEmptyThreadPool implements ISVNThreadPool {
 
-    public ISVNTask run(Runnable task, boolean daemon) throws SVNException {
+    public ISVNTask run(Runnable task, boolean daemon) {
         Thread thread = new Thread(task);
         thread.setDaemon(daemon);
         thread.start();
