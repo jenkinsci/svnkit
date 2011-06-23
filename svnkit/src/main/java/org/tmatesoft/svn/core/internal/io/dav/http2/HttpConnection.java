@@ -120,7 +120,7 @@ public class HttpConnection implements IHTTPConnection {
                 SSLContext context = SVNSocketFactory.createSSLContext(new KeyManager[] {km}, tm);
                 registry.register(new Scheme("https", 443, new HttpSSLSocketFactory(context)));
             } catch (IOException e) {
-                e.printStackTrace();
+                SVNDebugLog.getDefaultLog().logError(SVNLogType.NETWORK, e);
             }
         }
         return new DefaultHttpClient(new SingleClientConnManager(registry));
@@ -176,8 +176,9 @@ public class HttpConnection implements IHTTPConnection {
         configureRequest(request);
         
         while (true) {
+            error = null;
             try {
-                request.setEntity(createRequestEntity(body));
+                request.setEntity(createRequestEntity(body, header));
 
                 response = getHttpClient().execute(getHttpHost(), request, getHttpContext());
                 if (response == null) {
@@ -194,6 +195,7 @@ public class HttpConnection implements IHTTPConnection {
                     SVNErrorMessage sslErr = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "SSL handshake failed: ''{0}''", new Object[] { e.getMessage() }, SVNErrorMessage.TYPE_ERROR, e);
                     if (acknowledgeSSLContext(sslErr)) {
                         consumeResponse(response);
+                        error = null;
                         continue;
                     }
                     error = sslErr;
@@ -202,7 +204,11 @@ public class HttpConnection implements IHTTPConnection {
                 SVNErrorManager.cancel(e.getMessage(), SVNLogType.NETWORK);
             } catch (IOException e) {
                 error = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e);
-            } 
+            } finally {
+                if (error != null) {
+                    close();
+                }
+            }
          
             if (error == null) {
                 error = myCredentialsProvider.getAuthenticationError();
@@ -309,9 +315,13 @@ public class HttpConnection implements IHTTPConnection {
     }
 
     private void consumeResponse(HttpResponse response) {
-        try {
-            EntityUtils.consume(response.getEntity());
-        } catch (IOException e) {
+        if (response == null) {
+            close();
+        } else {
+            try {
+                EntityUtils.consume(response.getEntity());
+            } catch (IOException e) {
+            }
         }
         SpoolFile spoolFile = (SpoolFile) getHttpContext().getAttribute(SPOOL_FILE);
         if (spoolFile != null) {
@@ -426,7 +436,9 @@ public class HttpConnection implements IHTTPConnection {
             Map<String, Collection<String>> additionalHeaders = (Map<String, Collection<String>>) header.getRawHeaders();
             for (String headerName : additionalHeaders.keySet()) {
                 for (String value : additionalHeaders.get(headerName)) {
-                    request.addHeader(headerName, value);
+                    if (!HTTP.CONTENT_LEN.equals(headerName)) {
+                        request.addHeader(headerName, value);
+                    }
                 }
             }
         }
@@ -439,7 +451,7 @@ public class HttpConnection implements IHTTPConnection {
         }
     }
 
-    private AbstractHttpEntity createRequestEntity(Object body) throws UnsupportedEncodingException {
+    private AbstractHttpEntity createRequestEntity(Object body, HTTPHeader customHeaders) throws UnsupportedEncodingException {
         AbstractHttpEntity entity = null; 
         
         if (body instanceof ByteArrayInputStream) {
@@ -448,7 +460,18 @@ public class HttpConnection implements IHTTPConnection {
         } else if (body instanceof byte[]) {
             entity = new ByteArrayEntity((byte[]) body);
         } else if (body instanceof InputStream){
-            entity = new InputStreamEntity((InputStream) body, -1);
+            int length = -1;
+            if (customHeaders.getFirstHeaderValue(HTTP.CONTENT_LEN) != null) {
+                String lengthStr = customHeaders.getFirstHeaderValue(HTTP.CONTENT_LEN);
+                try {
+                    length = Integer.parseInt(lengthStr);
+                } catch (NumberFormatException nfe) {                    
+                }
+                if (length < 0) {
+                    length = -1;
+                }
+            }
+            entity = new InputStreamEntity((InputStream) body, length);
         } else if (body instanceof StringBuffer) {
             entity = new StringEntity(body.toString(), "text/xml", HTTP.UTF_8);
         }
@@ -458,7 +481,7 @@ public class HttpConnection implements IHTTPConnection {
 
     private SVNErrorMessage readError(String method, String path, StatusLine statusLine, InputStream content, SVNErrorMessage context) throws SVNCancelException {
         if (statusLine.getStatusCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-            context = SVNErrorMessage.create(context.getErrorCode(), "''{0}'' path not found", path);
+            context = SVNErrorMessage.create(context != null ? context.getErrorCode() : SVNErrorCode.FS_NOT_FOUND, "''{0}'' path not found", path);
         } 
         SVNErrorMessage error = createErrorFromStatus(statusLine, path, context);
         SVNErrorMessage davError = parseXMLErrorEntity(method, path, content);
@@ -540,6 +563,7 @@ public class HttpConnection implements IHTTPConnection {
         clearAuthenticationCache();
         if (myHttpClient != null && myHttpClient.getConnectionManager() != null) {
             myHttpClient.getConnectionManager().shutdown();
+            myHttpClient = null;
         }
     }
 

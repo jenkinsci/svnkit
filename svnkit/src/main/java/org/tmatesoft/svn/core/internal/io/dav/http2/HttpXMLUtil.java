@@ -83,7 +83,7 @@ public class HttpXMLUtil {
                             };
         for (int i = 0; i < parsers.length; i++) {
             String className = parsers[i];
-            ClassLoader loader = HttpConnection.class.getClassLoader();
+            ClassLoader loader = HttpXMLUtil.class.getClassLoader();
             try {
                 Class<?> clazz = null;
                 if (loader != null) {
