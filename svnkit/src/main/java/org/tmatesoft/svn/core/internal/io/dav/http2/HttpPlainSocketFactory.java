@@ -24,7 +24,7 @@ public class HttpPlainSocketFactory implements SchemeSocketFactory {
     }
 
     public Socket connectSocket(Socket socket, InetSocketAddress remoteAddress, InetSocketAddress localAddress, HttpParams params) throws IOException, UnknownHostException, ConnectTimeoutException {
-        ISVNCanceller canceller = (ISVNCanceller) params.getParameter(HttpConnection2.CANCELLER_PARAMETER);
+        ISVNCanceller canceller = (ISVNCanceller) params.getParameter(HttpConnection.CANCELLER_PARAMETER);
         
         Socket sock = socket;
         if (sock == null) {

@@ -74,7 +74,7 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-public class HttpConnection2 implements IHTTPConnection {
+public class HttpConnection implements IHTTPConnection {
     
     private static final String SPOOL_FILE = "svnkit.spool.file";
     public static final String CANCELLER_PARAMETER = "svnkit.canceller";
@@ -94,7 +94,7 @@ public class HttpConnection2 implements IHTTPConnection {
     private ISVNCanceller myCanceller;
     private String myHttpCharset;
 
-    public HttpConnection2(SVNRepository repository, String charset, File spoolDirectory, boolean isSpoolAllRequestes) {
+    public HttpConnection(SVNRepository repository, String charset, File spoolDirectory, boolean isSpoolAllRequestes) {
         SVNURL location = repository.getLocation();
         
         myHttpHost = new HttpHost(location.getHost(), location.getPort(), location.getProtocol());
