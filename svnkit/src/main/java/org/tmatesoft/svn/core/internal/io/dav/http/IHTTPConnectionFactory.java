@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.core.internal.io.dav.http;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.io.dav.http2.HttpConnection;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
 /**
@@ -24,7 +25,7 @@ public interface IHTTPConnectionFactory {
 
         public IHTTPConnection createHTTPConnection(SVNRepository repository) throws SVNException {
             String charset = System.getProperty("svnkit.http.encoding", "US-ASCII");
-            return new HTTPConnection(repository, charset, null, false);
+          return new HttpConnection(repository, charset, null, false);
         }
 
         public boolean useSendAllForDiff(SVNRepository repository) throws SVNException {
