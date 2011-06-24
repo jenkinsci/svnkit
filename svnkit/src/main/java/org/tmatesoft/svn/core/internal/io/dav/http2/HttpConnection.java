@@ -521,7 +521,13 @@ public class HttpConnection implements IHTTPConnection {
             error = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e);
         } catch (SAXException e) {
             mySAXParser = null;
-            error = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Processing {0} request response failed: {1} ({2}) ",  new Object[] {method, e.getMessage(), path});
+            if (e.getCause() instanceof SVNException) {
+                error = ((SVNException) e.getCause()).getErrorMessage();
+            } else if (e.getException() instanceof SVNException) {
+                error = ((SVNException) e.getException()).getErrorMessage();
+            } else {
+                error = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Processing {0} request response failed: {1} ({2}) ",  new Object[] {method, e.getMessage(), path});
+            }
         } catch (ParserConfigurationException e) {
             mySAXParser = null;
             error = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "XML parser configuration error while processing {0} request response: {1} ({2}) ",  new Object[] {method, e.getMessage(), path});
