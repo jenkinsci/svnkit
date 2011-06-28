@@ -14,14 +14,10 @@ package org.tmatesoft.svn.core.internal.wc17.db.statement;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.table.ISqlJetTransaction;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
-import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @version 1.4
@@ -69,11 +65,18 @@ public class SVNWCDbCreateSchema extends SVNSqlJetStatement {
             "); "),
             new Statement(Type.INDEX, "CREATE INDEX I_EXTERNALS_PARENT ON EXTERNALS (wc_id, parent_relpath); " ),
             new Statement(Type.INDEX, "CREATE UNIQUE INDEX I_EXTERNALS_DEFINED ON EXTERNALS " +
-            		" (wc_id, def_local_relpath, local_relpath); " )
+            		" (wc_id, def_local_relpath, local_relpath); " ),
+
+    		new Statement(Type.VIEW, "CREATE VIEW NODES_BASE AS SELECT * FROM nodes WHERE op_depth = 0;"),
+            new Statement(Type.VIEW, "CREATE VIEW NODES_CURRENT AS SELECT * FROM nodes AS n WHERE op_depth = (SELECT MAX(op_depth) FROM nodes AS n2 WHERE n2.wc_id = n.wc_id AND n2.local_relpath = n.local_relpath);"),
+            
+            new Statement(Type.TRIGGER, "CREATE TRIGGER nodes_insert_trigger AFTER INSERT ON nodes WHEN NEW.checksum IS NOT NULL BEGIN UPDATE pristine SET refcount = refcount + 1 WHERE checksum = NEW.checksum; END;"),
+            new Statement(Type.TRIGGER, "CREATE TRIGGER nodes_delete_trigger AFTER DELETE ON nodes WHEN OLD.checksum IS NOT NULL BEGIN UPDATE pristine SET refcount = refcount - 1 WHERE checksum = OLD.checksum; END;"),
+            new Statement(Type.TRIGGER, "CREATE TRIGGER nodes_update_checksum_trigger AFTER UPDATE OF checksum ON nodes WHEN NEW.checksum IS NOT OLD.checksum BEGIN UPDATE pristine SET refcount = refcount + 1 WHERE checksum = NEW.checksum; UPDATE pristine SET refcount = refcount - 1 WHERE checksum = OLD.checksum; END;"),
     };
 
     private enum Type {
-        TABLE, INDEX;
+        TABLE, INDEX, VIEW, TRIGGER;
     }
 
     private static class Statement {
@@ -111,6 +114,12 @@ public class SVNWCDbCreateSchema extends SVNSqlJetStatement {
                                 break;
                             case INDEX:
                                 db.createIndex(stmt.getSql());
+                                break;
+                            case VIEW:
+                                db.createView(stmt.getSql());
+                                break;
+                            case TRIGGER:
+                                db.createTrigger(stmt.getSql());
                                 break;
                             default:
                                 break;
