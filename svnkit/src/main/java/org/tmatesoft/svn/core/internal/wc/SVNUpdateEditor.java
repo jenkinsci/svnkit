@@ -1400,12 +1400,14 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
                 SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "UUID mismatch: existing file ''{0}'' was checked out from a different repository", fullPath);
                 SVNErrorManager.error(error, SVNLogType.WC);
             }
-            if (mySwitchURL == null && entry.getURL() == null && info.URL == null) {
-            } else if (mySwitchURL == null && (info.URL != entry.getURL() || !info.URL.equals(entry.getURL()))) {
-                SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "URL ''{0}'' of existing file ''{1}'' does not match expected URL ''{2}''", new Object[] {
-                        entry.getURL(), fullPath, info.URL
-                });
-                SVNErrorManager.error(error, SVNLogType.WC);
+            if (mySwitchURL == null) {
+                boolean equals = info.URL == entry.getURL() || (info.URL != null && info.URL.equals(entry.getURL()));
+                if (!equals) {
+                    SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "URL ''{0}'' of existing file ''{1}'' does not match expected URL ''{2}''", new Object[] {
+                            entry.getURL(), fullPath, info.URL
+                    });
+                    SVNErrorManager.error(error, SVNLogType.WC);
+                }
             }
         }
 
