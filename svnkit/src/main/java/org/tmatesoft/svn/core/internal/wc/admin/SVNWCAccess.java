@@ -38,6 +38,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNMergeCallback;
 import org.tmatesoft.svn.core.internal.wc.SVNMergeCallback15;
 import org.tmatesoft.svn.core.internal.wc.SVNMergeDriver;
+import org.tmatesoft.svn.core.internal.wc.SVNObjectsPool;
 import org.tmatesoft.svn.core.internal.wc.SVNUpdateEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNUpdateEditor15;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
@@ -60,15 +61,23 @@ public class SVNWCAccess implements ISVNEventHandler {
     private ISVNOptions myOptions;
     private Map myAdminAreas;
     private Map myCleanupHandlers;
-
+    private SVNObjectsPool myObjectsPool;
+    
     private File myAnchor;
 
     public static SVNWCAccess newInstance(ISVNEventHandler eventHandler) {
         return new SVNWCAccess(eventHandler);
     }
-    
+
+    private static boolean isObjectsPoolEnabled() {
+        return Boolean.TRUE.toString().equalsIgnoreCase(System.getProperty("svnkit.entry.pool", "true"));
+    }
+
     private SVNWCAccess(ISVNEventHandler handler) {
         myEventHandler = handler;
+        if (isObjectsPoolEnabled()) {
+            myObjectsPool = new SVNObjectsPool();
+        }
     }
     
     public void setEventHandler(ISVNEventHandler handler) {
@@ -338,6 +347,10 @@ public class SVNWCAccess implements ISVNEventHandler {
             myAdminAreas.clear();
         }
         myCleanupHandlers = null;
+        
+        if (getObjectsPool() != null) {
+            getObjectsPool().clear();
+        }
     }
     
     public void closeAdminArea(File path) throws SVNException {
@@ -899,5 +912,9 @@ public class SVNWCAccess implements ISVNEventHandler {
             }
             myDelegate.handleError(path, error);
         }
+    }
+
+    public SVNObjectsPool getObjectsPool() {
+        return myObjectsPool;
     }
 }

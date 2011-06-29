@@ -52,9 +52,13 @@ public class SVNHashMap implements Map, Cloneable, Serializable {
     }
     
     public SVNHashMap(Map map) {
+        init();
+        putAll(map);
+    }
+
+    protected void init() {
         myTable = new TableEntry[INITIAL_CAPACITY];
         myEntryCount = 0;
-        putAll(map);
     }
 
     public void clear() {
@@ -95,7 +99,7 @@ public class SVNHashMap implements Map, Cloneable, Serializable {
         for (int i = 0; i < myTable.length; i++) {
             TableEntry entry = myTable[i];
             while (entry != null) {
-                if (value.equals(entry.value)) {
+                if (value.equals(entry.getValue())) {
                     return true;
                 }
                 entry = entry.next;
@@ -108,7 +112,7 @@ public class SVNHashMap implements Map, Cloneable, Serializable {
         for (int i = 0; i < myTable.length; i++) {
             TableEntry entry = myTable[i];
             while (entry != null) {
-                if (entry.value == null) {
+                if (entry.getValue() == null) {
                     return true;
                 }
                 entry = entry.next;
@@ -126,7 +130,7 @@ public class SVNHashMap implements Map, Cloneable, Serializable {
         
         while (entry != null) {
             if (hash == entry.hash && eq(key, entry.key)) {
-                return entry.value;
+                return entry.getValue();
             }
             entry = entry.next;
         }
@@ -154,7 +158,7 @@ public class SVNHashMap implements Map, Cloneable, Serializable {
             previousEntry = entry;
             entry = entry.next;
         }
-        TableEntry newEntry = new TableEntry(key, value, hash);
+        TableEntry newEntry = createTableEntry(key, value, hash);
         
         if (previousEntry != null) {
             previousEntry.next = newEntry;
@@ -167,6 +171,10 @@ public class SVNHashMap implements Map, Cloneable, Serializable {
             resize(myTable.length * 2);
         }
         return null;
+    }
+    
+    protected TableEntry createTableEntry(Object key, Object value, int hash) {
+        return new TableEntry(key, value, hash);
     }
 
     public Object remove(Object key) {
@@ -530,16 +538,23 @@ public class SVNHashMap implements Map, Cloneable, Serializable {
         }
     }
     
-    private static class TableEntry implements Map.Entry {
+    protected static class TableEntry implements Map.Entry {
         
-        public TableEntry next;
-        public Object key;
-        public Object value;
-        public int hash;
+        private TableEntry next;
+        private Object key;
+        private Object value;
+        private int hash;
+
+        protected TableEntry() {            
+        }
         
         public TableEntry(Object key, Object value, int hash) {
+            init(key, value, hash);
+        }
+
+        protected void init(Object key, Object value, int hash) {
             this.key = key;
-            this.value = value;
+            setValue(value);
             this.hash = hash;
         }
 

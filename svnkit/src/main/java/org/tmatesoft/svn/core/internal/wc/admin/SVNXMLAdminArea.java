@@ -414,7 +414,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
             while ((line = reader.readLine()) != null) {
                 line = line.trim();
                 if (line.equals("<entry")) {
-                    entry = new SVNHashMap();
+                    entry = createEntryHashMap(null);
                     continue;
                 }
                 if (entry != null) {

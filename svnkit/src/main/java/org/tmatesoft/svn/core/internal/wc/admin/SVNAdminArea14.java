@@ -762,7 +762,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
         String name = parseString(line);
         name = name != null ? name : getThisDirName();
 
-        Map entryAttrs = new SVNHashMap();
+        Map entryAttrs = createEntryHashMap(null);
         entryAttrs.put(SVNProperty.NAME, name);
         SVNEntry entry = new SVNEntry(entryAttrs, this, name);
         entry.setDepth(SVNDepth.INFINITY);
