@@ -38,6 +38,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.io.fs.FSFile;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNEntryHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNHashSet;
@@ -762,7 +763,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
         String name = parseString(line);
         name = name != null ? name : getThisDirName();
 
-        Map entryAttrs = new SVNHashMap();
+        Map entryAttrs = createEntryHashMap(null);
         entryAttrs.put(SVNProperty.NAME, name);
         SVNEntry entry = new SVNEntry16(entryAttrs, this, name);
         entry.setDepth(SVNDepth.INFINITY);

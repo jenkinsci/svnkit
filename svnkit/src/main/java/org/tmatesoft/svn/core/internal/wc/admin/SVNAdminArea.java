@@ -40,6 +40,7 @@ import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNEntryHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNMerger;
@@ -48,6 +49,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNDiffConflictChoiceStyle;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNObjectsPool;
 import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
 import org.tmatesoft.svn.core.internal.wc.SVNWCProperties;
 import org.tmatesoft.svn.core.wc.ISVNCommitParameters;
@@ -962,7 +964,7 @@ public abstract class SVNAdminArea {
             entries = myEntries;
         }
 
-        SVNEntry entry = entries.containsKey(name) ? (SVNEntry) entries.get(name) : new SVNEntry16(new SVNHashMap(), this, name);
+        SVNEntry entry = entries.containsKey(name) ? (SVNEntry) entries.get(name) : new SVNEntry16(createEntryHashMap(null), this, name);
         entries.put(name, entry);
         return entry;
     }
@@ -1585,7 +1587,7 @@ public abstract class SVNAdminArea {
 
         for (Iterator entries = adminArea.entries(true); entries.hasNext();) {
             SVNEntry entry = (SVNEntry) entries.next();
-            SVNEntry newEntry = new SVNEntry16(new SVNHashMap(entry.asMap()), this, entry.getName());
+            SVNEntry newEntry = new SVNEntry16(createEntryHashMap(entry.asMap()), this, entry.getName());
             myEntries.put(entry.getName(), newEntry);
 
             if (entry.getKind() != SVNNodeKind.FILE && !adminArea.getThisDirName().equals(entry.getName())) {
@@ -1728,5 +1730,16 @@ public abstract class SVNAdminArea {
                 "     actual: {1}",
                 new Object[] { new Integer(getFormatVersion()), new Integer(format) });
         SVNErrorManager.error(err, SVNLogType.WC);
+    }
+    
+    protected SVNHashMap createEntryHashMap(Map map) {
+        if (getObjectsPool() != null) {
+            return new SVNEntryHashMap(map, getObjectsPool());
+        }
+        return new SVNHashMap(map);
+    }
+    
+    public SVNObjectsPool getObjectsPool() {
+        return myWCAccess != null ? myWCAccess.getObjectsPool() : null;
     }
 }

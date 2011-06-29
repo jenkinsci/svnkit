@@ -37,6 +37,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNEntryHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -414,7 +415,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
             while ((line = reader.readLine()) != null) {
                 line = line.trim();
                 if (line.equals("<entry")) {
-                    entry = new SVNHashMap();
+                    entry = createEntryHashMap(null);
                     continue;
                 }
                 if (entry != null) {
