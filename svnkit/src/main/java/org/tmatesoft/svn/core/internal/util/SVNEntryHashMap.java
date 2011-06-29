@@ -51,7 +51,7 @@ public class SVNEntryHashMap extends SVNHashMap {
 
     @Override
     protected TableEntry createTableEntry(Object key, Object value, int hash) {
-        return new PooledTableEntry(key, value, hash);
+        return new PooledTableEntry(myObjectsPool, key, value, hash);
     }
     
     private Object getObjectFromPool(Object value) {
@@ -61,47 +61,21 @@ public class SVNEntryHashMap extends SVNHashMap {
         return value;
     }
     
-    
-    private Object getPoolValue(Object key, Object value) {
-        if (myObjectsPool != null) {
-            if (value instanceof String) {
-                if (isURLKey(key)) {
-                    return new StringAsArray((String) value, myObjectsPool);
-                } else if (!isNonPoolableKey(key)) {
-                    return myObjectsPool.getObject(value);
-                }
-                return value;
-            } else if (value instanceof String[]) {
-                String[] array = (String[]) value;
-                for (int i = 0; i < array.length; i++) {
-                    array[i] = (String) myObjectsPool.getObject(array[i]);
-                }
-            } else if (value instanceof SVNRevision) {
-                return myObjectsPool.getObject(value);
-            }
-        }
-        return value;
-    }
-    
     private static boolean isNonPoolableKey(Object key) {            
         return ourNonPoolableKeys.contains(key); 
     }
     
-    private boolean isURLKey(Object key) {            
+    private static boolean isURLKey(Object key) {            
         return ourURLKeys.contains(key); 
     }
-
-    private Object getRealValue(Object value) {
-        if (value instanceof StringAsArray) {
-            return ((StringAsArray) value).toString();
-        }
-        return value;
-    }
     
-    protected class PooledTableEntry extends SVNHashMap.TableEntry {
+    protected static class PooledTableEntry extends SVNHashMap.TableEntry {
         
-        public PooledTableEntry(Object key, Object value, int hash) {
-            super(key, value, hash);
+        private SVNObjectsPool myObjectsPool;
+        
+        public PooledTableEntry(SVNObjectsPool pool, Object key, Object value, int hash) {
+            myObjectsPool = pool;
+            init(key, value, hash);
         }
         
         public Object setValue(Object value) {
@@ -111,6 +85,34 @@ public class SVNEntryHashMap extends SVNHashMap {
 
         public Object getValue() {
             return getRealValue(super.getValue());
+        }
+
+        private Object getRealValue(Object value) {
+            if (value instanceof StringAsArray) {
+                return ((StringAsArray) value).toString();
+            }
+            return value;
+        }
+        
+        private Object getPoolValue(Object key, Object value) {
+            if (myObjectsPool != null) {
+                if (value instanceof String) {
+                    if (isURLKey(key)) {
+                        return new StringAsArray((String) value, myObjectsPool);
+                    } else if (!isNonPoolableKey(key)) {
+                        return myObjectsPool.getObject(value);
+                    }
+                    return value;
+                } else if (value instanceof String[]) {
+                    String[] array = (String[]) value;
+                    for (int i = 0; i < array.length; i++) {
+                        array[i] = (String) myObjectsPool.getObject(array[i]);
+                    }
+                } else if (value instanceof SVNRevision) {
+                    return myObjectsPool.getObject(value);
+                }
+            }
+            return value;
         }
     }
     

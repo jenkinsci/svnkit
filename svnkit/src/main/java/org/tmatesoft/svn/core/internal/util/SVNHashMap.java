@@ -544,8 +544,15 @@ public class SVNHashMap implements Map, Cloneable, Serializable {
         private Object key;
         private Object value;
         private int hash;
+
+        protected TableEntry() {            
+        }
         
         public TableEntry(Object key, Object value, int hash) {
+            init(key, value, hash);
+        }
+
+        protected void init(Object key, Object value, int hash) {
             this.key = key;
             setValue(value);
             this.hash = hash;
