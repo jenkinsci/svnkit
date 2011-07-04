@@ -863,52 +863,19 @@ public abstract class SVNAdminArea {
             if (entry == null) {
                 entry = addEntry(name);
             }
-
-            Map entryAttrs = entry.asMap();
             for (Iterator atts = attributes.keySet().iterator(); atts.hasNext();) {
                 String attName = (String) atts.next();
                 if (!isEntryPropertyApplicable(attName)) {
                     atts.remove();
                     continue;
                 }
-
-                Object value = attributes.get(attName);
-                if (value instanceof String) {
-                    String strValue = (String) value;
-                    if (SVNProperty.CACHABLE_PROPS.equals(attName) || SVNProperty.PRESENT_PROPS.equals(attName)) {
-                        String[] propsArray = SVNAdminArea.fromString(strValue, " ");
-                        entryAttrs.put(attName, propsArray);
-                        continue;
-                    }
-                }
-
-                if (value != null) {
-                    entryAttrs.put(attName, value);
-                } else {
-                    entryAttrs.remove(attName);
-                }
             }
+            ((SVNEntry16) entry).applyChanges(attributes);
 
             if (!entry.isDirectory()) {
                 SVNEntry rootEntry = getEntry(getThisDirName(), true);
                 if (rootEntry != null) {
-                    if (!SVNRevision.isValidRevisionNumber(entry.getRevision())) {
-                        entry.setRevision(rootEntry.getRevision());
-                    }
-                    if (entry.getURL() == null) {
-                        entry.setURL(SVNPathUtil.append(rootEntry.getURL(), SVNEncodingUtil.uriEncode(name)));
-                    }
-                    if (entry.getRepositoryRoot() == null) {
-                        entry.setRepositoryRoot(rootEntry.getRepositoryRoot());
-                    }
-                    if (entry.getUUID() == null && !entry.isScheduledForAddition() && !entry.isScheduledForReplacement()) {
-                        entry.setUUID(rootEntry.getUUID());
-                    }
-                    if (isEntryPropertyApplicable(SVNProperty.CACHABLE_PROPS)) {
-                        if (entry.getCachableProperties() == null) {
-                            entry.setCachableProperties(rootEntry.getCachableProperties());
-                        }
-                    }
+                    ((SVNEntry16) entry).setParentEntry((SVNEntry16) rootEntry);
                 }
             }
 
@@ -1118,9 +1085,9 @@ public abstract class SVNAdminArea {
 
     protected abstract Map fetchEntries() throws SVNException;
 
-    protected abstract boolean readExtraOptions(BufferedReader reader, Map entryAttrs) throws SVNException, IOException;
+    protected abstract boolean readExtraOptions(BufferedReader reader, SVNEntry entry) throws SVNException, IOException;
 
-    protected abstract int writeExtraOptions(Writer writer, String entryName, Map entryAttrs, int emptyFields) throws SVNException, IOException;
+    protected abstract int writeExtraOptions(Writer writer, String entryName, SVNEntry entry, int emptyFields) throws SVNException, IOException;
 
     protected SVNAdminArea(File dir){
         myDirectory = dir;

@@ -130,8 +130,8 @@ public class SVNAdminArea16 extends SVNAdminArea15 {
         //does nothing since the working copy format v10
     }
 
-    protected boolean readExtraOptions(BufferedReader reader, Map entryAttrs) throws SVNException, IOException {
-        if (super.readExtraOptions(reader, entryAttrs)) {
+    protected boolean readExtraOptions(BufferedReader reader, SVNEntry entry) throws SVNException, IOException {
+        if (super.readExtraOptions(reader, entry)) {
             return true;
         }
         
@@ -141,7 +141,7 @@ public class SVNAdminArea16 extends SVNAdminArea15 {
         }
         String treeConflictData = parseString(line);
         if (treeConflictData != null) {
-            entryAttrs.put(SVNProperty.TREE_CONFLICT_DATA, treeConflictData);
+            entry.setTreeConflictData(treeConflictData);
         }
         
         line = reader.readLine();
@@ -149,23 +149,22 @@ public class SVNAdminArea16 extends SVNAdminArea15 {
             return true;
         }
         String fileExternalData = parseString(line);
-        if (fileExternalData != null) {
-            SVNAdminUtil.unserializeExternalFileData(entryAttrs, fileExternalData);
+        if (fileExternalData != null && entry instanceof SVNEntry16) {
+            SVNAdminUtil.unserializeExternalFileData((SVNEntry16) entry, fileExternalData);
         }
         
         return false;
     }
 
-    protected int writeExtraOptions(Writer writer, String entryName, Map entryAttrs, int emptyFields) throws SVNException, IOException {
-        emptyFields = super.writeExtraOptions(writer, entryName, entryAttrs, emptyFields);
-        String treeConflictData = (String) entryAttrs.get(SVNProperty.TREE_CONFLICT_DATA); 
+    protected int writeExtraOptions(Writer writer, String entryName, SVNEntry entry, int emptyFields) throws SVNException, IOException {
+        emptyFields = super.writeExtraOptions(writer, entryName, entry, emptyFields);
+        String treeConflictData = entry.getTreeConflictData(); 
         if (writeString(writer, treeConflictData, emptyFields)) {
             emptyFields = 0;
         } else {
             ++emptyFields;
         }
-        
-        String serializedFileExternalData = SVNAdminUtil.serializeExternalFileData(entryAttrs);
+        String serializedFileExternalData = SVNAdminUtil.serializeExternalFileData((SVNEntry16) entry);
         if (writeString(writer, serializedFileExternalData, emptyFields)) {
             emptyFields = 0;
         } else {

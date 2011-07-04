@@ -50,6 +50,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumInputStream;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumOutputStream;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry16;
 import org.tmatesoft.svn.core.internal.wc17.SVNStatus17.ConflictedInfo;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.CheckWCRootInfo;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.ISVNWCNodeHandler;
@@ -1252,11 +1253,11 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                     newChecksum, -1, (davProps != null && !davProps.isEmpty()) ? davProps : null, null, allWorkItems);
 
             if (kind != SVNNodeKind.NONE && serialised != null) {
-                Map map = new HashMap();
-                SVNAdminUtil.unserializeExternalFileData(map, serialised);
-                File fileExternalReposRelpath = SVNFileUtil.createFilePath((String) map.get(SVNProperty.FILE_EXTERNAL_PATH));
-                SVNRevision fileExternalPegRev = (SVNRevision) map.get(SVNProperty.FILE_EXTERNAL_PEG_REVISION);
-                SVNRevision fileExternalRev = (SVNRevision) map.get(SVNProperty.FILE_EXTERNAL_REVISION);
+                SVNEntry16 e = new SVNEntry16(null, null, null);
+                SVNAdminUtil.unserializeExternalFileData(e, serialised);
+                File fileExternalReposRelpath = SVNFileUtil.createFilePath(e.getExternalFilePath());
+                SVNRevision fileExternalPegRev = e.getExternalFilePegRevision();
+                SVNRevision fileExternalRev = e.getExternalFileRevision();
                 myWcContext.getDb().opSetFileExternal(fb.getLocalAbspath(), fileExternalReposRelpath, fileExternalPegRev, fileExternalRev);
             }
         }

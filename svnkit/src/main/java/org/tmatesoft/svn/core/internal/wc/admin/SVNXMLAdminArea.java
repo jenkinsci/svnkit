@@ -1154,11 +1154,11 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         return propName != null && !INAPPLICABLE_PROPERTIES.contains(propName);
     }
 
-    protected boolean readExtraOptions(BufferedReader reader, Map entryAttrs) throws SVNException, IOException {
+    protected boolean readExtraOptions(BufferedReader reader, SVNEntry entryAttrs) throws SVNException, IOException {
         return false;
     }
 
-    protected int writeExtraOptions(Writer writer, String entryName, Map entryAttrs, int emptyFields) throws SVNException, IOException {
+    protected int writeExtraOptions(Writer writer, String entryName, SVNEntry Attrs, int emptyFields) throws SVNException, IOException {
         return emptyFields;
     }
 

@@ -16,15 +16,14 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.util.Map;
 import java.util.logging.Level;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry16;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -263,7 +262,7 @@ public class SVNAdminUtil {
         return formatVersion;
     }
 
-    public static void unserializeExternalFileData(Map entryAttrs, String rawExternalFileData) throws SVNException {
+    public static void unserializeExternalFileData(SVNEntry16 entry, String rawExternalFileData) throws SVNException {
         SVNRevision pegRevision = SVNRevision.UNDEFINED;
         SVNRevision revision = SVNRevision.UNDEFINED;
         String path = null;
@@ -273,9 +272,9 @@ public class SVNAdminUtil {
             revision = parseRevision(buffer);
             path = buffer.toString();
         }
-        entryAttrs.put(SVNProperty.FILE_EXTERNAL_PATH, path);
-        entryAttrs.put(SVNProperty.FILE_EXTERNAL_REVISION, revision);
-        entryAttrs.put(SVNProperty.FILE_EXTERNAL_PEG_REVISION, pegRevision);
+        entry.setExternalFilePath(path);
+        entry.setExternalFileRevision(revision);
+        entry.setExternalFilePegRevision(pegRevision);
     }
 
     public static SVNRevision parseRevision(StringBuffer str) throws SVNException {
@@ -297,11 +296,11 @@ public class SVNAdminUtil {
         return revision;
     }
 
-    public static String serializeExternalFileData(Map entryAttrs) throws SVNException {
+    public static String serializeExternalFileData(SVNEntry16 entry) throws SVNException {
         String representation = null;
-        String path = (String) entryAttrs.get(SVNProperty.FILE_EXTERNAL_PATH);
-        SVNRevision revision = (SVNRevision) entryAttrs.get(SVNProperty.FILE_EXTERNAL_REVISION);
-        SVNRevision pegRevision = (SVNRevision) entryAttrs.get(SVNProperty.FILE_EXTERNAL_PEG_REVISION);
+        String path = entry.getExternalFilePath();
+        SVNRevision revision = entry.getExternalFileRevision();
+        SVNRevision pegRevision = entry.getExternalFilePegRevision();
         if (path != null) {
             String revStr = SVNAdminUtil.asString(revision, path);
             String pegRevStr = SVNAdminUtil.asString(pegRevision, path);

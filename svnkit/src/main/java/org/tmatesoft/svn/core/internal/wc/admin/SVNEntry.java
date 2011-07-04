@@ -165,8 +165,6 @@ public abstract class SVNEntry {
 
     public abstract boolean setRepositoryRootURL(SVNURL url);
 
-    public abstract void loadProperties(Map entryProps);
-
     public abstract String getLockOwner();
 
     public abstract String getLockComment();
