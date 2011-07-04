@@ -30,9 +30,9 @@ public interface ISVNConnectorFactory {
         public ISVNConnector createConnector(SVNRepository repository) throws SVNException {
             SVNURL location = repository.getLocation();
             if ("svn+ssh".equals(location.getProtocol())) {
-                return new SVNSSHConnector();
-            } else if ("svn+ssh2".equals(location.getProtocol())) {
                 return new SVNSSHConnector2();
+            } else if ("svn+ssh2".equals(location.getProtocol())) {
+                return new SVNSSHConnector();
             } else if (location.getProtocol().startsWith("svn+")) {
                 String name = location.getProtocol().substring("svn+".length());
                 if (repository.getTunnelProvider() != null) {
