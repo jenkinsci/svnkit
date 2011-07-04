@@ -766,8 +766,6 @@ public class SVNAdminArea14 extends SVNAdminArea {
         String name = parseString(line);
         name = name != null ? name : getThisDirName();
 
-//        Map entryAttrs = createEntryHashMap(null);
-//        entryAttrs.put(SVNProperty.NAME, name);
         name = (String) getObjectsPool().getObject(name);
         SVNEntry entry = new SVNEntry16(null, this, name);
         entry.setDepth(SVNDepth.INFINITY);

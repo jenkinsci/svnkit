@@ -131,9 +131,6 @@ public class SVNEntry16 extends SVNEntry {
     }
 
     public long getRevision() {
-        if (revision < 0 && myParentEntry != null) {
-            return myParentEntry.getRevision();
-        }
         return revision;
     }
 
@@ -612,7 +609,7 @@ public class SVNEntry16 extends SVNEntry {
         } else if (SVNProperty.LOCK_TOKEN.equals(name)) {
             setLockToken((String) value);
         } else if (SVNProperty.NAME.equals(name)) {
-            name = (String) value;
+            this.myName = (String) value;
         } else if (SVNProperty.PRESENT_PROPS.equals(name)) {
             if (value instanceof String) {
                 value = SVNAdminArea.fromString((String) value, " ");
@@ -644,14 +641,7 @@ public class SVNEntry16 extends SVNEntry {
     private static long fromString(Object longValue) {
         long size = -1;
         if (longValue instanceof String) {
-            try {
-                size = Long.parseLong((String) longValue);
-            } catch (NumberFormatException nfe) {
-                size = -1;
-            }
-            if (size < 0) {
-                size = -1;
-            }
+            return SVNProperty.longValue((String) longValue);
         }
         return size;
 
@@ -682,10 +672,10 @@ public class SVNEntry16 extends SVNEntry {
             map.put(SVNProperty.CONFLICT_NEW, getConflictNew());
         }
         if (getConflictOld() != null) {
-            map.put(SVNProperty.CONFLICT_OLD, getConflictNew());
+            map.put(SVNProperty.CONFLICT_OLD, getConflictOld());
         }
         if (getConflictWorking() != null) {
-            map.put(SVNProperty.CONFLICT_WRK, getConflictNew());
+            map.put(SVNProperty.CONFLICT_WRK, getConflictWorking());
         }
         if (isCopied()) {
             map.put(SVNProperty.COPIED, Boolean.TRUE.toString());
