@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.wc.admin;
 
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -36,7 +37,6 @@ public class SVNEntry16 extends SVNEntry {
 
     private SVNAdminArea myAdminArea;
     private String myName;    
-    private SVNEntry16 myParentEntry;
     
     private String author;
     private String[] cachableProperties;
@@ -76,6 +76,7 @@ public class SVNEntry16 extends SVNEntry {
     private boolean keepLocal;
     private boolean hasProperties;
     private boolean hasPropertiesModifications;
+    private String parentURL;
 
     public SVNEntry16(Map attributes, SVNAdminArea adminArea, String name) {
         myName = name;
@@ -92,10 +93,6 @@ public class SVNEntry16 extends SVNEntry {
             applyChanges(attributes);
         }
     }
-    
-    public void setParentEntry(SVNEntry16 parentEntry) {
-        myParentEntry = parentEntry;
-    }
 
     public boolean isThisDir() {
         if (myAdminArea != null) {
@@ -105,11 +102,8 @@ public class SVNEntry16 extends SVNEntry {
     }
 
     public String getURL() {
-        if (url == null && myParentEntry != null) {
-            url = myParentEntry.getURL();
-            if (url != null) {
-                url = SVNPathUtil.append(url, SVNEncodingUtil.uriEncode(myName));
-            }
+        if (url == null && parentURL != null) {
+            return SVNPathUtil.append(parentURL, SVNEncodingUtil.uriEncode(myName));
         }
         return url;
     }
@@ -400,16 +394,10 @@ public class SVNEntry16 extends SVNEntry {
     }
 
     public String getUUID() {
-        if (this.uuid == null && myParentEntry != null) {
-            return myParentEntry.getUUID();
-        }
         return this.uuid;
     }
 
     public String getRepositoryRoot() {
-        if (this.repositoryRoot == null && myParentEntry != null) {
-            return myParentEntry.getRepositoryRoot();
-        }
         return this.repositoryRoot;
     }
 
@@ -464,9 +452,6 @@ public class SVNEntry16 extends SVNEntry {
     }
 
     public String[] getCachableProperties() {
-        if (cachableProperties == null && myParentEntry != null) {
-            return myParentEntry.getCachableProperties();
-        }
         return cachableProperties;
     }
 
@@ -531,8 +516,15 @@ public class SVNEntry16 extends SVNEntry {
     public boolean hasProperties() {
         return hasProperties;
     }
-    
+
+    public void setParentURL(String url) {
+        parentURL = url;
+    }
+   
     public void applyChanges(Map attributes) {
+        if (attributes == null || attributes.isEmpty()) {
+            return;
+        }
         for(Iterator<?> names = attributes.keySet().iterator(); names.hasNext();) {
             String name = (String) names.next();
             setAttribute(name, attributes.get(name));
@@ -545,6 +537,9 @@ public class SVNEntry16 extends SVNEntry {
         } else if (SVNProperty.CACHABLE_PROPS.equals(name)) {
             if (value instanceof String) {
               value = SVNAdminArea.fromString((String) value, " ");
+            }
+            if (Arrays.equals((String[]) value, SVNAdminArea14.getCachableProperties())) {
+                value = SVNAdminArea14.getCachableProperties();
             }
             setCachableProperties((String[]) value);
         } else if (SVNProperty.CHANGELIST.equals(name)) {
@@ -632,7 +627,7 @@ public class SVNEntry16 extends SVNEntry {
         } else if (SVNProperty.URL.equals(name)) {
             setURL((String) value);
         } else if (SVNProperty.UUID.equals(name)) {
-            setUUID((String) uuid);
+            setUUID((String) value);
         } else if (SVNProperty.WORKING_SIZE.equals(name)) {            
             setWorkingSize(fromString(value));
         }

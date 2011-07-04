@@ -19,6 +19,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
@@ -38,7 +39,6 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.io.fs.FSFile;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
-import org.tmatesoft.svn.core.internal.util.SVNEntryHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNHashSet;
@@ -728,29 +728,23 @@ public class SVNAdminArea14 extends SVNAdminArea {
 
             SVNNodeKind kind = entry.getKind();
             if (kind == SVNNodeKind.FILE) {
-                ((SVNEntry16) entry).setParentEntry((SVNEntry16) defaultEntry);
-/*                
-                Map entryAttributes = entry.asMap();
-                if (entryAttributes.get(SVNProperty.REVISION) == null || Long.parseLong((String) entryAttributes.get(SVNProperty.REVISION), 10) < 0) {
-                    entryAttributes.put(SVNProperty.REVISION, defaultEntryAttrs.get(SVNProperty.REVISION));
+                if (entry.getRevision() < 0) {
+                    entry.setRevision(defaultEntry.getRevision());
                 }
-                if (entryAttributes.get(SVNProperty.URL) == null) {
-                    String rootURL = (String)defaultEntryAttrs.get(SVNProperty.URL);
-                    String url = SVNPathUtil.append(rootURL, SVNEncodingUtil.uriEncode(name));
-                    entryAttributes.put(SVNProperty.URL, url);
+                if (entry.getURL() == null) {
+                    ((SVNEntry16) entry).setParentURL(defaultEntry.getURL());
                 }
-                if (entryAttributes.get(SVNProperty.REPOS) == null) {
-                    entryAttributes.put(SVNProperty.REPOS, defaultEntryAttrs.get(SVNProperty.REPOS));
+                if (entry.getRepositoryRoot() == null) {
+                    entry.setRepositoryRoot(defaultEntry.getRepositoryRoot());
                 }
-                if (entryAttributes.get(SVNProperty.UUID) == null) {
-                    String schedule = (String)entryAttributes.get(SVNProperty.SCHEDULE);
-                    if (!(SVNProperty.SCHEDULE_ADD.equals(schedule) || SVNProperty.SCHEDULE_REPLACE.equals(schedule))) {
-                        entryAttributes.put(SVNProperty.UUID, defaultEntryAttrs.get(SVNProperty.UUID));
+                if (entry.getUUID() == null) {
+                    if (!(entry.isScheduledForAddition() || entry.isScheduledForReplacement())) {
+                        entry.setUUID(defaultEntry.getUUID());
                     }
                 }
-                if (entryAttributes.get(SVNProperty.CACHABLE_PROPS) == null) {
-                    entryAttributes.put(SVNProperty.CACHABLE_PROPS, defaultEntryAttrs.get(SVNProperty.CACHABLE_PROPS));
-                }*/
+                if (entry.getCachableProperties() == null) {
+                    entry.setCachableProperties(defaultEntry.getCachableProperties());
+                }
             }
         }
         
@@ -816,6 +810,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "Entry for ''{0}'' has invalid repository root", name);
             SVNErrorManager.error(err, SVNLogType.WC);
         } else if (reposRoot != null) {
+            reposRoot = (String) getObjectsPool().getObject(reposRoot);
             entry.setRepositoryRoot(reposRoot);
         }
 
@@ -909,6 +904,9 @@ public class SVNAdminArea14 extends SVNAdminArea {
         String cachablePropsStr = parseValue(line);
         if (cachablePropsStr != null) {
             String[] cachableProps = fromString(cachablePropsStr, " ");
+            if (Arrays.equals(cachableProps, getCachableProperties())) {
+                cachableProps = getCachableProperties();
+            }
             entry.setCachableProperties(cachableProps);
         }
 
@@ -1173,7 +1171,23 @@ public class SVNAdminArea14 extends SVNAdminArea {
 
             SVNNodeKind kind = entry.getKind();
             if (kind == SVNNodeKind.FILE) {
-                ((SVNEntry16) entry).setParentEntry((SVNEntry16) rootEntry);
+                if (entry.getRevision() < 0) {
+                    entry.setRevision(rootEntry.getRevision());
+                }
+                if (entry.getURL() == null) {
+                    ((SVNEntry16) entry).setParentURL(rootEntry.getURL());
+                }
+                if (entry.getRepositoryRoot() == null) {
+                    entry.setRepositoryRoot(rootEntry.getRepositoryRoot());
+                }
+                if (entry.getUUID() == null) {
+                    if (!(entry.isScheduledForAddition() || entry.isScheduledForReplacement())) {
+                        entry.setUUID(rootEntry.getUUID());
+                    }
+                }
+                if (entry.getCachableProperties() == null) {
+                    entry.setCachableProperties(rootEntry.getCachableProperties());
+                }
             }
             writeEntry(writer, name, entry, rootEntry);
         }

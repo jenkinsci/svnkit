@@ -875,7 +875,23 @@ public abstract class SVNAdminArea {
             if (!entry.isDirectory()) {
                 SVNEntry rootEntry = getEntry(getThisDirName(), true);
                 if (rootEntry != null) {
-                    ((SVNEntry16) entry).setParentEntry((SVNEntry16) rootEntry);
+                    if (!SVNRevision.isValidRevisionNumber(entry.getRevision())) {
+                        entry.setRevision(rootEntry.getRevision());
+                    }
+                    if (entry.getURL() == null) {
+                        ((SVNEntry16) entry).setParentURL(rootEntry.getURL());
+                    }
+                    if (entry.getRepositoryRoot() == null) {
+                        entry.setRepositoryRoot(rootEntry.getRepositoryRoot());
+                    }
+                    if (entry.getUUID() == null && !entry.isScheduledForAddition() && !entry.isScheduledForReplacement()) {
+                        entry.setUUID(rootEntry.getUUID());
+                    }
+                    if (isEntryPropertyApplicable(SVNProperty.CACHABLE_PROPS)) {
+                        if (entry.getCachableProperties() == null) {
+                            entry.setCachableProperties(rootEntry.getCachableProperties());
+                        }
+                    }
                 }
             }
 
