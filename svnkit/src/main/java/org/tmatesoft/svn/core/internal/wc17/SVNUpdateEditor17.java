@@ -14,11 +14,8 @@ package org.tmatesoft.svn.core.internal.wc17;
 import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -33,7 +30,6 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryUtil;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
@@ -50,6 +46,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumInputStream;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumOutputStream;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry16;
 import org.tmatesoft.svn.core.internal.wc17.SVNStatus17.ConflictedInfo;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.CheckWCRootInfo;
@@ -1253,7 +1250,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                     newChecksum, -1, (davProps != null && !davProps.isEmpty()) ? davProps : null, null, allWorkItems);
 
             if (kind != SVNNodeKind.NONE && serialised != null) {
-                SVNEntry16 e = new SVNEntry16(null, null, null);
+                SVNEntry e = new SVNEntry16(null, null, null);
                 SVNAdminUtil.unserializeExternalFileData(e, serialised);
                 File fileExternalReposRelpath = SVNFileUtil.createFilePath(e.getExternalFilePath());
                 SVNRevision fileExternalPegRev = e.getExternalFilePegRevision();

@@ -23,7 +23,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry16;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -262,7 +262,7 @@ public class SVNAdminUtil {
         return formatVersion;
     }
 
-    public static void unserializeExternalFileData(SVNEntry16 entry, String rawExternalFileData) throws SVNException {
+    public static void unserializeExternalFileData(SVNEntry entry, String rawExternalFileData) throws SVNException {
         SVNRevision pegRevision = SVNRevision.UNDEFINED;
         SVNRevision revision = SVNRevision.UNDEFINED;
         String path = null;
@@ -296,7 +296,7 @@ public class SVNAdminUtil {
         return revision;
     }
 
-    public static String serializeExternalFileData(SVNEntry16 entry) throws SVNException {
+    public static String serializeExternalFileData(SVNEntry entry) throws SVNException {
         String representation = null;
         String path = entry.getExternalFilePath();
         SVNRevision revision = entry.getExternalFileRevision();

@@ -870,7 +870,7 @@ public abstract class SVNAdminArea {
                     continue;
                 }
             }
-            ((SVNEntry16) entry).applyChanges(attributes);
+            entry.applyChanges(attributes);
 
             if (!entry.isDirectory()) {
                 SVNEntry rootEntry = getEntry(getThisDirName(), true);
@@ -879,7 +879,7 @@ public abstract class SVNAdminArea {
                         entry.setRevision(rootEntry.getRevision());
                     }
                     if (entry.getURL() == null) {
-                        ((SVNEntry16) entry).setParentURL(rootEntry.getURL());
+                        entry.setParentURL(rootEntry.getURL());
                     }
                     if (entry.getRepositoryRoot() == null) {
                         entry.setRepositoryRoot(rootEntry.getRepositoryRoot());

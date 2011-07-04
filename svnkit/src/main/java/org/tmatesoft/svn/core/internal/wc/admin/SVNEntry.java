@@ -196,9 +196,23 @@ public abstract class SVNEntry {
     public abstract void setTreeConflictData(String conflictData);
 
     public abstract void setTreeConflicts(Map treeConflicts) throws SVNException;
+    
+    public abstract void setExternalFilePath(String path);
+
+    public abstract void setExternalFileRevision(SVNRevision rev);
+
+    public abstract void setExternalFilePegRevision(SVNRevision pegRev);
 
     public abstract Map asMap();
 
     public abstract SVNAdminArea getAdminArea();
+
+    public abstract void setParentURL(String url);
+
+    public abstract boolean hasPropertiesModifications();
+
+    public abstract boolean hasProperties();
+
+    public abstract void applyChanges(Map attributes);
 
 }

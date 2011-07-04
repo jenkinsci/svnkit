@@ -149,8 +149,8 @@ public class SVNAdminArea16 extends SVNAdminArea15 {
             return true;
         }
         String fileExternalData = parseString(line);
-        if (fileExternalData != null && entry instanceof SVNEntry16) {
-            SVNAdminUtil.unserializeExternalFileData((SVNEntry16) entry, fileExternalData);
+        if (fileExternalData != null) {
+            SVNAdminUtil.unserializeExternalFileData(entry, fileExternalData);
         }
         
         return false;
@@ -164,7 +164,7 @@ public class SVNAdminArea16 extends SVNAdminArea15 {
         } else {
             ++emptyFields;
         }
-        String serializedFileExternalData = SVNAdminUtil.serializeExternalFileData((SVNEntry16) entry);
+        String serializedFileExternalData = SVNAdminUtil.serializeExternalFileData(entry);
         if (writeString(writer, serializedFileExternalData, emptyFields)) {
             emptyFields = 0;
         } else {

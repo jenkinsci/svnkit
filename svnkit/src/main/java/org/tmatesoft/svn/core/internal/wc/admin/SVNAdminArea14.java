@@ -732,7 +732,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
                     entry.setRevision(defaultEntry.getRevision());
                 }
                 if (entry.getURL() == null) {
-                    ((SVNEntry16) entry).setParentURL(defaultEntry.getURL());
+                    entry.setParentURL(defaultEntry.getURL());
                 }
                 if (entry.getRepositoryRoot() == null) {
                     entry.setRepositoryRoot(defaultEntry.getRepositoryRoot());
@@ -1175,7 +1175,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
                     entry.setRevision(rootEntry.getRevision());
                 }
                 if (entry.getURL() == null) {
-                    ((SVNEntry16) entry).setParentURL(rootEntry.getURL());
+                    entry.setParentURL(rootEntry.getURL());
                 }
                 if (entry.getRepositoryRoot() == null) {
                     entry.setRepositoryRoot(rootEntry.getRepositoryRoot());
@@ -1301,7 +1301,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
             ++emptyFields;
         }
 
-        boolean hasProps = entry instanceof SVNEntry16 && ((SVNEntry16) entry).hasProperties();
+        boolean hasProps = entry.hasProperties();
         if (hasProps) {
             writeValue(writer, ATTRIBUTE_HAS_PROPS, emptyFields);
             emptyFields = 0;
@@ -1309,7 +1309,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
             ++emptyFields;
         }
 
-        boolean hasPropsMods = entry instanceof SVNEntry16 && ((SVNEntry16) entry).hasPropertiesModifications();
+        boolean hasPropsMods = entry.hasPropertiesModifications();
         if (hasPropsMods) {
             writeValue(writer, ATTRIBUTE_HAS_PROP_MODS, emptyFields);
             emptyFields = 0;
@@ -1522,16 +1522,16 @@ public class SVNAdminArea14 extends SVNAdminArea {
 
     public boolean hasPropModifications(String name) throws SVNException {
         SVNEntry entry = getEntry(name, true);
-        if (entry instanceof SVNEntry16) {
-            return ((SVNEntry16) entry).hasPropertiesModifications();
+        if (entry != null) {
+            return entry.hasPropertiesModifications();
         }
         return false;
     }
 
     public boolean hasProperties(String name) throws SVNException {
         SVNEntry entry = getEntry(name, true);
-        if (entry instanceof SVNEntry16) {
-            return ((SVNEntry16) entry).hasProperties();
+        if (entry != null) {
+            return entry.hasProperties();
         }
         return false;
     }

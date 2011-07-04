@@ -535,4 +535,22 @@ public class SVNEntry17 extends SVNEntry {
         externalFileRevision = revision;
     }
 
+    @Override
+    public void setParentURL(String url) {
+    }
+
+    @Override
+    public boolean hasPropertiesModifications() {
+        return false;
+    }
+
+    @Override
+    public boolean hasProperties() {
+        return false;
+    }
+
+    @Override
+    public void applyChanges(Map attributes) {
+    }
+
 }
