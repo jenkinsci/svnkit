@@ -86,6 +86,8 @@ public class SVNEntry16 extends SVNEntry {
         revision = SVNRepository.INVALID_REVISION;
         copyFromRevision = SVNRepository.INVALID_REVISION;
         
+        depth = SVNDepth.INFINITY;
+        
         if (attributes != null) {
             applyChanges(attributes);
         }
@@ -218,6 +220,9 @@ public class SVNEntry16 extends SVNEntry {
     }
 
     public void setDepth(SVNDepth depth) {
+        if (depth == null) {
+            depth = SVNDepth.INFINITY;
+        }
         this.depth = depth;
     }
 
@@ -568,9 +573,12 @@ public class SVNEntry16 extends SVNEntry {
         } else if (SVNProperty.DELETED.equals(name)) {
             setDeleted(SVNProperty.booleanValue((String) value));
         } else if (SVNProperty.DEPTH.equals(name)) {
-            SVNDepth depth = SVNDepth.INFINITY;
+            SVNDepth depth = null;
             if (value instanceof String) {
                 depth = SVNDepth.fromString((String) value);
+            }
+            if (depth == null) {
+                depth = SVNDepth.INFINITY;
             }
             setDepth(depth);
         } else if (SVNProperty.FILE_EXTERNAL_PATH.equals(name)) {
