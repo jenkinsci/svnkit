@@ -129,8 +129,8 @@ public class SVNAdminArea16 extends SVNAdminArea15 {
         //does nothing since the working copy format v10
     }
 
-    protected boolean readExtraOptions(BufferedReader reader, Map entryAttrs) throws SVNException, IOException {
-        if (super.readExtraOptions(reader, entryAttrs)) {
+    protected boolean readExtraOptions(BufferedReader reader, SVNEntry entry) throws SVNException, IOException {
+        if (super.readExtraOptions(reader, entry)) {
             return true;
         }
         
@@ -140,7 +140,7 @@ public class SVNAdminArea16 extends SVNAdminArea15 {
         }
         String treeConflictData = parseString(line);
         if (treeConflictData != null) {
-            entryAttrs.put(SVNProperty.TREE_CONFLICT_DATA, treeConflictData);
+            entry.setTreeConflictData(treeConflictData);
         }
         
         line = reader.readLine();
@@ -149,22 +149,21 @@ public class SVNAdminArea16 extends SVNAdminArea15 {
         }
         String fileExternalData = parseString(line);
         if (fileExternalData != null) {
-            unserializeExternalFileData(entryAttrs, fileExternalData);
+            unserializeExternalFileData(entry, fileExternalData);
         }
         
         return false;
     }
 
-    protected int writeExtraOptions(Writer writer, String entryName, Map entryAttrs, int emptyFields) throws SVNException, IOException {
-        emptyFields = super.writeExtraOptions(writer, entryName, entryAttrs, emptyFields);
-        String treeConflictData = (String) entryAttrs.get(SVNProperty.TREE_CONFLICT_DATA); 
+    protected int writeExtraOptions(Writer writer, String entryName, SVNEntry entry, int emptyFields) throws SVNException, IOException {
+        emptyFields = super.writeExtraOptions(writer, entryName, entry, emptyFields);
+        String treeConflictData = entry.getTreeConflictData(); 
         if (writeString(writer, treeConflictData, emptyFields)) {
             emptyFields = 0;
         } else {
             ++emptyFields;
         }
-        
-        String serializedFileExternalData = serializeExternalFileData(entryAttrs);
+        String serializedFileExternalData = serializeExternalFileData(entry);
         if (writeString(writer, serializedFileExternalData, emptyFields)) {
             emptyFields = 0;
         } else {
@@ -173,11 +172,11 @@ public class SVNAdminArea16 extends SVNAdminArea15 {
         return emptyFields;
     }
 
-    private String serializeExternalFileData(Map entryAttrs) throws SVNException {
+    private String serializeExternalFileData(SVNEntry entry) throws SVNException {
         String representation = null;
-        String path = (String) entryAttrs.get(SVNProperty.FILE_EXTERNAL_PATH);
-        SVNRevision revision = (SVNRevision) entryAttrs.get(SVNProperty.FILE_EXTERNAL_REVISION);
-        SVNRevision pegRevision = (SVNRevision) entryAttrs.get(SVNProperty.FILE_EXTERNAL_PEG_REVISION);
+        String path = entry.getExternalFilePath();
+        SVNRevision revision = entry.getExternalFileRevision();
+        SVNRevision pegRevision = entry.getExternalFilePegRevision();
         if (path != null) {
             String revStr = asString(revision, path);
             String pegRevStr = asString(pegRevision, path);
@@ -199,7 +198,7 @@ public class SVNAdminArea16 extends SVNAdminArea15 {
         return null;
     }
     
-    private void unserializeExternalFileData(Map entryAttrs, String rawExternalFileData) throws SVNException {
+    private void unserializeExternalFileData(SVNEntry entry, String rawExternalFileData) throws SVNException {
         SVNRevision pegRevision = SVNRevision.UNDEFINED;
         SVNRevision revision = SVNRevision.UNDEFINED;
         String path = null;
@@ -209,9 +208,9 @@ public class SVNAdminArea16 extends SVNAdminArea15 {
             revision = parseRevision(buffer);
             path = buffer.toString();
         }
-        entryAttrs.put(SVNProperty.FILE_EXTERNAL_PATH, path);
-        entryAttrs.put(SVNProperty.FILE_EXTERNAL_REVISION, revision);
-        entryAttrs.put(SVNProperty.FILE_EXTERNAL_PEG_REVISION, pegRevision);
+        entry.setExternalFilePath(path);
+        entry.setExternalFilePegRevision(pegRevision);
+        entry.setExternalFileRevision(revision);
     }
     
     private SVNRevision parseRevision(StringBuffer str) throws SVNException {

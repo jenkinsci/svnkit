@@ -15,7 +15,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
-import java.util.Map;
 import java.util.Set;
 
 import org.tmatesoft.svn.core.SVNDepth;
@@ -51,14 +50,14 @@ public class SVNAdminArea15 extends SVNAdminArea14 {
         return WC_FORMAT;
     }
 
-    protected boolean readExtraOptions(BufferedReader reader, Map entryAttrs) throws SVNException, IOException {
+    protected boolean readExtraOptions(BufferedReader reader, SVNEntry entry) throws SVNException, IOException {
         String line = reader.readLine();
         if (isEntryFinished(line)) {
             return true;
         }
         String changelist = parseString(line);
         if (changelist != null) {
-            entryAttrs.put(SVNProperty.CHANGELIST, changelist);
+            entry.setChangelistName(changelist);
         }
 
         line = reader.readLine();
@@ -67,7 +66,7 @@ public class SVNAdminArea15 extends SVNAdminArea14 {
         }
         boolean keepLocal = parseBoolean(line, ATTRIBUTE_KEEP_LOCAL);
         if (keepLocal) {
-            entryAttrs.put(SVNProperty.KEEP_LOCAL, SVNProperty.toString(keepLocal));
+            entry.setKeepLocal(keepLocal);
         }
         
         line = reader.readLine();
@@ -76,7 +75,12 @@ public class SVNAdminArea15 extends SVNAdminArea14 {
         }
         String workingSize = parseString(line);
         if (workingSize != null) {
-            entryAttrs.put(SVNProperty.WORKING_SIZE, workingSize);
+            try {
+                long size = Long.parseLong(workingSize);
+                entry.setWorkingSize(size);
+            } catch (NumberFormatException nfe) {
+                entry.setWorkingSize(SVNProperty.WORKING_SIZE_UNKNOWN);
+            }
         }
         
         line = reader.readLine();
@@ -85,32 +89,34 @@ public class SVNAdminArea15 extends SVNAdminArea14 {
         }
         String depthStr = parseValue(line);
         if (depthStr == null) {
-            entryAttrs.put(SVNProperty.DEPTH, SVNDepth.INFINITY.getName());
+            entry.setDepth(SVNDepth.INFINITY);
         } else {
-            entryAttrs.put(SVNProperty.DEPTH, depthStr);
+            SVNDepth depth = SVNDepth.fromString(depthStr);            
+            entry.setDepth(depth);
         }
         return false;
     }
 
-    protected int writeExtraOptions(Writer writer, String entryName, Map entryAttrs, int emptyFields) throws SVNException, IOException {
-        emptyFields = super.writeExtraOptions(writer, entryName, entryAttrs, emptyFields);
+    protected int writeExtraOptions(Writer writer, String entryName, SVNEntry entry, int emptyFields) throws SVNException, IOException {
+        emptyFields = super.writeExtraOptions(writer, entryName, entry, emptyFields);
         
-        String changelist = (String) entryAttrs.get(SVNProperty.CHANGELIST); 
+        String changelist = entry.getChangelistName(); 
         if (writeString(writer, changelist, emptyFields)) {
             emptyFields = 0;
         } else {
             ++emptyFields;
         }
         
-        String keepLocalAttr = (String) entryAttrs.get(SVNProperty.KEEP_LOCAL);
-        if (SVNProperty.booleanValue(keepLocalAttr)) {
+        boolean keepLocalAttr = entry.isKeepLocal();
+        if (keepLocalAttr) {
             writeValue(writer, ATTRIBUTE_KEEP_LOCAL, emptyFields);
             emptyFields = 0;
         } else {
             ++emptyFields;
         }
 
-        String workingSize = (String) entryAttrs.get(SVNProperty.WORKING_SIZE);
+        long size = entry.getWorkingSize();
+        String workingSize = Long.toString(size);
         workingSize = "-1".equals(workingSize) ? null : workingSize;
         if (writeString(writer, workingSize, emptyFields)) {
             emptyFields = 0;
@@ -119,13 +125,12 @@ public class SVNAdminArea15 extends SVNAdminArea14 {
         }
         
         boolean isThisDir = getThisDirName().equals(entryName);
-        boolean isSubDir = !isThisDir && SVNProperty.KIND_DIR.equals(entryAttrs.get(SVNProperty.KIND)); 
-        String depthStr = (String) entryAttrs.get(SVNProperty.DEPTH);
-        SVNDepth depth = SVNDepth.fromString(depthStr);
+        boolean isSubDir = !isThisDir && entry.isDirectory(); 
+        SVNDepth depth = entry.getDepth();
         if ((isSubDir && depth != SVNDepth.EXCLUDE) || depth == SVNDepth.INFINITY) {
             emptyFields++;
         } else {
-            if (writeValue(writer, depthStr, emptyFields)) {
+            if (writeValue(writer, depth.toString(), emptyFields)) {
                 emptyFields = 0;    
             } else {
                 ++emptyFields;
