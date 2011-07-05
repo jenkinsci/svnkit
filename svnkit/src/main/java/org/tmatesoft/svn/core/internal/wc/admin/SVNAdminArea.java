@@ -947,7 +947,7 @@ public abstract class SVNAdminArea {
             entries = myEntries;
         }
 
-        SVNEntry entry = entries.containsKey(name) ? (SVNEntry) entries.get(name) : new SVNEntry16(createEntryHashMap(null), this, name);
+        SVNEntry entry = entries.containsKey(name) ? (SVNEntry) entries.get(name) : new SVNEntry16(this, name);
         entries.put(name, entry);
         return entry;
     }

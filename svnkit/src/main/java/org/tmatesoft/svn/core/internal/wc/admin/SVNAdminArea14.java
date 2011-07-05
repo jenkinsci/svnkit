@@ -761,7 +761,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
         name = name != null ? name : getThisDirName();
 
         name = (String) getObjectsPool().getObject(name);
-        SVNEntry entry = new SVNEntry16(null, this, name);
+        SVNEntry entry = new SVNEntry16(this, name);
         entry.setDepth(SVNDepth.INFINITY);
 
         line = reader.readLine();
@@ -885,7 +885,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
         }
         boolean hasProps = parseBoolean(line, ATTRIBUTE_HAS_PROPS);
         if (hasProps && entry instanceof SVNEntry16) {
-            ((SVNEntry16) entry).setHasProperties(hasProps);
+            ((SVNEntry) entry).setHasProperties(hasProps);
         }
 
         line = reader.readLine();
@@ -894,7 +894,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
         }
         boolean hasPropMods = parseBoolean(line, ATTRIBUTE_HAS_PROP_MODS);
         if (hasPropMods && entry instanceof SVNEntry16) {
-            ((SVNEntry16) entry).setHasPropertiesModifications(hasPropMods);
+            ((SVNEntry) entry).setHasPropertiesModifications(hasPropMods);
         }
 
         line = reader.readLine();
@@ -917,7 +917,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
         String presentPropsStr = parseValue(line);
         if (presentPropsStr != null && entry instanceof SVNEntry16) {
             String[] presentProps = fromString(presentPropsStr, " ");
-            ((SVNEntry16) entry).setPresentProperties(presentProps);
+            ((SVNEntry) entry).setPresentProperties(presentProps);
         }
 
         line = reader.readLine();

@@ -1250,7 +1250,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                     newChecksum, -1, (davProps != null && !davProps.isEmpty()) ? davProps : null, null, allWorkItems);
 
             if (kind != SVNNodeKind.NONE && serialised != null) {
-                SVNEntry e = new SVNEntry16(null, null, null);
+                SVNEntry e = new SVNEntry16(null, null);
                 SVNAdminUtil.unserializeExternalFileData(e, serialised);
                 File fileExternalReposRelpath = SVNFileUtil.createFilePath(e.getExternalFilePath());
                 SVNRevision fileExternalPegRev = e.getExternalFilePegRevision();
