@@ -265,7 +265,7 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
             return;
         } else if(event.getAction() == SVNEventAction.UPDATE_STARTED) {
             if (! (myIsSuppressLastLine || myIsInExternal || myIsCheckout || myIsExport)) {
-                buffer.append("Updating '"+path+"' ...\n");
+                buffer.append("Updating '"+path+"':\n");
             }
         } else if (event.getAction() == SVNEventAction.UPDATE_COMPLETED) {
             if (!myIsSuppressLastLine) {
