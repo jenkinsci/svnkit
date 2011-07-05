@@ -171,12 +171,9 @@ public abstract class SVNEntry {
     }
 
     public boolean setWorkingSize(long size) {
-        if (getKind() == SVNNodeKind.FILE) {
-            boolean changed = workingSize != size;
-            workingSize = size;
-            return changed;
-        }
-        return false;
+        boolean changed = workingSize != size;
+        workingSize = size;
+        return changed;
     }
 
     public long getWorkingSize() {
