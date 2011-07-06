@@ -746,7 +746,6 @@ public class SVNWCContext {
 
         final WCDbInfo info = db.readInfo(localAbsPath, InfoField.status, InfoField.kind, InfoField.revision, InfoField.reposRelPath, InfoField.reposRootUrl, InfoField.changedRev,
                 InfoField.changedDate, InfoField.changedAuthor, InfoField.depth, InfoField.changelist, InfoField.propsMod, InfoField.haveBase, InfoField.conflicted, InfoField.lock);
-
         if (info.reposRelPath == null) {
             /* The node is not switched, so imply from parent if possible */
 
@@ -962,11 +961,17 @@ public class SVNWCContext {
          * allocate a struct for an uninteresting entry.
          */
 
-        if (!getAll)
-            if (((node_status == SVNStatusType.STATUS_NONE) || (node_status == SVNStatusType.STATUS_NORMAL)) && (!switched_p) && (info.lock == null) && (repositoryLock == null)
+        if (!getAll) {
+            boolean isLocked = false;
+            if(pathKind ==SVNNodeKind.DIR) {
+                isLocked = db.isWCLocked(localAbsPath);
+            }
+
+            if (!isLocked && ((node_status == SVNStatusType.STATUS_NONE) || (node_status == SVNStatusType.STATUS_NORMAL)) && (!switched_p) && (info.lock == null) && (repositoryLock == null)
                     && (info.changelist == null) && (!info.conflicted)) {
                 return null;
             }
+        }
 
         /* 6. Build and return a status structure. */
 
