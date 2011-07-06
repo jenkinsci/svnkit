@@ -70,6 +70,11 @@ def runPythonTests() {
          if (!link.exists() && target.exists()) {
              ant.symlink(link: link.absolutePath, resource: target.absolutePath)
          }
+         link = new File(sandboxDir, 'svn-python-tests/wc-lock-tester')
+         target = new File(svnBinariesDir, 'bin/wc-lock-tester')
+         if (!link.exists() && target.exists()) {
+             ant.symlink(link: link.absolutePath, resource: target.absolutePath)
+         }
     }
 
     copy {
