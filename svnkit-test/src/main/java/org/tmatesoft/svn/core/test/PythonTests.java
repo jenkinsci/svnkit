@@ -74,7 +74,8 @@ public class PythonTests {
 			System.exit(1);
 		}
 		File testResultsDirectory = new File(properties.getProperty("python.tests.results", "build/logs"));
-        ourLoggers = new AbstractTestLogger[] {new ConsoleLogger(), new JUnitTestLogger(testResultsDirectory)};
+		boolean logAll = Boolean.TRUE.toString().equalsIgnoreCase(properties.getProperty("logAll", "false").trim());
+        ourLoggers = new AbstractTestLogger[] {new ConsoleLogger(), new JUnitTestLogger(testResultsDirectory, logAll)};
 		
 		ourProperties = properties;
         Logger logger = setupLogging();

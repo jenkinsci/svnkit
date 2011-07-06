@@ -14,7 +14,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
 public class JUnitTestLogger extends AbstractTestLogger {
     
@@ -27,9 +29,17 @@ public class JUnitTestLogger extends AbstractTestLogger {
     private long myLastTime;
     private long mySuiteTime;
     private List<TestInfo> myTests;
-    
+    private boolean myIsLogAll;
+
+    private String mySuiteName;
+
     public JUnitTestLogger(File resultDirectory) {
+        this(resultDirectory, false);
+    }
+    
+    public JUnitTestLogger(File resultDirectory, boolean logAll) {
         myResultDirectory = resultDirectory;
+        myIsLogAll = logAll;
     }
 
     @Override
@@ -42,6 +52,7 @@ public class JUnitTestLogger extends AbstractTestLogger {
 
     @Override
     public void startSuite(String suiteName) {
+        mySuiteName = suiteName;
         myLastTime = System.currentTimeMillis();
         mySuiteTime = myLastTime;
         myTests = new LinkedList<TestInfo>();
@@ -58,6 +69,15 @@ public class JUnitTestLogger extends AbstractTestLogger {
         if (!test.isPass() && test.getOutput() != null) {
             info.output = test.getOutput().toString();
         }
+        if (myIsLogAll) {
+            myResultDirectory.mkdirs();
+            File testLog = new File(myResultDirectory, mySuiteName + "." + test.getID() + ".log");
+            try {
+                SVNFileUtil.writeToFile(testLog, test.getOutput().toString(), "UTF-8");
+            } catch (SVNException e) {
+            }
+        }
+        
         if (!test.isPass()) {
             myFailuresCount++;
         }
@@ -82,7 +102,9 @@ public class JUnitTestLogger extends AbstractTestLogger {
         xml = SVNXMLUtil.openXMLTag(null, "testsuite", SVNXMLUtil.XML_STYLE_NORMAL, suiteAttributes, xml);
         
         if (myTests != null) {
+            int index = 0;
             for (TestInfo test : myTests) {
+                index++;
                 Map<String, String> testAttributes = new HashMap<String, String>();
                 testAttributes.put("classname", suiteName);
                 testAttributes.put("name", test.name);
@@ -99,7 +121,7 @@ public class JUnitTestLogger extends AbstractTestLogger {
                         xml = SVNXMLUtil.openXMLTag(null, "failure", SVNXMLUtil.XML_STYLE_SELF_CLOSING, failureAttributes, xml);
                     }
                     xml = SVNXMLUtil.closeXMLTag(null, "testcase", xml, true);
-                }
+                } 
             }
         }
         xml = SVNXMLUtil.closeXMLTag(null, "testsuite", xml);
