@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
 
@@ -119,7 +120,6 @@ public class SVNStatus {
     private SVNRevision myCopyFromRevision;
     private SVNLock myRemoteLock;
     private SVNLock myLocalLock;
-    private Map myEntryProperties;
     private SVNRevision myRemoteRevision;
     private SVNURL myRemoteURL;
     private SVNNodeKind myRemoteKind;
@@ -178,7 +178,7 @@ public class SVNStatus {
             boolean isCopied, boolean isSwitched, boolean isFileExternal, File conflictNewFile,
             File conflictOldFile, File conflictWrkFile, File projRejectFile,
             String copyFromURL, SVNRevision copyFromRevision,
-            SVNLock remoteLock, SVNLock localLock, Map entryProperties,
+            SVNLock remoteLock, SVNLock localLock,
             String changelistName, int wcFormatVersion, SVNTreeConflictDescription treeConflict) {
         myURL = url;
         myFile = file;
@@ -209,7 +209,6 @@ public class SVNStatus {
         myRemoteLock = remoteLock;
         myLocalLock = localLock;
         myPropRejectFile = projRejectFile;
-        myEntryProperties = entryProperties;
         myChangelistName = changelistName;
         myWorkingCopyFormat = wcFormatVersion;
         myTreeConflict = treeConflict;
@@ -487,7 +486,10 @@ public class SVNStatus {
      *         against their values (both strings)
      */
     public Map getEntryProperties() {
-        return myEntryProperties;
+        if (myEntry != null) {
+            return myEntry.asMap();
+        }
+        return Collections.EMPTY_MAP;
     }
     
     /**
