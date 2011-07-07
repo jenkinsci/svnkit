@@ -233,7 +233,7 @@ public class SVNStatusEditor {
                         SVNStatusType.STATUS_NAME_CONFLICT,  SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, 
                         false, entry.isCopied(), false, false, null, null, null, null, 
                         entry.getCopyFromURL(), SVNRevision.create(entry.getCopyFromRevision()),
-                        null, null, entry.getChangelistName(), dir.getFormatVersion(), null);                
+                        null, null, null, entry.getChangelistName(), dir.getFormatVersion(), null);                
                 status.setEntry(entry);
                 handler.handleStatus(status);                
                 continue;

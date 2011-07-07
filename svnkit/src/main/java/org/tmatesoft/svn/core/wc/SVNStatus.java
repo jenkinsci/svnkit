@@ -120,6 +120,7 @@ public class SVNStatus {
     private SVNRevision myCopyFromRevision;
     private SVNLock myRemoteLock;
     private SVNLock myLocalLock;
+    private Map myEntryProperties;
     private SVNRevision myRemoteRevision;
     private SVNURL myRemoteURL;
     private SVNNodeKind myRemoteKind;
@@ -178,7 +179,7 @@ public class SVNStatus {
             boolean isCopied, boolean isSwitched, boolean isFileExternal, File conflictNewFile,
             File conflictOldFile, File conflictWrkFile, File projRejectFile,
             String copyFromURL, SVNRevision copyFromRevision,
-            SVNLock remoteLock, SVNLock localLock,
+            SVNLock remoteLock, SVNLock localLock, Map entryProperties,
             String changelistName, int wcFormatVersion, SVNTreeConflictDescription treeConflict) {
         myURL = url;
         myFile = file;
@@ -209,6 +210,7 @@ public class SVNStatus {
         myRemoteLock = remoteLock;
         myLocalLock = localLock;
         myPropRejectFile = projRejectFile;
+        myEntryProperties = entryProperties;
         myChangelistName = changelistName;
         myWorkingCopyFormat = wcFormatVersion;
         myTreeConflict = treeConflict;
@@ -489,7 +491,7 @@ public class SVNStatus {
         if (myEntry != null) {
             return myEntry.asMap();
         }
-        return Collections.EMPTY_MAP;
+        return myEntryProperties;
     }
     
     /**

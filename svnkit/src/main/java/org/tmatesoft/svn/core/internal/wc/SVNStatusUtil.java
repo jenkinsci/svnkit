@@ -165,7 +165,7 @@ public class SVNStatusUtil {
                     SVNRevision.UNDEFINED, SVNRevision.UNDEFINED, null, null, SVNStatusType.STATUS_NONE, 
                     SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, false,
                     false, false, false, null, null, null, null, null, SVNRevision.UNDEFINED, repositoryLock, 
-                    null, null, -1, treeConflict);
+                    null, null, null, -1, treeConflict);
             status.setRemoteStatus(SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, repositoryLock, SVNNodeKind.NONE);
             SVNStatusType text = SVNStatusType.STATUS_NONE;
             SVNFileType fileType = SVNFileType.getType(file);
@@ -277,7 +277,7 @@ public class SVNStatusUtil {
                 textStatus,  propStatus, SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, 
                 isLocked, entry.isCopied(), isSwitched, isFileExternal, conflictNew, conflictOld, conflictWrk, conflictProp, 
                 entry.getCopyFromURL(), SVNRevision.create(entry.getCopyFromRevision()),
-                repositoryLock, localLock, entry.getChangelistName(), wcFormatNumber, treeConflict);
+                repositoryLock, localLock, null, entry.getChangelistName(), wcFormatNumber, treeConflict);
         status.setEntry(entry);
         return status;
     }
