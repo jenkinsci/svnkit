@@ -1392,7 +1392,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         if (recordedBaseChecksum != null && expectedBaseChecksum != null && recordedBaseChecksum.getKind() != SVNChecksumKind.MD5) {
             recordedBaseChecksum = myWcContext.getDb().getPristineMD5(myAnchorAbspath, recordedBaseChecksum);
         }
-        if (recordedBaseChecksum != null && expectedChecksum != null && !expectedChecksum.equals(recordedBaseChecksum)) {
+        if (recordedBaseChecksum != null && recordedBaseChecksum != null && !expectedBaseChecksum.equals(recordedBaseChecksum)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT_TEXT_BASE, "Checksum mismatch for ''{0}'':\n " + "   expected:  ''{1}''\n" + "   recorded:  ''{2}''\n",
                     new Object[] {
                             fb.localAbsolutePath, expectedChecksum, recordedBaseChecksum
