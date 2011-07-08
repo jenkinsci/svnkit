@@ -258,7 +258,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         SVNWCDbStatus baseStatus;
         SVNWCDbKind baseKind;
         
-        WCDbInfo info = myWcContext.getDb().readInfo(localAbsPath, InfoField.status, InfoField.status, InfoField.reposRelPath, InfoField.conflicted, InfoField.haveBase, InfoField.haveWork);
+        WCDbInfo info = myWcContext.getDb().readInfo(localAbsPath, InfoField.status, InfoField.kind, InfoField.reposRelPath, InfoField.conflicted, InfoField.haveBase, InfoField.haveWork);
        
         if (!info.haveWork) {
             baseStatus = info.status;
@@ -369,8 +369,9 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
 
             case Incomplete:
             case Normal:
-                if (action == SVNConflictAction.EDIT)
+                if (action == SVNConflictAction.EDIT) {
                     return null;
+                }
                 switch (workingKind) {
                     case File:
                     case Symlink:
