@@ -102,7 +102,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
 
     private FileBaton myCurrentFile;
 
-    private boolean myAddsAsModification;
+    private boolean myAddsAsModification = true;
 
     private Map<File, Map<String, SVNEntry>> myDirEntries;
 
@@ -1215,11 +1215,13 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             boolean incomingIsLink = false;
             
             localIsLink = localActualProps.getStringValue(SVNProperty.SPECIAL) != null;
-            for(Iterator<?> names = regularProps.nameSet().iterator(); names.hasNext();) {
-                String name = (String) names.next();
-                incomingIsLink = SVNProperty.SPECIAL.equals(name);
-                if (incomingIsLink) {
-                    break;
+            if (regularProps != null) {
+                for(Iterator<?> names = regularProps.nameSet().iterator(); names.hasNext();) {
+                    String name = (String) names.next();
+                    incomingIsLink = SVNProperty.SPECIAL.equals(name);
+                    if (incomingIsLink) {
+                        break;
+                    }
                 }
             }
             
