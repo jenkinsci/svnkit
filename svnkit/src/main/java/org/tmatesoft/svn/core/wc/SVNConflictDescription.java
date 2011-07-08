@@ -128,4 +128,8 @@ public abstract class SVNConflictDescription {
      * @return conflicted property name 
      */
     public abstract String getPropertyName();
+    
+    public void setConflictAction(SVNConflictAction action) {
+        myConflictAction = action;
+    }
 }

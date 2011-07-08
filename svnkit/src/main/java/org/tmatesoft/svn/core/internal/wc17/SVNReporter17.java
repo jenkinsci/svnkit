@@ -137,13 +137,13 @@ public class SVNReporter17 implements ISVNReporterBaton {
             target_kind = wcContext.getDb().readKind(path, true);
 
             if (target_kind == SVNWCDbKind.File || target_kind == SVNWCDbKind.Symlink)
-                status = SVNWCDbStatus.Absent; /* Crawl via parent dir */
+                status = SVNWCDbStatus.ServerExcluded; /* Crawl via parent dir */
             else
                 status = SVNWCDbStatus.NotPresent; /* As checkout */
 
         }
 
-        if (status == SVNWCDbStatus.NotPresent || status == SVNWCDbStatus.Absent || (target_kind == SVNWCDbKind.Dir && status != SVNWCDbStatus.Normal && status != SVNWCDbStatus.Incomplete)) {
+        if (status == SVNWCDbStatus.NotPresent || status == SVNWCDbStatus.ServerExcluded || (target_kind == SVNWCDbKind.Dir && status != SVNWCDbStatus.Normal && status != SVNWCDbStatus.Incomplete)) {
             /* The target does not exist or is a local addition */
 
             if (!SVNRevision.isValidRevisionNumber(target_rev))
@@ -216,7 +216,7 @@ public class SVNReporter17 implements ISVNReporterBaton {
                 wrk_status = wcContext.getDb().scanAddition(path, AdditionInfoField.status).status;
 
             if (isRestoreFiles && wrk_status != SVNWCDbStatus.Added && wrk_status != SVNWCDbStatus.Deleted && wrk_status != SVNWCDbStatus.Excluded && wrk_status != SVNWCDbStatus.NotPresent
-                    && wrk_status != SVNWCDbStatus.Absent) {
+                    && wrk_status != SVNWCDbStatus.ServerExcluded) {
                 boolean restored = restoreNode(path, target_kind, target_rev);
                 if (!restored)
                     missing = true;
@@ -499,7 +499,7 @@ public class SVNReporter17 implements ISVNReporterBaton {
             }
 
             /*** The Big Tests: ***/
-            if (this_status == SVNWCDbStatus.Absent || this_status == SVNWCDbStatus.NotPresent) {
+            if (this_status == SVNWCDbStatus.ServerExcluded || this_status == SVNWCDbStatus.NotPresent) {
                 /*
                  * If the entry is 'absent' or 'not-present', make sure the
                  * server knows it's gone... ...unless we're reporting
@@ -527,7 +527,7 @@ public class SVNReporter17 implements ISVNReporterBaton {
                     wrk_status = wcContext.getDb().scanAddition(this_abspath, AdditionInfoField.status).status;
 
                 if (isRestoreFiles && wrk_status != SVNWCDbStatus.Added && wrk_status != SVNWCDbStatus.Deleted && wrk_status != SVNWCDbStatus.Excluded && wrk_status != SVNWCDbStatus.NotPresent
-                        && wrk_status != SVNWCDbStatus.Absent) {
+                        && wrk_status != SVNWCDbStatus.ServerExcluded) {
                     /*
                      * It is possible on a case insensitive system that the
                      * entry is not really missing, but just cased incorrectly.

@@ -48,6 +48,7 @@ import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
+import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.internal.wc.FSMergerBySequence;
 import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
 import org.tmatesoft.svn.core.internal.wc.SVNChecksumKind;
@@ -328,7 +329,7 @@ public class SVNWCContext {
             if (!showHidden) {
                 switch (info.status) {
                     case NotPresent:
-                    case Absent:
+                    case ServerExcluded:
                     case Excluded:
                         return SVNNodeKind.NONE;
 
@@ -532,7 +533,7 @@ public class SVNWCContext {
 
         switch (status) {
             case NotPresent:
-            case Absent:
+            case ServerExcluded:
             case Excluded:
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "''{0}'' is not under version control", localAbsPath);
                 SVNErrorManager.error(err, SVNLogType.WC);
@@ -1128,7 +1129,7 @@ public class SVNWCContext {
                  */
                 // || status == svn_wc__db_status_incomplete
                 // #endif
-                || info.status == SVNWCDbStatus.Excluded || info.status == SVNWCDbStatus.Absent || info.status == SVNWCDbStatus.NotPresent) {
+                || info.status == SVNWCDbStatus.Excluded || info.status == SVNWCDbStatus.ServerExcluded || info.status == SVNWCDbStatus.NotPresent) {
             return null;
         }
 
@@ -1309,7 +1310,7 @@ public class SVNWCContext {
              */
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "Cannot get the pristine contents of ''{0}'' " + "because its delete is already committed", localAbspath);
             SVNErrorManager.error(err, SVNLogType.WC);
-        } else if (readInfo.status == SVNWCDbStatus.Absent || readInfo.status == SVNWCDbStatus.Excluded || readInfo.status == SVNWCDbStatus.Incomplete) {
+        } else if (readInfo.status == SVNWCDbStatus.ServerExcluded || readInfo.status == SVNWCDbStatus.Excluded || readInfo.status == SVNWCDbStatus.Incomplete) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS, "Cannot get the pristine contents of ''{0}'' " + "because it has an unexpected status", localAbspath);
             SVNErrorManager.error(err, SVNLogType.WC);
         } else {
@@ -1557,22 +1558,59 @@ public class SVNWCContext {
     public static class TranslateInfo {
 
         public SVNEolStyleInfo eolStyleInfo;
-        public Map keywords;
+        public Map<?,?> keywords;
         public boolean special;
     }
-
     public TranslateInfo getTranslateInfo(File localAbspath, boolean fetchEolStyle, boolean fetchKeywords, boolean fetchSpecial) throws SVNException {
+        return getTranslateInfo(localAbspath, null, false, fetchEolStyle, fetchKeywords, fetchSpecial);
+    }
+
+    public TranslateInfo getTranslateInfo(File localAbspath, SVNProperties props, boolean forNormalization, boolean fetchEolStyle, boolean fetchKeywords, boolean fetchSpecial) throws SVNException {
         TranslateInfo info = new TranslateInfo();
+        if (props == null) {
+            props = getActualProperties(localAbspath);
+        }
         if (fetchEolStyle) {
-            info.eolStyleInfo = getEolStyle(localAbspath);
+            info.eolStyleInfo = SVNEolStyleInfo.fromValue(props.getStringValue(SVNProperty.EOL_STYLE));
         }
         if (fetchKeywords) {
-            info.keywords = getKeyWords(localAbspath, null);
+            String keywordsProp = props.getStringValue(SVNProperty.KEYWORDS);
+            if (keywordsProp == null || "".equals(keywordsProp)) {
+                info.keywords = null;
+            } else {
+                info.keywords = expandKeywords(localAbspath, null, keywordsProp, forNormalization);
+            }
         }
         if (fetchSpecial) {
-            info.special = isSpecial(localAbspath);
+            info.special = props.getStringValue(SVNProperty.SPECIAL) != null;
         }
         return info;
+    }
+    
+    private Map<?, ?> expandKeywords(File localAbsPath, File wriAbspath, String keywordsList, boolean forNormalization) throws SVNException {
+        String url = null;
+        SVNDate changedDate = null;
+        long changedRev;
+        String changedAuthor = null;
+        
+        if (!forNormalization) {
+            WCDbInfo info = getDb().readInfo(localAbsPath, InfoField.reposRelPath, InfoField.reposRootUrl, InfoField.changedRev, InfoField.changedAuthor, InfoField.changedDate);
+            changedAuthor = info.changedAuthor;
+            changedRev = info.changedRev;
+            changedDate = info.changedDate;
+            
+            if (info.reposRelPath != null) {
+                url = info.reposRootUrl.appendPath(SVNFileUtil.getFilePath(info.reposRelPath), false).toString();
+            } else {
+                // TODO db_ReadURL                
+            }
+        } else {
+            url = "";
+            changedRev = INVALID_REVNUM;
+            changedDate = SVNDate.NULL;
+            changedAuthor = "";            
+        }
+        return SVNTranslator.computeKeywords(keywordsList, url, changedAuthor, changedDate.toString(), Long.toString(changedRev), getOptions());
     }
 
     public boolean isFileExternal(File path) throws SVNException {
@@ -1594,7 +1632,7 @@ public class SVNWCContext {
                 final WCDbAdditionInfo scanAddition = db.scanAddition(path, AdditionInfoField.reposRelPath, AdditionInfoField.reposRootUrl);
                 readInfo.reposRelPath = scanAddition.reposRelPath;
                 readInfo.reposRootUrl = scanAddition.reposRootUrl;
-            } else if (readInfo.status == SVNWCDbStatus.Absent || readInfo.status == SVNWCDbStatus.Excluded || readInfo.status == SVNWCDbStatus.NotPresent
+            } else if (readInfo.status == SVNWCDbStatus.ServerExcluded || readInfo.status == SVNWCDbStatus.Excluded || readInfo.status == SVNWCDbStatus.NotPresent
                     || (!readInfo.haveBase && (readInfo.status == SVNWCDbStatus.Deleted || readInfo.status == SVNWCDbStatus.ObstructedDelete))) {
                 File parent_abspath = SVNFileUtil.getFileDir(path);
                 readInfo.reposRelPath = SVNFileUtil.createFilePath(SVNFileUtil.getFileName(path));
@@ -1924,7 +1962,7 @@ public class SVNWCContext {
         SVNWCDbKind kind = readInfo.kind;
         SVNWCDbStatus status = readInfo.status;
         nodeHandler.nodeFound(localAbspath);
-        if (kind == SVNWCDbKind.File || status == SVNWCDbStatus.NotPresent || status == SVNWCDbStatus.Excluded || status == SVNWCDbStatus.Absent)
+        if (kind == SVNWCDbKind.File || status == SVNWCDbStatus.NotPresent || status == SVNWCDbStatus.Excluded || status == SVNWCDbStatus.ServerExcluded)
             return;
         if (kind == SVNWCDbKind.Dir) {
             walkerHelper(localAbspath, nodeHandler, showHidden, walkDepth);
@@ -1947,7 +1985,7 @@ public class SVNWCContext {
             if (!showHidden)
                 switch (childStatus) {
                     case NotPresent:
-                    case Absent:
+                    case ServerExcluded:
                     case Excluded:
                         continue;
                     default:
@@ -2093,7 +2131,7 @@ public class SVNWCContext {
             info.wcRoot = false;
         } else if (status == SVNWCDbStatus.Added || status == SVNWCDbStatus.Deleted) {
             info.wcRoot = false;
-        } else if (status == SVNWCDbStatus.Absent || status == SVNWCDbStatus.Excluded || status == SVNWCDbStatus.NotPresent) {
+        } else if (status == SVNWCDbStatus.ServerExcluded || status == SVNWCDbStatus.Excluded || status == SVNWCDbStatus.NotPresent) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{0}'' was not found.", localAbspath);
             SVNErrorManager.error(err, SVNLogType.WC);
             return null;
@@ -2157,7 +2195,7 @@ public class SVNWCContext {
         reposUuid = readInfo.reposUuid;
         haveBase = readInfo.haveBase;
         switch (status) {
-            case Absent:
+            case ServerExcluded:
             case Excluded:
             case NotPresent: {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ASSERTION_FAIL);
@@ -2194,7 +2232,7 @@ public class SVNWCContext {
                 throw e;
             }
         }
-        db.addBaseAbsentNode(localAbspath, reposRelpath, reposRoot, reposUuid, revision, kind, SVNWCDbStatus.Excluded, null, null);
+        db.addBaseExcludedNode(localAbspath, reposRelpath, reposRoot, reposUuid, revision, kind, SVNWCDbStatus.Excluded, null, null);
         if (eventHandler != null) {
             SVNEvent event = new SVNEvent(localAbspath, null, null, -1, null, null, null, null, SVNEventAction.DELETE, null, null, null, null);
             eventHandler.handleEvent(event, 0);
@@ -2344,7 +2382,7 @@ public class SVNWCContext {
                 return;
             }
 
-            if (status == SVNWCDbStatus.NotPresent || status == SVNWCDbStatus.Absent) {
+            if (status == SVNWCDbStatus.NotPresent || status == SVNWCDbStatus.ServerExcluded) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{0}'' was not found.", localAbspath);
                 SVNErrorManager.error(err, SVNLogType.WC);
                 return;
@@ -2382,7 +2420,7 @@ public class SVNWCContext {
             SVNWCDbStatus childStatus = readInfo.status;
             SVNWCDbKind kind = readInfo.kind;
             SVNDepth childDepth = readInfo.depth;
-            if (childStatus == SVNWCDbStatus.Absent || childStatus == SVNWCDbStatus.Excluded || childStatus == SVNWCDbStatus.NotPresent) {
+            if (childStatus == SVNWCDbStatus.ServerExcluded || childStatus == SVNWCDbStatus.Excluded || childStatus == SVNWCDbStatus.NotPresent) {
                 SVNDepth removeBelow = (kind == SVNWCDbKind.Dir) ? SVNDepth.IMMEDIATES : SVNDepth.FILES;
                 if (depth.getId() < removeBelow.getId()) {
                     db.opRemoveEntryTemp(localAbspath);
@@ -2454,7 +2492,7 @@ public class SVNWCContext {
             info.reposUuid = scanAddition.reposUuid;
             return info;
         }
-        if (status == SVNWCDbStatus.Normal || status == SVNWCDbStatus.Absent || status == SVNWCDbStatus.Excluded || status == SVNWCDbStatus.NotPresent
+        if (status == SVNWCDbStatus.Normal || status == SVNWCDbStatus.ServerExcluded || status == SVNWCDbStatus.Excluded || status == SVNWCDbStatus.NotPresent
                 || (scanDeleted && (status == SVNWCDbStatus.Deleted))) {
             WCDbRepositoryInfo scanBaseRepository = db.scanBaseRepository(localAbspath, RepositoryInfoField.rootUrl, RepositoryInfoField.uuid);
             info.reposRootUrl = scanBaseRepository.rootUrl;
@@ -2482,7 +2520,7 @@ public class SVNWCContext {
         if (status == SVNWCDbStatus.Added) {
             status = db.scanAddition(localAbspath, AdditionInfoField.status).status;
         }
-        if (status == SVNWCDbStatus.Added || status == SVNWCDbStatus.Excluded || status == SVNWCDbStatus.Absent || status == SVNWCDbStatus.NotPresent) {
+        if (status == SVNWCDbStatus.Added || status == SVNWCDbStatus.Excluded || status == SVNWCDbStatus.ServerExcluded || status == SVNWCDbStatus.NotPresent) {
             return null;
         }
         return db.readPristineProperties(localAbspath);
@@ -2491,6 +2529,103 @@ public class SVNWCContext {
     public SVNProperties getActualProps(File localAbspath) throws SVNException {
         assert (SVNFileUtil.isAbsolute(localAbspath));
         return db.readProperties(localAbspath);
+    }
+    
+    public SVNSkel mergeProperties2(SVNStatusType[] state, SVNProperties newBaseProps, SVNProperties newActualProps, File localAbsPath, SVNWCDbKind kind, SVNConflictVersion leftVersion, SVNConflictVersion rightVersion,
+            SVNProperties serverBaseProperties, SVNProperties pristineProperties, SVNProperties actualProperties, SVNProperties propChanges, 
+            boolean baseMerge, boolean dryRun) throws SVNException {
+        if (serverBaseProperties == null) {
+            serverBaseProperties = pristineProperties;
+        }
+        if (state == null) {
+            state = new SVNStatusType[1];
+        }
+        state[0] = SVNStatusType.UNCHANGED;
+        
+        SVNSkel conflictSkel = null;
+        boolean isDir = (kind == SVNWCDbKind.Dir);
+        ISVNConflictHandler conflictResolver = getOptions().getConflictResolver();
+        
+        for (Iterator<?> i = propChanges.nameSet().iterator(); i.hasNext();) {
+            checkCancelled();
+            String propname = (String) i.next();
+            SVNPropertyValue toVal = propChanges.getSVNPropertyValue(propname);
+            SVNPropertyValue fromVal = serverBaseProperties.getSVNPropertyValue(propname);
+            SVNPropertyValue baseVal = pristineProperties.getSVNPropertyValue(propname);
+            boolean conflictRemains;
+            if (baseMerge) {
+                if (toVal != null) {
+                    pristineProperties.put(propname, toVal);
+                } else {
+                    pristineProperties.remove(propname);
+                }
+            }
+            SVNPropertyValue mineVal = actualProperties.getSVNPropertyValue(propname);
+            state[0] = setPropMergeState(state[0], SVNStatusType.CHANGED);
+            if (fromVal == null) {
+                MergePropStatusInfo mergePropStatus = applySinglePropAdd(state[0], localAbsPath, leftVersion, rightVersion, isDir, actualProperties, propname, baseVal, toVal, conflictResolver, dryRun);
+                state[0] = mergePropStatus.state;
+                conflictRemains = mergePropStatus.conflictRemains;
+            } else if (toVal == null) {
+                MergePropStatusInfo mergePropStatus = applySinglePropDelete(state[0], localAbsPath, leftVersion, rightVersion, isDir, actualProperties, propname, baseVal, fromVal, conflictResolver, dryRun);
+                state[0] = mergePropStatus.state;
+                conflictRemains = mergePropStatus.conflictRemains;
+            } else {
+                MergePropStatusInfo mergePropStatus = applySinglePropChange(state[0], localAbsPath, leftVersion, rightVersion, isDir, actualProperties, propname, baseVal, fromVal, toVal, conflictResolver,
+                        dryRun);
+                state[0] = mergePropStatus.state;
+                conflictRemains = mergePropStatus.conflictRemains;
+            }
+            if (conflictRemains) {
+                state[0] = setPropMergeState(state[0], SVNStatusType.CONFLICTED);
+                if (dryRun) {
+                    continue;
+                }
+                if (conflictSkel == null) {
+                    conflictSkel = SVNSkel.createEmptyList();
+                }
+                conflictSkelAddPropConflict(conflictSkel, propname, baseVal, mineVal, toVal, fromVal);
+            }
+        }
+        
+        if (dryRun) {
+            return conflictSkel;
+        }
+        if (newBaseProps == null) {
+            newBaseProps = new SVNProperties(pristineProperties);
+        } else {
+            newBaseProps.clear();
+            newBaseProps.putAll(pristineProperties);
+        }
+        if (newActualProps == null) {
+            newActualProps = new SVNProperties(actualProperties);
+        } else {
+            newActualProps.clear();
+            newActualProps.putAll(actualProperties);
+        }
+        
+        SVNSkel workItems = null;
+        if (conflictSkel != null) {
+            File rejectPath = getPrejfileAbspath(localAbsPath);
+            if (rejectPath == null) {
+                File rejectDirpath;
+                String rejectFilename;
+                if (isDir) {
+                    rejectDirpath = localAbsPath;
+                    rejectFilename = THIS_DIR_PREJ;
+                } else {
+                    rejectDirpath = SVNFileUtil.getFileDir(localAbsPath);
+                    rejectFilename = SVNFileUtil.getFileName(localAbsPath);
+                }
+                rejectPath = SVNFileUtil.createUniqueFile(rejectDirpath, rejectFilename, PROP_REJ_EXT, false);
+                SVNSkel workItem = wqBuildSetPropertyConflictMarkerTemp(localAbsPath, rejectFilename);
+                workItems = wqMerge(workItems, workItem);
+            }
+            SVNSkel workItem = wqBuildPrejInstall(localAbsPath, conflictSkel);
+            workItems = wqMerge(workItems, workItem);
+        }
+        
+        return workItems;
     }
 
     public SVNStatusType mergeProperties(SVNProperties newBaseProps, SVNProperties newActualProps, File localAbspath, SVNWCDbKind kind, SVNConflictVersion leftVersion,
@@ -3012,15 +3147,15 @@ public class SVNWCContext {
 
     }
 
-    public MergeInfo merge(File leftAbspath, SVNConflictVersion leftVersion, File rightAbspath, SVNConflictVersion rightVersion, File targetAbspath, File copyfromAbspath, String leftLabel,
-            String rightLabel, String targetLabel, boolean dryRun, SVNDiffOptions options, SVNProperties propDiff) throws SVNException {
+    public MergeInfo merge(File leftAbspath, SVNConflictVersion leftVersion, File rightAbspath, SVNConflictVersion rightVersion, File targetAbspath, File wriAbspath, String leftLabel,
+            String rightLabel, String targetLabel, SVNProperties actualProps, boolean dryRun, SVNDiffOptions options, SVNProperties propDiff) throws SVNException {
         assert (SVNFileUtil.isAbsolute(leftAbspath));
         assert (SVNFileUtil.isAbsolute(rightAbspath));
         assert (SVNFileUtil.isAbsolute(targetAbspath));
-        assert (copyfromAbspath == null || SVNFileUtil.isAbsolute(copyfromAbspath));
+        assert (wriAbspath == null || SVNFileUtil.isAbsolute(wriAbspath));
         MergeInfo info = new MergeInfo();
         info.workItems = null;
-        if (copyfromAbspath == null) {
+        if (wriAbspath == null) {
             SVNWCDbKind kind = db.readKind(targetAbspath, true);
             boolean hidden;
 
@@ -3039,11 +3174,12 @@ public class SVNWCContext {
         SVNPropertyValue mimeprop = propDiff.getSVNPropertyValue(SVNProperty.MIME_TYPE);
         if (mimeprop != null && mimeprop.isString()) {
             isBinary = mimeTypeIsBinary(mimeprop.getString());
-        } else if (copyfromAbspath == null) {
-            isBinary = isMarkedAsBinary(targetAbspath);
+        } else {
+            SVNPropertyValue value = actualProps.getSVNPropertyValue(SVNProperty.MIME_TYPE);            
+            isBinary = value != null && mimeTypeIsBinary(value.getString());
         }
-        File workingAbspath = copyfromAbspath != null ? copyfromAbspath : targetAbspath;
-        File detranslatedTargetAbspath = detranslateWCFile(targetAbspath, !isBinary, propDiff, workingAbspath);
+        
+        File detranslatedTargetAbspath = detranslateWCFile(targetAbspath, !isBinary, propDiff, targetAbspath);
         leftAbspath = maybeUpdateTargetEols(leftAbspath, propDiff);
         if (isBinary) {
             if (dryRun) {
@@ -3053,7 +3189,7 @@ public class SVNWCContext {
                         .getConflictResolver());
             }
         } else {
-            info = mergeTextFile(leftAbspath, rightAbspath, targetAbspath, leftLabel, rightLabel, targetLabel, dryRun, options, leftVersion, rightVersion, copyfromAbspath, detranslatedTargetAbspath,
+            info = mergeTextFile(leftAbspath, rightAbspath, targetAbspath, leftLabel, rightLabel, targetLabel, dryRun, options, leftVersion, rightVersion, wriAbspath, detranslatedTargetAbspath,
                     mimeprop, getOptions().getConflictResolver());
         }
         if (!dryRun) {
@@ -3576,6 +3712,17 @@ public class SVNWCContext {
         result.appendChild(workItem);
         return result;
     }
+    
+    public SVNSkel wqBuildBaseRemove(File localAbspath, long notPresentRevision, SVNWCDbKind notPresentKind) throws SVNException {
+        SVNSkel workItem = SVNSkel.createEmptyList();
+        workItem.prependString(Integer.toString(notPresentKind.ordinal()));
+        workItem.prependString(Long.toString(notPresentRevision));
+        workItem.prependString(localAbspath.getPath());
+        workItem.prependString(WorkQueueOperation.BASE_REMOVE.getOpName());
+        SVNSkel result = SVNSkel.createEmptyList();
+        result.appendChild(workItem);
+        return result;
+    }
 
     public SVNSkel wqBuildRecordFileinfo(File localAbspath, SVNDate setTime) throws SVNException {
         assert (SVNFileUtil.isAbsolute(localAbspath));
@@ -3753,29 +3900,41 @@ public class SVNWCContext {
 
         public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) throws SVNException {
             File localAbspath = SVNFileUtil.createFilePath(workItem.getChild(1).getValue());
-            boolean keepNotPresent = "1".equals(workItem.getChild(2).getValue());
-            long revision = 0;
+            long value  = -1;
+            try {
+                value = Long.parseLong(workItem.getChild(2).getValue());
+            } catch (NumberFormatException nfe) {
+                value = -1;
+            }
             File reposRelPath = null;
             SVNURL reposRootUrl = null;
             String reposUuid = null;
             SVNWCDbKind kind = null;
-            if (keepNotPresent) {
-                WCDbBaseInfo baseInfo = ctx.getDb().getBaseInfo(localAbspath, BaseInfoField.kind, BaseInfoField.revision, BaseInfoField.reposRelPath, BaseInfoField.reposRootUrl,
-                        BaseInfoField.reposUuid);
-                kind = baseInfo.kind;
-                revision = baseInfo.revision;
-                reposRelPath = baseInfo.reposRelPath;
-                reposRootUrl = baseInfo.reposRootUrl;
-                reposUuid = baseInfo.reposUuid;
-                if (reposRelPath == null) {
-                    WCDbRepositoryInfo repInfo = ctx.getDb().scanBaseRepository(localAbspath, RepositoryInfoField.relPath, RepositoryInfoField.rootUrl, RepositoryInfoField.uuid);
-                    reposRelPath = repInfo.relPath;
-                    reposRootUrl = repInfo.rootUrl;
-                    reposUuid = repInfo.uuid;
+            long revision = -1;
+            if (workItem.getList().size() >= 4) {
+                revision = value;
+                kind = SVNWCDbKind.values()[Integer.parseInt(workItem.getChild(3).getValue())];
+                if (revision >= 0) {
+                    File dirAbsPath = SVNFileUtil.getParentFile(localAbspath);
+                    WCDbRepositoryInfo info = ctx.getDb().scanBaseRepository(dirAbsPath, RepositoryInfoField.relPath, RepositoryInfoField.rootUrl, RepositoryInfoField.uuid);
+                    reposRelPath = new File(info.relPath, SVNFileUtil.getFileName(localAbspath));
+                    reposRootUrl = info.rootUrl;
+                    reposUuid = info.uuid;
+                }
+            } else {
+                boolean keepNotPresent = value == 1;
+                if (keepNotPresent) {
+                    WCDbBaseInfo info = ctx.getDb().getBaseInfo(localAbspath, BaseInfoField.kind, BaseInfoField.revision, BaseInfoField.reposRelPath, BaseInfoField.reposRootUrl,
+                            BaseInfoField.reposUuid); 
+                    reposRelPath = info.reposRelPath;
+                    reposRootUrl = info.reposRootUrl;
+                    reposUuid = info.reposUuid;
+                    revision = info.revision;
+                    kind = info.kind;
                 }
             }
             ctx.removeBaseNode(localAbspath);
-            if (keepNotPresent) {
+            if (revision >= 0) {
                 ctx.getDb().addBaseNotPresentNode(localAbspath, reposRelPath, reposRootUrl, reposUuid, revision, kind, null, null);
             }
         }
@@ -4002,7 +4161,7 @@ public class SVNWCContext {
         assert (haveBase);
         SVNWCDbStatus baseStatus;
         SVNWCDbKind baseKind;
-        if (wrkStatus == SVNWCDbStatus.Normal || wrkStatus == SVNWCDbStatus.NotPresent || wrkStatus == SVNWCDbStatus.Absent) {
+        if (wrkStatus == SVNWCDbStatus.Normal || wrkStatus == SVNWCDbStatus.NotPresent || wrkStatus == SVNWCDbStatus.ServerExcluded) {
             baseStatus = wrkStatus;
             baseKind = wrkKind;
         } else {
@@ -4444,7 +4603,7 @@ public class SVNWCContext {
             }
             switch (dbStatus) {
                 case NotPresent:
-                case Absent:
+                case ServerExcluded:
                 case Excluded:
                     return 0;
                 default:

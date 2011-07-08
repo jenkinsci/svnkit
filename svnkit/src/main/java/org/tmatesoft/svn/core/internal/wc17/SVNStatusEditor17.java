@@ -290,7 +290,7 @@ public class SVNStatusEditor17 {
                  * working nodes, which only have an implied status via their
                  * parent.
                  */
-                if (!hidden && node.status != SVNWCDbStatus.Excluded && node.status != SVNWCDbStatus.Absent && node.status != SVNWCDbStatus.NotPresent) {
+                if (!hidden && node.status != SVNWCDbStatus.Excluded && node.status != SVNWCDbStatus.ServerExcluded && node.status != SVNWCDbStatus.NotPresent) {
                     if (depth == SVNDepth.FILES && node.kind == SVNWCDbKind.Dir)
                         continue;
                     /* Handle this entry (possibly recursing). */

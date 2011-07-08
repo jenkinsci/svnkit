@@ -13,6 +13,7 @@ package org.tmatesoft.svn.core.internal.wc17.db;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -220,10 +221,12 @@ public interface ISVNWCDb {
         ObstructedAdd,
 
         /** This node was named by the server, but no information was provided. */
-        Absent,
+        ServerExcluded,
 
         /** This node has been administratively excluded. */
         Excluded,
+        
+        /** This node has been administratively excluded. */
 
         /**
          * This node is not present in this revision. This typically happens
@@ -392,7 +395,7 @@ public interface ISVNWCDb {
      * be passed in WORK_ITEMS.
      */
     void addBaseDirectory(File localAbsPath, File reposRelPath, SVNURL reposRootUrl, String reposUuid, long revision, SVNProperties props, long changedRev, SVNDate changedDate, String changedAuthor,
-            List<File> children, SVNDepth depth, SVNProperties davCache, SVNSkel conflict, SVNSkel workItems) throws SVNException;
+            List<File> children, SVNDepth depth, SVNProperties davCache, SVNSkel conflict, boolean updateActualProps, SVNProperties actualProps, SVNSkel workItems) throws SVNException;
 
     /**
      * Add or replace a file in the BASE tree.
@@ -421,8 +424,9 @@ public interface ISVNWCDb {
      *
      * @param svnProperties
      */
-    void addBaseFile(File localAbspath, File reposRelpath, SVNURL reposRootUrl, String reposUuid, long revision, SVNProperties props, long changedRev, SVNDate changedDate, String changedAuthor,
-            SVNChecksum checksum, long translatedSize, SVNProperties properties, SVNSkel conflict, SVNSkel workItems) throws SVNException;
+    public void addBaseFile(File localAbspath, File reposRelpath, SVNURL reposRootUrl, String reposUuid, long revision, SVNProperties props, long changedRev, SVNDate changedDate,
+            String changedAuthor, SVNChecksum checksum, SVNProperties davCache, SVNSkel conflict, boolean updateActualProps, SVNProperties actualProps,
+            boolean keepRecordedInfo, boolean insertBaseDeleted, SVNSkel workItems) throws SVNException;
 
     /**
      * Add or replace a symlink in the BASE tree.
@@ -444,8 +448,8 @@ public interface ISVNWCDb {
      * Any work items that are necessary as part of this node construction may
      * be passed in WORK_ITEMS.
      */
-    void addBaseSymlink(File localAbsPath, File reposRelPath, SVNURL reposRootUrl, String reposUuid, long revision, SVNProperties props, long changedRev, SVNDate changedDate, String changedAuthor,
-            File target, SVNProperties davCache, SVNSkel conflict, SVNSkel workItem) throws SVNException;
+    public void addBaseSymlink(File localAbsPath, File reposRelPath, SVNURL reposRootUrl, String reposUuid, long revision, SVNProperties props, long changedRev, SVNDate changedDate,
+            String changedAuthor, File target, SVNProperties davCache, SVNSkel conflict, boolean updateActualProps, SVNProperties acutalProps, SVNSkel workItems) throws SVNException;
 
     /**
      * Create a node in the BASE tree that is present in name only.
@@ -468,7 +472,7 @@ public interface ISVNWCDb {
      * Any work items that are necessary as part of this node construction may
      * be passed in WORK_ITEMS.
      */
-    void addBaseAbsentNode(File localAbsPath, File reposRelPath, SVNURL reposRootUrl, String reposUuid, long revision, SVNWCDbKind kind, SVNWCDbStatus status, SVNSkel conflict, SVNSkel workItems)
+    void addBaseExcludedNode(File localAbsPath, File reposRelPath, SVNURL reposRootUrl, String reposUuid, long revision, SVNWCDbKind kind, SVNWCDbStatus status, SVNSkel conflict, SVNSkel workItems)
             throws SVNException;
 
     /**
@@ -581,7 +585,7 @@ public interface ISVNWCDb {
     class WCDbBaseInfo {
 
         public enum BaseInfoField {
-            status, kind, revision, reposRelPath, reposRootUrl, reposUuid, changedRev, changedDate, changedAuthor, lastModTime, depth, checksum, translatedSize, target, lock
+            status, kind, revision, reposRelPath, reposRootUrl, reposUuid, changedRev, changedDate, changedAuthor, lastModTime, depth, checksum, translatedSize, target, lock, updateRoot,
         }
 
         public SVNWCDbStatus status;
@@ -598,6 +602,7 @@ public interface ISVNWCDb {
         public SVNChecksum checksum;
         public long translatedSize;
         public File target;
+        public boolean updateRoot;
         public SVNWCDbLock lock;
     }
 
@@ -1599,5 +1604,8 @@ public interface ISVNWCDb {
     void addBaseNotPresentNode(File localAbspath, File reposRelPath, SVNURL reposRootUrl, String reposUuid, long revision, SVNWCDbKind kind, SVNSkel conflict, SVNSkel workItems) throws SVNException;
 
     void opSetPropertyConflictMarkerFileTemp(File localAbspath, String prejBasename) throws SVNException;
+
+    void opBumpRevisionPostUpdate(File localAbsPath, SVNDepth depth, File newReposRelPath, SVNURL newReposRootURL, String newReposUUID,
+            long newRevision, Collection<File> excludedPaths) throws SVNException;
 
 }

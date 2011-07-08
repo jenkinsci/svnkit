@@ -51,6 +51,7 @@ public enum SVNWCDbStatements {
     INSERT_WORKING_NODE_FROM_BASE(SVNWCDbInsertWorkingNodeFromBase.class),
     INSERT_WORKING_NODE_NORMAL_FROM_BASE(SVNWCDbInsertWorkingNodeNormalFromBase.class),
     INSERT_WORKING_NODE_NOT_PRESENT_FROM_BASE(SVNWCDbInsertWorkingNodeNotPresentFromBase.class),
+    INSERT_DELETE_FROM_BASE(SVNWCDbInsertDeleteFromBase.class),
     LOOK_FOR_WORK(SVNWCDbLookForWork.class),
     REVPROP_CREATE_SCHEMA(SVNFSFSRevPropCreateSchema.class),
     SELECT_ACTUAL_CONFLICT_VICTIMS(SVNWCDbSelectActualConflictVictims.class),
@@ -109,7 +110,7 @@ public enum SVNWCDbStatements {
     SELECT_OP_DEPTH_CHILDREN(SVNWCDbSelectOpDepthChildren.class),
     APPLY_CHANGES_TO_BASE_NODE(SVNWCDbApplyChangesToBaseNode.class),
     DELETE_ALL_WORKING_NODES(SVNWCDbDeleteAllWorkingNodes.class),
-    RESET_ACTUAL_WITH_CHANGELIST(SVNWCDbResetActualWithChangelist.class);
+    RESET_ACTUAL_WITH_CHANGELIST(SVNWCDbResetActualWithChangelist.class); 
 
     private Class<? extends SVNSqlJetStatement> statementClass;
 

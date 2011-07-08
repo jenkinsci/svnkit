@@ -329,7 +329,7 @@ public class SVNAmbientDepthFilterEditor17 implements ISVNEditor {
         info.hidden = false;
         switch (info.status) {
             case NotPresent:
-            case Absent:
+            case ServerExcluded:
             case Excluded:
                 info.hidden = true;
                 break;
