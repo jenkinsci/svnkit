@@ -1667,7 +1667,7 @@ public class SVNWCDb implements ISVNWCDb {
 
     public void opDelete(File localAbsPath) throws SVNException {
         // TODO
-        throw new UnsupportedOperationException();
+//        throw new UnsupportedOperationException();
     }
 
     public void opMarkConflict(File localAbsPath) throws SVNException {
@@ -2432,8 +2432,9 @@ public class SVNWCDb implements ISVNWCDb {
          * ### Transitional: accept MD-5 and look up the SHA-1. Return an error
          * if the pristine text is not in the store.
          */
-        if (sha1Checksum.getKind() != SVNChecksumKind.SHA1)
+        if (sha1Checksum.getKind() != SVNChecksumKind.SHA1) {
             sha1Checksum = getPristineSHA1(wcRootAbsPath, sha1Checksum);
+        }
         assert (sha1Checksum.getKind() == SVNChecksumKind.SHA1);
 
         final DirParsedInfo parsed = parseDir(wcRootAbsPath, Mode.ReadOnly);

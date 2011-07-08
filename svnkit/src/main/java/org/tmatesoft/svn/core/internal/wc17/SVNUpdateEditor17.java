@@ -46,7 +46,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumInputStream;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumOutputStream;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 import org.tmatesoft.svn.core.internal.wc17.SVNStatus17.ConflictedInfo;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.ISVNWCNodeHandler;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.MergeInfo;
@@ -1079,6 +1078,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         fb.changedDate = readInfo.changedDate;
         fb.changedRevison = readInfo.changedRev;
         fb.oldRevision = readInfo.revision;
+        fb.originalChecksum = readInfo.checksum;
         conflicted = readInfo.conflicted;
         
         if (readInfo.haveWork) {
