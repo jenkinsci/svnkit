@@ -2546,45 +2546,47 @@ public class SVNWCContext {
         boolean isDir = (kind == SVNWCDbKind.Dir);
         ISVNConflictHandler conflictResolver = getOptions().getConflictResolver();
         
-        for (Iterator<?> i = propChanges.nameSet().iterator(); i.hasNext();) {
-            checkCancelled();
-            String propname = (String) i.next();
-            SVNPropertyValue toVal = propChanges.getSVNPropertyValue(propname);
-            SVNPropertyValue fromVal = serverBaseProperties.getSVNPropertyValue(propname);
-            SVNPropertyValue baseVal = pristineProperties.getSVNPropertyValue(propname);
-            boolean conflictRemains;
-            if (baseMerge) {
-                if (toVal != null) {
-                    pristineProperties.put(propname, toVal);
+        if (propChanges != null) {
+            for (Iterator<?> i = propChanges.nameSet().iterator(); i.hasNext();) {
+                checkCancelled();
+                String propname = (String) i.next();
+                SVNPropertyValue toVal = propChanges.getSVNPropertyValue(propname);
+                SVNPropertyValue fromVal = serverBaseProperties.getSVNPropertyValue(propname);
+                SVNPropertyValue baseVal = pristineProperties.getSVNPropertyValue(propname);
+                boolean conflictRemains;
+                if (baseMerge) {
+                    if (toVal != null) {
+                        pristineProperties.put(propname, toVal);
+                    } else {
+                        pristineProperties.remove(propname);
+                    }
+                }
+                SVNPropertyValue mineVal = actualProperties.getSVNPropertyValue(propname);
+                state[0] = setPropMergeState(state[0], SVNStatusType.CHANGED);
+                if (fromVal == null) {
+                    MergePropStatusInfo mergePropStatus = applySinglePropAdd(state[0], localAbsPath, leftVersion, rightVersion, isDir, actualProperties, propname, baseVal, toVal, conflictResolver, dryRun);
+                    state[0] = mergePropStatus.state;
+                    conflictRemains = mergePropStatus.conflictRemains;
+                } else if (toVal == null) {
+                    MergePropStatusInfo mergePropStatus = applySinglePropDelete(state[0], localAbsPath, leftVersion, rightVersion, isDir, actualProperties, propname, baseVal, fromVal, conflictResolver, dryRun);
+                    state[0] = mergePropStatus.state;
+                    conflictRemains = mergePropStatus.conflictRemains;
                 } else {
-                    pristineProperties.remove(propname);
+                    MergePropStatusInfo mergePropStatus = applySinglePropChange(state[0], localAbsPath, leftVersion, rightVersion, isDir, actualProperties, propname, baseVal, fromVal, toVal, conflictResolver,
+                            dryRun);
+                    state[0] = mergePropStatus.state;
+                    conflictRemains = mergePropStatus.conflictRemains;
                 }
-            }
-            SVNPropertyValue mineVal = actualProperties.getSVNPropertyValue(propname);
-            state[0] = setPropMergeState(state[0], SVNStatusType.CHANGED);
-            if (fromVal == null) {
-                MergePropStatusInfo mergePropStatus = applySinglePropAdd(state[0], localAbsPath, leftVersion, rightVersion, isDir, actualProperties, propname, baseVal, toVal, conflictResolver, dryRun);
-                state[0] = mergePropStatus.state;
-                conflictRemains = mergePropStatus.conflictRemains;
-            } else if (toVal == null) {
-                MergePropStatusInfo mergePropStatus = applySinglePropDelete(state[0], localAbsPath, leftVersion, rightVersion, isDir, actualProperties, propname, baseVal, fromVal, conflictResolver, dryRun);
-                state[0] = mergePropStatus.state;
-                conflictRemains = mergePropStatus.conflictRemains;
-            } else {
-                MergePropStatusInfo mergePropStatus = applySinglePropChange(state[0], localAbsPath, leftVersion, rightVersion, isDir, actualProperties, propname, baseVal, fromVal, toVal, conflictResolver,
-                        dryRun);
-                state[0] = mergePropStatus.state;
-                conflictRemains = mergePropStatus.conflictRemains;
-            }
-            if (conflictRemains) {
-                state[0] = setPropMergeState(state[0], SVNStatusType.CONFLICTED);
-                if (dryRun) {
-                    continue;
+                if (conflictRemains) {
+                    state[0] = setPropMergeState(state[0], SVNStatusType.CONFLICTED);
+                    if (dryRun) {
+                        continue;
+                    }
+                    if (conflictSkel == null) {
+                        conflictSkel = SVNSkel.createEmptyList();
+                    }
+                    conflictSkelAddPropConflict(conflictSkel, propname, baseVal, mineVal, toVal, fromVal);
                 }
-                if (conflictSkel == null) {
-                    conflictSkel = SVNSkel.createEmptyList();
-                }
-                conflictSkelAddPropConflict(conflictSkel, propname, baseVal, mineVal, toVal, fromVal);
             }
         }
         
