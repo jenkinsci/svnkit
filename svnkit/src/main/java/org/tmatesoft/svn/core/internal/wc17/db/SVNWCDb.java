@@ -526,12 +526,12 @@ public class SVNWCDb implements ISVNWCDb {
         if (file == null) {
             return 0;
         }
-        String path = file.getAbsolutePath().replace(File.separatorChar, '/');
+        String path = SVNFileUtil.getFilePath(file);
         int n = 1;
         for(int i = 0; i < path.length(); i++) {
             if (path.charAt(i) == '/') {
                 n++;
-            }                
+            }
         }
         return n;
     }

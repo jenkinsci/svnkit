@@ -666,7 +666,8 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         if (myWcContext.getEventHandler() != null && !db.alreadyNotified && !db.addExisted) {
             SVNEventAction action;
             if (db.shadowed) {
-                action = SVNEventAction.UPDATE_ADD_DELETED;
+                // TODO add_shadowed.
+                action = SVNEventAction.UPDATE_ADD;
             } else if (db.obstructionFound) {
                 action = SVNEventAction.UPDATE_EXISTS;
             } else {
@@ -955,6 +956,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         SVNTreeConflictDescription treeConflict = null;
 
         if (!myIsCleanCheckout) {
+            kind = SVNFileType.getNodeKind(SVNFileType.getType(fb.localAbsolutePath));
             try {
                 WCDbInfo readInfo = myWcContext.getDb().readInfo(fb.localAbsolutePath, InfoField.status, InfoField.kind, InfoField.conflicted);
                 status = readInfo.status;
@@ -1046,6 +1048,17 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                 
                 assert (treeConflict != null);
             }        
+        }        
+        if (pb.parentBaton != null || myTargetBasename == null || "".equals(myTargetBasename) || !fb.localAbsolutePath.equals(myTargetAbspath)) {
+            if (pb.notPresentFiles == null) {
+                pb.notPresentFiles = new HashSet<String>();
+            }
+            pb.notPresentFiles.add(fb.name);
+        }
+        if (treeConflict != null) {
+            myWcContext.getDb().opSetTreeConflict(fb.localAbsolutePath, treeConflict);
+            fb.alreadyNotified = true;
+            doNotification(fb.localAbsolutePath, SVNNodeKind.FILE, SVNEventAction.TREE_CONFLICT);
         }
         return;
     }
@@ -1333,7 +1346,8 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         if (myWcContext.getEventHandler() != null && !fb.alreadyNotified && fb.edited) {
             SVNEventAction action = SVNEventAction.UPDATE_UPDATE;
             if (fb.shadowed) {
-                action = fb.addingFile ? SVNEventAction.UPDATE_ADD_DELETED : SVNEventAction.UPDATE_UPDATE_DELETED;
+                // TODO add/update_shadowed
+                action = fb.addingFile ? SVNEventAction.UPDATE_ADD : SVNEventAction.UPDATE_UPDATE;
             } else if (fb.obstructionFound || fb.addExisted) {
                 if (contentState != SVNStatusType.CONFLICTED) {
                     action = SVNEventAction.UPDATE_EXISTS;

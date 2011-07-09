@@ -11,12 +11,13 @@
  */
 package org.tmatesoft.svn.core.internal.wc17.db.statement;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetInsertStatement;
-import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectStatement;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectFieldsStatement;
 
 /**
  * INSERT INTO nodes (
@@ -28,11 +29,11 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectStatement;
  */
 public class SVNWCDbInsertDeleteFromBase extends SVNSqlJetInsertStatement {
 
-    protected SVNSqlJetSelectStatement select;
+    protected SVNSqlJetSelectFieldsStatement<SVNWCDbSchema.NODES__Fields> select;
 
     public SVNWCDbInsertDeleteFromBase(SVNSqlJetDb sDb) throws SVNException {
         super(sDb, SVNWCDbSchema.NODES);
-        select = new SVNSqlJetSelectStatement(sDb, SVNWCDbSchema.NODES) {
+        select = new SVNSqlJetSelectFieldsStatement<SVNWCDbSchema.NODES__Fields>(sDb, SVNWCDbSchema.NODES) {
 
             protected Object[] getWhere() throws SVNException {
                 return new Object[] {
@@ -51,6 +52,15 @@ public class SVNWCDbInsertDeleteFromBase extends SVNSqlJetInsertStatement {
                         && getColumnLong(SVNWCDbSchema.NODES__Fields.op_depth) == 0;
 
             };
+            
+            protected void defineFields() {
+                fields.add(SVNWCDbSchema.NODES__Fields.wc_id);
+                fields.add(SVNWCDbSchema.NODES__Fields.local_relpath);
+                fields.add(SVNWCDbSchema.NODES__Fields.op_depth);
+                fields.add(SVNWCDbSchema.NODES__Fields.parent_relpath);
+                fields.add(SVNWCDbSchema.NODES__Fields.presence);
+                fields.add(SVNWCDbSchema.NODES__Fields.kind);
+            }
 
         };
     }
@@ -72,8 +82,16 @@ public class SVNWCDbInsertDeleteFromBase extends SVNSqlJetInsertStatement {
     @Override
     protected Map<String, Object> getInsertValues() throws SVNException {
         Map<String, Object> rowValues = select.getRowValues();
-        rowValues.put(SVNWCDbSchema.NODES__Fields.op_depth.toString(), getBind(3));
-        return rowValues;
+        Map<String, Object> insertValues = new HashMap<String, Object>();
+        
+        insertValues.put(SVNWCDbSchema.NODES__Fields.op_depth.toString(), getBind(3));
+        insertValues.put(SVNWCDbSchema.NODES__Fields.presence.toString(), "base-deleted");
+        insertValues.put(SVNWCDbSchema.NODES__Fields.wc_id.toString(), getBind(1));
+        insertValues.put(SVNWCDbSchema.NODES__Fields.local_relpath.toString(), getBind(2));
+        insertValues.put(SVNWCDbSchema.NODES__Fields.parent_relpath.toString(), rowValues.get(SVNWCDbSchema.NODES__Fields.parent_relpath.toString()));
+        insertValues.put(SVNWCDbSchema.NODES__Fields.kind.toString(), rowValues.get(SVNWCDbSchema.NODES__Fields.kind.toString()));
+        return insertValues;
     }
+
 
 }
