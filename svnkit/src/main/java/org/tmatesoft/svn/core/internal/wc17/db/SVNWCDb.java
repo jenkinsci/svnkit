@@ -30,8 +30,6 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Level;
 
-import javax.sound.midi.MidiDevice.Info;
-
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -4140,6 +4138,8 @@ public class SVNWCDb implements ISVNWCDb {
         ibb.target = null;
         ibb.conflict = conflict;
         ibb.workItems = workItems;
+        ibb.reposRootURL = reposRootUrl;
+        ibb.reposUUID = reposUuid;
         
         ibb.wcId = pdh.getWCRoot().getWcId();
         ibb.localRelpath = localRelpath;
