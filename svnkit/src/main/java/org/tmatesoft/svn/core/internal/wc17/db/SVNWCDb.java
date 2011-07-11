@@ -2148,12 +2148,16 @@ public class SVNWCDb implements ISVNWCDb {
         final EnumSet<InfoField> f = getInfoFields(InfoField.class, fields);
         if (f.contains(InfoField.reposRootUrl) || f.contains(InfoField.reposUuid)) {
             ReposInfo reposInfo = fetchReposInfo(pdh.getWCRoot().getSDb(), info.reposId);
-            info.reposRootUrl = f.contains(InfoField.reposRootUrl) ? SVNURL.parseURIEncoded(reposInfo.reposRootUrl) : null;
+            if (reposInfo.reposRootUrl != null) {
+                info.reposRootUrl = f.contains(InfoField.reposRootUrl) ? SVNURL.parseURIEncoded(reposInfo.reposRootUrl) : null;
+            }
             info.reposUuid = f.contains(InfoField.reposUuid) ? reposInfo.reposUuid : null;
         }
         if (f.contains(InfoField.originalRootUrl) || f.contains(InfoField.originalUuid)) {
             ReposInfo reposInfo = fetchReposInfo(pdh.getWCRoot().getSDb(), info.originalReposId);
-            info.originalRootUrl = f.contains(InfoField.originalRootUrl) ? SVNURL.parseURIEncoded(reposInfo.reposRootUrl) : null;
+            if (reposInfo.reposRootUrl != null) {
+                info.originalRootUrl = f.contains(InfoField.originalRootUrl) ? SVNURL.parseURIEncoded(reposInfo.reposRootUrl) : null;
+            }
             info.originalUuid = f.contains(InfoField.originalUuid) ? reposInfo.reposUuid : null;
         }
         return info;
