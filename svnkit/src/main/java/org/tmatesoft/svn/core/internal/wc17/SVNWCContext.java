@@ -14,7 +14,6 @@ package org.tmatesoft.svn.core.internal.wc17;
 import static org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.isAbsolute;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -48,7 +47,6 @@ import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
-import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.internal.wc.FSMergerBySequence;
 import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
 import org.tmatesoft.svn.core.internal.wc.SVNChecksumKind;
@@ -3191,7 +3189,7 @@ public class SVNWCContext {
                         .getConflictResolver());
             }
         } else {
-            info = mergeTextFile(leftAbspath, rightAbspath, targetAbspath, leftLabel, rightLabel, targetLabel, dryRun, options, leftVersion, rightVersion, wriAbspath, detranslatedTargetAbspath,
+            info = mergeTextFile(leftAbspath, rightAbspath, targetAbspath, leftLabel, rightLabel, targetLabel, dryRun, options, leftVersion, rightVersion, null, detranslatedTargetAbspath,
                     mimeprop, getOptions().getConflictResolver());
         }
         if (!dryRun) {
@@ -3320,7 +3318,6 @@ public class SVNWCContext {
             throws SVNException {
         MergeInfo info = new MergeInfo();
         info.workItems = null;
-        File dirAbspath = SVNFileUtil.getFileDir(targetAbspath);
         String baseName = SVNFileUtil.getFileName(targetAbspath);
         File tempDir = db.getWCRootTempDir(targetAbspath);
         File resultTarget = SVNFileUtil.createUniqueFile(tempDir, baseName, ".tmp", false);
@@ -3335,7 +3332,7 @@ public class SVNWCContext {
                 File rightCopy = preserveInfo.rightCopy;
                 File targetCopy = preserveInfo.targetCopy;
                 info.workItems = wqMerge(info.workItems, workItem);
-                workItem = wqBuildSetTextConflictMarkersTmp(targetAbspath, SVNFileUtil.getFileName(leftCopy), SVNFileUtil.getFileName(rightCopy), SVNFileUtil.getFileName(targetCopy));
+                workItem = wqBuildSetTextConflictMarkersTmp(targetAbspath, leftCopy, rightCopy, targetCopy);
                 info.workItems = wqMerge(info.workItems, workItem);
             }
             if (info.mergeOutcome == SVNStatusType.MERGED) {
@@ -3600,8 +3597,7 @@ public class SVNWCContext {
         MergeInfo info = new MergeInfo();
         info.workItems = null;
         File leftCopy, rightCopy;
-        String leftBase, rightBase;
-        String conflictWrk;
+        File conflictWrk;
         SVNSkel workItem;
         File mergeDirpath = SVNFileUtil.getFileDir(targetAbspath);
         String mergeFilename = SVNFileUtil.getFileName(targetAbspath);
@@ -3644,13 +3640,11 @@ public class SVNWCContext {
         if (!targetAbspath.equals(detranslatedTargetAbspath)) {
             File mineCopy = SVNFileUtil.createUniqueFile(mergeDirpath, mergeFilename, targetLabel, true);
             info.workItems = wqBuildFileMove(detranslatedTargetAbspath, mineCopy);
-            conflictWrk = SVNPathUtil.getRelativePath(mergeDirpath.getPath(), mineCopy.getPath());
+            conflictWrk = mineCopy;
         } else {
             conflictWrk = null;
         }
-        leftBase = SVNFileUtil.getFileName(leftCopy);
-        rightBase = SVNFileUtil.getFileName(rightCopy);
-        workItem = wqBuildSetTextConflictMarkersTmp(targetAbspath, leftBase, rightBase, conflictWrk);
+        workItem = wqBuildSetTextConflictMarkersTmp(targetAbspath, leftCopy, rightCopy, conflictWrk);
         info.workItems = wqMerge(info.workItems, workItem);
         info.mergeOutcome = SVNStatusType.CONFLICTED;
         return info;
@@ -3692,12 +3686,17 @@ public class SVNWCContext {
         return result;
     }
 
-    public SVNSkel wqBuildSetTextConflictMarkersTmp(File localAbspath, String oldBasename, String newBasename, String wrkBasename) throws SVNException {
+    public SVNSkel wqBuildSetTextConflictMarkersTmp(File localAbspath, File old, File neo, File wrk) throws SVNException {
         assert (SVNFileUtil.isAbsolute(localAbspath));
         SVNSkel workItem = SVNSkel.createEmptyList();
-        workItem.prependString(wrkBasename != null ? wrkBasename : "");
-        workItem.prependString(newBasename != null ? newBasename : "");
-        workItem.prependString(oldBasename != null ? oldBasename : "");
+        File wcRoot = getDb().getWCRoot(localAbspath);
+        String oldPath = old != null ? SVNWCUtils.getPathAsChild(wcRoot, old) : null;
+        String newPath = neo != null ? SVNWCUtils.getPathAsChild(wcRoot, neo) : null;
+        String wrkPath = wrk != null ? SVNWCUtils.getPathAsChild(wcRoot, wrk) : null;
+        
+        workItem.prependString(wrkPath != null ? wrkPath : "");
+        workItem.prependString(newPath != null ? newPath : "");
+        workItem.prependString(oldPath != null ? oldPath : "");
         workItem.prependString(localAbspath.getPath());
         workItem.prependString(WorkQueueOperation.TMP_SET_TEXT_CONFLICT_MARKERS.getOpName());
         SVNSkel result = SVNSkel.createEmptyList();

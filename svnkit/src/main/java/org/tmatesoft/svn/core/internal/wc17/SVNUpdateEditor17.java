@@ -1238,6 +1238,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                 MergeFileInfo fileInfo = null;                
                 try {
                     fileInfo = mergeFile(fb, currentActualProps, fb.changedDate);
+                    contentState = fileInfo.contentState;
                     installFrom = fileInfo.installFrom;
                     installPristine = fileInfo.installPristine;
                 } catch (SVNException e) {

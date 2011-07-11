@@ -402,7 +402,7 @@ public class SVNWCDb implements ISVNWCDb {
                     addWork = true;
                     refetchDepth = true;
                 }
-                selectDepth = getRelPathDepth(localRelPath);
+                selectDepth = SVNWCUtils.relpathDepth(localRelPath);
             } else {
                 addWork = true;
                 selectDepth = readOpDepth(root, localRelPath);
@@ -571,27 +571,13 @@ public class SVNWCDb implements ISVNWCDb {
             
             if (insertBaseDeleted) {
                 stmt = db.getStatement(SVNWCDbStatements.INSERT_DELETE_FROM_BASE);
-                stmt.bindf("isi", wcId, localRelpath, getRelPathDepth(localRelpath));
+                stmt.bindf("isi", wcId, localRelpath, SVNWCUtils.relpathDepth(localRelpath));
                 stmt.done();                
             }
             
             addWorkItems(db, workItems);
         }
 
-    }
-    
-    private static int getRelPathDepth(File file) {
-        if (file == null) {
-            return 0;
-        }
-        String path = SVNFileUtil.getFilePath(file);
-        int n = 1;
-        for(int i = 0; i < path.length(); i++) {
-            if (path.charAt(i) == '/') {
-                n++;
-            }
-        }
-        return n;
     }
 
     public void insertIncompleteChildren(SVNSqlJetDb db, long wcId, File localRelpath, long revision, List<File> children, int opDepth) throws SVNException {
@@ -1732,7 +1718,7 @@ public class SVNWCDb implements ISVNWCDb {
         Delete deleteTxn = new Delete();
         deleteTxn.root = pdh.getWCRoot();
         deleteTxn.localRelPath = localRelpath;
-        deleteTxn.deleteDepth = getRelPathDepth(localRelpath);
+        deleteTxn.deleteDepth = SVNWCUtils.relpathDepth(localRelpath); 
         
         pdh.flushEntries(localAbsPath);
         pdh.getWCRoot().getSDb().runTransaction(deleteTxn);
@@ -1930,8 +1916,6 @@ public class SVNWCDb implements ISVNWCDb {
     public void opSetTreeConflict(File localAbspath, SVNTreeConflictDescription treeConflict) throws SVNException {
         assert (isAbsolute(localAbspath));
         SetTreeConflict stb = new SetTreeConflict();
-        stb.localAbspath = localAbspath;
-        stb.parentAbspath = SVNFileUtil.getFileDir(localAbspath);
         stb.treeConflict = treeConflict;
         DirParsedInfo parseDir = parseDir(localAbspath, Mode.ReadWrite);
         stb.localRelpath = parseDir.localRelPath;
@@ -1945,11 +1929,9 @@ public class SVNWCDb implements ISVNWCDb {
 
     private class SetTreeConflict implements SVNSqlJetTransaction {
 
-        public File localAbspath;
         public File localRelpath;
         public long wcId;
         public File parentRelpath;
-        public File parentAbspath;
         public SVNTreeConflictDescription treeConflict;
 
         public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
@@ -2043,7 +2025,6 @@ public class SVNWCDb implements ISVNWCDb {
         final SVNSqlJetDb sDb = pdh.getWCRoot().getSDb();
 
         SVNSqlJetStatement stmt;
-        String tree_conflict_data;
 
         List<String> victims = new ArrayList<String>();
 
@@ -2343,7 +2324,7 @@ public class SVNWCDb implements ISVNWCDb {
                     info.haveWork = opDepth != 0;
                 }
                 if (f.contains(InfoField.opRoot)) {
-                    info.opRoot = opDepth > 0 && opDepth == getRelPathDepth(localRelPath);
+                    info.opRoot = opDepth > 0 && opDepth == SVNWCUtils.relpathDepth(localRelPath);
                 }
                 if (f.contains(InfoField.haveBase) || f.contains(InfoField.haveWork)) {
                     while(opDepth != 0) {
