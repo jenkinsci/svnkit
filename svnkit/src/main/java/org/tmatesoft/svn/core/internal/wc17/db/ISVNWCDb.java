@@ -1068,7 +1068,7 @@ public interface ISVNWCDb {
     class WCDbInfo {
 
         public enum InfoField {
-            status, kind, revision, reposRelPath, reposRootUrl, reposUuid, changedRev, changedDate, changedAuthor, lastModTime, depth, checksum, translatedSize, target, changelist, originalReposRelpath, originalRootUrl, originalUuid, originalRevision, textMod, propsMod, conflicted, lock, haveBase, haveWork;
+            status, kind, revision, reposRelPath, reposId, reposRootUrl, reposUuid, changedRev, changedDate, changedAuthor, lastModTime, depth, checksum, translatedSize, target, changelist, originalReposRelpath, originalRootUrl, originalUuid, originalRevision, textMod, propsMod, conflicted, lock, haveBase, haveWork, opRoot, originalReposId, hadProps, haveMoreWork;
         }
 
         /* ### derived */
@@ -1082,6 +1082,7 @@ public interface ISVNWCDb {
         public SVNDate changedDate;
         public String changedAuthor;
         public long lastModTime;
+        public long reposId;
 
         /* ### dirs only */
         public SVNDepth depth;
@@ -1095,6 +1096,7 @@ public interface ISVNWCDb {
         public SVNURL originalRootUrl;
         public String originalUuid;
         public long originalRevision;
+        public long originalReposId;
 
         /* ### the followed are derived fields */
         /* ### possibly modified */
@@ -1104,6 +1106,9 @@ public interface ISVNWCDb {
         public SVNWCDbLock lock;
 
         public boolean haveBase, haveWork;
+        public boolean opRoot;
+        public boolean hadProps;
+        public boolean haveMoreWork;
 
     }
 

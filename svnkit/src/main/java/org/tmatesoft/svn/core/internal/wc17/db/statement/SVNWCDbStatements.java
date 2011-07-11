@@ -26,11 +26,14 @@ public enum SVNWCDbStatements {
     DELETE_ACTUAL_NODE(SVNWCDbDeleteActualNode.class),
     DELETE_BASE_NODE(SVNWCDbDeleteBaseNode.class),
     DELETE_LOCK,
+    DELETE_WC_LOCK_ORPHAN_RECURSIVE(SVNWCDbDeleteLockOrphanRecursive.class),
     DELETE_NODES(SVNWCDbDeleteNodes.class),
     DELETE_PRISTINE(SVNWCDbDeletePristine.class),
     DELETE_WC_LOCK(SVNWCDbDeleteWCLock.class),
     DELETE_WORK_ITEM(SVNWCDbDeleteWorkItem.class),
     DELETE_WORKING_NODE(SVNWCDbDeleteWorkingNode.class),
+    DELETE_NODES_RECURSIVE(SVNWCDbDeleteNodesRecursive.class),
+    DELETE_ACTUAL_NODE_LEAVING_CHANGELIST_RECURSIVE(SVNWCDbDeleteActualNodeLeavingChangelistRecursive.class),
     DETERMINE_TREE_FOR_RECORDING(SVNWCDbDetermineTreeForRecording.class),
     FIND_WC_LOCK(SVNWCDbFindWCLock.class),
     FSFS_GET_REVPROP(SVNFSFSRevPropGet.class),
@@ -51,7 +54,9 @@ public enum SVNWCDbStatements {
     INSERT_WORKING_NODE_FROM_BASE(SVNWCDbInsertWorkingNodeFromBase.class),
     INSERT_WORKING_NODE_NORMAL_FROM_BASE(SVNWCDbInsertWorkingNodeNormalFromBase.class),
     INSERT_WORKING_NODE_NOT_PRESENT_FROM_BASE(SVNWCDbInsertWorkingNodeNotPresentFromBase.class),
+    INSERT_DELETE_FROM_NODE_RECURSIVE(SVNWCDbInsertDeleteFromNodeRecursive.class),
     INSERT_DELETE_FROM_BASE(SVNWCDbInsertDeleteFromBase.class),
+    INSTALL_WORKING_NODE_FOR_DELETE(SVNWCDbInstallWorkingNodeForDelete.class),
     LOOK_FOR_WORK(SVNWCDbLookForWork.class),
     REVPROP_CREATE_SCHEMA(SVNFSFSRevPropCreateSchema.class),
     SELECT_ACTUAL_CONFLICT_VICTIMS(SVNWCDbSelectActualConflictVictims.class),
@@ -76,6 +81,8 @@ public enum SVNWCDbStatements {
     SELECT_WC_LOCK(SVNWCDbSelectWCLock.class),
     SELECT_WCROOT_NULL(SVNWCDbSelectWCRootNull.class),
     SELECT_WORK_ITEM(SVNWCDbSelectWorkItem.class),
+    SELECT_NODE_INFO(SVNWCDbSelectNodeInfo.class),
+    SELECT_NODE_INFO_WITH_LOCK(SVNWCDbSelectNodeInfoWithLock.class),
     SELECT_WORKING_NODE(SVNWCDbSelectWorkingNode.class),
     SELECT_WORKING_NODE_CHILDREN(SVNWCDbSelectWorkingNodeChildren.class),
     SELECT_WORKING_OP_DEPTH_RECURSIVE,
@@ -101,6 +108,7 @@ public enum SVNWCDbStatements {
     SELECT_LOWEST_WORKING_NODE(SVNWCDbSelectLowestWorkingNode.class),
     CLEAR_TEXT_CONFLICT(SVNWCDbClearTextConflict.class),
     CLEAR_PROPS_CONFLICT(SVNWCDbClearPropsConflict.class),
+    CLEAR_ACTUAL_NODE_LEAVING_CHANGELIST_RECURSIVE(SVNWCDbClearActualNodeLeavingChangelistRecursive.class),
     DELETE_LOWEST_WORKING_NODE(SVNWCDbDeleteLowestWorkingNode.class),
     DELETE_ACTUAL_NODE_WITHOUT_CONFLICT(SVNWCDbDeleteActualNodeWithoutConflict.class),
     SELECT_ACTUAL_CHILDREN_TREE_CONFLICT(SVNWCDbSelectActualChildrenTreeConflict.class),
@@ -110,7 +118,8 @@ public enum SVNWCDbStatements {
     SELECT_OP_DEPTH_CHILDREN(SVNWCDbSelectOpDepthChildren.class),
     APPLY_CHANGES_TO_BASE_NODE(SVNWCDbApplyChangesToBaseNode.class),
     DELETE_ALL_WORKING_NODES(SVNWCDbDeleteAllWorkingNodes.class),
-    RESET_ACTUAL_WITH_CHANGELIST(SVNWCDbResetActualWithChangelist.class); 
+    RESET_ACTUAL_WITH_CHANGELIST(SVNWCDbResetActualWithChangelist.class);
+    
 
     private Class<? extends SVNSqlJetStatement> statementClass;
 

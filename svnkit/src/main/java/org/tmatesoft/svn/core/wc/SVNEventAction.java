@@ -355,31 +355,51 @@ public class SVNEventAction {
     /**
      * @since 1.4, SVN 1.7
      */
-    public static final SVNEventAction PATCH_REJECTED_HUNK = new SVNEventAction(41, "patch_rejected_hunk");
+    public static final SVNEventAction UPDATE_STARTED = new SVNEventAction(41, "update_started");
+    
+    /**
+     * @since 1.4, SVN 1.7
+     */
+    public static final SVNEventAction PATCH_REJECTED_HUNK = new SVNEventAction(42, "patch_rejected_hunk");
 
     /**
      * @since 1.4, SVN 1.7
      */
-    public static final SVNEventAction PATCH_APPLIED_HUNK = new SVNEventAction(42, "patch_applied_hunk");
+    public static final SVNEventAction PATCH_APPLIED_HUNK = new SVNEventAction(43, "patch_applied_hunk");
 
     /**
      * @since 1.4, SVN 1.7
      */
-    public static final SVNEventAction UPDATE_OBSTRUCTION = new SVNEventAction(43, "update_obstruction");
+    public static final SVNEventAction UPDATE_SKIP_OBSTRUCTION = new SVNEventAction(44, "update_skip_obstruction");
+    
+    /**
+     * @since 1.4, SVN 1.7
+     */
+    public static final SVNEventAction UPDATE_SKIP_WORKING_ONLY = new SVNEventAction(45, "update_skip_obstruction");
 
     /**
      * @since 1.4, SVN 1.7
      */
-    public static final SVNEventAction UPDATE_ADD_DELETED = new SVNEventAction(44, "update_add_deleted");
+    public static final SVNEventAction UPDATE_SKIP_ACCESS_DENINED = new SVNEventAction(46, "update_skip_obstruction");
+    
+    /**
+     * @since 1.4, SVN 1.7
+     */
+    public static final SVNEventAction UPDATE_EXTERNAL_REMOVED = new SVNEventAction(47, "update_skip_obstruction");
 
     /**
      * @since 1.4, SVN 1.7
      */
-    public static final SVNEventAction UPDATE_UPDATE_DELETED = new SVNEventAction(45, "update_update_deleted");
+    public static final SVNEventAction UPDATE_SHADOWED_ADD = new SVNEventAction(48, "update_add_deleted");
 
     /**
      * @since 1.4, SVN 1.7
      */
-    public static final SVNEventAction UPDATE_STARTED = new SVNEventAction(46, "update_started");
+    public static final SVNEventAction UPDATE_SHADOWED_UPDATE = new SVNEventAction(49, "update_update_deleted");
+
+    /**
+     * @since 1.4, SVN 1.7
+     */
+    public static final SVNEventAction UPDATE_SHADOWED_DELETE = new SVNEventAction(50, "update_update_deleted");
 
 }

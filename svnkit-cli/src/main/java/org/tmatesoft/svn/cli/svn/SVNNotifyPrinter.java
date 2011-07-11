@@ -101,7 +101,16 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
             } else {
                 buffer.append("Skipped '" + path + "'\n");
             }
-        } else if (event.getAction() == SVNEventAction.UPDATE_DELETE || event.getAction() == SVNEventAction.UPDATE_ADD_DELETED || event.getAction() == SVNEventAction.UPDATE_UPDATE_DELETED ) {
+        } else if (event.getAction() == SVNEventAction.UPDATE_SKIP_OBSTRUCTION) {
+            mySkippedPaths++;
+            buffer.append("Skipped '" + path + "' -- An obstructing working copy was found\n");
+        } else if (event.getAction() == SVNEventAction.UPDATE_SKIP_WORKING_ONLY) {
+            mySkippedPaths++;
+            buffer.append("Skipped '" + path + "' -- Has no versioned parent\n");
+        } else if (event.getAction() == SVNEventAction.UPDATE_SKIP_ACCESS_DENINED) {
+            mySkippedPaths++;
+            buffer.append("Skipped '" + path + "' -- Access denied\n");
+        } else if (event.getAction() == SVNEventAction.UPDATE_DELETE) {
             myIsChangesReceived = true;
             buffer.append("D    " + path + "\n");
         } else if (event.getAction() == SVNEventAction.UPDATE_REPLACE) {
@@ -236,6 +245,21 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
                 myTreeConflicts++;
             }
             buffer.append("   C ");
+            buffer.append(path);
+            buffer.append("\n");
+        } else if (event.getAction() == SVNEventAction.UPDATE_SHADOWED_ADD) {
+            myIsChangesReceived = true;
+            buffer.append("   A ");
+            buffer.append(path);
+            buffer.append("\n");
+        } else if (event.getAction() == SVNEventAction.UPDATE_SHADOWED_UPDATE) {
+            myIsChangesReceived = true;
+            buffer.append("   U ");
+            buffer.append(path);
+            buffer.append("\n");
+        } else if (event.getAction() == SVNEventAction.UPDATE_SHADOWED_DELETE) {
+            myIsChangesReceived = true;
+            buffer.append("   D ");
             buffer.append(path);
             buffer.append("\n");
         } else if (event.getAction() == SVNEventAction.RESTORE) {

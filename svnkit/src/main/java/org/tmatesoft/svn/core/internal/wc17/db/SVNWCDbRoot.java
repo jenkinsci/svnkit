@@ -21,6 +21,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -156,6 +157,10 @@ public class SVNWCDbRoot {
     public static int upgrade(File absPath, int format) {
         // TODO
         return 0;
+    }
+
+    public File getAbsPath(File localRelPath) {
+        return SVNFileUtil.createFilePath(getAbsPath(), localRelPath);
     }
 
 }
