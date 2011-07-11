@@ -2618,7 +2618,7 @@ public class SVNWCContext {
                     rejectFilename = SVNFileUtil.getFileName(localAbsPath);
                 }
                 rejectPath = SVNFileUtil.createUniqueFile(rejectDirpath, rejectFilename, PROP_REJ_EXT, false);
-                SVNSkel workItem = wqBuildSetPropertyConflictMarkerTemp(localAbsPath, rejectFilename);
+                SVNSkel workItem = wqBuildSetPropertyConflictMarkerTemp(localAbsPath, rejectPath);
                 workItems = wqMerge(workItems, workItem);
             }
             SVNSkel workItem = wqBuildPrejInstall(localAbsPath, conflictSkel);
@@ -2628,99 +2628,6 @@ public class SVNWCContext {
         return workItems;
     }
 
-    public SVNStatusType mergeProperties(SVNProperties newBaseProps, SVNProperties newActualProps, File localAbspath, SVNWCDbKind kind, SVNConflictVersion leftVersion,
-            SVNConflictVersion rightVersion, SVNProperties serverBaseprops, SVNProperties baseProps, SVNProperties workingProps, SVNProperties propChanges, boolean baseMerge, boolean dryRun)
-            throws SVNException {
-        assert (baseProps != null);
-        assert (workingProps != null);
-        SVNSkel conflictSkel = null;
-        boolean isDir = (kind == SVNWCDbKind.Dir);
-        SVNStatusType state = SVNStatusType.UNCHANGED;
-        ISVNConflictHandler conflictResolver = getOptions().getConflictResolver();
-        if (serverBaseprops == null) {
-            serverBaseprops = baseProps;
-        }
-        for (Iterator<String> i = propChanges.nameSet().iterator(); i.hasNext();) {
-            checkCancelled();
-            String propname = i.next();
-            SVNPropertyValue toVal = propChanges.getSVNPropertyValue(propname);
-            SVNPropertyValue fromVal = serverBaseprops.getSVNPropertyValue(propname);
-            SVNPropertyValue baseVal = baseProps.getSVNPropertyValue(propname);
-            boolean conflictRemains;
-            if (baseMerge) {
-                if (toVal != null) {
-                    baseProps.put(propname, toVal);
-                } else {
-                    baseProps.remove(propname);
-                }
-            }
-            SVNPropertyValue mineVal = workingProps.getSVNPropertyValue(propname);
-            state = setPropMergeState(state, SVNStatusType.CHANGED);
-            if (fromVal == null) {
-                MergePropStatusInfo mergePropStatus = applySinglePropAdd(state, localAbspath, leftVersion, rightVersion, isDir, workingProps, propname, baseVal, toVal, conflictResolver, dryRun);
-                state = mergePropStatus.state;
-                conflictRemains = mergePropStatus.conflictRemains;
-            } else if (toVal == null) {
-                MergePropStatusInfo mergePropStatus = applySinglePropDelete(state, localAbspath, leftVersion, rightVersion, isDir, workingProps, propname, baseVal, fromVal, conflictResolver, dryRun);
-                state = mergePropStatus.state;
-                conflictRemains = mergePropStatus.conflictRemains;
-            } else {
-                MergePropStatusInfo mergePropStatus = applySinglePropChange(state, localAbspath, leftVersion, rightVersion, isDir, workingProps, propname, baseVal, fromVal, toVal, conflictResolver,
-                        dryRun);
-                state = mergePropStatus.state;
-                conflictRemains = mergePropStatus.conflictRemains;
-            }
-            if (conflictRemains) {
-                state = setPropMergeState(state, SVNStatusType.CONFLICTED);
-                if (dryRun) {
-                    continue;
-                }
-                if (conflictSkel == null) {
-                    conflictSkel = SVNSkel.createEmptyList();
-                }
-                conflictSkelAddPropConflict(conflictSkel, propname, baseVal, mineVal, toVal, fromVal);
-            }
-        }
-        if (dryRun) {
-            return state;
-        }
-        if (newBaseProps == null) {
-            newBaseProps = new SVNProperties(baseProps);
-        } else {
-            newBaseProps.clear();
-            newBaseProps.putAll(baseProps);
-        }
-        if (newActualProps == null) {
-            newActualProps = new SVNProperties(workingProps);
-        } else {
-            newActualProps.clear();
-            newActualProps.putAll(workingProps);
-        }
-        if (conflictSkel != null) {
-            File rejectPath = getPrejfileAbspath(localAbspath);
-            if (rejectPath == null) {
-                File rejectDirpath;
-                String rejectFilename;
-                if (isDir) {
-                    rejectDirpath = localAbspath;
-                    rejectFilename = THIS_DIR_PREJ;
-                } else {
-                    rejectDirpath = SVNFileUtil.getFileDir(localAbspath);
-                    rejectFilename = SVNFileUtil.getFileName(localAbspath);
-                }
-                rejectPath = SVNFileUtil.createUniqueFile(rejectDirpath, rejectFilename, PROP_REJ_EXT, false);
-            }
-            {
-                SVNSkel workItem = wqBuildSetPropertyConflictMarkerTemp(localAbspath, SVNFileUtil.getFileName(rejectPath));
-                db.addWorkQueue(localAbspath, workItem);
-            }
-            {
-                SVNSkel workItem = wqBuildPrejInstall(localAbspath, conflictSkel);
-                db.addWorkQueue(localAbspath, workItem);
-            }
-        }
-        return state;
-    }
 
     private File getPrejfileAbspath(File localAbspath) throws SVNException {
         List<SVNConflictDescription> conflicts = db.readConflicts(localAbspath);
@@ -3781,10 +3688,15 @@ public class SVNWCContext {
         return result;
     }
 
-    public SVNSkel wqBuildSetPropertyConflictMarkerTemp(File localAbspath, String prejBasename) throws SVNException {
+    public SVNSkel wqBuildSetPropertyConflictMarkerTemp(File localAbspath, File prejFile) throws SVNException {
         assert (SVNFileUtil.isAbsolute(localAbspath));
         SVNSkel workItem = SVNSkel.createEmptyList();
-        workItem.prependString(prejBasename != null ? prejBasename : "");
+        File wcRoot = getDb().getWCRoot(localAbspath);
+        String prejPath = null;
+        if (prejFile != null) {
+            prejPath = SVNWCUtils.getPathAsChild(wcRoot, prejFile);
+        }
+        workItem.prependString(prejPath != null ? prejPath : "");
         workItem.prependString(localAbspath.getPath());
         workItem.prependString(WorkQueueOperation.TMP_SET_PROPERTY_CONFLICT_MARKER.getOpName());
         SVNSkel result = SVNSkel.createEmptyList();
