@@ -49,6 +49,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc17.SVNStatus17.ConflictedInfo;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.ISVNWCNodeHandler;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.MergeInfo;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.MergePropertiesInfo;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.TranslateInfo;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.WritableBaseInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
@@ -811,8 +812,11 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                     actualProps = baseProps;
                 }
             }
-            SVNSkel workItem = myWcContext.mergeProperties2(propStatus, newBaseProps, newActualProps, db.localAbsolutePath, SVNWCDbKind.Dir, null, null, null, baseProps, actualProps, regularProps, true, false);
-            allWorkItems = myWcContext.wqMerge(allWorkItems, workItem);            
+            MergePropertiesInfo mergeProperiesInfo = myWcContext.mergeProperties2(null, db.localAbsolutePath, SVNWCDbKind.Dir, null, null, null, baseProps, actualProps, regularProps, true, false);
+            newActualProps = mergeProperiesInfo.newActualProperties;
+            newBaseProps = mergeProperiesInfo.newBaseProperties;
+            propStatus[0] = mergeProperiesInfo.mergeOutcome;
+            allWorkItems = myWcContext.wqMerge(allWorkItems, mergeProperiesInfo.workItems);            
         }
         AccumulatedChangeInfo change = accumulateLastChange(db.localAbsolutePath, entryProps);
         newChangedRev = change.changedRev;
@@ -1227,9 +1231,15 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         boolean keepRecordedInfo = false;
         if (!fb.shadowed) {
             boolean installPristine = false;
-            SVNSkel workItem = myWcContext.mergeProperties2(propState, newBaseProps, newActualProps, fb.localAbsolutePath, 
+            MergePropertiesInfo info = new MergePropertiesInfo();
+            info.newActualProperties = newActualProps;
+            info.newBaseProperties = newBaseProps;
+            info = myWcContext.mergeProperties2(info, fb.localAbsolutePath, 
                     SVNWCDbKind.File, null, null, null, currentBaseProps, currentActualProps, regularProps, true, false);
-            allWorkItems = myWcContext.wqMerge(allWorkItems, workItem);
+            newActualProps = info.newActualProperties;
+            newBaseProps = info.newBaseProperties;
+            propState[0] = info.mergeOutcome;
+            allWorkItems = myWcContext.wqMerge(allWorkItems, info.workItems);
 
             File installFrom = null;
             if (!fb.obstructionFound) {
@@ -1285,9 +1295,14 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             } else {
                 fakeActualProperties = currentBaseProps;
             }
-            
-            SVNSkel workItem = myWcContext.mergeProperties2(propState, newBaseProps, newActualProps, fb.localAbsolutePath, SVNWCDbKind.File, null, null, null, currentBaseProps, fakeActualProperties, regularProps, true, false);
-            allWorkItems = myWcContext.wqMerge(allWorkItems, workItem);
+            MergePropertiesInfo info = new MergePropertiesInfo();
+            info.newActualProperties = newActualProps;
+            info.newBaseProperties = newBaseProps;
+            info = myWcContext.mergeProperties2(info, fb.localAbsolutePath, SVNWCDbKind.File, null, null, null, currentBaseProps, fakeActualProperties, regularProps, true, false);
+            newActualProps = info.newActualProperties;
+            newBaseProps = info.newBaseProperties;
+            propState[0] = info.mergeOutcome;
+            allWorkItems = myWcContext.wqMerge(allWorkItems, info.workItems);
             if (fb.newTextBaseSHA1Checksum != null) {
                 contentState = SVNStatusType.CHANGED;
             } else {

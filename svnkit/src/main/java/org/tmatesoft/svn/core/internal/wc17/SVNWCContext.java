@@ -2529,16 +2529,16 @@ public class SVNWCContext {
         return db.readProperties(localAbspath);
     }
     
-    public SVNSkel mergeProperties2(SVNStatusType[] state, SVNProperties newBaseProps, SVNProperties newActualProps, File localAbsPath, SVNWCDbKind kind, SVNConflictVersion leftVersion, SVNConflictVersion rightVersion,
+    public MergePropertiesInfo mergeProperties2(MergePropertiesInfo mergeInfo, File localAbsPath, SVNWCDbKind kind, SVNConflictVersion leftVersion, SVNConflictVersion rightVersion,
             SVNProperties serverBaseProperties, SVNProperties pristineProperties, SVNProperties actualProperties, SVNProperties propChanges, 
             boolean baseMerge, boolean dryRun) throws SVNException {
         if (serverBaseProperties == null) {
             serverBaseProperties = pristineProperties;
         }
-        if (state == null) {
-            state = new SVNStatusType[1];
+        if (mergeInfo == null) {
+            mergeInfo = new MergePropertiesInfo();
         }
-        state[0] = SVNStatusType.UNCHANGED;
+        mergeInfo.mergeOutcome = SVNStatusType.UNCHANGED;
         
         SVNSkel conflictSkel = null;
         boolean isDir = (kind == SVNWCDbKind.Dir);
@@ -2560,23 +2560,23 @@ public class SVNWCContext {
                     }
                 }
                 SVNPropertyValue mineVal = actualProperties.getSVNPropertyValue(propname);
-                state[0] = setPropMergeState(state[0], SVNStatusType.CHANGED);
+                mergeInfo.mergeOutcome = setPropMergeState(mergeInfo.mergeOutcome, SVNStatusType.CHANGED);
                 if (fromVal == null) {
-                    MergePropStatusInfo mergePropStatus = applySinglePropAdd(state[0], localAbsPath, leftVersion, rightVersion, isDir, actualProperties, propname, baseVal, toVal, conflictResolver, dryRun);
-                    state[0] = mergePropStatus.state;
+                    MergePropStatusInfo mergePropStatus = applySinglePropAdd(mergeInfo.mergeOutcome, localAbsPath, leftVersion, rightVersion, isDir, actualProperties, propname, baseVal, toVal, conflictResolver, dryRun);
+                    mergeInfo.mergeOutcome = mergePropStatus.state;
                     conflictRemains = mergePropStatus.conflictRemains;
                 } else if (toVal == null) {
-                    MergePropStatusInfo mergePropStatus = applySinglePropDelete(state[0], localAbsPath, leftVersion, rightVersion, isDir, actualProperties, propname, baseVal, fromVal, conflictResolver, dryRun);
-                    state[0] = mergePropStatus.state;
+                    MergePropStatusInfo mergePropStatus = applySinglePropDelete(mergeInfo.mergeOutcome, localAbsPath, leftVersion, rightVersion, isDir, actualProperties, propname, baseVal, fromVal, conflictResolver, dryRun);
+                    mergeInfo.mergeOutcome = mergePropStatus.state;
                     conflictRemains = mergePropStatus.conflictRemains;
                 } else {
-                    MergePropStatusInfo mergePropStatus = applySinglePropChange(state[0], localAbsPath, leftVersion, rightVersion, isDir, actualProperties, propname, baseVal, fromVal, toVal, conflictResolver,
+                    MergePropStatusInfo mergePropStatus = applySinglePropChange(mergeInfo.mergeOutcome, localAbsPath, leftVersion, rightVersion, isDir, actualProperties, propname, baseVal, fromVal, toVal, conflictResolver,
                             dryRun);
-                    state[0] = mergePropStatus.state;
+                    mergeInfo.mergeOutcome = mergePropStatus.state;
                     conflictRemains = mergePropStatus.conflictRemains;
                 }
                 if (conflictRemains) {
-                    state[0] = setPropMergeState(state[0], SVNStatusType.CONFLICTED);
+                    mergeInfo.mergeOutcome = setPropMergeState(mergeInfo.mergeOutcome, SVNStatusType.CONFLICTED);
                     if (dryRun) {
                         continue;
                     }
@@ -2589,19 +2589,19 @@ public class SVNWCContext {
         }
         
         if (dryRun) {
-            return conflictSkel;
+            return mergeInfo;
         }
-        if (newBaseProps == null) {
-            newBaseProps = new SVNProperties(pristineProperties);
+        if (mergeInfo.newBaseProperties == null) {
+            mergeInfo.newBaseProperties = new SVNProperties(pristineProperties);
         } else {
-            newBaseProps.clear();
-            newBaseProps.putAll(pristineProperties);
+            mergeInfo.newBaseProperties.clear();
+            mergeInfo.newBaseProperties.putAll(pristineProperties);
         }
-        if (newActualProps == null) {
-            newActualProps = new SVNProperties(actualProperties);
+        if (mergeInfo.newActualProperties == null) {
+            mergeInfo.newActualProperties = new SVNProperties(actualProperties);
         } else {
-            newActualProps.clear();
-            newActualProps.putAll(actualProperties);
+            mergeInfo.newActualProperties.clear();
+            mergeInfo.newActualProperties.putAll(actualProperties);
         }
         
         SVNSkel workItems = null;
@@ -2624,8 +2624,8 @@ public class SVNWCContext {
             SVNSkel workItem = wqBuildPrejInstall(localAbsPath, conflictSkel);
             workItems = wqMerge(workItems, workItem);
         }
-        
-        return workItems;
+        mergeInfo.workItems = workItems;
+        return mergeInfo;
     }
 
 
@@ -3052,6 +3052,13 @@ public class SVNWCContext {
         public SVNSkel workItems;
         public SVNStatusType mergeOutcome;
 
+    }
+    
+    public static class MergePropertiesInfo {
+        public SVNSkel workItems;
+        public SVNStatusType mergeOutcome;
+        public SVNProperties newBaseProperties;
+        public SVNProperties newActualProperties;
     }
 
     public MergeInfo merge(File leftAbspath, SVNConflictVersion leftVersion, File rightAbspath, SVNConflictVersion rightVersion, File targetAbspath, File wriAbspath, String leftLabel,
