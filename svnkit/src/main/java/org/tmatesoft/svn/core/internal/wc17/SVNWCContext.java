@@ -4015,7 +4015,7 @@ public class SVNWCContext {
             File localAbspath = SVNFileUtil.createFilePath(workItem.getChild(1).getValue());
             SVNDate setTime = null;
             if (workItem.getListSize() > 2) {
-                long val = Long.parseLong(workItem.getChild(1).getValue());
+                long val = Long.parseLong(workItem.getChild(2).getValue());
                 setTime = SVNWCUtils.readDate(val);
             }
             if (setTime != null) {
