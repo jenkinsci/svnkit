@@ -3481,45 +3481,22 @@ public class SVNWCDb implements ISVNWCDb {
         DirParsedInfo parsed = parseDir(localAbspath, Mode.ReadWrite);
         SVNWCDbDir pdh = parsed.wcDbDir;
         verifyDirUsable(pdh);
-        final SetNewDirToIncomplete baton = new SetNewDirToIncomplete();
-        baton.pdh = pdh;
-        baton.localRelpath = parsed.localRelPath;
-        baton.reposRelpath = reposRelpath;
-        baton.reposRootUrl = reposRootURL;
-        baton.reposUuid = reposUuid;
-        baton.revision = revision;
-        baton.depth = depth;
-        pdh.getWCRoot().getSDb().runTransaction(baton);
+        
+        final InsertBase insertBase = new InsertBase();
+        insertBase.reposRootURL = reposRootURL;
+        insertBase.reposUUID = reposUuid;
+        insertBase.status = SVNWCDbStatus.Incomplete;
+        insertBase.kind = SVNWCDbKind.Dir;
+        insertBase.reposRelpath = reposRelpath;
+        insertBase.revision = revision;
+        insertBase.depth = depth;
+        
+        insertBase.localRelpath = parsed.localRelPath;
+        insertBase.wcId = pdh.getWCRoot().getWcId();
+        
+        pdh.getWCRoot().getSDb().runTransaction(insertBase);
         pdh.flushEntries(localAbspath);
     }
-
-    private class SetNewDirToIncomplete implements SVNSqlJetTransaction {
-
-        public SVNWCDbDir pdh;
-        public File localRelpath;
-        public File reposRelpath;
-        public SVNURL reposRootUrl;
-        public String reposUuid;
-        public long revision;
-        public SVNDepth depth;
-
-        public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
-            File parentRelpath = SVNFileUtil.getFileDir(localRelpath);
-            long reposId = createReposId(db, reposRootUrl, reposUuid);
-            SVNSqlJetStatement stmt = db.getStatement(SVNWCDbStatements.DELETE_NODES);
-            stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelpath);
-            stmt.done();
-            stmt = db.getStatement(SVNWCDbStatements.INSERT_NODE);
-            stmt.bindf("isisisrsns", pdh.getWCRoot().getWcId(), localRelpath, 0, parentRelpath, reposId, reposRelpath, revision, "incomplete", "dir");
-            if (depth.getId() >= SVNDepth.EMPTY.getId() && depth.getId() <= SVNDepth.INFINITY.getId()) {
-                stmt.bindString(9, SVNDepth.asString(depth));
-            }
-            stmt.done();
-            if (parentRelpath != null) {
-                extendParentDelete(pdh.getWCRoot().getSDb(), pdh.getWCRoot().getWcId(), localRelpath);
-            }
-        }
-    };
     
     public void opBumpRevisionPostUpdate(File localAbsPath, SVNDepth depth, File newReposRelPath, SVNURL newReposRootURL, String newReposUUID,
             long newRevision, Collection<File> excludedPaths) throws SVNException {
