@@ -4103,9 +4103,10 @@ public class SVNWCDb implements ISVNWCDb {
         assert (reposUuid != null);
         assert (SVNRevision.isValidRevisionNumber(revision));
         assert (status == SVNWCDbStatus.ServerExcluded || status == SVNWCDbStatus.Excluded || status == SVNWCDbStatus.NotPresent);
-        DirParsedInfo parseDir = parseDir(localAbspath, Mode.ReadWrite);
+        
+        DirParsedInfo parseDir = parseDir(SVNFileUtil.getParentFile(localAbspath), Mode.ReadWrite);
         SVNWCDbDir pdh = parseDir.wcDbDir;
-        File localRelpath = parseDir.localRelPath;
+        File localRelpath = SVNFileUtil.createFilePath(parseDir.localRelPath, SVNFileUtil.getFileName(localAbspath));
         verifyDirUsable(pdh);
 
         InsertBase ibb = new InsertBase();

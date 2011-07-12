@@ -146,11 +146,9 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         myIsDepthSticky = depthIsSticky;
         myDeltaProcessor = new SVNDeltaProcessor();
         myExtensionPatterns = preservedExts;
-//        myFileFetcher = fileFetcher;
         myTargetAbspath = anchorAbspath;
         myReposRootURL = reposRootUrl;
         myReposUuid = reposUuid;
-//        myIsLockOnDemand = lockOnDemand;
         myExternalsStore = externalsStore;
         myIsUseCommitTimes = myWcContext.getOptions().isUseCommitTimes();
         if (myTargetBasename != null) {
