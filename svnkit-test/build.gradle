@@ -159,9 +159,7 @@ def generateTestEnvironmentProperties(File svnBinaries) {
     properties.put('python.launcher', 'python')
 
     properties.put('python.tests', pythonTestsDir.absolutePath )
-    if (svnVersion == '16') {
-        properties.put('python.tests.sleepy', '(diff_tests.py_21)|(stat_tests.py_22)')
-    }
+    properties.put('python.tests.sleepy', '(diff_tests.py_21)|(stat_tests.py_22)')
     properties.put('python.tests.results', testResultsDir.absolutePath)
     properties.put('python.tests.logDir', logsDir.absolutePath)
 
