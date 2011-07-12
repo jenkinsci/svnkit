@@ -17,7 +17,14 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetDeleteStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectStatement;
 
 /**
- * DELETE FROM wc_lock WHERE wc_id = ?1 AND local_dir_relpath = ?2;
+ * DELETE FROM wc_lock
+ * WHERE wc_id = ?1
+ * AND (?2 = ''
+ *      OR local_dir_relpath = ?2
+ *      OR (local_dir_relpath > ?2 || '/' AND local_dir_relpath < ?2 || '0'))
+ * AND NOT EXISTS (SELECT 1 FROM nodes
+ *                  WHERE nodes.wc_id = ?1
+ *                    AND nodes.local_relpath = wc_lock.local_dir_relpath)
  *
  * @version 1.4
  * @author TMate Software Ltd.
@@ -45,7 +52,7 @@ public class SVNWCDbDeleteLockOrphanRecursive extends SVNSqlJetDeleteStatement {
         String rowPath = getColumnString(SVNWCDbSchema.WC_LOCK__Fields.local_dir_relpath);
         String selectPath = getBind(2).toString();
         
-        if (rowPath.equals(selectPath) || rowPath.startsWith(selectPath + '/')) {            
+        if ("".equals(selectPath) || rowPath.equals(selectPath) || rowPath.startsWith(selectPath + '/')) {            
             select.reset();
             select.bindf("is", 
                     getColumnLong(SVNWCDbSchema.WC_LOCK__Fields.wc_id), 

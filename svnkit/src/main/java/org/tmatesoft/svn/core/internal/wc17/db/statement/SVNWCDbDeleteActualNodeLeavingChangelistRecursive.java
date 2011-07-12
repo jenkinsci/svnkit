@@ -55,7 +55,7 @@ public class SVNWCDbDeleteActualNodeLeavingChangelistRecursive extends SVNSqlJet
     protected boolean isFilterPassed() throws SVNException {
         String selectPath = getBind(2).toString();
         String rowPath = getColumnString(SVNWCDbSchema.ACTUAL_NODE__Fields.local_relpath);
-        if (selectPath.equals(rowPath) || rowPath.startsWith(selectPath + '/')) {
+        if ("".equals(selectPath) || selectPath.equals(rowPath) || rowPath.startsWith(selectPath + '/')) {
             if (getColumnString(SVNWCDbSchema.ACTUAL_NODE__Fields.changelist) == null) {
                 return true;
             } else {
@@ -64,8 +64,7 @@ public class SVNWCDbDeleteActualNodeLeavingChangelistRecursive extends SVNSqlJet
                 return !select.next();
             }
         }
-
-        return super.isFilterPassed();
+        return false;
     }
     
     

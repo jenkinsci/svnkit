@@ -49,6 +49,9 @@ public class SVNWCDbDeleteNodesRecursive extends SVNSqlJetDeleteStatement {
         if (getColumnLong(SVNWCDbSchema.NODES__Fields.op_depth) < selectDepth) {
             return false;
         }
+        if ("".equals(selectPath)) {
+            return true;
+        }
         String rowPath = getColumnString(SVNWCDbSchema.NODES__Fields.local_relpath);
         return selectPath.equals(rowPath) || rowPath.startsWith(selectPath + '/');
     }

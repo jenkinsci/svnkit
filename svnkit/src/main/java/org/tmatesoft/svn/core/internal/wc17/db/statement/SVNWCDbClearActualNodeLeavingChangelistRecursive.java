@@ -45,6 +45,9 @@ public class SVNWCDbClearActualNodeLeavingChangelistRecursive extends SVNSqlJetU
             return false;
         }
         String selectPath = getBind(2).toString();
+        if ("".equals(selectPath)) {
+            return true;
+        }
         String rowPath = getColumnString(SVNWCDbSchema.ACTUAL_NODE__Fields.local_relpath);
         return selectPath.equals(rowPath) || rowPath.startsWith(selectPath + '/');
     }
