@@ -34,6 +34,7 @@ public class SVNWCDbClearTextConflict extends SVNSqlJetUpdateStatement {
         Map<String, Object> rowValues = getRowValues();
         rowValues.put(SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_old.toString(), null);
         rowValues.put(SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_new.toString(), null);
+        rowValues.put(SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_working.toString(), null);
         return rowValues;
     }
 

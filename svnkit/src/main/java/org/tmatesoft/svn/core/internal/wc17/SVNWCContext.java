@@ -116,7 +116,7 @@ public class SVNWCContext {
     public static String CONFLICT_KIND_REJECT = "reject";
     public static String CONFLICT_KIND_OBSTRUCTED = "obstructed";
 
-    private static List STATUS_ORDERING = new LinkedList();
+    private static List<SVNStatusType> STATUS_ORDERING = new LinkedList<SVNStatusType>();
     static {
         STATUS_ORDERING.add(SVNStatusType.UNKNOWN);
         STATUS_ORDERING.add(SVNStatusType.UNCHANGED);
