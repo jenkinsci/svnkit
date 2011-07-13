@@ -3,8 +3,8 @@ configurations {
     svnBinaries16 
 }
 dependencies {
-    pythonTests16 'org.tigris.subversion:svn-python-tests:1.6.17-SNAPSHOT@tgz'
-    svnBinaries16 'org.tigris.subversion:svn-binaries:1.6.17-SNAPSHOT@tgz'
+    pythonTests16 'org.tigris.subversion:svn-python-tests:1.6.18-SNAPSHOT@tgz'
+    svnBinaries16 'org.tigris.subversion:svn-binaries:1.6.18-SNAPSHOT@tgz'
 }
 
 sourceSets {
