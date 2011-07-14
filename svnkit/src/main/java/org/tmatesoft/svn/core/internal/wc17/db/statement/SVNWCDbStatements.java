@@ -61,6 +61,7 @@ public enum SVNWCDbStatements {
     REVPROP_CREATE_SCHEMA(SVNFSFSRevPropCreateSchema.class),
     SELECT_ACTUAL_CONFLICT_VICTIMS(SVNWCDbSelectActualConflictVictims.class),
     SELECT_ACTUAL_NODE(SVNWCDbSelectActualNode.class),
+    SELECT_ACTUAL_CHILDREN_INFO(SVNWCDbSelectActualChildrenInfo.class),
     SELECT_ACTUAL_PROPS(SVNWCDbSelectActualProperties.class),
     SELECT_ACTUAL_TREE_CONFLICT(SVNWCDbSelectActualTreeConflict.class),
     SELECT_ANY_PRISTINE_REFERENCE(SVNWCDbSelectAnyPristineReference.class),
@@ -73,6 +74,7 @@ public enum SVNWCDbStatements {
     SELECT_DELETION_INFO(SVNWCDbSelectDeletionInfo.class),
     SELECT_FILE_EXTERNAL(SVNWCDBSelectFileExternal.class),
     SELECT_NODE_PROPS(SVNWCDbSelectNodeProps.class),
+    SELECT_NODE_CHILDREN_INFO(SVNWCDbSelectNodeChildrenInfo.class),
     SELECT_NOT_PRESENT(SVNWCDbSelectNotPresent.class),
     SELECT_PRISTINE_MD5_CHECKSUM(SVNWCDbSelectPristineMD5Checksum.class),
     SELECT_PRISTINE_SHA1_CHECKSUM(SVNWCDbSelectSHA1Checksum.class),
@@ -118,7 +120,9 @@ public enum SVNWCDbStatements {
     SELECT_OP_DEPTH_CHILDREN(SVNWCDbSelectOpDepthChildren.class),
     APPLY_CHANGES_TO_BASE_NODE(SVNWCDbApplyChangesToBaseNode.class),
     DELETE_ALL_WORKING_NODES(SVNWCDbDeleteAllWorkingNodes.class),
-    RESET_ACTUAL_WITH_CHANGELIST(SVNWCDbResetActualWithChangelist.class);
+    RESET_ACTUAL_WITH_CHANGELIST(SVNWCDbResetActualWithChangelist.class), 
+    SELECT_EXTERNALS_DEFINED(SVNWCDBSelectExternalsDefined.class),
+    SELECT_EXTERNAL_PROPERTIES(SVNWCDBSelectExternalProperties.class);
     
 
     private Class<? extends SVNSqlJetStatement> statementClass;

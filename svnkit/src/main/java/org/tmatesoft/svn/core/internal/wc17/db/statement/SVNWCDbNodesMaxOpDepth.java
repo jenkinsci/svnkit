@@ -20,16 +20,24 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectStatement;
  * @author TMate Software Ltd.
  */
 public class SVNWCDbNodesMaxOpDepth extends SVNSqlJetSelectStatement {
+    
+    private long minDepth;
 
     public SVNWCDbNodesMaxOpDepth(SVNSqlJetDb sDb) throws SVNException {
+        this(sDb, 1);
+    }
+    
+    public SVNWCDbNodesMaxOpDepth(SVNSqlJetDb sDb, long minDepth) throws SVNException {
         super(sDb, SVNWCDbSchema.NODES);
+        this.minDepth = minDepth;
     }
 
     protected boolean isFilterPassed() throws SVNException {
-        return getColumnLong(SVNWCDbSchema.NODES__Fields.op_depth) > 0;
+        return getColumnLong(SVNWCDbSchema.NODES__Fields.op_depth) >= minDepth;
     }
 
     public Long getMaxOpDepth(Long wcId, String localRelpath) throws SVNException {
+        // TODO use just reverse cursor.
         try {
             bindLong(1, wcId);
             bindString(2, localRelpath);

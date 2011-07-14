@@ -19,7 +19,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNExternal;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc16.SVNBasicDelegate;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNCapability;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -72,7 +71,7 @@ public class SVNStatusClient17 extends SVNBaseClient17 {
     /**
      * @author TMate Software Ltd.
      */
-    private static class TweakHandler implements ISVNStatusHandler {
+    private static class TweakHandler implements ISVNStatus17Handler {
 
         private final Collection myChangeLists;
         private final ISVNStatusHandler myHandler;
@@ -83,19 +82,19 @@ public class SVNStatusClient17 extends SVNBaseClient17 {
             myHandler = handler;
         }
 
-        public void handleStatus(SVNStatus status) throws SVNException {
+        public void handleStatus(SVNStatus17 status) throws SVNException {
             /*
              * If we know that the target was deleted in HEAD of the repository,
              * we need to note that fact in all the status structures that come
              * through here.
              */
             if (deletedInRepository) {
-                status.setRemoteStatus(SVNStatusType.STATUS_DELETED, null, null, null);
+                status.setReposNodeStatus(SVNStatusType.STATUS_DELETED);
             }
-            if (!matchesChangeList(myChangeLists, status.getStatus17())) {
+            if (!matchesChangeList(myChangeLists, status)) {
                 return;
             }
-            myHandler.handleStatus(status);
+            myHandler.handleStatus(status.getStatus16());
         }
 
         public static boolean matchesChangeList(Collection changeLists, SVNStatus17 status) {
@@ -376,7 +375,6 @@ public class SVNStatusClient17 extends SVNBaseClient17 {
      */
     public long doStatus(File path, SVNRevision revision, SVNDepth depth, boolean remote, boolean reportAll, boolean includeIgnored, boolean collectParentExternals, final ISVNStatusHandler handler,
             final Collection changeLists) throws SVNException {
-
         if (handler == null) {
             return -1;
         }
@@ -391,8 +389,6 @@ public class SVNStatusClient17 extends SVNBaseClient17 {
             String targetBaseName;
 
             File targetAbsPath = path.getAbsoluteFile();
-
-            SVNExternalsStore externalsStore = new SVNExternalsStore();
 
             {
                 SVNNodeKind diskKind = SVNFileType.getNodeKind(SVNFileType.getType(targetAbsPath));
@@ -448,11 +444,11 @@ public class SVNStatusClient17 extends SVNBaseClient17 {
                     if (!added) {
                         tweakHandler.deletedInRepository = true;
                     }
-                    editor = new SVNStatusEditor17(targetAbsPath, wcContext, getOptions(), includeIgnored, reportAll, depth, externalsStore, tweakHandler);
+                    editor = new SVNStatusEditor17(targetAbsPath, wcContext, getOptions(), includeIgnored, reportAll, depth, tweakHandler);
                     checkCancelled();
                     editor.closeEdit();
                 } else {
-                    editor = new SVNRemoteStatusEditor17(dirAbsPath, targetBaseName, wcContext, getOptions(), includeIgnored, reportAll, depth, externalsStore, tweakHandler);
+                    editor = new SVNRemoteStatusEditor17(dirAbsPath, targetBaseName, wcContext, getOptions(), includeIgnored, reportAll, depth, tweakHandler);
                     SVNRepository locksRepos = createRepository(url, false);
                     checkCancelled();
                     boolean serverSupportsDepth = repository.hasCapability(SVNCapability.DEPTH);
@@ -469,14 +465,17 @@ public class SVNStatusClient17 extends SVNBaseClient17 {
                     getEventDispatcher().handleEvent(event, ISVNEventHandler.UNKNOWN);
                 }
             } else {
-                editor = new SVNStatusEditor17(targetAbsPath, wcContext, getOptions(), includeIgnored, reportAll, depth, externalsStore, handler);
+                editor = new SVNStatusEditor17(targetAbsPath, wcContext, getOptions(), includeIgnored, reportAll, depth, tweakHandler);
                 if (myFilesProvider != null) {
                     editor.setFileProvider(myFilesProvider);
                 }
-                editor.closeEdit();
+                editor.walkStatus(targetAbsPath, depth, reportAll, includeIgnored, false, null);
             }
 
             if (!isIgnoreExternals() && SVNWCUtils.isRecursiveDepth(depth)) {
+                SVNExternalsStore externalsStore = new SVNExternalsStore();
+                wcContext.getDb().gatherExternalDefinitions(targetAbsPath, externalsStore);
+                
                 doExternalStatus(externalsStore.getNewExternals(), depth, remote, reportAll, includeIgnored, handler);
             }
         } finally {
@@ -492,7 +491,7 @@ public class SVNStatusClient17 extends SVNBaseClient17 {
          * This is a mapping of versioned directories to property values.
          */
         for (Iterator paths = externalsNew.keySet().iterator(); paths.hasNext();) {
-            String path = (String) paths.next();
+            File path = (File) paths.next();
             String propVal = (String) externalsNew.get(path);
             /*
              * Parse the svn:externals property value. This results in a hash

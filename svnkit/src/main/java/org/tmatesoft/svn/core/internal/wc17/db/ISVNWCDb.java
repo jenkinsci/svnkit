@@ -31,6 +31,7 @@ import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc17.SVNExternalsStore;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbAdditionInfo.AdditionInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbBaseInfo.BaseInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbDeletionInfo.DeletionInfoField;
@@ -274,6 +275,69 @@ public interface ISVNWCDb {
 
         /** The date the lock was created */
         public SVNDate date;
+    }
+    
+    class SVNWCDbInfo {
+        public SVNWCDbStatus status;
+        public SVNWCDbKind kind;
+        public long revnum;
+        public File reposRelpath;
+        public SVNURL reposRootUrl;
+        public String reposUuid;
+        public long changedRev;
+        public String changedAuthor;
+        public SVNDate changedDate;
+        public SVNDepth depth;
+
+        public long recordedSize;
+        public long recordedModTime;
+
+        public String changelist;
+        public boolean conflicted;
+        public boolean special;
+        public boolean opRoot;
+
+        public boolean hasChecksum;
+        public boolean hadProps;
+        public boolean propsMod;
+
+        public boolean haveBase;
+        public boolean haveMoreWork;
+
+        public boolean locked;
+        public SVNWCDbLock lock;
+        
+        public void load(WCDbInfo info) {
+            if (info == null) {
+                return;
+            }
+            
+            status = info.status;
+            kind = info.kind;
+            revnum = info.revision;
+            reposRelpath = info.reposRelPath;
+            reposRootUrl = info.reposRootUrl;
+            reposUuid = info.reposUuid;
+            changedRev = info.changedRev;
+            changedAuthor = info.changedAuthor;
+            changedDate = info.changedDate;
+            depth = info.depth;
+            
+            recordedSize = info.translatedSize;
+            recordedModTime = info.lastModTime;
+            
+            changelist = info.changelist;
+            conflicted = info.conflicted;
+            opRoot = info.opRoot;
+            
+            hasChecksum = info.checksum != null;
+            hadProps = info.hadProps;
+            propsMod = info.propsMod;
+            haveBase = info.haveBase;
+            haveMoreWork = info.haveMoreWork;
+            locked = info.lock != null;
+            lock = info.lock;
+        }
     }
 
     /**
@@ -1147,6 +1211,8 @@ public interface ISVNWCDb {
      * Return the basenames of the immediate children of LOCAL_ABSPATH in DB.
      */
     Set<String> readChildren(File localAbspath) throws SVNException;
+    
+    void readChildren(File localAbspath, Map<String, SVNWCDbInfo> children, Set<String> conflicts) throws SVNException;
 
     /**
      * Return the basenames of the immediate children of LOCAL_ABSPATH in DB
@@ -1612,5 +1678,9 @@ public interface ISVNWCDb {
 
     void opBumpRevisionPostUpdate(File localAbsPath, SVNDepth depth, File newReposRelPath, SVNURL newReposRootURL, String newReposUUID,
             long newRevision, Collection<File> excludedPaths) throws SVNException;
+
+    Map<File, File> getExternalsDefinedBelow(File localAbsPath) throws SVNException;
+
+     void gatherExternalDefinitions(File localAbsPath, SVNExternalsStore externals) throws SVNException;
 
 }

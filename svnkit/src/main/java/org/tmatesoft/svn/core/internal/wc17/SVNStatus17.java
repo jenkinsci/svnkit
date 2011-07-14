@@ -20,6 +20,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.wc17.SVNStatus17.ConflictInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
@@ -41,7 +42,7 @@ import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
  */
 public class SVNStatus17 {
 
-    public static class ConflictedInfo {
+    public static class ConflictInfo {
         public boolean textConflicted;
         public boolean propConflicted;
         public boolean treeConflicted;
@@ -71,8 +72,6 @@ public class SVNStatus17 {
 
     /** Set to TRUE if the item is the victim of a conflict. */
     private boolean conflicted;
-
-    private ConflictedInfo conflictedInfo;
 
     /**
      * The status of the node itself. In order of precendence: Tree conflicts,
@@ -178,6 +177,12 @@ public class SVNStatus17 {
 
     private SVNTreeConflictDescription treeConflict;
 
+    private String reposUuid;
+    
+    private boolean locked;
+
+    private ConflictInfo conflictedInfo;
+
 
     public SVNStatus17(SVNWCContext context) {
         this.context = context;
@@ -221,14 +226,6 @@ public class SVNStatus17 {
 
     public void setConflicted(boolean conflicted) {
         this.conflicted = conflicted;
-    }
-
-    public ConflictedInfo getConflictedInfo() {
-        return conflictedInfo;
-    }
-
-    public void setConflictedInfo(ConflictedInfo conflictedInfo) {
-        this.conflictedInfo = conflictedInfo;
     }
 
     public SVNStatusType getNodeStatus() {
@@ -394,6 +391,10 @@ public class SVNStatus17 {
     public String getOodChangedAuthor() {
         return oodChangedAuthor;
     }
+    
+    public void setLocked(boolean locked) {
+        this.locked = locked;
+    }
 
     public void setOodChangedAuthor(String oodChangedAuthor) {
         this.oodChangedAuthor = oodChangedAuthor;
@@ -404,22 +405,46 @@ public class SVNStatus17 {
     }
 
     public SVNStatus getStatus16(boolean isFileExternal, String copyFromURL, SVNRevision copyFromRevision, SVNLock remoteLock, Map entryProperties, int wcFormatVersion) throws SVNException {
-        final SVNStatusType contentStatus = getCombinedStatus();
+        SVNStatusType contentStatus = getCombinedStatus();
         boolean isLocked = false;
         if(kind==SVNNodeKind.DIR) {
-            isLocked = context.getDb().isWCLocked(localAbsPath);
+            isLocked = this.locked;
         }
-        if (conflicted && conflictedInfo != null) {
+        // TODO externals.
+        
+        SVNStatusType propStatus = this.propStatus;
+        SVNStatusType nodeStatus = this.nodeStatus;
+        
+        if (conflicted) {
+            ConflictInfo info = context.getConflicted(localAbsPath, true, true, true);
+            if (info.textConflicted) {
+                contentStatus = SVNStatusType.CONFLICTED;
+            }
+            if (info.propConflicted) {
+                propStatus = SVNStatusType.CONFLICTED;
+            }
+            if (info.textConflicted || info.propConflicted) {
+                nodeStatus = SVNStatusType.CONFLICTED;
+            }
+        }
+        
+        if (conflicted) {
             final SVNStatus status = new SVNStatus(reposRootUrl, localAbsPath, kind, SVNRevision.create(revision), SVNRevision.create(changedRev), changedDate, changedAuthor, contentStatus,
-                    propStatus, reposTextStatus, reposPropStatus, isLocked, copied, switched, isFileExternal, conflictedInfo.textConflicted ? conflictedInfo.repositoryFile : null,
-                    conflictedInfo.textConflicted ? conflictedInfo.baseFile : null, conflictedInfo.textConflicted ? conflictedInfo.localFile : null,
-                    conflictedInfo.propConflicted ? conflictedInfo.repositoryFile : null, copyFromURL, copyFromRevision, remoteLock, lock, entryProperties, changelist, wcFormatVersion, treeConflict);
+                    propStatus, reposTextStatus, reposPropStatus, isLocked, copied, switched, isFileExternal, 
+                    null,
+                    null, 
+                    null,
+                    null, 
+                    copyFromURL, copyFromRevision, remoteLock, lock, entryProperties, changelist, wcFormatVersion, null);
+            status.setConflicted(conflicted);
             status.setStatus17(this);
             return status;
         }
+        
         final SVNStatus status = new SVNStatus(reposRootUrl, localAbsPath, kind, SVNRevision.create(revision), SVNRevision.create(changedRev), changedDate, changedAuthor, contentStatus, propStatus,
                 reposTextStatus, reposPropStatus, isLocked, copied, switched, isFileExternal, null, null, null, null, copyFromURL, copyFromRevision, remoteLock, lock, entryProperties, changelist,
                 wcFormatVersion, treeConflict);
+        
         status.setStatus17(this);
         return status;
 
@@ -437,12 +462,35 @@ public class SVNStatus17 {
         return nodeStatus;
     }
 
-    public void setTreeConflict(SVNTreeConflictDescription treeConflict) {
-        this.treeConflict = treeConflict;
+    public void setReposUUID(String uuid) {
+        this.reposUuid = uuid;
+    }
+    
+    public String getReposUUID() {
+        return this.reposUuid;
     }
 
-    public SVNTreeConflictDescription getTreeConflict() {
-        return this.treeConflict;
+    public ConflictInfo getConflictInfo() throws SVNException {
+        if (conflictedInfo == null) {
+            if (context != null) {
+                conflictedInfo = context.getConflicted(localAbsPath, true, true, true);
+            }
+        }
+        return conflictedInfo;
+    }
+
+    public SVNTreeConflictDescription getTreeConflict() throws SVNException {
+        if (treeConflict != null) {
+            return treeConflict;
+        }
+        
+        if (conflictedInfo != null && conflictedInfo.treeConflict != null) {
+            return conflictedInfo.treeConflict;
+        }
+        if (context != null) {
+            treeConflict = context.getTreeConflict(localAbsPath);
+        }
+        return treeConflict;
     }
 
 }

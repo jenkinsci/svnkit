@@ -46,7 +46,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumInputStream;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumOutputStream;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
-import org.tmatesoft.svn.core.internal.wc17.SVNStatus17.ConflictedInfo;
+import org.tmatesoft.svn.core.internal.wc17.SVNStatus17.ConflictInfo;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.ISVNWCNodeHandler;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.MergeInfo;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.MergePropertiesInfo;
@@ -332,7 +332,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             if (cd.isTreeConflict()) {
                 return true;
             } else if (cd.isPropertyConflict() || cd.isTextConflict()) {
-                ConflictedInfo info = myWcContext.getConflicted(localAbspath, true, true, true);
+                ConflictInfo info = myWcContext.getConflicted(localAbspath, true, true, true);
                 return (info.textConflicted || info.propConflicted || info.treeConflicted);
             }
         }

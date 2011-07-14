@@ -31,7 +31,9 @@ public enum SVNWCDbSchema {
 
     NODES(NODES__Fields.class, NODES__Indices.class),
 
-    WORK_QUEUE(WORK_QUEUE__Fields.class)
+    WORK_QUEUE(WORK_QUEUE__Fields.class),
+    
+    EXTERNALS(EXTERNALS__Fields.class)
 
     ;
 
@@ -99,4 +101,7 @@ public enum SVNWCDbSchema {
         id, work;
     }
 
+    public enum EXTERNALS__Fields {
+        wc_id, local_relpath, parent_relpath, repos_id, presence, kind, def_local_relpath, def_repos_relpath, def_operational_revision, def_revision;
+    }
 }

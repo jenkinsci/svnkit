@@ -18,6 +18,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.antlr.runtime.misc.Stats;
 import org.tmatesoft.svn.cli.SVNCommandUtil;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -27,7 +28,7 @@ import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc17.SVNStatus17;
-import org.tmatesoft.svn.core.internal.wc17.SVNStatus17.ConflictedInfo;
+import org.tmatesoft.svn.core.internal.wc17.SVNStatus17.ConflictInfo;
 import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
@@ -169,8 +170,8 @@ public class SVNStatusCommand extends SVNXMLCommand implements ISVNStatusHandler
         }
     }
 
-    private void countConflicts(SVNStatus17 status17) {
-        final ConflictedInfo conflictedInfo = status17.getConflictedInfo();
+    private void countConflicts(SVNStatus17 status17) throws SVNException {
+        final ConflictInfo conflictedInfo = status17.getConflictInfo();
         if(conflictedInfo!=null) {
             if(conflictedInfo.textConflicted){
                 textConflicts++;
@@ -179,9 +180,8 @@ public class SVNStatusCommand extends SVNXMLCommand implements ISVNStatusHandler
             } else if(conflictedInfo.treeConflicted) {
                 treeConflicts++;
             }
-        } else if(status17.getTreeConflict()!=null){
+        } else if (status17.getTreeConflict() != null) {
             treeConflicts++;
-            
         }
     }
 

@@ -33,7 +33,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
-import org.tmatesoft.svn.core.internal.wc17.SVNStatus17.ConflictedInfo;
+import org.tmatesoft.svn.core.internal.wc17.SVNStatus17.ConflictInfo;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.CheckSpecialInfo;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.ISVNWCNodeHandler;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.NodeCopyFromField;
@@ -1266,6 +1266,7 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
         }
         if (depth != SVNDepth.INFINITY) {
             if (kind == SVNNodeKind.DIR) {
+                /*
                 SVNStatus17 status = getContext().internalStatus(targetAbspath);
                 if (status.getNodeStatus() == SVNStatusType.STATUS_DELETED || status.getNodeStatus() == SVNStatusType.STATUS_REPLACED) {
                     List<File> children = getContext().getNodeChildren(targetAbspath, true);
@@ -1274,7 +1275,7 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
                         SVNErrorManager.error(err, SVNLogType.CLIENT);
                         return;
                     }
-                }
+                }*/
             }
         }
     }
@@ -1353,7 +1354,7 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
             return;
         }
         if (matchesChangelists) {
-            ConflictedInfo conflicted = getContext().getConflicted(localAbsPath, true, true, true);
+            ConflictInfo conflicted = getContext().getConflicted(localAbsPath, true, true, true);
             if (conflicted.textConflicted || conflicted.propConflicted || conflicted.treeConflicted) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_FOUND_CONFLICT, "Aborting commit: ''{0}'' remains in conflict", localAbsPath);
                 SVNErrorManager.error(err, SVNLogType.WC);
