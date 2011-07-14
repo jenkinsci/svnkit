@@ -605,7 +605,7 @@ public class SVNStatusEditor17 {
             if (ignorePatterns != null && patterns == null) {
                 patterns = collectIgnorePatterns(localAbsPath, ignorePatterns);
             }
-            sendUnversionedItem(nodeAbsPath, SVNFileType.getNodeKind(nodeFileType), false, ignorePatterns, noIgnore || selected != null, handler);                
+            sendUnversionedItem(nodeAbsPath, SVNFileType.getNodeKind(nodeFileType), false, patterns, noIgnore || selected != null, handler);                
         }
     }
     
