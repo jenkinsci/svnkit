@@ -155,8 +155,8 @@ public class SVNStatusPrinter {
             if (!status.isVersioned() && status.isConflicted()) {
                 return SVNStatusType.STATUS_MISSING;
             }
-        }
-        if (status.getNodeStatus() == SVNStatusType.STATUS_MODIFIED) {
+            return status.getContentsStatus();
+        } else if (status.getNodeStatus() == SVNStatusType.STATUS_MODIFIED) {
             return status.getContentsStatus();
         }
         return status.getNodeStatus();
