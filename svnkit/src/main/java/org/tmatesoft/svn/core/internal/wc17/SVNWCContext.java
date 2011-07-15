@@ -1210,7 +1210,7 @@ public class SVNWCContext {
                     final SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(path));
                     if (kind == SVNNodeKind.FILE) {
                         info.propConflicted = true;
-                        info.repositoryFile = path;
+                        info.propRejectFile = path;
                     }
                 }
             } else if (isTreeNeed && cd.isTreeConflict()) {

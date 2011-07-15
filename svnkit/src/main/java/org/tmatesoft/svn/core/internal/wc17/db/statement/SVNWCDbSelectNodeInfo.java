@@ -63,4 +63,5 @@ public class SVNWCDbSelectNodeInfo extends SVNSqlJetSelectFieldsStatement<SVNWCD
         }
         return cursor;
     }
+    
 }

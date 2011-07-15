@@ -15,12 +15,12 @@ import java.io.File;
 import java.util.Date;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
-import org.tmatesoft.svn.core.internal.wc17.SVNStatus17;
 
 /**
  * The <b>SVNStatus</b> class is used to provide detailed status information for
@@ -119,6 +119,7 @@ public class SVNStatus {
     private SVNStatusType myContentsStatus;
     private SVNStatusType myPropertiesStatus;
     private SVNStatusType myRemoteContentsStatus;
+    private SVNStatusType myRemoteNodeStatus;
     private SVNStatusType myRemotePropertiesStatus;
     private boolean myIsLocked;
     private boolean myIsCopied;
@@ -144,10 +145,15 @@ public class SVNStatus {
     private String myChangelistName;
     private int myWorkingCopyFormat;
     private SVNTreeConflictDescription myTreeConflict;
-
     private boolean myIsConflicted;
+    
+    private SVNStatusType myNodeStatus;
+    private SVNURL myRepositoryRootURL;
+    private String myRepositoryUUID;
+    private String myRepositoryRelativePath;
 
-    private SVNStatus17 status17;
+    private boolean myIsVersioned;
+    private SVNDepth myDepth;
 
     /**
      * Constructs an <b>SVNStatus</b> object filling it with status information
@@ -244,6 +250,10 @@ public class SVNStatus {
         myChangelistName = changelistName;
         myWorkingCopyFormat = wcFormatVersion;
         myTreeConflict = treeConflict;
+    }
+    
+    public SVNStatus() {
+        
     }
 
     /**
@@ -741,19 +751,202 @@ public class SVNStatus {
         return myIsConflicted;
     }
 
-    public SVNStatus17 getStatus17() {
-        return status17;
-    }
-
-    public void setStatus17(SVNStatus17 status17) {
-        this.status17 = status17;
-    }
-
     public boolean isVersioned() {
-        if(status17!=null){
-            return status17.isVersioned();
+        if (myIsVersioned) {
+            return myIsVersioned;
         }
-        return getEntry()!=null;
+        return getEntry() != null || myEntryProperties != null;
+    }
+
+    public SVNStatusType getRemoteNodeStatus() {
+        return myRemoteNodeStatus;
+    }
+
+    public SVNStatusType getNodeStatus() {
+        if (myNodeStatus == null) {
+            return myContentsStatus;
+        }
+        return myNodeStatus;
+    }
+
+    public SVNURL getRepositoryRootURL() {
+        return myRepositoryRootURL;
+    }
+
+    public String getRepositoryUUID() {
+        return myRepositoryUUID;
+    }
+
+    public String getRepositoryRelativePath() {
+        return myRepositoryRelativePath;
+    }
+    
+    public SVNDepth getDepth() {
+        return myDepth;
+    }
+
+    public void setRemoteNodeStatus(SVNStatusType remoteNodeStatus) {
+        myRemoteNodeStatus = remoteNodeStatus;
+    }
+
+    public void setNodeStatus(SVNStatusType nodeStatus) {
+        myNodeStatus = nodeStatus;
+    }
+
+    public void setRepositoryRootURL(SVNURL repositoryRootURL) {
+        myRepositoryRootURL = repositoryRootURL;
+    }
+
+    public void setRepositoryUUID(String repositoryUUID) {
+        myRepositoryUUID = repositoryUUID;
+    }
+
+    public void setRepositoryRelativePath(String repositoryRelativePath) {
+        myRepositoryRelativePath = repositoryRelativePath;
+    }
+
+    public void setURL(SVNURL uRL) {
+        myURL = uRL;
+    }
+
+    public void setFile(File file) {
+        myFile = file;
+    }
+
+    public void setKind(SVNNodeKind kind) {
+        myKind = kind;
+    }
+
+    public void setRevision(SVNRevision revision) {
+        myRevision = revision;
+    }
+
+    public void setCommittedRevision(SVNRevision committedRevision) {
+        myCommittedRevision = committedRevision;
+    }
+
+    public void setCommittedDate(Date committedDate) {
+        myCommittedDate = committedDate;
+    }
+
+    public void setAuthor(String author) {
+        myAuthor = author;
+    }
+
+    public void setPropertiesStatus(SVNStatusType propertiesStatus) {
+        myPropertiesStatus = propertiesStatus;
+    }
+
+    public void setRemoteContentsStatus(SVNStatusType remoteContentsStatus) {
+        myRemoteContentsStatus = remoteContentsStatus;
+    }
+
+    public void setRemotePropertiesStatus(SVNStatusType remotePropertiesStatus) {
+        myRemotePropertiesStatus = remotePropertiesStatus;
+    }
+
+    public void setIsLocked(boolean isLocked) {
+        myIsLocked = isLocked;
+    }
+
+    public void setIsCopied(boolean isCopied) {
+        myIsCopied = isCopied;
+    }
+
+    public void setIsSwitched(boolean isSwitched) {
+        myIsSwitched = isSwitched;
+    }
+
+    public void setIsFileExternal(boolean isFileExternal) {
+        myIsFileExternal = isFileExternal;
+    }
+
+    public void setConflictNewFile(File conflictNewFile) {
+        myConflictNewFile = conflictNewFile;
+    }
+
+    public void setConflictOldFile(File conflictOldFile) {
+        myConflictOldFile = conflictOldFile;
+    }
+
+    public void setConflictWrkFile(File conflictWrkFile) {
+        myConflictWrkFile = conflictWrkFile;
+    }
+
+    public void setPropRejectFile(File propRejectFile) {
+        myPropRejectFile = propRejectFile;
+    }
+
+    public void setCopyFromURL(String copyFromURL) {
+        myCopyFromURL = copyFromURL;
+    }
+
+    public void setCopyFromRevision(SVNRevision copyFromRevision) {
+        myCopyFromRevision = copyFromRevision;
+    }
+
+    public void setRemoteLock(SVNLock remoteLock) {
+        myRemoteLock = remoteLock;
+    }
+
+    public void setLocalLock(SVNLock localLock) {
+        myLocalLock = localLock;
+    }
+
+    public void setEntryProperties(Map entryProperties) {
+        myEntryProperties = entryProperties;
+    }
+
+    public void setRemoteRevision(SVNRevision remoteRevision) {
+        myRemoteRevision = remoteRevision;
+    }
+
+    public void setRemoteURL(SVNURL remoteURL) {
+        myRemoteURL = remoteURL;
+    }
+
+    public void setRemoteKind(SVNNodeKind remoteKind) {
+        myRemoteKind = remoteKind;
+    }
+
+    public void setRemoteAuthor(String remoteAuthor) {
+        myRemoteAuthor = remoteAuthor;
+    }
+
+    public void setRemoteDate(Date remoteDate) {
+        myRemoteDate = remoteDate;
+    }
+
+    public void setLocalContentsDate(Date localContentsDate) {
+        myLocalContentsDate = localContentsDate;
+    }
+
+    public void setLocalPropertiesDate(Date localPropertiesDate) {
+        myLocalPropertiesDate = localPropertiesDate;
+    }
+
+    public void setChangelistName(String changelistName) {
+        myChangelistName = changelistName;
+    }
+
+    public void setWorkingCopyFormat(int workingCopyFormat) {
+        myWorkingCopyFormat = workingCopyFormat;
+    }
+
+    public void setTreeConflict(SVNTreeConflictDescription treeConflict) {
+        myTreeConflict = treeConflict;
+    }
+
+    public void setIsConflicted(boolean isConflicted) {
+        myIsConflicted = isConflicted;
+    }
+    
+    public void setIsVersioned(boolean isVersioned) {
+        myIsVersioned = isVersioned;
+    }
+
+    public void setDepth(SVNDepth depth) {
+        myDepth = depth;
     }
     
 }

@@ -197,7 +197,6 @@ public class SVNStatusEditor17 {
                 repositoryLock = (SVNLock) myRepositoryLocks.get("/" + SVNFileUtil.getFilePath(reposInfo.relPath));
             }
         }
-
         SVNStatus17 status17 = assembleStatus(localAbsPath, parentReposInfo, info, pathKind, pathSpecial, getAll, repositoryLock);
         if (status17 != null && handler != null) {
             handler.handleStatus(status17);

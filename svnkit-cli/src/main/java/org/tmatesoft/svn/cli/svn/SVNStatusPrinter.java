@@ -11,15 +11,12 @@
  */
 package org.tmatesoft.svn.cli.svn;
 
-import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNTreeConflictUtil;
-import org.tmatesoft.svn.core.internal.wc17.SVNStatus17;
-import org.tmatesoft.svn.core.internal.wc17.SVNStatus17.ConflictInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
-import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 
 /**
  * @version 1.3
@@ -42,37 +39,10 @@ public class SVNStatusPrinter {
 
         char treeStatusCode = ' ';
         String treeDescriptionLine = "";
-        if (status.getStatus17() != null) {
-            if (status.isConflicted()) {
-                ConflictInfo conflictedInfo = new ConflictInfo();
-                boolean hasTreeConflict = false;
-                if (status.isVersioned()) {
-                    try {
-                        conflictedInfo = status.getStatus17().getConflictInfo();
-                    } catch (SVNException e) {
-                        if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UPGRADE_REQUIRED) {
-                            conflictedInfo = new ConflictInfo();
-                        } else {
-                            throw e;
-                        }
-                    }
-                    hasTreeConflict = conflictedInfo != null && conflictedInfo.treeConflicted;
-                } else {
-                    hasTreeConflict = true;
-                }                
-                if (hasTreeConflict) {
-                    SVNTreeConflictDescription treeConflictDescription = status.getStatus17().getTreeConflict();
-                    String description = SVNTreeConflictUtil.getHumanReadableConflictDescription(treeConflictDescription);
-                    treeStatusCode = 'C';
-                    treeDescriptionLine = "\n      >   " + description;
-                }
-            }
-        } else {
-            if (status.getTreeConflict() != null) {
-                String description = SVNTreeConflictUtil.getHumanReadableConflictDescription(status.getTreeConflict());
-                treeStatusCode = 'C';
-                treeDescriptionLine = "\n      >   " + description;
-            }
+        if (status.getTreeConflict() != null) {
+            String description = SVNTreeConflictUtil.getHumanReadableConflictDescription(status.getTreeConflict());
+            treeStatusCode = 'C';
+            treeDescriptionLine = "\n      >   " + description;
         }
 
         StringBuffer result = new StringBuffer();
@@ -84,14 +54,15 @@ public class SVNStatusPrinter {
             } else if (status.isCopied()) {
                 wcRevision = "-";
             } else if (!status.getRevision().isValid()) {
-                if(status.getStatus17()!=null) {
-                    SVNStatus17 status17 = status.getStatus17();
-                    if(status17.getNodeStatus()==SVNStatusType.STATUS_DELETED)
-                        wcRevision = Long.toString(status17.getChangedRev());
-                    else
+                if(status.getWorkingCopyFormat() == ISVNWCDb.WC_FORMAT_17) {
+                    if(status.getNodeStatus()==SVNStatusType.STATUS_DELETED) {
+                        wcRevision = status.getCommittedRevision().toString();
+                    } else {
                         wcRevision = "-";
-                } else
+                    }
+                } else {
                     wcRevision = " ? ";
+                }
             } else {
                 wcRevision = Long.toString(status.getRevision().getNumber());
             }
@@ -180,18 +151,15 @@ public class SVNStatusPrinter {
     }
     
     private static SVNStatusType combineStatus(SVNStatus status) {
-        if (status.getStatus17() == null) {
-            return status.getContentsStatus();
-        }
-        if (status.getStatus17().getNodeStatus() == SVNStatusType.STATUS_CONFLICTED) {
+        if (status.getNodeStatus() == SVNStatusType.STATUS_CONFLICTED) {
             if (!status.isVersioned() && status.isConflicted()) {
                 return SVNStatusType.STATUS_MISSING;
             }
         }
-        if (status.getStatus17().getNodeStatus() == SVNStatusType.STATUS_MODIFIED) {
-            return status.getStatus17().getTextStatus();
+        if (status.getNodeStatus() == SVNStatusType.STATUS_MODIFIED) {
+            return status.getContentsStatus();
         }
-        return status.getStatus17().getNodeStatus();
+        return status.getNodeStatus();
     }
 
     private static char getSwitchCharacter(SVNStatus status) {

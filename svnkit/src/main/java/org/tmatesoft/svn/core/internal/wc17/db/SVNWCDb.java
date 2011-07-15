@@ -2058,7 +2058,6 @@ public class SVNWCDb implements ISVNWCDb {
         
         public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
             WCDbRepositoryInfo reposInfo = new WCDbRepositoryInfo();
-            long lastReposId = INVALID_REPOS_ID;
             
             SVNSqlJetStatement stmt = db.getStatement(SVNWCDbStatements.SELECT_NODE_CHILDREN_INFO);
             stmt.bindf("is", wcRoot.getWcId(), dirRelPath);
@@ -2096,7 +2095,6 @@ public class SVNWCDb implements ISVNWCDb {
                         long reposId = getColumnInt64(stmt, SVNWCDbSchema.NODES__Fields.repos_id);
                         if (reposInfo.rootUrl == null) {
                             fetchReposInfo(reposInfo, db, reposId);
-                            lastReposId = reposId;
                         }
                         childItem.reposRootUrl = reposInfo.rootUrl;
                         childItem.reposUuid = reposInfo.uuid;

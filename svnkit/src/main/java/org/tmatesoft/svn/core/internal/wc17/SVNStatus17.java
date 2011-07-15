@@ -13,15 +13,17 @@ package org.tmatesoft.svn.core.internal.wc17;
 
 import java.io.File;
 import java.util.Date;
-import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.wc17.SVNStatus17.ConflictInfo;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbBaseInfo.BaseInfoField;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
@@ -49,6 +51,7 @@ public class SVNStatus17 {
         public File baseFile;
         public File repositoryFile;
         public File localFile;
+        public File propRejectFile;
         public SVNTreeConflictDescription treeConflict;
     }
 
@@ -175,13 +178,9 @@ public class SVNStatus17 {
      */
     private String oodChangedAuthor;
 
-    private SVNTreeConflictDescription treeConflict;
-
     private String reposUuid;
     
     private boolean locked;
-
-    private ConflictInfo conflictedInfo;
 
 
     public SVNStatus17(SVNWCContext context) {
@@ -400,68 +399,6 @@ public class SVNStatus17 {
         this.oodChangedAuthor = oodChangedAuthor;
     }
 
-    public SVNStatus getStatus16() throws SVNException {
-        return getStatus16(false, null, null, null, null, ISVNWCDb.WC_FORMAT_17);
-    }
-
-    public SVNStatus getStatus16(boolean isFileExternal, String copyFromURL, SVNRevision copyFromRevision, SVNLock remoteLock, Map entryProperties, int wcFormatVersion) throws SVNException {
-        SVNStatusType contentStatus = getCombinedStatus();
-        boolean isLocked = false;
-        if(kind==SVNNodeKind.DIR) {
-            isLocked = this.locked;
-        }
-        // TODO externals.
-        
-        SVNStatusType propStatus = this.propStatus;
-        SVNStatusType nodeStatus = this.nodeStatus;
-        
-        if (conflicted) {
-            ConflictInfo info = context.getConflicted(localAbsPath, true, true, true);
-            if (info.textConflicted) {
-                contentStatus = SVNStatusType.CONFLICTED;
-            }
-            if (info.propConflicted) {
-                propStatus = SVNStatusType.CONFLICTED;
-            }
-            if (info.textConflicted || info.propConflicted) {
-                nodeStatus = SVNStatusType.CONFLICTED;
-            }
-        }
-        
-        if (conflicted) {
-            final SVNStatus status = new SVNStatus(reposRootUrl, localAbsPath, kind, SVNRevision.create(revision), SVNRevision.create(changedRev), changedDate, changedAuthor, contentStatus,
-                    propStatus, reposTextStatus, reposPropStatus, isLocked, copied, switched, isFileExternal, 
-                    null,
-                    null, 
-                    null,
-                    null, 
-                    copyFromURL, copyFromRevision, remoteLock, lock, entryProperties, changelist, wcFormatVersion, null);
-            status.setConflicted(conflicted);
-            status.setStatus17(this);
-            return status;
-        }
-        
-        final SVNStatus status = new SVNStatus(reposRootUrl, localAbsPath, kind, SVNRevision.create(revision), SVNRevision.create(changedRev), changedDate, changedAuthor, contentStatus, propStatus,
-                reposTextStatus, reposPropStatus, isLocked, copied, switched, isFileExternal, null, null, null, null, copyFromURL, copyFromRevision, remoteLock, lock, entryProperties, changelist,
-                wcFormatVersion, treeConflict);
-        
-        status.setStatus17(this);
-        return status;
-
-    }
-
-    /*
-     * Return the combined STATUS as shown in 'svn status' based on the node
-     * status and text status
-     */
-    private SVNStatusType getCombinedStatus() {
-        if (nodeStatus == SVNStatusType.STATUS_MODIFIED || nodeStatus == SVNStatusType.STATUS_CONFLICTED) {
-            /* This value might be the property status */
-            return textStatus;
-        }
-        return nodeStatus;
-    }
-
     public void setReposUUID(String uuid) {
         this.reposUuid = uuid;
     }
@@ -470,27 +407,130 @@ public class SVNStatus17 {
         return this.reposUuid;
     }
 
-    public ConflictInfo getConflictInfo() throws SVNException {
-        if (conflictedInfo == null) {
-            if (context != null) {
-                conflictedInfo = context.getConflicted(localAbsPath, true, true, true);
+    public SVNStatus getStatus16() throws SVNException {
+        SVNStatus status = new SVNStatus();
+        status.setFile(localAbsPath);
+        status.setKind(kind);
+        // TODO filesize
+        status.setIsVersioned(versioned);
+        status.setIsConflicted(conflicted);
+        
+        status.setNodeStatus(nodeStatus);
+        status.setContentsStatus(textStatus);
+        status.setPropertiesStatus(propStatus);
+
+        if (kind == SVNNodeKind.DIR) {
+            status.setIsLocked(locked);
+        }
+        status.setIsCopied(copied);
+        status.setRevision(SVNRevision.create(revision));
+        
+        status.setCommittedRevision(SVNRevision.create(changedRev));
+        status.setAuthor(changedAuthor);
+        status.setCommittedDate(changedDate);
+        
+        status.setRepositoryRootURL(reposRootUrl);
+        status.setRepositoryRelativePath(SVNFileUtil.getFilePath(reposRelpath));
+        status.setRepositoryUUID(reposUuid);
+        
+        status.setIsSwitched(switched);
+        if (versioned && switched && kind == SVNNodeKind.FILE) {
+           // TODO fileExternal
+        }
+        status.setLocalLock(lock);
+        status.setChangelistName(changelist);
+        status.setDepth(depth);
+        
+        status.setRemoteKind(oodKind);
+        status.setRemoteNodeStatus(reposNodeStatus);
+        status.setRemoteContentsStatus(reposTextStatus);
+        status.setRemotePropertiesStatus(reposPropStatus);
+        status.setRemoteLock(reposLock);
+        
+        status.setRemoteAuthor(oodChangedAuthor);
+        status.setRemoteRevision(SVNRevision.create(oodChangedRev));
+        status.setRemoteDate(oodChangedDate);
+        
+        // do all that on demand in SVNStatus class later.
+        // compose URL on demand in SVNStatus
+        
+        if (versioned && conflicted) {
+            ConflictInfo info = context.getConflicted(localAbsPath, true, true, true);
+            if (info.textConflicted) {
+                status.setContentsStatus(SVNStatusType.STATUS_CONFLICTED);
+            }
+            if (info.propConflicted) {
+                status.setPropertiesStatus(SVNStatusType.STATUS_CONFLICTED);
+            }
+            if (info.textConflicted || info.propConflicted) {
+                status.setNodeStatus(SVNStatusType.STATUS_CONFLICTED);
             }
         }
-        return conflictedInfo;
-    }
-
-    public SVNTreeConflictDescription getTreeConflict() throws SVNException {
-        if (treeConflict != null) {
-            return treeConflict;
+        
+        if (reposRootUrl != null && reposRelpath != null) {
+            // TODO ?
+            status.setURL(SVNWCUtils.join(reposRootUrl, reposRelpath));
+            status.setRemoteURL(SVNWCUtils.join(reposRootUrl, reposRelpath));
         }
         
-        if (conflictedInfo != null && conflictedInfo.treeConflict != null) {
-            return conflictedInfo.treeConflict;
+        // fetch missing info on revisions for some statuses.
+        if (context != null && versioned && revision < 0 && !copied) {
+            if (nodeStatus == SVNStatusType.STATUS_REPLACED) {
+                ISVNWCDb.WCDbInfo info = context.getDb().readInfo(localAbsPath, InfoField.revision);
+                status.setRevision(SVNRevision.create(info.revision));
+            } else if (nodeStatus == SVNStatusType.STATUS_DELETED ) {
+                ISVNWCDb.WCDbInfo info = context.getDb().readInfo(localAbsPath, InfoField.revision, InfoField.changedAuthor, InfoField.changedDate, InfoField.changedRev,
+                        InfoField.haveBase, InfoField.haveWork, InfoField.haveMoreWork);
+                status.setAuthor(info.changedAuthor);
+                status.setCommittedDate(info.changedDate);
+                status.setCommittedRevision(SVNRevision.create(info.changedRev));
+                status.setRevision(SVNRevision.create(info.revision));
+                
+                if (info.haveWork || info.revision < 0 || info.changedRev < 0) {
+                    ISVNWCDb.WCDbBaseInfo binfo = context.getDb().getBaseInfo(localAbsPath, BaseInfoField.revision, BaseInfoField.changedRev, BaseInfoField.changedAuthor, BaseInfoField.changedDate);
+                    status.setAuthor(binfo.changedAuthor);
+                    status.setCommittedDate(binfo.changedDate);
+                    status.setCommittedRevision(SVNRevision.create(binfo.changedRev));
+                    status.setRevision(SVNRevision.create(binfo.revision));
+                }
+                
+            }
         }
-        if (context != null) {
-            treeConflict = context.getTreeConflict(localAbsPath);
+        
+        // fetch conflict info and tree conflict description.
+        if (conflicted && context != null) {
+            boolean hasTreeConflict = false;
+            ConflictInfo conflictedInfo = null;
+            if (versioned) {
+                if (status.isVersioned()) {
+                    try {
+                        conflictedInfo = context.getConflicted(localAbsPath, true, true, true);
+                    } catch (SVNException e) {
+                        if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UPGRADE_REQUIRED) {
+                        } else {
+                            throw e;
+                        }
+                    }
+                    hasTreeConflict = conflictedInfo != null && conflictedInfo.treeConflicted;
+                } else {
+                    hasTreeConflict = true;
+                }                
+            }
+            if (hasTreeConflict) {
+                SVNTreeConflictDescription treeConflictDescription = context.getTreeConflict(localAbsPath);
+                status.setTreeConflict(treeConflictDescription);
+            }
+            
+            if (conflictedInfo != null) {
+                status.setConflictWrkFile(conflictedInfo.localFile);
+                status.setConflictOldFile(conflictedInfo.baseFile);
+                status.setConflictNewFile(conflictedInfo.repositoryFile);                    
+                status.setPropRejectFile(conflictedInfo.propRejectFile);                    
+            }
         }
-        return treeConflict;
+        
+        status.setWorkingCopyFormat(ISVNWCDb.WC_FORMAT_17);
+        
+        return status;
     }
-
 }

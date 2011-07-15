@@ -142,9 +142,8 @@ public class SVNStatusCommand extends SVNXMLCommand implements ISVNStatusHandler
     }
 
     public void handleStatus(SVNStatus status) throws SVNException {
-        if(status.getStatus17()!=null && status.getStatus17().isConflicted()){
-            countConflicts(status.getStatus17());
-        }
+        countConflicts(status);
+        
         String path = getSVNEnvironment().getRelativePath(status.getFile());
         path = SVNCommandUtil.getLocalPath(path);
         if (status != null && status.getChangelistName() != null) {
@@ -170,18 +169,17 @@ public class SVNStatusCommand extends SVNXMLCommand implements ISVNStatusHandler
         }
     }
 
-    private void countConflicts(SVNStatus17 status17) throws SVNException {
-        final ConflictInfo conflictedInfo = status17.getConflictInfo();
-        if(conflictedInfo!=null) {
-            if(conflictedInfo.textConflicted){
-                textConflicts++;
-            } else if(conflictedInfo.propConflicted) {
+    private void countConflicts(SVNStatus status) throws SVNException {
+        if (status.isConflicted()) {
+            if (status.getPropRejectFile() != null) {
                 propConflicts++;
-            } else if(conflictedInfo.treeConflicted) {
+            } 
+            if (status.getConflictWrkFile() != null || status.getConflictOldFile() != null || status.getConflictNewFile() != null) {
+                textConflicts++;
+            }
+            if (status.getTreeConflict() != null) {
                 treeConflicts++;
             }
-        } else if (status17.getTreeConflict() != null) {
-            treeConflicts++;
         }
     }
 
