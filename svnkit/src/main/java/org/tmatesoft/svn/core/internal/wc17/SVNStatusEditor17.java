@@ -592,7 +592,7 @@ public class SVNStatusEditor17 {
                 sendUnversionedItem(nodeAbsPath, SVNFileType.getNodeKind(nodeFileType), true, patterns, noIgnore, handler);                
                 continue;
             }
-            if (fileType == null) {
+            if (nodeFileType == null) {
                 continue;
             }
             if (depth == SVNDepth.FILES && fileType == SVNFileType.DIRECTORY) {
