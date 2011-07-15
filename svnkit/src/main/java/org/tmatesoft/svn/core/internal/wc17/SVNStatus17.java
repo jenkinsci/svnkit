@@ -516,6 +516,9 @@ public class SVNStatus17 {
             }
         }
         
+        if (status.getNodeStatus() == SVNStatusType.STATUS_ADDED) {
+            status.setPropertiesStatus(SVNStatusType.STATUS_NONE);
+        }
         status.setWorkingCopyFormat(ISVNWCDb.WC_FORMAT_17);
         
         return status;
