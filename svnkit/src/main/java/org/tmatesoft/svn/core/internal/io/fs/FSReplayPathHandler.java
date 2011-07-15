@@ -230,6 +230,8 @@ public class FSReplayPathHandler implements ISVNCommitPathHandler {
                         SVNFileUtil.closeFile(sourceStream);
                         SVNFileUtil.closeFile(targetStream);
                     }
+                } else {
+                    editor.textDeltaEnd(path);
                 }
             }
         }
