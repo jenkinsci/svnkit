@@ -2373,6 +2373,17 @@ public class SVNWCDb implements ISVNWCDb {
         return 0;
     }
     
+    public WCDbInfo readInfoBelowWorking(File localAbsPath) throws SVNException {
+        assert (isAbsolute(localAbsPath));
+
+        final DirParsedInfo parseDir = parseDir(localAbsPath, Mode.ReadOnly);
+        SVNWCDbDir pdh = parseDir.wcDbDir;
+        File localRelPath = parseDir.localRelPath;
+
+        verifyDirUsable(pdh);
+        return readInfoBelowWorking(pdh.getWCRoot(), localRelPath, -1);
+    }
+    
     public WCDbInfo readInfoBelowWorking(SVNWCDbRoot wcRoot, File localRelPath, int belowOpDepth) throws SVNException {
 
         WCDbInfo info = new WCDbInfo();

@@ -1681,6 +1681,7 @@ public interface ISVNWCDb {
 
     Map<File, File> getExternalsDefinedBelow(File localAbsPath) throws SVNException;
 
-     void gatherExternalDefinitions(File localAbsPath, SVNExternalsStore externals) throws SVNException;
+    void gatherExternalDefinitions(File localAbsPath, SVNExternalsStore externals) throws SVNException;
 
+    public WCDbInfo readInfoBelowWorking(File localAbsPath) throws SVNException;
 }

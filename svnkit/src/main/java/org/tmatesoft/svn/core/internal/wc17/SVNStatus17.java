@@ -22,6 +22,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbBaseInfo.BaseInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -475,25 +476,11 @@ public class SVNStatus17 {
         
         // fetch missing info on revisions for some statuses.
         if (context != null && versioned && revision < 0 && !copied) {
+            
             if (nodeStatus == SVNStatusType.STATUS_REPLACED) {
-                ISVNWCDb.WCDbInfo info = context.getDb().readInfo(localAbsPath, InfoField.revision);
-                status.setRevision(SVNRevision.create(info.revision));
+                fetchStatusRevision(status);
             } else if (nodeStatus == SVNStatusType.STATUS_DELETED ) {
-                ISVNWCDb.WCDbInfo info = context.getDb().readInfo(localAbsPath, InfoField.revision, InfoField.changedAuthor, InfoField.changedDate, InfoField.changedRev,
-                        InfoField.haveBase, InfoField.haveWork, InfoField.haveMoreWork);
-                status.setAuthor(info.changedAuthor);
-                status.setCommittedDate(info.changedDate);
-                status.setCommittedRevision(SVNRevision.create(info.changedRev));
-                status.setRevision(SVNRevision.create(info.revision));
-                
-                if (info.haveWork || info.revision < 0 || info.changedRev < 0) {
-                    ISVNWCDb.WCDbBaseInfo binfo = context.getDb().getBaseInfo(localAbsPath, BaseInfoField.revision, BaseInfoField.changedRev, BaseInfoField.changedAuthor, BaseInfoField.changedDate);
-                    status.setAuthor(binfo.changedAuthor);
-                    status.setCommittedDate(binfo.changedDate);
-                    status.setCommittedRevision(SVNRevision.create(binfo.changedRev));
-                    status.setRevision(SVNRevision.create(binfo.revision));
-                }
-                
+                fetchStatusRevision(status);
             }
         }
         
@@ -533,4 +520,29 @@ public class SVNStatus17 {
         
         return status;
     }
+    
+    private void fetchStatusRevision(SVNStatus status) throws SVNException {        
+        ISVNWCDb.WCDbInfo info = context.getDb().readInfo(localAbsPath, InfoField.revision, InfoField.changedAuthor, InfoField.changedDate, InfoField.changedRev,
+                InfoField.haveBase, InfoField.haveWork, InfoField.haveMoreWork, InfoField.status);
+        if (nodeStatus == SVNStatusType.STATUS_DELETED) {
+            status.setAuthor(info.changedAuthor);
+            status.setCommittedDate(info.changedDate);
+            status.setCommittedRevision(SVNRevision.create(info.changedRev));
+        }
+        status.setRevision(SVNRevision.create(info.revision));
+        
+        if (info.haveWork || info.revision < 0 || (nodeStatus == SVNStatusType.STATUS_DELETED && info.changedRev < 0) || 
+                (info.status != SVNWCDbStatus.Added && info.status != SVNWCDbStatus.Deleted)) {
+            ISVNWCDb.WCDbBaseInfo binfo = context.getDb().getBaseInfo(localAbsPath, BaseInfoField.revision, BaseInfoField.changedRev, BaseInfoField.changedAuthor, BaseInfoField.changedDate);
+            if (nodeStatus == SVNStatusType.STATUS_DELETED) {
+                status.setAuthor(binfo.changedAuthor);
+                status.setCommittedDate(binfo.changedDate);
+                status.setCommittedRevision(SVNRevision.create(binfo.changedRev));
+            }
+            status.setRevision(SVNRevision.create(binfo.revision));
+        }
+    }
+        
+
+    
 }

@@ -516,12 +516,14 @@ public class SVNWCContext {
     public ScheduleInternalInfo getNodeScheduleInternal(File localAbsPath, boolean schedule, boolean copied) throws SVNException {
         final ScheduleInternalInfo info = new ScheduleInternalInfo();
 
-        if (schedule)
+        if (schedule) {
             info.schedule = SVNWCSchedule.normal;
-        if (copied)
+        }
+        if (copied) {
             info.copied = false;
+        }
 
-        WCDbInfo readInfo = db.readInfo(localAbsPath, InfoField.status, InfoField.originalReposRelpath, InfoField.haveBase);
+        WCDbInfo readInfo = db.readInfo(localAbsPath, InfoField.status, InfoField.originalReposRelpath, InfoField.opRoot, InfoField.haveBase, InfoField.haveMoreWork, InfoField.haveWork);
         SVNWCDbStatus status = readInfo.status;
         File copyFromRelpath = readInfo.originalReposRelpath;
         boolean hasBase = readInfo.haveBase;
@@ -530,116 +532,60 @@ public class SVNWCContext {
             case NotPresent:
             case ServerExcluded:
             case Excluded:
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "''{0}'' is not under version control", localAbsPath);
-                SVNErrorManager.error(err, SVNLogType.WC);
-                return null;
-
+                if (schedule) {
+                    info.schedule = SVNWCSchedule.normal;                
+                }
+                break;
             case Normal:
             case Incomplete:
-            case Obstructed:
                 break;
 
             case Deleted:
-            case ObstructedDelete: {
+            {
 
-                if (schedule)
+                if (schedule) {
                     info.schedule = SVNWCSchedule.delete;
+                }
 
-                if (!copied)
+                if (!copied) {
                     break;
-
-                /* Find out details of our deletion. */
-                File work_del_abspath = db.scanDeletion(localAbsPath, DeletionInfoField.workDelAbsPath).workDelAbsPath;
-
-                if (work_del_abspath == null)
-                    break; /* Base deletion */
-
-                /*
-                 * We miss the 4th tree to properly find out if this is the root
-                 * of a working-delete. Only in that case should copied be set
-                 * to true. See entries.c for details.
-                 */
-
-                info.copied = false; /* Until we can fix this test */
+                }
+                if (readInfo.haveMoreWork || !readInfo.haveBase) {
+                    info.copied = true;
+                } else {
+                    File work_del_abspath = db.scanDeletion(localAbsPath, DeletionInfoField.workDelAbsPath).workDelAbsPath;
+                    if (work_del_abspath == null) {
+                        info.copied = true;
+                    }
+                }
                 break;
             }
-            case Added:
-            case ObstructedAdd: {
-                File op_root_abspath;
-                File parent_abspath;
-                File parent_copyfrom_relpath;
-                String child_name;
-
-                if (schedule)
-                    info.schedule = SVNWCSchedule.add;
-
-                if (copyFromRelpath != null) {
-                    status = SVNWCDbStatus.Copied; /* Or moved */
-                    op_root_abspath = localAbsPath;
-                } else {
-                    WCDbAdditionInfo scanAddition = db.scanAddition(localAbsPath, AdditionInfoField.status, AdditionInfoField.opRootAbsPath, AdditionInfoField.originalReposRelPath);
-                    status = scanAddition.status;
-                    op_root_abspath = scanAddition.opRootAbsPath;
-                    copyFromRelpath = scanAddition.originalReposRelPath;
-                }
-
-                if (copied && status != SVNWCDbStatus.Added)
-                    info.copied = true;
-
-                if (!schedule)
+            case Added: 
+            {
+                if (!readInfo.opRoot) {
+                    if (copied) {
+                        info.copied = true;
+                    }
+                    if (schedule) {
+                        info.schedule = SVNWCSchedule.normal;
+                    }
                     break;
-
-                if (hasBase) {
-                    SVNWCDbStatus base_status = db.getBaseInfo(localAbsPath, BaseInfoField.status).status;
-                    if (base_status != SVNWCDbStatus.NotPresent)
+                }
+                if (copied) {
+                    info.copied = copyFromRelpath != null;
+                }
+                if (schedule) {
+                    info.schedule = SVNWCSchedule.add;
+                } else {
+                    break;
+                }
+                if (readInfo.haveBase || readInfo.haveMoreWork) {
+                    WCDbInfo workingInfo = db.readInfoBelowWorking(localAbsPath);
+                    if (workingInfo.status != SVNWCDbStatus.NotPresent && workingInfo.status != SVNWCDbStatus.Deleted) {
                         info.schedule = SVNWCSchedule.replace;
+                        break;
+                    }
                 }
-
-                if (status == SVNWCDbStatus.Added)
-                    break; /* Local addition */
-
-                /*
-                 * Determine the parent status to check if we should show the
-                 * schedule of a child of a copy as normal.
-                 */
-                if (!op_root_abspath.equals(localAbsPath)) {
-                    info.schedule = SVNWCSchedule.normal;
-                    break; /* Part of parent copy */
-                }
-
-                /*
-                 * When we used entries we didn't see just a different revision
-                 * as a new operational root, so we have to check if the parent
-                 * is from the same copy origin
-                 */
-                parent_abspath = SVNFileUtil.getFileDir(localAbsPath);
-
-                WCDbInfo parentReadInfo = db.readInfo(parent_abspath, InfoField.status, InfoField.originalReposRelpath);
-                status = parentReadInfo.status;
-                parent_copyfrom_relpath = parentReadInfo.originalReposRelpath;
-
-                if (status != SVNWCDbStatus.Added)
-                    break; /* Parent was not added */
-
-                if (parent_copyfrom_relpath == null) {
-                    WCDbAdditionInfo scanAddition = db.scanAddition(parent_abspath, AdditionInfoField.status, AdditionInfoField.opRootAbsPath, AdditionInfoField.originalReposRelPath);
-                    status = scanAddition.status;
-                    op_root_abspath = scanAddition.opRootAbsPath;
-                    parent_copyfrom_relpath = scanAddition.originalReposRelPath;
-
-                    if (parent_copyfrom_relpath == null)
-                        break; /* Parent is a local addition */
-
-                    parent_copyfrom_relpath = SVNFileUtil.createFilePath(parent_copyfrom_relpath, SVNPathUtil.getPathAsChild(op_root_abspath.toString(), parent_abspath.toString()));
-
-                }
-
-                child_name = SVNPathUtil.getPathAsChild(parent_copyfrom_relpath.toString(), copyFromRelpath.toString());
-
-                if (child_name == null || !child_name.equals(SVNFileUtil.getFileName(localAbsPath)))
-                    break; /* Different operation */
-
-                info.schedule = SVNWCSchedule.normal;
                 break;
             }
             default:
