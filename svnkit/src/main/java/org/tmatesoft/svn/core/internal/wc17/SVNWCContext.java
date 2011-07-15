@@ -526,7 +526,6 @@ public class SVNWCContext {
         WCDbInfo readInfo = db.readInfo(localAbsPath, InfoField.status, InfoField.originalReposRelpath, InfoField.opRoot, InfoField.haveBase, InfoField.haveMoreWork, InfoField.haveWork);
         SVNWCDbStatus status = readInfo.status;
         File copyFromRelpath = readInfo.originalReposRelpath;
-        boolean hasBase = readInfo.haveBase;
 
         switch (status) {
             case NotPresent:
@@ -554,7 +553,7 @@ public class SVNWCContext {
                     info.copied = true;
                 } else {
                     File work_del_abspath = db.scanDeletion(localAbsPath, DeletionInfoField.workDelAbsPath).workDelAbsPath;
-                    if (work_del_abspath == null) {
+                    if (work_del_abspath != null) {
                         info.copied = true;
                     }
                 }
