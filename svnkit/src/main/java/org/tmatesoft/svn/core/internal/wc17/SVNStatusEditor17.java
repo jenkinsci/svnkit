@@ -514,7 +514,7 @@ public class SVNStatusEditor17 {
     }
    
     protected void getDirStatus(File localAbsPath, String selected, boolean skipThisDir, WCDbRepositoryInfo parentReposInfo, 
-            SVNWCDbInfo dirInfo, SVNFileType fileType, Collection<String> ignorePatterns, SVNDepth  depth, boolean getAll, boolean noIgnore, ISVNStatus17Handler handler) throws SVNException {
+            SVNWCDbInfo dirInfo, SVNFileType fileType, Collection<String> ignorePatterns, SVNDepth depth, boolean getAll, boolean noIgnore, ISVNStatus17Handler handler) throws SVNException {
         myWCContext.checkCancelled();
         
         if (depth == SVNDepth.UNKNOWN) {
@@ -562,7 +562,7 @@ public class SVNStatusEditor17 {
             if (!skipThisDir) {
                 sendStatusStructure(localAbsPath, parentReposInfo, dirInfo, SVNFileType.getNodeKind(fileType), fileType == SVNFileType.SYMLINK, getAll, handler);
             }
-            if (depth == SVNDepth.UNKNOWN) {
+            if (depth == SVNDepth.EMPTY) {
                 return;
             }
         }
