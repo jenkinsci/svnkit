@@ -157,7 +157,7 @@ public class SVNStatusCommand extends SVNXMLCommand implements ISVNStatusHandler
             return;
         }
         if (getSVNEnvironment().isXML()) {
-            if (status.getContentsStatus() == SVNStatusType.STATUS_NONE && status.getRemoteContentsStatus() == SVNStatusType.STATUS_NONE) {
+            if (SVNStatusPrinter.combineStatus(status) == SVNStatusType.STATUS_NONE && status.getRemoteContentsStatus() == SVNStatusType.STATUS_NONE) {
                 return;
             }
             StringBuffer xmlBuffer = printXMLStatus(status, path);

@@ -150,7 +150,7 @@ public class SVNStatusPrinter {
         myEnvironment.getOut().println(result);
     }
     
-    private static SVNStatusType combineStatus(SVNStatus status) {
+    public static SVNStatusType combineStatus(SVNStatus status) {
         if (status.getNodeStatus() == SVNStatusType.STATUS_CONFLICTED) {
             if (!status.isVersioned() && status.isConflicted()) {
                 return SVNStatusType.STATUS_MISSING;
