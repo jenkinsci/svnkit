@@ -40,7 +40,7 @@ public abstract class SVNXMLCommand extends SVNCommand {
 
     protected void printXMLHeader(String header) {
         StringBuffer xmlBuffer = new StringBuffer();
-        SVNXMLUtil.addXMLHeader(xmlBuffer, false);
+        SVNXMLUtil.addXMLHeader(xmlBuffer, true);
         SVNXMLUtil.openXMLTag(null, header, SVNXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
         getSVNEnvironment().getOut().print(xmlBuffer.toString());
     }
