@@ -1272,7 +1272,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                 }
             }
             if (installPristine) {
-                boolean recordFileInfo = installFrom != null;
+                boolean recordFileInfo = installFrom == null;
                 SVNSkel wi = myWcContext.wqBuildFileInstall(fb.localAbsolutePath, installFrom, myIsUseCommitTimes, recordFileInfo);
                 allWorkItems = myWcContext.wqMerge(allWorkItems, wi);
             } else if (lockState == SVNStatusType.LOCK_UNLOCKED && !fb.obstructionFound) {
