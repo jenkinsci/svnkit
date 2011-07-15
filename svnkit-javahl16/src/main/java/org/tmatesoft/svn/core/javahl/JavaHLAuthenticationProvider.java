@@ -179,7 +179,7 @@ class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider, ISVNSS
             String prompt = "The ''{0}'' server''s key fingerprint is:\n{1}\n" +
             		"If you trust this host, select ''Yes'' to add the key to the SVN cache and carry on connecting.\n" +
             		"If you do not trust this host, select ''No'' to abandon the connection.";            
-            prompt = MessageFormat.format(prompt, new Object[] {url.getHost(), SVNSSLUtil.getFingerprint((byte[]) serverAuth)});
+            prompt = MessageFormat.format(prompt, new Object[] {url.getHost(), SVNSSLUtil.getFingerprint((byte[]) serverAuth, "MD5")});
             if (!myPrompt.askYesNo(realm, prompt, false)) {
                 return REJECTED;
             }                

@@ -52,16 +52,16 @@ public class SVNSSLUtil {
     
     private static String getFingerprint(X509Certificate cert) {
         try  {
-           return getFingerprint(cert.getEncoded());
+           return getFingerprint(cert.getEncoded(), "SHA1");
         } catch (Exception e)  {
         } 
         return null;
     }
 
-    public static String getFingerprint(byte[] key) {
+    public static String getFingerprint(byte[] key, String digestAlgorithm) {
         StringBuffer s = new StringBuffer();
         try  {
-           MessageDigest md = MessageDigest.getInstance("SHA1");
+           MessageDigest md = MessageDigest.getInstance(digestAlgorithm != null ? digestAlgorithm : "SHA1");
            md.update(key);
            byte[] digest = md.digest();
            for (int i= 0; i < digest.length; i++)  {

@@ -98,7 +98,7 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
                 prompt.append("If you do not trust this host, type ''R'' to abandon the connection.");
                 prompt.append("\n(R)eject or accept (t)emporarily? "); 
             }
-            System.err.print(MessageFormat.format(prompt.toString(), new Object[] {url.getHost(), SVNSSLUtil.getFingerprint((byte[]) certificate)}));
+            System.err.print(MessageFormat.format(prompt.toString(), new Object[] {url.getHost(), SVNSSLUtil.getFingerprint((byte[]) certificate, "MD5")}));
             System.err.flush();
             while(true) {
                 String line = readLine();
