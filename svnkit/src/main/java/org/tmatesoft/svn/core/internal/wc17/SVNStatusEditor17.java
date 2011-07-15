@@ -251,10 +251,11 @@ public class SVNStatusEditor17 {
                     copied = myWCContext.getNodeScheduleInternal(localAbsPath, false, true).copied;
                 }
             } else if (pathKind == null || pathKind != SVNNodeKind.DIR) {
-                if (pathKind == null || pathKind == SVNNodeKind.NONE)
+                if (pathKind == null || pathKind == SVNNodeKind.NONE) {
                     node_status = SVNStatusType.STATUS_MISSING;
-                else
+                } else {
                     node_status = SVNStatusType.STATUS_OBSTRUCTED;
+                }
             }
         } else {
             if (info.status == SVNWCDbStatus.Deleted) {
@@ -310,7 +311,7 @@ public class SVNStatusEditor17 {
             }
         }
         boolean conflicted = info.conflicted;
-        if (info.conflicted) {
+        if (conflicted) {
             ConflictInfo conflictInfo = myWCContext.getConflicted(localAbsPath, true, true, true);
             if (!conflictInfo.propConflicted && !conflictInfo.textConflicted && !conflictInfo.treeConflicted) {
                 conflicted =false;

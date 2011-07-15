@@ -489,20 +489,19 @@ public class SVNStatus17 {
             boolean hasTreeConflict = false;
             ConflictInfo conflictedInfo = null;
             if (versioned) {
-                if (status.isVersioned()) {
-                    try {
-                        conflictedInfo = context.getConflicted(localAbsPath, true, true, true);
-                    } catch (SVNException e) {
-                        if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UPGRADE_REQUIRED) {
-                        } else {
-                            throw e;
-                        }
+                try {
+                    conflictedInfo = context.getConflicted(localAbsPath, true, true, true);
+                } catch (SVNException e) {
+                    if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UPGRADE_REQUIRED) {
+                    } else {
+                        throw e;
                     }
-                    hasTreeConflict = conflictedInfo != null && conflictedInfo.treeConflicted;
-                } else {
-                    hasTreeConflict = true;
-                }                
+                }
+                hasTreeConflict = conflictedInfo != null && conflictedInfo.treeConflicted;
+            } else {
+                hasTreeConflict = true;
             }
+        
             if (hasTreeConflict) {
                 SVNTreeConflictDescription treeConflictDescription = context.getTreeConflict(localAbsPath);
                 status.setTreeConflict(treeConflictDescription);
