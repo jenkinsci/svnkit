@@ -33,7 +33,7 @@ public class SVNStatusPrinter {
     public void printStatus(String path, SVNStatus status,
             boolean detailed, boolean showLastCommitted, boolean skipUnrecognized, boolean showReposLocks) throws SVNException {
         if (status == null || (skipUnrecognized && !(status.isVersioned() || status.getTreeConflict() != null)) ||
-                (status.getContentsStatus() == SVNStatusType.STATUS_NONE && status.getRemoteContentsStatus() == SVNStatusType.STATUS_NONE)) {
+                (combineStatus(status) == SVNStatusType.STATUS_NONE && status.getRemoteContentsStatus() == SVNStatusType.STATUS_NONE)) {
             return;
         }
 
