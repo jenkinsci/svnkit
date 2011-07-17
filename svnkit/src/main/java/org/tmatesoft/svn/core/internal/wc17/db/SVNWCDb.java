@@ -3739,6 +3739,7 @@ public class SVNWCDb implements ISVNWCDb {
         
         brb.localRelPath = localRelPath;
         brb.wcRoot = pdh.getWCRoot().getAbsPath();
+        brb.exludedRelPaths = excludedPaths;
         
         pdh.getWCRoot().getSDb().runTransaction(brb);
         pdh.flushEntries(localAbsPath);

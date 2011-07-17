@@ -109,6 +109,8 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
 
     private boolean myIsCleanCheckout;
 
+    private File myWCRootAbsPath;
+
     public static ISVNUpdateEditor createUpdateEditor(SVNWCContext wcContext, File anchorAbspath, String target, SVNURL reposRoot, SVNURL switchURL, SVNExternalsStore externalsStore,
             boolean allowUnversionedObstructions, boolean depthIsSticky, SVNDepth depth, String[] preservedExts, ISVNFileFetcher fileFetcher, boolean updateLocksOnDemand) throws SVNException {
         if (depth == SVNDepth.UNKNOWN) {
@@ -172,10 +174,18 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         return targetRevision;
     }
 
-    private void rememberSkippedTree(File localAbspath) {
+    private void rememberSkippedTree(File localAbspath) throws SVNException {
         assert (SVNFileUtil.isAbsolute(localAbspath));
-        mySkippedTrees.add(localAbspath);
+        File relativePath = SVNWCUtils.skipAncestor(getWCRootAbsPath(), localAbspath);
+        mySkippedTrees.add(relativePath);
         return;
+    }
+    
+    private File getWCRootAbsPath() throws SVNException {
+        if (myWCRootAbsPath == null) {
+            myWCRootAbsPath = myWcContext.getDb().getWCRoot(myAnchorAbspath);
+        }
+        return myWCRootAbsPath;
     }
 
     public void openRoot(long revision) throws SVNException {
