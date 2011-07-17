@@ -3624,16 +3624,34 @@ public class SVNWCDb implements ISVNWCDb {
             try {
                 haveRow = stmt.next();
                 if (haveRow) {
-                    SVNWCDbStatus workingStatus = presenceMap2.get(stmt.getColumnString(SVNWCDbSchema.NODES__Fields.presence));
+                    SVNWCDbStatus workingStatus = getColumnToken(stmt, SVNWCDbSchema.NODES__Fields.presence, presenceMap2);
+                    long workingOpDepth = getColumnInt64(stmt, NODES__Fields.op_depth);
                     assert (workingStatus == SVNWCDbStatus.Normal || workingStatus == SVNWCDbStatus.BaseDeleted || workingStatus == SVNWCDbStatus.NotPresent || workingStatus == SVNWCDbStatus.Incomplete);
-                    if (workingStatus == SVNWCDbStatus.BaseDeleted) {
-                        removeWorking = true;
+                    if (workingOpDepth <= opDepth) {
+                        addWorkingBaseDeleted = true;
+                        if (workingStatus == SVNWCDbStatus.BaseDeleted) {
+                            removeWorking = true;
+                        }
                     }
-                    addWorkingBaseDeleted = true;
                 }
             } finally {
                 stmt.reset();
             }
+            if (removeWorking) {
+                stmt = db.getStatement(SVNWCDbStatements.DELETE_LOWEST_WORKING_NODE);
+                stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelpath);
+                stmt.done();
+            }
+            if (addWorkingBaseDeleted) {
+                stmt = db.getStatement(SVNWCDbStatements.INSERT_DELETE_FROM_BASE);
+                stmt.bindf("isi", pdh.getWCRoot().getWcId(), localRelpath, opDepth);
+                stmt.done();
+            } else {
+                stmt = db.getStatement(SVNWCDbStatements.INSERT_WORKING_NODE_FROM_BASE_COPY);
+                stmt.bindf("isi", pdh.getWCRoot().getWcId(), localRelpath, opDepth);
+                stmt.done();
+            }
+            
             final List<String> children = gatherRepoChildren(pdh, localRelpath, 0);
             for (String name : children) {
                 MakeCopy cbt = new MakeCopy();
@@ -3645,20 +3663,7 @@ public class SVNWCDb implements ISVNWCDb {
                 cbt.opDepth = opDepth;
                 cbt.transaction(db);
             }
-            if (removeWorking) {
-                stmt = db.getStatement(SVNWCDbStatements.DELETE_LOWEST_WORKING_NODE);
-                stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelpath);
-                stmt.done();
-            }
-            if (addWorkingBaseDeleted) {
-                stmt = db.getStatement(SVNWCDbStatements.INSERT_WORKING_NODE_FROM_BASE_COPY_PRESENCE);
-                stmt.bindf("isit", pdh.getWCRoot().getWcId(), localRelpath, opDepth, presenceMap.get(SVNWCDbStatus.BaseDeleted));
-                stmt.done();
-            } else {
-                stmt = db.getStatement(SVNWCDbStatements.INSERT_WORKING_NODE_FROM_BASE_COPY);
-                stmt.bindf("isi", pdh.getWCRoot().getWcId(), localRelpath, opDepth);
-                stmt.done();
-            }
+            
             pdh.flushEntries(localAbspath);
         }
 

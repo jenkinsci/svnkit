@@ -328,7 +328,6 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         if (treeConflict == null) {
             SVNEventAction action = SVNEventAction.UPDATE_DELETE;
             if (myCurrentDirectory.shadowed) {
-                // TODO shadow deletion event.
                 action = SVNEventAction.UPDATE_SHADOWED_DELETE;
             }
             doNotification(localAbsPath, info.kind == SVNWCDbKind.Dir ? SVNNodeKind.DIR : SVNNodeKind.FILE, action);
