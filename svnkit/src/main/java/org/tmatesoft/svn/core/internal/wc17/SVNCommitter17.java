@@ -134,7 +134,9 @@ public class SVNCommitter17 implements ISVNCommitPathHandler {
         }
         if (event != null) {
             event.setURL(item.getURL());
-            myContext.getEventHandler().handleEvent(event, ISVNEventHandler.UNKNOWN);
+            if (myContext.getEventHandler() != null) {
+                myContext.getEventHandler().handleEvent(event, ISVNEventHandler.UNKNOWN);
+            }
         }
         if (item.isDeleted()) {
             try {
