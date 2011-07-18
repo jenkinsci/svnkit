@@ -44,7 +44,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 public class SVNBasicClient {
 
     private static final String SVNKIT_WC_17_PROPERTY = "svnkit.wc.17";
-    private static final String SVNKIT_WC_17_DEFAULT = "true";
+    private static final String SVNKIT_WC_17_DEFAULT = "false";
     private static final String SVNKIT_WC_17_EXPECTED = "true";
 
     private SVNBasicDelegate delegate16;
