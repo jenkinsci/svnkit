@@ -3067,6 +3067,7 @@ public class SVNWCDb implements ISVNWCDb {
 
         WCDbBaseInfo baseInfo = getBaseInfo(localAbsPath, BaseInfoField.reposId, BaseInfoField.reposRelPath);
         final WCDbRepositoryInfo reposInfo = new WCDbRepositoryInfo();
+        reposInfo.relPath = baseInfo.reposRelPath;
         if (f.contains(RepositoryInfoField.rootUrl) || f.contains(RepositoryInfoField.uuid)) {
             fetchReposInfo(reposInfo, pdh.getWCRoot().getSDb(), baseInfo.reposId);
         }
