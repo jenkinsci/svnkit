@@ -81,11 +81,12 @@ public class SVNWCConflictDescription17 {
     }
 
     public SVNConflictDescription toConflictDescription() {
+        String wcPath = localAbspath != null ? localAbspath.getPath() : null;
         switch (kind) {
             case PROPERTY:
-                return new SVNPropertyConflictDescription(new SVNMergeFileSet(null, null, baseFile, myFile, myFile.getPath(), theirFile, mergedFile, null, mimeType), nodeKind, propertyName, action, reason);
+                return new SVNPropertyConflictDescription(new SVNMergeFileSet(null, null, baseFile, myFile, wcPath, theirFile, mergedFile, null, mimeType), nodeKind, propertyName, action, reason);
             case TEXT:
-                return new SVNTextConflictDescription(new SVNMergeFileSet(null, null, baseFile, myFile, myFile.getPath(), theirFile, mergedFile, null, mimeType), nodeKind, action, reason);
+                return new SVNTextConflictDescription(new SVNMergeFileSet(null, null, baseFile, myFile, wcPath, theirFile, mergedFile, null, mimeType), nodeKind, action, reason);
             case TREE:
                 return new SVNTreeConflictDescription(localAbspath, nodeKind, action, reason, operation, srcLeftVersion, srcRightVersion);
         }
