@@ -939,6 +939,10 @@ public class SVNWCDb implements ISVNWCDb {
                             info.lock.date = SVNWCUtils.readDate(getColumnInt64(lockStmt, SVNWCDbSchema.LOCK__Fields.lock_date));
                     }
                 }
+                if (f.contains(BaseInfoField.reposId)) {
+                    info.reposId = getColumnInt64(stmt, NODES__Fields.repos_id);
+                }
+                
                 if (f.contains(BaseInfoField.reposRootUrl) || f.contains(BaseInfoField.reposUuid)) {
                     /* Fetch repository information via REPOS_ID. */
                     if (isColumnNull(stmt, SVNWCDbSchema.NODES__Fields.repos_id)) {
@@ -3059,12 +3063,12 @@ public class SVNWCDb implements ISVNWCDb {
         final EnumSet<RepositoryInfoField> f = getInfoFields(RepositoryInfoField.class, fields);
         final DirParsedInfo parsed = parseDir(localAbsPath, Mode.ReadOnly);
         final SVNWCDbDir pdh = parsed.wcDbDir;
-        final File localRelPath = parsed.localRelPath;
         verifyDirUsable(pdh);
+
+        WCDbBaseInfo baseInfo = getBaseInfo(localAbsPath, BaseInfoField.reposId, BaseInfoField.reposRelPath);
         final WCDbRepositoryInfo reposInfo = new WCDbRepositoryInfo();
-        final long reposId = scanUpwardsForRepos(reposInfo, pdh.getWCRoot(), localRelPath);
         if (f.contains(RepositoryInfoField.rootUrl) || f.contains(RepositoryInfoField.uuid)) {
-            fetchReposInfo(reposInfo, pdh.getWCRoot().getSDb(), reposId);
+            fetchReposInfo(reposInfo, pdh.getWCRoot().getSDb(), baseInfo.reposId);
         }
         return reposInfo;
     }

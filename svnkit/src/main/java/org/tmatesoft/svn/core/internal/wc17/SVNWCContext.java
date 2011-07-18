@@ -3530,7 +3530,18 @@ public class SVNWCContext {
 
     public void removeBaseNode(File localAbspath) throws SVNException {
         checkCancelled();
-        WCDbInfo readInfo = db.readInfo(localAbspath, InfoField.status, InfoField.kind, InfoField.haveBase, InfoField.haveWork);
+        WCDbInfo readInfo;
+        try { 
+            readInfo = db.readInfo(localAbspath, InfoField.status, InfoField.kind, InfoField.haveBase, InfoField.haveWork);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND) {
+                return;
+            }
+            throw e;
+        }
+        if (!readInfo.haveBase) {
+            return;
+        }
         SVNWCDbStatus wrkStatus = readInfo.status;
         SVNWCDbKind wrkKind = readInfo.kind;
         boolean haveBase = readInfo.haveBase;

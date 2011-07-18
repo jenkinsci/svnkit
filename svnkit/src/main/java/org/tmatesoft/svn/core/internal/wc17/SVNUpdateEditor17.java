@@ -1739,7 +1739,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             if (--bdi.refCount > 0) {
                 return;
             }
-            myWcContext.getDb().opSetBaseIncompleteTemp(bdi.absPath, false);
+//            myWcContext.getDb().opSetBaseIncompleteTemp(bdi.absPath, false);
             bdi = bdi.parent;
         }
         return;

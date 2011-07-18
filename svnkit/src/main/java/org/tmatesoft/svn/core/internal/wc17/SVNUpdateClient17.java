@@ -23,7 +23,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc16.SVNBasicDelegate;
+import org.tmatesoft.svn.core.internal.wc17.SVNStatus17.ConflictInfo;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNCapability;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -420,7 +420,26 @@ public class SVNUpdateClient17 extends SVNBaseClient17 {
             SVNErrorManager.error(err, SVNLogType.WC);
             return SVNWCContext.INVALID_REVNUM;
         }
-
+        
+        long baseRevision = wcContext.getNodeBaseRev(localAbspath);
+        ConflictInfo conflictInfo;
+        boolean treeConflict = false;
+        try {
+            conflictInfo = wcContext.getConflicted(localAbspath, false, false, true);
+            treeConflict = conflictInfo != null && conflictInfo.treeConflicted;
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND) {
+                throw e;
+            }
+            treeConflict = false;
+        }
+        if (baseRevision < 0 || treeConflict) {
+            if (wcContext.getEventHandler() != null) {
+                dispatchEvent(SVNEventFactory.createSVNEvent(localAbspath, SVNNodeKind.NONE, null, -1, 
+                        treeConflict ? SVNEventAction.TREE_CONFLICT : SVNEventAction.UPDATE_SKIP_WORKING_ONLY, null, null, null, 0, 0));
+                
+            }
+        }
         try {
             /* We may need to crop the tree if the depth is sticky */
             if (depthIsSticky && depth.compareTo(SVNDepth.INFINITY) < 0) {

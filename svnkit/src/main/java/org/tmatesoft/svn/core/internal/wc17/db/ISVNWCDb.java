@@ -649,7 +649,7 @@ public interface ISVNWCDb {
     class WCDbBaseInfo {
 
         public enum BaseInfoField {
-            status, kind, revision, reposRelPath, reposRootUrl, reposUuid, changedRev, changedDate, changedAuthor, lastModTime, depth, checksum, translatedSize, target, lock, updateRoot,
+            status, kind, revision, reposRelPath, reposRootUrl, reposUuid, changedRev, changedDate, changedAuthor, lastModTime, depth, checksum, translatedSize, target, lock, updateRoot, reposId
         }
 
         public SVNWCDbStatus status;
@@ -658,6 +658,7 @@ public interface ISVNWCDb {
         public File reposRelPath;
         public SVNURL reposRootUrl;
         public String reposUuid;
+        public long reposId;
         public long changedRev;
         public SVNDate changedDate;
         public String changedAuthor;
