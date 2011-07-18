@@ -25,23 +25,23 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetDeleteStatement;
  */
 public class SVNWCDbDeleteLowestWorkingNode extends SVNSqlJetDeleteStatement {
 
-    private SVNWCDbNodesMaxOpDepth maxOpDepthSelect;
-    private Long maxOpDepth = null;
+    private SVNWCDbNodesMinOpDepth minOpDepthSelect;
+    private Long minOpDepth = null;
 
     public SVNWCDbDeleteLowestWorkingNode(SVNSqlJetDb sDb) throws SVNException {
         super(sDb, SVNWCDbSchema.NODES);
-        maxOpDepthSelect = new SVNWCDbNodesMaxOpDepth(sDb);
+        minOpDepthSelect = new SVNWCDbNodesMinOpDepth(sDb, 1);
     }
 
     public void reset() throws SVNException {
-        maxOpDepth = null;
+        minOpDepth = null;
         super.reset();
     }
 
     protected Object[] getWhere() throws SVNException {
-        maxOpDepth = maxOpDepthSelect.getMaxOpDepth((Long) getBind(1), getBind(2).toString());
+        minOpDepth = minOpDepthSelect.getMinOpDepth((Long) getBind(1), getBind(2).toString());
         return new Object[] {
-                getBind(1), getBind(2), maxOpDepth
+                getBind(1), getBind(2), minOpDepth
         };
     }
 
@@ -59,7 +59,7 @@ public class SVNWCDbDeleteLowestWorkingNode extends SVNSqlJetDeleteStatement {
             return false;
         }
         return "base-deleted".equals(getColumn(SVNWCDbSchema.NODES__Fields.presence)) && getColumn(SVNWCDbSchema.NODES__Fields.wc_id).equals(getBind(1))
-                && getColumn(SVNWCDbSchema.NODES__Fields.local_relpath).equals(getBind(2)) && getColumn(SVNWCDbSchema.NODES__Fields.op_depth).equals(maxOpDepth);
+                && getColumn(SVNWCDbSchema.NODES__Fields.local_relpath).equals(getBind(2)) && getColumn(SVNWCDbSchema.NODES__Fields.op_depth).equals(minOpDepth);
     }
 
 }
