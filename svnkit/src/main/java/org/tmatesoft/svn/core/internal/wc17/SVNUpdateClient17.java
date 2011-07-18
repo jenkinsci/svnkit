@@ -3,11 +3,14 @@ package org.tmatesoft.svn.core.internal.wc17;
 import java.io.File;
 import java.io.OutputStream;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -409,10 +412,11 @@ public class SVNUpdateClient17 extends SVNBaseClient17 {
             boolean sendCopyFrom, boolean innerUpdate, boolean notifySummary) throws SVNException {
 
         String target;
-        if (!localAbspath.equals(anchorAbspath))
+        if (!localAbspath.equals(anchorAbspath)) {
             target = SVNFileUtil.getFileName(localAbspath);
-        else
+        } else {
             target = "";
+        }
         final SVNURL anchorUrl = wcContext.getNodeUrl(anchorAbspath);
 
         if (anchorUrl == null) {
@@ -465,7 +469,7 @@ public class SVNUpdateClient17 extends SVNBaseClient17 {
             SVNRepository repos = createRepository(anchorUrl, anchorAbspath, true);
             boolean serverSupportsDepth = repos.hasCapability(SVNCapability.DEPTH);
             final SVNReporter17 reporter = new SVNReporter17(localAbspath, wcContext, true, !serverSupportsDepth, depth, isUpdateLocksOnDemand(), false, !depthIsSticky, useCommitTimes, getDebugLog());
-            long revNumber = getContext().getRevisionNumber(revision, null, repos, localAbspath);
+            final long revNumber = getContext().getRevisionNumber(revision, null, repos, localAbspath);
             final SVNURL reposRoot = repos.getRepositoryRoot(true);
 
             final SVNRepository[] repos2 = new SVNRepository[1];
@@ -481,10 +485,30 @@ public class SVNUpdateClient17 extends SVNBaseClient17 {
                     return repos2[0].getFile(SVNPathUtil.tail(path), revision, properties, os);
                 }
             };
+            ISVNDirFetcher dirFetcher = new ISVNDirFetcher() {
+                public Map<String, SVNDirEntry> fetchEntries(SVNURL reposRoot, File path) throws SVNException {
+                    SVNURL url = SVNWCUtils.join(reposRoot, path);
+                    if (repos2[0] == null) {
+                        repos2[0] = createRepository(url, null, null, false);
+                    } else {
+                        repos2[0].setLocation(url, false);
+                    }
+                    
+                    final Map<String, SVNDirEntry> entries = new HashMap<String, SVNDirEntry>();
+                    repos2[0].getDir("", revNumber, null, new ISVNDirEntryHandler() {
+                        public void handleDirEntry(SVNDirEntry dirEntry) throws SVNException {
+                            if (dirEntry.getName() != null && !"".equals(dirEntry.getName())) {
+                                entries.put(dirEntry.getName(), dirEntry);
+                            }
+                        }
+                    });
+                    return entries;
+                }
+            };
 
             SVNExternalsStore externalsStore = new SVNExternalsStore();
             ISVNUpdateEditor editor = createUpdateEditor(wcContext, anchorAbspath, target, reposRoot, externalsStore, allowUnversionedObstructions, depthIsSticky, depth, preservedExts, fileFetcher,
-                    isUpdateLocksOnDemand());
+                    dirFetcher, isUpdateLocksOnDemand());
             ISVNEditor filterEditor = SVNAmbientDepthFilterEditor17.wrap(wcContext, anchorAbspath, target, editor, depthIsSticky);
             try {
                 repos.update(revNumber, target, depth, sendCopyFrom, reporter, SVNCancellableEditor.newInstance(filterEditor, this, getDebugLog()));
@@ -510,8 +534,9 @@ public class SVNUpdateClient17 extends SVNBaseClient17 {
     }
 
     private ISVNUpdateEditor createUpdateEditor(SVNWCContext wcContext, File anchorAbspath, String target, SVNURL reposRoot, SVNExternalsStore externalsStore, boolean allowUnversionedObstructions,
-            boolean depthIsSticky, SVNDepth depth, String[] preservedExts, ISVNFileFetcher fileFetcher, boolean updateLocksOnDemand) throws SVNException {
-        return SVNUpdateEditor17.createUpdateEditor(wcContext, anchorAbspath, target, reposRoot, null, externalsStore, allowUnversionedObstructions, depthIsSticky, depth, preservedExts, fileFetcher,
+            boolean depthIsSticky, SVNDepth depth, String[] preservedExts, ISVNFileFetcher fileFetcher, ISVNDirFetcher dirFetcher, boolean updateLocksOnDemand) throws SVNException {
+        return SVNUpdateEditor17.createUpdateEditor(wcContext, anchorAbspath, target, reposRoot, null, externalsStore, allowUnversionedObstructions, depthIsSticky, depth, preservedExts, 
+                fileFetcher, dirFetcher, 
                 updateLocksOnDemand);
     }
 
