@@ -485,13 +485,21 @@ public class FSUpdateContext {
         if (sourceEntry != null && targetEntry != null && sourceEntry.getType() == targetEntry.getType()) {
             int distance = sourceEntry.getId().compareTo(targetEntry.getId());
             if (distance == 0 && !PathInfo.isRelevant(getCurrentPathInfo(), editPath) && 
-                    (pathInfo == null || 
-                            (!pathInfo.isStartEmpty() && pathInfo.getLockToken() == null)) && 
                             (requestedDepth.compareTo(wcDepth) <= 0 || targetEntry.getType() == SVNNodeKind.FILE)) {
-                return;
-            } else if (distance != -1 || isIgnoreAncestry()) {
-                related = true;
+                if (pathInfo == null) {
+                    return;
+                }
+                if (!pathInfo.isStartEmpty()) {
+                    if (pathInfo.getLockToken() == null) {
+                        return;
+                    }
+                    SVNLock exitsingLock = myFSFS.getLock(targetPath, false, false);
+                    if (exitsingLock != null && exitsingLock.getID().equals(pathInfo.getLockToken())) {
+                        return;
+                    }
+                }
             }
+            related = distance != -1 || isIgnoreAncestry();
         }
 
         if (sourceEntry != null && !related) {
