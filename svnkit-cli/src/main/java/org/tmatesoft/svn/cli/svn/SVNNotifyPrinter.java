@@ -110,6 +110,9 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
         } else if (event.getAction() == SVNEventAction.UPDATE_SKIP_ACCESS_DENINED) {
             mySkippedPaths++;
             buffer.append("Skipped '" + path + "' -- Access denied\n");
+        } else if (event.getAction() == SVNEventAction.SKIP_CONFLICTED) {
+            mySkippedPaths++;
+            buffer.append("Skipped '" + path + "' -- Node remains in conflict\n");
         } else if (event.getAction() == SVNEventAction.UPDATE_DELETE) {
             myIsChangesReceived = true;
             buffer.append("D    " + path + "\n");

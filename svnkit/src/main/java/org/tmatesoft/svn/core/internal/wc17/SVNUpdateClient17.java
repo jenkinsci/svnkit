@@ -436,7 +436,7 @@ public class SVNUpdateClient17 extends SVNBaseClient17 {
         if (baseRevision == SVNWCContext.INVALID_REVNUM || treeConflict) {
             if (wcContext.getEventHandler() != null) {
                 dispatchEvent(SVNEventFactory.createSVNEvent(localAbspath, SVNNodeKind.NONE, null, -1, 
-                        treeConflict ? SVNEventAction.TREE_CONFLICT : SVNEventAction.UPDATE_SKIP_WORKING_ONLY, null, null, null, 0, 0));
+                        treeConflict ? SVNEventAction.SKIP_CONFLICTED : SVNEventAction.UPDATE_SKIP_WORKING_ONLY, null, null, null, 0, 0));
                 
             }
             return SVNWCContext.INVALID_REVNUM;

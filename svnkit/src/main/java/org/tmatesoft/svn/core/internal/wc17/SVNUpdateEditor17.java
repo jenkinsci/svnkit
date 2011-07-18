@@ -203,7 +203,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         if (alreadyConflicted) {
             myCurrentDirectory.skipThis = true;
             myCurrentDirectory.alreadyNotified = true;
-            doNotification(myTargetAbspath, SVNNodeKind.UNKNOWN, SVNEventAction.SKIP);
+            doNotification(myTargetAbspath, SVNNodeKind.UNKNOWN, SVNEventAction.SKIP_CONFLICTED);
             return;
         }
         
@@ -283,7 +283,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         }
         if (info.conflicted) {
             rememberSkippedTree(localAbsPath);
-            doNotification(localAbsPath, SVNNodeKind.UNKNOWN, SVNEventAction.SKIP);
+            doNotification(localAbsPath, SVNNodeKind.UNKNOWN, SVNEventAction.SKIP_CONFLICTED);
             return;
         }
         
@@ -599,7 +599,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             db.skipThis = true;
             db.alreadyNotified = true;
             myWcContext.getDb().addBaseNotPresentNode(db.localAbsolutePath, db.newRelativePath, myReposRootURL, myReposUuid, targetRevision, SVNWCDbKind.Dir, null, null);
-            doNotification(db.localAbsolutePath, SVNNodeKind.DIR, SVNEventAction.SKIP);
+            doNotification(db.localAbsolutePath, SVNNodeKind.DIR, SVNEventAction.SKIP_CONFLICTED);
             return;
         }
         if (db.shadowed) {
@@ -710,7 +710,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             rememberSkippedTree(db.localAbsolutePath);
             db.skipThis = true;
             db.alreadyNotified = true;
-            doNotification(db.localAbsolutePath, SVNNodeKind.UNKNOWN, SVNEventAction.SKIP);
+            doNotification(db.localAbsolutePath, SVNNodeKind.UNKNOWN, SVNEventAction.SKIP_CONFLICTED);
             return;
         }
         if (!db.shadowed) {
@@ -1000,7 +1000,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                 pb.notPresentFiles = new HashSet<String>();
             }
             pb.notPresentFiles.add(fb.name);
-            doNotification(fb.localAbsolutePath, SVNNodeKind.UNKNOWN, SVNEventAction.SKIP);
+            doNotification(fb.localAbsolutePath, SVNNodeKind.UNKNOWN, SVNEventAction.SKIP_CONFLICTED);
             return;
         }
         
@@ -1091,7 +1091,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             rememberSkippedTree(fb.localAbsolutePath);
             fb.skipThis  = true;
             fb.alreadyNotified = true;
-            doNotification(fb.localAbsolutePath, SVNNodeKind.UNKNOWN, SVNEventAction.SKIP);
+            doNotification(fb.localAbsolutePath, SVNNodeKind.UNKNOWN, SVNEventAction.SKIP_CONFLICTED);
             return;
         }
         fb.shadowed = pb.shadowed;

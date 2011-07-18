@@ -402,4 +402,9 @@ public class SVNEventAction {
      */
     public static final SVNEventAction UPDATE_SHADOWED_DELETE = new SVNEventAction(50, "update_update_deleted");
 
+    /**
+     * @since 1.4, SVN 1.7
+     */
+    public static final SVNEventAction SKIP_CONFLICTED = new SVNEventAction(45, "skip_conflicted");
+
 }
