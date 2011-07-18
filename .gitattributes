@@ -23,6 +23,7 @@ svnkit-distribution/src/main/licenses/LICENSE-TRILEAD.txt eol=lf
 svnkit-test/configurations/shared/apache/python.template.conf eol=lf
 svnkit-test/configurations/shared/apache/users eol=lf
 svnkit-test/configurations/shared/daemon/matcher.pl -text
+svnkit-test/configurations/shared/daemon/snapshot eol=lf
 svnkit-test/configurations/shared/daemon/template eol=lf
 svnkit-test/configurations/shared/daemon/template.bat -text
 svnkit-test/configurations/shared/fsfs.conf -text

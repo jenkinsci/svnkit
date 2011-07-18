@@ -601,6 +601,7 @@ public class PythonTests {
                SVNFileUtil.deleteFile(new File("daemon/matcher.pl"));
            } catch (SVNException e) {}
         }
+        SVNFileUtil.setExecutable(new File("daemon/snapshot"), Boolean.TRUE.toString().equalsIgnoreCase(properties.getProperty("snapshot", "false")));
         return new File("daemon").getAbsolutePath();
     }
     
@@ -765,6 +766,7 @@ public class PythonTests {
         script = script.replaceAll("%port%", Integer.toString(port));
         script = script.replaceAll("%svn_home%", svnHome);
         script = script.replaceAll("%NG%", new File("daemon/ng").getAbsolutePath().replace(File.separatorChar, '/'));
+        script = script.replaceAll("%svn_test_work%", new File("svn-python-tests/svn-test-work").getAbsolutePath().replace(File.separatorChar, '/'));
         script = script.replace('/', File.separatorChar);
         
         if (SVNFileUtil.isWindows) {
