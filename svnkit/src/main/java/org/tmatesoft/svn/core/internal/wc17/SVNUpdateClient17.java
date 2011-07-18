@@ -433,12 +433,13 @@ public class SVNUpdateClient17 extends SVNBaseClient17 {
             }
             treeConflict = false;
         }
-        if (baseRevision < 0 || treeConflict) {
+        if (baseRevision == SVNWCContext.INVALID_REVNUM || treeConflict) {
             if (wcContext.getEventHandler() != null) {
                 dispatchEvent(SVNEventFactory.createSVNEvent(localAbspath, SVNNodeKind.NONE, null, -1, 
                         treeConflict ? SVNEventAction.TREE_CONFLICT : SVNEventAction.UPDATE_SKIP_WORKING_ONLY, null, null, null, 0, 0));
                 
             }
+            return SVNWCContext.INVALID_REVNUM;
         }
         try {
             /* We may need to crop the tree if the depth is sticky */
