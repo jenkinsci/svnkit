@@ -1403,7 +1403,7 @@ public class SVNWCContext {
 
     public static boolean isErrorAccess(SVNException e) {
         final SVNErrorCode errorCode = e.getErrorMessage().getErrorCode();
-        return errorCode == SVNErrorCode.FS_NOT_FOUND || errorCode == SVNErrorCode.IO_ERROR;
+        return errorCode == SVNErrorCode.FS_NOT_FOUND;
     }
 
     public boolean isPropsModified(File localAbspath) throws SVNException {

@@ -1259,8 +1259,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                     installFrom = fileInfo.installFrom;
                     installPristine = fileInfo.installPristine;
                 } catch (SVNException e) {
-                    if (e.getErrorMessage().getErrorCode() == SVNErrorCode.IO_ERROR) {
-                        // TODO catch 'access denied' here
+                    if (SVNWCContext.isErrorAccess(e)) {
                         doNotification(fb.localAbsolutePath, SVNNodeKind.FILE, SVNEventAction.UPDATE_SKIP_ACCESS_DENINED);                        
                         rememberSkippedTree(fb.localAbsolutePath);
                         fb.skipThis = true;
