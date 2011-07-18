@@ -421,7 +421,7 @@ public class SVNUpdateClient17 extends SVNBaseClient17 {
             return SVNWCContext.INVALID_REVNUM;
         }
         
-        long baseRevision = wcContext.getNodeBaseRev(localAbspath);
+        long baseRevision = wcContext.getNodeBaseRev(anchorAbspath);
         ConflictInfo conflictInfo;
         boolean treeConflict = false;
         try {
