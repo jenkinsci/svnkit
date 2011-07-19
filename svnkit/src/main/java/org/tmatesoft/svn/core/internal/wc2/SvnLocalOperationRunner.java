@@ -5,34 +5,52 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb.Mode;
+import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.wc2.ISvnOperationRunner;
 import org.tmatesoft.svn.core.wc2.SvnOperation;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 public abstract class SvnLocalOperationRunner implements ISvnOperationRunner {
     
-    private Collection<SvnWcFormat> applicableWcFormats;    
+    private Collection<SvnWcGeneration> applicableWcFormats;    
 
-    protected SvnLocalOperationRunner(SvnWcFormat... applicableFormats) {
-        this.applicableWcFormats = new HashSet<SvnWcFormat>();
+    protected SvnLocalOperationRunner(SvnWcGeneration... applicableFormats) {
+        this.applicableWcFormats = new HashSet<SvnWcGeneration>();
         this.applicableWcFormats.addAll(Arrays.asList(applicableFormats.clone()));
     }
 
     public boolean isApplicable(SvnOperation operation) throws SVNException {
-        if (operation == null || operation.getTarget() == null) {
-            return false;
-        }        
-        if (operation.getTarget().isURL()) {
+        if (!operation.hasLocalTargets()) {
             return false;
         }
-        File targetFile = operation.getTarget().getFile();
-        SvnWcFormat detectedFormat = detectWcFormat(targetFile);
+        
+        SvnTarget firstOperationTarget = operation.getTargets().iterator().next();
+        File firstTargetFile = firstOperationTarget.getFile();
+        SvnWcGeneration detectedFormat = detectWcGeneration(firstTargetFile);
+        
         return applicableWcFormats.contains(detectedFormat);
     }
     
     
-    protected SvnWcFormat detectWcFormat(File path) throws SVNException {
-        return SvnWcFormat.None;
+    protected SvnWcGeneration detectWcGeneration(File path) throws SVNException {
+        SVNWCDb db = new SVNWCDb();
+        try {
+            db.parseDir(path, Mode.ReadOnly);
+            return SvnWcGeneration.V17;
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_WORKING_COPY) {
+                return SvnWcGeneration.NOT_DETECTED;
+            } else if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                return SvnWcGeneration.V16;
+            } else {
+                throw e;
+            }
+        } finally {
+            db.close();
+        }
     }
     
 }

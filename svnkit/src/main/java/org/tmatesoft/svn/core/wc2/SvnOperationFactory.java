@@ -1,58 +1,56 @@
 package org.tmatesoft.svn.core.wc2;
 
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.util.SVNLogType;
+import org.tmatesoft.svn.core.internal.wc2.SvnGetInfoLocal;
+import org.tmatesoft.svn.core.internal.wc2.SvnGetInfoRemote;
 
 public class SvnOperationFactory {
     
-    private List<Map<Class<?>, ISvnOperationRunner>> operationRunners;
+    private Map<Class<?>, List<ISvnOperationRunner>> operationRunners;
     
     public SvnOperationFactory() {
-        operationRunners = new LinkedList<Map<Class<?>, ISvnOperationRunner>>();
+        operationRunners = new HashMap<Class<?>, List<ISvnOperationRunner>>();
         
-        registerOperationRunners();
+        registerOperationRunner(SvnGetInfo.class, new SvnGetInfoRemote());
+        registerOperationRunner(SvnGetInfo.class, new SvnGetInfoLocal());
     }
 
     public ISvnOperationRunner getImplementation(SvnOperation operation) throws SVNException {
-        List<ISvnOperationRunner> candidateRunners = new LinkedList<ISvnOperationRunner>();
-        for (Map<Class<?>, ISvnOperationRunner> runners : operationRunners) {
-            ISvnOperationRunner candidateRunner = runners.get(operation.getClass());
-            if (candidateRunner != null) {
-                candidateRunners.add(candidateRunner);
-            }
+        if (operation == null) {
+            return null;
+        }
+        List<ISvnOperationRunner> candidateRunners = operationRunners.get(operation.getClass());
+        if (candidateRunners == null) {
+            return null;
         }
         
-        SVNErrorMessage lastError = null;
         ISvnOperationRunner runner = null;
         for (ISvnOperationRunner candidateRunner : candidateRunners) {
-            try {
-                boolean isApplicable = candidateRunner.isApplicable(operation);
-                if (!isApplicable) {
-                    continue;
-                }
-                runner = candidateRunner;
-                break;
-            } catch (SVNException e) {
-                lastError = e.getErrorMessage();
+            boolean isApplicable = candidateRunner.isApplicable(operation);
+            if (!isApplicable) {
+                continue;
             }
+            runner = candidateRunner;
+            break;
         }
-        
-        if (runner != null) {
-            runner.run(operation);
-        }
-        if (lastError != null) {
-            SVNErrorManager.error(lastError, SVNLogType.WC);
-        }
-        return null;
+        return runner;
     }
     
-    protected void registerOperationRunners() {
+    protected void registerOperationRunner(Class<?> operationClass, ISvnOperationRunner runner) {
+        if (operationClass == null || runner == null) {
+            return;
+        }
+        List<ISvnOperationRunner> runners = operationRunners.get(operationClass);
+        if (runners == null) {
+            runners = new LinkedList<ISvnOperationRunner>();
+            operationRunners.put(operationClass, runners);
+        }
+        runners.add(runner);
     }
 
 }

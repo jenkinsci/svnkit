@@ -7,10 +7,7 @@ import org.tmatesoft.svn.core.wc2.SvnOperation;
 public abstract class SvnRemoteOperationRunner implements ISvnOperationRunner {
 
     public boolean isApplicable(SvnOperation operation) throws SVNException {
-        if (operation == null || operation.getTarget() == null) {
-            return false;
-        }        
-        return operation.getTarget().isURL();
+        return operation.hasRemoteTargets();
     }
     
     
