@@ -6,31 +6,32 @@ import java.util.List;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.wc2.SvnGetInfoLocal;
 import org.tmatesoft.svn.core.internal.wc2.SvnGetInfoRemote;
+import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgGetInfo;
 
 public class SvnOperationFactory {
     
-    private Map<Class<?>, List<ISvnOperationRunner>> operationRunners;
+    private Map<Class<?>, List<ISvnOperationRunner<SvnOperation>>> operationRunners;
     
     public SvnOperationFactory() {
-        operationRunners = new HashMap<Class<?>, List<ISvnOperationRunner>>();
+        operationRunners = new HashMap<Class<?>, List<ISvnOperationRunner<SvnOperation>>>();
         
         registerOperationRunner(SvnGetInfo.class, new SvnGetInfoRemote());
-        registerOperationRunner(SvnGetInfo.class, new SvnGetInfoLocal());
+        registerOperationRunner(SvnGetInfo.class, new SvnNgGetInfo());
     }
 
-    public ISvnOperationRunner getImplementation(SvnOperation operation) throws SVNException {
+    public ISvnOperationRunner<SvnOperation> getImplementation(SvnOperation operation) throws SVNException {
         if (operation == null) {
             return null;
         }
-        List<ISvnOperationRunner> candidateRunners = operationRunners.get(operation.getClass());
+        List<ISvnOperationRunner<SvnOperation>> candidateRunners = operationRunners.get(operation.getClass());
         if (candidateRunners == null) {
             return null;
         }
         
-        ISvnOperationRunner runner = null;
-        for (ISvnOperationRunner candidateRunner : candidateRunners) {
+        ISvnOperationRunner<SvnOperation> runner = null;
+        for (ISvnOperationRunner<SvnOperation> candidateRunner : candidateRunners) {
+            
             boolean isApplicable = candidateRunner.isApplicable(operation);
             if (!isApplicable) {
                 continue;
@@ -41,16 +42,17 @@ public class SvnOperationFactory {
         return runner;
     }
     
-    protected void registerOperationRunner(Class<?> operationClass, ISvnOperationRunner runner) {
+    @SuppressWarnings("unchecked")
+    protected void registerOperationRunner(Class<?> operationClass, ISvnOperationRunner<? extends SvnOperation> runner) {
         if (operationClass == null || runner == null) {
             return;
         }
-        List<ISvnOperationRunner> runners = operationRunners.get(operationClass);
+        List<ISvnOperationRunner<SvnOperation>> runners = operationRunners.get(operationClass);
         if (runners == null) {
-            runners = new LinkedList<ISvnOperationRunner>();
+            runners = new LinkedList<ISvnOperationRunner<SvnOperation>>();
             operationRunners.put(operationClass, runners);
         }
-        runners.add(runner);
+        runners.add((ISvnOperationRunner<SvnOperation>) runner);
     }
 
 }

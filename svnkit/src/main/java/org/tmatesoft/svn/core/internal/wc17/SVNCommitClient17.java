@@ -1555,7 +1555,7 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
 
         ISVNWCNodeHandler nodeHandler = new ISVNWCNodeHandler() {
 
-            public void nodeFound(File localAbspath) throws SVNException {
+            public void nodeFound(File localAbspath, SVNWCDbKind kind) throws SVNException {
                 SVNWCDbLock nodeLock = getContext().getNodeLock(localAbspath);
                 if (nodeLock == null || nodeLock.token == null) {
                     return;

@@ -487,10 +487,10 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         modInfo.allModsAreDeletes = true;
         ISVNWCNodeHandler nodeHandler = new ISVNWCNodeHandler() {
 
-            public void nodeFound(File localAbspath) throws SVNException {
+            public void nodeFound(File localAbspath, SVNWCDbKind kind) throws SVNException {
                 WCDbInfo readInfo = myWcContext.getDb().readInfo(localAbspath, InfoField.status, InfoField.kind);
                 SVNWCDbStatus status = readInfo.status;
-                SVNWCDbKind kind = readInfo.kind;
+                kind = readInfo.kind;
                 boolean modified = false;
                 if (status != SVNWCDbStatus.Normal)
                     modified = true;

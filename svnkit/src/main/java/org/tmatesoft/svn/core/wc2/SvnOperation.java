@@ -45,6 +45,10 @@ public class SvnOperation {
         return Collections.unmodifiableCollection(targets);
     }
     
+    public SvnTarget getFirstTarget() {
+        return targets != null && !targets.isEmpty() ? targets.iterator().next() : null;
+    }
+    
     public SVNDepth getDepth() {
         return depth;
     }
@@ -101,7 +105,7 @@ public class SvnOperation {
     public void run() throws SVNException {
         ensureArgumentsAreValid();
 
-        ISvnOperationRunner implementation = getOperationFactory().getImplementation(this);
+        ISvnOperationRunner<SvnOperation> implementation = getOperationFactory().getImplementation(this);
         if (implementation != null) {
             implementation.run(this);
         }

@@ -1412,7 +1412,7 @@ public class SVNWCContext {
 
     public interface ISVNWCNodeHandler {
 
-        void nodeFound(File localAbspath) throws SVNException;
+        void nodeFound(File localAbspath, SVNWCDbKind kind) throws SVNException;
     }
 
     public void nodeWalkChildren(File localAbspath, ISVNWCNodeHandler nodeHandler, boolean showHidden, SVNDepth walkDepth) throws SVNException {
@@ -1420,7 +1420,7 @@ public class SVNWCContext {
         WCDbInfo readInfo = db.readInfo(localAbspath, InfoField.status, InfoField.kind);
         SVNWCDbKind kind = readInfo.kind;
         SVNWCDbStatus status = readInfo.status;
-        nodeHandler.nodeFound(localAbspath);
+        nodeHandler.nodeFound(localAbspath, readInfo.kind);
         if (kind == SVNWCDbKind.File || status == SVNWCDbStatus.NotPresent || status == SVNWCDbStatus.Excluded || status == SVNWCDbStatus.ServerExcluded)
             return;
         if (kind == SVNWCDbKind.Dir) {
@@ -1451,7 +1451,7 @@ public class SVNWCContext {
                         break;
                 }
             if (childKind == SVNWCDbKind.File || depth.getId() >= SVNDepth.IMMEDIATES.getId()) {
-                nodeHandler.nodeFound(childAbspath);
+                nodeHandler.nodeFound(childAbspath, childKind);
             }
             if (childKind == SVNWCDbKind.Dir && depth.getId() >= SVNDepth.IMMEDIATES.getId()) {
                 SVNDepth depth_below_here = depth;

@@ -13,9 +13,10 @@ import org.tmatesoft.svn.core.wc2.ISvnOperationRunner;
 import org.tmatesoft.svn.core.wc2.SvnOperation;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
-public abstract class SvnLocalOperationRunner implements ISvnOperationRunner {
+public abstract class SvnLocalOperationRunner<T extends SvnOperation> implements ISvnOperationRunner<T> {
     
-    private Collection<SvnWcGeneration> applicableWcFormats;    
+    private Collection<SvnWcGeneration> applicableWcFormats;
+    private T operation;    
 
     protected SvnLocalOperationRunner(SvnWcGeneration... applicableFormats) {
         this.applicableWcFormats = new HashSet<SvnWcGeneration>();
@@ -34,6 +35,13 @@ public abstract class SvnLocalOperationRunner implements ISvnOperationRunner {
         return applicableWcFormats.contains(detectedFormat);
     }
     
+    public void run(T operation) throws SVNException {
+        setOperation(operation);
+    }
+    
+    protected File getFirstTarget() {
+        return getOperation().getFirstTarget() != null ? getOperation().getFirstTarget().getFile() : null;
+    }
     
     protected SvnWcGeneration detectWcGeneration(File path) throws SVNException {
         SVNWCDb db = new SVNWCDb();
@@ -52,5 +60,12 @@ public abstract class SvnLocalOperationRunner implements ISvnOperationRunner {
             db.close();
         }
     }
-    
+
+    protected void setOperation(T operation) {
+        this.operation = operation;
+    }
+
+    protected T getOperation() {
+        return this.operation;
+    }   
 }

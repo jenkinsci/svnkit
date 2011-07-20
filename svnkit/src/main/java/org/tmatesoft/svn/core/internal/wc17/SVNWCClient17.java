@@ -22,6 +22,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.ISVNEntryHandler;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.ISVNWCNodeHandler;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.SVNWCNodeReposInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
@@ -1874,7 +1875,7 @@ public class SVNWCClient17 extends SVNBaseClient17 {
     private void crawlEntries(final File path, final SVNDepth depth, final Collection changelistsSet, final ISVNInfoHandler handler) throws SVNException {
         try{
             final ISVNWCNodeHandler nodeHandler = new ISVNWCNodeHandler() {
-                public void nodeFound(File localAbspath) throws SVNException {
+                public void nodeFound(File localAbspath, SVNWCDbKind kind) throws SVNException {
                     if (getContext().isChangelistMatch(localAbspath, changelistsSet)) {
                         handler.handleInfo( buildInfoForEntry(path) );
                     }
