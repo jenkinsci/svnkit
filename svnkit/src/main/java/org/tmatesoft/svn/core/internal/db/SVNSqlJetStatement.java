@@ -387,9 +387,6 @@ public abstract class SVNSqlJetStatement {
         if (isColumnNull(f))
             return null;
         final byte[] val = getColumnBlob(f);
-        if (val.length <= 2) {
-            return null;
-        }
 	    return parseProperties(val);
     }
 
