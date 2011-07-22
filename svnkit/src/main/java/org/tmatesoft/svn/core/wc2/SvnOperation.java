@@ -23,6 +23,10 @@ public class SvnOperation {
     
     protected SvnOperation(SvnOperationFactory factory) {
         this.operationFactory = factory;
+    }
+    
+    public void initDefaults() {
+        this.depth = SVNDepth.UNKNOWN;        
         this.targets = new ArrayList<SvnTarget>();
     }
 

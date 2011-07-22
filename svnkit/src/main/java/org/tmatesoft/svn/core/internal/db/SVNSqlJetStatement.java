@@ -378,12 +378,27 @@ public abstract class SVNSqlJetStatement {
     public SVNProperties getColumnProperties(Enum f) throws SVNException {
         return getColumnProperties(f.name());
     }
+    
+    public boolean hasColumnProperties(Enum f) throws SVNException {
+        return hasColumnProperties(f.name());
+    }
 
     public SVNProperties getColumnProperties(String f) throws SVNException {
         if (isColumnNull(f))
             return null;
         final byte[] val = getColumnBlob(f);
+        if (val.length <= 2) {
+            return null;
+        }
 	    return parseProperties(val);
+    }
+
+    public boolean hasColumnProperties(String f) throws SVNException {
+        if (isColumnNull(f)) {
+            return false;
+        }
+        final byte[] val = getColumnBlob(f);
+        return val.length > 2;
     }
 
     public static SVNProperties parseProperties(byte[] val) throws SVNException {

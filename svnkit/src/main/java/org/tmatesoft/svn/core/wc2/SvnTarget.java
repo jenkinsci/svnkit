@@ -40,4 +40,13 @@ public class SvnTarget {
     public File getFile() {
         return this.file;
     }
+    
+    public String toString() {
+        if (isFile()) {
+            return getFile().getAbsolutePath();
+        } else if (isURL()) {
+            return getURL().toString();
+        }
+        return "INVALID TARGET";
+    }
 }

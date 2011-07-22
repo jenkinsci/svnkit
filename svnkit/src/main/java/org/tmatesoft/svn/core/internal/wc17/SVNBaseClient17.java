@@ -70,7 +70,7 @@ public abstract class SVNBaseClient17 extends SVNBasicDelegate {
         String uuid = null;
         if (baseDirAbspath != null) {
             try {
-                SVNWCNodeReposInfo nodeReposInfo = getContext().getNodeReposInfo(baseDirAbspath, false, false);
+                SVNWCNodeReposInfo nodeReposInfo = getContext().getNodeReposInfo(baseDirAbspath);
                 uuid = nodeReposInfo.reposUuid;
             } catch (SVNException e) {
                 if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_WORKING_COPY && e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND

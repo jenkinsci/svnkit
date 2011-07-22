@@ -1,6 +1,7 @@
 package org.tmatesoft.svn.core.wc2;
 
 import org.tmatesoft.svn.core.SVNLock;
+import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 
@@ -11,7 +12,7 @@ public class SvnInfo {
     private SVNURL repositoryRootURL;
     private String repositoryUUID;
     
-    private SvnFileKind kind;
+    private SVNNodeKind kind;
     private long size;
     
     private long lastChangedRevision;
@@ -38,7 +39,7 @@ public class SvnInfo {
         return repositoryUUID;
     }
 
-    public SvnFileKind getKind() {
+    public SVNNodeKind getKind() {
         return kind;
     }
 
@@ -82,7 +83,7 @@ public class SvnInfo {
         this.repositoryUUID = repositoryUUID;
     }
 
-    public void setKind(SvnFileKind kind) {
+    public void setKind(SVNNodeKind kind) {
         this.kind = kind;
     }
 

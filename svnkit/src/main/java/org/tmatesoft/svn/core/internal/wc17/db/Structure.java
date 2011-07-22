@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class Structure {
+public class Structure<T extends Enum<T>> {
 
     public interface TypeSafety {
         Class<?> getType();
@@ -15,29 +15,31 @@ public class Structure {
     private static final Object LONG_MARKER = Long.TYPE;
     private static final Object BOOLEAN_MARKER = Boolean.TYPE;
 
-    public static Structure obtain(Class<?> e) {
-        assert e.isEnum();
-        return globalPool.obtain(e);
+    @SuppressWarnings("unchecked")
+    public static <X extends Structure<T>, T extends Enum<T>> X obtain(Class<T> e, Enum<T>... fields) {
+        assert e != null && e.isEnum();
+        return (X) globalPool.obtain(e, fields);
     }
     
-    public static void release(Structure e) {
+    private static void release(Structure<?> e) {
         if (e != null) {
             globalPool.release(e);
         }
     }
     
     private Class<?> enumClass;
+    private long requestedFields;
     private Object[] nonPrimitiveValues;
     private long[] longValues;
+    private T[] copySource;
     
-    private Structure(Class<?> enumClass) {
-        setEnumClass(enumClass);
+    private Structure(Class<T> enumClass, Enum<T>... fields) {
+        init(enumClass, fields);
     }
     
-    public long lng(Enum<?> e) {
-        if (e instanceof TypeSafety) {
-            assert ((TypeSafety) e).getType() == Long.TYPE;
-        }
+    public long lng(T e) {
+        assert e.getClass() == enumClass;
+        assertSafeType(e, Long.TYPE);
         if (nonPrimitiveValues[e.ordinal()] == LONG_MARKER) {
             return longValues[e.ordinal()];
         }
@@ -45,10 +47,15 @@ public class Structure {
         return 0;
     }
     
-    public boolean is(Enum<?> e) {
-        if (e instanceof TypeSafety) {
-            assert ((TypeSafety) e).getType() == Boolean.TYPE;
-        }
+    public String text(T e) {
+        assert e.getClass() == enumClass;        
+        assertSafeType(e, String.class);
+        return (String) nonPrimitiveValues[e.ordinal()];
+    }
+    
+    public boolean is(T e) {
+        assert e.getClass() == enumClass;
+        assertSafeType(e, Boolean.TYPE);
         if (nonPrimitiveValues[e.ordinal()] == BOOLEAN_MARKER) {
             return longValues[e.ordinal()] != 0;
         }
@@ -56,8 +63,14 @@ public class Structure {
         return false;
     }
     
+    public boolean hasValue(Enum<?> e) {
+        assert e.getClass() == enumClass;
+        return nonPrimitiveValues[e.ordinal()] != null;
+    }
+    
     @SuppressWarnings("unchecked")
-    public <T> T get(Enum<?> e) {
+    public <X> X get(T e) {
+        assert e.getClass() == enumClass;
         Class<?> expectedType = null;
         if (e instanceof TypeSafety) {
             expectedType = ((TypeSafety) e).getType(); 
@@ -70,30 +83,89 @@ public class Structure {
         if (expectedType != null) {
             assert expectedType.isAssignableFrom(value.getClass());
         }
-        return (T) value;
+        return (X) value;
     }
     
-    public void set(Enum<?> x, Object v) {
+    public void set(T x, Object v) {
+        if (v == null) {
+            unset(x);
+            return;
+        }
+        if (x instanceof TypeSafety) {
+            assert v == null || ((TypeSafety) x).getType().isAssignableFrom(v.getClass());
+        }
         nonPrimitiveValues[x.ordinal()] = v;
     }
+    
+    public void unset(T x) {
+        if ((requestedFields & (1 << x.ordinal())) == 0) {
+            return;
+        }
+        nonPrimitiveValues[x.ordinal()] = null;
+        longValues[x.ordinal()] = 0;
+    }
 
-    public void set(Enum<?> x, long v) {        
+    public void set(T x, long v) {        
+        if (x instanceof TypeSafety) {
+            assert ((TypeSafety) x).getType() == Long.TYPE;
+        }
         longValues[x.ordinal()] = v;
         set(x, LONG_MARKER);
     }
     
-    public void set(Enum<?> x, boolean v) {        
+    public void set(T x, boolean v) {        
+        if (x instanceof TypeSafety) {
+            assert ((TypeSafety) x).getType() == Boolean.TYPE;
+        }
         longValues[x.ordinal()] = v ? 1 : 0;
         set(x, BOOLEAN_MARKER);
     }
     
+    public boolean hasField(Enum<T> field) {
+        return (requestedFields & (1 << field.ordinal())) != 0;
+    }
+    
     public void clear() {
+        copySource = null;
         Arrays.fill(nonPrimitiveValues, null);
         Arrays.fill(longValues, 0);
     }
     
-    public void release() {
+    public void release() {        
         release(this);
+    }
+    
+    public Structure<T> from(T... fields) {
+        assert copySource == null;
+        assert fields != null;
+        copySource = fields;
+        return this;
+    }
+    
+    public <X extends Enum<X>> Structure<X> into(Structure<X> target, X... fields) {
+        assert copySource != null;
+        assert fields != null;
+        assert fields.length == copySource.length;
+        assert target != null;
+        
+        try {
+            for (int i = 0; i < copySource.length; i++) {
+                int valueIndex = copySource[i].ordinal();
+                Object v = nonPrimitiveValues[copySource[i].ordinal()];
+                if (v == BOOLEAN_MARKER) {
+                    target.set(fields[i], longValues[valueIndex] != 0);
+                } else if (v == LONG_MARKER) {
+                    target.set(fields[i], longValues[valueIndex]);
+                } else if (v == null) {
+                    target.unset(fields[i]);
+                } else {
+                    target.set(fields[i], v);
+                }
+            }
+        } finally {
+            copySource = null;
+        }
+        return target;
     }
     
     public int hashCode() {
@@ -113,7 +185,7 @@ public class Structure {
         if (e == null || e.getClass() != Structure.class) {
             return false;
         }
-        Structure other = (Structure) e;
+        Structure<?> other = (Structure<?>) e;
         if (other.enumClass == enumClass) {
             return Arrays.equals(other.nonPrimitiveValues, nonPrimitiveValues) &&
                 Arrays.equals(longValues, other.longValues);
@@ -121,8 +193,23 @@ public class Structure {
         return false;
     }
 
-    private void setEnumClass(Class<?> enumClass) {
+    private void assertSafeType(T e, Class<?> c) {
+        if (e instanceof TypeSafety) {
+            assert ((TypeSafety) e).getType() == c;
+        }
+    }
+
+    private void init(Class<?> enumClass, Enum<?>... fields) {
         this.enumClass = enumClass;
+        
+        if (fields != null && fields.length > 0) {
+            for (Enum<?> field : fields) {
+                field.ordinal();
+                requestedFields |= (1 << field.ordinal());
+            }
+        } else {
+            requestedFields = ~0;
+        }
         
         Object[] enumConstants = enumClass.getEnumConstants();
         assert enumConstants != null;
@@ -153,7 +240,8 @@ public class Structure {
         sb.append(enumClass.getSimpleName());
         sb.append(">\n");
         for (Object field : enumClass.getEnumConstants()) {
-            Enum<?> e = (Enum<?>) field;
+            @SuppressWarnings("unchecked")
+            T e = (T) field;
             Object o = nonPrimitiveValues[e.ordinal()];
             if (o != null) {
                 sb.append(e.name());
@@ -175,19 +263,20 @@ public class Structure {
     
     private static class StructuresPool {
         
-        private BlockingQueue<Structure> objectsQueues = new LinkedBlockingQueue<Structure>(23);
+        private BlockingQueue<Structure<?>> objectsQueues = new LinkedBlockingQueue<Structure<?>>(23);
         
-        public Structure obtain(Class<?> enumClass) {
-            Structure t = objectsQueues.poll();
+        @SuppressWarnings({ "unchecked", "rawtypes" })
+        public Structure<?> obtain(Class<?> enumClass, Enum<?>... fields) {
+            Structure<?> t = objectsQueues.poll();
             if (t == null) {
-                t = new Structure(enumClass);
+                t = new Structure(enumClass, fields);
             } else {
-                t.setEnumClass(enumClass);
+                t.init(enumClass, fields);
             }
             return t;
         }
         
-        public void release(Structure t) {
+        public void release(Structure<?> t) {
             objectsQueues.offer(t);
         }        
     }

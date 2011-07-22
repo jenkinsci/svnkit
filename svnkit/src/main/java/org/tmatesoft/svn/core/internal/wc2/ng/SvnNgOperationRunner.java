@@ -4,6 +4,8 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc2.SvnLocalOperationRunner;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
+import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc2.SvnOperation;
 
 public abstract class SvnNgOperationRunner<T extends SvnOperation> extends SvnLocalOperationRunner<T> {
@@ -36,8 +38,8 @@ public abstract class SvnNgOperationRunner<T extends SvnOperation> extends SvnLo
 
     protected abstract void run(SVNWCContext context) throws SVNException;
 
-    private SVNWCContext createWCContext() {
-        return null;
+    private SVNWCContext createWCContext() throws SVNException {
+        return new SVNWCContext((ISVNOptions) null, (ISVNEventHandler) null);
     }
 
 }

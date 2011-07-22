@@ -1912,7 +1912,7 @@ public class SVNWCClient17 extends SVNBaseClient17 {
         }
 
         SVNURL url = context.getNodeUrl(path);
-        SVNWCNodeReposInfo reposInfo = context.getNodeReposInfo(path, true, true);
+        SVNWCNodeReposInfo reposInfo = context.getNodeReposInfo(path);
         WCDbInfo changeInfo = context.getDb().readInfo(path, InfoField.changedAuthor,
                 InfoField.changedDate, InfoField.changedRev);
         long revnum = context.getNodeBaseRev(path);

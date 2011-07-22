@@ -74,6 +74,9 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo.RepositoryInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbWorkQueueInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
+import org.tmatesoft.svn.core.internal.wc17.db.Structure;
+import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeOriginInfo;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.ISVNConflictHandler;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
@@ -677,7 +680,7 @@ public class SVNWCContext {
 
             if (!compareThem) {
                 /* Compare the sizes, if applicable */
-                if (readInfo.translatedSize != ISVNWCDb.ENTRY_WORKING_SIZE_UNKNOWN && localAbsPath.length() != readInfo.translatedSize) {
+                if (readInfo.translatedSize != ISVNWCDb.INVALID_FILESIZE && localAbsPath.length() != readInfo.translatedSize) {
                     compareThem = true;
                 }
             }
@@ -1400,6 +1403,75 @@ public class SVNWCContext {
 
         return copyFrom;
     }
+    
+    public Structure<NodeOriginInfo> getNodeOrigin(File localAbsPath, boolean scanDeleted, NodeOriginInfo... fields) throws SVNException {
+        final Structure<NodeInfo> readInfo = db.readInfo(localAbsPath, 
+                NodeInfo.status, NodeInfo.revision, NodeInfo.reposRelPath, NodeInfo.reposRootUrl, NodeInfo.reposUuid,
+                NodeInfo.originalReposRelpath, NodeInfo.originalRootUrl, NodeInfo.originalUuid, NodeInfo.originalUuid,
+                NodeInfo.haveWork);
+        
+        Structure<NodeOriginInfo> result = Structure.obtain(NodeOriginInfo.class, fields);
+        readInfo.
+            from(NodeInfo.revision, NodeInfo.reposRelPath, NodeInfo.reposRootUrl, NodeInfo.reposUuid, NodeInfo.haveWork).
+            into(result, NodeOriginInfo.revision, NodeOriginInfo.reposRelpath, NodeOriginInfo.reposRootUrl, NodeOriginInfo.reposUuid,
+                    NodeOriginInfo.isCopy);
+        
+        if (readInfo.hasValue(NodeInfo.reposRelPath)) {
+            readInfo.release();
+            return result;
+        }
+        
+        SVNWCDbStatus status = readInfo.get(NodeInfo.status);
+        if (status == SVNWCDbStatus.Deleted && !scanDeleted) {
+            if (result.is(NodeOriginInfo.isCopy)) {
+                result.set(NodeOriginInfo.isCopy, false);
+            }
+            readInfo.release();
+            return result;
+        }
+        
+        if (readInfo.hasValue(NodeInfo.originalReposRelpath)) {
+            readInfo.
+            from(NodeInfo.originalRevision, NodeInfo.originalReposRelpath, NodeInfo.originalRootUrl, NodeInfo.originalUuid).
+            into(result, NodeOriginInfo.revision, NodeOriginInfo.reposRelpath, NodeOriginInfo.reposRootUrl, NodeOriginInfo.reposUuid);
+            
+            readInfo.release();
+            return result;
+        }
+        
+        boolean scanWorking = false;
+        if (status == SVNWCDbStatus.Added) {
+            scanWorking = true;
+        } else if (status == SVNWCDbStatus.Deleted) {
+            WCDbInfo belowInfo = db.readInfoBelowWorking(localAbsPath);
+            scanWorking = belowInfo.haveWork;
+            status = belowInfo.status;
+        }
+        readInfo.release();
+        
+        if (scanWorking) {
+            WCDbAdditionInfo addInfo = db.scanAddition(localAbsPath, AdditionInfoField.status, AdditionInfoField.opRootAbsPath,
+                    AdditionInfoField.originalReposRelPath, AdditionInfoField.originalRootUrl, AdditionInfoField.originalRevision);
+            status = addInfo.status;
+            result.set(NodeOriginInfo.reposRootUrl, addInfo.originalRootUrl);
+            result.set(NodeOriginInfo.reposUuid, addInfo.originalUuid);
+            result.set(NodeOriginInfo.revision, addInfo.originalRevision);
+            
+            if (status == SVNWCDbStatus.Deleted) {
+                return result;
+            }
+            
+            File relPath = SVNFileUtil.createFilePath(addInfo.originalReposRelPath, SVNWCUtils.skipAncestor(addInfo.opRootAbsPath, localAbsPath));
+            result.set(NodeOriginInfo.reposRelpath, relPath);
+        } else {
+            WCDbBaseInfo baseInfo = db.getBaseInfo(localAbsPath, BaseInfoField.revision, BaseInfoField.reposRelPath, BaseInfoField.reposRootUrl, BaseInfoField.reposUuid);
+            result.set(NodeOriginInfo.reposRootUrl, baseInfo.reposRootUrl);
+            result.set(NodeOriginInfo.reposUuid, baseInfo.reposUuid);
+            result.set(NodeOriginInfo.revision, baseInfo.revision);
+            result.set(NodeOriginInfo.reposRelpath, baseInfo.reposRelPath);
+        }
+        return result;
+    }
 
     public static boolean isErrorAccess(SVNException e) {
         final SVNErrorCode errorCode = e.getErrorMessage().getErrorCode();
@@ -1925,34 +1997,57 @@ public class SVNWCContext {
         public String reposUuid;
     }
 
-    public SVNWCNodeReposInfo getNodeReposInfo(File localAbspath, boolean scanAdded, boolean scanDeleted) throws SVNException {
+    public SVNWCNodeReposInfo getNodeReposInfo(File localAbspath) throws SVNException {
+        // s0 (to return)
         SVNWCNodeReposInfo info = new SVNWCNodeReposInfo();
         info.reposRootUrl = null;
         info.reposUuid = null;
+        
         SVNWCDbStatus status;
         try {
+            // s1
             WCDbInfo readInfo = db.readInfo(localAbspath, InfoField.status, InfoField.reposRootUrl, InfoField.reposUuid);
             status = readInfo.status;
             info.reposRootUrl = readInfo.reposRootUrl;
             info.reposUuid = readInfo.reposUuid;
         } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND && e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_WORKING_COPY) {
+            if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND && e.
+                    getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_WORKING_COPY) {
                 throw e;
             }
             return info;
         }
-        if (scanAdded && (status == SVNWCDbStatus.Added)) {
-            WCDbAdditionInfo scanAddition = db.scanAddition(localAbspath, AdditionInfoField.status, AdditionInfoField.reposRootUrl, AdditionInfoField.reposUuid);
-            status = scanAddition.status;
-            info.reposRootUrl = scanAddition.reposRootUrl;
-            info.reposUuid = scanAddition.reposUuid;
+        if (info.reposRootUrl != null && info.reposUuid != null) {
             return info;
         }
-        if (status == SVNWCDbStatus.Normal || status == SVNWCDbStatus.ServerExcluded || status == SVNWCDbStatus.Excluded || status == SVNWCDbStatus.NotPresent
-                || (scanDeleted && (status == SVNWCDbStatus.Deleted))) {
-            WCDbRepositoryInfo scanBaseRepository = db.scanBaseRepository(localAbspath, RepositoryInfoField.rootUrl, RepositoryInfoField.uuid);
-            info.reposRootUrl = scanBaseRepository.rootUrl;
-            info.reposUuid = scanBaseRepository.uuid;
+        WCDbRepositoryInfo reposInfo = null;
+        WCDbAdditionInfo addInfo = null;
+        
+        if (status == SVNWCDbStatus.Deleted) {
+            // s2
+            WCDbDeletionInfo dinfo =db.scanDeletion(localAbspath, DeletionInfoField.baseDelAbsPath, DeletionInfoField.workDelAbsPath);
+            if (dinfo.baseDelAbsPath != null) {
+                // s3
+                reposInfo = db.scanBaseRepository(dinfo.baseDelAbsPath, RepositoryInfoField.rootUrl, RepositoryInfoField.uuid);
+            } else if (dinfo.workDelAbsPath != null) {
+                // s4
+                addInfo = db.scanAddition(SVNFileUtil.getParentFile(dinfo.workDelAbsPath), 
+                        AdditionInfoField.reposRootUrl, AdditionInfoField.reposUuid);
+            }
+        } else if (status == SVNWCDbStatus.Added) {
+            // s5
+            addInfo = db.scanAddition(localAbspath, 
+                    AdditionInfoField.reposRootUrl, AdditionInfoField.reposUuid);
+        } else {
+            // s6
+            reposInfo = db.scanBaseRepository(localAbspath, RepositoryInfoField.rootUrl, RepositoryInfoField.uuid);
+        }
+        if (addInfo != null) {
+            info.reposRootUrl = addInfo.reposRootUrl;
+            info.reposUuid = addInfo.reposUuid;
+        } else if (reposInfo != null) {
+            info.reposRootUrl = reposInfo.rootUrl;
+            info.reposUuid = reposInfo.uuid;
         }
         return info;
     }
@@ -4175,5 +4270,4 @@ public class SVNWCContext {
     public SVNDepth getNodeDepth(File localAbsPath) throws SVNException {
         return getDb().readInfo(localAbsPath, InfoField.depth).depth;
     }
-
 }

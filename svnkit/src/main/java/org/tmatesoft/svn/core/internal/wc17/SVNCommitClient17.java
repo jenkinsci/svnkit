@@ -1209,7 +1209,7 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
             }
 
             if (reposRootUrl == null) {
-                reposRootUrl = getContext().getNodeReposInfo(targetAbsPath, true, true).reposRootUrl;
+                reposRootUrl = getContext().getNodeReposInfo(targetAbsPath).reposRootUrl;
             }
 
             File reposRelPath = getContext().getNodeReposRelPath(targetAbsPath);

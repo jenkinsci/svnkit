@@ -8,7 +8,9 @@ import java.util.HashSet;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb.Mode;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbOpenMode;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
+import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc2.ISvnOperationRunner;
 import org.tmatesoft.svn.core.wc2.SvnOperation;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -46,6 +48,7 @@ public abstract class SvnLocalOperationRunner<T extends SvnOperation> implements
     protected SvnWcGeneration detectWcGeneration(File path) throws SVNException {
         SVNWCDb db = new SVNWCDb();
         try {
+            db.open(SVNWCDbOpenMode.ReadOnly, (ISVNOptions) null, false, false);
             db.parseDir(path, Mode.ReadOnly);
             return SvnWcGeneration.V17;
         } catch (SVNException e) {

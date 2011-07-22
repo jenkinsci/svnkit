@@ -37,6 +37,8 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbBaseInfo.BaseInfoFie
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbDeletionInfo.DeletionInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo.RepositoryInfoField;
+import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.PristineInfo;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -96,7 +98,6 @@ public interface ISVNWCDb {
 
     int WC_HAS_WORK_QUEUE = 13;
     long INVALID_FILESIZE = -1;
-    long ENTRY_WORKING_SIZE_UNKNOWN = -1;
     long INVALID_REVNUM = -1;
     String SDB_FILE = "wc.db";
     String SDB_FILE_UPGRADE = "wc.db.upgrade";
@@ -1129,6 +1130,7 @@ public interface ISVNWCDb {
      * set to NULL.
      */
     WCDbInfo readInfo(File localAbsPath, InfoField... fields) throws SVNException;
+    Structure<NodeInfo> readInfo(File localAbsPath, NodeInfo... fields) throws SVNException;
 
     class WCDbInfo {
 
@@ -1685,4 +1687,6 @@ public interface ISVNWCDb {
     void gatherExternalDefinitions(File localAbsPath, SVNExternalsStore externals) throws SVNException;
 
     public WCDbInfo readInfoBelowWorking(File localAbsPath) throws SVNException;
+    
+    public Structure<PristineInfo> readPristineInfo(File localAbspath) throws SVNException;
 }

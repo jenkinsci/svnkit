@@ -55,4 +55,10 @@ public class SvnOperationFactory {
         runners.add((ISvnOperationRunner<SvnOperation>) runner);
     }
 
+    public SvnGetInfo createGetInfo() {
+        SvnGetInfo getInfo = new SvnGetInfo(this);
+        getInfo.initDefaults();
+        return getInfo;
+    }
+
 }
