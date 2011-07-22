@@ -13,7 +13,7 @@ public abstract class SvnNgOperationRunner<T extends SvnOperation> extends SvnLo
     private SVNWCContext context;
     
     protected SvnNgOperationRunner() {
-        super(SvnWcGeneration.V17);
+        super(SvnWcGeneration.V17, SvnWcGeneration.NOT_DETECTED);
     }
 
     public void run(T operation) throws SVNException {
