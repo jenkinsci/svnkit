@@ -14,7 +14,7 @@ public class SvnChecksum {
     public Kind getKind() {
         return kind;
     }
-    public String getChecksum() {
+    public String getDigest() {
         return digest;
     }
     public void setKind(Kind kind) {
@@ -22,6 +22,10 @@ public class SvnChecksum {
     }
     public void setDigest(String digest) {
         this.digest = digest;
+    }
+    
+    public String toString() {
+        return '$' + getKind().name() + " " + getDigest();
     }
 
 }
