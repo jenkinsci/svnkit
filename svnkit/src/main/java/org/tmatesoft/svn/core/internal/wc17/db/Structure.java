@@ -127,11 +127,12 @@ public class Structure<T extends Enum<T>> {
     
     public void clear() {
         copySource = null;
+        
         Arrays.fill(nonPrimitiveValues, null);
         Arrays.fill(longValues, 0);
     }
     
-    public void release() {        
+    public void release() {
         release(this);
     }
     
@@ -203,8 +204,8 @@ public class Structure<T extends Enum<T>> {
         this.enumClass = enumClass;
         
         if (fields != null && fields.length > 0) {
+            requestedFields = 0;
             for (Enum<?> field : fields) {
-                field.ordinal();
                 requestedFields |= (1 << field.ordinal());
             }
         } else {
