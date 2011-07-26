@@ -4,7 +4,6 @@ import java.util.Date;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
-import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc2.ISvnOperationRunner;
 import org.tmatesoft.svn.core.wc2.SvnOperation;
 
@@ -39,10 +38,6 @@ public abstract class SvnOperationRunner<T extends SvnOperation> implements ISvn
 
     protected T getOperation() {
         return this.operation;
-    }
-
-    protected SVNClientManager getClientManager() {
-        return getOperation().getOperationFactory().getClientManager();
     }
     
     protected SVNDate getSvnDate(Date d) {

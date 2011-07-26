@@ -17,8 +17,8 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb.Mode;
-import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbOpenMode;
+import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgGetInfo;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetInfo;
@@ -27,7 +27,6 @@ import org.tmatesoft.svn.core.wc.DefaultSVNRepositoryPool;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.ISVNRepositoryPool;
-import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
 public class SvnOperationFactory {
@@ -36,8 +35,6 @@ public class SvnOperationFactory {
     private Map<Class<?>, List<ISvnOperationRunner<SvnOperation>>> noneOperationRunners;
     private Map<Class<?>, List<ISvnOperationRunner<SvnOperation>>> v17OperationRunners;
     private Map<Class<?>, List<ISvnOperationRunner<SvnOperation>>> v16OperationRunners;
-    
-    private SVNClientManager clientManager;
     
     private ISVNAuthenticationManager authenticationManager;
     private ISVNCanceller canceller;
@@ -90,30 +87,18 @@ public class SvnOperationFactory {
         if (repositoryPool != null) {
             repositoryPool.setAuthenticationManager(authenticationManager);
         }
-        if (clientManager != null) {
-            clientManager.setAuthenticationManager(authenticationManager);
-        }
     }
 
     public void setCanceller(ISVNCanceller canceller) {
         this.canceller = canceller;
-        if (clientManager != null) {
-            clientManager.setCanceller(canceller);
-        }
     }
 
     public void setEventHandler(ISVNEventHandler eventHandler) {
         this.eventHandler = eventHandler;
-        if (clientManager != null) {
-            clientManager.setEventHandler(eventHandler);
-        }
     }
 
     public void setOptions(ISVNOptions options) {
         this.options = options;
-        if (clientManager != null) {
-            clientManager.setOptions(options);
-        }
     }
 
     public SvnGetInfo createGetInfo() {
@@ -187,15 +172,6 @@ public class SvnOperationFactory {
             }
             runners.add((ISvnOperationRunner<SvnOperation>) runner);
         }
-    }
-    
-    public SVNClientManager getClientManager() {
-        if (clientManager == null) {
-            clientManager = SVNClientManager.newInstance(getOptions(), getRepositoryPool());
-            clientManager.setEventHandler(getEventHandler());
-            clientManager.setCanceller(getCanceller());
-        }
-        return clientManager;
     }
     
     protected SvnWcGeneration detectWcGeneration(File path) throws SVNException {
