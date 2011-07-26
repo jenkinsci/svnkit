@@ -13,6 +13,13 @@ public class SvnGetInfo extends SvnReceivingOperation<SvnInfo> {
     private boolean fetchExcluded;
     private boolean fetchActualOnly;
     
+    @Override
+    public void initDefaults() {
+        super.initDefaults();
+        setFetchActualOnly(true);
+        setFetchExcluded(true);
+    }
+
     public void setFetchExcluded(boolean fetchExcluded) {
         this.fetchExcluded = fetchExcluded;
     }
