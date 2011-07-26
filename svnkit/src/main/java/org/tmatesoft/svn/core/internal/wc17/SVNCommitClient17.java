@@ -1566,7 +1566,7 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
                 }
             }
         };
-        getContext().nodeWalkChildren(path, nodeHandler, false, SVNDepth.INFINITY);
+        getContext().nodeWalkChildren(path, nodeHandler, false, SVNDepth.INFINITY, null);
     }
 
     private static class PropMods {

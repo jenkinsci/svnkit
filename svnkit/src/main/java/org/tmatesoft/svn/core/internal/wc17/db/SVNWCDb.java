@@ -2777,7 +2777,7 @@ public class SVNWCDb implements ISVNWCDb {
         return info;
     }
 
-    private static SVNWCDbStatus getWorkingStatus(SVNWCDbStatus status) {
+    public static SVNWCDbStatus getWorkingStatus(SVNWCDbStatus status) {
         if (status == SVNWCDbStatus.Incomplete || status == SVNWCDbStatus.Excluded) {
             return status;
         } else if (status == SVNWCDbStatus.NotPresent || status == SVNWCDbStatus.BaseDeleted) {
@@ -4658,7 +4658,7 @@ public class SVNWCDb implements ISVNWCDb {
         return result;
     }
 
-    private DirParsedInfo obtainWcRoot(File localAbspath) throws SVNException {
+    public DirParsedInfo obtainWcRoot(File localAbspath) throws SVNException {
         assert (isAbsolute(localAbspath));
 
         final DirParsedInfo parseDir = parseDir(localAbspath, Mode.ReadOnly);

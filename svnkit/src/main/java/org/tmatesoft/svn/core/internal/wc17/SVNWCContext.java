@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -75,8 +76,10 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo.Repos
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbWorkQueueInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
+import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbReader;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeOriginInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.WalkerChildInfo;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.ISVNConflictHandler;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
@@ -1487,33 +1490,61 @@ public class SVNWCContext {
         void nodeFound(File localAbspath, SVNWCDbKind kind) throws SVNException;
     }
 
-    public void nodeWalkChildren(File localAbspath, ISVNWCNodeHandler nodeHandler, boolean showHidden, SVNDepth walkDepth) throws SVNException {
+    public void nodeWalkChildren(File localAbspath, ISVNWCNodeHandler nodeHandler, boolean showHidden, SVNDepth walkDepth, Collection<String> changelists) throws SVNException {
         assert (walkDepth != null && walkDepth.getId() >= SVNDepth.EMPTY.getId() && walkDepth.getId() <= SVNDepth.INFINITY.getId());
-        WCDbInfo readInfo = db.readInfo(localAbspath, InfoField.status, InfoField.kind);
-        SVNWCDbKind kind = readInfo.kind;
-        SVNWCDbStatus status = readInfo.status;
-        nodeHandler.nodeFound(localAbspath, readInfo.kind);
-        if (kind == SVNWCDbKind.File || status == SVNWCDbStatus.NotPresent || status == SVNWCDbStatus.Excluded || status == SVNWCDbStatus.ServerExcluded)
+        changelists = changelists != null && changelists.size() > 0 ? new HashSet<String>(changelists) : null;
+        Structure<NodeInfo> nodeInfo = db.readInfo(localAbspath, NodeInfo.status, NodeInfo.kind);
+        SVNWCDbKind kind = nodeInfo.<SVNWCDbKind>get(NodeInfo.kind);
+        SVNWCDbStatus status = nodeInfo.<SVNWCDbStatus>get(NodeInfo.status);
+        nodeInfo.release();
+        if (matchesChangelist(localAbspath, changelists)) {
+            nodeHandler.nodeFound(localAbspath, kind);
+        }
+        
+        if (kind == SVNWCDbKind.File || status == SVNWCDbStatus.NotPresent || status == SVNWCDbStatus.Excluded || status == SVNWCDbStatus.ServerExcluded) {
             return;
+        }
+        
         if (kind == SVNWCDbKind.Dir) {
-            walkerHelper(localAbspath, nodeHandler, showHidden, walkDepth);
+            walkerHelper(localAbspath, nodeHandler, showHidden, walkDepth, changelists);
             return;
         }
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNKNOWN_KIND, "''{0}'' has an unrecognized node kind", localAbspath);
         SVNErrorManager.error(err, SVNLogType.WC);
     }
+    
+    private boolean matchesChangelist(File localAbspath, Collection<String> changelists) {
+        if (changelists == null || changelists.isEmpty()) {
+            return true;
+        }
+        Structure<NodeInfo> nodeInfo = null;
+        try {
+            nodeInfo = db.readInfo(localAbspath, NodeInfo.changelist);
+            return nodeInfo.hasValue(NodeInfo.changelist) && changelists.contains(nodeInfo.text(NodeInfo.changelist));
+        } catch (SVNException e) {
+            return false;
+        } finally {
+            if (nodeInfo != null) {
+                nodeInfo.release();
+            }
+        }
+    }
 
-    private void walkerHelper(File dirAbspath, ISVNWCNodeHandler nodeHandler, boolean showHidden, SVNDepth depth) throws SVNException {
-        if (depth == SVNDepth.EMPTY)
+    private void walkerHelper(File dirAbspath, ISVNWCNodeHandler nodeHandler, boolean showHidden, SVNDepth depth, Collection<String> changelists) throws SVNException {
+        if (depth == SVNDepth.EMPTY) {
             return;
-        final Set<String> relChildren = db.readChildren(dirAbspath);
-        for (final String child : relChildren) {
+        }
+        final Map<String, Structure<WalkerChildInfo>> relChildren = SvnWcDbReader.readWalkerChildrenInfo((SVNWCDb) db, dirAbspath, null);
+        
+        for (final String child : relChildren.keySet()) {
             checkCancelled();
-            File childAbspath = SVNFileUtil.createFilePath(dirAbspath, child);
-            WCDbInfo childInfo = db.readInfo(childAbspath, InfoField.status, InfoField.kind);
-            SVNWCDbStatus childStatus = childInfo.status;
-            SVNWCDbKind childKind = childInfo.kind;
-            if (!showHidden)
+            
+            Structure<WalkerChildInfo> childInfo = relChildren.get(child);            
+            SVNWCDbStatus childStatus = childInfo.<SVNWCDbStatus>get(WalkerChildInfo.status);
+            SVNWCDbKind childKind = childInfo.<SVNWCDbKind>get(WalkerChildInfo.kind);
+            childInfo.release();
+            
+            if (!showHidden) {
                 switch (childStatus) {
                     case NotPresent:
                     case ServerExcluded:
@@ -1522,15 +1553,19 @@ public class SVNWCContext {
                     default:
                         break;
                 }
+            }
+            File childAbspath = SVNFileUtil.createFilePath(dirAbspath, child);
             if (childKind == SVNWCDbKind.File || depth.getId() >= SVNDepth.IMMEDIATES.getId()) {
-                nodeHandler.nodeFound(childAbspath, childKind);
+                if (matchesChangelist(childAbspath, changelists)) {
+                    nodeHandler.nodeFound(childAbspath, childKind);
+                }
             }
             if (childKind == SVNWCDbKind.Dir && depth.getId() >= SVNDepth.IMMEDIATES.getId()) {
                 SVNDepth depth_below_here = depth;
-
-                if (depth.getId() == SVNDepth.IMMEDIATES.getId())
+                if (depth.getId() == SVNDepth.IMMEDIATES.getId()) {
                     depth_below_here = SVNDepth.EMPTY;
-                walkerHelper(childAbspath, nodeHandler, showHidden, depth_below_here);
+                }
+                walkerHelper(childAbspath, nodeHandler, showHidden, depth_below_here, changelists);
             }
         }
     }

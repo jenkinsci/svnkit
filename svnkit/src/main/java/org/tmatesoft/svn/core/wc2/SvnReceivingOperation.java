@@ -1,6 +1,6 @@
 package org.tmatesoft.svn.core.wc2;
 
-public class SvnReceivingOperation<T> extends SvnOperation {
+public class SvnReceivingOperation<T extends SvnObject> extends SvnOperation {
 
     private ISvnObjectReceiver<T> receiver;
     

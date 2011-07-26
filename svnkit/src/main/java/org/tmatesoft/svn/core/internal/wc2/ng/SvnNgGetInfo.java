@@ -74,7 +74,7 @@ public class SvnNgGetInfo extends SvnNgOperationRunner<SvnGetInfo> implements IS
         }
         
         try {
-            context.nodeWalkChildren(getFirstTarget(), this, getOperation().isFetchExcluded(), getOperation().getDepth());
+            context.nodeWalkChildren(getFirstTarget(), this, getOperation().isFetchExcluded(), getOperation().getDepth(), getOperation().getApplicableChangelists());
         } catch (SVNException e) {
             if (!(e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND && hasRootTreeConflict)) {
                 throw e;

@@ -106,6 +106,12 @@ public class SvnOperationFactory {
         getInfo.initDefaults();
         return getInfo;
     }
+    
+    public SvnGetProperties createGetProperties() {
+        SvnGetProperties getProperties = new SvnGetProperties(this);
+        getProperties.initDefaults();
+        return getProperties;
+    }
 
     public ISvnOperationRunner<SvnOperation> getImplementation(SvnOperation operation) throws SVNException {
         if (operation == null) {

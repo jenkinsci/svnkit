@@ -93,4 +93,9 @@ public class StructureFields {
         hadProps, 
         haveMoreWork;
     }
+    
+    public enum WalkerChildInfo {
+        status, 
+        kind;
+    }
 }

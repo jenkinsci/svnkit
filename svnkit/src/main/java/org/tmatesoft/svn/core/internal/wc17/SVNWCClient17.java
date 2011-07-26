@@ -1881,7 +1881,7 @@ public class SVNWCClient17 extends SVNBaseClient17 {
                     }
                 }
             };
-            getContext().nodeWalkChildren(path, nodeHandler, false, depth);
+            getContext().nodeWalkChildren(path, nodeHandler, false, depth, null);
         } catch (SVNException e) {
             final SVNErrorCode errorCode = e.getErrorMessage().getErrorCode();
             if(errorCode == SVNErrorCode.WC_PATH_NOT_FOUND || errorCode == SVNErrorCode.UNVERSIONED_RESOURCE ) {

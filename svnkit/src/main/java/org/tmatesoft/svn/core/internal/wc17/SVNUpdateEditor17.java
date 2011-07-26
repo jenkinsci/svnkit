@@ -504,7 +504,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                 return;
             }
         };
-        myWcContext.nodeWalkChildren(localAbspath, nodeHandler, false, SVNDepth.INFINITY);
+        myWcContext.nodeWalkChildren(localAbspath, nodeHandler, false, SVNDepth.INFINITY, null);
         return modInfo;
     }
     

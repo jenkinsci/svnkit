@@ -75,6 +75,7 @@ public enum SVNWCDbStatements {
     SELECT_FILE_EXTERNAL(SVNWCDBSelectFileExternal.class),
     SELECT_NODE_PROPS(SVNWCDbSelectNodeProps.class),
     SELECT_NODE_CHILDREN_INFO(SVNWCDbSelectNodeChildrenInfo.class),
+    SELECT_NODE_CHILDREN_WALKER_INFO(SVNWCDbSelectNodeChildrenWalkerInfo.class),
     SELECT_NOT_PRESENT(SVNWCDbSelectNotPresent.class),
     SELECT_PRISTINE_MD5_CHECKSUM(SVNWCDbSelectPristineMD5Checksum.class),
     SELECT_PRISTINE_SHA1_CHECKSUM(SVNWCDbSelectSHA1Checksum.class),
