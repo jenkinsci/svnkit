@@ -46,8 +46,8 @@ public class SvnRemoteGetInfo extends SvnRemoteOperationRunner<SvnGetInfo> {
         Structure<RepositoryInfo> repositoryInfo = getRepositoryAccess().createRepositoryFor(getOperation().getFirstTarget(), getOperation().getRevision(), getOperation().getPegRevision(), null);
         SVNRepository repository = repositoryInfo.<SVNRepository>get(RepositoryInfo.repository);
         SVNURL url = repositoryInfo.<SVNURL>get(RepositoryInfo.url);
-        SVNURL repositoryRootUrl = repository.getRepositoryRoot(false);
-        String repositoryUUID = repository.getRepositoryUUID(false);
+        SVNURL repositoryRootUrl = repository.getRepositoryRoot(true);
+        String repositoryUUID = repository.getRepositoryUUID(true);
         long revNum = repositoryInfo.lng(RepositoryInfo.revision);
         
         repositoryInfo.release();
