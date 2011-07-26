@@ -29,6 +29,7 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.ISVNEntryHandler;
 import org.tmatesoft.svn.core.internal.wc16.SVNWCClient16;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCClient17;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnGetInfo;
@@ -2617,12 +2618,12 @@ public class SVNWCClient extends SVNBasicClient {
                 info.getKind(), 
                 info.getRepositoryUUID(), 
                 info.getLastChangedRevision(),
-                info.getLastChangedDate() != null ? new SVNDate(info.getLastChangedDate().getTime(), 0).format() : null, 
+                info.getLastChangedDate() != null ? info.getLastChangedDate().format() : null, 
                 info.getLastChangedAuthor(), 
                 wcInfo.getSchedule() != SvnSchedule.NORMAL && wcInfo.getSchedule() != null ? wcInfo.getSchedule().toString().toLowerCase() : null, 
                 wcInfo.getCopyFromUrl(), 
                 wcInfo.getCopyFromRevision(), 
-                wcInfo.getRecordedTime() > 0 ? new SVNDate(wcInfo.getRecordedTime(), 0).format() : null, 
+                wcInfo.getRecordedTime() > 0 ? SVNWCUtils.readDate(wcInfo.getRecordedTime()).format() : null, 
                 null,
                 wcInfo.getChecksum() != null ? wcInfo.getChecksum().getDigest() : null, 
                 conflictOld, 
