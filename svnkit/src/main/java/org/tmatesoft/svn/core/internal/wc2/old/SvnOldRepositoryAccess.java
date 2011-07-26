@@ -71,8 +71,8 @@ public class SvnOldRepositoryAccess extends SvnRepositoryAccess {
         } else if (revision.getDate() != null) {
             result.set(RevisionsPair.revNumber, repository.getDatedRevision(revision.getDate()));
         } else if (revision == SVNRevision.HEAD) {
-            if (youngestRevision != null && youngestRevision.hasValue(RevisionsPair.revNumber) && youngestRevision.lng(RevisionsPair.revNumber) >= 0) {
-                result.set(RevisionsPair.revNumber, youngestRevision.lng(RevisionsPair.revNumber));
+            if (youngestRevision != null && youngestRevision.hasValue(RevisionsPair.youngestRevision) && youngestRevision.lng(RevisionsPair.youngestRevision) >= 0) {
+                result.set(RevisionsPair.revNumber, youngestRevision.lng(RevisionsPair.youngestRevision));
             } else {
                 long latestRevision = repository.getLatestRevision();
                 result.set(RevisionsPair.revNumber, latestRevision);
@@ -96,8 +96,9 @@ public class SvnOldRepositoryAccess extends SvnRepositoryAccess {
             } else if (entry.getCommittedRevision() < 0) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Path ''{0}'' has no committed revision", path);
                 SVNErrorManager.error(err, SVNLogType.WC);
+            } else {
+                result.set(RevisionsPair.revNumber, revision == SVNRevision.PREVIOUS ? entry.getCommittedRevision() - 1 : entry.getCommittedRevision());
             }
-            result.set(RevisionsPair.revNumber, revision == SVNRevision.PREVIOUS ? entry.getCommittedRevision() - 1 : entry.getCommittedRevision());
         } else {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Unrecognized revision type requested for ''{0}''", path != null ? path : (Object) repository.getLocation());
             SVNErrorManager.error(err, SVNLogType.WC);
