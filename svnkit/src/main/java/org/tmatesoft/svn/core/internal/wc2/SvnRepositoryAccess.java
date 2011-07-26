@@ -114,7 +114,7 @@ public abstract class SvnRepositoryAccess {
                 
                 if (path.isFile()) {
                     Structure<UrlInfo> urlInfo = getURLFromPath(path, revision, repository);
-                    if (urlInfo.is(UrlInfo.dropRepsitory)) {
+                    if (urlInfo.hasValue(UrlInfo.dropRepsitory) && urlInfo.is(UrlInfo.dropRepsitory)) {
                         repository = null;
                     }
                     url = urlInfo.<SVNURL>get(UrlInfo.url);

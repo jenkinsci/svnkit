@@ -91,7 +91,7 @@ public class SvnOldGetInfo extends SvnLocalOperationRunner<SvnGetInfo> implement
             wcInfo.setRecordedTime(info.getTextTime().getTime());
         }
         if (info.getSchedule() != null) {
-            wcInfo.setSchedule(SvnSchedule.valueOf(info.getSchedule()));
+            wcInfo.setSchedule(SvnSchedule.valueOf(info.getSchedule().toUpperCase()));
         } else {
             wcInfo.setSchedule(SvnSchedule.NORMAL);
         }

@@ -70,7 +70,7 @@ public class SvnNgRepositoryAccess extends SvnRepositoryAccess {
             if (nodeOrigin.hasValue(NodeOriginInfo.reposRelpath)) {
               url = SVNWCUtils.join(nodeOrigin.<SVNURL>get(NodeOriginInfo.reposRootUrl), nodeOrigin.<File>get(NodeOriginInfo.reposRelpath));  
             }
-            if (url != null && nodeOrigin.is(NodeOriginInfo.isCopy) && repository != null) {
+            if (url != null && nodeOrigin.hasValue(NodeOriginInfo.isCopy) && nodeOrigin.is(NodeOriginInfo.isCopy) && repository != null) {
                 if (!url.equals(repository.getLocation())) {
                     urlInfo.set(UrlInfo.dropRepsitory, true);
                     repository = null;

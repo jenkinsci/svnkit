@@ -1423,7 +1423,7 @@ public class SVNWCContext {
         
         SVNWCDbStatus status = readInfo.get(NodeInfo.status);
         if (status == SVNWCDbStatus.Deleted && !scanDeleted) {
-            if (result.is(NodeOriginInfo.isCopy)) {
+            if (result.hasValue(NodeOriginInfo.isCopy) && result.is(NodeOriginInfo.isCopy)) {
                 result.set(NodeOriginInfo.isCopy, false);
             }
             readInfo.release();
