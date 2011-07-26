@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNDirEntry;
@@ -47,7 +48,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumInputStream;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumOutputStream;
 import org.tmatesoft.svn.core.internal.wc17.SVNStatus17.ConflictInfo;
-import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.ISVNWCNodeHandler;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.MergeInfo;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.MergePropertiesInfo;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.TranslateInfo;
@@ -389,16 +389,15 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
     private SVNTreeConflictDescription checkTreeConflict(File localAbspath, SVNWCDbStatus workingStatus, SVNWCDbKind workingKind, boolean existsInRepos, SVNConflictAction action, SVNNodeKind theirNodeKind, File theirRelpath) throws SVNException {
         SVNConflictReason reason = null;
         boolean locally_replaced = false;
-        boolean modified = false;
-        boolean all_mods_are_deletes = false;
         switch (workingStatus) {
             case Added:
             case MovedHere:
             case Copied:
                 if (existsInRepos) {
                     SVNWCDbStatus base_status = myWcContext.getDb().getBaseInfo(localAbspath, BaseInfoField.status).status;
-                    if (base_status != SVNWCDbStatus.NotPresent)
+                    if (base_status != SVNWCDbStatus.NotPresent) {
                         locally_replaced = true;
+                    }
                 }
                 if (!locally_replaced) {
                     assert (action == SVNConflictAction.ADD);
@@ -417,30 +416,13 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                 if (action == SVNConflictAction.EDIT) {
                     return null;
                 }
-                switch (workingKind) {
-                    case File:
-                    case Symlink:
-                        all_mods_are_deletes = false;
-                        modified = hasEntryLocalMods(localAbspath, workingKind);
-                        break;
-
-                    case Dir:
-                        TreeLocalModsInfo info = hasTreeLocalMods(localAbspath);
-                        modified = info.modified;
-                        all_mods_are_deletes = info.allModsAreDeletes;
-                        break;
-
-                    default:
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ASSERTION_FAIL);
-                        SVNErrorManager.error(err, SVNLogType.WC);
-                        break;
-                }
-
-                if (modified) {
-                    if (all_mods_are_deletes)
+                TreeLocalModsInfo info = hasLocalMods(localAbspath);
+                if (info.modificationsFound) {
+                    if (!info.nonDeleteModificationsFound) {
                         reason = SVNConflictReason.DELETED;
-                    else
+                    } else {
                         reason = SVNConflictReason.EDITED;
+                    }
                 }
                 break;
 
@@ -456,56 +438,56 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
 
         }
 
-        if (reason == null)
+        if (reason == null) {
             return null;
-        if (reason == SVNConflictReason.EDITED || reason == SVNConflictReason.DELETED || reason == SVNConflictReason.REPLACED)
+        }
+        if (reason == SVNConflictReason.EDITED || reason == SVNConflictReason.DELETED || reason == SVNConflictReason.REPLACED) {
             assert (action == SVNConflictAction.EDIT || action == SVNConflictAction.DELETE || action == SVNConflictAction.REPLACE);
-        else if (reason == SVNConflictReason.ADDED)
+        } else if (reason == SVNConflictReason.ADDED) {
             assert (action == SVNConflictAction.ADD);
+        }
         return createTreeConflict(localAbspath, reason, action, theirNodeKind, theirRelpath);
     }
-
-    private boolean hasEntryLocalMods(File localAbspath, SVNWCDbKind kind) throws SVNException {
-        boolean text_modified;
-        if (kind == SVNWCDbKind.File || kind == SVNWCDbKind.Symlink) {
-            text_modified = myWcContext.isTextModified(localAbspath, false, true);
-        } else {
-            text_modified = false;
-        }
-        boolean props_modified = myWcContext.isPropsModified(localAbspath);
-        return (text_modified || props_modified);
+    
+    private TreeLocalModsInfo hasLocalMods(File localAbspath) throws SVNException {
+        final TreeLocalModsInfo modsInfo = new TreeLocalModsInfo();
+        SVNStatusEditor17 statusEditor = new SVNStatusEditor17(myAnchorAbspath, myWcContext, myWcContext.getOptions(), false, false, SVNDepth.INFINITY, new ISVNStatus17Handler() {
+            public void handleStatus(SVNStatus17 status) throws SVNException {
+                SVNStatusType nodeStatus = status.getNodeStatus();
+                if (nodeStatus == SVNStatusType.STATUS_NORMAL 
+                    || nodeStatus == SVNStatusType.STATUS_IGNORED
+                    || nodeStatus == SVNStatusType.STATUS_NONE
+                    || nodeStatus == SVNStatusType.STATUS_UNVERSIONED
+                    || nodeStatus == SVNStatusType.STATUS_EXTERNAL) {
+                    return;
+                }
+                if (nodeStatus == SVNStatusType.STATUS_DELETED) {
+                    modsInfo.modificationsFound = true;
+                    return;
+                }
+                if (nodeStatus == SVNStatusType.STATUS_MISSING || nodeStatus == SVNStatusType.STATUS_OBSTRUCTED) {
+                    if (status.getPropStatus() != SVNStatusType.STATUS_MODIFIED) {
+                        return;
+                    }
+                }
+                modsInfo.modificationsFound = true;
+                modsInfo.nonDeleteModificationsFound = true;
+                throw new SVNCancelException();
+            }
+        });
+        
+        try {
+            statusEditor.walkStatus(localAbspath, SVNDepth.INFINITY, false, false, false, null);
+        } catch (SVNCancelException cancel) { 
+        } 
+        
+        return modsInfo;
     }
 
     private static class TreeLocalModsInfo {
 
-        public boolean modified;
-        public boolean allModsAreDeletes;
-    }
-
-    private TreeLocalModsInfo hasTreeLocalMods(File localAbspath) throws SVNException {
-        final TreeLocalModsInfo modInfo = new TreeLocalModsInfo();
-        modInfo.allModsAreDeletes = true;
-        ISVNWCNodeHandler nodeHandler = new ISVNWCNodeHandler() {
-
-            public void nodeFound(File localAbspath, SVNWCDbKind kind) throws SVNException {
-                WCDbInfo readInfo = myWcContext.getDb().readInfo(localAbspath, InfoField.status, InfoField.kind);
-                SVNWCDbStatus status = readInfo.status;
-                kind = readInfo.kind;
-                boolean modified = false;
-                if (status != SVNWCDbStatus.Normal)
-                    modified = true;
-                else if (!modInfo.modified || modInfo.allModsAreDeletes)
-                    modified = hasEntryLocalMods(localAbspath, kind);
-                if (modified) {
-                    modInfo.modified = true;
-                    if (status != SVNWCDbStatus.Deleted)
-                        modInfo.allModsAreDeletes = false;
-                }
-                return;
-            }
-        };
-        myWcContext.nodeWalkChildren(localAbspath, nodeHandler, false, SVNDepth.INFINITY, null);
-        return modInfo;
+        public boolean modificationsFound;
+        public boolean nonDeleteModificationsFound;
     }
     
     public void absentDir(String path) throws SVNException {
@@ -1513,7 +1495,6 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
     private static class BumpDirectoryInfo {
         private int refCount;
         private BumpDirectoryInfo parent;
-        public File absPath;
     }
     
     private class DirectoryBaton {
@@ -1655,7 +1636,6 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         BumpDirectoryInfo bdi = new BumpDirectoryInfo();
         bdi.parent = parent != null ? parent.bumpInfo : null;
         bdi.refCount = 1;
-        bdi.absPath = d.localAbsolutePath;
         
         if (parent != null) {
             bdi.parent.refCount++;

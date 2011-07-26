@@ -2308,7 +2308,6 @@ public class SVNWCDb implements ISVNWCDb {
         
         Structure<NodeInfo> info = readInfo(wcInfo.wcDbDir.getWCRoot(), localRelPath, fields);
         
-        
         if (info.hasField(NodeInfo.reposRootUrl) || info.hasField(NodeInfo.reposUuid)) {
             Structure<RepositoryInfo> reposInfo = fetchRepositoryInfo(sDb, info.lng(NodeInfo.reposId));
             reposInfo.from(RepositoryInfo.reposRootUrl, RepositoryInfo.reposUuid).into(info, NodeInfo.reposRootUrl, NodeInfo.reposUuid);
@@ -2591,7 +2590,7 @@ public class SVNWCDb implements ISVNWCDb {
         
         try {
             stmtInfo = wcRoot.getSDb().getStatement(info.hasField(NodeInfo.lock) ? SVNWCDbStatements.SELECT_NODE_INFO_WITH_LOCK : SVNWCDbStatements.SELECT_NODE_INFO);
-            stmtInfo.bindf("is", wcRoot.getWcId()  , localRelPath);
+            stmtInfo.bindf("is", wcRoot.getWcId(), localRelPath);
             boolean haveInfo = stmtInfo.next();
             boolean haveActual = false;
             

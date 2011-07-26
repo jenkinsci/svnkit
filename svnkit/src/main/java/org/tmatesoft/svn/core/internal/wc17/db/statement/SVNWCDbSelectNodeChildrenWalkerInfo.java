@@ -22,11 +22,6 @@ public class SVNWCDbSelectNodeChildrenWalkerInfo extends SVNSqlJetSelectStatemen
     }
 
     @Override
-    protected Object[] getWhere() throws SVNException {
-        return new Object[] {getBind(1), getBind(2), null};
-    }
-
-    @Override
     protected ISqlJetCursor openCursor() throws SVNException {
         ISqlJetCursor cursor = super.openCursor();
         if (cursor != null) {
