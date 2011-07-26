@@ -89,7 +89,7 @@ public class SvnNgGetInfo extends SvnNgOperationRunner<SvnGetInfo> implements IS
         }
         for (File target: getTreeConflicts().keySet()) {
             SVNTreeConflictDescription treeConflict = getTreeConflicts().get(target);
-            if (isDepthIncludes(target, getOperation().getDepth(), treeConflict.getPath(), treeConflict.getNodeKind())) {
+            if (isDepthIncludes(getFirstTarget(), getOperation().getDepth(), target, treeConflict.getNodeKind())) {
                 SvnInfo unversionedInfo = buildUnversionedInfo(target);
                 Collection<SVNConflictDescription> conflicts = new ArrayList<SVNConflictDescription>(1);
                 conflicts.add(treeConflict);

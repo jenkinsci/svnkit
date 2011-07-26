@@ -2619,7 +2619,7 @@ public class SVNWCClient extends SVNBasicClient {
                 info.getLastChangedRevision(),
                 info.getLastChangedDate() != null ? new SVNDate(info.getLastChangedDate().getTime(), 0).format() : null, 
                 info.getLastChangedAuthor(), 
-                wcInfo.getSchedule() != SvnSchedule.NORMAL ? wcInfo.getSchedule().toString().toLowerCase() : null, 
+                wcInfo.getSchedule() != SvnSchedule.NORMAL && wcInfo.getSchedule() != null ? wcInfo.getSchedule().toString().toLowerCase() : null, 
                 wcInfo.getCopyFromUrl(), 
                 wcInfo.getCopyFromRevision(), 
                 wcInfo.getRecordedTime() > 0 ? new SVNDate(wcInfo.getRecordedTime(), 0).format() : null, 
