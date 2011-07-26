@@ -53,6 +53,12 @@ public class SvnNgGetInfo extends SvnNgOperationRunner<SvnGetInfo> implements IS
     private boolean isFirstInfo;
     private Map<File, SVNTreeConflictDescription> treeConflicts;
     
+    public void reset() {
+        hasRootTreeConflict = false;
+        isFirstInfo = false;
+        treeConflicts = null;
+    }
+    
     @Override
     protected void run(SVNWCContext context) throws SVNException {
         hasRootTreeConflict = false;

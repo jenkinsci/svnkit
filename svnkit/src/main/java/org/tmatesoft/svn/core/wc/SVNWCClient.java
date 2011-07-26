@@ -24,10 +24,18 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.ISVNEntryHandler;
 import org.tmatesoft.svn.core.internal.wc16.SVNWCClient16;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCClient17;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
+import org.tmatesoft.svn.core.wc2.SvnGetInfo;
+import org.tmatesoft.svn.core.wc2.SvnInfo;
+import org.tmatesoft.svn.core.wc2.SvnSchedule;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
+import org.tmatesoft.svn.core.wc2.SvnWorkingCopyInfo;
 
 /**
  * The <b>SVNWCClient</b> class combines a number of version control operations
@@ -167,8 +175,10 @@ public class SVNWCClient extends SVNBasicClient {
         super(new SVNWCClient16(authManager, options), new SVNWCClient17(authManager, options));
         setCommitHandler(null);
         setAddParameters(null);
-
         setOptions(options);
+        
+        getOperationsFactory().setAuthenticationManager(authManager);
+        getOperationsFactory().setOptions(options);
     }
 
     /**
@@ -198,6 +208,8 @@ public class SVNWCClient extends SVNBasicClient {
         setAddParameters(null);
 
         setOptions(options);
+        getOperationsFactory().setRepositoryPool(repositoryPool);
+        getOperationsFactory().setOptions(options);
     }
 
     /**
@@ -2084,15 +2096,7 @@ public class SVNWCClient extends SVNBasicClient {
      *             instead
      */
     public void doInfo(File path, SVNRevision revision, boolean recursive, ISVNInfoHandler handler) throws SVNException {
-        try {
-            getSVNWCClient17().doInfo(path, revision, recursive, handler);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNWCClient16().doInfo(path, revision, recursive, handler);
-                return;
-            }
-            throw e;
-        }
+        doInfo(path, SVNRevision.UNDEFINED, revision, SVNDepth.getInfinityOrEmptyDepth(recursive), null, handler);
     }
 
     /**
@@ -2130,15 +2134,7 @@ public class SVNWCClient extends SVNBasicClient {
      *             instead
      */
     public void doInfo(File path, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNInfoHandler handler) throws SVNException {
-        try {
-            getSVNWCClient17().doInfo(path, pegRevision, revision, recursive, handler);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNWCClient16().doInfo(path, pegRevision, revision, recursive, handler);
-                return;
-            }
-            throw e;
-        }
+        doInfo(path, pegRevision, revision, SVNDepth.getInfinityOrEmptyDepth(recursive), null, handler);
     }
 
     /**
@@ -2194,16 +2190,20 @@ public class SVNWCClient extends SVNBasicClient {
      * @throws SVNException
      * @since 1.2, SVN 1.5
      */
-    public void doInfo(File path, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, Collection changeLists, ISVNInfoHandler handler) throws SVNException {
-        try {
-            getSVNWCClient17().doInfo(path, pegRevision, revision, depth, changeLists, handler);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNWCClient16().doInfo(path, pegRevision, revision, depth, changeLists, handler);
-                return;
+    @SuppressWarnings("unchecked")
+    public void doInfo(File path, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, Collection changeLists, final ISVNInfoHandler handler) throws SVNException {
+        SvnGetInfo getInfo = getOperationsFactory().createGetInfo();
+        getInfo.setSingleTarget(SvnTarget.fromFile(path));
+        getInfo.setPegRevision(pegRevision);
+        getInfo.setRevision(revision);
+        getInfo.setDepth(depth);
+        getInfo.setApplicalbeChangelists(changeLists);
+        getInfo.setReceiver(new ISvnObjectReceiver<SvnInfo>() {
+            public void receive(SvnTarget target, SvnInfo object) throws SVNException {
+                handler.handleInfo(convert(object));
             }
-            throw e;
-        }
+        });
+        getInfo.run();
     }
 
     /**
@@ -2230,15 +2230,7 @@ public class SVNWCClient extends SVNBasicClient {
      *             instead
      */
     public void doInfo(SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNInfoHandler handler) throws SVNException {
-        try {
-            getSVNWCClient17().doInfo(url, pegRevision, revision, recursive, handler);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNWCClient16().doInfo(url, pegRevision, revision, recursive, handler);
-                return;
-            }
-            throw e;
-        }
+        doInfo(url, pegRevision, revision, SVNDepth.getInfinityOrEmptyDepth(recursive), handler);
     }
 
     /**
@@ -2288,16 +2280,18 @@ public class SVNWCClient extends SVNBasicClient {
      * @throws SVNException
      * @since 1.2, SVN 1.5
      */
-    public void doInfo(SVNURL url, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, ISVNInfoHandler handler) throws SVNException {
-        try {
-            getSVNWCClient17().doInfo(url, pegRevision, revision, depth, handler);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNWCClient16().doInfo(url, pegRevision, revision, depth, handler);
-                return;
+    public void doInfo(SVNURL url, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, final ISVNInfoHandler handler) throws SVNException {
+        SvnGetInfo getInfo = getOperationsFactory().createGetInfo();
+        getInfo.setSingleTarget(SvnTarget.fromURL(url));
+        getInfo.setPegRevision(pegRevision);
+        getInfo.setRevision(revision);
+        getInfo.setDepth(depth);
+        getInfo.setReceiver(new ISvnObjectReceiver<SvnInfo>() {
+            public void receive(SvnTarget target, SvnInfo object) throws SVNException {
+                handler.handleInfo(convert(object));
             }
-            throw e;
-        }
+        });
+        getInfo.run();
     }
 
     /**
@@ -2413,14 +2407,20 @@ public class SVNWCClient extends SVNBasicClient {
      *      ISVNInfoHandler)
      */
     public SVNInfo doInfo(File path, SVNRevision revision) throws SVNException {
-        try {
-            return getSVNWCClient17().doInfo(path, revision);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                return getSVNWCClient16().doInfo(path, revision);
+        final SVNInfo[] info = new SVNInfo[1];
+        SvnGetInfo getInfo = getOperationsFactory().createGetInfo();
+        getInfo.setSingleTarget(SvnTarget.fromFile(path));
+        getInfo.setRevision(revision);
+        getInfo.setDepth(SVNDepth.EMPTY);
+        getInfo.setReceiver(new ISvnObjectReceiver<SvnInfo>() {
+            public void receive(SvnTarget target, SvnInfo object) throws SVNException {
+                if (info[0] == null) {
+                    info[0] = convert(object);
+                }
             }
-            throw e;
-        }
+        });
+        getInfo.run();
+        return info[0];
     }
 
     /**
@@ -2445,14 +2445,21 @@ public class SVNWCClient extends SVNBasicClient {
      * @see #doInfo(SVNURL, SVNRevision, SVNRevision, SVNDepth, ISVNInfoHandler)
      */
     public SVNInfo doInfo(SVNURL url, SVNRevision pegRevision, SVNRevision revision) throws SVNException {
-        try {
-            return getSVNWCClient17().doInfo(url, pegRevision, revision);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                return getSVNWCClient16().doInfo(url, pegRevision, revision);
+        final SVNInfo[] info = new SVNInfo[1];
+        SvnGetInfo getInfo = getOperationsFactory().createGetInfo();
+        getInfo.setSingleTarget(SvnTarget.fromURL(url));
+        getInfo.setRevision(revision);
+        getInfo.setPegRevision(revision);
+        getInfo.setDepth(SVNDepth.EMPTY);
+        getInfo.setReceiver(new ISvnObjectReceiver<SvnInfo>() {
+            public void receive(SvnTarget target, SvnInfo object) throws SVNException {
+                if (info[0] == null) {
+                    info[0] = convert(object);
+                }
             }
-            throw e;
-        }
+        });
+        getInfo.run();
+        return info[0];
     }
 
     /**
@@ -2554,5 +2561,78 @@ public class SVNWCClient extends SVNBasicClient {
             }
             throw e;
         }
+    }
+    
+    private SVNInfo convert(SvnInfo info) {
+        if (info.getUserData() instanceof SVNInfo) {
+            return ((SVNInfo) info.getUserData());
+        }
+        if (info.getWcInfo() == null) {
+            String rootPath = info.getRepositoryRootUrl().getPath();
+            String itemPath = info.getUrl().getPath();
+            itemPath = SVNPathUtil.getPathAsChild(rootPath, itemPath);
+            if (itemPath != null && !itemPath.startsWith("/")) {
+                itemPath = "/" + itemPath;
+            }
+            return new SVNInfo(itemPath, info.getUrl(), SVNRevision.create(info.getRevision()), info.getKind(), info.getRepositoryUUID(), info.getRepositoryRootUrl(), 
+                    info.getLastChangedRevision(), info.getLastChangedDate(), info.getLastChangedAuthor(), info.getLock(), SVNDepth.UNKNOWN, info.getSize());
+        }
+        SvnWorkingCopyInfo wcInfo = info.getWcInfo();
+        
+        String conflictOld = null;
+        String conflictNew = null;
+        String conflictWorking = null;
+        String propRejectFile = null;
+        SVNTreeConflictDescription treeConflict = null;
+        
+        Collection<SVNConflictDescription> conflicts = wcInfo.getConflicts();
+        if (conflicts != null) {
+            for (SVNConflictDescription conflictDescription : conflicts) {
+                if (conflictDescription.isTreeConflict() && conflictDescription instanceof SVNTreeConflictDescription) {
+                    treeConflict = (SVNTreeConflictDescription) conflictDescription;
+                } else if (conflictDescription.isTextConflict()) {
+                    if (conflictDescription.getMergeFiles() != null) {
+                        if (conflictDescription.getMergeFiles().getBaseFile() != null) {
+                            conflictOld = conflictDescription.getMergeFiles().getBaseFile().getName();
+                        }
+                        if (conflictDescription.getMergeFiles().getRepositoryFile() != null) {
+                            conflictNew = conflictDescription.getMergeFiles().getRepositoryFile().getName();
+                        }
+                        if (conflictDescription.getMergeFiles().getLocalFile() != null) {
+                            conflictWorking = conflictDescription.getMergeFiles().getLocalFile().getName();
+                        }
+                    }
+                } else if (conflictDescription.isPropertyConflict()) {
+                    if (conflictDescription.getMergeFiles() != null) {
+                        propRejectFile = conflictDescription.getMergeFiles().getRepositoryFile().getName();
+                    }
+                }
+            }
+        }
+        
+        return new SVNInfo(wcInfo.getPath(), 
+                info.getUrl(), 
+                info.getRepositoryRootUrl(), 
+                info.getRevision(), 
+                info.getKind(), 
+                info.getRepositoryUUID(), 
+                info.getLastChangedRevision(),
+                info.getLastChangedDate() != null ? new SVNDate(info.getLastChangedDate().getTime(), 0).format() : null, 
+                info.getLastChangedAuthor(), 
+                wcInfo.getSchedule() != SvnSchedule.NORMAL ? wcInfo.getSchedule().toString() : null, 
+                wcInfo.getCopyFromUrl(), 
+                wcInfo.getCopyFromRevision(), 
+                wcInfo.getRecordedTime() > 0 ? new SVNDate(wcInfo.getRecordedTime(), 0).format() : null, 
+                null,
+                wcInfo.getChecksum() != null ? wcInfo.getChecksum().getDigest() : null, 
+                conflictOld, 
+                conflictNew, 
+                conflictWorking, 
+                propRejectFile, 
+                info.getLock(), 
+                wcInfo.getDepth(), 
+                wcInfo.getChangelist(), 
+                wcInfo.getRecordedSize(), 
+                treeConflict);
     }
 }

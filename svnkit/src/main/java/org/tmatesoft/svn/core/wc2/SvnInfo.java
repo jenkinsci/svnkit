@@ -5,7 +5,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 
-public class SvnInfo {
+public class SvnInfo extends SvnObject {
     
     private SVNURL url;
     private long revision;

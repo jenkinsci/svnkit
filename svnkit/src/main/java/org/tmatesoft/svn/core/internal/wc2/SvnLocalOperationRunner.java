@@ -1,74 +1,22 @@
 package org.tmatesoft.svn.core.internal.wc2;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
 
-import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb.Mode;
-import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbOpenMode;
-import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
-import org.tmatesoft.svn.core.wc.ISVNOptions;
-import org.tmatesoft.svn.core.wc2.ISvnOperationRunner;
 import org.tmatesoft.svn.core.wc2.SvnOperation;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
-public abstract class SvnLocalOperationRunner<T extends SvnOperation> implements ISvnOperationRunner<T> {
+public abstract class SvnLocalOperationRunner<T extends SvnOperation> extends SvnOperationRunner<T> {
     
-    private Collection<SvnWcGeneration> applicableWcFormats;
-    private T operation;    
-
-    protected SvnLocalOperationRunner(SvnWcGeneration... applicableFormats) {
-        this.applicableWcFormats = new HashSet<SvnWcGeneration>();
-        this.applicableWcFormats.addAll(Arrays.asList(applicableFormats.clone()));
+    protected SvnLocalOperationRunner() {
     }
 
-    public boolean isApplicable(SvnOperation operation) throws SVNException {
-        if (!operation.hasLocalTargets()) {
-            return false;
-        }
-        
-        SvnTarget firstOperationTarget = operation.getTargets().iterator().next();
-        File firstTargetFile = firstOperationTarget.getFile();
-        SvnWcGeneration detectedFormat = detectWcGeneration(firstTargetFile);
-        
-        return applicableWcFormats.contains(detectedFormat);
-    }
-    
-    public void run(T operation) throws SVNException {
-        setOperation(operation);
+    public boolean isApplicable(SvnOperation operation, SvnWcGeneration wcGeneration) throws SVNException {
+        return wcGeneration != null && operation.hasLocalTargets();
     }
     
     protected File getFirstTarget() {
         return getOperation().getFirstTarget() != null ? getOperation().getFirstTarget().getFile() : null;
     }
     
-    protected SvnWcGeneration detectWcGeneration(File path) throws SVNException {
-        SVNWCDb db = new SVNWCDb();
-        try {
-            db.open(SVNWCDbOpenMode.ReadOnly, (ISVNOptions) null, false, false);
-            db.parseDir(path, Mode.ReadOnly);
-            return SvnWcGeneration.V17;
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_WORKING_COPY) {
-                return SvnWcGeneration.NOT_DETECTED;
-            } else if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                return SvnWcGeneration.V16;
-            } else {
-                throw e;
-            }
-        } finally {
-            db.close();
-        }
-    }
 
-    protected void setOperation(T operation) {
-        this.operation = operation;
-    }
-
-    protected T getOperation() {
-        return this.operation;
-    }   
 }

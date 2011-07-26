@@ -2,6 +2,7 @@ package org.tmatesoft.svn.core.wc2;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.Collections;
 
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNURL;
@@ -58,6 +59,9 @@ public class SvnWorkingCopyInfo {
     }
 
     public Collection<SVNConflictDescription> getConflicts() {
+        if (conflicts == null) {
+            return Collections.emptyList();
+        }
         return conflicts;
     }
 
@@ -112,5 +116,4 @@ public class SvnWorkingCopyInfo {
     public void setCopyFromRevision(long copyFromRevision) {
         this.copyFromRevision = copyFromRevision;
     }
-
 }

@@ -21,6 +21,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.internal.wc16.SVNBasicDelegate;
+import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 import org.tmatesoft.svn.util.ISVNDebugLog;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
@@ -49,10 +50,12 @@ public class SVNBasicClient {
 
     private SVNBasicDelegate delegate16;
     private SVNBasicDelegate delegate17;
+    private SvnOperationFactory operationFactory;
 
     protected SVNBasicClient(SVNBasicDelegate delegate16, SVNBasicDelegate delegate17) {
         this.delegate16 = delegate16;
         this.delegate17 = delegate17;
+        this.operationFactory = new SvnOperationFactory();
         setPathListHandler(null);
         setDebugLog(null);
         setEventPathPrefix(null);
@@ -104,6 +107,9 @@ public class SVNBasicClient {
         try {
             getDelegate17().setOptions(options);
         } catch (SVNException e) {
+        }
+        if (getOperationsFactory() != null) {
+            getOperationsFactory().setOptions(options);
         }
     }
 
@@ -220,6 +226,7 @@ public class SVNBasicClient {
             getDelegate17().setEventHandler(dispatcher);
         } catch (SVNException e) {
         }
+        this.operationFactory.setEventHandler(dispatcher);
     }
 
     /**
@@ -369,6 +376,10 @@ public class SVNBasicClient {
             getDelegate17().setEventPathPrefix(prefix);
         } catch (SVNException e) {
         }
+    }
+    
+    protected SvnOperationFactory getOperationsFactory() {
+        return this.operationFactory;
     }
 
 }

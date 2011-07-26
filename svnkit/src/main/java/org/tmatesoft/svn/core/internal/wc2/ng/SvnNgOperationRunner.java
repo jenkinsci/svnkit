@@ -3,7 +3,6 @@ package org.tmatesoft.svn.core.internal.wc2.ng;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc2.SvnLocalOperationRunner;
-import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc2.SvnOperation;
@@ -12,12 +11,12 @@ public abstract class SvnNgOperationRunner<T extends SvnOperation> extends SvnLo
     
     private SVNWCContext context;
     
-    protected SvnNgOperationRunner() {
-        super(SvnWcGeneration.V17, SvnWcGeneration.NOT_DETECTED);
+    public void reset() {
+        super.reset();
+        setContext(null);
     }
 
-    public void run(T operation) throws SVNException {
-        super.run(operation);
+    protected void run() throws SVNException {
         try {
             setContext(createWCContext());
             run(getContext());

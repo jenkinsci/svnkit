@@ -4,11 +4,16 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
+import org.tmatesoft.svn.core.ISVNCanceller;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
+import org.tmatesoft.svn.core.wc.ISVNOptions;
+import org.tmatesoft.svn.core.wc.ISVNRepositoryPool;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -23,6 +28,14 @@ public class SvnOperation {
     
     protected SvnOperation(SvnOperationFactory factory) {
         this.operationFactory = factory;
+    }
+
+    public ISVNEventHandler getEventHandler() {
+        return getOperationFactory().getEventHandler();
+    }
+
+    public ISVNOptions getOptions() {
+        return getOperationFactory().getOptions();
     }
     
     public void initDefaults() {
@@ -78,7 +91,7 @@ public class SvnOperation {
     }
     
     public Collection<String> getApplicableChangelists() {
-        if (this.changelists == null) {
+        if (this.changelists == null || this.changelists.isEmpty()) {
             return null;
         }
         return Collections.unmodifiableCollection(this.changelists);
@@ -130,5 +143,17 @@ public class SvnOperation {
         if (hasLocalTargets() && hasRemoteTargets()) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Cannot mix repository and working copy targets"), SVNLogType.WC);
         }
+    }
+
+    public ISVNRepositoryPool getRepositoryPool() {
+        return getOperationFactory().getRepositoryPool();
+    }
+
+    public ISVNAuthenticationManager getAuthenticationManager() {
+        return getOperationFactory().getAuthenticationManager();
+    }
+
+    public ISVNCanceller getCanceller() {
+        return getOperationFactory().getCanceller();
     }
 }

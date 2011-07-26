@@ -3584,7 +3584,7 @@ public class SVNWCDb implements ISVNWCDb {
                 return info;
             }
 
-            info.set(RepositoryInfo.reposRootUrl, getColumnText(stmt, SVNWCDbSchema.REPOSITORY__Fields.root));
+            info.set(RepositoryInfo.reposRootUrl, SVNURL.parseURIEncoded(getColumnText(stmt, SVNWCDbSchema.REPOSITORY__Fields.root)));
             info.set(RepositoryInfo.reposUuid, getColumnText(stmt, SVNWCDbSchema.REPOSITORY__Fields.uuid));
         } finally {
             stmt.reset();
