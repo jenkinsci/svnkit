@@ -2571,8 +2571,8 @@ public class SVNWCClient extends SVNBasicClient {
             String rootPath = info.getRepositoryRootUrl().getPath();
             String itemPath = info.getUrl().getPath();
             itemPath = SVNPathUtil.getPathAsChild(rootPath, itemPath);
-            if (itemPath != null && !itemPath.startsWith("/")) {
-                itemPath = "/" + itemPath;
+            if (itemPath == null) {
+                itemPath = "";
             }
             return new SVNInfo(itemPath, info.getUrl(), SVNRevision.create(info.getRevision()), info.getKind(), info.getRepositoryUUID(), info.getRepositoryRootUrl(), 
                     info.getLastChangedRevision(), info.getLastChangedDate(), info.getLastChangedAuthor(), info.getLock(), SVNDepth.UNKNOWN, info.getSize());

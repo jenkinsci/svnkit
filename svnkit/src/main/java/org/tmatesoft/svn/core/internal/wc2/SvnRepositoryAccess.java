@@ -101,99 +101,95 @@ public abstract class SvnRepositoryAccess {
         return repository;
     }
 
-    public Structure<LocationsInfo> getLocations(SVNRepository repository, SvnTarget path, SVNRevision revision,
-            SVNRevision start, SVNRevision end) throws SVNException {
-                if (!revision.isValid() || !start.isValid()) {
-                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION), SVNLogType.DEFAULT);
-                }
-                
-                long pegRevisionNumber = -1;
-                long startRevisionNumber;
-                long endRevisionNumber;
-                SVNURL url = null;
-                
-                if (path.isFile()) {
-                    Structure<UrlInfo> urlInfo = getURLFromPath(path, revision, repository);
-                    if (urlInfo.hasValue(UrlInfo.dropRepsitory) && urlInfo.is(UrlInfo.dropRepsitory)) {
-                        repository = null;
-                    }
-                    url = urlInfo.<SVNURL>get(UrlInfo.url);
-                    if (urlInfo.hasValue(UrlInfo.pegRevision)) {
-                        pegRevisionNumber = urlInfo.lng(UrlInfo.pegRevision);
-                    }
-                    urlInfo.release();
-                } else {
-                    url = path.getURL();
-                }
-                
-                if (repository == null) {
-                    repository = createRepository(url, null, true);
-                }
-            
-                Structure<RevisionsPair> pair = null;
-                if (pegRevisionNumber < 0) {
-                    pair = getRevisionNumber(repository, path, revision, pair);
-                    pegRevisionNumber = pair.lng(RevisionsPair.revNumber);
-                }
-                pair = getRevisionNumber(repository, path, start, pair);
-                startRevisionNumber = pair.lng(RevisionsPair.revNumber);
-                if (end == SVNRevision.UNDEFINED) {
-                    endRevisionNumber = startRevisionNumber;
-                } else {
-                    pair = getRevisionNumber(repository, path, end, pair);
-                    endRevisionNumber = pair.lng(RevisionsPair.revNumber);
-                }
-                pair.release();
-                
-                Structure<LocationsInfo> result = Structure.obtain(LocationsInfo.class);
-                result.set(LocationsInfo.startRevision, startRevisionNumber);
-                if (end != SVNRevision.UNDEFINED) {
-                    result.set(LocationsInfo.startRevision, endRevisionNumber);
-                }
-                if (startRevisionNumber == pegRevisionNumber && endRevisionNumber == pegRevisionNumber) {
-                    result.set(LocationsInfo.startUrl, url);
-                    if (end != SVNRevision.UNDEFINED) {
-                        result.set(LocationsInfo.endUrl, url);
-                    }
-                    return result;
-                }
-                
-                SVNURL repositoryRootURL = repository.getRepositoryRoot(true);
-                long[] revisionsRange = startRevisionNumber == endRevisionNumber ? 
-                        new long[] {startRevisionNumber} : new long[] {startRevisionNumber, endRevisionNumber};
-                        
-                Map<?,?> locations = null;
-                try {
-                    locations = repository.getLocations("", (Map<?,?>) null, pegRevisionNumber, revisionsRange);
-                } catch (SVNException e) {
-                    throw e;
-                }
-                
-                SVNLocationEntry startPath = (SVNLocationEntry) locations.get(new Long(startRevisionNumber));
-                SVNLocationEntry endPath = (SVNLocationEntry) locations.get(new Long(endRevisionNumber));
-                if (startPath == null) {
-                    Object source = path != null ? (Object) path : (Object) url;
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_UNRELATED_RESOURCES, "Unable to find repository location for ''{0}'' in revision ''{1}''", new Object[] {
-                            source, new Long(startRevisionNumber)
-                    });
-                    SVNErrorManager.error(err, SVNLogType.WC);
-                }
-                if (endPath == null) {
-                    Object source = path != null ? (Object) path : (Object) url;
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_UNRELATED_RESOURCES, "The location for ''{0}'' for revision {1} does not exist in the "
-                            + "repository or refers to an unrelated object", new Object[] {
-                            source, new Long(endRevisionNumber)
-                    });
-                    SVNErrorManager.error(err, SVNLogType.WC);
-                }
-                
-                result.set(LocationsInfo.startUrl, repositoryRootURL.appendPath(startPath.getPath(), false));
-                if (end.isValid()) {
-                    result.set(LocationsInfo.endUrl, repositoryRootURL.appendPath(endPath.getPath(), false));
-                }
-                return result;
+    public Structure<LocationsInfo> getLocations(SVNRepository repository, SvnTarget path, SVNRevision revision, SVNRevision start, SVNRevision end) throws SVNException {
+        if (!revision.isValid() || !start.isValid()) {
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION), SVNLogType.DEFAULT);
+        }
+        
+        long pegRevisionNumber = -1;
+        long startRevisionNumber;
+        long endRevisionNumber;
+        SVNURL url = null;
+        
+        if (path.isFile()) {
+            Structure<UrlInfo> urlInfo = getURLFromPath(path, revision, repository);
+            if (urlInfo.hasValue(UrlInfo.dropRepsitory) && urlInfo.is(UrlInfo.dropRepsitory)) {
+                repository = null;
             }
-
-
+            url = urlInfo.<SVNURL>get(UrlInfo.url);
+            if (urlInfo.hasValue(UrlInfo.pegRevision)) {
+                pegRevisionNumber = urlInfo.lng(UrlInfo.pegRevision);
+            }
+            urlInfo.release();
+        } else {
+            url = path.getURL();
+        }
+        
+        if (repository == null) {
+            repository = createRepository(url, null, true);
+        }
     
+        Structure<RevisionsPair> pair = null;
+        if (pegRevisionNumber < 0) {
+            pair = getRevisionNumber(repository, path, revision, pair);
+            pegRevisionNumber = pair.lng(RevisionsPair.revNumber);
+        }
+        pair = getRevisionNumber(repository, path, start, pair);
+        startRevisionNumber = pair.lng(RevisionsPair.revNumber);
+        if (end == SVNRevision.UNDEFINED) {
+            endRevisionNumber = startRevisionNumber;
+        } else {
+            pair = getRevisionNumber(repository, path, end, pair);
+            endRevisionNumber = pair.lng(RevisionsPair.revNumber);
+        }
+        pair.release();
+        
+        Structure<LocationsInfo> result = Structure.obtain(LocationsInfo.class);
+        result.set(LocationsInfo.startRevision, startRevisionNumber);
+        if (end != SVNRevision.UNDEFINED) {
+            result.set(LocationsInfo.startRevision, endRevisionNumber);
+        }
+        if (startRevisionNumber == pegRevisionNumber && endRevisionNumber == pegRevisionNumber) {
+            result.set(LocationsInfo.startUrl, url);
+            if (end != SVNRevision.UNDEFINED) {
+                result.set(LocationsInfo.endUrl, url);
+            }
+            return result;
+        }
+        
+        SVNURL repositoryRootURL = repository.getRepositoryRoot(true);
+        long[] revisionsRange = startRevisionNumber == endRevisionNumber ? 
+                new long[] {startRevisionNumber} : new long[] {startRevisionNumber, endRevisionNumber};
+                
+        Map<?,?> locations = null;
+        try {
+            locations = repository.getLocations("", (Map<?,?>) null, pegRevisionNumber, revisionsRange);
+        } catch (SVNException e) {
+            throw e;
+        }
+        
+        SVNLocationEntry startPath = (SVNLocationEntry) locations.get(new Long(startRevisionNumber));
+        SVNLocationEntry endPath = (SVNLocationEntry) locations.get(new Long(endRevisionNumber));
+        if (startPath == null) {
+            Object source = path != null ? (Object) path : (Object) url;
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_UNRELATED_RESOURCES, "Unable to find repository location for ''{0}'' in revision ''{1}''", new Object[] {
+                    source, new Long(startRevisionNumber)
+            });
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+        if (endPath == null) {
+            Object source = path != null ? (Object) path : (Object) url;
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_UNRELATED_RESOURCES, "The location for ''{0}'' for revision {1} does not exist in the "
+                    + "repository or refers to an unrelated object", new Object[] {
+                    source, new Long(endRevisionNumber)
+            });
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+        
+        result.set(LocationsInfo.startUrl, repositoryRootURL.appendPath(startPath.getPath(), false));
+        if (end.isValid()) {
+            result.set(LocationsInfo.endUrl, repositoryRootURL.appendPath(endPath.getPath(), false));
+        }
+        return result;
+    }
 }
