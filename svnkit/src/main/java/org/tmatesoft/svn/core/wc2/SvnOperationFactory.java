@@ -46,14 +46,18 @@ public class SvnOperationFactory {
     private boolean autoCloseContext;
     private boolean autoDisposeRepositoryPool;
     private SVNWCContext wcContext;
-    
+
     public SvnOperationFactory() {
+        this(null);
+    }
+    
+    public SvnOperationFactory(SVNWCContext context) {
         v17OperationRunners = new HashMap<Class<?>, List<ISvnOperationRunner<SvnOperation>>>();
         v16OperationRunners = new HashMap<Class<?>, List<ISvnOperationRunner<SvnOperation>>>();
         anyFormatOperationRunners = new HashMap<Class<?>, List<ISvnOperationRunner<SvnOperation>>>();
         noneOperationRunners = new HashMap<Class<?>, List<ISvnOperationRunner<SvnOperation>>>();
-        
-        setAutoCloseContext(true);
+        wcContext = context;
+        setAutoCloseContext(wcContext == null);
         
         registerOperationRunner(SvnGetInfo.class, new SvnRemoteGetInfo());
         registerOperationRunner(SvnGetInfo.class, new SvnNgGetInfo(), SvnWcGeneration.V17, SvnWcGeneration.NOT_DETECTED);
