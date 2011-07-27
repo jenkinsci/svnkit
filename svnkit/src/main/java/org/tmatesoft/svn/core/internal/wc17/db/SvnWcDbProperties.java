@@ -19,7 +19,7 @@ public class SvnWcDbProperties extends SvnWcDbShared {
         SVNSqlJetStatement stmt = root.getSDb().getStatement(SVNWCDbStatements.SELECT_NODE_PROPS);
         try {
             stmt.bindf("is", root.getWcId(), relpath);
-            if (stmt.next()) {
+            if (!stmt.next()) {
                 nodeNotFound(root.getAbsPath(relpath));
             }
             SVNWCDbStatus presence = getColumnPresence(stmt);
