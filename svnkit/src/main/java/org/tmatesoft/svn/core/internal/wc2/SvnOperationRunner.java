@@ -4,6 +4,7 @@ import java.util.Date;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.wc2.ISvnOperationRunner;
 import org.tmatesoft.svn.core.wc2.SvnOperation;
 
@@ -11,7 +12,8 @@ import org.tmatesoft.svn.core.wc2.SvnOperation;
 public abstract class SvnOperationRunner<T extends SvnOperation> implements ISvnOperationRunner<T> {
     private T operation;
     private SvnWcGeneration wcGeneration;
-
+    private SVNWCContext wcContext;
+    
     public void run(T operation) throws SVNException {
         setOperation(operation);
         run();
@@ -20,8 +22,17 @@ public abstract class SvnOperationRunner<T extends SvnOperation> implements ISvn
     public void reset() {
         setOperation(null);
         setWcGeneration(null);
+        setWcContext(null);
     }
     
+    public void setWcContext(SVNWCContext context) {
+        this.wcContext = context;
+    }
+    
+    protected SVNWCContext getWcContext() {
+        return this.wcContext;
+    }
+
     public void setWcGeneration(SvnWcGeneration wcGeneration) {
         this.wcGeneration = wcGeneration;
     }
@@ -49,5 +60,4 @@ public abstract class SvnOperationRunner<T extends SvnOperation> implements ISvn
         }
         return new SVNDate(d.getTime(), 0);
     }
-
 }

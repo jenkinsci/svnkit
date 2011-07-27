@@ -122,7 +122,7 @@ public class SVNWCDb implements ISVNWCDb {
     private boolean enforceEmptyWQ;
     private HashMap<File, SVNWCDbDir> dirData;
 
-    public void open(final SVNWCDbOpenMode mode, final ISVNOptions config, final boolean autoUpgrade, final boolean enforceEmptyWQ) throws SVNException {
+    public void open(final SVNWCDbOpenMode mode, final ISVNOptions config, final boolean autoUpgrade, final boolean enforceEmptyWQ) {
         this.config = config;
         this.autoUpgrade = autoUpgrade;
         this.enforceEmptyWQ = enforceEmptyWQ;
@@ -133,7 +133,7 @@ public class SVNWCDb implements ISVNWCDb {
         throw new UnsupportedOperationException();
     }
 
-    public void close() throws SVNException {
+    public void close() {
         final Set<SVNWCDbRoot> roots = new HashSet<SVNWCDbRoot>();
         /* Collect all the unique WCROOT structures, and empty out DIR_DATA. */
         if (dirData != null) {

@@ -377,10 +377,10 @@ public interface ISVNWCDb {
      *            queue is being processed (via 'svn cleanup') and all
      *            operations should be allowed.
      */
-    void open(SVNWCDbOpenMode mode, ISVNOptions config, boolean autoUpgrade, boolean enforceEmptyWQ) throws SVNException;
+    void open(SVNWCDbOpenMode mode, ISVNOptions config, boolean autoUpgrade, boolean enforceEmptyWQ);
 
     /** Close DB. */
-    void close() throws SVNException;
+    void close();
 
     ISVNOptions getConfig();
 

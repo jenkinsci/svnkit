@@ -271,11 +271,11 @@ public class SVNWCContext {
     private ISVNEventHandler eventHandler;
     private List<CleanupHandler> cleanupHandlers = new LinkedList<CleanupHandler>();
 
-    public SVNWCContext(ISVNOptions config, ISVNEventHandler eventHandler) throws SVNException {
+    public SVNWCContext(ISVNOptions config, ISVNEventHandler eventHandler) {
         this(SVNWCDbOpenMode.ReadWrite, config, false, true, eventHandler);
     }
 
-    public SVNWCContext(SVNWCDbOpenMode mode, ISVNOptions config, boolean autoUpgrade, boolean enforceEmptyWQ, ISVNEventHandler eventHandler) throws SVNException {
+    public SVNWCContext(SVNWCDbOpenMode mode, ISVNOptions config, boolean autoUpgrade, boolean enforceEmptyWQ, ISVNEventHandler eventHandler) {
         this.db = new SVNWCDb();
         this.db.open(mode, config, autoUpgrade, enforceEmptyWQ);
         this.closeDb = true;
@@ -292,7 +292,7 @@ public class SVNWCContext {
         return eventHandler;
     }
 
-    public void close() throws SVNException {
+    public void close() {
         if (closeDb) {
             db.close();
         }

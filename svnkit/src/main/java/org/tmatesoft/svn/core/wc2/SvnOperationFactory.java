@@ -17,6 +17,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb.Mode;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbOpenMode;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
@@ -42,6 +43,10 @@ public class SvnOperationFactory {
     private ISVNOptions options;
     private ISVNRepositoryPool repositoryPool;
     
+    private boolean autoCloseContext;
+    private boolean autoDisposeRepositoryPool;
+    private SVNWCContext wcContext;
+    
     public SvnOperationFactory() {
         v17OperationRunners = new HashMap<Class<?>, List<ISvnOperationRunner<SvnOperation>>>();
         v16OperationRunners = new HashMap<Class<?>, List<ISvnOperationRunner<SvnOperation>>>();
@@ -51,6 +56,14 @@ public class SvnOperationFactory {
         registerOperationRunner(SvnGetInfo.class, new SvnRemoteGetInfo());
         registerOperationRunner(SvnGetInfo.class, new SvnNgGetInfo(), SvnWcGeneration.V17, SvnWcGeneration.NOT_DETECTED);
         registerOperationRunner(SvnGetInfo.class, new SvnOldGetInfo(), SvnWcGeneration.V16);
+    }
+    
+    public boolean isAutoCloseContext() {
+        return autoCloseContext;
+    }
+
+    public void setAutoCloseContext(boolean autoCloseContext) {
+        this.autoCloseContext = autoCloseContext;
     }
 
     public ISVNAuthenticationManager getAuthenticationManager() {
@@ -74,6 +87,7 @@ public class SvnOperationFactory {
     public ISVNRepositoryPool getRepositoryPool() {
         if (repositoryPool == null) {
             repositoryPool = new DefaultSVNRepositoryPool(getAuthenticationManager(), getOptions());
+            autoDisposeRepositoryPool = true;
         }
         return repositoryPool;
     }
@@ -95,10 +109,24 @@ public class SvnOperationFactory {
 
     public void setEventHandler(ISVNEventHandler eventHandler) {
         this.eventHandler = eventHandler;
+        disposeWcContext();
     }
 
     public void setOptions(ISVNOptions options) {
         this.options = options;
+        disposeWcContext();
+    }
+
+    public void setRepositoryPool(ISVNRepositoryPool repositoryPool) {
+        this.repositoryPool = repositoryPool;
+        this.autoDisposeRepositoryPool = repositoryPool == null;
+    }
+    
+    public void dispose() {
+        disposeWcContext();
+        if (autoDisposeRepositoryPool && repositoryPool != null) {
+            repositoryPool.dispose();
+        }
     }
 
     public SvnGetInfo createGetInfo() {
@@ -113,7 +141,42 @@ public class SvnOperationFactory {
         return getProperties;
     }
 
-    public ISvnOperationRunner<SvnOperation> getImplementation(SvnOperation operation) throws SVNException {
+    protected void run(SvnOperation operation) throws SVNException {
+        ISvnOperationRunner<?> runner = getImplementation(operation);
+        if (runner != null) {
+            SVNWCContext wcContext = null;
+            try {
+                wcContext = obtainWcContext();
+                runner.setWcContext(wcContext);
+            } finally {
+                releaseWcContext(wcContext);
+            }
+        }
+    }
+
+    private void releaseWcContext(SVNWCContext wcContext) {
+        if (autoCloseContext && wcContext != null) {
+            if (this.wcContext == wcContext) {
+                disposeWcContext();
+            } else {
+                wcContext.close();
+            }
+        }
+    }
+
+    private SVNWCContext obtainWcContext() {
+        if (wcContext == null) {
+            wcContext = new SVNWCContext(getOptions(), getEventHandler());
+        }
+        return wcContext;
+    }
+
+    private void disposeWcContext() {
+        wcContext.close();
+        wcContext = null;
+    }
+
+    protected ISvnOperationRunner<SvnOperation> getImplementation(SvnOperation operation) throws SVNException {
         if (operation == null) {
             return null;
         }
@@ -205,9 +268,5 @@ public class SvnOperationFactory {
             list = Collections.emptyList();
         }
         return list;
-    }
-
-    public void setRepositoryPool(ISVNRepositoryPool repositoryPool) {
-        this.repositoryPool = repositoryPool;
     }
 }

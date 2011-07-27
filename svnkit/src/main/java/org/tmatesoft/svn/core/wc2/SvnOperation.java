@@ -121,11 +121,7 @@ public class SvnOperation {
     
     public void run() throws SVNException {
         ensureArgumentsAreValid();
-
-        ISvnOperationRunner<SvnOperation> implementation = getOperationFactory().getImplementation(this);
-        if (implementation != null) {
-            implementation.run(this);
-        }
+        getOperationFactory().run(this);
     }
     
     protected void ensureArgumentsAreValid() throws SVNException {
