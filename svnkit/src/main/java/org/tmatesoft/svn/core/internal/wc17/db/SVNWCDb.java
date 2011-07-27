@@ -1840,7 +1840,7 @@ public class SVNWCDb implements ISVNWCDb {
         public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
             assert (conflict == null);
             addWorkItems(db, workItems);
-            SVNProperties pristineProps = readPristineProperties(pdh, localRelpath);
+            SVNProperties pristineProps = SvnWcDbProperties.readPristineProperties(pdh.getWCRoot(), localRelpath);
             if (props != null && pristineProps != null) {
                 SVNProperties propDiffs = SVNWCUtils.propDiffs(props, pristineProps);
                 if (propDiffs.isEmpty()) {
@@ -1869,34 +1869,6 @@ public class SVNWCDb implements ISVNWCDb {
         }
         stmt.bindProperties(4, props);
         stmt.done();
-    }
-
-    public SVNProperties readPristineProperties(SVNWCDbDir pdh, File localRelpath) throws SVNException {
-        SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_NODE_PROPS);
-        try {
-            stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelpath);
-            boolean haveRow = stmt.next();
-            if (!haveRow) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{0}'' was not found.", SVNFileUtil.createFilePath(pdh.getWCRoot().getAbsPath(), localRelpath));
-                SVNErrorManager.error(err, SVNLogType.WC);
-            }
-            SVNWCDbStatus presence = getColumnPresence(stmt);
-            if (presence == SVNWCDbStatus.BaseDeleted) {
-                haveRow = stmt.next();
-                assert (haveRow);
-                presence = getColumnPresence(stmt);
-            }
-            if (presence == SVNWCDbStatus.Normal || presence == SVNWCDbStatus.Incomplete) {
-                SVNProperties props = stmt.getColumnProperties(SVNWCDbSchema.NODES__Fields.properties);
-                if (props == null) {
-                    props = new SVNProperties();
-                }
-                return props;
-            }
-            return null;
-        } finally {
-            stmt.reset();
-        }
     }
 
     public void opSetTreeConflict(File localAbspath, SVNTreeConflictDescription treeConflict) throws SVNException {
@@ -2831,7 +2803,7 @@ public class SVNWCDb implements ISVNWCDb {
         SVNWCDbDir pdh = parseDir.wcDbDir;
         File localRelPath = parseDir.localRelPath;
         verifyDirUsable(pdh);
-        return readPristineProperties(pdh, localRelPath);
+        return SvnWcDbProperties.readPristineProperties(pdh.getWCRoot(), localRelPath);
     }
 
     public String readProperty(File localAbsPath, String propname) throws SVNException {
@@ -2866,7 +2838,7 @@ public class SVNWCDb implements ISVNWCDb {
         }
 
         /* No local changes. Return the pristine props for this node. */
-        props = readPristineProperties(pdh, localRelPath);
+        props = SvnWcDbProperties.readPristineProperties(pdh.getWCRoot(), localRelPath);
         if (props == null) {
             /*
              * Pristine properties are not defined for this node. ### we need to

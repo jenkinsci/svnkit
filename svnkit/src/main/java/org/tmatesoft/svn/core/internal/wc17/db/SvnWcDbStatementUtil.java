@@ -171,4 +171,10 @@ public class SvnWcDbStatementUtil {
         }        
         return SvnChecksum.fromString(str);
     }
+    
+    public static void reset(SVNSqlJetStatement stmt) throws SVNException {
+        if (stmt != null) {
+            stmt.reset();
+        }
+    }
 }

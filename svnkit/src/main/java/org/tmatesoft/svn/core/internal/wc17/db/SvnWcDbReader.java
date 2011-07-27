@@ -1,5 +1,11 @@
 package org.tmatesoft.svn.core.internal.wc17.db;
 
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnInt64;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnKind;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnPresence;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnText;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.reset;
+
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
@@ -13,9 +19,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.WalkerChildInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODES__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.*;
-
-public class SvnWcDbReader {
+public class SvnWcDbReader extends SvnWcDbShared {
     
     public static Map<String, Structure<WalkerChildInfo>> readWalkerChildrenInfo(SVNWCDb db, File localAbspath, Map<String, Structure<WalkerChildInfo>> children) throws SVNException {
         
@@ -48,7 +52,7 @@ public class SvnWcDbReader {
                 childInfo.set(WalkerChildInfo.kind, getColumnKind(stmt, NODES__Fields.kind));            
             }
         } finally {
-            stmt.reset();
+            reset(stmt);
         }
         
         return children;
