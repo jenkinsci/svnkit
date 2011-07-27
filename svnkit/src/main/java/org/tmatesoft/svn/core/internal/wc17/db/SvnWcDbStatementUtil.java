@@ -15,6 +15,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
+import org.tmatesoft.svn.core.wc2.SvnChecksum;
 
 public class SvnWcDbStatementUtil {
     
@@ -200,5 +201,13 @@ public class SvnWcDbStatementUtil {
 
     public static <T extends Enum<T>> T getColumnToken(SVNSqlJetStatement stmt, int f, Map<String, T> tokenMap) throws SVNException {
         return tokenMap.get(getColumnText(stmt, f));
+    }
+    
+    public static SvnChecksum getColumnChecksum2(SVNSqlJetStatement stmt, Enum<?> f) throws SVNException {
+        String str = stmt.getColumnString(f.toString());
+        if (str == null) {
+            return null;
+        }        
+        return SvnChecksum.fromString(str);
     }
 }

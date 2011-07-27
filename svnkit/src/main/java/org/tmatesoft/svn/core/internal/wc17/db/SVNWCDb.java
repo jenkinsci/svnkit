@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.internal.wc17.db;
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnBlob;
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnBoolean;
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnChecksum;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnChecksum2;
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnDepth;
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnInt64;
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnKind;
@@ -4617,7 +4618,8 @@ public class SVNWCDb implements ISVNWCDb {
         final DirParsedInfo wcInfo = obtainWcRoot(localAbspath);
         SVNWCDbDir dir = wcInfo.wcDbDir;
         SVNSqlJetStatement stmt = dir.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_NODE_INFO);
-        stmt.bindf("is", dir.getWCRoot().getWcId(), dir.computeRelPath());
+        File relativePath = wcInfo.localRelPath;
+        stmt.bindf("is", dir.getWCRoot().getWcId(), relativePath);
         if (!stmt.next()) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{1}'' was not found.", 
                     dir.getWCRoot().getAbsPath(dir.computeRelPath())), SVNLogType.WC);
@@ -4627,7 +4629,8 @@ public class SVNWCDb implements ISVNWCDb {
         SVNWCDbStatus status = getColumnPresence(stmt);
         
         if (opDepth > 0 && status == SVNWCDbStatus.BaseDeleted) {
-            assert stmt.next();
+            boolean hasNext = stmt.next();
+            assert hasNext;
             opDepth = getColumnInt64(stmt, NODES__Fields.op_depth);
             status = getColumnPresence(stmt);
         }
@@ -4641,12 +4644,10 @@ public class SVNWCDb implements ISVNWCDb {
         if (opDepth > 0) {
             result.set(PristineInfo.status, getWorkingStatus(status));
         } else {
-            result.set(PristineInfo.status, getWorkingStatus(status));
+            result.set(PristineInfo.status, status);
         }
         if (kind == SVNWCDbKind.File) {
-            SvnChecksum checksum = new SvnChecksum();
-            checksum.setDigest(getColumnText(stmt, NODES__Fields.checksum));
-            checksum.setKind(SvnChecksum.Kind.sha1);
+            SvnChecksum checksum = getColumnChecksum2(stmt, NODES__Fields.checksum);
             result.set(PristineInfo.checksum, checksum);
         } else if (kind == SVNWCDbKind.Symlink) {
             // TODO File?

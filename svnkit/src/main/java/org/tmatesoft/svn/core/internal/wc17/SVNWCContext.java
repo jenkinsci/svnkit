@@ -79,6 +79,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbReader;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeOriginInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.PristineInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.WalkerChildInfo;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.ISVNConflictHandler;
@@ -96,6 +97,8 @@ import org.tmatesoft.svn.core.wc.SVNMergeFileSet;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
+import org.tmatesoft.svn.core.wc2.SvnChecksum;
+import org.tmatesoft.svn.core.wc2.SvnChecksum.Kind;
 import org.tmatesoft.svn.util.SVNLogType;
 
 import de.regnis.q.sequence.line.QSequenceLineRAByteData;
@@ -748,54 +751,43 @@ public class SVNWCContext {
         assert (openStream || getPath);
         PristineContentsInfo info = new PristineContentsInfo();
 
-        final WCDbInfo readInfo = db.readInfo(localAbspath, InfoField.status, InfoField.kind, InfoField.checksum);
+        final Structure<PristineInfo> readInfo = db.readPristineInfo(localAbspath);
 
-        /* Sanity */
-        if (readInfo.kind != SVNWCDbKind.File) {
+        if (readInfo.<SVNWCDbKind>get(PristineInfo.kind) != SVNWCDbKind.File) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNEXPECTED_KIND, "Can only get the pristine contents of files;" + "  ''{0}'' is not a file", localAbspath);
             SVNErrorManager.error(err, SVNLogType.WC);
         }
 
-        if (readInfo.status == SVNWCDbStatus.Added) {
-            /*
-             * For an added node, we return "no stream". Make sure this is not
-             * copied-here or moved-here, in which case we return the copy/move
-             * source's contents.
-             */
+        final SVNWCDbStatus status = readInfo.<SVNWCDbStatus>get(PristineInfo.status);
+        final SvnChecksum checksum = readInfo.<SvnChecksum>get(PristineInfo.checksum);
+        readInfo.release();
+        
+        if (status == SVNWCDbStatus.Added) {
             final WCDbAdditionInfo scanAddition = db.scanAddition(localAbspath, AdditionInfoField.status);
-
             if (scanAddition.status == SVNWCDbStatus.Added) {
-                /* Simply added. The pristine base does not exist. */
                 return info;
             }
-        } else if (readInfo.status == SVNWCDbStatus.NotPresent) {
-            /*
-             * We know that the delete of this node has been committed. This
-             * should be the same as if called on an unknown path.
-             */
+        } else if (status == SVNWCDbStatus.NotPresent) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "Cannot get the pristine contents of ''{0}'' " + "because its delete is already committed", localAbspath);
             SVNErrorManager.error(err, SVNLogType.WC);
-        } else if (readInfo.status == SVNWCDbStatus.ServerExcluded || readInfo.status == SVNWCDbStatus.Excluded || readInfo.status == SVNWCDbStatus.Incomplete) {
+        } else if (status == SVNWCDbStatus.ServerExcluded || status == SVNWCDbStatus.Excluded || status == SVNWCDbStatus.Incomplete) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS, "Cannot get the pristine contents of ''{0}'' " + "because it has an unexpected status", localAbspath);
             SVNErrorManager.error(err, SVNLogType.WC);
         } else {
-            /*
-             * We know that it is a file, so we can't hit the _obstructed stati.
-             * Also, we should never see _base_deleted here.
-             */
-            SVNErrorManager.assertionFailure(readInfo.status != SVNWCDbStatus.Obstructed && readInfo.status != SVNWCDbStatus.ObstructedAdd && readInfo.status != SVNWCDbStatus.ObstructedDelete
-                    && readInfo.status != SVNWCDbStatus.BaseDeleted, null, SVNLogType.WC);
+            SVNErrorManager.assertionFailure(status != SVNWCDbStatus.Obstructed && status != SVNWCDbStatus.ObstructedAdd && status != SVNWCDbStatus.ObstructedDelete
+                    && status != SVNWCDbStatus.BaseDeleted, null, SVNLogType.WC);
         }
 
-        if (readInfo.checksum == null) {
+        if (checksum == null) {
             return info;
         }
 
+        SVNChecksum oldchecksum = SVNChecksum.deserializeChecksum(checksum.toString());
         if (getPath) {
-            info.path = db.getPristinePath(localAbspath, readInfo.checksum);
+            info.path = db.getPristinePath(localAbspath, oldchecksum);
         }
         if (openStream) {
-            info.stream = db.readPristine(localAbspath, readInfo.checksum);
+            info.stream = db.readPristine(localAbspath, oldchecksum);
         }
         return info;
     }
