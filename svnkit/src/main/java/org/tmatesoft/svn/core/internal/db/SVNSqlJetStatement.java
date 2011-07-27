@@ -25,10 +25,10 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
-import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc2.SvnChecksum;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -38,7 +38,7 @@ public abstract class SVNSqlJetStatement {
 
     protected SVNSqlJetDb sDb;
     private ISqlJetCursor cursor;
-    protected List binds = new ArrayList();
+    protected List<Object> binds = new ArrayList<Object>();
     protected SqlJetTransactionMode transactionMode = SqlJetTransactionMode.READ_ONLY;
 
     protected ISqlJetCursor openCursor() throws SVNException {
@@ -58,7 +58,7 @@ public abstract class SVNSqlJetStatement {
         setCursor(null);
     }
 
-    public List getBinds() {
+    public List<Object> getBinds() {
         return binds;
     }
 
@@ -204,7 +204,7 @@ public abstract class SVNSqlJetStatement {
         binds.set(i - 1, props != null ? SVNSkel.createPropList(props.asMap()).unparse() : null);
     }
 
-    public void bindChecksum(int i, SVNChecksum checksum) {
+    public void bindChecksum(int i, SvnChecksum checksum) {
         adjustBinds(i);
         binds.set(i - 1, checksum != null ? checksum.toString() : null);
     }
@@ -239,7 +239,7 @@ public abstract class SVNSqlJetStatement {
         }
     }
 
-    public Object getColumn(Enum f) throws SVNException {
+    public Object getColumn(Enum<?> f) throws SVNException {
         return getColumn(f.toString());
     }
 
@@ -254,7 +254,7 @@ public abstract class SVNSqlJetStatement {
         }
     }
 
-    public long getColumnLong(Enum f) throws SVNException {
+    public long getColumnLong(Enum<?> f) throws SVNException {
         return getColumnLong(f.toString());
     }
 
@@ -269,7 +269,7 @@ public abstract class SVNSqlJetStatement {
         }
     }
 
-    public String getColumnString(Enum f) throws SVNException {
+    public String getColumnString(Enum<?> f) throws SVNException {
         return getColumnString(f.toString());
     }
 
@@ -284,7 +284,7 @@ public abstract class SVNSqlJetStatement {
         }
     }
 
-    public boolean isColumnNull(Enum f) throws SVNException {
+    public boolean isColumnNull(Enum<?> f) throws SVNException {
         return isColumnNull(f.toString());
     }
 
@@ -299,7 +299,7 @@ public abstract class SVNSqlJetStatement {
         }
     }
 
-    public byte[] getColumnBlob(Enum f) throws SVNException {
+    public byte[] getColumnBlob(Enum<?> f) throws SVNException {
         return getColumnBlob(f.toString());
     }
 
@@ -318,7 +318,7 @@ public abstract class SVNSqlJetStatement {
         return getColumnLong(f) != 0;
     }
 
-    public boolean getColumnBoolean(Enum f) throws SVNException {
+    public boolean getColumnBoolean(Enum<?> f) throws SVNException {
         return getColumnLong(f) != 0;
     }
 
@@ -371,15 +371,15 @@ public abstract class SVNSqlJetStatement {
         return null;
     }
 
-    public SVNSqlJetStatement getJoinedStatement(Enum joinedTable) throws SVNException {
+    public SVNSqlJetStatement getJoinedStatement(Enum<?> joinedTable) throws SVNException {
         return getJoinedStatement(joinedTable.toString());
     }
 
-    public SVNProperties getColumnProperties(Enum f) throws SVNException {
+    public SVNProperties getColumnProperties(Enum<?> f) throws SVNException {
         return getColumnProperties(f.name());
     }
     
-    public boolean hasColumnProperties(Enum f) throws SVNException {
+    public boolean hasColumnProperties(Enum<?> f) throws SVNException {
         return hasColumnProperties(f.name());
     }
 
@@ -424,7 +424,7 @@ public abstract class SVNSqlJetStatement {
         }
     }
 
-    public long getColumnRevnum(Enum f) throws SVNException {
+    public long getColumnRevnum(Enum<?> f) throws SVNException {
         if (isColumnNull(f)) {
             return -1;
         }

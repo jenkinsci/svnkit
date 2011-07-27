@@ -16,7 +16,7 @@ import java.util.List;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
-import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
+import org.tmatesoft.svn.core.wc2.SvnChecksum;
 
 /**
  * @author TMate Software Ltd.
@@ -104,7 +104,7 @@ public class SVNSqlJetUnionStatement extends SVNSqlJetStatement {
         updateBinds();
     }
 
-    public void bindChecksum(int i, SVNChecksum checksum) {
+    public void bindChecksum(int i, SvnChecksum checksum) {
         super.bindChecksum(i, checksum);
         updateBinds();
     }

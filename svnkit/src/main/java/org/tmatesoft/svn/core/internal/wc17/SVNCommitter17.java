@@ -21,7 +21,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
 
-import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -32,8 +31,6 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.ISVNCommitPathHandler;
-import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
-import org.tmatesoft.svn.core.internal.wc.SVNChecksumKind;
 import org.tmatesoft.svn.core.internal.wc.SVNCommitUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
@@ -51,6 +48,7 @@ import org.tmatesoft.svn.core.wc.SVNCommitItem;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.wc2.SvnChecksum;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -62,25 +60,23 @@ public class SVNCommitter17 implements ISVNCommitPathHandler {
     private SVNWCContext myContext;
     private Map<String, SVNCommitItem> myCommittables;
     private String myRepositoryRoot;
-    private Collection myTmpFiles;
-    private Map<File, SVNChecksum> myMd5Checksums;
-    private Map<File, SVNChecksum> mySha1Checksums;
+    private Map<File, SvnChecksum> myMd5Checksums;
+    private Map<File, SvnChecksum> mySha1Checksums;
     private Map<String, SVNCommitItem> myModifiedFiles;
     private SVNDeltaGenerator myDeltaGenerator;
 
-    public SVNCommitter17(SVNWCContext context, Map<String, SVNCommitItem> committables, String repositoryRoot, Collection tmpFiles, Map<File, SVNChecksum> md5Checksums,
-            Map<File, SVNChecksum> sha1Checksums) {
+    public SVNCommitter17(SVNWCContext context, Map<String, SVNCommitItem> committables, String repositoryRoot, Collection tmpFiles, Map<File, SvnChecksum> md5Checksums,
+            Map<File, SvnChecksum> sha1Checksums) {
         myContext = context;
         myCommittables = committables;
         myRepositoryRoot = repositoryRoot;
-        myTmpFiles = tmpFiles;
         myMd5Checksums = md5Checksums;
         mySha1Checksums = sha1Checksums;
         myModifiedFiles = new TreeMap<String, SVNCommitItem>();
     }
 
     public static SVNCommitInfo commit(SVNWCContext context, Collection tmpFiles, Map<String, SVNCommitItem> committables, String repositoryRoot, ISVNEditor commitEditor,
-            Map<File, SVNChecksum> md5Checksums, Map<File, SVNChecksum> sha1Checksums) throws SVNException {
+            Map<File, SvnChecksum> md5Checksums, Map<File, SvnChecksum> sha1Checksums) throws SVNException {
         SVNCommitter17 committer = new SVNCommitter17(context, committables, repositoryRoot, tmpFiles, md5Checksums, sha1Checksums);
         SVNCommitUtil.driveCommitEditor(committer, committables.keySet(), commitEditor, -1);
         committer.sendTextDeltas(commitEditor);
@@ -270,8 +266,8 @@ public class SVNCommitter17 implements ISVNCommitPathHandler {
             myContext.getEventHandler().handleEvent(event, ISVNEventHandler.UNKNOWN);
             boolean fulltext = item.isAdded();
             TransmittedChecksums transmitTextDeltas = transmitTextDeltas(path, itemAbspath, fulltext, editor);
-            SVNChecksum newTextBaseMd5Checksum = transmitTextDeltas.md5Checksum;
-            SVNChecksum newTextBaseSha1Checksum = transmitTextDeltas.sha1Checksum;
+            SvnChecksum newTextBaseMd5Checksum = transmitTextDeltas.md5Checksum;
+            SvnChecksum newTextBaseSha1Checksum = transmitTextDeltas.sha1Checksum;
             if (myMd5Checksums != null) {
                 myMd5Checksums.put(itemAbspath, newTextBaseMd5Checksum);
             }
@@ -283,16 +279,16 @@ public class SVNCommitter17 implements ISVNCommitPathHandler {
 
     private static class TransmittedChecksums {
 
-        public SVNChecksum md5Checksum;
-        public SVNChecksum sha1Checksum;
+        public SvnChecksum md5Checksum;
+        public SvnChecksum sha1Checksum;
     }
 
     private TransmittedChecksums transmitTextDeltas(String path, File localAbspath, boolean fulltext, ISVNEditor editor) throws SVNException {
         InputStream localStream = SVNFileUtil.DUMMY_IN;
         InputStream baseStream = SVNFileUtil.DUMMY_IN;
-        SVNChecksum expectedMd5Checksum = null;
-        SVNChecksum localMd5Checksum = null;
-        SVNChecksum verifyChecksum = null;
+        SvnChecksum expectedMd5Checksum = null;
+        SvnChecksum localMd5Checksum = null;
+        SvnChecksum verifyChecksum = null;
         SVNChecksumOutputStream localSha1ChecksumStream = null;
         SVNChecksumInputStream verifyChecksumStream = null;
         SVNErrorMessage error = null;
@@ -312,23 +308,23 @@ public class SVNCommitter17 implements ISVNCommitPathHandler {
                     baseStream = SVNFileUtil.DUMMY_IN;
                 }
                 expectedMd5Checksum = myContext.getDb().readInfo(localAbspath, InfoField.checksum).checksum;
-                if (expectedMd5Checksum != null && expectedMd5Checksum.getKind() != SVNChecksumKind.MD5) {
+                if (expectedMd5Checksum != null && expectedMd5Checksum.getKind() != SvnChecksum.Kind.md5) {
                     expectedMd5Checksum = myContext.getDb().getPristineMD5(localAbspath, expectedMd5Checksum);
                 }
                 if (expectedMd5Checksum != null) {
                     verifyChecksumStream = new SVNChecksumInputStream(baseStream, SVNChecksumInputStream.MD5_ALGORITHM);
                     baseStream = verifyChecksumStream;
                 } else {
-                    expectedMd5Checksum = new SVNChecksum(SVNChecksumKind.MD5, SVNFileUtil.computeChecksum(baseFile));
+                    expectedMd5Checksum = new SvnChecksum(SvnChecksum.Kind.md5, SVNFileUtil.computeChecksum(baseFile));
                 }
             }
             editor.applyTextDelta(path, expectedMd5Checksum!=null ? expectedMd5Checksum.getDigest() : null);
             if (myDeltaGenerator == null) {
                 myDeltaGenerator = new SVNDeltaGenerator();
             }
-            localMd5Checksum = new SVNChecksum(SVNChecksumKind.MD5, myDeltaGenerator.sendDelta(path, baseStream, 0, localStream, editor, true));
+            localMd5Checksum = new SvnChecksum(SvnChecksum.Kind.md5, myDeltaGenerator.sendDelta(path, baseStream, 0, localStream, editor, true));
             if (verifyChecksumStream != null) {
-                verifyChecksum = new SVNChecksum(SVNChecksumKind.MD5, verifyChecksumStream.getDigest());
+                verifyChecksum = new SvnChecksum(SvnChecksum.Kind.md5, verifyChecksumStream.getDigest());
             }
         } catch (SVNException svne) {
             error = svne.getErrorMessage().wrap("While preparing ''{0}'' for commit", localAbspath);
@@ -346,7 +342,7 @@ public class SVNCommitter17 implements ISVNCommitPathHandler {
             SVNErrorManager.error(error, SVNLogType.WC);
         }
         editor.closeFile(path, localMd5Checksum!=null ? localMd5Checksum.getDigest() : null);
-        SVNChecksum localSha1Checksum = new SVNChecksum(SVNChecksumKind.SHA1, localSha1ChecksumStream.getDigest());
+        SvnChecksum localSha1Checksum = new SvnChecksum(SvnChecksum.Kind.sha1, localSha1ChecksumStream.getDigest());
         myContext.getDb().installPristine(newPristineTmpAbspath, localSha1Checksum, localMd5Checksum);
         TransmittedChecksums result = new TransmittedChecksums();
         result.md5Checksum = localMd5Checksum;

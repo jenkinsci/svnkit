@@ -27,7 +27,6 @@ import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
 import org.tmatesoft.svn.core.internal.wc.SVNCommitUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
@@ -58,9 +57,9 @@ import org.tmatesoft.svn.core.wc.SVNCommitItem;
 import org.tmatesoft.svn.core.wc.SVNCommitPacket;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
+import org.tmatesoft.svn.core.wc2.SvnChecksum;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -830,8 +829,8 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
                     continue;
                 }
                 Map<String, SVNCommitItem> committables = new TreeMap();
-                Map<File, SVNChecksum> md5Checksums = new HashMap<File, SVNChecksum>();
-                Map<File, SVNChecksum> sha1Checksums = new HashMap<File, SVNChecksum>();
+                Map<File, SvnChecksum> md5Checksums = new HashMap<File, SvnChecksum>();
+                Map<File, SvnChecksum> sha1Checksums = new HashMap<File, SvnChecksum>();
                 SVNURL baseURL = SVNCommitUtil.translateCommitables(commitPacket.getCommitItems(), committables);
                 Map lockTokens = SVNCommitUtil.translateLockTokens(commitPacket.getLockTokens(), baseURL.toString());
                 SVNCommitItem firstItem = commitPacket.getCommitItems()[0];
@@ -882,7 +881,7 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
         return (SVNCommitInfo[]) infos.toArray(new SVNCommitInfo[infos.size()]);
     }
 
-    private void postProcessCommitItem(SVNWCCommittedQueue queue, SVNCommitItem item, boolean keepChangelists, boolean keepLocks, SVNChecksum md5Checksum, SVNChecksum sha1Checksum) {
+    private void postProcessCommitItem(SVNWCCommittedQueue queue, SVNCommitItem item, boolean keepChangelists, boolean keepLocks, SvnChecksum md5Checksum, SvnChecksum sha1Checksum) {
         boolean loopRecurse = false;
         if (item.isAdded() && (item.getKind() == SVNNodeKind.DIR) && (item.getCopyFromURL() != null)) {
             loopRecurse = true;
@@ -891,8 +890,8 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
         queueCommitted(queue, item.getFile(), loopRecurse, item.getIncomingProperties(), removeLock, !keepChangelists, md5Checksum, sha1Checksum);
     }
 
-    private void queueCommitted(SVNWCCommittedQueue queue, File localAbsPath, boolean recurse, Map wcPropChanges, boolean removeLock, boolean removeChangelist, SVNChecksum md5Checksum,
-            SVNChecksum sha1Checksum) {
+    private void queueCommitted(SVNWCCommittedQueue queue, File localAbsPath, boolean recurse, Map wcPropChanges, boolean removeLock, boolean removeChangelist, SvnChecksum md5Checksum,
+            SvnChecksum sha1Checksum) {
         assert (SVNFileUtil.isAbsolute(localAbsPath));
         queue.haveRecursive |= recurse;
         SVNWCCommittedQueueItem cqi = new SVNWCCommittedQueueItem();
@@ -932,7 +931,7 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
     }
 
     private void processCommittedInternal(File localAbspath, boolean recurse, boolean topOfRecurse, long newRevision, SVNDate revDate, String revAuthor, Map newDavCache, boolean noUnlock,
-            boolean keepChangelist, SVNChecksum md5Checksum, SVNChecksum sha1Checksum, SVNWCCommittedQueue queue) throws SVNException {
+            boolean keepChangelist, SvnChecksum md5Checksum, SvnChecksum sha1Checksum, SVNWCCommittedQueue queue) throws SVNException {
         SVNWCContext ctx = getContext();
         ISVNWCDb db = ctx.getDb();
         SVNWCDbKind kind = db.readKind(localAbspath, true);
@@ -977,13 +976,13 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
     }
 
     private void processCommittedLeaf(File localAbspath, boolean viaRecurse, long newRevnum, SVNDate newChangedDate, String newChangedAuthor, Map newDavCache, boolean noUnlock,
-            boolean keepChangelist, SVNChecksum checksum) throws SVNException {
+            boolean keepChangelist, SvnChecksum checksum) throws SVNException {
         long newChangedRev = newRevnum;
         assert (SVNFileUtil.isAbsolute(localAbspath));
         WCDbInfo readInfo = getContext().getDb().readInfo(localAbspath, InfoField.status, InfoField.kind, InfoField.checksum);
         SVNWCDbStatus status = readInfo.status;
         SVNWCDbKind kind = readInfo.kind;
-        SVNChecksum copiedChecksum = readInfo.checksum;
+        SvnChecksum copiedChecksum = readInfo.checksum;
         File admAbspath;
         if (kind == SVNWCDbKind.Dir) {
             admAbspath = localAbspath;
@@ -1034,8 +1033,8 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
         public boolean recurse;
         public boolean noUnlock;
         public boolean keepChangelist;
-        public SVNChecksum md5Checksum;
-        public SVNChecksum sha1Checksum;
+        public SvnChecksum md5Checksum;
+        public SvnChecksum sha1Checksum;
         public Map newDavCache;
     };
 

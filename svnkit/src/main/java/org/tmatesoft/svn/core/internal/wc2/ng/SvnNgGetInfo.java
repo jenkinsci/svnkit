@@ -14,8 +14,6 @@ import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
-import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
-import org.tmatesoft.svn.core.internal.wc.SVNChecksumKind;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
@@ -165,7 +163,7 @@ public class SvnNgGetInfo extends SvnNgOperationRunner<SvnGetInfo> implements IS
         info.setLastChangedRevision(readInfo.changedRev);
         
         wcInfo.setDepth(readInfo.depth);
-        wcInfo.setChecksum(toChecksum(readInfo.checksum));
+        wcInfo.setChecksum(readInfo.checksum);
         wcInfo.setRecordedSize(readInfo.translatedSize);
         wcInfo.setRecordedTime(readInfo.lastModTime);
         wcInfo.setChangelist(readInfo.changelist);
@@ -260,16 +258,6 @@ public class SvnNgGetInfo extends SvnNgOperationRunner<SvnGetInfo> implements IS
             info.setLock(lock);
         }
         return info;
-    }
-    
-    private SvnChecksum toChecksum(SVNChecksum checksum) {
-        if (checksum == null) {
-            return null;
-        }
-        SvnChecksum result = new SvnChecksum();
-        result.setDigest(checksum.getDigest());
-        result.setKind(checksum.getKind() == SVNChecksumKind.MD5 ? SvnChecksum.Kind.md5 : SvnChecksum.Kind.sha1);
-        return result;
     }
 
     private SvnSchedule toSchedule(SVNWCSchedule schedule) {

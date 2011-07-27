@@ -37,15 +37,15 @@ public enum SVNWCDbSchema {
 
     ;
 
-    final public Class<? extends Enum> fields;
-    final public Class<? extends Enum> indices;
+    final public Class<? extends Enum<?>> fields;
+    final public Class<? extends Enum<?>> indices;
 
-    private SVNWCDbSchema(Class<? extends Enum> fields) {
+    private SVNWCDbSchema(Class<? extends Enum<?>> fields) {
         this.fields = fields;
         this.indices = Empty.class;
     }
 
-    private SVNWCDbSchema(Class<? extends Enum> fields, Class<? extends Enum> indices) {
+    private SVNWCDbSchema(Class<? extends Enum<?>> fields, Class<? extends Enum<?>> indices) {
         this.fields = fields;
         this.indices = indices;
     }

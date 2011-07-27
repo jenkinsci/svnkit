@@ -10,7 +10,6 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
-import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
@@ -161,22 +160,6 @@ public class SvnWcDbStatementUtil {
         return stmt.getColumnBoolean(f);
     }
 
-    public static SVNChecksum getColumnChecksum(SVNSqlJetStatement stmt, Enum<?> f) throws SVNException {
-        final String digest = getColumnText(stmt, f);
-        if (digest != null) {
-            return SVNChecksum.deserializeChecksum(digest);
-        }
-        return null;
-    }
-
-    public static SVNChecksum getColumnChecksum(SVNSqlJetStatement stmt, int f) throws SVNException {
-        final String digest = getColumnText(stmt, f);
-        if (digest != null) {
-            return SVNChecksum.deserializeChecksum(digest);
-        }
-        return null;
-    }
-
     public static long getColumnRevNum(SVNSqlJetStatement stmt, int i) throws SVNException {
         if (isColumnNull(stmt, i))
             return ISVNWCDb.INVALID_REVNUM;
@@ -203,7 +186,7 @@ public class SvnWcDbStatementUtil {
         return tokenMap.get(getColumnText(stmt, f));
     }
     
-    public static SvnChecksum getColumnChecksum2(SVNSqlJetStatement stmt, Enum<?> f) throws SVNException {
+    public static SvnChecksum getColumnChecksum(SVNSqlJetStatement stmt, Enum<?> f) throws SVNException {
         String str = stmt.getColumnString(f.toString());
         if (str == null) {
             return null;

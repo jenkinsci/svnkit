@@ -14,7 +14,6 @@ package org.tmatesoft.svn.core.internal.wc17.db;
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnBlob;
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnBoolean;
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnChecksum;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnChecksum2;
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnDepth;
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnInt64;
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnKind;
@@ -62,8 +61,6 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetTransaction;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
-import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
-import org.tmatesoft.svn.core.internal.wc.SVNChecksumKind;
 import org.tmatesoft.svn.core.internal.wc.SVNConfigFile;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
@@ -83,6 +80,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.RepositoryInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.ACTUAL_NODE__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODES__Fields;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.PRISTINE__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSelectDeletionInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
@@ -478,7 +476,7 @@ public class SVNWCDb implements ISVNWCDb {
         public List<File> children;
         public SVNDepth depth = SVNDepth.INFINITY;
 
-        public SVNChecksum checksum;
+        public SvnChecksum checksum;
         
         public File target;
         
@@ -655,7 +653,7 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     public void addBaseFile(File localAbspath, File reposRelpath, SVNURL reposRootUrl, String reposUuid, long revision, SVNProperties props, long changedRev, SVNDate changedDate,
-            String changedAuthor, SVNChecksum checksum, SVNProperties davCache, SVNSkel conflict, boolean updateActualProps, SVNProperties actualProps,
+            String changedAuthor, SvnChecksum checksum, SVNProperties davCache, SVNSkel conflict, boolean updateActualProps, SVNProperties actualProps,
             boolean keepRecordedInfo, boolean insertBaseDeleted, SVNSkel workItems) throws SVNException {
 
         assert (SVNFileUtil.isAbsolute(localAbspath));
@@ -769,13 +767,13 @@ public class SVNWCDb implements ISVNWCDb {
         addWorkItems(pdh.getWCRoot().getSDb(), workItem);
     }
 
-    public boolean checkPristine(File wcRootAbsPath, SVNChecksum sha1Checksum) throws SVNException {
+    public boolean checkPristine(File wcRootAbsPath, SvnChecksum sha1Checksum) throws SVNException {
         assert (SVNFileUtil.isAbsolute(wcRootAbsPath));
         assert (sha1Checksum != null);
-        if (sha1Checksum.getKind() != SVNChecksumKind.SHA1) {
+        if (sha1Checksum.getKind() != SvnChecksum.Kind.sha1) {
             sha1Checksum = getPristineSHA1(wcRootAbsPath, sha1Checksum);
         }
-        assert (sha1Checksum.getKind() == SVNChecksumKind.SHA1);
+        assert (sha1Checksum.getKind() == SvnChecksum.Kind.sha1);
         DirParsedInfo parseDir = parseDir(wcRootAbsPath, Mode.ReadWrite);
         SVNWCDbDir pdh = parseDir.wcDbDir;
         verifyDirUsable(pdh);
@@ -1034,10 +1032,10 @@ public class SVNWCDb implements ISVNWCDb {
         return pdh.getWCRoot().getFormat();
     }
 
-    public SVNChecksum getPristineMD5(File wcRootAbsPath, SVNChecksum sha1Checksum) throws SVNException {
+    public SvnChecksum getPristineMD5(File wcRootAbsPath, SvnChecksum sha1Checksum) throws SVNException {
         assert (isAbsolute(wcRootAbsPath));
         assert (sha1Checksum != null);
-        assert (sha1Checksum.getKind() == SVNChecksumKind.SHA1);
+        assert (sha1Checksum.getKind() == SvnChecksum.Kind.sha1);
 
         final DirParsedInfo parsed = parseDir(wcRootAbsPath, Mode.ReadOnly);
 
@@ -1055,21 +1053,21 @@ public class SVNWCDb implements ISVNWCDb {
                 SVNErrorManager.error(err, SVNLogType.WC);
                 return null;
             }
-            final SVNChecksum md5Checksum = getColumnChecksum(stmt, 0);
-            assert (md5Checksum.getKind() == SVNChecksumKind.MD5);
+            final SvnChecksum md5Checksum = getColumnChecksum(stmt, PRISTINE__Fields.md5_checksum);
+            assert (md5Checksum.getKind() == SvnChecksum.Kind.md5);
             return md5Checksum;
         } finally {
             stmt.reset();
         }
     }
 
-    public File getPristinePath(File wcRootAbsPath, SVNChecksum sha1Checksum) throws SVNException {
+    public File getPristinePath(File wcRootAbsPath, SvnChecksum sha1Checksum) throws SVNException {
         assert (SVNFileUtil.isAbsolute(wcRootAbsPath));
         assert (sha1Checksum != null);
-        if (sha1Checksum.getKind() != SVNChecksumKind.SHA1) {
+        if (sha1Checksum.getKind() != SvnChecksum.Kind.sha1) {
             sha1Checksum = getPristineSHA1(wcRootAbsPath, sha1Checksum);
         }
-        assert (sha1Checksum.getKind() == SVNChecksumKind.SHA1);
+        assert (sha1Checksum.getKind() == SvnChecksum.Kind.sha1);
         final DirParsedInfo parsed = parseDir(wcRootAbsPath, Mode.ReadOnly);
         final SVNWCDbDir pdh = parsed.wcDbDir;
         verifyDirUsable(pdh);
@@ -1081,9 +1079,9 @@ public class SVNWCDb implements ISVNWCDb {
         return getPristineFileName(pdh, sha1Checksum, false);
     }
 
-    public SVNChecksum getPristineSHA1(File wcRootAbsPath, SVNChecksum md5Checksum) throws SVNException {
+    public SvnChecksum getPristineSHA1(File wcRootAbsPath, SvnChecksum md5Checksum) throws SVNException {
         assert (isAbsolute(wcRootAbsPath));
-        assert (md5Checksum.getKind() == SVNChecksumKind.MD5);
+        assert (md5Checksum.getKind() == SvnChecksum.Kind.md5);
 
         final DirParsedInfo parsed = parseDir(wcRootAbsPath, Mode.ReadOnly);
         SVNWCDbDir pdh = parsed.wcDbDir;
@@ -1098,8 +1096,8 @@ public class SVNWCDb implements ISVNWCDb {
                 SVNErrorManager.error(err, SVNLogType.WC);
                 return null;
             }
-            SVNChecksum sha1_checksum = getColumnChecksum(stmt, 0);
-            assert (sha1_checksum.getKind() == SVNChecksumKind.SHA1);
+            SvnChecksum sha1_checksum = getColumnChecksum(stmt, PRISTINE__Fields.checksum);
+            assert (sha1_checksum.getKind() == SvnChecksum.Kind.sha1);
             return sha1_checksum;
         } finally {
             stmt.reset();
@@ -1183,12 +1181,12 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     public void globalUpdate(File localAbsPath, SVNWCDbKind newKind, File newReposRelpath, long newRevision, SVNProperties newProps, long newChangedRev, SVNDate newChangedDate,
-            String newChangedAuthor, List<File> newChildren, SVNChecksum newChecksum, File newTarget, SVNProperties newDavCache, SVNSkel conflict, SVNSkel workItems) throws SVNException {
+            String newChangedAuthor, List<File> newChildren, SvnChecksum newChecksum, File newTarget, SVNProperties newDavCache, SVNSkel conflict, SVNSkel workItems) throws SVNException {
         // TODO
         throw new UnsupportedOperationException();
     }
 
-    public void installPristine(File tempfileAbspath, SVNChecksum sha1Checksum, SVNChecksum md5Checksum) throws SVNException {
+    public void installPristine(File tempfileAbspath, SvnChecksum sha1Checksum, SvnChecksum md5Checksum) throws SVNException {
 
         assert (SVNFileUtil.isAbsolute(tempfileAbspath));
         File wriAbspath = SVNFileUtil.getFileDir(tempfileAbspath);
@@ -1717,7 +1715,7 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     public void opCopyFile(File localAbsPath, SVNProperties props, long changedRev, SVNDate changedDate, String changedAuthor, File originalReposRelPath, SVNURL originalRootUrl, String originalUuid,
-            long originalRevision, SVNChecksum checksum, SVNSkel conflict, SVNSkel workItems) throws SVNException {
+            long originalRevision, SvnChecksum checksum, SVNSkel conflict, SVNSkel workItems) throws SVNException {
         // TODO
         throw new UnsupportedOperationException();
     }
@@ -2798,7 +2796,7 @@ public class SVNWCDb implements ISVNWCDb {
         }
     }
 
-    public InputStream readPristine(File wcRootAbsPath, SVNChecksum sha1Checksum) throws SVNException {
+    public InputStream readPristine(File wcRootAbsPath, SvnChecksum sha1Checksum) throws SVNException {
         assert (isAbsolute(wcRootAbsPath));
         assert (sha1Checksum != null);
 
@@ -2806,10 +2804,10 @@ public class SVNWCDb implements ISVNWCDb {
          * ### Transitional: accept MD-5 and look up the SHA-1. Return an error
          * if the pristine text is not in the store.
          */
-        if (sha1Checksum.getKind() != SVNChecksumKind.SHA1) {
+        if (sha1Checksum.getKind() != SvnChecksum.Kind.sha1) {
             sha1Checksum = getPristineSHA1(wcRootAbsPath, sha1Checksum);
         }
-        assert (sha1Checksum.getKind() == SVNChecksumKind.SHA1);
+        assert (sha1Checksum.getKind() == SvnChecksum.Kind.sha1);
 
         final DirParsedInfo parsed = parseDir(wcRootAbsPath, Mode.ReadOnly);
         SVNWCDbDir pdh = parsed.wcDbDir;
@@ -2822,11 +2820,11 @@ public class SVNWCDb implements ISVNWCDb {
 
     }
 
-    private File getPristineFileName(SVNWCDbDir pdh, SVNChecksum sha1Checksum, boolean createSubdir) {
+    private File getPristineFileName(SVNWCDbDir pdh, SvnChecksum sha1Checksum, boolean createSubdir) {
         /* ### code is in transition. make sure we have the proper data. */
         assert (pdh.getWCRoot() != null);
         assert (sha1Checksum != null);
-        assert (sha1Checksum.getKind() == SVNChecksumKind.SHA1);
+        assert (sha1Checksum.getKind() == SvnChecksum.Kind.sha1);
 
         /*
          * ### need to fix this to use a symbol for ".svn". we don't need ### to
@@ -2983,13 +2981,13 @@ public class SVNWCDb implements ISVNWCDb {
         pdh.flushEntries(localAbsPath);
     }
 
-    public void removePristine(File wcRootAbsPath, SVNChecksum sha1Checksum) throws SVNException {
+    public void removePristine(File wcRootAbsPath, SvnChecksum sha1Checksum) throws SVNException {
         assert (isAbsolute(wcRootAbsPath));
         assert (sha1Checksum != null);
-        if (sha1Checksum.getKind() != SVNChecksumKind.SHA1) {
+        if (sha1Checksum.getKind() != SvnChecksum.Kind.sha1) {
             sha1Checksum = getPristineSHA1(wcRootAbsPath, sha1Checksum);
         }
-        assert (sha1Checksum.getKind() == SVNChecksumKind.SHA1);
+        assert (sha1Checksum.getKind() == SvnChecksum.Kind.sha1);
         DirParsedInfo parseDir = parseDir(wcRootAbsPath, Mode.ReadWrite);
         SVNWCDbDir pdh = parseDir.wcDbDir;
         verifyDirUsable(pdh);
@@ -3007,7 +3005,7 @@ public class SVNWCDb implements ISVNWCDb {
         }
         boolean isReferenced;
         {
-            SVNChecksum md5Checksum = getPristineMD5(wcRootAbsPath, sha1Checksum);
+            SvnChecksum md5Checksum = getPristineMD5(wcRootAbsPath, sha1Checksum);
             SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_ANY_PRISTINE_REFERENCE);
             try {
                 stmt.bindChecksum(1, sha1Checksum);
@@ -3022,7 +3020,7 @@ public class SVNWCDb implements ISVNWCDb {
         }
     }
 
-    private void pristineRemove(SVNWCDbDir pdh, SVNChecksum sha1Checksum) throws SVNException {
+    private void pristineRemove(SVNWCDbDir pdh, SvnChecksum sha1Checksum) throws SVNException {
         SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.DELETE_PRISTINE);
         stmt.bindChecksum(1, sha1Checksum);
         stmt.done();
@@ -3035,7 +3033,7 @@ public class SVNWCDb implements ISVNWCDb {
         throw new UnsupportedOperationException();
     }
 
-    public void repairPristine(File wcRootAbsPath, SVNChecksum sha1Checksum) throws SVNException {
+    public void repairPristine(File wcRootAbsPath, SvnChecksum sha1Checksum) throws SVNException {
         // TODO
         throw new UnsupportedOperationException();
     }
@@ -4418,7 +4416,7 @@ public class SVNWCDb implements ISVNWCDb {
         pdh.flushEntries(localAbspath);
     }
 
-    public void globalCommit(File localAbspath, long newRevision, long changedRevision, SVNDate changedDate, String changedAuthor, SVNChecksum newChecksum, List<File> newChildren,
+    public void globalCommit(File localAbspath, long newRevision, long changedRevision, SVNDate changedDate, String changedAuthor, SvnChecksum newChecksum, List<File> newChildren,
             SVNProperties newDavCache, boolean keepChangelist, boolean noUnlock, SVNSkel workItems) throws SVNException {
         assert (isAbsolute(localAbspath));
         assert (SVNRevision.isValidRevisionNumber(newRevision));
@@ -4486,7 +4484,7 @@ public class SVNWCDb implements ISVNWCDb {
         public long changedRev;
         public SVNDate changedDate;
         public String changedAuthor;
-        public SVNChecksum newChecksum;
+        public SvnChecksum newChecksum;
         public List<File> newChildren;
         public SVNProperties newDavCache;
         public boolean keepChangelist;
@@ -4647,7 +4645,7 @@ public class SVNWCDb implements ISVNWCDb {
             result.set(PristineInfo.status, status);
         }
         if (kind == SVNWCDbKind.File) {
-            SvnChecksum checksum = getColumnChecksum2(stmt, NODES__Fields.checksum);
+            SvnChecksum checksum = getColumnChecksum(stmt, NODES__Fields.checksum);
             result.set(PristineInfo.checksum, checksum);
         } else if (kind == SVNWCDbKind.Symlink) {
             // TODO File?

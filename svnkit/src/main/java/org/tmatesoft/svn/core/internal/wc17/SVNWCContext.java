@@ -47,8 +47,6 @@ import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.FSMergerBySequence;
-import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
-import org.tmatesoft.svn.core.internal.wc.SVNChecksumKind;
 import org.tmatesoft.svn.core.internal.wc.SVNConflictVersion;
 import org.tmatesoft.svn.core.internal.wc.SVNDiffConflictChoiceStyle;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -76,11 +74,11 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo.Repos
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbWorkQueueInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
-import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbReader;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeOriginInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.PristineInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.WalkerChildInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbReader;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.ISVNConflictHandler;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
@@ -98,7 +96,6 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.core.wc2.SvnChecksum;
-import org.tmatesoft.svn.core.wc2.SvnChecksum.Kind;
 import org.tmatesoft.svn.util.SVNLogType;
 
 import de.regnis.q.sequence.line.QSequenceLineRAByteData;
@@ -782,7 +779,7 @@ public class SVNWCContext {
             return info;
         }
 
-        SVNChecksum oldchecksum = SVNChecksum.deserializeChecksum(checksum.toString());
+        SvnChecksum oldchecksum = SvnChecksum.fromString(checksum.toString());
         if (getPath) {
             info.path = db.getPristinePath(localAbspath, oldchecksum);
         }
@@ -1820,8 +1817,8 @@ public class SVNWCContext {
         SVNWCDbKind kind = readInfo.kind;
         if (kind == SVNWCDbKind.File || kind == SVNWCDbKind.Symlink) {
             boolean textModified = false;
-            SVNChecksum baseSha1Checksum = null;
-            SVNChecksum workingSha1Checksum = null;
+            SvnChecksum baseSha1Checksum = null;
+            SvnChecksum workingSha1Checksum = null;
             boolean wcSpecial = isSpecial(localAbspath);
             CheckSpecialInfo checkSpecialPath = checkSpecialPath(localAbspath);
             boolean localSpecial = checkSpecialPath.isSpecial;
@@ -2520,12 +2517,12 @@ public class SVNWCContext {
         public SVNChecksumOutputStream md5ChecksumStream;
         public SVNChecksumOutputStream sha1ChecksumStream;
 
-        public SVNChecksum getMD5Checksum() {
-            return md5ChecksumStream == null ? null : new SVNChecksum(SVNChecksumKind.MD5, md5ChecksumStream.getDigest());
+        public SvnChecksum getMD5Checksum() {
+            return md5ChecksumStream == null ? null : new SvnChecksum(SvnChecksum.Kind.md5, md5ChecksumStream.getDigest());
         }
 
-        public SVNChecksum getSHA1Checksum() {
-            return sha1ChecksumStream == null ? null : new SVNChecksum(SVNChecksumKind.SHA1, sha1ChecksumStream.getDigest());
+        public SvnChecksum getSHA1Checksum() {
+            return sha1ChecksumStream == null ? null : new SvnChecksum(SvnChecksum.Kind.sha1, sha1ChecksumStream.getDigest());
         }
 
     }
@@ -3302,7 +3299,7 @@ public class SVNWCContext {
         getDb().addWorkQueue(localAbspath, result);
     }
 
-    public void wqAddPostCommit(File localAbspath, long newRevision, long changedRev, SVNDate changedDate, String changedAuthor, SVNChecksum newChecksum, Map newDavCache, boolean keepChangelist,
+    public void wqAddPostCommit(File localAbspath, long newRevision, long changedRev, SVNDate changedDate, String changedAuthor, SvnChecksum newChecksum, Map newDavCache, boolean keepChangelist,
             boolean noUnlock) throws SVNException {
         SVNSkel workItem = SVNSkel.createEmptyList();
         workItem.prependString(Long.toString(changedRev));
@@ -3474,11 +3471,11 @@ public class SVNWCContext {
             if (workItem.getListSize() > 4) {
                 changedAuthor = workItem.getChild(4).getValue();
             }
-            SVNChecksum newChecksum = null;
+            SvnChecksum newChecksum = null;
             if (workItem.getListSize() > 5) {
                 String value = workItem.getChild(5).getValue();
                 if (value != null && !"".equals(value)) {
-                    newChecksum = SVNChecksum.deserializeChecksum(value);
+                    newChecksum = SvnChecksum.fromString(value);
                 }
             }
             SVNProperties newDavCache = null;
@@ -3696,7 +3693,7 @@ public class SVNWCContext {
         db.removeBase(localAbspath);
     }
 
-    public void logDoCommitted(File localAbspath, long newRevision, long changedRev, SVNDate changedDate, String changedAuthor, SVNChecksum newChecksum, SVNProperties newDavCache,
+    public void logDoCommitted(File localAbspath, long newRevision, long changedRev, SVNDate changedDate, String changedAuthor, SvnChecksum newChecksum, SVNProperties newDavCache,
             boolean keepChangelist, boolean noUnlock) throws SVNException {
         boolean removeExecutable = false;
         boolean setReadWrite = false;
@@ -3758,7 +3755,7 @@ public class SVNWCContext {
     }
 
     private File getTextBasePathToRead(File localAbspath) throws SVNException {
-        SVNChecksum checksum = getDb().readInfo(localAbspath, InfoField.checksum).checksum;
+        SvnChecksum checksum = getDb().readInfo(localAbspath, InfoField.checksum).checksum;
         if (checksum == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS, "Node ''{0}'' has no pristine text", localAbspath);
             SVNErrorManager.error(err, SVNLogType.WC);

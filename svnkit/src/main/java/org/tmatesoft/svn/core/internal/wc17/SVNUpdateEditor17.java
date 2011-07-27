@@ -38,8 +38,6 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.ISVNFileFetcher;
 import org.tmatesoft.svn.core.internal.wc.ISVNUpdateEditor;
-import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
-import org.tmatesoft.svn.core.internal.wc.SVNChecksumKind;
 import org.tmatesoft.svn.core.internal.wc.SVNConflictVersion;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
@@ -72,6 +70,7 @@ import org.tmatesoft.svn.core.wc.SVNOperation;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
+import org.tmatesoft.svn.core.wc2.SvnChecksum;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -1158,9 +1157,9 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             return;
         }
 
-        SVNChecksum expectedMd5Checksum = null;
+        SvnChecksum expectedMd5Checksum = null;
         if (expectedMd5Digest != null) {
-            expectedMd5Checksum = new SVNChecksum(SVNChecksumKind.MD5, expectedMd5Digest);
+            expectedMd5Checksum = new SvnChecksum(SvnChecksum.Kind.md5, expectedMd5Digest);
         }
         if (expectedMd5Checksum != null && fb.newTextBaseMD5Digest != null &&
                 !expectedMd5Checksum.getDigest().equals(fb.newTextBaseMD5Digest)) {
@@ -1338,7 +1337,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             }
         }
         
-        SVNChecksum newChecksum = fb.newTextBaseSHA1Checksum;
+        SvnChecksum newChecksum = fb.newTextBaseSHA1Checksum;
         if (newChecksum == null) {
             newChecksum = fb.originalChecksum;
         }
@@ -1410,10 +1409,10 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             return;
         }
         fb.markEdited();
-        SVNChecksum expectedBaseChecksum = expectedChecksum != null ? new SVNChecksum(SVNChecksumKind.MD5, expectedChecksum) : null;
-        SVNChecksum recordedBaseChecksum = fb.originalChecksum;
+        SvnChecksum expectedBaseChecksum = expectedChecksum != null ? new SvnChecksum(SvnChecksum.Kind.md5, expectedChecksum) : null;
+        SvnChecksum recordedBaseChecksum = fb.originalChecksum;
         
-        if (recordedBaseChecksum != null && expectedBaseChecksum != null && recordedBaseChecksum.getKind() != SVNChecksumKind.MD5) {
+        if (recordedBaseChecksum != null && expectedBaseChecksum != null && recordedBaseChecksum.getKind() != SvnChecksum.Kind.md5) {
             recordedBaseChecksum = myWcContext.getDb().getPristineMD5(myAnchorAbspath, recordedBaseChecksum);
         }
         if (recordedBaseChecksum != null && recordedBaseChecksum != null && !expectedBaseChecksum.equals(recordedBaseChecksum)) {
@@ -1439,7 +1438,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         }
         
         if (recordedBaseChecksum != null) {
-            fb.expectedSourceChecksum = new SVNChecksum(recordedBaseChecksum.getKind(), recordedBaseChecksum.getDigest());
+            fb.expectedSourceChecksum = new SvnChecksum(recordedBaseChecksum.getKind(), recordedBaseChecksum.getDigest());
             if (source != SVNFileUtil.DUMMY_IN) {
                 source = new SVNChecksumInputStream(source, SVNChecksumInputStream.MD5_ALGORITHM);
                 fb.sourceChecksumStream = (SVNChecksumInputStream) source;
@@ -1473,7 +1472,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         }
         myCurrentFile.newTextBaseMD5Digest = myDeltaProcessor.textDeltaEnd();
         if (myCurrentFile.newTextBaseSHA1ChecksumStream != null) {
-            myCurrentFile.newTextBaseSHA1Checksum = new SVNChecksum(SVNChecksumKind.SHA1, myCurrentFile.newTextBaseSHA1ChecksumStream.getDigest());
+            myCurrentFile.newTextBaseSHA1Checksum = new SvnChecksum(SvnChecksum.Kind.sha1, myCurrentFile.newTextBaseSHA1ChecksumStream.getDigest());
         }
 
         if (myCurrentFile.expectedSourceChecksum != null) {
@@ -1487,7 +1486,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         }
         if (myCurrentFile.newTextBaseTmpAbsPath != null && myCurrentFile.newTextBaseSHA1Checksum != null && myCurrentFile.newTextBaseMD5Digest != null) {
             myWcContext.getDb().installPristine(myCurrentFile.newTextBaseTmpAbsPath, myCurrentFile.newTextBaseSHA1Checksum, 
-                    new SVNChecksum(SVNChecksumKind.MD5, myCurrentFile.newTextBaseMD5Digest));
+                    new SvnChecksum(SvnChecksum.Kind.md5, myCurrentFile.newTextBaseMD5Digest));
         }
 
     }
@@ -1565,7 +1564,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         private SVNDate changedDate;
         private String changedAuthor;
         
-        private SVNChecksum originalChecksum;
+        private SvnChecksum originalChecksum;
         
         private SVNProperties entryPropChanges;
         private SVNProperties regularPropChanges;
@@ -1597,9 +1596,9 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         SVNChecksumInputStream sourceChecksumStream;        
         SVNChecksumOutputStream newTextBaseSHA1ChecksumStream;
 
-        SVNChecksum expectedSourceChecksum;
+        SvnChecksum expectedSourceChecksum;
         String newTextBaseMD5Digest;
-        public SVNChecksum newTextBaseSHA1Checksum;
+        public SvnChecksum newTextBaseSHA1Checksum;
     }
     
     private DirectoryBaton makeDirectoryBaton(String path, DirectoryBaton parent, boolean adding) throws SVNException {
@@ -1801,7 +1800,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         public SVNStatusType contentState;
     }
     
-    private MergeInfo performFileMerge(File localAbsPath, File wriAbsPath, SVNChecksum newChecksum, SVNChecksum originalChecksum,
+    private MergeInfo performFileMerge(File localAbsPath, File wriAbsPath, SvnChecksum newChecksum, SvnChecksum originalChecksum,
             SVNProperties actualProperties, String[] extPatterns,
             long oldRevision, long targetRevision, SVNProperties propChanges) throws SVNException {
         File mergeLeft = null;

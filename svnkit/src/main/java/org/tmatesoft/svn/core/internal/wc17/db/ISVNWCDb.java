@@ -29,7 +29,6 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
-import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc17.SVNExternalsStore;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbAdditionInfo.AdditionInfoField;
@@ -43,6 +42,7 @@ import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
+import org.tmatesoft.svn.core.wc2.SvnChecksum;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -490,7 +490,7 @@ public interface ISVNWCDb {
      * @param svnProperties
      */
     public void addBaseFile(File localAbspath, File reposRelpath, SVNURL reposRootUrl, String reposUuid, long revision, SVNProperties props, long changedRev, SVNDate changedDate,
-            String changedAuthor, SVNChecksum checksum, SVNProperties davCache, SVNSkel conflict, boolean updateActualProps, SVNProperties actualProps,
+            String changedAuthor, SvnChecksum checksum, SVNProperties davCache, SVNSkel conflict, boolean updateActualProps, SVNProperties actualProps,
             boolean keepRecordedInfo, boolean insertBaseDeleted, SVNSkel workItems) throws SVNException;
 
     /**
@@ -665,7 +665,7 @@ public interface ISVNWCDb {
         public String changedAuthor;
         public SVNDate lastModTime;
         public SVNDepth depth;
-        public SVNChecksum checksum;
+        public SvnChecksum checksum;
         public long translatedSize;
         public File target;
         public boolean updateRoot;
@@ -718,20 +718,20 @@ public interface ISVNWCDb {
      * ### This is temporary - callers should not be looking at the file
      * directly.
      */
-    File getPristinePath(File wcRootAbsPath, SVNChecksum sha1Checksum) throws SVNException;
+    File getPristinePath(File wcRootAbsPath, SvnChecksum sha1Checksum) throws SVNException;
 
     /**
      * Get a readable stream that will yield the pristine text identified by
      * CHECKSUM (### which should/must be its SHA-1 checksum?).
      */
-    InputStream readPristine(File wcRootAbsPath, SVNChecksum sha1Checksum) throws SVNException;
+    InputStream readPristine(File wcRootAbsPath, SvnChecksum sha1Checksum) throws SVNException;
 
     /**
      * Get a directory in which the caller should create a uniquely named file
      * for later installation as a pristine text file.
      * <p>
      * The directory is guaranteed to be one that
-     * {@link #installPristine(File, SVNChecksum, SVNChecksum)} can use:
+     * {@link #installPristine(File, SvnChecksum, SvnChecksum)} can use:
      * specifically, one from which it can atomically move the file.
      */
     File getPristineTempDir(File wcRootAbsPath) throws SVNException;
@@ -743,14 +743,14 @@ public interface ISVNWCDb {
      * <p>
      * ### the md5_checksum parameter is temporary.
      */
-    void installPristine(File tempfileAbspath, SVNChecksum sha1Checksum, SVNChecksum md5Checksum) throws SVNException;
+    void installPristine(File tempfileAbspath, SvnChecksum sha1Checksum, SvnChecksum md5Checksum) throws SVNException;
 
     /**
      * Get the MD-5 checksum of a pristine text identified by its SHA-1 checksum
      * SHA1_CHECKSUM. Return an error if the pristine text does not exist or its
      * MD5 checksum is not found.
      */
-    SVNChecksum getPristineMD5(File wcRootAbsPath, SVNChecksum sha1Checksum) throws SVNException;
+    SvnChecksum getPristineMD5(File wcRootAbsPath, SvnChecksum sha1Checksum) throws SVNException;
 
     /**
      * Get the SHA-1 checksum of a pristine text identified by its MD-5 checksum
@@ -764,14 +764,14 @@ public interface ISVNWCDb {
      * not unique. Need to see whether this function is going to stay in use,
      * and, if so, address this somehow.
      */
-    SVNChecksum getPristineSHA1(File wcRootAbsPath, SVNChecksum md5Checksum) throws SVNException;
+    SvnChecksum getPristineSHA1(File wcRootAbsPath, SvnChecksum md5Checksum) throws SVNException;
 
     /**
      * Remove the pristine text with SHA-1 checksum SHA1_CHECKSUM from the
      * pristine store, if it is not referenced by any of the (other) WC DB
      * tables.
      */
-    void removePristine(File wcRootAbsPath, SVNChecksum sha1Checksum) throws SVNException;
+    void removePristine(File wcRootAbsPath, SvnChecksum sha1Checksum) throws SVNException;
 
     /** Remove all unreferenced pristines belonging to WRI_ABSPATH in DB. */
     void cleanupPristine(File wcRootAbsPath) throws SVNException;
@@ -780,16 +780,16 @@ public interface ISVNWCDb {
      * Check for presence, according to the given mode (on how hard we should
      * examine things)
      */
-    boolean checkPristine(File wcRootAbsPath, SVNChecksum sha1Checksum) throws SVNException;
+    boolean checkPristine(File wcRootAbsPath, SvnChecksum sha1Checksum) throws SVNException;
 
     /**
-     * If {@link #checkPristine(File, SVNChecksum, SVNWCDbCheckMode)} returns
+     * If {@link #checkPristine(File, SvnChecksum, SVNWCDbCheckMode)} returns
      * "corrupted pristine file", then this function can be used to repair it.
      * It will attempt to restore integrity between the SQLite database and the
      * filesystem. Failing that, then it will attempt to clean out the record
      * and/or file. Failing that, then it will throw error.
      */
-    void repairPristine(File wcRootAbsPath, SVNChecksum sha1Checksum) throws SVNException;
+    void repairPristine(File wcRootAbsPath, SvnChecksum sha1Checksum) throws SVNException;
 
     /**
      * Ensure an entry for the repository at REPOS_ROOT_URL with UUID exists in
@@ -812,7 +812,7 @@ public interface ISVNWCDb {
 
     /** Record a copy at LOCAL_ABSPATH from a repository file. */
     void opCopyFile(File localAbsPath, SVNProperties props, long changedRev, SVNDate changedDate, String changedAuthor, File originalReposRelPath, SVNURL originalRootUrl, String originalUuid,
-            long originalRevision, SVNChecksum checksum, SVNSkel conflict, SVNSkel workItems) throws SVNException;
+            long originalRevision, SvnChecksum checksum, SVNSkel conflict, SVNSkel workItems) throws SVNException;
 
     void opCopySymlink(File localAbsPath, SVNProperties props, long changedRev, SVNDate changedDate, String changedAuthor, File originalReposRelPath, SVNURL originalRootUrl, String originalUuid,
             long originalRevision, File target, SVNSkel conflict, SVNSkel workItems) throws SVNException;
@@ -1153,7 +1153,7 @@ public interface ISVNWCDb {
 
         /* ### dirs only */
         public SVNDepth depth;
-        public SVNChecksum checksum;
+        public SvnChecksum checksum;
         public long translatedSize;
         public File target;
         public String changelist;
@@ -1300,7 +1300,7 @@ public interface ISVNWCDb {
      *
      * WORK_ITEMS will be place into the work queue.
      */
-    void globalCommit(File localAbspath, long newRevision, long changedRevision, SVNDate changedDate, String changedAuthor, SVNChecksum newChecksum, List<File> newChildren, SVNProperties newDavCache, boolean keepChangelist,
+    void globalCommit(File localAbspath, long newRevision, long changedRevision, SVNDate changedDate, String changedAuthor, SvnChecksum newChecksum, List<File> newChildren, SVNProperties newDavCache, boolean keepChangelist,
             boolean noUnlock, SVNSkel workItems) throws SVNException;
 
     /**
@@ -1324,7 +1324,7 @@ public interface ISVNWCDb {
      * when the file is installed, then a TRANSLATED_SIZE will be set.
      */
     void globalUpdate(File localAbsPath, SVNWCDbKind newKind, File newReposRelpath, long newRevision, SVNProperties newProps, long newChangedRev, SVNDate newChangedDate, String newChangedAuthor,
-            List<File> newChildren, SVNChecksum newChecksum, File newTarget, SVNProperties newDavCache, SVNSkel conflict, SVNSkel workItems) throws SVNException;
+            List<File> newChildren, SvnChecksum newChecksum, File newTarget, SVNProperties newDavCache, SVNSkel conflict, SVNSkel workItems) throws SVNException;
 
     /**
      * Record the TRANSLATED_SIZE and LAST_MOD_TIME for a versioned node.
