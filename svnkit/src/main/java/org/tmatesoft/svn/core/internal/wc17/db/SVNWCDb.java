@@ -2229,7 +2229,7 @@ public class SVNWCDb implements ISVNWCDb {
                     conflicts.add(desc);
                 }
 
-                byte[] conflict_data = getColumnBlob(stmt, ACTUAL_NODE__Fields.conflict_data);
+                byte[] conflict_data = getColumnBlob(stmt, ACTUAL_NODE__Fields.tree_conflict_data);
                 if (conflict_data != null) {
                     SVNSkel skel = SVNSkel.parse(conflict_data);
                     SVNTreeConflictDescription desc = SVNTreeConflictUtil.readSingleTreeConflict(skel, SVNFileUtil.getFileDir(localAbsPath));
