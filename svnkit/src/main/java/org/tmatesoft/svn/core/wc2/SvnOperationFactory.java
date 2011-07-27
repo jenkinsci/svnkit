@@ -175,8 +175,10 @@ public class SvnOperationFactory {
     }
 
     private void disposeWcContext() {
-        wcContext.close();
-        wcContext = null;
+        if (wcContext != null) {
+            wcContext.close();
+            wcContext = null;
+        }
     }
     
     private boolean isAutoDisposeRepositoryPool() {
