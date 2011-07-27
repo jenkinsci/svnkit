@@ -48,6 +48,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNWCProperties;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
@@ -635,7 +636,7 @@ public class FSFS {
                 SVNErrorManager.error(err, SVNLogType.FSFS);
                 return null;
             }
-            return stmt.getColumnProperties("properties");
+            return stmt.getColumnProperties(SVNWCDbSchema.REVPROP__Fields.properties);
         } finally {
             stmt.reset();
         }

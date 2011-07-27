@@ -15,8 +15,6 @@ import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
-import org.tmatesoft.svn.core.internal.db.SVNSqlJetInsertStatement;
-import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectStatement;
 
 /**
  * INSERT INTO nodes ( wc_id, local_relpath, op_depth, parent_relpath, repos_id,

@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.internal.wc17.db.statement;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectFieldsStatement;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODES__Fields;
 
 /**
  * SELECT op_depth, presence FROM nodes WHERE wc_id = ?1 AND local_relpath = ?2
@@ -22,7 +23,7 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectFieldsStatement;
  * @version 1.4
  * @author TMate Software Ltd.
  */
-public class SVNWCDbSelectLowestWorkingNode extends SVNSqlJetSelectFieldsStatement {
+public class SVNWCDbSelectLowestWorkingNode extends SVNSqlJetSelectFieldsStatement<NODES__Fields> {
 
     public SVNWCDbSelectLowestWorkingNode(SVNSqlJetDb sDb) throws SVNException {
         super(sDb, SVNWCDbSchema.NODES);

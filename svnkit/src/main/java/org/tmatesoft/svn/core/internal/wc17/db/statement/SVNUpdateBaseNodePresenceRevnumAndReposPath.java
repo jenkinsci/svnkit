@@ -11,7 +11,6 @@
  */
 package org.tmatesoft.svn.core.internal.wc17.db.statement;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;

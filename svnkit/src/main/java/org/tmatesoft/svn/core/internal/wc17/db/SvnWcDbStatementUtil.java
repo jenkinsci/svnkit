@@ -117,53 +117,35 @@ public class SvnWcDbStatementUtil {
     }
 
     public static String getColumnText(SVNSqlJetStatement stmt, Enum<?> f) throws SVNException {
-        return stmt.getColumnString(f.toString());
+        return stmt.getColumnString(f);
+    }
+    
+    public static File getColumnPath(SVNSqlJetStatement stmt, Enum<?> f) throws SVNException {
+        String path = stmt.getColumnString(f);
+        if (path != null) {
+            return SVNFileUtil.createFilePath(path);
+        }
+        return null;
     }
 
     public static SVNDepth getColumnDepth(SVNSqlJetStatement stmt, Enum<?> f) throws SVNException {
-        return parseDepth(stmt.getColumnString(f.toString()));
+        return parseDepth(stmt.getColumnString(f));
     }
 
     public static boolean isColumnNull(SVNSqlJetStatement stmt, Enum<?> f) throws SVNException {
-        return stmt.isColumnNull(f.toString());
-    }
-
-    public static long getColumnInt64(SVNSqlJetStatement stmt, Enum<?> f) throws SVNException {
-        return stmt.getColumnLong(f.toString());
-    }
-
-    public static byte[] getColumnBlob(SVNSqlJetStatement stmt, Enum<?> f) throws SVNException {
-        return stmt.getColumnBlob(f.toString());
-    }
-
-    public static String getColumnText(SVNSqlJetStatement stmt, int f) throws SVNException {
-        return stmt.getColumnString(f);
-    }
-
-    public static boolean isColumnNull(SVNSqlJetStatement stmt, int f) throws SVNException {
         return stmt.isColumnNull(f);
     }
 
-    public static long getColumnInt64(SVNSqlJetStatement stmt, int f) throws SVNException {
+    public static long getColumnInt64(SVNSqlJetStatement stmt, Enum<?> f) throws SVNException {
         return stmt.getColumnLong(f);
     }
 
-    public static byte[] getColumnBlob(SVNSqlJetStatement stmt, int f) throws SVNException {
+    public static byte[] getColumnBlob(SVNSqlJetStatement stmt, Enum<?> f) throws SVNException {
         return stmt.getColumnBlob(f);
-    }
-
-    public static boolean getColumnBoolean(SVNSqlJetStatement stmt, int i) throws SVNException {
-        return stmt.getColumnBoolean(i);
     }
 
     public static boolean getColumnBoolean(SVNSqlJetStatement stmt, Enum<?> f) throws SVNException {
         return stmt.getColumnBoolean(f);
-    }
-
-    public static long getColumnRevNum(SVNSqlJetStatement stmt, int i) throws SVNException {
-        if (isColumnNull(stmt, i))
-            return ISVNWCDb.INVALID_REVNUM;
-        return (int) getColumnInt64(stmt, i);
     }
 
     public static long getColumnRevNum(SVNSqlJetStatement stmt, Enum<?> f) throws SVNException {
@@ -182,12 +164,8 @@ public class SvnWcDbStatementUtil {
         return tokenMap.get(getColumnText(stmt, f));
     }
 
-    public static <T extends Enum<T>> T getColumnToken(SVNSqlJetStatement stmt, int f, Map<String, T> tokenMap) throws SVNException {
-        return tokenMap.get(getColumnText(stmt, f));
-    }
-    
     public static SvnChecksum getColumnChecksum(SVNSqlJetStatement stmt, Enum<?> f) throws SVNException {
-        String str = stmt.getColumnString(f.toString());
+        String str = stmt.getColumnString(f);
         if (str == null) {
             return null;
         }        

@@ -34,7 +34,6 @@ public enum SVNWCDbStatements {
     DELETE_WORKING_NODE(SVNWCDbDeleteWorkingNode.class),
     DELETE_NODES_RECURSIVE(SVNWCDbDeleteNodesRecursive.class),
     DELETE_ACTUAL_NODE_LEAVING_CHANGELIST_RECURSIVE(SVNWCDbDeleteActualNodeLeavingChangelistRecursive.class),
-    DETERMINE_TREE_FOR_RECORDING(SVNWCDbDetermineTreeForRecording.class),
     FIND_WC_LOCK(SVNWCDbFindWCLock.class),
     FSFS_GET_REVPROP(SVNFSFSRevPropGet.class),
     FSFS_SET_REVPROP(SVNFSFSRevPropSet.class),
@@ -43,8 +42,6 @@ public enum SVNWCDbStatements {
     INSERT_ACTUAL_PROPS(SVNWCDbInsertActualProps.class),
     INSERT_ACTUAL_TEXT_CONFLICTS(SVNWCDbInsertActualTextConflicts.class),
     INSERT_ACTUAL_TREE_CONFLICTS(SVNWCDbInsertActualTreeConflicts.class),
-    INSERT_BASE_NODE,
-    INSERT_BASE_NODE_INCOMPLETE,
     INSERT_NODE(SVNWCDbInsertNode.class),
     INSERT_PRISTINE(SVNWCDbInsertPristine.class),
     INSERT_REPOSITORY(SVNWCDbInsertRepository.class),
@@ -98,15 +95,12 @@ public enum SVNWCDbStatements {
     UPDATE_BASE_REPOS,
     UPDATE_BASE_REVISION(SVNWCDbUpdateBaseRevision.class),
     UPDATE_COPYFROM(SVNWCDbUpdateCopyfrom.class),
-    UPDATE_COPYFROM_TO_INHERIT,
     UPDATE_FILE_EXTERNAL,
     UPDATE_NODE_BASE_DEPTH(SVNWCDbUpdateNodeBaseDepth.class),
     UPDATE_NODE_BASE_EXCLUDED,
     UPDATE_NODE_BASE_PRESENCE(SVNWCDbUpdateNodeBasePresence.class),
     UPDATE_NODE_WORKING_DEPTH(SVNWCDbUpdateNodeWorkingDepth.class),
     UPDATE_NODE_WORKING_EXCLUDED,
-    UPDATE_NODE_WORKING_PRESENCE,
-    UPDATE_OP_DEPTH,
     UPDATE_NODE_FILEINFO(SVNWCDbUpdateNodeFileinfo.class),
     SELECT_LOWEST_WORKING_NODE(SVNWCDbSelectLowestWorkingNode.class),
     CLEAR_TEXT_CONFLICT(SVNWCDbClearTextConflict.class),
@@ -123,7 +117,8 @@ public enum SVNWCDbStatements {
     DELETE_ALL_WORKING_NODES(SVNWCDbDeleteAllWorkingNodes.class),
     RESET_ACTUAL_WITH_CHANGELIST(SVNWCDbResetActualWithChangelist.class), 
     SELECT_EXTERNALS_DEFINED(SVNWCDBSelectExternalsDefined.class),
-    SELECT_EXTERNAL_PROPERTIES(SVNWCDBSelectExternalProperties.class);
+    SELECT_EXTERNAL_PROPERTIES(SVNWCDBSelectExternalProperties.class), 
+    DOES_NODE_EXIST(SVNWCDBDoesNodeExists.class);
     
 
     private Class<? extends SVNSqlJetStatement> statementClass;

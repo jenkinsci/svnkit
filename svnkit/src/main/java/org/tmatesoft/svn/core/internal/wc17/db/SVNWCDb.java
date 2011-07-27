@@ -17,6 +17,7 @@ import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getCo
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnDepth;
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnInt64;
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnKind;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnPath;
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnPresence;
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnProperties;
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnRevNum;
@@ -81,6 +82,8 @@ import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.ACTUAL_NODE__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODES__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.PRISTINE__Fields;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.REPOSITORY__Fields;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.WC_LOCK__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSelectDeletionInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
@@ -1141,40 +1144,6 @@ public class SVNWCDb implements ISVNWCDb {
         }
     }
 
-    public static class TreesExistInfo {
-
-        public boolean baseExists;
-        public boolean workingExists;
-    }
-
-    public TreesExistInfo whichTreesExist(SVNSqlJetDb db, long wcId, File localRelpath) throws SVNException {
-        TreesExistInfo info = new TreesExistInfo();
-        info.baseExists = false;
-        info.workingExists = false;
-        SVNSqlJetStatement stmt = db.getStatement(SVNWCDbStatements.DETERMINE_TREE_FOR_RECORDING);
-        try {
-            stmt.bindf("is", wcId, localRelpath);
-            boolean haveRow = stmt.next();
-            if (haveRow) {
-                long value = stmt.getColumnLong(0);
-
-                if (value != 0) {
-                    info.workingExists = true;
-                } else {
-                    info.baseExists = true;
-                }
-                haveRow = stmt.next();
-                if (haveRow) {
-                    info.workingExists = true;
-                    info.baseExists = true;
-                }
-            }
-            return info;
-        } finally {
-            stmt.reset();
-        }
-    }
-
     public void globalRelocate(File localDirAbspath, SVNURL reposRootUrl, boolean singleDb) throws SVNException {
         // TODO
         throw new UnsupportedOperationException();
@@ -1663,7 +1632,7 @@ public class SVNWCDb implements ISVNWCDb {
         try {
             boolean have_row = stmt.next();
             if (have_row) {
-                long locked_levels = getColumnInt64(stmt, 0);
+                long locked_levels = getColumnInt64(stmt, WC_LOCK__Fields.locked_levels);
                 /*
                  * The directory in question is considered locked if we find a
                  * lock with depth -1 or the depth of the lock is greater than
@@ -2238,7 +2207,7 @@ public class SVNWCDb implements ISVNWCDb {
 
             if (have_row) {
                 /* ### Store in description! */
-                String prop_reject = getColumnText(stmt, 0);
+                String prop_reject = getColumnText(stmt, ACTUAL_NODE__Fields.prop_reject);
                 if (prop_reject != null) {
                     final File reposFile = SVNFileUtil.createFilePath(pdh.getWCRoot().getAbsPath(), prop_reject);
                     final SVNMergeFileSet mergeFiles = new SVNMergeFileSet(null, null, null, localAbsPath, null, reposFile, null, null, null);
@@ -2246,9 +2215,9 @@ public class SVNWCDb implements ISVNWCDb {
                     conflicts.add(desc);
                 }
 
-                final String conflict_old = getColumnText(stmt, 1);
-                final String conflict_new = getColumnText(stmt, 2);
-                final String conflict_working = getColumnText(stmt, 3);
+                final String conflict_old = getColumnText(stmt, ACTUAL_NODE__Fields.conflict_old);
+                final String conflict_new = getColumnText(stmt, ACTUAL_NODE__Fields.conflict_new);
+                final String conflict_working = getColumnText(stmt, ACTUAL_NODE__Fields.conflict_working);
 
                 if (conflict_old != null || conflict_new != null || conflict_working != null) {
                     File baseFile = conflict_old != null ? SVNFileUtil.createFilePath(pdh.getWCRoot().getAbsPath(), conflict_old) : null;
@@ -2260,7 +2229,7 @@ public class SVNWCDb implements ISVNWCDb {
                     conflicts.add(desc);
                 }
 
-                byte[] conflict_data = getColumnBlob(stmt, 4);
+                byte[] conflict_data = getColumnBlob(stmt, ACTUAL_NODE__Fields.conflict_data);
                 if (conflict_data != null) {
                     SVNSkel skel = SVNSkel.parse(conflict_data);
                     SVNTreeConflictDescription desc = SVNTreeConflictUtil.readSingleTreeConflict(skel, SVNFileUtil.getFileDir(localAbsPath));
@@ -3086,7 +3055,7 @@ public class SVNWCDb implements ISVNWCDb {
             }
 
             if (f.contains(AdditionInfoField.originalRevision)) {
-                additionInfo.originalRevision = getColumnRevNum(stmt, 12);
+                additionInfo.originalRevision = getColumnRevNum(stmt, NODES__Fields.revision);
             }
 
             if (f.contains(AdditionInfoField.status)) {
@@ -3118,7 +3087,7 @@ public class SVNWCDb implements ISVNWCDb {
                     }
 
                     if (f.contains(AdditionInfoField.originalRevision) && additionInfo.originalRevision == INVALID_REVNUM)
-                        additionInfo.originalRevision = getColumnRevNum(stmt, 12);
+                        additionInfo.originalRevision = getColumnRevNum(stmt, NODES__Fields.revision);
                 }
 
                 /*
@@ -3126,22 +3095,22 @@ public class SVNWCDb implements ISVNWCDb {
                  * stmt contain the data of the op_root
                  */
                 if (f.contains(AdditionInfoField.originalReposRelPath)) {
-                    additionInfo.originalReposRelPath = SVNFileUtil.createFilePath(stmt.getColumnString(11));
+                    additionInfo.originalReposRelPath = getColumnPath(stmt, NODES__Fields.repos_path);
                 }
 
-                if (!stmt.isColumnNull(10) && (f.contains(AdditionInfoField.status) || f.contains(AdditionInfoField.originalRootUrl) || f.contains(AdditionInfoField.originalUuid))) {
+                if (!isColumnNull(stmt, NODES__Fields.repos_id) && (f.contains(AdditionInfoField.status) || f.contains(AdditionInfoField.originalRootUrl) || f.contains(AdditionInfoField.originalUuid))) {
                     if (f.contains(AdditionInfoField.originalRootUrl) || f.contains(AdditionInfoField.originalUuid)) {
-                        originalReposId = stmt.getColumnLong(10);
+                        originalReposId = getColumnInt64(stmt, NODES__Fields.repos_id);
                         ReposInfo reposInfo = fetchReposInfo(pdh.getWCRoot().getSDb(), originalReposId);
                         additionInfo.originalRootUrl = SVNURL.parseURIDecoded(reposInfo.reposRootUrl);
                         additionInfo.originalUuid = reposInfo.reposUuid;
                     }
                     if (f.contains(AdditionInfoField.status)) {
-                        /* moved_here */
-                        if (stmt.getColumnBoolean(13))
+                        if (getColumnBoolean(stmt, NODES__Fields.moved_here)) {
                             additionInfo.status = SVNWCDbStatus.MovedHere;
-                        else
+                        } else {
                             additionInfo.status = SVNWCDbStatus.Copied;
+                        }
                     }
                 }
             }
@@ -3155,7 +3124,7 @@ public class SVNWCDb implements ISVNWCDb {
                 if (!haveRow) {
                     break;
                 }
-                opDepth = stmt.getColumnLong(0);
+                opDepth = getColumnInt64(stmt, NODES__Fields.op_depth);
                 for (i = SVNWCUtils.relpathDepth(currentRelpath); i > opDepth; i--) {
                     reposPrefixPath = SVNFileUtil.createFilePath(SVNFileUtil.createFilePath(SVNFileUtil.getFileName(currentRelpath)), reposPrefixPath);
                     currentRelpath = SVNFileUtil.getFileDir(currentRelpath);
@@ -3246,8 +3215,8 @@ public class SVNWCDb implements ISVNWCDb {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "No REPOSITORY table entry for id ''{0}''", reposId);
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
-            reposInfo.rootUrl = !isColumnNull(stmt, 0) ? SVNURL.parseURIEncoded(getColumnText(stmt, 0)) : null;
-            reposInfo.uuid = getColumnText(stmt, 1);
+            reposInfo.rootUrl = !isColumnNull(stmt, REPOSITORY__Fields.root) ? SVNURL.parseURIEncoded(getColumnText(stmt, REPOSITORY__Fields.root)) : null;
+            reposInfo.uuid = getColumnText(stmt, REPOSITORY__Fields.uuid);
         } finally {
             stmt.reset();
         }
@@ -3498,7 +3467,7 @@ public class SVNWCDb implements ISVNWCDb {
             if (!have_row)
                 return null;
             /* see below: *serialized_file_external = ... */
-            return getColumnText(stmt, 0);
+            return getColumnText(stmt, NODES__Fields.file_external);
         } finally {
             stmt.reset();
         }
@@ -4138,6 +4107,19 @@ public class SVNWCDb implements ISVNWCDb {
         baton.levelsToLock = levelsToLock;
         pdh.getWCRoot().getSDb().runTransaction(baton);
     }
+    
+    private boolean doesNodeExists(SVNWCDbRoot wcDbRoot, File relpath) throws SVNException {
+        SVNSqlJetStatement stmt = null;
+        try {
+            stmt = wcDbRoot.getSDb().getStatement(SVNWCDbStatements.DOES_NODE_EXIST);
+            stmt.bindf("is", wcDbRoot.getWcId(), relpath);
+            return stmt.next();
+        } finally {
+            if (stmt != null) {
+                stmt.reset();
+            }
+        }
+    }
 
     private class WCLockObtain implements SVNSqlJetTransaction {
 
@@ -4148,13 +4130,11 @@ public class SVNWCDb implements ISVNWCDb {
 
         public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
             SVNWCDbRoot wcroot = pdh.getWCRoot();
-            if (localRelpath != null) {
-                TreesExistInfo whichTreesExist = whichTreesExist(db, pdh.getWCRoot().getWcId(), localRelpath);
-                boolean haveBase = whichTreesExist.baseExists;
-                boolean haveWorking = whichTreesExist.workingExists;
-                if (!haveBase && !haveWorking) {
+            if (localRelpath != null && !"".equals(SVNFileUtil.getFilePath(localRelpath))) {
+                boolean nodeExists = doesNodeExists(wcroot, localRelpath);
+                if (!nodeExists) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{0}'' was not found.",
-                            SVNFileUtil.createFilePath(pdh.getWCRoot().getAbsPath(), localRelpath));
+                            wcroot.getAbsPath(localRelpath));
                     SVNErrorManager.error(err, SVNLogType.WC);
                 }
             }

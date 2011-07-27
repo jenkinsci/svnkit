@@ -15,7 +15,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
-import org.tmatesoft.sqljet.core.schema.SqlJetConflictAction;
 import org.tmatesoft.sqljet.core.table.ISqlJetTable;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;

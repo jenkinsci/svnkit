@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.internal.wc17.db.statement;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectFieldsStatement;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.WORK_QUEUE__Fields;
 
 /**
  * SELECT id FROM work_queue LIMIT 1
@@ -21,7 +22,7 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectFieldsStatement;
  * @version 1.4
  * @author TMate Software Ltd.
  */
-public class SVNWCDbLookForWork extends SVNSqlJetSelectFieldsStatement {
+public class SVNWCDbLookForWork extends SVNSqlJetSelectFieldsStatement<WORK_QUEUE__Fields> {
 
     public SVNWCDbLookForWork(SVNSqlJetDb sDb) throws SVNException {
         super(sDb, SVNWCDbSchema.WORK_QUEUE);

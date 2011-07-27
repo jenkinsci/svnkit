@@ -243,7 +243,7 @@ public abstract class SVNSqlJetStatement {
         return getColumn(f.toString());
     }
 
-    public Object getColumn(String f) throws SVNException {
+    protected Object getColumn(String f) throws SVNException {
         try {
             if (getCursor() == null || getCursor().eof())
                 return null;
@@ -258,7 +258,7 @@ public abstract class SVNSqlJetStatement {
         return getColumnLong(f.toString());
     }
 
-    public long getColumnLong(String f) throws SVNException {
+    protected long getColumnLong(String f) throws SVNException {
         try {
             if (getCursor() == null || getCursor().eof())
                 return 0;
@@ -273,7 +273,7 @@ public abstract class SVNSqlJetStatement {
         return getColumnString(f.toString());
     }
 
-    public String getColumnString(String f) throws SVNException {
+    protected String getColumnString(String f) throws SVNException {
         try {
             if (getCursor() == null || getCursor().eof())
                 return null;
@@ -288,7 +288,7 @@ public abstract class SVNSqlJetStatement {
         return isColumnNull(f.toString());
     }
 
-    public boolean isColumnNull(String f) throws SVNException {
+    protected boolean isColumnNull(String f) throws SVNException {
         try {
             if (getCursor() == null || getCursor().eof())
                 return true;
@@ -303,7 +303,7 @@ public abstract class SVNSqlJetStatement {
         return getColumnBlob(f.toString());
     }
 
-    public byte[] getColumnBlob(String f) throws SVNException {
+    protected byte[] getColumnBlob(String f) throws SVNException {
         try {
             if (getCursor() == null || getCursor().eof())
                 return null;
@@ -312,58 +312,10 @@ public abstract class SVNSqlJetStatement {
             SVNSqlJetDb.createSqlJetError(e);
             return null;
         }
-    }
-
-    public boolean getColumnBoolean(int f) throws SVNException {
-        return getColumnLong(f) != 0;
     }
 
     public boolean getColumnBoolean(Enum<?> f) throws SVNException {
         return getColumnLong(f) != 0;
-    }
-
-    public long getColumnLong(int f) throws SVNException {
-        try {
-            if (getCursor() == null || getCursor().eof())
-                return 0;
-            return getCursor().getInteger(f);
-        } catch (SqlJetException e) {
-            SVNSqlJetDb.createSqlJetError(e);
-            return 0;
-        }
-    }
-
-    public String getColumnString(int f) throws SVNException {
-        try {
-            if (getCursor() == null || getCursor().eof())
-                return null;
-            return getCursor().getString(f);
-        } catch (SqlJetException e) {
-            SVNSqlJetDb.createSqlJetError(e);
-            return null;
-        }
-    }
-
-    public boolean isColumnNull(int f) throws SVNException {
-        try {
-            if (getCursor() == null || getCursor().eof())
-                return true;
-            return getCursor().isNull(f);
-        } catch (SqlJetException e) {
-            SVNSqlJetDb.createSqlJetError(e);
-            return true;
-        }
-    }
-
-    public byte[] getColumnBlob(int f) throws SVNException {
-        try {
-            if (getCursor() == null || getCursor().eof())
-                return null;
-            return getCursor().getBlobAsArray(f);
-        } catch (SqlJetException e) {
-            SVNSqlJetDb.createSqlJetError(e);
-            return null;
-        }
     }
 
     public SVNSqlJetStatement getJoinedStatement(String joinedTable) throws SVNException {
@@ -383,14 +335,14 @@ public abstract class SVNSqlJetStatement {
         return hasColumnProperties(f.name());
     }
 
-    public SVNProperties getColumnProperties(String f) throws SVNException {
+    protected SVNProperties getColumnProperties(String f) throws SVNException {
         if (isColumnNull(f))
             return null;
         final byte[] val = getColumnBlob(f);
 	    return parseProperties(val);
     }
 
-    public boolean hasColumnProperties(String f) throws SVNException {
+    protected boolean hasColumnProperties(String f) throws SVNException {
         if (isColumnNull(f)) {
             return false;
         }

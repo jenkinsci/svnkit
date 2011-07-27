@@ -29,11 +29,11 @@ public class SVNSqlJetSelectStatement extends SVNSqlJetTableStatement {
 
     private String indexName;
 
-    public SVNSqlJetSelectStatement(SVNSqlJetDb sDb, Enum fromTable) throws SVNException {
+    public SVNSqlJetSelectStatement(SVNSqlJetDb sDb, Enum<?> fromTable) throws SVNException {
         this(sDb, fromTable.toString());
     }
 
-    public SVNSqlJetSelectStatement(SVNSqlJetDb sDb, Enum fromTable, Enum indexName) throws SVNException {
+    public SVNSqlJetSelectStatement(SVNSqlJetDb sDb, Enum<?> fromTable, Enum<?> indexName) throws SVNException {
         this(sDb, fromTable.toString(), indexName.toString());
     }
 

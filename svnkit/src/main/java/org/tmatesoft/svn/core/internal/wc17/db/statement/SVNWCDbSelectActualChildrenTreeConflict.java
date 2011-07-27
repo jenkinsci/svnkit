@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.internal.wc17.db.statement;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectFieldsStatement;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.ACTUAL_NODE__Fields;
 
 /**
  * SELECT local_relpath, tree_conflict_data FROM actual_node WHERE wc_id = ?1 AND
@@ -22,7 +23,7 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectFieldsStatement;
  * @version 1.4
  * @author TMate Software Ltd.
  */
-public class SVNWCDbSelectActualChildrenTreeConflict extends SVNSqlJetSelectFieldsStatement {
+public class SVNWCDbSelectActualChildrenTreeConflict extends SVNSqlJetSelectFieldsStatement<ACTUAL_NODE__Fields> {
 
     public SVNWCDbSelectActualChildrenTreeConflict(SVNSqlJetDb sDb) throws SVNException {
         super(sDb, SVNWCDbSchema.ACTUAL_NODE, SVNWCDbSchema.ACTUAL_NODE__Indices.I_ACTUAL_PARENT);
