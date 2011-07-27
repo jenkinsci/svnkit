@@ -53,6 +53,8 @@ public class SvnOperationFactory {
         anyFormatOperationRunners = new HashMap<Class<?>, List<ISvnOperationRunner<SvnOperation>>>();
         noneOperationRunners = new HashMap<Class<?>, List<ISvnOperationRunner<SvnOperation>>>();
         
+        setAutoCloseContext(true);
+        
         registerOperationRunner(SvnGetInfo.class, new SvnRemoteGetInfo());
         registerOperationRunner(SvnGetInfo.class, new SvnNgGetInfo(), SvnWcGeneration.V17, SvnWcGeneration.NOT_DETECTED);
         registerOperationRunner(SvnGetInfo.class, new SvnOldGetInfo(), SvnWcGeneration.V16);
@@ -87,7 +89,7 @@ public class SvnOperationFactory {
     public ISVNRepositoryPool getRepositoryPool() {
         if (repositoryPool == null) {
             repositoryPool = new DefaultSVNRepositoryPool(getAuthenticationManager(), getOptions());
-            autoDisposeRepositoryPool = true;
+            setAutoDisposeRepositoryPool(true);
         }
         return repositoryPool;
     }
@@ -119,12 +121,12 @@ public class SvnOperationFactory {
 
     public void setRepositoryPool(ISVNRepositoryPool repositoryPool) {
         this.repositoryPool = repositoryPool;
-        this.autoDisposeRepositoryPool = repositoryPool == null;
+        setAutoDisposeRepositoryPool(repositoryPool == null);
     }
     
     public void dispose() {
         disposeWcContext();
-        if (autoDisposeRepositoryPool && repositoryPool != null) {
+        if (isAutoDisposeRepositoryPool() && repositoryPool != null) {
             repositoryPool.dispose();
         }
     }
@@ -142,12 +144,13 @@ public class SvnOperationFactory {
     }
 
     protected void run(SvnOperation operation) throws SVNException {
-        ISvnOperationRunner<?> runner = getImplementation(operation);
+        ISvnOperationRunner<SvnOperation> runner = getImplementation(operation);
         if (runner != null) {
             SVNWCContext wcContext = null;
             try {
                 wcContext = obtainWcContext();
                 runner.setWcContext(wcContext);
+                runner.run(operation);
             } finally {
                 releaseWcContext(wcContext);
             }
@@ -155,7 +158,7 @@ public class SvnOperationFactory {
     }
 
     private void releaseWcContext(SVNWCContext wcContext) {
-        if (autoCloseContext && wcContext != null) {
+        if (isAutoCloseContext() && wcContext != null) {
             if (this.wcContext == wcContext) {
                 disposeWcContext();
             } else {
@@ -174,6 +177,14 @@ public class SvnOperationFactory {
     private void disposeWcContext() {
         wcContext.close();
         wcContext = null;
+    }
+    
+    private boolean isAutoDisposeRepositoryPool() {
+        return autoDisposeRepositoryPool;
+    }
+    
+    private void setAutoDisposeRepositoryPool(boolean dispose) {
+        autoDisposeRepositoryPool = dispose;
     }
 
     protected ISvnOperationRunner<SvnOperation> getImplementation(SvnOperation operation) throws SVNException {
