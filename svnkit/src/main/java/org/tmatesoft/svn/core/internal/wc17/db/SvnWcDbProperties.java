@@ -140,7 +140,7 @@ public class SvnWcDbProperties extends SvnWcDbShared {
                 String kind = getColumnText(stmt, TARGETS_LIST__Fields.kind);
                 
                 propertiesSelectStmt.bindf("is", wcId, localRelpath);
-                Object props = null;
+                byte[] props = null;
                 try {
                     if (propertiesSelectStmt.next()) {
                         SVNWCDbStatus presence = getColumnPresence(propertiesSelectStmt);
@@ -171,7 +171,7 @@ public class SvnWcDbProperties extends SvnWcDbShared {
                                 props = getColumnBlob(propertiesSelectStmt, NODES__Fields.properties);
                             }
                             SVNSqlJetSelectStatement query = new SVNSqlJetSelectStatement(root.getSDb(), SVNWCDbSchema.ACTUAL_NODE);
-                            Object actualProps = null;
+                            byte[] actualProps = null;
                             try {
                                 query.bindf("is", wcId, localRelpath);
                                 if (query.next()) {
@@ -187,7 +187,7 @@ public class SvnWcDbProperties extends SvnWcDbShared {
                     reset(propertiesSelectStmt);
                 }
                 
-                if (props != null) {
+                if (props != null && props.length > 2) {
                     try {
                         insertStmt.putInsertValue(NODE_PROPS_CACHE__Fields.local_Relpath, localRelpath);
                         insertStmt.putInsertValue(NODE_PROPS_CACHE__Fields.kind, kind);

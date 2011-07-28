@@ -22,8 +22,11 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbOpenMode;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgGetInfo;
+import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgGetProperties;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetInfo;
+import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetProperties;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteGetInfo;
+import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteGetProperties;
 import org.tmatesoft.svn.core.wc.DefaultSVNRepositoryPool;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
@@ -62,6 +65,10 @@ public class SvnOperationFactory {
         registerOperationRunner(SvnGetInfo.class, new SvnRemoteGetInfo());
         registerOperationRunner(SvnGetInfo.class, new SvnNgGetInfo(), SvnWcGeneration.V17, SvnWcGeneration.NOT_DETECTED);
         registerOperationRunner(SvnGetInfo.class, new SvnOldGetInfo(), SvnWcGeneration.V16);
+
+        registerOperationRunner(SvnGetProperties.class, new SvnRemoteGetProperties());
+        registerOperationRunner(SvnGetProperties.class, new SvnNgGetProperties(), SvnWcGeneration.V17, SvnWcGeneration.NOT_DETECTED);
+        registerOperationRunner(SvnGetProperties.class, new SvnOldGetProperties(), SvnWcGeneration.V16);
     }
     
     public boolean isAutoCloseContext() {

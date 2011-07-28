@@ -3,6 +3,8 @@ package org.tmatesoft.svn.core.internal.wc2;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgRepositoryAccess;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldRepositoryAccess;
+import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnOperation;
 
 public abstract class SvnRemoteOperationRunner<T extends SvnOperation> extends SvnOperationRunner<T> {
@@ -27,5 +29,9 @@ public abstract class SvnRemoteOperationRunner<T extends SvnOperation> extends S
             }            
         }
         return repositoryAccess;
+    }
+    
+    protected boolean isRevisionLocalToWc(SVNRevision revision) {
+        return revision == SVNRevision.BASE || revision == SVNRevision.WORKING || revision == SVNRevision.COMMITTED;
     }
 }

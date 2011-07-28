@@ -1,8 +1,27 @@
 package org.tmatesoft.svn.core.wc2;
 
-public class SvnGetProperties extends SvnReceivingOperation<SvnPropertyData> {
+import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 
-    protected SvnGetProperties(SvnOperationFactory factory) {
+public class SvnGetProperties extends SvnReceivingOperation<SVNProperties> {
+
+    public SvnGetProperties(SvnOperationFactory factory) {
         super(factory);
+    }
+
+    @Override
+    protected void ensureArgumentsAreValid() throws SVNException {
+        if (getDepth() == SVNDepth.UNKNOWN) {
+            setDepth(SVNDepth.EMPTY);
+        }
+        if (getPegRevision() == null || !getPegRevision().isValid()) {
+            setPegRevision(hasRemoteTargets() ? SVNRevision.HEAD : SVNRevision.WORKING);
+        }
+        if (getRevision() == null || !getRevision().isValid()) {
+            setRevision(getPegRevision());
+        }
+        super.ensureArgumentsAreValid();
     }
 }
