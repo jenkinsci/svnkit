@@ -24,7 +24,6 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
-import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.ISVNEntryHandler;
 import org.tmatesoft.svn.core.internal.wc16.SVNWCClient16;
@@ -33,6 +32,7 @@ import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnGetInfo;
+import org.tmatesoft.svn.core.wc2.SvnGetProperties;
 import org.tmatesoft.svn.core.wc2.SvnInfo;
 import org.tmatesoft.svn.core.wc2.SvnSchedule;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -827,15 +827,22 @@ public class SVNWCClient extends SVNBasicClient {
      * @see #doGetProperty(File, String, SVNRevision, SVNRevision, SVNDepth,
      *      ISVNPropertyHandler, Collection)
      */
-    public SVNPropertyData doGetProperty(final File path, String propName, SVNRevision pegRevision, SVNRevision revision) throws SVNException {
-        try {
-            return getSVNWCClient17().doGetProperty(path, propName, pegRevision, revision);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                return getSVNWCClient16().doGetProperty(path, propName, pegRevision, revision);
+    public SVNPropertyData doGetProperty(final File path, final String propName, SVNRevision pegRevision, SVNRevision revision) throws SVNException {
+        final SVNPropertyData[] data = new SVNPropertyData[1];
+        SvnGetProperties getProperties = getOperationsFactory().createGetProperties();
+        getProperties.setSingleTarget(SvnTarget.fromFile(path));
+        getProperties.setPegRevision(pegRevision);
+        getProperties.setRevision(revision);
+        getProperties.setDepth(SVNDepth.EMPTY);
+        getProperties.setReceiver(new ISvnObjectReceiver<SVNProperties>() {
+            public void receive(SvnTarget target, SVNProperties object) throws SVNException {
+                if (propName != null) {
+                    data[0] = new SVNPropertyData(propName, object.getSVNPropertyValue(propName), getOptions());
+                } 
             }
-            throw e;
-        }
+        });
+        getProperties.run();
+        return data[0];
     }
 
     /**
@@ -868,15 +875,22 @@ public class SVNWCClient extends SVNBasicClient {
      * @see #doGetProperty(SVNURL, String, SVNRevision, SVNRevision, SVNDepth,
      *      ISVNPropertyHandler)
      */
-    public SVNPropertyData doGetProperty(final SVNURL url, String propName, SVNRevision pegRevision, SVNRevision revision) throws SVNException {
-        try {
-            return getSVNWCClient17().doGetProperty(url, propName, pegRevision, revision);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                return getSVNWCClient16().doGetProperty(url, propName, pegRevision, revision);
+    public SVNPropertyData doGetProperty(final SVNURL url, final String propName, SVNRevision pegRevision, SVNRevision revision) throws SVNException {
+        final SVNPropertyData[] data = new SVNPropertyData[1];
+        SvnGetProperties getProperties = getOperationsFactory().createGetProperties();
+        getProperties.setSingleTarget(SvnTarget.fromURL(url));
+        getProperties.setPegRevision(pegRevision);
+        getProperties.setRevision(revision);
+        getProperties.setDepth(SVNDepth.EMPTY);
+        getProperties.setReceiver(new ISvnObjectReceiver<SVNProperties>() {
+            public void receive(SvnTarget target, SVNProperties object) throws SVNException {
+                if (propName != null) {
+                    data[0] = new SVNPropertyData(propName, object.getSVNPropertyValue(propName), getOptions());
+                } 
             }
-            throw e;
-        }
+        });
+        getProperties.run();
+        return data[0];
     }
 
     /**
@@ -920,15 +934,7 @@ public class SVNWCClient extends SVNBasicClient {
      *             instead
      */
     public void doGetProperty(File path, String propName, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNPropertyHandler handler) throws SVNException {
-        try {
-            getSVNWCClient17().doGetProperty(path, propName, pegRevision, revision, recursive, handler);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNWCClient16().doGetProperty(path, propName, pegRevision, revision, recursive, handler);
-                return;
-            }
-            throw e;
-        }
+        doGetProperty(path, propName, pegRevision, revision, SVNDepth.getInfinityOrEmptyDepth(recursive), handler, null);
     }
 
     /**
@@ -995,16 +1001,28 @@ public class SVNWCClient extends SVNBasicClient {
      *             </ul>
      * @since 1.2, SVN 1.5
      */
-    public void doGetProperty(File path, String propName, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, ISVNPropertyHandler handler, Collection changeLists) throws SVNException {
-        try {
-            getSVNWCClient17().doGetProperty(path, propName, pegRevision, revision, depth, handler, changeLists);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNWCClient16().doGetProperty(path, propName, pegRevision, revision, depth, handler, changeLists);
-                return;
+    public void doGetProperty(File path, final String propName, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, final ISVNPropertyHandler handler, Collection<String> changeLists) throws SVNException {
+        SvnGetProperties getProperties = getOperationsFactory().createGetProperties();
+        getProperties.setSingleTarget(SvnTarget.fromFile(path));
+        getProperties.setPegRevision(pegRevision);
+        getProperties.setRevision(revision);
+        getProperties.setDepth(depth);
+        getProperties.setApplicalbeChangelists(changeLists);
+        getProperties.setReceiver(new ISvnObjectReceiver<SVNProperties>() {
+            public void receive(SvnTarget target, SVNProperties object) throws SVNException {
+                if (propName != null) {
+                    SVNPropertyData propertyData = new SVNPropertyData(propName, object.getSVNPropertyValue(propName), getOptions());
+                    handler.handleProperty(target.getFile(), propertyData);
+                }  else {
+                    for (Object propertyName : object.nameSet()) {
+                        String name = propertyName.toString();
+                        SVNPropertyData propertyData = new SVNPropertyData(name, object.getSVNPropertyValue(name), getOptions());
+                        handler.handleProperty(target.getFile(), propertyData);
+                    }
+                }
             }
-            throw e;
-        }
+        });
+        getProperties.run();
     }
 
     /**
@@ -1036,15 +1054,7 @@ public class SVNWCClient extends SVNBasicClient {
      *             instead
      */
     public void doGetProperty(SVNURL url, String propName, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNPropertyHandler handler) throws SVNException {
-        try {
-            getSVNWCClient17().doGetProperty(url, propName, pegRevision, revision, recursive, handler);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNWCClient16().doGetProperty(url, propName, pegRevision, revision, recursive, handler);
-                return;
-            }
-            throw e;
-        }
+        doGetProperty(url, propName, pegRevision, revision, SVNDepth.getInfinityOrEmptyDepth(recursive), handler);
     }
 
     /**
@@ -1092,16 +1102,27 @@ public class SVNWCClient extends SVNBasicClient {
      *             </ul>
      * @since 1.2, SVN 1.5
      */
-    public void doGetProperty(SVNURL url, String propName, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, ISVNPropertyHandler handler) throws SVNException {
-        try {
-            getSVNWCClient17().doGetProperty(url, propName, pegRevision, revision, depth, handler);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNWCClient16().doGetProperty(url, propName, pegRevision, revision, depth, handler);
-                return;
+    public void doGetProperty(SVNURL url, final String propName, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, final ISVNPropertyHandler handler) throws SVNException {
+        SvnGetProperties getProperties = getOperationsFactory().createGetProperties();
+        getProperties.setSingleTarget(SvnTarget.fromURL(url));
+        getProperties.setPegRevision(pegRevision);
+        getProperties.setRevision(revision);
+        getProperties.setDepth(depth);
+        getProperties.setReceiver(new ISvnObjectReceiver<SVNProperties>() {
+            public void receive(SvnTarget target, SVNProperties object) throws SVNException {
+                if (propName != null) {
+                    SVNPropertyData propertyData = new SVNPropertyData(propName, object.getSVNPropertyValue(propName), getOptions());
+                    handler.handleProperty(target.getFile(), propertyData);
+                }  else {
+                    for (Object propertyName : object.nameSet()) {
+                        String name = propertyName.toString();
+                        SVNPropertyData propertyData = new SVNPropertyData(name, object.getSVNPropertyValue(name), getOptions());
+                        handler.handleProperty(target.getFile(), propertyData);
+                    }
+                }
             }
-            throw e;
-        }
+        });
+        getProperties.run();
     }
 
     /**

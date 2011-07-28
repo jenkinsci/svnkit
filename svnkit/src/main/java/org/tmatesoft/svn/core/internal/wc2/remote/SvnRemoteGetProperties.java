@@ -31,9 +31,9 @@ public class SvnRemoteGetProperties extends SvnRemoteOperationRunner<SvnGetPrope
         if (super.isApplicable(operation, wcGeneration)) {
             return true;
         }
-        if (!getOperation().hasRemoteTargets() && 
-                isRevisionLocalToWc(getOperation().getPegRevision()) && 
-                isRevisionLocalToWc(getOperation().getPegRevision())) {
+        if (!operation.hasRemoteTargets() && 
+                isRevisionLocalToWc(operation.getRevision()) && 
+                isRevisionLocalToWc(operation.getPegRevision())) {
             return false;
         }        
         return true;
