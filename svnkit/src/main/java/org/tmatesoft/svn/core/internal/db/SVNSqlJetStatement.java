@@ -13,12 +13,14 @@ package org.tmatesoft.svn.core.internal.db;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -394,5 +396,4 @@ public abstract class SVNSqlJetStatement {
     public Map<String, Object> getRowValues() throws SVNException {
         throw new UnsupportedOperationException();
     }
-
 }

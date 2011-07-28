@@ -11,6 +11,8 @@
  */
 package org.tmatesoft.svn.core.internal.wc17.db;
 
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbShared.begingReadTransaction;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbShared.commit;
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnBlob;
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnBoolean;
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnChecksum;
@@ -93,6 +95,7 @@ import org.tmatesoft.svn.core.wc.SVNPropertyConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNTextConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
+import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnChecksum;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -2805,6 +2808,19 @@ public class SVNWCDb implements ISVNWCDb {
         verifyDirUsable(pdh);
         return SvnWcDbProperties.readPristineProperties(pdh.getWCRoot(), localRelPath);
     }
+    
+    public void readPropertiesRecursively(File localAbsPath, SVNDepth depth, boolean baseProperties, boolean pristineProperties, Collection<String> changelists,
+            ISvnObjectReceiver<SVNProperties> receiver) throws SVNException {
+        assert (isAbsolute(localAbsPath));
+
+        final DirParsedInfo parseDir = parseDir(localAbsPath, Mode.ReadWrite);
+        SVNWCDbDir pdh = parseDir.wcDbDir;
+        File localRelPath = parseDir.localRelPath;
+        verifyDirUsable(pdh);
+        
+        SvnWcDbProperties.readPropertiesRecursively(pdh.getWCRoot(), localRelPath, depth, baseProperties, pristineProperties, changelists, receiver);        
+    }
+
 
     public String readProperty(File localAbsPath, String propname) throws SVNException {
         // TODO
@@ -2817,40 +2833,13 @@ public class SVNWCDb implements ISVNWCDb {
         SVNWCDbDir pdh = parseDir.wcDbDir;
         File localRelPath = parseDir.localRelPath;
         verifyDirUsable(pdh);
-
-        SVNProperties props = null;
-        boolean have_row = false;
-        SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_ACTUAL_PROPS);
-        stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelPath);
+        
         try {
-            have_row = stmt.next();
-
-            if (have_row && !isColumnNull(stmt, ACTUAL_NODE__Fields.properties)) {
-                props = getColumnProperties(stmt, ACTUAL_NODE__Fields.properties);
-            } else
-                have_row = false;
+            begingReadTransaction(pdh.getWCRoot());
+            return SvnWcDbProperties.readProperties(pdh.getWCRoot(), localRelPath);
         } finally {
-            stmt.reset();
+            commit(pdh.getWCRoot());
         }
-
-        if (have_row) {
-            return props;
-        }
-
-        /* No local changes. Return the pristine props for this node. */
-        props = SvnWcDbProperties.readPristineProperties(pdh.getWCRoot(), localRelPath);
-        if (props == null) {
-            /*
-             * Pristine properties are not defined for this node. ### we need to
-             * determine whether this node is in a state that ### allows for
-             * ACTUAL properties (ie. not deleted). for now, ### just say all
-             * nodes, no matter the state, have at least an ### empty set of
-             * props.
-             */
-            return new SVNProperties();
-        }
-
-        return props;
     }
 
     private SVNSqlJetStatement getStatementForPath(File localAbsPath, SVNWCDbStatements statementIndex) throws SVNException {

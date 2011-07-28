@@ -43,6 +43,7 @@ public class SVNSqlJetDb {
     private EnumMap<SVNWCDbStatements, SVNSqlJetStatement> statements;
 
     private int openCount = 0;
+    private SVNSqlJetDb temporaryDb;
 
     private SVNSqlJetDb(SqlJetDb db) {
         this.db = db;
@@ -54,6 +55,14 @@ public class SVNSqlJetDb {
     }
 
     public void close() throws SVNException {
+        if (temporaryDb != null) {
+            try {
+                temporaryDb.close();
+            } catch (SVNException e) {
+                //
+            }
+            temporaryDb = null;
+        }
         if (db != null) {
             try {
                 db.close();
@@ -80,6 +89,19 @@ public class SVNSqlJetDb {
             SVNErrorManager.error(err, SVNLogType.WC);
             return null;
         }
+    }
+    
+    public SVNSqlJetDb getTemporaryDb() throws SVNException {
+        if (temporaryDb == null) {
+            try {
+                temporaryDb = new SVNSqlJetDb(getDb().getTemporaryDatabase());
+            } catch (SqlJetException e) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SQLITE_ERROR, e);
+                SVNErrorManager.error(err, SVNLogType.WC);
+                return null;
+            }
+        }
+        return temporaryDb;
     }
 
     public SVNSqlJetStatement getStatement(SVNWCDbStatements statementIndex) throws SVNException {
@@ -182,6 +204,15 @@ public class SVNSqlJetDb {
             SVNErrorManager.error(err, SVNLogType.DEFAULT);
         } finally {
             commit();
+        }
+    }
+
+    public void rollback() throws SVNException {
+        try {
+            db.rollback();
+        } catch (SqlJetException e1) {
+            SVNErrorMessage err1 = SVNErrorMessage.create(SVNErrorCode.SQLITE_ERROR, e1);
+            SVNErrorManager.error(err1, SVNLogType.DEFAULT);
         }
     }
 

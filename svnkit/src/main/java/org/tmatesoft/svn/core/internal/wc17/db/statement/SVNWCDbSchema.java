@@ -33,8 +33,11 @@ public enum SVNWCDbSchema {
 
     WORK_QUEUE(WORK_QUEUE__Fields.class),
     
-    EXTERNALS(EXTERNALS__Fields.class)
+    EXTERNALS(EXTERNALS__Fields.class),
+    
+    TARGETS_LIST(TARGETS_LIST__Fields.class, TARGETS_LIST__Indices.class),
 
+    NODE_PROPS_CACHE(NODE_PROPS_CACHE__Fields.class),
     ;
 
     final public Class<? extends Enum<?>> fields;
@@ -107,5 +110,15 @@ public enum SVNWCDbSchema {
     
     public enum REVPROP__Fields {
         properties;
+    }
+    public enum TARGETS_LIST__Fields {
+        wc_id, local_relpath, parent_relpath, kind;
+    }
+    public enum TARGETS_LIST__Indices {
+        targets_list_kind;
+    }
+    
+    public enum NODE_PROPS_CACHE__Fields {
+        local_Relpath, kind, properties;
     }
 }

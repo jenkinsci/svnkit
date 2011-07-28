@@ -25,7 +25,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
  */
 public class SVNWCDbCreateSchema extends SVNSqlJetStatement {
 
-    private static final Statement[] statements = new Statement[] {
+    public static final Statement[] MAIN_DB_STATEMENTS = new Statement[] {
             new Statement(Type.TABLE, "CREATE TABLE REPOSITORY ( id INTEGER PRIMARY KEY AUTOINCREMENT, root  TEXT UNIQUE NOT NULL, uuid  TEXT NOT NULL ); "),
             new Statement(Type.INDEX, "CREATE INDEX I_UUID ON REPOSITORY (uuid); "),
             new Statement(Type.INDEX, "CREATE INDEX I_ROOT ON REPOSITORY (root); "),
@@ -74,19 +74,48 @@ public class SVNWCDbCreateSchema extends SVNSqlJetStatement {
             new Statement(Type.TRIGGER, "CREATE TRIGGER nodes_delete_trigger AFTER DELETE ON nodes WHEN OLD.checksum IS NOT NULL BEGIN UPDATE pristine SET refcount = refcount - 1 WHERE checksum = OLD.checksum; END;"),
             new Statement(Type.TRIGGER, "CREATE TRIGGER nodes_update_checksum_trigger AFTER UPDATE OF checksum ON nodes WHEN NEW.checksum IS NOT OLD.checksum BEGIN UPDATE pristine SET refcount = refcount + 1 WHERE checksum = NEW.checksum; UPDATE pristine SET refcount = refcount - 1 WHERE checksum = OLD.checksum; END;"),
     };
+    
+    public static final Statement[] TARGETS_LIST = new Statement[] {
+        new Statement(Type.TABLE, "CREATE TABLE TARGETS_LIST (wc_id  INTEGER NOT NULL, local_relpath TEXT NOT NULL, parent_relpath TEXT, kind TEXT NOT NULL, PRIMARY KEY (wc_id, local_relpath) );"),
+        new Statement(Type.INDEX, "CREATE INDEX targets_list_kind ON targets_list (kind);"),
+    };
+    
+    public static final Statement[] DROP_TARGETS_LIST = new Statement[] {
+        new Statement(Type.INDEX, "targets_list_kind", true),
+        new Statement(Type.TABLE, "TARGETS_LIST", true),
+    };
+    
+    public static final Statement[] NODE_PROPS_CACHE = new Statement[] {
+        new Statement(Type.TABLE, "CREATE TABLE NODE_PROPS_CACHE (local_Relpath TEXT NOT NULL, kind TEXT NOT NULL, properties BLOB, PRIMARY KEY (local_Relpath) );"),
+    };
+    
+    public static final Statement[] DROP_NODE_PROPS_CACHE = new Statement[] {
+        new Statement(Type.TABLE, "NODE_PROPS_CACHE", true),
+    };
+
 
     private enum Type {
         TABLE, INDEX, VIEW, TRIGGER;
     }
 
-    private static class Statement {
+    public static class Statement {
 
         private Type type;
         private String sql;
-
+        private boolean isDrop;
+        
         public Statement(Type type, String sql) {
+            this(type, sql, false);
+        }
+
+        public Statement(Type type, String sql, boolean isDrop) {
             this.type = type;
             this.sql = sql;
+            this.isDrop = isDrop;
+        }
+        
+        public boolean isDrop() {
+            return isDrop;
         }
 
         public Type getType() {
@@ -98,8 +127,17 @@ public class SVNWCDbCreateSchema extends SVNSqlJetStatement {
         }
     }
 
+    private Statement[] statements;
+    private int userVersion;
+    
     public SVNWCDbCreateSchema(SVNSqlJetDb sDb) {
+        this(sDb, MAIN_DB_STATEMENTS, ISVNWCDb.WC_FORMAT_17);
+    }
+
+    public SVNWCDbCreateSchema(SVNSqlJetDb sDb, Statement[] statements, int userVersion) {        
         super(sDb);
+        this.statements = statements;
+        this.userVersion = userVersion;
     }
 
     public long exec() throws SVNException {
@@ -109,23 +147,49 @@ public class SVNWCDbCreateSchema extends SVNSqlJetStatement {
                 public Object run(SqlJetDb db) throws SqlJetException {
                     for (Statement stmt : statements) {
                         switch (stmt.getType()) {
-                            case TABLE:
-                                db.createTable(stmt.getSql());
+                            case TABLE:                                
+                                if (stmt.isDrop()) {
+                                    if (db.getSchema().getTableNames().contains(stmt.getSql())) {
+                                        db.dropTable(stmt.getSql());
+                                    }
+                                } else {
+                                    db.createTable(stmt.getSql()); 
+                                }
                                 break;
                             case INDEX:
-                                db.createIndex(stmt.getSql());
+                                if (stmt.isDrop()) {
+                                    if (db.getSchema().getIndexNames().contains(stmt.getSql())) {
+                                        db.dropIndex(stmt.getSql());
+                                    }
+                                } else {
+                                    db.createIndex(stmt.getSql()); 
+                                }
                                 break;
                             case VIEW:
-                                db.createView(stmt.getSql());
+                                if (stmt.isDrop()) {
+                                    if (db.getSchema().getViewNames().contains(stmt.getSql())) {
+                                        db.dropView(stmt.getSql());
+                                    }
+                                } else {
+                                    db.createView(stmt.getSql()); 
+                                }
                                 break;
                             case TRIGGER:
-                                db.createTrigger(stmt.getSql());
+                                if (stmt.isDrop()) {
+                                    if (db.getSchema().getTriggerNames().contains(stmt.getSql())) {
+                                        db.dropTrigger(stmt.getSql());
+                                    }
+                                } else {
+                                    db.createTrigger(stmt.getSql()); 
+                                }
                                 break;
                             default:
                                 break;
                         }
                     }
-                    db.getOptions().setUserVersion(ISVNWCDb.WC_FORMAT_17);
+                    if (userVersion >= 0) {
+                        db.getOptions().setUserVersion(userVersion);
+                    }
                     return null;
                 }
             });
