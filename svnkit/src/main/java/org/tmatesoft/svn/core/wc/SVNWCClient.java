@@ -1112,12 +1112,12 @@ public class SVNWCClient extends SVNBasicClient {
             public void receive(SvnTarget target, SVNProperties object) throws SVNException {
                 if (propName != null) {
                     SVNPropertyData propertyData = new SVNPropertyData(propName, object.getSVNPropertyValue(propName), getOptions());
-                    handler.handleProperty(target.getFile(), propertyData);
+                    handler.handleProperty(target.getURL(), propertyData);
                 }  else {
                     for (Object propertyName : object.nameSet()) {
                         String name = propertyName.toString();
                         SVNPropertyData propertyData = new SVNPropertyData(name, object.getSVNPropertyValue(name), getOptions());
-                        handler.handleProperty(target.getFile(), propertyData);
+                        handler.handleProperty(target.getURL(), propertyData);
                     }
                 }
             }
