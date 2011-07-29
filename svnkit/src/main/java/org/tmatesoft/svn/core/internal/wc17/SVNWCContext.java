@@ -601,39 +601,6 @@ public class SVNWCContext {
         return info;
     }
 
-    public SvnStatus assembleUnversioned17(File localAbspath, SVNNodeKind pathKind, boolean treeConflicted, boolean isIgnored) throws SVNException {
-
-        SvnStatus stat = new SvnStatus();
-        stat.setPath(localAbspath);
-        stat.setKind(SVNNodeKind.UNKNOWN); 
-        stat.setDepth(SVNDepth.UNKNOWN);
-        stat.setNodeStatus(SVNStatusType.STATUS_NONE);
-        stat.setTextStatus(SVNStatusType.STATUS_NONE);
-        stat.setPropertiesStatus(SVNStatusType.STATUS_NONE);
-        stat.setRepositoryNodeStatus(SVNStatusType.STATUS_NONE);
-        stat.setRepositoryTextStatus(SVNStatusType.STATUS_NONE);
-        stat.setRepositoryPropertiesStatus(SVNStatusType.STATUS_NONE);
-
-        if (pathKind != SVNNodeKind.NONE) {
-            if (isIgnored) {
-                stat.setNodeStatus(SVNStatusType.STATUS_IGNORED);
-            } else {
-                stat.setNodeStatus(SVNStatusType.STATUS_UNVERSIONED);
-            }
-        } else if (treeConflicted) {
-            stat.setNodeStatus(SVNStatusType.STATUS_CONFLICTED);
-        }
-
-        stat.setRevision(INVALID_REVNUM);
-        stat.setChangedRevision(INVALID_REVNUM);
-        stat.setRepositoryChangedRevision(INVALID_REVNUM);
-        stat.setRepositoryKind(SVNNodeKind.NONE);
-
-        stat.setConflicted(treeConflicted);
-        stat.setChangelist(null);
-        return stat;
-    }
-
     public boolean isTextModified(File localAbsPath, boolean forceComparison, boolean compareTextBases) throws SVNException {
 
         /* No matter which way you look at it, the file needs to exist. */

@@ -684,7 +684,7 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
         }
 
         if (node_kind == SVNWCDbKind.Unknown) {
-            return myWCContext.assembleUnversioned17(localAbsPath, kind, conflicted, false);
+            return assembleUnversioned17(localAbsPath, kind, conflicted, false);
         }
 
         boolean isRoot;

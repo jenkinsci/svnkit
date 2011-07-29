@@ -89,8 +89,10 @@ public class SVNStatusClient extends SVNBasicClient {
     public SVNStatusClient(ISVNAuthenticationManager authManager, ISVNOptions options) {
         super(new SVNStatusClient16(authManager, options), new SVNStatusClient17(authManager, options));
         setFilesProvider(null);
-
         setOptions(options);
+        
+        getOperationsFactory().setAuthenticationManager(authManager);
+        getOperationsFactory().setOptions(options);
     }
 
     /**

@@ -161,7 +161,6 @@ public class SvnCodec {
             result.setRemoteURL(url);
         }
         
-        // fetch missing info on revisions for some statuses.
         if (context != null && status.isVersioned() && status.getRevision() == SVNWCContext.INVALID_REVNUM && !status.isCopied()) {
             if (status.getNodeStatus() == SVNStatusType.STATUS_REPLACED) {
                 fetchStatusRevision(context, status, result);
@@ -170,7 +169,6 @@ public class SvnCodec {
             }
         }
         
-        // fetch conflict info and tree conflict description.
         if (context != null && status.isConflicted()) {
             boolean hasTreeConflict = false;
             SVNWCContext.ConflictInfo conflictedInfo = null;
@@ -212,6 +210,7 @@ public class SvnCodec {
     private static void fetchStatusRevision(SVNWCContext context, SvnStatus source, SVNStatus result) throws SVNException {
         Structure<NodeInfo> info = context.getDb().readInfo(source.getPath(), NodeInfo.revision, NodeInfo.changedAuthor, NodeInfo.changedDate, NodeInfo.changedRev, 
                 NodeInfo.haveBase, NodeInfo.haveWork, NodeInfo.haveMoreWork, NodeInfo.status);
+        
         if (source.getNodeStatus() == SVNStatusType.STATUS_DELETED) {
             result.setAuthor(info.text(NodeInfo.changedAuthor));
             result.setCommittedDate(info.<SVNDate>get(NodeInfo.changedDate));
@@ -289,7 +288,7 @@ public class SvnCodec {
         if (info.getTextTime() != null) {
             wcInfo.setRecordedTime(info.getTextTime().getTime());
         }
-        wcInfo.setSchedule(SvnSchedule.valueOf(info.getSchedule()));
+        wcInfo.setSchedule(SvnSchedule.fromString(info.getSchedule()));
         
         File wcRoot = null;
         try {
