@@ -3437,11 +3437,13 @@ public class SVNWCClient16 extends SVNBasicDelegate {
                 public void handleError(File path, SVNErrorMessage error) throws SVNException {
                     if (error != null && error.getErrorCode() == SVNErrorCode.UNVERSIONED_RESOURCE) {
                         SVNAdminArea dir = wcAccess.probeTry(path.getParentFile(), false, 0);
-                        SVNTreeConflictDescription tc = dir.getTreeConflict(path.getName());
-                        if (tc != null) {
-                            SVNInfo info = SVNInfo.createInfo(path, tc);
-                            handler.handleInfo(info);
-                            return;
+                        if (dir != null) {
+                            SVNTreeConflictDescription tc = dir.getTreeConflict(path.getName());
+                            if (tc != null) {
+                                SVNInfo info = SVNInfo.createInfo(path, tc);
+                                handler.handleInfo(info);
+                                return;
+                            }
                         }
                     }
                     SVNErrorManager.error(error, SVNLogType.WC);
