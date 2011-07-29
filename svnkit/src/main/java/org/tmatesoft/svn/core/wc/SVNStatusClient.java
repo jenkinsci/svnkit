@@ -120,8 +120,10 @@ public class SVNStatusClient extends SVNBasicClient {
     public SVNStatusClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
         super(new SVNStatusClient16(repositoryPool, options), new SVNStatusClient17(repositoryPool, options));
         setFilesProvider(null);
-
         setOptions(options);
+        
+        getOperationsFactory().setRepositoryPool(repositoryPool);
+        getOperationsFactory().setOptions(options);
     }
 
     /**
