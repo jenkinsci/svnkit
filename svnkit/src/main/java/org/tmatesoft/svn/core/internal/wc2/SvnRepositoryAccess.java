@@ -21,14 +21,14 @@ import org.tmatesoft.svn.util.SVNLogType;
 public abstract class SvnRepositoryAccess {
     
     private SVNWCContext context;
-    private SvnOperation operation;
+    private SvnOperation<?> operation;
 
-    protected SvnRepositoryAccess(SvnOperation operation) throws SVNException {
+    protected SvnRepositoryAccess(SvnOperation<?> operation) throws SVNException {
         this.operation = operation;
         this.context = new SVNWCContext(getOperation().getOptions(), getOperation().getEventHandler());
     }
     
-    protected SvnOperation getOperation() {
+    protected SvnOperation<?> getOperation() {
         return this.operation;
     }
     

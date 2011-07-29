@@ -15,12 +15,17 @@ import java.io.File;
 import java.util.Collection;
 
 import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc16.SVNStatusClient16;
 import org.tmatesoft.svn.core.internal.wc17.SVNStatusClient17;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
+import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
+import org.tmatesoft.svn.core.wc2.SvnGetStatus;
+import org.tmatesoft.svn.core.wc2.SvnStatus;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 /**
  * The <b>SVNStatusClient</b> class provides methods for obtaining information
@@ -55,13 +60,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
  */
 public class SVNStatusClient extends SVNBasicClient {
 
-    private SVNStatusClient16 getSVNStatusClient16() {
-        return (SVNStatusClient16) getDelegate16();
-    }
-
-    private SVNStatusClient17 getSVNStatusClient17() throws SVNException {
-        return (SVNStatusClient17) getDelegate17();
-    }
+    private ISVNStatusFileProvider myFilesProvider;
 
     /**
      * Constructs and initializes an <b>SVNStatusClient</b> object with the
@@ -163,14 +162,7 @@ public class SVNStatusClient extends SVNBasicClient {
      *             instead
      */
     public long doStatus(File path, boolean recursive, boolean remote, boolean reportAll, boolean includeIgnored, ISVNStatusHandler handler) throws SVNException {
-        try {
-            return getSVNStatusClient17().doStatus(path, recursive, remote, reportAll, includeIgnored, handler);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                return getSVNStatusClient16().doStatus(path, recursive, remote, reportAll, includeIgnored, handler);
-            }
-            throw e;
-        }
+        return doStatus(path, SVNRevision.HEAD, SVNDepth.fromRecurse(recursive), remote, reportAll, includeIgnored, false, handler, null);
     }
 
     /**
@@ -222,15 +214,7 @@ public class SVNStatusClient extends SVNBasicClient {
      *             instead
      */
     public long doStatus(File path, boolean recursive, boolean remote, boolean reportAll, boolean includeIgnored, boolean collectParentExternals, final ISVNStatusHandler handler) throws SVNException {
-        try {
-            return getSVNStatusClient17().doStatus(path, recursive, remote, reportAll, includeIgnored, collectParentExternals, handler);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                return getSVNStatusClient16().doStatus(path, recursive, remote, reportAll, includeIgnored, collectParentExternals, handler);
-            }
-            throw e;
-        }
-
+        return doStatus(path, SVNRevision.HEAD, SVNDepth.fromRecurse(recursive), remote, reportAll, includeIgnored, collectParentExternals, handler, null);
     }
 
     /**
@@ -282,14 +266,7 @@ public class SVNStatusClient extends SVNBasicClient {
      */
     public long doStatus(File path, SVNRevision revision, boolean recursive, boolean remote, boolean reportAll, boolean includeIgnored, boolean collectParentExternals, final ISVNStatusHandler handler)
             throws SVNException {
-        try {
-            return getSVNStatusClient17().doStatus(path, revision, recursive, remote, reportAll, includeIgnored, collectParentExternals, handler);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                return getSVNStatusClient16().doStatus(path, revision, recursive, remote, reportAll, includeIgnored, collectParentExternals, handler);
-            }
-            throw e;
-        }
+        return doStatus(path, revision, SVNDepth.fromRecurse(recursive), remote, reportAll, includeIgnored, collectParentExternals, handler, null);
     }
 
     /**
@@ -365,15 +342,30 @@ public class SVNStatusClient extends SVNBasicClient {
      * @since 1.2, SVN 1.5
      */
     public long doStatus(File path, SVNRevision revision, SVNDepth depth, boolean remote, boolean reportAll, boolean includeIgnored, boolean collectParentExternals, final ISVNStatusHandler handler,
-            final Collection changeLists) throws SVNException {
-        try {
-            return getSVNStatusClient17().doStatus(path, revision, depth, remote, reportAll, includeIgnored, collectParentExternals, handler, changeLists);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                return getSVNStatusClient16().doStatus(path, revision, depth, remote, reportAll, includeIgnored, collectParentExternals, handler, changeLists);
+            final Collection<String> changeLists) throws SVNException {
+        
+        final SvnGetStatus getStatus = getOperationsFactory().createGetStatus();
+        getStatus.setReportExternals(!isIgnoreExternals());
+        getStatus.setFileListHook(SvnCodec.fileListHook(myFilesProvider));
+        getStatus.setApplicalbeChangelists(changeLists);
+        getStatus.setCollectParentExternals(collectParentExternals);
+        getStatus.setDepth(depth);
+        getStatus.setRevision(revision);
+        getStatus.setRemote(remote);
+        getStatus.setReportAll(reportAll);
+        getStatus.setReportIgnored(includeIgnored);
+        getStatus.setSingleTarget(SvnTarget.fromFile(path));
+        
+        getStatus.setReceiver(new ISvnObjectReceiver<SvnStatus>() {
+            public void receive(SvnTarget target, SvnStatus status) throws SVNException {
+                SVNWCContext context = getStatus.getOperationFactory().getWcContext();
+                handler.handleStatus(SvnCodec.status(context, status));
             }
-            throw e;
-        }
+        });
+        
+        getStatus.run();
+        
+        return getStatus.getRemoteRevision();
     }
 
     /**
@@ -392,14 +384,7 @@ public class SVNStatusClient extends SVNBasicClient {
      * @throws SVNException
      */
     public SVNStatus doStatus(final File path, boolean remote) throws SVNException {
-        try {
-            return getSVNStatusClient17().doStatus(path, remote);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                return getSVNStatusClient16().doStatus(path, remote);
-            }
-            throw e;
-        }
+        return doStatus(path, remote, false);
     }
 
     /**
@@ -423,21 +408,28 @@ public class SVNStatusClient extends SVNBasicClient {
      * @throws SVNException
      */
     public SVNStatus doStatus(File path, boolean remote, boolean collectParentExternals) throws SVNException {
-        try {
-            return getSVNStatusClient17().doStatus(path, remote, collectParentExternals);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                return getSVNStatusClient16().doStatus(path, remote, collectParentExternals);
-            }
-            throw e;
-        }
+        final SVNStatus[] result = new SVNStatus[] {
+                null
+            };
+            final File absPath = path.getAbsoluteFile();
+            ISVNStatusHandler handler = new ISVNStatusHandler() {
+
+                public void handleStatus(SVNStatus status) {
+                    if (absPath.equals(status.getFile())) {
+                        if (result[0] != null && result[0].getContentsStatus() == SVNStatusType.STATUS_EXTERNAL && absPath.isDirectory()) {
+                            result[0] = status;
+                            result[0].markExternal();
+                        } else if (result[0] == null) {
+                            result[0] = status;
+                        }
+                    }
+                }
+            };
+            doStatus(absPath, SVNRevision.HEAD, SVNDepth.EMPTY, remote, true, true, collectParentExternals, handler, null);
+            return result[0];
     }
 
     public void setFilesProvider(ISVNStatusFileProvider filesProvider) {
-        getSVNStatusClient16().setFilesProvider(filesProvider);
-        try {
-            getSVNStatusClient17().setFilesProvider(filesProvider);
-        } catch (SVNException e) {
-        }
+        myFilesProvider = filesProvider;
     }
 }

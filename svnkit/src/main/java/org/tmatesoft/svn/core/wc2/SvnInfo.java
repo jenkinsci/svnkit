@@ -10,7 +10,7 @@ public class SvnInfo extends SvnObject {
     private SVNURL url;
     private long revision;
     private SVNURL repositoryRootURL;
-    private String repositoryUUID;
+    private String repositoryUuid;
     
     private SVNNodeKind kind;
     private long size;
@@ -35,8 +35,8 @@ public class SvnInfo extends SvnObject {
         return repositoryRootURL;
     }
 
-    public String getRepositoryUUID() {
-        return repositoryUUID;
+    public String getRepositoryUuid() {
+        return repositoryUuid;
     }
 
     public SVNNodeKind getKind() {
@@ -79,8 +79,8 @@ public class SvnInfo extends SvnObject {
         this.repositoryRootURL = repositoryRootURL;
     }
 
-    public void setRepositoryUUID(String repositoryUUID) {
-        this.repositoryUUID = repositoryUUID;
+    public void setRepositoryUuid(String repositoryUUID) {
+        this.repositoryUuid = repositoryUUID;
     }
 
     public void setKind(SVNNodeKind kind) {

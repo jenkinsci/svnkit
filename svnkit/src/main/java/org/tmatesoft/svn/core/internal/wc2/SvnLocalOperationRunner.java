@@ -5,12 +5,12 @@ import java.io.File;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc2.SvnOperation;
 
-public abstract class SvnLocalOperationRunner<T extends SvnOperation> extends SvnOperationRunner<T> {
+public abstract class SvnLocalOperationRunner<V, T extends SvnOperation<V>> extends SvnOperationRunner<V, T> {
     
     protected SvnLocalOperationRunner() {
     }
 
-    public boolean isApplicable(SvnOperation operation, SvnWcGeneration wcGeneration) throws SVNException {
+    public boolean isApplicable(T operation, SvnWcGeneration wcGeneration) throws SVNException {
         return wcGeneration != null && operation.hasLocalTargets();
     }
     

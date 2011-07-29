@@ -24,19 +24,16 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.ISVNEntryHandler;
 import org.tmatesoft.svn.core.internal.wc16.SVNWCClient16;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCClient17;
-import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
+import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnGetInfo;
 import org.tmatesoft.svn.core.wc2.SvnGetProperties;
 import org.tmatesoft.svn.core.wc2.SvnInfo;
-import org.tmatesoft.svn.core.wc2.SvnSchedule;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
-import org.tmatesoft.svn.core.wc2.SvnWorkingCopyInfo;
 
 /**
  * The <b>SVNWCClient</b> class combines a number of version control operations
@@ -514,7 +511,7 @@ public class SVNWCClient extends SVNBasicClient {
      *      String, SVNProperties, boolean, ISVNPropertyHandler)
      * @since 1.2, SVN 1.5
      */
-    public void doSetProperty(File path, String propName, SVNPropertyValue propValue, boolean skipChecks, SVNDepth depth, ISVNPropertyHandler handler, Collection changeLists) throws SVNException {
+    public void doSetProperty(File path, String propName, SVNPropertyValue propValue, boolean skipChecks, SVNDepth depth, ISVNPropertyHandler handler, Collection<String> changeLists) throws SVNException {
         try {
             getSVNWCClient17().doSetProperty(path, propName, propValue, skipChecks, depth, handler, changeLists);
         } catch (SVNException e) {
@@ -591,7 +588,7 @@ public class SVNWCClient extends SVNBasicClient {
      *      java.util.Collection)
      * @since 1.2, SVN 1.5
      */
-    public void doSetProperty(File path, ISVNPropertyValueProvider propertyValueProvider, boolean skipChecks, SVNDepth depth, ISVNPropertyHandler handler, Collection changeLists) throws SVNException {
+    public void doSetProperty(File path, ISVNPropertyValueProvider propertyValueProvider, boolean skipChecks, SVNDepth depth, ISVNPropertyHandler handler, Collection<String> changeLists) throws SVNException {
         try {
             getSVNWCClient17().doSetProperty(path, propertyValueProvider, skipChecks, depth, handler, changeLists);
         } catch (SVNException e) {
@@ -1751,7 +1748,7 @@ public class SVNWCClient extends SVNBasicClient {
      * @throws SVNException
      * @since 1.2, SVN 1.5
      */
-    public void doRevert(File[] paths, SVNDepth depth, Collection changeLists) throws SVNException {
+    public void doRevert(File[] paths, SVNDepth depth, Collection<String> changeLists) throws SVNException {
         try {
             getSVNWCClient17().doRevert(paths, depth, changeLists);
         } catch (SVNException e) {
@@ -2212,8 +2209,7 @@ public class SVNWCClient extends SVNBasicClient {
      * @throws SVNException
      * @since 1.2, SVN 1.5
      */
-    @SuppressWarnings("unchecked")
-    public void doInfo(File path, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, Collection changeLists, final ISVNInfoHandler handler) throws SVNException {
+    public void doInfo(File path, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, Collection<String> changeLists, final ISVNInfoHandler handler) throws SVNException {
         SvnGetInfo getInfo = getOperationsFactory().createGetInfo();
         getInfo.setSingleTarget(SvnTarget.fromFile(path));
         getInfo.setPegRevision(pegRevision);
@@ -2222,7 +2218,7 @@ public class SVNWCClient extends SVNBasicClient {
         getInfo.setApplicalbeChangelists(changeLists);
         getInfo.setReceiver(new ISvnObjectReceiver<SvnInfo>() {
             public void receive(SvnTarget target, SvnInfo object) throws SVNException {
-                handler.handleInfo(convert(object));
+                handler.handleInfo(SvnCodec.info(object));
             }
         });
         getInfo.run();
@@ -2310,7 +2306,7 @@ public class SVNWCClient extends SVNBasicClient {
         getInfo.setDepth(depth);
         getInfo.setReceiver(new ISvnObjectReceiver<SvnInfo>() {
             public void receive(SvnTarget target, SvnInfo object) throws SVNException {
-                handler.handleInfo(convert(object));
+                handler.handleInfo(SvnCodec.info(object));
             }
         });
         getInfo.run();
@@ -2437,7 +2433,7 @@ public class SVNWCClient extends SVNBasicClient {
         getInfo.setReceiver(new ISvnObjectReceiver<SvnInfo>() {
             public void receive(SvnTarget target, SvnInfo object) throws SVNException {
                 if (info[0] == null) {
-                    info[0] = convert(object);
+                    info[0] = SvnCodec.info(object);
                 }
             }
         });
@@ -2476,7 +2472,7 @@ public class SVNWCClient extends SVNBasicClient {
         getInfo.setReceiver(new ISvnObjectReceiver<SvnInfo>() {
             public void receive(SvnTarget target, SvnInfo object) throws SVNException {
                 if (info[0] == null) {
-                    info[0] = convert(object);
+                    info[0] = SvnCodec.info(object);
                 }
             }
         });
@@ -2585,76 +2581,4 @@ public class SVNWCClient extends SVNBasicClient {
         }
     }
     
-    private SVNInfo convert(SvnInfo info) {
-        if (info.getUserData() instanceof SVNInfo) {
-            return ((SVNInfo) info.getUserData());
-        }
-        if (info.getWcInfo() == null) {
-            String rootPath = info.getRepositoryRootUrl().getPath();
-            String itemPath = info.getUrl().getPath();
-            itemPath = SVNPathUtil.getPathAsChild(rootPath, itemPath);
-            if (itemPath == null) {
-                itemPath = "";
-            }
-            return new SVNInfo(itemPath, info.getUrl(), SVNRevision.create(info.getRevision()), info.getKind(), info.getRepositoryUUID(), info.getRepositoryRootUrl(), 
-                    info.getLastChangedRevision(), info.getLastChangedDate(), info.getLastChangedAuthor(), info.getLock(), SVNDepth.UNKNOWN, info.getSize());
-        }
-        SvnWorkingCopyInfo wcInfo = info.getWcInfo();
-        
-        String conflictOld = null;
-        String conflictNew = null;
-        String conflictWorking = null;
-        String propRejectFile = null;
-        SVNTreeConflictDescription treeConflict = null;
-        
-        Collection<SVNConflictDescription> conflicts = wcInfo.getConflicts();
-        if (conflicts != null) {
-            for (SVNConflictDescription conflictDescription : conflicts) {
-                if (conflictDescription.isTreeConflict() && conflictDescription instanceof SVNTreeConflictDescription) {
-                    treeConflict = (SVNTreeConflictDescription) conflictDescription;
-                } else if (conflictDescription.isTextConflict()) {
-                    if (conflictDescription.getMergeFiles() != null) {
-                        if (conflictDescription.getMergeFiles().getBaseFile() != null) {
-                            conflictOld = conflictDescription.getMergeFiles().getBaseFile().getName();
-                        }
-                        if (conflictDescription.getMergeFiles().getRepositoryFile() != null) {
-                            conflictNew = conflictDescription.getMergeFiles().getRepositoryFile().getName();
-                        }
-                        if (conflictDescription.getMergeFiles().getLocalFile() != null) {
-                            conflictWorking = conflictDescription.getMergeFiles().getLocalFile().getName();
-                        }
-                    }
-                } else if (conflictDescription.isPropertyConflict()) {
-                    if (conflictDescription.getMergeFiles() != null) {
-                        propRejectFile = conflictDescription.getMergeFiles().getRepositoryFile().getName();
-                    }
-                }
-            }
-        }
-        
-        return new SVNInfo(wcInfo.getPath(), 
-                info.getUrl(), 
-                info.getRepositoryRootUrl(), 
-                info.getRevision(), 
-                info.getKind(), 
-                info.getRepositoryUUID(), 
-                info.getLastChangedRevision(),
-                info.getLastChangedDate() != null ? info.getLastChangedDate().format() : null, 
-                info.getLastChangedAuthor(), 
-                wcInfo.getSchedule() != SvnSchedule.NORMAL && wcInfo.getSchedule() != null ? wcInfo.getSchedule().toString().toLowerCase() : null, 
-                wcInfo.getCopyFromUrl(), 
-                wcInfo.getCopyFromRevision(), 
-                wcInfo.getRecordedTime() > 0 ? SVNWCUtils.readDate(wcInfo.getRecordedTime()).format() : null, 
-                null,
-                wcInfo.getChecksum() != null ? wcInfo.getChecksum().getDigest() : null, 
-                conflictOld, 
-                conflictNew, 
-                conflictWorking, 
-                propRejectFile, 
-                info.getLock(), 
-                wcInfo.getDepth(), 
-                wcInfo.getChangelist(), 
-                wcInfo.getRecordedSize(), 
-                treeConflict);
-    }
 }

@@ -21,7 +21,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 public class SvnNgRepositoryAccess extends SvnRepositoryAccess {
 
-    public SvnNgRepositoryAccess(SvnOperation operation) throws SVNException {
+    public SvnNgRepositoryAccess(SvnOperation<?> operation) throws SVNException {
         super(operation);
     }
 

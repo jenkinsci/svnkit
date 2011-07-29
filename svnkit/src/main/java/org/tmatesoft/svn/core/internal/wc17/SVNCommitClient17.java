@@ -32,8 +32,8 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
-import org.tmatesoft.svn.core.internal.wc17.SVNStatus17.ConflictInfo;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.CheckSpecialInfo;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.ConflictInfo;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.ISVNWCNodeHandler;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.NodeCopyFromField;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.NodeCopyFromInfo;
@@ -1353,7 +1353,7 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
             return;
         }
         if (matchesChangelists) {
-            ConflictInfo conflicted = getContext().getConflicted(localAbsPath, true, true, true);
+            SVNWCContext.ConflictInfo conflicted = getContext().getConflicted(localAbsPath, true, true, true);
             if (conflicted.textConflicted || conflicted.propConflicted || conflicted.treeConflicted) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_FOUND_CONFLICT, "Aborting commit: ''{0}'' remains in conflict", localAbsPath);
                 SVNErrorManager.error(err, SVNLogType.WC);

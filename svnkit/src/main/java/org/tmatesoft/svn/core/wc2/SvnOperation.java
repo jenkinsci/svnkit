@@ -17,7 +17,7 @@ import org.tmatesoft.svn.core.wc.ISVNRepositoryPool;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.SVNLogType;
 
-public class SvnOperation {
+public class SvnOperation<V> {
     
     private SVNDepth depth;
     private Collection<SvnTarget> targets;
@@ -119,9 +119,10 @@ public class SvnOperation {
         return false;
     }
     
-    public void run() throws SVNException {
+    @SuppressWarnings("unchecked")
+    public V run() throws SVNException {
         ensureArgumentsAreValid();
-        getOperationFactory().run(this);
+        return (V) getOperationFactory().run(this);
     }
     
     protected void ensureArgumentsAreValid() throws SVNException {

@@ -70,11 +70,11 @@ public class SVNExternalsStore {
         }
     }
 
-    public Map getNewExternals() {
+    public Map<File, String> getNewExternals() {
         return newExternals == null ? Collections.EMPTY_MAP : newExternals;
     }
 
-    public Map getOldExternals() {
+    public Map<File, String> getOldExternals() {
         return oldExternals == null ? Collections.EMPTY_MAP : oldExternals;
     }
 

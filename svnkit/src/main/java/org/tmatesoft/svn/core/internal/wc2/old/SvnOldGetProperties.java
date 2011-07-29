@@ -12,7 +12,7 @@ import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc2.SvnGetProperties;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
-public class SvnOldGetProperties extends SvnLocalOperationRunner<SvnGetProperties> implements ISVNPropertyHandler {
+public class SvnOldGetProperties extends SvnLocalOperationRunner<SVNProperties, SvnGetProperties> implements ISVNPropertyHandler {
     
     private File currentFile;
     private SVNProperties currentProperties;
@@ -25,7 +25,7 @@ public class SvnOldGetProperties extends SvnLocalOperationRunner<SvnGetPropertie
     }
 
     @Override
-    protected void run() throws SVNException {        
+    protected SVNProperties run() throws SVNException {        
         SVNWCClient16 client = new SVNWCClient16(getOperation().getRepositoryPool(), getOperation().getOptions());        
         client.doGetProperty(
                 getFirstTarget(), 
@@ -37,8 +37,9 @@ public class SvnOldGetProperties extends SvnLocalOperationRunner<SvnGetPropertie
                 getOperation().getApplicableChangelists());
         
         if (currentFile != null && currentProperties != null && !currentProperties.isEmpty()) {
-            getOperation().getReceiver().receive(SvnTarget.fromFile(currentFile), currentProperties);
+            getOperation().receive(SvnTarget.fromFile(currentFile), currentProperties);
         }
+        return getOperation().first();
     }
     
     public void handleProperty(File path, SVNPropertyData property) throws SVNException {
@@ -50,7 +51,7 @@ public class SvnOldGetProperties extends SvnLocalOperationRunner<SvnGetPropertie
         }
         if (!path.equals(currentFile)) {
             if (currentProperties != null && !currentProperties.isEmpty()) {
-                getOperation().getReceiver().receive(SvnTarget.fromFile(currentFile), currentProperties);
+                getOperation().receive(SvnTarget.fromFile(currentFile), currentProperties);
             }
             currentProperties.clear();
             currentFile = path;

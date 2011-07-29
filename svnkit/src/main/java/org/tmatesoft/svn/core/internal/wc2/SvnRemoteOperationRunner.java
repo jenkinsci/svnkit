@@ -6,7 +6,7 @@ import org.tmatesoft.svn.core.internal.wc2.old.SvnOldRepositoryAccess;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnOperation;
 
-public abstract class SvnRemoteOperationRunner<T extends SvnOperation> extends SvnOperationRunner<T> {
+public abstract class SvnRemoteOperationRunner<V, T extends SvnOperation<V>> extends SvnOperationRunner<V, T> {
     
     private SvnRepositoryAccess repositoryAccess;
     

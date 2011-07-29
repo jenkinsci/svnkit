@@ -33,12 +33,10 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
-import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc17.SVNStatus17.ConflictInfo;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.SVNWCSchedule;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.ScheduleInternalInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
@@ -53,8 +51,11 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo.RepositoryInfoField;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
-import org.tmatesoft.svn.core.wc.ISVNStatusFileProvider;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
+import org.tmatesoft.svn.core.wc2.SvnStatus;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
+import org.tmatesoft.svn.core.wc2.hooks.ISvnFileListHook;
 
 /**
  * @version 1.3
@@ -69,23 +70,22 @@ public class SVNStatusEditor17 {
     protected boolean myIsNoIgnore;
     protected SVNDepth myDepth;
 
-    protected ISVNStatus17Handler myStatusHandler;
+    protected ISvnObjectReceiver<SvnStatus> myStatusHandler;
 
     protected Map<File, File> myExternalsMap;
-    protected Collection myGlobalIgnores;
+    protected Collection<String> myGlobalIgnores;
 
     protected SVNURL myRepositoryRoot;
     protected Map myRepositoryLocks;
     protected long myTargetRevision;
     protected String myWCRootPath;
-    protected ISVNStatusFileProvider myFileProvider;
-    protected ISVNStatusFileProvider myDefaultFileProvider;
+    protected ISvnFileListHook myFileListHook;
+    protected ISvnFileListHook myDefaultFileListHook;
     protected boolean myIsGetExcluded;
 
-    private File myTargetAbsPath;
     private boolean myIgnoreTextMods;
 
-    public SVNStatusEditor17(File path, SVNWCContext wcContext, ISVNOptions options, boolean noIgnore, boolean reportAll, SVNDepth depth, ISVNStatus17Handler handler) {
+    public SVNStatusEditor17(File path, SVNWCContext wcContext, ISVNOptions options, boolean noIgnore, boolean reportAll, SVNDepth depth, ISvnObjectReceiver<SvnStatus> handler) {
 
         myWCContext = wcContext;
         myPath = path;
@@ -96,8 +96,8 @@ public class SVNStatusEditor17 {
         myExternalsMap = new HashMap<File, File>();
         myGlobalIgnores = getGlobalIgnores(options);
         myTargetRevision = -1;
-        myDefaultFileProvider = new DefaultSVNStatusFileProvider();
-        myFileProvider = myDefaultFileProvider;
+        myDefaultFileListHook = new DefaultSvnFileListHook();
+        myFileListHook = myDefaultFileListHook;
 
         myIsGetExcluded = false;
 
@@ -140,15 +140,17 @@ public class SVNStatusEditor17 {
         myTargetRevision = revision;
     }
 
-    public void setFileProvider(ISVNStatusFileProvider filesProvider) {
-        myFileProvider = filesProvider;
+    public void setFileListHook(ISvnFileListHook filesListHook) {
+        if (filesListHook != null) { 
+            myFileListHook = filesListHook;
+        }
     }
 
     public SVNDepth getDepth() {
         return myDepth;
     }
 
-    protected ISVNStatus17Handler getDefaultHandler() {
+    protected ISvnObjectReceiver<SvnStatus> getDefaultHandler() {
         return myStatusHandler;
     }
 
@@ -160,36 +162,37 @@ public class SVNStatusEditor17 {
         return myIsNoIgnore;
     }
 
-    private static Collection getGlobalIgnores(ISVNOptions options) {
+    private static Collection<String> getGlobalIgnores(ISVNOptions options) {
         if (options != null) {
             String[] ignores = options.getIgnorePatterns();
             if (ignores != null) {
-                Collection patterns = new SVNHashSet();
+                Collection<String> patterns = new HashSet<String>();
                 for (int i = 0; i < ignores.length; i++) {
                     patterns.add(ignores[i]);
                 }
                 return patterns;
             }
         }
-        return Collections.EMPTY_SET;
+        return Collections.emptySet();
     }
 
-    private static class DefaultSVNStatusFileProvider implements ISVNStatusFileProvider {
+    private static class DefaultSvnFileListHook implements ISvnFileListHook {
 
-        public Map getChildrenFiles(File parent) {
+        public Map<String, File> listFiles(File parent) {
             File[] children = SVNFileListUtil.listFiles(parent);
             if (children != null) {
-                Map map = new SVNHashMap();
+                @SuppressWarnings("unchecked")
+                Map<String, File> map = new SVNHashMap();
                 for (int i = 0; i < children.length; i++) {
                     map.put(SVNFileUtil.getFileName(children[i]), children[i]);
                 }
                 return map;
             }
-            return Collections.EMPTY_MAP;
+            return Collections.emptyMap();
         }
     }
 
-    private void sendStatusStructure(File localAbsPath, WCDbRepositoryInfo parentReposInfo, SVNWCDbInfo info, SVNNodeKind pathKind, boolean pathSpecial, boolean getAll, ISVNStatus17Handler handler) throws SVNException {
+    private void sendStatusStructure(File localAbsPath, WCDbRepositoryInfo parentReposInfo, SVNWCDbInfo info, SVNNodeKind pathKind, boolean pathSpecial, boolean getAll, ISvnObjectReceiver<SvnStatus> handler) throws SVNException {
         SVNLock repositoryLock = null;
         if (myRepositoryLocks != null) {
             WCDbRepositoryInfo reposInfo = getRepositoryRootUrlRelPath(parentReposInfo, info, localAbsPath);
@@ -197,17 +200,17 @@ public class SVNStatusEditor17 {
                 repositoryLock = (SVNLock) myRepositoryLocks.get("/" + SVNFileUtil.getFilePath(reposInfo.relPath));
             }
         }
-        SVNStatus17 status17 = assembleStatus(localAbsPath, parentReposInfo, info, pathKind, pathSpecial, getAll, repositoryLock);
-        if (status17 != null && handler != null) {
-            handler.handleStatus(status17);
+        SvnStatus status = assembleStatus(localAbsPath, parentReposInfo, info, pathKind, pathSpecial, getAll, repositoryLock);
+        if (status != null && handler != null) {
+            handler.receive(SvnTarget.fromFile(localAbsPath), status);
         }
 
     }
 
-    private void sendUnversionedItem(File nodeAbsPath, SVNNodeKind pathKind, boolean treeConflicted, Collection<String> patterns, boolean noIgnore, ISVNStatus17Handler handler) throws SVNException {
+    private void sendUnversionedItem(File nodeAbsPath, SVNNodeKind pathKind, boolean treeConflicted, Collection<String> patterns, boolean noIgnore, ISvnObjectReceiver<SvnStatus> handler) throws SVNException {
         boolean isIgnored = isIgnored(SVNFileUtil.getFileName(nodeAbsPath), patterns);
         boolean isExternal = isExternal(nodeAbsPath);
-        SVNStatus17 status = myWCContext.assembleUnversioned17(nodeAbsPath, pathKind, treeConflicted, isIgnored);
+        SvnStatus status = myWCContext.assembleUnversioned17(nodeAbsPath, pathKind, treeConflicted, isIgnored);
         if (status != null) {
             if (isExternal) {
                 status.setNodeStatus(SVNStatusType.STATUS_EXTERNAL);
@@ -216,13 +219,13 @@ public class SVNStatusEditor17 {
                 isIgnored = false;
             }
             if (handler != null && (noIgnore || !isIgnored || isExternal)) {
-                handler.handleStatus(status);
+                handler.receive(SvnTarget.fromFile(nodeAbsPath), status);
             }
         }
 
     }
 
-    public SVNStatus17 assembleStatus(File localAbsPath, WCDbRepositoryInfo parentReposInfo, SVNWCDbInfo info, SVNNodeKind pathKind, boolean pathSpecial, boolean getAll, SVNLock repositoryLock) throws SVNException {
+    public SvnStatus assembleStatus(File localAbsPath, WCDbRepositoryInfo parentReposInfo, SVNWCDbInfo info, SVNNodeKind pathKind, boolean pathSpecial, boolean getAll, SVNLock repositoryLock) throws SVNException {
 
         boolean switched_p, copied = false;
 
@@ -312,7 +315,7 @@ public class SVNStatusEditor17 {
         }
         boolean conflicted = info.conflicted;
         if (conflicted) {
-            ConflictInfo conflictInfo = myWCContext.getConflicted(localAbsPath, true, true, true);
+            SVNWCContext.ConflictInfo conflictInfo = myWCContext.getConflicted(localAbsPath, true, true, true);
             if (!conflictInfo.propConflicted && !conflictInfo.textConflicted && !conflictInfo.treeConflicted) {
                 conflicted =false;
             }
@@ -370,9 +373,9 @@ public class SVNStatusEditor17 {
         default:
             statusKind = SVNNodeKind.UNKNOWN;
         }
-        SVNStatus17 stat = new SVNStatus17(myWCContext);
+        SvnStatus stat = new SvnStatus();
         stat.setKind(statusKind);
-        stat.setLocalAbsPath(localAbsPath);
+        stat.setPath(localAbsPath);
 
         if (info.lock != null) {
             stat.setLock(new SVNLock(SVNFileUtil.getFilePath(reposInfo.relPath), info.lock.token, info.lock.owner, info.lock.comment, info.lock.date, null));
@@ -381,30 +384,30 @@ public class SVNStatusEditor17 {
         stat.setDepth(info.depth);
         stat.setNodeStatus(node_status);
         stat.setTextStatus(text_status);
-        stat.setPropStatus(prop_status);
-        stat.setReposNodeStatus(SVNStatusType.STATUS_NONE); 
-        stat.setReposTextStatus(SVNStatusType.STATUS_NONE);
-        stat.setReposPropStatus(SVNStatusType.STATUS_NONE);
+        stat.setPropertiesStatus(prop_status);
+        stat.setRepositoryNodeStatus(SVNStatusType.STATUS_NONE); 
+        stat.setRepositoryTextStatus(SVNStatusType.STATUS_NONE);
+        stat.setRepositoryPropertiesStatus(SVNStatusType.STATUS_NONE);
         stat.setSwitched(switched_p);
         stat.setCopied(copied);
-        stat.setReposLock(repositoryLock);
+        stat.setRepositoryLock(repositoryLock);
         stat.setRevision(info.revnum);
-        stat.setChangedRev(info.changedRev);
+        stat.setChangedRevision(info.changedRev);
         stat.setChangedAuthor(info.changedAuthor);
         stat.setChangedDate(info.changedDate);
 
-        stat.setOodKind(SVNNodeKind.NONE);
-        stat.setOodChangedRev(-1);
-        stat.setOodChangedDate(null);
-        stat.setOodChangedAuthor(null);
+        stat.setRepositoryKind(SVNNodeKind.NONE);
+        stat.setRepositoryChangedRevision(SVNWCContext.INVALID_REVNUM);
+        stat.setRepositoryChangedDate(null);
+        stat.setRepositoryChangedAuthor(null);
 
-        stat.setLocked(info.locked);
+        stat.setWcLocked(info.locked);
         stat.setConflicted(info.conflicted);
         stat.setVersioned(true);
         stat.setChangelist(info.changelist);
-        stat.setReposRootUrl(reposInfo.rootUrl);
-        stat.setReposRelpath(reposInfo.relPath);
-        stat.setReposUUID(reposInfo.uuid);
+        stat.setRepositoryRootUrl(reposInfo.rootUrl);
+        stat.setRepositoryRelativePath(SVNFileUtil.getFilePath(reposInfo.relPath));
+        stat.setRepositoryUuid(reposInfo.uuid);
         
         return stat;
     }
@@ -508,20 +511,19 @@ public class SVNStatusEditor17 {
             skipRoot = true;
         }
         
-        myTargetAbsPath = localAbsPath;
         myIgnoreTextMods = ignoreTextMods;
         
         getDirStatus(anchorAbsPath, targetName, skipRoot, null, dirInfo, fileType, ignorePatterns, depth, getAll, noIgnore, getDefaultHandler());        
     }
    
     protected void getDirStatus(File localAbsPath, String selected, boolean skipThisDir, WCDbRepositoryInfo parentReposInfo, 
-            SVNWCDbInfo dirInfo, SVNFileType fileType, Collection<String> ignorePatterns, SVNDepth depth, boolean getAll, boolean noIgnore, ISVNStatus17Handler handler) throws SVNException {
+            SVNWCDbInfo dirInfo, SVNFileType fileType, Collection<String> ignorePatterns, SVNDepth depth, boolean getAll, boolean noIgnore, ISvnObjectReceiver<SvnStatus> handler) throws SVNException {
         myWCContext.checkCancelled();
         
         if (depth == SVNDepth.UNKNOWN) {
             depth = SVNDepth.INFINITY;
         }
-        final Map<String, File> childrenFiles = myFileProvider.getChildrenFiles(localAbsPath);
+        final Map<String, File> childrenFiles = myFileListHook.listFiles(localAbsPath);
         final Set<String> allChildren = new HashSet<String>();
         final Set<String> conflicts = new HashSet<String>();
         final Map<String, SVNWCDbInfo> nodes = new HashMap<String, ISVNWCDb.SVNWCDbInfo>();

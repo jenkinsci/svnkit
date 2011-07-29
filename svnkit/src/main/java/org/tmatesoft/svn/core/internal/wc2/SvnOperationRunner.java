@@ -9,14 +9,14 @@ import org.tmatesoft.svn.core.wc2.ISvnOperationRunner;
 import org.tmatesoft.svn.core.wc2.SvnOperation;
 
 
-public abstract class SvnOperationRunner<T extends SvnOperation> implements ISvnOperationRunner<T>, ISVNEventHandler {
+public abstract class SvnOperationRunner<V, T extends SvnOperation<V>> implements ISvnOperationRunner<V, T>, ISVNEventHandler {
     private T operation;
     private SvnWcGeneration wcGeneration;
     private SVNWCContext wcContext;
     
-    public void run(T operation) throws SVNException {
+    public V run(T operation) throws SVNException {
         setOperation(operation);
-        run();
+        return run();
     }
     
     public void reset() {
@@ -41,7 +41,7 @@ public abstract class SvnOperationRunner<T extends SvnOperation> implements ISvn
         return this.wcGeneration;
     }
 
-    protected abstract void run() throws SVNException;
+    protected abstract V run() throws SVNException;
 
     protected void setOperation(T operation) {
         this.operation = operation;

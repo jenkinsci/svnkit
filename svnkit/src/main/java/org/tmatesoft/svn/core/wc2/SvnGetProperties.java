@@ -7,7 +7,7 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 
 public class SvnGetProperties extends SvnReceivingOperation<SVNProperties> {
 
-    public SvnGetProperties(SvnOperationFactory factory) {
+    protected SvnGetProperties(SvnOperationFactory factory) {
         super(factory);
     }
 

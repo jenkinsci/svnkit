@@ -13,10 +13,10 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnGetProperties;
 import org.tmatesoft.svn.util.SVNLogType;
 
-public class SvnNgGetProperties extends SvnNgOperationRunner<SvnGetProperties> {
+public class SvnNgGetProperties extends SvnNgOperationRunner<SVNProperties, SvnGetProperties> {
 
     @Override
-    protected void run(SVNWCContext context) throws SVNException {
+    protected SVNProperties run(SVNWCContext context) throws SVNException {
         boolean pristine = getOperation().getRevision() == SVNRevision.COMMITTED || getOperation().getRevision() == SVNRevision.BASE;
         SVNNodeKind kind = context.readKind(getFirstTarget(), false);
         
@@ -28,7 +28,7 @@ public class SvnNgGetProperties extends SvnNgOperationRunner<SvnGetProperties> {
         if (kind == SVNNodeKind.DIR) {
             if (getOperation().getDepth() == SVNDepth.EMPTY) {
                 if (matchesChangelist(getFirstTarget())) {
-                    return;
+                    return getOperation().first();
                 }
                 SVNProperties properties = null;
                 if (pristine) {
@@ -37,7 +37,7 @@ public class SvnNgGetProperties extends SvnNgOperationRunner<SvnGetProperties> {
                     properties = context.getDb().readProperties(getFirstTarget());
                 }
                 if (properties != null && !properties.isEmpty()) {
-                    getOperation().getReceiver().receive(getOperation().getFirstTarget(), properties);
+                    getOperation().receive(getOperation().getFirstTarget(), properties);
                 }
             } else if (matchesChangelist(getFirstTarget())) {
                 SVNWCDb db = (SVNWCDb) context.getDb();
@@ -47,7 +47,7 @@ public class SvnNgGetProperties extends SvnNgOperationRunner<SvnGetProperties> {
                         false, 
                         pristine, 
                         getOperation().getApplicableChangelists(), 
-                        getOperation().getReceiver());
+                        getOperation());
             }
         } else {
             SVNProperties properties = null;
@@ -59,9 +59,10 @@ public class SvnNgGetProperties extends SvnNgOperationRunner<SvnGetProperties> {
                 }
             }
             if (properties != null && !properties.isEmpty()) {
-                getOperation().getReceiver().receive(getOperation().getFirstTarget(), properties);
+                getOperation().receive(getOperation().getFirstTarget(), properties);
             }
         }        
+        return getOperation().first();
     }
 
 }

@@ -28,7 +28,7 @@ import org.tmatesoft.svn.core.wc2.SvnInfo;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
 
-public class SvnRemoteGetInfo extends SvnRemoteOperationRunner<SvnGetInfo> {
+public class SvnRemoteGetInfo extends SvnRemoteOperationRunner<SvnInfo, SvnGetInfo> {
 
     public boolean isApplicable(SvnGetInfo operation, SvnWcGeneration wcGeneration) throws SVNException {
         if (super.isApplicable(operation, wcGeneration)) {
@@ -43,7 +43,7 @@ public class SvnRemoteGetInfo extends SvnRemoteOperationRunner<SvnGetInfo> {
         return true;
     }
 
-    protected void run() throws SVNException {
+    protected SvnInfo run() throws SVNException {
         Structure<RepositoryInfo> repositoryInfo = getRepositoryAccess().createRepositoryFor(getOperation().getFirstTarget(), getOperation().getRevision(), getOperation().getPegRevision(), null);
         SVNRepository repository = repositoryInfo.<SVNRepository>get(RepositoryInfo.repository);
         SVNURL url = repositoryInfo.<SVNURL>get(RepositoryInfo.url);
@@ -88,7 +88,7 @@ public class SvnRemoteGetInfo extends SvnRemoteOperationRunner<SvnGetInfo> {
                             locksMap.put(lock.getPath(), lock);
                         }
                         pushDirInfo(repository, SVNRevision.create(revNum), "", repository.getRepositoryRoot(true), repositoryUUID, url, locksMap, depth);
-                        return;
+                        return getOperation().first();
                     }
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Server does not support retrieving information about the repository root");
                     SVNErrorManager.error(err, SVNLogType.WC);
@@ -149,7 +149,7 @@ public class SvnRemoteGetInfo extends SvnRemoteOperationRunner<SvnGetInfo> {
             }
         }
         SvnInfo info = creatSvnInfoForEntry(repositoryRootUrl, repositoryUUID, rootEntry, url, revNum, lock);
-        getOperation().getReceiver().receive(SvnTarget.fromURL(url), info);
+        getOperation().receive(SvnTarget.fromURL(url), info);
         
         if (depth.compareTo(SVNDepth.EMPTY) > 0 && rootEntry.getKind() == SVNNodeKind.DIR) {
             SVNLock[] locks = null;
@@ -176,8 +176,7 @@ public class SvnRemoteGetInfo extends SvnRemoteOperationRunner<SvnGetInfo> {
             
             pushDirInfo(repository, SVNRevision.create(revNum), "", repository.getRepositoryRoot(true), repositoryUUID, url, locksMap, depth);
         }
-
-        
+        return getOperation().first();        
     }
     
     private void pushDirInfo(SVNRepository repos, SVNRevision rev, String path, SVNURL root, String uuid, SVNURL url, Map<String, SVNLock> locks, SVNDepth depth) throws SVNException {
@@ -191,7 +190,7 @@ public class SvnRemoteGetInfo extends SvnRemoteOperationRunner<SvnGetInfo> {
             if (depth.compareTo(SVNDepth.IMMEDIATES) >= 0 || (depth == SVNDepth.FILES && child.getKind() == SVNNodeKind.FILE)) {
                 SvnInfo info = creatSvnInfoForEntry(root, uuid, child, childURL, rev.getNumber(), lock);
                 
-                getOperation().getReceiver().receive(SvnTarget.fromURL(childURL), info);
+                getOperation().receive(SvnTarget.fromURL(childURL), info);
             }
             
             if (depth == SVNDepth.INFINITY && child.getKind() == SVNNodeKind.DIR) {
@@ -208,7 +207,7 @@ public class SvnRemoteGetInfo extends SvnRemoteOperationRunner<SvnGetInfo> {
         info.setLastChangedRevision(entry.getRevision());
         info.setLock(lock);
         info.setRepositoryRootURL(root);
-        info.setRepositoryUUID(uuid);
+        info.setRepositoryUuid(uuid);
         info.setSize(entry.getSize());
         info.setUrl(entryURL);
         info.setRevision(revision);

@@ -19,6 +19,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNExternal;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNCapability;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -34,6 +35,9 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
+import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
+import org.tmatesoft.svn.core.wc2.SvnStatus;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -71,33 +75,35 @@ public class SVNStatusClient17 extends SVNBaseClient17 {
     /**
      * @author TMate Software Ltd.
      */
-    private static class TweakHandler implements ISVNStatus17Handler {
+    private static class TweakHandler implements ISvnObjectReceiver<SvnStatus> {
 
         private final Collection myChangeLists;
         private final ISVNStatusHandler myHandler;
         public boolean deletedInRepository = false;
+        private SVNWCContext context;
 
-        private TweakHandler(Collection changeLists, ISVNStatusHandler handler) {
+        private TweakHandler(SVNWCContext context, Collection changeLists, ISVNStatusHandler handler) {
             myChangeLists = changeLists;
             myHandler = handler;
+            this.context = context;
         }
 
-        public void handleStatus(SVNStatus17 status) throws SVNException {
+        public void receive(SvnTarget target, SvnStatus status) throws SVNException {
             /*
              * If we know that the target was deleted in HEAD of the repository,
              * we need to note that fact in all the status structures that come
              * through here.
              */
             if (deletedInRepository) {
-                status.setReposNodeStatus(SVNStatusType.STATUS_DELETED);
+                status.setRepositoryNodeStatus(SVNStatusType.STATUS_DELETED);
             }
             if (!matchesChangeList(myChangeLists, status)) {
                 return;
             }
-            myHandler.handleStatus(status.getStatus16());
+            myHandler.handleStatus(SvnCodec.status(context, status));
         }
 
-        public static boolean matchesChangeList(Collection changeLists, SVNStatus17 status) {
+        public static boolean matchesChangeList(Collection changeLists, SvnStatus status) {
             return changeLists == null || changeLists.isEmpty() || (status != null && status.getChangelist() != null && changeLists.contains(status.getChangelist()));
         }
 
@@ -381,7 +387,7 @@ public class SVNStatusClient17 extends SVNBaseClient17 {
         depth = depth == null ? SVNDepth.UNKNOWN : depth;
         final SVNWCContext wcContext = getContext();
         SVNStatusEditor17 editor = null;
-        TweakHandler tweakHandler = new TweakHandler(changeLists, handler);
+        TweakHandler tweakHandler = new TweakHandler(wcContext, changeLists, handler);
 
         try {
 
@@ -466,9 +472,6 @@ public class SVNStatusClient17 extends SVNBaseClient17 {
                 }
             } else {
                 editor = new SVNStatusEditor17(targetAbsPath, wcContext, getOptions(), includeIgnored, reportAll, depth, tweakHandler);
-                if (myFilesProvider != null) {
-                    editor.setFileProvider(myFilesProvider);
-                }
                 editor.walkStatus(targetAbsPath, depth, reportAll, includeIgnored, false, null);
             }
 

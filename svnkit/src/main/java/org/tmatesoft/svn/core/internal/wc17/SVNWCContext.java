@@ -55,7 +55,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumInputStream;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumOutputStream;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
-import org.tmatesoft.svn.core.internal.wc17.SVNStatus17.ConflictInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbLock;
@@ -96,6 +95,7 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.core.wc2.SvnChecksum;
+import org.tmatesoft.svn.core.wc2.SvnStatus;
 import org.tmatesoft.svn.util.SVNLogType;
 
 import de.regnis.q.sequence.line.QSequenceLineRAByteData;
@@ -601,18 +601,18 @@ public class SVNWCContext {
         return info;
     }
 
-    public SVNStatus17 assembleUnversioned17(File localAbspath, SVNNodeKind pathKind, boolean treeConflicted, boolean isIgnored) throws SVNException {
+    public SvnStatus assembleUnversioned17(File localAbspath, SVNNodeKind pathKind, boolean treeConflicted, boolean isIgnored) throws SVNException {
 
-        SVNStatus17 stat = new SVNStatus17(this);
-        stat.setLocalAbsPath(localAbspath);
+        SvnStatus stat = new SvnStatus();
+        stat.setPath(localAbspath);
         stat.setKind(SVNNodeKind.UNKNOWN); 
         stat.setDepth(SVNDepth.UNKNOWN);
         stat.setNodeStatus(SVNStatusType.STATUS_NONE);
         stat.setTextStatus(SVNStatusType.STATUS_NONE);
-        stat.setPropStatus(SVNStatusType.STATUS_NONE);
-        stat.setReposNodeStatus(SVNStatusType.STATUS_NONE);
-        stat.setReposTextStatus(SVNStatusType.STATUS_NONE);
-        stat.setReposPropStatus(SVNStatusType.STATUS_NONE);
+        stat.setPropertiesStatus(SVNStatusType.STATUS_NONE);
+        stat.setRepositoryNodeStatus(SVNStatusType.STATUS_NONE);
+        stat.setRepositoryTextStatus(SVNStatusType.STATUS_NONE);
+        stat.setRepositoryPropertiesStatus(SVNStatusType.STATUS_NONE);
 
         if (pathKind != SVNNodeKind.NONE) {
             if (isIgnored) {
@@ -625,9 +625,9 @@ public class SVNWCContext {
         }
 
         stat.setRevision(INVALID_REVNUM);
-        stat.setChangedRev(INVALID_REVNUM);
-        stat.setOodChangedRev(INVALID_REVNUM);
-        stat.setOodKind(SVNNodeKind.NONE);
+        stat.setChangedRevision(INVALID_REVNUM);
+        stat.setRepositoryChangedRevision(INVALID_REVNUM);
+        stat.setRepositoryKind(SVNNodeKind.NONE);
 
         stat.setConflicted(treeConflicted);
         stat.setChangelist(null);
@@ -1101,9 +1101,9 @@ public class SVNWCContext {
         return SVNWCUtils.join(readInfo.reposRootUrl, readInfo.reposRelPath);
     }
 
-    public ConflictInfo getConflicted(File localAbsPath, boolean isTextNeed, boolean isPropNeed, boolean isTreeNeed) throws SVNException {
+    public SVNWCContext.ConflictInfo getConflicted(File localAbsPath, boolean isTextNeed, boolean isPropNeed, boolean isTreeNeed) throws SVNException {
         final WCDbInfo readInfo = db.readInfo(localAbsPath, InfoField.kind, InfoField.conflicted);
-        final ConflictInfo info = new ConflictInfo();
+        final SVNWCContext.ConflictInfo info = new SVNWCContext.ConflictInfo();
         if (!readInfo.conflicted) {
             return info;
         }
@@ -4249,6 +4249,17 @@ public class SVNWCContext {
 
         public SVNProperties propChanges;
         public SVNProperties originalProps;
+    }
+
+    public static class ConflictInfo {
+        public boolean textConflicted;
+        public boolean propConflicted;
+        public boolean treeConflicted;
+        public File baseFile;
+        public File repositoryFile;
+        public File localFile;
+        public File propRejectFile;
+        public SVNTreeConflictDescription treeConflict;
     }
 
     public PropDiffs getPropDiffs(File localAbsPath) throws SVNException {

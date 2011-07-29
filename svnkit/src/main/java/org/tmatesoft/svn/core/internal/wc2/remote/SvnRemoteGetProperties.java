@@ -25,7 +25,7 @@ import org.tmatesoft.svn.core.wc2.SvnGetProperties;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
 
-public class SvnRemoteGetProperties extends SvnRemoteOperationRunner<SvnGetProperties> {
+public class SvnRemoteGetProperties extends SvnRemoteOperationRunner<SVNProperties, SvnGetProperties> {
 
     public boolean isApplicable(SvnGetProperties operation, SvnWcGeneration wcGeneration) throws SVNException {
         if (super.isApplicable(operation, wcGeneration)) {
@@ -40,7 +40,7 @@ public class SvnRemoteGetProperties extends SvnRemoteOperationRunner<SvnGetPrope
     }
 
     @Override
-    protected void run() throws SVNException {
+    protected SVNProperties run() throws SVNException {
         Structure<RepositoryInfo> repositoryInfo = 
             getRepositoryAccess().createRepositoryFor(
                     getOperation().getFirstTarget(), 
@@ -55,6 +55,8 @@ public class SvnRemoteGetProperties extends SvnRemoteOperationRunner<SvnGetPrope
         
         SVNNodeKind kind = repository.checkPath("", revnum);        
         remotePropertyGet(url, kind, "", repository, revnum, getOperation().getDepth());
+        
+        return getOperation().first();
     }
     
     @SuppressWarnings("unchecked")
@@ -81,7 +83,7 @@ public class SvnRemoteGetProperties extends SvnRemoteOperationRunner<SvnGetPrope
                 }                
             }
             if (!props.isEmpty()) {
-                getOperation().getReceiver().receive(SvnTarget.fromURL(fullURL), props);
+                getOperation().receive(SvnTarget.fromURL(fullURL), props);
             }
         }
         

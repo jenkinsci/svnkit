@@ -23,8 +23,10 @@ import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgGetInfo;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgGetProperties;
+import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgGetStatus;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetInfo;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetProperties;
+import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetStatus;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteGetInfo;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteGetProperties;
 import org.tmatesoft.svn.core.wc.DefaultSVNRepositoryPool;
@@ -35,10 +37,10 @@ import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
 public class SvnOperationFactory {
     
-    private Map<Class<?>, List<ISvnOperationRunner<SvnOperation>>> anyFormatOperationRunners;
-    private Map<Class<?>, List<ISvnOperationRunner<SvnOperation>>> noneOperationRunners;
-    private Map<Class<?>, List<ISvnOperationRunner<SvnOperation>>> v17OperationRunners;
-    private Map<Class<?>, List<ISvnOperationRunner<SvnOperation>>> v16OperationRunners;
+    private Map<Class<?>, List<ISvnOperationRunner<?, SvnOperation<?>>>> anyFormatOperationRunners;
+    private Map<Class<?>, List<ISvnOperationRunner<?, SvnOperation<?>>>> noneOperationRunners;
+    private Map<Class<?>, List<ISvnOperationRunner<?, SvnOperation<?>>>> v17OperationRunners;
+    private Map<Class<?>, List<ISvnOperationRunner<?, SvnOperation<?>>>> v16OperationRunners;
     
     private ISVNAuthenticationManager authenticationManager;
     private ISVNCanceller canceller;
@@ -55,11 +57,12 @@ public class SvnOperationFactory {
     }
     
     public SvnOperationFactory(SVNWCContext context) {
-        v17OperationRunners = new HashMap<Class<?>, List<ISvnOperationRunner<SvnOperation>>>();
-        v16OperationRunners = new HashMap<Class<?>, List<ISvnOperationRunner<SvnOperation>>>();
-        anyFormatOperationRunners = new HashMap<Class<?>, List<ISvnOperationRunner<SvnOperation>>>();
-        noneOperationRunners = new HashMap<Class<?>, List<ISvnOperationRunner<SvnOperation>>>();
+        v17OperationRunners = new HashMap<Class<?>, List<ISvnOperationRunner<?, SvnOperation<?>>>>();
+        v16OperationRunners = new HashMap<Class<?>, List<ISvnOperationRunner<?, SvnOperation<?>>>>();
+        anyFormatOperationRunners = new HashMap<Class<?>, List<ISvnOperationRunner<?, SvnOperation<?>>>>();
+        noneOperationRunners = new HashMap<Class<?>, List<ISvnOperationRunner<?, SvnOperation<?>>>>();
         wcContext = context;
+        
         setAutoCloseContext(wcContext == null);
         
         registerOperationRunner(SvnGetInfo.class, new SvnRemoteGetInfo());
@@ -69,6 +72,9 @@ public class SvnOperationFactory {
         registerOperationRunner(SvnGetProperties.class, new SvnRemoteGetProperties());
         registerOperationRunner(SvnGetProperties.class, new SvnNgGetProperties(), SvnWcGeneration.V17, SvnWcGeneration.NOT_DETECTED);
         registerOperationRunner(SvnGetProperties.class, new SvnOldGetProperties(), SvnWcGeneration.V16);
+
+        registerOperationRunner(SvnGetStatus.class, new SvnNgGetStatus(), SvnWcGeneration.V17, SvnWcGeneration.NOT_DETECTED);
+        registerOperationRunner(SvnGetStatus.class, new SvnOldGetStatus(), SvnWcGeneration.V16);
     }
     
     public boolean isAutoCloseContext() {
@@ -154,18 +160,25 @@ public class SvnOperationFactory {
         return getProperties;
     }
 
-    protected void run(SvnOperation operation) throws SVNException {
-        ISvnOperationRunner<SvnOperation> runner = getImplementation(operation);
+    public SvnGetStatus createGetStatus() {
+        SvnGetStatus getStatus = new SvnGetStatus(this);
+        getStatus.initDefaults();
+        return getStatus;
+    }
+
+    protected Object run(SvnOperation<?> operation) throws SVNException {
+        ISvnOperationRunner<?, SvnOperation<?>> runner = getImplementation(operation);
         if (runner != null) {
             SVNWCContext wcContext = null;
             try {
                 wcContext = obtainWcContext();
                 runner.setWcContext(wcContext);
-                runner.run(operation);
+                return runner.run(operation);
             } finally {
                 releaseWcContext(wcContext);
             }
         }
+        return null;
     }
 
     private void releaseWcContext(SVNWCContext wcContext) {
@@ -200,7 +213,7 @@ public class SvnOperationFactory {
         autoDisposeRepositoryPool = dispose;
     }
 
-    protected ISvnOperationRunner<SvnOperation> getImplementation(SvnOperation operation) throws SVNException {
+    protected ISvnOperationRunner<?, SvnOperation<?>> getImplementation(SvnOperation<?> operation) throws SVNException {
         if (operation == null) {
             return null;
         }
@@ -208,7 +221,7 @@ public class SvnOperationFactory {
         if (operation.hasLocalTargets()) {
             wcGeneration = detectWcGeneration(operation.getFirstTarget().getFile());
         }
-        final List<ISvnOperationRunner<SvnOperation>> candidateRunners = new LinkedList<ISvnOperationRunner<SvnOperation>>();
+        final List<ISvnOperationRunner<?, SvnOperation<?>>> candidateRunners = new LinkedList<ISvnOperationRunner<?, SvnOperation<?>>>();
         
         candidateRunners.addAll(getRunners(operation.getClass(), anyFormatOperationRunners));
         if (wcGeneration == SvnWcGeneration.NOT_DETECTED) {
@@ -219,9 +232,9 @@ public class SvnOperationFactory {
             candidateRunners.addAll(getRunners(operation.getClass(), v17OperationRunners));
         }
         
-        ISvnOperationRunner<SvnOperation> runner = null;
+        ISvnOperationRunner<?, SvnOperation<?>> runner = null;
         
-        for (ISvnOperationRunner<SvnOperation> candidateRunner : candidateRunners) {            
+        for (ISvnOperationRunner<?, SvnOperation<?>> candidateRunner : candidateRunners) {            
             boolean isApplicable = candidateRunner.isApplicable(operation, wcGeneration);
             if (!isApplicable) {
                 continue;
@@ -237,11 +250,11 @@ public class SvnOperationFactory {
     }
     
     @SuppressWarnings("unchecked")
-    protected void registerOperationRunner(Class<?> operationClass, ISvnOperationRunner<? extends SvnOperation> runner, SvnWcGeneration... formats) {
+    protected void registerOperationRunner(Class<?> operationClass, ISvnOperationRunner<?, ? extends SvnOperation<?>> runner, SvnWcGeneration... formats) {
         if (operationClass == null || runner == null) {
             return;
         }
-        Collection<Map<Class<?>, List<ISvnOperationRunner<SvnOperation>>>> maps = new ArrayList<Map<Class<?>,List<ISvnOperationRunner<SvnOperation>>>>();
+        Collection<Map<Class<?>, List<ISvnOperationRunner<?, SvnOperation<?>>>>> maps = new ArrayList<Map<Class<?>,List<ISvnOperationRunner<?, SvnOperation<?>>>>>();
         if (formats == null || formats.length == 0) {
             maps.add(anyFormatOperationRunners);
         } else {
@@ -257,13 +270,13 @@ public class SvnOperationFactory {
                 maps.add(v16OperationRunners);
             }
         }
-        for (Map<Class<?>, List<ISvnOperationRunner<SvnOperation>>> runnerMap : maps) {
-            List<ISvnOperationRunner<SvnOperation>> runners = runnerMap.get(operationClass);
+        for (Map<Class<?>, List<ISvnOperationRunner<?, SvnOperation<?>>>> runnerMap : maps) {
+            List<ISvnOperationRunner<?, SvnOperation<?>>> runners = runnerMap.get(operationClass);
             if (runners == null) {
-                runners = new LinkedList<ISvnOperationRunner<SvnOperation>>();
+                runners = new LinkedList<ISvnOperationRunner<?, SvnOperation<?>>>();
                 runnerMap.put(operationClass, runners);
             }
-            runners.add((ISvnOperationRunner<SvnOperation>) runner);
+            runners.add((ISvnOperationRunner<?, SvnOperation<?>>) runner);
         }
     }
     
@@ -286,11 +299,15 @@ public class SvnOperationFactory {
         }
     }
     
-    private static List<ISvnOperationRunner<SvnOperation>> getRunners(Class<?> clazz, Map<Class<?>, List<ISvnOperationRunner<SvnOperation>>> map) {
-        List<ISvnOperationRunner<SvnOperation>> list = map.get(clazz);
+    private static List<ISvnOperationRunner<?, SvnOperation<?>>> getRunners(Class<?> clazz, Map<Class<?>, List<ISvnOperationRunner<?,SvnOperation<?>>>> map) {
+        List<ISvnOperationRunner<?, SvnOperation<?>>> list = map.get(clazz);
         if (list == null) {
             list = Collections.emptyList();
         }
         return list;
+    }
+
+    public SVNWCContext getWcContext() {
+        return wcContext;
     }
 }

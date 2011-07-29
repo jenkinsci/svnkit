@@ -45,7 +45,7 @@ import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.core.wc2.SvnWorkingCopyInfo;
 import org.tmatesoft.svn.util.SVNLogType;
 
-public class SvnNgGetInfo extends SvnNgOperationRunner<SvnGetInfo> implements ISVNWCNodeHandler {
+public class SvnNgGetInfo extends SvnNgOperationRunner<SvnInfo, SvnGetInfo> implements ISVNWCNodeHandler {
     
     private boolean hasRootTreeConflict;
     private boolean isFirstInfo;
@@ -58,7 +58,7 @@ public class SvnNgGetInfo extends SvnNgOperationRunner<SvnGetInfo> implements IS
     }
     
     @Override
-    protected void run(SVNWCContext context) throws SVNException {
+    protected SvnInfo run(SVNWCContext context) throws SVNException {
         hasRootTreeConflict = false;
         isFirstInfo = true;
         getTreeConflicts().clear();
@@ -94,11 +94,12 @@ public class SvnNgGetInfo extends SvnNgOperationRunner<SvnGetInfo> implements IS
                 unversionedInfo.getWcInfo().setConflicts(conflicts);
                 if (reposInfo != null) {
                     unversionedInfo.setRepositoryRootURL(reposInfo.reposRootUrl);
-                    unversionedInfo.setRepositoryUUID(reposInfo.reposUuid);
+                    unversionedInfo.setRepositoryUuid(reposInfo.reposUuid);
                 }
-                getOperation().getReceiver().receive(SvnTarget.fromFile(target), unversionedInfo);
+                getOperation().receive(SvnTarget.fromFile(target), unversionedInfo);
             }
         }
+        return getOperation().first();
     }
 
     public void nodeFound(File localAbspath, SVNWCDbKind kind) throws SVNException {
@@ -109,7 +110,7 @@ public class SvnNgGetInfo extends SvnNgOperationRunner<SvnGetInfo> implements IS
         }
         isFirstInfo = false;
         if (info != null) {
-            getOperation().getReceiver().receive(SvnTarget.fromFile(localAbspath), info);
+            getOperation().receive(SvnTarget.fromFile(localAbspath), info);
         }
         if (getOperation().isFetchActualOnly() && kind == SVNWCDbKind.Dir) {
             Map<String,SVNTreeConflictDescription> treeConflicts = getWcContext().getDb().opReadAllTreeConflicts(localAbspath);
@@ -157,7 +158,7 @@ public class SvnNgGetInfo extends SvnNgOperationRunner<SvnGetInfo> implements IS
         
         info.setRevision(readInfo.revision);
         info.setRepositoryRootURL(readInfo.reposRootUrl);
-        info.setRepositoryUUID(readInfo.reposUuid);
+        info.setRepositoryUuid(readInfo.reposUuid);
         info.setLastChangedDate(readInfo.changedDate);
         info.setLastChangedAuthor(readInfo.changedAuthor);
         info.setLastChangedRevision(readInfo.changedRev);
@@ -172,7 +173,7 @@ public class SvnNgGetInfo extends SvnNgOperationRunner<SvnGetInfo> implements IS
         
         if (readInfo.originalRootUrl != null) {
             info.setRepositoryRootURL(readInfo.originalRootUrl);
-            info.setRepositoryUUID(readInfo.originalUuid);
+            info.setRepositoryUuid(readInfo.originalUuid);
         }
         
         if (readInfo.status == SVNWCDbStatus.Added) {
@@ -187,7 +188,7 @@ public class SvnNgGetInfo extends SvnNgOperationRunner<SvnGetInfo> implements IS
             } else if (readInfo.opRoot) {
                 WCDbAdditionInfo addInfo = getWcContext().getDb().scanAddition(localAbspath, AdditionInfoField.reposRelPath, AdditionInfoField.reposRootUrl, AdditionInfoField.reposUuid);
                 info.setRepositoryRootURL(addInfo.reposRootUrl);
-                info.setRepositoryUUID(addInfo.reposUuid);
+                info.setRepositoryUuid(addInfo.reposUuid);
                 if (readInfo.haveBase) {
                     long baseRev = getWcContext().getDb().getBaseInfo(localAbspath, BaseInfoField.revision).revision;
                     info.setRevision(baseRev);
@@ -195,7 +196,7 @@ public class SvnNgGetInfo extends SvnNgOperationRunner<SvnGetInfo> implements IS
             } else {
                 Structure<NodeOriginInfo> nodeOrigin = getWcContext().getNodeOrigin(localAbspath, true);
                 info.setRepositoryRootURL(nodeOrigin.<SVNURL>get(NodeOriginInfo.reposRootUrl));
-                info.setRepositoryUUID(nodeOrigin.text(NodeOriginInfo.reposUuid));
+                info.setRepositoryUuid(nodeOrigin.text(NodeOriginInfo.reposUuid));
                 info.setRevision(nodeOrigin.lng(NodeOriginInfo.revision));
                 nodeOrigin.release();
             }
@@ -222,7 +223,7 @@ public class SvnNgGetInfo extends SvnNgOperationRunner<SvnGetInfo> implements IS
                 WCDbAdditionInfo additionInfo = getWcContext().getDb().scanAddition(localAbspath, AdditionInfoField.reposRootUrl, AdditionInfoField.reposRelPath, AdditionInfoField.reposUuid, AdditionInfoField.originalRevision);
                 reposRelPath = additionInfo.reposRelPath;
                 info.setRepositoryRootURL(additionInfo.reposRootUrl);
-                info.setRepositoryUUID(additionInfo.reposUuid);
+                info.setRepositoryUuid(additionInfo.reposUuid);
                 info.setRevision(additionInfo.originalRevision);
                 File p = SVNFileUtil.createFilePath(reposRelPath, SVNWCUtils.skipAncestor(addedAbsPath, localAbspath));
                 
@@ -232,7 +233,7 @@ public class SvnNgGetInfo extends SvnNgOperationRunner<SvnGetInfo> implements IS
                 reposRelPath = baseInfo.reposRelPath;
                 info.setRevision(baseInfo.revision);
                 info.setRepositoryRootURL(baseInfo.reposRootUrl);
-                info.setRepositoryUUID(baseInfo.reposUuid);
+                info.setRepositoryUuid(baseInfo.reposUuid);
                 
                 info.setUrl(SVNWCUtils.join(info.getRepositoryRootUrl(), reposRelPath));
             }

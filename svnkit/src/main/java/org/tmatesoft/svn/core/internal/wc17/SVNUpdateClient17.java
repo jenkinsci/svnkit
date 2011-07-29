@@ -26,7 +26,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc17.SVNStatus17.ConflictInfo;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.ConflictInfo;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNCapability;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -426,7 +426,7 @@ public class SVNUpdateClient17 extends SVNBaseClient17 {
         }
         
         long baseRevision = wcContext.getNodeBaseRev(anchorAbspath);
-        ConflictInfo conflictInfo;
+        SVNWCContext.ConflictInfo conflictInfo;
         boolean treeConflict = false;
         try {
             conflictInfo = wcContext.getConflicted(localAbspath, false, false, true);

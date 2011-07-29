@@ -45,7 +45,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumInputStream;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumOutputStream;
-import org.tmatesoft.svn.core.internal.wc17.SVNStatus17.ConflictInfo;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.ConflictInfo;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.MergeInfo;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.MergePropertiesInfo;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.TranslateInfo;
@@ -70,7 +70,10 @@ import org.tmatesoft.svn.core.wc.SVNOperation;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
+import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnChecksum;
+import org.tmatesoft.svn.core.wc2.SvnStatus;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -378,7 +381,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             if (cd.isTreeConflict()) {
                 return true;
             } else if (cd.isPropertyConflict() || cd.isTextConflict()) {
-                ConflictInfo info = myWcContext.getConflicted(localAbspath, true, true, true);
+                SVNWCContext.ConflictInfo info = myWcContext.getConflicted(localAbspath, true, true, true);
                 return (info.textConflicted || info.propConflicted || info.treeConflicted);
             }
         }
@@ -450,8 +453,9 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
     
     private TreeLocalModsInfo hasLocalMods(File localAbspath) throws SVNException {
         final TreeLocalModsInfo modsInfo = new TreeLocalModsInfo();
-        SVNStatusEditor17 statusEditor = new SVNStatusEditor17(myAnchorAbspath, myWcContext, myWcContext.getOptions(), false, false, SVNDepth.INFINITY, new ISVNStatus17Handler() {
-            public void handleStatus(SVNStatus17 status) throws SVNException {
+        SVNStatusEditor17 statusEditor = new SVNStatusEditor17(myAnchorAbspath, myWcContext, myWcContext.getOptions(), false, false, SVNDepth.INFINITY, new ISvnObjectReceiver<SvnStatus>() {
+            
+            public void receive(SvnTarget target, SvnStatus status) throws SVNException {
                 SVNStatusType nodeStatus = status.getNodeStatus();
                 if (nodeStatus == SVNStatusType.STATUS_NORMAL 
                     || nodeStatus == SVNStatusType.STATUS_IGNORED
@@ -465,7 +469,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                     return;
                 }
                 if (nodeStatus == SVNStatusType.STATUS_MISSING || nodeStatus == SVNStatusType.STATUS_OBSTRUCTED) {
-                    if (status.getPropStatus() != SVNStatusType.STATUS_MODIFIED) {
+                    if (status.getPropertiesStatus() != SVNStatusType.STATUS_MODIFIED) {
                         return;
                     }
                 }

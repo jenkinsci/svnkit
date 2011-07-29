@@ -143,7 +143,7 @@ public class SVNInfo {
                 dirEntry.getAuthor(), lock, SVNDepth.UNKNOWN, dirEntry.getSize());
     }
 
-    protected SVNInfo(File file, SVNURL url, SVNURL rootURL, long revision, SVNNodeKind kind,
+    public SVNInfo(File file, SVNURL url, SVNURL rootURL, long revision, SVNNodeKind kind,
             String uuid, long committedRevision, String committedDate,
             String author, String schedule, SVNURL copyFromURL,
             long copyFromRevision, String textTime, String propTime,
@@ -197,7 +197,7 @@ public class SVNInfo {
         myRepositorySize = -1;
     }
 
-    protected SVNInfo(String path, SVNURL url, SVNRevision revision,
+    public SVNInfo(String path, SVNURL url, SVNRevision revision,
             SVNNodeKind kind, String uuid, SVNURL reposRootURL,
             long comittedRevision, Date date, String author, SVNLock lock, 
             SVNDepth depth, long size) {
