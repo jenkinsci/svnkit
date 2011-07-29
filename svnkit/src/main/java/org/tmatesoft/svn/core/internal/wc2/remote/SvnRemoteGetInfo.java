@@ -13,6 +13,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
@@ -203,7 +204,7 @@ public class SvnRemoteGetInfo extends SvnRemoteOperationRunner<SvnGetInfo> {
         SvnInfo info = new SvnInfo();
         info.setKind(entry.getKind());
         info.setLastChangedAuthor(entry.getAuthor());
-        info.setLastChangedDate(getSvnDate(entry.getDate()));
+        info.setLastChangedDate(SVNDate.fromDate(entry.getDate()));
         info.setLastChangedRevision(entry.getRevision());
         info.setLock(lock);
         info.setRepositoryRootURL(root);

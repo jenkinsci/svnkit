@@ -1502,14 +1502,14 @@ public class SVNWCContext {
         SVNErrorManager.error(err, SVNLogType.WC);
     }
     
-    private boolean matchesChangelist(File localAbspath, Collection<String> changelists) {
+    public boolean matchesChangelist(File localAbspath, Collection<String> changelists) {
         if (changelists == null || changelists.isEmpty()) {
             return true;
         }
         Structure<NodeInfo> nodeInfo = null;
         try {
             nodeInfo = db.readInfo(localAbspath, NodeInfo.changelist);
-            return nodeInfo.hasValue(NodeInfo.changelist) && changelists.contains(nodeInfo.text(NodeInfo.changelist));
+            return nodeInfo != null && nodeInfo.hasValue(NodeInfo.changelist) && changelists.contains(nodeInfo.text(NodeInfo.changelist));
         } catch (SVNException e) {
             return false;
         } finally {

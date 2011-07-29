@@ -1,15 +1,15 @@
 package org.tmatesoft.svn.core.internal.wc2;
 
-import java.util.Date;
-
+import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
+import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc2.ISvnOperationRunner;
 import org.tmatesoft.svn.core.wc2.SvnOperation;
 
 
-public abstract class SvnOperationRunner<T extends SvnOperation> implements ISvnOperationRunner<T> {
+public abstract class SvnOperationRunner<T extends SvnOperation> implements ISvnOperationRunner<T>, ISVNEventHandler {
     private T operation;
     private SvnWcGeneration wcGeneration;
     private SVNWCContext wcContext;
@@ -51,13 +51,15 @@ public abstract class SvnOperationRunner<T extends SvnOperation> implements ISvn
         return this.operation;
     }
     
-    protected SVNDate getSvnDate(Date d) {
-        if (d == null) {
-            return SVNDate.NULL;
+    public void checkCancelled() throws SVNCancelException {
+        if (getOperation() != null && getOperation().getCanceller() != null) {
+            getOperation().getCanceller().checkCancelled();
         }
-        if (d instanceof SVNDate) {
-            return (SVNDate) d;
+    }
+    
+    public void handleEvent(SVNEvent event, double progress) throws SVNException {
+        if (getOperation() != null && getOperation().getEventHandler() != null) {
+            getOperation().getEventHandler().handleEvent(event, progress);
         }
-        return new SVNDate(d.getTime(), 0);
     }
 }

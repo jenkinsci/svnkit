@@ -116,6 +116,7 @@ public class SvnWcDbProperties extends SvnWcDbShared {
         InsertIntoPropertiesCache insertStmt = null;
         SVNSqlJetSelectStatement propertiesSelectStmt = null;
         
+        root.getSDb().beginTransaction(SqlJetTransactionMode.READ_ONLY);
         try {
             collectTargets(root, relpath, depth, changelists);
             stmt = new SVNWCDbCreateSchema(root.getSDb().getTemporaryDb(), SVNWCDbCreateSchema.NODE_PROPS_CACHE, -1);
@@ -200,12 +201,16 @@ public class SvnWcDbProperties extends SvnWcDbShared {
                 }
             }
         } finally {
-            reset(stmt);
-            reset(insertStmt);
-            reset(propertiesSelectStmt);
-            
-            SVNSqlJetStatement dropTargets = new SVNWCDbCreateSchema(root.getSDb().getTemporaryDb(), SVNWCDbCreateSchema.DROP_TARGETS_LIST, -1);
-            dropTargets.done();
+            try {
+                reset(stmt);
+                reset(insertStmt);
+                reset(propertiesSelectStmt);
+
+                SVNSqlJetStatement dropTargets = new SVNWCDbCreateSchema(root.getSDb().getTemporaryDb(), SVNWCDbCreateSchema.DROP_TARGETS_LIST, -1);
+                dropTargets.done();
+            } finally {
+                root.getSDb().commit();
+            }
         }
     }
     

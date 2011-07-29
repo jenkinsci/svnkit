@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc16.SVNWCClient16;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCConflictDescription17;
 import org.tmatesoft.svn.core.internal.wc2.SvnLocalOperationRunner;
@@ -42,7 +43,7 @@ public class SvnOldGetInfo extends SvnLocalOperationRunner<SvnGetInfo> implement
         result.setUserData(info);
         result.setKind(info.getKind());
         result.setLastChangedAuthor(info.getAuthor());
-        result.setLastChangedDate(getSvnDate(info.getCommittedDate()));
+        result.setLastChangedDate(SVNDate.fromDate(info.getCommittedDate()));
         result.setLastChangedRevision(info.getCommittedRevision().getNumber());
         result.setLock(info.getLock());
         result.setRepositoryRootURL(info.getRepositoryRootURL());

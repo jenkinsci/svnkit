@@ -27,6 +27,9 @@ public class SvnNgGetProperties extends SvnNgOperationRunner<SvnGetProperties> {
         
         if (kind == SVNNodeKind.DIR) {
             if (getOperation().getDepth() == SVNDepth.EMPTY) {
+                if (matchesChangelist(getFirstTarget())) {
+                    return;
+                }
                 SVNProperties properties = null;
                 if (pristine) {
                     properties = context.getDb().readPristineProperties(getFirstTarget());
@@ -36,7 +39,7 @@ public class SvnNgGetProperties extends SvnNgOperationRunner<SvnGetProperties> {
                 if (properties != null && !properties.isEmpty()) {
                     getOperation().getReceiver().receive(getOperation().getFirstTarget(), properties);
                 }
-            } else {
+            } else if (matchesChangelist(getFirstTarget())) {
                 SVNWCDb db = (SVNWCDb) context.getDb();
                 db.readPropertiesRecursively(
                         getFirstTarget(), 
@@ -58,8 +61,7 @@ public class SvnNgGetProperties extends SvnNgOperationRunner<SvnGetProperties> {
             if (properties != null && !properties.isEmpty()) {
                 getOperation().getReceiver().receive(getOperation().getFirstTarget(), properties);
             }
-        }
-        
+        }        
     }
 
 }

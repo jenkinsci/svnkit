@@ -335,6 +335,16 @@ public class SVNDate extends Date {
             return CALENDAR.getTimeInMillis();
         }
     }
+    
+    public static SVNDate fromDate(Date d) {
+        if (d == null) {
+            return SVNDate.NULL;
+        }
+        if (d instanceof SVNDate) {
+            return (SVNDate) d;
+        }
+        return new SVNDate(d.getTime(), 0);
+    }
 
     public int hashCode() {
         return 31 * super.hashCode() + myMicroSeconds;
