@@ -188,7 +188,7 @@ public class SvnNgRepositoryAccess extends SvnRepositoryAccess {
         return result;
     }
 
-    protected SVNRepository createRepository(SVNURL url, File baseDirectory) throws SVNException {
+    public SVNRepository createRepository(SVNURL url, File baseDirectory) throws SVNException {
         String expectedUuid = null;
         if (baseDirectory != null) {
             SVNWCNodeReposInfo nodeReposInfo = null;

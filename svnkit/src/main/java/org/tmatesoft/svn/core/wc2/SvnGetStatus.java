@@ -96,6 +96,9 @@ public class SvnGetStatus extends SvnReceivingOperation<SvnStatus> {
         return collectParentExternals;
     }
     
+    /**
+     * Only relevant for 1.6 working copies
+     */
     public void setCollectParentExternals(boolean collect) {
         this.collectParentExternals = collect;
     }

@@ -33,7 +33,7 @@ public class SvnReceivingOperation<T> extends SvnOperation<T> implements ISvnObj
     }
 
     @Override
-    public void initDefaults() {
+    protected void initDefaults() {
         super.initDefaults();
         this.first = null;
     }

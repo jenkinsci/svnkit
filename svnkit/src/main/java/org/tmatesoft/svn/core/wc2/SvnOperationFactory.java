@@ -21,6 +21,7 @@ import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbOpenMode;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
+import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgCheckout;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgGetInfo;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgGetProperties;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgGetStatus;
@@ -75,6 +76,8 @@ public class SvnOperationFactory {
 
         registerOperationRunner(SvnGetStatus.class, new SvnNgGetStatus(), SvnWcGeneration.V17, SvnWcGeneration.NOT_DETECTED);
         registerOperationRunner(SvnGetStatus.class, new SvnOldGetStatus(), SvnWcGeneration.V16);
+
+        registerOperationRunner(SvnCheckout.class, new SvnNgCheckout(), SvnWcGeneration.V17, SvnWcGeneration.NOT_DETECTED);
     }
     
     public boolean isAutoCloseContext() {
@@ -149,21 +152,27 @@ public class SvnOperationFactory {
     }
 
     public SvnGetInfo createGetInfo() {
-        SvnGetInfo getInfo = new SvnGetInfo(this);
-        getInfo.initDefaults();
-        return getInfo;
+        return new SvnGetInfo(this);
     }
     
     public SvnGetProperties createGetProperties() {
-        SvnGetProperties getProperties = new SvnGetProperties(this);
-        getProperties.initDefaults();
-        return getProperties;
+        return new SvnGetProperties(this);
     }
 
     public SvnGetStatus createGetStatus() {
-        SvnGetStatus getStatus = new SvnGetStatus(this);
-        getStatus.initDefaults();
-        return getStatus;
+        return new SvnGetStatus(this);
+    }
+    
+    public SvnUpdate createUpdate() {
+        return new SvnUpdate(this);
+    }
+    
+    public SvnSwitch createSwitch() {
+        return new SvnSwitch(this);
+    }
+
+    public SvnCheckout createCheckout() {
+        return new SvnCheckout(this);
     }
 
     protected Object run(SvnOperation<?> operation) throws SVNException {

@@ -62,4 +62,9 @@ public abstract class SvnOperationRunner<V, T extends SvnOperation<V>> implement
             getOperation().getEventHandler().handleEvent(event, progress);
         }
     }
+    
+    protected void handleEvent(SVNEvent event) throws SVNException {
+        handleEvent(event, -1);
+    }
+
 }

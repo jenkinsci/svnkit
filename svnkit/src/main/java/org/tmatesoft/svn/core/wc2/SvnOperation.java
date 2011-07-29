@@ -25,9 +25,11 @@ public class SvnOperation<V> {
     private SVNRevision pegRevision;
     private Collection<String> changelists;
     private SvnOperationFactory operationFactory;
+    private boolean isSleepForTimestamp;
     
     protected SvnOperation(SvnOperationFactory factory) {
         this.operationFactory = factory;
+        initDefaults();
     }
 
     public ISVNEventHandler getEventHandler() {
@@ -38,8 +40,9 @@ public class SvnOperation<V> {
         return getOperationFactory().getOptions();
     }
     
-    public void initDefaults() {
-        this.depth = SVNDepth.UNKNOWN;        
+    protected void initDefaults() {
+        setDepth(SVNDepth.UNKNOWN);
+        setSleepForTimestamp(true);
         this.targets = new ArrayList<SvnTarget>();
     }
 
@@ -130,7 +133,7 @@ public class SvnOperation<V> {
     }
     
     protected boolean needsHomohenousTargets() {
-        return false;
+        return true;
     }
     
     protected void ensureHomohenousTargets() throws SVNException {
@@ -152,5 +155,13 @@ public class SvnOperation<V> {
 
     public ISVNCanceller getCanceller() {
         return getOperationFactory().getCanceller();
+    }
+
+    public boolean isSleepForTimestamp() {
+        return isSleepForTimestamp;
+    }
+
+    public void setSleepForTimestamp(boolean isSleepForTimestamp) {
+        this.isSleepForTimestamp = isSleepForTimestamp;
     }
 }

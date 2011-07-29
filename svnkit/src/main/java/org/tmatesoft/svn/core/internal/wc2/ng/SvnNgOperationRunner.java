@@ -5,12 +5,11 @@ import java.io.File;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc2.SvnLocalOperationRunner;
-import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess;
 import org.tmatesoft.svn.core.wc2.SvnOperation;
 
 public abstract class SvnNgOperationRunner<V, T extends SvnOperation<V>> extends SvnLocalOperationRunner<V, T> {
     
-    private SvnRepositoryAccess repositoryAccess;
+    private SvnNgRepositoryAccess repositoryAccess;
     
     protected V run() throws SVNException {
         return run(getWcContext());
@@ -20,7 +19,7 @@ public abstract class SvnNgOperationRunner<V, T extends SvnOperation<V>> extends
         return getWcContext().matchesChangelist(target, getOperation().getApplicableChangelists());
     }
     
-    protected SvnRepositoryAccess getRepositoryAccess() throws SVNException {
+    protected SvnNgRepositoryAccess getRepositoryAccess() throws SVNException {
         if (repositoryAccess == null) {
             repositoryAccess = new SvnNgRepositoryAccess(getOperation());
         }
