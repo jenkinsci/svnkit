@@ -27,7 +27,7 @@ public class SvnNgGetProperties extends SvnNgOperationRunner<SVNProperties, SvnG
         
         if (kind == SVNNodeKind.DIR) {
             if (getOperation().getDepth() == SVNDepth.EMPTY) {
-                if (matchesChangelist(getFirstTarget())) {
+                if (!matchesChangelist(getFirstTarget())) {
                     return getOperation().first();
                 }
                 SVNProperties properties = null;
