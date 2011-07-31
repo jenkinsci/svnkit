@@ -50,11 +50,11 @@ public class SvnOldGetProperties extends SvnLocalOperationRunner<SVNProperties, 
         if (currentFile == null) {
             currentFile = path;
         }
-        if (!path.equals(currentFile)) {
-            if (currentProperties != null && !currentProperties.isEmpty()) {
+        if (!currentFile.equals(path)) {
+            if (!currentProperties.isEmpty()) {
                 getOperation().receive(SvnTarget.fromFile(currentFile), currentProperties);
+                currentProperties.clear();
             }
-            currentProperties.clear();
             currentFile = path;
         }
         currentProperties.put(property.getName(), property.getValue());        

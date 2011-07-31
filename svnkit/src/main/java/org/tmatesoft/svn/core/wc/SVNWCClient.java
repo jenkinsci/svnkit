@@ -833,7 +833,7 @@ public class SVNWCClient extends SVNBasicClient {
         getProperties.setDepth(SVNDepth.EMPTY);
         getProperties.setReceiver(new ISvnObjectReceiver<SVNProperties>() {
             public void receive(SvnTarget target, SVNProperties object) throws SVNException {
-                if (propName != null) {
+                if (propName != null && object.containsName(propName)) {
                     data[0] = new SVNPropertyData(propName, object.getSVNPropertyValue(propName), getOptions());
                 } 
             }
@@ -1007,7 +1007,7 @@ public class SVNWCClient extends SVNBasicClient {
         getProperties.setApplicalbeChangelists(changeLists);
         getProperties.setReceiver(new ISvnObjectReceiver<SVNProperties>() {
             public void receive(SvnTarget target, SVNProperties object) throws SVNException {
-                if (propName != null) {
+                if (propName != null && object.containsName(propName)) {
                     SVNPropertyData propertyData = new SVNPropertyData(propName, object.getSVNPropertyValue(propName), getOptions());
                     handler.handleProperty(target.getFile(), propertyData);
                 }  else {
