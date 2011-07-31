@@ -8,7 +8,8 @@ public class SvnReceivingOperation<T> extends SvnOperation<T> implements ISvnObj
 
     private ISvnObjectReceiver<T> receiver;
     private T first;
-    private Collection<T> receivedItems;
+    private T last;
+    private Collection<T> receivedObjects;
     
     protected SvnReceivingOperation(SvnOperationFactory factory) {
         super(factory);
@@ -26,8 +27,10 @@ public class SvnReceivingOperation<T> extends SvnOperation<T> implements ISvnObj
         if (first == null) {
             first = object;
         }
-        if (getReceivedItems() != null) {
-            getReceivedItems().add(object);
+        last = object;
+        
+        if (getReceivedObjects() != null) {
+            getReceivedObjects().add(object);
         }
         if (getReceiver() != null) {
             getReceiver().receive(target, object);
@@ -38,12 +41,16 @@ public class SvnReceivingOperation<T> extends SvnOperation<T> implements ISvnObj
         return this.first;
     }
     
-    public void setReceivingContainer(Collection<T> receivingContainer) {
-        this.receivedItems = receivingContainer;
+    public T last() {
+        return this.last;
     }
     
-    public Collection<T> getReceivedItems() {
-        return this.receivedItems;
+    public void setReceivingContainer(Collection<T> receivingContainer) {
+        this.receivedObjects = receivingContainer;
+    }
+    
+    public Collection<T> getReceivedObjects() {
+        return this.receivedObjects;
     }
 
     @Override
