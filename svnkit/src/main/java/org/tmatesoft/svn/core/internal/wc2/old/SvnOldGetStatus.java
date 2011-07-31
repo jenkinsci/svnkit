@@ -17,6 +17,7 @@ public class SvnOldGetStatus extends SvnLocalOperationRunner<SvnStatus, SvnGetSt
         SVNStatusClient16 client = new SVNStatusClient16(getOperation().getRepositoryPool(), getOperation().getOptions());
         client.setFilesProvider(SvnCodec.fileListProvider(getOperation().getFileListHook()));
         client.setIgnoreExternals(!getOperation().isReportExternals());
+        client.setEventHandler(getOperation().getEventHandler());
         
         long revision = client.doStatus(getFirstTarget(),
                 getOperation().getRevision(),

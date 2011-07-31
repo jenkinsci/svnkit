@@ -15,6 +15,7 @@ public class SvnOldGetInfo extends SvnLocalOperationRunner<SvnInfo, SvnGetInfo> 
     @Override
     protected SvnInfo run() throws SVNException {        
         SVNWCClient16 client = new SVNWCClient16(getOperation().getRepositoryPool(), getOperation().getOptions());        
+        client.setEventHandler(getOperation().getEventHandler());
         client.doInfo(getFirstTarget(), 
                 getOperation().getPegRevision(), 
                 getOperation().getRevision(), 

@@ -412,25 +412,22 @@ public class SVNStatusClient extends SVNBasicClient {
      * @throws SVNException
      */
     public SVNStatus doStatus(File path, boolean remote, boolean collectParentExternals) throws SVNException {
-        final SVNStatus[] result = new SVNStatus[] {
-                null
-            };
-            final File absPath = path.getAbsoluteFile();
-            ISVNStatusHandler handler = new ISVNStatusHandler() {
-
-                public void handleStatus(SVNStatus status) {
-                    if (absPath.equals(status.getFile())) {
-                        if (result[0] != null && result[0].getContentsStatus() == SVNStatusType.STATUS_EXTERNAL && absPath.isDirectory()) {
-                            result[0] = status;
-                            result[0].markExternal();
-                        } else if (result[0] == null) {
-                            result[0] = status;
-                        }
+        final SVNStatus[] result = new SVNStatus[] {null};
+        final File absPath = path.getAbsoluteFile();
+        ISVNStatusHandler handler = new ISVNStatusHandler() {
+            public void handleStatus(SVNStatus status) {
+                if (absPath.equals(status.getFile())) {
+                    if (result[0] != null && result[0].getContentsStatus() == SVNStatusType.STATUS_EXTERNAL && absPath.isDirectory()) {
+                        result[0] = status;
+                        result[0].markExternal();
+                    } else if (result[0] == null) {
+                        result[0] = status;
                     }
                 }
-            };
-            doStatus(absPath, SVNRevision.HEAD, SVNDepth.EMPTY, remote, true, true, collectParentExternals, handler, null);
-            return result[0];
+            }
+        };
+        doStatus(absPath, SVNRevision.HEAD, SVNDepth.EMPTY, remote, true, true, collectParentExternals, handler, null);
+        return result[0];
     }
 
     public void setFilesProvider(ISVNStatusFileProvider filesProvider) {

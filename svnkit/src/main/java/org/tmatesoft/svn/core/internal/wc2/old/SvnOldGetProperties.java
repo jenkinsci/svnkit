@@ -26,7 +26,8 @@ public class SvnOldGetProperties extends SvnLocalOperationRunner<SVNProperties, 
 
     @Override
     protected SVNProperties run() throws SVNException {        
-        SVNWCClient16 client = new SVNWCClient16(getOperation().getRepositoryPool(), getOperation().getOptions());        
+        SVNWCClient16 client = new SVNWCClient16(getOperation().getRepositoryPool(), getOperation().getOptions());
+        client.setEventHandler(getOperation().getEventHandler());
         client.doGetProperty(
                 getFirstTarget(), 
                 null, 
