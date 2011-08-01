@@ -20,7 +20,7 @@ public abstract class SvnOperationRunner<V, T extends SvnOperation<V>> implement
         return run();
     }
     
-    public void reset() {
+    public void reset(SvnWcGeneration wcGeneration) {
         setOperation(null);
         setWcContext(null);
     }

@@ -30,8 +30,8 @@ public abstract class SvnNgOperationRunner<V, T extends SvnOperation<V>> extends
     protected abstract V run(SVNWCContext context) throws SVNException;
 
     @Override
-    public void reset() {
-        super.reset();
+    public void reset(SvnWcGeneration wcGeneration) {
+        super.reset(wcGeneration);
         repositoryAccess = null;
     }
 

@@ -11,14 +11,13 @@ public abstract class SvnRemoteOperationRunner<V, T extends SvnOperation<V>> ext
     private SvnRepositoryAccess repositoryAccess;
     private SvnWcGeneration detectedWcGeneration;
     
-    public void reset() {
-        super.reset();
+    public void reset(SvnWcGeneration wcGeneration) {
+        super.reset(wcGeneration);
         repositoryAccess = null;
-        detectedWcGeneration = null;
+        detectedWcGeneration = wcGeneration;
     }
 
     public boolean isApplicable(T operation, SvnWcGeneration wcGeneration) throws SVNException {
-        detectedWcGeneration = wcGeneration;
         return operation.hasRemoteTargets();
     }
     

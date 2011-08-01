@@ -35,6 +35,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeOriginInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.PristineInfo;
+import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.wc.SVNConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.core.wc2.SvnChecksum;
@@ -51,7 +52,9 @@ public class SvnNgGetInfo extends SvnNgOperationRunner<SvnInfo, SvnGetInfo> impl
     private boolean isFirstInfo;
     private Map<File, SVNTreeConflictDescription> treeConflicts;
     
-    public void reset() {
+    public void reset(SvnWcGeneration wcGeneration) {
+        super.reset(wcGeneration);
+        
         hasRootTreeConflict = false;
         isFirstInfo = false;
         treeConflicts = null;

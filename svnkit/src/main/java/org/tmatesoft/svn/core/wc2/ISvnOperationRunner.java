@@ -12,7 +12,7 @@ public interface ISvnOperationRunner<V, T extends SvnOperation<V>> {
     
     public void setWcContext(SVNWCContext context);
     
-    public void reset();
+    public void reset(SvnWcGeneration detectedWcGeneration);
     
     public SvnWcGeneration getWcGeneration();
 

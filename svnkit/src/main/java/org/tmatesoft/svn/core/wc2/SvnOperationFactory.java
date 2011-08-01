@@ -273,7 +273,7 @@ public class SvnOperationFactory {
             break;
         }
         if (runner != null) {
-            runner.reset();
+            runner.reset(wcGeneration);
         }
         return runner;
     }
