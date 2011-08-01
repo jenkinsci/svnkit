@@ -13,7 +13,6 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 public abstract class SvnOperationRunner<V, T extends SvnOperation<V>> implements ISvnOperationRunner<V, T>, ISVNEventHandler {
     private T operation;
-    private SvnWcGeneration wcGeneration;
     private SVNWCContext wcContext;
     
     public V run(T operation) throws SVNException {
@@ -23,7 +22,6 @@ public abstract class SvnOperationRunner<V, T extends SvnOperation<V>> implement
     
     public void reset() {
         setOperation(null);
-        setWcGeneration(null);
         setWcContext(null);
     }
     
@@ -33,14 +31,6 @@ public abstract class SvnOperationRunner<V, T extends SvnOperation<V>> implement
     
     protected SVNWCContext getWcContext() {
         return this.wcContext;
-    }
-
-    public void setWcGeneration(SvnWcGeneration wcGeneration) {
-        this.wcGeneration = wcGeneration;
-    }
-    
-    public SvnWcGeneration getWcGeneration() {
-        return this.wcGeneration;
     }
 
     protected abstract V run() throws SVNException;

@@ -65,33 +65,37 @@ public class SvnOperationFactory {
     }
     
     public SvnOperationFactory(SVNWCContext context) {
+        wcContext = context;
+        
+        setAutoCloseContext(wcContext == null);
+        registerRunners();
+    }
+    
+    private void registerRunners() {
         v17OperationRunners = new HashMap<Class<?>, List<ISvnOperationRunner<?, SvnOperation<?>>>>();
         v16OperationRunners = new HashMap<Class<?>, List<ISvnOperationRunner<?, SvnOperation<?>>>>();
         anyFormatOperationRunners = new HashMap<Class<?>, List<ISvnOperationRunner<?, SvnOperation<?>>>>();
         noneOperationRunners = new HashMap<Class<?>, List<ISvnOperationRunner<?, SvnOperation<?>>>>();
-        wcContext = context;
-        
-        setAutoCloseContext(wcContext == null);
-        
+
         registerOperationRunner(SvnGetInfo.class, new SvnRemoteGetInfo());
-        registerOperationRunner(SvnGetInfo.class, new SvnNgGetInfo(), getPrimaryWcGeneration(), SvnWcGeneration.NOT_DETECTED);
-        registerOperationRunner(SvnGetInfo.class, new SvnOldGetInfo(), getSecondaryWcGeneration());
+        registerOperationRunner(SvnGetInfo.class, new SvnNgGetInfo());
+        registerOperationRunner(SvnGetInfo.class, new SvnOldGetInfo());
 
         registerOperationRunner(SvnGetProperties.class, new SvnRemoteGetProperties());
-        registerOperationRunner(SvnGetProperties.class, new SvnNgGetProperties(), getPrimaryWcGeneration(), SvnWcGeneration.NOT_DETECTED);
-        registerOperationRunner(SvnGetProperties.class, new SvnOldGetProperties(), getSecondaryWcGeneration());
+        registerOperationRunner(SvnGetProperties.class, new SvnNgGetProperties());
+        registerOperationRunner(SvnGetProperties.class, new SvnOldGetProperties());
 
-        registerOperationRunner(SvnGetStatus.class, new SvnNgGetStatus(), getPrimaryWcGeneration(), SvnWcGeneration.NOT_DETECTED);
-        registerOperationRunner(SvnGetStatus.class, new SvnOldGetStatus(), getSecondaryWcGeneration());
+        registerOperationRunner(SvnGetStatus.class, new SvnNgGetStatus());
+        registerOperationRunner(SvnGetStatus.class, new SvnOldGetStatus());
 
-        registerOperationRunner(SvnCheckout.class, new SvnNgCheckout(), getPrimaryWcGeneration(), SvnWcGeneration.NOT_DETECTED);
-        registerOperationRunner(SvnCheckout.class, new SvnOldCheckout(), getSecondaryWcGeneration());
+        registerOperationRunner(SvnCheckout.class, new SvnNgCheckout());
+        registerOperationRunner(SvnCheckout.class, new SvnOldCheckout());
         
-        registerOperationRunner(SvnSwitch.class, new SvnNgSwitch(), getPrimaryWcGeneration(), SvnWcGeneration.NOT_DETECTED);
-        registerOperationRunner(SvnSwitch.class, new SvnOldSwitch(), getSecondaryWcGeneration());
+        registerOperationRunner(SvnSwitch.class, new SvnNgSwitch());
+        registerOperationRunner(SvnSwitch.class, new SvnOldSwitch());
 
-        registerOperationRunner(SvnUpdate.class, new SvnNgUpdate(), getPrimaryWcGeneration(), SvnWcGeneration.NOT_DETECTED);
-        registerOperationRunner(SvnUpdate.class, new SvnOldUpdate(), getSecondaryWcGeneration());
+        registerOperationRunner(SvnUpdate.class, new SvnNgUpdate());
+        registerOperationRunner(SvnUpdate.class, new SvnOldUpdate());
     }
     
     public boolean isAutoCloseContext() {
@@ -267,22 +271,22 @@ public class SvnOperationFactory {
         }
         if (runner != null) {
             runner.reset();
-            runner.setWcGeneration(wcGeneration);
         }
         return runner;
     }
     
     @SuppressWarnings("unchecked")
-    protected void registerOperationRunner(Class<?> operationClass, ISvnOperationRunner<?, ? extends SvnOperation<?>> runner, SvnWcGeneration... formats) {
+    protected void registerOperationRunner(Class<?> operationClass, ISvnOperationRunner<?, ? extends SvnOperation<?>> runner) {
         if (operationClass == null || runner == null) {
             return;
         }
         Collection<Map<Class<?>, List<ISvnOperationRunner<?, SvnOperation<?>>>>> maps = new ArrayList<Map<Class<?>,List<ISvnOperationRunner<?, SvnOperation<?>>>>>();
-        if (formats == null || formats.length == 0) {
+        SvnWcGeneration[] scope = getRunnerScope(runner);
+        if (scope == null || scope.length == 0) {
             maps.add(anyFormatOperationRunners);
         } else {
             Set<SvnWcGeneration> formatsSet = new HashSet<SvnWcGeneration>();
-            formatsSet.addAll(Arrays.asList(formats));
+            formatsSet.addAll(Arrays.asList(scope));
             if (formatsSet.contains(SvnWcGeneration.NOT_DETECTED)) {
                 maps.add(noneOperationRunners);
             }
@@ -352,5 +356,18 @@ public class SvnOperationFactory {
 
     public void setPrimaryWcGeneration(SvnWcGeneration primaryWcGeneration) {
         this.primaryWcGeneration = primaryWcGeneration;
+        registerRunners();
     }
+    
+    private SvnWcGeneration[] getRunnerScope(ISvnOperationRunner<?, ? extends SvnOperation<?>> runner) {
+        if (runner.getWcGeneration() == getPrimaryWcGeneration()) {
+            return new SvnWcGeneration[] { getPrimaryWcGeneration(), SvnWcGeneration.NOT_DETECTED};
+        } else if (runner.getWcGeneration() == getSecondaryWcGeneration()) {
+            return new SvnWcGeneration[] { getSecondaryWcGeneration() };
+        } else {
+            // any.
+            return new SvnWcGeneration[] { };
+        }
+    }
+    
 }

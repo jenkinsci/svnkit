@@ -5,6 +5,7 @@ import java.io.File;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc2.SvnLocalOperationRunner;
+import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.wc2.SvnOperation;
 
 public abstract class SvnNgOperationRunner<V, T extends SvnOperation<V>> extends SvnLocalOperationRunner<V, T> {
@@ -33,5 +34,11 @@ public abstract class SvnNgOperationRunner<V, T extends SvnOperation<V>> extends
         super.reset();
         repositoryAccess = null;
     }
+
+    public SvnWcGeneration getWcGeneration() {
+        return SvnWcGeneration.V17;
+    }
+    
+    
 
 }

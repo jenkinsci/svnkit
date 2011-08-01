@@ -15,7 +15,7 @@ public abstract class SvnRemoteOperationRunner<V, T extends SvnOperation<V>> ext
         repositoryAccess = null;
     }
 
-    public boolean isApplicable(SvnOperation operation, SvnWcGeneration wcGeneration) throws SVNException {
+    public boolean isApplicable(T operation, SvnWcGeneration wcGeneration) throws SVNException {
         return operation.hasRemoteTargets();
     }
     
@@ -32,5 +32,9 @@ public abstract class SvnRemoteOperationRunner<V, T extends SvnOperation<V>> ext
     
     protected boolean isRevisionLocalToWc(SVNRevision revision) {
         return revision == SVNRevision.BASE || revision == SVNRevision.WORKING || revision == SVNRevision.COMMITTED;
+    }
+
+    public SvnWcGeneration getWcGeneration() {
+        return SvnWcGeneration.NOT_DETECTED;
     }
 }

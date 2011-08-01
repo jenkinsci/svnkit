@@ -6,13 +6,12 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc16.SVNWCClient16;
-import org.tmatesoft.svn.core.internal.wc2.SvnLocalOperationRunner;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc2.SvnGetProperties;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
-public class SvnOldGetProperties extends SvnLocalOperationRunner<SVNProperties, SvnGetProperties> implements ISVNPropertyHandler {
+public class SvnOldGetProperties extends SvnOldRunner<SVNProperties, SvnGetProperties> implements ISVNPropertyHandler {
     
     private File currentFile;
     private SVNProperties currentProperties;

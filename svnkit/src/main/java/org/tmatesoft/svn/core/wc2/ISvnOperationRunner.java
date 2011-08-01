@@ -9,10 +9,11 @@ public interface ISvnOperationRunner<V, T extends SvnOperation<V>> {
     public boolean isApplicable(T operation, SvnWcGeneration wcGeneration) throws SVNException;
     
     public V run(T operation) throws SVNException;
-
-    public void setWcGeneration(SvnWcGeneration wcGeneration);
     
     public void setWcContext(SVNWCContext context);
     
     public void reset();
+    
+    public SvnWcGeneration getWcGeneration();
+
 }

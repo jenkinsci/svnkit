@@ -4,11 +4,10 @@ import java.io.File;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc16.SVNUpdateClient16;
-import org.tmatesoft.svn.core.internal.wc2.SvnLocalOperationRunner;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.core.wc2.SvnUpdate;
 
-public class SvnOldUpdate extends SvnLocalOperationRunner<long[], SvnUpdate> {
+public class SvnOldUpdate extends SvnOldRunner<long[], SvnUpdate> {
 
     @Override
     protected long[] run() throws SVNException {        

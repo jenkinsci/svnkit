@@ -2,7 +2,6 @@ package org.tmatesoft.svn.core.internal.wc2.old;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc16.SVNStatusClient16;
-import org.tmatesoft.svn.core.internal.wc2.SvnLocalOperationRunner;
 import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
 import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
 import org.tmatesoft.svn.core.wc.SVNStatus;
@@ -10,7 +9,7 @@ import org.tmatesoft.svn.core.wc2.SvnGetStatus;
 import org.tmatesoft.svn.core.wc2.SvnStatus;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
-public class SvnOldGetStatus extends SvnLocalOperationRunner<SvnStatus, SvnGetStatus> implements ISVNStatusHandler {
+public class SvnOldGetStatus extends SvnOldRunner<SvnStatus, SvnGetStatus> implements ISVNStatusHandler {
 
     @Override
     protected SvnStatus run() throws SVNException {        
