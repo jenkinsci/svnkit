@@ -88,10 +88,10 @@ public class SvnOperationFactory {
         registerOperationRunner(SvnCheckout.class, new SvnOldCheckout(), getSecondaryWcGeneration());
         
         registerOperationRunner(SvnSwitch.class, new SvnNgSwitch(), getPrimaryWcGeneration(), SvnWcGeneration.NOT_DETECTED);
-        registerOperationRunner(SvnCheckout.class, new SvnOldSwitch(), getSecondaryWcGeneration());
+        registerOperationRunner(SvnSwitch.class, new SvnOldSwitch(), getSecondaryWcGeneration());
 
         registerOperationRunner(SvnUpdate.class, new SvnNgUpdate(), getPrimaryWcGeneration(), SvnWcGeneration.NOT_DETECTED);
-        registerOperationRunner(SvnCheckout.class, new SvnOldUpdate(), getSecondaryWcGeneration());
+        registerOperationRunner(SvnUpdate.class, new SvnOldUpdate(), getSecondaryWcGeneration());
     }
     
     public boolean isAutoCloseContext() {
