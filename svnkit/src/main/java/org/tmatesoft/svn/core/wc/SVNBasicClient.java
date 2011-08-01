@@ -226,7 +226,9 @@ public class SVNBasicClient {
             getDelegate17().setEventHandler(dispatcher);
         } catch (SVNException e) {
         }
-        this.operationFactory.setEventHandler(dispatcher);
+        if (getOperationsFactory() != null) {
+            getOperationsFactory().setEventHandler(dispatcher);
+        }
     }
 
     /**

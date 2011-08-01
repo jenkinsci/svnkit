@@ -25,9 +25,14 @@ import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgCheckout;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgGetInfo;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgGetProperties;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgGetStatus;
+import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgSwitch;
+import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgUpdate;
+import org.tmatesoft.svn.core.internal.wc2.old.SvnOldCheckout;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetInfo;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetProperties;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetStatus;
+import org.tmatesoft.svn.core.internal.wc2.old.SvnOldSwitch;
+import org.tmatesoft.svn.core.internal.wc2.old.SvnOldUpdate;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteGetInfo;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteGetProperties;
 import org.tmatesoft.svn.core.wc.DefaultSVNRepositoryPool;
@@ -52,6 +57,8 @@ public class SvnOperationFactory {
     private boolean autoCloseContext;
     private boolean autoDisposeRepositoryPool;
     private SVNWCContext wcContext;
+    
+    private SvnWcGeneration primaryWcGeneration;
 
     public SvnOperationFactory() {
         this(null);
@@ -67,17 +74,24 @@ public class SvnOperationFactory {
         setAutoCloseContext(wcContext == null);
         
         registerOperationRunner(SvnGetInfo.class, new SvnRemoteGetInfo());
-        registerOperationRunner(SvnGetInfo.class, new SvnNgGetInfo(), SvnWcGeneration.V17, SvnWcGeneration.NOT_DETECTED);
-        registerOperationRunner(SvnGetInfo.class, new SvnOldGetInfo(), SvnWcGeneration.V16);
+        registerOperationRunner(SvnGetInfo.class, new SvnNgGetInfo(), getPrimaryWcGeneration(), SvnWcGeneration.NOT_DETECTED);
+        registerOperationRunner(SvnGetInfo.class, new SvnOldGetInfo(), getSecondaryWcGeneration());
 
         registerOperationRunner(SvnGetProperties.class, new SvnRemoteGetProperties());
-        registerOperationRunner(SvnGetProperties.class, new SvnNgGetProperties(), SvnWcGeneration.V17, SvnWcGeneration.NOT_DETECTED);
-        registerOperationRunner(SvnGetProperties.class, new SvnOldGetProperties(), SvnWcGeneration.V16);
+        registerOperationRunner(SvnGetProperties.class, new SvnNgGetProperties(), getPrimaryWcGeneration(), SvnWcGeneration.NOT_DETECTED);
+        registerOperationRunner(SvnGetProperties.class, new SvnOldGetProperties(), getSecondaryWcGeneration());
 
-        registerOperationRunner(SvnGetStatus.class, new SvnNgGetStatus(), SvnWcGeneration.V17, SvnWcGeneration.NOT_DETECTED);
-        registerOperationRunner(SvnGetStatus.class, new SvnOldGetStatus(), SvnWcGeneration.V16);
+        registerOperationRunner(SvnGetStatus.class, new SvnNgGetStatus(), getPrimaryWcGeneration(), SvnWcGeneration.NOT_DETECTED);
+        registerOperationRunner(SvnGetStatus.class, new SvnOldGetStatus(), getSecondaryWcGeneration());
 
-        registerOperationRunner(SvnCheckout.class, new SvnNgCheckout(), SvnWcGeneration.V17, SvnWcGeneration.NOT_DETECTED);
+        registerOperationRunner(SvnCheckout.class, new SvnNgCheckout(), getPrimaryWcGeneration(), SvnWcGeneration.NOT_DETECTED);
+        registerOperationRunner(SvnCheckout.class, new SvnOldCheckout(), getSecondaryWcGeneration());
+        
+        registerOperationRunner(SvnSwitch.class, new SvnNgSwitch(), getPrimaryWcGeneration(), SvnWcGeneration.NOT_DETECTED);
+        registerOperationRunner(SvnCheckout.class, new SvnOldSwitch(), getSecondaryWcGeneration());
+
+        registerOperationRunner(SvnUpdate.class, new SvnNgUpdate(), getPrimaryWcGeneration(), SvnWcGeneration.NOT_DETECTED);
+        registerOperationRunner(SvnCheckout.class, new SvnOldUpdate(), getSecondaryWcGeneration());
     }
     
     public boolean isAutoCloseContext() {
@@ -318,5 +332,25 @@ public class SvnOperationFactory {
 
     public SVNWCContext getWcContext() {
         return wcContext;
+    }
+
+    public SvnWcGeneration getPrimaryWcGeneration() {
+        if (primaryWcGeneration == null) {
+            String systemProperty = System.getProperty("svnkit.wc.17");
+            if (Boolean.toString(true).equalsIgnoreCase(systemProperty)) {
+                primaryWcGeneration = SvnWcGeneration.V17;
+            } else {
+                primaryWcGeneration = SvnWcGeneration.V16;
+            }
+        }
+        return primaryWcGeneration;
+    }
+    
+    public SvnWcGeneration getSecondaryWcGeneration() {
+        return getPrimaryWcGeneration() == SvnWcGeneration.V17 ? SvnWcGeneration.V16 : SvnWcGeneration.V17;
+    }
+
+    public void setPrimaryWcGeneration(SvnWcGeneration primaryWcGeneration) {
+        this.primaryWcGeneration = primaryWcGeneration;
     }
 }

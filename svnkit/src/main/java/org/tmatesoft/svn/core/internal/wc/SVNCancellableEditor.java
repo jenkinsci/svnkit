@@ -17,6 +17,7 @@ import org.tmatesoft.svn.core.ISVNCanceller;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.util.ISVNDebugLog;
@@ -29,7 +30,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @version 1.3
  * @author  TMate Software Ltd.
  */
-public class SVNCancellableEditor implements ISVNEditor {
+public class SVNCancellableEditor implements ISVNUpdateEditor {
 
     private ISVNEditor myDelegate;
     private ISVNCanceller myCancel;
@@ -150,6 +151,13 @@ public class SVNCancellableEditor implements ISVNEditor {
     public void abortEdit() throws SVNException {
         myLog.logFine(SVNLogType.WC, "abort edit");
         myDelegate.abortEdit();
+    }
+
+    public long getTargetRevision() {
+        if (myDelegate instanceof ISVNUpdateEditor) {
+            return ((ISVNUpdateEditor) myDelegate).getTargetRevision();
+        }
+        return SVNWCContext.INVALID_REVNUM;
     }
 
 }

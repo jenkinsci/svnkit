@@ -18,7 +18,6 @@ public class SvnOldGetStatus extends SvnLocalOperationRunner<SvnStatus, SvnGetSt
         client.setFilesProvider(SvnCodec.fileListProvider(getOperation().getFileListHook()));
         client.setIgnoreExternals(!getOperation().isReportExternals());
         client.setEventHandler(getOperation().getEventHandler());
-        
         long revision = client.doStatus(getFirstTarget(),
                 getOperation().getRevision(),
                 getOperation().getDepth(),
@@ -28,7 +27,6 @@ public class SvnOldGetStatus extends SvnLocalOperationRunner<SvnStatus, SvnGetSt
                 getOperation().isCollectParentExternals(),
                 this,
                 getOperation().getApplicableChangelists());
-        
         getOperation().setRemoteRevision(revision);
         
         return getOperation().first();

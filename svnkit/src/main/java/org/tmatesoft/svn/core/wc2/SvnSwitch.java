@@ -1,11 +1,16 @@
 package org.tmatesoft.svn.core.wc2;
 
+import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.util.SVNLogType;
 
 public class SvnSwitch extends AbstractSvnUpdate<Long> {
 
     private boolean depthIsSticky;
-    private boolean allowUnversionedObstructions;
     private boolean ignoreAncestry;
     
     private SVNURL switchUrl;
@@ -16,10 +21,6 @@ public class SvnSwitch extends AbstractSvnUpdate<Long> {
 
     public boolean isDepthIsSticky() {
         return depthIsSticky;
-    }
-
-    public boolean isAllowUnversionedObstructions() {
-        return allowUnversionedObstructions;
     }
 
     public boolean isIgnoreAncestry() {
@@ -34,10 +35,6 @@ public class SvnSwitch extends AbstractSvnUpdate<Long> {
         this.depthIsSticky = depthIsSticky;
     }
 
-    public void setAllowUnversionedObstructions(boolean allowUnversionedObstructions) {
-        this.allowUnversionedObstructions = allowUnversionedObstructions;
-    }
-
     public void setIgnoreAncestry(boolean ignoreAncestry) {
         this.ignoreAncestry = ignoreAncestry;
     }
@@ -45,4 +42,15 @@ public class SvnSwitch extends AbstractSvnUpdate<Long> {
     public void setSwitchUrl(SVNURL switchUrl) {
         this.switchUrl = switchUrl;
     }
+
+    @Override
+    protected void ensureArgumentsAreValid() throws SVNException {
+        super.ensureArgumentsAreValid();
+        if (getDepth() == SVNDepth.EXCLUDE) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Cannot both exclude and switch a path");
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+    }
+    
+    
 }

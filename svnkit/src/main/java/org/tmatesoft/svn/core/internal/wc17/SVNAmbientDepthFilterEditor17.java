@@ -37,7 +37,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @version 1.3
  * @author TMate Software Ltd.
  */
-public class SVNAmbientDepthFilterEditor17 implements ISVNEditor {
+public class SVNAmbientDepthFilterEditor17 implements ISVNUpdateEditor {
 
     private ISVNEditor myDelegate;
     private SVNWCContext myWcContext;
@@ -349,6 +349,13 @@ public class SVNAmbientDepthFilterEditor17 implements ISVNEditor {
     private class FileBaton {
 
         boolean myIsAmbientlyExcluded;
+    }
+
+    public long getTargetRevision() {
+        if (myDelegate instanceof ISVNUpdateEditor) {
+            return ((ISVNUpdateEditor) myDelegate).getTargetRevision();
+        }
+        return SVNWCContext.INVALID_REVNUM;
     }
 
 }

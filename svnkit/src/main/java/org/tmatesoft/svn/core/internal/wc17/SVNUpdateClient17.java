@@ -536,8 +536,7 @@ public class SVNUpdateClient17 extends SVNBaseClient17 {
     private ISVNUpdateEditor createUpdateEditor(SVNWCContext wcContext, File anchorAbspath, String target, SVNURL reposRoot, SVNExternalsStore externalsStore, boolean allowUnversionedObstructions,
             boolean depthIsSticky, SVNDepth depth, String[] preservedExts, ISVNFileFetcher fileFetcher, ISVNDirFetcher dirFetcher, boolean updateLocksOnDemand) throws SVNException {
         return SVNUpdateEditor17.createUpdateEditor(wcContext, anchorAbspath, target, reposRoot, null, externalsStore, allowUnversionedObstructions, depthIsSticky, depth, preservedExts, 
-                fileFetcher, dirFetcher, 
-                updateLocksOnDemand);
+                dirFetcher);
     }
 
     private void handleExternals(Map oldExternals, Map newExternals, Map depths, SVNURL anchorUrl, File anchorAbspath, SVNURL reposRoot, SVNDepth depth) {

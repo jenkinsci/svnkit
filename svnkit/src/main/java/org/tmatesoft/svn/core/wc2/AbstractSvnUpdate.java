@@ -4,6 +4,7 @@ public abstract class AbstractSvnUpdate<V> extends SvnOperation<V> {
     
     private boolean ignoreExternals;
     private boolean updateLocksOnDemand;
+    private boolean allowUnversionedObstructions;
 
     protected AbstractSvnUpdate(SvnOperationFactory factory) {
         super(factory);
@@ -26,6 +27,14 @@ public abstract class AbstractSvnUpdate<V> extends SvnOperation<V> {
      */
     public void setUpdateLocksOnDemand(boolean updateLocksOnDemand) {
         this.updateLocksOnDemand = updateLocksOnDemand;
+    }
+
+    public boolean isAllowUnversionedObstructions() {
+        return allowUnversionedObstructions;
+    }
+
+    public void setAllowUnversionedObstructions(boolean allowUnversionedObstructions) {
+        this.allowUnversionedObstructions = allowUnversionedObstructions;
     }
 
 }

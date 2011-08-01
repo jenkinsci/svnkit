@@ -135,7 +135,7 @@ public class SVNErrorMessage implements Serializable {
      * @param  objects    an array of objects related to the error <code>message</code>
      * @return            a new error message
      */
-    public static SVNErrorMessage create(SVNErrorCode code, String message, Object[] objects) {
+    public static SVNErrorMessage create(SVNErrorCode code, String message, Object... objects) {
         return create(code, message, objects, TYPE_ERROR);
     }
 

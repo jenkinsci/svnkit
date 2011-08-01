@@ -11,7 +11,6 @@ public class SvnUpdate extends AbstractSvnUpdate<long[]> {
     
     private boolean depthIsSticky;
     private boolean makeParents;
-    private boolean allowUnversionedObstructions;
     private boolean treatAddsAsModifications;
 
     protected SvnUpdate(SvnOperationFactory factory) {
@@ -43,10 +42,6 @@ public class SvnUpdate extends AbstractSvnUpdate<long[]> {
         return makeParents;
     }
 
-    public boolean isAllowUnversionedObstructions() {
-        return allowUnversionedObstructions;
-    }
-
     public boolean isTreatAddsAsModifications() {
         return treatAddsAsModifications;
     }
@@ -57,10 +52,6 @@ public class SvnUpdate extends AbstractSvnUpdate<long[]> {
 
     public void setMakeParents(boolean makeParents) {
         this.makeParents = makeParents;
-    }
-
-    public void setAllowUnversionedObstructions(boolean allowUnversionedObstructions) {
-        this.allowUnversionedObstructions = allowUnversionedObstructions;
     }
 
     public void setTreatAddsAsModifications(boolean treatAddsAsModifications) {

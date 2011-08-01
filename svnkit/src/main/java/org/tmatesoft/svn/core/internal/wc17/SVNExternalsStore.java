@@ -78,7 +78,7 @@ public class SVNExternalsStore {
         return oldExternals == null ? Collections.EMPTY_MAP : oldExternals;
     }
 
-    public Map getDepths() {
+    public Map<File, SVNDepth> getDepths() {
         return depths == null ? Collections.EMPTY_MAP : depths;
     }
 

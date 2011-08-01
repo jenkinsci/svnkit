@@ -95,7 +95,6 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.core.wc2.SvnChecksum;
-import org.tmatesoft.svn.core.wc2.SvnStatus;
 import org.tmatesoft.svn.util.SVNLogType;
 
 import de.regnis.q.sequence.line.QSequenceLineRAByteData;
@@ -1527,6 +1526,12 @@ public class SVNWCContext {
     }
 
     public File acquireWriteLock(File localAbspath, boolean lockAnchor, boolean returnLockRoot) throws SVNException {
+        localAbspath = obtainAnchorPath(localAbspath, lockAnchor, returnLockRoot);
+        db.obtainWCLock(localAbspath, -1, false);
+        return localAbspath;
+    }
+
+    public File obtainAnchorPath(File localAbspath, boolean lockAnchor, boolean returnLockRoot) throws SVNException {
         SVNWCDbKind kind = db.readKind(localAbspath, returnLockRoot);
         if (!returnLockRoot && kind != SVNWCDbKind.Dir) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "Can''t obtain lock on non-directory ''{0}''", localAbspath);
@@ -1565,11 +1570,7 @@ public class SVNWCContext {
                 }
             }
         }
-        db.obtainWCLock(localAbspath, -1, false);
-        if (returnLockRoot) {
-            return localAbspath;
-        }
-        return null;
+        return localAbspath;
     }
 
     private boolean isChildDisjoint(File localAbspath) throws SVNException {

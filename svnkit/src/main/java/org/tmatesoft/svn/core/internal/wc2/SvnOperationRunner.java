@@ -2,11 +2,13 @@ package org.tmatesoft.svn.core.internal.wc2;
 
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc2.ISvnOperationRunner;
 import org.tmatesoft.svn.core.wc2.SvnOperation;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 public abstract class SvnOperationRunner<V, T extends SvnOperation<V>> implements ISvnOperationRunner<V, T>, ISVNEventHandler {
@@ -52,6 +54,9 @@ public abstract class SvnOperationRunner<V, T extends SvnOperation<V>> implement
     }
     
     public void checkCancelled() throws SVNCancelException {
+        if (getOperation() != null && getOperation().isCancelled()) {
+            SVNErrorManager.cancel("Operation cancelled", SVNLogType.WC);
+        }
         if (getOperation() != null && getOperation().getCanceller() != null) {
             getOperation().getCanceller().checkCancelled();
         }

@@ -10,23 +10,14 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 public class SvnCheckout extends AbstractSvnUpdate<Long> {
     
-    private boolean allowUnversionedObstructions;
     private SVNURL url;
 
     protected SvnCheckout(SvnOperationFactory factory) {
         super(factory);
     }
 
-    public boolean isAllowUnversionedObstructions() {
-        return allowUnversionedObstructions;
-    }
-
     public SVNURL getUrl() {
         return url;
-    }
-
-    public void setAllowUnversionedObstructions(boolean allowUnversionedObstructions) {
-        this.allowUnversionedObstructions = allowUnversionedObstructions;
     }
 
     public void setUrl(SVNURL url) {

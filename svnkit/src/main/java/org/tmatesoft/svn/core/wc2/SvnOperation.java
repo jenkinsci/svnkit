@@ -27,6 +27,8 @@ public class SvnOperation<V> {
     private SvnOperationFactory operationFactory;
     private boolean isSleepForTimestamp;
     
+    private volatile boolean isCancelled;
+    
     protected SvnOperation(SvnOperationFactory factory) {
         this.operationFactory = factory;
         initDefaults();
@@ -120,6 +122,14 @@ public class SvnOperation<V> {
             }
         }
         return false;
+    }
+    
+    public void cancel() {
+        isCancelled = true;
+    }
+    
+    public boolean isCancelled() {
+        return isCancelled;
     }
     
     @SuppressWarnings("unchecked")
