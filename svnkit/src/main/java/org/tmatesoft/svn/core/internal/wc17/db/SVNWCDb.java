@@ -246,7 +246,7 @@ public class SVNWCDb implements ISVNWCDb {
      *
      * @throws SVNException
      */
-    private long createReposId(SVNSqlJetDb sDb, SVNURL reposRootUrl, String reposUuid) throws SVNException {
+    public long createReposId(SVNSqlJetDb sDb, SVNURL reposRootUrl, String reposUuid) throws SVNException {
 
         final SVNSqlJetStatement getStmt = sDb.getStatement(SVNWCDbStatements.SELECT_REPOSITORY);
         try {
@@ -462,7 +462,7 @@ public class SVNWCDb implements ISVNWCDb {
         
     }
 
-    private class InsertBase implements SVNSqlJetTransaction {
+    public class InsertBase implements SVNSqlJetTransaction {
 
         public SVNWCDbStatus status;
         public SVNWCDbKind kind;
@@ -862,21 +862,25 @@ public class SVNWCDb implements ISVNWCDb {
 
     public WCDbBaseInfo getBaseInfo(File localAbsPath, BaseInfoField... fields) throws SVNException {
         assert (isAbsolute(localAbsPath));
+        final DirParsedInfo dir = parseDir(localAbsPath, Mode.ReadOnly);
+        final SVNWCDbDir pdh = dir.wcDbDir;
+        final File localRelPath = dir.localRelPath;
+
+        verifyDirUsable(pdh);
+        
+        return getBaseInfo(dir.wcDbDir.getWCRoot(), localRelPath, fields);
+    }
+    
+    public WCDbBaseInfo getBaseInfo(SVNWCDbRoot root, File localRelPath, BaseInfoField... fields) throws SVNException {
 
         final EnumSet<BaseInfoField> f = getInfoFields(BaseInfoField.class, fields);
         WCDbBaseInfo info = new WCDbBaseInfo();
 
         boolean have_row;
 
-        final DirParsedInfo dir = parseDir(localAbsPath, Mode.ReadOnly);
-        final SVNWCDbDir pdh = dir.wcDbDir;
-        final File localRelPath = dir.localRelPath;
-
-        verifyDirUsable(pdh);
-
-        SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(f.contains(BaseInfoField.lock) ? SVNWCDbStatements.SELECT_BASE_NODE_WITH_LOCK : SVNWCDbStatements.SELECT_BASE_NODE);
+        SVNSqlJetStatement stmt = root.getSDb().getStatement(f.contains(BaseInfoField.lock) ? SVNWCDbStatements.SELECT_BASE_NODE_WITH_LOCK : SVNWCDbStatements.SELECT_BASE_NODE);
         try {
-            stmt.bindf("is", pdh.getWCRoot().getWcId(), SVNFileUtil.getFilePath(localRelPath));
+            stmt.bindf("is", root.getWcId(), SVNFileUtil.getFilePath(localRelPath));
             have_row = stmt.next();
 
             if (have_row) {
@@ -921,7 +925,7 @@ public class SVNWCDb implements ISVNWCDb {
                         if (f.contains(BaseInfoField.reposUuid))
                             info.reposUuid = null;
                     } else {
-                        final ReposInfo reposInfo = fetchReposInfo(pdh.getWCRoot().getSDb(), getColumnInt64(stmt, SVNWCDbSchema.NODES__Fields.repos_id));
+                        final ReposInfo reposInfo = fetchReposInfo(root.getSDb(), getColumnInt64(stmt, SVNWCDbSchema.NODES__Fields.repos_id));
                         info.reposRootUrl = SVNURL.parseURIEncoded(reposInfo.reposRootUrl);
                     }
                 }
@@ -957,7 +961,7 @@ public class SVNWCDb implements ISVNWCDb {
                         try {
                             info.checksum = getColumnChecksum(stmt, SVNWCDbSchema.NODES__Fields.checksum);
                         } catch (SVNException e) {
-                            SVNErrorMessage err = SVNErrorMessage.create(e.getErrorMessage().getErrorCode(), "The node ''{0}'' has a corrupt checksum value.", localAbsPath);
+                            SVNErrorMessage err = SVNErrorMessage.create(e.getErrorMessage().getErrorCode(), "The node ''{0}'' has a corrupt checksum value.", root.getAbsPath(localRelPath));
                             SVNErrorManager.error(err, SVNLogType.WC);
                         }
                     }
@@ -975,7 +979,7 @@ public class SVNWCDb implements ISVNWCDb {
                     info.updateRoot = getColumnBoolean(stmt, SVNWCDbSchema.NODES__Fields.file_external);
                 }
             } else {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{0}'' was not found.", localAbsPath);
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{0}'' was not found.", root.getAbsPath(localRelPath));
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
 
@@ -4605,6 +4609,10 @@ public class SVNWCDb implements ISVNWCDb {
         verifyDirUsable(pdh);
         
         return parseDir;
+    }
+    
+    public void registerExternal(File definingAbsPath, File localAbsPath, SVNNodeKind kind, SVNURL reposRootUrl, String reposUuid, File reposRelPath, long operationalRevision, long revision) throws SVNException {
+        SvnWcDbExternals.addExternalDir(this, localAbsPath, definingAbsPath, reposRootUrl, reposUuid, definingAbsPath, reposRelPath, operationalRevision, revision, null);
     }
 
 }

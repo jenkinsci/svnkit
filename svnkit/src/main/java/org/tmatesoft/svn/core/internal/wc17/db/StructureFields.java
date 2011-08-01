@@ -98,4 +98,30 @@ public class StructureFields {
         status, 
         kind;
     }
+    
+    public enum ExternalNodeInfo {
+        kind,
+        presence,
+        reposId,
+        reposRelPath,
+        revision,
+        reposRootUrl,
+        reposUuid,
+        properties,
+        changedRevision,
+        changedDate,
+        changedAuthor,
+        davCache,
+        checksum,
+        target,
+        recordAncestorRelPath,
+        recordedReposRelPath,
+        recordedPegRevision,
+        recordedRevision,
+        conflict,
+        updateActualProperties,
+        newActualProperties,
+        keepRecordedInfo,
+        workItems;
+    }
 }

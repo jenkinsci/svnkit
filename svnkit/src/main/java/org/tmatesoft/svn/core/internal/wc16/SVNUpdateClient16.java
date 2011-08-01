@@ -133,7 +133,8 @@ public class SVNUpdateClient16 extends SVNBasicDelegate {
      */
     public SVNUpdateClient16(ISVNAuthenticationManager authManager, ISVNOptions options) {
         super(authManager, options);
-        myIsExportExpandsKeywords = true;
+        setExportExpandsKeywords(true);
+        setExternalsHandler(ISVNExternalsHandler.DEFAULT);
     }
 
     /**
@@ -157,7 +158,8 @@ public class SVNUpdateClient16 extends SVNBasicDelegate {
      */
     public SVNUpdateClient16(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
         super(repositoryPool, options);
-        myIsExportExpandsKeywords = true;
+        setExportExpandsKeywords(true);
+        setExternalsHandler(ISVNExternalsHandler.DEFAULT);
     }
 
     /**

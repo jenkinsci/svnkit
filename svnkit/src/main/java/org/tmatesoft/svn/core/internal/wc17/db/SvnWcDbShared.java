@@ -5,6 +5,7 @@ import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.reset
 import java.io.File;
 import java.util.Collection;
 
+import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -24,12 +25,25 @@ public class SvnWcDbShared {
         root.getSDb().beginTransaction(SqlJetTransactionMode.READ_ONLY);
     }
     
+    public static void begingWriteTransaction(SVNWCDbRoot root) throws SVNException {
+        root.getSDb().beginTransaction(SqlJetTransactionMode.WRITE);
+    }
+    
     public static void commit(SVNWCDbRoot root) throws SVNException {
         root.getSDb().commit();
     }
     
+    public static void rollback(SVNWCDbRoot root) throws SVNException {
+        root.getSDb().rollback();
+    }
+    
     protected static void nodeNotFound(File absolutePath) throws SVNException {
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{0}'' was not found.", absolutePath);
+        SVNErrorManager.error(err, SVNLogType.WC);
+    }
+    
+    protected static void sqliteError(SqlJetException e) throws SVNException {
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SQLITE_ERROR, e);
         SVNErrorManager.error(err, SVNLogType.WC);
     }
     
