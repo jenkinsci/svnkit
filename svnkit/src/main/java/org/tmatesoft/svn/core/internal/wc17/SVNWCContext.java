@@ -1545,7 +1545,8 @@ public class SVNWCContext {
             try {
                 parentKind = db.readKind(parentAbspath, true);
             } catch (SVNException e) {
-                if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_WORKING_COPY) {
+                if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_WORKING_COPY &&
+                        e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
                     throw e;
                 }
             }
