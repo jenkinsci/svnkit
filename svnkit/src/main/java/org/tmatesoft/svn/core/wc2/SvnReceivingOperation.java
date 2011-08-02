@@ -1,6 +1,7 @@
 package org.tmatesoft.svn.core.wc2;
 
 import java.util.Collection;
+import java.util.LinkedList;
 
 import org.tmatesoft.svn.core.SVNException;
 
@@ -45,12 +46,14 @@ public class SvnReceivingOperation<T> extends SvnOperation<T> implements ISvnObj
         return this.last;
     }
     
-    public void setReceivingContainer(Collection<T> receivingContainer) {
-        this.receivedObjects = receivingContainer;
-    }
-    
-    public Collection<T> getReceivedObjects() {
-        return this.receivedObjects;
+    public Collection<T> run(Collection<T> objects) throws SVNException {
+        setReceivingContainer(objects != null ? objects : new LinkedList<T>());
+        try {
+            run();
+            return getReceivedObjects();
+        } finally {
+            setReceivingContainer(null);
+        }
     }
 
     @Override
@@ -59,4 +62,12 @@ public class SvnReceivingOperation<T> extends SvnOperation<T> implements ISvnObj
         this.first = null;
     }
 
+    
+    private void setReceivingContainer(Collection<T> receivingContainer) {
+        this.receivedObjects = receivingContainer;
+    }
+    
+    private Collection<T> getReceivedObjects() {
+        return this.receivedObjects;
+    }
 }

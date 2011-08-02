@@ -11,14 +11,13 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Level;
 
 import org.tmatesoft.svn.core.ISVNCanceller;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb.Mode;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbOpenMode;
@@ -320,15 +319,11 @@ public class SvnOperationFactory {
             if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_WORKING_COPY) {
                 return SvnWcGeneration.NOT_DETECTED;
             } else if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {                
-                if (path.getParentFile() == null) {
-                    return SvnWcGeneration.V16;
-                }
-                    
                 // there should be an exception for an 'add' operation.
                 SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
                 try {
-                    SVNAdminArea dir = wcAccess.open(path, false, false, false, 0, Level.OFF);
-                    if (dir != null && dir.getEntry(path.getName(), false) != null) {
+                    SVNAdminAreaInfo adminAreaInfo = wcAccess.openAnchor(path, false, 0);
+                    if ("".equals(adminAreaInfo.getTargetName()) || wcAccess.getEntry(path, false) != null) {
                         return SvnWcGeneration.V16;
                     }
                 } catch (SVNException inner) {                         
