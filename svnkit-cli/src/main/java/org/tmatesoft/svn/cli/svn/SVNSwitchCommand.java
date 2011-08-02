@@ -46,6 +46,7 @@ public class SVNSwitchCommand extends SVNCommand {
         options.add(SVNOption.DIFF3_CMD);
         options.add(SVNOption.RELOCATE);
         options.add(SVNOption.IGNORE_EXTERNALS);
+        options.add(SVNOption.IGNORE_ANCESTRY);
         options.add(SVNOption.FORCE);
         options.add(SVNOption.ACCEPT);
         return options;
@@ -95,10 +96,10 @@ public class SVNSwitchCommand extends SVNCommand {
             depth = getSVNEnvironment().getSetDepth();
             depthIsSticky = true;
         }
-        
+        boolean ignoreAncestry = getSVNEnvironment().isIgnoreAncestry();
         client.doSwitch(target.getFile(), switchURL.getURL(), switchURL.getPegRevision(), 
                 getSVNEnvironment().getStartRevision(), depth, 
-                getSVNEnvironment().isForce(), depthIsSticky);    
+                getSVNEnvironment().isForce(), depthIsSticky, ignoreAncestry);    
     }
     
     protected void relocate(List targets) throws SVNException {

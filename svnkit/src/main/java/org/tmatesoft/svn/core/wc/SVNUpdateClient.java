@@ -615,6 +615,10 @@ public class SVNUpdateClient extends SVNBasicClient {
      * @since 1.2, SVN 1.5
      */
     public long doSwitch(File path, SVNURL url, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions, boolean depthIsSticky) throws SVNException {
+        return doSwitch(path, url, pegRevision, revision, depth, allowUnversionedObstructions, depthIsSticky, false);
+    }
+    
+    public long doSwitch(File path, SVNURL url, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions, boolean depthIsSticky, boolean ignoreAncestry) throws SVNException {
         SvnSwitch sw = getOperationsFactory().createSwitch();
         sw.setUpdateLocksOnDemand(isUpdateLocksOnDemand());
         sw.setSwitchUrl(url);
@@ -624,6 +628,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         sw.setDepth(depth);
         sw.setDepthIsSticky(depthIsSticky);
         sw.setAllowUnversionedObstructions(allowUnversionedObstructions);
+        sw.setIgnoreAncestry(ignoreAncestry);
         sw.setIgnoreExternals(isIgnoreExternals());
         
         return sw.run();
