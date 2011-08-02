@@ -33,7 +33,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 public class SVNSwitchCommand extends SVNCommand {
 
     public SVNSwitchCommand() {
-        super("switch", new String[] {"sw"});
+        super("switch", new String[] {"sw", "relocate"});
     }
 
     protected Collection createSupportedOptions() {

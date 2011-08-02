@@ -642,6 +642,9 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
                 myDepth = SVNDepth.FILES;
             }
         }
+        if ("relocate".equals(getCommandName())) {
+            myIsRelocate = true;
+        }
     }
     
     protected String getCommandLineClientName() {
