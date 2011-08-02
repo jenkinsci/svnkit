@@ -23,12 +23,12 @@ import org.tmatesoft.svn.core.SVNException;
  */
 public abstract class SVNSqlJetUpdateStatement extends SVNSqlJetSelectStatement {
 
-    public SVNSqlJetUpdateStatement(SVNSqlJetDb sDb, Enum fromTable) throws SVNException {
+    public SVNSqlJetUpdateStatement(SVNSqlJetDb sDb, Enum<?> fromTable) throws SVNException {
         super(sDb, fromTable);
         transactionMode = SqlJetTransactionMode.WRITE;
     }
 
-    public SVNSqlJetUpdateStatement(SVNSqlJetDb sDb, Enum fromTable, Enum indexName) throws SVNException {
+    public SVNSqlJetUpdateStatement(SVNSqlJetDb sDb, Enum<?> fromTable, Enum<?> indexName) throws SVNException {
         super(sDb, fromTable, indexName);
         transactionMode = SqlJetTransactionMode.WRITE;
     }

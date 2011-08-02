@@ -69,9 +69,9 @@ public class SvnWcDbExternals extends SvnWcDbShared {
         begingWriteTransaction(root);
         try {
             insertExternalNode(root, localRelpath, externalInfo);
-            commit(root);
+            commitTransaction(root);
         } catch (SVNException e) {
-            rollback(root);
+            rollbackTransaction(root);
             throw e;
         } finally {
             externalInfo.release();

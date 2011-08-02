@@ -22,6 +22,7 @@ import org.tmatesoft.svn.core.internal.wc16.SVNUpdateClient16;
 import org.tmatesoft.svn.core.internal.wc17.SVNUpdateClient17;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc2.SvnCheckout;
+import org.tmatesoft.svn.core.wc2.SvnRelocate;
 import org.tmatesoft.svn.core.wc2.SvnSwitch;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.core.wc2.SvnUpdate;
@@ -1080,15 +1081,14 @@ public class SVNUpdateClient extends SVNBasicClient {
      * @throws SVNException
      */
     public void doRelocate(File dst, SVNURL oldURL, SVNURL newURL, boolean recursive) throws SVNException {
-        try {
-            getSVNUpdateClient17().doRelocate(dst, oldURL, newURL, recursive);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNUpdateClient16().doRelocate(dst, oldURL, newURL, recursive);
-                return;
-            }
-            throw e;
-        }
+        SvnRelocate relocate = getOperationsFactory().createRelocate();
+        
+        relocate.setSingleTarget(SvnTarget.fromFile(dst));
+        relocate.setFromUrl(oldURL);
+        relocate.setToUrl(newURL);
+        relocate.setRecursive(recursive);
+        
+        relocate.run();
     }
 
     /**

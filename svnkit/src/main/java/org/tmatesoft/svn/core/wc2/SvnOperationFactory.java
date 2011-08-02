@@ -27,12 +27,14 @@ import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgCheckout;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgGetInfo;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgGetProperties;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgGetStatus;
+import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgRelocate;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgSwitch;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgUpdate;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldCheckout;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetInfo;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetProperties;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetStatus;
+import org.tmatesoft.svn.core.internal.wc2.old.SvnOldRelocate;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldSwitch;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldUpdate;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteGetInfo;
@@ -98,6 +100,9 @@ public class SvnOperationFactory {
 
         registerOperationRunner(SvnUpdate.class, new SvnNgUpdate());
         registerOperationRunner(SvnUpdate.class, new SvnOldUpdate());
+        
+        registerOperationRunner(SvnRelocate.class, new SvnNgRelocate());
+        registerOperationRunner(SvnRelocate.class, new SvnOldRelocate());
     }
     
     public boolean isAutoCloseContext() {
@@ -193,6 +198,10 @@ public class SvnOperationFactory {
 
     public SvnCheckout createCheckout() {
         return new SvnCheckout(this);
+    }
+
+    public SvnRelocate createRelocate() {
+        return new SvnRelocate(this);
     }
 
     protected Object run(SvnOperation<?> operation) throws SVNException {
@@ -319,7 +328,7 @@ public class SvnOperationFactory {
             if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_WORKING_COPY) {
                 return SvnWcGeneration.NOT_DETECTED;
             } else if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {                
-                // there should be an exception for an 'add' operation.
+                // there should be an exception for an 'add' and 'checkout' operations.
                 SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
                 try {
                     SVNAdminAreaInfo adminAreaInfo = wcAccess.openAnchor(path, false, 0);

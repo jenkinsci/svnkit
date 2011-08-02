@@ -11,7 +11,9 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbLock;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 import org.tmatesoft.svn.core.wc2.SvnChecksum;
@@ -170,6 +172,32 @@ public class SvnWcDbStatementUtil {
             return null;
         }        
         return SvnChecksum.fromString(str);
+    }
+    
+    public static SVNDate getColumnDate(SVNSqlJetStatement stmt, Enum<?> f) throws SVNException {
+        if (isColumnNull(stmt, f)) {
+            return null;
+        }
+        return SVNWCUtils.readDate(getColumnInt64(stmt, f));
+    }
+    
+    public static SVNWCDbLock getLockFromColumns(SVNSqlJetStatement stmt, Enum<?> tokenField, Enum<?> owner, Enum<?> comment, Enum<?> date) throws SVNException {
+        if (isColumnNull(stmt, tokenField)) {
+            return null;
+        }
+        SVNWCDbLock lock = new SVNWCDbLock();
+        lock.token = getColumnText(stmt, tokenField);
+        if (!isColumnNull(stmt, owner)) {
+            lock.owner = getColumnText(stmt, owner);
+        }
+        if (!isColumnNull(stmt, SVNWCDbSchema.LOCK__Fields.lock_comment)) {
+            lock.comment = getColumnText(stmt, comment);
+        }
+        if (!isColumnNull(stmt, SVNWCDbSchema.LOCK__Fields.lock_date)) {
+            lock.date = getColumnDate(stmt, date);
+        }
+        return lock;
+
     }
     
     public static void reset(SVNSqlJetStatement stmt) throws SVNException {

@@ -91,7 +91,9 @@ public class StructureFields {
         haveWork, 
         opRoot, 
         hadProps, 
-        haveMoreWork;
+        haveMoreWork,
+        /* base info field */
+        updateRoot;
     }
     
     public enum WalkerChildInfo {
@@ -123,5 +125,26 @@ public class StructureFields {
         newActualProperties,
         keepRecordedInfo,
         workItems;
+    }
+    
+    public enum DeletionInfo {
+        baseDelRelPath,
+        movedToRelPath,
+        workDelRelPath;
+    }
+    
+    public enum AdditionInfo {
+        status, 
+        opRootAbsPath, 
+        opRootRelPath,
+        reposRelPath, 
+        reposId,
+        reposRootUrl, 
+        reposUuid, 
+        originalReposRelPath, 
+        originalReposId,
+        originalRootUrl, 
+        originalUuid, 
+        originalRevision
     }
 }

@@ -143,7 +143,7 @@ public class Structure<T extends Enum<T>> {
         return this;
     }
     
-    public <X extends Enum<X>> Structure<X> into(Structure<X> target, X... fields) {
+    public <X extends Enum<X>> void into(Structure<X> target, X... fields) {
         assert copySource != null;
         assert fields != null;
         assert fields.length == copySource.length;
@@ -166,7 +166,6 @@ public class Structure<T extends Enum<T>> {
         } finally {
             copySource = null;
         }
-        return target;
     }
     
     public int hashCode() {
