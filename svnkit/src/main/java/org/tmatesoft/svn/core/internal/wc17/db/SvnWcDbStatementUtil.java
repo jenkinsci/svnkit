@@ -106,6 +106,10 @@ public class SvnWcDbStatementUtil {
         return getColumnToken(stmt, SVNWCDbSchema.NODES__Fields.presence, presenceMap2);
     }
     
+    public static SVNWCDbStatus getColumnPresence(SVNSqlJetStatement stmt, Enum<?> f) throws SVNException {
+        return getColumnToken(stmt, f, presenceMap2);
+    }
+    
     public static SVNWCDbKind getColumnKind(SVNSqlJetStatement stmt, Enum<?> f) throws SVNException {
         return getColumnToken(stmt, f, kindMap2);
     }

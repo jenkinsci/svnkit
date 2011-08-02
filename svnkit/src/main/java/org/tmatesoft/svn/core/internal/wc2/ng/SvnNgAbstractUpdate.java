@@ -30,6 +30,7 @@ import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.SVNWCNodeReposInfo;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
+import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbExternals;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
 import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess.RepositoryInfo;
 import org.tmatesoft.svn.core.io.SVNCapability;
@@ -37,6 +38,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.AbstractSvnUpdate;
+import org.tmatesoft.svn.core.wc2.SvnRelocate;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -237,8 +239,47 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
             }
             handleExternalsChange(reposRoot, externalPath, externalDefinition, oldExternals, ambientDepth, requestedDepth);
         }
+        
+        for(File oldExternalPath : oldExternals.keySet()) {
+           File definingAbsPath = oldExternals.get(oldExternalPath);
+           handleExternalItemRemoval(definingAbsPath, oldExternalPath);
+        }
     }
 
+
+    private void handleExternalItemRemoval(File definingAbsPath, File localAbsPath) throws SVNException {
+        SVNNodeKind kind = getWcContext().readKind(localAbsPath, false);
+        if (kind == SVNNodeKind.NONE) {
+            return;
+        }
+        File lockRootAbsPath = null;
+        boolean locked = getWcContext().getDb().isWCLocked(localAbsPath);
+        if (!locked) {
+            lockRootAbsPath = getWcContext().acquireWriteLock(localAbsPath, false, true);
+        }
+        SVNErrorMessage err = null;
+        try {
+            SvnWcDbExternals.removeExternal(getWcContext(), definingAbsPath, localAbsPath);
+        } catch (SVNException e) {
+            err = e.getErrorMessage();
+        } 
+        handleEvent(SVNEventFactory.createLockEvent(localAbsPath, SVNEventAction.UPDATE_EXTERNAL_REMOVED, null, err));
+        if (lockRootAbsPath != null) {
+            try {
+                getWcContext().releaseWriteLock(lockRootAbsPath);
+            } catch (SVNException e) {
+                if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_LOCKED) {
+                    throw e;
+                }
+            }
+        }
+        if (err.getErrorCode() == SVNErrorCode.WC_LEFT_LOCAL_MOD) {
+            err = null;
+        }
+        if (err != null) {
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+    }
 
     private void handleExternalsChange(SVNURL reposRoot, File externalPath, String externalDefinition, Map<File, File> oldExternals, SVNDepth ambientDepth, SVNDepth requestedDepth) throws SVNException {
         if ((requestedDepth.compareTo(SVNDepth.INFINITY) < 0 && requestedDepth != SVNDepth.UNKNOWN) ||
@@ -267,8 +308,6 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
         long externalRevnum = repositoryInfo.lng(RepositoryInfo.revision);
         repositoryInfo.release();
         
-        String externalUuid = repository.getRepositoryUUID(true);
-        SVNURL externalRootUrl = repository.getRepositoryRoot(true);
         SVNNodeKind externalKind = repository.checkPath("", externalRevnum);
         
         if (externalKind == SVNNodeKind.NONE) {
@@ -292,6 +331,12 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
             }
         } else {
             // modification or update
+            if (externalKind == SVNNodeKind.DIR) {                
+                SVNFileUtil.ensureDirectoryExists(localAbsPath);
+                switchDirExternal(localAbsPath, newUrl, newItem.getRevision(), newItem.getPegRevision(), parentPath);
+            } else if (externalKind == SVNNodeKind.FILE) {
+                
+            }
         }
     }
 
@@ -309,9 +354,21 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
                     SVNWCNodeReposInfo nodeRepositoryInfo = getWcContext().getNodeReposInfo(localAbsPath);
                     if (nodeRepositoryInfo != null && nodeRepositoryInfo.reposRootUrl != null) {
                         if (!url.toString().startsWith(nodeRepositoryInfo.reposRootUrl.toString() + "/")) {
-                            // TODO relocate
+                            SvnRelocate relocate = getOperation().getOperationFactory().createRelocate();
+                            relocate.setToUrl(nodeRepositoryInfo.reposRootUrl);
+                            relocate.setFromUrl(nodeUrl);
+                            relocate.setSingleTarget(SvnTarget.fromFile(localAbsPath));
+                            try {
+                                relocate.run();
+                            } catch (SVNException e) {
+                                if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_INVALID_RELOCATION 
+                                        || e.getErrorMessage().getErrorCode() == SVNErrorCode.CLIENT_INVALID_RELOCATION) {
+                                    relegateExternal(localAbsPath, url, revision, pegRevision, definingPath, fileKind);
+                                    return;
+                                }
+                                throw e;
+                            }
                         }
-                        // switch
                         doSwitch(localAbsPath, url, revision, pegRevision, SVNDepth.INFINITY, true, false, false, true, false);
                         getWcContext().getDb().registerExternal(definingPath, localAbsPath, SVNNodeKind.DIR, 
                                 nodeRepositoryInfo.reposRootUrl, nodeRepositoryInfo.reposUuid, 
@@ -328,12 +385,16 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
             }
         }
         
+        relegateExternal(localAbsPath, url, revision, pegRevision, definingPath, fileKind);
+    }
+
+    private void relegateExternal(File localAbsPath, SVNURL url, SVNRevision revision, SVNRevision pegRevision, File definingPath, SVNFileType fileKind) throws SVNException {
         if (fileKind == SVNFileType.DIRECTORY) {
-            // remove existing or fail.
+            getWcContext().acquireWriteLock(localAbsPath, false, false);
+            relegateExternalDir(definingPath, localAbsPath);
         } else {
             SVNFileUtil.ensureDirectoryExists(localAbsPath);
         }
-        // checkout and register
         checkout(url, localAbsPath, pegRevision, revision, SVNDepth.INFINITY, false, false, false);
         
         SVNWCNodeReposInfo nodeRepositoryInfo = getWcContext().getNodeReposInfo(localAbsPath);
@@ -342,6 +403,20 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
                 SVNFileUtil.createFilePath(SVNPathUtil.getPathAsChild(nodeRepositoryInfo.reposRootUrl.getPath(), url.getPath())), 
                 SVNWCContext.INVALID_REVNUM, 
                 SVNWCContext.INVALID_REVNUM);
+    }
+
+    private void relegateExternalDir(File wriAbsPath, File localAbsPath) throws SVNException {
+        try {
+            SvnWcDbExternals.removeExternal(getWcContext(), wriAbsPath, localAbsPath);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_LEFT_LOCAL_MOD) {
+                File oldName = SVNFileUtil.createUniqueFile(localAbsPath.getParentFile(), localAbsPath.getName(), ".OLD", false);
+                SVNFileUtil.deleteFile(oldName);
+                SVNFileUtil.rename(localAbsPath, oldName);
+                return;
+            }
+            throw e;
+        }
     }
 
     protected long doSwitch(File localAbsPath, SVNURL switchUrl, SVNRevision revision, SVNRevision pegRevision, SVNDepth depth, boolean depthIsSticky, boolean ignoreExternals, boolean allowUnversionedObstructions, boolean ignoreAncestry, boolean sleepForTimestamp) throws SVNException {
@@ -422,8 +497,8 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
             SVNErrorManager.error(err, SVNLogType.WC);            
         }
         if (!ignoreAncestry) {
-            SVNURL targetUrl = getWcContext().getNodeUrl(localAbsPath);
-            long targetRev = getWcContext().getNodeBaseRev(localAbsPath);
+//            SVNURL targetUrl = getWcContext().getNodeUrl(localAbsPath);
+//            long targetRev = getWcContext().getNodeBaseRev(localAbsPath);
             
             // TODO find common ancestor of switchRevUrl@revnum and targetUrl@targetRev
         }

@@ -1,5 +1,11 @@
 package org.tmatesoft.svn.core.internal.wc17.db;
 
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnKind;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnPresence;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getKindText;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getPresenceText;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.reset;
+
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
@@ -12,7 +18,9 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetDeleteStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetInsertStatement;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectStatement;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
@@ -30,8 +38,6 @@ import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.EXTERNALS__Fields;
 import org.tmatesoft.svn.core.wc2.SvnChecksum;
 import org.tmatesoft.svn.util.SVNLogType;
-
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.*;
 
 public class SvnWcDbExternals extends SvnWcDbShared {
     
@@ -150,6 +156,75 @@ public class SvnWcDbExternals extends SvnWcDbShared {
                 info.lng(ExternalNodeInfo.recordedPegRevision),
                 info.lng(ExternalNodeInfo.recordedRevision));
         stmt.done();
+    }
+
+    public static void removeExternal(SVNWCContext context, File wriAbsPath, File localAbsPath) throws SVNException {
+        Structure<ExternalNodeInfo> info = readExternal(context, localAbsPath, wriAbsPath, ExternalNodeInfo.presence, ExternalNodeInfo.kind);
+        removeExternalNode(context, localAbsPath, wriAbsPath, null);
+        SVNWCDbKind kind = info.<SVNWCDbKind>get(ExternalNodeInfo.kind);
+        info.release();
+        if (kind == SVNWCDbKind.Dir) {
+            context.removeFromRevisionControl(localAbsPath, true, false);
+        } else {
+            context.getDb().removeBase(localAbsPath);
+            SVNFileUtil.deleteFile(localAbsPath);
+        }
+    }
+    
+    private static void removeExternalNode(SVNWCContext context, File wriAbsPath, File localAbsPath, SVNSkel workItems) throws SVNException {
+        if (wriAbsPath == null) {
+            wriAbsPath = SVNFileUtil.getParentFile(localAbsPath);
+        }
+        DirParsedInfo dirInfo = ((SVNWCDb) context.getDb()).obtainWcRoot(wriAbsPath);
+        SVNWCDbRoot root = dirInfo.wcDbDir.getWCRoot();
+        
+        File localRelpath = SVNFileUtil.createFilePath(SVNPathUtil.getRelativePath(root.getAbsPath().getAbsolutePath(), localAbsPath.getAbsolutePath()));
+        begingWriteTransaction(root);
+        SVNSqlJetDeleteStatement deleteExternal = null;
+        try {
+            deleteExternal = new SVNSqlJetDeleteStatement(root.getSDb(), SVNWCDbSchema.EXTERNALS);
+            deleteExternal.bindf("is", root.getWcId(), localRelpath);
+            deleteExternal.done();
+
+            if (workItems != null) {
+                root.getDb().addWorkQueue(root.getAbsPath(), workItems);
+            }
+            commitTransaction(root);
+        } catch (SVNException e) {
+            rollbackTransaction(root);
+        } 
+        
+    }
+    
+    private static Structure<ExternalNodeInfo> readExternal(SVNWCContext context, File localAbsPath, File wriAbsPath, ExternalNodeInfo... fields) throws SVNException {
+        if (wriAbsPath == null) {
+            wriAbsPath = SVNFileUtil.getParentFile(localAbsPath);
+        }
+        DirParsedInfo dirInfo = ((SVNWCDb) context.getDb()).obtainWcRoot(wriAbsPath);
+        SVNWCDbRoot root = dirInfo.wcDbDir.getWCRoot();
+        
+        File localRelpath = SVNFileUtil.createFilePath(SVNPathUtil.getRelativePath(root.getAbsPath().getAbsolutePath(), localAbsPath.getAbsolutePath()));
+        SVNSqlJetSelectStatement selectExternalInfo = new SVNSqlJetSelectStatement(root.getSDb(), SVNWCDbSchema.EXTERNALS);
+        try {
+            selectExternalInfo.bindf("is", root.getWcId(), localRelpath);
+            if (selectExternalInfo.next()) {
+                Structure<ExternalNodeInfo> info = Structure.obtain(ExternalNodeInfo.class, fields);
+                if (info.hasField(ExternalNodeInfo.presence)) {
+                    info.set(ExternalNodeInfo.presence, getColumnPresence(selectExternalInfo, EXTERNALS__Fields.presence));
+                }
+                if (info.hasField(ExternalNodeInfo.kind)) {
+                    info.set(ExternalNodeInfo.kind, getColumnKind(selectExternalInfo, EXTERNALS__Fields.kind));
+                }
+                // TODO read more                
+                return info;
+            } else {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{0}'' is not an external.", localAbsPath);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+        } finally {
+            reset(selectExternalInfo);
+        }
+        return null;
     }
     
     /**
