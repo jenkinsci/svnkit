@@ -80,11 +80,6 @@ public class SVNSwitchCommand extends SVNCommand {
         } else {
             target = new SVNPath((String) targets.get(1));
         }
-        if (!getSVNEnvironment().isVersioned(target.getTarget())) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND,
-                    "''{0}'' does not appear to be a working copy path", target.getTarget());
-            SVNErrorManager.error(err, SVNLogType.CLIENT);
-        }
         SVNUpdateClient client = getSVNEnvironment().getClientManager().getUpdateClient();
         if (!getSVNEnvironment().isQuiet()) {
             client.setEventHandler(new SVNNotifyPrinter(getSVNEnvironment(), false, false, false));

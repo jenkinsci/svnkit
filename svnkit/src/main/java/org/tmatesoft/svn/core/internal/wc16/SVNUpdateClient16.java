@@ -413,6 +413,11 @@ public class SVNUpdateClient16 extends SVNBasicDelegate {
 
     private long doSwitchImpl(SVNWCAccess wcAccess, File path, SVNURL url, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions, boolean depthIsSticky)
             throws SVNException {
+        if (!SVNWCUtil.isVersionedDirectory(path.isDirectory() ? path : path.getParentFile())) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND,
+                    "''{0}'' does not appear to be a working copy path", path);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
+        }
         if (depth == SVNDepth.UNKNOWN) {
             depthIsSticky = false;
         }
