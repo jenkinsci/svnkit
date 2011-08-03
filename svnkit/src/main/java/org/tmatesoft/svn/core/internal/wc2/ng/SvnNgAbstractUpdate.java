@@ -449,7 +449,7 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
         try {
             if (nodeInfo.is(NodeInfo.haveWork)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
-                        "Cannot switch ''{0}'' because it is not in repository yet", localAbsPath);
+                        "Cannot switch ''{0}'' because it is not in the repository yet", localAbsPath);
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
         } finally {
