@@ -3845,7 +3845,7 @@ public class SVNWCDb implements ISVNWCDb {
                     public Map<String, Object> getUpdateValues() throws SVNException {
                         Map<String, Object> values = new HashMap<String, Object>();
                         values.put(NODES__Fields.repos_id.toString(), reposId);
-                        values.put(NODES__Fields.repos_path.toString(), reposRelpath);
+                        values.put(NODES__Fields.repos_path.toString(), SVNFileUtil.getFilePath(reposRelpath));
                         return values;
                     }
                 };
