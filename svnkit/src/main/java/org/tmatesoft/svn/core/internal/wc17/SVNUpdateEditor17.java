@@ -166,7 +166,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         }
         
         ISVNUpdateEditor result = editor;
-        if (!serverPerformsFiltering && depthIsSticky) {
+        if (!serverPerformsFiltering && !depthIsSticky) {
             result = new SVNAmbientDepthFilterEditor17(result, context, anchorAbspath, targetName, true);
         }
         return (ISVNUpdateEditor) SVNCancellableEditor.newInstance(result, context.getEventHandler(), null);
@@ -271,7 +271,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                             File dirReposRelPath = mySwitchRelpath != null ? 
                                     SVNFileUtil.createFilePath(mySwitchRelpath, child) : info.reposRelPath;
                             Map<String, SVNDirEntry> dirEntries = dirFetcher.fetchEntries(myReposRootURL, dirReposRelPath);
-                            if (dirEntries != null && dirEntries.isEmpty()) {
+                            if (dirEntries != null && !dirEntries.isEmpty()) {
                                 myDirEntries.put(dirReposRelPath, dirEntries);
                             }                            
                         }

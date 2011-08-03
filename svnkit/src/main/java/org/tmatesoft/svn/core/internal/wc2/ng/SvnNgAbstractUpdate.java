@@ -519,13 +519,16 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
                 }
                 
                 final Map<String, SVNDirEntry> entries = new HashMap<String, SVNDirEntry>();
-                repos2[0].getDir("", revnum, null, new ISVNDirEntryHandler() {
-                    public void handleDirEntry(SVNDirEntry dirEntry) throws SVNException {
-                        if (dirEntry.getName() != null && !"".equals(dirEntry.getName())) {
-                            entries.put(dirEntry.getName(), dirEntry);
+                SVNNodeKind kind = repos2[0].checkPath("", revnum);
+                if (kind == SVNNodeKind.DIR) {
+                    repos2[0].getDir("", revnum, null, new ISVNDirEntryHandler() {
+                        public void handleDirEntry(SVNDirEntry dirEntry) throws SVNException {
+                            if (dirEntry.getName() != null && !"".equals(dirEntry.getName())) {
+                                entries.put(dirEntry.getName(), dirEntry);
+                            }
                         }
-                    }
-                });
+                    });
+                }
                 return entries;
             }
         };
