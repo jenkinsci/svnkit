@@ -269,7 +269,7 @@ public class SvnWcDbShared {
                 childPresence = workPresence;
                 childHasBase = haveBase;
                 
-                currentRelPath = SVNFileUtil.getParentFile(currentRelPath);                
+                currentRelPath = SVNFileUtil.getFileDir(currentRelPath);                
             }
         } finally {
             commitTransaction(root);

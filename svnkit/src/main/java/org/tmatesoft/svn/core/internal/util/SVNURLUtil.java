@@ -30,6 +30,24 @@ public class SVNURLUtil {
         return relativePath == null ? "" : relativePath;
     }
     
+    public static boolean isAncestor(SVNURL ancestor, SVNURL descendant) {
+        if (ancestor == null || descendant == null) {
+            return false;
+        }
+        String aStr = ancestor.toString();
+        String dStr = descendant.toString();
+        if (aStr.length() > dStr.length()) {
+            return false;
+        }
+        if (dStr.startsWith(aStr)) {
+            if (aStr.length() == dStr.length()) {
+                return true;
+            }
+            return dStr.charAt(aStr.length()) == '/';
+        }
+        return false;
+    }
+    
     public static SVNURL getCommonURLAncestor(SVNURL url1, SVNURL url2) {
         // skip protocol and host, if they are different -> return null;
         if (url1 == null || url2 == null) {

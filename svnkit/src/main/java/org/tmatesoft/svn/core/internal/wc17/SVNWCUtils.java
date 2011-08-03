@@ -147,7 +147,7 @@ public class SVNWCUtils {
         if (!childPath.startsWith(parentPath))
             return null;
         final String restPath = childPath.substring(parentPath.length());
-        if (restPath.startsWith(File.separator)) {
+        if (restPath.startsWith(File.separator) || restPath.startsWith("/")) {
             return restPath.substring(1);
         }
         return restPath;

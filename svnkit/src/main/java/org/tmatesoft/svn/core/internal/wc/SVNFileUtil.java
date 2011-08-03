@@ -1901,7 +1901,7 @@ public class SVNFileUtil {
             return null;
         String path = file.getPath();
         if (File.separatorChar != '/') {
-            path = path.replace(File.separator, "/");
+            path = path.replace(File.separatorChar, '/');
         }
         return path;
     }

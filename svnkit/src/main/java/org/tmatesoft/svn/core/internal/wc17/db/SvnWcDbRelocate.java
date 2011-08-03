@@ -99,7 +99,7 @@ public class SvnWcDbRelocate extends SvnWcDbShared {
         
 
         if (status == SVNWCDbStatus.Excluded) {
-            File parentRelPath = SVNFileUtil.getParentFile(localRelpath);
+            File parentRelPath = SVNFileUtil.getFileDir(localRelpath);
             nodeInfo = SvnWcDbShared.readInfo(root, localRelpath, NodeInfo.status, NodeInfo.reposId);
             status = nodeInfo.<SVNWCDbStatus>get(NodeInfo.status);
             oldReposId = nodeInfo.lng(NodeInfo.reposId);
@@ -112,7 +112,7 @@ public class SvnWcDbRelocate extends SvnWcDbShared {
                 Structure<DeletionInfo> deletionInfo = scanDeletion(root, localRelpath);
                 if (deletionInfo.hasValue(DeletionInfo.workDelRelPath)) {
                     status = SVNWCDbStatus.Added;
-                    localRelpath = SVNFileUtil.getParentFile(deletionInfo.<File>get(DeletionInfo.workDelRelPath));
+                    localRelpath = SVNFileUtil.getFileDir(deletionInfo.<File>get(DeletionInfo.workDelRelPath));
                 }
                 deletionInfo.release();
             } 

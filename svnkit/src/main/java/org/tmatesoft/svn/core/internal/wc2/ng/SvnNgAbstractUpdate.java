@@ -15,6 +15,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.internal.wc.ISVNUpdateEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
@@ -215,6 +216,7 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
         
         if (targetRevision >= 0) {
             if ((depth == SVNDepth.INFINITY || depth == SVNDepth.UNKNOWN) && !getOperation().isIgnoreExternals()) {
+                getWcContext().getDb().gatherExternalDefinitions(localAbspath, externalsStore);
                 handleExternals(externalsStore.getNewExternals(), externalsStore.getDepths(), anchorUrl, anchorAbspath, reposRoot, depth, false);
             }
             if (sleepForTimestamp) {
@@ -324,7 +326,7 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
         if (oldDefiningPath == null) {
             // checkout or export.
             if (externalKind == SVNNodeKind.DIR) {                
-                SVNFileUtil.ensureDirectoryExists(localAbsPath);
+                SVNFileUtil.ensureDirectoryExists(SVNFileUtil.getParentFile(localAbsPath));
                 switchDirExternal(localAbsPath, newUrl, newItem.getRevision(), newItem.getPegRevision(), parentPath);
             } else if (externalKind == SVNNodeKind.FILE) {
                 
@@ -332,7 +334,6 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
         } else {
             // modification or update
             if (externalKind == SVNNodeKind.DIR) {                
-                SVNFileUtil.ensureDirectoryExists(localAbsPath);
                 switchDirExternal(localAbsPath, newUrl, newItem.getRevision(), newItem.getPegRevision(), parentPath);
             } else if (externalKind == SVNNodeKind.FILE) {
                 
@@ -353,7 +354,7 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
                     }
                     SVNWCNodeReposInfo nodeRepositoryInfo = getWcContext().getNodeReposInfo(localAbsPath);
                     if (nodeRepositoryInfo != null && nodeRepositoryInfo.reposRootUrl != null) {
-                        if (!url.toString().startsWith(nodeRepositoryInfo.reposRootUrl.toString() + "/")) {
+                        if (!SVNURLUtil.isAncestor(nodeRepositoryInfo.reposRootUrl, nodeUrl)) {
                             SvnRelocate relocate = getOperation().getOperationFactory().createRelocate();
                             relocate.setToUrl(nodeRepositoryInfo.reposRootUrl);
                             relocate.setFromUrl(nodeUrl);

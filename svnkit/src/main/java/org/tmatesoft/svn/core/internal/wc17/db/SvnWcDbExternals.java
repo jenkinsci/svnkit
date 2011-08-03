@@ -147,7 +147,7 @@ public class SvnWcDbExternals extends SvnWcDbShared {
         stmt.bindf("issttsisii", 
                 root.getWcId(),
                 localRelpath,
-                SVNFileUtil.getParentFile(localRelpath),
+                SVNFileUtil.getFileDir(localRelpath),
                 getPresenceText(info.<SVNWCDbStatus>get(ExternalNodeInfo.presence)),
                 getKindText(info.<SVNWCDbKind>get(ExternalNodeInfo.kind)),
                 info.get(ExternalNodeInfo.recordAncestorRelPath),

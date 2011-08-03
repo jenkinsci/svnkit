@@ -45,6 +45,8 @@ public class SvnOperation<V> {
     protected void initDefaults() {
         setDepth(SVNDepth.UNKNOWN);
         setSleepForTimestamp(true);
+        setRevision(SVNRevision.UNDEFINED);
+        setPegRevision(SVNRevision.UNDEFINED);
         this.targets = new ArrayList<SvnTarget>();
     }
 

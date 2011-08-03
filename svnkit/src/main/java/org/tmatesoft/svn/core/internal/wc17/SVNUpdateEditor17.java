@@ -130,7 +130,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         }
         WCDbRepositoryInfo repositoryInfo = context.getDb().scanBaseRepository(anchorAbspath, RepositoryInfoField.rootUrl, RepositoryInfoField.uuid);
         assert repositoryInfo != null && repositoryInfo.rootUrl != null && repositoryInfo.uuid != null;
-        if (switchURL != null && SVNURLUtil.getCommonURLAncestor(repositoryInfo.rootUrl, switchURL) == null) {
+        if (switchURL != null && !SVNURLUtil.isAncestor(repositoryInfo.rootUrl, switchURL)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_SWITCH, "''{0}'' is not the same repository as ''{1}''", switchURL, repositoryInfo.rootUrl);
             SVNErrorManager.error(err, SVNLogType.WC);
         }
