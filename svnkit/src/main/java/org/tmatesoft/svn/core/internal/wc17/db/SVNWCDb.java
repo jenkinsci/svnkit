@@ -62,6 +62,7 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb.Mode;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetTransaction;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetUpdateStatement;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.SVNConfigFile;
@@ -3838,9 +3839,17 @@ public class SVNWCDb implements ISVNWCDb {
                 stmt.done();
             }
             if (setReposRelpath) {
-                long reposId = createReposId(pdh.getWCRoot().getSDb(), reposRootUrl, reposUuid);
-                stmt = db.getStatement(SVNWCDbStatements.UPDATE_BASE_REPOS);
-                stmt.bindf("isis", pdh.getWCRoot().getWcId(), localRelpath, reposId, reposRelpath);
+                final long reposId = createReposId(pdh.getWCRoot().getSDb(), reposRootUrl, reposUuid);
+                stmt = new SVNSqlJetUpdateStatement(pdh.getWCRoot().getSDb(), SVNWCDbSchema.NODES) {
+                    @Override
+                    public Map<String, Object> getUpdateValues() throws SVNException {
+                        Map<String, Object> values = new HashMap<String, Object>();
+                        values.put(NODES__Fields.repos_id.toString(), reposId);
+                        values.put(NODES__Fields.repos_path.toString(), reposRelpath);
+                        return values;
+                    }
+                };
+                stmt.bindf("isi", pdh.getWCRoot().getWcId(), localRelpath, 0);
                 stmt.done();
             }
         }
