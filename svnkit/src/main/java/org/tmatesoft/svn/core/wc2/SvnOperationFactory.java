@@ -71,7 +71,12 @@ public class SvnOperationFactory {
     public SvnOperationFactory(SVNWCContext context) {
         wcContext = context;
         
+        if (wcContext != null) {
+            options = wcContext.getOptions();
+            eventHandler = wcContext.getEventHandler();
+        }
         setAutoCloseContext(wcContext == null);
+        
         registerRunners();
     }
     
@@ -140,6 +145,9 @@ public class SvnOperationFactory {
     }
 
     public ISVNOptions getOptions() {
+        if (options == null) {
+            options = SVNWCUtil.createDefaultOptions(true);
+        }
         return options;
     }
 
