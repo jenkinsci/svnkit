@@ -3656,7 +3656,7 @@ public class SVNWCContext {
             if (wrkStatus != SVNWCDbStatus.Deleted && (baseKind == SVNWCDbKind.File || baseKind == SVNWCDbKind.Symlink)) {
                 SVNFileUtil.deleteFile(localAbspath);
             } else if (baseKind == SVNWCDbKind.Dir && wrkStatus != SVNWCDbStatus.Deleted) {
-                SVNFileUtil.deleteAll(localAbspath, true);
+                SVNFileUtil.deleteFile(localAbspath);
             }
         }
         db.removeBase(localAbspath);
