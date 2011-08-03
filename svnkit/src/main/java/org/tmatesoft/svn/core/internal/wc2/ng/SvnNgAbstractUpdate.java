@@ -491,9 +491,9 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
     
         SVNURL switchRootUrl = repository.getRepositoryRoot(true);
         
-        if (!anchorUrl.toString().startsWith(switchRootUrl.toString() + "/")) {
+        if (!anchorUrl.equals(switchRootUrl) && !anchorUrl.toString().startsWith(switchRootUrl.toString() + "/")) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_SWITCH, 
-                    "''{0}'' is not the same repository as ''{1}''", anchor, switchRootUrl);
+                    "''{0}'' is not the same repository as ''{1}''", anchorUrl, switchRootUrl);
             SVNErrorManager.error(err, SVNLogType.WC);            
         }
         if (!ignoreAncestry) {
