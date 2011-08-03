@@ -59,7 +59,7 @@ public class SvnWcDbRelocate extends SvnWcDbShared {
         oldUrl = SVNWCUtils.join(oldUrl, relPath);
 
         if (!oldUrl.toString().startsWith(from.toString())) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_RELOCATION, "Invalid source URL prefix: ''{0}'' (doe not " +
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_RELOCATION, "Invalid source URL prefix: ''{0}'' (does not " +
             		"overlap target''s URL ''{1}''", from, oldUrl);
             SVNErrorManager.error(err, SVNLogType.WC);
         }
@@ -71,6 +71,12 @@ public class SvnWcDbRelocate extends SvnWcDbShared {
         }
         String relPathStr = SVNFileUtil.getFilePath(relPath);
         String newReposRootPath = newUrl.getPath();
+        if (!newReposRootPath.endsWith(relPathStr)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_RELOCATION, 
+                    "Invalid relocation destination: ''{0}'' (does not " +
+                    "point to target)", newUrl);
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
         newReposRootPath = newReposRootPath.substring(0, newReposRootPath.length() - relPathStr.length());
         SVNURL newReposRoot = newUrl.setPath(newReposRootPath, false);
 
