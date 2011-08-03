@@ -128,11 +128,11 @@ public class SvnWcDbRelocate extends SvnWcDbShared {
         begingWriteTransaction(root);
         try {
             relocate(root, localRelpath, repositoryRootUrl, reposUuid, haveBase, oldReposId);
-        } catch(SVNException e) {
-            rollbackTransaction(root);
-        } finally {
             commitTransaction(root);
-        }
+        } catch(SVNException e) {            
+            rollbackTransaction(root);
+            throw e;
+        } 
         
     }
     
@@ -210,6 +210,7 @@ public class SvnWcDbRelocate extends SvnWcDbShared {
             }
             updateValues.put(NODES__Fields.repos_id.toString(), getBind(4));
             updateValues.put(NODES__Fields.dav_cache.toString(), null);
+            updateValues.put(NODES__Fields.properties.toString(), getColumnBlob(NODES__Fields.properties));
             return updateValues;
         }
 
