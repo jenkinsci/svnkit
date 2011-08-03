@@ -54,7 +54,7 @@ public class SvnNgRelocate extends SvnNgOperationRunner<SVNURL, SvnRelocate> imp
     private void relocateExternals(File localAbsPath, SVNExternal[] externals, SVNURL oldReposRootUrl, SVNURL newReposRootUrl) throws SVNException {
         for (int i = 0; i < externals.length; i++) {
             String rawUrl = externals[i].getUnresolvedUrl();
-            if (rawUrl.startsWith("../") || rawUrl.startsWith("^/")) {
+            if (!(rawUrl.startsWith("../") || rawUrl.startsWith("^/"))) {
                 continue;
             }
             File targetPath = SVNFileUtil.createFilePath(localAbsPath, externals[i].getPath());
