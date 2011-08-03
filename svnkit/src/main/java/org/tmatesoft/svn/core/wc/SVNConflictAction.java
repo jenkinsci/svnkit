@@ -36,7 +36,7 @@ public class SVNConflictAction {
     /**
      * Constant representing an attempt to replace an object.
      */
-    public static final SVNConflictAction REPLACE = new SVNConflictAction("replace");
+    public static final SVNConflictAction REPLACE = new SVNConflictAction("replaced");
 
     /**
      * Converts string to an <code>SVNConflictAction</code> object when possible.
@@ -55,6 +55,9 @@ public class SVNConflictAction {
         }
         if (DELETE.getName().equals(action)) {
             return DELETE;
+        }
+        if (REPLACE.getName().equals(action)) {
+            return REPLACE;
         }
         return null;
     }
