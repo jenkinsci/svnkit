@@ -1740,7 +1740,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         f.localAbsolutePath = SVNFileUtil.createFilePath(parent.localAbsolutePath, f.name);
         
         if (mySwitchRelpath != null) {
-            if (parent == null && f.name.equals(myTargetBasename) || myTargetBasename == null) {
+            if (parent.parentBaton == null && myTargetBasename != null && f.name.equals(myTargetBasename)) {
                 f.newRelativePath = mySwitchRelpath;
             } else {
                 f.newRelativePath = SVNFileUtil.createFilePath(parent.newRelativePath, f.name);
