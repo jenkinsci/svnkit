@@ -86,7 +86,7 @@ public class SVNSocketFactory {
         sslSocket.setKeepAlive(true);
         sslSocket.setSoLinger(true, 0);
         sslSocket.setSoTimeout(readTimeout);
-        ((SSLSocket) sslSocket).setEnabledProtocols(new String[] {"SSLv3"});
+        sslSocket = configureSSLSocket(sslSocket);
         return sslSocket;
     }
 
@@ -97,7 +97,7 @@ public class SVNSocketFactory {
         sslSocket.setKeepAlive(true);
         sslSocket.setSoLinger(true, 0);
         sslSocket.setSoTimeout(readTimeout);
-        ((SSLSocket) sslSocket).setEnabledProtocols(new String[] {"SSLv3"});
+        sslSocket = configureSSLSocket(sslSocket);
         return sslSocket;
     }
 
@@ -236,4 +236,20 @@ public class SVNSocketFactory {
 			throw new IOException(e.getMessage());
 		}
 	}
+
+    public static Socket configureSSLSocket(Socket socket) {
+        if (socket == null || !(socket instanceof SSLSocket)) {
+            return null;
+        }
+        SSLSocket sslSocket = (SSLSocket) socket;
+        String[] protocols = sslSocket.getSupportedProtocols();
+        String[] suites = sslSocket.getSupportedCipherSuites();
+        if (protocols != null && protocols.length > 0) {
+            sslSocket.setEnabledProtocols(protocols);
+        }
+        if (suites != null && suites.length > 0) {
+            sslSocket.setEnabledCipherSuites(suites);
+        }
+        return sslSocket;
+    }
 }

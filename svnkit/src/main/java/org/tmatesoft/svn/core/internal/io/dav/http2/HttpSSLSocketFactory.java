@@ -30,7 +30,7 @@ public class HttpSSLSocketFactory implements LayeredSchemeSocketFactory {
     }
 
     public Socket createSocket(HttpParams params) throws IOException {
-        return mySSLContext.getSocketFactory().createSocket();
+        return SVNSocketFactory.configureSSLSocket(mySSLContext.getSocketFactory().createSocket());
     }
 
     public Socket connectSocket(Socket socket, InetSocketAddress remoteAddress,
@@ -57,6 +57,7 @@ public class HttpSSLSocketFactory implements LayeredSchemeSocketFactory {
             sslsock = (SSLSocket) sock;
         } else {
             sslsock = (SSLSocket) mySSLContext.getSocketFactory().createSocket(sock, remoteAddress.getHostName(), remoteAddress.getPort(), true);
+            sslsock = (SSLSocket) SVNSocketFactory.configureSSLSocket(sslsock);
         }
         return sslsock;
     }
@@ -66,7 +67,6 @@ public class HttpSSLSocketFactory implements LayeredSchemeSocketFactory {
     }
 
     public Socket createLayeredSocket(Socket socket, String target, int port, boolean autoClose) throws IOException, UnknownHostException {
-        return mySSLContext.getSocketFactory().createSocket(socket, target, port, autoClose);
+        return SVNSocketFactory.configureSSLSocket(mySSLContext.getSocketFactory().createSocket(socket, target, port, autoClose));
     }
-
 }
