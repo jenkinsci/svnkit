@@ -66,7 +66,7 @@ public class SVNURL {
         if ((host == null && !"file".equalsIgnoreCase(protocol)) || (host != null && host.indexOf('@') >= 0)) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.BAD_URL, "Invalid host name ''{0}''", host), SVNLogType.DEFAULT);
         }
-        path = path == null ? "/" : path.trim();
+        path = path == null ? "/" : path;
         if (!uriEncoded) {
             path = SVNEncodingUtil.uriEncode(path);
         } else {
