@@ -3063,7 +3063,9 @@ public class SVNDiffClient extends SVNMergeDriver {
             sourceHistory = getHistoryAsMergeInfo(realMergeSrcURL, null, realSrcPegRevision, 
                     SVNRepository.INVALID_REVISION, SVNRepository.INVALID_REVISION, repos, null);
         } finally {
-            repos.closeSession();
+            if (repos != null) {
+                repos.closeSession();
+            }
         }
         
         Map availableMergeInfo = SVNMergeInfoUtil.removeMergeInfo(mergeInfo, sourceHistory, false);
