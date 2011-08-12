@@ -499,8 +499,10 @@ public class FSCommitter {
         }
 
         String commitTime = SVNDate.formatDate(new Date(System.currentTimeMillis()));
-        myFSFS.setTransactionProperty(myTxn.getTxnId(), SVNRevisionProperty.DATE,
-                SVNPropertyValue.create(commitTime));
+        SVNProperties presetRevisionProperties = myFSFS.getTransactionProperties(myTxn.getTxnId()); 
+        if (presetRevisionProperties == null || !presetRevisionProperties.containsName(SVNRevisionProperty.DATE)) {
+            myFSFS.setTransactionProperty(myTxn.getTxnId(), SVNRevisionProperty.DATE, SVNPropertyValue.create(commitTime));
+        }
 
         File txnPropsFile = myFSFS.getTransactionPropertiesFile(myTxn.getTxnId());
 
