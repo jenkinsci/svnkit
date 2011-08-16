@@ -125,7 +125,7 @@ public class FSHooks {
         runHook(reposRootDir, hookName, new String[] {String.valueOf(revision), author, propName, action}, propValue);
     }
 
-    public static void runStartCommitHook(File reposRootDir, String author, List capabilities) throws SVNException {
+    public static void runStartCommitHook(File reposRootDir, String author, List<?> capabilities) throws SVNException {
         author = author == null ? "" : author;
         String capsString = getCapabilitiesAsString(capabilities);
         String[] args = capsString == null ? new String[] { author } : new String[] { author, capsString }; 
@@ -153,18 +153,28 @@ public class FSHooks {
         String executableName = hookFile.getName().toLowerCase();
         boolean useCmd = (executableName.endsWith(".bat") || executableName.endsWith(".cmd")) && SVNFileUtil.isWindows;
         String[] cmd = useCmd ? new String[4 + args.length] : new String[2 + args.length];
-        int i = 0;
+        
         if (useCmd) {
-            cmd[0] = "cmd";
-            cmd[1] = "/C";
-            i = 2;
-        }
-        cmd[i] = hookFile.getAbsolutePath();
-        i++;
-        cmd[i] = reposPath;
-        i++;
-        for(int j = 0; j < args.length; j++) {
-            cmd[i + j] = args[j];
+            cmd = new String[] {"cmd", "/C", ""};
+            cmd[2] = "\"" + "\"" + hookFile.getAbsolutePath() + "\" \"" + reposPath + "\"";
+            for (int i = 0; i < args.length; i++) {
+                cmd[2] += " \"" + args[i] + "\"";
+            }
+            cmd[2] += "\"";
+        } else {
+            int i = 0;
+            if (useCmd) {
+                cmd[0] = "cmd";
+                cmd[1] = "/C";
+                i = 2;
+            }
+            cmd[i] = hookFile.getAbsolutePath();
+            i++;
+            cmd[i] = reposPath;
+            i++;
+            for(int j = 0; j < args.length; j++) {
+                cmd[i + j] = args[j];
+            }
         }
         try {
             hookProc = Runtime.getRuntime().exec(cmd);
@@ -287,7 +297,7 @@ public class FSHooks {
         return new File(reposRootDir, SVN_REPOS_HOOKS_DIR);
     }
     
-    private static String getCapabilitiesAsString(List capabilities) {
+    private static String getCapabilitiesAsString(List<?> capabilities) {
         if (capabilities == null || capabilities.isEmpty()) {
             return "";
         }
