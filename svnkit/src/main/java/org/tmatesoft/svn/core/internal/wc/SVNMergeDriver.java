@@ -1745,6 +1745,10 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
                 String srcPath = (String) srcCatalogIter.next();
                 SVNMergeInfo sourceMergeInfoObject = (SVNMergeInfo) srcCatalog.get(srcPath);
                 Map srcMergeInfo = sourceMergeInfoObject.getMergeSourcesToMergeLists();
+                if (srcPath.length() < sourceReposPath.length()) {
+                    SVNDebugLog.getDefaultLog().logError(SVNLogType.WC, "Merge: wrong combination of source path ('" + srcPath + "') and sourcer repository path: '" + sourceReposPath + "')");
+                    continue;
+                }
                 String targetPath = srcPath.substring(sourceReposPath.length());
                 if (targetPath.startsWith("/")) {
                     targetPath = targetPath.substring(1);
