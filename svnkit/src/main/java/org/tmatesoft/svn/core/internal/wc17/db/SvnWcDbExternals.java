@@ -109,6 +109,7 @@ public class SvnWcDbExternals extends SvnWcDbShared {
         SVNWCDbKind kind = info.<SVNWCDbKind>get(ExternalNodeInfo.kind);
         if (kind == SVNWCDbKind.File || kind == SVNWCDbKind.Symlink) {
             InsertBase insertBase = root.getDb().new InsertBase();
+            insertBase.localRelpath = localRelpath;
             insertBase.status = SVNWCDbStatus.Normal;
             insertBase.kind = info.<SVNWCDbKind>get(ExternalNodeInfo.kind);
             
@@ -133,7 +134,8 @@ public class SvnWcDbExternals extends SvnWcDbShared {
             insertBase.workItems = info.<SVNSkel>get(ExternalNodeInfo.workItems);
             
             insertBase.fileExternal = true;
-
+            insertBase.wcId = root.getWcId();
+            
             try {
                 insertBase.transaction(root.getSDb());
             } catch (SqlJetException e) {
@@ -265,12 +267,61 @@ public class SvnWcDbExternals extends SvnWcDbShared {
         
     }
 
-    public static void addExternalFile(SVNWCContext context, File localAbsPath, File wriAbsPath, File reposRelPath, SVNURL reposRootUrl, String reposUuid, 
+    public static void addExternalFile(SVNWCContext context, File localAbsPath, File wriAbsPath, File reposRelPath, 
+            SVNURL reposRootUrl, String reposUuid, 
             long targetRevision, SVNProperties newPristineProperties, long changedRev,
             SVNDate changedDate, String changedAuthor, SvnChecksum newChecksum, SVNProperties davCache, 
             File recordAncestorAbspath, File recordedReposRelPath, long recordedPegRevision, long recordedRevision, 
             boolean updateActualProperties, SVNProperties newActualProperties, boolean keepRecordedInfo, 
             SVNSkel allWorkItems) throws SVNException {
+        SVNWCDb db = (SVNWCDb) context.getDb();
+        if (wriAbsPath == null) {
+            wriAbsPath = SVNFileUtil.getParentFile(localAbsPath);
+        }
+        DirParsedInfo dirInfo = db.obtainWcRoot(wriAbsPath);
+        SVNWCDbRoot root = dirInfo.wcDbDir.getWCRoot();
+        
+        File localRelpath = SVNFileUtil.createFilePath(SVNPathUtil.getRelativePath(root.getAbsPath().getAbsolutePath(), localAbsPath.getAbsolutePath()));
+        Structure<ExternalNodeInfo> externalInfo = Structure.obtain(ExternalNodeInfo.class);
+
+        externalInfo.set(ExternalNodeInfo.kind, SVNWCDbKind.File);
+        externalInfo.set(ExternalNodeInfo.presence, SVNWCDbStatus.Normal);
+        
+        externalInfo.set(ExternalNodeInfo.reposRootUrl, reposRootUrl);
+        externalInfo.set(ExternalNodeInfo.reposUuid, reposUuid);
+        externalInfo.set(ExternalNodeInfo.reposId, SVNWCContext.INVALID_REVNUM);
+        
+        externalInfo.set(ExternalNodeInfo.reposRelPath, reposRelPath);
+        externalInfo.set(ExternalNodeInfo.revision, targetRevision);
+        externalInfo.set(ExternalNodeInfo.properties, newPristineProperties);
+
+        externalInfo.set(ExternalNodeInfo.changedRevision, changedRev);
+        externalInfo.set(ExternalNodeInfo.changedDate, changedDate);
+        externalInfo.set(ExternalNodeInfo.changedAuthor, changedAuthor);
+        externalInfo.set(ExternalNodeInfo.checksum, newChecksum);
+        externalInfo.set(ExternalNodeInfo.davCache, davCache);
+
+        externalInfo.set(ExternalNodeInfo.recordAncestorRelPath, SVNFileUtil.createFilePath(SVNPathUtil.getRelativePath(root.getAbsPath().getAbsolutePath(), recordAncestorAbspath.getAbsolutePath())));
+        externalInfo.set(ExternalNodeInfo.recordedRevision, recordedRevision);
+        externalInfo.set(ExternalNodeInfo.recordedPegRevision, recordedPegRevision);
+        externalInfo.set(ExternalNodeInfo.recordedReposRelPath, recordedReposRelPath);
+        
+        externalInfo.set(ExternalNodeInfo.updateActualProperties, updateActualProperties);
+        externalInfo.set(ExternalNodeInfo.newActualProperties, newActualProperties);
+        externalInfo.set(ExternalNodeInfo.keepRecordedInfo, keepRecordedInfo);
+
+        externalInfo.set(ExternalNodeInfo.workItems, allWorkItems);
+        
+        begingWriteTransaction(root);
+        try {
+            insertExternalNode(root, localRelpath, externalInfo);
+            commitTransaction(root);
+        } catch (SVNException e) {
+            rollbackTransaction(root);
+            throw e;
+        } finally {
+            externalInfo.release();
+        }
     }
 
 }

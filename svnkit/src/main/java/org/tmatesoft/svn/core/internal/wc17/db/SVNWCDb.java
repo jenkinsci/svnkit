@@ -4374,8 +4374,8 @@ public class SVNWCDb implements ISVNWCDb {
         File relativePath = wcInfo.localRelPath;
         stmt.bindf("is", dir.getWCRoot().getWcId(), relativePath);
         if (!stmt.next()) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{1}'' was not found.", 
-                    dir.getWCRoot().getAbsPath(dir.computeRelPath())), SVNLogType.WC);
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{0}'' was not found.", 
+                    localAbspath), SVNLogType.WC);
         }
         
         long opDepth = getColumnInt64(stmt, NODES__Fields.op_depth);

@@ -193,7 +193,7 @@ public class SvnExternalUpdateEditor implements ISVNUpdateEditor {
             context.getDb().installPristine(currentBase.tempBaseAbspath, currentBase.getSHA1Checksum(), currentBase.getMD5Checksum());
             SVNFileUtil.deleteFile(currentBase.tempBaseAbspath);
         }
-        boolean added = originalRevision != SVNWCContext.INVALID_REVNUM;
+        boolean added = originalRevision == SVNWCContext.INVALID_REVNUM;
         File reposRelPath = SVNFileUtil.createFilePath(SVNURLUtil.getRelativeURL(reposRootUrl, url));
         
         SvnChecksum newChecksum = null;

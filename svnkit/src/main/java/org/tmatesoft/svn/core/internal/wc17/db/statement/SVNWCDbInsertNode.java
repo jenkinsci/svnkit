@@ -79,6 +79,7 @@ public class SVNWCDbInsertNode extends SVNSqlJetStatement {
         values.put("last_mod_time", getBind(17));
         values.put("dav_cache", getBind(18));
         values.put("symlink_target", getBind(19));
+        values.put("file_external", getBind(20));
         return values;
     }
 
