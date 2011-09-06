@@ -231,7 +231,22 @@ public class DAVConnection {
         }
         SVNErrorMessage context = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Unlock request failed");
         IHTTPConnection httpConnection = getConnection();
-        httpConnection.request("UNLOCK", path, header, (StringBuffer) null, 204, 0, null, null, context);
+        HTTPStatus status = httpConnection.request("UNLOCK", path, header, (StringBuffer) null, -1, 0, null, null, context);
+        
+        if (status != null) {
+            if (status.getCode() == 400) {
+                SVNErrorManager.error(
+                        SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_LOCK, "No lock on path ''{1}'' ({2} bad request)", path, status.getCode()), 
+                        SVNLogType.NETWORK);
+            } else if (status.getCode() == 403) {
+                SVNErrorManager.error(
+                        SVNErrorMessage.create(SVNErrorCode.FS_LOCK_OWNER_MISMATCH, "Unlock failed on ''{1}'' ({2} forbidden)", path, status.getCode()), 
+                        SVNLogType.NETWORK);
+            } else if (status.getCode() != 204) {
+                SVNErrorManager.error(status.getError(), SVNLogType.NETWORK);
+            } 
+        }
+        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED), SVNLogType.NETWORK);
     }
 
 	public void doGet(String path, OutputStream os) throws SVNException {
