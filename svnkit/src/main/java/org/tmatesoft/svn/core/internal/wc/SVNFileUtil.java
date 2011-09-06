@@ -515,7 +515,10 @@ public class SVNFileUtil {
         if (!isWindows) {
             renamed = src.renameTo(dst);
             if (!renamed && src.isFile() && !dst.exists()) {
-                copyFile(src, dst, false);
+                copyFile(src, dst, true);
+                if (!dst.isFile()) {
+                    copyFile(src, dst, false);
+                }
                 boolean deleted = deleteFile(src);
                 renamed = deleted && dst.isFile();
             }
