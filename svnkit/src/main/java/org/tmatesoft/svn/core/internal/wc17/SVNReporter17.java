@@ -13,8 +13,6 @@ package org.tmatesoft.svn.core.internal.wc17;
 
 import java.io.File;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.tmatesoft.svn.core.SVNDepth;
@@ -37,13 +35,13 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbAdditionInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbAdditionInfo.AdditionInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbBaseInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbBaseInfo.BaseInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbDeletionInfo.DeletionInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo.RepositoryInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
-import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbBaseInfo.BaseInfoField;
-import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.wc.SVNConflictChoice;
@@ -217,7 +215,7 @@ public class SVNReporter17 implements ISVNReporterBaton {
 
             if (isRestoreFiles && wrk_status != SVNWCDbStatus.Added && wrk_status != SVNWCDbStatus.Deleted && wrk_status != SVNWCDbStatus.Excluded && wrk_status != SVNWCDbStatus.NotPresent
                     && wrk_status != SVNWCDbStatus.ServerExcluded) {
-                boolean restored = restoreNode(path, target_kind, target_rev);
+                boolean restored = restoreNode(wcContext, path, target_kind, target_rev, isUseCommitTimes);
                 if (!restored)
                     missing = true;
             }
@@ -295,7 +293,7 @@ public class SVNReporter17 implements ISVNReporterBaton {
 
     }
 
-    private boolean restoreNode(File local_abspath, SVNWCDbKind kind, long target_rev) throws SVNException {
+    public static boolean restoreNode(SVNWCContext context, File local_abspath, SVNWCDbKind kind, long target_rev, boolean useCommitTimes) throws SVNException {
         boolean restored = false;
 
         /*
@@ -304,7 +302,7 @@ public class SVNReporter17 implements ISVNReporterBaton {
          */
         if (kind == SVNWCDbKind.File || kind == SVNWCDbKind.Symlink) {
             /* ... recreate file from text-base, and ... */
-            restoreFile(local_abspath, true);
+            restoreFile(context, local_abspath, useCommitTimes, true);
             restored = true;
         } else if (kind == SVNWCDbKind.Dir) {
             /* Recreating a directory is just a mkdir */
@@ -314,8 +312,8 @@ public class SVNReporter17 implements ISVNReporterBaton {
 
         if (restored) {
             /* ... report the restoration to the caller. */
-            if (wcContext.getEventHandler() != null) {
-                wcContext.getEventHandler().handleEvent(SVNEventFactory.createSVNEvent(local_abspath, SVNNodeKind.FILE, null, target_rev, SVNEventAction.RESTORE, null, null, null), 0);
+            if (context.getEventHandler() != null) {
+                context.getEventHandler().handleEvent(SVNEventFactory.createSVNEvent(local_abspath, SVNNodeKind.FILE, null, target_rev, SVNEventAction.RESTORE, null, null, null), 0);
             }
         }
         return restored;
@@ -537,7 +535,7 @@ public class SVNReporter17 implements ISVNReporterBaton {
                     SVNNodeKind dirent_kind = SVNFileType.getNodeKind(SVNFileType.getType(this_abspath));
 
                     if (dirent_kind == SVNNodeKind.NONE) {
-                        boolean restored = restoreNode(this_abspath, wrk_kind, this_rev);
+                        boolean restored = restoreNode(wcContext, this_abspath, wrk_kind, this_rev, isUseCommitTimes);
                         if (!restored)
                             missing = true;
                     }
@@ -676,16 +674,16 @@ public class SVNReporter17 implements ISVNReporterBaton {
      * Not that a valid access baton with a write lock to the directory of
      * LOCAL_ABSPATH must be available in DB.
      */
-    private void restoreFile(File localAbsPath, boolean removeTextConflicts) throws SVNException {
-        SVNSkel workItem = wcContext.wqBuildFileInstall(localAbsPath, null, isUseCommitTimes, true);
-        wcContext.getDb().addWorkQueue(localAbsPath, workItem);
+    private static void restoreFile(SVNWCContext context, File localAbsPath, boolean useCommitTimes, boolean removeTextConflicts) throws SVNException {
+        SVNSkel workItem = context.wqBuildFileInstall(localAbsPath, null, useCommitTimes, true);
+        context.getDb().addWorkQueue(localAbsPath, workItem);
         if (removeTextConflicts) {
-            resolveTextConflict(localAbsPath);
+            resolveTextConflict(context, localAbsPath);
         }
     }
 
-    private void resolveTextConflict(File localAbsPath) throws SVNException {
-        wcContext.resolveConflictOnNode(localAbsPath, true, false, SVNConflictChoice.MERGED);
+    private static void resolveTextConflict(SVNWCContext context, File localAbsPath) throws SVNException {
+        context.resolveConflictOnNode(localAbsPath, true, false, SVNConflictChoice.MERGED);
     }
 
 }

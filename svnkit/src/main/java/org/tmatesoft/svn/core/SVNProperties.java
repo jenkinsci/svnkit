@@ -311,7 +311,7 @@ public class SVNProperties implements Cloneable, Serializable {
      *
      * @return property names set
      */
-    public Set nameSet() {
+    public Set<String> nameSet() {
         return myProperties.keySet();
     }
 

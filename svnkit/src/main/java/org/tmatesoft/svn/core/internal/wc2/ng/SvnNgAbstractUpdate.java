@@ -31,6 +31,8 @@ import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.SVNWCNodeReposInfo;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
+import org.tmatesoft.svn.core.internal.wc17.db.SvnExternalFileReporter;
+import org.tmatesoft.svn.core.internal.wc17.db.SvnExternalUpdateEditor;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbExternals;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
 import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess.RepositoryInfo;
@@ -329,14 +331,14 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
                 SVNFileUtil.ensureDirectoryExists(SVNFileUtil.getParentFile(localAbsPath));
                 switchDirExternal(localAbsPath, newUrl, newItem.getRevision(), newItem.getPegRevision(), parentPath);
             } else if (externalKind == SVNNodeKind.FILE) {
-                
+                switchFileExternal(localAbsPath, newUrl, newItem.getPegRevision(), newItem.getRevision(), parentPath, repository, externalRevnum, repository.getRepositoryRoot(true));
             }
         } else {
             // modification or update
             if (externalKind == SVNNodeKind.DIR) {                
                 switchDirExternal(localAbsPath, newUrl, newItem.getRevision(), newItem.getPegRevision(), parentPath);
             } else if (externalKind == SVNNodeKind.FILE) {
-                
+                switchFileExternal(localAbsPath, newUrl, newItem.getPegRevision(), newItem.getRevision(), parentPath, repository, externalRevnum, repository.getRepositoryRoot(true));
             }
         }
     }
@@ -419,7 +421,90 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
             throw e;
         }
     }
+    
+    private void switchFileExternal(File localAbsPath, SVNURL url, SVNRevision pegRevision, SVNRevision revision, File defDirAbspath, SVNRepository repository, long repositoryRevision, SVNURL reposRootUrl) throws SVNException {
+        File dirAbspath = SVNFileUtil.getParentFile(localAbsPath);
+        boolean locked = getWcContext().getDb().isWCLocked(dirAbspath); 
+        if (!locked) {
+            File wcRoot = getWcContext().getDb().getWCRoot(dirAbspath);
+            String rootPath = wcRoot.getAbsolutePath().replace(File.separatorChar, '/');
+            String defPath = defDirAbspath.getAbsolutePath().replace(File.separatorChar, '/');
+            if (!SVNPathUtil.isAncestor(rootPath, defPath)) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_BAD_PATH, 
+                        "Cannot insert a file external defined on ''{0}'' into the working copy ''{1}''", defDirAbspath, wcRoot);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+        }
+        SVNNodeKind kind = SVNNodeKind.NONE;
+        SVNNodeKind externalKind = SVNNodeKind.FILE;
+        try {
+            kind = getWcContext().readKind(localAbsPath, false);
+            // TODO get stored external kind.
+        } catch (SVNException e) {
+            if (!locked) {
+                getWcContext().releaseWriteLock(dirAbspath);
+            }
+            return;
+        }
+        if (kind != SVNNodeKind.NONE && kind != SVNNodeKind.UNKNOWN) {
+            if (externalKind != SVNNodeKind.FILE) {
+                if (!locked) {
+                    getWcContext().releaseWriteLock(dirAbspath);
+                }
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_FILE_EXTERNAL_OVERWRITE_VERSIONED, 
+                        "The file external from ''{0}'' cannot overwrite the existing versioned item at ''{1}''",
+                        url, localAbsPath);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+        } else {
+            SVNNodeKind diskKind = SVNFileType.getNodeKind(SVNFileType.getType(localAbsPath));
+            if (diskKind == SVNNodeKind.FILE || diskKind == SVNNodeKind.DIR) {
+                if (!locked) {
+                    getWcContext().releaseWriteLock(dirAbspath);
+                }
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_FOUND, 
+                        "The file external ''{0}'' can not be created because the node exists.",
+                        localAbsPath);
+                SVNErrorManager.error(err, SVNLogType.WC);
+                return;
+            }
+        }
+        // do file external update.
+        SvnTarget target = SvnTarget.fromURL(url);
+        Structure<RepositoryInfo> repositoryInfo = getRepositoryAccess().createRepositoryFor(target, revision, pegRevision, dirAbspath);
+        repository = repositoryInfo.<SVNRepository>get(RepositoryInfo.repository);
+        long revnum = repositoryInfo.lng(RepositoryInfo.revision);
+        SVNURL swithUrl = repositoryInfo.<SVNURL>get(RepositoryInfo.url);
+        repositoryInfo.release();
+        
+        String uuid = repository.getRepositoryUUID(true);
+        String[] preservedExts = getOperation().getOptions().getPreservedConflictFileExtensions();
+        boolean useCommitTimes = getOperation().getOptions().isUseCommitTimes();
 
+        File definitionAbsPath = SVNFileUtil.getParentFile(localAbsPath);
+        ISVNUpdateEditor updateEditor = SvnExternalUpdateEditor.createEditor(
+                getWcContext(), 
+                localAbsPath, 
+                definitionAbsPath, 
+                swithUrl, 
+                reposRootUrl, 
+                uuid, 
+                useCommitTimes, 
+                preservedExts, 
+                definitionAbsPath, 
+                url, 
+                pegRevision, 
+                revision);
+        SvnExternalFileReporter reporter = new SvnExternalFileReporter(getWcContext(), localAbsPath, true, useCommitTimes);
+        repository.update(swithUrl, revnum, SVNFileUtil.getFileName(localAbsPath), SVNDepth.UNKNOWN, reporter, updateEditor);
+
+        handleEvent(SVNEventFactory.createSVNEvent(localAbsPath, SVNNodeKind.NONE, null, revnum, SVNEventAction.UPDATE_COMPLETED, null, null, null, 1, 1));
+
+        if (!locked) {
+            getWcContext().releaseWriteLock(dirAbspath);
+        }
+    }
+ 
     protected long doSwitch(File localAbsPath, SVNURL switchUrl, SVNRevision revision, SVNRevision pegRevision, SVNDepth depth, boolean depthIsSticky, boolean ignoreExternals, boolean allowUnversionedObstructions, boolean ignoreAncestry, boolean sleepForTimestamp) throws SVNException {
         File anchor = null;
         boolean releaseLock = false;

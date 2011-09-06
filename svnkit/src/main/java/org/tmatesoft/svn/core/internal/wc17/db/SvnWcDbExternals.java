@@ -265,4 +265,12 @@ public class SvnWcDbExternals extends SvnWcDbShared {
         
     }
 
+    public static void addExternalFile(SVNWCContext context, File localAbsPath, File wriAbsPath, File reposRelPath, SVNURL reposRootUrl, String reposUuid, 
+            long targetRevision, SVNProperties newPristineProperties, long changedRev,
+            SVNDate changedDate, String changedAuthor, SvnChecksum newChecksum, SVNProperties davCache, 
+            File recordAncestorAbspath, File recordedReposRelPath, long recordedPegRevision, long recordedRevision, 
+            boolean updateActualProperties, SVNProperties newActualProperties, boolean keepRecordedInfo, 
+            SVNSkel allWorkItems) throws SVNException {
+    }
+
 }
