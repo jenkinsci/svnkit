@@ -52,6 +52,7 @@ import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVProppatchHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVReplayHandler;
 import org.tmatesoft.svn.core.internal.io.dav.http.HTTPStatus;
 import org.tmatesoft.svn.core.internal.io.dav.http.IHTTPConnectionFactory;
+import org.tmatesoft.svn.core.internal.io.fs.FSErrors;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
@@ -709,7 +710,8 @@ public class DAVRepository extends SVNRepository {
                     connection.doUnlock(path, this, id, force);
                     error = null;
                 } catch (SVNException e) {
-                    if (e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_NOT_LOCKED) {
+                    if (e.getErrorMessage() != null && 
+                            (e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_NOT_LOCKED || FSErrors.isUnlockError(e.getErrorMessage()))) {
                         error = e.getErrorMessage();
                         error = SVNErrorMessage.create(error.getErrorCode(), error.getMessageTemplate(), shortPath);
                     } else {
