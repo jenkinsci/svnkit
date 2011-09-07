@@ -272,6 +272,12 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
         } else if (event.getAction() == SVNEventAction.UPDATE_EXTERNAL) {
             myIsInExternal = true;
             buffer.append("\nFetching external item into '" + path + "'\n");
+        } else if (event.getAction() == SVNEventAction.UPDATE_EXTERNAL_REMOVED) {
+            buffer.append("Removed external '" + path + "'");
+            if (event.getErrorMessage() != null) {
+                buffer.append(": " + event.getErrorMessage().getMessage());
+            }
+            buffer.append("\n");
         } else if (event.getAction() == SVNEventAction.FAILED_EXTERNAL) {
             if (myIsInExternal) {
                 myEnvironment.handleWarning(event.getErrorMessage(), new SVNErrorCode[] { event.getErrorMessage().getErrorCode() },

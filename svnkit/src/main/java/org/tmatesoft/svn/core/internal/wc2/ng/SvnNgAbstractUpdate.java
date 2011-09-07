@@ -257,8 +257,8 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
             return;
         }
         File lockRootAbsPath = null;
-        boolean locked = getWcContext().getDb().isWCLocked(localAbsPath);
-        if (!locked) {
+        boolean lockedHere = getWcContext().getDb().isWCLockOwns(localAbsPath, false);
+        if (!lockedHere) {
             lockRootAbsPath = getWcContext().acquireWriteLock(localAbsPath, false, true);
         }
         SVNErrorMessage err = null;
@@ -267,7 +267,7 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
         } catch (SVNException e) {
             err = e.getErrorMessage();
         } 
-        handleEvent(SVNEventFactory.createLockEvent(localAbsPath, SVNEventAction.UPDATE_EXTERNAL_REMOVED, null, err));
+        handleEvent(SVNEventFactory.createSVNEvent(localAbsPath, SVNNodeKind.NONE, null, -1, SVNEventAction.UPDATE_EXTERNAL_REMOVED, SVNEventAction.UPDATE_EXTERNAL_REMOVED, err, null, 1, 1));
         if (lockRootAbsPath != null) {
             try {
                 getWcContext().releaseWriteLock(lockRootAbsPath);
@@ -277,7 +277,7 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
                 }
             }
         }
-        if (err.getErrorCode() == SVNErrorCode.WC_LEFT_LOCAL_MOD) {
+        if (err != null && err.getErrorCode() == SVNErrorCode.WC_LEFT_LOCAL_MOD) {
             err = null;
         }
         if (err != null) {
@@ -424,8 +424,8 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
     
     private void switchFileExternal(File localAbsPath, SVNURL url, SVNRevision pegRevision, SVNRevision revision, File defDirAbspath, SVNRepository repository, long repositoryRevision, SVNURL reposRootUrl) throws SVNException {
         File dirAbspath = SVNFileUtil.getParentFile(localAbsPath);
-        boolean locked = getWcContext().getDb().isWCLocked(dirAbspath); 
-        if (!locked) {
+        boolean lockedHere = getWcContext().getDb().isWCLockOwns(dirAbspath, false); 
+        if (!lockedHere) {
             File wcRoot = getWcContext().getDb().getWCRoot(dirAbspath);
             String rootPath = wcRoot.getAbsolutePath().replace(File.separatorChar, '/');
             String defPath = defDirAbspath.getAbsolutePath().replace(File.separatorChar, '/');
@@ -441,14 +441,14 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
             kind = getWcContext().readKind(localAbsPath, false);
             // TODO get stored external kind.
         } catch (SVNException e) {
-            if (!locked) {
+            if (!lockedHere) {
                 getWcContext().releaseWriteLock(dirAbspath);
             }
             return;
         }
         if (kind != SVNNodeKind.NONE && kind != SVNNodeKind.UNKNOWN) {
             if (externalKind != SVNNodeKind.FILE) {
-                if (!locked) {
+                if (!lockedHere) {
                     getWcContext().releaseWriteLock(dirAbspath);
                 }
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_FILE_EXTERNAL_OVERWRITE_VERSIONED, 
@@ -459,7 +459,7 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
         } else {
             SVNNodeKind diskKind = SVNFileType.getNodeKind(SVNFileType.getType(localAbsPath));
             if (diskKind == SVNNodeKind.FILE || diskKind == SVNNodeKind.DIR) {
-                if (!locked) {
+                if (!lockedHere) {
                     getWcContext().releaseWriteLock(dirAbspath);
                 }
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_FOUND, 
@@ -500,7 +500,7 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
 
         handleEvent(SVNEventFactory.createSVNEvent(localAbsPath, SVNNodeKind.NONE, null, revnum, SVNEventAction.UPDATE_COMPLETED, null, null, null, 1, 1));
 
-        if (!locked) {
+        if (!lockedHere) {
             getWcContext().releaseWriteLock(dirAbspath);
         }
     }

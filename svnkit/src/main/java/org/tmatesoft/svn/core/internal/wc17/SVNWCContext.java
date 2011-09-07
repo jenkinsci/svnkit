@@ -1859,7 +1859,7 @@ public class SVNWCContext {
             destroyAdm(localAbspath);
             if (destroyWf && (!leftSomething)) {
                 try {
-                    SVNFileUtil.deleteAll(localAbspath, true, this.getEventHandler());
+                    SVNFileUtil.deleteFile(localAbspath);
                 } catch (SVNException e) {
                     leftSomething = true;
                 }
@@ -3483,7 +3483,7 @@ public class SVNWCContext {
             File srcPath;
             if (workItem.getListSize() <= 4) {
                 srcPath = ctx.getPristineContents(localAbspath, false, true).path;
-                assert (srcPath != null);
+//                assert (srcPath != null);
             } else {
                 srcPath = SVNFileUtil.createFilePath(workItem.getChild(4).getValue());
             }
