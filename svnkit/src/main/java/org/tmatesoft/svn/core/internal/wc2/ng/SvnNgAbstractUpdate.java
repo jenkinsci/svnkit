@@ -219,7 +219,7 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
         if (targetRevision >= 0) {
             if ((depth == SVNDepth.INFINITY || depth == SVNDepth.UNKNOWN) && !getOperation().isIgnoreExternals()) {
                 getWcContext().getDb().gatherExternalDefinitions(localAbspath, externalsStore);
-                handleExternals(externalsStore.getNewExternals(), externalsStore.getDepths(), anchorUrl, anchorAbspath, reposRoot, depth, false);
+                handleExternals(externalsStore.getNewExternals(), externalsStore.getDepths(), anchorUrl, localAbspath, reposRoot, depth, false);
             }
             if (sleepForTimestamp) {
                 sleepForTimestamp();
