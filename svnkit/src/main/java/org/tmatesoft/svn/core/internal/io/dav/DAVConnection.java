@@ -236,11 +236,11 @@ public class DAVConnection {
         if (status != null) {
             if (status.getCode() == 400) {
                 SVNErrorManager.error(
-                        SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_LOCK, "No lock on path ''{1}'' ({2} bad request)", path, status.getCode()), 
+                        SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_LOCK, "No lock on path ''{0}'' (400 Bad Request)", path), 
                         SVNLogType.NETWORK);
             } else if (status.getCode() == 403) {
                 SVNErrorManager.error(
-                        SVNErrorMessage.create(SVNErrorCode.FS_LOCK_OWNER_MISMATCH, "Unlock failed on ''{1}'' ({2} forbidden)", path, status.getCode()), 
+                        SVNErrorMessage.create(SVNErrorCode.FS_LOCK_OWNER_MISMATCH, "Unlock failed on ''{0}'' (403 Forbidden)", path), 
                         SVNLogType.NETWORK);
             } else if (status.getCode() >= 300 && status.getError() != null) {
                 SVNErrorMessage error = status.getError() != null ? status.getError() : SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED);
