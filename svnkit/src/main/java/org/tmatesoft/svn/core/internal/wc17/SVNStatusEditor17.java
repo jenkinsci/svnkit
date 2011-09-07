@@ -40,6 +40,9 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.SVNWCSchedule;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.ScheduleInternalInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
+import org.tmatesoft.svn.core.internal.wc17.db.Structure;
+import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.ExternalNodeInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbExternals;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
@@ -446,6 +449,24 @@ public class SVNStatusEditor17 {
         stat.setRepositoryRootUrl(reposInfo.rootUrl);
         stat.setRepositoryRelativePath(SVNFileUtil.getFilePath(reposInfo.relPath));
         stat.setRepositoryUuid(reposInfo.uuid);
+
+        if (stat.isSwitched() && stat.isVersioned() && stat.getKind() == SVNNodeKind.FILE) {
+            try {
+                Structure<ExternalNodeInfo> externalInfo = SvnWcDbExternals.readExternal(myWCContext, stat.getPath(), stat.getPath(), ExternalNodeInfo.kind);
+                if (externalInfo != null) {
+                    stat.setFileExternal(externalInfo.<SVNWCDbKind>get(ExternalNodeInfo.kind) == SVNWCDbKind.File);
+                    stat.setSwitched(false);
+                    stat.setNodeStatus(stat.getTextStatus());
+                    
+                    externalInfo.release();
+                }
+            } catch (SVNException e) {
+                if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND) {
+                    throw e;
+                }
+            }
+            
+        }
         
         return stat;
     }

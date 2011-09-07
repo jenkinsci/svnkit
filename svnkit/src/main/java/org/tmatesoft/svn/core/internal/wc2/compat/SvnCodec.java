@@ -109,6 +109,7 @@ public class SvnCodec {
         if (status.getKind() == SVNNodeKind.DIR) {
             result.setIsLocked(status.isWcLocked());
         }
+        result.setIsFileExternal(status.isFileExternal());
         result.setIsCopied(status.isCopied());
         result.setRevision(SVNRevision.create(status.getRevision()));
         

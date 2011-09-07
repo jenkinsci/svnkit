@@ -198,7 +198,7 @@ public class SvnWcDbExternals extends SvnWcDbShared {
         
     }
     
-    private static Structure<ExternalNodeInfo> readExternal(SVNWCContext context, File localAbsPath, File wriAbsPath, ExternalNodeInfo... fields) throws SVNException {
+    public static Structure<ExternalNodeInfo> readExternal(SVNWCContext context, File localAbsPath, File wriAbsPath, ExternalNodeInfo... fields) throws SVNException {
         if (wriAbsPath == null) {
             wriAbsPath = SVNFileUtil.getParentFile(localAbsPath);
         }
