@@ -242,9 +242,11 @@ public class DAVConnection {
                 SVNErrorManager.error(
                         SVNErrorMessage.create(SVNErrorCode.FS_LOCK_OWNER_MISMATCH, "Unlock failed on ''{1}'' ({2} forbidden)", path, status.getCode()), 
                         SVNLogType.NETWORK);
-            } else if (status.getCode() != 204) {
-                SVNErrorManager.error(status.getError(), SVNLogType.NETWORK);
-            } 
+            } else if (status.getCode() >= 300 && status.getError() != null) {
+                SVNErrorMessage error = status.getError() != null ? status.getError() : SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED);
+                SVNErrorManager.error(error, SVNLogType.NETWORK);
+            }
+            return;
         }
         SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED), SVNLogType.NETWORK);
     }
