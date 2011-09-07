@@ -72,6 +72,7 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
         myAnchorAbsPath = anchorAbsPath;
         myTargetBaseName = targetBaseName;
         myTargetAbsPath = SVNFileUtil.createFilePath(anchorAbsPath, targetBaseName);
+        collectExternals(myTargetAbsPath);
     }
 
     public void openRoot(long revision) throws SVNException {

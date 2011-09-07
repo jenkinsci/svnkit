@@ -102,6 +102,10 @@ public class SVNStatusEditor17 {
         myIsGetExcluded = false;
 
     }
+    
+    protected void collectExternals(File path) throws SVNException {
+        myExternalsMap = myWCContext.getDb().getExternalsDefinedBelow(path);
+    }
 
     public SVNCommitInfo closeEdit() throws SVNException {
 
@@ -518,7 +522,7 @@ public class SVNStatusEditor17 {
     }
     
     public void walkStatus(File localAbsPath, SVNDepth depth, boolean getAll, boolean noIgnore, boolean ignoreTextMods, Collection<String> ignorePatterns) throws SVNException {
-        myExternalsMap = myWCContext.getDb().getExternalsDefinedBelow(localAbsPath);
+        collectExternals(localAbsPath);
         if (ignorePatterns == null) {
             ignorePatterns = getGlobalIgnores(myWCContext.getOptions());
         }
