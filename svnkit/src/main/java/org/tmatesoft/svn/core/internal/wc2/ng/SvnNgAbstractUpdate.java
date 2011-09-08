@@ -356,7 +356,7 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
                     }
                     SVNWCNodeReposInfo nodeRepositoryInfo = getWcContext().getNodeReposInfo(localAbsPath);
                     if (nodeRepositoryInfo != null && nodeRepositoryInfo.reposRootUrl != null) {
-                        if (!SVNURLUtil.isAncestor(nodeRepositoryInfo.reposRootUrl, nodeUrl)) {
+                        if (!SVNURLUtil.isAncestor(nodeRepositoryInfo.reposRootUrl, url)) {
                             SvnRelocate relocate = getOperation().getOperationFactory().createRelocate();
                             relocate.setToUrl(nodeRepositoryInfo.reposRootUrl);
                             relocate.setFromUrl(nodeUrl);

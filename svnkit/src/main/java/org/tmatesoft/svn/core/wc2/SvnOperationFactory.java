@@ -63,9 +63,11 @@ public class SvnOperationFactory {
     private SVNWCContext wcContext;
     
     private SvnWcGeneration primaryWcGeneration;
+    private int runLevel;
 
     public SvnOperationFactory() {
         this(null);
+        runLevel = 0;
     }
     
     public SvnOperationFactory(SVNWCContext context) {
@@ -216,12 +218,16 @@ public class SvnOperationFactory {
         ISvnOperationRunner<?, SvnOperation<?>> runner = getImplementation(operation);
         if (runner != null) {
             SVNWCContext wcContext = null;
+            runLevel++;
             try {
                 wcContext = obtainWcContext();
                 runner.setWcContext(wcContext);
                 return runner.run(operation);
             } finally {
-                releaseWcContext(wcContext);
+                runLevel--;
+                if (runLevel == 0) {
+                    releaseWcContext(wcContext);
+                }
             }
         }
         return null;
