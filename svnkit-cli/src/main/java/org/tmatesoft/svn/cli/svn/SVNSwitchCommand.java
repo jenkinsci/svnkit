@@ -81,8 +81,9 @@ public class SVNSwitchCommand extends SVNCommand {
             target = new SVNPath((String) targets.get(1));
         }
         SVNUpdateClient client = getSVNEnvironment().getClientManager().getUpdateClient();
+        SVNNotifyPrinter printer = new SVNNotifyPrinter(getSVNEnvironment(), false, false, false);
         if (!getSVNEnvironment().isQuiet()) {
-            client.setEventHandler(new SVNNotifyPrinter(getSVNEnvironment(), false, false, false));
+            client.setEventHandler(printer);
         }
         
         SVNDepth depth = getSVNEnvironment().getDepth();
@@ -95,6 +96,11 @@ public class SVNSwitchCommand extends SVNCommand {
         client.doSwitch(target.getFile(), switchURL.getURL(), switchURL.getPegRevision(), 
                 getSVNEnvironment().getStartRevision(), depth, 
                 getSVNEnvironment().isForce(), depthIsSticky, ignoreAncestry);    
+
+        if (printer.hasExternalErrors()) {
+            getSVNEnvironment().handleError(SVNErrorMessage.create(SVNErrorCode.CL_ERROR_PROCESSING_EXTERNALS, 
+                    "Failure occurred processing one or more externals definitions"));
+        }
     }
     
     protected void relocate(List targets) throws SVNException {

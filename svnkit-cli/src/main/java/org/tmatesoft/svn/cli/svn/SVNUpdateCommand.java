@@ -19,6 +19,8 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.wc.ISVNChangelistHandler;
@@ -87,8 +89,9 @@ public class SVNUpdateCommand extends SVNCommand {
         }
         
         SVNUpdateClient client = getSVNEnvironment().getClientManager().getUpdateClient();
+        SVNNotifyPrinter printer = new SVNNotifyPrinter(getSVNEnvironment());
         if (!getSVNEnvironment().isQuiet()) {
-            client.setEventHandler(new SVNNotifyPrinter(getSVNEnvironment()));
+            client.setEventHandler(printer);
         }
         
         SVNDepth depth = getSVNEnvironment().getDepth();
@@ -111,7 +114,12 @@ public class SVNUpdateCommand extends SVNCommand {
         }
         File[] filesArray = (File[]) files.toArray(new File[files.size()]);
         client.doUpdate(filesArray, getSVNEnvironment().getStartRevision(), depth, 
-                getSVNEnvironment().isForce(), depthIsSticky); 
+                getSVNEnvironment().isForce(), depthIsSticky);
+
+        if (printer.hasExternalErrors()) {
+            getSVNEnvironment().handleError(SVNErrorMessage.create(SVNErrorCode.CL_ERROR_PROCESSING_EXTERNALS, 
+                    "Failure occurred processing one or more externals definitions"));
+        }
     } 
 
 }

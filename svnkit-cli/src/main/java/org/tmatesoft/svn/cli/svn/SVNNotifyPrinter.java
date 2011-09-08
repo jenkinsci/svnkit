@@ -59,6 +59,8 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
     private int myExternalTreeConflicts = 0;
     private int myExternalSkippedPaths = 0;
 
+    private boolean myHasExternalErrors;
+
     public SVNNotifyPrinter(SVNCommandEnvironment env) {
         this(env, false, false, false);
     }
@@ -68,6 +70,10 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
         myIsCheckout = isCheckout;
         myIsExport = isExport;
         myIsSuppressLastLine = suppressLastLine;
+    }
+    
+    public boolean hasExternalErrors() {
+        return myHasExternalErrors;
     }
 
     public void handleEvent(SVNEvent event, double progress) throws SVNException {
@@ -279,6 +285,7 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
             }
             buffer.append("\n");
         } else if (event.getAction() == SVNEventAction.FAILED_EXTERNAL) {
+            myHasExternalErrors = true;
             if (myIsInExternal) {
                 myEnvironment.handleWarning(event.getErrorMessage(), new SVNErrorCode[] { event.getErrorMessage().getErrorCode() },
                         myEnvironment.isQuiet());
