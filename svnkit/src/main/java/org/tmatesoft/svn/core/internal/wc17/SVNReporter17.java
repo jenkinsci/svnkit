@@ -61,10 +61,7 @@ public class SVNReporter17 implements ISVNReporterBaton {
     private final SVNDepth depth;
     private final boolean isRestoreFiles;
     private final boolean isUseDepthCompatibilityTrick;
-    private final boolean lockOnDemand;
-    private final boolean isStatus;
     private final boolean isHonorDepthExclude;
-    private final ISVNDebugLog log;
     private boolean isUseCommitTimes;
     private int reportedFilesCount;
     private int totalFilesCount;
@@ -76,11 +73,8 @@ public class SVNReporter17 implements ISVNReporterBaton {
         this.isRestoreFiles = restoreFiles;
         this.isUseDepthCompatibilityTrick = useDepthCompatibilityTrick;
         this.depth = depth;
-        this.lockOnDemand = lockOnDemand;
-        this.isStatus = isStatus;
         this.isHonorDepthExclude = isHonorDepthExclude;
         this.isUseCommitTimes = isUseCommitTimes;
-        this.log = log;
     }
 
     public int getReportedFilesCount() {
@@ -101,8 +95,6 @@ public class SVNReporter17 implements ISVNReporterBaton {
          * compared to.
          */
 
-        boolean has_base = true;
-
         SVNWCDbStatus status;
         SVNWCDbKind target_kind;
         long target_rev = 0;
@@ -111,7 +103,6 @@ public class SVNReporter17 implements ISVNReporterBaton {
         SVNDepth target_depth = SVNDepth.UNKNOWN;
         SVNWCDbLock target_lock = null;
         boolean explicit_rev, start_empty;
-        boolean missing = false;
 
         try {
 
@@ -131,7 +122,6 @@ public class SVNReporter17 implements ISVNReporterBaton {
             if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND)
                 throw e;
 
-            has_base = false;
             target_kind = wcContext.getDb().readKind(path, true);
 
             if (target_kind == SVNWCDbKind.File || target_kind == SVNWCDbKind.Symlink)
@@ -215,9 +205,7 @@ public class SVNReporter17 implements ISVNReporterBaton {
 
             if (isRestoreFiles && wrk_status != SVNWCDbStatus.Added && wrk_status != SVNWCDbStatus.Deleted && wrk_status != SVNWCDbStatus.Excluded && wrk_status != SVNWCDbStatus.NotPresent
                     && wrk_status != SVNWCDbStatus.ServerExcluded) {
-                boolean restored = restoreNode(wcContext, path, target_kind, target_rev, isUseCommitTimes);
-                if (!restored)
-                    missing = true;
+                restoreNode(wcContext, path, target_kind, target_rev, isUseCommitTimes);
             }
         }
 
@@ -250,7 +238,6 @@ public class SVNReporter17 implements ISVNReporterBaton {
                  * directory, so we only look at the relpath.
                  */
                 final WCDbBaseInfo baseInfo = wcContext.getDb().getBaseInfo(parent_abspath, BaseInfoField.status, BaseInfoField.reposRelPath);
-                SVNWCDbStatus parent_status = baseInfo.status;
                 File parent_repos_relpath = baseInfo.reposRelPath;
 
                 if (parent_repos_relpath == null) {
@@ -409,7 +396,6 @@ public class SVNReporter17 implements ISVNReporterBaton {
             SVNWCDbKind this_kind = null;
             long this_rev = SVNWCContext.INVALID_REVNUM;
             File this_repos_relpath = null;
-            SVNURL this_repos_root_url;
             SVNDepth this_depth = null;
             SVNWCDbLock this_lock = null;
             boolean this_switched;
@@ -417,15 +403,19 @@ public class SVNReporter17 implements ISVNReporterBaton {
             try {
 
                 final WCDbBaseInfo baseInfo = wcContext.getDb().getBaseInfo(this_abspath, BaseInfoField.status, BaseInfoField.kind, BaseInfoField.revision, BaseInfoField.reposRelPath,
-                        BaseInfoField.reposRootUrl, BaseInfoField.depth, BaseInfoField.lock);
+                        BaseInfoField.reposRootUrl, BaseInfoField.depth, BaseInfoField.lock, BaseInfoField.updateRoot);
 
+                if (baseInfo.updateRoot) {
+                    continue;
+                }
+                
                 this_status = baseInfo.status;
                 this_kind = baseInfo.kind;
                 this_rev = baseInfo.revision;
                 this_repos_relpath = baseInfo.reposRelPath;
-                this_repos_root_url = baseInfo.reposRootUrl;
                 this_depth = baseInfo.depth;
                 this_lock = baseInfo.lock;
+                
 
             } catch (SVNException e) {
 
@@ -515,7 +505,6 @@ public class SVNReporter17 implements ISVNReporterBaton {
 
             /* Is the entry NOT on the disk? We may be able to restore it. */
             if (!dirents.contains(child)) {
-                boolean missing = false;
 
                 final WCDbInfo info = wcContext.getDb().readInfo(this_abspath, InfoField.status, InfoField.kind);
                 SVNWCDbStatus wrk_status = info.status;
@@ -535,9 +524,7 @@ public class SVNReporter17 implements ISVNReporterBaton {
                     SVNNodeKind dirent_kind = SVNFileType.getNodeKind(SVNFileType.getType(this_abspath));
 
                     if (dirent_kind == SVNNodeKind.NONE) {
-                        boolean restored = restoreNode(wcContext, this_abspath, wrk_kind, this_rev, isUseCommitTimes);
-                        if (!restored)
-                            missing = true;
+                        restoreNode(wcContext, this_abspath, wrk_kind, this_rev, isUseCommitTimes);
                     }
                 }
 
