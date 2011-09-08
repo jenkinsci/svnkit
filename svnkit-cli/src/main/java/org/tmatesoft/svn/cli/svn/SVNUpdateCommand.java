@@ -22,10 +22,12 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.wc.ISVNChangelistHandler;
 import org.tmatesoft.svn.core.wc.SVNChangelistClient;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -117,8 +119,8 @@ public class SVNUpdateCommand extends SVNCommand {
                 getSVNEnvironment().isForce(), depthIsSticky);
 
         if (printer.hasExternalErrors()) {
-            getSVNEnvironment().handleError(SVNErrorMessage.create(SVNErrorCode.CL_ERROR_PROCESSING_EXTERNALS, 
-                    "Failure occurred processing one or more externals definitions"));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ERROR_PROCESSING_EXTERNALS, 
+                "Failure occurred processing one or more externals definitions"), SVNLogType.CLIENT);
         }
     } 
 
