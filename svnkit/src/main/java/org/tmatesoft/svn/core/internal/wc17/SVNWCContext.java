@@ -1620,6 +1620,7 @@ public class SVNWCContext {
         if (wqInfo.workItem != null) {
             return;
         }
+        
         db.releaseWCLock(localAbspath);
         return;
     }
@@ -1699,7 +1700,7 @@ public class SVNWCContext {
         boolean haveBase;
         CheckWCRootInfo checkWCRoot = checkWCRoot(localAbspath, true);
         isRoot = checkWCRoot.wcRoot;
-        isSwitched = checkWCRoot.wcRoot;
+        isSwitched = checkWCRoot.switched;
         if (isRoot) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Cannot exclude ''{0}'': it is a working copy root", localAbspath);
             SVNErrorManager.error(err, SVNLogType.WC);
