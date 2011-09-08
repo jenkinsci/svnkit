@@ -4304,7 +4304,7 @@ public class SVNWCDb implements ISVNWCDb {
                     propBlob = stmtAct.getColumnBlob(SVNWCDbSchema.ACTUAL_NODE__Fields.properties);
                 }
                 if (haveWork && propBlob == null) {
-                    propBlob = stmtAct.getColumnBlob(SVNWCDbSchema.NODES__Fields.properties);
+                    propBlob = stmtWork.getColumnBlob(SVNWCDbSchema.NODES__Fields.properties);
                 }
                 if (haveBase && propBlob == null) {
                     propBlob = stmtBase.getColumnBlob(SVNWCDbSchema.NODES__Fields.properties);
