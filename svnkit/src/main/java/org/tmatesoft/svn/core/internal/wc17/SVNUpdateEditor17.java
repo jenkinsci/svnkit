@@ -1069,6 +1069,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                 fb.skipThis = true;
                 fb.alreadyNotified = true;
                 doNotification(fb.localAbsolutePath, SVNNodeKind.FILE, SVNEventAction.UPDATE_SKIP_OBSTRUCTION);
+                return;
             } else if (wcKind == SVNWCDbKind.Unknown) {
                 versionedLocallyAndPresent = false;
             } else {
