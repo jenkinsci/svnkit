@@ -449,6 +449,10 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
                 if (eKind != null) {
                     externalKind = eKind.toNodeKind();
                 }
+            } catch (SVNException e) {
+                if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND) {
+                    throw e;
+                }
             } finally {
                 if (externalInfo != null) {
                     externalInfo.release();
