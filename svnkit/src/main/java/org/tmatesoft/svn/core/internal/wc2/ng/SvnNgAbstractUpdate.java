@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
+import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -248,7 +249,14 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
         
         for(File oldExternalPath : oldExternals.keySet()) {
            File definingAbsPath = oldExternals.get(oldExternalPath);
-           handleExternalItemRemoval(definingAbsPath, oldExternalPath);
+           try {
+               handleExternalItemRemoval(definingAbsPath, oldExternalPath);
+           } catch (SVNCancelException cancel) {
+               throw cancel;
+           } catch (SVNException e) {
+               handleEvent(SVNEventFactory.createSVNEvent(oldExternalPath, SVNNodeKind.NONE, null, -1, SVNEventAction.FAILED_EXTERNAL, SVNEventAction.UPDATE_EXTERNAL_REMOVED, 
+                       e.getErrorMessage(), null));
+           }
         }
     }
 
@@ -298,7 +306,14 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
             for (int i = 0; i < externals.length; i++) {
                 File targetAbsPath = SVNFileUtil.createFilePath(externalPath, externals[i].getPath());
                 File oldExternalDefiningPath = oldExternals.get(targetAbsPath);
-                handleExternalItemChange(reposRoot, externalPath, url, targetAbsPath, oldExternalDefiningPath, externals[i]);
+                try {
+                    handleExternalItemChange(reposRoot, externalPath, url, targetAbsPath, oldExternalDefiningPath, externals[i]);
+                } catch (SVNCancelException cancel) {
+                    throw cancel;
+                } catch (SVNException e) {
+                    handleEvent(SVNEventFactory.createSVNEvent(targetAbsPath, SVNNodeKind.NONE, null, -1, SVNEventAction.FAILED_EXTERNAL, SVNEventAction.UPDATE_EXTERNAL, 
+                            e.getErrorMessage(), null));
+                }
                 if (oldExternalDefiningPath != null) {
                     oldExternals.remove(targetAbsPath);
                 }

@@ -595,7 +595,7 @@ public class SVNErrorCode implements Serializable {
      * @since  1.2.0, SVN 1.5
      */
     public static final SVNErrorCode CL_NO_EXTERNAL_MERGE_TOOL = new SVNErrorCode(CL_CATEGORY, 10, "No external merge tool available");
-
+    public static final SVNErrorCode CL_ERROR_PROCESSING_EXTERNALS = new SVNErrorCode(CL_CATEGORY, 11, "Failed processing one or more externals definitions");
     /**
      * @since 1.3.3
      */

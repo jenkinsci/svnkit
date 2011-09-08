@@ -290,7 +290,7 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
                 return;
             }
 
-            SVNErrorMessage warnMessage = SVNErrorMessage.create(SVNErrorCode.BASE, "Error handling externals definition for ''{0}'':", path);
+            SVNErrorMessage warnMessage = SVNErrorMessage.create(SVNErrorCode.CL_ERROR_PROCESSING_EXTERNALS, "Error handling externals definition for ''{0}'':", path);
             myEnvironment.handleWarning(warnMessage, new SVNErrorCode[] { warnMessage.getErrorCode() },
                     myEnvironment.isQuiet());
             myEnvironment.handleWarning(event.getErrorMessage(), new SVNErrorCode[] { event.getErrorMessage().getErrorCode() },
