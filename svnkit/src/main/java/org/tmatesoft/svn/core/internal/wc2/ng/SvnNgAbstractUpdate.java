@@ -630,6 +630,7 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
             throw e;
         }
         if (depth.isRecursive() && !getOperation().isIgnoreExternals()) {
+            getWcContext().getDb().gatherExternalDefinitions(localAbsPath, externalsStore);
             handleExternals(externalsStore.getNewExternals(), externalsStore.getDepths(), anchorUrl, localAbsPath, switchRootUrl, depth, true);
         }
         if (sleepForTimestamp) {
