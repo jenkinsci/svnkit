@@ -30,7 +30,9 @@ import org.tmatesoft.svn.core.internal.wc17.SVNUpdateEditor17;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.SVNWCNodeReposInfo;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
+import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.ExternalNodeInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnExternalFileReporter;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnExternalUpdateEditor;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbExternals;
@@ -436,15 +438,27 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
             }
         }
         SVNNodeKind kind = SVNNodeKind.NONE;
-        SVNNodeKind externalKind = SVNNodeKind.FILE;
+        SVNNodeKind externalKind = SVNNodeKind.NONE;
+        
         try {
             kind = getWcContext().readKind(localAbsPath, false);
-            // TODO get stored external kind.
+            Structure<ExternalNodeInfo> externalInfo = null;
+            try {
+                externalInfo = SvnWcDbExternals.readExternal(getWcContext(), localAbsPath, localAbsPath, ExternalNodeInfo.kind);
+                ISVNWCDb.SVNWCDbKind eKind = externalInfo.<ISVNWCDb.SVNWCDbKind>get(ExternalNodeInfo.kind);
+                if (eKind != null) {
+                    externalKind = eKind.toNodeKind();
+                }
+            } finally {
+                if (externalInfo != null) {
+                    externalInfo.release();
+                }
+            }
         } catch (SVNException e) {
             if (!lockedHere) {
                 getWcContext().releaseWriteLock(dirAbspath);
             }
-            return;
+            throw e;
         }
         if (kind != SVNNodeKind.NONE && kind != SVNNodeKind.UNKNOWN) {
             if (externalKind != SVNNodeKind.FILE) {
