@@ -22,6 +22,7 @@ import org.tmatesoft.svn.core.internal.wc16.SVNUpdateClient16;
 import org.tmatesoft.svn.core.internal.wc17.SVNUpdateClient17;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc2.SvnCheckout;
+import org.tmatesoft.svn.core.wc2.SvnExport;
 import org.tmatesoft.svn.core.wc2.SvnRelocate;
 import org.tmatesoft.svn.core.wc2.SvnSwitch;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -842,14 +843,7 @@ public class SVNUpdateClient extends SVNBasicClient {
      *             {@link #doExport(SVNURL, File, SVNRevision, SVNRevision, String, boolean, SVNDepth)}
      */
     public long doExport(SVNURL url, File dstPath, SVNRevision pegRevision, SVNRevision revision, String eolStyle, boolean force, boolean recursive) throws SVNException {
-        try {
-            return getSVNUpdateClient17().doExport(url, dstPath, pegRevision, revision, eolStyle, force, recursive);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                return getSVNUpdateClient16().doExport(url, dstPath, pegRevision, revision, eolStyle, force, recursive);
-            }
-            throw e;
-        }
+        return doExport(url, dstPath, pegRevision, revision, eolStyle, force, SVNDepth.fromRecurse(recursive));
     }
 
     /**
@@ -903,14 +897,20 @@ public class SVNUpdateClient extends SVNBasicClient {
      * @since 1.2, SVN 1.5
      */
     public long doExport(SVNURL url, File dstPath, SVNRevision pegRevision, SVNRevision revision, String eolStyle, boolean overwrite, SVNDepth depth) throws SVNException {
-        try {
-            return getSVNUpdateClient17().doExport(url, dstPath, pegRevision, revision, eolStyle, overwrite, depth);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                return getSVNUpdateClient16().doExport(url, dstPath, pegRevision, revision, eolStyle, overwrite, depth);
-            }
-            throw e;
-        }
+        SvnExport export = getOperationsFactory().createExport();
+        
+        export.setUpdateLocksOnDemand(isUpdateLocksOnDemand());
+        export.setSingleTarget(SvnTarget.fromURL(url));
+        export.setDestination(dstPath);
+        export.setPegRevision(pegRevision);
+        export.setRevision(revision);
+        export.setEolStyle(eolStyle);
+        export.setForce(overwrite);
+        export.setDepth(depth);
+        export.setExpandKeywords(isExportExpandsKeywords());
+        export.setIgnoreExternals(isIgnoreExternals());
+        
+        return export.run();
     }
 
     /**
@@ -977,14 +977,7 @@ public class SVNUpdateClient extends SVNBasicClient {
      *             {@link #doExport(File, File, SVNRevision, SVNRevision, String, boolean, SVNDepth)}
      */
     public long doExport(File srcPath, final File dstPath, SVNRevision pegRevision, SVNRevision revision, String eolStyle, final boolean force, boolean recursive) throws SVNException {
-        try {
-            return getSVNUpdateClient17().doExport(srcPath, dstPath, pegRevision, revision, eolStyle, force, recursive);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                return getSVNUpdateClient16().doExport(srcPath, dstPath, pegRevision, revision, eolStyle, force, recursive);
-            }
-            throw e;
-        }
+        return doExport(srcPath, dstPath, pegRevision, revision, eolStyle, force, SVNDepth.fromRecurse(recursive));
     }
 
     /**
@@ -1052,14 +1045,19 @@ public class SVNUpdateClient extends SVNBasicClient {
      * @since 1.2, SVN 1.5
      */
     public long doExport(File srcPath, final File dstPath, SVNRevision pegRevision, SVNRevision revision, String eolStyle, final boolean overwrite, SVNDepth depth) throws SVNException {
-        try {
-            return getSVNUpdateClient17().doExport(srcPath, dstPath, pegRevision, revision, eolStyle, overwrite, depth);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                return getSVNUpdateClient16().doExport(srcPath, dstPath, pegRevision, revision, eolStyle, overwrite, depth);
-            }
-            throw e;
-        }
+        SvnExport export = getOperationsFactory().createExport();
+        export.setUpdateLocksOnDemand(isUpdateLocksOnDemand());
+        export.setSingleTarget(SvnTarget.fromFile(srcPath));
+        export.setDestination(dstPath);
+        export.setPegRevision(pegRevision);
+        export.setRevision(revision);
+        export.setEolStyle(eolStyle);
+        export.setForce(overwrite);
+        export.setIgnoreExternals(isIgnoreExternals());
+        export.setDepth(depth);
+        export.setExpandKeywords(isExportExpandsKeywords());
+        
+        return export.run();
     }
 
     /**

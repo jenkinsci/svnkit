@@ -59,7 +59,6 @@ public class SvnRemoteGetProperties extends SvnRemoteOperationRunner<SVNProperti
         return getOperation().first();
     }
     
-    @SuppressWarnings("unchecked")
     private void remotePropertyGet(SVNURL url, SVNNodeKind kind, String path, SVNRepository repos, long revNumber, SVNDepth depth) throws SVNException {
         SVNURL fullURL = url.appendPath(path, false);
         SVNProperties props = new SVNProperties();

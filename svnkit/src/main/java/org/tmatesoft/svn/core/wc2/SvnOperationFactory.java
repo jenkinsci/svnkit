@@ -24,6 +24,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbOpenMode;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgCheckout;
+import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgExport;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgGetInfo;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgGetProperties;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgGetStatus;
@@ -31,12 +32,14 @@ import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgRelocate;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgSwitch;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgUpdate;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldCheckout;
+import org.tmatesoft.svn.core.internal.wc2.old.SvnOldExport;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetInfo;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetProperties;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetStatus;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldRelocate;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldSwitch;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldUpdate;
+import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteExport;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteGetInfo;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteGetProperties;
 import org.tmatesoft.svn.core.wc.DefaultSVNRepositoryPool;
@@ -107,6 +110,10 @@ public class SvnOperationFactory {
 
         registerOperationRunner(SvnUpdate.class, new SvnNgUpdate());
         registerOperationRunner(SvnUpdate.class, new SvnOldUpdate());
+
+        registerOperationRunner(SvnExport.class, new SvnRemoteExport());
+        registerOperationRunner(SvnExport.class, new SvnNgExport());
+        registerOperationRunner(SvnExport.class, new SvnOldExport());
         
         registerOperationRunner(SvnRelocate.class, new SvnNgRelocate());
         registerOperationRunner(SvnRelocate.class, new SvnOldRelocate());
@@ -212,6 +219,10 @@ public class SvnOperationFactory {
 
     public SvnRelocate createRelocate() {
         return new SvnRelocate(this);
+    }
+
+    public SvnExport createExport() {
+        return new SvnExport(this);
     }
 
     protected Object run(SvnOperation<?> operation) throws SVNException {

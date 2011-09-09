@@ -21,7 +21,6 @@ import java.util.TreeMap;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
@@ -30,12 +29,8 @@ import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
-import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
-import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo;
-import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.io.ISVNEditor;
@@ -68,7 +63,7 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
     public SVNRemoteStatusEditor17(File anchorAbsPath, String targetBaseName, SVNWCContext wcContext, ISVNOptions options, boolean includeIgnored, boolean reportAll, SVNDepth depth,
             ISvnObjectReceiver<SvnStatus> realHandler) throws SVNException {
         super(SVNFileUtil.createFilePath(anchorAbsPath, targetBaseName), wcContext, options, includeIgnored, reportAll, depth, realHandler);
-        myAnchorStatus = internalStatus(anchorAbsPath);
+        myAnchorStatus = internalStatus(wcContext, anchorAbsPath);
         myAnchorAbsPath = anchorAbsPath;
         myTargetBaseName = targetBaseName;
         myTargetAbsPath = SVNFileUtil.createFilePath(anchorAbsPath, targetBaseName);
@@ -116,7 +111,7 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
                 return;
 
             /* Use the public API to get a statstruct, and put it into the hash. */
-            statstruct = internalStatus(localAbsPath);
+            statstruct = internalStatus(myWCContext, localAbsPath);
             statstruct.setRepositoryLock(reposLock);
             statushash.put(localAbsPath, statstruct);
         }
@@ -451,7 +446,7 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
         if (statstruct == null) {
             if (reposNodeStatus != SVNStatusType.STATUS_ADDED)
                 return;
-            statstruct = internalStatus(localAbsPath);
+            statstruct = internalStatus(myWCContext, localAbsPath);
             statstruct.setRepositoryLock(reposLock);
             statushash.put(localAbsPath, statstruct);
         }
@@ -644,78 +639,6 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
             this.ood_kind = SVNNodeKind.FILE;
             this.ood_changed_author = null;
         }
-
-    }
-
-    public SvnStatus internalStatus(File localAbsPath) throws SVNException {
-
-        SVNWCDbKind node_kind;
-        SVNWCDbStatus node_status = null;
-        boolean conflicted;
-
-        assert (SVNWCDb.isAbsolute(localAbsPath));
-
-        SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(localAbsPath));
-        try {
-            WCDbInfo info = myWCContext.getDb().readInfo(localAbsPath, InfoField.status, InfoField.kind, InfoField.conflicted);
-            node_status = info.status;
-            node_kind = info.kind;
-            conflicted = info.conflicted;
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND) {
-                throw e;
-            }
-            node_kind = SVNWCDbKind.Unknown;
-            conflicted = false;
-        }
-        if (node_status == SVNWCDbStatus.ServerExcluded || 
-            node_status == SVNWCDbStatus.NotPresent || 
-            node_status == SVNWCDbStatus.Excluded) {
-            
-            node_kind = SVNWCDbKind.Unknown;
-        }
-
-        if (node_kind != SVNWCDbKind.Unknown) {
-            /* Check for hidden in the parent stub */
-            boolean hidden = myWCContext.getDb().isNodeHidden(localAbsPath);
-
-            if (hidden) {
-                node_kind = SVNWCDbKind.Unknown;
-            }
-        }
-
-        if (node_kind == SVNWCDbKind.Unknown) {
-            return assembleUnversioned17(localAbsPath, kind, conflicted, false);
-        }
-
-        boolean isRoot;
-        if (SVNFileUtil.getParentFile(localAbsPath) == null) {
-            isRoot = true;
-        } else {
-            isRoot = myWCContext.getDb().isWCRoot(localAbsPath);
-        }
-        
-        WCDbRepositoryInfo reposInfo = new WCDbRepositoryInfo();
-        if (SVNFileUtil.getFileDir(localAbsPath) != null && !isRoot) {
-
-            File parent_abspath = SVNFileUtil.getFileDir(localAbsPath);
-            try {
-                WCDbInfo parent_info = myWCContext.getDb().readInfo(parent_abspath, InfoField.reposRelPath, InfoField.reposRootUrl, InfoField.reposUuid);
-                reposInfo.relPath  = parent_info.reposRelPath;
-                reposInfo.rootUrl  = parent_info.reposRootUrl;
-                reposInfo.uuid = parent_info.reposUuid;
-            } catch (SVNException e) {
-                if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND || e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_WORKING_COPY)
-                /* || SVN_WC__ERR_IS_NOT_CURRENT_WC(err)) */ {
-                    reposInfo.relPath  = null;
-                    reposInfo.rootUrl  = null;
-                    reposInfo.uuid = null;
-                } else {
-                    throw e;
-                }
-            }
-        } 
-        return assembleStatus(localAbsPath, reposInfo, null, kind, false, true, null);
 
     }
 
