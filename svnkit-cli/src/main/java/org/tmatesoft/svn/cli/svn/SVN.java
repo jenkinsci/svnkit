@@ -83,6 +83,7 @@ public class SVN extends AbstractSVNLauncher {
         SVNCommandLine.registerOption(SVNOption.XML);
         SVNCommandLine.registerOption(SVNOption.CONFIG_DIR);
         SVNCommandLine.registerOption(SVNOption.IGNORE_EXTERNALS);
+        SVNCommandLine.registerOption(SVNOption.IGNORE_KEYWORDS);
         SVNCommandLine.registerOption(SVNOption.CHANGELIST);
         SVNCommandLine.registerOption(SVNOption.HELP);
         SVNCommandLine.registerOption(SVNOption.QUESTION);

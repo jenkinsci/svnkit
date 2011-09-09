@@ -34,6 +34,7 @@ public class SVNOption extends AbstractSVNOption {
     public static final SVNOption CONFIG_DIR = new SVNOption("config-dir", false);
     public static final SVNOption CONFIG_OPTION = new SVNOption("config-option", false);
     public static final SVNOption IGNORE_EXTERNALS = new SVNOption("ignore-externals");
+    public static final SVNOption IGNORE_KEYWORDS = new SVNOption("ignore-keywords");
     public static final SVNOption CHANGELIST = new SVNOption("changelist", false);
     public static final SVNOption HELP = new SVNOption("help", "h");
     public static final SVNOption QUESTION = new SVNOption(null, "?");

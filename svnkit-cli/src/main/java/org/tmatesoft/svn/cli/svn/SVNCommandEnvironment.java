@@ -78,6 +78,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
     private boolean myIsIncremental;
     private boolean myIsHelp;
     private boolean myIsIgnoreExternals;
+    private boolean myIsIgnoreKeywords;
     private boolean myIsXML;
     private boolean myIsVersion;
     private String myChangelist;
@@ -491,6 +492,8 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
             myIsIgnoreAncestry = true;
         } else if (option == SVNOption.IGNORE_EXTERNALS) {
             myIsIgnoreExternals = true;
+        } else if (option == SVNOption.IGNORE_KEYWORDS) {
+            myIsIgnoreKeywords = true;
         } else if (option == SVNOption.RELOCATE) {
             if (myDepth != SVNDepth.UNKNOWN) {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_MUTUALLY_EXCLUSIVE_ARGS, 
@@ -680,6 +683,10 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
 
     public Collection getChangelistsCollection() {
         return myChangelists;
+    }
+    
+    public boolean isIgnoreKeywords() {
+        return myIsIgnoreKeywords;
     }
 
     public SVNDepth getDepth() {
