@@ -47,6 +47,7 @@ public abstract class AbstractSVNCommand {
     private Collection myOptions;
     private AbstractSVNCommandEnvironment myEnvironment;
     private Collection myValidOptions;
+    private boolean myIsFailed;
 
     public static void registerCommand(AbstractSVNCommand command) {
         ourCommands.put(command.getName(), command);
@@ -75,6 +76,14 @@ public abstract class AbstractSVNCommand {
         }
         myValidOptions = new LinkedList(myOptions); 
         myOptions.addAll(getGlobalOptions());
+    }
+    
+    public boolean isFailed() {
+        return myIsFailed;
+    }
+    
+    public void setFailed(boolean failed) {
+        myIsFailed = failed;
     }
 
     public abstract void run() throws SVNException;

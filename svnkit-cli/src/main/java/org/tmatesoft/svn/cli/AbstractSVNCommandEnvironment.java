@@ -156,7 +156,7 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
             getOut().flush();
             getErr().flush();
         }
-        return true;
+        return !myCommand.isFailed();
     }
 
     protected void initOptions(SVNCommandLine commandLine) throws SVNException {
