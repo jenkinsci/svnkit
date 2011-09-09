@@ -43,14 +43,18 @@ public class SVNCommitMediator17 implements ISVNWorkspaceMediator {
     public void setWorkspaceProperty(String path, String name, SVNPropertyValue value) throws SVNException {
         if (name != null) {
             SVNCommitItem item = (SVNCommitItem) myCommitItems.get(path);
-            item.setIncomingProperty(name, value);
+            if (item != null) {
+                item.setIncomingProperty(name, value);
+            }
         }
     }
 
     public SVNPropertyValue getWorkspaceProperty(String path, String name) throws SVNException {
         if (name != null) {
             SVNCommitItem item = (SVNCommitItem) myCommitItems.get(path);
-            return myContext.getPropertyValue(item.getFile(), name);
+            if (item != null) {
+                return myContext.getPropertyValue(item.getFile(), name);
+            }
         }
         return null;
     }
