@@ -105,6 +105,9 @@ public class SvnNgExport extends SvnNgOperationRunner<Long, SvnExport> {
                         externalKind = info.<ISVNWCDb.SVNWCDbKind>get(ExternalNodeInfo.kind);
                         info.release();
                     } catch (SVNException e) {
+                        if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND) {
+                            throw e;
+                        }
                         externalKind = null;
                     }
                     if (externalKind != ISVNWCDb.SVNWCDbKind.File) {
@@ -113,7 +116,7 @@ public class SvnNgExport extends SvnNgOperationRunner<Long, SvnExport> {
                 }
             }
             SVNDepth nodeDepth = getWcContext().getNodeDepth(from);
-            if (!getOperation().isIgnoreExternals() && depth == SVNDepth.INFINITY || nodeDepth == SVNDepth.INFINITY) {
+            if (!getOperation().isIgnoreExternals() && depth == SVNDepth.INFINITY && nodeDepth == SVNDepth.INFINITY) {
                 String externalProperty = getWcContext().getProperty(from, SVNProperty.EXTERNALS);
                 if (externalProperty != null) {
                     SVNExternal[] externals = SVNExternal.parseExternals(from, externalProperty);
