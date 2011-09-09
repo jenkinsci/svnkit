@@ -75,7 +75,6 @@ public class SVNUnLockCommand extends SVNCommand {
             SVNURL[] urlsArray = (SVNURL[]) urls.toArray(new SVNURL[urls.size()]);
             client.doUnlock(urlsArray, getSVNEnvironment().isForce());
         }
-        setFailed(printer.hasLockingErrors());        
     }
 
 }
