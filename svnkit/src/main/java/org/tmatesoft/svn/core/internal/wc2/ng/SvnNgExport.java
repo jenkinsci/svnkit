@@ -96,7 +96,7 @@ public class SvnNgExport extends SvnNgOperationRunner<Long, SvnExport> {
                     if (depth == SVNDepth.INFINITY) {
                         copyVersionedDir(child, targetPath, revision, eolStyle, ignoreKeywords, force, depth);
                     } else {
-                        SVNFileUtil.ensureDirectoryExists(child);
+                        SVNFileUtil.ensureDirectoryExists(targetPath);
                     }
                 } else if (childKind == SVNNodeKind.FILE && depth.compareTo(SVNDepth.FILES) >= 0) {
                     ISVNWCDb.SVNWCDbKind externalKind = null;
