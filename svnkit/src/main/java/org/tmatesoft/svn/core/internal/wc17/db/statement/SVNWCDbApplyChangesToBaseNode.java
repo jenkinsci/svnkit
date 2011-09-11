@@ -23,8 +23,8 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetInsertStatement;
  * INSERT OR REPLACE INTO nodes ( wc_id, local_relpath, op_depth,
  * parent_relpath, repos_id, repos_path, revision, presence, depth, kind,
  * changed_revision, changed_date, changed_author, checksum, properties,
- * dav_cache, symlink_target ) VALUES (?1, ?2, 0, ?3, ?4, ?5, ?6, ?7, ?8, ?9,
- * ?10, ?11, ?12, ?13, ?14, ?15, ?16);
+ * dav_cache, symlink_target, file_external ) VALUES (?1, ?2, 0, ?3, ?4, ?5, ?6, ?7, ?8, ?9,
+ * ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17);
  *
  * @version 1.4
  * @author TMate Software Ltd.
@@ -54,6 +54,8 @@ public class SVNWCDbApplyChangesToBaseNode extends SVNSqlJetInsertStatement {
         values.put(SVNWCDbSchema.NODES__Fields.properties.toString(), getBind(14));
         values.put(SVNWCDbSchema.NODES__Fields.dav_cache.toString(), getBind(15));
         values.put(SVNWCDbSchema.NODES__Fields.symlink_target.toString(), getBind(16));
+        values.put(SVNWCDbSchema.NODES__Fields.file_external.toString(), getBind(17));
+        
         return values;
     }
 

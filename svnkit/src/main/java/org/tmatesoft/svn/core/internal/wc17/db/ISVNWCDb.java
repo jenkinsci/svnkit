@@ -830,9 +830,6 @@ public interface ISVNWCDb {
      */
     void opAddFile(File localAbsPath, SVNSkel workItems) throws SVNException;
 
-    /** Newly added symlinks have no properties. */
-    void opAddSymlink(File localAbsPath, File target, SVNSkel workItems) throws SVNException;
-
     /**
      * Set the properties of the node LOCAL_ABSPATH in the ACTUAL tree to PROPS.
      * <p>

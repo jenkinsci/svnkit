@@ -1794,10 +1794,6 @@ public class SVNWCDb implements ISVNWCDb {
         pdh.flushEntries(localAbsPath);
     }
 
-    public void opAddSymlink(File localAbsPath, File target, SVNSkel workItems) throws SVNException {
-        throw new UnsupportedOperationException();
-    }
-
     public void opCopy(File srcAbsPath, File dstAbspath, SVNSkel workItems) throws SVNException {
         // TODO
         throw new UnsupportedOperationException();
@@ -4381,6 +4377,7 @@ public class SVNWCDb implements ISVNWCDb {
             SVNWCDbKind newKind;
             String newDepthStr = null;
             SVNSqlJetStatement stmt;
+            boolean fileExternal = false;
 
             stmtBase = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_BASE_NODE);
             stmtWork = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_WORKING_NODE);
@@ -4393,6 +4390,9 @@ public class SVNWCDb implements ISVNWCDb {
                 haveWork = stmtWork.next();
                 stmtAct.bindf("is", pdh.getWCRoot().getWcId(), localRelpath);
                 haveAct = stmtAct.next();
+                if (haveBase) {
+                    fileExternal = stmtBase.getColumnBoolean(SVNWCDbSchema.NODES__Fields.file_external);
+                }
 
                 if (haveWork) {
                     newKind = getColumnKind(stmtWork, NODES__Fields.kind);
@@ -4443,11 +4443,16 @@ public class SVNWCDb implements ISVNWCDb {
             newPresence = SVNWCDbStatus.Normal;
 
             stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.APPLY_CHANGES_TO_BASE_NODE);
-            stmt.bindf("issisrtstrisnbn", pdh.getWCRoot().getWcId(), localRelpath, parentRelpath, reposId, reposRelPath, newRevision, getPresenceText(newPresence), newDepthStr, 
+            stmt.bindf("issisrtstrisnbnn", pdh.getWCRoot().getWcId(), localRelpath, parentRelpath, reposId, reposRelPath, newRevision, getPresenceText(newPresence), newDepthStr, 
                     getKindText(newKind),
                     changedRev, changedDate, changedAuthor, propBlob);
             stmt.bindChecksum(13, newChecksum);
             stmt.bindProperties(15, newDavCache);
+            if (fileExternal) {
+                stmt.bindLong(17, 1);
+            } else {
+                stmt.bindNull(17);
+            }
             stmt.done();
 
             if (haveWork) {

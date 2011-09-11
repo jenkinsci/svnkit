@@ -43,7 +43,13 @@ public class SVNWCDbSelectOpDepthChildren extends SVNSqlJetSelectFieldsStatement
         if (isColumnNull(SVNWCDbSchema.NODES__Fields.op_depth) && getBind(3) != null) {
             return false;
         }
-        return getColumn(SVNWCDbSchema.NODES__Fields.wc_id).equals(getBind(1)) && getColumn(SVNWCDbSchema.NODES__Fields.parent_relpath).equals(getBind(2))
+        if (getBind(3) instanceof Long && ((Long) getBind(3)) == 0) {
+            if (getColumn(SVNWCDbSchema.NODES__Fields.file_external) != null) {
+                return false;
+            }
+        }
+        return getColumn(SVNWCDbSchema.NODES__Fields.wc_id).equals(getBind(1)) && 
+            getColumn(SVNWCDbSchema.NODES__Fields.parent_relpath).equals(getBind(2))
                 && getColumn(SVNWCDbSchema.NODES__Fields.op_depth).equals(getBind(3));
     }
 
