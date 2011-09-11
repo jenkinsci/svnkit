@@ -1,6 +1,7 @@
 package org.tmatesoft.svn.core.internal.wc2.ng;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.Map;
 import java.util.StringTokenizer;
 
@@ -133,8 +134,13 @@ public class SvnNgAdd extends SvnNgOperationRunner<SvnAdd, SvnAdd> {
         }
         addFromDisk(path, false);
         if (properties != null) {
-            // TODO set properties or revert an addition.
-            // getWcContext().getDb().setWorkingPropsTemp(localAbsPath, props);
+            for (String propertyName : properties.nameSet()) {
+                String value = properties.getStringValue(propertyName);
+                if (value != null) {
+                    SvnNgPropertiesManager.setProperty(getWcContext(), path, propertyName, value, SVNDepth.EMPTY, false, null);
+                }
+            }
+            // TODO revert addition if propset fails.
         }
         
         handleEvent(SVNEventFactory.createSVNEvent(path, SVNNodeKind.FILE, mimeType, -1, SVNEventAction.ADD, 
@@ -153,8 +159,9 @@ public class SvnNgAdd extends SvnNgOperationRunner<SvnAdd, SvnAdd> {
         if (depth.compareTo(SVNDepth.EMPTY) <= 0) {
             return;
         }
+        Collection<String> ignorePatterns = null;
         if (getOperation().isIncludeIgnored()) {
-            // TODO collect ignores.
+            ignorePatterns = SvnNgPropertiesManager.getEffectiveIgnores(getWcContext(), path, null);
         }
         
         File[] children = SVNFileListUtil.listFiles(path);
@@ -164,9 +171,9 @@ public class SvnNgAdd extends SvnNgOperationRunner<SvnAdd, SvnAdd> {
             if (name.equals(SVNFileUtil.getAdminDirectoryName())) {
                 continue;
             }
-            
-            // TODO skip ignored.
-            
+            if (ignorePatterns != null && SvnNgPropertiesManager.isIgnored(name, ignorePatterns)) {
+                continue;
+            }
             SVNNodeKind childKind = SVNFileType.getNodeKind(SVNFileType.getType(children[i]));
             if (childKind == SVNNodeKind.DIR && depth.compareTo(SVNDepth.IMMEDIATES) >= 0) {
                 SVNDepth depthBelow = depth;

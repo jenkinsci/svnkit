@@ -445,7 +445,7 @@ public class SVNPropertiesManager {
                 SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Charset ''{0}'' is not supported on this computer", value.getString());
                 SVNErrorManager.error(error, SVNLogType.DEFAULT);
             }
-            if (fileContentFetcher.fileIsBinary()) {
+            if (fileContentFetcher != null && fileContentFetcher.fileIsBinary()) {
                 SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "File ''{0}'' has binary mime type property", path);
                 SVNErrorManager.error(error, SVNLogType.DEFAULT);
             }
@@ -453,7 +453,7 @@ public class SVNPropertiesManager {
             value = SVNPropertyValue.create(value.getString().trim());
             validateMimeType(value.getString());
             if (SVNProperty.isBinaryMimeType(value.getString())) {
-                if (fileContentFetcher.getProperty(SVNProperty.EOL_STYLE) != null) {
+                if (fileContentFetcher != null && fileContentFetcher.getProperty(SVNProperty.EOL_STYLE) != null) {
                     SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "File ''{0}'' has svn:eol-style property set and thus cannot have binary mime type", path);
                     SVNErrorManager.error(error, SVNLogType.DEFAULT);
                 }
@@ -545,6 +545,9 @@ public class SVNPropertiesManager {
     }
 
     public static void validateEOLProperty(Object path, ISVNFileContentFetcher fetcher) throws SVNException {
+        if (fetcher == null) {
+            return;
+        }
         SVNTranslatorOutputStream out = new SVNTranslatorOutputStream(SVNFileUtil.DUMMY_OUT, new byte[0], false, null, false);
 
         try {

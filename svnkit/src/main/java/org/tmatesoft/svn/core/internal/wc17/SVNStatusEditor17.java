@@ -33,7 +33,6 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
-import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -54,6 +53,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.ExternalNodeInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbExternals;
+import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgPropertiesManager;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
@@ -216,7 +216,7 @@ public class SVNStatusEditor17 {
     }
 
     private void sendUnversionedItem(File nodeAbsPath, SVNNodeKind pathKind, boolean treeConflicted, Collection<String> patterns, boolean noIgnore, ISvnObjectReceiver<SvnStatus> handler) throws SVNException {
-        boolean isIgnored = isIgnored(SVNFileUtil.getFileName(nodeAbsPath), patterns);
+        boolean isIgnored = SvnNgPropertiesManager.isIgnored(SVNFileUtil.getFileName(nodeAbsPath), patterns);
         boolean isExternal = isExternal(nodeAbsPath);
         SvnStatus status = assembleUnversioned17(nodeAbsPath, pathKind, treeConflicted, isIgnored);
         if (status != null) {
@@ -483,16 +483,6 @@ public class SVNStatusEditor17 {
             return false;
         }
         return true;
-    }
-
-    private boolean isIgnored(String name, Collection<String> patterns) {
-        for (Iterator ps = patterns.iterator(); ps.hasNext();) {
-            String pattern = (String) ps.next();
-            if (DefaultSVNOptions.matches(pattern, name)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private Collection<String> collectIgnorePatterns(File localAbsPath, Collection<String> ignores) throws SVNException {
