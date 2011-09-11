@@ -30,6 +30,7 @@ import org.tmatesoft.svn.core.internal.wc17.SVNWCClient17;
 import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
+import org.tmatesoft.svn.core.wc2.SvnAdd;
 import org.tmatesoft.svn.core.wc2.SvnGetInfo;
 import org.tmatesoft.svn.core.wc2.SvnGetProperties;
 import org.tmatesoft.svn.core.wc2.SvnInfo;
@@ -1317,15 +1318,8 @@ public class SVNWCClient extends SVNBasicClient {
      *             instead
      */
     public void doAdd(File path, boolean force, boolean mkdir, boolean climbUnversionedParents, boolean recursive) throws SVNException {
-        try {
-            getSVNWCClient17().doAdd(path, force, mkdir, climbUnversionedParents, recursive);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNWCClient16().doAdd(path, force, mkdir, climbUnversionedParents, recursive);
-                return;
-            }
-            throw e;
-        }
+        File[] paths = new File[] {path};
+        doAdd(paths, force, mkdir, climbUnversionedParents, SVNDepth.fromRecurse(recursive), false, false, climbUnversionedParents);
     }
 
     /**
@@ -1371,15 +1365,8 @@ public class SVNWCClient extends SVNBasicClient {
      *             instead
      */
     public void doAdd(File path, boolean force, boolean mkdir, boolean climbUnversionedParents, boolean recursive, boolean includeIgnored) throws SVNException {
-        try {
-            getSVNWCClient17().doAdd(path, force, mkdir, climbUnversionedParents, recursive, includeIgnored);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNWCClient16().doAdd(path, force, mkdir, climbUnversionedParents, recursive, includeIgnored);
-                return;
-            }
-            throw e;
-        }
+        File[] paths = new File[] {path};
+        doAdd(paths, force, mkdir, climbUnversionedParents, SVNDepth.fromRecurse(recursive), false, includeIgnored, climbUnversionedParents);
     }
 
     /**
@@ -1451,15 +1438,8 @@ public class SVNWCClient extends SVNBasicClient {
      * @since 1.2, SVN 1.5
      */
     public void doAdd(File path, boolean force, boolean mkdir, boolean climbUnversionedParents, SVNDepth depth, boolean includeIgnored, boolean makeParents) throws SVNException {
-        try {
-            getSVNWCClient17().doAdd(path, force, mkdir, climbUnversionedParents, depth, includeIgnored, makeParents);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNWCClient16().doAdd(path, force, mkdir, climbUnversionedParents, depth, includeIgnored, makeParents);
-                return;
-            }
-            throw e;
-        }
+        File[] paths = new File[] {path};
+        doAdd(paths, force, mkdir, climbUnversionedParents, depth, false, includeIgnored, makeParents);
     }
 
     /**
@@ -1529,17 +1509,19 @@ public class SVNWCClient extends SVNBasicClient {
      *             stepping upper from a path are found
      * @since 1.3
      */
-    public void doAdd(File[] paths, boolean force, boolean mkdir, boolean climbUnversionedParents, SVNDepth depth, boolean depthIsSticky, boolean includeIgnored, boolean makeParents)
-            throws SVNException {
-        try {
-            getSVNWCClient17().doAdd(paths, force, mkdir, climbUnversionedParents, depth, depthIsSticky, includeIgnored, makeParents);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNWCClient16().doAdd(paths, force, mkdir, climbUnversionedParents, depth, depthIsSticky, includeIgnored, makeParents);
-                return;
-            }
-            throw e;
+    public void doAdd(File[] paths, boolean force, boolean mkdir, boolean climbUnversionedParents, SVNDepth depth, boolean depthIsSticky, boolean includeIgnored, boolean makeParents) throws SVNException {
+        SvnAdd add = getOperationsFactory().createAdd();
+        for (int i = 0; i < paths.length; i++) {
+            add.addTarget(SvnTarget.fromFile(paths[i]));            
         }
+        add.setMkDir(mkdir);
+        add.setForce(force);
+        add.setDepth(depth);
+        add.setDepth(depth);
+        add.setIncludeIgnored(includeIgnored);
+        add.setAddParents(makeParents);
+        
+        add.run();
     }
 
     /**
@@ -1613,15 +1595,8 @@ public class SVNWCClient extends SVNBasicClient {
      * @since 1.3
      */
     public void doAdd(File path, boolean force, boolean mkdir, boolean climbUnversionedParents, SVNDepth depth, boolean depthIsSticky, boolean includeIgnored, boolean makeParents) throws SVNException {
-        try {
-            getSVNWCClient17().doAdd(path, force, mkdir, climbUnversionedParents, depth, depthIsSticky, includeIgnored, makeParents);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNWCClient16().doAdd(path, force, mkdir, climbUnversionedParents, depth, depthIsSticky, includeIgnored, makeParents);
-                return;
-            }
-            throw e;
-        }
+        File[] paths = new File[] {path};
+        doAdd(paths, force, mkdir, climbUnversionedParents, depth, depthIsSticky, includeIgnored, makeParents);
     }
 
     /**

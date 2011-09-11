@@ -66,7 +66,6 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetTransaction;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetUpdateStatement;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.SVNConfigFile;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -607,6 +606,97 @@ public class SVNWCDb implements ISVNWCDb {
             }
             
             addWorkItems(db, workItems);
+        }
+
+    }
+
+    public class InsertWorking implements SVNSqlJetTransaction {
+
+        public SVNWCDbStatus status;
+        public SVNWCDbKind kind;
+        public File reposRelpath;
+        
+        public SVNProperties props;
+        public long changedRev = INVALID_REVNUM;
+        public SVNDate changedDate;
+        public String changedAuthor;
+
+        public List<File> children;
+        public SVNDepth depth = SVNDepth.INFINITY;
+
+        public SvnChecksum checksum;
+        
+        public File target;
+        
+        public SVNSkel workItems;
+
+        public long wcId;
+        public File localRelpath;
+        public File originalReposRelPath;
+        public long originalReposId;
+        public long originalRevision;
+        
+        public int opDepth;
+        private int notPresentOpDepth;
+        
+        public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
+            File parentRelpath = SVNFileUtil.getFileDir(localRelpath);
+            
+            SVNSqlJetStatement stmt = db.getStatement(SVNWCDbStatements.INSERT_NODE);
+            stmt.bindf("isisnnntstrisnnnnns", 
+                    wcId, 
+                    localRelpath, 
+                    opDepth, 
+                    parentRelpath, 
+                    getPresenceText(status), 
+                    (kind == SVNWCDbKind.Dir) ? SVNDepth.asString(depth) : null, 
+                    getKindText(kind), 
+                    changedRev, 
+                    changedDate, 
+                    changedAuthor, 
+                    (kind == SVNWCDbKind.Symlink) ? target : null);
+
+            if (kind == SVNWCDbKind.File) {
+                stmt.bindChecksum(14, checksum);
+            } 
+            if (originalReposRelPath != null) {
+                stmt.bindLong(5, originalReposId);
+                stmt.bindString(6, SVNFileUtil.getFilePath(originalReposRelPath));
+                stmt.bindLong(7, originalRevision);
+            }
+            stmt.bindProperties(15, props);
+            stmt.done();
+            
+            if (kind == SVNWCDbKind.Dir && children != null) {
+                insertIncompleteChildren(db, wcId, localRelpath, originalRevision, children, opDepth);
+            }
+            
+            // update changelists
+            if (kind == SVNWCDbKind.Dir) {
+                stmt = db.getStatement(SVNWCDbStatements.UPDATE_ACTUAL_CLEAR_CHANGELIST);
+                stmt.bindf("is", wcId, localRelpath);
+                stmt.done();
+                stmt = db.getStatement(SVNWCDbStatements.DELETE_ACTUAL_EMPTY);
+                stmt.bindf("is", wcId, localRelpath);
+                stmt.done();
+            }
+            
+            addWorkItems(db, workItems);
+            
+            if (notPresentOpDepth > 0 && notPresentOpDepth < opDepth) {
+                stmt = db.getStatement(SVNWCDbStatements.INSERT_NODE);
+                stmt.bindf("isisisrtnt", 
+                        wcId, 
+                        localRelpath, 
+                        notPresentOpDepth, 
+                        parentRelpath,
+                        originalReposId,
+                        originalReposRelPath,
+                        originalRevision,
+                        getPresenceText(SVNWCDbStatus.NotPresent),
+                        getKindText(kind));
+                stmt.done();                        
+            }
         }
 
     }
@@ -1669,17 +1759,42 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     public void opAddDirectory(File localAbsPath, SVNSkel workItems) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+        DirParsedInfo parseDir = parseDir(localAbsPath, Mode.ReadWrite);
+        SVNWCDbDir pdh = parseDir.wcDbDir;
+        File localRelpath = parseDir.localRelPath;
+        verifyDirUsable(pdh);
+
+        InsertWorking ibw = new InsertWorking();
+        ibw.status = SVNWCDbStatus.Normal;
+        ibw.kind = SVNWCDbKind.Dir;
+        ibw.opDepth = SVNWCUtils.relpathDepth(localRelpath);
+        ibw.workItems = workItems;
+        ibw.localRelpath = localRelpath;
+        ibw.wcId = pdh.getWCRoot().getWcId();
+        
+        pdh.getWCRoot().getSDb().runTransaction(ibw);
+        pdh.flushEntries(localAbsPath);
     }
 
     public void opAddFile(File localAbsPath, SVNSkel workItems) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+        DirParsedInfo parseDir = parseDir(localAbsPath, Mode.ReadWrite);
+        SVNWCDbDir pdh = parseDir.wcDbDir;
+        File localRelpath = parseDir.localRelPath;
+        verifyDirUsable(pdh);
+
+        InsertWorking ibw = new InsertWorking();
+        ibw.status = SVNWCDbStatus.Normal;
+        ibw.kind = SVNWCDbKind.File;
+        ibw.opDepth = SVNWCUtils.relpathDepth(localRelpath);
+        ibw.workItems = workItems;
+        ibw.localRelpath = localRelpath;
+        ibw.wcId = pdh.getWCRoot().getWcId();
+
+        pdh.getWCRoot().getSDb().runTransaction(ibw);
+        pdh.flushEntries(localAbsPath);
     }
 
     public void opAddSymlink(File localAbsPath, File target, SVNSkel workItems) throws SVNException {
-        // TODO
         throw new UnsupportedOperationException();
     }
 

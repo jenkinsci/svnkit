@@ -118,7 +118,8 @@ public enum SVNWCDbStatements {
     RESET_ACTUAL_WITH_CHANGELIST(SVNWCDbResetActualWithChangelist.class), 
     SELECT_EXTERNALS_DEFINED(SVNWCDBSelectExternalsDefined.class),
     SELECT_EXTERNAL_PROPERTIES(SVNWCDBSelectExternalProperties.class), 
-    DOES_NODE_EXIST(SVNWCDBDoesNodeExists.class);
+    DOES_NODE_EXIST(SVNWCDBDoesNodeExists.class), 
+    UPDATE_ACTUAL_CLEAR_CHANGELIST(SVNWCDDBUpdateActualClearChangelist.class);
     
 
     private Class<? extends SVNSqlJetStatement> statementClass;

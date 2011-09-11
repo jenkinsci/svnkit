@@ -237,6 +237,7 @@ public class SVNErrorCode implements Serializable {
     public static final SVNErrorCode ENTRY_MISSING_REVISION = new SVNErrorCode(ENTRY_CATEGORY, 3, "Entry has no revision");
     public static final SVNErrorCode ENTRY_MISSING_URL = new SVNErrorCode(ENTRY_CATEGORY, 4, "Entry has no URL");
     public static final SVNErrorCode ENTRY_ATTRIBUTE_INVALID = new SVNErrorCode(ENTRY_CATEGORY, 5, "Entry has an invalid attribute");
+    public static final SVNErrorCode ENTRY_FORBIDDEN = new SVNErrorCode(ENTRY_CATEGORY, 6, "Can't create an entry for a forbidden name");
     
     public static final SVNErrorCode WC_OBSTRUCTED_UPDATE = new SVNErrorCode(WC_CATEGORY, 0, "Obstructed update");
     public static final SVNErrorCode WC_UNWIND_MISMATCH = new SVNErrorCode(WC_CATEGORY, 1, "Mismatch popping the WC unwind stack");
