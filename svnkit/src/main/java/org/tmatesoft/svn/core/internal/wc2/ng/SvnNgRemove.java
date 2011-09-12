@@ -55,7 +55,9 @@ public class SvnNgRemove extends SvnNgOperationRunner<SvnRemove, SvnRemove> {
         try {
             info = SvnWcDbExternals.readExternal(getWcContext(), path, path, ExternalNodeInfo.kind);
             if (info != null && info.get(ExternalNodeInfo.kind) == SVNWCDbKind.File) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CANNOT_DELETE_FILE_EXTERNAL);
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CANNOT_DELETE_FILE_EXTERNAL,
+                        "Cannot remove the external at ''{0}''; please edit or delete the svn:externals property on ''{1}''",
+                        path, SVNFileUtil.getParentFile(path));
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
         } catch (SVNException e) {
