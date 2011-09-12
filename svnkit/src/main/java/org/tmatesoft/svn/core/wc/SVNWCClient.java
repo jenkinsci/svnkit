@@ -34,6 +34,7 @@ import org.tmatesoft.svn.core.wc2.SvnAdd;
 import org.tmatesoft.svn.core.wc2.SvnGetInfo;
 import org.tmatesoft.svn.core.wc2.SvnGetProperties;
 import org.tmatesoft.svn.core.wc2.SvnInfo;
+import org.tmatesoft.svn.core.wc2.SvnRemove;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 /**
@@ -1221,15 +1222,7 @@ public class SVNWCClient extends SVNBasicClient {
      * @see #doDelete(File,boolean,boolean,boolean)
      */
     public void doDelete(File path, boolean force, boolean dryRun) throws SVNException {
-        try {
-            getSVNWCClient17().doDelete(path, force, dryRun);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNWCClient16().doDelete(path, force, dryRun);
-                return;
-            }
-            throw e;
-        }
+        doDelete(path, force, true, dryRun);
     }
 
     /**
@@ -1264,15 +1257,13 @@ public class SVNWCClient extends SVNBasicClient {
      *             </ul>
      */
     public void doDelete(File path, boolean force, boolean deleteFiles, boolean dryRun) throws SVNException {
-        try {
-            getSVNWCClient17().doDelete(path, force, deleteFiles, dryRun);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNWCClient16().doDelete(path, force, deleteFiles, dryRun);
-                return;
-            }
-            throw e;
-        }
+        SvnRemove remove = getOperationsFactory().createRemove();
+        remove.setSingleTarget(SvnTarget.fromFile(path));
+        remove.setForce(force);
+        remove.setDeleteFiles(deleteFiles);
+        remove.setDryRun(dryRun);
+        
+        remove.run();
     }
 
     /**

@@ -30,6 +30,7 @@ import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgGetInfo;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgGetProperties;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgGetStatus;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgRelocate;
+import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgRemove;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgSwitch;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgUpdate;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldAdd;
@@ -39,6 +40,7 @@ import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetInfo;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetProperties;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetStatus;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldRelocate;
+import org.tmatesoft.svn.core.internal.wc2.old.SvnOldRemove;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldSwitch;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldUpdate;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteExport;
@@ -122,7 +124,10 @@ public class SvnOperationFactory {
 
         registerOperationRunner(SvnAdd.class, new SvnNgAdd());
         registerOperationRunner(SvnAdd.class, new SvnOldAdd());
-}
+
+        registerOperationRunner(SvnRemove.class, new SvnNgRemove());
+        registerOperationRunner(SvnRemove.class, new SvnOldRemove());
+    }
     
     public boolean isAutoCloseContext() {
         return autoCloseContext;
@@ -232,6 +237,10 @@ public class SvnOperationFactory {
     
     public SvnAdd createAdd() {
         return new SvnAdd(this);
+    }
+    
+    public SvnRemove createRemove() {
+        return new SvnRemove(this);
     }
 
     protected Object run(SvnOperation<?> operation) throws SVNException {
