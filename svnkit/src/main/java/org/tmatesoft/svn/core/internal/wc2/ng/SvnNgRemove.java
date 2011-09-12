@@ -8,6 +8,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
@@ -104,6 +105,10 @@ public class SvnNgRemove extends SvnNgOperationRunner<SvnRemove, SvnRemove> {
             info = getWcContext().getDb().readInfo(path, NodeInfo.status, NodeInfo.kind, NodeInfo.conflicted);
         } catch (SVNException e) {
             if (deleteUnversioned && e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND) {
+                if (SVNFileType.getType(path) == SVNFileType.NONE) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_FILENAME, "''{0}'' does not exist", path);
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                }
                 SVNFileUtil.deleteAll(path, this);
                 return;
             }
