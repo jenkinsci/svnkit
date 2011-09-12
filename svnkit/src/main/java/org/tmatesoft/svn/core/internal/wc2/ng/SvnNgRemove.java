@@ -127,7 +127,7 @@ public class SvnNgRemove extends SvnNgOperationRunner<SvnRemove, SvnRemove> {
         }
         info.release();
 
-        getWcContext().getDb().opDelete(path);
+        getWcContext().getDb().opDelete(path, this);
         if (!keepLocal && conflicts != null) {
             for (SVNConflictDescription conflict : conflicts) {
                 if (conflict.isTextConflict()) {

@@ -732,7 +732,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             myWCContext.getDb().opRemoveWorkingTemp(db.localAbsolutePath);
         }
         if (db.shadowed && db.obstructionFound) {
-            myWCContext.getDb().opDelete(db.localAbsolutePath);
+            myWCContext.getDb().opDelete(db.localAbsolutePath, null);
         }
         if (treeConflict != null) {
             myWCContext.getDb().opSetTreeConflict(db.localAbsolutePath, treeConflict);

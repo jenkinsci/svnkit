@@ -52,6 +52,7 @@ import java.util.TreeSet;
 import java.util.logging.Level;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
+import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -62,6 +63,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb.Mode;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetTransaction;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetUpdateStatement;
@@ -69,6 +71,7 @@ import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.SVNConfigFile;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNTreeConflictUtil;
@@ -83,16 +86,21 @@ import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDbRoot.WCLock;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.PristineInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.RepositoryInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbCreateSchema;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbInsertDeleteList;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.ACTUAL_NODE__Fields;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.DELETE_LIST__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODES__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.PRISTINE__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.REPOSITORY__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.WC_LOCK__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSelectDeletionInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNConflictDescription;
+import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNMergeFileSet;
 import org.tmatesoft.svn.core.wc.SVNPropertyConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -413,6 +421,7 @@ public class SVNWCDb implements ISVNWCDb {
         public SVNWCDbRoot root;
         public File localRelPath;
         public long deleteDepth;
+        public ISVNEventHandler eventHandler;
         
         public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
             WCDbInfo info = readInfo(root, localRelPath, InfoField.status, InfoField.opRoot);
@@ -420,9 +429,23 @@ public class SVNWCDb implements ISVNWCDb {
             if (status == SVNWCDbStatus.Deleted || status == SVNWCDbStatus.NotPresent) {
                 return;
             }
+            SVNSqlJetStatement stmt = root.getSDb().getStatement(SVNWCDbStatements.HAS_SERVER_EXCLUDED_NODES);
+            try {
+                stmt.bindf("is", root.getWcId(), localRelPath);
+                
+                if (stmt.next()) {
+                    File absentPath = getColumnPath(stmt, SVNWCDbSchema.NODES__Fields.local_relpath);
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS,
+                            "Cannot delete ''{0}'' as ''{1}'' is excluded by server", localRelPath, absentPath);
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                }
+            } finally {
+                stmt.reset();
+            }
             boolean addWork = false;
             boolean refetchDepth = false;
             long selectDepth;
+
             
             if (info.opRoot) {
                 WCDbInfo infoBelow = readInfoBelowWorking(root, localRelPath, -1);
@@ -437,6 +460,17 @@ public class SVNWCDb implements ISVNWCDb {
                 addWork = true;
                 selectDepth = readOpDepth(root, localRelPath);
             } 
+            // collect files to delete.
+            stmt = new SVNWCDbCreateSchema(root.getSDb().getTemporaryDb(), SVNWCDbCreateSchema.DELETE_LIST, -1);
+            stmt.done();
+            
+            if (eventHandler != null) {
+                stmt = new SVNWCDbInsertDeleteList(root.getSDb());
+                stmt.bindf("isi", root.getWcId(), localRelPath, selectDepth);
+                stmt.done();
+            }
+
+
             SVNSqlJetStatement deleteStmt = root.getSDb().getStatement(SVNWCDbStatements.DELETE_NODES_RECURSIVE);
             deleteStmt.bindf("isi", root.getWcId(), localRelPath, deleteDepth);
             deleteStmt.done();
@@ -1817,7 +1851,7 @@ public class SVNWCDb implements ISVNWCDb {
         throw new UnsupportedOperationException();
     }
 
-    public void opDelete(File localAbsPath) throws SVNException {
+    public void opDelete(File localAbsPath, ISVNEventHandler notifyHandler) throws SVNException {
         final DirParsedInfo parsed = parseDir(localAbsPath, Mode.ReadWrite);
         final SVNWCDbDir pdh = parsed.wcDbDir;
         final File localRelpath = parsed.localRelPath;
@@ -1826,10 +1860,37 @@ public class SVNWCDb implements ISVNWCDb {
         Delete deleteTxn = new Delete();
         deleteTxn.root = pdh.getWCRoot();
         deleteTxn.localRelPath = localRelpath;
-        deleteTxn.deleteDepth = SVNWCUtils.relpathDepth(localRelpath); 
+        deleteTxn.deleteDepth = SVNWCUtils.relpathDepth(localRelpath);
+        deleteTxn.eventHandler = notifyHandler;
         
         pdh.flushEntries(localAbsPath);
-        pdh.getWCRoot().getSDb().runTransaction(deleteTxn);
+        pdh.getWCRoot().getSDb().beginTransaction(SqlJetTransactionMode.WRITE);
+        try {
+            try {
+                deleteTxn.transaction(pdh.getWCRoot().getSDb());
+            } catch (SqlJetException e) {
+                SVNSqlJetDb.createSqlJetError(e);
+            }
+            // fire events.
+            if (notifyHandler != null) {
+                SVNSqlJetStatement selectDeleteList = new SVNSqlJetSelectStatement(pdh.getWCRoot().getSDb().getTemporaryDb(), SVNWCDbSchema.DELETE_LIST);
+                try {
+                    while(selectDeleteList.next()) {
+                        File path = getColumnPath(selectDeleteList, DELETE_LIST__Fields.local_relpath);
+                        path = pdh.getWCRoot().getAbsPath(path);
+                        notifyHandler.handleEvent(SVNEventFactory.createSVNEvent(path, SVNNodeKind.NONE, null, -1, SVNEventAction.DELETE, 
+                                SVNEventAction.DELETE, null, null, 1, 1), -1);
+                    }
+                } finally {
+                    selectDeleteList.reset();
+                }
+                SVNSqlJetStatement dropList = new SVNWCDbCreateSchema(pdh.getWCRoot().getSDb().getTemporaryDb(), SVNWCDbCreateSchema.DROP_DELETE_LIST, -1);
+                dropList.done();
+            }
+            pdh.getWCRoot().getSDb().commit();
+        } catch (SVNException e) {
+            pdh.getWCRoot().getSDb().rollback();
+        }
     }
 
     public void opMarkConflict(File localAbsPath) throws SVNException {

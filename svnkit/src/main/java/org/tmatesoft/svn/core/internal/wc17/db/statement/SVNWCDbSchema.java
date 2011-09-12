@@ -38,6 +38,8 @@ public enum SVNWCDbSchema {
     TARGETS_LIST(TARGETS_LIST__Fields.class, TARGETS_LIST__Indices.class),
 
     NODE_PROPS_CACHE(NODE_PROPS_CACHE__Fields.class),
+
+    DELETE_LIST( DELETE_LIST__Fields.class)
     ;
 
     final public Class<? extends Enum<?>> fields;
@@ -120,5 +122,9 @@ public enum SVNWCDbSchema {
     
     public enum NODE_PROPS_CACHE__Fields {
         local_Relpath, kind, properties;
+    }
+
+    public enum DELETE_LIST__Fields {
+        local_relpath;
     }
 }

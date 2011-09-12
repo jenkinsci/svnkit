@@ -92,6 +92,14 @@ public class SVNWCDbCreateSchema extends SVNSqlJetStatement {
     public static final Statement[] DROP_NODE_PROPS_CACHE = new Statement[] {
         new Statement(Type.TABLE, "NODE_PROPS_CACHE", true),
     };
+    
+    public static final Statement[] DELETE_LIST = new Statement[] {
+        new Statement(Type.TABLE, "CREATE TABLE DELETE_LIST (local_relpath TEXT PRIMARY KEY NOT NULL);"),
+    };
+    
+    public static final Statement[] DROP_DELETE_LIST = new Statement[] {
+        new Statement(Type.TABLE, "DELETE_LIST", true),
+    };
 
 
     private enum Type {

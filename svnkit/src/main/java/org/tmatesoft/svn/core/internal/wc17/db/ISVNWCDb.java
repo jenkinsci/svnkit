@@ -38,6 +38,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo.RepositoryInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.PristineInfo;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -878,7 +879,7 @@ public interface ISVNWCDb {
      */
     void setWorkingPropsTemp(File localAbsPath, SVNProperties props) throws SVNException;
 
-    void opDelete(File localAbsPath) throws SVNException;
+    void opDelete(File localAbsPath, ISVNEventHandler handler) throws SVNException;
 
     void opMove(File srcAbsPath, File dstAbsPath) throws SVNException;
 

@@ -119,7 +119,9 @@ public enum SVNWCDbStatements {
     SELECT_EXTERNALS_DEFINED(SVNWCDBSelectExternalsDefined.class),
     SELECT_EXTERNAL_PROPERTIES(SVNWCDBSelectExternalProperties.class), 
     DOES_NODE_EXIST(SVNWCDBDoesNodeExists.class), 
-    UPDATE_ACTUAL_CLEAR_CHANGELIST(SVNWCDDBUpdateActualClearChangelist.class);
+    UPDATE_ACTUAL_CLEAR_CHANGELIST(SVNWCDDBUpdateActualClearChangelist.class),
+    INSERT_DELETE_LIST(SVNWCDbInsertDeleteList.class),
+    HAS_SERVER_EXCLUDED_NODES(SVNWCDbHasServerExcludedNodes.class);
     
 
     private Class<? extends SVNSqlJetStatement> statementClass;
