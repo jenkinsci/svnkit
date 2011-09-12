@@ -4,6 +4,7 @@ import java.io.File;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc16.SVNWCClient16;
+import org.tmatesoft.svn.core.wc.SVNWCClient;
 import org.tmatesoft.svn.core.wc2.SvnAdd;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -21,6 +22,7 @@ public class SvnOldAdd extends SvnOldRunner<SvnAdd, SvnAdd> {
             paths[i++] = target.getFile();
         }
         
+        client.setAddParameters(SVNWCClient.DEFAULT_ADD_PARAMETERS);
         client.doAdd(paths, 
                 getOperation().isForce(), 
                 getOperation().isMkDir(), 
