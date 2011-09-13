@@ -57,6 +57,8 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
     private int myExternalTreeConflicts = 0;
     private int myExternalSkippedPaths = 0;
     
+    private boolean myHasLockingError;
+
     public SVNNotifyPrinter(SVNCommandEnvironment env) {
         this(env, false, false, false);
     }
@@ -66,6 +68,10 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
         myIsCheckout = isCheckout;
         myIsExport = isExport;
         myIsSuppressLastLine = suppressLastLine;
+    }
+
+    public boolean hasLockingErrors() {
+        return myHasLockingError;
     }
 
     public void handleEvent(SVNEvent event, double progress) throws SVNException {
@@ -346,6 +352,7 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
                 event.getAction() == SVNEventAction.UNLOCK_FAILED) {
             myEnvironment.handleWarning(event.getErrorMessage(), new SVNErrorCode[] {event.getErrorMessage().getErrorCode()},
                 myEnvironment.isQuiet());
+            myHasLockingError = true;
             return;
         } else if (event.getAction() == SVNEventAction.RESOLVED) {
             buffer.append("Resolved conflicted state of '" + path + "'\n");

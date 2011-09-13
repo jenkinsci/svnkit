@@ -54,7 +54,8 @@ public class SVNUnLockCommand extends SVNCommand {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS), SVNLogType.CLIENT);
         }
         SVNWCClient client = getSVNEnvironment().getClientManager().getWCClient();
-        client.setEventHandler(new SVNNotifyPrinter(getSVNEnvironment()));
+        SVNNotifyPrinter printer = new SVNNotifyPrinter(getSVNEnvironment()); 
+        client.setEventHandler(printer);
         Collection paths = new ArrayList();
         Collection urls = new ArrayList();
         for (Iterator ts = targets.iterator(); ts.hasNext();) {
