@@ -1767,8 +1767,8 @@ public class SVNWCContext {
 
     public static class CheckSpecialInfo {
 
-        SVNNodeKind kind;
-        boolean isSpecial;
+        public SVNNodeKind kind;
+        public boolean isSpecial;
     }
 
     public static CheckSpecialInfo checkSpecialPath(File localAbspath) {
@@ -3271,6 +3271,7 @@ public class SVNWCContext {
 
     public void wqAddPostCommit(File localAbspath, long newRevision, long changedRev, SVNDate changedDate, String changedAuthor, SvnChecksum newChecksum, Map newDavCache, boolean keepChangelist,
             boolean noUnlock) throws SVNException {
+        System.out.println("adding post commit for " + localAbspath);
         SVNSkel workItem = SVNSkel.createEmptyList();
         workItem.prependString(Long.toString(changedRev));
         workItem.prependString(noUnlock ? "1" : "0");
@@ -3334,6 +3335,7 @@ public class SVNWCContext {
             if (fetchWorkQueue.workItem == null) {
                 break;
             }
+            System.out.println("running: " + fetchWorkQueue.workItem);
             dispatchWorkItem(wcRootAbspath, fetchWorkQueue.workItem);
             db.completedWorkQueue(wcRootAbspath, fetchWorkQueue.id);
         }
@@ -3465,6 +3467,7 @@ public class SVNWCContext {
                 changedRev = SVNWCUtils.parseLong(workItem.getChild(9).getValue());
             }
 
+            System.out.println("post commit for " + localAbspath);
             try {
                 ctx.logDoCommitted(localAbspath, newRevision, changedRev, changedDate, changedAuthor, newChecksum, newDavCache, keepChangelist, noUnlock);
             } catch (SVNException e) {
@@ -4258,6 +4261,22 @@ public class SVNWCContext {
 
     public List<File> getNodeChildren(File dirAbsPath, boolean showHidden) throws SVNException {
         Set<String> relChildren = getDb().readChildren(dirAbsPath);
+        List<File> childs = new ArrayList<File>();
+        for (String child : relChildren) {
+            File childAbsPath = SVNFileUtil.createFilePath(dirAbsPath, child);
+            if (!showHidden) {
+                boolean childIsHiden = getDb().isNodeHidden(childAbsPath);
+                if (childIsHiden) {
+                    continue;
+                }
+            }
+            childs.add(childAbsPath);
+        }
+        return childs;
+    }
+
+    public List<File> getChildrenOfWorkingNode(File dirAbsPath, boolean showHidden) throws SVNException {
+        Set<String> relChildren = getDb().getChildrenOfWorkingNode(dirAbsPath);
         List<File> childs = new ArrayList<File>();
         for (String child : relChildren) {
             File childAbsPath = SVNFileUtil.createFilePath(dirAbsPath, child);

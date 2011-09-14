@@ -1689,4 +1689,6 @@ public interface ISVNWCDb {
     public Structure<PristineInfo> readPristineInfo(File localAbspath) throws SVNException;
     
     public void registerExternal(File definingAbsPath, File localAbsPath, SVNNodeKind kind, SVNURL reposRootUrl, String reposUuid, File reposRelPath, long operationalRevision, long revision) throws SVNException;
+
+    Set<String> getChildrenOfWorkingNode(File dirAbsPath) throws SVNException;
 }

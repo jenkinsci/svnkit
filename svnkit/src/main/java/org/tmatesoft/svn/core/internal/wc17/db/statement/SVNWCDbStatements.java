@@ -73,7 +73,7 @@ public enum SVNWCDbStatements {
     SELECT_NODE_PROPS(SVNWCDbSelectNodeProps.class),
     SELECT_NODE_CHILDREN_INFO(SVNWCDbSelectNodeChildrenInfo.class),
     SELECT_NODE_CHILDREN_WALKER_INFO(SVNWCDbSelectNodeChildrenWalkerInfo.class),
-    SELECT_NOT_PRESENT(SVNWCDbSelectNotPresent.class),
+    SELECT_NOT_PRESENT_DESCENDANTS(SVNWCDbSelectNotPresent.class),
     SELECT_PRISTINE_MD5_CHECKSUM(SVNWCDbSelectPristineMD5Checksum.class),
     SELECT_PRISTINE_SHA1_CHECKSUM(SVNWCDbSelectSHA1Checksum.class),
     SELECT_REPOSITORY(SVNWCDbSelectRepository.class),
@@ -121,7 +121,8 @@ public enum SVNWCDbStatements {
     DOES_NODE_EXIST(SVNWCDBDoesNodeExists.class), 
     UPDATE_ACTUAL_CLEAR_CHANGELIST(SVNWCDDBUpdateActualClearChangelist.class),
     INSERT_DELETE_LIST(SVNWCDbInsertDeleteList.class),
-    HAS_SERVER_EXCLUDED_NODES(SVNWCDbHasServerExcludedNodes.class);
+    HAS_SERVER_EXCLUDED_NODES(SVNWCDbHasServerExcludedNodes.class),
+    SELECT_WORKING_CHILDREN(SVNWCDbSelectWorkingChildren.class);
     
 
     private Class<? extends SVNSqlJetStatement> statementClass;

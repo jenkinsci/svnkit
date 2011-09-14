@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -906,13 +907,18 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
     }
 
     private void processCommittedQueue(SVNWCCommittedQueue queue, long newRevision, Date revDate, String revAuthor) throws SVNException {
+        Collection<File> roots = new HashSet<File>();
         for (SVNWCCommittedQueueItem cqi : queue.queue.values()) {
             if (queue.haveRecursive && haveRecursiveParent(queue.queue, cqi)) {
                 continue;
             }
             processCommittedInternal(cqi.localAbspath, cqi.recurse, true, newRevision, new SVNDate(revDate.getTime(), 0), revAuthor, cqi.newDavCache, cqi.noUnlock, cqi.keepChangelist,
                     cqi.md5Checksum, cqi.sha1Checksum, queue);
-            getContext().wqRun(cqi.localAbspath);
+            File root = getContext().getDb().getWCRoot(cqi.localAbspath);
+            roots.add(root);
+        }
+        for (File root : roots) {
+            getContext().wqRun(root);
         }
         queue.queue.clear();
     }
@@ -937,11 +943,8 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
         SVNWCDbKind kind = db.readKind(localAbspath, true);
         processCommittedLeaf(localAbspath, !topOfRecurse, newRevision, revDate, revAuthor, newDavCache, noUnlock, keepChangelist, sha1Checksum);
         if (recurse && kind == SVNWCDbKind.Dir) {
-            ctx.wqRun(localAbspath);
-            kind = db.readKind(localAbspath, true);
-            if (kind == SVNWCDbKind.Unknown) {
-                return;
-            }
+//            ctx.wqRun(localAbspath);
+            
             Set<String> children = db.readChildren(localAbspath);
             for (String name : children) {
                 File thisAbspath = SVNFileUtil.createFilePath(localAbspath, name);
@@ -1338,6 +1341,7 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
             SVNErrorManager.error(err, SVNLogType.WC);
             return;
         }
+        
         boolean matchesChangelists = getContext().isChangelistMatch(localAbsPath, changelistsSet);
         if (workingKind != SVNNodeKind.DIR && workingKind != SVNNodeKind.NONE && !matchesChangelists) {
             return;
@@ -1493,18 +1497,19 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
             }
         }
         if ((dbKind == SVNNodeKind.DIR) && (depth.getId() > SVNDepth.EMPTY.getId()) && (!isCommitItemDelete || isCommitItemAdd)) {
-            List<File> children = getContext().getNodeChildren(localAbsPath, copyMode);
+            List<File> children = getContext().getChildrenOfWorkingNode(localAbsPath, copyMode);
+            
             for (File thisAbsPath : children) {
                 String name = SVNFileUtil.getFileName(thisAbsPath);
                 SVNDepth thisDepth = getContext().getNodeDepth(thisAbsPath);
                 if (thisDepth == SVNDepth.EXCLUDE) {
                     continue;
                 }
-                boolean thisIsDeleted = getContext().isNodeStatusDeleted(thisAbsPath);
-                boolean isReplaced = getContext().isNodeReplaced(thisAbsPath);
-                if (isReplaced && thisIsDeleted) {
-                    continue;
-                }
+//                boolean thisIsDeleted = getContext().isNodeStatusDeleted(thisAbsPath);
+//                boolean isReplaced = getContext().isNodeReplaced(thisAbsPath);
+//                if (isReplaced && thisIsDeleted) {
+//                    continue;
+//                }
                 File thisReposRelpath;
                 if (!copyMode) {
                     thisReposRelpath = getContext().getNodeReposRelPath(localAbsPath);

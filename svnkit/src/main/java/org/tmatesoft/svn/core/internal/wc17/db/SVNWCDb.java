@@ -971,7 +971,7 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     public Set<String> getBaseChildren(File localAbsPath) throws SVNException {
-        return gatherChildren(localAbsPath, true);
+        return gatherChildren(localAbsPath, true, false);
     }
 
     public SVNProperties getBaseDavCache(File localAbsPath) throws SVNException {
@@ -2111,7 +2111,23 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     public Set<String> readChildren(File localAbsPath) throws SVNException {
-        return gatherChildren(localAbsPath, false);
+        return gatherChildren(localAbsPath, false, false);
+    }
+
+    public Set<String> getChildrenOfWorkingNode(File localAbsPath) throws SVNException {
+        final DirParsedInfo wcInfo = obtainWcRoot(localAbsPath);
+        final File localRelPath = wcInfo.localRelPath;
+
+        final long wcId = wcInfo.wcDbDir.getWCRoot().getWcId();
+        final SVNSqlJetDb sDb = wcInfo.wcDbDir.getWCRoot().getSDb();
+
+        final Set<String> names = new TreeSet<String>();
+
+        final SVNSqlJetStatement work_stmt = sDb.getStatement(SVNWCDbStatements.SELECT_WORKING_CHILDREN);
+        work_stmt.bindf("is", wcId, SVNFileUtil.getFilePath(localRelPath));
+        addChildren(names, work_stmt);
+
+        return names;
     }
     
     public void readChildren(File localAbsPath, Map<String, SVNWCDbInfo> children, Set<String> conflicts) throws SVNException {
@@ -2270,7 +2286,7 @@ public class SVNWCDb implements ISVNWCDb {
     
 
 
-    private Set<String> gatherChildren(File localAbsPath, boolean baseOnly) throws SVNException {
+    private Set<String> gatherChildren(File localAbsPath, boolean baseOnly, boolean workOnly) throws SVNException {
         final DirParsedInfo wcInfo = obtainWcRoot(localAbsPath);
         final File localRelPath = wcInfo.localRelPath;
 
@@ -2279,9 +2295,11 @@ public class SVNWCDb implements ISVNWCDb {
 
         final Set<String> names = new TreeSet<String>();
 
-        final SVNSqlJetStatement base_stmt = sDb.getStatement(SVNWCDbStatements.SELECT_BASE_NODE_CHILDREN);
-        base_stmt.bindf("is", wcId, SVNFileUtil.getFilePath(localRelPath));
-        addChildren(names, base_stmt);
+        if (!workOnly) {
+            final SVNSqlJetStatement base_stmt = sDb.getStatement(SVNWCDbStatements.SELECT_BASE_NODE_CHILDREN);
+            base_stmt.bindf("is", wcId, SVNFileUtil.getFilePath(localRelPath));
+            addChildren(names, base_stmt);
+        }
 
         if (!baseOnly) {
             final SVNSqlJetStatement work_stmt = sDb.getStatement(SVNWCDbStatements.SELECT_WORKING_NODE_CHILDREN);
@@ -2992,6 +3010,7 @@ public class SVNWCDb implements ISVNWCDb {
 
             if (presence != SVNWCDbStatus.Normal) {
                 stmt.reset();
+                new Exception().printStackTrace();
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS, "Expected node ''{0}'' to be added.", localAbsPath);
                 SVNErrorManager.error(err, SVNLogType.WC);
             }

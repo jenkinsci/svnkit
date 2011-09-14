@@ -22,9 +22,11 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbOpenMode;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
+import org.tmatesoft.svn.core.internal.wc2.ISvnCommitRunner;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgAdd;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgCheckout;
+import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgCommit;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgExport;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgGetInfo;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgGetProperties;
@@ -127,6 +129,8 @@ public class SvnOperationFactory {
 
         registerOperationRunner(SvnRemove.class, new SvnNgRemove());
         registerOperationRunner(SvnRemove.class, new SvnOldRemove());
+        
+        registerOperationRunner(SvnCommit.class, new SvnNgCommit());
     }
     
     public boolean isAutoCloseContext() {
@@ -237,6 +241,10 @@ public class SvnOperationFactory {
     
     public SvnAdd createAdd() {
         return new SvnAdd(this);
+    }
+
+    public SvnCommit createCommit() {
+        return new SvnCommit(this);
     }
     
     public SvnRemove createRemove() {
@@ -434,6 +442,23 @@ public class SvnOperationFactory {
             // any.
             return new SvnWcGeneration[] { };
         }
+    }
+
+    SvnCommitPacket collectCommitItems(SvnCommit operation) throws SVNException {
+        ISvnOperationRunner<?, SvnOperation<?>> runner = getImplementation(operation);
+        if (runner instanceof ISvnCommitRunner) {
+            SVNWCContext wcContext = null;
+            runLevel++;
+            try {
+                wcContext = obtainWcContext();
+                runner.setWcContext(wcContext);
+                return ((ISvnCommitRunner) runner).collectCommitItems(operation);
+            } finally {
+                // do not release context, it keeps locks.
+                runLevel--;
+            }
+        }
+        return null;
     }
     
 }

@@ -124,6 +124,7 @@ public class SvnWcDbShared {
 
             if (presence != SVNWCDbStatus.Normal) {
                 reset(stmt);
+                new Exception().printStackTrace();
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS, "Expected node ''{0}'' to be added.", root.getAbsPath(localRelpath));
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
