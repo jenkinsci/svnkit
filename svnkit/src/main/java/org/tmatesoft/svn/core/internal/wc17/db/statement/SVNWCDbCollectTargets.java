@@ -46,7 +46,6 @@ public class SVNWCDbCollectTargets extends SVNWCDbNodesCurrent {
     protected boolean isFilterPassed() throws SVNException {
         if (getDepth() == SVNDepth.FILES || getDepth() == SVNDepth.IMMEDIATES) {
             // test if we had one with that name.
-            System.out.println("received: " + getColumnString(NODES__Fields.local_relpath) + " : " + getColumnLong(NODES__Fields.op_depth));
             if (!receivedPaths.add(getColumnString(NODES__Fields.local_relpath))) {
                 return false;
             }
