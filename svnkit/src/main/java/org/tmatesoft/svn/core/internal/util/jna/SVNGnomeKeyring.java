@@ -98,7 +98,7 @@ public class SVNGnomeKeyring {
     public static boolean isEnabled() {
         boolean gnomeSupported = SVNFileUtil.isOSX || SVNFileUtil.isLinux || SVNFileUtil.isBSD || SVNFileUtil.isSolaris;
 
-        String gnomeKeyringOption = System.getProperty("svnkit.library.gnome-keyring.enabled", "false");
+        String gnomeKeyringOption = System.getProperty("svnkit.library.gnome-keyring.enabled", "true");
         boolean gnomeKeyringEnabled = Boolean.TRUE.toString().equalsIgnoreCase(gnomeKeyringOption);
 
         boolean librariesLoaded = JNALibraryLoader.getGnomeKeyringLibrary() != null && JNALibraryLoader.getGLibrary() != null;
