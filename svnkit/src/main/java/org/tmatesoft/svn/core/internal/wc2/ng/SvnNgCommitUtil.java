@@ -122,11 +122,11 @@ public class SvnNgCommitUtil {
         for(File danglingParent : danglers.keySet()) {
             if (!packet.hasItem(danglingParent)) {
                 // TODO fail no parent event
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, 
+                        "''{0}'' is not under version control and is not part of the commit, yet its child ''{1}'' is part of the commit",
+                        danglingParent, danglers.get(danglingParent));
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, 
-                    "''{0}'' is not under version control and is not part of the commit, yet its child ''{1}'' is part of the commit",
-                    danglingParent, danglers.get(danglingParent));
-            SVNErrorManager.error(err, SVNLogType.WC);
         }
         
         return packet;
