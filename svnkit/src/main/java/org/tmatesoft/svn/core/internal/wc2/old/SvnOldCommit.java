@@ -7,6 +7,7 @@ import java.util.Collection;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc16.SVNCommitClient16;
 import org.tmatesoft.svn.core.internal.wc2.ISvnCommitRunner;
 import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
@@ -16,6 +17,7 @@ import org.tmatesoft.svn.core.wc.SVNCommitPacket;
 import org.tmatesoft.svn.core.wc2.SvnCommit;
 import org.tmatesoft.svn.core.wc2.SvnCommitPacket;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
+import org.tmatesoft.svn.util.SVNLogType;
 
 public class SvnOldCommit extends SvnOldRunner<Collection<SVNCommitInfo>, SvnCommit> implements ISvnCommitRunner, ISVNCommitHandler {
 
@@ -50,6 +52,9 @@ public class SvnOldCommit extends SvnOldRunner<Collection<SVNCommitInfo>, SvnCom
         
         SVNCommitInfo[] infos = client.doCommit(oldPackets, getOperation().isKeepLocks(), getOperation().isKeepChangelists(), getOperation().getCommitMessage(), getOperation().getRevisionProperties());
         if (infos != null) {
+            if (infos.length == 1 && infos[0].getErrorMessage() != null) {
+                SVNErrorManager.error(infos[0].getErrorMessage(), SVNLogType.WC);
+            }
             return Arrays.asList(infos);
         }
         return null;
