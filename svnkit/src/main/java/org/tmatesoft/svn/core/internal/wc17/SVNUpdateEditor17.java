@@ -1885,7 +1885,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             SVNProperties actualProperties, String[] extPatterns,
             long oldRevision, long targetRevision, SVNProperties propChanges) throws SVNException {
         File mergeLeft = null;
-        boolean deleteLeft = true;
+        boolean deleteLeft = false;
         File newTextBaseTmpAbsPath = context.getDb().getPristinePath(wriAbsPath, newChecksum);
         if (extPatterns != null && extPatterns.length > 0) {
             

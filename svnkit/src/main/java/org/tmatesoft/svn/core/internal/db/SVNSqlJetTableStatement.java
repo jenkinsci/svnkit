@@ -66,29 +66,22 @@ public abstract class SVNSqlJetTableStatement extends SVNSqlJetStatement {
             if (checksumTriggerValues != null && !checksumTriggerValues.isEmpty()) {
                 Map<String, Object> values = new HashMap<String, Object>();
                 ISqlJetTable pristineTable = sDb.getDb().getTable(SVNWCDbSchema.PRISTINE.toString());
-                sDb.getDb().beginTransaction(SqlJetTransactionMode.WRITE);
-                try {
-                    for (String checksum : checksumTriggerValues.keySet()) {
-                        ISqlJetCursor cursor = pristineTable.lookup(null, checksum);
-                        long delta = checksumTriggerValues.get(checksum); 
-                        if (delta == 0) {
-                            continue;
-                        }
-                        if (cursor != null && !cursor.eof()) {                        
-                            long refcount = cursor.getInteger(SVNWCDbSchema.PRISTINE__Fields.refcount.toString());
-                            refcount += delta;
-                            if (refcount < 0) {
-                                refcount = 0;
-                            }
-                            values.put(SVNWCDbSchema.PRISTINE__Fields.refcount.toString(), refcount);
-                            cursor.updateByFieldNames(values);
-                        }
-                        cursor.close();
+                for (String checksum : checksumTriggerValues.keySet()) {
+                    ISqlJetCursor cursor = pristineTable.lookup(null, checksum);
+                    long delta = checksumTriggerValues.get(checksum); 
+                    if (delta == 0) {
+                        continue;
                     }
-                    sDb.getDb().commit();
-                } catch (SqlJetException e) {
-                    sDb.getDb().rollback();
-                    throw e;
+                    if (cursor != null && !cursor.eof()) {                        
+                        long refcount = cursor.getInteger(SVNWCDbSchema.PRISTINE__Fields.refcount.toString());
+                        refcount += delta;
+                        if (refcount < 0) {
+                            refcount = 0;
+                        }
+                        values.put(SVNWCDbSchema.PRISTINE__Fields.refcount.toString(), refcount);
+                        cursor.updateByFieldNames(values);
+                    }
+                    cursor.close();
                 }
             }
         } finally {
