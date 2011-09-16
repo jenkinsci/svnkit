@@ -17,6 +17,7 @@ import org.tmatesoft.svn.core.wc2.SvnTarget;
 public class SvnOldCommit extends SvnOldRunner<Collection<SVNCommitInfo>, SvnCommit> implements ISvnCommitRunner {
 
     public SvnCommitPacket collectCommitItems(SvnCommit operation) throws SVNException {
+        setOperation(operation);
         SVNCommitClient16 client = new SVNCommitClient16(getOperation().getRepositoryPool(), getOperation().getOptions());
         client.setEventHandler(getOperation().getEventHandler());
 
