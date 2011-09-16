@@ -642,7 +642,6 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
             return doCommit(packet, keepLocks, keepChangelist, commitMessage, revisionProperties);
         } finally {
             if (packet != null) {
-                packet.unlockWC(getContext());
                 packet.dispose();
             }
         }
@@ -1172,7 +1171,7 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
                 getContext().releaseWriteLock(baseDir);
                 return SVNCommitPacket.EMPTY;
             }
-            return new SVNCommitPacket(baseDir, commitItems, lockTokens);
+            return new SVNCommitPacket(null, commitItems, lockTokens);
         } catch (SVNException e) {
             getContext().releaseWriteLock(baseDir);
             if (e instanceof SVNCancelException) {

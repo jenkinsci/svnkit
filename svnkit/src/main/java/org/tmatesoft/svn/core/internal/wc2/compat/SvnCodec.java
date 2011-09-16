@@ -3,6 +3,7 @@ package org.tmatesoft.svn.core.internal.wc2.compat;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNDepth;
@@ -20,7 +21,10 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbBaseInfo.BaseInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
+import org.tmatesoft.svn.core.internal.wc2.ISvnCommitRunner;
 import org.tmatesoft.svn.core.wc.ISVNStatusFileProvider;
+import org.tmatesoft.svn.core.wc.SVNCommitItem;
+import org.tmatesoft.svn.core.wc.SVNCommitPacket;
 import org.tmatesoft.svn.core.wc.SVNConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -29,6 +33,9 @@ import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.core.wc2.SvnChecksum;
+import org.tmatesoft.svn.core.wc2.SvnCommit;
+import org.tmatesoft.svn.core.wc2.SvnCommitItem;
+import org.tmatesoft.svn.core.wc2.SvnCommitPacket;
 import org.tmatesoft.svn.core.wc2.SvnInfo;
 import org.tmatesoft.svn.core.wc2.SvnSchedule;
 import org.tmatesoft.svn.core.wc2.SvnStatus;
@@ -396,4 +403,110 @@ public class SvnCodec {
             }
         };
     }
+    
+    public static SVNCommitItem commitItem(SvnCommitItem item) {
+        return new SVNCommitItem(item.getPath(), 
+                item.getUrl(), item.getCopyFromUrl(), 
+                item.getKind(), 
+                SVNRevision.create(item.getRevision()), 
+                SVNRevision.create(item.getCopyFromRevision()), 
+                item.hasFlag(SvnCommitItem.ADD), 
+                item.hasFlag(SvnCommitItem.DELETE), 
+                item.hasFlag(SvnCommitItem.PROPS_MODIFIED), 
+                item.hasFlag(SvnCommitItem.TEXT_MODIFIED), 
+                item.hasFlag(SvnCommitItem.COPY), 
+                item.hasFlag(SvnCommitItem.LOCK));
+    }
+    
+    public static class SVNCommitPacketWrapper extends SVNCommitPacket {
+
+        private SvnCommitPacket packet;
+        private SvnCommit operation;
+
+        public SVNCommitPacketWrapper(SvnCommit operation, SvnCommitPacket packet, SVNCommitItem[] items, Map<String, String> lockTokens) {
+            super(null, items, lockTokens);
+            this.operation = operation;
+            this.packet = packet;
+        }
+
+        @Override
+        public void dispose() throws SVNException {
+            packet.dispose();
+        }
+        
+        public SvnCommit getOperation() {
+            return operation;
+        }
+        
+    }
+    
+    public static SVNCommitPacket commitPacket(final SvnCommit operation, final SvnCommitPacket packet) {
+        Collection<SVNCommitItem> oldItems = new ArrayList<SVNCommitItem>();
+        for (SVNURL reposRoot : packet.getRepositoryRoots()) {
+            for (SvnCommitItem item : packet.getItems(reposRoot)) {
+                oldItems.add(commitItem(item));
+            }
+        }
+        final SVNCommitItem[] allItems = oldItems.toArray(new SVNCommitItem[oldItems.size()]);
+        Map<String, String> oldLockTokens = new HashMap<String, String>();
+        for (SVNURL url : packet.getLockTokens().keySet()) {
+            String token = packet.getLockTokens().get(url);
+            oldLockTokens.put(url.toString(), token);
+        }
+        
+        return new SVNCommitPacketWrapper(operation, packet, allItems, oldLockTokens);
+    }
+
+    public static SvnCommitPacket commitPacket(ISvnCommitRunner runner, SVNCommitPacket[] packets) {
+        SvnCommitPacket packet = new SvnCommitPacket();
+        packet.setLockingContext(runner, packets);
+        Map<SVNURL, String> lockTokens = new HashMap<SVNURL, String>();
+        for (int i = 0; i < packets.length; i++) {
+            SVNCommitItem[] items = packets[i].getCommitItems();
+            @SuppressWarnings("unchecked")
+            Map<String, String> locks = packets[i].getLockTokens();
+            for (String url : locks.keySet()) {
+                try {
+                    lockTokens.put(SVNURL.parseURIEncoded(url), locks.get(url));
+                } catch (SVNException e) {
+                    //
+                }
+            }
+            for (int j = 0; j < items.length; j++) {
+                SVNCommitItem item = items[j];
+                int flags = 0;
+                if (item.isAdded()) {
+                    flags |= SvnCommitItem.ADD;
+                }
+                if (item.isContentsModified()) {
+                    flags |= SvnCommitItem.TEXT_MODIFIED;
+                }
+                if (item.isCopied()) {
+                    flags |= SvnCommitItem.COPY;
+                }
+                if (item.isDeleted()) {
+                    flags |= SvnCommitItem.DELETE;
+                }
+                if (item.isLocked()) {
+                    flags |= SvnCommitItem.LOCK;
+                }
+                if (item.isPropertiesModified()) {
+                    flags |= SvnCommitItem.PROPS_MODIFIED;
+                }
+                try {
+                    packet.addItem(item.getFile(), 
+                            item.getKind(),
+                            item.getURL(), item.getRevision() != null ? item.getRevision().getNumber() : -1, 
+                            item.getCopyFromURL(), 
+                            item.getCopyFromRevision() != null ? item.getCopyFromRevision().getNumber() : -1, 
+                                    flags);
+                } catch (SVNException e) {
+                    //
+                }
+            }
+        }
+        packet.setLockTokens(lockTokens);
+        return packet;
+    }
+
 }

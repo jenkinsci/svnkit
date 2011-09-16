@@ -37,6 +37,7 @@ import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgSwitch;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgUpdate;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldAdd;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldCheckout;
+import org.tmatesoft.svn.core.internal.wc2.old.SvnOldCommit;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldExport;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetInfo;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetProperties;
@@ -131,6 +132,7 @@ public class SvnOperationFactory {
         registerOperationRunner(SvnRemove.class, new SvnOldRemove());
         
         registerOperationRunner(SvnCommit.class, new SvnNgCommit());
+        registerOperationRunner(SvnCommit.class, new SvnOldCommit());
     }
     
     public boolean isAutoCloseContext() {
@@ -458,7 +460,7 @@ public class SvnOperationFactory {
                 runLevel--;
             }
         }
-        return null;
+        return new SvnCommitPacket();
     }
     
 }

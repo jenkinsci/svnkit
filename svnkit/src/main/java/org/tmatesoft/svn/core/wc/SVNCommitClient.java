@@ -12,6 +12,8 @@
 package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.Collection;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
@@ -23,7 +25,12 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc16.SVNCommitClient16;
 import org.tmatesoft.svn.core.internal.wc17.SVNCommitClient17;
+import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
+import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec.SVNCommitPacketWrapper;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.wc2.SvnCommit;
+import org.tmatesoft.svn.core.wc2.SvnCommitPacket;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 /**
  * The <b>SVNCommitClient</b> class provides methods to perform operations that
@@ -611,14 +618,7 @@ public class SVNCommitClient extends SVNBasicClient {
      *             instead
      */
     public SVNCommitInfo doCommit(File[] paths, boolean keepLocks, String commitMessage, boolean force, boolean recursive) throws SVNException {
-        try {
-            return getSVNCommitClient17().doCommit(paths, keepLocks, commitMessage, force, recursive);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                return getSVNCommitClient16().doCommit(paths, keepLocks, commitMessage, force, recursive);
-            }
-            throw e;
-        }
+        return doCommit(paths, keepLocks, commitMessage, null, null, false, force, SVNDepth.fromRecurse(recursive));
     }
 
     /**
@@ -702,14 +702,14 @@ public class SVNCommitClient extends SVNBasicClient {
      */
     public SVNCommitInfo doCommit(File[] paths, boolean keepLocks, String commitMessage, SVNProperties revisionProperties, String[] changelists, boolean keepChangelist, boolean force, SVNDepth depth)
             throws SVNException {
-        try {
-            return getSVNCommitClient17().doCommit(paths, keepLocks, commitMessage, revisionProperties, changelists, keepChangelist, force, depth);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                return getSVNCommitClient16().doCommit(paths, keepLocks, commitMessage, revisionProperties, changelists, keepChangelist, force, depth);
+        SVNCommitPacket[] packet = doCollectCommitItems(paths, keepLocks, force, depth, true, changelists);
+        if (packet != null) {
+            SVNCommitInfo[] infos = doCommit(packet, keepLocks, keepChangelist, commitMessage, revisionProperties);
+            if (infos != null && infos.length > 0) {
+                return infos[0];
             }
-            throw e;
         }
+        return SVNCommitInfo.NULL;
     }
 
     /**
@@ -740,14 +740,7 @@ public class SVNCommitClient extends SVNBasicClient {
      * @see SVNCommitItem
      */
     public SVNCommitInfo doCommit(SVNCommitPacket commitPacket, boolean keepLocks, String commitMessage) throws SVNException {
-        try {
-            return getSVNCommitClient17().doCommit(commitPacket, keepLocks, commitMessage);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                return getSVNCommitClient16().doCommit(commitPacket, keepLocks, commitMessage);
-            }
-            throw e;
-        }
+        return doCommit(commitPacket, keepLocks, false, commitMessage, null);
     }
 
     /**
@@ -790,14 +783,11 @@ public class SVNCommitClient extends SVNBasicClient {
      * @since 1.2.0, SVN 1.5.0
      */
     public SVNCommitInfo doCommit(SVNCommitPacket commitPacket, boolean keepLocks, boolean keepChangelist, String commitMessage, SVNProperties revisionProperties) throws SVNException {
-        try {
-            return getSVNCommitClient17().doCommit(commitPacket, keepLocks, keepChangelist, commitMessage, revisionProperties);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                return getSVNCommitClient16().doCommit(commitPacket, keepLocks, keepChangelist, commitMessage, revisionProperties);
-            }
-            throw e;
+        SVNCommitInfo[] infos = doCommit(new SVNCommitPacket[] {commitPacket}, keepLocks, keepChangelist, commitMessage, revisionProperties);
+        if (infos != null && infos.length > 0) {
+            return infos[0];
         }
+        return SVNCommitInfo.NULL;
     }
 
     /**
@@ -835,14 +825,7 @@ public class SVNCommitClient extends SVNBasicClient {
      * @throws SVNException
      */
     public SVNCommitInfo[] doCommit(SVNCommitPacket[] commitPackets, boolean keepLocks, String commitMessage) throws SVNException {
-        try {
-            return getSVNCommitClient17().doCommit(commitPackets, keepLocks, commitMessage);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                return getSVNCommitClient16().doCommit(commitPackets, keepLocks, commitMessage);
-            }
-            throw e;
-        }
+        return doCommit(commitPackets, keepLocks, false, commitMessage, null);
     }
 
     /**
@@ -885,14 +868,35 @@ public class SVNCommitClient extends SVNBasicClient {
      * @since 1.2.0, SVN 1.5.0
      */
     public SVNCommitInfo[] doCommit(SVNCommitPacket[] commitPackets, boolean keepLocks, boolean keepChangelist, String commitMessage, SVNProperties revisionProperties) throws SVNException {
-        try {
-            return getSVNCommitClient17().doCommit(commitPackets, keepLocks, keepChangelist, commitMessage, revisionProperties);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                return getSVNCommitClient16().doCommit(commitPackets, keepLocks, keepChangelist, commitMessage, revisionProperties);
+        SVNCommitInfo[] infos = new SVNCommitInfo[commitPackets.length];
+        for (int i = 0; i < commitPackets.length; i++) {
+            try {
+                SvnCommit commit = ((SVNCommitPacketWrapper) commitPackets[i]).getOperation();
+                if (getCommitHandler() != null) {
+                    SVNCommitItem[] items = commitPackets[i].getCommitItems();
+                    String message = getCommitHandler().getCommitMessage(commitMessage, items);
+                    if (message != null) {
+                        commit.setCommitMessage(message);
+                    } else {
+                        continue;
+                    }
+                    getCommitHandler().getRevisionProperties(message, items, revisionProperties);
+                }
+                Collection<SVNCommitInfo> infs = commit.run();
+                if (infs != null && !infs.isEmpty()) {
+                    infos[i] = infs.iterator().next();
+                }
+            } finally {
+                try {
+                    commitPackets[i].dispose();
+                } catch (SVNException e) {
+                    //
+                }
             }
-            throw e;
+            
+            
         }
+        return infos;
     }
 
     /**
@@ -930,14 +934,11 @@ public class SVNCommitClient extends SVNBasicClient {
      *             instead
      */
     public SVNCommitPacket doCollectCommitItems(File[] paths, boolean keepLocks, boolean force, boolean recursive) throws SVNException {
-        try {
-            return getSVNCommitClient17().doCollectCommitItems(paths, keepLocks, force, recursive);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                return getSVNCommitClient16().doCollectCommitItems(paths, keepLocks, force, recursive);
-            }
-            throw e;
+        SVNCommitPacket[] packets = doCollectCommitItems(paths, keepLocks, force, SVNDepth.fromRecurse(recursive), true, null);
+        if (packets != null && packets.length > 0) {
+            return packets[0];
         }
+        return SVNCommitPacket.EMPTY;
     }
 
     /**
@@ -972,14 +973,11 @@ public class SVNCommitClient extends SVNBasicClient {
      * @since 1.2.0
      */
     public SVNCommitPacket doCollectCommitItems(File[] paths, boolean keepLocks, boolean force, SVNDepth depth, String[] changelists) throws SVNException {
-        try {
-            return getSVNCommitClient17().doCollectCommitItems(paths, keepLocks, force, depth, changelists);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                return getSVNCommitClient16().doCollectCommitItems(paths, keepLocks, force, depth, changelists);
-            }
-            throw e;
+        SVNCommitPacket[] packets = doCollectCommitItems(paths, keepLocks, force, depth, true, changelists);
+        if (packets != null && packets.length > 0) {
+            return packets[0];
         }
+        return SVNCommitPacket.EMPTY;
     }
 
     /**
@@ -1018,14 +1016,7 @@ public class SVNCommitClient extends SVNBasicClient {
      *             instead
      */
     public SVNCommitPacket[] doCollectCommitItems(File[] paths, boolean keepLocks, boolean force, boolean recursive, boolean combinePackets) throws SVNException {
-        try {
-            return getSVNCommitClient17().doCollectCommitItems(paths, keepLocks, force, recursive, combinePackets);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                return getSVNCommitClient16().doCollectCommitItems(paths, keepLocks, force, recursive, combinePackets);
-            }
-            throw e;
-        }
+        return doCollectCommitItems(paths, keepLocks, force, SVNDepth.fromRecurse(recursive), combinePackets, null);
     }
 
     /**
@@ -1080,15 +1071,18 @@ public class SVNCommitClient extends SVNBasicClient {
      * @since 1.2.0
      */
     public SVNCommitPacket[] doCollectCommitItems(File[] paths, boolean keepLocks, boolean force, SVNDepth depth, boolean combinePackets, String[] changelists) throws SVNException {
-
-        try {
-            return getSVNCommitClient17().doCollectCommitItems(paths, keepLocks, force, depth, combinePackets, changelists);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                return getSVNCommitClient16().doCollectCommitItems(paths, keepLocks, force, depth, combinePackets, changelists);
-            }
-            throw e;
+        SvnCommit commit = getOperationsFactory().createCommit();
+        for (int i = 0; i < paths.length; i++) {
+            commit.addTarget(SvnTarget.fromFile(paths[i]));
         }
+        commit.setKeepLocks(keepLocks);
+        commit.setDepth(depth);
+        if (changelists != null && changelists.length > 0) {
+            commit.setApplicalbeChangelists(Arrays.asList(changelists));
+        }
+        
+        SvnCommitPacket packet = commit.collectCommitItems();        
+        return new SVNCommitPacket[] {SvnCodec.commitPacket(commit, packet)};
     }
 
 }

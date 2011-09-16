@@ -276,41 +276,6 @@ public class SvnNgCommit extends SvnNgOperationRunner<Collection<SVNCommitInfo>,
     private void processCommittedInternal(File localAbspath, boolean recurse, boolean topOfRecurse, long newRevision, SVNDate revDate, String revAuthor, SVNProperties newDavCache, boolean noUnlock,
             boolean keepChangelist, SvnChecksum sha1Checksum, SvnCommittedQueue queue) throws SVNException {
         processCommittedLeaf(localAbspath, !topOfRecurse, newRevision, revDate, revAuthor, newDavCache, noUnlock, keepChangelist, sha1Checksum);
-        /*
-        SVNWCDbKind kind = db.readKind(localAbspath, true);
-        if (recurse && kind == SVNWCDbKind.Dir) {
-            Set<String> children = db.readChildren(localAbspath);
-            for (String name : children) {
-                File thisAbspath = SVNFileUtil.createFilePath(localAbspath, name);
-                WCDbInfo readInfo = db.readInfo(thisAbspath, InfoField.status);
-                SVNWCDbStatus status = readInfo.status;
-                kind = readInfo.kind;
-                if (status == SVNWCDbStatus.Excluded) {
-                    continue;
-                }
-                md5Checksum = null;
-                sha1Checksum = null;
-                if (kind != SVNWCDbKind.Dir) {
-                    if (status == SVNWCDbStatus.Deleted) {
-                        boolean replaced = ctx.isNodeReplaced(localAbspath);
-                        if (replaced)
-                            continue;
-                    }
-                    if (queue != null) {
-                        SVNWCCommittedQueueItem cqi = queue.queue.get(thisAbspath);
-                        if (cqi != null) {
-                            md5Checksum = cqi.md5Checksum;
-                            sha1Checksum = cqi.sha1Checksum;
-                        }
-                    }
-                }
-                processCommittedInternal(thisAbspath, true, false, newRevision, revDate, revAuthor, null, true, keepChangelist, sha1Checksum, queue);
-                if (kind == SVNWCDbKind.Dir) {
-                    ctx.wqRun(thisAbspath);
-                }
-            }
-        }
-        */
     }
 
     private void processCommittedLeaf(File localAbspath, boolean viaRecurse, long newRevnum, SVNDate newChangedDate, String newChangedAuthor, SVNProperties newDavCache, boolean noUnlock,
@@ -358,7 +323,9 @@ public class SvnNgCommit extends SvnNgOperationRunner<Collection<SVNCommitInfo>,
     }
 
     private static class SvnCommittedQueue {
+        @SuppressWarnings("unchecked")
         public Map<File, SvnCommittedQueueItem> queue = new TreeMap<File, SvnCommittedQueueItem>(SVNCommitUtil.FILE_COMPARATOR);
+        
         public boolean haveRecursive = false;
     };
 

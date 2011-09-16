@@ -11,7 +11,6 @@
  */
 package org.tmatesoft.svn.core.wc;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
@@ -19,7 +18,6 @@ import java.util.Map;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
-import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 
 /**
  * The <b>SVNCommitPacket</b> is a storage for <b>SVNCommitItem</b>
@@ -47,8 +45,6 @@ public class SVNCommitPacket {
     private boolean[] myIsSkipped;
     private boolean myIsDisposed;
 
-    private File myWCLockBasePath;
-
     public SVNCommitPacket(SVNWCAccess wcAccess, SVNCommitItem[] items, Map lockTokens) {
         myCommitItems = items;
         myLockTokens = lockTokens;
@@ -62,14 +58,6 @@ public class SVNCommitPacket {
                 }
             }
         }
-    }
-
-    public SVNCommitPacket(File wcLockBasePath, SVNCommitItem[] items, Map lockTokens) {
-        myCommitItems = items;
-        myLockTokens = lockTokens;
-        myIsSkipped = new boolean[items == null ? 0 : items.length];
-        myIsDisposed = false;
-        myWCLockBasePath = wcLockBasePath;
     }
 
     /**
@@ -176,7 +164,7 @@ public class SVNCommitPacket {
             }
         }
         SVNCommitItem[] filteredItems = (SVNCommitItem[]) items.toArray(new SVNCommitItem[items.size()]);
-        return new SVNCommitPacket(myWCLockBasePath, filteredItems, lockTokens);
+        return new SVNCommitPacket(null, filteredItems, lockTokens);
     }
 
     /**
@@ -228,18 +216,6 @@ public class SVNCommitPacket {
             }
         }
         return result.toString();
-    }
-
-
-    public File getWCLockBasePath() {
-        return myWCLockBasePath;
-    }
-
-    public void unlockWC(SVNWCContext context) throws SVNException {
-        if(myWCLockBasePath!=null) {
-            context.releaseWriteLock(myWCLockBasePath);
-            myWCLockBasePath = null;
-        }
     }
 
 }
