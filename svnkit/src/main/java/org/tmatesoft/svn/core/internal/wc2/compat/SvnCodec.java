@@ -448,10 +448,13 @@ public class SvnCodec {
             }
         }
         final SVNCommitItem[] allItems = oldItems.toArray(new SVNCommitItem[oldItems.size()]);
+        
         Map<String, String> oldLockTokens = new HashMap<String, String>();
-        for (SVNURL url : packet.getLockTokens().keySet()) {
-            String token = packet.getLockTokens().get(url);
-            oldLockTokens.put(url.toString(), token);
+        if (packet.getLockTokens() != null) {
+            for (SVNURL url : packet.getLockTokens().keySet()) {
+                String token = packet.getLockTokens().get(url);
+                oldLockTokens.put(url.toString(), token);
+            }
         }
         
         return new SVNCommitPacketWrapper(operation, packet, allItems, oldLockTokens);

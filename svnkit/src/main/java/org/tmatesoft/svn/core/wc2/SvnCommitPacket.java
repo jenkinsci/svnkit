@@ -23,6 +23,7 @@ public class SvnCommitPacket {
     public SvnCommitPacket() {
         items = new HashMap<SVNURL, Collection<SvnCommitItem>>();
         itemsByPath = new HashMap<File, SvnCommitItem>();
+        lockTokens = new HashMap<SVNURL, String>();
     }
     
     public boolean hasItem(File path) {
