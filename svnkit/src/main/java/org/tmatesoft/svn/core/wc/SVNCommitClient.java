@@ -880,8 +880,20 @@ public class SVNCommitClient extends SVNBasicClient {
                     } else {
                         continue;
                     }
-                    getCommitHandler().getRevisionProperties(message, items, revisionProperties);
+                    revisionProperties = getCommitHandler().getRevisionProperties(message, items, revisionProperties);
                 }
+                commit.setCommitMessage(commitMessage);
+                if (revisionProperties != null) {
+                    for (String propertyName : revisionProperties.nameSet()) {
+                        SVNPropertyValue value = revisionProperties.getSVNPropertyValue(propertyName);
+                        if (value != null) {
+                            commit.setRevisionProperty(propertyName, value);
+                        }
+                    }
+                }
+                commit.setKeepLocks(keepLocks);
+                commit.setKeepChangelists(keepChangelist);
+                
                 Collection<SVNCommitInfo> infs = commit.run();
                 if (infs != null && !infs.isEmpty()) {
                     infos[i] = infs.iterator().next();
