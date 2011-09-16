@@ -3517,8 +3517,8 @@ public class SVNWCContext {
             TranslateInfo info = ctx.getTranslateInfo(localAbspath, false, false, true);
             boolean sameContents = false;
             boolean overwroteWorkFile = false;
-            if (info != null && info.special && tmpFile.equals(localAbspath)) {
-                ctx.isSameContents(tmpFile, localAbspath);
+            if (info != null && info.special && !tmpFile.equals(localAbspath)) {
+                sameContents = ctx.isSameContents(tmpFile, localAbspath);
             } else {
                 sameContents = true;
             }
