@@ -384,7 +384,7 @@ public class SvnNgCommitUtil {
         result.set(NodeCommitStatus.originalReposRelPath, nodeInfo.get(NodeInfo.originalReposRelpath));
         result.set(NodeCommitStatus.originalRevision, nodeInfo.lng(NodeInfo.originalRevision));
         result.set(NodeCommitStatus.changelist, nodeInfo.get(NodeInfo.changelist));
-        result.set(NodeCommitStatus.propsMod, nodeInfo.get(NodeInfo.propsMod));
+        result.set(NodeCommitStatus.propsMod, nodeInfo.is(NodeInfo.propsMod));
         
         SVNWCDbStatus nodeStatus = nodeInfo.get(NodeInfo.status);
         
