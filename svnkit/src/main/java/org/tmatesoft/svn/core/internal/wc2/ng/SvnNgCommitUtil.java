@@ -297,14 +297,14 @@ public class SvnNgCommitUtil {
             }
             if (commitStatus.get(NodeCommitStatus.kind) == SVNNodeKind.FILE) {
                 if ((stateFlags & SvnCommitItem.COPY) != 0) {
-                    textModified = context.isTextModified(localAbsPath, false, false);
+                    textModified = context.isTextModified(localAbsPath, false, true);
                 } else {
                     textModified = true;
                 }
             }
         } else if ((stateFlags & SvnCommitItem.DELETE) == 0) {
             if (commitStatus.get(NodeCommitStatus.kind) == SVNNodeKind.FILE) {
-                textModified = context.isTextModified(localAbsPath, false, false);
+                textModified = context.isTextModified(localAbsPath, false, true);
             }
         }
         
