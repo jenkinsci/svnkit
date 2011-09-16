@@ -63,7 +63,7 @@ public class SvnCommitPacket {
         return item;
     }
     
-    public SvnCommitItem addItem(File path, SVNNodeKind kind, SVNURL url, long revision,
+    public SvnCommitItem addItem(File path, SVNURL rootUrl, SVNNodeKind kind, SVNURL url, long revision,
             SVNURL copyFromUrl, long copyFromRevision, int flags) throws SVNException {
         SvnCommitItem item = new SvnCommitItem();
         item.setPath(path);
@@ -78,14 +78,12 @@ public class SvnCommitPacket {
         }
         item.setFlags(flags);
         
-        SVNURL rootUrl = SVNURL.create(url.getProtocol(), url.getUserInfo(), url.getHost(), url.getPort(), "", false);
         if (!items.containsKey(rootUrl)) {
             items.put(rootUrl, new HashSet<SvnCommitItem>());
         }
         
         items.get(rootUrl).add(item);
         itemsByPath.put(path, item);
-        
         return item;
     }
 

@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNDepth;
@@ -13,6 +14,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCConflictDescription17;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
@@ -475,6 +477,22 @@ public class SvnCodec {
                     //
                 }
             }
+            Collection<SVNURL> allUrl = new HashSet<SVNURL>();
+            SVNURL rootUrl = null;
+            for (int j = 0; j < items.length; j++) {
+                SVNCommitItem item = items[j];
+                allUrl.add(item.getURL());
+                if (item.getCopyFromURL() != null) {
+                    allUrl.add(item.getCopyFromURL());
+                }
+            }
+            for (SVNURL svnurl : allUrl) {
+                if (rootUrl == null) {
+                    rootUrl = svnurl;
+                } else {
+                    rootUrl = SVNURLUtil.getCommonURLAncestor(rootUrl, svnurl);
+                }
+            }
             for (int j = 0; j < items.length; j++) {
                 SVNCommitItem item = items[j];
                 int flags = 0;
@@ -498,6 +516,7 @@ public class SvnCodec {
                 }
                 try {
                     packet.addItem(item.getFile(), 
+                            rootUrl,
                             item.getKind(),
                             item.getURL(), item.getRevision() != null ? item.getRevision().getNumber() : -1, 
                             item.getCopyFromURL(), 
