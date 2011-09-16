@@ -43,6 +43,7 @@ public abstract class SVNSqlJetUpdateStatement extends SVNSqlJetSelectStatement 
             throw new UnsupportedOperationException();
         }
         try {
+            aboutToUpdateRow(values);
             getCursor().updateByFieldNames(values);
         } catch (SqlJetException e) {
             SVNSqlJetDb.createSqlJetError(e);
@@ -55,6 +56,11 @@ public abstract class SVNSqlJetUpdateStatement extends SVNSqlJetSelectStatement 
             Map<String, Object> values = getUpdateValues();
             update(values);
             n++;
+        }
+        try {
+            updatePristine();
+        } catch (SqlJetException e) {
+            SVNSqlJetDb.createSqlJetError(e);
         }
         return n;
     }

@@ -21,7 +21,7 @@ import org.tmatesoft.svn.core.SVNException;
  */
 public class SVNSqlJetDeleteStatement extends SVNSqlJetSelectStatement {
 
-    public SVNSqlJetDeleteStatement(SVNSqlJetDb sDb, Enum fromTable) throws SVNException {
+    public SVNSqlJetDeleteStatement(SVNSqlJetDb sDb, Enum<?> fromTable) throws SVNException {
         super(sDb, fromTable);
         transactionMode = SqlJetTransactionMode.WRITE;
     }
@@ -30,12 +30,18 @@ public class SVNSqlJetDeleteStatement extends SVNSqlJetSelectStatement {
         long n = 0;
         while (!eof()) {
             try {
+                aboutToDeleteRow();
                 getCursor().delete();
             } catch (SqlJetException e) {
                 SVNSqlJetDb.createSqlJetError(e);
                 return n;
             }
             n++;
+        }
+        try {
+            updatePristine();
+        } catch (SqlJetException e) {
+            SVNSqlJetDb.createSqlJetError(e);
         }
         return n;
     }

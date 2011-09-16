@@ -73,7 +73,7 @@ public class SVNSqlJetUnionStatement extends SVNSqlJetStatement {
             return;
         }
         for (SVNSqlJetStatement stmt : statements) {
-            List stmtBinds = stmt.getBinds();
+            List<Object> stmtBinds = stmt.getBinds();
             stmtBinds.clear();
             stmtBinds.addAll(getBinds());
         }

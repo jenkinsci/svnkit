@@ -26,20 +26,26 @@ public abstract class SVNSqlJetInsertStatement extends SVNSqlJetTableStatement {
 
     protected SqlJetConflictAction conflictAction = null;
 
-    public SVNSqlJetInsertStatement(SVNSqlJetDb sDb, Enum tableName) throws SVNException {
+    public SVNSqlJetInsertStatement(SVNSqlJetDb sDb, Enum<?> tableName) throws SVNException {
         super(sDb, tableName);
         transactionMode = SqlJetTransactionMode.WRITE;
     }
 
 
-    public SVNSqlJetInsertStatement(SVNSqlJetDb sDb, Enum tableName, SqlJetConflictAction conflictAction) throws SVNException {
+    public SVNSqlJetInsertStatement(SVNSqlJetDb sDb, Enum<?> tableName, SqlJetConflictAction conflictAction) throws SVNException {
         this(sDb, tableName);
         this.conflictAction = conflictAction;
     }
 
     public long exec() throws SVNException {
         try {
-            return table.insertByFieldNamesOr(conflictAction, getInsertValues());
+            Map<String, Object> insertValues = getInsertValues();
+            aboutToInsertRow(insertValues);
+            long n = table.insertByFieldNamesOr(conflictAction, insertValues);
+            if (n > 0) {
+                updatePristine();
+            }
+            return n;
         } catch (SqlJetException e) {
             SVNSqlJetDb.createSqlJetError(e);
             return -1;

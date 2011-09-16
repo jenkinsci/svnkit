@@ -14,13 +14,10 @@ package org.tmatesoft.svn.core.internal.wc17.db.statement;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.tmatesoft.sqljet.core.SqlJetException;
-import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.sqljet.core.schema.SqlJetConflictAction;
-import org.tmatesoft.sqljet.core.table.ISqlJetTable;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
-import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetInsertStatement;
 
 /**
  * INSERT OR REPLACE INTO nodes ( wc_id, local_relpath, op_depth,
@@ -33,32 +30,14 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
  * @version 1.4
  * @author TMate Software Ltd.
  */
-public class SVNWCDbInsertNode extends SVNSqlJetStatement {
-
-    private ISqlJetTable table;
+public class SVNWCDbInsertNode extends SVNSqlJetInsertStatement {
 
     public SVNWCDbInsertNode(SVNSqlJetDb sDb) throws SVNException {
-        super(sDb);
-        transactionMode = SqlJetTransactionMode.WRITE;
-        try {
-            table = sDb.getDb().getTable(SVNWCDbSchema.NODES.toString());
-        } catch (SqlJetException e) {
-            SVNSqlJetDb.createSqlJetError(e);
-        }
+        super(sDb, SVNWCDbSchema.NODES, SqlJetConflictAction.REPLACE);
     }
 
-    public long exec() throws SVNException {
-        assert(getBinds().size()==19);
-        Map<String, Object> values = getBindedValues();
-        try {
-            return table.insertByFieldNamesOr(SqlJetConflictAction.REPLACE, values);
-        } catch (SqlJetException e) {
-            SVNSqlJetDb.createSqlJetError(e);
-            return 0;
-        }
-    }
-
-    private Map<String, Object> getBindedValues() {
+    @Override
+    protected Map<String, Object> getInsertValues() throws SVNException {
         Map<String, Object> values = new HashMap<String, Object>();
         values.put("wc_id", getBind(1));
         values.put("local_relpath", getBind(2));

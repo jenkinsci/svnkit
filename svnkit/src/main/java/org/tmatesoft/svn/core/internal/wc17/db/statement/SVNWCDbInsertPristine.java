@@ -19,40 +19,31 @@ import org.tmatesoft.sqljet.core.schema.SqlJetConflictAction;
 import org.tmatesoft.sqljet.core.table.ISqlJetTable;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetInsertStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetUpdateStatement;
 
 /**
  * INSERT OR IGNORE INTO pristine (checksum, md5_checksum, size, refcount)
- * VALUES (?1, ?2, ?3, 1);
+ * VALUES (?1, ?2, ?3, 0);
  *
  * @version 1.4
  * @author TMate Software Ltd.
  */
-public class SVNWCDbInsertPristine extends SVNSqlJetStatement {
-
-    private ISqlJetTable table;
+public class SVNWCDbInsertPristine extends SVNSqlJetInsertStatement {
 
     public SVNWCDbInsertPristine(SVNSqlJetDb sDb) throws SVNException {
-        super(sDb);
-        try {
-            table = sDb.getDb().getTable(SVNWCDbSchema.PRISTINE.toString());
-        } catch (SqlJetException e) {
-            SVNSqlJetDb.createSqlJetError(e);
-        }
+        super(sDb, SVNWCDbSchema.PRISTINE);
     }
 
-    public long exec() throws SVNException {
+    @Override
+    protected Map<String, Object> getInsertValues() throws SVNException {
         Map<String, Object> values = new HashMap<String, Object>();
         values.put(SVNWCDbSchema.PRISTINE__Fields.checksum.toString(), getBind(1));
         values.put(SVNWCDbSchema.PRISTINE__Fields.md5_checksum.toString(), getBind(2));
         values.put(SVNWCDbSchema.PRISTINE__Fields.size.toString(), getBind(3));
-        values.put(SVNWCDbSchema.PRISTINE__Fields.refcount.toString(), 1);
-        try {
-            return table.insertByFieldNamesOr(SqlJetConflictAction.IGNORE, values);
-        } catch (SqlJetException e) {
-            SVNSqlJetDb.createSqlJetError(e);
-            return 0;
-        }
+        values.put(SVNWCDbSchema.PRISTINE__Fields.refcount.toString(), 0);
+        return values;
     }
 
 }

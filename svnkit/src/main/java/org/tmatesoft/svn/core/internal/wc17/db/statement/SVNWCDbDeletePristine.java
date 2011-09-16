@@ -29,7 +29,9 @@ public class SVNWCDbDeletePristine extends SVNSqlJetDeleteStatement {
 
     protected boolean isFilterPassed() throws SVNException {
         if (!isColumnNull(SVNWCDbSchema.PRISTINE__Fields.checksum)) {
-            return getColumnString(SVNWCDbSchema.PRISTINE__Fields.checksum).equals(getBind(1));
+            if (getColumnString(SVNWCDbSchema.PRISTINE__Fields.checksum).equals(getBind(1))) {
+                return getColumnLong(SVNWCDbSchema.PRISTINE__Fields.refcount) == 0;
+            }
         }
         return false;
     }
