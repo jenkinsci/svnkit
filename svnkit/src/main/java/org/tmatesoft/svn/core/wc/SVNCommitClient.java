@@ -116,6 +116,9 @@ public class SVNCommitClient extends SVNBasicClient {
         setCommitHandler(null);
 
         setOptions(options);
+        
+        getOperationsFactory().setAuthenticationManager(authManager);
+        getOperationsFactory().setOptions(options);
     }
 
     /**

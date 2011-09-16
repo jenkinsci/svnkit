@@ -208,6 +208,7 @@ public class SVNWCClient extends SVNBasicClient {
         setAddParameters(null);
 
         setOptions(options);
+
         getOperationsFactory().setRepositoryPool(repositoryPool);
         getOperationsFactory().setOptions(options);
     }
