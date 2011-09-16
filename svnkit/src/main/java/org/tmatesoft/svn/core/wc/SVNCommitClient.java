@@ -15,14 +15,17 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
 
+import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc16.SVNCommitClient16;
 import org.tmatesoft.svn.core.internal.wc17.SVNCommitClient17;
 import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
@@ -31,6 +34,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc2.SvnCommit;
 import org.tmatesoft.svn.core.wc2.SvnCommitPacket;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * The <b>SVNCommitClient</b> class provides methods to perform operations that
@@ -872,27 +876,34 @@ public class SVNCommitClient extends SVNBasicClient {
         for (int i = 0; i < commitPackets.length; i++) {
             try {
                 SvnCommit commit = ((SVNCommitPacketWrapper) commitPackets[i]).getOperation();
-                if (getCommitHandler() != null) {
-                    SVNCommitItem[] items = commitPackets[i].getCommitItems();
-                    String message = getCommitHandler().getCommitMessage(commitMessage, items);
-                    if (message != null) {
-                        commit.setCommitMessage(message);
-                    } else {
-                        continue;
+                try {
+                    if (getCommitHandler() != null) {
+                        SVNCommitItem[] items = commitPackets[i].getCommitItems();
+                        String message = getCommitHandler().getCommitMessage(commitMessage, items);
+                        if (message != null) {
+                            commit.setCommitMessage(message);
+                        } else {
+                            continue;
+                        }
+                        revisionProperties = getCommitHandler().getRevisionProperties(message, items, revisionProperties);
                     }
-                    revisionProperties = getCommitHandler().getRevisionProperties(message, items, revisionProperties);
-                }
-                commit.setCommitMessage(commitMessage);
-                if (revisionProperties != null) {
-                    for (String propertyName : revisionProperties.nameSet()) {
-                        SVNPropertyValue value = revisionProperties.getSVNPropertyValue(propertyName);
-                        if (value != null) {
-                            commit.setRevisionProperty(propertyName, value);
+                    commit.setCommitMessage(commitMessage);
+                    if (revisionProperties != null) {
+                        for (String propertyName : revisionProperties.nameSet()) {
+                            SVNPropertyValue value = revisionProperties.getSVNPropertyValue(propertyName);
+                            if (value != null) {
+                                commit.setRevisionProperty(propertyName, value);
+                            }
                         }
                     }
+                    commit.setKeepLocks(keepLocks);
+                    commit.setKeepChangelists(keepChangelist);
+                } catch (SVNCancelException e) {
+                    throw e;
+                } catch (SVNException e) {
+                    SVNErrorMessage err = e.getErrorMessage().wrap("Commit failed (details follow):");
+                    SVNErrorManager.error(err, SVNLogType.WC);
                 }
-                commit.setKeepLocks(keepLocks);
-                commit.setKeepChangelists(keepChangelist);
                 
                 Collection<SVNCommitInfo> infs = commit.run();
                 if (infs != null && !infs.isEmpty()) {
