@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 
+import org.ietf.jgss.Oid;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -227,6 +228,8 @@ public class SVNWCContext {
 
         FILE_INSTALL("file-install", new RunFileInstall()),
 
+        FILE_COMMIT("file-commit", new RunFileCommit()),
+        
         FILE_REMOVE("file-remove", new RunFileRemove()),
 
         FILE_MOVE("file-move", new RunFileMove()),
@@ -3506,6 +3509,33 @@ public class SVNWCContext {
         }
     }
 
+    public static class RunFileCommit implements RunWorkQueueOperation {
+
+        public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) throws SVNException {
+            File localAbspath = SVNFileUtil.createFilePath(workItem.getChild(1).getValue());
+            File tmpFile = ctx.getTranslatedFile(localAbspath, localAbspath, false, false, false, false);
+            TranslateInfo info = ctx.getTranslateInfo(localAbspath, false, false, true);
+            boolean sameContents = false;
+            boolean overwroteWorkFile = false;
+            if (info != null && info.special && tmpFile.equals(localAbspath)) {
+                ctx.isSameContents(tmpFile, localAbspath);
+            } else {
+                sameContents = true;
+            }
+            if (!sameContents) {
+                SVNFileUtil.rename(tmpFile, localAbspath);
+                overwroteWorkFile = true;
+            }
+            ctx.syncFileFlags(localAbspath);
+            if (overwroteWorkFile) {
+                ctx.getAndRecordFileInfo(localAbspath, false);
+            } else {
+                // TODO need to fix size and tsmtp.
+                ctx.isTextModified(localAbspath, false, false);
+            }
+        }
+    }
+
     public static class RunFileRemove implements RunWorkQueueOperation {
 
         public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) throws SVNException {
@@ -4290,5 +4320,18 @@ public class SVNWCContext {
 
     public SVNDepth getNodeDepth(File localAbsPath) throws SVNException {
         return getDb().readInfo(localAbsPath, InfoField.depth).depth;
+    }
+
+    public SVNSkel wqBuildFileCommit(File localAbspath, boolean propsMods) throws SVNException {
+        SVNSkel workItem = SVNSkel.createEmptyList();
+        workItem.prependString("0");
+        workItem.prependString("0");
+        // TODO relative path!
+        workItem.prependString(localAbspath.getPath());
+        workItem.prependString(WorkQueueOperation.FILE_COMMIT.getOpName());
+
+        SVNSkel result = SVNSkel.createEmptyList();
+        result.appendChild(workItem);
+        return result;
     }
 }

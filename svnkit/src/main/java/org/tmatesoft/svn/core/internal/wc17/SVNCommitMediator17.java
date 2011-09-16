@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.wc17;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
@@ -18,7 +19,7 @@ import java.util.Map;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
-import org.tmatesoft.svn.core.wc.SVNCommitItem;
+import org.tmatesoft.svn.core.wc2.SvnCommitItem;
 
 /**
  * @version 1.4
@@ -26,34 +27,28 @@ import org.tmatesoft.svn.core.wc.SVNCommitItem;
  */
 public class SVNCommitMediator17 implements ISVNWorkspaceMediator {
 
-    private Collection myTmpFiles;
-    private Map myCommitItems;
+    private Collection<File> myTmpFiles;
+    private Map<String, SvnCommitItem> myCommitItems;
     private SVNWCContext myContext;
 
-    public SVNCommitMediator17(SVNWCContext context, Map committables) {
+    public SVNCommitMediator17(SVNWCContext context, Map<String, SvnCommitItem> committables) {
         this.myCommitItems = committables;
         this.myContext = context;
-        myTmpFiles = new ArrayList();
+        myTmpFiles = new ArrayList<File>();
     }
 
-    public Collection getTmpFiles() {
+    public Collection<File> getTmpFiles() {
         return myTmpFiles;
     }
 
     public void setWorkspaceProperty(String path, String name, SVNPropertyValue value) throws SVNException {
-        if (name != null) {
-            SVNCommitItem item = (SVNCommitItem) myCommitItems.get(path);
-            if (item != null) {
-                item.setIncomingProperty(name, value);
-            }
-        }
     }
 
     public SVNPropertyValue getWorkspaceProperty(String path, String name) throws SVNException {
         if (name != null) {
-            SVNCommitItem item = (SVNCommitItem) myCommitItems.get(path);
+            SvnCommitItem item = (SvnCommitItem) myCommitItems.get(path);
             if (item != null) {
-                return myContext.getPropertyValue(item.getFile(), name);
+                return myContext.getPropertyValue(item.getPath(), name);
             }
         }
         return null;

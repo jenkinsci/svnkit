@@ -1,5 +1,8 @@
 package org.tmatesoft.svn.core.wc2;
 
+import java.util.Collection;
+
+import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
@@ -9,7 +12,7 @@ import org.tmatesoft.svn.core.SVNPropertyValue;
  * @author alex
  *
  */
-public class SvnCommit extends SvnOperation<SvnCommitInfo> {
+public class SvnCommit extends SvnOperation<Collection<SVNCommitInfo>> {
     
     private SVNProperties revisionProperties;
     
@@ -65,7 +68,7 @@ public class SvnCommit extends SvnOperation<SvnCommitInfo> {
         return packet;
     }
     
-    public SvnCommitInfo run() throws SVNException {
+    public Collection<SVNCommitInfo> run() throws SVNException {
         if (packet == null) {
             packet = collectCommitItems();
         }
@@ -78,6 +81,10 @@ public class SvnCommit extends SvnOperation<SvnCommitInfo> {
         if (getDepth() == SVNDepth.UNKNOWN) {
             setDepth(SVNDepth.INFINITY);
         }
+    }
+
+    public SVNProperties getRevisionProperties() {
+        return revisionProperties;
     }
     
 }

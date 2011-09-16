@@ -3,8 +3,10 @@ package org.tmatesoft.svn.core.internal.wc2.ng;
 import java.io.File;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -15,6 +17,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -365,7 +368,7 @@ public class SvnNgCommitUtil {
     private static Structure<NodeCommitStatus> getNodeCommitStatus(SVNWCContext context, File localAbsPath) throws SVNException {
         Structure<NodeCommitStatus> result = Structure.obtain(NodeCommitStatus.class);
         Structure<NodeInfo> nodeInfo = context.getDb().readInfo(localAbsPath, NodeInfo.status, NodeInfo.kind, NodeInfo.revision,
-                NodeInfo.reposRelPath, NodeInfo.originalRevision, NodeInfo.lock,
+                NodeInfo.reposRelPath, NodeInfo.originalRevision, NodeInfo.originalReposRelpath, NodeInfo.lock,
                 NodeInfo.changelist, NodeInfo.conflicted, NodeInfo.opRoot, NodeInfo.hadProps,
                 NodeInfo.propsMod, NodeInfo.haveBase, NodeInfo.haveMoreWork);
         
@@ -475,5 +478,65 @@ public class SvnNgCommitUtil {
             }
             localAbspath = parentAbspath;
         }
+    }
+
+    public static SVNURL translateCommitables(Collection<SvnCommitItem> items, Map<String, SvnCommitItem> decodedPaths) throws SVNException {
+        Map<SVNURL, SvnCommitItem> itemsMap = new HashMap<SVNURL, SvnCommitItem>();
+
+        for (SvnCommitItem item : items) {
+            if (itemsMap.containsKey(item.getUrl())) {
+                SvnCommitItem oldItem = (SvnCommitItem) itemsMap.get(item.getUrl());
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_DUPLICATE_COMMIT_URL, 
+                        "Cannot commit both ''{0}'' and ''{1}'' as they refer to the same URL",
+                        new Object[] {item.getPath(), oldItem.getPath()});
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+            itemsMap.put(item.getUrl(), item);
+        }
+
+        Iterator<SVNURL> urls = itemsMap.keySet().iterator();
+        SVNURL baseURL = urls.next();
+        while (urls.hasNext()) {
+            SVNURL url = (SVNURL) urls.next();
+            baseURL = SVNURLUtil.getCommonURLAncestor(baseURL, url);
+        }
+        if (itemsMap.containsKey(baseURL)) {
+            SvnCommitItem rootItem = (SvnCommitItem) itemsMap.get(baseURL);
+            if (rootItem.getKind() != SVNNodeKind.DIR) {
+                baseURL = baseURL.removePathTail();
+            } else if (rootItem.getKind() == SVNNodeKind.DIR
+                    && (rootItem.hasFlag(SvnCommitItem.ADD) 
+                            || rootItem.hasFlag(SvnCommitItem.DELETE) 
+                            || rootItem.hasFlag(SvnCommitItem.COPY) 
+                            || rootItem.hasFlag(SvnCommitItem.LOCK))) {
+                baseURL = baseURL.removePathTail();
+            }
+        }
+        if (baseURL == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, 
+                    "Cannot compute base URL for commit operation");
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+        for (Iterator<SVNURL> iterator = itemsMap.keySet().iterator(); iterator.hasNext();) {
+            SVNURL url = iterator.next();
+            SvnCommitItem item = itemsMap.get(url);
+            String realPath = url.equals(baseURL) ? "" : SVNPathUtil.getRelativePath(baseURL.getPath(), url.getPath());
+            decodedPaths.put(realPath, item);
+        }
+        return baseURL;
+    }
+
+    public static Map<String, String> translateLockTokens(Map<SVNURL, String> lockTokens, SVNURL baseURL) {
+        Map<String, String> translatedLocks = new TreeMap<String, String>();
+        for (Iterator<SVNURL> urls = lockTokens.keySet().iterator(); urls.hasNext();) {
+            SVNURL url = urls.next();
+            if (!SVNURLUtil.isAncestor(baseURL, url)) {
+                continue;
+            }
+            String token = lockTokens.get(url);
+            String path = url.getPath().substring(baseURL.getPath().length());
+            translatedLocks.put(path, token);
+        }
+        return translatedLocks;
     }
 }

@@ -25,7 +25,6 @@ public enum SVNWCDbStatements {
     DELETE_ACTUAL_EMPTY(SVNWCDbDeleteActualEmpty.class),
     DELETE_ACTUAL_NODE(SVNWCDbDeleteActualNode.class),
     DELETE_BASE_NODE(SVNWCDbDeleteBaseNode.class),
-    DELETE_LOCK,
     DELETE_WC_LOCK_ORPHAN_RECURSIVE(SVNWCDbDeleteLockOrphanRecursive.class),
     DELETE_NODES(SVNWCDbDeleteNodes.class),
     DELETE_PRISTINE(SVNWCDbDeletePristine.class),
@@ -92,7 +91,6 @@ public enum SVNWCDbStatements {
     UPDATE_ACTUAL_TEXT_CONFLICTS(SVNWCDbUpdateActualTextConflicts.class),
     UPDATE_ACTUAL_TREE_CONFLICTS(SVNWCDbUpdateActualTreeConflicts.class),
     UPDATE_BASE_NODE_PRESENCE_REVNUM_AND_REPOS_PATH(SVNUpdateBaseNodePresenceRevnumAndReposPath.class),
-    UPDATE_BASE_REPOS,
     UPDATE_BASE_REVISION(SVNWCDbUpdateBaseRevision.class),
     UPDATE_COPYFROM(SVNWCDbUpdateCopyfrom.class),
     UPDATE_FILE_EXTERNAL,
@@ -122,7 +120,13 @@ public enum SVNWCDbStatements {
     UPDATE_ACTUAL_CLEAR_CHANGELIST(SVNWCDDBUpdateActualClearChangelist.class),
     INSERT_DELETE_LIST(SVNWCDbInsertDeleteList.class),
     HAS_SERVER_EXCLUDED_NODES(SVNWCDbHasServerExcludedNodes.class),
-    SELECT_WORKING_CHILDREN(SVNWCDbSelectWorkingChildren.class);
+    SELECT_WORKING_CHILDREN(SVNWCDbSelectWorkingChildren.class), 
+    DELETE_LOCK(SVNWCDbDeleteLock.class),
+    DELETE_ALL_LAYERS(SVNWCDbDeleteAllLayers.class), 
+    DELETE_SHADOWED_RECURSIVE(SVNWCDbDeleteShadowedRecursive.class), 
+    DELETE_ACTUAL_NODE_RECURSIVE(SVNWCDbDeleteActualNodeRecursive.class),
+    COMMIT_DESCENDANT_TO_BASE(SVNWCDbCommitDescendantToBase.class), 
+    ;
     
 
     private Class<? extends SVNSqlJetStatement> statementClass;

@@ -43,6 +43,7 @@ public class SvnCommitPacket {
         item.setPath(path);
         item.setKind(kind);
         item.setUrl(repositoryRoot.appendPath(repositoryPath, false));
+        item.setRevision(revision);
         if (copyFromPath != null) {
             item.setCopyFromUrl(repositoryRoot.appendPath(copyFromPath, false));
             item.setCopyFromRevision(copyFromRevision);
@@ -86,7 +87,16 @@ public class SvnCommitPacket {
     }
     
     public boolean isEmpty() {
-        for (SvnCommitItem item : itemsByPath.values()) {
+        for (SVNURL rootUrl : getRepositoryRoots()) {
+            if (!isEmpty(rootUrl)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public boolean isEmpty(SVNURL repositoryRootUrl) {
+        for (SvnCommitItem item : getItems(repositoryRootUrl)) {
             if (item.getFlags() != SvnCommitItem.LOCK) {
                 return false;
             }

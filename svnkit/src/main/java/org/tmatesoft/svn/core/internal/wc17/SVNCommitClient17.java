@@ -836,12 +836,12 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
                 Map lockTokens = SVNCommitUtil.translateLockTokens(commitPacket.getLockTokens(), baseURL.toString());
                 SVNCommitItem firstItem = commitPacket.getCommitItems()[0];
                 SVNRepository repository = createRepository(baseURL, firstItem.getFile(), true);
-                SVNCommitMediator17 mediator = new SVNCommitMediator17(getContext(), committables);
+                SVNCommitMediator17 mediator = null;//new SVNCommitMediator17(getContext(), committables);
                 tmpFiles = mediator.getTmpFiles();
                 String repositoryRoot = repository.getRepositoryRoot(true).getPath();
                 SVNPropertiesManager.validateRevisionProperties(revisionProperties);
                 commitEditor = repository.getCommitEditor(commitMessage, lockTokens, keepLocks, revisionProperties, mediator);
-                info = SVNCommitter17.commit(getContext(), mediator.getTmpFiles(), committables, repositoryRoot, commitEditor, md5Checksums, sha1Checksums);
+//                info = SVNCommitter17.commit(getContext(), mediator.getTmpFiles(), committables, repositoryRoot, commitEditor, md5Checksums, sha1Checksums);
 
                 SVNWCCommittedQueue queue = new SVNWCCommittedQueue();
                 for (SVNCommitItem item : commitPacket.getCommitItems()) {

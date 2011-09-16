@@ -1691,4 +1691,6 @@ public interface ISVNWCDb {
     public void registerExternal(File definingAbsPath, File localAbsPath, SVNNodeKind kind, SVNURL reposRootUrl, String reposUuid, File reposRelPath, long operationalRevision, long revision) throws SVNException;
 
     Set<String> getChildrenOfWorkingNode(File dirAbsPath) throws SVNException;
+
+    void opRemoveNode(File localAbspath, long revision, SVNWCDbKind kind) throws SVNException;
 }

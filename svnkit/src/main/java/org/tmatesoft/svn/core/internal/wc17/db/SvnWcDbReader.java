@@ -113,7 +113,7 @@ public class SvnWcDbReader extends SvnWcDbShared {
                 return result;
             }
             if (replacedStatus != SVNWCDbStatus.BaseDeleted) {
-                stmt.bindf("is", wcId, SVNFileUtil.getParentFile(localRelPath));
+                stmt.bindf("is", wcId, SVNFileUtil.getFileDir(localRelPath));
                 if (stmt.next()) {
                     long parentOpDepth = getColumnInt64(stmt, NODES__Fields.op_depth);
                     if (parentOpDepth >= replacedOpDepth) {
@@ -151,7 +151,7 @@ public class SvnWcDbReader extends SvnWcDbShared {
         }
         
         try {
-            stmt.bindf("is", wcId, SVNFileUtil.getParentFile(dirInfo.localRelPath));
+            stmt.bindf("is", wcId, SVNFileUtil.getFileDir(dirInfo.localRelPath));
             while(stmt.next()) {
                 File childPath = SVNFileUtil.createFilePath(getColumnText(stmt, NODES__Fields.local_relpath));
                 String childName = SVNFileUtil.getFileName(childPath);
