@@ -109,7 +109,7 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
 
             if (event.getContentsStatus() == SVNStatusType.MISSING) {
                 buffer.append("Skipped missing target: '" + path + "'\n");
-            } else {
+            } else if (path != null) {
                 buffer.append("Skipped '" + path + "'\n");
             }
         } else if (event.getAction() == SVNEventAction.UPDATE_SKIP_OBSTRUCTION) {

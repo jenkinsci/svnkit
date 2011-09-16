@@ -162,7 +162,10 @@ public class SvnNgCommit extends SvnNgOperationRunner<Collection<SVNCommitInfo>,
                     }
                     SVNErrorMessage err = e.getErrorMessage().wrap("Commit failed (details follow):");
                     info = new SVNCommitInfo(-1, null, null, err);
-                    handleEvent(SVNEventFactory.createErrorEvent(err, SVNEventAction.COMMIT_COMPLETED), ISVNEventHandler.UNKNOWN);                    
+                    handleEvent(SVNEventFactory.createErrorEvent(err, SVNEventAction.COMMIT_COMPLETED), ISVNEventHandler.UNKNOWN);
+                    if (packet.getRepositoryRoots().size() == 1) {
+                        throw e;
+                    }
                 } finally {
                     if (commitEditor != null) {
                         commitEditor.abortEdit();
