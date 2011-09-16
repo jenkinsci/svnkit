@@ -17,20 +17,13 @@ import org.tmatesoft.svn.core.wc2.SvnCommit;
 import org.tmatesoft.svn.core.wc2.SvnCommitPacket;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
-public class SvnOldCommit extends SvnOldRunner<Collection<SVNCommitInfo>, SvnCommit> implements ISvnCommitRunner {
+public class SvnOldCommit extends SvnOldRunner<Collection<SVNCommitInfo>, SvnCommit> implements ISvnCommitRunner, ISVNCommitHandler {
 
     public SvnCommitPacket collectCommitItems(SvnCommit operation) throws SVNException {
         setOperation(operation);
         SVNCommitClient16 client = new SVNCommitClient16(getOperation().getRepositoryPool(), getOperation().getOptions());
         client.setEventHandler(getOperation().getEventHandler());
-        client.setCommitHandler(new ISVNCommitHandler() {
-            public String getCommitMessage(String message, SVNCommitItem[] commitables) throws SVNException {
-                return message;
-            }
-            public SVNProperties getRevisionProperties(String message, SVNCommitItem[] commitables, SVNProperties revisionProperties) throws SVNException {
-                return revisionProperties;
-            }            
-        });
+        client.setCommitHandler(this);
 
         File[] paths = new File[getOperation().getTargets().size()];
         int i = 0;
@@ -53,6 +46,8 @@ public class SvnOldCommit extends SvnOldRunner<Collection<SVNCommitInfo>, SvnCom
         
         SVNCommitClient16 client = new SVNCommitClient16(getOperation().getRepositoryPool(), getOperation().getOptions());
         client.setEventHandler(getOperation().getEventHandler());
+        client.setCommitHandler(this);
+        
         SVNCommitInfo[] infos = client.doCommit(oldPackets, getOperation().isKeepLocks(), getOperation().isKeepChangelists(), getOperation().getCommitMessage(), getOperation().getRevisionProperties());
         if (infos != null) {
             return Arrays.asList(infos);
@@ -71,6 +66,14 @@ public class SvnOldCommit extends SvnOldRunner<Collection<SVNCommitInfo>, SvnCom
                 }
             }
         }
+    }
+
+    public String getCommitMessage(String message, SVNCommitItem[] commitables) throws SVNException {
+        return message;
+    }
+
+    public SVNProperties getRevisionProperties(String message, SVNCommitItem[] commitables, SVNProperties revisionProperties) throws SVNException {
+        return revisionProperties;
     }
 
 }
