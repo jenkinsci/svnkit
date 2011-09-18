@@ -40,7 +40,7 @@ public abstract class SVNSqlJetInsertStatement extends SVNSqlJetTableStatement {
     public long exec() throws SVNException {
         try {
             Map<String, Object> insertValues = getInsertValues();
-            aboutToInsertRow(insertValues);
+            aboutToInsertRow(conflictAction, insertValues);
             long n = table.insertByFieldNamesOr(conflictAction, insertValues);
             if (n > 0) {
                 updatePristine();

@@ -15,7 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
-import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
+import org.tmatesoft.sqljet.core.schema.SqlJetConflictAction;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
 import org.tmatesoft.sqljet.core.table.ISqlJetTable;
 import org.tmatesoft.svn.core.SVNException;
@@ -94,39 +94,52 @@ public abstract class SVNSqlJetTableStatement extends SVNSqlJetStatement {
             return;
         }
         String checksumValue = getCursor().getString(NODES__Fields.checksum.toString());
-        if (checksumValue != null) {
-            if (!checksumTriggerValues.containsKey(checksumValue)) {
-                checksumTriggerValues.put(checksumValue, -1);
-            } else {
-                checksumTriggerValues.put(checksumValue, checksumTriggerValues.get(checksumValue) - 1);
-            }
-        }
+        changeRefCount(checksumValue, -1);
     }
 
-    protected void aboutToInsertRow(Map<String, Object> values) throws SqlJetException {
+    protected void aboutToInsertRow(SqlJetConflictAction onConflict, Map<String, Object> values) throws SqlJetException {
         if (!isNodesTable()) {
             return;
         }
-        String newChecksumValue = (String) values.get(NODES__Fields.checksum.toString());
-        if (newChecksumValue != null) {
-            if (!checksumTriggerValues.containsKey(newChecksumValue)) {
-                checksumTriggerValues.put(newChecksumValue, 1);
-            } else {
-                checksumTriggerValues.put(newChecksumValue, checksumTriggerValues.get(newChecksumValue) + 1);
+        if (onConflict == SqlJetConflictAction.REPLACE) {
+            Object o1 = values.get(NODES__Fields.wc_id.toString());
+            Object o2 = values.get(NODES__Fields.local_relpath.toString());
+            Object o3 = values.get(NODES__Fields.op_depth.toString());
+            ISqlJetCursor cursor = getTable().lookup(null, new Object[] {o1, o2, o3});
+            try { 
+                if (!cursor.eof()) {
+                    changeRefCount(cursor.getString(NODES__Fields.checksum.toString()), -1);
+                }
+            } finally {
+                cursor.close();
             }
         }
+        String newChecksumValue = (String) values.get(NODES__Fields.checksum.toString());
+        changeRefCount(newChecksumValue, 1);
     }
     
-    protected void aboutToUpdateRow(Map<String, Object> values) throws SqlJetException {
+    protected void aboutToUpdateRow(Map<String, Object> values) throws SqlJetException, SVNException {
         if (!isNodesTable()) {
             return;
         }
         if (values.containsKey(NODES__Fields.checksum.toString())) {
-            aboutToDeleteRow();
-            if (values.get(NODES__Fields.checksum.toString()) != null) {
-                aboutToInsertRow(values);
-            }
+            Map<String, Object> existingValues = getRowValues();
+            
+            String newChecksum = (String) values.get(NODES__Fields.checksum.toString());
+            String oldChecksum = (String) existingValues.get(NODES__Fields.checksum.toString());
+            
+            changeRefCount(oldChecksum,-1);
+            changeRefCount(newChecksum, 1);
         }
     }
 
+    private void changeRefCount(String checksum, int delta) {
+        if (checksum != null) {
+            if (!checksumTriggerValues.containsKey(checksum)) {
+                checksumTriggerValues.put(checksum, delta);
+            } else {
+                checksumTriggerValues.put(checksum, checksumTriggerValues.get(checksum) + delta);
+            }
+        }
+    }
 }
