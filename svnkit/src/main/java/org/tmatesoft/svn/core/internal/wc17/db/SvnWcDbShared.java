@@ -366,7 +366,7 @@ public class SvnWcDbShared {
                         info.set(NodeInfo.target, getColumnPath(stmt, SVNWCDbSchema.NODES__Fields.symlink_target));
                 }
                 if (info.hasField(NodeInfo.updateRoot)) {
-                    info.set(NodeInfo.updateRoot, getColumnBoolean(stmt, SVNWCDbSchema.NODES__Fields.file_external));
+                    info.set(NodeInfo.updateRoot, getColumnText(stmt, SVNWCDbSchema.NODES__Fields.file_external) != null);
                 }
                 if (info.hasField(NodeInfo.hadProps)) {
                     info.set(NodeInfo.hadProps, hasColumnProperties(stmt, NODES__Fields.properties));

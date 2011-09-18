@@ -603,7 +603,7 @@ public class SVNWCDb implements ISVNWCDb {
                 stmt.bindNull(18);
             }
             if (fileExternal) {
-                stmt.bindLong(20, 1);
+                stmt.bindString(20, "1");
             } else {
                 stmt.bindNull(20);
             }
@@ -4511,7 +4511,7 @@ public class SVNWCDb implements ISVNWCDb {
             stmt.bindChecksum(13, newChecksum);
             stmt.bindProperties(15, newDavCache);
             if (fileExternal) {
-                stmt.bindLong(17, 1);
+                stmt.bindString(17, "1");
             } else {
                 stmt.bindNull(17);
             }

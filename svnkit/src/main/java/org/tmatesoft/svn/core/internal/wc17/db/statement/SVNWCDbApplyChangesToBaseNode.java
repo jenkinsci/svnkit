@@ -18,6 +18,8 @@ import org.tmatesoft.sqljet.core.schema.SqlJetConflictAction;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetInsertStatement;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODES__Fields;
 
 /**
  * INSERT OR REPLACE INTO nodes ( wc_id, local_relpath, op_depth,
@@ -54,7 +56,18 @@ public class SVNWCDbApplyChangesToBaseNode extends SVNSqlJetInsertStatement {
         values.put(SVNWCDbSchema.NODES__Fields.properties.toString(), getBind(14));
         values.put(SVNWCDbSchema.NODES__Fields.dav_cache.toString(), getBind(15));
         values.put(SVNWCDbSchema.NODES__Fields.symlink_target.toString(), getBind(16));
-        values.put(SVNWCDbSchema.NODES__Fields.file_external.toString(), getBind(17));
+        
+        SVNSqlJetStatement stmt = sDb.getStatement(SVNWCDbStatements.SELECT_BASE_NODE);
+        try {
+            stmt.bindf("is", getBind(1), getBind(2));
+            if (stmt.next() && !stmt.isColumnNull(NODES__Fields.file_external)) {
+                values.put(SVNWCDbSchema.NODES__Fields.file_external.toString(), stmt.getColumn(NODES__Fields.file_external));
+            }
+        } finally {
+            if (stmt != null) {
+                stmt.reset();
+            }
+        }
         
         return values;
     }
