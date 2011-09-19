@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
+import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -52,7 +53,8 @@ public class SvnOldCommit extends SvnOldRunner<Collection<SVNCommitInfo>, SvnCom
         
         SVNCommitInfo[] infos = client.doCommit(oldPackets, getOperation().isKeepLocks(), getOperation().isKeepChangelists(), getOperation().getCommitMessage(), getOperation().getRevisionProperties());
         if (infos != null) {
-            if (infos.length == 1 && infos[0].getErrorMessage() != null) {
+            if (infos.length == 1 && infos[0].getErrorMessage() != null 
+                    && infos[0].getErrorMessage().getErrorCode() != SVNErrorCode.REPOS_POST_COMMIT_HOOK_FAILED) {
                 SVNErrorManager.error(infos[0].getErrorMessage(), SVNLogType.WC);
             }
             return Arrays.asList(infos);
