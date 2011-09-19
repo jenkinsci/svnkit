@@ -38,8 +38,8 @@ public class SvnOldCommit extends SvnOldRunner<Collection<SVNCommitInfo>, SvnCom
         if (getOperation().getApplicableChangelists() != null && !getOperation().getApplicableChangelists().isEmpty()) {
             changelists = getOperation().getApplicableChangelists().toArray(new String[getOperation().getApplicableChangelists().size()]);
         }
-        SVNCommitPacket[] packets = client.doCollectCommitItems(paths, getOperation().isKeepLocks(), false, getOperation().getDepth(), false, changelists);
-        return SvnCodec.commitPacket(this, packets);
+        SVNCommitPacket packet = client.doCollectCommitItems(paths, getOperation().isKeepLocks(), false, getOperation().getDepth(), changelists);
+        return SvnCodec.commitPacket(this, new SVNCommitPacket[] {packet});
     }
 
     @Override

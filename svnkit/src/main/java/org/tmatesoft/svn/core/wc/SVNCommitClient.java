@@ -712,9 +712,9 @@ public class SVNCommitClient extends SVNBasicClient {
      */
     public SVNCommitInfo doCommit(File[] paths, boolean keepLocks, String commitMessage, SVNProperties revisionProperties, String[] changelists, boolean keepChangelist, boolean force, SVNDepth depth)
             throws SVNException {
-        SVNCommitPacket[] packet = doCollectCommitItems(paths, keepLocks, force, depth, true, changelists);
-        if (packet != null) {
-            SVNCommitInfo[] infos = doCommit(packet, keepLocks, keepChangelist, commitMessage, revisionProperties);
+        SVNCommitPacket[] packets = doCollectCommitItems(paths, keepLocks, force, depth, false, changelists);
+        if (packets != null) {
+            SVNCommitInfo[] infos = doCommit(packets, keepLocks, keepChangelist, commitMessage, revisionProperties);
             if (infos != null && infos.length > 0) {
                 return infos[0];
             }
