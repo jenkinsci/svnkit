@@ -101,7 +101,7 @@ public class SvnNgCommit extends SvnNgOperationRunner<Collection<SVNCommitInfo>,
         } catch (SVNException e) {
             packet.dispose();
             throw e;
-        } 
+        }
     }
 
     @Override
@@ -152,6 +152,8 @@ public class SvnNgCommit extends SvnNgOperationRunner<Collection<SVNCommitInfo>,
                             // this is bump error.
                             bumpError = e;
                             throw e;
+                        } finally {
+                            sleepForTimestamp();
                         }
                     }
                     handleEvent(SVNEventFactory.createSVNEvent(null, SVNNodeKind.NONE, null, info.getNewRevision(), SVNEventAction.COMMIT_COMPLETED, 
