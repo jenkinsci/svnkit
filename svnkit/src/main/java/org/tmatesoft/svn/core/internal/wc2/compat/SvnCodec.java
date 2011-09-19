@@ -470,11 +470,13 @@ public class SvnCodec {
             SVNCommitItem[] items = packets[i].getCommitItems();
             @SuppressWarnings("unchecked")
             Map<String, String> locks = packets[i].getLockTokens();
-            for (String url : locks.keySet()) {
-                try {
-                    lockTokens.put(SVNURL.parseURIEncoded(url), locks.get(url));
-                } catch (SVNException e) {
-                    //
+            if (locks != null) {
+                for (String url : locks.keySet()) {
+                    try {
+                        lockTokens.put(SVNURL.parseURIEncoded(url), locks.get(url));
+                    } catch (SVNException e) {
+                        //
+                    }
                 }
             }
             Collection<SVNURL> allUrl = new HashSet<SVNURL>();
