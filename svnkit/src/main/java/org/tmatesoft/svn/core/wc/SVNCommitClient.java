@@ -883,6 +883,7 @@ public class SVNCommitClient extends SVNBasicClient {
             try {
                 SvnCommit commit = ((SVNCommitPacketWrapper) commitPackets[i]).getOperation();
                 try {
+                    commit.setCommitMessage(commitMessage);
                     if (getCommitHandler() != null) {
                         SVNCommitItem[] items = commitPackets[i].getCommitItems();
                         if (items == null || items.length == 0) {
@@ -897,7 +898,6 @@ public class SVNCommitClient extends SVNBasicClient {
                         }
                         revisionProperties = getCommitHandler().getRevisionProperties(message, items, revisionProperties);
                     }
-                    commit.setCommitMessage(commitMessage);
                     if (revisionProperties != null) {
                         for (String propertyName : revisionProperties.nameSet()) {
                             SVNPropertyValue value = revisionProperties.getSVNPropertyValue(propertyName);
