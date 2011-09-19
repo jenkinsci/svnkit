@@ -885,6 +885,10 @@ public class SVNCommitClient extends SVNBasicClient {
                 try {
                     if (getCommitHandler() != null) {
                         SVNCommitItem[] items = commitPackets[i].getCommitItems();
+                        if (items == null || items.length == 0) {
+                            infos[i] = SVNCommitInfo.NULL;
+                            continue;
+                        }
                         String message = getCommitHandler().getCommitMessage(commitMessage, items);
                         if (message != null) {
                             commit.setCommitMessage(message);
