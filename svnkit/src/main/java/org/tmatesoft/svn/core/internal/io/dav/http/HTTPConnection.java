@@ -324,7 +324,7 @@ class HTTPConnection implements IHTTPConnection {
             if (myNextRequestTimeout < 0 || System.currentTimeMillis() >= myNextRequestTimeout) {
                 SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "Keep-Alive timeout detected");
                 close();
-                if (!(myChallengeCredentials instanceof HTTPBasicAuthentication)) {
+                if (isClearCredentialsOnClose(myChallengeCredentials)) {
                     httpAuth = null;
                 }
             }
@@ -646,6 +646,10 @@ class HTTPConnection implements IHTTPConnection {
         return null;
     }
 
+    private boolean isClearCredentialsOnClose(HTTPAuthentication auth) {
+        return !(auth instanceof HTTPBasicAuthentication || auth instanceof HTTPDigestAuthentication);
+    }
+
 	private HTTPSSLKeyManager createKeyManager() {
 		if (!myIsSecured) {
 			return null;
@@ -801,7 +805,7 @@ class HTTPConnection implements IHTTPConnection {
     }
 
     public void close() {
-        if (!(myChallengeCredentials instanceof HTTPBasicAuthentication)) {
+        if (isClearCredentialsOnClose(myChallengeCredentials)) {
             clearAuthenticationCache();
         }
         if (mySocket != null) {
