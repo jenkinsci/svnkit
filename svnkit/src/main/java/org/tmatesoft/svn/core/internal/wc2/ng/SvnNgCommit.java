@@ -62,7 +62,7 @@ public class SvnNgCommit extends SvnNgOperationRunner<Collection<SVNCommitInfo>,
             validatedPaths[i] = validatedPaths[i].replace(File.separatorChar, '/');
             i++;
         }
-        String rootPath = SVNPathUtil.condencePaths(validatedPaths, targets, getOperation().getDepth() == SVNDepth.INFINITY);
+        String rootPath = SVNPathUtil.condencePaths(validatedPaths, targets, false);
         if (rootPath == null) {
             return packet;
         }
