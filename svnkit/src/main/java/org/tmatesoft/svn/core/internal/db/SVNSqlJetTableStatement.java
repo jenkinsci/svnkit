@@ -58,7 +58,7 @@ public abstract class SVNSqlJetTableStatement extends SVNSqlJetStatement {
     
     protected Collection<ISVNSqlJetTrigger> getTriggers() {
         if (this.triggers == null) {
-            Collections.emptyList();
+            return Collections.emptyList();
         }
         return this.triggers;
     }
@@ -90,6 +90,8 @@ public abstract class SVNSqlJetTableStatement extends SVNSqlJetStatement {
     @Override
     public void reset() throws SVNException {
         super.reset();
-        this.triggers.clear();
+        if (this.triggers != null) {
+            this.triggers.clear();
+        }
     }
 }
