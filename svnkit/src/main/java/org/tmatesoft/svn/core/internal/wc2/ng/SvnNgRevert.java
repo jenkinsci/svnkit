@@ -41,7 +41,10 @@ public class SvnNgRevert extends SvnNgOperationRunner<SvnRevert, SvnRevert> {
                     handleEvent(event);
                     continue;
                 }
-                break;
+                if (!useCommitTimes) {
+                    sleepForTimestamp();
+                }
+                throw e;
             } finally {
                 context.releaseWriteLock(lockRoot);
             }

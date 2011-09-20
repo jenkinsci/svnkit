@@ -34,7 +34,7 @@ public class SVNSqlJetSelectStatement extends SVNSqlJetTableStatement {
     }
 
     public SVNSqlJetSelectStatement(SVNSqlJetDb sDb, Enum<?> fromTable, Enum<?> indexName) throws SVNException {
-        this(sDb, fromTable.toString(), indexName.toString());
+        this(sDb, fromTable.toString(), indexName != null ? indexName.toString() : null);
     }
 
     public SVNSqlJetSelectStatement(SVNSqlJetDb sDb, String fromTable) throws SVNException {
