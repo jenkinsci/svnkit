@@ -16,7 +16,10 @@ import java.util.Map;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.sqljet.core.schema.SqlJetConflictAction;
+import org.tmatesoft.sqljet.core.table.ISqlJetTable;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.wc17.db.SvnNodesPristineTrigger;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 
 /**
  * @version 1.4
@@ -29,6 +32,10 @@ public abstract class SVNSqlJetInsertStatement extends SVNSqlJetTableStatement {
     public SVNSqlJetInsertStatement(SVNSqlJetDb sDb, Enum<?> tableName) throws SVNException {
         super(sDb, tableName);
         transactionMode = SqlJetTransactionMode.WRITE;
+        if (SVNWCDbSchema.NODES == tableName) {
+            SvnNodesPristineTrigger trigger = new SvnNodesPristineTrigger();
+            addTrigger(trigger);
+        }
     }
 
 
@@ -38,19 +45,30 @@ public abstract class SVNSqlJetInsertStatement extends SVNSqlJetTableStatement {
     }
 
     public long exec() throws SVNException {
+        statementStarted();
         try {
             Map<String, Object> insertValues = getInsertValues();
-            aboutToInsertRow(conflictAction, insertValues);
+            beforeInsert(conflictAction, table, insertValues);
             long n = table.insertByFieldNamesOr(conflictAction, insertValues);
-            if (n > 0) {
-                updatePristine();
-            }
+            statementCompleted(null);
             return n;
         } catch (SqlJetException e) {
+            statementCompleted(e);
             SVNSqlJetDb.createSqlJetError(e);
             return -1;
         }
     }
+
+    private void beforeInsert(SqlJetConflictAction conflictAction, ISqlJetTable table, Map<String, Object> insertValues) {
+        for (ISVNSqlJetTrigger trigger : getTriggers()) {
+            try {
+                trigger.beforeInsert(conflictAction, table, insertValues);
+            } catch (SqlJetException e) {
+                //
+            }
+        }
+    }
+
 
     protected abstract Map<String, Object> getInsertValues() throws SVNException;
 

@@ -100,6 +100,25 @@ public class SVNWCDbCreateSchema extends SVNSqlJetStatement {
     public static final Statement[] DROP_DELETE_LIST = new Statement[] {
         new Statement(Type.TABLE, "DELETE_LIST", true),
     };
+    
+    public static final Statement[] REVERT_LIST = new Statement[] {
+        new Statement(Type.TABLE, "CREATE TABLE REVERT_LIST (" +
+        		" local_relpath TEXT NOT NULL, " +
+        		" actual INTEGER NOT NULL, " +
+        		" conflict_old TEXT, " +
+                " conflict_new TEXT, " +
+                " conflict_working TEXT, " +
+                " prop_reject TEXT, " +
+                " notify INTEGER, " +
+                " op_depth INTEGER, " +
+                " repos_id INTEGER, " +
+                " kind TEXT, " + 
+                " PRIMARY KEY (local_relpath, actual) );")
+    };
+    
+    public static final Statement[] DROP_REVERT_LIST = new Statement[] {
+        new Statement(Type.TABLE, "REVERT_LIST", true),
+    };
 
 
     private enum Type {

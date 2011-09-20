@@ -36,11 +36,14 @@ public class SVNWCDbClearActualNodeLeavingChangelistRecursive extends SVNSqlJetU
 
     @Override
     protected Object[] getWhere() throws SVNException {
-        return new Object[] {getBind(1)};
+        return isRecursive() ? new Object[] {getBind(1)} : new Object[] {getBind(1), getBind(2)};
     }
 
     @Override
     protected boolean isFilterPassed() throws SVNException {
+        if (!isRecursive()) {
+            return true;
+        }
         if (isColumnNull(SVNWCDbSchema.ACTUAL_NODE__Fields.local_relpath)) {
             return false;
         }
@@ -65,6 +68,10 @@ public class SVNWCDbClearActualNodeLeavingChangelistRecursive extends SVNSqlJetU
         rowValues.put(SVNWCDbSchema.ACTUAL_NODE__Fields.left_checksum.toString(), null);
         rowValues.put(SVNWCDbSchema.ACTUAL_NODE__Fields.right_checksum.toString(), null);
         return rowValues;
+    }
+    
+    protected boolean isRecursive() {
+        return true;
     }
 
 }

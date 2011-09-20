@@ -22,6 +22,8 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc17.db.SvnNodesPristineTrigger;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -115,6 +117,16 @@ public class SVNSqlJetDb {
         if (stmt != null && stmt.isNeedsReset()) {
             stmt.reset();
         }
+        
+        if (stmt instanceof SVNSqlJetInsertStatement
+         || stmt instanceof SVNSqlJetUpdateStatement
+         || stmt instanceof SVNSqlJetDeleteStatement) {
+            String targetTableName = ((SVNSqlJetTableStatement) stmt).getTableName();
+            if (SVNWCDbSchema.NODES.toString().equals(targetTableName)) {
+                SvnNodesPristineTrigger trigger = new SvnNodesPristineTrigger();
+                ((SVNSqlJetTableStatement) stmt).addTrigger(trigger);
+            }
+        }        
         return stmt;
     }
 

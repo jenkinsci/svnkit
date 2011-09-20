@@ -48,27 +48,27 @@ public class SVNWCDbDeleteActualNodeLeavingChangelistRecursive extends SVNSqlJet
 
     @Override
     protected Object[] getWhere() throws SVNException {
-        return new Object[] {getBind(1)};
+        return isRecursive() ? new Object[] {getBind(1)} : new Object[] {getBind(1), getBind(2)};
     }
 
     @Override
     protected boolean isFilterPassed() throws SVNException {
-        String selectPath = getBind(2).toString();
         String rowPath = getColumnString(SVNWCDbSchema.ACTUAL_NODE__Fields.local_relpath);
-        if ("".equals(selectPath) || selectPath.equals(rowPath) || rowPath.startsWith(selectPath + '/')) {
-            if (getColumnString(SVNWCDbSchema.ACTUAL_NODE__Fields.changelist) == null) {
-                return true;
-            } else {
-                select.reset();
-                select.bindf("is", getColumn(SVNWCDbSchema.ACTUAL_NODE__Fields.wc_id), getColumn(SVNWCDbSchema.ACTUAL_NODE__Fields.local_relpath));
-                return !select.next();
+        if (isRecursive()) {
+            String selectPath = getBind(2).toString();
+            if (!("".equals(selectPath) || selectPath.equals(rowPath) || rowPath.startsWith(selectPath + '/'))) {
+                return false;
             }
         }
-        return false;
+        if (getColumnString(SVNWCDbSchema.ACTUAL_NODE__Fields.changelist) == null) {
+            return true;
+        } else {
+            select.reset();
+            select.bindf("is", getColumn(SVNWCDbSchema.ACTUAL_NODE__Fields.wc_id), rowPath);
+            return !select.next();
+        }
     }
     
-    
-    
-    
-
-}
+    protected boolean isRecursive() {
+        return true;
+    }}

@@ -40,7 +40,11 @@ public class SVNWCDbDeleteLockOrphanRecursive extends SVNSqlJetDeleteStatement {
 
     @Override
     protected Object[] getWhere() throws SVNException {
-        return new Object[] {getBind(1)};
+        return isRecursive() ? new Object[] {getBind(1)} : new Object[] {getBind(1), getBind(2)}; 
+    }
+    
+    protected boolean isRecursive() {
+        return true;
     }
 
     @Override
@@ -48,22 +52,17 @@ public class SVNWCDbDeleteLockOrphanRecursive extends SVNSqlJetDeleteStatement {
         if (isColumnNull(SVNWCDbSchema.WC_LOCK__Fields.local_dir_relpath)) {
             return false;
         }
-        
         String rowPath = getColumnString(SVNWCDbSchema.WC_LOCK__Fields.local_dir_relpath);
-        String selectPath = getBind(2).toString();
-        
-        if ("".equals(selectPath) || rowPath.equals(selectPath) || rowPath.startsWith(selectPath + '/')) {            
-            select.reset();
-            select.bindf("is", 
-                    getColumnLong(SVNWCDbSchema.WC_LOCK__Fields.wc_id), 
-                    rowPath);
-            return !select.next();
+        if (isRecursive()) {
+            String selectPath = getBind(2).toString();
+            if (!("".equals(selectPath) || rowPath.equals(selectPath) || rowPath.startsWith(selectPath + '/'))) {
+                return false;
+            }
         }
-        return false;
+        select.reset();
+        select.bindf("is", 
+                getColumnLong(SVNWCDbSchema.WC_LOCK__Fields.wc_id), 
+                rowPath);
+        return !select.next();
     }
-    
-    
-    
-    
-
 }

@@ -1989,9 +1989,29 @@ public class SVNWCDb implements ISVNWCDb {
         }
     }
 
-    public void opRevert(File localAbspath, SVNDepth depth) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+    public void opRevert(File localAbspath, SVNDepth depth) throws SVNException {        
+        final DirParsedInfo parsed = parseDir(localAbspath, Mode.ReadWrite);
+        SVNWCDbDir pdh = parsed.wcDbDir;
+        verifyDirUsable(pdh);
+        
+        SVNSqlJetDb sdb = pdh.getWCRoot().getSDb();
+        sdb.beginTransaction(SqlJetTransactionMode.WRITE);
+            
+        try {
+            SVNSqlJetStatement stmt = new SVNWCDbCreateSchema(sdb.getTemporaryDb(), SVNWCDbCreateSchema.REVERT_LIST, -1);
+            stmt.done();
+
+            if (depth == SVNDepth.INFINITY) {
+                SvnWcDbRevert.revertRecursive(pdh.getWCRoot(), parsed.localRelPath);
+            } else if (depth == SVNDepth.EMPTY) {
+                SvnWcDbRevert.revert(pdh.getWCRoot(), parsed.localRelPath);
+            }
+            sdb.commit();
+        } catch (SVNException e) {
+            sdb.rollback();
+            throw e;
+        }
+        pdh.flushEntries(localAbspath);
     }
 
     public void opSetChangelist(File localAbsPath, String changelist) throws SVNException {

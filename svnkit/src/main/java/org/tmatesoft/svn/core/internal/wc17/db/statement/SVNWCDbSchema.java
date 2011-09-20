@@ -39,7 +39,9 @@ public enum SVNWCDbSchema {
 
     NODE_PROPS_CACHE(NODE_PROPS_CACHE__Fields.class),
 
-    DELETE_LIST( DELETE_LIST__Fields.class)
+    DELETE_LIST( DELETE_LIST__Fields.class),
+
+    REVERT_LIST( REVERT_LIST__Fields.class)
     ;
 
     final public Class<? extends Enum<?>> fields;
@@ -126,5 +128,9 @@ public enum SVNWCDbSchema {
 
     public enum DELETE_LIST__Fields {
         local_relpath;
+    }
+
+    public enum REVERT_LIST__Fields {
+        local_relpath, actual, conflict_old, conflict_new, conflict_working, prop_reject, notify, op_depth, repos_id, kind;
     }
 }

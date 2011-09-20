@@ -334,6 +334,7 @@ public class SVNErrorCode implements Serializable {
      * @since 1.4, SVN 1.7
      */
     public static final SVNErrorCode WC_CLEANUP_REQUIRED = new SVNErrorCode(WC_CATEGORY, 37, "Previous operation was interrupted; run 'svn cleanup'");
+    public static final SVNErrorCode WC_INVALID_OPERATION_DEPTH = new SVNErrorCode(WC_CATEGORY, 38, "The operation can not be performed with the specified depth");
     
     public static final SVNErrorCode FS_GENERAL = new SVNErrorCode(FS_CATEGORY, 0, "General filesystem error");
     public static final SVNErrorCode FS_CLEANUP = new SVNErrorCode(FS_CATEGORY, 1, "Error closing filesystem");

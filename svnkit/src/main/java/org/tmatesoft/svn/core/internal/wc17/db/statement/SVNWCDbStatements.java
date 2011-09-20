@@ -126,6 +126,10 @@ public enum SVNWCDbStatements {
     DELETE_SHADOWED_RECURSIVE(SVNWCDbDeleteShadowedRecursive.class), 
     DELETE_ACTUAL_NODE_RECURSIVE(SVNWCDbDeleteActualNodeRecursive.class),
     COMMIT_DESCENDANT_TO_BASE(SVNWCDbCommitDescendantToBase.class), 
+    UPDATE_OP_DEPTH_INCREASE_RECURSIVE(SVNWCDbUpdateOpDepthIncreaseRecursive.class), 
+    DELETE_WC_LOCK_ORPHAN(SVNWCDbDeleteWCLockOrphan.class), 
+    DELETE_ACTUAL_NODE_LEAVING_CHANGELIST(SVNWCDbDeleteActualNodeLeavingChangelist.class), 
+    CLEAR_ACTUAL_NODE_LEAVING_CHANGELIST(SVNWCDbClearActualNodeLeavingChangelist.class), 
     ;
     
 

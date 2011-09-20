@@ -11,16 +11,13 @@
  */
 package org.tmatesoft.svn.core.internal.db;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
-import org.tmatesoft.sqljet.core.schema.SqlJetConflictAction;
-import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
 import org.tmatesoft.sqljet.core.table.ISqlJetTable;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
-import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODES__Fields;
 
 /**
  * @version 1.4
@@ -30,11 +27,14 @@ public abstract class SVNSqlJetTableStatement extends SVNSqlJetStatement {
 
     protected ISqlJetTable table;
     protected String tableName;
-    
-    private Map<String, Integer> checksumTriggerValues;
+    private Collection<ISVNSqlJetTrigger> triggers;
 
     public SVNSqlJetTableStatement(SVNSqlJetDb sDb, Enum<?> tableName) throws SVNException {
         this(sDb, tableName.toString());
+    }
+    
+    public String getTableName() {
+        return tableName;
     }
 
     public SVNSqlJetTableStatement(SVNSqlJetDb sDb, String tableName) throws SVNException {
@@ -45,101 +45,51 @@ public abstract class SVNSqlJetTableStatement extends SVNSqlJetStatement {
         } catch (SqlJetException e) {
             SVNSqlJetDb.createSqlJetError(e);
         }
-        if (isNodesTable()) {
-            checksumTriggerValues = new HashMap<String, Integer>();
+    }
+    
+    public void addTrigger(ISVNSqlJetTrigger trigger) {
+        if (trigger != null) {
+            if (this.triggers == null) {
+                this.triggers = new ArrayList<ISVNSqlJetTrigger>();
+            }
+            this.triggers.add(trigger);
         }
+    }
+    
+    protected Collection<ISVNSqlJetTrigger> getTriggers() {
+        if (this.triggers == null) {
+            Collections.emptyList();
+        }
+        return this.triggers;
     }
 
     public ISqlJetTable getTable() {
         return table;
     }
-    
-    private boolean isNodesTable() {
-        return SVNWCDbSchema.NODES.toString().equals(tableName);
-    }
-    
-    public void updatePristine() throws SqlJetException {
-        if (!isNodesTable()) {
-            return;
-        }
-        try {
-            if (checksumTriggerValues != null && !checksumTriggerValues.isEmpty()) {
-                Map<String, Object> values = new HashMap<String, Object>();
-                ISqlJetTable pristineTable = sDb.getDb().getTable(SVNWCDbSchema.PRISTINE.toString());
-                for (String checksum : checksumTriggerValues.keySet()) {
-                    ISqlJetCursor cursor = pristineTable.lookup(null, checksum);
-                    long delta = checksumTriggerValues.get(checksum); 
-                    if (delta == 0) {
-                        continue;
-                    }
-                    if (cursor != null && !cursor.eof()) {                        
-                        long refcount = cursor.getInteger(SVNWCDbSchema.PRISTINE__Fields.refcount.toString());
-                        refcount += delta;
-                        if (refcount < 0) {
-                            refcount = 0;
-                        }
-                        values.put(SVNWCDbSchema.PRISTINE__Fields.refcount.toString(), refcount);
-                        cursor.updateByFieldNames(values);
-                    }
-                    cursor.close();
-                }
-            }
-        } finally {
-            checksumTriggerValues = new HashMap<String, Integer>();
-        }
-    }
-    
-    protected void aboutToDeleteRow() throws SqlJetException {
-        if (!isNodesTable()) {
-            return;
-        }
-        String checksumValue = getCursor().getString(NODES__Fields.checksum.toString());
-        changeRefCount(checksumValue, -1);
-    }
 
-    protected void aboutToInsertRow(SqlJetConflictAction onConflict, Map<String, Object> values) throws SqlJetException {
-        if (!isNodesTable()) {
-            return;
-        }
-        if (onConflict == SqlJetConflictAction.REPLACE) {
-            Object o1 = values.get(NODES__Fields.wc_id.toString());
-            Object o2 = values.get(NODES__Fields.local_relpath.toString());
-            Object o3 = values.get(NODES__Fields.op_depth.toString());
-            ISqlJetCursor cursor = getTable().lookup(null, new Object[] {o1, o2, o3});
-            try { 
-                if (!cursor.eof()) {
-                    changeRefCount(cursor.getString(NODES__Fields.checksum.toString()), -1);
-                }
-            } finally {
-                cursor.close();
+    protected void statementStarted() {
+        for (ISVNSqlJetTrigger trigger : getTriggers()) {
+            try {
+                trigger.statementStarted(sDb.getDb());
+            } catch (SqlJetException e) {
+                //
             }
         }
-        String newChecksumValue = (String) values.get(NODES__Fields.checksum.toString());
-        changeRefCount(newChecksumValue, 1);
     }
     
-    protected void aboutToUpdateRow(Map<String, Object> values) throws SqlJetException, SVNException {
-        if (!isNodesTable()) {
-            return;
-        }
-        if (values.containsKey(NODES__Fields.checksum.toString())) {
-            Map<String, Object> existingValues = getRowValues();
-            
-            String newChecksum = (String) values.get(NODES__Fields.checksum.toString());
-            String oldChecksum = (String) existingValues.get(NODES__Fields.checksum.toString());
-            
-            changeRefCount(oldChecksum,-1);
-            changeRefCount(newChecksum, 1);
+    protected void statementCompleted(SqlJetException error) {
+        for (ISVNSqlJetTrigger trigger : getTriggers()) {
+            try {
+                trigger.statementCompleted(sDb.getDb(), error);
+            } catch (SqlJetException e) {
+                //
+            }
         }
     }
 
-    private void changeRefCount(String checksum, int delta) {
-        if (checksum != null) {
-            if (!checksumTriggerValues.containsKey(checksum)) {
-                checksumTriggerValues.put(checksum, delta);
-            } else {
-                checksumTriggerValues.put(checksum, checksumTriggerValues.get(checksum) + delta);
-            }
-        }
+    @Override
+    public void reset() throws SVNException {
+        super.reset();
+        this.triggers.clear();
     }
 }
