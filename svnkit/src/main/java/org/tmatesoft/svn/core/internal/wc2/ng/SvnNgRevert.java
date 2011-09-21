@@ -206,12 +206,10 @@ public class SvnNgRevert extends SvnNgOperationRunner<SvnRevert, SvnRevert> {
             } else if (onDisk == SVNNodeKind.FILE) {
                 SVNProperties pristineProperties = getWcContext().getDb().readPristineProperties(localAbsPath);
                 boolean modified = false;
-                if (SVNFileUtil.symlinksSupported()) {
-                    String specialProperty = pristineProperties.getStringValue(SVNProperty.SPECIAL);
-                    if ((specialProperty != null) != special) {
-                        SVNFileUtil.deleteFile(localAbsPath);
-                        onDisk = SVNNodeKind.NONE;
-                    }
+                String specialProperty = pristineProperties.getStringValue(SVNProperty.SPECIAL);
+                if (SVNFileUtil.symlinksSupported() && (specialProperty != null) != special) {
+                    SVNFileUtil.deleteFile(localAbsPath);
+                    onDisk = SVNNodeKind.NONE;                    
                 } else {
                     if (recordedSize != -1
                             && recordedTime != 0
