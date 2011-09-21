@@ -211,13 +211,15 @@ public class SvnNgRevert extends SvnNgOperationRunner<SvnRevert, SvnRevert> {
                     SVNFileUtil.deleteFile(localAbsPath);
                     onDisk = SVNNodeKind.NONE;                    
                 } else {
+                    long lastModified = SVNFileUtil.roundTimeStamp(localAbsPath.lastModified());
+                    long size = localAbsPath.length();
                     if (recordedSize != -1
                             && recordedTime != 0
-                            && recordedSize == localAbsPath.length()
-                            && recordedTime == localAbsPath.lastModified()) {
+                            && recordedSize == size 
+                            && recordedTime/1000 == lastModified) {
                         modified = false;
                     } else {
-                        modified = getWcContext().isTextModified(localAbsPath, true, false);
+                        modified = getWcContext().isTextModified(localAbsPath, true, true);
                     }
                 }
                 
