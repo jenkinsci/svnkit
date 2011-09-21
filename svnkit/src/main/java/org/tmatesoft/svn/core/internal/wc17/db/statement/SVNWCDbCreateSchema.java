@@ -86,7 +86,7 @@ public class SVNWCDbCreateSchema extends SVNSqlJetStatement {
     };
     
     public static final Statement[] NODE_PROPS_CACHE = new Statement[] {
-        new Statement(Type.TABLE, "NODE_PROPS_CACHE", "CREATE TABLE NODE_PROPS_CACHE (local_Relpath TEXT NOT NULL, kind TEXT NOT NULL, properties BLOB, PRIMARY KEY (local_Relpath) );", true, true),
+        new Statement(Type.TABLE, "NODE_PROPS_CACHE", "CREATE TABLE NODE_PROPS_CACHE (local_Relpath TEXT NOT NULL, kind TEXT NOT NULL, properties BLOB, PRIMARY KEY (local_Relpath) );", true),
     };
     
     public static final Statement[] DROP_NODE_PROPS_CACHE = new Statement[] {
