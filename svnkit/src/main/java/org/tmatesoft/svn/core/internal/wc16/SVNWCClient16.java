@@ -1993,7 +1993,6 @@ public class SVNWCClient16 extends SVNBasicDelegate {
                     SVNEntry entry = wcAccess.getEntry(path, false);
                     if (entry != null && entry.isDirectory() && entry.isScheduledForAddition()) {
                         if (depth != SVNDepth.INFINITY) {
-                            getDebugLog().logFine(SVNLogType.WC, "Forcing revert on path '" + path + "' to recurse");
                             depth = SVNDepth.INFINITY;
                             wcAccess.close();
                             info = wcAccess.openAnchor(path, true, SVNWCAccess.INFINITE_DEPTH);
