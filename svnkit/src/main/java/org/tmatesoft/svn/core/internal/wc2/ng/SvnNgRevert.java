@@ -215,7 +215,7 @@ public class SvnNgRevert extends SvnNgOperationRunner<SvnRevert, SvnRevert> {
                 } else {
                     if (recordedSize != -1
                             && recordedTime != 0
-                            && recordedSize != localAbsPath.length()
+                            && recordedSize == localAbsPath.length()
                             && recordedTime == localAbsPath.lastModified()) {
                         modified = false;
                     } else {
