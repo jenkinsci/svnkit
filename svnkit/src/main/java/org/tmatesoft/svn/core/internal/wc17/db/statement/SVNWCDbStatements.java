@@ -130,6 +130,7 @@ public enum SVNWCDbStatements {
     DELETE_WC_LOCK_ORPHAN(SVNWCDbDeleteWCLockOrphan.class), 
     DELETE_ACTUAL_NODE_LEAVING_CHANGELIST(SVNWCDbDeleteActualNodeLeavingChangelist.class), 
     CLEAR_ACTUAL_NODE_LEAVING_CHANGELIST(SVNWCDbClearActualNodeLeavingChangelist.class), 
+    SELECT_REVERT_LIST_COPIED_CHILDREN(SVNWCDbSelectRevertListCopiedChildren.class), 
     ;
     
 

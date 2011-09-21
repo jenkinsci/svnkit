@@ -35,6 +35,7 @@ import org.tmatesoft.svn.core.wc2.SvnGetInfo;
 import org.tmatesoft.svn.core.wc2.SvnGetProperties;
 import org.tmatesoft.svn.core.wc2.SvnInfo;
 import org.tmatesoft.svn.core.wc2.SvnRemove;
+import org.tmatesoft.svn.core.wc2.SvnRevert;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 /**
@@ -1634,15 +1635,7 @@ public class SVNWCClient extends SVNBasicClient {
      * @deprecated use {@link #doRevert(File[], SVNDepth, Collection)}
      */
     public void doRevert(File path, boolean recursive) throws SVNException {
-        try {
-            getSVNWCClient17().doRevert(path, recursive);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNWCClient16().doRevert(path, recursive);
-                return;
-            }
-            throw e;
-        }
+        doRevert(new File[] {path}, SVNDepth.fromRecurse(recursive), null);
     }
 
     /**
@@ -1669,15 +1662,7 @@ public class SVNWCClient extends SVNBasicClient {
      * @deprecated use {@link #doRevert(File[], SVNDepth, Collection)} instead
      */
     public void doRevert(File[] paths, boolean recursive) throws SVNException {
-        try {
-            getSVNWCClient17().doRevert(paths, recursive);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNWCClient16().doRevert(paths, recursive);
-                return;
-            }
-            throw e;
-        }
+        doRevert(paths, SVNDepth.fromRecurse(recursive), null);
     }
 
     /**
@@ -1716,15 +1701,14 @@ public class SVNWCClient extends SVNBasicClient {
      * @since 1.2, SVN 1.5
      */
     public void doRevert(File[] paths, SVNDepth depth, Collection<String> changeLists) throws SVNException {
-        try {
-            getSVNWCClient17().doRevert(paths, depth, changeLists);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNWCClient16().doRevert(paths, depth, changeLists);
-                return;
-            }
-            throw e;
+        SvnRevert revert = getOperationsFactory().createRevert();
+        for (int i = 0; i < paths.length; i++) {
+            revert.addTarget(SvnTarget.fromFile(paths[i]));
         }
+        revert.setDepth(depth);
+        revert.setApplicalbeChangelists(changeLists);
+        
+        revert.run();
     }
 
     /**

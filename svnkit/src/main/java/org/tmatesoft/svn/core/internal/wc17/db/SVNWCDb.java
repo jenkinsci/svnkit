@@ -974,6 +974,10 @@ public class SVNWCDb implements ISVNWCDb {
         return gatherChildren(localAbsPath, true, false);
     }
 
+    public Set<String> getWorkingChildren(File localAbsPath) throws SVNException {
+        return gatherChildren(localAbsPath, false, true);
+    }
+
     public SVNProperties getBaseDavCache(File localAbsPath) throws SVNException {
         SVNSqlJetStatement stmt = getStatementForPath(localAbsPath, SVNWCDbStatements.SELECT_BASE_DAV_CACHE);
         try {
