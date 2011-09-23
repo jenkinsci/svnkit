@@ -333,7 +333,6 @@ public class PythonTests {
                 commandsList.add(String.valueOf(testCase));
             }
         }
-        
         String[] commands = (String[]) commandsList.toArray(new String[commandsList.size()]); 
 
 		try {
@@ -462,6 +461,7 @@ public class PythonTests {
 		final List tests = new ArrayList();
 		String line;
 		while ((line = reader.readLine()) != null) {
+		    line = line.trim();
 			final StringTokenizer tokenizer = new StringTokenizer(line, " \t", false);
 			if (!tokenizer.hasMoreTokens()) {
 				continue;
@@ -482,6 +482,7 @@ public class PythonTests {
 			try {
 				tests.add(new Integer(first));
 			} catch (NumberFormatException ex) {
+			    ex.printStackTrace();
 			    continue;
 			}
 		}
@@ -585,15 +586,26 @@ public class PythonTests {
         // create client scripts.
         String svnHome = properties.getProperty("svn.home", "/usr/bin");
         File template = SVNFileUtil.isWindows ? new File("daemon/template.bat") : new File("daemon/template");
+        File templatePy = SVNFileUtil.isWindows ? new File("daemon/template.py") : null;
         
-        generateClientScript(template, new File("daemon/jsvn"), NailgunProcessor.class.getName(), "svn", portNumber, svnHome);
-        generateClientScript(template, new File("daemon/jsvnadmin"), NailgunProcessor.class.getName(), "svnadmin", portNumber, svnHome);
-        generateClientScript(template, new File("daemon/jsvnversion"), NailgunProcessor.class.getName(), "svnversion", portNumber, svnHome);
-        generateClientScript(template, new File("daemon/jsvnlook"), NailgunProcessor.class.getName(), "svnlook", portNumber, svnHome);
-        generateClientScript(template, new File("daemon/jsvnsync"), NailgunProcessor.class.getName(), "svnsync", portNumber, svnHome);
-        generateClientScript(template, new File("daemon/jsvndumpfilter"), NailgunProcessor.class.getName(), "svndumpfilter", portNumber, svnHome);
-
         String pattern = properties.getProperty("python.tests.pattern", null);
+
+        generateClientScript(template, new File("daemon/jsvn"), NailgunProcessor.class.getName(), "svn", portNumber, svnHome, pattern);
+        generateClientScript(template, new File("daemon/jsvnadmin"), NailgunProcessor.class.getName(), "svnadmin", portNumber, svnHome, pattern);
+        generateClientScript(template, new File("daemon/jsvnversion"), NailgunProcessor.class.getName(), "svnversion", portNumber, svnHome, pattern);
+        generateClientScript(template, new File("daemon/jsvnlook"), NailgunProcessor.class.getName(), "svnlook", portNumber, svnHome, pattern);
+        generateClientScript(template, new File("daemon/jsvnsync"), NailgunProcessor.class.getName(), "svnsync", portNumber, svnHome, pattern);
+        generateClientScript(template, new File("daemon/jsvndumpfilter"), NailgunProcessor.class.getName(), "svndumpfilter", portNumber, svnHome, pattern);
+        
+        if (SVNFileUtil.isWindows) {
+            generateClientScript(templatePy, new File("daemon/jsvn.py"), NailgunProcessor.class.getName(), "svn", portNumber, svnHome, pattern);
+            generateClientScript(templatePy, new File("daemon/jsvnadmin.py"), NailgunProcessor.class.getName(), "svnadmin", portNumber, svnHome, pattern);
+            generateClientScript(templatePy, new File("daemon/jsvnversion.py"), NailgunProcessor.class.getName(), "svnversion", portNumber, svnHome, pattern);
+            generateClientScript(templatePy, new File("daemon/jsvnlook.py"), NailgunProcessor.class.getName(), "svnlook", portNumber, svnHome, pattern);
+            generateClientScript(templatePy, new File("daemon/jsvnsync.py"), NailgunProcessor.class.getName(), "svnsync", portNumber, svnHome, pattern);
+            generateClientScript(templatePy, new File("daemon/jsvndumpfilter.py"), NailgunProcessor.class.getName(), "svndumpfilter", portNumber, svnHome, pattern);
+        }
+
         if (pattern != null) {
             generateMatcher(new File("daemon/matcher.pl"), new File("daemon/matcher.pl"), pattern);
         } else {
@@ -754,7 +766,7 @@ public class PythonTests {
         return connectorPort;
     }
 
-    private static void generateClientScript(File src, File destination, String mainClass, String name, int port, String svnHome) throws IOException {
+    private static void generateClientScript(File src, File destination, String mainClass, String name, int port, String svnHome, String pattern) throws IOException {
         byte[] contents = new byte[(int) src.length()];
         InputStream is = new FileInputStream(src);
         SVNFileUtil.readIntoBuffer(is, contents, 0, contents.length);
@@ -764,14 +776,18 @@ public class PythonTests {
         script = script.replaceAll("%mainclass%", mainClass);
         script = script.replaceAll("%name%", name);
         script = script.replaceAll("%port%", Integer.toString(port));
-        script = script.replaceAll("%svn_home%", svnHome);
+        script = script.replaceAll("%svn_home%", new File(svnHome).getAbsolutePath().replace(File.separatorChar, '/'));
         script = script.replaceAll("%NG%", new File("daemon/ng").getAbsolutePath().replace(File.separatorChar, '/'));
         script = script.replaceAll("%svn_test_work%", new File("svn-python-tests/svn-test-work").getAbsolutePath().replace(File.separatorChar, '/'));
-        script = script.replace('/', File.separatorChar);
-        
-        if (SVNFileUtil.isWindows) {
-            destination = new File(destination.getParentFile(), destination.getName() + ".bat");
+        if (pattern != null) {
+            script = script.replace("%pattern%", pattern);
+        }        
+        if (!destination.getName().endsWith(".py")) {
+            script = script.replace('/', File.separatorChar);
         }
+        if (SVNFileUtil.isWindows && !destination.getName().endsWith(".py")) {
+            destination = new File(destination.getParentFile(), destination.getName() + ".bat");
+        } 
         
         FileOutputStream os = new FileOutputStream(destination);
         os.write(script.getBytes());

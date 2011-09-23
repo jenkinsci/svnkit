@@ -26,6 +26,7 @@ svnkit-test/configurations/shared/daemon/matcher.pl -text
 svnkit-test/configurations/shared/daemon/snapshot eol=lf
 svnkit-test/configurations/shared/daemon/template eol=lf
 svnkit-test/configurations/shared/daemon/template.bat -text
+svnkit-test/configurations/shared/daemon/template.py -text
 svnkit-test/configurations/shared/fsfs.conf -text
 svnkit-test/nailgun/Makefile -text
 svnkit-test/nailgun/README.txt -text

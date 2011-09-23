@@ -43,7 +43,10 @@ public class NailgunProcessor {
             SVNSync.main(programArgs);
         } else if ("svndumpfilter".equals(programName)) {
             SVNDumpFilter.main(programArgs);
+        } else if ("entries-dump".equals(programName)) {
+            // give them some entries dump!
         }
+        
     }
 
     private static void configureLoggers(String testName) {
