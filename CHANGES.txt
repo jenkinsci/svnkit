@@ -1,3 +1,18 @@
+== version 1.3.6 ==
+
++ Changes made in Subversion since version 1.6.15 implemented, 
+  all Subversion 1.6.17 features are supported.
+  
++ SSH connections pool reimplemented, number of race conditions
+  and potential deadlocks fixed by that new implementation.
++ Memory consumption decreased significantly for status operation.
++ GNOME keyring support
++ HTTP Digest and Basic authentication methods did not work 
+  with non Keep-Alive connection, fixed.  
++ SQLJet library upgraded to v1.0.7
+
++ Other minor bugfixes and improvements.
+
 == version 1.3.5 ==
 
 + Changes made in Subversion since version 1.6.12 implemented, 
