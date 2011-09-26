@@ -3324,22 +3324,23 @@ public class SVNWCContext {
         return workItem1;
     }
 
-    public void wqRun(File wcRootAbspath) throws SVNException {
+    public void wqRun(File dirAbspath) throws SVNException {
         // SVNDebugLog.getDefaultLog().log(SVNLogType.WC,
         // String.format("work queue run: wcroot='%s'", wcRootAbspath),
         // Level.INFO);
+        File wcRootAbspath = getDb().getWCRoot(dirAbspath);
         while (true) {
             checkCancelled();
-            SVNWCDbKind kind = db.readKind(wcRootAbspath, true);
+            SVNWCDbKind kind = db.readKind(dirAbspath, true);
             if (kind == SVNWCDbKind.Unknown) {
                 break;
             }
-            WCDbWorkQueueInfo fetchWorkQueue = db.fetchWorkQueue(wcRootAbspath);
+            WCDbWorkQueueInfo fetchWorkQueue = db.fetchWorkQueue(dirAbspath);
             if (fetchWorkQueue.workItem == null) {
                 break;
             }
             dispatchWorkItem(wcRootAbspath, fetchWorkQueue.workItem);
-            db.completedWorkQueue(wcRootAbspath, fetchWorkQueue.id);
+            db.completedWorkQueue(dirAbspath, fetchWorkQueue.id);
         }
     }
 
