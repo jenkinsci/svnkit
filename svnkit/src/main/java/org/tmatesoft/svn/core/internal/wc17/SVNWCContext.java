@@ -3480,9 +3480,8 @@ public class SVNWCContext {
             File srcPath;
             if (workItem.getListSize() <= 4) {
                 srcPath = ctx.getPristineContents(localAbspath, false, true).path;
-//                assert (srcPath != null);
             } else {
-                srcPath = SVNFileUtil.createFilePath(workItem.getChild(4).getValue());
+                srcPath = SVNFileUtil.createFilePath(wcRootAbspath, workItem.getChild(4).getValue());
             }
             TranslateInfo tinfo = ctx.getTranslateInfo(localAbspath, true, true, true);
             SVNTranslator.translate(srcPath, localAbspath, null, tinfo.eolStyleInfo.eolStr, tinfo.keywords, tinfo.special, true);
