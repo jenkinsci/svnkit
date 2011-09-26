@@ -32,7 +32,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 
-import org.ietf.jgss.Oid;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -74,8 +73,8 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo.RepositoryInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbWorkQueueInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
-import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.DirParsedInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeOriginInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.PristineInfo;
@@ -607,9 +606,9 @@ public class SVNWCContext {
         Structure<NodeInfo> nodeInfo = getDb().readInfo(localAbsPath, NodeInfo.status, NodeInfo.kind, NodeInfo.checksum, 
                 NodeInfo.recordedSize, NodeInfo.recordedTime, NodeInfo.hadProps, NodeInfo.propsMod);
         if (!nodeInfo.hasValue(NodeInfo.checksum)
-                || SVNWCDbKind.File != nodeInfo.get(NodeInfo.kind)
-                || (SVNWCDbStatus.Added != nodeInfo.get(NodeInfo.status) &&
-                    SVNWCDbStatus.Normal != nodeInfo.get(NodeInfo.status))) {
+                || SVNWCDbKind.File != nodeInfo.<SVNWCDbKind>get(NodeInfo.kind)
+                || (SVNWCDbStatus.Added != nodeInfo.<SVNWCDbStatus>get(NodeInfo.status) &&
+                    SVNWCDbStatus.Normal != nodeInfo.<SVNWCDbStatus>get(NodeInfo.status))) {
             return true;
         }
         SVNFileType fileType = SVNFileType.getType(localAbsPath);
