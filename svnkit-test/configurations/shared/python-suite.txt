@@ -14,7 +14,7 @@ externals ALL
 history ALL
 import ALL
 info ALL
-lock ALL
+lock ALL -32
 log ALL
 merge ALL -4
 merge_authz ALL
