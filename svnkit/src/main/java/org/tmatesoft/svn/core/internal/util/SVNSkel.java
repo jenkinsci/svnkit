@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.util;
 
+import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -23,6 +24,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -266,6 +268,11 @@ public class SVNSkel {
     public void prependString(String str) throws SVNException {
         SVNSkel skel = SVNSkel.createAtom(str);
         addChild(skel);
+    }
+
+    public void prependPath(File path) throws SVNException {        
+        String str = path != null ? SVNFileUtil.getFilePath(path) : "";
+        prependString(str);
     }
 
     public int getListSize() {

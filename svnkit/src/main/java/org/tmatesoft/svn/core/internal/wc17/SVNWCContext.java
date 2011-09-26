@@ -43,6 +43,7 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb.Mode;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -74,6 +75,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo.Repos
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbWorkQueueInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
+import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.DirParsedInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeOriginInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.PristineInfo;
@@ -217,8 +219,6 @@ public class SVNWCContext {
     }
 
     public static enum WorkQueueOperation {
-
-        REVERT("revert", new RunRevert()),
 
         BASE_REMOVE("base-remove", new RunBaseRemove()),
 
@@ -3122,9 +3122,10 @@ public class SVNWCContext {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "''{0}'' not found", srcAbspath);
             SVNErrorManager.error(err, SVNLogType.WC);
         }
+//        getDb().getWCRoot(dirAbspath)
         SVNSkel workItem = SVNSkel.createEmptyList();
-        workItem.prependString(dstAbspath.getPath());
-        workItem.prependString(srcAbspath.getPath());
+        workItem.prependPath(getRelativePath(dstAbspath));
+        workItem.prependPath(getRelativePath(srcAbspath));
         workItem.prependString(WorkQueueOperation.FILE_MOVE.getOpName());
         SVNSkel result = SVNSkel.createEmptyList();
         result.appendChild(workItem);
@@ -3141,9 +3142,9 @@ public class SVNWCContext {
             SVNErrorManager.error(err, SVNLogType.WC);
         }
         SVNSkel workItem = SVNSkel.createEmptyList();
-        workItem.prependString(dstAbspath.getPath());
-        workItem.prependString(srcAbspath.getPath());
-        workItem.prependString(localAbspath.getPath());
+        workItem.prependPath(getRelativePath(dstAbspath));
+        workItem.prependPath(getRelativePath(srcAbspath));
+        workItem.prependPath(getRelativePath(localAbspath));
         workItem.prependString(WorkQueueOperation.FILE_COPY_TRANSLATED.getOpName());
         SVNSkel result = SVNSkel.createEmptyList();
         result.appendChild(workItem);
@@ -3161,7 +3162,7 @@ public class SVNWCContext {
         workItem.prependString(wrkPath != null ? wrkPath : "");
         workItem.prependString(newPath != null ? newPath : "");
         workItem.prependString(oldPath != null ? oldPath : "");
-        workItem.prependString(localAbspath.getPath());
+        workItem.prependPath(getRelativePath(localAbspath));
         workItem.prependString(WorkQueueOperation.TMP_SET_TEXT_CONFLICT_MARKERS.getOpName());
         SVNSkel result = SVNSkel.createEmptyList();
         result.appendChild(workItem);
@@ -3171,7 +3172,7 @@ public class SVNWCContext {
     public SVNSkel wqBuildBaseRemove(File localAbspath, boolean keepNotPresent) throws SVNException {
         SVNSkel workItem = SVNSkel.createEmptyList();
         workItem.prependString(keepNotPresent ? "1" : "0");
-        workItem.prependString(localAbspath.getPath());
+        workItem.prependPath(getRelativePath(localAbspath));
         workItem.prependString(WorkQueueOperation.BASE_REMOVE.getOpName());
         SVNSkel result = SVNSkel.createEmptyList();
         result.appendChild(workItem);
@@ -3182,7 +3183,7 @@ public class SVNWCContext {
         SVNSkel workItem = SVNSkel.createEmptyList();
         workItem.prependString(Integer.toString(notPresentKind.ordinal()));
         workItem.prependString(Long.toString(notPresentRevision));
-        workItem.prependString(localAbspath.getPath());
+        workItem.prependPath(getRelativePath(localAbspath));
         workItem.prependString(WorkQueueOperation.BASE_REMOVE.getOpName());
         SVNSkel result = SVNSkel.createEmptyList();
         result.appendChild(workItem);
@@ -3195,7 +3196,7 @@ public class SVNWCContext {
         if (setTime != null) {
             workItem.prependString(String.format("%d", setTime.getTimeInMicros()));
         }
-        workItem.prependString(localAbspath.getPath());
+        workItem.prependPath(getRelativePath(localAbspath));
         workItem.prependString(WorkQueueOperation.RECORD_FILEINFO.getOpName());
         SVNSkel result = SVNSkel.createEmptyList();
         result.appendChild(workItem);
@@ -3205,11 +3206,11 @@ public class SVNWCContext {
     public SVNSkel wqBuildFileInstall(File localAbspath, File sourceAbspath, boolean useCommitTimes, boolean recordFileinfo) throws SVNException {
         SVNSkel workItem = SVNSkel.createEmptyList();
         if (sourceAbspath != null) {
-            workItem.prependString(sourceAbspath.getPath());
+            workItem.prependPath(getRelativePath(sourceAbspath));
         }
         workItem.prependString(recordFileinfo ? "1" : "0");
         workItem.prependString(useCommitTimes ? "1" : "0");
-        workItem.prependString(localAbspath.getPath());
+        workItem.prependPath(getRelativePath(localAbspath));
         workItem.prependString(WorkQueueOperation.FILE_INSTALL.getOpName());
         SVNSkel result = SVNSkel.createEmptyList();
         result.appendChild(workItem);
@@ -3218,7 +3219,7 @@ public class SVNWCContext {
 
     public SVNSkel wqBuildSyncFileFlags(File localAbspath) throws SVNException {
         SVNSkel workItem = SVNSkel.createEmptyList();
-        workItem.prependString(localAbspath.getPath());
+        workItem.prependPath(getRelativePath(localAbspath));
         workItem.prependString(WorkQueueOperation.SYNC_FILE_FLAGS.getOpName());
         SVNSkel result = SVNSkel.createEmptyList();
         result.appendChild(workItem);
@@ -3227,7 +3228,7 @@ public class SVNWCContext {
 
     public SVNSkel wqBuildFileRemove(File localAbspath) throws SVNException {
         SVNSkel workItem = SVNSkel.createEmptyList();
-        workItem.prependString(localAbspath.getPath());
+        workItem.prependPath(getRelativePath(localAbspath));
         workItem.prependString(WorkQueueOperation.FILE_REMOVE.getOpName());
         SVNSkel result = SVNSkel.createEmptyList();
         result.appendChild(workItem);
@@ -3238,7 +3239,7 @@ public class SVNWCContext {
         assert (conflictSkel != null);
         SVNSkel workItem = SVNSkel.createEmptyList();
         workItem.addChild(conflictSkel);
-        workItem.prependString(localAbspath.getPath());
+        workItem.prependPath(getRelativePath(localAbspath));
         workItem.prependString(WorkQueueOperation.PREJ_INSTALL.getOpName());
         SVNSkel result = SVNSkel.createEmptyList();
         result.appendChild(workItem);
@@ -3254,7 +3255,7 @@ public class SVNWCContext {
             prejPath = SVNWCUtils.getPathAsChild(wcRoot, prejFile);
         }
         workItem.prependString(prejPath != null ? prejPath : "");
-        workItem.prependString(localAbspath.getPath());
+        workItem.prependPath(getRelativePath(localAbspath));
         workItem.prependString(WorkQueueOperation.TMP_SET_PROPERTY_CONFLICT_MARKER.getOpName());
         SVNSkel result = SVNSkel.createEmptyList();
         result.appendChild(workItem);
@@ -3265,7 +3266,7 @@ public class SVNWCContext {
         SVNSkel workItem = SVNSkel.createEmptyList();
         workItem.prependString(noUnlock ? "1" : "0");
         workItem.prependString(Long.toString(newRevnum));
-        workItem.prependString(SVNFileUtil.getFilePath(localAbspath));
+        workItem.prependPath(getRelativePath(localAbspath));
         workItem.prependString(WorkQueueOperation.DELETION_POSTCOMMIT.getOpName());
         SVNSkel result = SVNSkel.createEmptyList();
         result.appendChild(workItem);
@@ -3358,18 +3359,10 @@ public class SVNWCContext {
         SVNErrorManager.error(err, SVNLogType.WC);
     }
 
-    public static class RunRevert implements RunWorkQueueOperation {
-
-        public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) {
-            // TODO
-            throw new UnsupportedOperationException();
-        }
-    }
-
     public static class RunBaseRemove implements RunWorkQueueOperation {
 
         public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) throws SVNException {
-            File localAbspath = SVNFileUtil.createFilePath(workItem.getChild(1).getValue());
+            File localAbspath = SVNFileUtil.createFilePath(wcRootAbspath, workItem.getChild(1).getValue());
             long value  = -1;
             try {
                 value = Long.parseLong(workItem.getChild(2).getValue());
@@ -3413,7 +3406,7 @@ public class SVNWCContext {
     public static class RunDeletionPostCommit implements RunWorkQueueOperation {
 
         public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) throws SVNException {
-            File localAbspath = SVNFileUtil.createFilePath(workItem.getChild(1).getValue());
+            File localAbspath = SVNFileUtil.createFilePath(wcRootAbspath, workItem.getChild(1).getValue());
             long newRevision = SVNWCUtils.parseLong(workItem.getChild(2).getValue());
             SVNWCDbKind kind = ctx.getDb().readKind(localAbspath, false);
             long parentRevision = ctx.getDb().getBaseInfo(SVNFileUtil.getParentFile(localAbspath), BaseInfoField.revision).revision;
@@ -3437,7 +3430,7 @@ public class SVNWCContext {
 
         public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) throws SVNException {
 
-            File localAbspath = SVNFileUtil.createFilePath(workItem.getChild(1).getValue());
+            File localAbspath = SVNFileUtil.createFilePath(wcRootAbspath, workItem.getChild(1).getValue());
             long newRevision = SVNWCUtils.parseLong(workItem.getChild(2).getValue());
             SVNDate changedDate = SVNWCUtils.readDate(SVNWCUtils.parseLong(workItem.getChild(3).getValue()));
             String changedAuthor = null;
@@ -3481,7 +3474,7 @@ public class SVNWCContext {
     public static class RunFileInstall implements RunWorkQueueOperation {
 
         public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) throws SVNException {
-            File localAbspath = SVNFileUtil.createFilePath(workItem.getChild(1).getValue());
+            File localAbspath = SVNFileUtil.createFilePath(wcRootAbspath, workItem.getChild(1).getValue());
             boolean useCommitTimes = "1".equals(workItem.getChild(2).getValue());
             boolean recordFileInfo = "1".equals(workItem.getChild(3).getValue());
             File srcPath;
@@ -3512,7 +3505,7 @@ public class SVNWCContext {
     public static class RunFileCommit implements RunWorkQueueOperation {
 
         public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) throws SVNException {
-            File localAbspath = SVNFileUtil.createFilePath(workItem.getChild(1).getValue());
+            File localAbspath = SVNFileUtil.createFilePath(wcRootAbspath, workItem.getChild(1).getValue());
             File tmpFile = ctx.getTranslatedFile(localAbspath, localAbspath, true, false, false, false);
             TranslateInfo info = ctx.getTranslateInfo(localAbspath, false, false, true);
             boolean sameContents = false;
@@ -3539,7 +3532,7 @@ public class SVNWCContext {
     public static class RunFileRemove implements RunWorkQueueOperation {
 
         public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) throws SVNException {
-            File localAbspath = SVNFileUtil.createFilePath(workItem.getChild(1).getValue());
+            File localAbspath = SVNFileUtil.createFilePath(wcRootAbspath, workItem.getChild(1).getValue());
             SVNFileUtil.deleteFile(localAbspath);
         }
     }
@@ -3547,8 +3540,8 @@ public class SVNWCContext {
     public static class RunFileMove implements RunWorkQueueOperation {
 
         public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) throws SVNException {
-            File srcAbspath = SVNFileUtil.createFilePath(workItem.getChild(1).getValue());
-            File dstAbspath = SVNFileUtil.createFilePath(workItem.getChild(2).getValue());
+            File srcAbspath = SVNFileUtil.createFilePath(wcRootAbspath, workItem.getChild(1).getValue());
+            File dstAbspath = SVNFileUtil.createFilePath(wcRootAbspath, workItem.getChild(2).getValue());
             if (srcAbspath.exists()) {
                 SVNFileUtil.rename(srcAbspath, dstAbspath);
             }
@@ -3558,9 +3551,9 @@ public class SVNWCContext {
     public static class RunFileTranslate implements RunWorkQueueOperation {
 
         public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) throws SVNException {
-            File localAbspath = SVNFileUtil.createFilePath(workItem.getChild(1).getValue());
-            File srcAbspath = SVNFileUtil.createFilePath(workItem.getChild(2).getValue());
-            File dstAbspath = SVNFileUtil.createFilePath(workItem.getChild(3).getValue());
+            File localAbspath = SVNFileUtil.createFilePath(wcRootAbspath, workItem.getChild(1).getValue());
+            File srcAbspath = SVNFileUtil.createFilePath(wcRootAbspath, workItem.getChild(2).getValue());
+            File dstAbspath = SVNFileUtil.createFilePath(wcRootAbspath, workItem.getChild(3).getValue());
             TranslateInfo tinf = ctx.getTranslateInfo(localAbspath, true, true, true);
             SVNTranslator.copyAndTranslate(srcAbspath, dstAbspath, null, tinf.eolStyleInfo.eolStr, tinf.keywords, tinf.special, true, true);
         }
@@ -3569,7 +3562,7 @@ public class SVNWCContext {
     public static class RunSyncFileFlags implements RunWorkQueueOperation {
 
         public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) throws SVNException {
-            File localAbspath = SVNFileUtil.createFilePath(workItem.getChild(1).getValue());
+            File localAbspath = SVNFileUtil.createFilePath(wcRootAbspath, workItem.getChild(1).getValue());
             ctx.syncFileFlags(localAbspath);
         }
     }
@@ -3577,7 +3570,7 @@ public class SVNWCContext {
     public static class RunPrejInstall implements RunWorkQueueOperation {
 
         public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) throws SVNException {
-            File localAbspath = SVNFileUtil.createFilePath(workItem.getChild(1).getValue());
+            File localAbspath = SVNFileUtil.createFilePath(wcRootAbspath, workItem.getChild(1).getValue());
             SVNSkel conflictSkel = null;
             if (workItem.getListSize() > 2) {
                 conflictSkel = workItem.getChild(2);
@@ -3595,7 +3588,7 @@ public class SVNWCContext {
     public static class RunRecordFileInfo implements RunWorkQueueOperation {
 
         public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) throws NumberFormatException, SVNException {
-            File localAbspath = SVNFileUtil.createFilePath(workItem.getChild(1).getValue());
+            File localAbspath = SVNFileUtil.createFilePath(wcRootAbspath, workItem.getChild(1).getValue());
             SVNDate setTime = null;
             if (workItem.getListSize() > 2) {
                 long val = Long.parseLong(workItem.getChild(2).getValue());
@@ -3613,7 +3606,7 @@ public class SVNWCContext {
     public static class RunSetTextConflictMarkersTemp implements RunWorkQueueOperation {
 
         public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) throws SVNException {
-            File localAbspath = SVNFileUtil.createFilePath(workItem.getChild(1).getValue());
+            File localAbspath = SVNFileUtil.createFilePath(wcRootAbspath, workItem.getChild(1).getValue());
             int listSize = workItem.getListSize();
             File oldBasename = listSize > 2 ? SVNFileUtil.createFilePath(workItem.getChild(2).getValue()) : null;
             File newBasename = listSize > 3 ? SVNFileUtil.createFilePath(workItem.getChild(3).getValue()) : null;
@@ -3625,7 +3618,7 @@ public class SVNWCContext {
     public static class RunSetPropertyConflictMarkerTemp implements RunWorkQueueOperation {
 
         public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) throws SVNException {
-            File localAbspath = SVNFileUtil.createFilePath(workItem.getChild(1).getValue());
+            File localAbspath = SVNFileUtil.createFilePath(wcRootAbspath, workItem.getChild(1).getValue());
             String prejBasename = workItem.getListSize() > 2 ? workItem.getChild(2).getValue() : null;
             ctx.getDb().opSetPropertyConflictMarkerFileTemp(localAbspath, prejBasename);
         }
@@ -4326,12 +4319,19 @@ public class SVNWCContext {
         SVNSkel workItem = SVNSkel.createEmptyList();
         workItem.prependString("0");
         workItem.prependString("0");
-        // TODO relative path!
-        workItem.prependString(localAbspath.getPath());
+        workItem.prependPath(getRelativePath(localAbspath));
         workItem.prependString(WorkQueueOperation.FILE_COMMIT.getOpName());
 
         SVNSkel result = SVNSkel.createEmptyList();
         result.appendChild(workItem);
         return result;
+    }
+    
+    private File getRelativePath(File localAbsPath) throws SVNException {
+        if (localAbsPath == null) {
+            return null;
+        }
+        DirParsedInfo parseDir = ((SVNWCDb) getDb()).parseDir(localAbsPath, Mode.ReadWrite);
+        return parseDir.localRelPath;
     }
 }
