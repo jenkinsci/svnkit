@@ -59,10 +59,13 @@ public class SVNWCDbDeleteLockOrphanRecursive extends SVNSqlJetDeleteStatement {
                 return false;
             }
         }
-        select.reset();
-        select.bindf("is", 
-                getColumnLong(SVNWCDbSchema.WC_LOCK__Fields.wc_id), 
-                rowPath);
-        return !select.next();
+        try {
+            select.bindf("is", 
+                    getColumnLong(SVNWCDbSchema.WC_LOCK__Fields.wc_id), 
+                    rowPath);
+            return !select.next();
+        } finally {
+            select.reset();
+        }
     }
 }

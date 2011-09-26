@@ -2322,13 +2322,13 @@ public class SVNWCDb implements ISVNWCDb {
 
         if (!workOnly) {
             final SVNSqlJetStatement base_stmt = sDb.getStatement(SVNWCDbStatements.SELECT_BASE_NODE_CHILDREN);
-            base_stmt.bindf("is", wcId, SVNFileUtil.getFilePath(localRelPath));
+            base_stmt.bindf("is", wcId, localRelPath);
             addChildren(names, base_stmt);
         }
 
         if (!baseOnly) {
             final SVNSqlJetStatement work_stmt = sDb.getStatement(SVNWCDbStatements.SELECT_WORKING_NODE_CHILDREN);
-            work_stmt.bindf("is", wcId, SVNFileUtil.getFilePath(localRelPath));
+            work_stmt.bindf("is", wcId, localRelPath);
             addChildren(names, work_stmt);
         }
 

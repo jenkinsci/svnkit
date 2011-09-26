@@ -63,9 +63,12 @@ public class SVNWCDbDeleteActualNodeLeavingChangelistRecursive extends SVNSqlJet
         if (getColumnString(SVNWCDbSchema.ACTUAL_NODE__Fields.changelist) == null) {
             return true;
         } else {
-            select.reset();
-            select.bindf("is", getColumn(SVNWCDbSchema.ACTUAL_NODE__Fields.wc_id), rowPath);
-            return !select.next();
+            try {
+                select.bindf("is", getColumn(SVNWCDbSchema.ACTUAL_NODE__Fields.wc_id), rowPath);
+                return !select.next();
+            } finally {
+                select.reset();
+            }
         }
     }
     

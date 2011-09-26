@@ -46,14 +46,18 @@ public class SVNWCDbDeleteNodesRecursive extends SVNSqlJetDeleteStatement {
         }
         long selectDepth = (Long) getBind(3);
         String selectPath = getBind(2).toString();
+        
+        String rowPath = getColumnString(SVNWCDbSchema.NODES__Fields.local_relpath);
         if (getColumnLong(SVNWCDbSchema.NODES__Fields.op_depth) < selectDepth) {
             return false;
         }
         if ("".equals(selectPath)) {
             return true;
         }
-        String rowPath = getColumnString(SVNWCDbSchema.NODES__Fields.local_relpath);
-        return selectPath.equals(rowPath) || rowPath.startsWith(selectPath + '/');
+        if (selectPath.equals(rowPath) || rowPath.startsWith(selectPath + '/')) {
+            return true;
+        }
+        return false;
     }
 
 }
