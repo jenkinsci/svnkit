@@ -53,7 +53,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNDiffConflictChoiceStyle;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumInputStream;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumOutputStream;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
@@ -705,110 +704,6 @@ public class SVNWCContext {
         }
     }
 
-    public boolean isTextModified(File localAbsPath, boolean forceComparison, boolean compareTextBases) throws SVNException {
-
-        /* No matter which way you look at it, the file needs to exist. */
-        if (!localAbsPath.exists() || !localAbsPath.isFile()) {
-            /*
-             * There is no entity, or, the entity is not a regular file or link.
-             * So, it can't be modified.
-             */
-            return false;
-        }
-
-        if (!forceComparison) {
-
-            /*
-             * We're allowed to use a heuristic to determine whether files may
-             * have changed. The heuristic has these steps:
-             *
-             *
-             * 1. Compare the working file's size with the size cached in the
-             * entries file 2. If they differ, do a full file compare 3. Compare
-             * the working file's timestamp with the timestamp cached in the
-             * entries file 4. If they differ, do a full file compare 5.
-             * Otherwise, return indicating an unchanged file.
-             *
-             * There are 2 problematic situations which may occur:
-             *
-             * 1. The cached working size is missing --> In this case, we forget
-             * we ever tried to compare and skip to the timestamp comparison.
-             * This is because old working copies do not contain cached sizes
-             *
-             * 2. The cached timestamp is missing --> In this case, we forget we
-             * ever tried to compare and skip to full file comparison. This is
-             * because the timestamp will be removed when the library updates a
-             * locally changed file. (ie, this only happens when the file was
-             * locally modified.)
-             */
-
-            boolean compareThem = false;
-
-            /* Read the relevant info */
-            WCDbInfo readInfo = null;
-            try {
-                readInfo = db.readInfo(localAbsPath, InfoField.lastModTime, InfoField.translatedSize);
-            } catch (SVNException e) {
-                compareThem = true;
-            }
-
-            if (!compareThem) {
-                /* Compare the sizes, if applicable */
-                if (readInfo.translatedSize != ISVNWCDb.INVALID_FILESIZE && localAbsPath.length() != readInfo.translatedSize) {
-                    compareThem = true;
-                }
-            }
-
-            if (!compareThem) {
-                /*
-                 * Compare the timestamps
-                 *
-                 * Note: text_time == 0 means absent from entries, which also
-                 * means the timestamps won't be equal, so there's no need to
-                 * explicitly check the 'absent' value.
-                 */
-                if (compareTimestamps(localAbsPath, readInfo)) {
-                    compareThem = true;
-                }
-            }
-
-            if (!compareThem) {
-                return false;
-            }
-        }
-
-        // compare_them:
-        /*
-         * If there's no text-base file, we have to assume the working file is
-         * modified. For example, a file scheduled for addition but not yet
-         * committed.
-         */
-        /*
-         * We used to stat for the working base here, but we just give
-         * compare_and_verify a try; we'll check for errors afterwards
-         */
-        InputStream pristineStream;
-        try {
-            pristineStream = getPristineContents(localAbsPath, true, false).stream;
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND) {
-                return true;
-            }
-            throw e;
-        }
-
-        if (pristineStream == null) {
-            return true;
-        }
-
-        /* Check all bytes, and verify checksum if requested. */
-        return compareAndVerify(localAbsPath, pristineStream, compareTextBases, forceComparison);
-    }
-
-    private boolean compareTimestamps(File localAbsPath, WCDbInfo readInfo) {
-        return SVNFileUtil.roundTimeStamp(localAbsPath.lastModified()) != SVNFileUtil.roundTimeStamp(readInfo.lastModTime / 1000);
-    }
-
     public static class PristineContentsInfo {
 
         public InputStream stream;
@@ -858,97 +753,6 @@ public class SVNWCContext {
             info.stream = db.readPristine(localAbspath, oldchecksum);
         }
         return info;
-    }
-
-    /**
-     * Return TRUE if (after translation) VERSIONED_FILE_ABSPATH differs from
-     * PRISTINE_STREAM, else to FALSE if not. Also verify that PRISTINE_STREAM
-     * matches the stored checksum for VERSIONED_FILE_ABSPATH, if
-     * verify_checksum is TRUE. If checksum does not match, throw the error
-     * SVN_ERR_WC_CORRUPT_TEXT_BASE.
-     * <p>
-     * If COMPARE_TEXTBASES is true, translate VERSIONED_FILE_ABSPATH's EOL
-     * style and keywords to repository-normal form according to its properties,
-     * and compare the result with PRISTINE_STREAM. If COMPARE_TEXTBASES is
-     * false, translate PRISTINE_STREAM's EOL style and keywords to working-copy
-     * form according to VERSIONED_FILE_ABSPATH's properties, and compare the
-     * result with VERSIONED_FILE_ABSPATH.
-     * <p>
-     * PRISTINE_STREAM will be closed before a successful return.
-     *
-     */
-    public boolean compareAndVerify(File versionedFileAbsPath, InputStream pristineStream, boolean compareTextBases, boolean verifyChecksum) throws SVNException {
-        InputStream vStream = null; /* versioned_file */
-        try {
-            boolean same = false;
-
-            assert (versionedFileAbsPath != null && versionedFileAbsPath.isAbsolute());
-
-            final SVNEolStyleInfo eolStyle = getEolStyle(versionedFileAbsPath);
-            final Map keywords = getKeyWords(versionedFileAbsPath, null);
-            final boolean special = isSpecial(versionedFileAbsPath);
-            final boolean needTranslation = isTranslationRequired(eolStyle.eolStyle, eolStyle.eolStr, keywords, special, true);
-
-            if (verifyChecksum || needTranslation) {
-
-                if (verifyChecksum) {
-                    /*
-                     * Need checksum verification, so read checksum from entries
-                     * file and setup checksummed stream for base file.
-                     */
-                    final WCDbInfo nodeInfo = db.readInfo(versionedFileAbsPath, InfoField.checksum);
-                    /*
-                     * SVN_EXPERIMENTAL_PRISTINE: node_checksum is originally
-                     * MD-5 but will later be SHA-1. To allow for this, we
-                     * calculate CHECKSUM as the same kind so that we can
-                     * compare them.
-                     */
-                    if (nodeInfo.checksum != null) {
-                        pristineStream = new SVNChecksumInputStream(pristineStream, nodeInfo.checksum.getKind().toString());
-                    }
-                }
-
-                if (special) {
-                    vStream = readSpecialFile(versionedFileAbsPath);
-                } else {
-                    vStream = SVNFileUtil.openFileForReading(versionedFileAbsPath);
-
-                    if (compareTextBases && needTranslation) {
-                        if (eolStyle.eolStyle == SVNEolStyle.Native)
-                            eolStyle.eolStr = SVNEolStyleInfo.NATIVE_EOL_STR;
-                        else if (eolStyle.eolStyle != SVNEolStyle.Fixed && eolStyle.eolStyle != SVNEolStyle.None) {
-                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_UNKNOWN_EOL);
-                            SVNErrorManager.error(err, SVNLogType.WC);
-                        }
-
-                        /*
-                         * Wrap file stream to detranslate into normal form,
-                         * "repairing" the EOL style if it is inconsistent.
-                         */
-                        vStream = SVNTranslator.getTranslatingInputStream(vStream, null, eolStyle.eolStr, true, keywords, false);
-                    } else if (needTranslation) {
-                        /*
-                         * Wrap base stream to translate into working copy form,
-                         * and arrange to throw an error if its EOL style is
-                         * inconsistent.
-                         */
-                        pristineStream = SVNTranslator.getTranslatingInputStream(pristineStream, null, eolStyle.eolStr, false, keywords, true);
-                    }
-                }
-                same = isSameContents(pristineStream, vStream);
-            } else {
-                /* Translation would be a no-op, so compare the original file. */
-                vStream = SVNFileUtil.openFileForReading(versionedFileAbsPath);
-                same = isSameContents(vStream, pristineStream);
-            }
-
-            return (!same);
-
-        } finally {
-            SVNFileUtil.closeFile(pristineStream);
-            SVNFileUtil.closeFile(vStream);
-        }
-
     }
 
     private boolean isSameContents(File file1, File file2) throws SVNException {
@@ -1899,7 +1703,7 @@ public class SVNWCContext {
             CheckSpecialInfo checkSpecialPath = checkSpecialPath(localAbspath);
             boolean localSpecial = checkSpecialPath.isSpecial;
             if (wcSpecial || !localSpecial) {
-                textModified = isTextModified(localAbspath, false, true);
+                textModified = isTextModified(localAbspath, false);
                 if (textModified && instantError) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LEFT_LOCAL_MOD, "File ''{0}'' has local modifications", localAbspath);
                     SVNErrorManager.error(err, SVNLogType.WC);
@@ -3833,7 +3637,7 @@ public class SVNWCContext {
                 File textBasePath = getTextBasePathToRead(localAbspath);
                 boolean modified = localAbspath.length() != textBasePath.length();
                 if (localAbspath.lastModified() != textBasePath.lastModified() && !modified) {
-                    modified = isTextModified(localAbspath, true, false);
+                    modified = isTextModified(localAbspath, false);
                 }
                 lastModTime = modified ? textBasePath.lastModified() : localAbspath.lastModified();
             }

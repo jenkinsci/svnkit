@@ -263,7 +263,7 @@ public class SvnExternalUpdateEditor implements ISVNUpdateEditor {
                 obstructed = true;
                 contentState = SVNStatusType.UNCHANGED;
             } else {
-                boolean isModified = context.isTextModified(localAbsPath, false, false);
+                boolean isModified = context.isTextModified(localAbsPath, false);
                 if (!isModified) {
                     installPristine = true;
                     contentState = SVNStatusType.CHANGED;

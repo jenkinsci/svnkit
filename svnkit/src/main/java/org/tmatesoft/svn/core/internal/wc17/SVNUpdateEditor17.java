@@ -1926,7 +1926,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         if (fb.addingFile && !fb.addExisted) {
             isLocallyModified = false;
         } else {
-            isLocallyModified = myWCContext.isTextModified(fb.localAbsolutePath, false, false);
+            isLocallyModified = myWCContext.isTextModified(fb.localAbsolutePath, false);
         }
         
         SVNProperties propChanges = new SVNProperties();

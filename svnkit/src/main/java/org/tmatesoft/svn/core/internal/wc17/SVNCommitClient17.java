@@ -1453,7 +1453,7 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
             boolean eolPropChanged = checkPropMods.eolPropChanged;
             if (dbKind == SVNNodeKind.FILE) {
                 if (isCommitItemIsCopy) {
-                    textMod = getContext().isTextModified(localAbsPath, eolPropChanged, true);
+                    textMod = getContext().isTextModified(localAbsPath, false);
                 } else {
                     textMod = true;
                 }
@@ -1463,7 +1463,7 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
             propMod = checkPropMods.propsChanged;
             boolean eolPropChanged = checkPropMods.eolPropChanged;
             if (dbKind == SVNNodeKind.FILE) {
-                textMod = getContext().isTextModified(localAbsPath, eolPropChanged, true);
+                textMod = getContext().isTextModified(localAbsPath, false);
             }
         }
         boolean isCommitItemTextMods = textMod;

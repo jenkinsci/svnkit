@@ -340,7 +340,7 @@ public class SVNStatusEditor17 {
                     text_modified_p = false;
                 } else {
                     try {
-                        text_modified_p = context.isTextModified(localAbsPath, false, true);
+                        text_modified_p = context.isTextModified(localAbsPath, false);
                     } catch (SVNException e) {
                         if (!SVNWCContext.isErrorAccess(e)) {
                             throw e;
