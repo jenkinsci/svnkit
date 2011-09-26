@@ -219,7 +219,7 @@ public class SvnNgRevert extends SvnNgOperationRunner<SvnRevert, SvnRevert> {
                             && recordedTime/1000 == lastModified) {
                         modified = false;
                     } else {
-                        modified = getWcContext().isTextModified(localAbsPath, true, true);
+                        modified = getWcContext().isTextModified(localAbsPath, true);
                     }
                 }
                 

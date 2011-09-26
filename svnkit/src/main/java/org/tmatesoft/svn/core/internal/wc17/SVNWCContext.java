@@ -602,6 +602,116 @@ public class SVNWCContext {
 
         return info;
     }
+    
+    public boolean isTextModified(File localAbsPath, boolean exactComparison) throws SVNException {
+        Structure<NodeInfo> nodeInfo = getDb().readInfo(localAbsPath, NodeInfo.status, NodeInfo.kind, NodeInfo.checksum, 
+                NodeInfo.recordedSize, NodeInfo.recordedTime, NodeInfo.hadProps, NodeInfo.propsMod);
+        if (!nodeInfo.hasValue(NodeInfo.checksum)
+                || SVNWCDbKind.File != nodeInfo.get(NodeInfo.kind)
+                || (SVNWCDbStatus.Added != nodeInfo.get(NodeInfo.status) &&
+                    SVNWCDbStatus.Normal != nodeInfo.get(NodeInfo.status))) {
+            return true;
+        }
+        SVNFileType fileType = SVNFileType.getType(localAbsPath);
+        if (fileType != SVNFileType.FILE && fileType != SVNFileType.SYMLINK) {
+            return false;
+        }
+        if (!exactComparison) {
+            boolean compare = false;
+            long recordedSize = nodeInfo.lng(NodeInfo.recordedSize); 
+            if (recordedSize != -1 && localAbsPath.length() != recordedSize) {
+                compare = true;
+            }
+            if (!compare && nodeInfo.lng(NodeInfo.recordedTime) != localAbsPath.lastModified()) {
+                compare = true;
+            }
+            if (!compare) {
+                return false;
+            }
+        }
+        
+        File pristineFile = getDb().getPristinePath(getDb().getWCRoot(localAbsPath), nodeInfo.<SvnChecksum>get(NodeInfo.checksum));
+        boolean modified = false;
+
+        modified = compareAndVerify(localAbsPath, pristineFile, nodeInfo.is(NodeInfo.hadProps), nodeInfo.is(NodeInfo.propsMod), exactComparison);
+        
+        if (!modified) {
+            if (getDb().isWCLockOwns(localAbsPath, false)) {
+                db.globalRecordFileinfo(localAbsPath, localAbsPath.length(), new SVNDate(localAbsPath.lastModified(), 0));
+            }
+        }
+        return modified;
+    }
+        
+    private boolean compareAndVerify(File localAbsPath, File pristineFile, boolean hasProps, boolean propMods, boolean exactComparison) throws SVNException {
+        if (propMods) {
+            hasProps = true;
+        }
+        boolean translationRequired = false;
+        
+        TranslateInfo translateInfo = null;
+        if (hasProps) {
+            translateInfo = getTranslateInfo(localAbsPath, true, true, true);
+            translationRequired = isTranslationRequired(translateInfo.eolStyleInfo.eolStyle, translateInfo.eolStyleInfo.eolStr, translateInfo.keywords, translateInfo.special, true);
+        }
+        if (!translationRequired && localAbsPath.length() != pristineFile.length()) {
+            return true;
+        }
+        
+        if (translationRequired) {
+            InputStream versionedStream = null;
+            InputStream pristineStream = null;
+            File tmpFile = null;
+            try {
+                pristineStream = SVNFileUtil.openFileForReading(pristineFile);
+                if (translateInfo.special) {
+                    if (SVNFileUtil.symlinksSupported()) {
+                        tmpFile = getDb().getPristineTempDir(localAbsPath);
+                        SVNFileUtil.ensureDirectoryExists(tmpFile);
+                        
+                        tmpFile = SVNFileUtil.createUniqueFile(tmpFile, "svn", ".tmp", false);
+                        if (SVNFileUtil.detranslateSymlink(localAbsPath, tmpFile)) {
+                            versionedStream = SVNFileUtil.openFileForReading(tmpFile);
+                        } else {
+                            return true;
+                        }
+                    }
+                } else {
+                    versionedStream = SVNFileUtil.openFileForReading(localAbsPath);
+                    if (!exactComparison) {
+                        byte[] eolStr = translateInfo.eolStyleInfo.eolStr; 
+                        if (translateInfo.eolStyleInfo.eolStyle == SVNWCContext.SVNEolStyle.Native) {
+                            eolStr = SVNEolStyleInfo.NATIVE_EOL_STR;
+                        } else if (translateInfo.eolStyleInfo.eolStyle != SVNWCContext.SVNEolStyle.Fixed &&
+                                translateInfo.eolStyleInfo.eolStyle != SVNWCContext.SVNEolStyle.None) {
+                            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_UNKNOWN_EOL), SVNLogType.WC);
+                        }
+                            
+                        versionedStream = SVNTranslator.getTranslatingInputStream(
+                                versionedStream, 
+                                null, 
+                                eolStr, true, 
+                                translateInfo.keywords, 
+                                false);
+                    } else {
+                        pristineStream = SVNTranslator.getTranslatingInputStream(
+                                pristineStream, 
+                                null, 
+                                translateInfo.eolStyleInfo.eolStr, false, 
+                                translateInfo.keywords, 
+                                true);
+                    }
+                }
+                return !isSameContents(versionedStream, pristineStream);
+            } finally {
+                SVNFileUtil.closeFile(pristineStream);
+                SVNFileUtil.closeFile(versionedStream);
+                SVNFileUtil.deleteFile(tmpFile);
+            }
+        } else {
+            return !isSameContents(localAbsPath, pristineFile);
+        }
+    }
 
     public boolean isTextModified(File localAbsPath, boolean forceComparison, boolean compareTextBases) throws SVNException {
 
@@ -3524,7 +3634,7 @@ public class SVNWCContext {
                 ctx.getAndRecordFileInfo(localAbspath, false);
             } else {
                 // TODO need to fix size and tsmtp.
-                ctx.isTextModified(localAbspath, false, false);
+                ctx.isTextModified(localAbspath, false);
             }
         }
     }
