@@ -622,7 +622,7 @@ public class SVNWCContext {
             if (recordedSize != -1 && localAbsPath.length() != recordedSize) {
                 compare = true;
             }
-            if (!compare && nodeInfo.lng(NodeInfo.recordedTime) != localAbsPath.lastModified()) {
+            if (!compare && (nodeInfo.lng(NodeInfo.recordedTime)/1000) != localAbsPath.lastModified()) {
                 compare = true;
             }
             if (!compare) {
@@ -666,15 +666,7 @@ public class SVNWCContext {
                 pristineStream = SVNFileUtil.openFileForReading(pristineFile);
                 if (translateInfo.special) {
                     if (SVNFileUtil.symlinksSupported()) {
-                        tmpFile = getDb().getPristineTempDir(localAbsPath);
-                        SVNFileUtil.ensureDirectoryExists(tmpFile);
-                        
-                        tmpFile = SVNFileUtil.createUniqueFile(tmpFile, "svn", ".tmp", false);
-                        if (SVNFileUtil.detranslateSymlink(localAbsPath, tmpFile)) {
-                            versionedStream = SVNFileUtil.openFileForReading(tmpFile);
-                        } else {
-                            return true;
-                        }
+                        versionedStream = readSpecialFile(localAbsPath);
                     }
                 } else {
                     versionedStream = SVNFileUtil.openFileForReading(localAbsPath);
@@ -1028,11 +1020,12 @@ public class SVNWCContext {
     }
 
     private boolean isTranslationRequired(SVNEolStyle style, byte[] eol, Map keywords, boolean special, boolean force_eol_check) {
-        return (special || keywords != null || (style != SVNEolStyle.None && force_eol_check)
+        return (special 
+                || (keywords != null && !keywords.isEmpty()) 
+                || (style != SVNEolStyle.None && force_eol_check)
         // || (style == SVNEolStyle.Native && strcmp(APR_EOL_STR,
         // SVN_SUBST_NATIVE_EOL_STR) != 0)
-        || (style == SVNEolStyle.Fixed && !Arrays.equals(SVNEolStyleInfo.NATIVE_EOL_STR, eol)));
-
+                || (style == SVNEolStyle.Fixed && !Arrays.equals(SVNEolStyleInfo.NATIVE_EOL_STR, eol)));
     }
 
     // TODO merget isSpecial()/getEOLStyle()/getKeyWords() into
@@ -2644,7 +2637,7 @@ public class SVNWCContext {
         boolean special = translateInfo.special;
         SVNEolStyle eolStyle = translateInfo.eolStyleInfo.eolStyle;
         byte[] eolStr = translateInfo.eolStyleInfo.eolStr;
-        Map keywords = translateInfo.keywords;
+        Map<?,?> keywords = translateInfo.keywords;
         if (special) {
             return readSpecialFile(localAbspath);
         }
@@ -2661,8 +2654,7 @@ public class SVNWCContext {
                     SVNErrorManager.error(err, SVNLogType.DEFAULT);
                     return null;
                 }
-                boolean repair = (eolStyle != null && eolStr != null && !SVNProperty.EOL_STYLE_NATIVE.equals(eolStyle)) || repairEOL;
-                return SVNTranslator.getTranslatingInputStream(SVNFileUtil.openFileForReading(localAbspath, SVNLogType.WC), charset, eolStr, repair, keywords, false);
+                return SVNTranslator.getTranslatingInputStream(SVNFileUtil.openFileForReading(localAbspath, SVNLogType.WC), charset, eolStr, repairEOL, keywords, false);
             }
         }
         return SVNFileUtil.openFileForReading(localAbspath, SVNLogType.WC);

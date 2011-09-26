@@ -263,8 +263,11 @@ public class SVNCommitter17 implements ISVNCommitPathHandler {
             SvnCommitItem item = myModifiedFiles.get(path);
             myContext.checkCancelled();
             File itemAbspath = item.getPath();
-            SVNEvent event = SVNEventFactory.createSVNEvent(itemAbspath, SVNNodeKind.FILE, null, SVNRepository.INVALID_REVISION, SVNEventAction.COMMIT_DELTA_SENT, null, null, null);
-            myContext.getEventHandler().handleEvent(event, ISVNEventHandler.UNKNOWN);
+            if (myContext.getEventHandler() != null) {
+                SVNEvent event = SVNEventFactory.createSVNEvent(itemAbspath, SVNNodeKind.FILE, null, SVNRepository.INVALID_REVISION, SVNEventAction.COMMIT_DELTA_SENT, null, null, null);
+                myContext.getEventHandler().handleEvent(event, ISVNEventHandler.UNKNOWN);
+            }
+            
             boolean fulltext = item.hasFlag(SvnCommitItem.ADD);
             TransmittedChecksums transmitTextDeltas = transmitTextDeltas(path, itemAbspath, fulltext, editor);
             SvnChecksum newTextBaseMd5Checksum = transmitTextDeltas.md5Checksum;
@@ -294,6 +297,7 @@ public class SVNCommitter17 implements ISVNCommitPathHandler {
         SVNChecksumInputStream verifyChecksumStream = null;
         SVNErrorMessage error = null;
         File newPristineTmpAbspath = null;
+        
         try {
             localStream = myContext.getTranslatedStream(localAbspath, localAbspath, true, false);
             WritableBaseInfo openWritableBase = myContext.openWritableBase(localAbspath, false, true);
