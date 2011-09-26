@@ -605,10 +605,11 @@ public class SVNWCContext {
     public boolean isTextModified(File localAbsPath, boolean exactComparison) throws SVNException {
         Structure<NodeInfo> nodeInfo = getDb().readInfo(localAbsPath, NodeInfo.status, NodeInfo.kind, NodeInfo.checksum, 
                 NodeInfo.recordedSize, NodeInfo.recordedTime, NodeInfo.hadProps, NodeInfo.propsMod);
+        SVNWCDbStatus status = nodeInfo.get(NodeInfo.status);
+        SVNWCDbKind kind = nodeInfo.get(NodeInfo.kind);
         if (!nodeInfo.hasValue(NodeInfo.checksum)
-                || SVNWCDbKind.File != nodeInfo.<SVNWCDbKind>get(NodeInfo.kind)
-                || (SVNWCDbStatus.Added != nodeInfo.<SVNWCDbStatus>get(NodeInfo.status) &&
-                    SVNWCDbStatus.Normal != nodeInfo.<SVNWCDbStatus>get(NodeInfo.status))) {
+                || SVNWCDbKind.File != kind
+                || (SVNWCDbStatus.Added != status && SVNWCDbStatus.Normal != status)) {
             return true;
         }
         SVNFileType fileType = SVNFileType.getType(localAbsPath);
