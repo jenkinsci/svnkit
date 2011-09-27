@@ -229,6 +229,13 @@ public class SvnWcDbRevert extends SvnWcDbShared {
         result.set(RevertInfo.kind, SVNWCDbKind.Unknown);
         
         try {            
+            /**
+             * SELECT conflict_old, conflict_new, conflict_working, prop_reject, notify,
+             *  actual, op_depth, repos_id, kind
+             *   FROM revert_list
+             * WHERE local_relpath = ?1
+             * ORDER BY actual DESC
+             */
             SVNSqlJetStatement stmt = new SVNSqlJetSelectStatement(root.getSDb().getTemporaryDb(), SVNWCDbSchema.REVERT_LIST) {
                 @Override
                 protected ISqlJetCursor openCursor() throws SVNException {
@@ -267,7 +274,7 @@ public class SvnWcDbRevert extends SvnWcDbShared {
                 }
                 if (!isActual || anotherRow) {
                     result.set(RevertInfo.reverted, true);
-                    if (!isColumnNull(stmt, REVERT_LIST__Fields.op_depth)) {
+                    if (!isColumnNull(stmt, REVERT_LIST__Fields.repos_id)) {
                         long opDepth = getColumnInt64(stmt, REVERT_LIST__Fields.op_depth);
                         result.set(RevertInfo.copiedHere, opDepth == SVNWCUtils.relpathDepth(localRelpath));
                     }

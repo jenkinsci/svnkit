@@ -33,7 +33,7 @@ public class SVNWCDbUpdateOpDepthIncreaseRecursive extends SVNSqlJetUpdateStatem
             return selectDepth == getColumnLong(NODES__Fields.op_depth);
         }
         String rowPath = getColumnString(NODES__Fields.local_relpath);
-        if (rowPath.equals(selectPath) || rowPath.startsWith(selectPath + "/")) {
+        if (rowPath.startsWith(selectPath + "/")) {
             return selectDepth == getColumnLong(NODES__Fields.op_depth);
         }
         return false;
