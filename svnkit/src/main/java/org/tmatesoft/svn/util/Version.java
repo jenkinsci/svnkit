@@ -31,14 +31,14 @@ public class Version {
     private static final String VERSION_MICRO_PROPERTY = "svnkit.version.micro";
     private static final String VERSION_REVISION_PROPERTY = "svnkit.version.revision";
 
-    private static final String VERSION_STRING_DEFAULT = "SVN/1.6.15 SVNKit/1.3.5 (http://svnkit.com/) rSNAPSHOT";
+    private static final String VERSION_STRING_DEFAULT = "SVN/1.6.17 SVNKit/1.3.6 (http://svnkit.com/) rSNAPSHOT";
     private static final String SVN_VERSION_PROPERTY = "svnkit.svn.version";  
     
     private static final String VERSION_MAJOR_DEFAULT = "1";
     private static final String VERSION_MINOR_DEFAULT = "3";
-    private static final String VERSION_MICRO_DEFAULT = "5";
+    private static final String VERSION_MICRO_DEFAULT = "6";
     private static final String VERSION_REVISION_DEFAULT = "SNAPSHOT";
-    private static final String SVN_VERSION_DEFAULT = "1.6.15";
+    private static final String SVN_VERSION_DEFAULT = "1.6.17";
     private static String ourUserAgent;
 
     private static Properties ourProperties;
@@ -103,9 +103,23 @@ public class Version {
 
     public static long getRevisionNumber() {
         loadProperties();
+        String propertyValue = ourProperties.getProperty(VERSION_REVISION_PROPERTY);
+        if (propertyValue != null) {
+            if (propertyValue.startsWith("r")) {
+                propertyValue = ""; 
+                for (int i = 1; i < propertyValue.length(); i++) {
+                    if (Character.isDigit(propertyValue.charAt(i))) {
+                        propertyValue += propertyValue.charAt(i);
+                    } else {
+                        break;
+                    }
+                }
+            }
+        } else {
+            propertyValue = VERSION_REVISION_DEFAULT;
+        }
         try {
-            return Long.parseLong(ourProperties.getProperty(
-                    VERSION_REVISION_PROPERTY, VERSION_REVISION_DEFAULT));
+            return Long.parseLong(propertyValue);
         } catch (NumberFormatException nfe) {
             //
         }
