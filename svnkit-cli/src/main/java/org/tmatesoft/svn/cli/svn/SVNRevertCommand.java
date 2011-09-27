@@ -86,6 +86,8 @@ public class SVNRevertCommand extends SVNCommand {
             SVNErrorMessage err = e.getErrorMessage();
             if (!depth.isRecursive() && err.getErrorCode() == SVNErrorCode.WC_NOT_LOCKED) {
                 err = err.wrap("Try 'svn revert --recursive' instead?");
+            } else if (!depth.isRecursive() && err.getErrorCode() == SVNErrorCode.WC_INVALID_OPERATION_DEPTH) {
+                err = err.wrap("Try 'svn revert --depth infinity' instead?");
             }
             SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
