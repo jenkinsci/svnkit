@@ -287,7 +287,7 @@ public class SvnNgRevert extends SvnNgOperationRunner<SvnRevert, SvnRevert> {
         if (depth == SVNDepth.INFINITY && kind == SVNWCDbKind.Dir) {
             restoreCopiedDirectory(localAbsPath, false);
             
-            Set<String> children = ((SVNWCDb) getWcContext().getDb()).getWorkingChildren(localAbsPath);
+            Set<String> children = ((SVNWCDb) getWcContext().getDb()).getChildrenOfWorkingNode(localAbsPath);
             for (String childName : children) {
                 File childAbsPath = SVNFileUtil.createFilePath(localAbsPath, childName);
                 restore(childAbsPath, depth, useCommitTimes);
