@@ -1891,9 +1891,10 @@ public class SVNWCDb implements ISVNWCDb {
                 SVNSqlJetStatement dropList = new SVNWCDbCreateSchema(pdh.getWCRoot().getSDb().getTemporaryDb(), SVNWCDbCreateSchema.DROP_DELETE_LIST, -1);
                 dropList.done();
             }
-            pdh.getWCRoot().getSDb().commit();
         } catch (SVNException e) {
             pdh.getWCRoot().getSDb().rollback();
+        } finally {
+            pdh.getWCRoot().getSDb().commit();
         }
     }
 
@@ -2009,10 +2010,11 @@ public class SVNWCDb implements ISVNWCDb {
             } else if (depth == SVNDepth.EMPTY) {
                 SvnWcDbRevert.revert(pdh.getWCRoot(), parsed.localRelPath);
             }
-            sdb.commit();
         } catch (SVNException e) {
             sdb.rollback();
             throw e;
+        } finally {
+            sdb.commit();
         }
         pdh.flushEntries(localAbspath);
     }
@@ -4674,11 +4676,12 @@ public class SVNWCDb implements ISVNWCDb {
                     SVNSqlJetDb.createSqlJetError(e);
                 }
             }
-            pdh.getWCRoot().getSDb().commit();
         } catch (SVNException e) {
             pdh.getWCRoot().getSDb().rollback();
             throw e;
-        } 
+        } finally {
+            pdh.getWCRoot().getSDb().commit();
+        }
         pdh.flushEntries(localAbspath);
     }
 

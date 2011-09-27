@@ -75,11 +75,11 @@ public class SvnWcDbExternals extends SvnWcDbShared {
         begingWriteTransaction(root);
         try {
             insertExternalNode(root, localRelpath, externalInfo);
-            commitTransaction(root);
         } catch (SVNException e) {
             rollbackTransaction(root);
             throw e;
         } finally {
+            commitTransaction(root);
             externalInfo.release();
         }
 
@@ -191,10 +191,11 @@ public class SvnWcDbExternals extends SvnWcDbShared {
             if (workItems != null) {
                 root.getDb().addWorkQueue(root.getAbsPath(), workItems);
             }
-            commitTransaction(root);
         } catch (SVNException e) {
             rollbackTransaction(root);
-        } 
+        } finally {
+            commitTransaction(root);
+        }
         
     }
     
@@ -315,13 +316,13 @@ public class SvnWcDbExternals extends SvnWcDbShared {
         begingWriteTransaction(root);
         try {
             insertExternalNode(root, localRelpath, externalInfo);
-            commitTransaction(root);
         } catch (SVNException e) {
             rollbackTransaction(root);
             throw e;
         } finally {
+            commitTransaction(root);
             externalInfo.release();
-        }
+        } 
     }
 
 }

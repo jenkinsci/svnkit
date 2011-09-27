@@ -104,11 +104,12 @@ public class SvnWcDbProperties extends SvnWcDbShared {
                 SVNSqlJetStatement dropCache = new SVNWCDbCreateSchema(root.getSDb().getTemporaryDb(), SVNWCDbCreateSchema.DROP_NODE_PROPS_CACHE, -1);
                 dropCache.done();
             }
-            root.getSDb().getTemporaryDb().commit();
         } catch (SVNException e) {
             root.getSDb().getTemporaryDb().rollback();
             throw e;
-        } 
+        } finally {
+            root.getSDb().getTemporaryDb().commit();
+        }
     }
     
     private static void cacheProperties(SVNWCDbRoot root, File relpath, SVNDepth depth, boolean baseProperties, boolean pristineProperties, Collection<String> changelists) throws SVNException {

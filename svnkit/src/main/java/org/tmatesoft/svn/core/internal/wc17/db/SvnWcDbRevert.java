@@ -287,10 +287,11 @@ public class SvnWcDbRevert extends SvnWcDbShared {
                 stmt.bindf("s", localRelpath);
                 stmt.done();
             }
-            root.getSDb().getTemporaryDb().commit();
         } catch (SVNException e) {
             root.getSDb().getTemporaryDb().rollback();
             throw e;
+        } finally {
+            root.getSDb().getTemporaryDb().commit();
         }
         return result;
     }

@@ -134,11 +134,12 @@ public class SvnWcDbRelocate extends SvnWcDbShared {
         begingWriteTransaction(root);
         try {
             relocate(root, localRelpath, repositoryRootUrl, reposUuid, haveBase, oldReposId);
-            commitTransaction(root);
         } catch(SVNException e) {            
             rollbackTransaction(root);
             throw e;
-        } 
+        } finally {
+            commitTransaction(root);
+        }
         
     }
     
