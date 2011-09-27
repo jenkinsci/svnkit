@@ -16,8 +16,7 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectStatement;
 public class SVNWCDbSelectActualChildrenInfo extends SVNSqlJetSelectStatement {
 
     public SVNWCDbSelectActualChildrenInfo(SVNSqlJetDb sDb) throws SVNException {
-        super(sDb, SVNWCDbSchema.ACTUAL_NODE);
-        setIndexName(SVNWCDbSchema.ACTUAL_NODE__Indices.I_ACTUAL_PARENT.toString());
+        super(sDb, SVNWCDbSchema.ACTUAL_NODE, SVNWCDbSchema.ACTUAL_NODE__Indices.I_ACTUAL_PARENT);
     }
 
     @Override

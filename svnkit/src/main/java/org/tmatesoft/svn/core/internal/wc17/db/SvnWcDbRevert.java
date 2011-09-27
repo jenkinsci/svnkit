@@ -75,7 +75,7 @@ public class SvnWcDbRevert extends SvnWcDbShared {
         reset(stmt);
         if (opDepth > 0 && opDepth == SVNWCUtils.relpathDepth(localRelPath)) {
             
-            stmt = sdb.getStatement(SVNWCDbStatements.SELECT_OP_DEPTH_CHILDREN);
+            stmt = sdb.getStatement(SVNWCDbStatements.SELECT_GE_OP_DEPTH_CHILDREN);
             stmt.bindf("isi", root.getWcId(), localRelPath, opDepth);
             boolean haveRow = stmt.next();
             reset(stmt);
