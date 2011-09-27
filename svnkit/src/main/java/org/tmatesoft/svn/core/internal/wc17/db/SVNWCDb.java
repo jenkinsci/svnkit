@@ -450,8 +450,8 @@ public class SVNWCDb implements ISVNWCDb {
             if (info.opRoot) {
                 WCDbInfo infoBelow = readInfoBelowWorking(root, localRelPath, -1);
                 if ((infoBelow.haveBase || infoBelow.haveWork) 
-                        && infoBelow.status == SVNWCDbStatus.NotPresent 
-                        && infoBelow.status == SVNWCDbStatus.Deleted) {
+                        && infoBelow.status != SVNWCDbStatus.NotPresent 
+                        && infoBelow.status != SVNWCDbStatus.Deleted) {
                     addWork = true;
                     refetchDepth = true;
                 }
@@ -469,7 +469,6 @@ public class SVNWCDb implements ISVNWCDb {
                 stmt.bindf("isi", root.getWcId(), localRelPath, selectDepth);
                 stmt.done();
             }
-
 
             SVNSqlJetStatement deleteStmt = root.getSDb().getStatement(SVNWCDbStatements.DELETE_NODES_RECURSIVE);
             deleteStmt.bindf("isi", root.getWcId(), localRelPath, deleteDepth);

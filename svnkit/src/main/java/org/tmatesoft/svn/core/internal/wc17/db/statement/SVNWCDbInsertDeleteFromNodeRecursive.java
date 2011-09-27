@@ -82,7 +82,7 @@ public class SVNWCDbInsertDeleteFromNodeRecursive extends SVNSqlJetInsertStateme
     }
 
     public long exec() throws SVNException {
-        select.bindf("is", getBind(1), getBind(2), getBind(3));
+        select.bindf("isi", getBind(1), getBind(2), getBind(3));
         long n = 0;
         try {
             while (select.next()) {
