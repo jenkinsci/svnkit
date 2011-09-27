@@ -62,10 +62,14 @@ public class SvnWcDbRevert extends SvnWcDbShared {
             long affectedRows = stmt.done();
             if (affectedRows > 0) {
                 stmt = sdb.getStatement(SVNWCDbStatements.SELECT_ACTUAL_CHILDREN_INFO);
-                stmt.bindf("is", root.getWcId(), localRelPath);
-                if (stmt.next()) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_OPERATION_DEPTH, "Can''t revert ''{0}'' without reverting children", root.getAbsPath(localRelPath));
-                    SVNErrorManager.error(err, SVNLogType.WC);
+                try {
+                    stmt.bindf("is", root.getWcId(), localRelPath);
+                    if (stmt.next()) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_OPERATION_DEPTH, "Can''t revert ''{0}'' without reverting children", root.getAbsPath(localRelPath));
+                        SVNErrorManager.error(err, SVNLogType.WC);
+                    }
+                } finally {
+                    reset(stmt);
                 }
                 return;
             }
