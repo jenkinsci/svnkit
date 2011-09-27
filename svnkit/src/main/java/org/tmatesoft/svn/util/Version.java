@@ -106,14 +106,15 @@ public class Version {
         String propertyValue = ourProperties.getProperty(VERSION_REVISION_PROPERTY);
         if (propertyValue != null) {
             if (propertyValue.startsWith("r")) {
-                propertyValue = ""; 
+                String revValue = ""; 
                 for (int i = 1; i < propertyValue.length(); i++) {
                     if (Character.isDigit(propertyValue.charAt(i))) {
-                        propertyValue += propertyValue.charAt(i);
+                        revValue += propertyValue.charAt(i);
                     } else {
                         break;
                     }
                 }
+                propertyValue = revValue;
             }
         } else {
             propertyValue = VERSION_REVISION_DEFAULT;
