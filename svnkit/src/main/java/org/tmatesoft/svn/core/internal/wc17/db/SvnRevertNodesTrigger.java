@@ -32,7 +32,7 @@ public class SvnRevertNodesTrigger implements ISVNSqlJetTrigger {
         rowValues.put(REVERT_LIST__Fields.op_depth.toString(), cursor.getValue(NODES__Fields.op_depth.toString()));
         rowValues.put(REVERT_LIST__Fields.repos_id.toString(), cursor.getValue(NODES__Fields.repos_id.toString()));
         rowValues.put(REVERT_LIST__Fields.kind.toString(), cursor.getValue(NODES__Fields.kind.toString()));
-        
+
         table.insertByFieldNamesOr(SqlJetConflictAction.REPLACE, rowValues);
     }
 

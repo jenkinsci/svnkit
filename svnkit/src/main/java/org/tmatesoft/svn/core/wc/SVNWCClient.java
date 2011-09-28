@@ -36,6 +36,7 @@ import org.tmatesoft.svn.core.wc2.SvnGetProperties;
 import org.tmatesoft.svn.core.wc2.SvnInfo;
 import org.tmatesoft.svn.core.wc2.SvnRemove;
 import org.tmatesoft.svn.core.wc2.SvnRevert;
+import org.tmatesoft.svn.core.wc2.SvnSetProperty;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 /**
@@ -515,16 +516,17 @@ public class SVNWCClient extends SVNBasicClient {
      *      String, SVNProperties, boolean, ISVNPropertyHandler)
      * @since 1.2, SVN 1.5
      */
-    public void doSetProperty(File path, String propName, SVNPropertyValue propValue, boolean skipChecks, SVNDepth depth, ISVNPropertyHandler handler, Collection<String> changeLists) throws SVNException {
-        try {
-            getSVNWCClient17().doSetProperty(path, propName, propValue, skipChecks, depth, handler, changeLists);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNWCClient16().doSetProperty(path, propName, propValue, skipChecks, depth, handler, changeLists);
-                return;
-            }
-            throw e;
-        }
+    public void doSetProperty(File path, String propName, SVNPropertyValue propValue, boolean skipChecks, SVNDepth depth, final ISVNPropertyHandler handler, Collection<String> changeLists) throws SVNException {
+        SvnSetProperty ps = getOperationsFactory().createSetProperty();
+        ps.setPropertyName(propName);
+        ps.setPropertyValue(propValue);
+        ps.setForce(skipChecks);
+        ps.setDepth(depth);
+        ps.setSingleTarget(SvnTarget.fromFile(path));
+        ps.setApplicalbeChangelists(changeLists);
+        ps.setReceiver(SvnCodec.propertyReceiver(handler));
+        
+        ps.run();
     }
 
     /**
