@@ -406,5 +406,7 @@ public class SVNEventAction {
      * @since 1.4, SVN 1.7
      */
     public static final SVNEventAction SKIP_CONFLICTED = new SVNEventAction(45, "skip_conflicted");
+    
+    public static final SVNEventAction WC_PATH_NONEXISTENT = new SVNEventAction(51, "wc_path_nonexistent");
 
 }

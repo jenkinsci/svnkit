@@ -1,5 +1,7 @@
 package org.tmatesoft.svn.core.wc2;
 
+import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 
@@ -35,5 +37,14 @@ public class SvnSetProperty extends SvnReceivingOperation<SVNPropertyData> {
 
     public void setPropertyName(String propertyName) {
         this.propertyName = propertyName;
+    }
+
+    @Override
+    protected void ensureArgumentsAreValid() throws SVNException {
+        super.ensureArgumentsAreValid();
+        
+        if (getDepth() == null || getDepth() == SVNDepth.UNKNOWN) {
+            setDepth(SVNDepth.EMPTY);
+        }
     }
 }
