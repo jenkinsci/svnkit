@@ -45,11 +45,8 @@ jar {
 			'org.tmatesoft.sqljet;bundle-version="[1.0.5,2.0.0)",' +
 			'org.eclipse.core.runtime;bundle-version="[3.0.0,4.0.0)"'
 
-        instruction 'Export-Package', '!org.tmatesoft.svn.core.internal.*',
-        'org.tmatesoft.svn.core.*;version=' + bundleVersion,
-        'org.tigris.subvesion.javahl.*;version=' + bundleVersion,
-        'de.regnis.q.sequence.*;version=' + bundleVersion,
-        'org.tmatesoft.svn.util.*;version=' + bundleVersion
+        instruction 'Export-Package',
+        '*;version=' + bundleVersion
 
         instruction 'Import-Package', '!*'
     }
