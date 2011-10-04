@@ -476,71 +476,69 @@ public class SvnCodec {
         return new SVNCommitPacketWrapper(operation, packet, allItems, oldLockTokens);
     }
 
-    public static SvnCommitPacket commitPacket(ISvnCommitRunner runner, SVNCommitPacket[] packets) {
+    public static SvnCommitPacket commitPacket(ISvnCommitRunner runner, SVNCommitPacket oldPacket) {
         SvnCommitPacket packet = new SvnCommitPacket();
-        packet.setLockingContext(runner, packets);
+        packet.setLockingContext(runner, oldPacket);
         Map<SVNURL, String> lockTokens = new HashMap<SVNURL, String>();
-        for (int i = 0; i < packets.length; i++) {
-            SVNCommitItem[] items = packets[i].getCommitItems();
-            @SuppressWarnings("unchecked")
-            Map<String, String> locks = packets[i].getLockTokens();
-            if (locks != null) {
-                for (String url : locks.keySet()) {
-                    try {
-                        lockTokens.put(SVNURL.parseURIEncoded(url), locks.get(url));
-                    } catch (SVNException e) {
-                        //
-                    }
-                }
-            }
-            Collection<SVNURL> allUrl = new HashSet<SVNURL>();
-            SVNURL rootUrl = null;
-            for (int j = 0; j < items.length; j++) {
-                SVNCommitItem item = items[j];
-                allUrl.add(item.getURL());
-                if (item.getCopyFromURL() != null) {
-                    allUrl.add(item.getCopyFromURL());
-                }
-            }
-            for (SVNURL svnurl : allUrl) {
-                if (rootUrl == null) {
-                    rootUrl = svnurl;
-                } else {
-                    rootUrl = SVNURLUtil.getCommonURLAncestor(rootUrl, svnurl);
-                }
-            }
-            for (int j = 0; j < items.length; j++) {
-                SVNCommitItem item = items[j];
-                int flags = 0;
-                if (item.isAdded()) {
-                    flags |= SvnCommitItem.ADD;
-                }
-                if (item.isContentsModified()) {
-                    flags |= SvnCommitItem.TEXT_MODIFIED;
-                }
-                if (item.isCopied()) {
-                    flags |= SvnCommitItem.COPY;
-                }
-                if (item.isDeleted()) {
-                    flags |= SvnCommitItem.DELETE;
-                }
-                if (item.isLocked()) {
-                    flags |= SvnCommitItem.LOCK;
-                }
-                if (item.isPropertiesModified()) {
-                    flags |= SvnCommitItem.PROPS_MODIFIED;
-                }
+        SVNCommitItem[] items = oldPacket.getCommitItems();
+        @SuppressWarnings("unchecked")
+        Map<String, String> locks = oldPacket.getLockTokens();
+        if (locks != null) {
+            for (String url : locks.keySet()) {
                 try {
-                    packet.addItem(item.getFile(), 
-                            rootUrl,
-                            item.getKind(),
-                            item.getURL(), item.getRevision() != null ? item.getRevision().getNumber() : -1, 
-                            item.getCopyFromURL(), 
-                            item.getCopyFromRevision() != null ? item.getCopyFromRevision().getNumber() : -1, 
-                                    flags);
+                    lockTokens.put(SVNURL.parseURIEncoded(url), locks.get(url));
                 } catch (SVNException e) {
                     //
                 }
+            }
+        }
+        Collection<SVNURL> allUrl = new HashSet<SVNURL>();
+        SVNURL rootUrl = null;
+        for (int j = 0; j < items.length; j++) {
+            SVNCommitItem item = items[j];
+            allUrl.add(item.getURL());
+            if (item.getCopyFromURL() != null) {
+                allUrl.add(item.getCopyFromURL());
+            }
+        }
+        for (SVNURL svnurl : allUrl) {
+            if (rootUrl == null) {
+                rootUrl = svnurl;
+            } else {
+                rootUrl = SVNURLUtil.getCommonURLAncestor(rootUrl, svnurl);
+            }
+        }
+        for (int j = 0; j < items.length; j++) {
+            SVNCommitItem item = items[j];
+            int flags = 0;
+            if (item.isAdded()) {
+                flags |= SvnCommitItem.ADD;
+            }
+            if (item.isContentsModified()) {
+                flags |= SvnCommitItem.TEXT_MODIFIED;
+            }
+            if (item.isCopied()) {
+                flags |= SvnCommitItem.COPY;
+            }
+            if (item.isDeleted()) {
+                flags |= SvnCommitItem.DELETE;
+            }
+            if (item.isLocked()) {
+                flags |= SvnCommitItem.LOCK;
+            }
+            if (item.isPropertiesModified()) {
+                flags |= SvnCommitItem.PROPS_MODIFIED;
+            }
+            try {
+                packet.addItem(item.getFile(), 
+                        rootUrl,
+                        item.getKind(),
+                        item.getURL(), item.getRevision() != null ? item.getRevision().getNumber() : -1, 
+                        item.getCopyFromURL(), 
+                        item.getCopyFromRevision() != null ? item.getCopyFromRevision().getNumber() : -1, 
+                                flags);
+            } catch (SVNException e) {
+                //
             }
         }
         packet.setLockTokens(lockTokens);

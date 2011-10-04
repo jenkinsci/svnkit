@@ -13,7 +13,6 @@ package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
 import java.util.Arrays;
-import java.util.Collection;
 
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNCommitInfo;
@@ -915,9 +914,9 @@ public class SVNCommitClient extends SVNBasicClient {
                     SVNErrorManager.error(err, SVNLogType.WC);
                 }
                 
-                Collection<SVNCommitInfo> infs = commit.run();
-                if (infs != null && !infs.isEmpty()) {
-                    infos[i] = infs.iterator().next();
+                SVNCommitInfo info = commit.run();
+                if (info != null) {
+                    infos[i] = info;
                 }
             } finally {
                 try {

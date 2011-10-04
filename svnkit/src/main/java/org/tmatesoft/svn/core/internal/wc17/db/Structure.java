@@ -20,6 +20,12 @@ public class Structure<T extends Enum<T>> {
         assert e != null && e.isEnum();
         return (X) globalPool.obtain(e, fields);
     }
+
+    @SuppressWarnings("unchecked")
+    public static <X extends Structure<T>, T extends Enum<T>> X obtain(Class<T> e) {
+        assert e != null && e.isEnum();
+        return (X) globalPool.obtain(e);
+    }
     
     private static void release(Structure<?> e) {
         if (e != null) {

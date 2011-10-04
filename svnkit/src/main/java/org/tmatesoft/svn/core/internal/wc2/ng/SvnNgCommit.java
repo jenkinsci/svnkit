@@ -3,7 +3,6 @@ package org.tmatesoft.svn.core.internal.wc2.ng;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -46,7 +45,7 @@ import org.tmatesoft.svn.core.wc2.SvnCommitPacket;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
 
-public class SvnNgCommit extends SvnNgOperationRunner<Collection<SVNCommitInfo>, SvnCommit> implements ISvnCommitRunner, ISvnUrlKindCallback {
+public class SvnNgCommit extends SvnNgOperationRunner<SVNCommitInfo, SvnCommit> implements ISvnCommitRunner, ISvnUrlKindCallback {
 
     public SvnCommitPacket collectCommitItems(SvnCommit operation) throws SVNException {
         setOperation(operation);
@@ -104,77 +103,74 @@ public class SvnNgCommit extends SvnNgOperationRunner<Collection<SVNCommitInfo>,
     }
 
     @Override
-    protected Collection<SVNCommitInfo> run(SVNWCContext context) throws SVNException {
+    protected SVNCommitInfo run(SVNWCContext context) throws SVNException {
         SvnCommitPacket packet = getOperation().collectCommitItems();
         if (packet == null || packet.isEmpty()) {
-            return Collections.emptyList();
+            return null;
         }
         SVNProperties revisionProperties = getOperation().getRevisionProperties();
         SVNPropertiesManager.validateRevisionProperties(revisionProperties);
         String commitMessage = getOperation().getCommitMessage();
         boolean keepLocks = getOperation().isKeepLocks();
         
-        Collection<SVNCommitInfo> infos = new ArrayList<SVNCommitInfo>();
         SVNException bumpError = null;
+        SVNCommitInfo info = null;
         try {
-            for (SVNURL repositoryRootUrl : packet.getRepositoryRoots()) {
-                if (packet.isEmpty(repositoryRootUrl)) {
-                    continue;
-                }
-                
-                Map<String, SvnCommitItem> committables = new TreeMap<String, SvnCommitItem>();
-                Map<File, SvnChecksum> md5Checksums = new HashMap<File, SvnChecksum>();
-                Map<File, SvnChecksum> sha1Checksums = new HashMap<File, SvnChecksum>();
-                SVNURL baseURL = SvnNgCommitUtil.translateCommitables(packet.getItems(repositoryRootUrl), committables);
-                Map<String, String> lockTokens = SvnNgCommitUtil.translateLockTokens(packet.getLockTokens(), baseURL);
-                
-                SvnCommitItem firstItem = packet.getItems(repositoryRootUrl).iterator().next();
-                SVNRepository repository = getRepositoryAccess().createRepository(baseURL, firstItem.getPath());
-                SVNCommitMediator17 mediator = new SVNCommitMediator17(context, committables);
-                
-                SVNCommitInfo info = null;
-                ISVNEditor commitEditor = repository.getCommitEditor(commitMessage, lockTokens, keepLocks, revisionProperties, mediator);
-                
-                try {
-                    info = SVNCommitter17.commit(getWcContext(), mediator.getTmpFiles(), committables, repositoryRootUrl, commitEditor, md5Checksums, sha1Checksums);
-                    commitEditor = null;
-                    if (info.getErrorMessage() == null || info.getErrorMessage().getErrorCode() == SVNErrorCode.REPOS_POST_COMMIT_HOOK_FAILED) {
-                        // do some post processing, make sure not to unlock wc (to dipose packet) in case there
-                        // is an error on post processing.
-                        SvnCommittedQueue queue = new SvnCommittedQueue();
-                        try {
-                            for (SvnCommitItem item : packet.getItems(repositoryRootUrl)) {
-                                postProcessCommitItem(queue, item, getOperation().isKeepChangelists(), getOperation().isKeepLocks(), sha1Checksums.get(item.getPath()));
-                            }
-                            processCommittedQueue(queue, info.getNewRevision(), info.getDate(), info.getAuthor());
-                        } catch (SVNException e) {
-                            // this is bump error.
-                            bumpError = e;
-                            throw e;
-                        } finally {
-                            sleepForTimestamp();
+            SVNURL repositoryRootUrl = packet.getRepositoryRoots().iterator().next();
+            if (packet.isEmpty(repositoryRootUrl)) {
+                return SVNCommitInfo.NULL;
+            }
+            
+            Map<String, SvnCommitItem> committables = new TreeMap<String, SvnCommitItem>();
+            Map<File, SvnChecksum> md5Checksums = new HashMap<File, SvnChecksum>();
+            Map<File, SvnChecksum> sha1Checksums = new HashMap<File, SvnChecksum>();
+            SVNURL baseURL = SvnNgCommitUtil.translateCommitables(packet.getItems(repositoryRootUrl), committables);
+            Map<String, String> lockTokens = SvnNgCommitUtil.translateLockTokens(packet.getLockTokens(), baseURL);
+            
+            SvnCommitItem firstItem = packet.getItems(repositoryRootUrl).iterator().next();
+            SVNRepository repository = getRepositoryAccess().createRepository(baseURL, firstItem.getPath());
+            SVNCommitMediator17 mediator = new SVNCommitMediator17(context, committables);
+            
+            ISVNEditor commitEditor = repository.getCommitEditor(commitMessage, lockTokens, keepLocks, revisionProperties, mediator);
+            
+            try {
+                info = SVNCommitter17.commit(getWcContext(), mediator.getTmpFiles(), committables, repositoryRootUrl, commitEditor, md5Checksums, sha1Checksums);
+                commitEditor = null;
+                if (info.getErrorMessage() == null || info.getErrorMessage().getErrorCode() == SVNErrorCode.REPOS_POST_COMMIT_HOOK_FAILED) {
+                    // do some post processing, make sure not to unlock wc (to dipose packet) in case there
+                    // is an error on post processing.
+                    SvnCommittedQueue queue = new SvnCommittedQueue();
+                    try {
+                        for (SvnCommitItem item : packet.getItems(repositoryRootUrl)) {
+                            postProcessCommitItem(queue, item, getOperation().isKeepChangelists(), getOperation().isKeepLocks(), sha1Checksums.get(item.getPath()));
                         }
-                    }
-                    handleEvent(SVNEventFactory.createSVNEvent(null, SVNNodeKind.NONE, null, info.getNewRevision(), SVNEventAction.COMMIT_COMPLETED, 
-                            SVNEventAction.COMMIT_COMPLETED, null, null, -1, -1));
-                } catch (SVNException e) {
-                    if (e instanceof SVNCancelException) {
+                        processCommittedQueue(queue, info.getNewRevision(), info.getDate(), info.getAuthor());
+                    } catch (SVNException e) {
+                        // this is bump error.
+                        bumpError = e;
                         throw e;
+                    } finally {
+                        sleepForTimestamp();
                     }
-                    SVNErrorMessage err = e.getErrorMessage().wrap("Commit failed (details follow):");
-                    info = new SVNCommitInfo(-1, null, null, err);
-                    handleEvent(SVNEventFactory.createErrorEvent(err, SVNEventAction.COMMIT_COMPLETED), ISVNEventHandler.UNKNOWN);
-                    if (packet.getRepositoryRoots().size() == 1) {
-                        throw e;
-                    }
-                } finally {
-                    if (commitEditor != null) {
-                        commitEditor.abortEdit();
-                    }
-                    for (File tmpFile : mediator.getTmpFiles()) {
-                        SVNFileUtil.deleteFile(tmpFile);
-                    }
-                    infos.add(info != null ? info : SVNCommitInfo.NULL);
+                }
+                handleEvent(SVNEventFactory.createSVNEvent(null, SVNNodeKind.NONE, null, info.getNewRevision(), SVNEventAction.COMMIT_COMPLETED, 
+                        SVNEventAction.COMMIT_COMPLETED, null, null, -1, -1));
+            } catch (SVNException e) {
+                if (e instanceof SVNCancelException) {
+                    throw e;
+                }
+                SVNErrorMessage err = e.getErrorMessage().wrap("Commit failed (details follow):");
+                info = new SVNCommitInfo(-1, null, null, err);
+                handleEvent(SVNEventFactory.createErrorEvent(err, SVNEventAction.COMMIT_COMPLETED), ISVNEventHandler.UNKNOWN);
+                if (packet.getRepositoryRoots().size() == 1) {
+                    throw e;
+                }
+            } finally {
+                if (commitEditor != null) {
+                    commitEditor.abortEdit();
+                }
+                for (File tmpFile : mediator.getTmpFiles()) {
+                    SVNFileUtil.deleteFile(tmpFile);
                 }
             }
         } finally {
@@ -183,7 +179,7 @@ public class SvnNgCommit extends SvnNgOperationRunner<Collection<SVNCommitInfo>,
             }
         }
         
-        return infos;
+        return info;
     }
 
     private void postProcessCommitItem(SvnCommittedQueue queue, SvnCommitItem item, boolean keepChangelists, boolean keepLocks, SvnChecksum sha1Checksum) {
@@ -252,7 +248,6 @@ public class SvnNgCommit extends SvnNgOperationRunner<Collection<SVNCommitInfo>,
     private void queueCommitted(SvnCommittedQueue queue, File localAbsPath, boolean recurse, SVNProperties wcPropChanges, boolean removeLock, boolean removeChangelist, 
             SvnChecksum sha1Checksum) {
         
-        queue.haveRecursive |= recurse;
         SvnCommittedQueueItem cqi = new SvnCommittedQueueItem();
         cqi.localAbspath = localAbsPath;
         cqi.recurse = recurse;
@@ -329,8 +324,6 @@ public class SvnNgCommit extends SvnNgOperationRunner<Collection<SVNCommitInfo>,
     private static class SvnCommittedQueue {
         @SuppressWarnings("unchecked")
         public Map<File, SvnCommittedQueueItem> queue = new TreeMap<File, SvnCommittedQueueItem>(SVNCommitUtil.FILE_COMPARATOR);
-        
-        public boolean haveRecursive = false;
     };
 
     private static class SvnCommittedQueueItem {
