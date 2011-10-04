@@ -30,11 +30,11 @@ import org.tmatesoft.svn.core.internal.wc17.SVNWCClient17;
 import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
-import org.tmatesoft.svn.core.wc2.SvnAdd;
+import org.tmatesoft.svn.core.wc2.SvnScheduleForAddition;
 import org.tmatesoft.svn.core.wc2.SvnGetInfo;
 import org.tmatesoft.svn.core.wc2.SvnGetProperties;
 import org.tmatesoft.svn.core.wc2.SvnInfo;
-import org.tmatesoft.svn.core.wc2.SvnRemove;
+import org.tmatesoft.svn.core.wc2.SvnScheduleForRemoval;
 import org.tmatesoft.svn.core.wc2.SvnRevert;
 import org.tmatesoft.svn.core.wc2.SvnSetProperty;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -1261,7 +1261,7 @@ public class SVNWCClient extends SVNBasicClient {
      *             </ul>
      */
     public void doDelete(File path, boolean force, boolean deleteFiles, boolean dryRun) throws SVNException {
-        SvnRemove remove = getOperationsFactory().createRemove();
+        SvnScheduleForRemoval remove = getOperationsFactory().createScheduleForRemoval();
         remove.setSingleTarget(SvnTarget.fromFile(path));
         remove.setForce(force);
         remove.setDeleteFiles(deleteFiles);
@@ -1505,7 +1505,7 @@ public class SVNWCClient extends SVNBasicClient {
      * @since 1.3
      */
     public void doAdd(File[] paths, boolean force, boolean mkdir, boolean climbUnversionedParents, SVNDepth depth, boolean depthIsSticky, boolean includeIgnored, boolean makeParents) throws SVNException {
-        SvnAdd add = getOperationsFactory().createAdd();
+        SvnScheduleForAddition add = getOperationsFactory().createScheduleForAddition();
         for (int i = 0; i < paths.length; i++) {
             add.addTarget(SvnTarget.fromFile(paths[i]));            
         }

@@ -5,13 +5,13 @@ import java.io.File;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc16.SVNWCClient16;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
-import org.tmatesoft.svn.core.wc2.SvnAdd;
+import org.tmatesoft.svn.core.wc2.SvnScheduleForAddition;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
-public class SvnOldAdd extends SvnOldRunner<SvnAdd, SvnAdd> {
+public class SvnOldAdd extends SvnOldRunner<SvnScheduleForAddition, SvnScheduleForAddition> {
 
     @Override
-    protected SvnAdd run() throws SVNException {
+    protected SvnScheduleForAddition run() throws SVNException {
         
         SVNWCClient16 client = new SVNWCClient16(getOperation().getRepositoryPool(), getOperation().getOptions());
         client.setEventHandler(getOperation().getEventHandler());

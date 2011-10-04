@@ -129,11 +129,11 @@ public class SvnOperationFactory {
         registerOperationRunner(SvnRelocate.class, new SvnNgRelocate());
         registerOperationRunner(SvnRelocate.class, new SvnOldRelocate());
 
-        registerOperationRunner(SvnAdd.class, new SvnNgAdd());
-        registerOperationRunner(SvnAdd.class, new SvnOldAdd());
+        registerOperationRunner(SvnScheduleForAddition.class, new SvnNgAdd());
+        registerOperationRunner(SvnScheduleForAddition.class, new SvnOldAdd());
 
-        registerOperationRunner(SvnRemove.class, new SvnNgRemove());
-        registerOperationRunner(SvnRemove.class, new SvnOldRemove());
+        registerOperationRunner(SvnScheduleForRemoval.class, new SvnNgRemove());
+        registerOperationRunner(SvnScheduleForRemoval.class, new SvnOldRemove());
         
         registerOperationRunner(SvnCommit.class, new SvnNgCommit());
         registerOperationRunner(SvnCommit.class, new SvnOldCommit());
@@ -251,16 +251,16 @@ public class SvnOperationFactory {
         return new SvnExport(this);
     }
     
-    public SvnAdd createAdd() {
-        return new SvnAdd(this);
+    public SvnScheduleForAddition createScheduleForAddition() {
+        return new SvnScheduleForAddition(this);
     }
 
     public SvnCommit createCommit() {
         return new SvnCommit(this);
     }
     
-    public SvnRemove createRemove() {
-        return new SvnRemove(this);
+    public SvnScheduleForRemoval createScheduleForRemoval() {
+        return new SvnScheduleForRemoval(this);
     }
 
     public SvnRevert createRevert() {

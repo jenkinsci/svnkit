@@ -27,14 +27,14 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
-import org.tmatesoft.svn.core.wc2.SvnAdd;
+import org.tmatesoft.svn.core.wc2.SvnScheduleForAddition;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
 
-public class SvnNgAdd extends SvnNgOperationRunner<SvnAdd, SvnAdd> {
+public class SvnNgAdd extends SvnNgOperationRunner<SvnScheduleForAddition, SvnScheduleForAddition> {
 
     @Override
-    protected SvnAdd run(SVNWCContext context) throws SVNException {
+    protected SvnScheduleForAddition run(SVNWCContext context) throws SVNException {
         for (SvnTarget target : getOperation().getTargets()) {
             add(target);            
         }

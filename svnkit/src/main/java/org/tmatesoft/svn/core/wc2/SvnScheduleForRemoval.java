@@ -1,12 +1,12 @@
 package org.tmatesoft.svn.core.wc2;
 
-public class SvnRemove extends SvnOperation<SvnRemove> {
+public class SvnScheduleForRemoval extends SvnOperation<SvnScheduleForRemoval> {
     
     private boolean force;
     private boolean dryRun;
     private boolean deleteFiles;
 
-    protected SvnRemove(SvnOperationFactory factory) {
+    protected SvnScheduleForRemoval(SvnOperationFactory factory) {
         super(factory);
     }
 

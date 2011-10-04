@@ -21,15 +21,15 @@ import org.tmatesoft.svn.core.wc.SVNConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnGetStatus;
-import org.tmatesoft.svn.core.wc2.SvnRemove;
+import org.tmatesoft.svn.core.wc2.SvnScheduleForRemoval;
 import org.tmatesoft.svn.core.wc2.SvnStatus;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
 
-public class SvnNgRemove extends SvnNgOperationRunner<SvnRemove, SvnRemove> {
+public class SvnNgRemove extends SvnNgOperationRunner<SvnScheduleForRemoval, SvnScheduleForRemoval> {
 
     @Override
-    protected SvnRemove run(SVNWCContext context) throws SVNException {
+    protected SvnScheduleForRemoval run(SVNWCContext context) throws SVNException {
         
         for(SvnTarget target : getOperation().getTargets()) {
             File path = target.getFile();

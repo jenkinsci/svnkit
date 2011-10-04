@@ -1,6 +1,6 @@
 package org.tmatesoft.svn.core.wc2;
 
-public class SvnAdd extends SvnOperation<SvnAdd> {
+public class SvnScheduleForAddition extends SvnOperation<SvnScheduleForAddition> {
     
     private boolean force;
     private boolean includeIgnored;
@@ -8,7 +8,7 @@ public class SvnAdd extends SvnOperation<SvnAdd> {
     private boolean addParents;
     private boolean mkDir;
 
-    protected SvnAdd(SvnOperationFactory factory) {
+    protected SvnScheduleForAddition(SvnOperationFactory factory) {
         super(factory);
     }
 
