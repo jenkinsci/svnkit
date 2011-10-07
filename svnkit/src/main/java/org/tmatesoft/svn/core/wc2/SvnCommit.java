@@ -3,36 +3,22 @@ package org.tmatesoft.svn.core.wc2;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNProperties;
-import org.tmatesoft.svn.core.SVNPropertyValue;
 
 /**
  * @author alex
  *
  */
-public class SvnCommit extends SvnOperation<SVNCommitInfo> {
-    
-    private SVNProperties revisionProperties;
+public class SvnCommit extends AbstractSvnCommit {
     
     private boolean keepChangelists;
     private boolean keepLocks;
-    private String commitMessage;
     
     private SvnCommitPacket packet;
 
     protected SvnCommit(SvnOperationFactory factory) {
         super(factory);
-        revisionProperties = new SVNProperties();
     }
     
-    public void setRevisionProperty(String name, SVNPropertyValue value) {
-        if (value != null) {
-            revisionProperties.put(name, value);
-        } else {
-            revisionProperties.remove(name);
-        }
-    }
-
     public boolean isKeepChangelists() {
         return keepChangelists;
     }
@@ -41,20 +27,12 @@ public class SvnCommit extends SvnOperation<SVNCommitInfo> {
         return keepLocks;
     }
 
-    public String getCommitMessage() {
-        return commitMessage;
-    }
-
     public void setKeepChangelists(boolean keepChangelists) {
         this.keepChangelists = keepChangelists;
     }
 
     public void setKeepLocks(boolean keepLocks) {
         this.keepLocks = keepLocks;
-    }
-
-    public void setCommitMessage(String commitMessage) {
-        this.commitMessage = commitMessage;
     }
     
     public SvnCommitPacket collectCommitItems() throws SVNException {
@@ -80,9 +58,4 @@ public class SvnCommit extends SvnOperation<SVNCommitInfo> {
             setDepth(SVNDepth.INFINITY);
         }
     }
-
-    public SVNProperties getRevisionProperties() {
-        return revisionProperties;
-    }
-    
 }
