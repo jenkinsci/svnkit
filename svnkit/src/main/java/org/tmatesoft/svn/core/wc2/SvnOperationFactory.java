@@ -218,6 +218,46 @@ public class SvnOperationFactory {
             repositoryPool.dispose();
         }
     }
+    
+    public SvnAnnotate createAnnotate() {
+        return new SvnAnnotate(this);
+    }
+    
+    public SvnCat createCat() {
+        return new SvnCat(this);
+    }
+
+    public SvnImport createImport() {
+        return new SvnImport(this);
+    }
+
+    public SvnRemoteCopy createRemoteCopy() {
+        return new SvnRemoteCopy(this);
+    }
+    
+    public SvnRemoteMkDir createRemoteMkDir() {
+        return new SvnRemoteMkDir(this);
+    }
+
+    public SvnRemoteSetProperty createRemoteSetProperty() {
+        return new SvnRemoteSetProperty(this);
+    }
+
+    public SvnSetChangelist createSetChangelist() {
+        return new SvnSetChangelist(this);
+    }
+
+    public SvnSetLock createSetLock() {
+        return new SvnSetLock(this);
+    }
+
+    public SvnUnlock createUnlock() {
+        return new SvnUnlock(this);
+    }
+
+    public SvnUpgrade createUpgrade() {
+        return new SvnUpgrade(this);
+    }
 
     public SvnGetInfo createGetInfo() {
         return new SvnGetInfo(this);
