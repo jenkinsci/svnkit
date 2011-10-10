@@ -75,9 +75,22 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
     private FSFS myFSFS;
     private SVNMergeInfoManager myMergeInfoManager;
     private FSLog myLogDriver;
+    private boolean myIsHooksEnabled;
     
     protected FSRepository(SVNURL location, ISVNSession options) {
         super(location, options);
+        setHooksEnabled(true);
+    }
+
+    public void setHooksEnabled(boolean enabled) {
+        myIsHooksEnabled = enabled;
+        if (getFSFS() != null) {
+            getFSFS().setHooksEnabled(isHooksEnabled());
+        }
+    }
+    
+    public boolean isHooksEnabled() {
+        return myIsHooksEnabled;
     }
 
     public FSFS getFSFS() {
@@ -161,11 +174,11 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             }
 
             byte[] bytes = SVNPropertyValue.getPropertyAsBytes(propertyValue);
-            if (FSHooks.isHooksEnabled() && !bypassPreRevpropHook) {
+            if (isHooksEnabled() && FSHooks.isHooksEnabled() && !bypassPreRevpropHook) {
                 FSHooks.runPreRevPropChangeHook(myReposRootDir, propertyName, bytes, userName, revision, action);
             }
             myFSFS.setRevisionProperty(revision, propertyName, propertyValue);
-            if (FSHooks.isHooksEnabled() && !bypassPostRevpropHook) {
+            if (isHooksEnabled() && FSHooks.isHooksEnabled() && !bypassPostRevpropHook) {
                 FSHooks.runPostRevPropChangeHook(myReposRootDir, propertyName, bytes, userName, revision, action);
             }
         } finally {
@@ -770,6 +783,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         myReposRootDir = hasCustomHostName ? new File("\\\\" + hostName, dirPath).getAbsoluteFile() :
                                              new File(dirPath).getAbsoluteFile();
         myFSFS = new FSFS(myReposRootDir);
+        myFSFS.setHooksEnabled(isHooksEnabled());
         myFSFS.open();
         setRepositoryCredentials(myFSFS.getUUID(), getLocation().setPath(rootPath, false));
     }

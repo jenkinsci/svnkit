@@ -277,7 +277,7 @@ public class FSCommitter {
     }
 
     public long commitTxn(boolean runPreCommitHook, boolean runPostCommitHook, SVNErrorMessage[] postCommitHookError, StringBuffer conflictPath) throws SVNException {
-        if (runPreCommitHook) {
+        if (myFSFS.isHooksEnabled() && runPreCommitHook) {
             FSHooks.runPreCommitHook(myFSFS.getRepositoryRoot(), myTxn.getTxnId());
         }
 
@@ -314,7 +314,7 @@ public class FSCommitter {
             break;
         }
 
-        if (runPostCommitHook) {
+        if (myFSFS.isHooksEnabled() && runPostCommitHook) {
             try {
                 FSHooks.runPostCommitHook(myFSFS.getRepositoryRoot(), newRevision);
              } catch (SVNException svne) {
