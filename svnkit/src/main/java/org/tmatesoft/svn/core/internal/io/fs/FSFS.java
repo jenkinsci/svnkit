@@ -169,6 +169,7 @@ public class FSFS {
     public FSFS(File repositoryRoot) {
         myRepositoryRoot = repositoryRoot;
         myMaxFilesPerDirectory = 0;
+        setHooksEnabled(true);
     }
     
     public void setHooksEnabled(boolean enabled) {
