@@ -36,8 +36,10 @@ import org.tmatesoft.svn.core.wc2.SvnGetProperties;
 import org.tmatesoft.svn.core.wc2.SvnInfo;
 import org.tmatesoft.svn.core.wc2.SvnScheduleForRemoval;
 import org.tmatesoft.svn.core.wc2.SvnRevert;
+import org.tmatesoft.svn.core.wc2.SvnSetLock;
 import org.tmatesoft.svn.core.wc2.SvnSetProperty;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
+import org.tmatesoft.svn.core.wc2.SvnUnlock;
 
 /**
  * The <b>SVNWCClient</b> class combines a number of version control operations
@@ -1940,15 +1942,14 @@ public class SVNWCClient extends SVNBasicClient {
      * @see #doLock(SVNURL[],boolean,String)
      */
     public void doLock(File[] paths, boolean stealLock, String lockMessage) throws SVNException {
-        try {
-            getSVNWCClient17().doLock(paths, stealLock, lockMessage);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNWCClient16().doLock(paths, stealLock, lockMessage);
-                return;
-            }
-            throw e;
+    	SvnSetLock lock = getOperationsFactory().createSetLock();
+    	for (int i = 0; i < paths.length; i++) {
+    		lock.addTarget(SvnTarget.fromFile(paths[i]));            
         }
+    	lock.setStealLock(stealLock);
+    	lock.setLockMessage(lockMessage);
+    	
+    	lock.run();
     }
 
     /**
@@ -2001,15 +2002,13 @@ public class SVNWCClient extends SVNBasicClient {
      * @see #doUnlock(SVNURL[],boolean)
      */
     public void doUnlock(File[] paths, boolean breakLock) throws SVNException {
-        try {
-            getSVNWCClient17().doUnlock(paths, breakLock);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNWCClient16().doUnlock(paths, breakLock);
-                return;
-            }
-            throw e;
+    	SvnUnlock unlock = getOperationsFactory().createUnlock();
+    	for (int i = 0; i < paths.length; i++) {
+    		unlock.addTarget(SvnTarget.fromFile(paths[i]));            
         }
+    	unlock.setBreakLock(breakLock);
+    	
+    	unlock.run();
     }
 
     /**

@@ -15,6 +15,7 @@ import java.util.Set;
 import org.tmatesoft.svn.core.ISVNCanceller;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb.Mode;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
@@ -47,8 +48,10 @@ import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetStatus;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldRelocate;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldRemove;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldRevert;
+import org.tmatesoft.svn.core.internal.wc2.old.SvnOldSetLock;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldSetProperty;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldSwitch;
+import org.tmatesoft.svn.core.internal.wc2.old.SvnOldUnlock;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldUpdate;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteExport;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteGetInfo;
@@ -143,6 +146,10 @@ public class SvnOperationFactory {
 
         registerOperationRunner(SvnSetProperty.class, new SvnOldSetProperty());
         registerOperationRunner(SvnSetProperty.class, new SvnNgSetProperty());
+        
+        registerOperationRunner(SvnSetLock.class, new SvnOldSetLock());
+        
+        registerOperationRunner(SvnUnlock.class, new SvnOldUnlock());
     }
     
     public boolean isAutoCloseContext() {
@@ -309,6 +316,10 @@ public class SvnOperationFactory {
 
     public SvnSetProperty createSetProperty() {
         return new SvnSetProperty(this);
+    }
+    
+    public SvnLog createLog() {
+        return new SvnLog(this);
     }
 
     protected Object run(SvnOperation<?> operation) throws SVNException {
