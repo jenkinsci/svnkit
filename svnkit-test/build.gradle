@@ -123,9 +123,7 @@ def runPythonTests() {
 
         systemProperty 'sun.io.useCanonCaches', 'false'
         systemProperty 'svnkit.compatibleHash', 'true'
-        if (project.svnVersion == '17') {
-            systemProperty 'svnkit.wc.17', 'true'
-        }
+        systemProperty 'svnkit.wc.17', (project.svnVersion == '17')
 
         environment 'LD_LIBRARY_PATH' : new File(svnBinariesDir, 'lib').absolutePath
         main = 'org.tmatesoft.svn.core.test.PythonTests'
