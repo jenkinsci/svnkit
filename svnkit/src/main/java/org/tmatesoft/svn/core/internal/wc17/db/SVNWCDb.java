@@ -2024,7 +2024,7 @@ public class SVNWCDb implements ISVNWCDb {
         throw new UnsupportedOperationException();
     }
 
-    public void opSetProps(File localAbsPath, SVNProperties props, SVNSkel conflict, SVNSkel workItems) throws SVNException {
+    public void opSetProps(File localAbsPath, SVNProperties props, SVNSkel conflict, boolean clearRecordedInfo, SVNSkel workItems) throws SVNException {
         assert (SVNFileUtil.isAbsolute(localAbsPath));
         final DirParsedInfo parsed = parseDir(localAbsPath, Mode.ReadWrite);
         SVNWCDbDir pdh = parsed.wcDbDir;
@@ -2035,6 +2035,8 @@ public class SVNWCDb implements ISVNWCDb {
         spb.conflict = conflict;
         spb.workItems = workItems;
         spb.localRelpath = parsed.localRelPath;
+        spb.clearRecordedInfo = true;
+        
         pdh.getWCRoot().getSDb().runTransaction(spb);
     }
 
@@ -2045,6 +2047,7 @@ public class SVNWCDb implements ISVNWCDb {
         File localRelpath;
         SVNSkel conflict;
         SVNSkel workItems;
+        boolean clearRecordedInfo;
 
         public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
             assert (conflict == null);
@@ -2057,6 +2060,14 @@ public class SVNWCDb implements ISVNWCDb {
                 }
             }
             setActualProperties(db, pdh.getWCRoot().getWcId(), localRelpath, props);
+            if (clearRecordedInfo) {
+                RecordFileinfo rfi = new RecordFileinfo();
+                rfi.lastModTime = SVNDate.NULL;
+                rfi.translatedSize = -1;
+                rfi.localRelpath = localRelpath;
+                rfi.wcRoot = pdh.getWCRoot();
+                rfi.transaction(db);
+            }
         }
 
     };

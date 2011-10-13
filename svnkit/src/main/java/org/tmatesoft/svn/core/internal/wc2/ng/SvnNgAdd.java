@@ -12,6 +12,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
@@ -135,9 +136,9 @@ public class SvnNgAdd extends SvnNgOperationRunner<SvnScheduleForAddition, SvnSc
         addFromDisk(path, false);
         if (properties != null) {
             for (String propertyName : properties.nameSet()) {
-                String value = properties.getStringValue(propertyName);
+                SVNPropertyValue value = properties.getSVNPropertyValue(propertyName);
                 if (value != null) {
-                    SvnNgPropertiesManager.setProperty(getWcContext(), path, propertyName, value, SVNDepth.EMPTY, false, null);
+                    SvnNgPropertiesManager.setProperty(getWcContext(), path, propertyName, value, SVNDepth.EMPTY, false, null, null);
                 }
             }
             // TODO revert addition if propset fails.

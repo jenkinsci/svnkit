@@ -850,7 +850,7 @@ public interface ISVNWCDb {
      * NOTE: This will create an entry in the ACTUAL table for the node if it
      * does not yet have one.
      */
-    void opSetProps(File localAbsPath, SVNProperties props, SVNSkel conflict, SVNSkel workItems) throws SVNException;
+    void opSetProps(File localAbsPath, SVNProperties props, SVNSkel conflict, boolean clearRecordedInfo, SVNSkel workItems) throws SVNException;
 
     /**
      * Set the properties of the node LOCAL_ABSPATH in the BASE tree to PROPS.

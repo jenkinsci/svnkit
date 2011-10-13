@@ -35,9 +35,11 @@ public class SvnNgSetProperty extends SvnNgOperationRunner<SVNPropertyData, SvnS
                 notifyNonExistentPath(localAbsPath);
             }
             File lockedPath = context.acquireWriteLock(localAbsPath, false, true);
-            try {
-                //
-                
+            try {                
+                SvnNgPropertiesManager.setProperty(getWcContext(), localAbsPath, getOperation().getPropertyName(), 
+                        getOperation().getPropertyValue(), getOperation().getDepth(), 
+                        false, getOperation().getEventHandler(),
+                        getOperation().getApplicableChangelists());
             } finally {
                 context.releaseWriteLock(lockedPath);
             }
