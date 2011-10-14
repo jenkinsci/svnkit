@@ -15,7 +15,6 @@ import java.util.Set;
 import org.tmatesoft.svn.core.ISVNCanceller;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb.Mode;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
@@ -440,7 +439,7 @@ public class SvnOperationFactory {
         }
     }
     
-    protected SvnWcGeneration detectWcGeneration(File path) throws SVNException {
+    public static SvnWcGeneration detectWcGeneration(File path) throws SVNException {
         SVNWCDb db = new SVNWCDb();
         try {
             db.open(SVNWCDbOpenMode.ReadOnly, (ISVNOptions) null, false, false);
