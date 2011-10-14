@@ -1556,7 +1556,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             myCurrentFile.newTextBaseSHA1Checksum = new SvnChecksum(SvnChecksum.Kind.sha1, myCurrentFile.newTextBaseSHA1ChecksumStream.getDigest());
         }
 
-        if (myCurrentFile.expectedSourceChecksum != null) {
+        if (myCurrentFile.expectedSourceChecksum != null && myCurrentFile.expectedSourceChecksum.getKind() == SvnChecksum.Kind.md5) {
             String actualSourceChecksum = myCurrentFile.sourceChecksumStream != null ? myCurrentFile.sourceChecksumStream.getDigest() : null;
             if (!myCurrentFile.expectedSourceChecksum.getDigest().equals(actualSourceChecksum)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT_TEXT_BASE, "Checksum mismatch while updating ''{0}''; expected: ''{1}'', actual: ''{2}''", new Object[] {
