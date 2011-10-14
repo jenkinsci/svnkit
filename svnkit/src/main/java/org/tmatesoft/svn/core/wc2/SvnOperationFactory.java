@@ -484,7 +484,7 @@ public class SvnOperationFactory {
 
     public SvnWcGeneration getPrimaryWcGeneration() {
         if (primaryWcGeneration == null) {
-            String systemProperty = System.getProperty("svnkit.wc.17", "false");
+            String systemProperty = System.getProperty("svnkit.wc.17", "true");
             if (Boolean.toString(true).equalsIgnoreCase(systemProperty)) {
                 primaryWcGeneration = SvnWcGeneration.V17;
             } else {
