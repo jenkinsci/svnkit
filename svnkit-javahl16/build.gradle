@@ -35,7 +35,7 @@ classes << {
 test {
     includes = ['**/BasicTests*', '**/SVNAdminTests*']    
     //does not pass on Windows: BasicTests.testBasicChangelist
-    systemProperty 'svnkit.wc.17', (project.svnVersion == '17')
+    systemProperty 'svnkit.wc.17', 'false'
     ignoreFailures = true
     workingDir = file('build/tests-working-dir')
 } 
