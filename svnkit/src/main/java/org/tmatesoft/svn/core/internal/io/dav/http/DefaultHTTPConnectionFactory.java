@@ -14,7 +14,6 @@ package org.tmatesoft.svn.core.internal.io.dav.http;
 import java.io.File;
 
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.io.dav.http2.HttpConnection;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
 
@@ -46,7 +45,9 @@ public class DefaultHTTPConnectionFactory implements IHTTPConnectionFactory {
         if (mySpoolDirectory != null && !mySpoolDirectory.isDirectory()) {
             spoolLocation = null;
         }
-        return new HttpConnection(repository, charset, spoolLocation, myIsSpoolAll);
+        return new HTTPConnection(repository, charset, spoolLocation, myIsSpoolAll);
+
+//        return new HttpConnection(repository, charset, spoolLocation, myIsSpoolAll);
     }
 
     public boolean useSendAllForDiff(SVNRepository repository) throws SVNException {
