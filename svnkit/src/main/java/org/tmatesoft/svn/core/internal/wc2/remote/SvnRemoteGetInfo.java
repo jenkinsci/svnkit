@@ -36,11 +36,14 @@ public class SvnRemoteGetInfo extends SvnRemoteOperationRunner<SvnInfo, SvnGetIn
         }
         SVNRevision revision = operation.getRevision();
         SVNRevision pegRevision = operation.getPegRevision();
-        if ((revision == null || revision == SVNRevision.UNDEFINED) &&
-                (pegRevision == null || pegRevision == SVNRevision.UNDEFINED)) {
+        if (isLocalRevision(revision) && isLocalRevision(pegRevision)) {
             return false;
         }        
         return true;
+    }
+
+    private boolean isLocalRevision(SVNRevision revision) {
+        return revision == null || revision == SVNRevision.UNDEFINED || revision == SVNRevision.WORKING || revision == SVNRevision.BASE || revision == SVNRevision.COMMITTED;
     }
 
     protected SvnInfo run() throws SVNException {
