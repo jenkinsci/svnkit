@@ -36,6 +36,7 @@ import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.NoConnectionReuseStrategy;
 import org.apache.http.impl.client.BasicAuthCache;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.SingleClientConnManager;
@@ -123,7 +124,9 @@ public class HttpConnection implements IHTTPConnection {
                 SVNDebugLog.getDefaultLog().logError(SVNLogType.NETWORK, e);
             }
         }
-        return new DefaultHttpClient(new SingleClientConnManager(registry));
+        DefaultHttpClient client = new DefaultHttpClient(new SingleClientConnManager(registry));
+        client.setReuseStrategy(new NoConnectionReuseStrategy());
+        return client;
     }
     
     public void setSpoolResponse(boolean spoolResponse) {
@@ -179,7 +182,6 @@ public class HttpConnection implements IHTTPConnection {
             error = null;
             try {
                 request.setEntity(createRequestEntity(body, header));
-
                 response = getHttpClient().execute(getHttpHost(), request, getHttpContext());
                 if (response == null) {
                     throw new ClientProtocolException("Unexpected NULL HttpResponse object");
