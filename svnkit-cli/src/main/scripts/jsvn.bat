@@ -56,7 +56,7 @@ if not "%JAVA_HOME%"=="" set JAVACMD="%JAVA_HOME%\bin\%JAVACMD%"
 if "%SVNKIT_LIB%"=="" set SVNKIT_LIB=%BASEDIR%\lib
 
 set CLASSPATH=%CLASSPATH%;"%SVNKIT_LIB%\${classpathEntry}"
-set EXTRA_JVM_ARGUMENTS=-Djava.util.logging.config.file=%BASEDIR%\conf\logging.properties -Dsun.io.useCanonCaches=false
+set EXTRA_JVM_ARGUMENTS=-Djava.util.logging.config.file="%BASEDIR%\conf\logging.properties" -Dsun.io.useCanonCaches=false
 goto endInit
 
 @REM Reaching here means variables are defined and arguments have been captured
