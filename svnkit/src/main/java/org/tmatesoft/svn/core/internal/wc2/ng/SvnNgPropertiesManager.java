@@ -24,6 +24,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
@@ -83,8 +84,8 @@ public class SvnNgPropertiesManager {
         return false;
     }
 
-    public static void setProperty(SVNWCContext context, File path, String propertyName, SVNPropertyValue propertyValue, SVNDepth depth, boolean skipChecks, 
-            ISVNEventHandler eventHandler, Collection<String> changelists) throws SVNException {
+    public static void setProperty(final SVNWCContext context, File path, final String propertyName, final SVNPropertyValue propertyValue, SVNDepth depth, final boolean skipChecks, 
+            final ISVNEventHandler eventHandler, Collection<String> changelists) throws SVNException {
         if (SVNProperty.isEntryProperty(propertyName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_PROP_KIND, "Property ''{0}'' is an entry property", propertyName);
             SVNErrorManager.error(err, SVNLogType.WC);
@@ -101,10 +102,24 @@ public class SvnNgPropertiesManager {
         }
         context.writeCheck(dirPath);
         if (depth == SVNDepth.EMPTY) {
-            // TODO changelists
+            if (!context.matchesChangelist(path, changelists)) {
+                return;
+            }
             setProperty(context, path, kind, propertyName, propertyValue, skipChecks, eventHandler);
         } else {
-            // TODO recursive propset
+            context.nodeWalkChildren(path, new SVNWCContext.ISVNWCNodeHandler() {
+                public void nodeFound(File localAbspath, SVNWCDbKind kind) throws SVNException {
+                    try {
+                        setProperty(context, localAbspath, kind.toNodeKind(), propertyName, propertyValue, skipChecks, eventHandler);
+                    } catch (SVNException e) {
+                        if (e.getErrorMessage().getErrorCode() == SVNErrorCode.ILLEGAL_TARGET ||
+                                e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_INVALID_SCHEDULE) {
+                            return;
+                        }
+                        throw e;
+                    }
+                }
+            }, false, depth, changelists);
         }
     }
 
