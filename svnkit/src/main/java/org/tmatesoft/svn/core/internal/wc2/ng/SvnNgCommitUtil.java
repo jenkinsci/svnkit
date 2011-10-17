@@ -406,6 +406,8 @@ public class SvnNgCommitUtil {
         if (nodeInfo.get(NodeInfo.kind) == SVNWCDbKind.File && (nodeInfo.is(NodeInfo.hadProps) || nodeInfo.is(NodeInfo.propsMod))) {
             SVNProperties properties = context.getDb().readProperties(localAbsPath);
             result.set(NodeCommitStatus.symlink, properties.getStringValue(SVNProperty.SPECIAL) != null);
+        } else {
+            result.set(NodeCommitStatus.symlink, false);
         }
         
         if (nodeInfo.is(NodeInfo.haveBase) && (nodeInfo.lng(NodeInfo.revision) < 0 || nodeStatus == SVNWCDbStatus.Normal)) {
