@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
@@ -39,7 +40,7 @@ public class StructureFields {
     }
     
     public enum RepositoryInfo implements TypeSafety {
-        reposRootUrl(String.class),
+        reposRootUrl(SVNURL.class),
         reposUuid(String.class);
         
         private Class<?> valueType;
