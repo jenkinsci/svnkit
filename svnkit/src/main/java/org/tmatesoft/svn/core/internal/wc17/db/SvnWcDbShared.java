@@ -528,6 +528,9 @@ public class SvnWcDbShared {
                     SVNErrorManager.error(err, SVNLogType.WC);
                 }    
                 assert (info.hasField(NodeInfo.conflicted));    
+                if (info.hasField(NodeInfo.opRoot)) {
+                    info.set(NodeInfo.opRoot, false);
+                }
                 if (info.hasField(NodeInfo.status)) {
                     info.set(NodeInfo.status, SVNWCDbStatus.Normal);
                 }

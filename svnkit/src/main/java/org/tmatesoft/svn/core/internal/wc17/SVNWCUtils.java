@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.core.internal.wc17;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.Iterator;
 
 import org.tmatesoft.svn.core.SVNDepth;
@@ -19,7 +20,6 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
-import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
@@ -58,23 +58,23 @@ public class SVNWCUtils {
 
     public static SVNProperties propDiffs(SVNProperties targetProps, SVNProperties sourceProps) {
         SVNProperties propdiffs = new SVNProperties();
-        for (Iterator i = sourceProps.nameSet().iterator(); i.hasNext();) {
-            String key = (String) i.next();
-            String propVal1 = sourceProps.getStringValue(key);
-            String propVal2 = targetProps.getStringValue(key);
+        for (Iterator<String> i = sourceProps.nameSet().iterator(); i.hasNext();) {
+            String key = i.next();
+            byte[] propVal1 = SVNPropertyValue.getPropertyAsBytes(sourceProps.getSVNPropertyValue(key));
+            byte[] propVal2 = SVNPropertyValue.getPropertyAsBytes(targetProps.getSVNPropertyValue(key));
             if (propVal2 == null) {
                 SVNPropertyValue p = SVNPropertyValue.create(null);
                 propdiffs.put(key, p);
-            } else if (!propVal1.equals(propVal2)) {
-                SVNPropertyValue p = SVNPropertyValue.create(propVal2);
+            } else if (!Arrays.equals(propVal1, propVal2)) {
+                SVNPropertyValue p = SVNPropertyValue.create(key, propVal2);
                 propdiffs.put(key, p);
             }
         }
-        for (Iterator i = targetProps.nameSet().iterator(); i.hasNext();) {
-            String key = (String) i.next();
-            String propVal = targetProps.getStringValue(key);
-            if (null == sourceProps.getStringValue(key)) {
-                SVNPropertyValue p = SVNPropertyValue.create(propVal);
+        for (Iterator<String> i = targetProps.nameSet().iterator(); i.hasNext();) {
+            String key = i.next();
+            SVNPropertyValue propVal = targetProps.getSVNPropertyValue(key);
+            if (null == sourceProps.getSVNPropertyValue(key)) {
+                SVNPropertyValue p = propVal;
                 propdiffs.put(key, p);
             }
         }
