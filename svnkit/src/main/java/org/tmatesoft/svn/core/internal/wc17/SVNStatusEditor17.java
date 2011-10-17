@@ -573,7 +573,10 @@ public class SVNStatusEditor17 {
         if (depth == SVNDepth.UNKNOWN) {
             depth = SVNDepth.INFINITY;
         }
-        final Map<String, File> childrenFiles = myFileListHook.listFiles(localAbsPath);
+        Map<String, File> childrenFiles = myFileListHook.listFiles(localAbsPath);
+        if (childrenFiles == null) {
+            childrenFiles = Collections.emptyMap();
+        }
         final Set<String> allChildren = new HashSet<String>();
         final Set<String> conflicts = new HashSet<String>();
         final Map<String, SVNWCDbInfo> nodes = new HashMap<String, ISVNWCDb.SVNWCDbInfo>();
