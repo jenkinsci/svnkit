@@ -469,24 +469,32 @@ public class SvnWcDbShared {
                 if (info.hasField(NodeInfo.originalReposRelpath)) {
                     info.set(NodeInfo.originalReposRelpath, opDepth == 0 ? null : SVNFileUtil.createFilePath(getColumnText(stmtInfo, SVNWCDbSchema.NODES__Fields.repos_path)));
                 }
-                if (info.hasField(NodeInfo.propsMod) && haveActual) {
-                    info.set(NodeInfo.propsMod, !isColumnNull(stmtActual, SVNWCDbSchema.ACTUAL_NODE__Fields.properties));
+                if (info.hasField(NodeInfo.propsMod)) {
+                    info.set(NodeInfo.propsMod, haveActual && !isColumnNull(stmtActual, SVNWCDbSchema.ACTUAL_NODE__Fields.properties));
                 }
                 if (info.hasField(NodeInfo.hadProps)) {
                     byte[] props = getColumnBlob(stmtInfo, SVNWCDbSchema.NODES__Fields.properties);
                     info.set(NodeInfo.hadProps, props != null && props.length > 2); 
                 }
-                if (info.hasField(NodeInfo.conflicted) && haveActual) {
-                    info.set(NodeInfo.conflicted, !isColumnNull(stmtActual, SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_old) || /* old */
-                        !isColumnNull(stmtActual, SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_new) || /* new */
-                        !isColumnNull(stmtActual, SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_working) || /* working */
-                        !isColumnNull(stmtActual, SVNWCDbSchema.ACTUAL_NODE__Fields.prop_reject) || /* prop_reject */
-                        !isColumnNull(stmtActual, SVNWCDbSchema.ACTUAL_NODE__Fields.tree_conflict_data)); /* tree_conflict_data */
+                if (info.hasField(NodeInfo.conflicted)) {
+                    if (haveActual) {
+                        info.set(NodeInfo.conflicted, !isColumnNull(stmtActual, SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_old) || /* old */
+                            !isColumnNull(stmtActual, SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_new) || /* new */
+                            !isColumnNull(stmtActual, SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_working) || /* working */
+                            !isColumnNull(stmtActual, SVNWCDbSchema.ACTUAL_NODE__Fields.prop_reject) || /* prop_reject */
+                            !isColumnNull(stmtActual, SVNWCDbSchema.ACTUAL_NODE__Fields.tree_conflict_data)); /* tree_conflict_data */
+                    } else {
+                        info.set(NodeInfo.conflicted, false);
+                    }
                 }
-                if (info.hasField(NodeInfo.lock) && opDepth == 0) {
-                    final SVNSqlJetStatement stmtBaseLock = stmtInfo.getJoinedStatement(SVNWCDbSchema.LOCK.toString());
-                    SVNWCDbLock lock = getLockFromColumns(stmtBaseLock, LOCK__Fields.lock_owner, LOCK__Fields.lock_owner, LOCK__Fields.lock_comment, LOCK__Fields.lock_date);
-                    info.set(NodeInfo.lock, lock);
+                if (info.hasField(NodeInfo.lock)) {
+                    if (opDepth == 0) {
+                        final SVNSqlJetStatement stmtBaseLock = stmtInfo.getJoinedStatement(SVNWCDbSchema.LOCK.toString());
+                        SVNWCDbLock lock = getLockFromColumns(stmtBaseLock, LOCK__Fields.lock_owner, LOCK__Fields.lock_owner, LOCK__Fields.lock_comment, LOCK__Fields.lock_date);
+                        info.set(NodeInfo.lock, lock);
+                    } else {
+                        info.set(NodeInfo.lock, null);
+                    }
                 }
                 if (info.hasField(NodeInfo.haveWork)) {
                     info.set(NodeInfo.haveWork, opDepth != 0);
