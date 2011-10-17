@@ -1967,15 +1967,16 @@ public class SVNWCClient extends SVNBasicClient {
      * @see #doLock(File[],boolean,String)
      */
     public void doLock(SVNURL[] urls, boolean stealLock, String lockMessage) throws SVNException {
-        try {
-            getSVNWCClient17().doLock(urls, stealLock, lockMessage);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNWCClient16().doLock(urls, stealLock, lockMessage);
-                return;
-            }
-            throw e;
+    	SvnSetLock lock = getOperationsFactory().createSetLock();
+    	for (int i = 0; i < urls.length; i++) {
+    		lock.addTarget(SvnTarget.fromURL(urls[i]));            
         }
+    	lock.setStealLock(stealLock);
+    	lock.setLockMessage(lockMessage);
+    	
+    	lock.run();
+    	
+        
     }
 
     /**
@@ -2024,15 +2025,13 @@ public class SVNWCClient extends SVNBasicClient {
      * @see #doUnlock(File[],boolean)
      */
     public void doUnlock(SVNURL[] urls, boolean breakLock) throws SVNException {
-        try {
-            getSVNWCClient17().doUnlock(urls, breakLock);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNWCClient16().doUnlock(urls, breakLock);
-                return;
-            }
-            throw e;
+    	SvnUnlock unlock = getOperationsFactory().createUnlock();
+    	for (int i = 0; i < urls.length; i++) {
+    		unlock.addTarget(SvnTarget.fromURL(urls[i]));            
         }
+    	unlock.setBreakLock(breakLock);
+    	
+    	unlock.run();
     }
 
     /**
