@@ -132,7 +132,7 @@ public class SvnNgPropertiesManager {
         
         SVNProperties properties = new SVNProperties(); 
         try {
-            context.getDb().readProperties(path);
+            properties = context.getDb().readProperties(path);
         } catch (SVNException e) {
             SVNErrorMessage err = e.getErrorMessage().wrap("Failed to load current properties");
             SVNErrorManager.error(err, e, SVNLogType.WC);

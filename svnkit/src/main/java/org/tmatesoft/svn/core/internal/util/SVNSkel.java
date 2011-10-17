@@ -23,6 +23,7 @@ import java.util.Map;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.util.SVNLogType;
@@ -198,17 +199,25 @@ public class SVNSkel {
         return new SVNSkel();
     }
 
-    public static SVNSkel createPropList(Map props) throws SVNException {
+    public static SVNSkel createPropList(Map<String, SVNPropertyValue> props) throws SVNException {
         SVNSkel list = createEmptyList();
         if (props == null) {
             return list;
         }
-        for (Iterator iterator = props.entrySet().iterator(); iterator.hasNext();) {
-            Map.Entry entry = (Map.Entry) iterator.next();
-            SVNSkel name = createAtom((String) entry.getKey());
-            SVNSkel value = createAtom(entry.getValue()!=null ? entry.getValue().toString() : "");
+        for(String propertyName : props.keySet()) {
+            SVNSkel name = createAtom(propertyName);
+            SVNPropertyValue pv = props.get(propertyName);
+            SVNSkel value = null;
+            if (pv != null && pv.getString() != null) {
+                value = createAtom(pv.getString());
+            } else if (pv != null && pv.getBytes() != null) {
+                value = createAtom(pv.getBytes());
+            } else {
+                value = createAtom("");
+            }
             list.addChild(value);
             list.addChild(name);
+            
         }
         if (!list.isValidPropList()) {
             error("proplist");
