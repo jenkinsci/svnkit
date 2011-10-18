@@ -476,7 +476,7 @@ public class SVNFileUtil {
         }
         fileName.append(suffix);
         File file = new File(parent, fileName.toString());
-        int i = 1;
+        int i = 2;
         do {
             if (SVNFileType.getType(file) == SVNFileType.NONE) {
                 createEmptyFile(file);
