@@ -156,7 +156,7 @@ public class SvnWcDbProperties extends SvnWcDbShared {
                             }
                             if (props == null) {
                                 long rowOpDepth = getColumnInt64(propertiesSelectStmt, NODES__Fields.op_depth);
-                                if (rowOpDepth > 0) {
+                                if (rowOpDepth > 0 && getColumnPresence(propertiesSelectStmt, NODES__Fields.presence) == SVNWCDbStatus.BaseDeleted) {
                                     SelectRowWithMaxOpDepth query = new SelectRowWithMaxOpDepth(root.getSDb(), rowOpDepth);
                                     try {
                                         query.bindf("is", wcId, localRelpath);
@@ -217,7 +217,7 @@ public class SvnWcDbProperties extends SvnWcDbShared {
     
     /*
      * SELECT properties FROM nodes nn
-                 WHERE n.presence = 'base-deleted'
+                 WHERE  //n.presence = 'base-deleted' 
                    AND nn.wc_id = n.wc_id
                    AND nn.local_relpath = n.local_relpath
                    AND nn.op_depth < n.op_depth
@@ -241,11 +241,8 @@ public class SvnWcDbProperties extends SvnWcDbShared {
         }
         @Override
         protected boolean isFilterPassed() throws SVNException {
-            
             long rowOpDepth = getColumnLong(NODES__Fields.op_depth);
-            String precense = getColumnString(NODES__Fields.presence);
-            
-            return rowOpDepth < opDepth && "base-deleted".equals(precense); 
+            return rowOpDepth < opDepth; 
         }
     }
     
