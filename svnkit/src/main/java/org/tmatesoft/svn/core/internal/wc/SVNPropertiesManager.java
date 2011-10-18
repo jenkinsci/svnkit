@@ -469,14 +469,15 @@ public class SVNPropertiesManager {
             }
         } else if (SVNProperty.KEYWORDS.equals(name)) {
             value = SVNPropertyValue.create(value.getString().trim());
-        } else
-        if (SVNProperty.EXECUTABLE.equals(name) || SVNProperty.SPECIAL.equals(name) || SVNProperty.NEEDS_LOCK.equals(name)) {
+        } else if (SVNProperty.EXECUTABLE.equals(name) || SVNProperty.SPECIAL.equals(name) || SVNProperty.NEEDS_LOCK.equals(name)) {
             value = SVNPropertyValue.create("*");
         } else if (SVNProperty.MERGE_INFO.equals(name)) {
             Map<String, SVNMergeRangeList> mergeInfo = SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(value.getString()), null);
+            
             if (kind != SVNNodeKind.DIR && SVNMergeInfoUtil.isNonInheritable(mergeInfo)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MERGE_INFO_PARSE_ERROR,
                         "Cannot set non-inheritable mergeinfo on a non-directory (''{0}'')", path);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
         }
         return value;
