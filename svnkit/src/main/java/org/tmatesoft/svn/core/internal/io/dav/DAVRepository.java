@@ -1217,7 +1217,7 @@ public class DAVRepository extends SVNRepository {
         }
         String[] repositoryPaths = new String[paths.length];
         for (int i = 0; i < paths.length; i++) {
-            repositoryPaths[i] = getRepositoryPath(paths[i]);
+            repositoryPaths[i] = paths[i];
         }
         StringBuffer request = DAVMergeInfoHandler.generateMergeInfoRequest(null, revision, repositoryPaths, inherit, includeDescendants);
         DAVMergeInfoHandler handler = new DAVMergeInfoHandler();
