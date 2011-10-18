@@ -16,6 +16,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -191,6 +192,21 @@ public class SvnNgPropertiesManager {
             SVNEvent event = SVNEventFactory.createSVNEvent(path, SVNNodeKind.NONE, 
                     null, -1, action, action, null, null, 1, 1);
             eventHandler.handleEvent(event, -1);
+        }
+    }
+
+    public static void checkPropertyName(String propertyName, SVNPropertyValue propertyValue) throws SVNException {
+        if (SVNRevisionProperty.isRevisionProperty(propertyName)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, "Revision property ''{0}'' not allowed in this context", propertyName);
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+        if (propertyValue != null && !SVNPropertiesManager.isValidPropertyName(propertyName)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, "Bad property name: ''{0}''", propertyName);
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+        if (SVNProperty.isWorkingCopyProperty(propertyName)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, "''{0}'' is a wcprop, thus not accessible to clients", propertyName);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
     }
 

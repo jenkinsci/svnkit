@@ -17,6 +17,7 @@ public class SvnNgSetProperty extends SvnNgOperationRunner<SVNPropertyData, SvnS
 
     @Override
     protected SVNPropertyData run(SVNWCContext context) throws SVNException {
+        SvnNgPropertiesManager.checkPropertyName(getOperation().getPropertyName(), getOperation().getPropertyValue());
         
         for (SvnTarget target : getOperation().getTargets()) {
             File localAbsPath = target.getFile();
