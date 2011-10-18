@@ -1,6 +1,9 @@
 package org.tmatesoft.svn.core.internal.wc2.ng;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -19,10 +22,13 @@ import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
+import org.tmatesoft.svn.core.internal.wc.IOExceptionWrapper;
+import org.tmatesoft.svn.core.internal.wc.ISVNFileContentFetcher;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
@@ -124,7 +130,7 @@ public class SvnNgPropertiesManager {
         }
     }
 
-    private static void setProperty(SVNWCContext context, File path, SVNNodeKind kind, String propertyName, SVNPropertyValue value, boolean skipChecks,
+    private static void setProperty(final SVNWCContext context, final File path, SVNNodeKind kind, String propertyName, SVNPropertyValue value, boolean skipChecks,
             ISVNEventHandler eventHandler) throws SVNException {
         Structure<NodeInfo> nodeInfo = context.getDb().readInfo(path, NodeInfo.status);
         ISVNWCDb.SVNWCDbStatus status = nodeInfo.get(NodeInfo.status);
@@ -136,8 +142,30 @@ public class SvnNgPropertiesManager {
         }
         
         if (value != null && SVNProperty.isSVNProperty(propertyName)) {
-            // TODO content fetcher.
-            SVNPropertyValue pv = SVNPropertiesManager.validatePropertyValue(path, kind, propertyName, value, skipChecks, context.getOptions(), null);
+            ISVNFileContentFetcher fetcher = new ISVNFileContentFetcher() {                
+                public SVNPropertyValue getProperty(String propertyName) throws SVNException {
+                    return context.getPropertyValue(path, propertyName);
+                }                
+                public boolean fileIsBinary() throws SVNException {
+                    SVNPropertyValue mimeType = context.getPropertyValue(path, SVNProperty.MIME_TYPE);
+                    return mimeType != null && SVNProperty.isBinaryMimeType(mimeType.getString());
+                }                
+                public void fetchFileContent(OutputStream os) throws SVNException {
+                    InputStream is = null;
+                    try {
+                        is = SVNFileUtil.openFileForReading(path);
+                        SVNTranslator.copy(is, os);
+                    } catch (IOExceptionWrapper ioew) {
+                        throw ioew.getOriginalException();
+                    } catch (IOException e) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e);
+                        SVNErrorManager.error(err, SVNLogType.WC);
+                    } finally {
+                        SVNFileUtil.closeFile(is);
+                    }
+                }
+            };
+            SVNPropertyValue pv = SVNPropertiesManager.validatePropertyValue(path, kind, propertyName, value, skipChecks, context.getOptions(), fetcher);
             value = pv;
         }
         SVNSkel workItems = null;
