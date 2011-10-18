@@ -39,7 +39,7 @@ public class SvnNgSetProperty extends SvnNgOperationRunner<SVNPropertyData, SvnS
             try {                
                 SvnNgPropertiesManager.setProperty(getWcContext(), localAbsPath, getOperation().getPropertyName(), 
                         getOperation().getPropertyValue(), getOperation().getDepth(), 
-                        false, getOperation().getEventHandler(),
+                        getOperation().isForce(), getOperation().getEventHandler(),
                         getOperation().getApplicableChangelists());
             } finally {
                 context.releaseWriteLock(lockedPath);
