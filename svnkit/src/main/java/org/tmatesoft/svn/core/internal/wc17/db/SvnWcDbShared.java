@@ -502,7 +502,10 @@ public class SvnWcDbShared {
                 if (info.hasField(NodeInfo.opRoot)) {
                     info.set(NodeInfo.opRoot, opDepth > 0 && opDepth == SVNWCUtils.relpathDepth(localRelPath));
                 }
-                if (info.hasField(NodeInfo.haveBase) || info.hasField(NodeInfo.haveWork)) {
+                if (info.hasField(NodeInfo.haveBase) || info.hasField(NodeInfo.haveMoreWork)) {
+                    if (info.hasField(NodeInfo.haveMoreWork)) {
+                        info.set(NodeInfo.haveMoreWork, false);
+                    }
                     while(opDepth != 0) {
                         haveInfo = stmtInfo.next();
                         if (!haveInfo) {
