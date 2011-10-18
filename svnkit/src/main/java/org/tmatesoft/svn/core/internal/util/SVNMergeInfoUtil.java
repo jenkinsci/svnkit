@@ -303,8 +303,23 @@ public class SVNMergeInfoUtil {
         return target;
     }
     
-    public static Map parseMergeInfo(StringBuffer mergeInfo, Map srcPathsToRangeLists) throws SVNException {
-        srcPathsToRangeLists = srcPathsToRangeLists == null ? new TreeMap() : srcPathsToRangeLists;
+    public static boolean isNonInheritable(Map<String, SVNMergeRangeList> mergeInfo) {
+        if (mergeInfo != null) {
+            for (String path : mergeInfo.keySet()) {
+                SVNMergeRangeList rangeList = mergeInfo.get(path);
+                SVNMergeRange[] ranges = rangeList.getRanges();
+                for (int i = 0; ranges != null && i < ranges.length; i++) {
+                    if (ranges[i] != null && !ranges[i].isInheritable()) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+    
+    public static Map<String, SVNMergeRangeList> parseMergeInfo(StringBuffer mergeInfo, Map<String, SVNMergeRangeList> srcPathsToRangeLists) throws SVNException {
+        srcPathsToRangeLists = srcPathsToRangeLists == null ? new TreeMap<String, SVNMergeRangeList>() : srcPathsToRangeLists;
         if (mergeInfo.length() == 0) {
             return srcPathsToRangeLists;
         }

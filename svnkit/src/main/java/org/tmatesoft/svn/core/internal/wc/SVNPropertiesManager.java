@@ -24,6 +24,8 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNMergeInfo;
+import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
@@ -471,7 +473,11 @@ public class SVNPropertiesManager {
         if (SVNProperty.EXECUTABLE.equals(name) || SVNProperty.SPECIAL.equals(name) || SVNProperty.NEEDS_LOCK.equals(name)) {
             value = SVNPropertyValue.create("*");
         } else if (SVNProperty.MERGE_INFO.equals(name)) {
-            SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(value.getString()), null);
+            Map<String, SVNMergeRangeList> mergeInfo = SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(value.getString()), null);
+            if (kind != SVNNodeKind.DIR && SVNMergeInfoUtil.isNonInheritable(mergeInfo)) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MERGE_INFO_PARSE_ERROR,
+                        "Cannot set non-inheritable mergeinfo on a non-directory (''{0}'')", path);
+            }
         }
         return value;
     }
