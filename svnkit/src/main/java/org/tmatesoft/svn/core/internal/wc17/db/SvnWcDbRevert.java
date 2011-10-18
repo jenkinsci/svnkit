@@ -227,6 +227,8 @@ public class SvnWcDbRevert extends SvnWcDbShared {
         root.getSDb().getTemporaryDb().beginTransaction(SqlJetTransactionMode.WRITE);
         Structure<RevertInfo> result = Structure.obtain(RevertInfo.class);
         result.set(RevertInfo.kind, SVNWCDbKind.Unknown);
+        result.set(RevertInfo.reverted, false);
+        result.set(RevertInfo.copiedHere, false);
         
         try {            
             /**
