@@ -114,7 +114,8 @@ public class SVNPropDelCommand extends SVNPropertiesCommand {
                         }
                         if (deletedNonExistent[0]) {
                             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, "Attempting to delete nonexistent property ''{0}''", propertyName);
-                            SVNErrorManager.error(err, SVNLogType.CLIENT);
+                            getSVNEnvironment().getOut().println(err.getFullMessage());
+                            success = false;
                         }
                     } catch (SVNException e) {
                         success = getSVNEnvironment().handleWarning(e.getErrorMessage(), 
