@@ -151,7 +151,7 @@ public class SvnWcDbReader extends SvnWcDbShared {
         }
         
         try {
-            stmt.bindf("is", wcId, SVNFileUtil.getFileDir(dirInfo.localRelPath));
+            stmt.bindf("is", wcId, dirInfo.localRelPath); //SVNFileUtil.getFileDir(dirInfo.localRelPath));
             while(stmt.next()) {
                 File childPath = SVNFileUtil.createFilePath(getColumnText(stmt, NODES__Fields.local_relpath));
                 String childName = SVNFileUtil.getFileName(childPath);
