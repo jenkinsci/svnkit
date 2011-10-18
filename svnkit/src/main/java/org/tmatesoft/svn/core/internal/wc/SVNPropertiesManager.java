@@ -479,6 +479,9 @@ public class SVNPropertiesManager {
                         "Cannot set non-inheritable mergeinfo on a non-directory (''{0}'')", path);
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
+            if (mergeInfo != null) {
+                value = SVNPropertyValue.create(SVNMergeInfoUtil.formatMergeInfoToString(mergeInfo, null));
+            }
         }
         return value;
     }
