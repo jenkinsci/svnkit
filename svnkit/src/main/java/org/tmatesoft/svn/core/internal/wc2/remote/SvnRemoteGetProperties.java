@@ -64,11 +64,12 @@ public class SvnRemoteGetProperties extends SvnRemoteOperationRunner<SVNProperti
         SVNProperties props = new SVNProperties();
         final Collection<SVNDirEntry> dirEntries = new LinkedList<SVNDirEntry>();
         if (kind == SVNNodeKind.DIR) {
-            repos.getDir(path, revNumber, props, SVNDirEntry.DIRENT_KIND, SVNDepth.FILES.compareTo(depth) <= 0 ? null : new ISVNDirEntryHandler() {
+            ISVNDirEntryHandler handler = SVNDepth.FILES.compareTo(depth) <= 0 ? new ISVNDirEntryHandler() {
                 public void handleDirEntry(SVNDirEntry dirEntry) throws SVNException {
                     dirEntries.add(dirEntry);
                 }
-            });
+            } : null;
+            repos.getDir(path, revNumber, props, SVNDirEntry.DIRENT_KIND, handler);
         } else if (kind == SVNNodeKind.FILE) {
             repos.getFile(path, revNumber, props, null);
         } else {
