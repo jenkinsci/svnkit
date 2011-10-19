@@ -6,6 +6,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc16.SVNWCClient16;
+import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc2.SvnSetProperty;
@@ -35,6 +36,11 @@ public class SvnOldSetProperty extends SvnOldRunner<SVNPropertyData, SvnSetPrope
     }
 
     public void handleProperty(long revision, SVNPropertyData property) throws SVNException {
+    }
+
+    @Override
+    public boolean isApplicable(SvnSetProperty operation, SvnWcGeneration wcGeneration) throws SVNException {
+        return !operation.isRevisionProperty() && super.isApplicable(operation, wcGeneration);
     }
 
 }

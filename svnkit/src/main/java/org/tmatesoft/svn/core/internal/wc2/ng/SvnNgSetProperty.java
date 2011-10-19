@@ -7,6 +7,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
+import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
@@ -14,7 +15,7 @@ import org.tmatesoft.svn.core.wc2.SvnSetProperty;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 public class SvnNgSetProperty extends SvnNgOperationRunner<SVNPropertyData, SvnSetProperty> {
-
+    
     @Override
     protected SVNPropertyData run(SVNWCContext context) throws SVNException {
         SvnNgPropertiesManager.checkPropertyName(getOperation().getPropertyName(), getOperation().getPropertyValue());
@@ -58,6 +59,11 @@ public class SvnNgSetProperty extends SvnNgOperationRunner<SVNPropertyData, SvnS
         if (getOperation().getEventHandler() != null) {
             getOperation().getEventHandler().handleEvent(event, -1);
         }
+    }
+
+    @Override
+    public boolean isApplicable(SvnSetProperty operation, SvnWcGeneration wcGeneration) throws SVNException {
+        return !operation.isRevisionProperty() && super.isApplicable(operation, wcGeneration);
     }
 
 }
