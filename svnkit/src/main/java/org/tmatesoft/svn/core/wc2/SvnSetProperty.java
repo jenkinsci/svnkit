@@ -8,6 +8,7 @@ import org.tmatesoft.svn.core.wc.SVNPropertyData;
 public class SvnSetProperty extends SvnReceivingOperation<SVNPropertyData> {
     
     private boolean force;
+    private boolean revisionProperty;
     private String propertyName;
     private SVNPropertyValue propertyValue;
 
@@ -46,5 +47,13 @@ public class SvnSetProperty extends SvnReceivingOperation<SVNPropertyData> {
         if (getDepth() == null || getDepth() == SVNDepth.UNKNOWN) {
             setDepth(SVNDepth.EMPTY);
         }
+    }
+
+    public void setRevisionProperty(boolean revisionProperty) {
+        this.revisionProperty = revisionProperty;
+    }
+
+    public boolean isRevisionProperty() {
+        return revisionProperty;
     }
 }

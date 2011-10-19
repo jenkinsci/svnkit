@@ -727,14 +727,17 @@ public class SVNWCClient extends SVNBasicClient {
      *             </ul>
      */
     public void doSetRevisionProperty(File path, SVNRevision revision, String propName, SVNPropertyValue propValue, boolean force, ISVNPropertyHandler handler) throws SVNException {
-        try {
-            getSVNWCClient17().doSetRevisionProperty(path, revision, propName, propValue, force, handler);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNWCClient16().doSetRevisionProperty(path, revision, propName, propValue, force, handler);
-                return;
-            }
-            throw e;
+        SvnSetProperty ps = getOperationsFactory().createSetProperty();
+        ps.setRevisionProperty(true);
+        ps.setSingleTarget(SvnTarget.fromFile(path));
+        ps.setRevision(revision);
+        ps.setPropertyName(propName);
+        ps.setPropertyValue(propValue);
+        ps.setForce(force);
+        
+        SVNPropertyData propertyData = ps.run();
+        if (handler != null) {
+            handler.handleProperty(revision != null ? revision.getNumber() : -1, propertyData);
         }
     }
 
@@ -790,14 +793,17 @@ public class SVNWCClient extends SVNBasicClient {
      *      boolean, ISVNPropertyHandler)
      */
     public void doSetRevisionProperty(SVNURL url, SVNRevision revision, String propName, SVNPropertyValue propValue, boolean force, ISVNPropertyHandler handler) throws SVNException {
-        try {
-            getSVNWCClient17().doSetRevisionProperty(url, revision, propName, propValue, force, handler);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNWCClient16().doSetRevisionProperty(url, revision, propName, propValue, force, handler);
-                return;
-            }
-            throw e;
+        SvnSetProperty ps = getOperationsFactory().createSetProperty();
+        ps.setRevisionProperty(true);
+        ps.setSingleTarget(SvnTarget.fromURL(url));
+        ps.setRevision(revision);
+        ps.setPropertyName(propName);
+        ps.setPropertyValue(propValue);
+        ps.setForce(force);
+        
+        SVNPropertyData propertyData = ps.run();
+        if (handler != null) {
+            handler.handleProperty(revision != null ? revision.getNumber() : -1, propertyData);
         }
     }
 
