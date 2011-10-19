@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.cli.svn;
 
+import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -127,9 +128,16 @@ public class SVNPropSetCommand extends SVNPropertiesCommand {
             if (targets.isEmpty()) {
                 targets.add("");
             }
-            SVNURL revPropURL = getRevpropURL(getSVNEnvironment().getStartRevision(), targets);
-            getSVNEnvironment().getClientManager().getWCClient().doSetRevisionProperty(revPropURL, getSVNEnvironment().getStartRevision(),
-                    propertyName, propertyValue, getSVNEnvironment().isForce(), this);
+            String target = checkRevPropTarget(getSVNEnvironment().getStartRevision(), targets);
+            if (SVNCommandUtil.isURL(target)) {
+                SVNURL revPropURL = SVNURL.parseURIEncoded(target);
+                getSVNEnvironment().getClientManager().getWCClient().doSetRevisionProperty(revPropURL, getSVNEnvironment().getStartRevision(),
+                        propertyName, propertyValue, getSVNEnvironment().isForce(), this);
+            } else {
+                File targetFile = new SVNPath(target).getFile();
+                getSVNEnvironment().getClientManager().getWCClient().doSetRevisionProperty(targetFile, getSVNEnvironment().getStartRevision(),
+                        propertyName, propertyValue, getSVNEnvironment().isForce(), this);
+            }
         } else if (getSVNEnvironment().getStartRevision() != SVNRevision.UNDEFINED) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR,
                     "Cannot specify revision for setting versioned property ''{0}''", propertyName);
