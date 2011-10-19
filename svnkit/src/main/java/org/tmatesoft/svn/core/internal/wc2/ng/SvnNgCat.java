@@ -35,11 +35,11 @@ public class SvnNgCat extends SvnNgOperationRunner<Long, SvnCat> {
         
         SVNNodeKind kind = context.readKind(getFirstTarget(), false);
         if (kind == SVNNodeKind.UNKNOWN || kind == SVNNodeKind.NONE) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' is not under version control", getFirstTarget());
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' is not under version control", getFirstTarget().getAbsolutePath());
             SVNErrorManager.error(err, SVNLogType.WC);
         }
         if (kind != SVNNodeKind.FILE) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_IS_DIRECTORY, "''{0}'' refers to a directory", getFirstTarget());
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_IS_DIRECTORY, "''{0}'' refers to a directory", getFirstTarget().getAbsolutePath());
             SVNErrorManager.error(err, SVNLogType.WC);
         }
         
