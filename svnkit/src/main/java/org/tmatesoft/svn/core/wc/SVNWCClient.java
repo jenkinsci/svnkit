@@ -30,6 +30,7 @@ import org.tmatesoft.svn.core.internal.wc17.SVNWCClient17;
 import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
+import org.tmatesoft.svn.core.wc2.SvnCat;
 import org.tmatesoft.svn.core.wc2.SvnScheduleForAddition;
 import org.tmatesoft.svn.core.wc2.SvnGetInfo;
 import org.tmatesoft.svn.core.wc2.SvnGetProperties;
@@ -331,15 +332,13 @@ public class SVNWCClient extends SVNBasicClient {
      * @see #doGetFileContents(SVNURL,SVNRevision,SVNRevision,boolean,OutputStream)
      */
     public void doGetFileContents(File path, SVNRevision pegRevision, SVNRevision revision, boolean expandKeywords, OutputStream dst) throws SVNException {
-        try {
-            getSVNWCClient17().doGetFileContents(path, pegRevision, revision, expandKeywords, dst);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNWCClient16().doGetFileContents(path, pegRevision, revision, expandKeywords, dst);
-                return;
-            }
-            throw e;
-        }
+        SvnCat cat = getOperationsFactory().createCat();
+        cat.setSingleTarget(SvnTarget.fromFile(path));
+        cat.setPegRevision(pegRevision);
+        cat.setRevision(revision);
+        cat.setExpandKeywords(expandKeywords);
+        cat.setOutput(dst);
+        cat.run();
     }
 
     /**
@@ -374,15 +373,13 @@ public class SVNWCClient extends SVNBasicClient {
      * @see #doGetFileContents(File,SVNRevision,SVNRevision,boolean,OutputStream)
      */
     public void doGetFileContents(SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean expandKeywords, OutputStream dst) throws SVNException {
-        try {
-            getSVNWCClient17().doGetFileContents(url, pegRevision, revision, expandKeywords, dst);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNWCClient16().doGetFileContents(url, pegRevision, revision, expandKeywords, dst);
-                return;
-            }
-            throw e;
-        }
+        SvnCat cat = getOperationsFactory().createCat();
+        cat.setSingleTarget(SvnTarget.fromURL(url));
+        cat.setPegRevision(pegRevision);
+        cat.setRevision(revision);
+        cat.setExpandKeywords(expandKeywords);
+        cat.setOutput(dst);
+        cat.run();
     }
 
     /**

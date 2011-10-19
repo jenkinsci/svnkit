@@ -25,6 +25,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.internal.wc2.ISvnCommitRunner;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgAdd;
+import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgCat;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgCheckout;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgCommit;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgExport;
@@ -161,6 +162,7 @@ public class SvnOperationFactory {
         registerOperationRunner(SvnUnlock.class, new SvnOldUnlock());
         
         registerOperationRunner(SvnCat.class, new SvnRemoteCat());
+        registerOperationRunner(SvnCat.class, new SvnNgCat());
         registerOperationRunner(SvnCat.class, new SvnOldCat());
     }
     
