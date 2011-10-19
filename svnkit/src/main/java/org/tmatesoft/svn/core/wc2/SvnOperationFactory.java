@@ -57,9 +57,10 @@ import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteCat;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteExport;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteGetInfo;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteGetProperties;
+import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteGetRevisionProperties;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteSetLock;
+import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteSetRevisionProperty;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteUnlock;
-import org.tmatesoft.svn.core.internal.wc2.remote.SvnSetRemoteRevisionProperty;
 import org.tmatesoft.svn.core.wc.DefaultSVNRepositoryPool;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
@@ -113,6 +114,7 @@ public class SvnOperationFactory {
         registerOperationRunner(SvnGetInfo.class, new SvnNgGetInfo());
         registerOperationRunner(SvnGetInfo.class, new SvnOldGetInfo());
 
+        registerOperationRunner(SvnGetProperties.class, new SvnRemoteGetRevisionProperties());
         registerOperationRunner(SvnGetProperties.class, new SvnRemoteGetProperties());
         registerOperationRunner(SvnGetProperties.class, new SvnNgGetProperties());
         registerOperationRunner(SvnGetProperties.class, new SvnOldGetProperties());
@@ -148,7 +150,7 @@ public class SvnOperationFactory {
         registerOperationRunner(SvnRevert.class, new SvnNgRevert());
         registerOperationRunner(SvnRevert.class, new SvnOldRevert());
 
-        registerOperationRunner(SvnSetProperty.class, new SvnSetRemoteRevisionProperty());
+        registerOperationRunner(SvnSetProperty.class, new SvnRemoteSetRevisionProperty());
         registerOperationRunner(SvnSetProperty.class, new SvnOldSetProperty());
         registerOperationRunner(SvnSetProperty.class, new SvnNgSetProperty());
         

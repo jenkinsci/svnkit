@@ -7,6 +7,9 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 
 public class SvnGetProperties extends SvnReceivingOperation<SVNProperties> {
 
+    private boolean revisionProperties;
+    private long revisionNumber;
+
     protected SvnGetProperties(SvnOperationFactory factory) {
         super(factory);
     }
@@ -24,4 +27,22 @@ public class SvnGetProperties extends SvnReceivingOperation<SVNProperties> {
         }
         super.ensureArgumentsAreValid();
     }
+
+    public boolean isRevisionProperties() {
+        return revisionProperties;
+    }
+
+    public void setRevisionProperties(boolean revisionProperties) {
+        this.revisionProperties = revisionProperties;
+    }
+
+    public long getRevisionNumber() {
+        return revisionNumber;
+    }
+    
+    public void setRevisionNumber(long revisionNumber) {
+        this.revisionNumber = revisionNumber;
+    }
+    
+    
 }

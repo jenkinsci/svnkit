@@ -63,9 +63,15 @@ public class SVNPropListCommand extends SVNPropertiesCommand {
         }
 
         if (getSVNEnvironment().isRevprop()) {
-            SVNURL url = getRevpropURL(getSVNEnvironment().getStartRevision(), targets);
             SVNWCClient wcClient = getSVNEnvironment().getClientManager().getWCClient();
-            long rev = wcClient.doGetRevisionProperty(url, null, getSVNEnvironment().getStartRevision(), this);
+            String target = checkRevPropTarget(getSVNEnvironment().getStartRevision(), targets);            
+            long rev;
+            if (SVNCommandUtil.isURL(target)) {
+                rev = wcClient.doGetRevisionProperty(SVNURL.parseURIEncoded(target), null, getSVNEnvironment().getStartRevision(), this);
+            } else {
+                File targetPath = new SVNPath(target).getFile();
+                rev = wcClient.doGetRevisionProperty(targetPath, null, getSVNEnvironment().getStartRevision(), this);
+            }
             Map revisionPropertiesMap = getRevisionProperties();
             List revisionProperties = (List) revisionPropertiesMap.get(new Long(rev));
             if (revisionProperties == null) {

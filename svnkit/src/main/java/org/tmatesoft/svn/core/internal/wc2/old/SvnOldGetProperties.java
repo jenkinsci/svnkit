@@ -25,6 +25,11 @@ public class SvnOldGetProperties extends SvnOldRunner<SVNProperties, SvnGetPrope
     }
 
     @Override
+    public boolean isApplicable(SvnGetProperties operation, SvnWcGeneration wcGeneration) throws SVNException {
+        return !operation.isRevisionProperties() && super.isApplicable(operation, wcGeneration);
+    }
+
+    @Override
     protected SVNProperties run() throws SVNException {        
         SVNWCClient16 client = new SVNWCClient16(getOperation().getRepositoryPool(), getOperation().getOptions());
         client.setEventHandler(getOperation().getEventHandler());

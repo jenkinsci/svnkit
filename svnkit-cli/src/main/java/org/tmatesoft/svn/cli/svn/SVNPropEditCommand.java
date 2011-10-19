@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.cli.svn;
 
+import java.io.File;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -73,9 +74,19 @@ public class SVNPropEditCommand extends SVNPropertiesCommand {
             if (targets.isEmpty()) {
                 targets.add("");
             }
-            SVNURL revPropURL = getRevpropURL(getSVNEnvironment().getStartRevision(), targets);
+//            SVNURL revPropURL = getRevpropURL();
             SVNWCClient client = getSVNEnvironment().getClientManager().getWCClient();
-            long rev = client.doGetRevisionProperty(revPropURL, propertyName, getSVNEnvironment().getStartRevision(), this);
+            String target = checkRevPropTarget(getSVNEnvironment().getStartRevision(), targets);
+            SVNURL revPropURL = null;
+            File targetPath = null;
+            long rev;
+            if (SVNCommandUtil.isURL(target)) {
+                revPropURL = SVNURL.parseURIEncoded(target);
+                rev = client.doGetRevisionProperty(revPropURL, propertyName, getSVNEnvironment().getStartRevision(), this);
+            } else {
+                targetPath = new SVNPath(target).getFile();
+                rev = client.doGetRevisionProperty(targetPath, propertyName, getSVNEnvironment().getStartRevision(), this);
+            }
             SVNPropertyData property = getRevisionProperty(rev);
             SVNPropertyValue propertyValue = property != null ? property.getValue() : SVNPropertyValue.create("");
             byte[] propBytes = SVNPropertyValue.getPropertyAsBytes(propertyValue);            
@@ -83,7 +94,11 @@ public class SVNPropEditCommand extends SVNPropertiesCommand {
             SVNPropertyValue newPropertyValue = SVNPropertyValue.create(propertyName, bytes);
             if (newPropertyValue != null && !newPropertyValue.equals(propertyValue)) {
                 clearCollectedProperties();
-                client.doSetRevisionProperty(revPropURL, SVNRevision.create(rev), propertyName, newPropertyValue, getSVNEnvironment().isForce(), this);
+                if (revPropURL != null) {
+                    client.doSetRevisionProperty(revPropURL, SVNRevision.create(rev), propertyName, newPropertyValue, getSVNEnvironment().isForce(), this);
+                } else if (targetPath != null) {
+                    client.doSetRevisionProperty(targetPath, SVNRevision.create(rev), propertyName, newPropertyValue, getSVNEnvironment().isForce(), this);
+                }
                 String message = "Set new value for property ''{0}'' on revision {1}";
                 message = MessageFormat.format(message, new Object[]{propertyName, new Long(rev)});
                 getSVNEnvironment().getOut().println(message);

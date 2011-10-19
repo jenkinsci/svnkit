@@ -9,12 +9,13 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
+import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnGetProperties;
 import org.tmatesoft.svn.util.SVNLogType;
 
 public class SvnNgGetProperties extends SvnNgOperationRunner<SVNProperties, SvnGetProperties> {
-
+    
     @Override
     protected SVNProperties run(SVNWCContext context) throws SVNException {
         boolean pristine = getOperation().getRevision() == SVNRevision.COMMITTED || getOperation().getRevision() == SVNRevision.BASE;
@@ -63,6 +64,11 @@ public class SvnNgGetProperties extends SvnNgOperationRunner<SVNProperties, SvnG
             }
         }        
         return getOperation().first();
+    }
+
+    @Override
+    public boolean isApplicable(SvnGetProperties operation, SvnWcGeneration wcGeneration) throws SVNException {
+        return !operation.isRevisionProperties() && super.isApplicable(operation, wcGeneration);
     }
 
 }

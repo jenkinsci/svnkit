@@ -28,6 +28,9 @@ import org.tmatesoft.svn.util.SVNLogType;
 public class SvnRemoteGetProperties extends SvnRemoteOperationRunner<SVNProperties, SvnGetProperties> {
 
     public boolean isApplicable(SvnGetProperties operation, SvnWcGeneration wcGeneration) throws SVNException {
+        if (getOperation().isRevisionProperties()) {
+            return false;
+        }        
         if (super.isApplicable(operation, wcGeneration)) {
             return true;
         }

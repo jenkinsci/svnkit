@@ -20,7 +20,7 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnSetProperty;
 import org.tmatesoft.svn.util.SVNLogType;
 
-public class SvnSetRemoteRevisionProperty extends SvnRemoteOperationRunner<SVNPropertyData, SvnSetProperty> {
+public class SvnRemoteSetRevisionProperty extends SvnRemoteOperationRunner<SVNPropertyData, SvnSetProperty> {
 
     @Override
     public boolean isApplicable(SvnSetProperty operation, SvnWcGeneration wcGeneration) throws SVNException {

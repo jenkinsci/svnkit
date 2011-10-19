@@ -1163,16 +1163,31 @@ public class SVNWCClient extends SVNBasicClient {
      *             </ul>
      * @see #doGetRevisionProperty(SVNURL,String,SVNRevision,ISVNPropertyHandler)
      */
-    public void doGetRevisionProperty(File path, String propName, SVNRevision revision, ISVNPropertyHandler handler) throws SVNException {
-        try {
-            getSVNWCClient17().doGetRevisionProperty(path, propName, revision, handler);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNWCClient16().doGetRevisionProperty(path, propName, revision, handler);
-                return;
+    public long doGetRevisionProperty(File path, final String propName, final SVNRevision revision, final ISVNPropertyHandler handler) throws SVNException {
+        final SvnGetProperties getProperties = getOperationsFactory().createGetProperties();
+        getProperties.setSingleTarget(SvnTarget.fromFile(path));
+        getProperties.setRevisionProperties(true);
+        getProperties.setRevision(revision);
+        getProperties.setReceiver(new ISvnObjectReceiver<SVNProperties>() {
+            public void receive(SvnTarget target, SVNProperties object) throws SVNException {
+                if (propName == null) {
+                    for (String name : object.nameSet()) {
+                        SVNPropertyData pdata = new SVNPropertyData(name, object.getSVNPropertyValue(name), getOptions());
+                        if (handler != null) {
+                            handler.handleProperty(getProperties.getRevisionNumber(), pdata);
+                        }
+                    }
+                } else if (propName != null && object.containsName(propName)) {
+                    SVNPropertyData pdata = new SVNPropertyData(propName, object.getSVNPropertyValue(propName), getOptions());
+                    if (handler != null) {
+                        handler.handleProperty(getProperties.getRevisionNumber(), pdata);
+                    }
+                } 
             }
-            throw e;
-        }
+        });
+        getProperties.run();
+        
+        return getProperties.getRevisionNumber();
     }
 
     /**
@@ -1202,15 +1217,31 @@ public class SVNWCClient extends SVNBasicClient {
      *             </ul>
      * @see #doGetRevisionProperty(File,String,SVNRevision,ISVNPropertyHandler)
      */
-    public long doGetRevisionProperty(SVNURL url, String propName, SVNRevision revision, ISVNPropertyHandler handler) throws SVNException {
-        try {
-            return getSVNWCClient17().doGetRevisionProperty(url, propName, revision, handler);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                return getSVNWCClient16().doGetRevisionProperty(url, propName, revision, handler);
+    public long doGetRevisionProperty(SVNURL url, final String propName, final SVNRevision revision, final ISVNPropertyHandler handler) throws SVNException {
+        final SvnGetProperties getProperties = getOperationsFactory().createGetProperties();
+        getProperties.setSingleTarget(SvnTarget.fromURL(url));
+        getProperties.setRevisionProperties(true);
+        getProperties.setRevision(revision);
+        getProperties.setReceiver(new ISvnObjectReceiver<SVNProperties>() {
+            public void receive(SvnTarget target, SVNProperties object) throws SVNException {
+                if (propName == null) {
+                    for (String name : object.nameSet()) {
+                        SVNPropertyData pdata = new SVNPropertyData(name, object.getSVNPropertyValue(name), getOptions());
+                        if (handler != null) {
+                            handler.handleProperty(getProperties.getRevisionNumber(), pdata);
+                        }
+                    }
+                } else if (propName != null && object.containsName(propName)) {
+                    SVNPropertyData pdata = new SVNPropertyData(propName, object.getSVNPropertyValue(propName), getOptions());
+                    if (handler != null) {
+                        handler.handleProperty(getProperties.getRevisionNumber(), pdata);
+                    }
+                } 
             }
-            throw e;
-        }
+        });
+        getProperties.run();
+        
+        return getProperties.getRevisionNumber();
     }
 
     /**
