@@ -38,6 +38,7 @@ import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgSetProperty;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgSwitch;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgUpdate;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldAdd;
+import org.tmatesoft.svn.core.internal.wc2.old.SvnOldCat;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldCheckout;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldCommit;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldExport;
@@ -52,6 +53,7 @@ import org.tmatesoft.svn.core.internal.wc2.old.SvnOldSetProperty;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldSwitch;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldUnlock;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldUpdate;
+import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteCat;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteExport;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteGetInfo;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteGetProperties;
@@ -153,6 +155,9 @@ public class SvnOperationFactory {
         
         registerOperationRunner(SvnUnlock.class, new SvnRemoteUnlock());
         registerOperationRunner(SvnUnlock.class, new SvnOldUnlock());
+        
+        registerOperationRunner(SvnCat.class, new SvnRemoteCat());
+        registerOperationRunner(SvnCat.class, new SvnOldCat());
     }
     
     public boolean isAutoCloseContext() {

@@ -139,8 +139,10 @@ svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbUp
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbUpdateNodeBasePresence.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbUpdateNodeFileinfo.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbUpdateNodeWorkingDepth.java -text
+svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/old/SvnOldCat.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/old/SvnOldSetLock.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/old/SvnOldUnlock.java -text
+svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/remote/SvnRemoteCat.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/remote/SvnRemoteSetLock.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/remote/SvnRemoteUnlock.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/io/repository/template.jar -text
