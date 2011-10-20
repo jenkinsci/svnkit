@@ -84,7 +84,7 @@ public class SvnNgGetStatus extends SvnNgOperationRunner<SvnStatus, SvnGetStatus
             } else {
                 rev = context.getRevisionNumber(getOperation().getRevision(), null, repository, getFirstTarget());
             }
-            kind = repository.checkPath("", -1);
+            kind = repository.checkPath("", rev);
             checkCancelled();
             SVNStatusEditor17 editor = null;
             SVNReporter17 reporter = null;
@@ -100,7 +100,7 @@ public class SvnNgGetStatus extends SvnNgOperationRunner<SvnStatus, SvnGetStatus
                 editor = new SVNStatusEditor17(getFirstTarget(), context, 
                         getOperation().getOptions(), getOperation().isReportIgnored(), getOperation().isReportAll(), getOperation().getDepth(), this);
                 editor.setFileListHook(getOperation().getFileListHook());
-
+                editor.targetRevision(rev >= 0 ? rev : repository.getLatestRevision());
                 checkCancelled();
                 editor.closeEdit();
             } else {
