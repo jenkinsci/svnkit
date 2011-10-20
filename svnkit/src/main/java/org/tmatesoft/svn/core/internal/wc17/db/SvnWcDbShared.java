@@ -229,11 +229,12 @@ public class SvnWcDbShared {
         
         begingReadTransaction(root);
         SVNSqlJetStatement stmt = null;
-        try {while (true) {
+        try {
+            while (true) {
                 stmt = root.getSDb().getStatement(SVNWCDbStatements.SELECT_DELETION_INFO);
                 stmt.bindf("is", root.getWcId(), SVNFileUtil.getFilePath(currentRelPath));
-                try {
-                    if (!stmt.next()) {
+                if (!stmt.next()) {
+                    try {
                         if (currentRelPath == localRelpath) {
                             nodeNotFound(root, localRelpath);
                         }
@@ -241,21 +242,22 @@ public class SvnWcDbShared {
                             info.set(DeletionInfo.baseDelRelPath, childRelpath);
                         }
                         break;
+                    } finally {
+                        reset(stmt);
                     }
-                } finally {
-                    reset(stmt);
                 }
                 
-                SVNWCDbStatus workPresence = getColumnPresence(stmt);
-                if (currentRelPath.equals(localRelpath) && workPresence != SVNWCDbStatus.NotPresent && workPresence != SVNWCDbStatus.BaseDeleted) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS, "Expected node ''{0}'' to be deleted.", root.getAbsPath(localRelpath));
-                    SVNErrorManager.error(err, SVNLogType.WC);
-                }
-                assert (workPresence == SVNWCDbStatus.Normal || workPresence == SVNWCDbStatus.NotPresent || workPresence == SVNWCDbStatus.BaseDeleted);
-                
-                SVNSqlJetStatement baseStmt = stmt.getJoinedStatement(SVNWCDbSelectDeletionInfo.NODES_BASE);
-                boolean haveBase = false;
+                SVNSqlJetStatement baseStmt = null;
                 try {
+                    SVNWCDbStatus workPresence = getColumnPresence(stmt);
+                    if (currentRelPath.equals(localRelpath) && workPresence != SVNWCDbStatus.NotPresent && workPresence != SVNWCDbStatus.BaseDeleted) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS, "Expected node ''{0}'' to be deleted.", root.getAbsPath(localRelpath));
+                        SVNErrorManager.error(err, SVNLogType.WC);
+                    }
+                    assert (workPresence == SVNWCDbStatus.Normal || workPresence == SVNWCDbStatus.NotPresent || workPresence == SVNWCDbStatus.BaseDeleted);
+                    
+                    baseStmt = stmt.getJoinedStatement(SVNWCDbSelectDeletionInfo.NODES_BASE);
+                    boolean haveBase = false;
                     haveBase = baseStmt != null && baseStmt.next() && !isColumnNull(baseStmt, SVNWCDbSchema.NODES__Fields.presence);
                     if (haveBase) {
                         SVNWCDbStatus basePresence = getColumnPresence(baseStmt);
@@ -279,15 +281,16 @@ public class SvnWcDbShared {
                             ((opDepth < localOpDepth && opDepth > 0) || childPresence == SVNWCDbStatus.NotPresent)) {
                         info.set(DeletionInfo.workDelRelPath, childRelpath);
                     }
+                    
+                    childRelpath = currentRelPath;
+                    childPresence = workPresence;
+                    childHasBase = haveBase;
+                    
+                    currentRelPath = SVNFileUtil.getFileDir(currentRelPath);                
                 } finally {
                     reset(stmt);
                     reset(baseStmt);
                 }
-                childRelpath = currentRelPath;
-                childPresence = workPresence;
-                childHasBase = haveBase;
-                
-                currentRelPath = SVNFileUtil.getFileDir(currentRelPath);                
             }
         } finally {
             commitTransaction(root);

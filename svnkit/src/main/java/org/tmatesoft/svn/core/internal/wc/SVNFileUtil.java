@@ -1929,10 +1929,12 @@ public class SVNFileUtil {
     }
 
     public static File createFilePath(File parent, File child) {
-        if (child == null)
-            return null;
-        if (isAbsolute(child))
+        if (child == null) {
+            return parent;
+        }
+        if (isAbsolute(child)) {
             return child;
+        }
         return createFilePath(parent, child.toString());
     }
 
