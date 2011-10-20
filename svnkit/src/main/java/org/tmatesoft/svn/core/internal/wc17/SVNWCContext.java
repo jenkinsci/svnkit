@@ -56,6 +56,10 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumOutputStream;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
+import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDbDir;
+import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDbRoot;
+import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.DeletionInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbShared;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbLock;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbOpenMode;
@@ -73,11 +77,15 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo.Repos
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbWorkQueueInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.DirParsedInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.ReposInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
+import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.AdditionInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeOriginInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.PristineInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.WalkerChildInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbReader;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.ISVNConflictHandler;
@@ -949,32 +957,54 @@ public class SVNWCContext {
     }
 
     public SVNURL getNodeUrl(File path) throws SVNException {
+        Structure<NodeInfo> info = db.readInfo(path, NodeInfo.status, NodeInfo.reposRelPath, NodeInfo.reposId, NodeInfo.haveBase);
+        File reposRelPath = info.get(NodeInfo.reposRelPath);
+        SVNWCDbStatus status = info.get(NodeInfo.status);
+        long reposId = info.lng(NodeInfo.reposId);
 
-        final WCDbInfo readInfo = db.readInfo(path, InfoField.status, InfoField.reposRelPath, InfoField.reposRootUrl, InfoField.haveBase);
+        
+        if (reposRelPath == null) {
+            if (status == SVNWCDbStatus.Added) {
+                Structure<AdditionInfo> additionInfo = SvnWcDbShared.scanAddition((SVNWCDb) db, path, AdditionInfo.reposRelPath, AdditionInfo.reposId);
+                reposRelPath = additionInfo.get(AdditionInfo.reposRelPath);
+                reposId = additionInfo.lng(AdditionInfo.reposId);
+                additionInfo.release();
+            } else if (status == SVNWCDbStatus.Deleted) {
+                File localRelPath = db.toRelPath(path);
 
-        if (readInfo.reposRelPath == null) {
-            if (readInfo.status == SVNWCDbStatus.Normal || readInfo.status == SVNWCDbStatus.Incomplete
-                    || (readInfo.haveBase && (readInfo.status == SVNWCDbStatus.Deleted || readInfo.status == SVNWCDbStatus.ObstructedDelete))) {
-                final WCDbRepositoryInfo repos = db.scanBaseRepository(path, RepositoryInfoField.relPath, RepositoryInfoField.rootUrl);
-                readInfo.reposRelPath = repos.relPath;
-                readInfo.reposRootUrl = repos.rootUrl;
-            } else if (readInfo.status == SVNWCDbStatus.Added) {
-                final WCDbAdditionInfo scanAddition = db.scanAddition(path, AdditionInfoField.reposRelPath, AdditionInfoField.reposRootUrl);
-                readInfo.reposRelPath = scanAddition.reposRelPath;
-                readInfo.reposRootUrl = scanAddition.reposRootUrl;
-            } else if (readInfo.status == SVNWCDbStatus.ServerExcluded || readInfo.status == SVNWCDbStatus.Excluded || readInfo.status == SVNWCDbStatus.NotPresent
-                    || (!readInfo.haveBase && (readInfo.status == SVNWCDbStatus.Deleted || readInfo.status == SVNWCDbStatus.ObstructedDelete))) {
-                File parent_abspath = SVNFileUtil.getFileDir(path);
-                readInfo.reposRelPath = SVNFileUtil.createFilePath(SVNFileUtil.getFileName(path));
-                readInfo.reposRootUrl = getNodeUrl(parent_abspath);
+                Structure<DeletionInfo> deletionInfo = SvnWcDbShared.scanDeletion((SVNWCDb) db, path);
+                File baseDelRelpath = deletionInfo.get(DeletionInfo.baseDelRelPath);
+                File workDelRelpath = deletionInfo.get(DeletionInfo.workDelRelPath);
+                if (baseDelRelpath != null) {
+                    Structure<NodeInfo> baseInfo = SvnWcDbShared.getBaseInfo((SVNWCDb) db, path, NodeInfo.reposRelPath, NodeInfo.reposId);
+                    reposRelPath = baseInfo.get(NodeInfo.reposRelPath);
+                    reposId = baseInfo.lng(NodeInfo.reposId);
+                    baseInfo.release();
+                    
+                    reposRelPath = SVNFileUtil.createFilePath(reposRelPath, SVNWCUtils.skipAncestor(baseDelRelpath, localRelPath));
+                } else {
+                    File workRelpath = SVNFileUtil.getFileDir(workDelRelpath); 
+                    Structure<AdditionInfo> additionInfo = SvnWcDbShared.scanAddition((SVNWCDb) db, db.fromRelPath(db.getWCRoot(path), workRelpath), AdditionInfo.reposRelPath, AdditionInfo.reposId);
+                    reposRelPath = additionInfo.get(AdditionInfo.reposRelPath);
+                    reposId = additionInfo.lng(AdditionInfo.reposId);
+                    additionInfo.release();
+
+                    reposRelPath = SVNFileUtil.createFilePath(reposRelPath, SVNWCUtils.skipAncestor(workRelpath, localRelPath));
+                    
+                }
+            } else if (status == SVNWCDbStatus.Excluded) {
+                File parentPath = SVNFileUtil.getParentFile(path);
+                SVNURL url = getNodeUrl(parentPath);
+                return url.appendPath(SVNFileUtil.getFileName(path), false);
             } else {
-                /* Status: obstructed, obstructed_add */
                 return null;
             }
         }
-
-        assert (readInfo.reposRootUrl != null && readInfo.reposRelPath != null);
-        return SVNWCUtils.join(readInfo.reposRootUrl, readInfo.reposRelPath);
+        
+        DirParsedInfo dpi = ((SVNWCDb) db).parseDir(path, Mode.ReadOnly);
+        ReposInfo reposInfo = ((SVNWCDb) db).fetchReposInfo(dpi.wcDbDir.getWCRoot().getSDb(), reposId);
+        
+        return SVNWCUtils.join(SVNURL.parseURIEncoded(reposInfo.reposRootUrl), reposRelPath);       
     }
 
     public SVNWCContext.ConflictInfo getConflicted(File localAbsPath, boolean isTextNeed, boolean isPropNeed, boolean isTreeNeed) throws SVNException {
@@ -1275,7 +1305,7 @@ public class SVNWCContext {
     public Structure<NodeOriginInfo> getNodeOrigin(File localAbsPath, boolean scanDeleted, NodeOriginInfo... fields) throws SVNException {
         final Structure<NodeInfo> readInfo = db.readInfo(localAbsPath, 
                 NodeInfo.status, NodeInfo.revision, NodeInfo.reposRelPath, NodeInfo.reposRootUrl, NodeInfo.reposUuid,
-                NodeInfo.originalReposRelpath, NodeInfo.originalRootUrl, NodeInfo.originalUuid, NodeInfo.originalUuid,
+                NodeInfo.originalRevision, NodeInfo.originalReposRelpath, NodeInfo.originalRootUrl, NodeInfo.originalUuid, NodeInfo.originalUuid,
                 NodeInfo.haveWork);
         
         Structure<NodeOriginInfo> result = Structure.obtain(NodeOriginInfo.class, fields);

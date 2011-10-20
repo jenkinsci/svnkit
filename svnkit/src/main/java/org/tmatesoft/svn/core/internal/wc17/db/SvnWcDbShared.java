@@ -28,12 +28,14 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb.Mode;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbLock;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
+import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.DirParsedInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.AdditionInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.DeletionInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
@@ -96,6 +98,14 @@ public class SvnWcDbShared {
             reset(stmt);
         }
     }
+
+    public static Structure<AdditionInfo> scanAddition(SVNWCDb db, File localAbsPath, AdditionInfo... fields) throws SVNException {
+        DirParsedInfo parsed = db.parseDir(localAbsPath, Mode.ReadOnly);
+        SVNWCDbDir pdh = parsed.wcDbDir;
+        File localRelpath = parsed.localRelPath;
+
+        return scanAddition(pdh.getWCRoot(), localRelpath, fields);
+    }
     
     protected static Structure<AdditionInfo> scanAddition(SVNWCDbRoot root, File localRelpath, AdditionInfo... fields) throws SVNException {
         Structure<AdditionInfo> info = Structure.obtain(AdditionInfo.class, fields);
@@ -124,7 +134,6 @@ public class SvnWcDbShared {
 
             if (presence != SVNWCDbStatus.Normal) {
                 reset(stmt);
-                new Exception().printStackTrace();
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS, "Expected node ''{0}'' to be added.", root.getAbsPath(localRelpath));
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
@@ -198,6 +207,14 @@ public class SvnWcDbShared {
         }
         
         return info;
+    }
+
+    public static Structure<DeletionInfo> scanDeletion(SVNWCDb db, File localAbsPath) throws SVNException {
+        DirParsedInfo parsed = db.parseDir(localAbsPath, Mode.ReadOnly);
+        SVNWCDbDir pdh = parsed.wcDbDir;
+        File localRelpath = parsed.localRelPath;
+
+        return scanDeletion(pdh.getWCRoot(), localRelpath);
     }
     
     protected static Structure<DeletionInfo> scanDeletion(SVNWCDbRoot root, File localRelpath) throws SVNException {
@@ -277,6 +294,14 @@ public class SvnWcDbShared {
             reset(stmt);
         }
         return info;
+    }
+
+    public static Structure<NodeInfo> getBaseInfo(SVNWCDb db, File localAbsPath, NodeInfo... fields) throws SVNException {
+        DirParsedInfo parsed = db.parseDir(localAbsPath, Mode.ReadOnly);
+        SVNWCDbDir pdh = parsed.wcDbDir;
+        File localRelpath = parsed.localRelPath;
+
+        return getBaseInfo(pdh.getWCRoot(), localRelpath, fields);
     }
     
     protected static Structure<NodeInfo> getBaseInfo(SVNWCDbRoot wcroot, File localRelPath, NodeInfo...fields) throws SVNException {

@@ -965,8 +965,7 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     public File fromRelPath(File wcRootAbsPath, File localRelPath) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+        return SVNFileUtil.createFilePath(wcRootAbsPath, localRelPath);
     }
 
     public Set<String> getBaseChildren(File localAbsPath) throws SVNException {
@@ -3033,7 +3032,6 @@ public class SVNWCDb implements ISVNWCDb {
 
             if (presence != SVNWCDbStatus.Normal) {
                 stmt.reset();
-                new Exception().printStackTrace();
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS, "Expected node ''{0}'' to be added.", localAbsPath);
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
@@ -3433,8 +3431,8 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     public File toRelPath(File localAbsPath) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+        DirParsedInfo parsed = parseDir(localAbsPath, Mode.ReadOnly);
+        return parsed.localRelPath;
     }
 
     public String getFileExternalTemp(File path) throws SVNException {
