@@ -1412,7 +1412,7 @@ public class SVNWCDb implements ISVNWCDb {
              * we'll need it later to construct local_relpath.
              */
             buildRelPath = SVNFileUtil.getFileName(localAbsPath);
-            localAbsPath = SVNFileUtil.getParentFile(localAbsPath);
+            localAbsPath = SVNFileUtil.getFileDir(localAbsPath);
 
             /*
              * ### if *pdh != NULL (from further above), then there is (quite
@@ -1513,7 +1513,7 @@ public class SVNWCDb implements ISVNWCDb {
              * We couldn't open the SDB within the specified directory, so move
              * up one more directory.
              */
-            localAbsPath = SVNFileUtil.getParentFile(localAbsPath);
+            localAbsPath = SVNFileUtil.getFileDir(localAbsPath);
             if (localAbsPath == null) {
                 /* Hit the root without finding a wcroot. */
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_WORKING_COPY, "''{0}'' is not a working copy", original_abspath);
@@ -1609,7 +1609,7 @@ public class SVNWCDb implements ISVNWCDb {
             assert (!moved_upwards);
 
             /* Get/make a PDH for the parent. */
-            File parent_dir = SVNFileUtil.getParentFile(localAbsPath);
+            File parent_dir = SVNFileUtil.getFileDir(localAbsPath);
             SVNWCDbDir parent_pdh = dirData.get(parent_dir);
             if (parent_pdh == null || parent_pdh.getWCRoot() == null) {
                 boolean err = false;
@@ -1671,7 +1671,7 @@ public class SVNWCDb implements ISVNWCDb {
         child_pdh = info.wcDbDir;
 
         do {
-            File parent_dir = SVNFileUtil.getParentFile(child_pdh.getLocalAbsPath());
+            File parent_dir = SVNFileUtil.getFileDir(child_pdh.getLocalAbsPath());
             SVNWCDbDir parent_pdh;
 
             parent_pdh = dirData.get(parent_dir);
@@ -1781,7 +1781,7 @@ public class SVNWCDb implements ISVNWCDb {
         } finally {
             stmt.reset();
         }
-        final File parentFile = SVNFileUtil.getParentFile(localAbspath);
+        final File parentFile = SVNFileUtil.getFileDir(localAbspath);
         if (parentFile == null) {
             return false;
         }
