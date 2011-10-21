@@ -1295,7 +1295,7 @@ public class SVNWCDb implements ISVNWCDb {
     public void installPristine(File tempfileAbspath, SvnChecksum sha1Checksum, SvnChecksum md5Checksum) throws SVNException {
 
         assert (SVNFileUtil.isAbsolute(tempfileAbspath));
-        File wriAbspath = SVNFileUtil.getFileDir(tempfileAbspath);
+        File wriAbspath = SVNFileUtil.getParentFile(tempfileAbspath);
         final DirParsedInfo parsed = parseDir(wriAbspath, Mode.ReadWrite);
         SVNWCDbDir pdh = parsed.wcDbDir;
         verifyDirUsable(pdh);
@@ -1412,7 +1412,7 @@ public class SVNWCDb implements ISVNWCDb {
              * we'll need it later to construct local_relpath.
              */
             buildRelPath = SVNFileUtil.getFileName(localAbsPath);
-            localAbsPath = SVNFileUtil.getFileDir(localAbsPath);
+            localAbsPath = SVNFileUtil.getParentFile(localAbsPath);
 
             /*
              * ### if *pdh != NULL (from further above), then there is (quite
@@ -1513,7 +1513,7 @@ public class SVNWCDb implements ISVNWCDb {
              * We couldn't open the SDB within the specified directory, so move
              * up one more directory.
              */
-            localAbsPath = SVNFileUtil.getFileDir(localAbsPath);
+            localAbsPath = SVNFileUtil.getParentFile(localAbsPath);
             if (localAbsPath == null) {
                 /* Hit the root without finding a wcroot. */
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_WORKING_COPY, "''{0}'' is not a working copy", original_abspath);
@@ -1537,8 +1537,9 @@ public class SVNWCDb implements ISVNWCDb {
             /* Is the parent directory recorded in our hash? */
             found_pdh = dirData.get(localAbsPath);
             if (found_pdh != null) {
-                if (found_pdh.getWCRoot() != null)
+                if (found_pdh.getWCRoot() != null) {
                     break;
+                }
                 found_pdh = null;
             }
         }
@@ -1609,7 +1610,10 @@ public class SVNWCDb implements ISVNWCDb {
             assert (!moved_upwards);
 
             /* Get/make a PDH for the parent. */
-            File parent_dir = SVNFileUtil.getFileDir(localAbsPath);
+            File parent_dir = SVNFileUtil.getParentFile(localAbsPath);
+            if (parent_dir == null) {
+                
+            }
             SVNWCDbDir parent_pdh = dirData.get(parent_dir);
             if (parent_pdh == null || parent_pdh.getWCRoot() == null) {
                 boolean err = false;
@@ -1617,8 +1621,9 @@ public class SVNWCDb implements ISVNWCDb {
                     sDb = openDb(parent_dir, SDB_FILE, sMode);
                 } catch (SVNException e) {
                     err = true;
-                    if (!isErrorNOENT(e.getErrorMessage().getErrorCode()))
+                    if (!isErrorNOENT(e.getErrorMessage().getErrorCode())) {
                         throw e;
+                    }
                 }
 
                 if (err) {
@@ -1671,7 +1676,7 @@ public class SVNWCDb implements ISVNWCDb {
         child_pdh = info.wcDbDir;
 
         do {
-            File parent_dir = SVNFileUtil.getFileDir(child_pdh.getLocalAbsPath());
+            File parent_dir = SVNFileUtil.getParentFile(child_pdh.getLocalAbsPath());
             SVNWCDbDir parent_pdh;
 
             parent_pdh = dirData.get(parent_dir);
@@ -1781,7 +1786,7 @@ public class SVNWCDb implements ISVNWCDb {
         } finally {
             stmt.reset();
         }
-        final File parentFile = SVNFileUtil.getFileDir(localAbspath);
+        final File parentFile = SVNFileUtil.getParentFile(localAbspath);
         if (parentFile == null) {
             return false;
         }
@@ -2441,7 +2446,7 @@ public class SVNWCDb implements ISVNWCDb {
                 byte[] conflict_data = getColumnBlob(stmt, ACTUAL_NODE__Fields.tree_conflict_data);
                 if (conflict_data != null) {
                     SVNSkel skel = SVNSkel.parse(conflict_data);
-                    SVNTreeConflictDescription desc = SVNTreeConflictUtil.readSingleTreeConflict(skel, SVNFileUtil.getFileDir(localAbsPath));
+                    SVNTreeConflictDescription desc = SVNTreeConflictUtil.readSingleTreeConflict(skel, SVNFileUtil.getParentFile(localAbsPath));
                     conflicts.add(desc);
                 }
 
@@ -3401,7 +3406,7 @@ public class SVNWCDb implements ISVNWCDb {
         SVNWCDbDir parentPdh = childPdh.getParent();
         if (parentPdh != null && parentPdh.getWCRoot() != null)
             return parentPdh;
-        File parentAbsPath = SVNFileUtil.getFileDir(childPdh.getLocalAbsPath());
+        File parentAbsPath = SVNFileUtil.getParentFile(childPdh.getLocalAbsPath());
         /* Make sure we don't see the root as its own parent */
         assert (parentAbsPath != null);
         parentPdh = parseDir(parentAbsPath, sMode).wcDbDir;

@@ -248,7 +248,7 @@ public class SVNFileUtil {
         }
         path = path.replace('/', File.separatorChar);
         file = new File(path);
-        return SVNFileUtil.getFileDir(file);
+        return file.getParentFile();
     }
 
     public static String readFile(File file) throws SVNException {
