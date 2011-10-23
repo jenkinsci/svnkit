@@ -328,7 +328,7 @@ public class SVNStatusEditor17 {
             long fileSize = localAbsPath.length();
             long fileTime = localAbsPath.lastModified();
             
-            if ((info.kind == SVNWCDbKind.File || info.kind == SVNWCDbKind.Symlink) && info.special == pathSpecial) {
+            if ((info.kind == SVNWCDbKind.File || info.kind == SVNWCDbKind.Symlink) && (!SVNFileUtil.symlinksSupported() || info.special == pathSpecial)) {
                 if (!info.hasChecksum) {
                     text_modified_p = true;
                 } else if (ignoreTextMods ||
@@ -348,7 +348,7 @@ public class SVNStatusEditor17 {
                         text_modified_p = true;
                     }
                 }                
-            } else if (info.special != (pathKind != null && pathSpecial)) {
+            } else if (SVNFileUtil.symlinksSupported() && (info.special != (pathKind != null && pathSpecial))) {
                 node_status = SVNStatusType.STATUS_OBSTRUCTED;
             }
             if (text_modified_p) {

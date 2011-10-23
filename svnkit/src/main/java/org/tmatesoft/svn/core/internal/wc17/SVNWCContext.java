@@ -674,6 +674,8 @@ public class SVNWCContext {
                 if (translateInfo.special) {
                     if (SVNFileUtil.symlinksSupported()) {
                         versionedStream = readSpecialFile(localAbsPath);
+                    } else {
+                        versionedStream = SVNFileUtil.openFileForReading(localAbsPath);
                     }
                 } else {
                     versionedStream = SVNFileUtil.openFileForReading(localAbsPath);
