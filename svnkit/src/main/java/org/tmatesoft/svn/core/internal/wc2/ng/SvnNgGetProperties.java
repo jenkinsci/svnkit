@@ -1,5 +1,7 @@
 package org.tmatesoft.svn.core.internal.wc2.ng;
 
+import java.io.File;
+
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -12,38 +14,48 @@ import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnGetProperties;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
 
 public class SvnNgGetProperties extends SvnNgOperationRunner<SVNProperties, SvnGetProperties> {
     
     @Override
     protected SVNProperties run(SVNWCContext context) throws SVNException {
+        for (SvnTarget target : getOperation().getTargets()) {
+            if (target.isFile()) {
+                run(context, target.getFile());
+            }
+        }
+        return getOperation().first();
+    }
+
+    protected SVNProperties run(SVNWCContext context, File target) throws SVNException {
         boolean pristine = getOperation().getRevision() == SVNRevision.COMMITTED || getOperation().getRevision() == SVNRevision.BASE;
-        SVNNodeKind kind = context.readKind(getFirstTarget(), false);
+        SVNNodeKind kind = context.readKind(target, false);
         
         if (kind == SVNNodeKind.UNKNOWN || kind == SVNNodeKind.NONE) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' is not under version control", getFirstTarget());
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' is not under version control", target);
             SVNErrorManager.error(err, SVNLogType.WC);
         }
         
         if (kind == SVNNodeKind.DIR) {
             if (getOperation().getDepth() == SVNDepth.EMPTY) {
-                if (!matchesChangelist(getFirstTarget())) {
+                if (!matchesChangelist(target)) {
                     return getOperation().first();
                 }
                 SVNProperties properties = null;
                 if (pristine) {
-                    properties = context.getDb().readPristineProperties(getFirstTarget());
+                    properties = context.getDb().readPristineProperties(target);
                 } else {
-                    properties = context.getDb().readProperties(getFirstTarget());
+                    properties = context.getDb().readProperties(target);
                 }
                 if (properties != null && !properties.isEmpty()) {
-                    getOperation().receive(getOperation().getFirstTarget(), properties);
+                    getOperation().receive(SvnTarget.fromFile(target), properties);
                 }
-            } else if (matchesChangelist(getFirstTarget())) {
+            } else if (matchesChangelist(target)) {
                 SVNWCDb db = (SVNWCDb) context.getDb();
                 db.readPropertiesRecursively(
-                        getFirstTarget(), 
+                        target, 
                         getOperation().getDepth(), 
                         false, 
                         pristine, 
@@ -53,14 +65,14 @@ public class SvnNgGetProperties extends SvnNgOperationRunner<SVNProperties, SvnG
         } else {
             SVNProperties properties = null;
             if (pristine) {
-                properties = context.getDb().readPristineProperties(getFirstTarget());
+                properties = context.getDb().readPristineProperties(target);
             } else {
-                if (!context.isNodeStatusDeleted(getFirstTarget())) {
-                    properties = context.getDb().readProperties(getFirstTarget());
+                if (!context.isNodeStatusDeleted(target)) {
+                    properties = context.getDb().readProperties(target);
                 }
             }
             if (properties != null && !properties.isEmpty()) {
-                getOperation().receive(getOperation().getFirstTarget(), properties);
+                getOperation().receive(SvnTarget.fromFile(target), properties);
             }
         }        
         return getOperation().first();
