@@ -56,10 +56,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumOutputStream;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
-import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDbDir;
-import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDbRoot;
-import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.DeletionInfo;
-import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbShared;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbLock;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbOpenMode;
@@ -80,13 +76,13 @@ import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.DirParsedInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.ReposInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.AdditionInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.DeletionInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeOriginInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.PristineInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.WalkerChildInfo;
-import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
-import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbReader;
+import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbShared;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.ISVNConflictHandler;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
@@ -682,7 +678,7 @@ public class SVNWCContext {
                     if (!exactComparison) {
                         byte[] eolStr = translateInfo.eolStyleInfo.eolStr; 
                         if (translateInfo.eolStyleInfo.eolStyle == SVNWCContext.SVNEolStyle.Native) {
-                            eolStr = SVNEolStyleInfo.NATIVE_EOL_STR;
+                            eolStr = SVNTranslator.getBaseEOL(SVNProperty.EOL_STYLE_NATIVE);
                         } else if (translateInfo.eolStyleInfo.eolStyle != SVNWCContext.SVNEolStyle.Fixed &&
                                 translateInfo.eolStyleInfo.eolStyle != SVNWCContext.SVNEolStyle.None) {
                             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_UNKNOWN_EOL), SVNLogType.WC);
@@ -691,14 +687,16 @@ public class SVNWCContext {
                         versionedStream = SVNTranslator.getTranslatingInputStream(
                                 versionedStream, 
                                 null, 
-                                eolStr, true, 
+                                eolStr, 
+                                true, 
                                 translateInfo.keywords, 
                                 false);
                     } else {
                         pristineStream = SVNTranslator.getTranslatingInputStream(
                                 pristineStream, 
-                                null, 
-                                translateInfo.eolStyleInfo.eolStr, false, 
+                                null,
+                                translateInfo.eolStyleInfo.eolStr, 
+                                false, 
                                 translateInfo.keywords, 
                                 true);
                     }
