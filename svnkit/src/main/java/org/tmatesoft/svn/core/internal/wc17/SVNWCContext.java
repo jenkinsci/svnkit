@@ -4110,6 +4110,8 @@ public class SVNWCContext {
         SVNFileUtil.setHidden(wcAdmDir, true);
         SVNFileUtil.ensureDirectoryExists(SVNWCUtils.admChild(localAbspath, WC_ADM_PRISTINE));
         SVNFileUtil.ensureDirectoryExists(SVNWCUtils.admChild(localAbspath, WC_ADM_TMP));
+        SVNFileUtil.writeToFile(SVNWCUtils.admChild(localAbspath, WC_ADM_FORMAT), "12", null);
+        SVNFileUtil.writeToFile(SVNWCUtils.admChild(localAbspath, WC_ADM_ENTRIES), "12", null);
         db.init(localAbspath, reposRelpath, repositoryRoot, uuid, revNumber, depth);
     }
 
