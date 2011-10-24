@@ -38,6 +38,7 @@ import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgRevert;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgSetProperty;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgSwitch;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgUpdate;
+import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgWcToWcCopy;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldAdd;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldCat;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldCheckout;
@@ -164,6 +165,8 @@ public class SvnOperationFactory {
         registerOperationRunner(SvnCat.class, new SvnRemoteCat());
         registerOperationRunner(SvnCat.class, new SvnNgCat());
         registerOperationRunner(SvnCat.class, new SvnOldCat());
+        
+        registerOperationRunner(SvnCopy.class, new SvnNgWcToWcCopy());
     }
     
     public boolean isAutoCloseContext() {
@@ -251,6 +254,11 @@ public class SvnOperationFactory {
     public SvnImport createImport() {
         return new SvnImport(this);
     }
+    
+    public SvnCopy createCopy() {
+        return new SvnCopy(this);
+    }
+    
 
     public SvnRemoteCopy createRemoteCopy() {
         return new SvnRemoteCopy(this);
