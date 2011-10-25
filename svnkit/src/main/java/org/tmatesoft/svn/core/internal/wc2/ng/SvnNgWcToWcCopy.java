@@ -44,7 +44,13 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
     
     @Override
     protected Long run(SVNWCContext context) throws SVNException {
-        return null;
+        File source = getOperation().getSource().getFile();
+        File dst = getOperation().getTarget().getFile();
+        
+        copy(context, source, dst, false);
+        
+        // local copy
+        return new Long(-1);
     }
 
     

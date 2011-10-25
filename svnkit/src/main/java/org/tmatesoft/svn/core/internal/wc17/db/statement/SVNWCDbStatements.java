@@ -39,6 +39,7 @@ public enum SVNWCDbStatements {
     INSERT_ACTUAL_CONFLICT_DATA(SVNWCDbInsertActualConflictData.class),
     INSERT_ACTUAL_PROPERTY_CONFLICTS,
     INSERT_ACTUAL_PROPS(SVNWCDbInsertActualProps.class),
+    INSERT_ACTUAL_NODE(SVNWCDbInsertActualNode.class),
     INSERT_ACTUAL_TEXT_CONFLICTS(SVNWCDbInsertActualTextConflicts.class),
     INSERT_ACTUAL_TREE_CONFLICTS(SVNWCDbInsertActualTreeConflicts.class),
     INSERT_NODE(SVNWCDbInsertNode.class),

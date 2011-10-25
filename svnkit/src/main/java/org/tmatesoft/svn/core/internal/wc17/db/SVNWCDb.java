@@ -734,7 +734,7 @@ public class SVNWCDb implements ISVNWCDb {
 
     }
 
-    public void insertIncompleteChildren(SVNSqlJetDb db, long wcId, File localRelpath, long revision, List<File> children, int opDepth) throws SVNException {
+    public void insertIncompleteChildren(SVNSqlJetDb db, long wcId, File localRelpath, long revision, List<File> children, long opDepth) throws SVNException {
         SVNSqlJetStatement stmt = db.getStatement(SVNWCDbStatements.INSERT_NODE);
         for (File name : children) {
             stmt.bindf("isisnnrsns", wcId, SVNFileUtil.createFilePath(localRelpath, name), opDepth, localRelpath, revision, "incomplete", "unknown");
@@ -3719,7 +3719,7 @@ public class SVNWCDb implements ISVNWCDb {
 
     };
 
-    private List<String> gatherRepoChildren(SVNWCDbDir pdh, File localRelpath, long opDepth) throws SVNException {
+    public List<String> gatherRepoChildren(SVNWCDbDir pdh, File localRelpath, long opDepth) throws SVNException {
         final List<String> children = new ArrayList<String>();
         final SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_OP_DEPTH_CHILDREN);
         try {

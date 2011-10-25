@@ -14,14 +14,9 @@ package org.tmatesoft.svn.core.internal.wc17.db.statement;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.tmatesoft.sqljet.core.SqlJetException;
-import org.tmatesoft.sqljet.core.schema.SqlJetConflictAction;
-import org.tmatesoft.sqljet.core.table.ISqlJetTable;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetInsertStatement;
-import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
-import org.tmatesoft.svn.core.internal.db.SVNSqlJetUpdateStatement;
 
 /**
  * INSERT OR IGNORE INTO pristine (checksum, md5_checksum, size, refcount)
