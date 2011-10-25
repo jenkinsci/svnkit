@@ -38,9 +38,6 @@ public class SvnGetInfo extends SvnReceivingOperation<SvnInfo> {
 
     @Override
     protected void ensureArgumentsAreValid() throws SVNException {
-        if (getPegRevision() == null) {
-            setPegRevision(hasRemoteTargets() ? SVNRevision.HEAD : SVNRevision.UNDEFINED);
-        }
         if (getRevision() == null) {
             setRevision(hasRemoteTargets() ? SVNRevision.HEAD : SVNRevision.UNDEFINED);
         }

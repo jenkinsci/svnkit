@@ -43,8 +43,9 @@ public class SvnNgExport extends SvnNgOperationRunner<Long, SvnExport> {
     @Override
     protected Long run(SVNWCContext context) throws SVNException {
         SVNRevision revision = getOperation().getRevision();
-        File from = getOperation().getFirstTarget().getFile();
-        File to = getOperation().getDestination();
+        File to = getOperation().getFirstTarget().getFile();
+        File from = getOperation().getSource().getFile();
+        
         String eolStyle = getOperation().getEolStyle();
         boolean ignoreKeywords = !getOperation().isExpandKeywords();
         boolean force = getOperation().isForce();

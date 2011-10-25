@@ -333,8 +333,7 @@ public class SVNWCClient extends SVNBasicClient {
      */
     public void doGetFileContents(File path, SVNRevision pegRevision, SVNRevision revision, boolean expandKeywords, OutputStream dst) throws SVNException {
         SvnCat cat = getOperationsFactory().createCat();
-        cat.setSingleTarget(SvnTarget.fromFile(path));
-        cat.setPegRevision(pegRevision);
+        cat.setSingleTarget(SvnTarget.fromFile(path, pegRevision));
         cat.setRevision(revision);
         cat.setExpandKeywords(expandKeywords);
         cat.setOutput(dst);
@@ -374,8 +373,7 @@ public class SVNWCClient extends SVNBasicClient {
      */
     public void doGetFileContents(SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean expandKeywords, OutputStream dst) throws SVNException {
         SvnCat cat = getOperationsFactory().createCat();
-        cat.setSingleTarget(SvnTarget.fromURL(url));
-        cat.setPegRevision(pegRevision);
+        cat.setSingleTarget(SvnTarget.fromURL(url, pegRevision));
         cat.setRevision(revision);
         cat.setExpandKeywords(expandKeywords);
         cat.setOutput(dst);
@@ -838,8 +836,7 @@ public class SVNWCClient extends SVNBasicClient {
     public SVNPropertyData doGetProperty(final File path, final String propName, SVNRevision pegRevision, SVNRevision revision) throws SVNException {
         final SVNPropertyData[] data = new SVNPropertyData[1];
         SvnGetProperties getProperties = getOperationsFactory().createGetProperties();
-        getProperties.setSingleTarget(SvnTarget.fromFile(path));
-        getProperties.setPegRevision(pegRevision);
+        getProperties.setSingleTarget(SvnTarget.fromFile(path, pegRevision));
         getProperties.setRevision(revision);
         getProperties.setDepth(SVNDepth.EMPTY);
         getProperties.setReceiver(new ISvnObjectReceiver<SVNProperties>() {
@@ -886,8 +883,7 @@ public class SVNWCClient extends SVNBasicClient {
     public SVNPropertyData doGetProperty(final SVNURL url, final String propName, SVNRevision pegRevision, SVNRevision revision) throws SVNException {
         final SVNPropertyData[] data = new SVNPropertyData[1];
         SvnGetProperties getProperties = getOperationsFactory().createGetProperties();
-        getProperties.setSingleTarget(SvnTarget.fromURL(url));
-        getProperties.setPegRevision(pegRevision);
+        getProperties.setSingleTarget(SvnTarget.fromURL(url, pegRevision));
         getProperties.setRevision(revision);
         getProperties.setDepth(SVNDepth.EMPTY);
         getProperties.setReceiver(new ISvnObjectReceiver<SVNProperties>() {
@@ -1011,8 +1007,7 @@ public class SVNWCClient extends SVNBasicClient {
      */
     public void doGetProperty(File path, final String propName, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, final ISVNPropertyHandler handler, Collection<String> changeLists) throws SVNException {
         SvnGetProperties getProperties = getOperationsFactory().createGetProperties();
-        getProperties.setSingleTarget(SvnTarget.fromFile(path));
-        getProperties.setPegRevision(pegRevision);
+        getProperties.setSingleTarget(SvnTarget.fromFile(path, pegRevision));
         getProperties.setRevision(revision);
         getProperties.setDepth(depth);
         getProperties.setApplicalbeChangelists(changeLists);
@@ -1112,8 +1107,7 @@ public class SVNWCClient extends SVNBasicClient {
      */
     public void doGetProperty(SVNURL url, final String propName, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, final ISVNPropertyHandler handler) throws SVNException {
         SvnGetProperties getProperties = getOperationsFactory().createGetProperties();
-        getProperties.setSingleTarget(SvnTarget.fromURL(url));
-        getProperties.setPegRevision(pegRevision);
+        getProperties.setSingleTarget(SvnTarget.fromURL(url, pegRevision));
         getProperties.setRevision(revision);
         getProperties.setDepth(depth);
         getProperties.setReceiver(new ISvnObjectReceiver<SVNProperties>() {
@@ -2196,8 +2190,7 @@ public class SVNWCClient extends SVNBasicClient {
      */
     public void doInfo(File path, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, Collection<String> changeLists, final ISVNInfoHandler handler) throws SVNException {
         SvnGetInfo getInfo = getOperationsFactory().createGetInfo();
-        getInfo.setSingleTarget(SvnTarget.fromFile(path));
-        getInfo.setPegRevision(pegRevision);
+        getInfo.setSingleTarget(SvnTarget.fromFile(path, pegRevision));
         getInfo.setRevision(revision);
         getInfo.setDepth(depth);
         getInfo.setApplicalbeChangelists(changeLists);
@@ -2285,8 +2278,7 @@ public class SVNWCClient extends SVNBasicClient {
      */
     public void doInfo(SVNURL url, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, final ISVNInfoHandler handler) throws SVNException {
         SvnGetInfo getInfo = getOperationsFactory().createGetInfo();
-        getInfo.setSingleTarget(SvnTarget.fromURL(url));
-        getInfo.setPegRevision(pegRevision);
+        getInfo.setSingleTarget(SvnTarget.fromURL(url, pegRevision));
         getInfo.setRevision(revision);
         getInfo.setDepth(depth);
         getInfo.setReceiver(new ISvnObjectReceiver<SvnInfo>() {
@@ -2450,9 +2442,8 @@ public class SVNWCClient extends SVNBasicClient {
     public SVNInfo doInfo(SVNURL url, SVNRevision pegRevision, SVNRevision revision) throws SVNException {
         final SVNInfo[] info = new SVNInfo[1];
         SvnGetInfo getInfo = getOperationsFactory().createGetInfo();
-        getInfo.setSingleTarget(SvnTarget.fromURL(url));
+        getInfo.setSingleTarget(SvnTarget.fromURL(url, pegRevision));
         getInfo.setRevision(revision);
-        getInfo.setPegRevision(revision);
         getInfo.setDepth(SVNDepth.EMPTY);
         getInfo.setReceiver(new ISvnObjectReceiver<SvnInfo>() {
             public void receive(SvnTarget target, SvnInfo object) throws SVNException {

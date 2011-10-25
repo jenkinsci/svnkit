@@ -16,9 +16,9 @@ public class SvnOldExport extends SvnOldRunner<Long, SvnExport> {
         client.setExportExpandsKeywords(getOperation().isExpandKeywords());
         
         return client.doExport(
+                getOperation().getSource().getFile(), 
                 getOperation().getFirstTarget().getFile(), 
-                getOperation().getDestination(), 
-                getOperation().getPegRevision(), 
+                getOperation().getSource().getPegRevision(), 
                 getOperation().getRevision(), 
                 getOperation().getEolStyle(),
                 getOperation().isForce(),

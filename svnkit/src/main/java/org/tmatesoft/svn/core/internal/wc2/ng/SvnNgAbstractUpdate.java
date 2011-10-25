@@ -602,7 +602,7 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
             }
         }
         
-        Structure<RepositoryInfo> repositoryInfo = getRepositoryAccess().createRepositoryFor(SvnTarget.fromURL(switchUrl), getOperation().getRevision(), getOperation().getPegRevision(), anchor);
+        Structure<RepositoryInfo> repositoryInfo = getRepositoryAccess().createRepositoryFor(SvnTarget.fromURL(switchUrl), revision, pegRevision, anchor);
         SVNRepository repository = repositoryInfo.<SVNRepository>get(RepositoryInfo.repository);
         final long revnum = repositoryInfo.lng(RepositoryInfo.revision);
         SVNURL switchRevUrl = repositoryInfo.<SVNURL>get(RepositoryInfo.url); 

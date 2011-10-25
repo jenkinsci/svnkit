@@ -41,28 +41,24 @@ public class SvnRemoteExport extends SvnRemoteOperationRunner<Long, SvnExport> {
 
     @Override
     public boolean isApplicable(SvnExport operation, SvnWcGeneration wcGeneration) throws SVNException {
-        if (super.isApplicable(operation, wcGeneration)) {
+        // remote source
+        if (!getOperation().getSource().isLocal()) {
             return true;
         }
-        if (!operation.hasRemoteTargets() && 
-                isRevisionLocalToWc(operation.getRevision()) && 
-                isRevisionLocalToWc(operation.getPegRevision())) {
-            return false;
-        }        
-        return true;
+        return false;
     }
 
 
     @Override
     protected Long run() throws SVNException {
-        File directory = !getOperation().hasRemoteTargets() ? getOperation().getFirstTarget().getFile() : null;
-        Structure<RepositoryInfo> repositoryInfo = getRepositoryAccess().createRepositoryFor(getOperation().getFirstTarget(), getOperation().getRevision(), getOperation().getPegRevision(), 
-                directory);
+        SvnTarget exportSource = getOperation().getSource();
+        Structure<RepositoryInfo> repositoryInfo = 
+            getRepositoryAccess().createRepositoryFor(exportSource, getOperation().getRevision(), exportSource.getPegRevision(), exportSource.getFile());
         final long revNumber = repositoryInfo.lng(RepositoryInfo.revision);
         SVNRepository repository = repositoryInfo.<SVNRepository>get(RepositoryInfo.repository);
         repositoryInfo.release();
         
-        File dstPath = getOperation().getDestination();
+        File dstPath = getOperation().getFirstTarget().getFile();
         SVNDepth depth = getOperation().getDepth();
         boolean force = getOperation().isForce();
         boolean expandKeywords = getOperation().isExpandKeywords();
@@ -171,13 +167,12 @@ public class SvnRemoteExport extends SvnRemoteOperationRunner<Long, SvnExport> {
                 SVNURL externalUrl = exts[i].getResolvedURL();
                 
                 SvnExport export = getOperation().getOperationFactory().createExport();
-                export.setDestination(externalDirectory);
-                export.setSingleTarget(SvnTarget.fromURL(externalUrl));
+                export.setSource(SvnTarget.fromURL(externalUrl, exts[i].getPegRevision()));
+                export.setSingleTarget(SvnTarget.fromFile(externalDirectory));
                 export.setDepth(SVNDepth.INFINITY);
                 export.setExpandKeywords(getOperation().isExpandKeywords());
                 export.setEolStyle(getOperation().getEolStyle());
                 export.setRevision(exts[i].getRevision());
-                export.setPegRevision(exts[i].getPegRevision());
                 export.setForce(true);
                 export.setIgnoreExternals(false);
                 export.setSleepForTimestamp(false);

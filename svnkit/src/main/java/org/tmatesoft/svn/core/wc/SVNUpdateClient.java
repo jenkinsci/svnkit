@@ -622,9 +622,8 @@ public class SVNUpdateClient extends SVNBasicClient {
     public long doSwitch(File path, SVNURL url, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions, boolean depthIsSticky, boolean ignoreAncestry) throws SVNException {
         SvnSwitch sw = getOperationsFactory().createSwitch();
         sw.setUpdateLocksOnDemand(isUpdateLocksOnDemand());
-        sw.setSwitchUrl(url);
+        sw.setSwitchTarget(SvnTarget.fromURL(url, pegRevision));
         sw.setSingleTarget(SvnTarget.fromFile(path));
-        sw.setPegRevision(pegRevision);
         sw.setRevision(revision);
         sw.setDepth(depth);
         sw.setDepthIsSticky(depthIsSticky);
@@ -782,9 +781,8 @@ public class SVNUpdateClient extends SVNBasicClient {
     public long doCheckout(SVNURL url, File dstPath, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions) throws SVNException {
         SvnCheckout co = getOperationsFactory().createCheckout();
         co.setUpdateLocksOnDemand(isUpdateLocksOnDemand());
-        co.setUrl(url);
+        co.setSource(SvnTarget.fromURL(url, pegRevision));
         co.setSingleTarget(SvnTarget.fromFile(dstPath));
-        co.setPegRevision(pegRevision);
         co.setRevision(revision);
         co.setDepth(depth);
         co.setAllowUnversionedObstructions(allowUnversionedObstructions);
@@ -900,9 +898,8 @@ public class SVNUpdateClient extends SVNBasicClient {
         SvnExport export = getOperationsFactory().createExport();
         
         export.setUpdateLocksOnDemand(isUpdateLocksOnDemand());
-        export.setSingleTarget(SvnTarget.fromURL(url));
-        export.setDestination(dstPath);
-        export.setPegRevision(pegRevision);
+        export.setSingleTarget(SvnTarget.fromFile(dstPath));
+        export.setSource(SvnTarget.fromURL(url, pegRevision));
         export.setRevision(revision);
         export.setEolStyle(eolStyle);
         export.setForce(overwrite);
@@ -1047,9 +1044,8 @@ public class SVNUpdateClient extends SVNBasicClient {
     public long doExport(File srcPath, final File dstPath, SVNRevision pegRevision, SVNRevision revision, String eolStyle, final boolean overwrite, SVNDepth depth) throws SVNException {
         SvnExport export = getOperationsFactory().createExport();
         export.setUpdateLocksOnDemand(isUpdateLocksOnDemand());
-        export.setSingleTarget(SvnTarget.fromFile(srcPath));
-        export.setDestination(dstPath);
-        export.setPegRevision(pegRevision);
+        export.setSingleTarget(SvnTarget.fromFile(dstPath));
+        export.setSource(SvnTarget.fromFile(srcPath, pegRevision));
         export.setRevision(revision);
         export.setEolStyle(eolStyle);
         export.setForce(overwrite);

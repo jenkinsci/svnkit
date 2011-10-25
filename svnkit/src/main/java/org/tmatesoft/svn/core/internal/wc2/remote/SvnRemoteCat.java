@@ -16,32 +16,26 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc2.SvnRemoteOperationRunner;
-import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess.RepositoryInfo;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnCat;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
 
 public class SvnRemoteCat extends SvnRemoteOperationRunner<Long, SvnCat> {
-
-    public boolean isApplicable(SvnCat operation, SvnWcGeneration wcGeneration) throws SVNException {
-        if (super.isApplicable(operation, wcGeneration)) {
-            return true;
-        }
-        return !(isRevisionLocalToWc(operation.getRevision()) && isRevisionLocalToWc(operation.getPegRevision()));
-    }
 
     @Override
     protected Long run() throws SVNException {
     	SVNRevision revision = getOperation().getRevision() == null || !getOperation().getRevision().isValid() ? 
     			SVNRevision.HEAD : getOperation().getRevision();
+    	SvnTarget target = getOperation().getFirstTarget();
     	
     	Structure<RepositoryInfo> repositoryInfo = 
                 getRepositoryAccess().createRepositoryFor(
-                        getOperation().getFirstTarget(), 
+                        target, 
                         revision, 
-                        getOperation().getPegRevision(), 
+                        target.getPegRevision(), 
                         null);
             
         SVNRepository repos = repositoryInfo.<SVNRepository>get(RepositoryInfo.repository);

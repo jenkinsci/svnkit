@@ -32,6 +32,7 @@ public class SvnRemoteLog extends SvnRemoteOperationRunner<SVNLogEntry, SvnLog> 
     	 
     	SVNRevision sessionRevision = SVNRevision.UNDEFINED;
         List<SVNRevisionRange> editedRevisionRanges = new LinkedList<SVNRevisionRange>();
+        
         for (Iterator<SVNRevisionRange> revRangesIter = getOperation().getRevisionRanges().iterator(); revRangesIter.hasNext();) {
             SVNRevisionRange revRange = (SVNRevisionRange) revRangesIter.next();
         	if (revRange.getStartRevision().isValid() && !revRange.getEndRevision().isValid()) {
@@ -39,10 +40,10 @@ public class SvnRemoteLog extends SvnRemoteOperationRunner<SVNLogEntry, SvnLog> 
             } else if (!revRange.getStartRevision().isValid()) {
                 SVNRevision start = SVNRevision.UNDEFINED;
                 SVNRevision end = SVNRevision.UNDEFINED;
-                if (!getOperation().getPegRevision().isValid()) {
+                if (!getOperation().getFirstTarget().getPegRevision().isValid()) {
                     start = SVNRevision.HEAD;
                 } else {
-                    start = getOperation().getPegRevision();
+                    start = getOperation().getFirstTarget().getPegRevision();
                 }
                 if (!revRange.getEndRevision().isValid()) {
                     end = SVNRevision.create(0);
@@ -68,7 +69,7 @@ public class SvnRemoteLog extends SvnRemoteOperationRunner<SVNLogEntry, SvnLog> 
                 }
             }
         }
-        if (isRevisionLocalToWc(getOperation().getPegRevision())) {
+        if (isRevisionLocalToWc(getOperation().getFirstTarget().getPegRevision())) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Revision type requires a working copy path, not a URL");
             SVNErrorManager.error(err, SVNLogType.WC);
         }
@@ -80,7 +81,7 @@ public class SvnRemoteLog extends SvnRemoteOperationRunner<SVNLogEntry, SvnLog> 
                     getRepositoryAccess().createRepositoryFor(
                             getOperation().getFirstTarget(), 
                             sessionRevision, 
-                            getOperation().getPegRevision(), 
+                            getOperation().getFirstTarget().getPegRevision(), 
                             null);
         	repository = repositoryInfo.<SVNRepository>get(RepositoryInfo.repository);
             repositoryInfo.release();
@@ -100,7 +101,7 @@ public class SvnRemoteLog extends SvnRemoteOperationRunner<SVNLogEntry, SvnLog> 
                     getRepositoryAccess().createRepositoryFor(
                             getOperation().getFirstTarget(), 
                             revRange.getStartRevision(), 
-                            getOperation().getPegRevision(), 
+                            getOperation().getFirstTarget().getPegRevision(), 
                             null);
             long startRev = repositoryInfo.lng(RepositoryInfo.revision);
             repositoryInfo.release();
@@ -109,7 +110,7 @@ public class SvnRemoteLog extends SvnRemoteOperationRunner<SVNLogEntry, SvnLog> 
                     getRepositoryAccess().createRepositoryFor(
                             getOperation().getFirstTarget(), 
                             revRange.getEndRevision(), 
-                            getOperation().getPegRevision(), 
+                            getOperation().getFirstTarget().getPegRevision(), 
                             null);
             
             long endRev = repositoryInfo.lng(RepositoryInfo.revision);

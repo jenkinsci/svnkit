@@ -35,19 +35,17 @@ public class SvnRemoteGetInfo extends SvnRemoteOperationRunner<SvnInfo, SvnGetIn
             return true;
         }
         SVNRevision revision = operation.getRevision();
-        SVNRevision pegRevision = operation.getPegRevision();
-        if (isLocalRevision(revision) && isLocalRevision(pegRevision)) {
-            return false;
-        }        
-        return true;
-    }
-
-    private boolean isLocalRevision(SVNRevision revision) {
-        return revision == null || revision == SVNRevision.UNDEFINED || revision == SVNRevision.WORKING || revision == SVNRevision.BASE || revision == SVNRevision.COMMITTED;
+        if (!revision.isLocal()) {
+            return true;
+        }
+        return false;
     }
 
     protected SvnInfo run() throws SVNException {
-        Structure<RepositoryInfo> repositoryInfo = getRepositoryAccess().createRepositoryFor(getOperation().getFirstTarget(), getOperation().getRevision(), getOperation().getPegRevision(), null);
+        SvnTarget infoTarget = getOperation().getFirstTarget();
+        Structure<RepositoryInfo> repositoryInfo = 
+            getRepositoryAccess().createRepositoryFor(infoTarget, getOperation().getRevision(), infoTarget.getPegRevision(), null);
+        
         SVNRepository repository = repositoryInfo.<SVNRepository>get(RepositoryInfo.repository);
         SVNURL url = repositoryInfo.<SVNURL>get(RepositoryInfo.url);
         long revNum = repositoryInfo.lng(RepositoryInfo.revision);
@@ -61,7 +59,7 @@ public class SvnRemoteGetInfo extends SvnRemoteOperationRunner<SvnInfo, SvnGetIn
         SVNDirEntry rootEntry = null;
         
         SVNDepth depth = getOperation().getDepth();
-        SVNRevision pegRevision = getOperation().getPegRevision();
+        SVNRevision pegRevision = infoTarget.getPegRevision();
         
         try {
             rootEntry = repository.info("", revNum);

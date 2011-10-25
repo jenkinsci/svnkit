@@ -22,7 +22,6 @@ public class SvnOperation<V> {
     private SVNDepth depth;
     private Collection<SvnTarget> targets;
     private SVNRevision revision;
-    private SVNRevision pegRevision;
     private Collection<String> changelists;
     private SvnOperationFactory operationFactory;
     private boolean isSleepForTimestamp;
@@ -46,7 +45,6 @@ public class SvnOperation<V> {
         setDepth(SVNDepth.UNKNOWN);
         setSleepForTimestamp(true);
         setRevision(SVNRevision.UNDEFINED);
-        setPegRevision(SVNRevision.UNDEFINED);
         this.targets = new ArrayList<SvnTarget>();
     }
 
@@ -80,15 +78,7 @@ public class SvnOperation<V> {
     public void setRevision(SVNRevision revision) {
         this.revision = revision;
     }
-    
-    public void setPegRevision(SVNRevision revision) {
-        this.pegRevision = revision;
-    }
-    
-    public SVNRevision getPegRevision() {
-        return pegRevision;
-    }
-    
+
     public SVNRevision getRevision() {
         return revision;
     }
@@ -118,12 +108,37 @@ public class SvnOperation<V> {
     }
     
     public boolean hasRemoteTargets() {
+        if (!getRevision().isLocal()) {
+            return true;
+        }
         for (SvnTarget target : getTargets()) {
-            if (target.isURL()) {
+            if (!target.isLocal()) {
                 return true;
             }
         }
         return false;
+    }
+    
+    protected void ensureEnoughTargets() throws SVNException {
+        int targetsCount = getTargets().size();
+        
+        if (targetsCount < getMinimumTargetsCount()) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Wrong number of targets has been specified (''{0}''), at least ''{1}'' is required.", targetsCount, getMinimumTargetsCount());
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+
+        if (targetsCount > getMaximumTargetsCount()) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Wrong number of targets has been specified (''{0}''), no more that ''{1}'' may be specified.", targetsCount, getMaximumTargetsCount());
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+    }
+    
+    protected int getMinimumTargetsCount() {
+        return 1;
+    }
+
+    protected int getMaximumTargetsCount() {
+        return 1;
     }
     
     public void cancel() {
@@ -141,6 +156,7 @@ public class SvnOperation<V> {
     }
     
     protected void ensureArgumentsAreValid() throws SVNException {
+        ensureEnoughTargets();
         ensureHomohenousTargets();
     }
     

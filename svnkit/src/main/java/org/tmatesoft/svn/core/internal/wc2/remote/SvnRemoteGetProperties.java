@@ -34,21 +34,20 @@ public class SvnRemoteGetProperties extends SvnRemoteOperationRunner<SVNProperti
         if (super.isApplicable(operation, wcGeneration)) {
             return true;
         }
-        if (!operation.hasRemoteTargets() && 
-                isRevisionLocalToWc(operation.getRevision()) && 
-                isRevisionLocalToWc(operation.getPegRevision())) {
-            return false;
-        }        
+        if (!operation.getRevision().isLocal()) {
+            return true;
+        }
         return true;
     }
 
     @Override
     protected SVNProperties run() throws SVNException {
+        SvnTarget target = getOperation().getFirstTarget();
         Structure<RepositoryInfo> repositoryInfo = 
             getRepositoryAccess().createRepositoryFor(
-                    getOperation().getFirstTarget(), 
+                    target, 
                     getOperation().getRevision(), 
-                    getOperation().getPegRevision(), 
+                    target.getPegRevision(), 
                     null);
         
         SVNRepository repository = repositoryInfo.<SVNRepository>get(RepositoryInfo.repository);

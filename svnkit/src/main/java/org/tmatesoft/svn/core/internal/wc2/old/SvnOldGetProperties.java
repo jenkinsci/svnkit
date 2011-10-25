@@ -36,7 +36,7 @@ public class SvnOldGetProperties extends SvnOldRunner<SVNProperties, SvnGetPrope
         client.doGetProperty(
                 getFirstTarget(), 
                 null, 
-                getOperation().getPegRevision(), 
+                getOperation().getFirstTarget().getPegRevision(), 
                 getOperation().getRevision(), 
                 getOperation().getDepth(), 
                 this, 

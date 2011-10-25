@@ -896,9 +896,8 @@ public class SVNLogClient extends SVNBasicClient {
         revisionRanges.add(new SVNRevisionRange(startRevision, endRevision));
     	
     	SvnLog log = getOperationsFactory().createLog();
-    	log.setSingleTarget(SvnTarget.fromURL(url));
+    	log.setSingleTarget(SvnTarget.fromURL(url, pegRevision));
     	log.setTargetPaths(paths);
-    	log.setPegRevision(pegRevision);
     	log.setRevisionRanges(revisionRanges);
         log.setStopOnCopy(stopOnCopy);
         log.setDiscoverChangedPaths(discoverChangedPaths);
@@ -992,9 +991,8 @@ public class SVNLogClient extends SVNBasicClient {
         revisionRanges.add(new SVNRevisionRange(startRevision, endRevision));
     	
     	SvnLog log = getOperationsFactory().createLog();
-    	log.setSingleTarget(SvnTarget.fromURL(url));
+    	log.setSingleTarget(SvnTarget.fromURL(url, pegRevision));
     	log.setTargetPaths(paths);
-    	log.setPegRevision(pegRevision);
     	log.setRevisionRanges(revisionRanges);
         log.setStopOnCopy(stopOnCopy);
         log.setDiscoverChangedPaths(discoverChangedPaths);
@@ -1083,9 +1081,8 @@ public class SVNLogClient extends SVNBasicClient {
             String[] revisionProperties, final ISVNLogEntryHandler handler) throws SVNException {
     	
     	SvnLog log = getOperationsFactory().createLog();
-    	log.setSingleTarget(SvnTarget.fromURL(url));
+    	log.setSingleTarget(SvnTarget.fromURL(url, pegRevision));
     	log.setTargetPaths(paths);
-    	log.setPegRevision(pegRevision);
     	log.setRevisionRanges(revisionRanges);
         log.setStopOnCopy(stopOnCopy);
         log.setDiscoverChangedPaths(discoverChangedPaths);

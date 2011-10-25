@@ -1,7 +1,5 @@
 package org.tmatesoft.svn.core.wc2;
 
-import java.io.File;
-
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -15,7 +13,7 @@ public class SvnExport extends AbstractSvnUpdate<Long> {
     private boolean force;
     private boolean expandKeywords;
     private String eolStyle;
-    private File destination;
+    private SvnTarget source;
 
     protected SvnExport(SvnOperationFactory factory) {
         super(factory);
@@ -45,17 +43,17 @@ public class SvnExport extends AbstractSvnUpdate<Long> {
         this.eolStyle = eolStyle;
     }
 
-    public File getDestination() {
-        return destination;
+    public SvnTarget getSource() {
+        return source;
     }
     
-    public void setDestination(File destination) {
-        this.destination = destination;
+    public void setSource(SvnTarget source) {
+        this.source = source;
     }
 
     @Override
     protected void ensureArgumentsAreValid() throws SVNException {
-        if (getDestination() == null) {
+        if (getSource() == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Destination path is required for export.");
             SVNErrorManager.error(err, SVNLogType.WC);
         }
@@ -64,9 +62,6 @@ public class SvnExport extends AbstractSvnUpdate<Long> {
         }
         if (!hasRemoteTargets() && getRevision() == SVNRevision.UNDEFINED) {
             setRevision(SVNRevision.WORKING);
-        }
-        if (!hasRemoteTargets() && getPegRevision() == SVNRevision.UNDEFINED) {
-            setPegRevision(SVNRevision.WORKING);
         }
         super.ensureArgumentsAreValid();
     }

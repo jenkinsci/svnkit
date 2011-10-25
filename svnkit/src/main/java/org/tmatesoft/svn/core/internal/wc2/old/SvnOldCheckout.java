@@ -14,9 +14,9 @@ public class SvnOldCheckout extends SvnOldRunner<Long, SvnCheckout> {
         client.setUpdateLocksOnDemand(getOperation().isUpdateLocksOnDemand());
         client.setEventHandler(getOperation().getEventHandler());
         
-        return client.doCheckout(getOperation().getUrl(), 
+        return client.doCheckout(getOperation().getSource().getURL(), 
                 getFirstTarget(), 
-                getOperation().getPegRevision(), 
+                getOperation().getFirstTarget().getPegRevision(), 
                 getOperation().getRevision(), 
                 getOperation().getDepth(), 
                 getOperation().isAllowUnversionedObstructions());

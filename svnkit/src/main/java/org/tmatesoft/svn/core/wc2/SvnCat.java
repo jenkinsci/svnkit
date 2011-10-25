@@ -33,14 +33,11 @@ public class SvnCat extends SvnOperation<Long> {
     @Override
     protected void ensureArgumentsAreValid() throws SVNException {
         super.ensureArgumentsAreValid();
-        if (getPegRevision() == SVNRevision.UNDEFINED) {
-            setPegRevision(hasRemoteTargets() ? SVNRevision.HEAD : SVNRevision.WORKING);
-            if (getRevision() == SVNRevision.UNDEFINED) {
+        if (getRevision() == SVNRevision.UNDEFINED) {
+            if (getFirstTarget().getPegRevision().isValid()) {
+                setRevision(getFirstTarget().getPegRevision());
+            } else {
                 setRevision(hasRemoteTargets() ? SVNRevision.HEAD : SVNRevision.BASE);
-            }
-        } else {
-            if (getRevision() == SVNRevision.UNDEFINED) {
-                setRevision(getPegRevision());
             }
         }
     }

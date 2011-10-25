@@ -4,7 +4,6 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -13,7 +12,7 @@ public class SvnSwitch extends AbstractSvnUpdate<Long> {
     private boolean depthIsSticky;
     private boolean ignoreAncestry;
     
-    private SVNURL switchUrl;
+    private SvnTarget switchTarget;
 
     protected SvnSwitch(SvnOperationFactory factory) {
         super(factory);
@@ -27,8 +26,8 @@ public class SvnSwitch extends AbstractSvnUpdate<Long> {
         return ignoreAncestry;
     }
 
-    public SVNURL getSwitchUrl() {
-        return switchUrl;
+    public SvnTarget getSwitchTarget() {
+        return switchTarget;
     }
 
     public void setDepthIsSticky(boolean depthIsSticky) {
@@ -39,8 +38,8 @@ public class SvnSwitch extends AbstractSvnUpdate<Long> {
         this.ignoreAncestry = ignoreAncestry;
     }
 
-    public void setSwitchUrl(SVNURL switchUrl) {
-        this.switchUrl = switchUrl;
+    public void setSwitchTarget(SvnTarget switchTarget) {
+        this.switchTarget = switchTarget;
     }
 
     @Override
