@@ -2,10 +2,8 @@ package org.tmatesoft.svn.core.wc2;
 
 import java.util.Collection;
 
-import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNRevisionRange;
 
 public class SvnLog extends SvnReceivingOperation<SVNLogEntry> {
@@ -82,8 +80,6 @@ public class SvnLog extends SvnReceivingOperation<SVNLogEntry> {
 		this.revisionProperties = revisionProperties;
 	}
 	
-	
-    
     @Override
     protected void ensureArgumentsAreValid() throws SVNException {
         super.ensureArgumentsAreValid();
@@ -92,10 +88,4 @@ public class SvnLog extends SvnReceivingOperation<SVNLogEntry> {
             setLimit(Integer.MAX_VALUE);
         }
     }
-
-	
-    
-    
-
-    
 }
