@@ -2480,7 +2480,7 @@ public class SVNWCContext {
         if (translationRequired) {
             if (translateToNormalForm) {
                 if (eolStyle == SVNEolStyle.Native)
-                    eolStr = SVNEolStyleInfo.NATIVE_EOL_STR;
+                    eolStr = SVNTranslator.getBaseEOL(SVNProperty.EOL_STYLE_NATIVE);
                 else if (eolStyle == SVNEolStyle.Fixed)
                     repairEOL = true;
                 else if (eolStyle != SVNEolStyle.None) {
