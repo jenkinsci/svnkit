@@ -7,9 +7,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
@@ -55,6 +57,16 @@ public class SvnCodec {
             public void receive(SvnTarget target, SVNPropertyData object) throws SVNException {
                 if (handler != null) {
                     handler.handleProperty(target.getFile(), object);
+                }
+            }
+        };
+    }
+    
+    public static ISvnObjectReceiver<SVNLogEntry> logReceiver(final ISVNLogEntryHandler handler) {
+        return new ISvnObjectReceiver<SVNLogEntry>() {
+            public void receive(SvnTarget target, SVNLogEntry object) throws SVNException {
+                if (handler != null) {
+                    handler.handleLogEntry(object);
                 }
             }
         };

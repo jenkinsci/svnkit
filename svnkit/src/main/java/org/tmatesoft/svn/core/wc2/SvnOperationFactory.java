@@ -60,6 +60,7 @@ import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteExport;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteGetInfo;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteGetProperties;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteGetRevisionProperties;
+import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteLog;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteSetLock;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteSetRevisionProperty;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteUnlock;
@@ -167,6 +168,8 @@ public class SvnOperationFactory {
         registerOperationRunner(SvnCat.class, new SvnOldCat());
         
         registerOperationRunner(SvnCopy.class, new SvnNgWcToWcCopy());
+        
+        registerOperationRunner(SvnLog.class, new SvnRemoteLog());
     }
     
     public boolean isAutoCloseContext() {
@@ -259,7 +262,7 @@ public class SvnOperationFactory {
         return new SvnCopy(this);
     }
     
-
+    
     public SvnRemoteCopy createRemoteCopy() {
         return new SvnRemoteCopy(this);
     }

@@ -12,6 +12,8 @@
 package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
+import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Collection;
 
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
@@ -25,7 +27,11 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc16.SVNLogClient16;
 import org.tmatesoft.svn.core.internal.wc17.SVNLogClient17;
+import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.wc2.SvnCat;
+import org.tmatesoft.svn.core.wc2.SvnLog;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 /**
  * The <b>SVNLogClient</b> class is intended for such purposes as getting
@@ -885,15 +891,20 @@ public class SVNLogClient extends SVNBasicClient {
      */
     public void doLog(SVNURL url, String[] paths, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, boolean stopOnCopy, boolean discoverChangedPaths, long limit,
             final ISVNLogEntryHandler handler) throws SVNException {
-        try {
-            getSVNLogClient17().doLog(url, paths, pegRevision, startRevision, endRevision, stopOnCopy, discoverChangedPaths, limit, handler);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNLogClient16().doLog(url, paths, pegRevision, startRevision, endRevision, stopOnCopy, discoverChangedPaths, limit, handler);
-                return;
-            }
-            throw e;
-        }
+    	
+    	Collection<SVNRevisionRange> revisionRanges = new ArrayList<SVNRevisionRange>(1);
+        revisionRanges.add(new SVNRevisionRange(startRevision, endRevision));
+    	
+    	SvnLog log = getOperationsFactory().createLog();
+    	log.setSingleTarget(SvnTarget.fromURL(url));
+    	log.setTargetPaths(paths);
+    	log.setPegRevision(pegRevision);
+    	log.setRevisionRanges(revisionRanges);
+        log.setStopOnCopy(stopOnCopy);
+        log.setDiscoverChangedPaths(discoverChangedPaths);
+        log.setLimit(limit);
+        log.setReceiver(SvnCodec.logReceiver(handler));
+        log.run();
     }
 
     /**
@@ -976,15 +987,23 @@ public class SVNLogClient extends SVNBasicClient {
      */
     public void doLog(SVNURL url, String[] paths, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, boolean stopOnCopy, boolean discoverChangedPaths,
             boolean includeMergedRevisions, long limit, String[] revisionProperties, final ISVNLogEntryHandler handler) throws SVNException {
-        try {
-            getSVNLogClient17().doLog(url, paths, pegRevision, startRevision, endRevision, stopOnCopy, discoverChangedPaths, includeMergedRevisions, limit, revisionProperties, handler);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNLogClient16().doLog(url, paths, pegRevision, startRevision, endRevision, stopOnCopy, discoverChangedPaths, includeMergedRevisions, limit, revisionProperties, handler);
-                return;
-            }
-            throw e;
-        }
+    	
+    	Collection<SVNRevisionRange> revisionRanges = new ArrayList<SVNRevisionRange>(1);
+        revisionRanges.add(new SVNRevisionRange(startRevision, endRevision));
+    	
+    	SvnLog log = getOperationsFactory().createLog();
+    	log.setSingleTarget(SvnTarget.fromURL(url));
+    	log.setTargetPaths(paths);
+    	log.setPegRevision(pegRevision);
+    	log.setRevisionRanges(revisionRanges);
+        log.setStopOnCopy(stopOnCopy);
+        log.setDiscoverChangedPaths(discoverChangedPaths);
+        log.setUseMergeHistory(includeMergedRevisions);
+        log.setLimit(limit);
+        log.setRevisionProperties(revisionProperties);
+        log.setReceiver(SvnCodec.logReceiver(handler));
+        
+        log.run();
     }
 
     /**
@@ -1062,15 +1081,20 @@ public class SVNLogClient extends SVNBasicClient {
      */
     public void doLog(SVNURL url, String[] paths, SVNRevision pegRevision, Collection revisionRanges, boolean stopOnCopy, boolean discoverChangedPaths, boolean includeMergedRevisions, long limit,
             String[] revisionProperties, final ISVNLogEntryHandler handler) throws SVNException {
-        try {
-            getSVNLogClient17().doLog(url, paths, pegRevision, revisionRanges, stopOnCopy, discoverChangedPaths, includeMergedRevisions, limit, revisionProperties, handler);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNLogClient16().doLog(url, paths, pegRevision, revisionRanges, stopOnCopy, discoverChangedPaths, includeMergedRevisions, limit, revisionProperties, handler);
-                return;
-            }
-            throw e;
-        }
+    	
+    	SvnLog log = getOperationsFactory().createLog();
+    	log.setSingleTarget(SvnTarget.fromURL(url));
+    	log.setTargetPaths(paths);
+    	log.setPegRevision(pegRevision);
+    	log.setRevisionRanges(revisionRanges);
+        log.setStopOnCopy(stopOnCopy);
+        log.setDiscoverChangedPaths(discoverChangedPaths);
+        log.setUseMergeHistory(includeMergedRevisions);
+        log.setLimit(limit);
+        log.setRevisionProperties(revisionProperties);
+        log.setReceiver(SvnCodec.logReceiver(handler));
+        
+        log.run();
     }
 
     /**
