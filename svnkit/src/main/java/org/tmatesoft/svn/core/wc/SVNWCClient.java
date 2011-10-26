@@ -333,6 +333,13 @@ public class SVNWCClient extends SVNBasicClient {
      */
     public void doGetFileContents(File path, SVNRevision pegRevision, SVNRevision revision, boolean expandKeywords, OutputStream dst) throws SVNException {
         SvnCat cat = getOperationsFactory().createCat();
+        if (revision == SVNRevision.UNDEFINED) {
+            if (pegRevision != null && pegRevision.isValid()) {
+                revision = pegRevision;
+            } else {
+                revision = SVNRevision.BASE;
+            }
+        }
         cat.setSingleTarget(SvnTarget.fromFile(path, pegRevision));
         cat.setRevision(revision);
         cat.setExpandKeywords(expandKeywords);
@@ -373,6 +380,13 @@ public class SVNWCClient extends SVNBasicClient {
      */
     public void doGetFileContents(SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean expandKeywords, OutputStream dst) throws SVNException {
         SvnCat cat = getOperationsFactory().createCat();
+        if (revision == SVNRevision.UNDEFINED) {
+            if (pegRevision != null && pegRevision.isValid()) {
+                revision = pegRevision;
+            } else {
+                revision = SVNRevision.HEAD;
+            }
+        }
         cat.setSingleTarget(SvnTarget.fromURL(url, pegRevision));
         cat.setRevision(revision);
         cat.setExpandKeywords(expandKeywords);
