@@ -100,7 +100,7 @@ public class SvnOperation<V> {
     
     public boolean hasLocalTargets() {
         for (SvnTarget target : getTargets()) {
-            if (target.isFile()) {
+            if (target.isLocal()) {
                 return true;
             }
         }
@@ -108,9 +108,6 @@ public class SvnOperation<V> {
     }
     
     public boolean hasRemoteTargets() {
-        if (!getRevision().isLocal()) {
-            return true;
-        }
         for (SvnTarget target : getTargets()) {
             if (!target.isLocal()) {
                 return true;
@@ -165,6 +162,9 @@ public class SvnOperation<V> {
     }
     
     protected void ensureHomohenousTargets() throws SVNException {
+        if (getTargets().size() <= 1) {
+            return;
+        }
         if (!needsHomohenousTargets()) {
             return;
         }

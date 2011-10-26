@@ -42,7 +42,7 @@ public class SvnCheckout extends AbstractSvnUpdate<Long> {
             setRevision(SVNRevision.HEAD);
         }
         
-        if (getFirstTarget() == null || hasRemoteTargets()) {
+        if (getFirstTarget() == null || getFirstTarget().getFile() == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_FILENAME, "Checkout destination path can not be NULL");
             SVNErrorManager.error(err, SVNLogType.WC);
         }
