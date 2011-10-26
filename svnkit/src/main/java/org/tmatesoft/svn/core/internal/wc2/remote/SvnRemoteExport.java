@@ -42,7 +42,7 @@ public class SvnRemoteExport extends SvnRemoteOperationRunner<Long, SvnExport> {
     @Override
     public boolean isApplicable(SvnExport operation, SvnWcGeneration wcGeneration) throws SVNException {
         // remote source
-        if (!getOperation().getSource().isLocal()) {
+        if (!operation.getSource().isLocal()) {
             return true;
         }
         return false;
