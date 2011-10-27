@@ -36,7 +36,7 @@ public class SvnCheckout extends AbstractSvnUpdate<Long> {
         }
 
         if (!getRevision().isValid() && getFirstTarget() != null) {
-            setRevision(getFirstTarget().getPegRevision());            
+            setRevision(getSource().getPegRevision());            
         }
         if (!getRevision().isValid()) {
             setRevision(SVNRevision.HEAD);
@@ -46,6 +46,7 @@ public class SvnCheckout extends AbstractSvnUpdate<Long> {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_FILENAME, "Checkout destination path can not be NULL");
             SVNErrorManager.error(err, SVNLogType.WC);
         }
+        
         if (getRevision().getNumber() < 0 && getRevision().getDate() == null && getRevision() != SVNRevision.HEAD) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION);
             SVNErrorManager.error(err, SVNLogType.WC);
