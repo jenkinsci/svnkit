@@ -57,4 +57,9 @@ public class SvnScheduleForAddition extends SvnOperation<SvnScheduleForAddition>
     public void setMkDir(boolean mkDir) {
         this.mkDir = mkDir;
     }
+
+    @Override
+    protected int getMaximumTargetsCount() {
+        return Integer.MAX_VALUE;
+    }
 }

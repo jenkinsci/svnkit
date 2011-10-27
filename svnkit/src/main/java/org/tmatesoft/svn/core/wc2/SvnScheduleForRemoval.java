@@ -40,6 +40,8 @@ public class SvnScheduleForRemoval extends SvnOperation<SvnScheduleForRemoval> {
         setDeleteFiles(true);
     }
     
-    
-
+    @Override
+    protected int getMaximumTargetsCount() {
+        return Integer.MAX_VALUE;
+    }
 }

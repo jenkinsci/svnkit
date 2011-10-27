@@ -17,4 +17,11 @@ public class SvnRevert extends SvnOperation<SvnRevert> {
         }
     }
 
+    @Override
+    protected int getMaximumTargetsCount() {
+        return Integer.MAX_VALUE;
+    }
+    
+    
+
 }
