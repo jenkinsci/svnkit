@@ -53,15 +53,19 @@ public class SvnExport extends AbstractSvnUpdate<Long> {
 
     @Override
     protected void ensureArgumentsAreValid() throws SVNException {
-        if (getSource() == null) {
+        if (getFirstTarget() == null || !getFirstTarget().isLocal()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Destination path is required for export.");
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+        if (getSource() == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Source is required for export.");
             SVNErrorManager.error(err, SVNLogType.WC);
         }
         if (getDepth() == null || getDepth() == SVNDepth.UNKNOWN) {
             setDepth(SVNDepth.INFINITY);
         }
-        if (!hasRemoteTargets() && getRevision() == SVNRevision.UNDEFINED) {
-            setRevision(SVNRevision.WORKING);
+        if (getRevision() == SVNRevision.UNDEFINED) {
+            setRevision(getSource().isLocal() ? SVNRevision.WORKING : SVNRevision.HEAD);
         }
         super.ensureArgumentsAreValid();
     }
