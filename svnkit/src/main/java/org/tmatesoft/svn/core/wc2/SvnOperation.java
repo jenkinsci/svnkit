@@ -120,12 +120,19 @@ public class SvnOperation<V> {
         int targetsCount = getTargets().size();
         
         if (targetsCount < getMinimumTargetsCount()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Wrong number of targets has been specified (''{0}''), at least ''{1}'' is required.", targetsCount, getMinimumTargetsCount());
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, 
+                    "Wrong number of targets has been specified ({0}), at least {1} is required.", 
+                    new Object[] {new Integer(targetsCount), new Integer(getMinimumTargetsCount())}, 
+                    SVNErrorMessage.TYPE_ERROR);
             SVNErrorManager.error(err, SVNLogType.WC);
         }
 
         if (targetsCount > getMaximumTargetsCount()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Wrong number of targets has been specified (''{0}''), no more that ''{1}'' may be specified.", targetsCount, getMaximumTargetsCount());
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, 
+                    "Wrong number of targets has been specified ({0}), no more that {1} may be specified.", 
+                    new Object[] {new Integer(targetsCount), 
+                    new Integer(getMaximumTargetsCount())}, 
+                    SVNErrorMessage.TYPE_ERROR);
             SVNErrorManager.error(err, SVNLogType.WC);
         }
     }
