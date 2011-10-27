@@ -57,4 +57,11 @@ public class SvnUpdate extends AbstractSvnUpdate<long[]> {
     public void setTreatAddsAsModifications(boolean treatAddsAsModifications) {
         this.treatAddsAsModifications = treatAddsAsModifications;
     }
+
+    @Override
+    protected int getMaximumTargetsCount() {
+        return Integer.MAX_VALUE;
+    }
+    
+    
 }

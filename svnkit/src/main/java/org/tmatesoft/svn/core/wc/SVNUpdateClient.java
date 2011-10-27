@@ -309,6 +309,9 @@ public class SVNUpdateClient extends SVNBasicClient {
      * @since 1.2, SVN 1.5
      */
     public long[] doUpdate(File[] paths, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions, boolean depthIsSticky) throws SVNException {
+        if (paths == null || paths.length == 0) {
+            return new long[0];
+        }
         SvnUpdate up = getOperationsFactory().createUpdate();
         up.setUpdateLocksOnDemand(isUpdateLocksOnDemand());
         for (int i = 0; i < paths.length; i++) {
