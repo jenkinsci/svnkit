@@ -58,4 +58,9 @@ public class SvnCommit extends AbstractSvnCommit {
             setDepth(SVNDepth.INFINITY);
         }
     }
+
+    @Override
+    protected int getMaximumTargetsCount() {
+        return Integer.MAX_VALUE;
+    }
 }

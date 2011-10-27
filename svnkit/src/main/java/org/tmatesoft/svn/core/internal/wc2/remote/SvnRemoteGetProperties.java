@@ -37,7 +37,7 @@ public class SvnRemoteGetProperties extends SvnRemoteOperationRunner<SVNProperti
         if (!operation.getRevision().isLocal()) {
             return true;
         }
-        return true;
+        return false;
     }
 
     @Override
