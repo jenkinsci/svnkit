@@ -27,7 +27,8 @@ public class SvnSetLock extends SvnReceivingOperation<SVNLock> {
     	this.lockMessage = lockMessage;
     }
 
-    
-
-
+    @Override
+    protected int getMaximumTargetsCount() {
+        return Integer.MAX_VALUE;
+    }
 }

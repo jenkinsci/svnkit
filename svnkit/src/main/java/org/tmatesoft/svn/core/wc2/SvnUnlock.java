@@ -18,4 +18,9 @@ public class SvnUnlock extends SvnReceivingOperation<SVNLock> {
         this.breakLock = breakLock;
     }
 
+    @Override
+    protected int getMaximumTargetsCount() {
+        return Integer.MAX_VALUE;
+    }
+
 }

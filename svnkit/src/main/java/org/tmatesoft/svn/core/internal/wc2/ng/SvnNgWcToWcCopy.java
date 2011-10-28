@@ -1,6 +1,8 @@
 package org.tmatesoft.svn.core.internal.wc2.ng;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -15,6 +17,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
@@ -22,6 +25,8 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo.RepositoryInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
+import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.ExternalNodeInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbExternals;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.AdditionInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbShared;
@@ -31,25 +36,72 @@ import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc2.SvnChecksum;
 import org.tmatesoft.svn.core.wc2.SvnCopy;
+import org.tmatesoft.svn.core.wc2.SvnCopySource;
 import org.tmatesoft.svn.util.SVNLogType;
 
 public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
 
     @Override
     public boolean isApplicable(SvnCopy operation, SvnWcGeneration wcGeneration) throws SVNException {
-        return getOperation().getSource().isFile() && 
-            getOperation().getTarget().isFile() &&
-            getOperation().getRevision().isLocal();
+        return areAllSourcesLocal(operation) && operation.getFirstTarget().isLocal();
+    }
+    
+    private boolean areAllSourcesLocal(SvnCopy operation) {
+        for(SvnCopySource source : operation.getSources()) {
+            if (!source.isLocal()) {
+                return false;
+            }
+        }
+        return true;
     }
     
     @Override
     protected Long run(SVNWCContext context) throws SVNException {
-        File source = getOperation().getSource().getFile();
-        File dst = getOperation().getTarget().getFile();
+        Collection<SvnCopySource> sources = getOperation().getSources();
+        Collection<SvnCopyPair> copyPairs = new ArrayList<SvnNgWcToWcCopy.SvnCopyPair>();
+        if (sources.size() > 1) {
+            for (SvnCopySource copySource : sources) {
+                SvnCopyPair copyPair = new SvnCopyPair();
+                copyPair.source = copySource.getSource().getFile();
+                String baseName = copyPair.source.getName();
+                copyPair.dst = new File(getFirstTarget(), baseName);
+                copyPairs.add(copyPair);
+            }
+        } else if (sources.size() == 1) {
+            SvnCopyPair copyPair = new SvnCopyPair();
+            SvnCopySource source = sources.iterator().next(); 
+            copyPair.source = source.getSource().getFile();
+            copyPair.dst = getFirstTarget();
+            
+            copyPairs.add(copyPair);
+        }
         
-        copy(context, source, dst, false);
-        
-        // local copy
+        for (SvnCopyPair pair : copyPairs) {
+            File src = pair.source;
+            File dst = pair.dst;
+            if (SVNWCUtils.isChild(src, dst)) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Cannot copy path ''{0}'' into its own child ''{1}''",
+                    src, dst);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+        }
+        if (getOperation().isMove()) {
+            for (SvnCopyPair pair : copyPairs) {
+                File src = pair.source;
+                File dst = pair.dst;
+                if (src.equals(dst)) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
+                            "Cannot move path ''{0}'' into itself", src);
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                }
+                Structure<ExternalNodeInfo> externalInfo = SvnWcDbExternals.readExternal(context, src, src, ExternalNodeInfo.kind);
+                if (externalInfo.hasValue(ExternalNodeInfo.kind) && externalInfo.get(ExternalNodeInfo.kind) != SVNNodeKind.NONE) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CANNOT_MOVE_FILE_EXTERNAL, 
+                            "Cannot move the external at ''{0}''; please edit the svn:externals property on ''{1}''.", src);
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                }
+            }
+        }
         return new Long(-1);
     }
 
@@ -264,5 +316,15 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
             SVNFileUtil.copy(source, dstPath, false, true);
         }
         return tmpDir;
+    }
+    
+    private static class SvnCopyPair {
+        File source;
+        File dst;
+        File dstParent;
+        
+        String baseName;
+        SVNNodeKind sourceKind;
+        String originalSourceName;
     }
 }
