@@ -199,4 +199,13 @@ public class SvnOperation<V> {
     public void setSleepForTimestamp(boolean isSleepForTimestamp) {
         this.isSleepForTimestamp = isSleepForTimestamp;
     }
+
+    public boolean hasFileTargets() {
+        for (SvnTarget target : getTargets()) {
+            if (target.isFile()) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

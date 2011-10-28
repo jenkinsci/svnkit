@@ -253,7 +253,8 @@ public class SVNStatus {
     }
     
     public SVNStatus() {
-        
+        setCopyFromRevision(SVNRevision.UNDEFINED);
+        setRevision(SVNRevision.UNDEFINED);
     }
 
     /**

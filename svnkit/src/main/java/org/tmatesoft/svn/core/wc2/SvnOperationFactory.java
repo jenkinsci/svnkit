@@ -403,7 +403,8 @@ public class SvnOperationFactory {
             return null;
         }
         SvnWcGeneration wcGeneration = null;
-        if (operation.hasLocalTargets()) {
+        
+        if (operation.hasFileTargets()) {
             wcGeneration = detectWcGeneration(operation.getFirstTarget().getFile());
         }
         final List<ISvnOperationRunner<?, SvnOperation<?>>> candidateRunners = new LinkedList<ISvnOperationRunner<?, SvnOperation<?>>>();
