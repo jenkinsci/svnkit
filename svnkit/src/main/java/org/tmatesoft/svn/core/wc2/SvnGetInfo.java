@@ -38,8 +38,8 @@ public class SvnGetInfo extends SvnReceivingOperation<SvnInfo> {
 
     @Override
     protected void ensureArgumentsAreValid() throws SVNException {
-        if (getRevision() == null) {
-            setRevision(hasRemoteTargets() ? SVNRevision.HEAD : SVNRevision.UNDEFINED);
+        if (getRevision() == null || !getRevision().isValid()) {
+            setRevision(hasRemoteTargets() ? SVNRevision.HEAD : SVNRevision.WORKING);
         }
         if (getDepth() == null || getDepth() == SVNDepth.UNKNOWN) {
             setDepth(SVNDepth.EMPTY);
