@@ -35,7 +35,7 @@ public class SvnGetInfo extends SvnReceivingOperation<SvnInfo> {
     public boolean isFetchActualOnly() {
         return fetchActualOnly;
     }
-
+    
     @Override
     protected void ensureArgumentsAreValid() throws SVNException {
         if (getRevision() == null || !getRevision().isValid()) {
@@ -47,6 +47,4 @@ public class SvnGetInfo extends SvnReceivingOperation<SvnInfo> {
         
         super.ensureArgumentsAreValid();
     }
-    
-    
 }
