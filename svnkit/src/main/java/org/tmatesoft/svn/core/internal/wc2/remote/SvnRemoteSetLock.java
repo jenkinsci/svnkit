@@ -15,6 +15,7 @@ import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc2.SvnRemoteOperationRunner;
+import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
@@ -23,6 +24,10 @@ import org.tmatesoft.svn.core.wc2.SvnSetLock;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 public class SvnRemoteSetLock extends SvnRemoteOperationRunner<SVNLock, SvnSetLock> implements ISVNLockHandler {
+
+    public boolean isApplicable(SvnSetLock operation, SvnWcGeneration wcGeneration) throws SVNException {
+        return operation.hasRemoteTargets();
+    }
 
     @Override
     protected SVNLock run() throws SVNException {
