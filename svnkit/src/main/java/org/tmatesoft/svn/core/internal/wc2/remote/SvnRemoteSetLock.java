@@ -51,7 +51,7 @@ public class SvnRemoteSetLock extends SvnRemoteOperationRunner<SVNLock, SvnSetLo
             pathsToRevisions.put(path, null);
         }
 
-        getOperation().getEventHandler().checkCancelled();
+        checkCancelled();
         SVNRepository repository = getRepositoryAccess().createRepository(topURL, null, true);
         repository.lock(pathsToRevisions, getOperation().getLockMessage(), getOperation().isStealLock(), this);
 

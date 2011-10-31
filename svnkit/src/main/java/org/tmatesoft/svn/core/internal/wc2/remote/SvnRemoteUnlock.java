@@ -54,7 +54,7 @@ public class SvnRemoteUnlock extends SvnRemoteOperationRunner<SVNLock, SvnUnlock
             pathsToTokens.put(path, null);
         }
         
-        getOperation().getEventHandler().checkCancelled();        
+        checkCancelled();        
         SVNRepository repository = getRepositoryAccess().createRepository(topURL, null, true);
         if (!getOperation().isBreakLock()) {
             pathsToTokens = fetchLockTokens(repository, pathsToTokens);

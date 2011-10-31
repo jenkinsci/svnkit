@@ -41,23 +41,23 @@ public class SvnRemoteCat extends SvnRemoteOperationRunner<Long, SvnCat> {
         SVNRepository repos = repositoryInfo.<SVNRepository>get(RepositoryInfo.repository);
         repositoryInfo.release();
          
-        getOperation().getEventHandler().checkCancelled();
+        checkCancelled();
         long revNumber = repositoryInfo.lng(RepositoryInfo.revision);
-        getOperation().getEventHandler().checkCancelled();
+        checkCancelled();
         SVNNodeKind nodeKind = repos.checkPath("", revNumber);
-        getOperation().getEventHandler().checkCancelled();
+        checkCancelled();
         if (nodeKind == SVNNodeKind.DIR) {
             SVNErrorMessage err = SVNErrorMessage.create(
             		SVNErrorCode.CLIENT_IS_DIRECTORY, "URL ''{0}'' refers to a directory", getOperation().getFirstTarget().getURL());
             SVNErrorManager.error(err, SVNLogType.WC);
         }
-        getOperation().getEventHandler().checkCancelled();
+        checkCancelled();
         if (!getOperation().isExpandKeywords()) {
             repos.getFile("", revNumber, null, new SVNCancellableOutputStream(getOperation().getOutput(), this));
         } else {
             SVNProperties properties = new SVNProperties();
             repos.getFile("", revNumber, properties, null);
-            getOperation().getEventHandler().checkCancelled();
+            checkCancelled();
             String mimeType = properties.getStringValue(SVNProperty.MIME_TYPE);
             String charset = SVNTranslator.getCharset(
             		properties.getStringValue(SVNProperty.CHARSET), 

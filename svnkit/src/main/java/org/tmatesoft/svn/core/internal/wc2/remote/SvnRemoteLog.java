@@ -1,17 +1,30 @@
 package org.tmatesoft.svn.core.internal.wc2.remote;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.TreeSet;
 
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.EntryLocationInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc2.SvnRemoteOperationRunner;
+import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess.RepositoryInfo;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -19,6 +32,7 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNRevisionRange;
 import org.tmatesoft.svn.core.wc2.SvnCat;
 import org.tmatesoft.svn.core.wc2.SvnLog;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
 
 public class SvnRemoteLog extends SvnRemoteOperationRunner<SVNLogEntry, SvnLog> implements ISVNLogEntryHandler {
@@ -29,6 +43,10 @@ public class SvnRemoteLog extends SvnRemoteOperationRunner<SVNLogEntry, SvnLog> 
 	 
     @Override
     protected SVNLogEntry run() throws SVNException {
+    	
+    	String[] targetPaths = null;
+    	SVNRevision pegRevision = getOperation().getFirstTarget().getPegRevision();
+    	SvnTarget baseTarget = getOperation().getFirstTarget();
     	 
     	SVNRevision sessionRevision = SVNRevision.UNDEFINED;
         List<SVNRevisionRange> editedRevisionRanges = new LinkedList<SVNRevisionRange>();
@@ -41,10 +59,15 @@ public class SvnRemoteLog extends SvnRemoteOperationRunner<SVNLogEntry, SvnLog> 
                 SVNRevision start = SVNRevision.UNDEFINED;
                 SVNRevision end = SVNRevision.UNDEFINED;
                 if (!getOperation().getFirstTarget().getPegRevision().isValid()) {
-                    start = SVNRevision.HEAD;
+                	if (getOperation().hasRemoteTargets()) {
+                		start = SVNRevision.BASE;
+                	} else {
+                		start = SVNRevision.HEAD;
+                	}
                 } else {
                     start = getOperation().getFirstTarget().getPegRevision();
                 }
+                
                 if (!revRange.getEndRevision().isValid()) {
                     end = SVNRevision.create(0);
                 }
@@ -54,11 +77,14 @@ public class SvnRemoteLog extends SvnRemoteOperationRunner<SVNLogEntry, SvnLog> 
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Missing required revision specification");
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
+            
             if (isRevisionLocalToWc(revRange.getStartRevision()) || isRevisionLocalToWc(revRange.getEndRevision())) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Revision type requires a working copy path, not a URL");
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
+            
             editedRevisionRanges.add(revRange);
+            
             if (!sessionRevision.isValid()) {
                 SVNRevision start = revRange.getStartRevision();
                 SVNRevision end = revRange.getEndRevision();
@@ -69,55 +95,89 @@ public class SvnRemoteLog extends SvnRemoteOperationRunner<SVNLogEntry, SvnLog> 
                 }
             }
         }
-        if (isRevisionLocalToWc(getOperation().getFirstTarget().getPegRevision())) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Revision type requires a working copy path, not a URL");
-            SVNErrorManager.error(err, SVNLogType.WC);
+        
+        Collection<String> condenced_targets = new ArrayList<String>();
+        if (getOperation().hasRemoteTargets()) {
+        	if (getOperation().getTargetPaths().length == 0) {
+        		targetPaths = new String[] {""};
+        	}
+        } else {
+        	if (!pegRevision.isValid())
+        		pegRevision = SVNRevision.WORKING;
+        	
+        	SVNURL[] targetUrls = new SVNURL[getOperation().getTargets().size()];
+            SvnRepositoryAccess wcAccess = getRepositoryAccess();
+            Collection<String> wcPaths = new ArrayList<String>();
+            int i = 0;
+            for (SvnTarget target : getOperation().getTargets()) {
+            	checkCancelled();
+                File path = target.getFile();
+                wcPaths.add(path.getAbsolutePath().replace(File.separatorChar, '/'));
+                targetUrls[i++] = getWcContext().getEntryLocation(path, pegRevision, false).url;
+            }
+            
+            if (targetUrls.length == 0)
+            	return null;
+            
+            Collection<String> targets = new TreeSet<String>();
+            SVNURL baseURL = SVNURLUtil.condenceURLs(targetUrls, targets, true);
+            if (baseURL == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "target log paths belong to different repositories");
+                SVNErrorManager.error(err, SVNLogType.WC);
+                return null;
+            }
+            if (targets.isEmpty()) {
+                targets.add("");
+            }
+            
+            targetPaths = (String[]) targets.toArray(new String[targets.size()]);
+            for (i = 0; i < targetPaths.length; i++) {
+                targetPaths[i] = SVNEncodingUtil.uriDecode(targetPaths[i]);
+            }
+            
+            if (isRevisionLocalToWc(pegRevision)) {
+            	String rootWCPath = SVNPathUtil.condencePaths((String[]) wcPaths.toArray(new String[wcPaths.size()]), null, true);
+            	baseTarget = SvnTarget.fromFile(new File(rootWCPath), pegRevision);
+            }
+            
+            
         }
         
-        SVNRepository repository;
-        if (sessionRevision.isValid()) {
-        
-        	Structure<RepositoryInfo> repositoryInfo = 
+        Structure<RepositoryInfo> repositoryInfo = 
                     getRepositoryAccess().createRepositoryFor(
-                            getOperation().getFirstTarget(), 
+                    		baseTarget, 
                             sessionRevision, 
-                            getOperation().getFirstTarget().getPegRevision(), 
+                            pegRevision, 
                             null);
-        	repository = repositoryInfo.<SVNRepository>get(RepositoryInfo.repository);
-            repositoryInfo.release();
-        }
-        else {
-        	repository = getRepositoryAccess().createRepository(getOperation().getFirstTarget().getURL(), null, true);
-        }
+        SVNRepository repository = repositoryInfo.<SVNRepository>get(RepositoryInfo.repository);
+        repositoryInfo.release();
+        
         
         for (Iterator<SVNRevisionRange> revRangesIter = editedRevisionRanges.iterator(); revRangesIter.hasNext();) {
-        	getOperation().getEventHandler().checkCancelled();
+        	checkCancelled();
             SVNRevisionRange revRange = (SVNRevisionRange) revRangesIter.next();
-            getOperation().getEventHandler().checkCancelled();
+            checkCancelled();
             
-            
-            
-            Structure<RepositoryInfo> repositoryInfo = 
+            Structure<RepositoryInfo> ri = 
                     getRepositoryAccess().createRepositoryFor(
                             getOperation().getFirstTarget(), 
                             revRange.getStartRevision(), 
-                            getOperation().getFirstTarget().getPegRevision(), 
+                            pegRevision, 
                             null);
-            long startRev = repositoryInfo.lng(RepositoryInfo.revision);
-            repositoryInfo.release();
+            long startRev = ri.lng(RepositoryInfo.revision);
+            ri.release();
             
-            repositoryInfo = 
-                    getRepositoryAccess().createRepositoryFor(
+            ri = getRepositoryAccess().createRepositoryFor(
                             getOperation().getFirstTarget(), 
                             revRange.getEndRevision(), 
-                            getOperation().getFirstTarget().getPegRevision(), 
+                            pegRevision, 
                             null);
             
             long endRev = repositoryInfo.lng(RepositoryInfo.revision);
-            repositoryInfo.release();
+            ri.release();
             
             repository.log(
-            		getOperation().getTargetPaths(), 
+            		targetPaths, 
             		startRev, 
             		endRev,
             		getOperation().isDiscoverChangedPaths(), 
@@ -129,13 +189,12 @@ public class SvnRemoteLog extends SvnRemoteOperationRunner<SVNLogEntry, SvnLog> 
         }
         
     
-    	return null;
+        return getOperation().first();
     }
     
     public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
-		getOperation().getEventHandler().checkCancelled();
+    	checkCancelled();
 		getOperation().receive(null, logEntry);
 	}
-    
     
  }
