@@ -356,27 +356,59 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
             String chValue = optionValue.getValue();
             for(StringTokenizer tokens = new StringTokenizer(chValue, ", \n\r\t"); tokens.hasMoreTokens();) {
                 String token = tokens.nextToken();
+                boolean isNegative = false;
+                if (token.startsWith("-")) {
+                    token = token.substring(1);
+                    isNegative = true;
+                }
                 while (token.startsWith("r")) {
                     token = token.substring(1);
                 }
                 long change = 0;
+                long changeEnd = 0;
                 try {
-                    change = Long.parseLong(token);
+                    if (token.indexOf("-") > 0) {
+                        if (isNegative || token.startsWith("-")) {
+                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
+                                    "Negative number in range ({0}) is not supported with -c", token);
+                            SVNErrorManager.error(err, SVNLogType.CLIENT);
+                        }
+                        String firstPart = token.substring(0, token.indexOf("-"));
+                        String secondPart = token.substring(token.indexOf("-") + 1);
+                        change = Long.parseLong(firstPart);
+                        while (secondPart.startsWith("r")) {
+                            secondPart = secondPart.substring(1);
+                        }
+                        changeEnd = Long.parseLong(secondPart);
+                    } else {
+                        change = Long.parseLong(token);
+                        changeEnd = change;
+                    }
                 } catch (NumberFormatException nfe) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
                             "Non-numeric change argument ({0}) given to -c", token);
                     SVNErrorManager.error(err, SVNLogType.CLIENT);
                 }
+                if (isNegative) {
+                    change = -change;
+                }
                 SVNRevisionRange range = null;
+                
                 if (change == 0) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
                             "There is no change 0");
                     SVNErrorManager.error(err, SVNLogType.CLIENT);
                 } else if (change > 0) {
-                    range = new SVNRevisionRange(SVNRevision.create(change - 1), SVNRevision.create(change));
+                    if (change <= changeEnd) {
+                        change--;
+                    } else {
+                        changeEnd--;
+                    }
+                    range = new SVNRevisionRange(SVNRevision.create(change - 1), SVNRevision.create(changeEnd));
                 } else {
                     change = -change;
-                    range = new SVNRevisionRange(SVNRevision.create(change), SVNRevision.create(change - 1));
+                    changeEnd = change - 1;
+                    range = new SVNRevisionRange(SVNRevision.create(change), SVNRevision.create(changeEnd));
                 }
                 myRevisionRanges.add(range);
                 myIsChangeOptionUsed = true;
