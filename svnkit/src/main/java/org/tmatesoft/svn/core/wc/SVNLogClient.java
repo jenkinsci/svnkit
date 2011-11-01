@@ -12,7 +12,6 @@
 package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -29,7 +28,6 @@ import org.tmatesoft.svn.core.internal.wc16.SVNLogClient16;
 import org.tmatesoft.svn.core.internal.wc17.SVNLogClient17;
 import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.wc2.SvnCat;
 import org.tmatesoft.svn.core.wc2.SvnLog;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -548,20 +546,9 @@ public class SVNLogClient extends SVNBasicClient {
     public void doLog(File[] paths, SVNRevision startRevision, SVNRevision endRevision, boolean stopOnCopy, boolean discoverChangedPaths, long limit, final ISVNLogEntryHandler handler)
             throws SVNException {
     	
-    	Collection<SVNRevisionRange> revisionRanges = new ArrayList<SVNRevisionRange>(1);
+        Collection<SVNRevisionRange> revisionRanges = new ArrayList<SVNRevisionRange>(1);
         revisionRanges.add(new SVNRevisionRange(startRevision, endRevision));
-    	
-    	SvnLog log = getOperationsFactory().createLog();
-    	for (File file : paths) {
-    		log.addTarget(SvnTarget.fromFile(file));
-    	}
-    	log.setTargetPaths(new String[0]);
-    	log.setRevisionRanges(revisionRanges);
-        log.setStopOnCopy(stopOnCopy);
-        log.setDiscoverChangedPaths(discoverChangedPaths);
-        log.setLimit(limit);
-        log.setReceiver(SvnCodec.logReceiver(handler));
-        log.run();
+        doLog(paths, revisionRanges, SVNRevision.WORKING, stopOnCopy, discoverChangedPaths, false, limit, null, handler);
     }
 
     /**
@@ -677,7 +664,6 @@ public class SVNLogClient extends SVNBasicClient {
     	for (File file : paths) {
     		log.addTarget(SvnTarget.fromFile(file));
     	}
-    	log.setTargetPaths(new String[0]);
     	log.setRevisionRanges(revisionRanges);
         log.setStopOnCopy(stopOnCopy);
         log.setDiscoverChangedPaths(discoverChangedPaths);
@@ -787,7 +773,7 @@ public class SVNLogClient extends SVNBasicClient {
      *             </ul>
      * @since 1.3, SVN 1.6
      */
-    public void doLog(File[] paths, Collection revisionRanges, SVNRevision pegRevision, boolean stopOnCopy, boolean discoverChangedPaths, boolean includeMergedRevisions, long limit,
+    public void doLog(File[] paths, Collection<SVNRevisionRange> revisionRanges, SVNRevision pegRevision, boolean stopOnCopy, boolean discoverChangedPaths, boolean includeMergedRevisions, long limit,
             String[] revisionProperties, final ISVNLogEntryHandler handler) throws SVNException {
         
     	SvnLog log = getOperationsFactory().createLog();
@@ -856,21 +842,9 @@ public class SVNLogClient extends SVNBasicClient {
      */
     public void doLog(File[] paths, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, boolean stopOnCopy, boolean discoverChangedPaths, long limit,
             final ISVNLogEntryHandler handler) throws SVNException {
-    	
-    	Collection<SVNRevisionRange> revisionRanges = new ArrayList<SVNRevisionRange>(1);
+        Collection<SVNRevisionRange> revisionRanges = new ArrayList<SVNRevisionRange>(1);
         revisionRanges.add(new SVNRevisionRange(startRevision, endRevision));
-        
-    	SvnLog log = getOperationsFactory().createLog();
-    	for (File file : paths) {
-    		log.addTarget(SvnTarget.fromFile(file, pegRevision));
-    	}
-    	log.setTargetPaths(new String[0]);
-    	log.setRevisionRanges(revisionRanges);
-        log.setStopOnCopy(stopOnCopy);
-        log.setDiscoverChangedPaths(discoverChangedPaths);
-        log.setLimit(limit);
-        log.setReceiver(SvnCodec.logReceiver(handler));
-        log.run();
+    	doLog(paths, revisionRanges, pegRevision, stopOnCopy, discoverChangedPaths, false, limit, null, handler);
     }
 
     /**
@@ -916,19 +890,7 @@ public class SVNLogClient extends SVNBasicClient {
      */
     public void doLog(SVNURL url, String[] paths, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, boolean stopOnCopy, boolean discoverChangedPaths, long limit,
             final ISVNLogEntryHandler handler) throws SVNException {
-    	
-    	Collection<SVNRevisionRange> revisionRanges = new ArrayList<SVNRevisionRange>(1);
-        revisionRanges.add(new SVNRevisionRange(startRevision, endRevision));
-    	
-    	SvnLog log = getOperationsFactory().createLog();
-    	log.setSingleTarget(SvnTarget.fromURL(url, pegRevision));
-    	log.setTargetPaths(paths);
-    	log.setRevisionRanges(revisionRanges);
-        log.setStopOnCopy(stopOnCopy);
-        log.setDiscoverChangedPaths(discoverChangedPaths);
-        log.setLimit(limit);
-        log.setReceiver(SvnCodec.logReceiver(handler));
-        log.run();
+    	doLog(url, paths, pegRevision, startRevision, endRevision, stopOnCopy, discoverChangedPaths, false, limit, null, handler);
     }
 
     /**
@@ -1102,7 +1064,7 @@ public class SVNLogClient extends SVNBasicClient {
      * @throws SVNException
      * @since 1.3, SVN 1.6
      */
-    public void doLog(SVNURL url, String[] paths, SVNRevision pegRevision, Collection revisionRanges, boolean stopOnCopy, boolean discoverChangedPaths, boolean includeMergedRevisions, long limit,
+    public void doLog(SVNURL url, String[] paths, SVNRevision pegRevision, Collection<SVNRevisionRange> revisionRanges, boolean stopOnCopy, boolean discoverChangedPaths, boolean includeMergedRevisions, long limit,
             String[] revisionProperties, final ISVNLogEntryHandler handler) throws SVNException {
     	
     	SvnLog log = getOperationsFactory().createLog();

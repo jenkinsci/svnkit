@@ -1,5 +1,6 @@
 package org.tmatesoft.svn.core.wc2;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -92,7 +93,7 @@ public class SvnLog extends SvnReceivingOperation<SVNLogEntry> {
             setLimit(Long.MAX_VALUE);
         }
         
-        if (getRevisionRanges().size() == 0) {
+        if (getRevisionRanges() == null || getRevisionRanges().size() == 0) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Missing required revision specification");
             SVNErrorManager.error(err, SVNLogType.WC);
         }
@@ -100,6 +101,15 @@ public class SvnLog extends SvnReceivingOperation<SVNLogEntry> {
         if (hasRemoteTargets() && getTargets().size() > 1) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "When specifying URL, only one target may be given.");
             SVNErrorManager.error(err, SVNLogType.CLIENT);
+        }
+    }
+
+    public void addRange(SVNRevisionRange range) {
+        if (range != null) {
+            if (getRevisionRanges() == null) {
+                this.revisionRanges = new ArrayList<SVNRevisionRange>();
+            }
+            this.revisionRanges.add(range);
         }
     }
 }
