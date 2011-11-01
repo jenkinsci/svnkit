@@ -113,7 +113,7 @@ public class SvnOldRepositoryAccess extends SvnRepositoryAccess {
     }
 
     @Override
-    protected Structure<UrlInfo> getURLFromPath(SvnTarget path, SVNRevision revision, SVNRepository repository) throws SVNException {
+    public Structure<UrlInfo> getURLFromPath(SvnTarget path, SVNRevision revision, SVNRepository repository) throws SVNException {
         Structure<UrlInfo> urlInfo = Structure.obtain(UrlInfo.class);
         SVNURL url = null;
         SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);

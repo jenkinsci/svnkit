@@ -127,11 +127,8 @@ public class SvnRemoteLog extends SvnRemoteOperationRunner<SVNLogEntry, SvnLog> 
                 File path = target.getFile();
                 wcPaths.add(path.getAbsolutePath().replace(File.separatorChar, '/'));
                 
-                Structure<LocationsInfo> locationsInfo =  
-                		getRepositoryAccess().getLocations(repository, target, pegRevision, pegRevision, pegRevision);
-                targetUrls[i++] = locationsInfo.<SVNURL>get(LocationsInfo.startUrl);
-                locationsInfo.release();
-              //targetUrls[i++] = getWcContext().getNodeUrl(path);
+                Structure<SvnRepositoryAccess.UrlInfo> locationsInfo = getRepositoryAccess().getURLFromPath(target, target.getPegRevision(), repository);
+                targetUrls[i++] = locationsInfo.<SVNURL>get(SvnRepositoryAccess.UrlInfo.url);
             }
             
             if (targetUrls.length == 0)
@@ -185,12 +182,12 @@ public class SvnRemoteLog extends SvnRemoteOperationRunner<SVNLogEntry, SvnLog> 
             ri.release();
             
             ri = getRepositoryAccess().createRepositoryFor(
-            				baseTarget, 
+                    		baseTarget, 
                             revRange.getEndRevision(), 
                             pegRevision, 
                             null);
             
-            long endRev = repositoryInfo.lng(RepositoryInfo.revision);
+            long endRev = ri.lng(RepositoryInfo.revision);
             ri.release();
             
             repository.log(

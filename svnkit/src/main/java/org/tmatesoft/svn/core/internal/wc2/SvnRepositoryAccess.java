@@ -53,11 +53,11 @@ public abstract class SvnRepositoryAccess {
    
     public abstract Structure<RevisionsPair> getRevisionNumber(SVNRepository repository, SvnTarget path, SVNRevision revision, Structure<RevisionsPair> youngestRevision) throws SVNException;
     
-    protected enum UrlInfo {
+    public enum UrlInfo {
         url, pegRevision, dropRepsitory; 
     }
     
-    protected abstract Structure<UrlInfo> getURLFromPath(SvnTarget path, SVNRevision revision, SVNRepository repository) throws SVNException;
+    public abstract Structure<UrlInfo> getURLFromPath(SvnTarget path, SVNRevision revision, SVNRepository repository) throws SVNException;
 
     
     protected SVNRevision[] resolveRevisions(SVNRevision pegRevision, SVNRevision revision, boolean isURL, boolean noticeLocalModifications) {
