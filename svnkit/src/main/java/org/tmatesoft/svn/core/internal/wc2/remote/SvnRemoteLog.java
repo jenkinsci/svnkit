@@ -25,6 +25,7 @@ import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.EntryLocationInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc2.SvnRemoteOperationRunner;
 import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess;
+import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess.LocationsInfo;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess.RepositoryInfo;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -78,9 +79,11 @@ public class SvnRemoteLog extends SvnRemoteOperationRunner<SVNLogEntry, SvnLog> 
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
             
-            if (isRevisionLocalToWc(revRange.getStartRevision()) || isRevisionLocalToWc(revRange.getEndRevision())) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Revision type requires a working copy path, not a URL");
-                SVNErrorManager.error(err, SVNLogType.WC);
+            if (getOperation().hasRemoteTargets()) {
+	            if (isRevisionLocalToWc(revRange.getStartRevision()) || isRevisionLocalToWc(revRange.getEndRevision())) {
+	                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Revision type requires a working copy path, not a URL");
+	                SVNErrorManager.error(err, SVNLogType.WC);
+	            }
             }
             
             editedRevisionRanges.add(revRange);
@@ -96,8 +99,9 @@ public class SvnRemoteLog extends SvnRemoteOperationRunner<SVNLogEntry, SvnLog> 
             }
         }
         
-        Collection<String> condenced_targets = new ArrayList<String>();
         if (getOperation().hasRemoteTargets()) {
+        	if (!pegRevision.isValid())
+        		pegRevision = SVNRevision.BASE;
         	if (getOperation().getTargetPaths().length == 0) {
         		targetPaths = new String[] {""};
         	}
@@ -106,14 +110,28 @@ public class SvnRemoteLog extends SvnRemoteOperationRunner<SVNLogEntry, SvnLog> 
         		pegRevision = SVNRevision.WORKING;
         	
         	SVNURL[] targetUrls = new SVNURL[getOperation().getTargets().size()];
-            SvnRepositoryAccess wcAccess = getRepositoryAccess();
             Collection<String> wcPaths = new ArrayList<String>();
             int i = 0;
+            
+            Structure<RepositoryInfo> repositoryInfo = 
+                    getRepositoryAccess().createRepositoryFor(
+                    		baseTarget, 
+                            sessionRevision, 
+                            pegRevision, 
+                            null);
+            SVNRepository repository = repositoryInfo.<SVNRepository>get(RepositoryInfo.repository);
+            repositoryInfo.release();
+            
             for (SvnTarget target : getOperation().getTargets()) {
             	checkCancelled();
                 File path = target.getFile();
                 wcPaths.add(path.getAbsolutePath().replace(File.separatorChar, '/'));
-                targetUrls[i++] = getWcContext().getEntryLocation(path, pegRevision, false).url;
+                
+                Structure<LocationsInfo> locationsInfo =  
+                		getRepositoryAccess().getLocations(repository, target, pegRevision, pegRevision, pegRevision);
+                targetUrls[i++] = locationsInfo.<SVNURL>get(LocationsInfo.startUrl);
+                locationsInfo.release();
+              //targetUrls[i++] = getWcContext().getNodeUrl(path);
             }
             
             if (targetUrls.length == 0)
@@ -142,7 +160,6 @@ public class SvnRemoteLog extends SvnRemoteOperationRunner<SVNLogEntry, SvnLog> 
             
             
         }
-        
         Structure<RepositoryInfo> repositoryInfo = 
                     getRepositoryAccess().createRepositoryFor(
                     		baseTarget, 
@@ -160,7 +177,7 @@ public class SvnRemoteLog extends SvnRemoteOperationRunner<SVNLogEntry, SvnLog> 
             
             Structure<RepositoryInfo> ri = 
                     getRepositoryAccess().createRepositoryFor(
-                            getOperation().getFirstTarget(), 
+                    		baseTarget, 
                             revRange.getStartRevision(), 
                             pegRevision, 
                             null);
@@ -168,7 +185,7 @@ public class SvnRemoteLog extends SvnRemoteOperationRunner<SVNLogEntry, SvnLog> 
             ri.release();
             
             ri = getRepositoryAccess().createRepositoryFor(
-                            getOperation().getFirstTarget(), 
+            				baseTarget, 
                             revRange.getEndRevision(), 
                             pegRevision, 
                             null);
