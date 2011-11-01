@@ -18,16 +18,11 @@ import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
-import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.EntryLocationInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc2.SvnRemoteOperationRunner;
 import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess;
-import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess.LocationsInfo;
-import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess.RepositoryInfo;
+import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNRevisionRange;
@@ -100,14 +95,18 @@ public class SvnRemoteLog extends SvnRemoteOperationRunner<SVNLogEntry, SvnLog> 
         }
         
         if (getOperation().hasRemoteTargets()) {
-        	if (!pegRevision.isValid())
+        	if (!pegRevision.isValid()) {
         		pegRevision = SVNRevision.BASE;
-        	if (getOperation().getTargetPaths().length == 0) {
+        	}
+        	if (getOperation().getTargetPaths() == null) {
         		targetPaths = new String[] {""};
+        	} else {
+        	    targetPaths = getOperation().getTargetPaths();
         	}
         } else {
-        	if (!pegRevision.isValid())
+        	if (!pegRevision.isValid()) {
         		pegRevision = SVNRevision.WORKING;
+        	}
         	
         	SVNURL[] targetUrls = new SVNURL[getOperation().getTargets().size()];
             Collection<String> wcPaths = new ArrayList<String>();
@@ -131,8 +130,9 @@ public class SvnRemoteLog extends SvnRemoteOperationRunner<SVNLogEntry, SvnLog> 
                 targetUrls[i++] = locationsInfo.<SVNURL>get(SvnRepositoryAccess.UrlInfo.url);
             }
             
-            if (targetUrls.length == 0)
+            if (targetUrls.length == 0) {
             	return null;
+            }
             
             Collection<String> targets = new TreeSet<String>();
             SVNURL baseURL = SVNURLUtil.condenceURLs(targetUrls, targets, true);
