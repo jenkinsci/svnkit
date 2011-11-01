@@ -647,7 +647,8 @@ class HTTPConnection implements IHTTPConnection {
     }
 
     private boolean isClearCredentialsOnClose(HTTPAuthentication auth) {
-        return !(auth instanceof HTTPBasicAuthentication || auth instanceof HTTPDigestAuthentication);
+        return !(auth instanceof HTTPBasicAuthentication || auth instanceof HTTPDigestAuthentication 
+                || auth instanceof HTTPNegotiateAuthentication);
     }
 
 	private HTTPSSLKeyManager createKeyManager() {
