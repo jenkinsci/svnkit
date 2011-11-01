@@ -22,6 +22,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc2.SvnRemoteOperationRunner;
 import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess;
 import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess.RepositoryInfo;
+import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess.RevisionsPair;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -172,23 +173,11 @@ public class SvnRemoteLog extends SvnRemoteOperationRunner<SVNLogEntry, SvnLog> 
             SVNRevisionRange revRange = (SVNRevisionRange) revRangesIter.next();
             checkCancelled();
             
-            Structure<RepositoryInfo> ri = 
-                    getRepositoryAccess().createRepositoryFor(
-                    		baseTarget, 
-                            revRange.getStartRevision(), 
-                            pegRevision, 
-                            null);
-            long startRev = ri.lng(RepositoryInfo.revision);
-            ri.release();
-            
-            ri = getRepositoryAccess().createRepositoryFor(
-                    		baseTarget, 
-                            revRange.getEndRevision(), 
-                            pegRevision, 
-                            null);
-            
-            long endRev = ri.lng(RepositoryInfo.revision);
-            ri.release();
+            Structure<RevisionsPair> pair = getRepositoryAccess().getRevisionNumber(repository, baseTarget, revRange.getStartRevision(), null);
+            long startRev = pair.lng(RevisionsPair.revNumber);
+            pair = getRepositoryAccess().getRevisionNumber(repository, baseTarget, revRange.getEndRevision(), pair);
+            long endRev = pair.lng(RevisionsPair.revNumber);
+            pair.release();
             
             repository.log(
             		targetPaths, 
