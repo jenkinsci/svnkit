@@ -99,8 +99,10 @@ public class SVNLogClient extends SVNBasicClient {
     public SVNLogClient(ISVNAuthenticationManager authManager, ISVNOptions options) {
         super(new SVNLogClient16(authManager, options), new SVNLogClient17(authManager, options));
         setDiffOptions(null);
-
         setOptions(options);
+
+        getOperationsFactory().setAuthenticationManager(authManager);
+        getOperationsFactory().setOptions(options);
     }
 
     /**
@@ -127,8 +129,10 @@ public class SVNLogClient extends SVNBasicClient {
     public SVNLogClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
         super(new SVNLogClient16(repositoryPool, options), new SVNLogClient17(repositoryPool, options));
         setDiffOptions(null);
-
         setOptions(options);
+        
+        getOperationsFactory().setRepositoryPool(repositoryPool);
+        getOperationsFactory().setOptions(options);
     }
 
     /**
@@ -780,7 +784,6 @@ public class SVNLogClient extends SVNBasicClient {
     	for (File file : paths) {
     		log.addTarget(SvnTarget.fromFile(file, pegRevision));
     	}
-    	log.setTargetPaths(new String[0]);
     	log.setRevisionRanges(revisionRanges);
         log.setStopOnCopy(stopOnCopy);
         log.setDiscoverChangedPaths(discoverChangedPaths);
