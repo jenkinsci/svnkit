@@ -404,14 +404,14 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
                     } else {
                         changeEnd--;
                     }
-                    range = new SVNRevisionRange(SVNRevision.create(change - 1), SVNRevision.create(changeEnd));
+                    range = new SVNRevisionRange(SVNRevision.create(change), SVNRevision.create(changeEnd));
                 } else {
                     change = -change;
                     changeEnd = change - 1;
                     range = new SVNRevisionRange(SVNRevision.create(change), SVNRevision.create(changeEnd));
                 }
+                    myIsChangeOptionUsed = true;
                 myRevisionRanges.add(range);
-                myIsChangeOptionUsed = true;
             }
         } else if (option == SVNOption.REVISION) {
             String revStr = optionValue.getValue();

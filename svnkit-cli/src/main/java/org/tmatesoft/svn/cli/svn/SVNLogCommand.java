@@ -123,10 +123,10 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
                 SVNRevisionRange revRange = (SVNRevisionRange) revisionsIter.next();
                 SVNRevision startRev = revRange.getStartRevision();
                 SVNRevision endRev = revRange.getEndRevision();
-                if (startRev.getNumber() < endRev.getNumber()) {
-                    revRange = new SVNRevisionRange(endRev, endRev);
+                if (startRev.getNumber() < endRev.getNumber() && startRev.getNumber() >= 0 && endRev.getNumber() >= 0) {
+                    revRange = new SVNRevisionRange(SVNRevision.create(startRev.getNumber() + 1), endRev);
                 } else {
-                    revRange = new SVNRevisionRange(startRev, startRev);
+                    revRange = new SVNRevisionRange(startRev, SVNRevision.create(endRev.getNumber() + 1));
                 }
                 editedRevisionRangesList.add(revRange);
             }
