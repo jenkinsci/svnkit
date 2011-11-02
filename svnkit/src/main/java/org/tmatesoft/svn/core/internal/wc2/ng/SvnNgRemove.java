@@ -17,6 +17,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.ExternalNodeInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbExternals;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
@@ -41,7 +42,7 @@ public class SvnNgRemove extends SvnNgOperationRunner<SvnScheduleForRemoval, Svn
                     checkCanDelete(path);
                 }
                 if (!getOperation().isDryRun()) {
-                    delete(path, !getOperation().isDeleteFiles(), true);
+                    delete(context, path, !getOperation().isDeleteFiles(), true, this);
                 }
             } finally {
                 getWcContext().releaseWriteLock(lockRoot);
@@ -99,17 +100,17 @@ public class SvnNgRemove extends SvnNgOperationRunner<SvnScheduleForRemoval, Svn
         status.run();
     }
 
-    private void delete(File path, boolean keepLocal, boolean deleteUnversioned) throws SVNException {
+    public static void delete(SVNWCContext context, File path, boolean keepLocal, boolean deleteUnversioned, ISVNEventHandler handler) throws SVNException {
         Structure<NodeInfo> info = null;
         try {
-            info = getWcContext().getDb().readInfo(path, NodeInfo.status, NodeInfo.kind, NodeInfo.conflicted);
+            info = context.getDb().readInfo(path, NodeInfo.status, NodeInfo.kind, NodeInfo.conflicted);
         } catch (SVNException e) {
             if (deleteUnversioned && e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND) {
                 if (SVNFileType.getType(path) == SVNFileType.NONE) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_FILENAME, "''{0}'' does not exist", path);
                     SVNErrorManager.error(err, SVNLogType.WC);
                 }
-                SVNFileUtil.deleteAll(path, this);
+                SVNFileUtil.deleteAll(path, handler);
                 return;
             }
             throw e;
@@ -121,20 +122,20 @@ public class SvnNgRemove extends SvnNgOperationRunner<SvnScheduleForRemoval, Svn
             SVNErrorManager.error(err, SVNLogType.WC);
         }
         if (status == SVNWCDbStatus.Normal && info.get(NodeInfo.kind) == SVNWCDbKind.Dir) {
-            if (getWcContext().getDb().isWCRoot(path)) {
+            if (context.getDb().isWCRoot(path)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS, 
                         "''{0}'' is the root of a working copy and cannot be deleted", path);
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
         }
-        getWcContext().writeCheck(SVNFileUtil.getParentFile(path));
+        context.writeCheck(SVNFileUtil.getParentFile(path));
         List<SVNConflictDescription> conflicts = null;
         if (!keepLocal && info.is(NodeInfo.conflicted)) {
-            conflicts = getWcContext().getDb().readConflicts(path);
+            conflicts = context.getDb().readConflicts(path);
         }
         info.release();
 
-        getWcContext().getDb().opDelete(path, this);
+        context.getDb().opDelete(path, handler);
         if (!keepLocal && conflicts != null) {
             for (SVNConflictDescription conflict : conflicts) {
                 if (conflict.isTextConflict()) {
@@ -149,7 +150,7 @@ public class SvnNgRemove extends SvnNgOperationRunner<SvnScheduleForRemoval, Svn
             }
         }
         if (!keepLocal) {
-            SVNFileUtil.deleteAll(path, this);
+            SVNFileUtil.deleteAll(path, handler);
         }
     }
 

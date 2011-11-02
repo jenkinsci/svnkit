@@ -150,7 +150,7 @@ public class SVNWCUtils {
         if (restPath.startsWith(File.separator) || restPath.startsWith("/")) {
             return restPath.substring(1);
         }
-        return restPath;
+        return null;
     }
 
     public static boolean isAncestor(File parent, File child) {
