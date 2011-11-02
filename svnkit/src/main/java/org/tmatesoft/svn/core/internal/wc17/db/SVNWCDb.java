@@ -30,6 +30,7 @@ import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getTr
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.hasColumnProperties;
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.isColumnNull;
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.parseDepth;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getPresenceText;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -669,8 +670,8 @@ public class SVNWCDb implements ISVNWCDb {
         public long originalReposId;
         public long originalRevision;
         
-        public int opDepth;
-        private int notPresentOpDepth;
+        public long opDepth;
+        private long notPresentOpDepth;
         
         public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
             File parentRelpath = SVNFileUtil.getFileDir(localRelpath);
@@ -1848,6 +1849,20 @@ public class SVNWCDb implements ISVNWCDb {
         verifyDirUsable(dstPdh);
         
         SvnWcDbCopy.copy(srcPdh, localSrcRelpath, dstPdh, localDstRelpath, workItems);
+    }
+
+    public void opCopyShadowedLayer(File srcAbsPath, File dstAbsPath) throws SVNException {
+        DirParsedInfo parseSrcDir = parseDir(srcAbsPath, Mode.ReadWrite);
+        SVNWCDbDir srcPdh = parseSrcDir.wcDbDir;
+        File localSrcRelpath = parseSrcDir.localRelPath;
+        verifyDirUsable(srcPdh);
+
+        DirParsedInfo parseDstDir = parseDir(dstAbsPath, Mode.ReadWrite);
+        SVNWCDbDir dstPdh = parseDstDir.wcDbDir;
+        File localDstRelpath = parseDstDir.localRelPath;
+        verifyDirUsable(dstPdh);
+        
+        SvnWcDbCopy.copyShadowedLayer(srcPdh, localSrcRelpath, dstPdh, localDstRelpath);
     }
 
     public void opCopyDir(File localAbsPath, SVNProperties props, long changedRev, SVNDate changedDate, String changedAuthor, File originalReposRelPath, SVNURL originalRootUrl, String originalUuid,

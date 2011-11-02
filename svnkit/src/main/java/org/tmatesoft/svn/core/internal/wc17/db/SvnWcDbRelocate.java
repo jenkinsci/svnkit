@@ -121,7 +121,7 @@ public class SvnWcDbRelocate extends SvnWcDbShared {
                 oldReposId = additionInfo.lng(AdditionInfo.reposId);
                 additionInfo.release();
             } else {
-                Structure<NodeInfo> baseInfo = getBaseInfo(root, localRelpath, NodeInfo.reposId);
+                Structure<NodeInfo> baseInfo = getDepthInfo(root, localRelpath, 0, NodeInfo.reposId);
                 oldReposId = baseInfo.lng(NodeInfo.reposId);
                 baseInfo.release();
             }

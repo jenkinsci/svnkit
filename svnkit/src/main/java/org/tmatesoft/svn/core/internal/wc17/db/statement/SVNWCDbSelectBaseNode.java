@@ -47,7 +47,9 @@ public class SVNWCDbSelectBaseNode extends SVNSqlJetSelectFieldsStatement<SVNWCD
     }
 
     protected Object[] getWhere() throws SVNException {
-        bindLong(3, 0);
+        if (getBind(3) == null) {
+            bindLong(3, 0);
+        }         
         return super.getWhere();
     }
 

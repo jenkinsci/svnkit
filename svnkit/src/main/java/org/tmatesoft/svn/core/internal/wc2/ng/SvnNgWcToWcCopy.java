@@ -430,7 +430,7 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
                     NodeInfo.opRoot);
             
             if (childInfo.is(NodeInfo.opRoot)) {
-                // TODO copy shadowed layer
+                getWcContext().getDb().opCopyShadowedLayer(childSrcPath, childDstPath);
             }
             SVNWCDbStatus childStatus = childInfo.get(NodeInfo.status);
             SVNWCDbKind childKind = childInfo.get(NodeInfo.kind);

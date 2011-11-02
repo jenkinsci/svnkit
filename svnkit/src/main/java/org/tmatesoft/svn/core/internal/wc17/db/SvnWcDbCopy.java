@@ -17,9 +17,11 @@ import java.util.Map;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.schema.SqlJetConflictAction;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetInsertStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectStatement;
@@ -30,6 +32,8 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
+import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.InsertWorking;
+import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.ReposInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.AdditionInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.DeletionInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
@@ -49,6 +53,181 @@ public class SvnWcDbCopy extends SvnWcDbShared {
         kind,
         opRoot,
         haveWork
+    }
+
+    private static void copyShadowedLayer(SVNWCDbDir srcPdh, File srcRelpath, long srcOpDepth, 
+            SVNWCDbDir dstPdh, File dstRelpath, long dstOpDepth, long delOpDepth, long reposId, File reposRelPath, long revision) throws SVNException {
+        Structure<NodeInfo> depthInfo = null;
+        try {
+            depthInfo = SvnWcDbReader.getDepthInfo(srcPdh.getWCRoot(), srcRelpath, srcOpDepth, 
+                    NodeInfo.status, NodeInfo.kind, NodeInfo.revision, NodeInfo.reposRelPath, NodeInfo.reposId);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND) {
+                throw e;
+            }
+            return;
+        }
+        SVNWCDbStatus status = depthInfo.get(NodeInfo.status);
+        if (srcOpDepth == 0) {
+            long nodeRevision = depthInfo.lng(NodeInfo.revision);
+            long nodeReposId = depthInfo.lng(NodeInfo.reposId);
+            File nodeReposRelPath = depthInfo.get(NodeInfo.reposRelPath);
+            
+            if (status == SVNWCDbStatus.NotPresent
+                    || status == SVNWCDbStatus.Excluded
+                    || status == SVNWCDbStatus.ServerExcluded
+                    || nodeRevision != revision
+                    || nodeReposId != reposId
+                    || !nodeReposRelPath.equals(reposRelPath)) {
+                
+                ReposInfo reposInfo = srcPdh.getWCRoot().getDb().fetchReposInfo(srcPdh.getWCRoot().getSDb(), nodeReposId);
+                nodeReposId = dstPdh.getWCRoot().getDb().createReposId(dstPdh.getWCRoot().getSDb(), 
+                        SVNURL.parseURIEncoded(reposInfo.reposRootUrl), reposInfo.reposUuid);
+                
+                InsertWorking iw = dstPdh.getWCRoot().getDb().new InsertWorking();
+                iw.opDepth = dstOpDepth;
+                if (status != SVNWCDbStatus.Excluded) {
+                    iw.status = SVNWCDbStatus.NotPresent;
+                } else {
+                    iw.status = SVNWCDbStatus.Excluded;
+                }
+                iw.kind = depthInfo.get(NodeInfo.kind);
+                iw.originalReposId = nodeReposId;
+                iw.originalRevision = nodeRevision;
+                iw.originalReposRelPath = nodeReposRelPath;
+                
+                iw.changedRev = -1;
+                iw.depth = SVNDepth.INFINITY;
+
+                iw.wcId = dstPdh.getWCRoot().getWcId();
+                iw.localRelpath = dstRelpath;
+                
+                dstPdh.getWCRoot().getSDb().runTransaction(iw);
+
+                return;
+            }
+        }
+        SVNWCDbStatus dstPresence = null;
+        switch (status) {
+        case Normal:
+        case Added:
+        case MovedHere:
+        case Copied:
+            dstPresence = SVNWCDbStatus.Normal;
+            break;
+        case Deleted:
+        case NotPresent:
+            dstPresence = SVNWCDbStatus.NotPresent;
+            break;
+        case Excluded:
+            dstPresence = SVNWCDbStatus.Excluded;
+            break;
+        case ServerExcluded:
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS, "Cannot copy ''{0}'' excluded by server", srcPdh.getWCRoot().getAbsPath(srcRelpath));
+            SVNErrorManager.error(err, SVNLogType.WC);
+            break;
+        default:
+            SVNErrorMessage err2 = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS, "Cannot handle status of ''{0}''", srcPdh.getWCRoot().getAbsPath(srcRelpath));
+            SVNErrorManager.error(err2, SVNLogType.WC);
+        }
+        
+        if (dstPresence == SVNWCDbStatus.Normal && srcPdh.getWCRoot().getSDb() == dstPdh.getWCRoot().getSDb()) {
+            SVNSqlJetStatement stmt;
+            if (srcOpDepth > 0) {
+                stmt = new InsertWorkingNodeCopy(srcPdh.getWCRoot().getSDb(), srcOpDepth);
+            } else {
+                stmt = new InsertWorkingNodeCopy(srcPdh.getWCRoot().getSDb(), 0);                
+            }
+            stmt.bindf("issist", 
+                    srcPdh.getWCRoot().getWcId(), 
+                    srcRelpath,
+                    dstRelpath,
+                    dstOpDepth,
+                    SVNFileUtil.getFileDir(dstRelpath),
+                    dstPresence);
+            stmt.done();
+            
+            InsertWorking iw = dstPdh.getWCRoot().getDb().new InsertWorking();
+            iw.opDepth = delOpDepth;
+            iw.status = SVNWCDbStatus.Deleted;
+            iw.kind = depthInfo.get(NodeInfo.kind);
+            iw.changedRev = -1;
+            iw.depth = SVNDepth.INFINITY;
+            iw.wcId = dstPdh.getWCRoot().getWcId();
+            iw.localRelpath = dstRelpath;
+            
+            dstPdh.getWCRoot().getSDb().runTransaction(iw);
+        } else {
+            if (dstPresence == SVNWCDbStatus.Normal) {
+                dstPresence = SVNWCDbStatus.NotPresent;
+            }
+
+            InsertWorking iw = dstPdh.getWCRoot().getDb().new InsertWorking();
+            iw.opDepth = dstOpDepth;
+            iw.status = dstPresence;
+            iw.kind = depthInfo.get(NodeInfo.kind);
+            iw.changedRev = -1;
+            iw.depth = SVNDepth.INFINITY;
+            iw.wcId = dstPdh.getWCRoot().getWcId();
+            iw.localRelpath = dstRelpath;
+            
+            dstPdh.getWCRoot().getSDb().runTransaction(iw);            
+        }
+        List<String> children = srcPdh.getWCRoot().getDb().gatherRepoChildren(srcPdh, srcRelpath, srcOpDepth);
+        for (String name : children) {
+            File srcChildRelpath = SVNFileUtil.createFilePath(srcRelpath, name);
+            File dstChildRelpath = SVNFileUtil.createFilePath(dstRelpath, name);
+            File childReposRelPath = null;
+            if (reposRelPath != null) {
+                childReposRelPath = SVNFileUtil.createFilePath(reposRelPath, name);
+            }
+            copyShadowedLayer(srcPdh, srcChildRelpath, srcOpDepth, dstPdh, dstChildRelpath, dstOpDepth, delOpDepth, reposId, childReposRelPath, revision);
+        }
+    }
+
+    public static void copyShadowedLayer(SVNWCDbDir srcPdh, File localSrcRelpath, SVNWCDbDir dstPdh, File localDstRelpath) throws SVNException {
+        boolean dstLocked = false;
+        begingWriteTransaction(srcPdh.getWCRoot());
+        try {
+            if (srcPdh.getWCRoot().getSDb() != dstPdh.getWCRoot().getSDb()) {
+                begingWriteTransaction(dstPdh.getWCRoot());
+                dstLocked = true;
+            }
+            File srcParentRelPath = SVNFileUtil.getFileDir(localSrcRelpath);
+            File dstParentRelPath = SVNFileUtil.getFileDir(localDstRelpath);
+            
+            long srcOpDepth = getOpDepthOf(srcPdh.getWCRoot(), srcParentRelPath);
+            long dstOpDepth = getOpDepthOf(dstPdh.getWCRoot(), dstParentRelPath);
+            long delOpDepth = SVNWCUtils.relpathDepth(localDstRelpath);
+            
+            Structure<NodeInfo> depthInfo = SvnWcDbReader.getDepthInfo(srcPdh.getWCRoot(), srcParentRelPath, srcOpDepth, 
+                    NodeInfo.revision, NodeInfo.reposRelPath, NodeInfo.reposId);
+            File reposRelpath = depthInfo.get(NodeInfo.reposRelPath);
+            if (reposRelpath == null) {
+                return;
+            }
+            reposRelpath = SVNFileUtil.createFilePath(reposRelpath, SVNFileUtil.getFileName(localSrcRelpath));
+            copyShadowedLayer(srcPdh, localSrcRelpath, srcOpDepth, dstPdh, localDstRelpath, dstOpDepth, delOpDepth, 
+                    depthInfo.lng(NodeInfo.reposId), reposRelpath, depthInfo.lng(NodeInfo.revision));
+            
+            depthInfo.release();
+        } catch (SVNException e) {
+            try {
+                rollbackTransaction(srcPdh.getWCRoot());
+            } finally {
+                if (dstLocked) {
+                    rollbackTransaction(dstPdh.getWCRoot());
+                }
+            }
+        } finally {
+            try {
+                commitTransaction(srcPdh.getWCRoot());
+            } finally {
+                if (dstLocked) {
+                    commitTransaction(dstPdh.getWCRoot());
+                }
+            }
+        }
     }
 
     public static void copy(SVNWCDbDir srcPdh, File localSrcRelpath, SVNWCDbDir dstPdh, File localDstRelpath, SVNSkel workItems) throws SVNException {
@@ -262,7 +441,7 @@ public class SvnWcDbCopy extends SvnWcDbShared {
 
                 additionInfo.release();
             } else if (deletionInfo.get(DeletionInfo.baseDelRelPath) != null) {
-                Structure<NodeInfo> baseInfo = getBaseInfo(wcRoot, localRelPath, NodeInfo.revision, NodeInfo.reposRelPath, NodeInfo.reposId);
+                Structure<NodeInfo> baseInfo = getDepthInfo(wcRoot, localRelPath, 0, NodeInfo.revision, NodeInfo.reposRelPath, NodeInfo.reposId);
                 baseInfo.from(NodeInfo.revision, NodeInfo.reposRelPath, NodeInfo.reposId).
                     into(result, CopyInfo.copyFromRev, CopyInfo.copyFromRelpath, CopyInfo.copyFromId);
                 baseInfo.release();
@@ -340,8 +519,12 @@ public class SvnWcDbCopy extends SvnWcDbShared {
         private SelectNodeToCopy select;
 
         public InsertWorkingNodeCopy(SVNSqlJetDb sDb, boolean base) throws SVNException {
+            this(sDb, base ? 0 : -1);
+        }
+
+        public InsertWorkingNodeCopy(SVNSqlJetDb sDb, long depth) throws SVNException {
             super(sDb, SVNWCDbSchema.NODES, SqlJetConflictAction.REPLACE);
-            select = new SelectNodeToCopy(sDb, base);
+            select = new SelectNodeToCopy(sDb, depth);
         }
 
         @Override
@@ -400,18 +583,18 @@ public class SvnWcDbCopy extends SvnWcDbShared {
      */
     private static class SelectNodeToCopy extends SVNSqlJetSelectStatement {
 
-        private boolean isBase;
         private long limit;
+        private long depth;
 
-        public SelectNodeToCopy(SVNSqlJetDb sDb, boolean base) throws SVNException {
+        public SelectNodeToCopy(SVNSqlJetDb sDb, long depth) throws SVNException {
             super(sDb, SVNWCDbSchema.NODES);
-            isBase = base;
+            this.depth = depth;
         }
 
         @Override
         protected Object[] getWhere() throws SVNException {
-            if (isBase) {
-                return new Object[] {getBind(1), getBind(2), 0};
+            if (depth >= 0) {
+                return new Object[] {getBind(1), getBind(2), depth};
             } 
             return super.getWhere();
         }
@@ -424,7 +607,7 @@ public class SvnWcDbCopy extends SvnWcDbShared {
 
         @Override
         protected ISqlJetCursor openCursor() throws SVNException {
-            if (isBase) {
+            if (depth == 0) {
                 return super.openCursor();
             }
             try {

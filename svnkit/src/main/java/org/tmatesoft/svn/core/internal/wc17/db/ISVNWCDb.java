@@ -801,6 +801,7 @@ public interface ISVNWCDb {
 
     /** svn cp WCPATH WCPATH ... can copy mixed base/working around */
     void opCopy(File srcAbsPath, File dstAbspath, SVNSkel workItems) throws SVNException;
+    void opCopyShadowedLayer(File srcAbsPath, File dstAbsPath) throws SVNException;
 
     /**
      * Record a copy at LOCAL_ABSPATH from a repository directory.

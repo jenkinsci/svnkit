@@ -196,7 +196,7 @@ public class SvnWcDbShared {
             buildRelpath = reposPrefixPath;
             
             if (info.hasField(AdditionInfo.reposRelPath) || info.hasField(AdditionInfo.reposId)) {
-                Structure<NodeInfo> baseInfo = getBaseInfo(root, currentRelpath, NodeInfo.reposRelPath, NodeInfo.reposId);
+                Structure<NodeInfo> baseInfo = getDepthInfo(root, currentRelpath, 0, NodeInfo.reposRelPath, NodeInfo.reposId);
                 info.set(AdditionInfo.reposRelPath, SVNFileUtil.createFilePath(baseInfo.<File>get(NodeInfo.reposRelPath), buildRelpath));
                 info.set(AdditionInfo.reposId, baseInfo.lng(NodeInfo.reposId));
                 baseInfo.release();
@@ -304,14 +304,14 @@ public class SvnWcDbShared {
         SVNWCDbDir pdh = parsed.wcDbDir;
         File localRelpath = parsed.localRelPath;
 
-        return getBaseInfo(pdh.getWCRoot(), localRelpath, fields);
+        return getDepthInfo(pdh.getWCRoot(), localRelpath, 0, fields);
     }
     
-    protected static Structure<NodeInfo> getBaseInfo(SVNWCDbRoot wcroot, File localRelPath, NodeInfo...fields) throws SVNException {
+    protected static Structure<NodeInfo> getDepthInfo(SVNWCDbRoot wcroot, File localRelPath, long opDepth, NodeInfo...fields) throws SVNException {
         Structure<NodeInfo> info = Structure.obtain(NodeInfo.class, fields);
         SVNSqlJetStatement stmt = wcroot.getSDb().getStatement(info.hasField(NodeInfo.lock) ? SVNWCDbStatements.SELECT_BASE_NODE_WITH_LOCK : SVNWCDbStatements.SELECT_BASE_NODE);
         try {
-            stmt.bindf("is", wcroot.getWcId(), SVNFileUtil.getFilePath(localRelPath));
+            stmt.bindf("isi", wcroot.getWcId(), SVNFileUtil.getFilePath(localRelPath), opDepth);
             if (stmt.next()) {
                 SVNWCDbKind node_kind = getColumnKind(stmt, NODES__Fields.kind);
 
