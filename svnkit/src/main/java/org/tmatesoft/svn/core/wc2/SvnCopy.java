@@ -14,6 +14,7 @@ public class SvnCopy extends SvnOperation<Long> {
     
     private Collection<SvnCopySource> sources = new HashSet<SvnCopySource>();
     private boolean isMove;
+    private boolean isMakeParents;
 
     protected SvnCopy(SvnOperationFactory factory) {
         super(factory);
@@ -54,7 +55,12 @@ public class SvnCopy extends SvnOperation<Long> {
             SVNErrorManager.error(err, SVNLogType.WC);
         }
     }
-    
 
+    public boolean isMakeParents() {
+        return isMakeParents;
+    }
 
+    public void setMakeParents(boolean isMakeParents) {
+        this.isMakeParents = isMakeParents;
+    }
 }
