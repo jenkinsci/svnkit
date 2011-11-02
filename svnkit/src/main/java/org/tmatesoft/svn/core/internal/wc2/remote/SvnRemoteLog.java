@@ -91,6 +91,8 @@ public class SvnRemoteLog extends SvnRemoteOperationRunner<SVNLogEntry, SvnLog> 
                     sessionRevision = start.getNumber() > end.getNumber() ? start : end;
                 } else if (start.getDate() != null && end.getDate() != null) {
                     sessionRevision = start.getDate().compareTo(end.getDate()) > 0 ? start : end;
+                } else if (start == SVNRevision.HEAD || end == SVNRevision.HEAD) {
+                    sessionRevision = SVNRevision.HEAD;
                 }
             }
         }
