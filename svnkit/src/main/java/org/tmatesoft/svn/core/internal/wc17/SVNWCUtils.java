@@ -144,13 +144,17 @@ public class SVNWCUtils {
     }
 
     private static String isChild(final String parentPath, final String childPath) {
-        if (!childPath.startsWith(parentPath))
+        if (!childPath.startsWith(parentPath)) {
             return null;
+        }
         final String restPath = childPath.substring(parentPath.length());
         if (restPath.startsWith(File.separator) || restPath.startsWith("/")) {
             return restPath.substring(1);
         }
-        return restPath;
+        if ("".equals(restPath)) {
+            return restPath;
+        }
+        return null;
     }
 
     public static boolean isAncestor(File parent, File child) {
