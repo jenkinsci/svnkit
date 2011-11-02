@@ -741,7 +741,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 // paths  athr                               date                            log msg hasChrn invR  rProps
                 //     0 1   2                                  3                                  4     5     6 7   8
 
-                List items = SVNReader.parseTuple("lr(?s)(?s)(?s)?ssnl", item.getItems(), null);
+                List items = SVNReader.parseTuple("lr(?s)(?s)(?s)?ssnl?s", item.getItems(), null);
                 List changedPathsList = (List) items.get(0);
                 Map changedPathsMap = new SVNHashMap();
                 if (changedPathsList != null && changedPathsList.size() > 0) {
@@ -767,6 +767,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 SVNProperties revisionProperties = null;
                 SVNProperties logEntryProperties = new SVNProperties();
                 boolean hasChildren = false;
+                boolean isSubtractiveMerge = false;
                 if (handler != null && !(limit > 0 && count > limit && nestLevel == 0)) {
                     revision = SVNReader.getLong(items, 1);
                     String author = SVNReader.getString(items, 2);
@@ -781,6 +782,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     if (invalidRevision) {
                         revision = SVNRepository.INVALID_REVISION;
                     }
+                    isSubtractiveMerge =SVNReader.getBoolean(items, 9);
                     if (wantCustomRevProps && (revisionProperties == null)) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED, "Server does not support custom revprops via log");
                         SVNErrorManager.error(err, SVNLogType.NETWORK);
@@ -820,6 +822,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 }
                 if (handler != null && !(limit > 0 && count > limit && nestLevel == 0)) {
                     SVNLogEntry logEntry = new SVNLogEntry(changedPathsMap, revision, logEntryProperties, hasChildren);
+                    logEntry.setSubtractiveMerge(isSubtractiveMerge);
                     handler.handleLogEntry(logEntry);
                     if (logEntry.hasChildren()) {
                         nestLevel++;

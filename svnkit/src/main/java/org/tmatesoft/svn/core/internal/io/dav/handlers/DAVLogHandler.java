@@ -94,6 +94,7 @@ public class DAVLogHandler extends BasicDAVHandler {
     private static final DAVElement REPLACED_PATH = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "replaced-path");
     private static final DAVElement HAS_CHILDREN = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "has-children");
     private static final DAVElement REVPROP = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "revprop");
+    private static final DAVElement SUBTRACTIVE_MERGE = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "subtractive-merge");
 
     private ISVNLogEntryHandler myLogEntryHandler;
     private long myRevision;
@@ -114,6 +115,7 @@ public class DAVLogHandler extends BasicDAVHandler {
     private boolean myIsWantCustomRevProps;
     private String myRevPropName;
     private SVNProperties myRevProps;
+    private boolean myIsSubtractiveMerge;
 
     public DAVLogHandler(ISVNLogEntryHandler handler, long limit, String[] revPropNames) {
         myLogEntryHandler = handler;
@@ -163,6 +165,8 @@ public class DAVLogHandler extends BasicDAVHandler {
 
         } else if (element == HAS_CHILDREN) {
             myHasChildren = true;
+        } else if (element == SUBTRACTIVE_MERGE) {
+            myIsSubtractiveMerge = true;
         }
 
         if (element == ADDED_PATH || element == REPLACED_PATH) {
@@ -218,6 +222,7 @@ public class DAVLogHandler extends BasicDAVHandler {
                     myRevProps.put(SVNRevisionProperty.DATE, SVNDate.formatDate(myDate));
                 }
                 SVNLogEntry logEntry = new SVNLogEntry(myPaths, myRevision, myRevProps, myHasChildren);
+                logEntry.setSubtractiveMerge(myIsSubtractiveMerge);
                 myLogEntryHandler.handleLogEntry(logEntry);
                 if (logEntry.hasChildren()) {
                     myNestLevel++;
@@ -234,6 +239,7 @@ public class DAVLogHandler extends BasicDAVHandler {
             myComment = null;
             myRevPropName = null;
             myHasChildren = false;
+            myIsSubtractiveMerge = false;
         } else if (element == DAVElement.VERSION_NAME && cdata != null) {
             try {
                 myRevision = Long.parseLong(cdata.toString());
