@@ -26,9 +26,9 @@ import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess.RevisionsPair;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNRevisionRange;
 import org.tmatesoft.svn.core.wc2.SvnCat;
 import org.tmatesoft.svn.core.wc2.SvnLog;
+import org.tmatesoft.svn.core.wc2.SvnRevisionRange;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -46,13 +46,13 @@ public class SvnRemoteLog extends SvnRemoteOperationRunner<SVNLogEntry, SvnLog> 
     	SvnTarget baseTarget = getOperation().getFirstTarget();
     	 
     	SVNRevision sessionRevision = SVNRevision.UNDEFINED;
-        List<SVNRevisionRange> editedRevisionRanges = new LinkedList<SVNRevisionRange>();
+        List<SvnRevisionRange> editedRevisionRanges = new LinkedList<SvnRevisionRange>();
         
-        for (Iterator<SVNRevisionRange> revRangesIter = getOperation().getRevisionRanges().iterator(); revRangesIter.hasNext();) {
-            SVNRevisionRange revRange = (SVNRevisionRange) revRangesIter.next();
-        	if (revRange.getStartRevision().isValid() && !revRange.getEndRevision().isValid()) {
-                revRange = new SVNRevisionRange(revRange.getStartRevision(), revRange.getStartRevision());
-            } else if (!revRange.getStartRevision().isValid()) {
+        for (Iterator<SvnRevisionRange> revRangesIter = getOperation().getRevisionRanges().iterator(); revRangesIter.hasNext();) {
+            SvnRevisionRange revRange = (SvnRevisionRange) revRangesIter.next();
+        	if (revRange.getStart().isValid() && !revRange.getEnd().isValid()) {
+                revRange = SvnRevisionRange.create(revRange.getStart(), revRange.getStart());
+            } else if (!revRange.getStart().isValid()) {
                 SVNRevision start = SVNRevision.UNDEFINED;
                 SVNRevision end = SVNRevision.UNDEFINED;
                 if (!getOperation().getFirstTarget().getPegRevision().isValid()) {
@@ -65,18 +65,18 @@ public class SvnRemoteLog extends SvnRemoteOperationRunner<SVNLogEntry, SvnLog> 
                     start = getOperation().getFirstTarget().getPegRevision();
                 }
                 
-                if (!revRange.getEndRevision().isValid()) {
+                if (!revRange.getEnd().isValid()) {
                     end = SVNRevision.create(0);
                 }
-                revRange = new SVNRevisionRange(start, end);
+                revRange = SvnRevisionRange.create(start, end);
             }
-            if (!revRange.getStartRevision().isValid() || !revRange.getEndRevision().isValid()) {
+            if (!revRange.getStart().isValid() || !revRange.getEnd().isValid()) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Missing required revision specification");
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
             
             if (getOperation().hasRemoteTargets()) {
-	            if (isRevisionLocalToWc(revRange.getStartRevision()) || isRevisionLocalToWc(revRange.getEndRevision())) {
+	            if (isRevisionLocalToWc(revRange.getStart()) || isRevisionLocalToWc(revRange.getEnd())) {
 	                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Revision type requires a working copy path, not a URL");
 	                SVNErrorManager.error(err, SVNLogType.WC);
 	            }
@@ -85,8 +85,8 @@ public class SvnRemoteLog extends SvnRemoteOperationRunner<SVNLogEntry, SvnLog> 
             editedRevisionRanges.add(revRange);
             
             if (!sessionRevision.isValid()) {
-                SVNRevision start = revRange.getStartRevision();
-                SVNRevision end = revRange.getEndRevision();
+                SVNRevision start = revRange.getStart();
+                SVNRevision end = revRange.getEnd();
                 if (SVNRevision.isValidRevisionNumber(start.getNumber()) && SVNRevision.isValidRevisionNumber(end.getNumber())) {
                     sessionRevision = start.getNumber() > end.getNumber() ? start : end;
                 } else if (start.getDate() != null && end.getDate() != null) {
@@ -170,14 +170,14 @@ public class SvnRemoteLog extends SvnRemoteOperationRunner<SVNLogEntry, SvnLog> 
         repositoryInfo.release();
         
         
-        for (Iterator<SVNRevisionRange> revRangesIter = editedRevisionRanges.iterator(); revRangesIter.hasNext();) {
+        for (Iterator<SvnRevisionRange> revRangesIter = editedRevisionRanges.iterator(); revRangesIter.hasNext();) {
         	checkCancelled();
-            SVNRevisionRange revRange = (SVNRevisionRange) revRangesIter.next();
+            SvnRevisionRange revRange = (SvnRevisionRange) revRangesIter.next();
             checkCancelled();
             
-            Structure<RevisionsPair> pair = getRepositoryAccess().getRevisionNumber(repository, baseTarget, revRange.getStartRevision(), null);
+            Structure<RevisionsPair> pair = getRepositoryAccess().getRevisionNumber(repository, baseTarget, revRange.getStart(), null);
             long startRev = pair.lng(RevisionsPair.revNumber);
-            pair = getRepositoryAccess().getRevisionNumber(repository, baseTarget, revRange.getEndRevision(), pair);
+            pair = getRepositoryAccess().getRevisionNumber(repository, baseTarget, revRange.getEnd(), pair);
             long endRev = pair.lng(RevisionsPair.revNumber);
             pair.release();
             

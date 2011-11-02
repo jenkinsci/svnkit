@@ -8,7 +8,6 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.wc.SVNRevisionRange;
 import org.tmatesoft.svn.util.SVNLogType;
 
 public class SvnLog extends SvnReceivingOperation<SVNLogEntry> {
@@ -21,7 +20,7 @@ public class SvnLog extends SvnReceivingOperation<SVNLogEntry> {
     private String[] revisionProperties;
     
     
-    private Collection<SVNRevisionRange> revisionRanges;
+    private Collection<SvnRevisionRange> revisionRanges;
     
     protected SvnLog(SvnOperationFactory factory) {
         super(factory);
@@ -59,12 +58,12 @@ public class SvnLog extends SvnReceivingOperation<SVNLogEntry> {
         this.stopOnCopy = stopOnCopy;
     }
     
-    public Collection<SVNRevisionRange> getRevisionRanges()
+    public Collection<SvnRevisionRange> getRevisionRanges()
     {
     	return revisionRanges;
     }
     
-    public void setRevisionRanges(Collection<SVNRevisionRange> revisionRanges)
+    public void setRevisionRanges(Collection<SvnRevisionRange> revisionRanges)
     {
     	this.revisionRanges = revisionRanges;
     }
@@ -104,10 +103,10 @@ public class SvnLog extends SvnReceivingOperation<SVNLogEntry> {
         }
     }
 
-    public void addRange(SVNRevisionRange range) {
+    public void addRange(SvnRevisionRange range) {
         if (range != null) {
             if (getRevisionRanges() == null) {
-                this.revisionRanges = new ArrayList<SVNRevisionRange>();
+                this.revisionRanges = new ArrayList<SvnRevisionRange>();
             }
             this.revisionRanges.add(range);
         }

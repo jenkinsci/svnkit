@@ -34,6 +34,7 @@ import org.tmatesoft.svn.core.wc.SVNConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNRevisionRange;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
@@ -44,6 +45,7 @@ import org.tmatesoft.svn.core.wc2.SvnCommit;
 import org.tmatesoft.svn.core.wc2.SvnCommitItem;
 import org.tmatesoft.svn.core.wc2.SvnCommitPacket;
 import org.tmatesoft.svn.core.wc2.SvnInfo;
+import org.tmatesoft.svn.core.wc2.SvnRevisionRange;
 import org.tmatesoft.svn.core.wc2.SvnSchedule;
 import org.tmatesoft.svn.core.wc2.SvnStatus;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -140,6 +142,7 @@ public class SvnCodec {
         result.setNodeStatus(status.getNodeStatus());
         result.setContentsStatus(status.getTextStatus());
         result.setPropertiesStatus(status.getPropertiesStatus());
+
 
         if (status.getKind() == SVNNodeKind.DIR) {
             result.setIsLocked(status.isWcLocked());
@@ -556,5 +559,22 @@ public class SvnCodec {
         packet.setLockTokens(lockTokens);
         return packet;
     }
+    
+    public static SVNRevisionRange revisionRange(SvnRevisionRange range) {
+        return new SVNRevisionRange(range.getStart(), range.getEnd());
+    }
+    
+    public static SvnRevisionRange revisionRange(SVNRevisionRange range) {
+        return SvnRevisionRange.create(range.getStartRevision(), range.getEndRevision());
+    }
 
+    public static Collection<SvnRevisionRange> revisionRanges(Collection<SVNRevisionRange> ranges) {
+        Collection<SvnRevisionRange> result = new ArrayList<SvnRevisionRange>();
+        if (ranges != null) {
+            for (SVNRevisionRange range : ranges) {
+                result.add(revisionRange(range));
+            }
+        }
+        return result;
+    }
 }
