@@ -13,8 +13,9 @@ import org.tmatesoft.svn.util.SVNLogType;
 public class SvnCopy extends SvnOperation<Long> {
     
     private Collection<SvnCopySource> sources = new HashSet<SvnCopySource>();
-    private boolean isMove;
-    private boolean isMakeParents;
+    private boolean move;
+    private boolean makeParents;
+    private boolean failWhenDstExist;
 
     protected SvnCopy(SvnOperationFactory factory) {
         super(factory);
@@ -32,11 +33,11 @@ public class SvnCopy extends SvnOperation<Long> {
     }
     
     public boolean isMove() {
-        return isMove;
+        return move;
     }
 
     public void setMove(boolean isMove) {
-        this.isMove = isMove;
+        this.move = isMove;
     }
     
 
@@ -57,10 +58,18 @@ public class SvnCopy extends SvnOperation<Long> {
     }
 
     public boolean isMakeParents() {
-        return isMakeParents;
+        return makeParents;
     }
 
     public void setMakeParents(boolean isMakeParents) {
-        this.isMakeParents = isMakeParents;
+        this.makeParents = isMakeParents;
+    }
+
+    public boolean isFailWhenDstExists() {
+        return failWhenDstExist;
+    }
+
+    public void setFailWhenDstExists(boolean isFailWhenDstExist) {
+        this.failWhenDstExist = isFailWhenDstExist;
     }
 }

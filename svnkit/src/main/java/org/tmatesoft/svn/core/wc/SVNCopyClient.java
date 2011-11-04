@@ -24,7 +24,11 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc16.SVNCopyClient16;
 import org.tmatesoft.svn.core.internal.wc17.SVNCopyClient17;
+import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.wc2.SvnCopy;
+import org.tmatesoft.svn.core.wc2.SvnRemoteCopy;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 /**
  * The <b>SVNCopyClient</b> provides methods to perform any kinds of copying and
@@ -119,6 +123,9 @@ public class SVNCopyClient extends SVNBasicClient {
         setExternalsHandler(null);
 
         setOptions(options);
+
+        getOperationsFactory().setAuthenticationManager(authManager);
+        getOperationsFactory().setOptions(options);
     }
 
     /**
@@ -149,6 +156,9 @@ public class SVNCopyClient extends SVNBasicClient {
         setExternalsHandler(null);
 
         setOptions(options);
+
+        getOperationsFactory().setRepositoryPool(repositoryPool);
+        getOperationsFactory().setOptions(options);
     }
 
     /**
@@ -354,15 +364,17 @@ public class SVNCopyClient extends SVNBasicClient {
      * @since 1.2, SVN 1.5
      */
     public void doCopy(SVNCopySource[] sources, File dst, boolean isMove, boolean makeParents, boolean failWhenDstExists) throws SVNException {
-        try {
-            getSVNCopyClient17().doCopy(sources, dst, isMove, makeParents, failWhenDstExists);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNCopyClient16().doCopy(sources, dst, isMove, makeParents, failWhenDstExists);
-                return;
-            }
-            throw e;
+        SvnCopy cp = getOperationsFactory().createCopy();
+        cp.setSingleTarget(SvnTarget.fromFile(dst));
+        cp.setMove(isMove);
+        cp.setFailWhenDstExists(failWhenDstExists);
+        cp.setMakeParents(makeParents);
+        
+        for (int i = 0; i < sources.length; i++) {
+            cp.addCopySource(SvnCodec.copySource(sources[i]));
         }
+        
+        cp.run();
     }
 
     /**
@@ -482,14 +494,20 @@ public class SVNCopyClient extends SVNBasicClient {
      */
     public SVNCommitInfo doCopy(SVNCopySource[] sources, SVNURL dst, boolean isMove, boolean makeParents, boolean failWhenDstExists, String commitMessage, SVNProperties revisionProperties)
             throws SVNException {
-        try {
-            return getSVNCopyClient17().doCopy(sources, dst, isMove, makeParents, failWhenDstExists, commitMessage, revisionProperties);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                return getSVNCopyClient16().doCopy(sources, dst, isMove, makeParents, failWhenDstExists, commitMessage, revisionProperties);
-            }
-            throw e;
+        SvnRemoteCopy cp = getOperationsFactory().createRemoteCopy();
+        cp.setSingleTarget(SvnTarget.fromURL(dst));
+        cp.setMove(isMove);
+        cp.setFailWhenDstExists(failWhenDstExists);
+        cp.setMakeParents(makeParents);
+        cp.setCommitMessage(commitMessage);
+        cp.setRevisionProperties(revisionProperties);
+        
+        for (int i = 0; i < sources.length; i++) {
+            cp.addCopySource(SvnCodec.copySource(sources[i]));
         }
+
+        // TODO use commit handler.
+        return cp.run();
     }
 
     /**

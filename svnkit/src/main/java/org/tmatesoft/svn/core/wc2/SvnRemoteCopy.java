@@ -1,16 +1,19 @@
 package org.tmatesoft.svn.core.wc2;
 
-import org.tmatesoft.svn.core.SVNURL;
+import java.util.ArrayList;
+import java.util.Collection;
 
 public class SvnRemoteCopy extends AbstractSvnCommit {
     
     private boolean move;
     private boolean makeParents;
-    private SvnTarget source;
-    private SVNURL targetUrl;
+    private boolean failWhenDstExists;
+    
+    private Collection<SvnCopySource> sources;
 
     protected SvnRemoteCopy(SvnOperationFactory factory) {
         super(factory);
+        sources = new ArrayList<SvnCopySource>();
     }
 
     public boolean isMove() {
@@ -29,19 +32,21 @@ public class SvnRemoteCopy extends AbstractSvnCommit {
         this.makeParents = makeParents;
     }
 
-    public SvnTarget getSource() {
-        return source;
+    public Collection<SvnCopySource> getSources() {
+        return sources;
     }
 
-    public void setSource(SvnTarget source) {
-        this.source = source;
+    public void addCopySource(SvnCopySource source) {
+        if (source != null) {
+            this.sources.add(source);
+        }
     }
 
-    public SVNURL getTargetUrl() {
-        return targetUrl;
+    public boolean isFailWhenDstExists() {
+        return failWhenDstExists;
     }
 
-    public void setTargetUrl(SVNURL targetUrl) {
-        this.targetUrl = targetUrl;
+    public void setFailWhenDstExists(boolean failWhenDstExists) {
+        this.failWhenDstExists = failWhenDstExists;
     }
 }

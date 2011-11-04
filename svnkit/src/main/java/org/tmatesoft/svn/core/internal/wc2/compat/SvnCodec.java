@@ -31,6 +31,7 @@ import org.tmatesoft.svn.core.wc.ISVNStatusFileProvider;
 import org.tmatesoft.svn.core.wc.SVNCommitItem;
 import org.tmatesoft.svn.core.wc.SVNCommitPacket;
 import org.tmatesoft.svn.core.wc.SVNConflictDescription;
+import org.tmatesoft.svn.core.wc.SVNCopySource;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -44,6 +45,7 @@ import org.tmatesoft.svn.core.wc2.SvnChecksum;
 import org.tmatesoft.svn.core.wc2.SvnCommit;
 import org.tmatesoft.svn.core.wc2.SvnCommitItem;
 import org.tmatesoft.svn.core.wc2.SvnCommitPacket;
+import org.tmatesoft.svn.core.wc2.SvnCopySource;
 import org.tmatesoft.svn.core.wc2.SvnInfo;
 import org.tmatesoft.svn.core.wc2.SvnRevisionRange;
 import org.tmatesoft.svn.core.wc2.SvnSchedule;
@@ -576,5 +578,22 @@ public class SvnCodec {
             }
         }
         return result;
+    }
+
+    public static SVNCopySource copySource(SvnCopySource newSource) {
+        if (newSource.getSource().getURL() != null) {
+            return new SVNCopySource(newSource.getSource().getPegRevision(), newSource.getRevision(), newSource.getSource().getURL());
+        }
+        return new SVNCopySource(newSource.getSource().getPegRevision(), newSource.getRevision(), newSource.getSource().getFile());
+    }
+
+    public static SvnCopySource copySource(SVNCopySource oldSource) {
+        SvnTarget target;
+        if (oldSource.isURL()) {
+            target = SvnTarget.fromURL(oldSource.getURL(), oldSource.getPegRevision());
+        } else {
+            target = SvnTarget.fromFile(oldSource.getFile(), oldSource.getPegRevision());
+        }
+        return SvnCopySource.create(target, oldSource.getRevision());
     }
 }
