@@ -15,5 +15,4 @@ public interface ISvnOperationRunner<V, T extends SvnOperation<V>> {
     public void reset(SvnWcGeneration detectedWcGeneration);
     
     public SvnWcGeneration getWcGeneration();
-
 }

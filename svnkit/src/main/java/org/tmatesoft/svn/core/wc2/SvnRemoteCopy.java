@@ -3,6 +3,10 @@ package org.tmatesoft.svn.core.wc2;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import org.tmatesoft.svn.core.SVNCommitInfo;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.wc2.hooks.ISvnCommitHandler;
+
 public class SvnRemoteCopy extends AbstractSvnCommit {
     
     private boolean move;
@@ -10,6 +14,7 @@ public class SvnRemoteCopy extends AbstractSvnCommit {
     private boolean failWhenDstExists;
     
     private Collection<SvnCopySource> sources;
+    private ISvnCommitHandler commitHandler;
 
     protected SvnRemoteCopy(SvnOperationFactory factory) {
         super(factory);
@@ -49,4 +54,19 @@ public class SvnRemoteCopy extends AbstractSvnCommit {
     public void setFailWhenDstExists(boolean failWhenDstExists) {
         this.failWhenDstExists = failWhenDstExists;
     }
+
+    public ISvnCommitHandler getCommitHandler() {
+        return commitHandler;
+    }
+
+    public void setCommitHandler(ISvnCommitHandler commitHandler) {
+        this.commitHandler = commitHandler;
+    }
+
+    @Override
+    public SVNCommitInfo run() throws SVNException {
+        return super.run();
+    }
+    
+    
 }

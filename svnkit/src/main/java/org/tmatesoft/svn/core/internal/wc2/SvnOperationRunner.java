@@ -61,5 +61,4 @@ public abstract class SvnOperationRunner<V, T extends SvnOperation<V>> implement
     protected void handleEvent(SVNEvent event) throws SVNException {
         handleEvent(event, -1);
     }
-
 }

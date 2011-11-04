@@ -13,18 +13,17 @@ import org.tmatesoft.svn.core.wc2.SvnRemoteCopy;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 public class SvnOldRemoteCopy extends SvnOldRunner<SVNCommitInfo, SvnRemoteCopy> {
-
+    
     @Override
     public boolean isApplicable(SvnRemoteCopy operation, SvnWcGeneration wcGeneration) throws SVNException {
-        if (getOperation().getFirstTarget().isURL()) {
+        if (operation.getFirstTarget().isURL()) {
             for (SvnCopySource source : operation.getSources()) {
-                if (source.getSource().getFile() == null) {
-                    return false;
+                if (source.getSource().getFile() != null) {
+                    SvnWcGeneration sourceFormat = SvnOperationFactory.detectWcGeneration(source.getSource().getFile());
+                    if (sourceFormat != SvnWcGeneration.V16) {
+                        return false;
+                    }                
                 }
-                SvnWcGeneration sourceFormat = SvnOperationFactory.detectWcGeneration(source.getSource().getFile());
-                if (sourceFormat != SvnWcGeneration.V16) {
-                    return false;
-                }                    
             }
             // copy from old_wc[@rev] to url
             return true;
@@ -38,7 +37,8 @@ public class SvnOldRemoteCopy extends SvnOldRunner<SVNCommitInfo, SvnRemoteCopy>
         client.setEventHandler(getOperation().getEventHandler());
         client.setCommitHandler(null);
         client.setExternalsHandler(ISVNExternalsHandler.DEFAULT);
-        client.setOptions(getOperation().getOptions());        
+        client.setOptions(getOperation().getOptions());
+        client.setCommitHandler(SvnCodec.commitHandler(getOperation().getCommitHandler()));
         
         SvnTarget target = getOperation().getFirstTarget();
         SVNCopySource[] sources = new SVNCopySource[getOperation().getSources().size()];

@@ -14,9 +14,11 @@ import java.util.Set;
 
 import org.tmatesoft.svn.core.ISVNCanceller;
 import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb.Mode;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
@@ -71,6 +73,7 @@ import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.ISVNRepositoryPool;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
+import org.tmatesoft.svn.util.SVNLogType;
 
 public class SvnOperationFactory {
     
@@ -407,7 +410,7 @@ public class SvnOperationFactory {
         if (operation == null) {
             return null;
         }
-        SvnWcGeneration wcGeneration = null;
+        SvnWcGeneration wcGeneration = SvnWcGeneration.NOT_DETECTED;
         
         if (operation.hasFileTargets()) {
             wcGeneration = detectWcGeneration(operation.getFirstTarget().getFile());
@@ -435,6 +438,10 @@ public class SvnOperationFactory {
         }
         if (runner != null) {
             runner.reset(wcGeneration);
+        } else {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Runner for ''{0}'' command have not been found; probably not yet implement in this API.",
+                    operation.getClass().getName());
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         return runner;
     }
