@@ -9,6 +9,7 @@ import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getCo
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.reset;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -21,6 +22,7 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetInsertStatement;
@@ -350,11 +352,51 @@ public class SvnWcDbCopy extends SvnWcDbShared {
                         localDstRelpath, copyInfo.lng(CopyInfo.copyFromRev), fileChildren, dstOpDepths[0]);
             }
         } else {
-            // TODO cross-wc copy
+            crossDbCopy(srcPdh, localSrcRelpath, dstPdh, localDstRelpath, dstPresence, dstOpDepths[0], dstOpDepths[1], kind, children, 
+                    copyInfo.lng(CopyInfo.copyFromId), copyInfo.<File>get(CopyInfo.copyFromRelpath), copyInfo.lng(CopyInfo.copyFromRev));
         }
         dstPdh.getWCRoot().getDb().addWorkQueue(dstPdh.getWCRoot().getAbsPath(), workItems);
     }
     
+    private static void crossDbCopy(SVNWCDbDir srcPdh, File localSrcRelpath,
+            SVNWCDbDir dstPdh, File localDstRelpath, SVNWCDbStatus dstPresence,
+            long dstOpDepth, long dstNpOpDepth, SVNWCDbKind kind, List<String> children, long copyFromId,
+            File copyFromRelpath, long copyFromRev) throws SVNException {
+        Structure<NodeInfo> nodeInfo = 
+                SvnWcDbShared.readInfo(srcPdh.getWCRoot(), localSrcRelpath, NodeInfo.changedRev, NodeInfo.changedDate, NodeInfo.changedAuthor,
+                        NodeInfo.depth, NodeInfo.checksum);
+        SVNProperties properties = SvnWcDbProperties.readPristineProperties(srcPdh.getWCRoot(), localSrcRelpath);
+        
+        InsertWorking iw = dstPdh.getWCRoot().getDb().new InsertWorking();
+        iw.status = dstPresence;
+        iw.kind = kind;
+        iw.props = properties;
+        iw.changedRev = nodeInfo.lng(NodeInfo.changedRev);
+        iw.changedDate = nodeInfo.get(NodeInfo.changedDate);
+        iw.changedAuthor = nodeInfo.text(NodeInfo.changedAuthor);
+        iw.opDepth = nodeInfo.get(NodeInfo.depth);
+        iw.checksum = nodeInfo.get(NodeInfo.checksum);
+        List<File> childrenAsFiles = new ArrayList<File>();
+        for (String name : children) {
+            childrenAsFiles.add(new File(name));
+        }
+        iw.children = childrenAsFiles;
+        iw.opDepth = dstOpDepth;
+        iw.notPresentOpDepth = dstNpOpDepth;
+
+        iw.originalReposId = copyFromId;
+        iw.originalRevision = copyFromRev;
+        iw.originalReposRelPath = copyFromRelpath;
+        
+        iw.wcId = dstPdh.getWCRoot().getWcId();
+        iw.localRelpath = localDstRelpath;
+        
+        dstPdh.getWCRoot().getSDb().runTransaction(iw);
+        
+        copyActual(srcPdh, localSrcRelpath, dstPdh, localDstRelpath);
+        
+    }
+
     private static void copyActual(SVNWCDbDir srcPdh, File localSrcRelpath, SVNWCDbDir dstPdh, File localDstRelpath) throws SVNException {
         SVNSqlJetStatement stmt = srcPdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_ACTUAL_NODE);
         stmt.bindf("is", srcPdh.getWCRoot().getWcId(), localSrcRelpath);

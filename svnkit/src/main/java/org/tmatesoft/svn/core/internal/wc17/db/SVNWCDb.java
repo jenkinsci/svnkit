@@ -671,7 +671,7 @@ public class SVNWCDb implements ISVNWCDb {
         public long originalRevision;
         
         public long opDepth;
-        private long notPresentOpDepth;
+        public long notPresentOpDepth;
         
         public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
             File parentRelpath = SVNFileUtil.getFileDir(localRelpath);

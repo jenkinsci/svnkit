@@ -23,6 +23,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.PristineContentsInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
@@ -488,7 +489,13 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
 
     private void copyVersionedFile(File source, File dst, File dstOpRoot, File tmpDir, SvnChecksum srcChecksum, boolean metadataOnly, boolean conflicted, boolean notify) throws SVNException {
         if (srcChecksum != null) {
-            // TODO copy pristine to another wc if needed.
+            if (!getWcContext().getDb().checkPristine(dst, srcChecksum)) {
+                SvnChecksum md5 = getWcContext().getDb().getPristineMD5(source, srcChecksum);
+                PristineContentsInfo pristine = getWcContext().getPristineContents(source, false, true);
+                File tempFile = SVNFileUtil.createUniqueFile(tmpDir, dst.getName(), ".tmp", false);
+                SVNFileUtil.copyFile(pristine.path, tempFile, false);
+                getWcContext().getDb().installPristine(dstOpRoot, srcChecksum, md5);
+            }
         }
         
         SVNSkel workItems = null;
