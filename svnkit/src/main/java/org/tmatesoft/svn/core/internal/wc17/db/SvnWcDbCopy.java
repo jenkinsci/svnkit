@@ -374,7 +374,7 @@ public class SvnWcDbCopy extends SvnWcDbShared {
         iw.changedRev = nodeInfo.lng(NodeInfo.changedRev);
         iw.changedDate = nodeInfo.get(NodeInfo.changedDate);
         iw.changedAuthor = nodeInfo.text(NodeInfo.changedAuthor);
-        iw.opDepth = nodeInfo.get(NodeInfo.depth);
+        iw.opDepth = nodeInfo.lng(NodeInfo.depth);
         iw.checksum = nodeInfo.get(NodeInfo.checksum);
         List<File> childrenAsFiles = new ArrayList<File>();
         for (String name : children) {
@@ -394,7 +394,7 @@ public class SvnWcDbCopy extends SvnWcDbShared {
         dstPdh.getWCRoot().getSDb().runTransaction(iw);
         
         copyActual(srcPdh, localSrcRelpath, dstPdh, localDstRelpath);
-        
+        nodeInfo.release();
     }
 
     private static void copyActual(SVNWCDbDir srcPdh, File localSrcRelpath, SVNWCDbDir dstPdh, File localDstRelpath) throws SVNException {
