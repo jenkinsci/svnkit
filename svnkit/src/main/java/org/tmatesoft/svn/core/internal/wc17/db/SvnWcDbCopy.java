@@ -376,9 +376,12 @@ public class SvnWcDbCopy extends SvnWcDbShared {
         iw.changedAuthor = nodeInfo.text(NodeInfo.changedAuthor);
         iw.opDepth = nodeInfo.lng(NodeInfo.depth);
         iw.checksum = nodeInfo.get(NodeInfo.checksum);
-        List<File> childrenAsFiles = new ArrayList<File>();
-        for (String name : children) {
-            childrenAsFiles.add(new File(name));
+        List<File> childrenAsFiles = null;
+        if (children != null) {
+            childrenAsFiles = new ArrayList<File>();
+            for (String name : children) {
+                childrenAsFiles.add(new File(name));
+            }
         }
         iw.children = childrenAsFiles;
         iw.opDepth = dstOpDepth;

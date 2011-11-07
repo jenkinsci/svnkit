@@ -27,6 +27,10 @@ public abstract class SvnNgOperationRunner<V, T extends SvnOperation<V>> extends
         return repositoryAccess;
     }
     
+    protected void setRepositoryAccess(SvnNgRepositoryAccess repositoryAccess) {
+        this.repositoryAccess = repositoryAccess;
+    }
+    
     protected abstract V run(SVNWCContext context) throws SVNException;
 
     @Override

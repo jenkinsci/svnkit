@@ -35,7 +35,7 @@ public abstract class SvnOperationRunner<V, T extends SvnOperation<V>> implement
 
     protected abstract V run() throws SVNException;
 
-    protected void setOperation(T operation) {
+    public void setOperation(T operation) {
         this.operation = operation;
     }
 

@@ -382,14 +382,14 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
         
         File tmpDir = context.getDb().getWCRootTempDir(dst);
         if (srcKind == SVNWCDbKind.File || srcKind == SVNWCDbKind.Symlink) {
-            copyVersionedFile(source, dst, dst, tmpDir, srcChecksum, metadataOnly, srcConflicted, true);
+            copyVersionedFile(context, source, dst, dst, tmpDir, srcChecksum, metadataOnly, srcConflicted, true);
         } else {
-            copyVersionedDirectory(source, dst, dst, tmpDir, metadataOnly, true);
+            copyVersionedDirectory(context, source, dst, dst, tmpDir, metadataOnly, true);
         }
         
     }
 
-    private void copyVersionedDirectory(File source, File dst, File dstOpRoot, File tmpDir, boolean metadataOnly, boolean notify) throws SVNException {
+    private void copyVersionedDirectory(SVNWCContext wcContext, File source, File dst, File dstOpRoot, File tmpDir, boolean metadataOnly, boolean notify) throws SVNException {
         SVNSkel workItems = null;
         SVNFileType srcType = null;
         
@@ -397,12 +397,12 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
             srcType = SVNFileType.getType(source);
             File tmpDst = copyToTmpDir(source, tmpDir, false);
             if (tmpDst != null) {
-                SVNSkel workItem = getWcContext().wqBuildFileMove(tmpDst, dst);
-                workItems = getWcContext().wqMerge(workItems, workItem);
+                SVNSkel workItem = wcContext.wqBuildFileMove(tmpDst, dst);
+                workItems = wcContext.wqMerge(workItems, workItem);
             }
         }
-        getWcContext().getDb().opCopy(source, dst, workItems);
-        getWcContext().wqRun(SVNFileUtil.getParentFile(dst));
+        wcContext.getDb().opCopy(source, dst, workItems);
+        wcContext.wqRun(SVNFileUtil.getParentFile(dst));
         
         if (notify) {
             SVNEvent event = SVNEventFactory.createSVNEvent(dst, SVNNodeKind.DIR, null, -1, SVNEventAction.ADD, SVNEventAction.ADD, null, null, 1, 1);
@@ -421,17 +421,17 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
             }
         }
         
-        Set<String> versionedChildren = getWcContext().getDb().readChildren(source);
+        Set<String> versionedChildren = wcContext.getDb().readChildren(source);
         for (String childName : versionedChildren) {
             checkCancelled();
             File childSrcPath = SVNFileUtil.createFilePath(source, childName);
             File childDstPath = SVNFileUtil.createFilePath(dst, childName);
             
-            Structure<NodeInfo> childInfo = getWcContext().getDb().readInfo(childSrcPath, NodeInfo.status, NodeInfo.kind, NodeInfo.checksum, NodeInfo.conflicted,
+            Structure<NodeInfo> childInfo = wcContext.getDb().readInfo(childSrcPath, NodeInfo.status, NodeInfo.kind, NodeInfo.checksum, NodeInfo.conflicted,
                     NodeInfo.opRoot);
             
             if (childInfo.is(NodeInfo.opRoot)) {
-                getWcContext().getDb().opCopyShadowedLayer(childSrcPath, childDstPath);
+                wcContext.getDb().opCopyShadowedLayer(childSrcPath, childDstPath);
             }
             SVNWCDbStatus childStatus = childInfo.get(NodeInfo.status);
             SVNWCDbKind childKind = childInfo.get(NodeInfo.kind);
@@ -439,17 +439,17 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
                 if (childKind == SVNWCDbKind.File) {
                     boolean skip = false;
                     if (childStatus == SVNWCDbStatus.Normal) {
-                        Structure<NodeInfo> baseChildInfo = SvnWcDbReader.getBaseInfo((SVNWCDb) getWcContext().getDb(), childSrcPath, NodeInfo.updateRoot);
+                        Structure<NodeInfo> baseChildInfo = SvnWcDbReader.getBaseInfo((SVNWCDb) wcContext.getDb(), childSrcPath, NodeInfo.updateRoot);
                         skip = baseChildInfo.is(NodeInfo.updateRoot);
                         baseChildInfo.release();
                     }
                     if (!skip) {
                         SvnChecksum checksum = childInfo.get(NodeInfo.checksum);
                         boolean conflicted = childInfo.is(NodeInfo.conflicted);
-                        copyVersionedFile(childSrcPath, childDstPath, dstOpRoot, tmpDir, checksum, metadataOnly, conflicted, false);
+                        copyVersionedFile(wcContext, childSrcPath, childDstPath, dstOpRoot, tmpDir, checksum, metadataOnly, conflicted, false);
                     }
                 } else if (childKind == SVNWCDbKind.Dir) {
-                    copyVersionedDirectory(childSrcPath, childDstPath, dstOpRoot, tmpDir, metadataOnly, false);
+                    copyVersionedDirectory(wcContext, childSrcPath, childDstPath, dstOpRoot, tmpDir, metadataOnly, false);
                 } else {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNEXPECTED_KIND, "cannot handle node kind for ''{0}''", childSrcPath);
                     SVNErrorManager.error(err, SVNLogType.WC);
@@ -457,7 +457,7 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
             } else if (childStatus == SVNWCDbStatus.Deleted ||
                     childStatus == SVNWCDbStatus.NotPresent ||
                     childStatus == SVNWCDbStatus.Excluded) {
-                getWcContext().getDb().opCopy(childSrcPath, childDstPath, null);                
+                wcContext.getDb().opCopy(childSrcPath, childDstPath, null);                
             } else {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS, 
                         "Cannot copy ''{0}'' excluded by server", childSrcPath);
@@ -479,7 +479,7 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
                 File childDstPath = SVNFileUtil.createFilePath(dst, childName);
                 File tmp = copyToTmpDir(childSrcPath, tmpDir, true);
                 if (tmp != null) {
-                    SVNSkel moveItem = getWcContext().wqBuildFileMove(tmp, childDstPath);
+                    SVNSkel moveItem = wcContext.wqBuildFileMove(tmp, childDstPath);
                     getWcContext().getDb().addWorkQueue(dst, moveItem);
                 }
             }
@@ -487,14 +487,14 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
         }
     }
 
-    private void copyVersionedFile(File source, File dst, File dstOpRoot, File tmpDir, SvnChecksum srcChecksum, boolean metadataOnly, boolean conflicted, boolean notify) throws SVNException {
+    private void copyVersionedFile(SVNWCContext wcContext, File source, File dst, File dstOpRoot, File tmpDir, SvnChecksum srcChecksum, boolean metadataOnly, boolean conflicted, boolean notify) throws SVNException {
         if (srcChecksum != null) {
-            if (!getWcContext().getDb().checkPristine(dst, srcChecksum)) {
-                SvnChecksum md5 = getWcContext().getDb().getPristineMD5(source, srcChecksum);
-                PristineContentsInfo pristine = getWcContext().getPristineContents(source, false, true);
+            if (!wcContext.getDb().checkPristine(dst, srcChecksum)) {
+                SvnChecksum md5 = wcContext.getDb().getPristineMD5(source, srcChecksum);
+                PristineContentsInfo pristine = wcContext.getPristineContents(source, false, true);
                 File tempFile = SVNFileUtil.createUniqueFile(tmpDir, dst.getName(), ".tmp", false);
                 SVNFileUtil.copyFile(pristine.path, tempFile, false);
-                getWcContext().getDb().installPristine(dstOpRoot, srcChecksum, md5);
+                wcContext.getDb().installPristine(dstOpRoot, srcChecksum, md5);
             }
         }
         
@@ -503,7 +503,7 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
         if (!metadataOnly) {
             if (conflicted) {
                 File conflictWorking = null;
-                List<SVNConflictDescription> conflicts = getWcContext().getDb().readConflicts(source);
+                List<SVNConflictDescription> conflicts = wcContext.getDb().readConflicts(source);
                 
                 for (SVNConflictDescription conflictDescription : conflicts) {
                     if (conflictDescription.isTextConflict()) {
@@ -519,25 +519,25 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
             }
             File tmpDst = copyToTmpDir(toCopy, tmpDir, true);
             if (tmpDst != null) {
-                boolean needsLock = getWcContext().getProperty(source, SVNProperty.NEEDS_LOCK) != null;
+                boolean needsLock = wcContext.getProperty(source, SVNProperty.NEEDS_LOCK) != null;
                 if (needsLock) {
                     SVNFileUtil.setReadonly(tmpDst, false);
                 }
-                SVNSkel workItem = getWcContext().wqBuildFileMove(tmpDst, dst);
-                workItems = getWcContext().wqMerge(workItems, workItem);
+                SVNSkel workItem = wcContext.wqBuildFileMove(tmpDst, dst);
+                workItems = wcContext.wqMerge(workItems, workItem);
                 
                 SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(tmpDst));
                 if (kind == SVNNodeKind.DIR) {
-                    if (!getWcContext().isTextModified(source, false)) {
-                        SVNSkel workItem2 = getWcContext().wqBuildRecordFileinfo(dst, null);
-                        workItems = getWcContext().wqMerge(workItems, workItem2);
+                    if (!wcContext.isTextModified(source, false)) {
+                        SVNSkel workItem2 = wcContext.wqBuildRecordFileinfo(dst, null);
+                        workItems = wcContext.wqMerge(workItems, workItem2);
                     }
                 }
             }
         }
         
-        getWcContext().getDb().opCopy(source, dst, workItems);
-        getWcContext().wqRun(SVNFileUtil.getParentFile(dst));
+        wcContext.getDb().opCopy(source, dst, workItems);
+        wcContext.wqRun(SVNFileUtil.getParentFile(dst));
         if (notify) {
             SVNEvent event = SVNEventFactory.createSVNEvent(dst, SVNNodeKind.FILE, null, -1, SVNEventAction.ADD, SVNEventAction.ADD, null, null, 1, 1);
             handleEvent(event, -1);

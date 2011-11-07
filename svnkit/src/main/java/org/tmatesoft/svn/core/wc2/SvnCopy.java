@@ -16,6 +16,7 @@ public class SvnCopy extends SvnOperation<Long> {
     private boolean move;
     private boolean makeParents;
     private boolean failWhenDstExist;
+    private boolean ignoreExternals;
 
     protected SvnCopy(SvnOperationFactory factory) {
         super(factory);
@@ -71,5 +72,13 @@ public class SvnCopy extends SvnOperation<Long> {
 
     public void setFailWhenDstExists(boolean isFailWhenDstExist) {
         this.failWhenDstExist = isFailWhenDstExist;
+    }
+
+    public boolean isIgnoreExternals() {
+        return ignoreExternals;
+    }
+
+    public void setIgnoreExternals(boolean ignoreExternals) {
+        this.ignoreExternals = ignoreExternals;
     }
 }
