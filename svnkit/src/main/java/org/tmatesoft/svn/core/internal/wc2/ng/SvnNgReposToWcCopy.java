@@ -260,10 +260,17 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
                 rev = co.run();
     
                 new SvnNgWcToWcCopy().copy(getWcContext(), dstPath, pair.dst, true);
-//                SVNFileUtil.deleteAll(new File(dstPath, ".svn"), true);
-//                SVNFileUtil.rename(dstPath, pair.dst);
+                File dstLock = getWcContext().acquireWriteLock(dstPath, false, true);
+                try {
+                    getWcContext().removeFromRevisionControl(dstPath, false, false);
+                } finally {
+                    try {
+                        getWcContext().releaseWriteLock(dstLock);
+                    } catch (SVNException e) {}
+                }
+                SVNFileUtil.rename(dstPath, pair.dst);
             } finally {
-//                SVNFileUtil.deleteAll(dstPath, true);
+                SVNFileUtil.deleteAll(dstPath, true);
             }
         } else {
             // TODO single file.
