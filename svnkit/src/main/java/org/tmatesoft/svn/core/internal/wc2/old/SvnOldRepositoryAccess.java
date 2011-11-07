@@ -20,7 +20,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 public class SvnOldRepositoryAccess extends SvnRepositoryAccess {
 
     public SvnOldRepositoryAccess(SvnOperation<?> operation) throws SVNException {
-        super(operation);
+        super(operation, null);
     }
 
     @Override

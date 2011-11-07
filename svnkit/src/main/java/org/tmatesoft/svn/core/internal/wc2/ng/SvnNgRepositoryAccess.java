@@ -7,6 +7,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.SVNWCNodeReposInfo;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
@@ -21,8 +22,8 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 public class SvnNgRepositoryAccess extends SvnRepositoryAccess {
 
-    public SvnNgRepositoryAccess(SvnOperation<?> operation) throws SVNException {
-        super(operation);
+    public SvnNgRepositoryAccess(SvnOperation<?> operation, SVNWCContext context) throws SVNException {
+        super(operation, context);
     }
 
     @Override

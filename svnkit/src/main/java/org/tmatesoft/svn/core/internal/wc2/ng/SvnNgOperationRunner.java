@@ -22,7 +22,7 @@ public abstract class SvnNgOperationRunner<V, T extends SvnOperation<V>> extends
     
     protected SvnNgRepositoryAccess getRepositoryAccess() throws SVNException {
         if (repositoryAccess == null) {
-            repositoryAccess = new SvnNgRepositoryAccess(getOperation());
+            repositoryAccess = new SvnNgRepositoryAccess(getOperation(), getWcContext());
         }
         return repositoryAccess;
     }

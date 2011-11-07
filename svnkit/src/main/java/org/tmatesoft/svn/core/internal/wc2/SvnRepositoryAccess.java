@@ -23,9 +23,9 @@ public abstract class SvnRepositoryAccess {
     private SVNWCContext context;
     private SvnOperation<?> operation;
 
-    protected SvnRepositoryAccess(SvnOperation<?> operation) throws SVNException {
+    protected SvnRepositoryAccess(SvnOperation<?> operation, SVNWCContext context) throws SVNException {
         this.operation = operation;
-        this.context = new SVNWCContext(getOperation().getOptions(), getOperation().getEventHandler());
+        this.context = context;
     }
     
     protected SvnOperation<?> getOperation() {

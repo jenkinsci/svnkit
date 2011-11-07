@@ -26,7 +26,7 @@ public abstract class SvnRemoteOperationRunner<V, T extends SvnOperation<V>> ext
             if (getDetectedWcGeneration() == SvnWcGeneration.V16) {
                 repositoryAccess = new SvnOldRepositoryAccess(getOperation());
             } else {
-                repositoryAccess = new SvnNgRepositoryAccess(getOperation());
+                repositoryAccess = new SvnNgRepositoryAccess(getOperation(), getWcContext());
             }            
         }
         return repositoryAccess;
