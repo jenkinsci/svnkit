@@ -30,7 +30,6 @@ import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getTr
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.hasColumnProperties;
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.isColumnNull;
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.parseDepth;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getPresenceText;
 
 import java.io.BufferedReader;
 import java.io.File;
