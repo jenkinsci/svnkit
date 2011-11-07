@@ -201,7 +201,10 @@ public class DAVConnection {
             if (status.getError() != null) {
                 SVNErrorManager.error(status.getError(), SVNLogType.NETWORK);
             }
-            String userName = httpConnection.getLastValidCredentials() != null ? httpConnection.getLastValidCredentials().getUserName() : null; 
+            String userName = status.getHeader().getFirstHeaderValue(HTTPHeader.LOCK_OWNER_HEADER);
+            if (userName == null) {
+                userName = httpConnection.getLastValidCredentials() != null ? httpConnection.getLastValidCredentials().getUserName() : null;
+            }
             String created = status.getHeader().getFirstHeaderValue(HTTPHeader.CREATION_DATE_HEADER);
             if (userName == null || created == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, "Incomplete lock data returned");
