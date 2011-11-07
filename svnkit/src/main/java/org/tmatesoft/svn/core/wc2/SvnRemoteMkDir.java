@@ -16,4 +16,11 @@ public class SvnRemoteMkDir extends AbstractSvnCommit {
         super(factory);
     }
 
+    @Override
+    protected int getMaximumTargetsCount() {
+        return Integer.MAX_VALUE;
+    }
+    
+    
+
 }
