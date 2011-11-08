@@ -1,6 +1,8 @@
 package org.tmatesoft.svn.core.internal.wc2.ng;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -9,15 +11,25 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.SVNWCNodeReposInfo;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.UniqueFileInfo;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.WritableBaseInfo;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
@@ -26,6 +38,8 @@ import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess.LocationsInfo;
 import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess.RevisionsPair;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.wc.SVNEvent;
+import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnCheckout;
 import org.tmatesoft.svn.core.wc2.SvnCopy;
@@ -273,8 +287,26 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
                 SVNFileUtil.deleteAll(dstPath, true);
             }
         } else {
-            // TODO single file.
+            String relativePath = SVNURLUtil.getRelativeURL(repository.getLocation(), pair.source);
+            File tmpDir = getWcContext().getDb().getWCRootTempDir(pair.dst);
+            UniqueFileInfo ufInfo = SVNWCContext.openUniqueFile(tmpDir, true);
+            SVNProperties newProperties = new SVNProperties();
+            pair.revNum = repository.getFile(relativePath, pair.revNum, newProperties, ufInfo.stream);
+            
+            InputStream newContents = SVNFileUtil.openFileForReading(ufInfo.path);
+            try {
+                addFileToWc(getWcContext(), 
+                        pair.dst, newContents, null, newProperties, null, 
+                        pair.source, pair.revNum);
+            } finally {
+                SVNFileUtil.closeFile(newContents);
+            }
+            
         }
+        // TODO extend mergeinfo
+        SVNEvent event = SVNEventFactory.createSVNEvent(pair.dst, pair.srcKind, null, pair.revNum, 
+                SVNEventAction.ADD, SVNEventAction.ADD, null, null, 1, 1);
+        handleEvent(event);
         return rev;
     }
 
@@ -302,6 +334,127 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
         }
         return new File(ancestor);
     }
+    
+    private static void addFileToWc(SVNWCContext context, File path, InputStream newBaseContents, InputStream newContents,
+            SVNProperties newBaseProps, SVNProperties newProps, SVNURL copyFromURL, long copyFromRev) throws SVNException {
+        context.writeCheck(path);
+        
+        SVNWCDbStatus status = null;
+        try {
+            Structure<NodeInfo> ni = context.getDb().readInfo(path, NodeInfo.status);
+            status = ni.get(NodeInfo.status);
+            ni.release();
+            
+            switch (status) {
+            case NotPresent:
+            case Deleted:
+                break;
+            default:
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, "Node ''{0}'' exists", path);
+                SVNErrorManager.error(err, SVNLogType.WC);
+                break;
+            }
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND) {
+                throw e;
+            }
+        }
+        
+        File dirPath = SVNFileUtil.getParentFile(path);
+        Structure<NodeInfo> ni = context.getDb().readInfo(path, NodeInfo.status, NodeInfo.kind);
+        status = ni.get(NodeInfo.status);
+        ISVNWCDb.SVNWCDbKind kind = ni.get(NodeInfo.kind);
+        ni.release();
+
+        switch (status) {
+        case Normal:
+        case Added:
+            break;
+        case Deleted:
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, "Can''t add ''{0}'' to a parent directory scheduled for deletion", path);
+            SVNErrorManager.error(err, SVNLogType.WC);
+        default:
+            SVNErrorMessage err2 = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, "Can''t find parent directory''s node while trying to add ''{0}''", path);
+            SVNErrorManager.error(err2, SVNLogType.WC);
+            break;
+        }
+        
+        if (kind != SVNWCDbKind.Dir) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, "Can''t schedule an addition of ''{0}'' below a not-directory node", path);
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+        
+        SVNURL originalURL = null;
+        File originalReposPath = null;
+        String originalUuid = null;
+        
+        if (copyFromURL != null) {
+            SVNWCNodeReposInfo reposInfo = context.getNodeReposInfo(dirPath);
+            if (!SVNURLUtil.isAncestor(reposInfo.reposRootUrl, copyFromURL)) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
+                        "Copyfrom-url ''{0}'' has different repository root than ''{0}''", 
+                        copyFromURL, reposInfo.reposRootUrl);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+            originalUuid = reposInfo.reposUuid;
+            originalURL = reposInfo.reposRootUrl;
+            originalReposPath = SVNWCUtils.skipAncestor(new File(originalURL.getPath()), new File(copyFromURL.getPath()));
+        } else {
+            copyFromRev = -1;
+        }
+        SVNProperties regularProps = new SVNProperties();
+        SVNProperties entryProps = new SVNProperties();
+        SvnNgPropertiesManager.categorizeProperties(newBaseProps, regularProps, entryProps, null);
+        long changedRev = Long.parseLong(entryProps.getStringValue(SVNProperty.COMMITTED_REVISION));
+        String changedAuthor = entryProps.getStringValue(SVNProperty.LAST_AUTHOR);
+        SVNDate changedDate = SVNDate.parseDate(entryProps.getStringValue(SVNProperty.COMMITTED_DATE));
+        
+        WritableBaseInfo wbInfo = context.openWritableBase(path, true, true);
+        try {
+            SVNTranslator.copy(newBaseContents, wbInfo.stream);
+        } catch (IOException e) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e);
+            SVNErrorManager.error(err, SVNLogType.WC);
+        } finally {
+            SVNFileUtil.closeFile(wbInfo.stream);
+        }
+        File sourcePath = null;
+        if (newContents != null) {
+            File tempDir = context.getDb().getWCRootTempDir(path);
+            UniqueFileInfo ufInfo = SVNWCContext.openUniqueFile(tempDir, true);
+            try {
+                SVNTranslator.copy(newContents, ufInfo.stream);
+            } catch (IOException e) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            } finally {
+                SVNFileUtil.closeFile(ufInfo.stream);
+            }            
+            sourcePath = ufInfo.path;
+        }
+        
+        if (copyFromURL != null) {
+            context.getDb().installPristine(wbInfo.tempBaseAbspath, wbInfo.getSHA1Checksum(), wbInfo.getSHA1Checksum());
+        } 
+        
+        if (newContents == null && copyFromURL == null) {
+            sourcePath = wbInfo.tempBaseAbspath;
+        }
+        boolean recordFileInfo = newContents != null;
+        SVNSkel wi = context.wqBuildFileInstall(path, sourcePath, false, recordFileInfo);
+        wi = context.wqMerge(wi, null);
+        if (sourcePath != null) {
+            SVNSkel remove = context.wqBuildFileRemove(sourcePath);
+            wi = context.wqMerge(wi, remove);
+        }
+        
+        context.getDb().opCopyFile(path, newBaseProps, changedRev, changedDate, changedAuthor,
+                originalReposPath, originalURL, originalUuid, copyFromRev, 
+                copyFromURL != null ? wbInfo.getSHA1Checksum() : null, null, null);
+        
+        context.getDb().opSetProps(path, newProps, null, false, wi);        
+        context.wqRun(dirPath);
+    }
 
     private static class SvnCopyPair {
         SVNNodeKind srcKind;
@@ -313,8 +466,5 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
         SVNRevision sourcePegRevision;
         
         File dst;
-        
-//        File dstParent;        
-//        String baseName;
     }
 }

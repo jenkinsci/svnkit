@@ -28,6 +28,7 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetInsertStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -43,6 +44,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.ACTUAL_NODE__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODES__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
+import org.tmatesoft.svn.core.wc2.SvnChecksum;
 import org.tmatesoft.svn.util.SVNLogType;
 
 public class SvnWcDbCopy extends SvnWcDbShared {
@@ -55,6 +57,39 @@ public class SvnWcDbCopy extends SvnWcDbShared {
         kind,
         opRoot,
         haveWork
+    }
+
+    public static void copyFile(SVNWCDbDir pdh, File localRelpath,
+            SVNProperties props, long changedRev, SVNDate changedDate,
+            String changedAuthor, File originalReposRelPath,
+            SVNURL originalRootUrl, String originalUuid, long originalRevision,
+            SvnChecksum checksum, SVNSkel conflict, SVNSkel workItems) throws SVNException {
+
+        InsertWorking iw = pdh.getWCRoot().getDb().new InsertWorking();
+        iw.status = SVNWCDbStatus.Normal;
+        iw.kind = SVNWCDbKind.File;
+        iw.props = props;
+        iw.changedAuthor = changedAuthor;
+        iw.changedDate = changedDate;
+        iw.changedRev = changedRev;
+        
+        if (originalRootUrl != null) {
+            long reposId = pdh.getWCRoot().getDb().createReposId(pdh.getWCRoot().getSDb(), originalRootUrl, originalUuid);
+            iw.originalReposId = reposId;
+            iw.originalReposRelPath = originalReposRelPath;
+            iw.originalRevision = originalRevision;
+        }
+        long[] depths = getOpDepthForCopy(pdh.getWCRoot(), localRelpath, iw.originalReposId, originalReposRelPath, originalRevision);
+        iw.opDepth = depths[0];
+        iw.notPresentOpDepth = depths[1];
+        iw.checksum = checksum;
+        iw.workItems = workItems;
+
+        iw.wcId = pdh.getWCRoot().getWcId();
+        iw.localRelpath = localRelpath;
+        
+        pdh.getWCRoot().getSDb().runTransaction(iw);
+        pdh.flushEntries(pdh.getWCRoot().getAbsPath());
     }
 
     private static void copyShadowedLayer(SVNWCDbDir srcPdh, File srcRelpath, long srcOpDepth, 

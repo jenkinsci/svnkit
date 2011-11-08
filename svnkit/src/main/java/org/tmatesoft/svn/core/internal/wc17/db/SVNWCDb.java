@@ -1872,8 +1872,14 @@ public class SVNWCDb implements ISVNWCDb {
 
     public void opCopyFile(File localAbsPath, SVNProperties props, long changedRev, SVNDate changedDate, String changedAuthor, File originalReposRelPath, SVNURL originalRootUrl, String originalUuid,
             long originalRevision, SvnChecksum checksum, SVNSkel conflict, SVNSkel workItems) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+        final DirParsedInfo parsed = parseDir(localAbsPath, Mode.ReadWrite);
+        final SVNWCDbDir pdh = parsed.wcDbDir;
+        final File localRelpath = parsed.localRelPath;
+        verifyDirUsable(pdh);
+
+        SvnWcDbCopy.copyFile(pdh, localRelpath, 
+                props, changedRev, changedDate, changedAuthor, originalReposRelPath, originalRootUrl, 
+                originalUuid, originalRevision, checksum, conflict, workItems);
     }
 
     public void opCopySymlink(File localAbsPath, SVNProperties props, long changedRev, SVNDate changedDate, String changedAuthor, File originalReposRelPath, SVNURL originalRootUrl,

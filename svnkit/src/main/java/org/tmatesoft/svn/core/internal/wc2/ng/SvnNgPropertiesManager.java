@@ -237,5 +237,17 @@ public class SvnNgPropertiesManager {
             SVNErrorManager.error(err, SVNLogType.WC);
         }
     }
-
+    
+    public static void categorizeProperties(SVNProperties props, SVNProperties regular, SVNProperties entry, SVNProperties working) {
+        for (String name : props.nameSet()) {
+            SVNPropertyValue pv = props.getSVNPropertyValue(name);
+            if (SVNProperty.isEntryProperty(name) && entry != null) {
+                entry.put(name, pv);
+            } else if (SVNProperty.isRegularProperty(name) && regular != null) {
+                entry.put(name, pv);
+            } else if (SVNProperty.isWorkingCopyProperty(name) && working != null) {
+                working.put(name, pv);
+            }
+        }
+    }
 }
