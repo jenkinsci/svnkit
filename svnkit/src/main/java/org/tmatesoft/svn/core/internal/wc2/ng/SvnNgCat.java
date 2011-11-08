@@ -97,11 +97,13 @@ public class SvnNgCat extends SvnNgOperationRunner<Long, SvnCat> {
                         false, keywordsMap, true);                
             }
             
-            try {
-                SVNTranslator.copy(source, getOperation().getOutput());
-            } catch (IOException e) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e);
-                SVNErrorManager.error(err, SVNLogType.WC);
+            if (source != null && getOperation().getOutput() != null) {
+                try {
+                    SVNTranslator.copy(source, getOperation().getOutput());
+                } catch (IOException e) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e);
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                }
             }
             
         } finally {
