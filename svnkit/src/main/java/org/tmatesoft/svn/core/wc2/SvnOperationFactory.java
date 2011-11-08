@@ -508,6 +508,7 @@ public class SvnOperationFactory {
                             if (climbUp) {
                                 continue;
                             }
+                            return SvnWcGeneration.NOT_DETECTED;
                         }
                     }
                     try {

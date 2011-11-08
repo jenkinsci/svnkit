@@ -19,7 +19,7 @@ public class SvnOldRemoteCopy extends SvnOldRunner<SVNCommitInfo, SvnRemoteCopy>
         if (operation.getFirstTarget().isURL()) {
             for (SvnCopySource source : operation.getSources()) {
                 if (source.getSource().getFile() != null) {
-                    SvnWcGeneration sourceFormat = SvnOperationFactory.detectWcGeneration(source.getSource().getFile());
+                    SvnWcGeneration sourceFormat = SvnOperationFactory.detectWcGeneration(source.getSource().getFile(), false);
                     if (sourceFormat != SvnWcGeneration.V16) {
                         return false;
                     }                
