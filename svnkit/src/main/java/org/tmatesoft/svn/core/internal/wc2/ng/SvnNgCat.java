@@ -59,7 +59,9 @@ public class SvnNgCat extends SvnNgOperationRunner<Long, SvnCat> {
                 SvnStatus status = SVNStatusEditor17.internalStatus(context, getFirstTarget());
                 localModifications = status.getTextStatus() != SVNStatusType.STATUS_NORMAL;
             }
-            
+            if (properties == null) {
+                properties = new SVNProperties();
+            }
             String eolStyle = properties.getStringValue(SVNProperty.EOL_STYLE);
             String keywords = properties.getStringValue(SVNProperty.KEYWORDS);
             boolean special = properties.getStringValue(SVNProperty.SPECIAL) != null;
