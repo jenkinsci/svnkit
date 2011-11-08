@@ -6,6 +6,9 @@ import java.util.Map;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNMergeInfo;
+import org.tmatesoft.svn.core.SVNMergeInfoInheritance;
+import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
@@ -191,5 +194,61 @@ public abstract class SvnRepositoryAccess {
             result.set(LocationsInfo.endUrl, repositoryRootURL.appendPath(endPath.getPath(), false));
         }
         return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    public Map<String, SVNMergeRangeList> getReposMergeInfo(SVNRepository repository, String path, long revision, SVNMergeInfoInheritance inheritance, boolean squelchIncapable) throws SVNException {
+        Map<String, SVNMergeInfo> reposMergeInfo = null;
+        try {
+            reposMergeInfo = repository.getMergeInfo(new String[] {path}, revision, inheritance, false);
+        } catch (SVNException svne) {
+            if (!squelchIncapable || svne.getErrorMessage().getErrorCode() != SVNErrorCode.UNSUPPORTED_FEATURE) {
+                throw svne;
+            }
+        }
+        String rootRelativePath = getPathRelativeToRoot(repository.getLocation(), repository.getRepositoryRoot(false), repository);
+        Map<String, SVNMergeRangeList> targetMergeInfo = null;
+        if (reposMergeInfo != null) {
+            SVNMergeInfo mergeInfo = (SVNMergeInfo) reposMergeInfo.get(rootRelativePath);
+            if (mergeInfo != null) {
+                targetMergeInfo = mergeInfo.getMergeSourcesToMergeLists();
+            }
+        }
+        return targetMergeInfo;
+    }
+    
+    protected String getPathRelativeToRoot(SVNURL url, SVNURL reposRootURL, SVNRepository repos) throws SVNException {
+        if (reposRootURL == null) {
+            reposRootURL = repos.getRepositoryRoot(true);
+        }
+        String reposRootPath = reposRootURL.getPath();
+        String absPath = url.getPath();
+        if (!absPath.startsWith(reposRootPath)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_UNRELATED_RESOURCES, "URL ''{0}'' is not a child of repository root URL ''{1}''", new Object[] {
+                    url, reposRootURL
+            });
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+        absPath = absPath.substring(reposRootPath.length());
+        if (!absPath.startsWith("/")) {
+            absPath = "/" + absPath;
+        }
+        return absPath;
+    }
+
+    public String getPathRelativeToSession(SVNURL url, SVNURL sessionURL, SVNRepository repos) {
+        if (sessionURL == null) {
+            sessionURL = repos.getLocation();
+        }
+        String reposPath = sessionURL.getPath();
+        String absPath = url.getPath();
+        if (!absPath.startsWith(reposPath + "/") && !absPath.equals(reposPath)) {
+            return null;
+        }
+        absPath = absPath.substring(reposPath.length());
+        if (absPath.startsWith("/")) {
+            absPath = absPath.substring(1);
+        }
+        return absPath;
     }
 }

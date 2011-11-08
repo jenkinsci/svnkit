@@ -22,14 +22,14 @@ import java.util.Map;
  */
 public class SVNMergeInfo {
     private String myPath;
-    private Map myMergeSrcPathsToRangeLists;
+    private Map<String, SVNMergeRangeList> myMergeSrcPathsToRangeLists;
 
     /**
      * Creates a new <code>SVNMergeInfo</code> object.
      * @param path                 absolute repository path of the merge target 
      * @param srcsToRangeLists     hash that maps merge sources to merge range lists (<code>String</code> to {@link SVNMergeRangeList})
      */
-    public SVNMergeInfo(String path, Map srcsToRangeLists) {
+    public SVNMergeInfo(String path, Map<String, SVNMergeRangeList> srcsToRangeLists) {
         myPath = path;
         myMergeSrcPathsToRangeLists = srcsToRangeLists;
     }
@@ -47,7 +47,7 @@ public class SVNMergeInfo {
      * Keys are <code>String</code> paths, values - {@link SVNMergeRangeList} values.
      * @return mergeinfo of the {@link #getPath() path}
      */
-    public Map getMergeSourcesToMergeLists() {
+    public Map<String, SVNMergeRangeList> getMergeSourcesToMergeLists() {
         return myMergeSrcPathsToRangeLists;
     }
 

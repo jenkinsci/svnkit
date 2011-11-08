@@ -5,16 +5,21 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNMergeInfoInheritance;
+import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
@@ -303,10 +308,31 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
             }
             
         }
-        // TODO extend mergeinfo
+        SVNURL oldLocation = repository.getLocation();
+        repository.setLocation(pair.source, false);
+        Map<String, SVNMergeRangeList> mergeInfo = calculateTargetMergeInfo(pair.source, pair.revNum, repository);
+        repository.setLocation(oldLocation, false);
+        
+        String mergeInfoProperty = getWcContext().getProperty(pair.dst, SVNProperty.MERGE_INFO);
+        Map<String, SVNMergeRangeList> wcMergeInfo = SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(mergeInfoProperty), null);
+        if (wcMergeInfo != null && mergeInfo != null) {
+            wcMergeInfo = SVNMergeInfoUtil.mergeMergeInfos(wcMergeInfo, mergeInfo);
+        } else if (wcMergeInfo == null) {
+            wcMergeInfo = mergeInfo;
+        }
+        String extendedMergeInfoValue = null;
+        if (wcMergeInfo != null) {
+            extendedMergeInfoValue = SVNMergeInfoUtil.formatMergeInfoToString(wcMergeInfo, null);
+        }
+        
+        SvnNgPropertiesManager.setProperty(getWcContext(), pair.dst, SVNProperty.MERGE_INFO, 
+                extendedMergeInfoValue != null ? SVNPropertyValue.create(extendedMergeInfoValue) : null, 
+                SVNDepth.EMPTY, true, null, null);
+
         SVNEvent event = SVNEventFactory.createSVNEvent(pair.dst, pair.srcKind, null, pair.revNum, 
                 SVNEventAction.ADD, SVNEventAction.ADD, null, null, 1, 1);
         handleEvent(event);
+        
         return rev;
     }
 
@@ -454,6 +480,35 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
         
         context.getDb().opSetProps(path, newProps, null, false, wi);        
         context.wqRun(dirPath);
+    }
+
+    private Map<String, SVNMergeRangeList> calculateTargetMergeInfo(SVNURL srcURL, long srcRevision,  SVNRepository repository) throws SVNException {
+        SVNURL url = null;
+        url = srcURL;
+
+        Map<String, SVNMergeRangeList> targetMergeInfo = null;
+        String mergeInfoPath;
+        SVNRepository repos = repository;
+        if (repos == null) {
+            repos = getRepositoryAccess().createRepository(url, null, false);
+        }
+        SVNURL oldLocation = null;
+        try {
+            mergeInfoPath = getRepositoryAccess().getPathRelativeToSession(url, null, repos);
+            if (mergeInfoPath == null) {
+                oldLocation = repos.getLocation();
+                repos.setLocation(url, false);
+                mergeInfoPath = "";
+            }
+            targetMergeInfo = getRepositoryAccess().getReposMergeInfo(repos, mergeInfoPath, srcRevision, SVNMergeInfoInheritance.INHERITED, true);
+        } finally {
+            if (repository == null) {
+                repos.closeSession();
+            } else if (oldLocation != null) {
+                repos.setLocation(oldLocation, false);
+            }
+        }
+        return targetMergeInfo;
     }
 
     private static class SvnCopyPair {

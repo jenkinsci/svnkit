@@ -200,7 +200,7 @@ public class SVNMergeInfoUtil {
 		return removedSomeRanges;
 	}
 	
-    public static Map mergeMergeInfos(Map originalSrcsToRangeLists, Map changedSrcsToRangeLists) throws SVNException {
+    public static Map<String, SVNMergeRangeList> mergeMergeInfos(Map<String, SVNMergeRangeList> originalSrcsToRangeLists, Map<String, SVNMergeRangeList> changedSrcsToRangeLists) throws SVNException {
         originalSrcsToRangeLists = originalSrcsToRangeLists == null ? new TreeMap() : originalSrcsToRangeLists;
         changedSrcsToRangeLists = changedSrcsToRangeLists == null ? Collections.EMPTY_MAP : changedSrcsToRangeLists;
         String[] paths1 = (String[]) originalSrcsToRangeLists.keySet().toArray(new String[originalSrcsToRangeLists.size()]);
