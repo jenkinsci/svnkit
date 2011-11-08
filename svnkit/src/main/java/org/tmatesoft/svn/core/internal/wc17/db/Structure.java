@@ -98,7 +98,7 @@ public class Structure<T extends Enum<T>> {
             return;
         }
         if (x instanceof TypeSafety) {
-            assert v == null || ((TypeSafety) x).getType().isAssignableFrom(v.getClass());
+            assert v == LONG_MARKER || v == BOOLEAN_MARKER || v == null || ((TypeSafety) x).getType().isAssignableFrom(v.getClass());
         }
         nonPrimitiveValues[x.ordinal()] = v;
     }
