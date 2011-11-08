@@ -69,7 +69,7 @@ public class SvnNgCat extends SvnNgOperationRunner<Long, SvnCat> {
                 lastModified = getFirstTarget().lastModified();
             } else {
                 Structure<NodeInfo> info = context.getDb().readInfo(getFirstTarget(), NodeInfo.recordedTime);
-                lastModified = info.lng(NodeInfo.recordedSize) / 1000;
+                lastModified = info.lng(NodeInfo.recordedTime) / 1000;
                 info.release();
             }
             
