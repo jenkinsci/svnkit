@@ -208,4 +208,8 @@ public class SvnOperation<V> {
         }
         return false;
     }
+
+    public boolean isUseParentWcFormat() {
+        return false;
+    }
 }

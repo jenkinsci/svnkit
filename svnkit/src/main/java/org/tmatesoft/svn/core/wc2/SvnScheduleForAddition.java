@@ -62,4 +62,10 @@ public class SvnScheduleForAddition extends SvnOperation<SvnScheduleForAddition>
     protected int getMaximumTargetsCount() {
         return Integer.MAX_VALUE;
     }
+
+    @Override
+    public boolean isUseParentWcFormat() {
+        return true;
+    }
+
 }

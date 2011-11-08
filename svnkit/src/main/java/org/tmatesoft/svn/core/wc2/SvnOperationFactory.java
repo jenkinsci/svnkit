@@ -19,7 +19,9 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb.Mode;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
+import org.tmatesoft.svn.core.internal.wc.SVNFileType;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbOpenMode;
@@ -415,7 +417,7 @@ public class SvnOperationFactory {
         SvnWcGeneration wcGeneration = SvnWcGeneration.NOT_DETECTED;
         
         if (operation.hasFileTargets()) {
-            wcGeneration = detectWcGeneration(operation.getFirstTarget().getFile());
+            wcGeneration = detectWcGeneration(operation.getFirstTarget().getFile(), operation.isUseParentWcFormat());
         }
         final List<ISvnOperationRunner<?, SvnOperation<?>>> candidateRunners = new LinkedList<ISvnOperationRunner<?, SvnOperation<?>>>();
         
@@ -480,34 +482,55 @@ public class SvnOperationFactory {
         }
     }
     
-    public static SvnWcGeneration detectWcGeneration(File path) throws SVNException {
-        SVNWCDb db = new SVNWCDb();
-        try {
-            db.open(SVNWCDbOpenMode.ReadOnly, (ISVNOptions) null, false, false);
-            db.parseDir(path, Mode.ReadOnly);
-            return SvnWcGeneration.V17;
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_WORKING_COPY) {
+    public static SvnWcGeneration detectWcGeneration(File path, boolean climbUp) throws SVNException {
+        while(true) {
+            if (path == null) {
                 return SvnWcGeneration.NOT_DETECTED;
-            } else if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {                
-                // there should be an exception for an 'add' and 'checkout' operations.
-                SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
-                try {
-                    SVNAdminAreaInfo adminAreaInfo = wcAccess.openAnchor(path, false, 0);
-                    if ("".equals(adminAreaInfo.getTargetName()) || wcAccess.getEntry(path, false) != null) {
-                        return SvnWcGeneration.V16;
-                    }
-                } catch (SVNException inner) {                         
-                } finally {
-                    wcAccess.close();
-                }
-                return SvnWcGeneration.NOT_DETECTED;
-                
-            } else {
-                throw e;
             }
-        } finally {
-            db.close();
+            SVNWCDb db = new SVNWCDb();
+            try {
+                db.open(SVNWCDbOpenMode.ReadOnly, (ISVNOptions) null, false, false);
+                db.parseDir(path, Mode.ReadOnly);
+                return SvnWcGeneration.V17;
+            } catch (SVNException e) {
+                if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_WORKING_COPY) {
+                    if (!climbUp) {
+                        return SvnWcGeneration.NOT_DETECTED;
+                    }
+                    path = SVNFileUtil.getParentFile(path);
+                    continue;
+                } else if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {                
+                    // there should be an exception for an 'add' and 'checkout' operations.
+                    SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
+                    if (SVNFileType.getType(path) != SVNFileType.DIRECTORY) {
+                        path = SVNFileUtil.getParentFile(path);
+                        if (path == null || SVNFileType.getType(path) != SVNFileType.DIRECTORY) {
+                            if (climbUp) {
+                                continue;
+                            }
+                        }
+                    }
+                    try {
+                        SVNAdminArea area = wcAccess.open(path, false, 0);
+                        if (area != null) {
+                            return SvnWcGeneration.V16;
+                        }
+                    } catch (SVNException inner) {
+                        if (climbUp && inner.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
+                            path = SVNFileUtil.getParentFile(path);
+                            continue;
+                        }
+                    } finally {
+                        wcAccess.close();
+                    }
+                    return SvnWcGeneration.NOT_DETECTED;
+                    
+                } else {
+                    throw e;
+                }
+            } finally {
+                db.close();
+            }
         }
     }
     
