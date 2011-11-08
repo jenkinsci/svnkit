@@ -4652,6 +4652,16 @@ public class SVNWCDb implements ISVNWCDb {
         } else {
             result.set(PristineInfo.status, status);
         }
+        if (kind != SVNWCDbKind.Dir) {
+            result.set(PristineInfo.depth, SVNDepth.UNKNOWN);
+        } else {
+            String depthStr = getColumnText(stmt, NODES__Fields.depth);
+            if (depthStr == null) {
+                result.set(PristineInfo.depth, SVNDepth.UNKNOWN);
+            } else {
+                result.set(PristineInfo.depth, SVNDepth.fromString(depthStr));
+            }
+        }
         if (kind == SVNWCDbKind.File) {
             SvnChecksum checksum = getColumnChecksum(stmt, NODES__Fields.checksum);
             result.set(PristineInfo.checksum, checksum);
