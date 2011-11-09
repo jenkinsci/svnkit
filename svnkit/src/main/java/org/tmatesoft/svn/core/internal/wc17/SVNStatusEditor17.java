@@ -651,7 +651,7 @@ public class SVNStatusEditor17 {
             if (nodeFileType == null) {
                 continue;
             }
-            if (depth == SVNDepth.FILES && fileType == SVNFileType.DIRECTORY) {
+            if (depth == SVNDepth.FILES && nodeFileType == SVNFileType.DIRECTORY) {
                 continue;
             }
             if (SVNFileUtil.getAdminDirectoryName().equals(name)) {
