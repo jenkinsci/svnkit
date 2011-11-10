@@ -469,7 +469,7 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
         if (newContents == null && copyFromURL == null) {
             sourcePath = wbInfo.tempBaseAbspath;
         }
-        boolean recordFileInfo = newContents != null;
+        boolean recordFileInfo = newContents == null;
         SVNSkel wi = context.wqBuildFileInstall(path, sourcePath, false, recordFileInfo);
         wi = context.wqMerge(wi, null);
         if (sourcePath != null) {
@@ -481,7 +481,7 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
                 originalReposPath, originalURL, originalUuid, copyFromRev, 
                 copyFromURL != null ? wbInfo.getSHA1Checksum() : null, null, null);
         
-        context.getDb().opSetProps(path, newProps, null, false, wi);        
+        context.getDb().opSetProps(path, newProps, null, false, wi);
         context.wqRun(dirPath);
     }
 
