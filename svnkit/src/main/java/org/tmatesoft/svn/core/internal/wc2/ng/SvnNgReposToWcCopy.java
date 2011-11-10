@@ -314,7 +314,10 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
         repository.setLocation(oldLocation, false);
         
         String mergeInfoProperty = getWcContext().getProperty(pair.dst, SVNProperty.MERGE_INFO);
-        Map<String, SVNMergeRangeList> wcMergeInfo = SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(mergeInfoProperty), null);
+        Map<String, SVNMergeRangeList> wcMergeInfo = null;
+        if (mergeInfoProperty != null) {
+            wcMergeInfo = SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(mergeInfoProperty), null);
+        }
         if (wcMergeInfo != null && mergeInfo != null) {
             wcMergeInfo = SVNMergeInfoUtil.mergeMergeInfos(wcMergeInfo, mergeInfo);
         } else if (wcMergeInfo == null) {
