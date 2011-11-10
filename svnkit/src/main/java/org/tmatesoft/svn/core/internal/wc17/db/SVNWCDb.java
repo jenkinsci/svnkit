@@ -2068,7 +2068,7 @@ public class SVNWCDb implements ISVNWCDb {
         spb.conflict = conflict;
         spb.workItems = workItems;
         spb.localRelpath = parsed.localRelPath;
-        spb.clearRecordedInfo = true;
+        spb.clearRecordedInfo = clearRecordedInfo;
         
         pdh.getWCRoot().getSDb().runTransaction(spb);
     }

@@ -22,8 +22,8 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
-import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.PristineContentsInfo;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
@@ -534,7 +534,7 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
                 workItems = wcContext.wqMerge(workItems, workItem);
                 
                 SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(tmpDst));
-                if (kind == SVNNodeKind.DIR) {
+                if (kind == SVNNodeKind.FILE) {
                     if (!wcContext.isTextModified(source, false)) {
                         SVNSkel workItem2 = wcContext.wqBuildRecordFileinfo(dst, null);
                         workItems = wcContext.wqMerge(workItems, workItem2);
