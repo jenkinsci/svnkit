@@ -387,7 +387,7 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
         }
         
         File dirPath = SVNFileUtil.getParentFile(path);
-        Structure<NodeInfo> ni = context.getDb().readInfo(path, NodeInfo.status, NodeInfo.kind);
+        Structure<NodeInfo> ni = context.getDb().readInfo(dirPath, NodeInfo.status, NodeInfo.kind);
         status = ni.get(NodeInfo.status);
         ISVNWCDb.SVNWCDbKind kind = ni.get(NodeInfo.kind);
         ni.release();
