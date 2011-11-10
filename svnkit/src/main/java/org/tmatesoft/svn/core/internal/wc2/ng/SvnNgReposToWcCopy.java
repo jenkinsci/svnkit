@@ -296,8 +296,11 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
             File tmpDir = getWcContext().getDb().getWCRootTempDir(pair.dst);
             UniqueFileInfo ufInfo = SVNWCContext.openUniqueFile(tmpDir, true);
             SVNProperties newProperties = new SVNProperties();
-            pair.revNum = repository.getFile(relativePath, pair.revNum, newProperties, ufInfo.stream);
-            
+            try {
+                pair.revNum = repository.getFile(relativePath, pair.revNum, newProperties, ufInfo.stream);
+            } finally {
+                SVNFileUtil.closeFile(ufInfo.stream);
+            }
             InputStream newContents = SVNFileUtil.openFileForReading(ufInfo.path);
             try {
                 addFileToWc(getWcContext(), 
