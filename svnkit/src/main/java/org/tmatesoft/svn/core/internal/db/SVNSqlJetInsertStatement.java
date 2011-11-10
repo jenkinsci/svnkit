@@ -45,9 +45,12 @@ public abstract class SVNSqlJetInsertStatement extends SVNSqlJetTableStatement {
     }
 
     public long exec() throws SVNException {
+        Map<String, Object> insertValues = getInsertValues();
+        if (insertValues == null) {
+            return 0;
+        }
         statementStarted();
         try {
-            Map<String, Object> insertValues = getInsertValues();
             beforeInsert(conflictAction, table, insertValues);
             long n = table.insertByFieldNamesOr(conflictAction, insertValues);
             statementCompleted(null);
