@@ -102,15 +102,21 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
             }
         } else if (sources.size() == 1) {
             SvnCopyPair copyPair = new SvnCopyPair();
-            SvnCopySource source = sources.iterator().next(); 
+            SvnCopySource source = sources.iterator().next();
+            String baseName;
             if (source.getSource().isFile()) {
                 copyPair.sourceFile = source.getSource().getFile();
+                baseName = copyPair.sourceFile.getName();
             } else {
                 copyPair.source = source.getSource().getURL();
+                baseName = SVNPathUtil.tail(copyPair.source.getPath());
             }
             copyPair.sourcePegRevision = source.getSource().getPegRevision();
             copyPair.sourceRevision = source.getRevision();
             copyPair.dst = getFirstTarget();
+            if (!getOperation().isFailWhenDstExists() && SVNFileType.getType(copyPair.dst) != SVNFileType.NONE) {
+                copyPair.dst = new File(copyPair.dst, baseName);
+            }
             
             copyPairs.add(copyPair);
         }
