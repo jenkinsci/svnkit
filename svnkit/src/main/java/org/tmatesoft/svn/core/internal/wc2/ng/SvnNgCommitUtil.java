@@ -69,6 +69,22 @@ public class SvnNgCommitUtil {
         public SVNNodeKind getUrlKind(SVNURL url, long revision) throws SVNException;
     }
     
+    public static SvnCommitPacket harvestCopyCommitables(SVNWCContext context, File path, SVNURL dst, SvnCommitPacket packet, ISvnUrlKindCallback urlKindCallback) throws SVNException {
+        SVNWCNodeReposInfo reposInfo = context.getNodeReposInfo(path);
+        File commitRelPath = new File(SVNURLUtil.getRelativeURL(reposInfo.reposRootUrl, dst));
+        
+        harvestCommittables(context, path, packet, null, 
+                reposInfo.reposRootUrl, 
+                commitRelPath, 
+                true, SVNDepth.INFINITY, 
+                false, null, 
+                false, false, 
+                urlKindCallback, 
+                context.getEventHandler());
+        
+        return packet;
+    }
+    
     public static SvnCommitPacket harversCommittables(SVNWCContext context, SvnCommitPacket packet, Map<SVNURL, String> lockTokens,
             File baseDirPath,
             Collection<String> targets,
