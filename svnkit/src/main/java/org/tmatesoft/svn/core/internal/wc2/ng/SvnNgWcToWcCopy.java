@@ -68,7 +68,12 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
     protected Long run(SVNWCContext context) throws SVNException {
         Collection<SvnCopySource> sources = getOperation().getSources();
         Collection<SvnCopyPair> copyPairs = new ArrayList<SvnNgWcToWcCopy.SvnCopyPair>();
+
         if (sources.size() > 1) {
+            if (getOperation().isFailWhenDstExists()) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_MULTIPLE_SOURCES_DISALLOWED);
+                SVNErrorManager.error(err, SVNLogType.DEFAULT);
+            }
             for (SvnCopySource copySource : sources) {
                 SvnCopyPair copyPair = new SvnCopyPair();
                 copyPair.source = copySource.getSource().getFile();
@@ -81,7 +86,9 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
             SvnCopySource source = sources.iterator().next(); 
             copyPair.source = source.getSource().getFile();
             copyPair.dst = getFirstTarget();
-            
+            if (!getOperation().isFailWhenDstExists() && SVNFileType.getType(copyPair.dst) != SVNFileType.NONE) {
+                copyPair.dst = new File(copyPair.dst, copyPair.source.getName());
+            }
             copyPairs.add(copyPair);
         }
         
