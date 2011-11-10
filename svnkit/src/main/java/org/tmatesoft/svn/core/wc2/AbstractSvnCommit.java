@@ -45,10 +45,10 @@ public abstract class AbstractSvnCommit extends SvnOperation<SVNCommitInfo> {
         if (commitHandler == null) {
             commitHandler = new ISvnCommitHandler() {                
                 public SVNProperties getRevisionProperties(String message, SvnCommitItem[] commitables, SVNProperties revisionProperties) throws SVNException {
-                    return revisionProperties;
+                    return revisionProperties == null ? new SVNProperties() : revisionProperties;
                 }                
                 public String getCommitMessage(String message, SvnCommitItem[] commitables) throws SVNException {
-                    return message;
+                    return message == null ? "" : message;
                 }
             };
         }
