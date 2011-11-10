@@ -63,6 +63,7 @@ import org.tmatesoft.svn.core.internal.wc2.old.SvnOldSetProperty;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldSwitch;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldUnlock;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldUpdate;
+import org.tmatesoft.svn.core.internal.wc2.remote.SvnNgReposToReposCopy;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteCat;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteExport;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteGetInfo;
@@ -182,6 +183,7 @@ public class SvnOperationFactory {
 
         registerOperationRunner(SvnRemoteCopy.class, new SvnOldRemoteCopy());
         registerOperationRunner(SvnRemoteCopy.class, new SvnNgWcToReposCopy());
+        registerOperationRunner(SvnRemoteCopy.class, new SvnNgReposToReposCopy());
         
         registerOperationRunner(SvnLog.class, new SvnRemoteLog());
     }

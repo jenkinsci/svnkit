@@ -1,8 +1,11 @@
 package org.tmatesoft.svn.core.wc2;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 
 public class SvnCommitItem {
@@ -23,6 +26,7 @@ public class SvnCommitItem {
     private long copyFromRevision;
     
     private int flags;
+    private Map<String, SVNPropertyValue> outgoingProperties;
     
     public File getPath() {
         return path;
@@ -70,5 +74,21 @@ public class SvnCommitItem {
     public boolean hasFlag(int flag) {
         return (getFlags() & flag) != 0;
     }
+    
+    public Map<String, SVNPropertyValue> getOutgoingProperties() {
+        return outgoingProperties;
+    }
 
+    public void addOutgoingProperty(String name, SVNPropertyValue value) {
+        if (outgoingProperties == null) {
+            outgoingProperties = new HashMap<String, SVNPropertyValue>();
+        }
+        if (name != null) {
+            if (value != null) {
+                outgoingProperties.put(name, value);
+            } else {
+                outgoingProperties.remove(name);
+            }
+        }
+    }
 }

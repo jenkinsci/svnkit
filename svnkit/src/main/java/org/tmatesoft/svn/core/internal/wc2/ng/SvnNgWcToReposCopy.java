@@ -10,14 +10,21 @@ import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNMergeInfoInheritance;
+import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc17.SVNCommitter17;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
+import org.tmatesoft.svn.core.internal.wc17.db.Structure;
+import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeOriginInfo;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgCommitUtil.ISvnUrlKindCallback;
 import org.tmatesoft.svn.core.io.ISVNEditor;
@@ -41,7 +48,8 @@ public class SvnNgWcToReposCopy extends SvnNgOperationRunner<SVNCommitInfo, SvnR
         // need all sources to be wc files at WORKING.
         // BASE revision meas repos_to_repos copy
         for(SvnCopySource source : operation.getSources()) {
-            if (source.getSource().isFile() && source.getRevision() == SVNRevision.WORKING) {
+            if (source.getSource().isFile() && 
+                    (source.getRevision() == SVNRevision.WORKING || source.getRevision() == SVNRevision.UNDEFINED)) {
                 continue;
             }
             return false;
@@ -145,9 +153,28 @@ public class SvnNgWcToReposCopy extends SvnNgOperationRunner<SVNCommitInfo, SvnR
         }
         for (SvnCopyPair svnCopyPair : copyPairs) {
             SvnNgCommitUtil.harvestCopyCommitables(getWcContext(), svnCopyPair.source, svnCopyPair.dst, packet, this);
-            // TODO add mergeinfo property
         }
 
+        for (SvnCopyPair svnCopyPair : copyPairs) {
+            SvnCommitItem item = packet.getItem(svnCopyPair.source);
+            if (item == null) {
+                continue;
+            }
+            Map<String, SVNMergeRangeList> mergeInfo = calculateTargetMergeInfo(svnCopyPair.source, -1, repository);
+
+            String mergeInfoProperty = getWcContext().getProperty(svnCopyPair.source, SVNProperty.MERGE_INFO);
+            Map<String, SVNMergeRangeList> wcMergeInfo = SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(mergeInfoProperty), null);
+            if (wcMergeInfo != null && mergeInfo != null) {
+                mergeInfo = SVNMergeInfoUtil.mergeMergeInfos(mergeInfo, wcMergeInfo);
+            } else if (mergeInfo == null) {
+                mergeInfo = wcMergeInfo;
+            }
+            String extendedMergeInfoValue = null;
+            if (wcMergeInfo != null) {
+                extendedMergeInfoValue = SVNMergeInfoUtil.formatMergeInfoToString(wcMergeInfo, null);
+                item.addOutgoingProperty(SVNProperty.MERGE_INFO, SVNPropertyValue.create(extendedMergeInfoValue));
+            }
+        }
         Map<String, SvnCommitItem> committables = new TreeMap<String, SvnCommitItem>();
         SVNURL url = SvnNgCommitUtil.translateCommitables(packet.getItems(packet.getRepositoryRoots().iterator().next()), committables);
         repository.setLocation(url, false);
@@ -185,6 +212,41 @@ public class SvnNgWcToReposCopy extends SvnNgOperationRunner<SVNCommitInfo, SvnR
             ancestor = new File(ancestorPath);
         }
         return ancestor;
+    }
+
+    private Map<String, SVNMergeRangeList> calculateTargetMergeInfo(File srcFile, long srcRevision, SVNRepository repository) throws SVNException {
+        SVNURL url = null;
+        SVNURL oldLocation = null;
+        
+        Structure<NodeOriginInfo> nodeOrigin = getWcContext().getNodeOrigin(srcFile, false, NodeOriginInfo.revision, NodeOriginInfo.reposRelpath, NodeOriginInfo.reposRootUrl);
+        if (nodeOrigin != null && nodeOrigin.get(NodeOriginInfo.reposRelpath) != null) {
+            url = nodeOrigin.get(NodeOriginInfo.reposRootUrl);
+            url = url.appendPath(nodeOrigin.<File>get(NodeOriginInfo.reposRelpath).getPath(), false);
+            srcRevision = nodeOrigin.lng(NodeOriginInfo.revision);
+        }
+        if (url != null) {
+            Map<String, SVNMergeRangeList> targetMergeInfo = null;
+            String mergeInfoPath;
+            SVNRepository repos = repository;
+
+            try {
+                mergeInfoPath = getRepositoryAccess().getPathRelativeToSession(url, null, repos);
+                if (mergeInfoPath == null) {
+                    oldLocation = repos.getLocation();
+                    repos.setLocation(url, false);
+                    mergeInfoPath = "";
+                }
+                targetMergeInfo = getRepositoryAccess().getReposMergeInfo(repos, mergeInfoPath, srcRevision, SVNMergeInfoInheritance.INHERITED, true);
+            } finally {
+                if (repository == null) {
+                    repos.closeSession();
+                } else if (oldLocation != null) {
+                    repos.setLocation(oldLocation, false);
+                }
+            }
+            return targetMergeInfo;
+        }
+        return null;
     }
 
     private static class SvnCopyPair {

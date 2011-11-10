@@ -29,6 +29,10 @@ public class SvnCommitPacket {
     public boolean hasItem(File path) {
         return itemsByPath.containsKey(path);
     }
+
+    public SvnCommitItem getItem(File path) {
+        return itemsByPath.get(path);
+    }
     
     public Collection<SVNURL> getRepositoryRoots() {
         return Collections.unmodifiableCollection(items.keySet());
