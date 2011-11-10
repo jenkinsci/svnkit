@@ -337,7 +337,8 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
             }
         }
         
-        if (!srcReposRootUrl.equals(dstReposRootUrl) || !srcReposUuid.equals(dstReposUuid)) {
+        if ((srcReposRootUrl != null && dstReposRootUrl != null && !srcReposRootUrl.equals(dstReposRootUrl)) || 
+                (srcReposUuid != null && dstReposUuid != null && !srcReposUuid.equals(dstReposUuid))) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_SCHEDULE, 
                     "Cannot copy to ''{0}'', as it is not from repository ''{1}''; it is from ''{2}''", dst, srcReposRootUrl, dstReposRootUrl);
             SVNErrorManager.error(err, SVNLogType.WC);
