@@ -380,7 +380,7 @@ public class SVNBasicClient {
         }
     }
     
-    protected SvnOperationFactory getOperationsFactory() {
+    public SvnOperationFactory getOperationsFactory() {
         return this.operationFactory;
     }
 
