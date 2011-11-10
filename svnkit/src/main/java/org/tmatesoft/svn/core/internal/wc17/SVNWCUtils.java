@@ -143,8 +143,12 @@ public class SVNWCUtils {
         return isChild(SVNFileUtil.getFilePath(parent), SVNFileUtil.getFilePath(child)) != null;
     }
 
-    private static String isChild(final String parentPath, final String childPath) {
-        if (!childPath.startsWith(parentPath)) {
+    private static String isChild(final String parentPath, String childPath) {
+        childPath = childPath.replace(File.separatorChar, '/');
+        if ("".equals(parentPath)) {
+            return childPath;
+        }
+        if (!childPath.equals(parentPath) || !childPath.startsWith(parentPath + '/')) {
             return null;
         }
         final String restPath = childPath.substring(parentPath.length());
