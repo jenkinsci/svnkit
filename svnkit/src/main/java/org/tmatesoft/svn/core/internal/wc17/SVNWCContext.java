@@ -940,7 +940,10 @@ public class SVNWCContext {
             if (info.reposRelPath != null) {
                 url = info.reposRootUrl.appendPath(SVNFileUtil.getFilePath(info.reposRelPath), false).toString();
             } else {
-                // TODO db_ReadURL                
+                SVNURL svnUrl = getNodeUrl(localAbsPath);
+                if (svnUrl != null) {
+                    url = svnUrl.toDecodedString();
+                }
             }
         } else {
             url = "";
