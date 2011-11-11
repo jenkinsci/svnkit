@@ -409,7 +409,7 @@ public class SvnWcDbCopy extends SvnWcDbShared {
         iw.changedRev = nodeInfo.lng(NodeInfo.changedRev);
         iw.changedDate = nodeInfo.get(NodeInfo.changedDate);
         iw.changedAuthor = nodeInfo.text(NodeInfo.changedAuthor);
-        iw.opDepth = nodeInfo.lng(NodeInfo.depth);
+        iw.opDepth = dstOpDepth;
         iw.checksum = nodeInfo.get(NodeInfo.checksum);
         List<File> childrenAsFiles = null;
         if (children != null) {
@@ -419,7 +419,7 @@ public class SvnWcDbCopy extends SvnWcDbShared {
             }
         }
         iw.children = childrenAsFiles;
-        iw.opDepth = dstOpDepth;
+        iw.depth = nodeInfo.get(NodeInfo.depth);
         iw.notPresentOpDepth = dstNpOpDepth;
 
         iw.originalReposId = copyFromId;

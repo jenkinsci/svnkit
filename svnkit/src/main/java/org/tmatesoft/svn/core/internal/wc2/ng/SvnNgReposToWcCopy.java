@@ -258,8 +258,7 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
         boolean sameRepositories = false;
         try {
             String sourceUuid = repository.getRepositoryUUID(true);
-            File parent = copyPairs.size() == 1 ? SVNFileUtil.getParentFile(topDst) : topDst;
-            SVNWCNodeReposInfo info = getWcContext().getNodeReposInfo(parent);
+            SVNWCNodeReposInfo info = getWcContext().getNodeReposInfo(topDst);
             String dstUuid = info != null ? info.reposUuid : null;
             sameRepositories = sourceUuid != null && dstUuid != null && sourceUuid.equals(dstUuid);
         } catch (SVNException e) {
