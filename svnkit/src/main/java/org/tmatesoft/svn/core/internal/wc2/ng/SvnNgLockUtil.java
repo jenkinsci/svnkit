@@ -25,7 +25,7 @@ import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgOperationRunner;
 
 public class SvnNgLockUtil {
 
-    public static SVNURL CollectLockInfo(SvnNgOperationRunner opRunner, SVNWCContext context, SvnNgRepositoryAccess wcAccess, Collection<SvnTarget> targets, Map lockInfo, Map lockPaths, boolean lock, boolean stealLock) throws SVNException {
+    public static SVNURL collectLockInfo(SvnNgOperationRunner opRunner, SVNWCContext context, SvnNgRepositoryAccess wcAccess, Collection<SvnTarget> targets, Map lockInfo, Map lockPaths, boolean lock, boolean stealLock) throws SVNException {
         String[] paths = new String[targets.size()];
         int i = 0;
         for (SvnTarget target : targets) {

@@ -32,7 +32,7 @@ public class SvnNgUnlock extends SvnNgOperationRunner<SVNLock, SvnUnlock> implem
         Map pathsRevisionsMap = new SVNHashMap();
         final SvnNgRepositoryAccess wcAccess = getRepositoryAccess();
         
-            final SVNURL topURL = SvnNgLockUtil.CollectLockInfo(this, getWcContext(), wcAccess, getOperation().getTargets(), entriesMap, pathsRevisionsMap, false, getOperation().isBreakLock());
+            final SVNURL topURL = SvnNgLockUtil.collectLockInfo(this, getWcContext(), wcAccess, getOperation().getTargets(), entriesMap, pathsRevisionsMap, false, getOperation().isBreakLock());
             SVNRepository repository = getRepositoryAccess().createRepository(topURL, null, true);
             final SVNURL rootURL = repository.getRepositoryRoot(true);
             repository.unlock(pathsRevisionsMap, getOperation().isBreakLock(), new ISVNLockHandler() {

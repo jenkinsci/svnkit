@@ -86,7 +86,18 @@ public class SVNLockCommand extends SVNCommand {
         }
         if (!paths.isEmpty()) {
             File[] filesArray = (File[]) paths.toArray(new File[paths.size()]);
-            client.doLock(filesArray, getSVNEnvironment().isForce(), message);
+            try {
+                client.doLock(filesArray, getSVNEnvironment().isForce(), message);
+            } catch (SVNException e) {
+                if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND) {
+                    if (e.getErrorMessage().getRelatedObjects() != null
+                            && e.getErrorMessage().getRelatedObjects().length > 0
+                            && e.getErrorMessage().getRelatedObjects()[0] instanceof File) {
+                        e.getErrorMessage().getRelatedObjects()[0] = ((File) e.getErrorMessage().getRelatedObjects()[0]).getAbsolutePath();
+                    }
+                }
+                throw e;
+            }
         }
         if (!urls.isEmpty()) {
             SVNURL[] urlsArray = (SVNURL[]) urls.toArray(new SVNURL[urls.size()]);

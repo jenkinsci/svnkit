@@ -12,15 +12,14 @@ import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbLock;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbLock;
+import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgLockUtil.LockInfo;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnSetLock;
-import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgLockUtil.LockInfo;
 
 public class SvnNgSetLock extends SvnNgOperationRunner<SVNLock, SvnSetLock> implements ISVNLockHandler {
 
@@ -29,9 +28,9 @@ public class SvnNgSetLock extends SvnNgOperationRunner<SVNLock, SvnSetLock> impl
         
     	final Map entriesMap = new SVNHashMap();
         Map pathsRevisionsMap = new SVNHashMap();
-        final SvnNgRepositoryAccess wcAccess = getRepositoryAccess();
+        final SvnNgRepositoryAccess repositoryAccess = getRepositoryAccess();
         
-        final SVNURL topURL = SvnNgLockUtil.CollectLockInfo(this, getWcContext(), wcAccess, getOperation().getTargets(), entriesMap, pathsRevisionsMap, true, getOperation().isStealLock());
+        final SVNURL topURL = SvnNgLockUtil.collectLockInfo(this, getWcContext(), repositoryAccess, getOperation().getTargets(), entriesMap, pathsRevisionsMap, true, getOperation().isStealLock());
             SVNRepository repository = getRepositoryAccess().createRepository(topURL, null, true);
             final SVNURL rootURL = repository.getRepositoryRoot(true);
             repository.lock(pathsRevisionsMap, getOperation().getLockMessage(), getOperation().isStealLock(), new ISVNLockHandler() {
