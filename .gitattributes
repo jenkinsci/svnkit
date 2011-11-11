@@ -105,6 +105,7 @@ svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbIn
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbInsertActualProps.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbInsertActualTextConflicts.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbInsertActualTreeConflicts.java -text
+svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbInsertLock.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbInsertNode.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbInsertPristine.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbInsertRepository.java -text
@@ -138,6 +139,9 @@ svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbUp
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbUpdateNodeBasePresence.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbUpdateNodeFileinfo.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbUpdateNodeWorkingDepth.java -text
+svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/ng/SvnNgLockUtil.java -text
+svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/ng/SvnNgSetLock.java -text
+svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/ng/SvnNgUnlock.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/old/SvnOldAnnotate.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/old/SvnOldCat.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/old/SvnOldSetLock.java -text

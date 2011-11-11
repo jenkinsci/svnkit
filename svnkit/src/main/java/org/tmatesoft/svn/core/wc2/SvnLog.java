@@ -111,4 +111,9 @@ public class SvnLog extends SvnReceivingOperation<SVNLogEntry> {
             this.revisionRanges.add(range);
         }
     }
+    
+    @Override
+    protected int getMaximumTargetsCount() {
+        return Integer.MAX_VALUE;
+    }
 }

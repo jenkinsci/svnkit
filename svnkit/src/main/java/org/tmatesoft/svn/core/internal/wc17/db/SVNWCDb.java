@@ -497,6 +497,33 @@ public class SVNWCDb implements ISVNWCDb {
         }
         
     }
+    
+    public class InsertLock implements SVNSqlJetTransaction {
+
+        public long reposId = INVALID_REPOS_ID;
+        public File localAbsPath;
+        public SVNWCDbLock lock;
+        
+        public SVNURL reposRootURL;
+        public String reposUUID;
+        
+        public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
+        	
+        	  final WCDbBaseInfo baseInfo = getBaseInfo(localAbsPath, BaseInfoField.reposRelPath, BaseInfoField.reposId);
+        	  
+        	  SVNSqlJetStatement stmt = db.getStatement(SVNWCDbStatements.INSERT_LOCK);
+        	  stmt.bindf("issssi", 
+        			  baseInfo.reposId, 
+        			  baseInfo.reposRelPath,
+                      lock.token,
+                      lock.owner != null ? lock.owner : null,
+                      lock.comment != null ? lock.comment : null,
+                      lock.date != null ? lock.date : null);
+        	  stmt.done();
+        }
+
+    }
+
 
     public class InsertBase implements SVNSqlJetTransaction {
 
@@ -885,8 +912,20 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     public void addLock(File localAbsPath, SVNWCDbLock lock) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+    	assert (isAbsolute(localAbsPath));
+    	assert (lock != null);
+    	
+        final DirParsedInfo dir = parseDir(localAbsPath, Mode.ReadOnly);
+        final SVNWCDbDir pdh = dir.wcDbDir;
+        
+        verifyDirUsable(pdh);
+        
+        InsertLock ilb = new InsertLock();
+        ilb.localAbsPath = localAbsPath;
+        ilb.lock = lock;
+        pdh.getWCRoot().getSDb().runTransaction(ilb);
+    	
+    	pdh.flushEntries(localAbsPath);
     }
 
     public void addWorkQueue(File wcRootAbsPath, SVNSkel workItem) throws SVNException {

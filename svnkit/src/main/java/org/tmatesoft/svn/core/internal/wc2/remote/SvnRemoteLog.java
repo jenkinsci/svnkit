@@ -182,15 +182,15 @@ public class SvnRemoteLog extends SvnRemoteOperationRunner<SVNLogEntry, SvnLog> 
             pair.release();
             
             repository.log(
-            		targetPaths, 
-            		startRev, 
-            		endRev,
-            		getOperation().isDiscoverChangedPaths(), 
-            		getOperation().isStopOnCopy(), 
-            		getOperation().getLimit(), 
-            		getOperation().isUseMergeHistory(), 
-            		getOperation().getRevisionProperties(), 
-            		this);
+	            		targetPaths, 
+	            		startRev, 
+	            		endRev,
+	            		getOperation().isDiscoverChangedPaths(), 
+	            		getOperation().isStopOnCopy(), 
+	            		getOperation().getLimit(), 
+	            		getOperation().isUseMergeHistory(), 
+	            		getOperation().getRevisionProperties(), 
+	            		this);
         }
         
     

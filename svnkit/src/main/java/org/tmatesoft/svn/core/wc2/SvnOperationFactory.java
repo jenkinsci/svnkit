@@ -40,8 +40,10 @@ import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgRelocate;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgRemove;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgReposToWcCopy;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgRevert;
+import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgSetLock;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgSetProperty;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgSwitch;
+import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgUnlock;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgUpdate;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgWcToReposCopy;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgWcToWcCopy;
@@ -169,9 +171,11 @@ public class SvnOperationFactory {
         
         registerOperationRunner(SvnSetLock.class, new SvnRemoteSetLock());
         registerOperationRunner(SvnSetLock.class, new SvnOldSetLock());
+        registerOperationRunner(SvnSetLock.class, new SvnNgSetLock());
         
         registerOperationRunner(SvnUnlock.class, new SvnRemoteUnlock());
         registerOperationRunner(SvnUnlock.class, new SvnOldUnlock());
+        registerOperationRunner(SvnUnlock.class, new SvnNgUnlock());
         
         registerOperationRunner(SvnCat.class, new SvnRemoteCat());
         registerOperationRunner(SvnCat.class, new SvnNgCat());
