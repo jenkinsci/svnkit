@@ -1916,8 +1916,13 @@ public class FSFS {
         if (kind == SVNNodeKind.DIR) {
             SVNErrorManager.error(FSErrors.errorNotFile(path, this), SVNLogType.FSFS);
         } else if (kind == SVNNodeKind.NONE) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "Path ''{0}'' doesn''t exist in HEAD revision", path);
-            SVNErrorManager.error(err, SVNLogType.FSFS);
+            if (currentRevision >= 0) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_OUT_OF_DATE, "Path ''{0}'' doesn''t exist in HEAD revision", path);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
+            } else {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "Path ''{0}'' doesn''t exist in HEAD revision", path);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
+            }
         }
 
         if (username == null || "".equals(username)) {
