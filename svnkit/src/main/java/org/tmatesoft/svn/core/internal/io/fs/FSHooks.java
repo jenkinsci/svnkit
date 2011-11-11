@@ -65,8 +65,10 @@ public class FSHooks {
         return ourIsHooksEnabled.booleanValue();
     }
 
-    public static void runPreLockHook(File reposRootDir, String path, String username) throws SVNException {
-        runLockHook(reposRootDir, SVN_REPOS_HOOK_PRE_LOCK, path, username, null);
+    public static String runPreLockHook(File reposRootDir, String path, String username, String comment, boolean stealLock) throws SVNException {
+        username = username == null ? "" : username;
+        path = path == null ? "" : path;
+        return runHook(reposRootDir, SVN_REPOS_HOOK_PRE_LOCK, new String[] {path, username, comment != null ? comment : "", stealLock ? "1" : "0"}, null);
     }
 
     public static void runPostLockHook(File reposRootDir, String[] paths, String username) throws SVNException {
@@ -140,10 +142,10 @@ public class FSHooks {
         runHook(reposRootDir, SVN_REPOS_HOOK_POST_COMMIT, new String[] {String.valueOf(committedRevision)}, null);
     }
 
-    private static void runHook(File reposRootDir, String hookName, String[] args, byte[] input) throws SVNException {
+    private static String runHook(File reposRootDir, String hookName, String[] args, byte[] input) throws SVNException {
         File hookFile = getHookFile(reposRootDir, hookName);
         if (hookFile == null) {
-            return;
+            return null;
         }
         if (args == null) {
             args = new String[0];
@@ -184,11 +186,11 @@ public class FSHooks {
             });
             SVNErrorManager.error(err, ioe, SVNLogType.FSFS);
         }
-        feedHook(hookFile, hookName, hookProc, input);
+        return feedHook(hookFile, hookName, hookProc, input);
     }
 
 
-    private static void feedHook(File hook, String hookName, Process hookProcess, byte[] stdInValue) throws SVNException {
+    private static String feedHook(File hook, String hookName, Process hookProcess, byte[] stdInValue) throws SVNException {
         if (hookProcess == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, "Failed to start ''{0}'' hook", hook);
             SVNErrorManager.error(err, SVNLogType.FSFS);
@@ -234,6 +236,7 @@ public class FSHooks {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, "''{0}'' hook succeeded, but error output could not be read", hookName);
                 SVNErrorManager.error(err, errorGobbler.getError(), SVNLogType.FSFS);
             }
+            return inputGobbler.getResult();
         } else {
             String actionName = null;
             if (SVN_REPOS_HOOK_START_COMMIT.equals(hookName) || SVN_REPOS_HOOK_PRE_COMMIT.equals(hookName)) {
@@ -258,6 +261,7 @@ public class FSHooks {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, errorMessage, new Object[] {hookName, new Integer(rc)});
             SVNErrorManager.error(err, SVNLogType.FSFS);
         }
+        return null;
     }
 
     private static File getHookFile(File reposRootDir, String hookName) throws SVNException {

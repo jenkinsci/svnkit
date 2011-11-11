@@ -38,9 +38,12 @@ import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
+import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNConfigFile;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -1394,8 +1397,12 @@ public class FSFS {
             SVNErrorManager.error(err, SVNLogType.FSFS);
         }
 
+        String customToken = null;
         if (isHooksEnabled()) {
-            FSHooks.runPreLockHook(myRepositoryRoot, path, username);
+            customToken = FSHooks.runPreLockHook(myRepositoryRoot, path, username, comment, stealLock);
+            if (customToken != null) {
+                token = customToken;
+            }
         }
         SVNLock lock = null;
 
@@ -1912,6 +1919,26 @@ public class FSFS {
         long youngestRev = getYoungestRevision();
         FSRevisionRoot root = createRevisionRoot(youngestRev);
         SVNNodeKind kind = root.checkNodeKind(path);
+        
+        if (token != null) {
+            if (!token.startsWith("opaquelocktoken:")) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_BAD_LOCK_TOKEN, 
+                        "Lock token URI ''{0}'' has bad scheme; expected ''opaquelocktoken''", token);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
+            }
+            for (int i = 0; i < token.length(); i++) {
+                if (token.charAt(i) > 255) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_BAD_LOCK_TOKEN, 
+                            "Lock token ''{0}'' is not ASCII at byte ''{1}''", new Object[] {token, new Integer(i)});
+                    SVNErrorManager.error(err, SVNLogType.FSFS);
+                }
+            }
+            if (!SVNEncodingUtil.isXMLSafe(token)) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_BAD_LOCK_TOKEN, 
+                        "Lock token URI ''{0}'' is not XML-safe", token);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
+            }
+        }
 
         if (kind == SVNNodeKind.DIR) {
             SVNErrorManager.error(FSErrors.errorNotFile(path, this), SVNLogType.FSFS);
