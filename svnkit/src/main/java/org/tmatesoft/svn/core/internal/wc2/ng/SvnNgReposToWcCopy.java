@@ -132,7 +132,7 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
                 
                 Structure<NodeOriginInfo> no = getWcContext().getNodeOrigin(src, true, NodeOriginInfo.reposRelpath, NodeOriginInfo.reposRootUrl, NodeOriginInfo.revision);
                 if (no.get(NodeOriginInfo.reposRelpath) != null) {
-                    pair.source = no.<SVNURL>get(NodeOriginInfo.reposRootUrl).appendPath(no.text(NodeOriginInfo.reposRelpath), false);
+                    pair.source = no.<SVNURL>get(NodeOriginInfo.reposRootUrl).appendPath(no.<File>get(NodeOriginInfo.reposRelpath).getPath(), false);
                 } else {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' does not have an URL associated with it", src);
                     SVNErrorManager.error(err, SVNLogType.WC);
