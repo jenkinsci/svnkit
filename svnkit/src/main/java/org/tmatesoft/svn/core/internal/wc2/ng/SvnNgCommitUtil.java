@@ -12,7 +12,6 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
@@ -433,8 +432,8 @@ public class SvnNgCommitUtil {
         } else {
             result.set(NodeCommitStatus.updateRoot, false);
         }
-        SVNLock lock = nodeInfo.get(NodeInfo.lock);
-        result.set(NodeCommitStatus.lockToken, lock != null ? lock.getID() : null);
+        SVNWCDbLock lock = nodeInfo.get(NodeInfo.lock);
+        result.set(NodeCommitStatus.lockToken, lock != null ? lock.token : null);
         nodeInfo.release();
         return result;
     }
