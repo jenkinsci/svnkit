@@ -255,10 +255,21 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
             }
             
         }
-        // TODO test if dst and src are of the same repositories
+        boolean sameRepositories = false;
+        try {
+            String sourceUuid = repository.getRepositoryUUID(true);
+            File parent = copyPairs.size() == 1 ? SVNFileUtil.getParentFile(topDst) : topDst;
+            SVNWCNodeReposInfo info = getWcContext().getNodeReposInfo(parent);
+            String dstUuid = info != null ? info.reposUuid : null;
+            sameRepositories = sourceUuid != null && dstUuid != null && sourceUuid.equals(dstUuid);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() != SVNErrorCode.RA_NO_REPOS_UUID) {
+                throw e;
+            }
+        }
         long rev = -1;
         for (SvnCopyPair pair : copyPairs) {
-            rev = copy(pair, true, ignoreExternals, repository);
+            rev = copy(pair, sameRepositories, ignoreExternals, repository);
         }
         sleepForTimestamp();
         
@@ -284,16 +295,25 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
                 co.setSleepForTimestamp(false);
                 rev = co.run();
     
-                new SvnNgWcToWcCopy().copy(getWcContext(), dstPath, pair.dst, true);
-                File dstLock = getWcContext().acquireWriteLock(dstPath, false, true);
-                try {
-                    getWcContext().removeFromRevisionControl(dstPath, false, false);
-                } finally {
+                if (sameRepositories) {
+                    new SvnNgWcToWcCopy().copy(getWcContext(), dstPath, pair.dst, true);
+                    File dstLock = getWcContext().acquireWriteLock(dstPath, false, true);
                     try {
-                        getWcContext().releaseWriteLock(dstLock);
-                    } catch (SVNException e) {}
+                        getWcContext().removeFromRevisionControl(dstPath, false, false);
+                    } finally {
+                        try {
+                            getWcContext().releaseWriteLock(dstLock);
+                        } catch (SVNException e) {}
+                    }
+                    SVNFileUtil.rename(dstPath, pair.dst);
+                } else {
+                    SVNFileUtil.rename(dstPath, pair.dst);
+                    sleepForTimestamp();
+                    
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Source URL ''{0}'' is from foreign repository; " +
+                    		"leaving it as a disjoint WC", pair.source);
+                    SVNErrorManager.error(err, SVNLogType.WC);
                 }
-                SVNFileUtil.rename(dstPath, pair.dst);
             } finally {
                 SVNFileUtil.deleteAll(dstPath, true);
             }
