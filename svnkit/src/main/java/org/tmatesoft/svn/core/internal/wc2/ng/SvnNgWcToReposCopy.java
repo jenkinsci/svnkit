@@ -161,9 +161,9 @@ public class SvnNgWcToReposCopy extends SvnNgOperationRunner<SVNCommitInfo, SvnR
                 continue;
             }
             Map<String, SVNMergeRangeList> mergeInfo = calculateTargetMergeInfo(svnCopyPair.source, -1, repository);
-
             String mergeInfoProperty = getWcContext().getProperty(svnCopyPair.source, SVNProperty.MERGE_INFO);
-            Map<String, SVNMergeRangeList> wcMergeInfo = SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(mergeInfoProperty), null);
+            Map<String, SVNMergeRangeList> wcMergeInfo = 
+                    mergeInfoProperty != null ? SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(mergeInfoProperty), null) : null;
             if (wcMergeInfo != null && mergeInfo != null) {
                 mergeInfo = SVNMergeInfoUtil.mergeMergeInfos(mergeInfo, wcMergeInfo);
             } else if (mergeInfo == null) {
