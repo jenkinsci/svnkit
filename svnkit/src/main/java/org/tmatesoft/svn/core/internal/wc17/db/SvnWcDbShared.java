@@ -332,7 +332,7 @@ public class SvnWcDbShared {
                 }
                 if (info.hasField(NodeInfo.lock)) {
                     final SVNSqlJetStatement lockStmt = stmt.getJoinedStatement(SVNWCDbSchema.LOCK);
-                    SVNWCDbLock lock = getLockFromColumns(lockStmt, LOCK__Fields.lock_owner, LOCK__Fields.lock_token, LOCK__Fields.lock_comment, LOCK__Fields.lock_date);
+                    SVNWCDbLock lock = getLockFromColumns(lockStmt, LOCK__Fields.lock_token, LOCK__Fields.lock_owner, LOCK__Fields.lock_comment, LOCK__Fields.lock_date);
                     info.set(NodeInfo.lock, lock);
                 }
                 
@@ -518,7 +518,7 @@ public class SvnWcDbShared {
                 if (info.hasField(NodeInfo.lock)) {
                     if (opDepth == 0) {
                         final SVNSqlJetStatement stmtBaseLock = stmtInfo.getJoinedStatement(SVNWCDbSchema.LOCK.toString());
-                        SVNWCDbLock lock = getLockFromColumns(stmtBaseLock, LOCK__Fields.lock_owner, LOCK__Fields.lock_token, LOCK__Fields.lock_comment, LOCK__Fields.lock_date);
+                        SVNWCDbLock lock = getLockFromColumns(stmtBaseLock, LOCK__Fields.lock_token, LOCK__Fields.lock_owner, LOCK__Fields.lock_comment, LOCK__Fields.lock_date);
                         info.set(NodeInfo.lock, lock);
                     } else {
                         info.set(NodeInfo.lock, null);
