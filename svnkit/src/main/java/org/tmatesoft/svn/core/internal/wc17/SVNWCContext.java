@@ -3772,7 +3772,8 @@ public class SVNWCContext {
             return didSet;
         }
         String needsLock = getProperty(localAbspath, SVNProperty.NEEDS_LOCK);
-        if (needsLock != null) {
+        SVNProperties pristineProperties = getPristineProps(localAbspath);
+        if (needsLock != null && (pristineProperties != null && pristineProperties.getStringValue(SVNProperty.NEEDS_LOCK) != null)) {
             SVNFileUtil.setReadonly(localAbspath, true);
             didSet = true;
         }
