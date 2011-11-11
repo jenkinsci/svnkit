@@ -552,6 +552,9 @@ public class SvnNgCommitUtil {
             }
             String token = lockTokens.get(url);
             String path = url.getPath().substring(baseURL.getPath().length());
+            if (path.startsWith("/")) {
+                path = path.substring(1);
+            }
             translatedLocks.put(path, token);
         }
         return translatedLocks;
