@@ -258,7 +258,7 @@ public class SvnNgGetInfo extends SvnNgOperationRunner<SvnInfo, SvnGetInfo> impl
             wcInfo.setConflicts(getWcContext().getDb().readConflicts(localAbspath));
         }
         if (readInfo.lock != null) {
-            SVNLock lock = new SVNLock(null, readInfo.lock.token, readInfo.lock.owner, null, readInfo.lock.date, null);
+            SVNLock lock = new SVNLock(null, readInfo.lock.token, readInfo.lock.owner, readInfo.lock.comment, readInfo.lock.date, null);
             info.setLock(lock);
         }
         return info;
