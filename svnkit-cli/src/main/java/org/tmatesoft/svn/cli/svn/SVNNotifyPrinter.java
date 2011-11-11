@@ -62,6 +62,8 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
     private boolean myHasExternalErrors;
     private boolean myHasLockingError;
 
+    private boolean myIsWcToReposCopy;
+
     public SVNNotifyPrinter(SVNCommandEnvironment env) {
         this(env, false, false, false);
     }
@@ -71,6 +73,14 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
         myIsCheckout = isCheckout;
         myIsExport = isExport;
         myIsSuppressLastLine = suppressLastLine;
+    }
+    
+    public void setWcToReposCopy(boolean wcToReposCopy) {
+        myIsWcToReposCopy = wcToReposCopy;
+    }
+    
+    public boolean isWcToReposCopy() {
+        return myIsWcToReposCopy;
     }
     
     public boolean hasExternalErrors() {
@@ -360,17 +370,17 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
             myTreeConflicts = 0;
             mySkippedPaths = 0;
         } else if (event.getAction() == SVNEventAction.COMMIT_MODIFIED) {
-            buffer.append("Sending        " + path + "\n");
+            buffer.append((!isWcToReposCopy() ? "Sending        " : "Sending copy of        ") + path + "\n");
         } else if (event.getAction() == SVNEventAction.COMMIT_ADDED) {
             if (SVNProperty.isBinaryMimeType(event.getMimeType())) {
-                buffer.append("Adding  (bin)  " + path + "\n");
+                buffer.append((!isWcToReposCopy() ? "Adding  (bin)  " : "Adding copy of (bin)  ") + path + "\n");
             } else {
-                buffer.append("Adding         " + path + "\n");
+                buffer.append((!isWcToReposCopy() ? "Adding         " : "Adding copy of         ") + path + "\n");
             }
         } else if (event.getAction() == SVNEventAction.COMMIT_DELETED) {
-            buffer.append("Deleting       " + path + "\n");
+            buffer.append((!isWcToReposCopy() ? "Deleting       " : "Deleting copy of       ") + path + "\n");
         } else if (event.getAction() == SVNEventAction.COMMIT_REPLACED) {
-            buffer.append("Replacing      " + path + "\n");
+            buffer.append((!isWcToReposCopy() ? "Replacing      " : "Replacing copy of      ") + path + "\n");
         } else if (event.getAction() == SVNEventAction.COMMIT_DELTA_SENT) {
             if (!myIsDeltaSent) {
                 myIsDeltaSent = true;
