@@ -4,12 +4,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.util.SVNLogType;
-
 public class SvnCopy extends SvnOperation<Long> {
     
     private Collection<SvnCopySource> sources = new HashSet<SvnCopySource>();
@@ -41,23 +35,6 @@ public class SvnCopy extends SvnOperation<Long> {
         this.move = isMove;
     }
     
-
-    protected void ensureHomohenousSources() throws SVNException {
-        if (getSources().size() <= 1) {
-            return;
-        }
-        boolean remote = false;
-        boolean local = false;
-        for (SvnCopySource source : getSources()) {
-            remote |= source.isLocal();
-            local |= !source.isLocal();
-        }
-        if (remote && local) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Cannot mix repository and working copy sources");
-            SVNErrorManager.error(err, SVNLogType.WC);
-        }
-    }
-
     public boolean isMakeParents() {
         return makeParents;
     }
