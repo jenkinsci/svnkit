@@ -370,12 +370,10 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
             } finally {
                 SVNFileUtil.closeFile(ufInfo.stream);
             }
-            SVNProperties regularProperties = new SVNProperties();
-            SvnNgPropertiesManager.categorizeProperties(newProperties, regularProperties, null, null);
             InputStream newContents = SVNFileUtil.openFileForReading(ufInfo.path);
             try {
                 addFileToWc(getWcContext(), 
-                        pair.dst, newContents, null, regularProperties, null, 
+                        pair.dst, newContents, null, newProperties, null, 
                         sameRepositories ? pair.source : null, 
                         sameRepositories ? pair.revNum : -1);
             } finally {
@@ -509,6 +507,7 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
         SVNProperties regularProps = new SVNProperties();
         SVNProperties entryProps = new SVNProperties();
         SvnNgPropertiesManager.categorizeProperties(newBaseProps, regularProps, entryProps, null);
+        newBaseProps = regularProps;
         long changedRev = Long.parseLong(entryProps.getStringValue(SVNProperty.COMMITTED_REVISION));
         String changedAuthor = entryProps.getStringValue(SVNProperty.LAST_AUTHOR);
         SVNDate changedDate = SVNDate.parseDate(entryProps.getStringValue(SVNProperty.COMMITTED_DATE));
