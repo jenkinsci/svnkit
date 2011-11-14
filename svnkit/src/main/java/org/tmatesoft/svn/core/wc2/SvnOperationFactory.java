@@ -215,6 +215,9 @@ public class SvnOperationFactory {
     }
 
     public ISVNEventHandler getEventHandler() {
+        if (getWcContext() != null) {
+            return getWcContext().getEventHandler();
+        }
         return eventHandler;
     }
 

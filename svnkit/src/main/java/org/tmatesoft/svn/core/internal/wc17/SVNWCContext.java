@@ -30,6 +30,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Stack;
 import java.util.logging.Level;
 
 import org.tmatesoft.svn.core.SVNCancelException;
@@ -272,7 +273,7 @@ public class SVNWCContext {
 
     private ISVNWCDb db;
     private boolean closeDb;
-    private ISVNEventHandler eventHandler;
+    private Stack<ISVNEventHandler> eventHandler;
     private List<CleanupHandler> cleanupHandlers = new LinkedList<CleanupHandler>();
 
     public SVNWCContext(ISVNOptions config, ISVNEventHandler eventHandler) {
@@ -283,17 +284,28 @@ public class SVNWCContext {
         this.db = new SVNWCDb();
         this.db.open(mode, config, autoUpgrade, enforceEmptyWQ);
         this.closeDb = true;
-        this.eventHandler = eventHandler;
+        this.eventHandler = new Stack<ISVNEventHandler>();
+        this.eventHandler.push(eventHandler);
     }
 
     public SVNWCContext(ISVNWCDb db, ISVNEventHandler eventHandler) {
         this.db = db;
         this.closeDb = false;
-        this.eventHandler = eventHandler;
+
+        this.eventHandler = new Stack<ISVNEventHandler>();
+        this.eventHandler.push(eventHandler);
     }
 
     public ISVNEventHandler getEventHandler() {
-        return eventHandler;
+        return eventHandler.peek();
+    }
+    
+    public void pushEventHandler(ISVNEventHandler handler) {
+        eventHandler.push(handler);
+    }
+
+    public void popEventHandler() {
+        eventHandler.pop();
     }
 
     public void close() {
@@ -318,8 +330,8 @@ public class SVNWCContext {
     }
 
     public void checkCancelled() throws SVNCancelException {
-        if (eventHandler != null) {
-            eventHandler.checkCancelled();
+        if (getEventHandler() != null) {
+            getEventHandler().checkCancelled();
         }
     }
 
@@ -1701,9 +1713,9 @@ public class SVNWCContext {
             }
         }
         db.addBaseExcludedNode(localAbspath, reposRelpath, reposRoot, reposUuid, revision, kind, SVNWCDbStatus.Excluded, null, null);
-        if (eventHandler != null) {
+        if (getEventHandler() != null) {
             SVNEvent event = new SVNEvent(localAbspath, null, null, -1, null, null, null, null, SVNEventAction.DELETE, null, null, null, null);
-            eventHandler.handleEvent(event, 0);
+            getEventHandler().handleEvent(event, 0);
         }
         return;
     }
@@ -1822,7 +1834,7 @@ public class SVNWCContext {
         File admAbspath = db.getWCRoot(dirAbspath);
         db.forgetDirectoryTemp(dirAbspath);
         if (admAbspath.equals(dirAbspath)) {
-            SVNFileUtil.deleteAll(SVNWCUtils.admChild(admAbspath, null), true, this.eventHandler);
+            SVNFileUtil.deleteAll(SVNWCUtils.admChild(admAbspath, null), true, getEventHandler());
         }
     }
 
@@ -1923,7 +1935,7 @@ public class SVNWCContext {
             }
             if (eventHandler != null) {
                 SVNEvent event = new SVNEvent(childAbspath, null, null, -1, null, null, null, null, SVNEventAction.DELETE, null, null, null, null);
-                eventHandler.handleEvent(event, 0);
+                getEventHandler().handleEvent(event, 0);
             }
         }
     }

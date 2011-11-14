@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -43,6 +44,7 @@ import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess.LocationsInfo;
 import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess.RevisionsPair;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -293,25 +295,48 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
         return rev;
     }
 
-    private long copy(SvnCopyPair pair, boolean sameRepositories, boolean ignoreExternals, SVNRepository repository) throws SVNException {
+    private long copy(final SvnCopyPair pair, boolean sameRepositories, boolean ignoreExternals, SVNRepository repository) throws SVNException {
         long rev = -1;
         if (pair.srcKind == SVNNodeKind.DIR) {
             File dstParent = SVNFileUtil.getParentFile(pair.dst);
-            File dstPath = SVNFileUtil.createUniqueFile(dstParent, pair.dst.getName(), ".tmp", false);
+            final File dstPath = SVNFileUtil.createUniqueFile(dstParent, pair.dst.getName(), ".tmp", false);
             SVNFileUtil.deleteFile(dstPath);
             SVNFileUtil.ensureDirectoryExists(dstPath);
-            try {
-                
+            try {                
                 SvnCheckout co = getOperation().getOperationFactory().createCheckout();
                 co.setSingleTarget(SvnTarget.fromFile(dstPath));
-                // peg may be wrong here.
                 co.setSource(SvnTarget.fromURL(pair.sourceOriginal, pair.sourcePegRevision));
                 co.setRevision(pair.sourceRevision);
                 co.setIgnoreExternals(ignoreExternals);
                 co.setDepth(SVNDepth.INFINITY);
                 co.setAllowUnversionedObstructions(false);
                 co.setSleepForTimestamp(false);
-                rev = co.run();
+                final ISVNEventHandler oldHandler = getWcContext().getEventHandler();
+                getWcContext().pushEventHandler(new ISVNEventHandler() {
+                    public void checkCancelled() throws SVNCancelException {
+                        if (oldHandler != null) {
+                            oldHandler.checkCancelled();
+                        }
+                    }
+                    public void handleEvent(SVNEvent event, double progress) throws SVNException {
+                        File path = event.getFile();
+                        if (path != null) {
+                            path = SVNWCUtils.skipAncestor(dstPath, path);
+                            if (path != null) {
+                                path = new File(pair.dst, path.getPath());
+                                event.setFile(path);
+                            } else if (dstPath.equals(event.getFile())) {
+                                event.setFile(pair.dst);
+                            }
+                        }
+                        oldHandler.handleEvent(event, progress);
+                    }
+                });
+                try {
+                    rev = co.run();
+                } finally {
+                    getWcContext().popEventHandler();
+                }
     
                 if (sameRepositories) {
                     new SvnNgWcToWcCopy().copy(getWcContext(), dstPath, pair.dst, true);

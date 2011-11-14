@@ -439,5 +439,10 @@ public class SVNEvent {
     public void setInfo(Object info) {
         this.info = info;
     }
+
+
+    public void setFile(File path) {
+        this.myFile = path;
+    }
     
 }
