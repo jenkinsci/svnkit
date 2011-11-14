@@ -370,10 +370,12 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
             } finally {
                 SVNFileUtil.closeFile(ufInfo.stream);
             }
+            SVNProperties regularProperties = new SVNProperties();
+            SvnNgPropertiesManager.categorizeProperties(newProperties, regularProperties, null, null);
             InputStream newContents = SVNFileUtil.openFileForReading(ufInfo.path);
             try {
                 addFileToWc(getWcContext(), 
-                        pair.dst, newContents, null, newProperties, null, 
+                        pair.dst, newContents, null, regularProperties, null, 
                         sameRepositories ? pair.source : null, 
                         sameRepositories ? pair.revNum : -1);
             } finally {
