@@ -267,7 +267,7 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
             if (dstKind != SVNNodeKind.DIR) {
-                if (status == SVNWCDbStatus.Deleted || status == SVNWCDbStatus.NotPresent) {
+                if ((status != SVNWCDbStatus.Deleted) && (status != SVNWCDbStatus.NotPresent)) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "Entry for ''{0}'' exists (though the working file is missing)",
                             pair.dst);
                     SVNErrorManager.error(err, SVNLogType.WC);
