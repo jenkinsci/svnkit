@@ -722,6 +722,10 @@ public class SVNFileUtil {
     }
 
     public static void copyFile(File src, File dst, boolean safe) throws SVNException {
+        copyFile(src, dst, safe, true);
+    }
+
+    public static void copyFile(File src, File dst, boolean safe, boolean keepTimestamp) throws SVNException {
         if (src == null || dst == null) {
             return;
         }
@@ -811,7 +815,9 @@ public class SVNFileUtil {
         if (executable) {
             setExecutable(dst, true);
         }
-        SVNFileUtil.setLastModified(dst, src.lastModified());
+        if (keepTimestamp) {
+            SVNFileUtil.setLastModified(dst, src.lastModified());
+        }
     }
     
     public static boolean setLastModified(File file, long timestamp) {

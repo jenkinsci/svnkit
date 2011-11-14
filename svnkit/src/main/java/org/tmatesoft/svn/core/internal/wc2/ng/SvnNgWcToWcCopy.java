@@ -575,7 +575,7 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
                 SVNFileUtil.ensureDirectoryExists(dstPath);
             }
         } else if (!special) {
-            SVNFileUtil.copyFile(source, dstPath, false);
+            SVNFileUtil.copyFile(source, dstPath, false, false);
         } else {
             SVNFileUtil.copy(source, dstPath, false, true);
         }
