@@ -487,7 +487,7 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
                 File childDstPath = SVNFileUtil.createFilePath(dst, childName);
                 File tmp = copyToTmpDir(childSrcPath, tmpDir, true);
                 if (tmp != null) {
-                    SVNSkel moveItem = wcContext.wqBuildFileMove(tmp, childDstPath);
+                    SVNSkel moveItem = wcContext.wqBuildFileMove(SVNFileUtil.getParentFile(dst), tmp, childDstPath);
                     getWcContext().getDb().addWorkQueue(dst, moveItem);
                 }
             }

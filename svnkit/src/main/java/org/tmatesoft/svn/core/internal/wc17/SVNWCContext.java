@@ -3082,6 +3082,24 @@ public class SVNWCContext {
         result.appendChild(workItem);
         return result;
     }
+    
+    public SVNSkel wqBuildFileMove(File anchorPath, File srcAbspath, File dstAbspath) throws SVNException {
+        assert (SVNFileUtil.isAbsolute(srcAbspath));
+        assert (SVNFileUtil.isAbsolute(dstAbspath));
+        SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(srcAbspath));
+        if (kind == SVNNodeKind.NONE) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "''{0}'' not found", srcAbspath);
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+        SVNSkel workItem = SVNSkel.createEmptyList();
+        File anchorRelativePath = getRelativePath(anchorPath);
+        workItem.prependPath(SVNFileUtil.createFilePath(anchorRelativePath, SVNWCUtils.skipAncestor(anchorPath, srcAbspath)));
+        workItem.prependPath(SVNFileUtil.createFilePath(anchorRelativePath, SVNWCUtils.skipAncestor(anchorPath, dstAbspath)));
+        workItem.prependString(WorkQueueOperation.FILE_MOVE.getOpName());
+        SVNSkel result = SVNSkel.createEmptyList();
+        result.appendChild(workItem);
+        return result;
+    }
 
     public SVNSkel wqBuildFileCopyTranslated(File localAbspath, File srcAbspath, File dstAbspath) throws SVNException {
         assert (SVNFileUtil.isAbsolute(localAbspath));
@@ -3491,8 +3509,10 @@ public class SVNWCContext {
     public static class RunFileMove implements RunWorkQueueOperation {
 
         public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) throws SVNException {
-            File srcAbspath = SVNFileUtil.createFilePath(wcRootAbspath, workItem.getChild(1).getValue());
-            File dstAbspath = SVNFileUtil.createFilePath(wcRootAbspath, workItem.getChild(2).getValue());
+            String srcRelPath = workItem.getChild(1).getValue();
+            String dstRelPath = workItem.getChild(2).getValue();
+            File srcAbspath = SVNFileUtil.createFilePath(wcRootAbspath, srcRelPath);
+            File dstAbspath = SVNFileUtil.createFilePath(wcRootAbspath, dstRelPath);
             if (srcAbspath.exists()) {
                 SVNFileUtil.rename(srcAbspath, dstAbspath);
             }
