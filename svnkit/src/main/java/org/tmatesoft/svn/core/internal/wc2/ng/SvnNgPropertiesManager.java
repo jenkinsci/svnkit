@@ -244,7 +244,7 @@ public class SvnNgPropertiesManager {
             if (SVNProperty.isEntryProperty(name) && entry != null) {
                 entry.put(name, pv);
             } else if (SVNProperty.isRegularProperty(name) && regular != null) {
-                entry.put(name, pv);
+                regular.put(name, pv);
             } else if (SVNProperty.isWorkingCopyProperty(name) && working != null) {
                 working.put(name, pv);
             }
