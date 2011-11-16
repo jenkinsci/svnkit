@@ -52,6 +52,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo.Repos
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.ExternalNodeInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeOriginInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbExternals;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgPropertiesManager;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
@@ -388,7 +389,6 @@ public class SVNStatusEditor17 {
         if (node_status == SVNStatusType.STATUS_NORMAL && prop_status != SVNStatusType.STATUS_NONE) {
             node_status = prop_status;
         }
-
         if (!getAll) {
             if ((node_status == SVNStatusType.STATUS_NONE || node_status == SVNStatusType.STATUS_NORMAL) 
                     && !switched_p
@@ -400,8 +400,20 @@ public class SVNStatusEditor17 {
                 return null;
             }
         }
+        SVNURL copyFromUrl = null;
+        long copyFromRevision = -1;
+
+        if (copied) {
+            Structure<NodeOriginInfo> origin = context.getNodeOrigin(localAbsPath, false, NodeOriginInfo.reposRootUrl, NodeOriginInfo.reposRelpath, NodeOriginInfo.revision);
+            copyFromUrl = origin.get(NodeOriginInfo.reposRootUrl);
+            if (copyFromUrl != null) {
+                copyFromUrl = SVNWCUtils.join(copyFromUrl, origin.<File>get(NodeOriginInfo.reposRelpath));
+                copyFromRevision = origin.lng(NodeOriginInfo.revision);
+            }
+            origin.release();
+        }
         
-        WCDbRepositoryInfo reposInfo =getRepositoryRootUrlRelPath(context, parentReposInfo, info, localAbsPath);
+        WCDbRepositoryInfo reposInfo = getRepositoryRootUrlRelPath(context, parentReposInfo, info, localAbsPath);
         SVNNodeKind statusKind = null;
         switch (info.kind) {
         case Dir:
@@ -422,6 +434,9 @@ public class SVNStatusEditor17 {
         if (info.lock != null) {
             stat.setLock(new SVNLock(SVNFileUtil.getFilePath(reposInfo.relPath), info.lock.token, info.lock.owner, info.lock.comment, info.lock.date, null));
         }
+
+        stat.setCopyFromUrl(copyFromUrl);
+        stat.setCopyFromRevision(copyFromRevision);
 
         stat.setDepth(info.depth);
         stat.setNodeStatus(node_status);

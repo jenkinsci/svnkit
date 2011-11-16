@@ -23,6 +23,8 @@ public class SvnStatus extends SvnObject {
     
     private boolean wcLocked;
     private boolean copied;
+    private SVNURL copyFromUrl;
+    private long copyFromRevision;
     
     private SVNURL repositoryRootUrl;
     private String repositoryUuid;
@@ -230,5 +232,17 @@ public class SvnStatus extends SvnObject {
     }
     public void setChangelist(String changelist) {
         this.changelist = changelist;
+    }
+    public void setCopyFromUrl(SVNURL copyFromUrl) {
+        this.copyFromUrl = copyFromUrl;
+    }
+    public SVNURL getCopyFromUrl() {
+        return copyFromUrl;
+    }
+    public void setCopyFromRevision(long copyFromRevision) {
+        this.copyFromRevision = copyFromRevision;
+    }
+    public long getCopyFromRevision() {
+        return copyFromRevision;
     }
 }

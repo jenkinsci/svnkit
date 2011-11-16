@@ -122,6 +122,12 @@ public class SvnCodec {
         result.setVersioned(status.isVersioned());
         result.setWcLocked(status.isLocked());
         
+        try {
+            result.setCopyFromUrl(status.getCopyFromURL() != null ? SVNURL.parseURIEncoded(status.getCopyFromURL()) : null);
+            result.setCopyFromRevision(status.getCopyFromRevision() != null ? status.getCopyFromRevision().getNumber() : -1);
+        } catch (SVNException e) {
+            result.setCopyFromUrl(null);
+        }
         return result;
     }
     
@@ -247,6 +253,9 @@ public class SvnCodec {
             result.setPropertiesStatus(SVNStatusType.STATUS_NONE);
         }
         result.setWorkingCopyFormat(ISVNWCDb.WC_FORMAT_17);
+        
+        result.setCopyFromRevision(status.getCopyFromRevision() >= 0 ? SVNRevision.create(status.getCopyFromRevision()) : SVNRevision.UNDEFINED);
+        result.setCopyFromURL(status.getCopyFromUrl() != null ? status.getCopyFromUrl().toString() : null);
         
         return result;
     }
