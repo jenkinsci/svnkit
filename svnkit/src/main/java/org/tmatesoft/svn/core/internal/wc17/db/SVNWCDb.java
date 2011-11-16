@@ -950,17 +950,20 @@ public class SVNWCDb implements ISVNWCDb {
         SVNWCDbDir pdh = parseDir.wcDbDir;
         verifyDirUsable(pdh);
         boolean haveRow = false;
-        SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_PRISTINE_MD5_CHECKSUM);
+        SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_PRISTINE_SHA1_CHECKSUM);
+        stmt.bindf("s", sha1Checksum);
         try {
             haveRow = stmt.next();
         } finally {
             stmt.reset();
         }
-        File pristineAbspath = getPristineFileName(pdh, sha1Checksum, false);
-        SVNNodeKind kindOnDisk = SVNFileType.getNodeKind(SVNFileType.getType(pristineAbspath));
-        if (kindOnDisk != (haveRow ? SVNNodeKind.FILE : SVNNodeKind.NONE)) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_DB_ERROR, "The pristine text with checksum ''{0}'' was found in the DB or on disk but not both", sha1Checksum);
-            SVNErrorManager.error(err, SVNLogType.WC);
+        if (haveRow) {
+            File pristineAbspath = getPristineFileName(pdh, sha1Checksum, false);
+            SVNNodeKind kindOnDisk = SVNFileType.getNodeKind(SVNFileType.getType(pristineAbspath));
+            if (kindOnDisk != SVNNodeKind.FILE) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_DB_ERROR, "The pristine text with checksum ''{0}'' was found in the DB but not disk", sha1Checksum);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
         }
         return haveRow;
     }
@@ -1266,7 +1269,7 @@ public class SVNWCDb implements ISVNWCDb {
         SVNWCDbDir pdh = parsed.wcDbDir;
         verifyDirUsable(pdh);
 
-        SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_PRISTINE_SHA1_CHECKSUM);
+        SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_PRISTINE_MD5_CHECKSUM);
         try {
             stmt.bindChecksum(1, md5Checksum);
             boolean have_row = stmt.next();

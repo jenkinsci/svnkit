@@ -497,7 +497,7 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
 
     private void copyVersionedFile(SVNWCContext wcContext, File source, File dst, File dstOpRoot, File tmpDir, SvnChecksum srcChecksum, boolean metadataOnly, boolean conflicted, boolean notify) throws SVNException {
         if (srcChecksum != null) {
-            if (!wcContext.getDb().checkPristine(dst, srcChecksum)) {
+            if (!wcContext.getDb().checkPristine(dstOpRoot, srcChecksum)) {
                 SvnChecksum md5 = wcContext.getDb().getPristineMD5(source, srcChecksum);
                 PristineContentsInfo pristine = wcContext.getPristineContents(source, false, true);
                 File tempFile = SVNFileUtil.createUniqueFile(tmpDir, dst.getName(), ".tmp", false);
