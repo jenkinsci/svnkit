@@ -41,6 +41,7 @@ import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.wc.SVNConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnChecksum;
 import org.tmatesoft.svn.core.wc2.SvnCopy;
 import org.tmatesoft.svn.core.wc2.SvnCopySource;
@@ -57,13 +58,19 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
     
     private boolean areAllSourcesLocal(SvnCopy operation) {
         for(SvnCopySource source : operation.getSources()) {
-            if (!source.isLocal()) {
-                return false;
+            if (source.getSource().isFile() &&
+                    isLocalRevision(source.getRevision()) && isLocalRevision(source.getSource().getPegRevision())) {
+                continue;
             }
+            return false;
         }
         return true;
     }
     
+    private boolean isLocalRevision(SVNRevision revision) {
+        return revision == SVNRevision.WORKING || revision == SVNRevision.UNDEFINED;
+    }
+
     @Override
     protected Long run(SVNWCContext context) throws SVNException {
         Collection<SvnCopySource> sources = getOperation().getSources();
