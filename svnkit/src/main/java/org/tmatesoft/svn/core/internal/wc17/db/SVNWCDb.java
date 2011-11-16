@@ -961,7 +961,7 @@ public class SVNWCDb implements ISVNWCDb {
             File pristineAbspath = getPristineFileName(pdh, sha1Checksum, false);
             SVNNodeKind kindOnDisk = SVNFileType.getNodeKind(SVNFileType.getType(pristineAbspath));
             if (kindOnDisk != SVNNodeKind.FILE) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_DB_ERROR, "The pristine text with checksum ''{0}'' was found in the DB but not disk", sha1Checksum);
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_DB_ERROR, "The pristine text with checksum ''{0}'' was found in the DB but not on disk", sha1Checksum);
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
         }
