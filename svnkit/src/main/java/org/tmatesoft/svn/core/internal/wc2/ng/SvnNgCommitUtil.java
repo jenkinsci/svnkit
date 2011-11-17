@@ -19,6 +19,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.CheckSpecialInfo;
@@ -169,13 +170,14 @@ public class SvnNgCommitUtil {
                     continue;
                 }
                 SVNURL url = SVNWCUtils.join(item.getCopyFromUrl(), absent);
+                SVNNodeKind kind = SVNNodeKind.UNKNOWN;
                 if (urlKindCallback != null) {
-                    if (urlKindCallback.getUrlKind(url, item.getCopyFromRevision()) == SVNNodeKind.NONE) {
+                    kind = urlKindCallback.getUrlKind(url, item.getCopyFromRevision());
+                    if (kind == SVNNodeKind.NONE) {
                         continue;
                     }
                 }
-                String reposRelativePath = SVNURLUtil.getRelativeURL(rootUrl, url);
-                packet.addItem(localAbsPath, SVNNodeKind.NONE, rootUrl,  reposRelativePath, -1, null, -1, SvnCommitItem.DELETE);
+                packet.addItem(localAbsPath, rootUrl, kind, SVNWCUtils.join(item.getUrl(), absent),  -1, null, -1, SvnCommitItem.DELETE);
             }
         }
     }

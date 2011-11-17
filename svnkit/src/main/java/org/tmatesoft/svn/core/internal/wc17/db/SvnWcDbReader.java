@@ -41,9 +41,9 @@ public class SvnWcDbReader extends SvnWcDbShared {
         Collection<File> result = new ArrayList<File>();
         SVNSqlJetStatement stmt = sdb.getStatement(SVNWCDbStatements.SELECT_NOT_PRESENT_DESCENDANTS);
         try {
-            stmt.bindf("isi", wcId, parentPath, SVNWCUtils.relpathDepth(localRelPath));
+            stmt.bindf("isi", wcId, localRelPath, SVNWCUtils.relpathDepth(localRelPath));
             while(stmt.next()) {
-                result.add(getColumnPath(stmt, NODES__Fields.local_relpath));
+                result.add(new File(SVNWCUtils.getPathAsChild(localRelPath, getColumnPath(stmt, NODES__Fields.local_relpath))));
             }
         } finally {
             reset(stmt);
