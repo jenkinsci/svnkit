@@ -2560,15 +2560,7 @@ public class SVNWCClient extends SVNBasicClient {
      *             instead
      */
     public void doSetProperty(File path, String propName, SVNPropertyValue propValue, boolean force, boolean recursive, ISVNPropertyHandler handler) throws SVNException {
-        try {
-            getSVNWCClient17().doSetProperty(path, propName, propValue, force, recursive, handler);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNWCClient16().doSetProperty(path, propName, propValue, force, recursive, handler);
-                return;
-            }
-            throw e;
-        }
+        doSetProperty(path, propName, propValue, force, SVNDepth.fromRecurse(recursive), handler, null);
     }
     
 }
