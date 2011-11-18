@@ -23,6 +23,7 @@ import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc17.SVNCommitter17;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeOriginInfo;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
@@ -221,7 +222,7 @@ public class SvnNgWcToReposCopy extends SvnNgOperationRunner<SVNCommitInfo, SvnR
         Structure<NodeOriginInfo> nodeOrigin = getWcContext().getNodeOrigin(srcFile, false, NodeOriginInfo.revision, NodeOriginInfo.reposRelpath, NodeOriginInfo.reposRootUrl);
         if (nodeOrigin != null && nodeOrigin.get(NodeOriginInfo.reposRelpath) != null) {
             url = nodeOrigin.get(NodeOriginInfo.reposRootUrl);
-            url = url.appendPath(nodeOrigin.<File>get(NodeOriginInfo.reposRelpath).getPath(), false);
+            url = SVNWCUtils.join(url, nodeOrigin.<File>get(NodeOriginInfo.reposRelpath));
             srcRevision = nodeOrigin.lng(NodeOriginInfo.revision);
         }
         if (url != null) {

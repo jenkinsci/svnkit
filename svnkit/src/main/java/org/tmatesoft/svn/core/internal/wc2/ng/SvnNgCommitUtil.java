@@ -291,7 +291,7 @@ public class SvnNgCommitUtil {
                 && !((stateFlags & SvnCommitItem.DELETE) != 0)) {
             long dirRevision = 0;
             if (!copyModeRoot) {
-                dirRevision = context.getNodeBaseRev(localAbsPath);
+                dirRevision = context.getNodeBaseRev(SVNFileUtil.getParentFile(localAbsPath));
             }
             if (copyModeRoot || dirRevision != commitStatus.lng(NodeCommitStatus.revision)) {
                 stateFlags |= SvnCommitItem.ADD;
