@@ -1,6 +1,7 @@
 package org.tmatesoft.svn.core.internal.wc2.ng;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -19,7 +20,6 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.CheckSpecialInfo;
@@ -132,7 +132,7 @@ public class SvnNgCommitUtil {
             harvestCommittables(context, targetPath, packet, lockTokens, repositoryRootUrl, null, false, depth, justLocked, changelists, false, false, urlKindCallback, context.getEventHandler());
         }
         for(SVNURL root : packet.getRepositoryRoots()) {
-            handleDescendants(context, packet, root, packet.getItems(root), urlKindCallback, context.getEventHandler());
+            handleDescendants(context, packet, root, new ArrayList<SvnCommitItem>(packet.getItems(root)), urlKindCallback, context.getEventHandler());
         }
         
         for(File danglingParent : danglers.keySet()) {
