@@ -27,6 +27,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbBaseInfo.BaseInfoFie
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
 import org.tmatesoft.svn.core.internal.wc2.ISvnCommitRunner;
+import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
 import org.tmatesoft.svn.core.wc.ISVNCommitHandler;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
 import org.tmatesoft.svn.core.wc.ISVNStatusFileProvider;
@@ -43,6 +44,7 @@ import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
+import org.tmatesoft.svn.core.wc2.SvnAnnotateItem;
 import org.tmatesoft.svn.core.wc2.SvnChecksum;
 import org.tmatesoft.svn.core.wc2.SvnCommit;
 import org.tmatesoft.svn.core.wc2.SvnCommitItem;
@@ -74,6 +76,23 @@ public class SvnCodec {
             public void receive(SvnTarget target, SVNLogEntry object) throws SVNException {
                 if (handler != null) {
                     handler.handleLogEntry(object);
+                }
+            }
+        };
+    }
+    
+    public static ISvnObjectReceiver<SvnAnnotateItem> annotateReceiver(final ISVNAnnotateHandler handler) {
+        return new ISvnObjectReceiver<SvnAnnotateItem>() {
+            public void receive(SvnTarget target, SvnAnnotateItem item) throws SVNException {
+                if (handler != null) {
+                	if (item.isEof())
+                		handler.handleEOF();
+                	else if (item.isLine()) 
+                		handler.handleLine(item.getDate(), item.getRevision(), item.getAuthor(), item.getLine(), item.getMergedDate(), 
+                				item.getMergedRevision(), item.getMergedAuthor(), item.getMergedPath(), item.getLineNumber());
+                	else if (item.isRevision())
+                		handler.handleRevision(item.getDate(), item.getRevision(), item.getAuthor(), item.getContents());
+                	
                 }
             }
         };

@@ -28,6 +28,7 @@ import org.tmatesoft.svn.core.internal.wc16.SVNLogClient16;
 import org.tmatesoft.svn.core.internal.wc17.SVNLogClient17;
 import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.wc2.SvnAnnotate;
 import org.tmatesoft.svn.core.wc2.SvnLog;
 import org.tmatesoft.svn.core.wc2.SvnRevisionRange;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -189,15 +190,13 @@ public class SVNLogClient extends SVNBasicClient {
      *      boolean, ISVNAnnotateHandler, String)
      */
     public void doAnnotate(File path, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, ISVNAnnotateHandler handler) throws SVNException {
-        try {
-            getSVNLogClient17().doAnnotate(path, pegRevision, startRevision, endRevision, handler);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNLogClient16().doAnnotate(path, pegRevision, startRevision, endRevision, handler);
-                return;
-            }
-            throw e;
-        }
+        SvnAnnotate annotate = getOperationsFactory().createAnnotate();
+    	annotate.addTarget(SvnTarget.fromFile(path, pegRevision));
+    	annotate.setStartRevision(startRevision);
+    	annotate.setEndRevision(endRevision);
+    	annotate.setDiffOptions(getDiffOptions());
+    	annotate.setReceiver(SvnCodec.annotateReceiver(handler));
+        annotate.run();
     }
 
     /**
@@ -229,15 +228,14 @@ public class SVNLogClient extends SVNBasicClient {
      * @since 1.1
      */
     public void doAnnotate(File path, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, boolean ignoreMimeType, ISVNAnnotateHandler handler) throws SVNException {
-        try {
-            getSVNLogClient17().doAnnotate(path, pegRevision, startRevision, endRevision, ignoreMimeType, handler);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNLogClient16().doAnnotate(path, pegRevision, startRevision, endRevision, ignoreMimeType, handler);
-                return;
-            }
-            throw e;
-        }
+        SvnAnnotate annotate = getOperationsFactory().createAnnotate();
+    	annotate.addTarget(SvnTarget.fromFile(path, pegRevision));
+    	annotate.setStartRevision(startRevision);
+    	annotate.setEndRevision(endRevision);
+    	annotate.setIgnoreMimeType(ignoreMimeType);
+    	annotate.setDiffOptions(getDiffOptions());
+    	annotate.setReceiver(SvnCodec.annotateReceiver(handler));
+        annotate.run();
     }
 
     /**
@@ -302,15 +300,16 @@ public class SVNLogClient extends SVNBasicClient {
      */
     public void doAnnotate(File path, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, boolean ignoreMimeType, boolean includeMergedRevisions, ISVNAnnotateHandler handler,
             String inputEncoding) throws SVNException {
-        try {
-            getSVNLogClient17().doAnnotate(path, pegRevision, startRevision, endRevision, ignoreMimeType, includeMergedRevisions, handler, inputEncoding);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNLogClient16().doAnnotate(path, pegRevision, startRevision, endRevision, ignoreMimeType, includeMergedRevisions, handler, inputEncoding);
-                return;
-            }
-            throw e;
-        }
+        SvnAnnotate annotate = getOperationsFactory().createAnnotate();
+    	annotate.addTarget(SvnTarget.fromFile(path, pegRevision));
+    	annotate.setStartRevision(startRevision);
+    	annotate.setEndRevision(endRevision);
+    	annotate.setIgnoreMimeType(ignoreMimeType);
+    	annotate.setUseMergeHistory(includeMergedRevisions);
+    	annotate.setInputEncoding(inputEncoding);
+    	annotate.setDiffOptions(getDiffOptions());
+    	annotate.setReceiver(SvnCodec.annotateReceiver(handler));
+        annotate.run();
     }
 
     /**
@@ -338,15 +337,13 @@ public class SVNLogClient extends SVNBasicClient {
      *      boolean, ISVNAnnotateHandler, String)
      */
     public void doAnnotate(SVNURL url, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, ISVNAnnotateHandler handler) throws SVNException {
-        try {
-            getSVNLogClient17().doAnnotate(url, pegRevision, startRevision, endRevision, handler);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNLogClient16().doAnnotate(url, pegRevision, startRevision, endRevision, handler);
-                return;
-            }
-            throw e;
-        }
+        SvnAnnotate annotate = getOperationsFactory().createAnnotate();
+    	annotate.addTarget(SvnTarget.fromURL(url, pegRevision));
+    	annotate.setStartRevision(startRevision);
+    	annotate.setEndRevision(endRevision);
+    	annotate.setDiffOptions(getDiffOptions());
+    	annotate.setReceiver(SvnCodec.annotateReceiver(handler));
+        annotate.run();
     }
 
     /**
@@ -375,15 +372,14 @@ public class SVNLogClient extends SVNBasicClient {
      *      boolean, ISVNAnnotateHandler, String)
      */
     public void doAnnotate(SVNURL url, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, ISVNAnnotateHandler handler, String inputEncoding) throws SVNException {
-        try {
-            getSVNLogClient17().doAnnotate(url, pegRevision, startRevision, endRevision, handler, inputEncoding);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNLogClient16().doAnnotate(url, pegRevision, startRevision, endRevision, handler, inputEncoding);
-                return;
-            }
-            throw e;
-        }
+        SvnAnnotate annotate = getOperationsFactory().createAnnotate();
+    	annotate.addTarget(SvnTarget.fromURL(url, pegRevision));
+    	annotate.setStartRevision(startRevision);
+    	annotate.setEndRevision(endRevision);
+    	annotate.setInputEncoding(inputEncoding);
+    	annotate.setDiffOptions(getDiffOptions());
+    	annotate.setReceiver(SvnCodec.annotateReceiver(handler));
+        annotate.run();
     }
 
     /**
@@ -418,15 +414,15 @@ public class SVNLogClient extends SVNBasicClient {
      */
     public void doAnnotate(SVNURL url, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, boolean ignoreMimeType, ISVNAnnotateHandler handler, String inputEncoding)
             throws SVNException {
-        try {
-            getSVNLogClient17().doAnnotate(url, pegRevision, startRevision, endRevision, ignoreMimeType, handler, inputEncoding);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNLogClient16().doAnnotate(url, pegRevision, startRevision, endRevision, ignoreMimeType, handler, inputEncoding);
-                return;
-            }
-            throw e;
-        }
+    	SvnAnnotate annotate = getOperationsFactory().createAnnotate();
+    	annotate.addTarget(SvnTarget.fromURL(url, pegRevision));
+    	annotate.setStartRevision(startRevision);
+    	annotate.setEndRevision(endRevision);
+    	annotate.setIgnoreMimeType(ignoreMimeType);
+    	annotate.setInputEncoding(inputEncoding);
+    	annotate.setDiffOptions(getDiffOptions());
+    	annotate.setReceiver(SvnCodec.annotateReceiver(handler));
+        annotate.run();
     }
 
     /**
@@ -491,16 +487,16 @@ public class SVNLogClient extends SVNBasicClient {
      */
     public void doAnnotate(SVNURL url, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, boolean ignoreMimeType, boolean includeMergedRevisions,
             ISVNAnnotateHandler handler, String inputEncoding) throws SVNException {
-        try {
-            getSVNLogClient17().doAnnotate(url, pegRevision, startRevision, endRevision, ignoreMimeType, includeMergedRevisions, handler, inputEncoding);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNLogClient16().doAnnotate(url, pegRevision, startRevision, endRevision, ignoreMimeType, includeMergedRevisions, handler, inputEncoding);
-                return;
-            }
-            throw e;
-        }
-
+    	SvnAnnotate annotate = getOperationsFactory().createAnnotate();
+    	annotate.addTarget(SvnTarget.fromURL(url, pegRevision));
+    	annotate.setStartRevision(startRevision);
+    	annotate.setEndRevision(endRevision);
+    	annotate.setIgnoreMimeType(ignoreMimeType);
+    	annotate.setUseMergeHistory(includeMergedRevisions);
+    	annotate.setInputEncoding(inputEncoding);
+    	annotate.setDiffOptions(getDiffOptions());
+    	annotate.setReceiver(SvnCodec.annotateReceiver(handler));
+        annotate.run();
     }
 
     /**
