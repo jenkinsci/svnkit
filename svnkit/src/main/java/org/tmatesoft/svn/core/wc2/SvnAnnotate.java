@@ -92,12 +92,21 @@ public class SvnAnnotate extends SvnReceivingOperation<SvnAnnotateItem> {
     protected void ensureArgumentsAreValid() throws SVNException {
         super.ensureArgumentsAreValid();
         
+        /*
+        if (startRevision == null || !startRevision.isValid() || endRevision == null || !endRevision.isValid() ) {
+        	SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION);
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+        */
+        
         if (startRevision == null || !startRevision.isValid()) {
             startRevision = SVNRevision.create(1);
         }
         if (endRevision == null || !endRevision.isValid()) {
             endRevision = getFirstTarget().getPegRevision();
         }
+        
+        
         if (startRevision == SVNRevision.WORKING || endRevision == SVNRevision.WORKING) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Blame of the WORKING revision is not supported");
             SVNErrorManager.error(err, SVNLogType.WC);

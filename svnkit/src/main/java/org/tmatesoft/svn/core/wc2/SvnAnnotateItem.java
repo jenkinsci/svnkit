@@ -17,6 +17,7 @@ public class SvnAnnotateItem {
     private boolean isEof;
     private boolean isRevision;
     private boolean isLine;
+    private boolean returnResult;
     
     public SvnAnnotateItem(boolean isEof)
     {
@@ -95,6 +96,14 @@ public class SvnAnnotateItem {
 	
 	public boolean isRevision() {
 		return isRevision;
+	}
+	
+	public void setReturnResult(boolean returnResult) {
+		this.returnResult = returnResult;
+	}
+	
+	public boolean getReturnResult() {
+		return returnResult;
 	}
 	
 	

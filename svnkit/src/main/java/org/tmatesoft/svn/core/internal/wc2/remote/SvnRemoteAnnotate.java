@@ -30,6 +30,7 @@ public class SvnRemoteAnnotate extends SvnRemoteOperationRunner<SvnAnnotateItem,
     protected SvnAnnotateItem run() throws SVNException {
     	Structure<RepositoryInfo> repositoryInfo = getRepositoryAccess().createRepositoryFor(
 				getOperation().getFirstTarget(), getOperation().getEndRevision(), getOperation().getFirstTarget().getPegRevision(),null);
+		
     	SVNRepository repository = repositoryInfo.<SVNRepository>get(RepositoryInfo.repository);
 		repositoryInfo.release();
 		
@@ -64,7 +65,7 @@ public class SvnRemoteAnnotate extends SvnRemoteOperationRunner<SvnAnnotateItem,
     			getOperation().isIgnoreMimeType(), getOperation().isUseMergeHistory(), getOperation().getDiffOptions(), getOperation().getInputEncoding(), this, this);
     	
        try {
-        	repository.getFileRevisions("", startRev > 0 ? startRev - 1 : startRev, endRev, getOperation().isUseMergeHistory(), generator);
+    	   	repository.getFileRevisions("", startRev > 0 ? startRev - 1 : startRev, endRev, getOperation().isUseMergeHistory(), generator);
             if (!generator.isLastRevisionReported()) {
                 generator.reportAnnotations(this, getOperation().getInputEncoding());
             }
@@ -84,8 +85,9 @@ public class SvnRemoteAnnotate extends SvnRemoteOperationRunner<SvnAnnotateItem,
     }
     
     public boolean handleRevision(Date date, long revision, String author, File contents) throws SVNException{
-    	getOperation().receive(getOperation().getFirstTarget(), new SvnAnnotateItem(date, revision, author, contents));
-    	return true;
+    	SvnAnnotateItem item = new SvnAnnotateItem(date, revision, author, contents);
+    	getOperation().receive(getOperation().getFirstTarget(), item);
+    	return item.getReturnResult();
     }
     
     public void handleLine(Date date, long revision, String author, String line) throws SVNException {

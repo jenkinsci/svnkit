@@ -91,7 +91,7 @@ public class SvnCodec {
                 		handler.handleLine(item.getDate(), item.getRevision(), item.getAuthor(), item.getLine(), item.getMergedDate(), 
                 				item.getMergedRevision(), item.getMergedAuthor(), item.getMergedPath(), item.getLineNumber());
                 	else if (item.isRevision())
-                		handler.handleRevision(item.getDate(), item.getRevision(), item.getAuthor(), item.getContents());
+                		item.setReturnResult(handler.handleRevision(item.getDate(), item.getRevision(), item.getAuthor(), item.getContents()));
                 	
                 }
             }
