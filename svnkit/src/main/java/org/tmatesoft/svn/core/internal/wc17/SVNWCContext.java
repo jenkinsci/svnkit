@@ -3093,8 +3093,8 @@ public class SVNWCContext {
         }
         SVNSkel workItem = SVNSkel.createEmptyList();
         File anchorRelativePath = getRelativePath(anchorPath);
-        workItem.prependPath(SVNFileUtil.createFilePath(anchorRelativePath, SVNWCUtils.skipAncestor(anchorPath, srcAbspath)));
         workItem.prependPath(SVNFileUtil.createFilePath(anchorRelativePath, SVNWCUtils.skipAncestor(anchorPath, dstAbspath)));
+        workItem.prependPath(SVNFileUtil.createFilePath(anchorRelativePath, SVNWCUtils.skipAncestor(anchorPath, srcAbspath)));
         workItem.prependString(WorkQueueOperation.FILE_MOVE.getOpName());
         SVNSkel result = SVNSkel.createEmptyList();
         result.appendChild(workItem);
@@ -3509,10 +3509,10 @@ public class SVNWCContext {
     public static class RunFileMove implements RunWorkQueueOperation {
 
         public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) throws SVNException {
-            String srcRelPath = workItem.getChild(1).getValue();
-            String dstRelPath = workItem.getChild(2).getValue();
-            File srcAbspath = SVNFileUtil.createFilePath(wcRootAbspath, srcRelPath);
-            File dstAbspath = SVNFileUtil.createFilePath(wcRootAbspath, dstRelPath);
+            File srcRelPath = new File(workItem.getChild(1).getValue());
+            File dstRelPath = new File(workItem.getChild(2).getValue());
+            File srcAbspath = !SVNFileUtil.isAbsolute(srcRelPath) ? SVNFileUtil.createFilePath(wcRootAbspath, srcRelPath) : srcRelPath;
+            File dstAbspath = !SVNFileUtil.isAbsolute(dstRelPath) ? SVNFileUtil.createFilePath(wcRootAbspath, dstRelPath) : dstRelPath;
             if (srcAbspath.exists()) {
                 SVNFileUtil.rename(srcAbspath, dstAbspath);
             }
