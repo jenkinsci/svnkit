@@ -162,7 +162,7 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
             Collection<File> lockedPaths = new HashSet<File>();
             
             checkCancelled();
-            File sourceParent = SVNFileUtil.getParentFile(copyPair.source);
+            File sourceParent = new File(SVNPathUtil.validateFilePath(SVNFileUtil.getParentFile(copyPair.source).getAbsolutePath()));
             if (sourceParent.equals(copyPair.dstParent) ||
                     SVNWCUtils.isChild(sourceParent, copyPair.dstParent)) {
                 lockPaths.add(sourceParent);
@@ -176,6 +176,7 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
                 for (File file : lockPaths) {
                     lockedPaths.add(getWcContext().acquireWriteLock(file, false, true));
                 }
+                
                 move(getWcContext(), copyPair.source, SVNFileUtil.createFilePath(copyPair.dstParent, copyPair.baseName), false);
             } finally {
                 try {
@@ -219,7 +220,7 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
                     if (srcDir.equals(dstDir)) {
                         // check if it is case-only rename
                         if (copyPair.source.getName().equalsIgnoreCase(copyPair.dst.getName())) {
-                            copyPair.dstParent = dstDir;
+                            copyPair.dstParent = new File(SVNPathUtil.validateFilePath(dstDir.getAbsolutePath()));
                             copyPair.baseName = SVNFileUtil.getFileName(copyPair.dst);
                             return;
                         }
@@ -230,7 +231,7 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
 
-            copyPair.dstParent = SVNFileUtil.getFileDir(copyPair.dst);
+            copyPair.dstParent = new File(SVNPathUtil.validateFilePath(SVNFileUtil.getParentFile(copyPair.dst).getAbsolutePath()));
             copyPair.baseName = SVNFileUtil.getFileName(copyPair.dst);
             
             if (makeParents && SVNFileType.getType(copyPair.dstParent) == SVNFileType.NONE) {
