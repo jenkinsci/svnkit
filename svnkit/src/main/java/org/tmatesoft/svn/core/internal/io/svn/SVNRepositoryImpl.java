@@ -1643,6 +1643,28 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         return INVALID_REVISION; 
     }
 
+    public String getRepositoryPath(String relativePath) throws SVNException {
+        if (relativePath == null) {
+            relativePath = "/";
+        }
+        if (relativePath.length() > 0 && relativePath.charAt(0) == '/') {
+            // get relative path if it is child or equal to location path
+            String locationPath = getLocation().getPath();
+            locationPath = locationPath.substring(getRepositoryRoot(true).getPath().length());
+            if (!locationPath.startsWith("/")) {
+                locationPath = "/" + locationPath;
+            }
+            if (relativePath.startsWith(locationPath + "/") || relativePath.equals(locationPath)) {
+                relativePath = relativePath.substring(locationPath.length());
+                if (relativePath.startsWith("/")) {
+                    relativePath = relativePath.substring(1);
+                }
+            }
+            return relativePath;
+        }
+        return relativePath;
+    }
+
     private static boolean getRecurseFromDepth(SVNDepth depth) {
         return depth == null || depth == SVNDepth.UNKNOWN || depth.compareTo(SVNDepth.FILES) > 0;
     }
