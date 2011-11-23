@@ -241,7 +241,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
     public SVNNodeKind checkPath(String path, long revision) throws SVNException {
         try {
             openConnection();
-            path = getRepositoryPath(path);
+            path = getLocationRelativePath(path);
             Object[] buffer = new Object[]{"check-path", path, getRevisionObject(revision)};
             write("(w(s(n)))", buffer);
             authenticate();
@@ -263,7 +263,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         int count = 0;
         try {
             openConnection();
-            path = getRepositoryPath(path);
+            path = getLocationRelativePath(path);
             Object[] buffer = new Object[]{"get-locations", path, getRevisionObject(pegRevision), revisions};
             write("(w(sn(*n)))", buffer);
             authenticate();
@@ -303,7 +303,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         long count = 0;
         try {
             openConnection();
-            path = getRepositoryPath(path);
+            path = getLocationRelativePath(path);
             Object[] buffer = new Object[] { "get-location-segments", path, getRevisionObject(pegRevision), 
                     getRevisionObject(startRevision), getRevisionObject(endRevision) };
             write("(w(s(n)(n)(n)))", buffer);
@@ -351,7 +351,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         Long rev = revision > 0 ? new Long(revision) : null;
         try {
             openConnection();
-            Object[] buffer = new Object[]{"get-file", getRepositoryPath(path), rev,
+            Object[] buffer = new Object[]{"get-file", getLocationRelativePath(path), rev,
                     Boolean.valueOf(properties != null), Boolean.valueOf(contents != null)};
             write("(w(s(n)ww))", buffer);
             authenticate();
@@ -420,7 +420,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
 
             String fullPath = getFullPath(path);
             final SVNURL url = getLocation().setPath(fullPath, false);
-            path = getRepositoryPath(path);
+            path = getLocationRelativePath(path);
 
             List individualProps = new LinkedList();
             if ((entryFields & SVNDirEntry.DIRENT_KIND) != 0) {
@@ -474,7 +474,8 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     long createdRevision = SVNReader.getLong(direntProps, 4);
                     Date createdDate = SVNDate.parseDate(SVNReader.getString(direntProps, 5));
                     String lastAuthor = SVNReader.getString(direntProps, 6);
-                    handler.handleDirEntry(new SVNDirEntry(url.appendPath(name, false), repositoryRoot, name, kind, size, hasProps, createdRevision, createdDate, lastAuthor));
+                    handler.handleDirEntry(new SVNDirEntry(url.appendPath(name, false), repositoryRoot, 
+                            "".equals(name) ? SVNPathUtil.tail(url.getPath()) : name, kind, size, hasProps, createdRevision, createdDate, lastAuthor));
                 }
             }
         } catch (SVNException e) {
@@ -503,7 +504,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     }
                 }
             };
-            path = getRepositoryPath(path);
+            path = getLocationRelativePath(path);
             // get parent
             Object[] buffer = new Object[]{"stat", path, getRevisionObject(revision)};
             write("(w(s(n)))", buffer);
@@ -584,7 +585,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         try {
             openConnection();
             Object[] buffer = new Object[]{"get-file-revs",
-                    getRepositoryPath(path),
+                    getLocationRelativePath(path),
                     srev, erev, Boolean.toString(includeMergedRevisions)};
             write("(w(s(n)(n)w))", buffer);
             authenticate();
@@ -905,7 +906,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
     public SVNLock getLock(String path) throws SVNException {
         try {
             openConnection();
-            path = getRepositoryPath(path);
+            path = getLocationRelativePath(path);
             Object[] buffer = new Object[]{"get-lock", path};
             write("(w(s))", buffer);
             authenticate();
@@ -924,7 +925,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
     public SVNLock[] getLocks(String path) throws SVNException {
         try {
             openConnection();
-            path = getRepositoryPath(path);
+            path = getLocationRelativePath(path);
             Object[] buffer = new Object[]{"get-locks", path};
             write("(w(s))", buffer);
             authenticate();
@@ -959,7 +960,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             write("(w((s)w(", buffer);
             buffer = new Object[2];
             for (Iterator paths = pathsToRevisions.keySet().iterator(); paths.hasNext();) {
-                buffer[0] = paths.next();
+                buffer[0] = getLocationRelativePath((String) paths.next());
                 buffer[1] = pathsToRevisions.get(buffer[0]);
                 write("(s(n))", buffer);
             }
@@ -1035,7 +1036,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         for (Iterator paths = pathsToRevisions.keySet().iterator(); paths.hasNext();) {
             String path = (String) paths.next();
             Long revision = (Long) pathsToRevisions.get(path);
-            path = getRepositoryPath(path);
+            path = getLocationRelativePath(path);
             Object[] buffer = new Object[]{"lock", path, comment, Boolean.valueOf(force), revision};
             write("(w(s(s)w(n)))", buffer);
             authenticate();
@@ -1141,7 +1142,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         for (Iterator paths = pathToTokens.keySet().iterator(); paths.hasNext();) {
             String path = (String) paths.next();
             String id = (String) pathToTokens.get(path);
-            path = getRepositoryPath(path);
+            path = getLocationRelativePath(path);
             if (id == null) {
                 Object[] buffer = new Object[]{"get-lock", path};
                 write("(w(s))", buffer);
@@ -1185,7 +1186,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             openConnection();
             String fullPath = getFullPath(path);
             SVNURL url = getLocation().setPath(fullPath, false);
-            path = getRepositoryPath(path);
+            path = getLocationRelativePath(path);
             Object[] buffer = new Object[]{"stat", path, getRevisionObject(revision)};
             write("(w(s(n)))", buffer);
             authenticate();
@@ -1204,7 +1205,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 long createdRevision = SVNReader.getLong(values, 3);
                 Date createdDate = SVNDate.parseDate(SVNReader.getString(values, 4));
                 String lastAuthor = SVNReader.getString(values, 5);
-                entry = new SVNDirEntry(url, repositoryRoot, SVNPathUtil.tail(path), kind, size, hasProperties, createdRevision, createdDate, lastAuthor);
+                entry = new SVNDirEntry(url, repositoryRoot, "".equals(path) ? SVNPathUtil.tail(getLocation().getPath()) : SVNPathUtil.tail(path), kind, size, hasProperties, createdRevision, createdDate, lastAuthor);
             }
             return entry;
         } catch (SVNException e) {
@@ -1326,7 +1327,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         }
         String[] fullPaths = new String[paths.length];
         for (int i = 0; i < paths.length; i++) {
-            fullPaths[i] = getRepositoryPath(paths[i]);
+            fullPaths[i] = getLocationRelativePath(paths[i]);
         }
         return fullPaths;
     }
@@ -1624,6 +1625,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
     protected long getDeletedRevisionImpl(String path, long pegRevision, long endRevision) throws SVNException {
         try {
             openConnection();
+            path = getLocationRelativePath(path);
             Long srev = getRevisionObject(pegRevision);
             Long erev = getRevisionObject(endRevision);
             Object[] buffer = new Object[] { "get-deleted-rev", path, srev, erev };
@@ -1638,6 +1640,28 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             closeConnection();
         }
         return INVALID_REVISION; 
+    }
+
+    protected String getLocationRelativePath(String relativeOrAbsolutePath) throws SVNException {
+        if (relativeOrAbsolutePath == null) {
+            relativeOrAbsolutePath = "/";
+        }
+        if (relativeOrAbsolutePath.length() > 0 && relativeOrAbsolutePath.charAt(0) == '/') {
+            // get relative path if it is child or equal to location path
+            String locationPath = getLocation().getPath();
+            locationPath = locationPath.substring(getRepositoryRoot(true).getPath().length());
+            if (!locationPath.startsWith("/")) {
+                locationPath = "/" + locationPath;
+            }
+            if (relativeOrAbsolutePath.startsWith(locationPath + "/") || relativeOrAbsolutePath.equals(locationPath)) {
+                relativeOrAbsolutePath = relativeOrAbsolutePath.substring(locationPath.length());
+                if (relativeOrAbsolutePath.startsWith("/")) {
+                    relativeOrAbsolutePath = relativeOrAbsolutePath.substring(1);
+                }
+            }
+            return relativeOrAbsolutePath;
+        }
+        return relativeOrAbsolutePath;
     }
 
     private static boolean getRecurseFromDepth(SVNDepth depth) {
