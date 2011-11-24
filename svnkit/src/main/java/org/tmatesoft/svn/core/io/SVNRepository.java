@@ -2738,8 +2738,8 @@ public abstract class SVNRepository {
      * @since    1.3
      */
     public long getDeletedRevision(String path, long pegRevision, long endRevision) throws SVNException {
-        path = getRepositoryPath(path);
-        if ("/".equals(path)) {
+        String repositoryPath = getRepositoryPath(path);
+        if ("/".equals(repositoryPath)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "root path could not be deleted");
             SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
@@ -2760,6 +2760,7 @@ public abstract class SVNRepository {
         }
         
         try {
+            path = getLocationRelativePath(path);
             return getDeletedRevisionImpl(path, pegRevision, endRevision);
         } catch (SVNException svne) {
             SVNErrorCode errCode = svne.getErrorMessage().getErrorCode();
@@ -2896,6 +2897,28 @@ public abstract class SVNRepository {
             repositoryPath = "/" + repositoryPath;
         }
         return repositoryPath;
+    }
+
+    protected String getLocationRelativePath(String relativeOrAbsolutePath) throws SVNException {
+        if (relativeOrAbsolutePath == null) {
+            relativeOrAbsolutePath = "/";
+        }
+        if (relativeOrAbsolutePath.length() > 0 && relativeOrAbsolutePath.charAt(0) == '/') {
+            // get relative path if it is child or equal to location path
+            String locationPath = getLocation().getPath();
+            locationPath = locationPath.substring(getRepositoryRoot(true).getPath().length());
+            if (!locationPath.startsWith("/")) {
+                locationPath = "/" + locationPath;
+            }
+            if (relativeOrAbsolutePath.startsWith(locationPath + "/") || relativeOrAbsolutePath.equals(locationPath)) {
+                relativeOrAbsolutePath = relativeOrAbsolutePath.substring(locationPath.length());
+                if (relativeOrAbsolutePath.startsWith("/")) {
+                    relativeOrAbsolutePath = relativeOrAbsolutePath.substring(1);
+                }
+            }
+            return relativeOrAbsolutePath;
+        }
+        return relativeOrAbsolutePath;
     }
     
     /**
