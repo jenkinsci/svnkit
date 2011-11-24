@@ -162,10 +162,8 @@ public class SvnNgAdd extends SvnNgOperationRunner<SvnScheduleForAddition, SvnSc
             return;
         }
         Collection<String> ignorePatterns = null;
-        if (getOperation().isIncludeIgnored()) {
-            String[] gIgnores = getOperation().getOperationFactory().getOptions().getIgnorePatterns();
-            Collection<String> globalIgnores = gIgnores != null ? Arrays.asList(gIgnores) : null; 
-            ignorePatterns = SvnNgPropertiesManager.getEffectiveIgnores(getWcContext(), path, globalIgnores);
+        if (!getOperation().isIncludeIgnored()) {
+            ignorePatterns = SvnNgPropertiesManager.getEffectiveIgnores(getWcContext(), path, null);
         }
         
         File[] children = SVNFileListUtil.listFiles(path);
