@@ -88,7 +88,9 @@ public class SVNMkDirCommand extends SVNCommand {
             }
             try {
                 SVNCommitInfo info = client.doMkDir(urls, getSVNEnvironment().getMessage(), getSVNEnvironment().getRevisionProperties(), getSVNEnvironment().isParents());
-                getSVNEnvironment().printCommitInfo(info);
+                if (!getSVNEnvironment().isQuiet()) {
+                    getSVNEnvironment().printCommitInfo(info);
+                }
             } catch (SVNException e) {
                 SVNErrorMessage err = e.getErrorMessage();
                 if (!getSVNEnvironment().isParents() && 

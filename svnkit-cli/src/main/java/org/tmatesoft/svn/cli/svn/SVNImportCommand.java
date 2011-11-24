@@ -87,7 +87,9 @@ public class SVNImportCommand extends SVNCommand {
         SVNCommitInfo info = client.doImport(src.getFile(), url.getURL(), getSVNEnvironment().getMessage(), 
                 getSVNEnvironment().getRevisionProperties(), !getSVNEnvironment().isNoIgnore(), 
                 getSVNEnvironment().isForce(), depth);
-        getSVNEnvironment().printCommitInfo(info);
+        if (!getSVNEnvironment().isQuiet()) {
+            getSVNEnvironment().printCommitInfo(info);
+        }
     }
 
 }
