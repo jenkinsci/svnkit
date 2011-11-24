@@ -290,9 +290,11 @@ public class SvnNgAdd extends SvnNgOperationRunner<SvnScheduleForAddition, SvnSc
     }
 
     private File findExistingParent(File parentPath) throws SVNException {
-        int format = getWcContext().checkWC(parentPath);
-        if (format > 0) {
-            return parentPath;
+        SVNNodeKind kind = getWcContext().readKind(parentPath, false);
+        if (kind == SVNNodeKind.DIR) {
+            if (!getWcContext().isNodeStatusDeleted(parentPath)) {
+                return parentPath;
+            }
         }
         if (parentPath.getParentFile() == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_NO_VERSIONED_PARENT);
