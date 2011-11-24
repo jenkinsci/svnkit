@@ -110,7 +110,7 @@ public class SvnNgWcToReposCopy extends SvnNgOperationRunner<SVNCommitInfo, SvnR
             parents = findMissingParents(topDstUrl, repository);
         }
         for (SvnCopyPair pair : copyPairs) {
-            String path = SVNURLUtil.getRelativeURL(topDstUrl, pair.dst);
+            String path = SVNURLUtil.getRelativeURL(repository.getLocation(), pair.dst);
             if (repository.checkPath(path, -1) != SVNNodeKind.NONE) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS,
                         "Path ''{0}'' already exists", pair.dst);
