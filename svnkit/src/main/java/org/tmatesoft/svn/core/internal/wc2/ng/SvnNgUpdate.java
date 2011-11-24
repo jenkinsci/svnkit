@@ -43,6 +43,7 @@ public class SvnNgUpdate extends SvnNgAbstractUpdate<long[], SvnUpdate> {
                     throw e;
                 }
                 handleEvent(SVNEventFactory.createSVNEvent(targets[i], SVNNodeKind.NONE, null, -1, SVNEventAction.SKIP, null, null, null));
+                handleEvent(SVNEventFactory.createSVNEvent(targets[i], SVNNodeKind.NONE, null, -1, SVNEventAction.UPDATE_COMPLETED, null, null, null));
             }
         }
         sleepForTimestamp();

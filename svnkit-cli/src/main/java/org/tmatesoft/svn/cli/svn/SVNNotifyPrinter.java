@@ -122,6 +122,7 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
             } else if (path != null) {
                 buffer.append("Skipped '" + path + "'\n");
             }
+            myIsSuppressLastLine = true;
         } else if (event.getAction() == SVNEventAction.UPDATE_SKIP_OBSTRUCTION) {
             mySkippedPaths++;
             buffer.append("Skipped '" + path + "' -- An obstructing working copy was found\n");
