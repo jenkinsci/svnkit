@@ -112,7 +112,7 @@ public class SVNPath {
                 myTarget = myTarget.substring(0, index);
                 return;
             }
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Syntax error parsing revision ''{0}''", myTarget.substring(index + 1));
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Syntax error parsing peg revision ''{0}''", myTarget.substring(index + 1));
             SVNErrorManager.error(err, SVNLogType.DEFAULT);
         } else if (index == 0) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_FILENAME, 
