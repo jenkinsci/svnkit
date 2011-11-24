@@ -1,6 +1,7 @@
 package org.tmatesoft.svn.core.internal.wc2.ng;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 import java.util.StringTokenizer;
@@ -162,7 +163,9 @@ public class SvnNgAdd extends SvnNgOperationRunner<SvnScheduleForAddition, SvnSc
         }
         Collection<String> ignorePatterns = null;
         if (getOperation().isIncludeIgnored()) {
-            ignorePatterns = SvnNgPropertiesManager.getEffectiveIgnores(getWcContext(), path, null);
+            String[] gIgnores = getOperation().getOperationFactory().getOptions().getIgnorePatterns();
+            Collection<String> globalIgnores = gIgnores != null ? Arrays.asList(gIgnores) : null; 
+            ignorePatterns = SvnNgPropertiesManager.getEffectiveIgnores(getWcContext(), path, globalIgnores);
         }
         
         File[] children = SVNFileListUtil.listFiles(path);
