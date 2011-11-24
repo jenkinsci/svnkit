@@ -122,7 +122,6 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
             } else if (path != null) {
                 buffer.append("Skipped '" + path + "'\n");
             }
-            myIsSuppressLastLine = true;
         } else if (event.getAction() == SVNEventAction.UPDATE_SKIP_OBSTRUCTION) {
             mySkippedPaths++;
             buffer.append("Skipped '" + path + "' -- An obstructing working copy was found\n");
@@ -343,9 +342,7 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
                         buffer.append(myIsInExternal ? "External export complete.\n" : "Export complete.\n");
                     } else if (myIsCheckout) {
                         buffer.append(myIsInExternal ? "External checkout complete.\n" : "Checkout complete.\n");
-                    } else {
-                        buffer.append(myIsInExternal ? "External update complete.\n" : "Update complete.\n");
-                    }
+                    } 
                 }
             }
 
