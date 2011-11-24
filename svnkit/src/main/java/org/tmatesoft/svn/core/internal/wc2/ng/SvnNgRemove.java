@@ -110,7 +110,9 @@ public class SvnNgRemove extends SvnNgOperationRunner<SvnScheduleForRemoval, Svn
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_FILENAME, "''{0}'' does not exist", path);
                     SVNErrorManager.error(err, SVNLogType.WC);
                 }
-                SVNFileUtil.deleteAll(path, handler);
+                if (!keepLocal) {
+                    SVNFileUtil.deleteAll(path, handler);
+                }
                 return;
             }
             throw e;
