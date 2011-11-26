@@ -21,6 +21,9 @@ import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc16.SVNChangelistClient16;
 import org.tmatesoft.svn.core.internal.wc17.SVNChangelistClient17;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.wc2.SvnCat;
+import org.tmatesoft.svn.core.wc2.SvnSetChangelist;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 /**
  * The <b>SVNChangelistClient</b> provides API for managing changelists.
@@ -236,15 +239,14 @@ public class SVNChangelistClient extends SVNBasicClient {
      * @since 1.2.0, New in SVN 1.5.0
      */
     public void doAddToChangelist(File[] paths, SVNDepth depth, String changelist, String[] changelists) throws SVNException {
-        try {
-            getSVNChangelistClient17().doAddToChangelist(paths, depth, changelist, changelists);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNChangelistClient16().doAddToChangelist(paths, depth, changelist, changelists);
-                return;
-            }
-            throw e;
+    	SvnSetChangelist cl = getOperationsFactory().createChangeList();
+    	for (int i = 0; i < paths.length; i++) {
+            cl.addTarget(SvnTarget.fromFile(paths[i]));            
         }
+    	cl.setDepth(depth);
+        cl.setChangelistName(changelist);
+        cl.setChangelists(changelists);
+        cl.run();
     }
 
     /**
@@ -277,15 +279,14 @@ public class SVNChangelistClient extends SVNBasicClient {
      * @since 1.2.0, New in SVN 1.5.0
      */
     public void doRemoveFromChangelist(File[] paths, SVNDepth depth, String[] changelists) throws SVNException {
-        try {
-            getSVNChangelistClient17().doRemoveFromChangelist(paths, depth, changelists);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNChangelistClient16().doRemoveFromChangelist(paths, depth, changelists);
-                return;
-            }
-            throw e;
+    	SvnSetChangelist cl = getOperationsFactory().createChangeList();
+    	for (int i = 0; i < paths.length; i++) {
+            cl.addTarget(SvnTarget.fromFile(paths[i]));            
         }
+    	cl.setDepth(depth);
+        cl.setChangelists(changelists);
+        cl.setRemove(true);
+        cl.run();
     }
 
     /**

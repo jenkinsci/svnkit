@@ -29,6 +29,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.internal.wc2.ISvnCommitRunner;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgAdd;
+import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgAnnotate;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgCat;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgCheckout;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgCommit;
@@ -48,6 +49,7 @@ import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgUpdate;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgWcToReposCopy;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgWcToWcCopy;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldAdd;
+import org.tmatesoft.svn.core.internal.wc2.old.SvnOldAnnotate;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldCat;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldCheckout;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldCommit;
@@ -60,6 +62,7 @@ import org.tmatesoft.svn.core.internal.wc2.old.SvnOldRelocate;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldRemoteCopy;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldRemove;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldRevert;
+import org.tmatesoft.svn.core.internal.wc2.old.SvnOldSetChangelist;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldSetLock;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldSetProperty;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldSwitch;
@@ -192,7 +195,12 @@ public class SvnOperationFactory {
         
         registerOperationRunner(SvnLog.class, new SvnRemoteLog());
         
+        registerOperationRunner(SvnAnnotate.class, new SvnOldAnnotate());
+        registerOperationRunner(SvnAnnotate.class, new SvnNgAnnotate());
         registerOperationRunner(SvnAnnotate.class, new SvnRemoteAnnotate());
+        
+        registerOperationRunner(SvnSetChangelist.class, new SvnOldSetChangelist());
+        
     }
     
     public boolean isAutoCloseContext() {
@@ -371,6 +379,10 @@ public class SvnOperationFactory {
     
     public SvnLog createLog() {
         return new SvnLog(this);
+    }
+    
+    public SvnSetChangelist createChangeList() {
+        return new SvnSetChangelist(this);
     }
 
     protected Object run(SvnOperation<?> operation) throws SVNException {

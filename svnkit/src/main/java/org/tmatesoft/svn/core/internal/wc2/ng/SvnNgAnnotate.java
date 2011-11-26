@@ -1,5 +1,5 @@
 
-package org.tmatesoft.svn.core.internal.wc2.remote;
+package org.tmatesoft.svn.core.internal.wc2.ng;
 
 import java.io.File;
 import java.util.Date;
@@ -12,7 +12,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
-import org.tmatesoft.svn.core.internal.wc2.SvnRemoteOperationRunner;
 import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess.RepositoryInfo;
 import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess.RevisionsPair;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -22,10 +21,10 @@ import org.tmatesoft.svn.core.wc2.SvnAnnotate;
 import org.tmatesoft.svn.core.wc2.SvnAnnotateItem;
 import org.tmatesoft.svn.util.SVNLogType;
 
-public class SvnRemoteAnnotate extends SvnRemoteOperationRunner<SvnAnnotateItem, SvnAnnotate> implements ISVNAnnotateHandler { 
+public class SvnNgAnnotate extends SvnNgOperationRunner<SvnAnnotateItem, SvnAnnotate> implements ISVNAnnotateHandler { 
 	
 	@Override
-    protected SvnAnnotateItem run() throws SVNException {
+    protected SvnAnnotateItem run(SVNWCContext context) throws SVNException {
 		
 		if (getOperation().getStartRevision() == null || !getOperation().getStartRevision().isValid() ||
     			getOperation().getEndRevision() == null || !getOperation().getEndRevision().isValid()) {
