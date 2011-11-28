@@ -104,27 +104,33 @@ public class SVNSwitchCommand extends SVNCommand {
     }
     
     protected void relocate(List targets) throws SVNException {
-        if (targets.size() < 2) {
+        if (targets.size() < 1) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS), SVNLogType.CLIENT);
         }
-        if (targets.get(0).equals(targets.get(1))) {
-            return;
-        }
-        SVNPath from = new SVNPath((String) targets.get(0));
-        SVNPath to = new SVNPath((String) targets.get(1));
-        if (from.isURL() != to.isURL() || !from.isURL()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS, 
-                    "''{0}'' to ''{1}'' is not a valid relocation", new Object[] {from.getTarget(), to.getTarget()});
-            SVNErrorManager.error(err, SVNLogType.CLIENT);
-        }
         SVNUpdateClient client = getSVNEnvironment().getClientManager().getUpdateClient();
-        if (targets.size() == 2) {
-            SVNPath target = new SVNPath("");
-            client.doRelocate(target.getFile(), from.getURL(), to.getURL(), getSVNEnvironment().getDepth().isRecursive());
+        if (targets.size() == 1 ||
+                (targets.size() == 2 
+                && new SVNPath((String) targets.get(0)).isURL() 
+                && !new SVNPath((String) targets.get(1)).isURL())) {
+            SVNPath target = targets.size() == 2 ? new SVNPath((String) targets.get(1)) : new SVNPath("");
+            SVNPath to = new SVNPath((String) targets.get(0));
+            client.doRelocate(target.getFile(), null, to.getURL(), getSVNEnvironment().getDepth().isRecursive());
         } else {
-            for(int i = 2; i < targets.size(); i++) {
-                SVNPath target = new SVNPath((String) targets.get(i));
+            SVNPath from = new SVNPath((String) targets.get(0));
+            SVNPath to = new SVNPath((String) targets.get(1));
+            if (from.isURL() != to.isURL() || !from.isURL()) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS, 
+                        "''{0}'' to ''{1}'' is not a valid relocation", new Object[] {from.getTarget(), to.getTarget()});
+                SVNErrorManager.error(err, SVNLogType.CLIENT);
+            }
+            if (targets.size() == 2) {
+                SVNPath target = new SVNPath("");
                 client.doRelocate(target.getFile(), from.getURL(), to.getURL(), getSVNEnvironment().getDepth().isRecursive());
+            } else {
+                for(int i = 2; i < targets.size(); i++) {
+                    SVNPath target = new SVNPath((String) targets.get(i));
+                    client.doRelocate(target.getFile(), from.getURL(), to.getURL(), getSVNEnvironment().getDepth().isRecursive());
+                }
             }
         }
     }
