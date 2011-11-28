@@ -63,6 +63,8 @@ public class SVNAddCommand extends SVNCommand {
         if (!getSVNEnvironment().isQuiet()) {
             client.setEventHandler(new SVNNotifyPrinter(getSVNEnvironment()));
         }
+        boolean hasMissingPaths = false;
+        boolean hasPresentPaths = false;
         for (Iterator ts = targets.iterator(); ts.hasNext();) {
             String targetName = (String) ts.next();
             SVNPath target = new SVNPath(targetName);
@@ -74,9 +76,19 @@ public class SVNAddCommand extends SVNCommand {
                         getSVNEnvironment().isParents(), depth, getSVNEnvironment().isNoIgnore(), 
                         getSVNEnvironment().isParents());
             } catch (SVNException e) {
+                hasMissingPaths |= e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND; 
+                hasPresentPaths |= e.getErrorMessage().getErrorCode() == SVNErrorCode.ENTRY_EXISTS; 
                 getSVNEnvironment().handleWarning(e.getErrorMessage(), 
                         new SVNErrorCode[] {SVNErrorCode.ENTRY_EXISTS, SVNErrorCode.WC_PATH_NOT_FOUND}, getSVNEnvironment().isQuiet());
             }
+        }
+        if (hasMissingPaths) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Could not add all targets because some targets don't exist");
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+        if (hasPresentPaths) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Could not add all targets because some targets are already versioned");
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
     }
 
