@@ -11,8 +11,6 @@
  */
 package org.tmatesoft.svn.cli;
 
-import static org.tmatesoft.svn.core.wc.SVNBasicClient.isWC17Supported;
-
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -30,6 +28,7 @@ import java.util.regex.Pattern;
 import org.tmatesoft.svn.core.ISVNCanceller;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNCommitInfo;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -52,6 +51,10 @@ import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.core.wc2.SvnGetInfo;
+import org.tmatesoft.svn.core.wc2.SvnInfo;
+import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -425,17 +428,14 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
         if (SVNCommandUtil.isURL(target)) {
             return SVNURL.parseURIEncoded(target);
         }
-        SVNWCAccess wcAccess = null;
-        SVNPath commandTarget = new SVNPath(target);
         try {
-            wcAccess = SVNWCAccess.newInstance(null);
-            wcAccess.probeOpen(commandTarget.getFile(), false, 0);
-            SVNEntry entry = wcAccess.getVersionedEntry(commandTarget.getFile(), false);
-            if (entry != null) {
-                return entry.getSVNURL();
-            }
-        } finally {
-            wcAccess.close();
+            SvnGetInfo info = new SvnOperationFactory().createGetInfo();
+            info.setSingleTarget(SvnTarget.fromFile(new File(target)));
+            info.setDepth(SVNDepth.EMPTY);
+            SvnInfo i = info.run();
+            return i != null ? i.getUrl() : null;
+        } catch (SVNException e) {
+            //
         }
         return null;
     }
