@@ -107,6 +107,9 @@ public class SVNSwitchCommand extends SVNCommand {
         if (targets.size() < 2) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS), SVNLogType.CLIENT);
         }
+        if (targets.get(0).equals(targets.get(1))) {
+            return;
+        }
         SVNPath from = new SVNPath((String) targets.get(0));
         SVNPath to = new SVNPath((String) targets.get(1));
         if (from.isURL() != to.isURL() || !from.isURL()) {
