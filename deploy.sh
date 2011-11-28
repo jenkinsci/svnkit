@@ -1,18 +1,17 @@
 # run it as ". ./deploy.sh"
-tiger
-ant clean build-src build-library
+# ./gradlew clean assemble
 
-animal-sniffer -t Java5 build/lib/svnkit.jar
+# be sure to update POM as well
+version=1.3.6-jenkins-1
+v=1.3.6-v1
+
+animal-sniffer -t Java5 svnkit/build/libs/svnkit-$v.jar
 if [ $? != 0 ]; then
     echo "Incompatible classes"
     exit 1
 fi
 
-version=1.3.4-jenkins-5
-
-# be sure to update pom.xml and svnkit.build.properties
-
 cmd=install:install-file
 #cmd=deploy:deploy-file
-mvn $cmd -Dfile=build/lib/svnkit.jar    -DrepositoryId=maven.jenkins-ci.org -Durl=http://maven.jenkins-ci.org:8081/content/repositories/releases -DpomFile=pom.xml
-mvn $cmd -Dfile=build/lib/svnkitsrc.zip -DrepositoryId=maven.jenkins-ci.org -Durl=http://maven.jenkins-ci.org:8081/content/repositories/releases -DpomFile=pom.xml -Dclassifier=sources
+mvn $cmd -Dfile=svnkit/build/libs/svnkit-$v.jar    -DrepositoryId=maven.jenkins-ci.org -Durl=http://maven.jenkins-ci.org:8081/content/repositories/releases -DpomFile=pom.xml
+mvn $cmd -Dfile=svnkit/build/libs/svnkit-$v-sources.jar -DrepositoryId=maven.jenkins-ci.org -Durl=http://maven.jenkins-ci.org:8081/content/repositories/releases -DpomFile=pom.xml -Dclassifier=sources
