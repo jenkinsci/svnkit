@@ -66,7 +66,10 @@ public class SvnSetChangelist extends SvnOperation<Long> {
         
         
     }
-    
-    
+
+    @Override
+    protected int getMaximumTargetsCount() {
+        return Integer.MAX_VALUE;
+    }
 
 }
