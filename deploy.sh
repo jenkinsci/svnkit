@@ -1,5 +1,5 @@
 # run it as ". ./deploy.sh"
-# ./gradlew clean assemble
+./gradlew clean assemble
 
 # be sure to update POM as well
 version=1.3.6-jenkins-1
@@ -11,7 +11,7 @@ if [ $? != 0 ]; then
     exit 1
 fi
 
-cmd=install:install-file
-#cmd=deploy:deploy-file
+#cmd=install:install-file
+cmd=deploy:deploy-file
 mvn $cmd -Dfile=svnkit/build/libs/svnkit-$v.jar    -DrepositoryId=maven.jenkins-ci.org -Durl=http://maven.jenkins-ci.org:8081/content/repositories/releases -DpomFile=pom.xml
 mvn $cmd -Dfile=svnkit/build/libs/svnkit-$v-sources.jar -DrepositoryId=maven.jenkins-ci.org -Durl=http://maven.jenkins-ci.org:8081/content/repositories/releases -DpomFile=pom.xml -Dclassifier=sources
