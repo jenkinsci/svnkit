@@ -1,8 +1,0 @@
-targets=Pass\ contents\ of\ file\ ARG\ as\ additional\ args
-quiet=Do\ not\ display\ filtering\ statistics.
-drop-empty-revs=Remove\ revisions\ emptied\ by\ filtering.
-renumber-revs=Renumber\ revisions\ left\ after\ filtering.
-skip-missing-merge-sources=Skip\ missing\ merge\ sources.
-preserve-revprops=Don't\ filter\ revision\ properties.
-version=show\ program\ version\ information
-help=show\ help\ on\ a\ subcommand

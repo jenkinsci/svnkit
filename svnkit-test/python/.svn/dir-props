@@ -1,6 +1,0 @@
-K 13
-svn:externals
-V 87
-cmdline http://svn.apache.org/repos/asf/subversion/tags/1.6.6/subversion/tests/cmdline
-
-END
