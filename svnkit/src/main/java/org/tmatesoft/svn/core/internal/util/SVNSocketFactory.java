@@ -23,6 +23,8 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.StringTokenizer;
 
 import javax.net.ssl.KeyManager;
@@ -50,6 +52,7 @@ public class SVNSocketFactory {
 
     private static boolean ourIsSocketStaleCheck = false;
     private static int ourSocketReceiveBufferSize = 0; // default
+    private static String ourSSLProtocols = System.getProperty("svnkit.http.sslProtocols");
 
     public static Socket createPlainSocket(String host, int port, int connectTimeout, int readTimeout, ISVNCanceller cancel) throws IOException, SVNCancelException {
         InetAddress address = createAddres(host);
@@ -230,7 +233,20 @@ public class SVNSocketFactory {
             return null;
         }
         SSLSocket sslSocket = (SSLSocket) socket;
-        String[] protocols = sslSocket.getSupportedProtocols();
+        String[] protocols = null;
+        
+        if (ourSSLProtocols != null) {
+            Collection userProtocols = new ArrayList();
+            for(StringTokenizer tokens = new StringTokenizer(ourSSLProtocols, ","); tokens.hasMoreTokens();) {
+                String userProtocol = tokens.nextToken().trim();
+                if (!"".equals(userProtocol)) {
+                    userProtocols.add(userProtocol);
+                }
+            }
+            protocols = (String[]) userProtocols.toArray(new String[userProtocols.size()]);
+        } else {
+            protocols = sslSocket.getSupportedProtocols();
+        }
         String[] suites = sslSocket.getSupportedCipherSuites();
         if (protocols != null && protocols.length > 0) {
             sslSocket.setEnabledProtocols(protocols);
