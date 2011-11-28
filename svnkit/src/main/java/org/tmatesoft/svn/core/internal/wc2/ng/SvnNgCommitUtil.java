@@ -17,6 +17,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -71,7 +72,7 @@ public class SvnNgCommitUtil {
     
     public static SvnCommitPacket harvestCopyCommitables(SVNWCContext context, File path, SVNURL dst, SvnCommitPacket packet, ISvnUrlKindCallback urlKindCallback) throws SVNException {
         SVNWCNodeReposInfo reposInfo = context.getNodeReposInfo(path);
-        File commitRelPath = new File(SVNURLUtil.getRelativeURL(reposInfo.reposRootUrl, dst));
+        File commitRelPath = new File(SVNEncodingUtil.uriDecode(SVNURLUtil.getRelativeURL(reposInfo.reposRootUrl, dst)));
         
         harvestCommittables(context, path, packet, null, 
                 reposInfo.reposRootUrl, 

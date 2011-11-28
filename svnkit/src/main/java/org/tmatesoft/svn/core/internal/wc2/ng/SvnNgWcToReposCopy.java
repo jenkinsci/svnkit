@@ -17,6 +17,7 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
@@ -111,6 +112,7 @@ public class SvnNgWcToReposCopy extends SvnNgOperationRunner<SVNCommitInfo, SvnR
         }
         for (SvnCopyPair pair : copyPairs) {
             String path = SVNURLUtil.getRelativeURL(repository.getLocation(), pair.dst);
+            path = SVNEncodingUtil.uriDecode(path);
             if (repository.checkPath(path, -1) != SVNNodeKind.NONE) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS,
                         "Path ''{0}'' already exists", pair.dst);

@@ -20,6 +20,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
@@ -197,6 +198,7 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
         
         for (SvnCopyPair pair : copyPairs) {
             String relativePath = SVNURLUtil.getRelativeURL(topSrcUrl, pair.source);
+            relativePath = SVNEncodingUtil.uriDecode(relativePath);
             SVNNodeKind sourceKind = repository.checkPath(relativePath, pair.revNum);
             if (sourceKind == SVNNodeKind.NONE) {
                 if (pair.revNum >= 0) {
@@ -366,6 +368,7 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
             }
         } else {
             String relativePath = SVNURLUtil.getRelativeURL(repository.getLocation(), pair.source);
+            relativePath = SVNEncodingUtil.uriDecode(relativePath);
             File tmpDir = getWcContext().getDb().getWCRootTempDir(pair.dst);
             UniqueFileInfo ufInfo = SVNWCContext.openUniqueFile(tmpDir, true);
             SVNProperties newProperties = new SVNProperties();
