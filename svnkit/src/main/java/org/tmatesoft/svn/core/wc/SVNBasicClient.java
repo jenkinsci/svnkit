@@ -13,6 +13,7 @@ package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
 
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -21,7 +22,10 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.internal.wc16.SVNBasicDelegate;
+import org.tmatesoft.svn.core.wc2.SvnGetInfo;
+import org.tmatesoft.svn.core.wc2.SvnInfo;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.ISVNDebugLog;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
@@ -355,14 +359,15 @@ public class SVNBasicClient {
      *
      */
     public SVNURL getReposRoot(File path, SVNURL url, SVNRevision pegRevision) throws SVNException {
-        try {
-            return getDelegate17().getReposRoot(path, url, pegRevision, null, null);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                return getDelegate16().getReposRoot(path, url, pegRevision, null, null);
-            }
-            throw e;
+        SvnGetInfo info = getOperationsFactory().createGetInfo();
+        if (path != null) {
+            info.setSingleTarget(SvnTarget.fromFile(path, pegRevision));
+        } else {
+            info.setSingleTarget(SvnTarget.fromURL(url, pegRevision));
         }
+        info.setDepth(SVNDepth.EMPTY);
+        SvnInfo i = info.run();
+        return i != null ? i.getRepositoryRootUrl() : null;
     }
 
     /**
