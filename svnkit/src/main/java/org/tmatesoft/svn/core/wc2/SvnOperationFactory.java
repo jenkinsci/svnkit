@@ -41,6 +41,7 @@ import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgRelocate;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgRemove;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgReposToWcCopy;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgRevert;
+import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgSetChangelist;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgSetLock;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgSetProperty;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgSwitch;
@@ -200,6 +201,7 @@ public class SvnOperationFactory {
         registerOperationRunner(SvnAnnotate.class, new SvnRemoteAnnotate());
         
         registerOperationRunner(SvnSetChangelist.class, new SvnOldSetChangelist());
+        registerOperationRunner(SvnSetChangelist.class, new SvnNgSetChangelist());
         
     }
     
