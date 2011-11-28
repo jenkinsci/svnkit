@@ -116,8 +116,12 @@ public class SVNSwitchCommand extends SVNCommand {
             SVNPath to = new SVNPath((String) targets.get(0));
             client.doRelocate(target.getFile(), null, to.getURL(), getSVNEnvironment().getDepth().isRecursive());
         } else {
+            if (targets.get(0).equals(targets.get(1))) {
+                return;
+            }
             SVNPath from = new SVNPath((String) targets.get(0));
             SVNPath to = new SVNPath((String) targets.get(1));
+            
             if (from.isURL() != to.isURL() || !from.isURL()) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS, 
                         "''{0}'' to ''{1}'' is not a valid relocation", new Object[] {from.getTarget(), to.getTarget()});
