@@ -444,8 +444,8 @@ public class SvnOperationFactory {
         }
         SvnWcGeneration wcGeneration = SvnWcGeneration.NOT_DETECTED;
         
-        if (operation.hasFileTargets()) {
-            wcGeneration = detectWcGeneration(operation.getFirstTarget().getFile(), operation.isUseParentWcFormat());
+        if (operation.getOperationalWorkingCopy() != null) {
+            wcGeneration = detectWcGeneration(operation.getOperationalWorkingCopy(), operation.isUseParentWcFormat());
         }
         final List<ISvnOperationRunner<?, SvnOperation<?>>> candidateRunners = new LinkedList<ISvnOperationRunner<?, SvnOperation<?>>>();
         

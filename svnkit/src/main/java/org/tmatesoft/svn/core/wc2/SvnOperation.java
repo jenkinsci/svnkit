@@ -1,5 +1,6 @@
 package org.tmatesoft.svn.core.wc2;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -211,5 +212,12 @@ public class SvnOperation<V> {
 
     public boolean isUseParentWcFormat() {
         return false;
+    }
+    
+    protected File getOperationalWorkingCopy() {
+        if (hasFileTargets()) {
+            return getFirstTarget().getFile();
+        }
+        return null;
     }
 }

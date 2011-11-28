@@ -1,5 +1,7 @@
 package org.tmatesoft.svn.core.wc2;
 
+import java.io.File;
+
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -76,4 +78,14 @@ public class SvnExport extends AbstractSvnUpdate<Long> {
         setExpandKeywords(true);
         setDepth(SVNDepth.INFINITY);
     }
+
+    @Override
+    protected File getOperationalWorkingCopy() {
+        if (getSource().isLocal()) {
+            return getSource().getFile();
+        }
+        return null;
+    }
+    
+    
 }
