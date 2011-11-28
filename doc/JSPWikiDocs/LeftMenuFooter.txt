@@ -1,5 +1,0 @@
-[{Image src = 'LeftMenuFooter/svnkit_logo1.JPG' align = 'center' link='http://svnkit.com' }]
-----
-
-__Referenced by__\\
-[{ReferringPagesPlugin max=100, maxwidth=50 before='#' after='\n' }]
