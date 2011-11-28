@@ -1,6 +1,0 @@
-help.description=Describe\ the\ usage\ of\ this\ program\ or\ its\ subcommands.\n\
-usage:\ jsvndumpfilter\ help\ [SUBCOMMAND...]
-exclude.description=Filter\ out\ nodes\ with\ given\ prefixes\ from\ dumpstream.\n\
-usage:\ jsvndumpfilter\ exclude\ PATH_PREFIX...
-include.description=Filter\ out\ nodes\ without\ given\ prefixes\ from\ dumpstream.\n\
-usage:\ jsvndumpfilter\ include\ PATH_PREFIX...
