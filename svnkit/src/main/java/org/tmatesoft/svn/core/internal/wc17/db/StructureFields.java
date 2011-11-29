@@ -131,7 +131,8 @@ public class StructureFields {
     public enum DeletionInfo {
         baseDelRelPath,
         movedToRelPath,
-        workDelRelPath;
+        workDelRelPath, 
+        workDelAbsPath;
     }
     
     public enum AdditionInfo {

@@ -35,6 +35,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.AdditionInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.DeletionInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeOriginInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.PristineInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbShared;
@@ -223,16 +224,17 @@ public class SvnNgGetInfo extends SvnNgOperationRunner<SvnInfo, SvnGetInfo> impl
             wcInfo.setChecksum(pristineInfo.<SvnChecksum>get(PristineInfo.checksum));
             
             pristineInfo.release();
-            
-            File workDelAbsPath = getWcContext().getDb().scanDeletion(localAbspath, DeletionInfoField.workDelAbsPath).workDelAbsPath;
+
+            Structure<DeletionInfo> delInfo = SvnWcDbShared.scanDeletion((SVNWCDb) getWcContext().getDb(), localAbspath);
+            File workDelAbsPath = delInfo.<File>get(DeletionInfo.workDelAbsPath);
             if (workDelAbsPath != null) {
-                File addedAbsPath = SVNFileUtil.getParentFile(workDelAbsPath);
-                
-                WCDbAdditionInfo additionInfo = getWcContext().getDb().scanAddition(localAbspath, AdditionInfoField.reposRootUrl, AdditionInfoField.reposRelPath, AdditionInfoField.reposUuid, AdditionInfoField.originalRevision);
-                reposRelPath = additionInfo.reposRelPath;
-                info.setRepositoryRootURL(additionInfo.reposRootUrl);
-                info.setRepositoryUuid(additionInfo.reposUuid);
-                info.setRevision(additionInfo.originalRevision);
+                File addedAbsPath = SVNFileUtil.getFileDir(workDelAbsPath);
+                Structure<AdditionInfo> additionInfo = 
+                        SvnWcDbShared.scanAddition((SVNWCDb) getWcContext().getDb(), addedAbsPath, AdditionInfo.reposRelPath, AdditionInfo.reposRootUrl, AdditionInfo.reposUuid, AdditionInfo.originalRevision);
+                reposRelPath = additionInfo.<File>get(AdditionInfo.reposRelPath);
+                info.setRepositoryRootURL(additionInfo.<SVNURL>get(AdditionInfo.reposRootUrl));
+                info.setRepositoryUuid(additionInfo.<String>get(AdditionInfo.reposUuid));
+                info.setRevision(additionInfo.lng(AdditionInfo.originalRevision));
                 File p = SVNFileUtil.createFilePath(reposRelPath, SVNWCUtils.skipAncestor(addedAbsPath, localAbspath));
                 
                 info.setUrl(SVNWCUtils.join(info.getRepositoryRootUrl(), p));

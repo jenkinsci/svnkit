@@ -280,6 +280,7 @@ public class SvnWcDbShared {
                     if (!info.hasValue(DeletionInfo.workDelRelPath) && 
                             ((opDepth < localOpDepth && opDepth > 0) || childPresence == SVNWCDbStatus.NotPresent)) {
                         info.set(DeletionInfo.workDelRelPath, childRelpath);
+                        info.set(DeletionInfo.workDelAbsPath, root.getAbsPath(childRelpath));
                     }
                     
                     childRelpath = currentRelPath;
