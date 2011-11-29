@@ -26,9 +26,10 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
-import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb.Mode;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
@@ -36,6 +37,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbLock;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.DirParsedInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.ReposInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.AdditionInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.DeletionInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
@@ -104,7 +106,19 @@ public class SvnWcDbShared {
         SVNWCDbDir pdh = parsed.wcDbDir;
         File localRelpath = parsed.localRelPath;
 
-        return scanAddition(pdh.getWCRoot(), localRelpath, fields);
+        Structure<AdditionInfo> additionInfo = scanAddition(pdh.getWCRoot(), localRelpath, fields);
+        if (additionInfo.hasField(AdditionInfo.reposRootUrl)) {
+            ReposInfo reposInfo = db.fetchReposInfo(pdh.getWCRoot().getSDb(), additionInfo.lng(AdditionInfo.reposId));
+            additionInfo.set(AdditionInfo.reposRootUrl, SVNURL.parseURIEncoded(reposInfo.reposRootUrl));
+            additionInfo.set(AdditionInfo.reposUuid, reposInfo.reposUuid);
+        }
+        
+        if (additionInfo.hasField(AdditionInfo.originalRootUrl) && additionInfo.lng(AdditionInfo.originalReposId) >= 0) {
+            ReposInfo reposInfo = db.fetchReposInfo(pdh.getWCRoot().getSDb(), additionInfo.lng(AdditionInfo.originalReposId));
+            additionInfo.set(AdditionInfo.originalRootUrl, SVNURL.parseURIEncoded(reposInfo.reposRootUrl));
+            additionInfo.set(AdditionInfo.originalUuid, reposInfo.reposUuid);
+        }
+        return additionInfo;
     }
     
     protected static Structure<AdditionInfo> scanAddition(SVNWCDbRoot root, File localRelpath, AdditionInfo... fields) throws SVNException {
