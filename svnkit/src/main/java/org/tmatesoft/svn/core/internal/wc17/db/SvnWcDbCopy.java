@@ -375,7 +375,7 @@ public class SvnWcDbCopy extends SvnWcDbShared {
                         copyInfo.get(CopyInfo.copyFromRelpath),
                         copyInfo.lng(CopyInfo.copyFromRev),
                         SvnWcDbStatementUtil.getPresenceText(SVNWCDbStatus.NotPresent),
-                        kind);
+                        SvnWcDbStatementUtil.getKindText(kind));
                 stmt.done();                
             }
             if (kind == SVNWCDbKind.Dir && dstPresence == SVNWCDbStatus.Normal) {
