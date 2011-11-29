@@ -1151,7 +1151,7 @@ public abstract class SVNRepository {
      * @throws SVNException 
      * @since                  1.2.0, New in Subversion 1.5.0
      */
-    public List getLocationSegments(String path, long pegRevision, long startRevision, long endRevision) throws SVNException {
+    public List<SVNLocationSegment> getLocationSegments(String path, long pegRevision, long startRevision, long endRevision) throws SVNException {
         
         final List result = new LinkedList();
         getLocationSegments(path, pegRevision, startRevision, endRevision, new ISVNLocationSegmentHandler() {

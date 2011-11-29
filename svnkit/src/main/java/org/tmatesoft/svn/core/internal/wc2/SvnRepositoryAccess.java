@@ -1,19 +1,26 @@
 package org.tmatesoft.svn.core.internal.wc2;
 
 import java.io.File;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNMergeInfo;
 import org.tmatesoft.svn.core.SVNMergeInfoInheritance;
+import org.tmatesoft.svn.core.SVNMergeRange;
 import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
+import org.tmatesoft.svn.core.io.SVNLocationSegment;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -250,5 +257,92 @@ public abstract class SvnRepositoryAccess {
             absPath = absPath.substring(1);
         }
         return absPath;
+    }
+    
+    public SVNLocationSegment getYoungestCommonAncestor(SVNURL url1, long rev1, SVNURL url2, long rev2) throws SVNException {
+        boolean[] hasZero1 = new boolean[1];
+        boolean[] hasZero2 = new boolean[1];
+        Map<String, SVNMergeRangeList> history1 = getHistoryAsMergeInfo(url1, SVNRevision.create(rev1), -1, -1, hasZero1, null);
+        Map<String, SVNMergeRangeList> history2 = getHistoryAsMergeInfo(url2, SVNRevision.create(rev2), -1, -1, hasZero2, null);
+        long ycRevision = -1;
+        String ycPath = null;
+        for (Iterator<String> paths = history1.keySet().iterator(); paths.hasNext();) {
+            String path = paths.next();
+            SVNMergeRangeList ranges1 = history1.get(path);
+            SVNMergeRangeList ranges2 = history2.get(path);
+            if (ranges2 != null) {
+                SVNMergeRangeList intersection = ranges1.intersect(ranges2, true);
+                if (intersection != null && !intersection.isEmpty()) {
+                    SVNMergeRange ycRange = intersection.getRanges()[intersection.getSize() - 1];
+                    if (ycRevision < 0 || ycRange.getEndRevision() > ycRevision) {
+                        ycRevision = ycRange.getEndRevision();
+                        ycPath = path.substring(1);
+                    }
+                }
+            }
+        }
+        if (ycPath == null && hasZero1[0] && hasZero2[0]) {
+            ycPath = "/";
+            ycRevision = 0;
+        }
+        return new SVNLocationSegment(ycRevision, ycRevision, ycPath);
+    }
+    
+    private Map<String, SVNMergeRangeList> getHistoryAsMergeInfo(SVNURL url, SVNRevision pegRevision, long rangeYoungest, long rangeOldest, boolean[] hasZero, SVNRepository repos) throws SVNException {
+        long[] pegRevNum = new long[1];
+        Structure<RevisionsPair> pair = getRevisionNumber(repos, SvnTarget.fromURL(url), pegRevision, null);
+        pegRevNum[0] = pair.lng(RevisionsPair.revNumber);
+        pair.release();
+        
+        boolean closeSession = false;
+        try {
+            if (repos == null) {
+                repos = createRepository(url, null, false);
+                closeSession = true;
+            }
+            if (!SVNRevision.isValidRevisionNumber(rangeYoungest)) {
+                rangeYoungest = pegRevNum[0];
+            }
+            if (!SVNRevision.isValidRevisionNumber(rangeOldest)) {
+                rangeOldest = 0;
+            }
+            
+            List<SVNLocationSegment> segments = repos.getLocationSegments("", pegRevNum[0], rangeYoungest, rangeOldest);
+            if (!segments.isEmpty() && hasZero != null && hasZero.length > 0) {
+                SVNLocationSegment oldest = segments.get(0);
+                hasZero[0] = oldest.getStartRevision() == 0;
+            }
+            return getMergeInfoFromSegments(segments);
+        } finally {
+            if (closeSession) {
+                repos.closeSession();
+            }
+        }
+    }
+
+    public static Map<String, SVNMergeRangeList> getMergeInfoFromSegments(Collection<SVNLocationSegment> segments) {
+        Map<String, Collection<SVNMergeRange>> mergeInfo = new TreeMap<String, Collection<SVNMergeRange>>();
+        for (Iterator<SVNLocationSegment> segmentsIter = segments.iterator(); segmentsIter.hasNext();) {
+            SVNLocationSegment segment = (SVNLocationSegment) segmentsIter.next();
+            if (segment.getPath() == null) {
+                continue;
+            }
+            String sourcePath = segment.getPath();
+            Collection<SVNMergeRange> pathRanges = mergeInfo.get(sourcePath);
+            if (pathRanges == null) {
+                pathRanges = new LinkedList<SVNMergeRange>();
+                mergeInfo.put(sourcePath, pathRanges);
+            }
+            SVNMergeRange range = new SVNMergeRange(Math.max(segment.getStartRevision() - 1, 0), 
+                    segment.getEndRevision(), true);
+            pathRanges.add(range);
+        }
+        Map<String, SVNMergeRangeList> result = new TreeMap<String, SVNMergeRangeList>();
+        for (Iterator<String> paths = mergeInfo.keySet().iterator(); paths.hasNext();) {
+            String path = (String) paths.next();
+            Collection<SVNMergeRange> pathRanges = mergeInfo.get(path);
+            result.put(path, SVNMergeRangeList.fromCollection(pathRanges));
+        }
+        return result;
     }
 }

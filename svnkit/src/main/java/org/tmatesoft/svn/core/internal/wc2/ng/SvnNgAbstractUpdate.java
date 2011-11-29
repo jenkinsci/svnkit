@@ -40,6 +40,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbExternals;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
 import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess.RepositoryInfo;
 import org.tmatesoft.svn.core.io.SVNCapability;
+import org.tmatesoft.svn.core.io.SVNLocationSegment;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -616,10 +617,14 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
             SVNErrorManager.error(err, SVNLogType.WC);            
         }
         if (!ignoreAncestry) {
-//            SVNURL targetUrl = getWcContext().getNodeUrl(localAbsPath);
-//            long targetRev = getWcContext().getNodeBaseRev(localAbsPath);
-            
-            // TODO find common ancestor of switchRevUrl@revnum and targetUrl@targetRev
+            SVNURL targetUrl = getWcContext().getNodeUrl(localAbsPath);
+            long targetRev = getWcContext().getNodeBaseRev(localAbsPath);
+            SVNLocationSegment ancestor = getRepositoryAccess().getYoungestCommonAncestor(switchRevUrl, revnum, targetUrl, targetRev);
+            if (!(ancestor.getPath() != null && ancestor.getStartRevision() >= 0)) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_SWITCH, 
+                        "''{0}'' shares no common ancestry with ''{1}''", switchUrl, localAbsPath);
+                SVNErrorManager.error(err, SVNLogType.WC);            
+            }
         }
         
         repository.setLocation(anchorUrl, false);
