@@ -621,7 +621,7 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
             long targetRev = getWcContext().getNodeBaseRev(localAbsPath);
             SVNLocationSegment ancestor = getRepositoryAccess().getYoungestCommonAncestor(switchRevUrl, revnum, targetUrl, targetRev);
             if (!(ancestor.getPath() != null && ancestor.getStartRevision() >= 0)) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_SWITCH, 
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_UNRELATED_RESOURCES, 
                         "''{0}'' shares no common ancestry with ''{1}''", switchUrl, localAbsPath);
                 SVNErrorManager.error(err, SVNLogType.WC);            
             }
