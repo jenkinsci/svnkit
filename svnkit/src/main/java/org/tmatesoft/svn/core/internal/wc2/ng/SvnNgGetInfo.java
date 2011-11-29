@@ -32,9 +32,12 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbBaseInfo.BaseInfoFie
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbDeletionInfo.DeletionInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
+import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
+import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.AdditionInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeOriginInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.PristineInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbShared;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.wc.SVNConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
@@ -189,13 +192,15 @@ public class SvnNgGetInfo extends SvnNgOperationRunner<SvnInfo, SvnGetInfo> impl
                     wcInfo.setCopyFromRevision(readInfo.originalRevision);
                 }
             } else if (readInfo.opRoot) {
-                WCDbAdditionInfo addInfo = getWcContext().getDb().scanAddition(localAbspath, AdditionInfoField.reposRelPath, AdditionInfoField.reposRootUrl, AdditionInfoField.reposUuid);
-                info.setRepositoryRootURL(addInfo.reposRootUrl);
-                info.setRepositoryUuid(addInfo.reposUuid);
+                Structure<AdditionInfo> additionInfo = 
+                        SvnWcDbShared.scanAddition((SVNWCDb) getWcContext().getDb(), localAbspath, AdditionInfo.reposRelPath, AdditionInfo.reposRootUrl, AdditionInfo.reposUuid);
+                info.setRepositoryRootURL(additionInfo.<SVNURL>get(AdditionInfo.reposRootUrl));
+                info.setRepositoryUuid(additionInfo.<String>get(AdditionInfo.reposUuid));
                 if (readInfo.haveBase) {
                     long baseRev = getWcContext().getDb().getBaseInfo(localAbspath, BaseInfoField.revision).revision;
                     info.setRevision(baseRev);
                 }
+                additionInfo.release();
             } else {
                 Structure<NodeOriginInfo> nodeOrigin = getWcContext().getNodeOrigin(localAbspath, true);
                 info.setRepositoryRootURL(nodeOrigin.<SVNURL>get(NodeOriginInfo.reposRootUrl));
