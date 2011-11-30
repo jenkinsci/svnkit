@@ -213,7 +213,14 @@ public class SVNReporter17 implements ISVNReporterBaton {
          * The first call to the reporter merely informs it that the top-level
          * directory being updated is at BASE_REV. Its PATH argument is ignored.
          */
-        reporter.setPath("", null, target_rev, target_depth, start_empty);
+        SVNDepth reportDepth = target_depth;
+        if (isHonorDepthExclude
+                && depth != SVNDepth.EXCLUDE
+                && depth.compareTo(target_depth) < 0) {
+            reportDepth = depth;
+        }
+                
+        reporter.setPath("", null, target_rev, reportDepth, start_empty);
 
         try {
 
