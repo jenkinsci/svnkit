@@ -208,7 +208,7 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
                 preservedExts);
                 
         try {
-            repos.update(revNumber, target, depth, false, reporter, editor);
+            repos.update(revNumber, target, depthIsSticky ? depth : SVNDepth.UNKNOWN, false, reporter, editor);
         } catch(SVNException e) {
             sleepForTimestamp();
             throw e;
