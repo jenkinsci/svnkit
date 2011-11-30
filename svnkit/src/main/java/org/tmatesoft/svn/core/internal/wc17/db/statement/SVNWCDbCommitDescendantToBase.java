@@ -35,7 +35,7 @@ public class SVNWCDbCommitDescendantToBase extends SVNSqlJetUpdateStatement {
         updateValues.put(NODES__Fields.dav_cache.toString(), null);
         String presence = (String) updateValues.get(NODES__Fields.presence.toString());
         
-        if (!"normal".equals(presence) && !"exclude".equals(presence)) {
+        if (!"normal".equals(presence) && !"excluded".equals(presence)) {
             updateValues.put(NODES__Fields.presence.toString(), "not-present");
         }
 

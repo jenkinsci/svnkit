@@ -4550,6 +4550,7 @@ public class SVNWCDb implements ISVNWCDb {
             boolean fileExternal = false;
             long opDepth;
             SVNWCDbKind newKind;
+            SVNWCDbStatus oldPresence = null;
 
             ReposInfo2 reposInfo = determineReposInfo(pdh, localRelpath);
             reposId = reposInfo.reposId;
@@ -4583,6 +4584,7 @@ public class SVNWCDb implements ISVNWCDb {
                 if (keepChangelist && haveAct) {
                     changelist = getColumnText(stmtAct, ACTUAL_NODE__Fields.changelist);
                 }
+                oldPresence = getColumnPresence(stmtInfo);
             } finally {
                 stmtInfo.reset();
                 stmtAct.reset();
@@ -4606,7 +4608,7 @@ public class SVNWCDb implements ISVNWCDb {
                 parentRelpath = SVNFileUtil.getFileDir(localRelpath);
             }
 
-            newPresence = SVNWCDbStatus.Normal;
+            newPresence = oldPresence == SVNWCDbStatus.Incomplete ? SVNWCDbStatus.Incomplete : SVNWCDbStatus.Normal;
 
             stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.APPLY_CHANGES_TO_BASE_NODE);
             stmt.bindf("issisrtstrisnbnn", 
