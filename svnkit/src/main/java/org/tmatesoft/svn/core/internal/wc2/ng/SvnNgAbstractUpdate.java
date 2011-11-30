@@ -70,8 +70,8 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
                             throw e;
                         }
                     }
-                    missingParents.add(0, parentPath);
                     parentPath = SVNFileUtil.getParentFile(parentPath);
+                    missingParents.add(0, parentPath);
                 }
                 anchor = lockRootPath;
                 for (File missingParent : missingParents) {
