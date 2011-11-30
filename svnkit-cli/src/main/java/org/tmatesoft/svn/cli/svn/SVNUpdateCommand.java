@@ -53,6 +53,7 @@ public class SVNUpdateCommand extends SVNCommand {
         options.add(SVNOption.CHANGELIST);
         options.add(SVNOption.EDITOR_CMD);
         options.add(SVNOption.ACCEPT);
+        options.add(SVNOption.PARENTS);
         return options;
     }
 
@@ -116,7 +117,7 @@ public class SVNUpdateCommand extends SVNCommand {
         }
         File[] filesArray = (File[]) files.toArray(new File[files.size()]);
         client.doUpdate(filesArray, getSVNEnvironment().getStartRevision(), depth, 
-                getSVNEnvironment().isForce(), depthIsSticky);
+                getSVNEnvironment().isForce(), depthIsSticky, getSVNEnvironment().isParents());
 
         if (printer.hasExternalErrors()) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ERROR_PROCESSING_EXTERNALS, 

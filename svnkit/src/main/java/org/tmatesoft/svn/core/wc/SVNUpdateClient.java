@@ -309,6 +309,10 @@ public class SVNUpdateClient extends SVNBasicClient {
      * @since 1.2, SVN 1.5
      */
     public long[] doUpdate(File[] paths, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions, boolean depthIsSticky) throws SVNException {
+        return doUpdate(paths, revision, depth, allowUnversionedObstructions, depthIsSticky, false);
+    }
+
+    public long[] doUpdate(File[] paths, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions, boolean depthIsSticky, boolean makeParents) throws SVNException {
         if (paths == null || paths.length == 0) {
             return new long[0];
         }
@@ -322,6 +326,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         up.setDepthIsSticky(depthIsSticky);
         up.setAllowUnversionedObstructions(allowUnversionedObstructions);
         up.setIgnoreExternals(isIgnoreExternals());
+        up.setMakeParents(makeParents);
 
         return up.run();
     }
