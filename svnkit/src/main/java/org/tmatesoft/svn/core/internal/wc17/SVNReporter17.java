@@ -58,7 +58,7 @@ public class SVNReporter17 implements ISVNReporterBaton {
 
     private final File path;
     private SVNWCContext wcContext;
-    private final SVNDepth depth;
+    private SVNDepth depth;
     private final boolean isRestoreFiles;
     private final boolean isUseDepthCompatibilityTrick;
     private final boolean isHonorDepthExclude;
@@ -215,6 +215,7 @@ public class SVNReporter17 implements ISVNReporterBaton {
          */
         SVNDepth reportDepth = target_depth;
         if (isHonorDepthExclude
+                && depth != SVNDepth.UNKNOWN
                 && depth != SVNDepth.EXCLUDE
                 && depth.compareTo(target_depth) < 0) {
             reportDepth = depth;
