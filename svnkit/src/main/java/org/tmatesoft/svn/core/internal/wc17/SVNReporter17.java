@@ -637,7 +637,7 @@ public class SVNReporter17 implements ISVNReporterBaton {
                  * infinity.
                  */
                 else if (this_rev != dir_rev || this_lock != null || is_incomplete || dir_depth == SVNDepth.EMPTY || dir_depth == SVNDepth.FILES
-                        || (dir_depth == SVNDepth.IMMEDIATES && this_depth != SVNDepth.EMPTY) || (this_depth.compareTo(SVNDepth.INFINITY) < 0 && depth == SVNDepth.INFINITY))
+                        || (dir_depth == SVNDepth.IMMEDIATES && this_depth != SVNDepth.EMPTY) || (this_depth.compareTo(SVNDepth.INFINITY) < 0 && depth.isRecursive()))
                     reporter.setPath(SVNFileUtil.getFilePath(this_path), this_lock != null ? this_lock.token : null, this_rev, this_depth, start_empty);
 
                 if (SVNDepth.recurseFromDepth(depth))
