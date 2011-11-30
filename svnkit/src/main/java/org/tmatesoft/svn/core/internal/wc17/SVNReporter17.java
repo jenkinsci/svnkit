@@ -134,13 +134,15 @@ public class SVNReporter17 implements ISVNReporterBaton {
         if (status == SVNWCDbStatus.NotPresent || status == SVNWCDbStatus.ServerExcluded || (target_kind == SVNWCDbKind.Dir && status != SVNWCDbStatus.Normal && status != SVNWCDbStatus.Incomplete)) {
             /* The target does not exist or is a local addition */
 
-            if (!SVNRevision.isValidRevisionNumber(target_rev))
+            if (!SVNRevision.isValidRevisionNumber(target_rev)) {
                 target_rev = 0;
+            }
 
-            if (target_depth == SVNDepth.UNKNOWN)
-                target_depth = SVNDepth.INFINITY;
+            if (depth == SVNDepth.UNKNOWN) {
+                depth = SVNDepth.INFINITY;
+            }
 
-            reporter.setPath("", null, target_rev, target_depth, false);
+            reporter.setPath("", null, target_rev, depth, false);
             reporter.deletePath("");
 
             /*
