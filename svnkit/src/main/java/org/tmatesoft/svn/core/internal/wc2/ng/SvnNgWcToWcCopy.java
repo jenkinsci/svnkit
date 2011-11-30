@@ -91,7 +91,7 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
         } else if (sources.size() == 1) {
             SvnCopyPair copyPair = new SvnCopyPair();
             SvnCopySource source = sources.iterator().next(); 
-            copyPair.source = source.getSource().getFile();
+            copyPair.source = new File(SVNPathUtil.validateFilePath(source.getSource().getFile().getAbsolutePath()));
             copyPair.dst = getFirstTarget();
             if (!getOperation().isFailWhenDstExists() && SVNFileType.getType(copyPair.dst) != SVNFileType.NONE) {
                 copyPair.dst = new File(copyPair.dst, copyPair.source.getName());
