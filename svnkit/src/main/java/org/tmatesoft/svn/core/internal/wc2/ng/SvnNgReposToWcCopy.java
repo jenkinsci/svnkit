@@ -303,6 +303,9 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
 
     private long copy(final SvnCopyPair pair, boolean sameRepositories, boolean ignoreExternals, SVNRepository repository) throws SVNException {
         long rev = -1;
+        SVNURL oldLocation = repository.getLocation();
+        repository.setLocation(pair.source, false);
+
         if (pair.srcKind == SVNNodeKind.DIR) {
             File dstParent = SVNFileUtil.getParentFile(pair.dst);
             final File dstPath = SVNFileUtil.createUniqueFile(dstParent, pair.dst.getName(), ".tmp", false);
@@ -367,8 +370,7 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
                 SVNFileUtil.deleteAll(dstPath, true);
             }
         } else {
-            String relativePath = SVNURLUtil.getRelativeURL(repository.getLocation(), pair.source);
-            relativePath = SVNEncodingUtil.uriDecode(relativePath);
+            String relativePath = "";
             File tmpDir = getWcContext().getDb().getWCRootTempDir(pair.dst);
             UniqueFileInfo ufInfo = SVNWCContext.openUniqueFile(tmpDir, true);
             SVNProperties newProperties = new SVNProperties();
@@ -388,8 +390,6 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
             }
             
         }
-        SVNURL oldLocation = repository.getLocation();
-        repository.setLocation(pair.source, false);
         Map<String, SVNMergeRangeList> mergeInfo = calculateTargetMergeInfo(pair.source, pair.revNum, repository);
         repository.setLocation(oldLocation, false);
         
