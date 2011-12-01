@@ -74,6 +74,22 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
     @Override
     protected Long run(SVNWCContext context) throws SVNException {
         Collection<SvnCopySource> sources = getOperation().getSources();
+        try {
+            return tryRun(context, sources, getFirstTarget());
+        } catch (SVNException e) {
+            SVNErrorCode code = e.getErrorMessage().getErrorCode();
+            if (!getOperation().isFailWhenDstExists()
+                    && getOperation().getSources().size() == 1 
+                    && (code == SVNErrorCode.ENTRY_EXISTS || code == SVNErrorCode.FS_ALREADY_EXISTS)) {
+                SvnCopySource source = sources.iterator().next();
+                return tryRun(context, sources, new File(getFirstTarget(), source.getSource().getFile().getName()));
+            }
+            throw e;            
+        } finally {
+            sleepForTimestamp();
+        }
+    }
+    protected Long tryRun(SVNWCContext context, Collection<SvnCopySource> sources, File target) throws SVNException {
         Collection<SvnCopyPair> copyPairs = new ArrayList<SvnNgWcToWcCopy.SvnCopyPair>();
 
         if (sources.size() > 1) {
@@ -85,17 +101,14 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
                 SvnCopyPair copyPair = new SvnCopyPair();
                 copyPair.source = copySource.getSource().getFile();
                 String baseName = copyPair.source.getName();
-                copyPair.dst = new File(getFirstTarget(), baseName);
+                copyPair.dst = new File(target, baseName);
                 copyPairs.add(copyPair);
             }
         } else if (sources.size() == 1) {
             SvnCopyPair copyPair = new SvnCopyPair();
             SvnCopySource source = sources.iterator().next(); 
             copyPair.source = new File(SVNPathUtil.validateFilePath(source.getSource().getFile().getAbsolutePath()));
-            copyPair.dst = getFirstTarget();
-            if (getOperation().isMove() && !getOperation().isFailWhenDstExists() && SVNFileType.getType(copyPair.dst) != SVNFileType.NONE) {
-                copyPair.dst = new File(copyPair.dst, copyPair.source.getName());
-            }
+            copyPair.dst = target;
             copyPairs.add(copyPair);
         }
         
@@ -144,25 +157,9 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
                 for (SvnCopyPair copyPair : copyPairs) {
                     checkCancelled();
                     File dstPath = SVNFileUtil.createFilePath(copyPair.dstParent, copyPair.baseName);
-                    try {
-                        copy(context, copyPair.source, dstPath, false);
-                    } catch (SVNException e) {
-                        SVNErrorCode code = e.getErrorMessage().getErrorCode();
-                        
-                        if (sources.size() == 1 
-                                && !getOperation().isFailWhenDstExists() 
-                                && (code == SVNErrorCode.ENTRY_EXISTS || code == SVNErrorCode.FS_ALREADY_EXISTS)) {
-                            dstPath = SVNFileUtil.createFilePath(copyPair.dst, copyPair.source.getName());
-                            copyPair.dst = dstPath;
-                            verifyPaths(copyPairs, getOperation().isMakeParents(), getOperation().isMove());
-                            copy(context, copyPair.source, dstPath, false);
-                        } else {
-                            throw e;
-                        }
-                    }
+                    copy(context, copyPair.source, dstPath, false);
                 }
             } finally {
-                sleepForTimestamp();
                 context.releaseWriteLock(ancestor);
             }
         }
@@ -193,12 +190,8 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
                 
                 move(getWcContext(), copyPair.source, SVNFileUtil.createFilePath(copyPair.dstParent, copyPair.baseName), false);
             } finally {
-                try {
-                    for (File file : lockedPaths) {
-                        getWcContext().releaseWriteLock(file);
-                    }
-                } finally {
-                    sleepForTimestamp();
+                for (File file : lockedPaths) {
+                    getWcContext().releaseWriteLock(file);
                 }
             }
         }
