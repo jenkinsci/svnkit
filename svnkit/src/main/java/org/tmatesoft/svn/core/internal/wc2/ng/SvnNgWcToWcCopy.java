@@ -102,6 +102,11 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
         for (SvnCopyPair pair : copyPairs) {
             File src = pair.source;
             File dst = pair.dst;
+            if (getOperation().isMove() && src.equals(dst)) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
+                        "Cannot move path ''{0}'' into itself", src);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
             if (SVNWCUtils.isChild(src, dst)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Cannot copy path ''{0}'' into its own child ''{1}''",
                     src, dst);
@@ -112,11 +117,6 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
             for (SvnCopyPair pair : copyPairs) {
                 File src = pair.source;
                 File dst = pair.dst;
-                if (src.equals(dst)) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
-                            "Cannot move path ''{0}'' into itself", src);
-                    SVNErrorManager.error(err, SVNLogType.WC);
-                }
                 try {
                     Structure<ExternalNodeInfo> externalInfo = SvnWcDbExternals.readExternal(context, src, src, ExternalNodeInfo.kind);
                     if (externalInfo.hasValue(ExternalNodeInfo.kind) && externalInfo.get(ExternalNodeInfo.kind) != SVNNodeKind.NONE) {
