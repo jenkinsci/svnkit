@@ -28,6 +28,7 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslatorInputStream;
 import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
 import org.tmatesoft.svn.core.io.SVNFileRevision;
@@ -337,6 +338,29 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
                 myIsLastRevisionReported = true;
                 reportAnnotations(myFileHandler, myEncoding);
             }
+        }
+    }
+    
+    public void addFileBlame(InputStream contents) throws SVNException {
+        if (myCurrentFile == null) {
+            myCurrentFile = SVNFileUtil.createUniqueFile(myTmpDirectory, "annotate", ".tmp", false);
+        }
+        OutputStream os = null;
+        try {
+            os = SVNFileUtil.openFileForWriting(myCurrentFile);
+            SVNTranslator.copy(contents, os);
+        } catch (IOException e) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e);
+            SVNErrorManager.error(err, SVNLogType.WC);
+        } finally {
+            SVNFileUtil.closeFile(os);
+        }
+        myBlameChunks = addFileBlame(myPreviousFile, myCurrentFile, myBlameChunks);
+        if (myPreviousFile == null) {
+            myPreviousFile = myCurrentFile;
+            myCurrentFile = null;
+        } else {
+            SVNFileUtil.rename(myCurrentFile, myPreviousFile);
         }
     }
     

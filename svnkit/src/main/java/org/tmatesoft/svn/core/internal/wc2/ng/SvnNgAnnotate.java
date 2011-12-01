@@ -16,7 +16,6 @@ import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess.RepositoryInfo;
 import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess.RevisionsPair;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnAnnotate;
 import org.tmatesoft.svn.core.wc2.SvnAnnotateItem;
 import org.tmatesoft.svn.util.SVNLogType;
@@ -64,8 +63,6 @@ public class SvnNgAnnotate extends SvnNgOperationRunner<SvnAnnotateItem, SvnAnno
             path = getOperation().getFirstTarget().getFile().getAbsolutePath();
     		
     	}
-    	
-    	
     	SVNAnnotationGenerator generator = new SVNAnnotationGenerator(path, tmpFile, startRev, 
     			getOperation().isIgnoreMimeType(), getOperation().isUseMergeHistory(), getOperation().getDiffOptions(), getOperation().getInputEncoding(), this, this);
     	

@@ -101,7 +101,7 @@ public class SVNBlameCommand extends SVNXMLCommand implements ISVNAnnotateHandle
                 } else if (target.isURL()) {
                     endRev = SVNRevision.HEAD;
                 } else {
-                    endRev = SVNRevision.BASE;
+                    endRev = SVNRevision.WORKING;
                 }
             }
             if (getSVNEnvironment().isXML()) {

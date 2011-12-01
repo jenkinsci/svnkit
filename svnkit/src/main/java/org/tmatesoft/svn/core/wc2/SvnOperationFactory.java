@@ -197,7 +197,7 @@ public class SvnOperationFactory {
         registerOperationRunner(SvnLog.class, new SvnRemoteLog());
         
         registerOperationRunner(SvnAnnotate.class, new SvnOldAnnotate());
-        registerOperationRunner(SvnAnnotate.class, new SvnNgAnnotate());
+//        registerOperationRunner(SvnAnnotate.class, new SvnNgAnnotate());
         registerOperationRunner(SvnAnnotate.class, new SvnRemoteAnnotate());
         
         registerOperationRunner(SvnSetChangelist.class, new SvnOldSetChangelist());
