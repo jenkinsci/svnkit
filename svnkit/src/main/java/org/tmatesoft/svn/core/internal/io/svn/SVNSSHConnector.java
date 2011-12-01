@@ -85,14 +85,11 @@ public class SVNSSHConnector implements ISVNConnector {
             SVNSSHAuthentication authentication = (SVNSSHAuthentication) authManager.getFirstAuthentication(ISVNAuthenticationManager.SSH, realm, repository.getLocation());
             SshSession connection = null;
             
-            // lock SVNSSHSession to make sure connection opening and session creation is atomic.
-//            SVNSSHSession.lock(Thread.currentThread());
-//            try {
                 while (authentication != null) {
                     try {
                         final ISVNSSHHostVerifier verifier = (ISVNSSHHostVerifier) (authManager instanceof ISVNSSHHostVerifier ? authManager : null);
                         String host = repository.getLocation().getHost();
-                        int port = repository.getLocation().getPort() > 0 ? repository.getLocation().getPort() : authentication.getPortNumber();
+                        int port = repository.getLocation().hasPort() ? repository.getLocation().getPort() : authentication.getPortNumber();
                         if (port < 0) {
                             port = 22;
                         }
