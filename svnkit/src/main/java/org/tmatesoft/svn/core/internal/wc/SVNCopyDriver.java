@@ -557,7 +557,7 @@ public class SVNCopyDriver extends SVNBasicDelegate {
                     }
                     if (same) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
-                                "Cannot move path ''{0}'' into itself", p);
+                                "Cannot move {1} ''{0}'' into itself", p, srcIsURL ? "URL" : "path");
                         SVNErrorManager.error(err, SVNLogType.WC);
                     }
                 }

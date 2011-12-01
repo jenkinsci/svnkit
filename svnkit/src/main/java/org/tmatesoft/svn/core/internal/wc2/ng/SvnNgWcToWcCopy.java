@@ -239,10 +239,6 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
             }
 
             copyPair.dstParent = new File(SVNPathUtil.validateFilePath(SVNFileUtil.getParentFile(copyPair.dst).getAbsolutePath()));
-            if (SVNFileType.getType(copyPair.dstParent) != SVNFileType.DIRECTORY) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "Path ''{0}'' is not a directory", copyPair.dstParent);
-                SVNErrorManager.error(err, SVNLogType.WC);
-            }
             copyPair.baseName = SVNFileUtil.getFileName(copyPair.dst);
             
             if (makeParents && SVNFileType.getType(copyPair.dstParent) == SVNFileType.NONE) {
