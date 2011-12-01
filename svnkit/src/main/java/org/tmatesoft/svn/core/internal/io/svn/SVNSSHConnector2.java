@@ -92,7 +92,7 @@ public class SVNSSHConnector2 implements ISVNConnector {
                     try {
                         final ISVNSSHHostVerifier verifier = (ISVNSSHHostVerifier) (authManager instanceof ISVNSSHHostVerifier ? authManager : null);
                         String host = repository.getLocation().getHost();
-                        int port = repository.getLocation().getPort() > 0 ? repository.getLocation().getPort() : authentication.getPortNumber();
+                        int port = repository.getLocation().hasPort() ? repository.getLocation().getPort() : authentication.getPortNumber();
                         if (port < 0) {
                             port = 22;
                         }
