@@ -93,7 +93,7 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
             SvnCopySource source = sources.iterator().next(); 
             copyPair.source = new File(SVNPathUtil.validateFilePath(source.getSource().getFile().getAbsolutePath()));
             copyPair.dst = getFirstTarget();
-            if (!getOperation().isFailWhenDstExists() && SVNFileType.getType(copyPair.dst) != SVNFileType.NONE) {
+            if (getOperation().isMove() && !getOperation().isFailWhenDstExists() && SVNFileType.getType(copyPair.dst) != SVNFileType.NONE) {
                 copyPair.dst = new File(copyPair.dst, copyPair.source.getName());
             }
             copyPairs.add(copyPair);
@@ -116,7 +116,6 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
         if (getOperation().isMove()) {
             for (SvnCopyPair pair : copyPairs) {
                 File src = pair.source;
-                File dst = pair.dst;
                 try {
                     Structure<ExternalNodeInfo> externalInfo = SvnWcDbExternals.readExternal(context, src, src, ExternalNodeInfo.kind);
                     if (externalInfo.hasValue(ExternalNodeInfo.kind) && externalInfo.get(ExternalNodeInfo.kind) != SVNNodeKind.NONE) {
@@ -145,7 +144,22 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
                 for (SvnCopyPair copyPair : copyPairs) {
                     checkCancelled();
                     File dstPath = SVNFileUtil.createFilePath(copyPair.dstParent, copyPair.baseName);
-                    copy(context, copyPair.source, dstPath, false);
+                    try {
+                        copy(context, copyPair.source, dstPath, false);
+                    } catch (SVNException e) {
+                        SVNErrorCode code = e.getErrorMessage().getErrorCode();
+                        
+                        if (sources.size() == 1 
+                                && !getOperation().isFailWhenDstExists() 
+                                && (code == SVNErrorCode.ENTRY_EXISTS || code == SVNErrorCode.FS_ALREADY_EXISTS)) {
+                            dstPath = SVNFileUtil.createFilePath(copyPair.dst, copyPair.source.getName());
+                            copyPair.dst = dstPath;
+                            verifyPaths(copyPairs, getOperation().isMakeParents(), getOperation().isMove());
+                            copy(context, copyPair.source, dstPath, false);
+                        } else {
+                            throw e;
+                        }
+                    }
                 }
             } finally {
                 sleepForTimestamp();
@@ -232,6 +246,10 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
             }
 
             copyPair.dstParent = new File(SVNPathUtil.validateFilePath(SVNFileUtil.getParentFile(copyPair.dst).getAbsolutePath()));
+            if (SVNFileType.getType(copyPair.dstParent) != SVNFileType.DIRECTORY) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "Path ''{0}'' is not a directory", copyPair.dstParent);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
             copyPair.baseName = SVNFileUtil.getFileName(copyPair.dst);
             
             if (makeParents && SVNFileType.getType(copyPair.dstParent) == SVNFileType.NONE) {
