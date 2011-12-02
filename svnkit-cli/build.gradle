@@ -1,5 +1,6 @@
 configurations {
     scripts
+    conf
 }
 
 packageName = 'org.tmatesoft.svn.cli'
@@ -15,6 +16,8 @@ jar << {
     
     File scriptsDir = new File(buildDir, 'scripts')
     scriptsDir.mkdirs()
+    File confDir = new File(buildDir, 'conf')
+    confDir.mkdirs()
     
     def classpath = []
     configurations.compile.files.each {
@@ -55,7 +58,16 @@ jar << {
             it = expandClasspath(it, classpath)
         }
     }
+    copy {
+        from file("src/main/conf/logging.properties")
+        into confDir
+        eachFile {
+           it.name = it.name + '.disabled'
+        }
+    }
 
     configurations.scripts.addArtifact(new
         org.gradle.api.internal.artifacts.publish.DefaultPublishArtifact("svn-cli-scripts", "dir", "dir", null, new  Date(), scriptsDir))
+    configurations.conf.addArtifact(new
+        org.gradle.api.internal.artifacts.publish.DefaultPublishArtifact("svn-cli-conf", "dir", "dir", null, new  Date(), confDir))
 }

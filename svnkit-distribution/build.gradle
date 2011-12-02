@@ -13,6 +13,9 @@ task buildAll << {
         into('src') {
             from configurations.sources.files
         }
+        into('conf') {
+            from configurations.conf.files
+        }
         into('licenses') {
             from file('src/main/licenses')
         }

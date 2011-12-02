@@ -113,6 +113,7 @@ project(':svnkit-distribution') {
         binaries
         sources
         scripts
+        conf
         osgi
     }
 
@@ -126,6 +127,7 @@ project(':svnkit-distribution') {
         sources project(path: ':svnkit-javahl16', configuration: 'sources')
 
         scripts project(path: ':svnkit-cli', configuration: 'scripts')
+        conf project(path: ':svnkit-cli', configuration: 'conf')
 
         osgi project(path: ':svnkit-osgi', configuration: 'archives')
         osgi 'com.trilead:trilead-ssh2-osgi:1.0.0-build214'
