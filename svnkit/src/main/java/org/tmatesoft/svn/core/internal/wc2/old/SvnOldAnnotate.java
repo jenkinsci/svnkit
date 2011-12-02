@@ -19,20 +19,16 @@ import org.tmatesoft.svn.util.SVNLogType;
 public class SvnOldAnnotate extends SvnOldRunner<SvnAnnotateItem, SvnAnnotate> implements ISVNAnnotateHandler { 
 	
 	@Override
-    public boolean isApplicable(SvnAnnotate operation, SvnWcGeneration wcGeneration) throws SVNException {
-        return wcGeneration == getWcGeneration();
-    }
-	
-	@Override
     protected SvnAnnotateItem run() throws SVNException {
-		
+		if (getOperation().getEndRevision() == SVNRevision.UNDEFINED) {
+			getOperation().setEndRevision(SVNRevision.BASE);
+	    }
 		if (getOperation().getStartRevision() == null || !getOperation().getStartRevision().isValid()) {
     		getOperation().setStartRevision(SVNRevision.create(1));
         }
         if (getOperation().getEndRevision() == null || !getOperation().getEndRevision().isValid()) {
             getOperation().setEndRevision(getOperation().getFirstTarget().getPegRevision());
         }
-        
         if (getOperation().getStartRevision() == SVNRevision.WORKING || getOperation().getEndRevision() == SVNRevision.WORKING) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Blame of the WORKING revision is not supported");
             SVNErrorManager.error(err, SVNLogType.WC);

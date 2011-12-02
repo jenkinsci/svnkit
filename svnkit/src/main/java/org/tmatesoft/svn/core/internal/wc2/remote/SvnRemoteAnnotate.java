@@ -37,11 +37,18 @@ public class SvnRemoteAnnotate extends SvnRemoteOperationRunner<SvnAnnotateItem,
 	
 	@Override
     public boolean isApplicable(SvnAnnotate operation, SvnWcGeneration wcGeneration) throws SVNException {
-        return wcGeneration == SvnWcGeneration.V17;
+        return (operation.hasRemoteTargets() || wcGeneration == SvnWcGeneration.V17);
     }
 	
 	@Override
     protected SvnAnnotateItem run() throws SVNException {
+		if (getOperation().getEndRevision() == SVNRevision.UNDEFINED) {
+			if (getOperation().hasRemoteTargets()) {
+				getOperation().setEndRevision(SVNRevision.HEAD);
+			} else {
+				getOperation().setEndRevision(SVNRevision.WORKING);
+			}
+	    }
 		
 		if (getOperation().getStartRevision() == null || !getOperation().getStartRevision().isValid() ||
     			getOperation().getEndRevision() == null || !getOperation().getEndRevision().isValid()) {
@@ -80,7 +87,7 @@ public class SvnRemoteAnnotate extends SvnRemoteOperationRunner<SvnAnnotateItem,
     	}
     	
     	SVNAnnotationGenerator generator = new SVNAnnotationGenerator(path, tmpFile, startRev, 
-    			getOperation().isIgnoreMimeType(), getOperation().isUseMergeHistory(), getOperation().getDiffOptions(), getOperation().getInputEncoding(), this, this);
+    			getOperation().isForce(), getOperation().isUseMergeHistory(), getOperation().getDiffOptions(), getOperation().getInputEncoding(), this, this);
     	
        try {
     	   	repository.getFileRevisions("", startRev > 0 ? startRev - 1 : startRev, endRev, getOperation().isUseMergeHistory(), generator);
