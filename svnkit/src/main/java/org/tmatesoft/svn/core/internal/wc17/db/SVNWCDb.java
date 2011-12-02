@@ -2235,7 +2235,7 @@ public class SVNWCDb implements ISVNWCDb {
         	{
         		boolean exists = doesNodeExists(wcRoot, localRelPath);
         	    if (!exists) {
-        	    	SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{0}'' has a corrupt checksum value.", wcRoot.getAbsPath(localRelPath));
+        	    	SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{0}'' was not found.", wcRoot.getAbsPath(localRelPath).getPath());
         	    	SVNErrorManager.error(err, SVNLogType.WC);
         	    }
         	 }
