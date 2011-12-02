@@ -244,6 +244,10 @@ public class SVNSocketFactory {
             return null;
         }
         SSLSocket sslSocket = (SSLSocket) socket;
+        if (ourSSLProtocols != null && "SSLv3".equals(ourSSLProtocols.trim())) {
+            sslSocket.setEnabledProtocols(new String[] {"SSLv3"});
+            return sslSocket;
+        }
         String[] protocols = null;
         
         if (ourSSLProtocols != null) {
