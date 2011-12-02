@@ -76,8 +76,8 @@ public class SVNWCDbMarkSkippedChangelistDirs extends SVNSqlJetInsertStatement {
     protected Map<String, Object> getInsertValues() throws SVNException {
     	Map<String,Object> selectedRow = select.getRowValues();
     	Map<String, Object> insertValues = new HashMap<String, Object>();
-    	insertValues.put(SVNWCDbSchema.CHANGELIST_LIST__Fields.wc_id.toString(), selectedRow.get(SVNWCDbSchema.TARGETS_LIST__Fields.wc_id));
-        insertValues.put(SVNWCDbSchema.CHANGELIST_LIST__Fields.local_relpath.toString(), selectedRow.get(SVNWCDbSchema.TARGETS_LIST__Fields.local_relpath));
+    	insertValues.put(SVNWCDbSchema.CHANGELIST_LIST__Fields.wc_id.toString(), selectedRow.get(SVNWCDbSchema.TARGETS_LIST__Fields.wc_id.toString()));
+        insertValues.put(SVNWCDbSchema.CHANGELIST_LIST__Fields.local_relpath.toString(), selectedRow.get(SVNWCDbSchema.TARGETS_LIST__Fields.local_relpath.toString()));
         insertValues.put(SVNWCDbSchema.CHANGELIST_LIST__Fields.notify.toString(), 7);
         insertValues.put(SVNWCDbSchema.CHANGELIST_LIST__Fields.changelist.toString(), getBind(1));
         return insertValues;

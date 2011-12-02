@@ -99,10 +99,6 @@ public class SVNBlameCommand extends SVNXMLCommand implements ISVNAnnotateHandle
             if (endRev == SVNRevision.UNDEFINED) {
                 if (target.getPegRevision() != SVNRevision.UNDEFINED) {
                     endRev = target.getPegRevision();
-                } else if (target.isURL()) {
-                    endRev = SVNRevision.HEAD;
-                } else {
-                    endRev = SVNRevision.WORKING;
                 }
             }
             if (getSVNEnvironment().isXML()) {
