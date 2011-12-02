@@ -52,32 +52,33 @@ public class SvnChangelistActualNodesTrigger implements ISVNSqlJetTrigger {
 	*/
 
     public void beforeUpdate(ISqlJetCursor cursor, Map<String, Object> newValues) throws SqlJetException {
+    	
         ISqlJetTable table = db.getDb().getTemporaryDatabase().getTable(SVNWCDbSchema.CHANGELIST_LIST.toString());
         
-        if (!cursor.isNull(CHANGELIST_LIST__Fields.changelist.toString()) && 
-        	(!cursor.getValue(CHANGELIST_LIST__Fields.changelist.toString()).equals(newValues.get(CHANGELIST_LIST__Fields.changelist.toString()) )
-        	|| (newValues.get(CHANGELIST_LIST__Fields.changelist.toString()) == null)))
+        if (!cursor.isNull(ACTUAL_NODE__Fields.changelist.toString()) && 
+        	(!cursor.getValue(ACTUAL_NODE__Fields.changelist.toString()).equals(newValues.get(ACTUAL_NODE__Fields.changelist.toString()) )
+        	|| (newValues.get(ACTUAL_NODE__Fields.changelist.toString()) == null)))
         {
         	Map<String, Object> rowValues = new HashMap<String, Object>();
-	        rowValues.put(CHANGELIST_LIST__Fields.wc_id.toString(), cursor.getValue(CHANGELIST_LIST__Fields.wc_id.toString()));
-	        rowValues.put(CHANGELIST_LIST__Fields.local_relpath.toString(), cursor.getValue(CHANGELIST_LIST__Fields.local_relpath.toString()));
+	        rowValues.put(CHANGELIST_LIST__Fields.wc_id.toString(), cursor.getValue(ACTUAL_NODE__Fields.wc_id.toString()));
+	        rowValues.put(CHANGELIST_LIST__Fields.local_relpath.toString(), cursor.getValue(ACTUAL_NODE__Fields.local_relpath.toString()));
 	        rowValues.put(CHANGELIST_LIST__Fields.notify.toString(), 27);
-	        rowValues.put(CHANGELIST_LIST__Fields.changelist.toString(), cursor.getValue(CHANGELIST_LIST__Fields.changelist.toString()));
+	        rowValues.put(CHANGELIST_LIST__Fields.changelist.toString(), cursor.getValue(ACTUAL_NODE__Fields.changelist.toString()));
 	        
 	        table.insertByFieldNames(rowValues);
         }
         
-        if ( (newValues.get(CHANGELIST_LIST__Fields.changelist.toString()) != null) && 
-            	(cursor.isNull(CHANGELIST_LIST__Fields.changelist.toString())
-            			||	!cursor.getValue(CHANGELIST_LIST__Fields.changelist.toString()).equals(newValues.get(CHANGELIST_LIST__Fields.changelist.toString()) )
+        if ( (newValues.get(ACTUAL_NODE__Fields.changelist.toString()) != null) && 
+            	(cursor.isNull(ACTUAL_NODE__Fields.changelist.toString())
+            			||	!cursor.getValue(ACTUAL_NODE__Fields.changelist.toString()).equals(newValues.get(ACTUAL_NODE__Fields.changelist.toString()) )
             	))
             {
         	
         		Map<String, Object> rowValues = new HashMap<String, Object>();
-    	        rowValues.put(CHANGELIST_LIST__Fields.wc_id.toString(), newValues.get(CHANGELIST_LIST__Fields.changelist.toString()));
-    	        rowValues.put(CHANGELIST_LIST__Fields.local_relpath.toString(), newValues.get(CHANGELIST_LIST__Fields.local_relpath.toString()));
+    	        rowValues.put(CHANGELIST_LIST__Fields.wc_id.toString(), newValues.get(ACTUAL_NODE__Fields.changelist.toString()));
+    	        rowValues.put(CHANGELIST_LIST__Fields.local_relpath.toString(), newValues.get(ACTUAL_NODE__Fields.local_relpath.toString()));
     	        rowValues.put(CHANGELIST_LIST__Fields.notify.toString(), 26);
-    	        rowValues.put(CHANGELIST_LIST__Fields.changelist.toString(), newValues.get(CHANGELIST_LIST__Fields.changelist.toString()));
+    	        rowValues.put(CHANGELIST_LIST__Fields.changelist.toString(), newValues.get(ACTUAL_NODE__Fields.changelist.toString()));
     	        
     	        table.insertByFieldNames(rowValues);
             }
@@ -97,10 +98,10 @@ public class SvnChangelistActualNodesTrigger implements ISVNSqlJetTrigger {
     	ISqlJetTable clltable = db.getDb().getTemporaryDatabase().getTable(SVNWCDbSchema.CHANGELIST_LIST.toString());
     	
         Map<String, Object> rowValues = new HashMap<String, Object>();
-	    rowValues.put(CHANGELIST_LIST__Fields.wc_id.toString(), newValues.get(CHANGELIST_LIST__Fields.wc_id.toString()));
-	    rowValues.put(CHANGELIST_LIST__Fields.local_relpath.toString(), newValues.get(CHANGELIST_LIST__Fields.local_relpath.toString()));
+	    rowValues.put(CHANGELIST_LIST__Fields.wc_id.toString(), newValues.get(ACTUAL_NODE__Fields.wc_id.toString()));
+	    rowValues.put(CHANGELIST_LIST__Fields.local_relpath.toString(), newValues.get(ACTUAL_NODE__Fields.local_relpath.toString()));
 	    rowValues.put(CHANGELIST_LIST__Fields.notify.toString(), 26);
-	    rowValues.put(CHANGELIST_LIST__Fields.changelist.toString(), newValues.get(CHANGELIST_LIST__Fields.changelist.toString()));
+	    rowValues.put(CHANGELIST_LIST__Fields.changelist.toString(), newValues.get(ACTUAL_NODE__Fields.changelist.toString()));
 	        
 	    clltable.insertByFieldNames(rowValues);
         

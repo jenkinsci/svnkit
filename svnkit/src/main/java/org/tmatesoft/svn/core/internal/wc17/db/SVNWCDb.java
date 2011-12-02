@@ -91,6 +91,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbCreateSchema;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbInsertDeleteList;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.ACTUAL_NODE__Fields;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.CHANGELIST_LIST__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.DELETE_LIST__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODES__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.PRISTINE__Fields;
@@ -110,6 +111,7 @@ import org.tmatesoft.svn.core.wc.SVNTextConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnChecksum;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -2150,16 +2152,33 @@ public class SVNWCDb implements ISVNWCDb {
 	        	stmt = new SVNWCDbCreateSchema(wcRoot.getSDb().getTemporaryDb(), SVNWCDbCreateSchema.CHANGELIST_LIST, -1);
 	        	stmt.done();
 	        	
+	        	ArrayList<String> targetList = new ArrayList<String>();
+	        	stmt = wcRoot.getSDb().getTemporaryDb().getStatement(SVNWCDbStatements.SELECT_TARGETS_LIST); 
+	        	stmt.bindf("i", wcRoot.getWcId());
+	        	while (stmt.next()) {
+	        	 targetList.add(stmt.getColumnString(SVNWCDbSchema.TARGETS_LIST__Fields.local_relpath));
+	        	}
+	        	stmt.reset();
+	        	
 	        	/* Update our changelists. */
+	        	for (String localRelPath : targetList) {
+	        		SVNSqlJetStatement updateChangelist = wcRoot.getSDb().getStatement(SVNWCDbStatements.UPDATE_ACTUAL_CHANGELISTS);
+	        		((SVNSqlJetTableStatement) updateChangelist).addTrigger(changelistTrigger); 
+	                updateChangelist.bindf("iss", wcRoot.getWcId(), localRelPath, changelistName);
+	                updateChangelist.done();
+	            }
+	        		        	
+	        	/* this version doesn't work, trigger breaks outer stmt cursor
 	        	stmt = wcRoot.getSDb().getTemporaryDb().getStatement(SVNWCDbStatements.SELECT_TARGETS_LIST); 
 	        	stmt.bindf("i", wcRoot.getWcId());
 	        	while (stmt.next()) {
 	        		SVNSqlJetStatement updateChangelist = wcRoot.getSDb().getStatement(SVNWCDbStatements.UPDATE_ACTUAL_CHANGELISTS);
-	        		((SVNSqlJetTableStatement) updateChangelist).addTrigger(changelistTrigger);
+	        		((SVNSqlJetTableStatement) updateChangelist).addTrigger(changelistTrigger); 
 	                updateChangelist.bindf("iss", wcRoot.getWcId(), stmt.getColumnString(SVNWCDbSchema.TARGETS_LIST__Fields.local_relpath), changelistName);
 	                updateChangelist.done();
 	        	}
 	        	stmt.reset();
+	        	*/
 	            
 	            if (changelistName != null){
 	            	stmt = wcRoot.getSDb().getTemporaryDb().getStatement(SVNWCDbStatements.MARK_SKIPPED_CHANGELIST_DIRS);
