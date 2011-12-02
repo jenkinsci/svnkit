@@ -888,7 +888,7 @@ public interface ISVNWCDb {
     void opModified(File localAbsPath) throws SVNException;
 
     /** use NULL to remove from a changelist. */
-    void opSetChangelist(File localAbsPath, String changelist) throws SVNException;
+    void opSetChangelist(File localAbsPath, String changelistName, String[] changeLists, SVNDepth depth,  ISVNEventHandler handler) throws SVNException;
 
     /** caller maintains ACTUAL. we're just recording state. */
     void opMarkConflict(File localAbsPath) throws SVNException;

@@ -20,6 +20,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslatorInputStream;
 import org.tmatesoft.svn.core.internal.wc17.SVNStatusEditor17;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc2.SvnRemoteOperationRunner;
+import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess.RepositoryInfo;
 import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess.RevisionsPair;
 import org.tmatesoft.svn.core.io.SVNFileRevision;
@@ -33,6 +34,11 @@ import org.tmatesoft.svn.core.wc2.SvnStatus;
 import org.tmatesoft.svn.util.SVNLogType;
 
 public class SvnRemoteAnnotate extends SvnRemoteOperationRunner<SvnAnnotateItem, SvnAnnotate> implements ISVNAnnotateHandler { 
+	
+	@Override
+    public boolean isApplicable(SvnAnnotate operation, SvnWcGeneration wcGeneration) throws SVNException {
+        return wcGeneration == SvnWcGeneration.V17;
+    }
 	
 	@Override
     protected SvnAnnotateItem run() throws SVNException {

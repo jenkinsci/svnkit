@@ -63,8 +63,10 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb.Mode;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectFieldsStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetTableStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetTransaction;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetUpdateStatement;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
@@ -100,6 +102,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNConflictDescription;
+import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNMergeFileSet;
 import org.tmatesoft.svn.core.wc.SVNPropertyConflictDescription;
@@ -2094,11 +2097,193 @@ public class SVNWCDb implements ISVNWCDb {
         pdh.flushEntries(localAbspath);
     }
 
-    public void opSetChangelist(File localAbsPath, String changelist) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+    public void opSetChangelist(File localAbspath, String changelistName, String[] changeLists, SVNDepth depth, ISVNEventHandler eventHandler) throws SVNException {
+    	assert (isAbsolute(localAbspath));
+        DirParsedInfo parsed = parseDir(localAbspath, Mode.ReadWrite);
+        SVNWCDbDir pdh = parsed.wcDbDir;
+        verifyDirUsable(pdh);
+                
+        pdh.flushEntries(localAbspath);
+        
+        try {
+        	Changelist cl = new Changelist();
+        	cl.localRelPath = parsed.localRelPath;
+        	cl.localAbsPath = localAbspath;
+        	cl.wcRoot = pdh.getWCRoot();
+        	cl.changelistName = changelistName;
+        	cl.changeLists = changeLists;
+        	cl.depth = depth;
+        	cl.eventHandler = eventHandler;
+        	cl.setChangelist();
+        	cl.notifyChangelist();
+        }
+        finally {
+        	try {
+        		SVNSqlJetStatement dropList = new SVNWCDbCreateSchema(pdh.getWCRoot().getSDb().getTemporaryDb(), SVNWCDbCreateSchema.DROP_CHANGELIST_LIST, -1);
+        		dropList.done();
+        	}
+        	catch (SVNException e) {}
+        }
     }
+    
+    private class Changelist {
+        String changelistName;
+        String[] changeLists;
+        SVNDepth depth;
+        ISVNEventHandler eventHandler;
+        File localRelPath;
+        File localAbsPath;
+        SVNWCDbRoot wcRoot;
+                
+        public void setChangelist() throws SVNException {
+        	
+        	SvnChangelistActualNodesTrigger changelistTrigger = new SvnChangelistActualNodesTrigger(wcRoot.getSDb());
+        	wcRoot.getSDb().beginTransaction(SqlJetTransactionMode.WRITE);
+        	
+        	try {
+        		populateTargetsTree();
+	        	
+	        	/* Ensure we have actual nodes for our targets. */
+	        	SVNSqlJetStatement stmt = wcRoot.getSDb().getStatement(SVNWCDbStatements.INSERT_ACTUAL_EMPTIES);
+	        	stmt.done();
+	        	
+	        	/* Now create our notification table. */
+	        	stmt = new SVNWCDbCreateSchema(wcRoot.getSDb().getTemporaryDb(), SVNWCDbCreateSchema.CHANGELIST_LIST, -1);
+	        	stmt.done();
+	        	
+	        	/* Update our changelists. */
+	        	stmt = wcRoot.getSDb().getTemporaryDb().getStatement(SVNWCDbStatements.SELECT_TARGETS_LIST); 
+	        	stmt.bindf("i", wcRoot.getWcId());
+	        	while (stmt.next()) {
+	        		SVNSqlJetStatement updateChangelist = wcRoot.getSDb().getStatement(SVNWCDbStatements.UPDATE_ACTUAL_CHANGELISTS);
+	        		((SVNSqlJetTableStatement) updateChangelist).addTrigger(changelistTrigger);
+	                updateChangelist.bindf("iss", wcRoot.getWcId(), stmt.getColumnString(SVNWCDbSchema.TARGETS_LIST__Fields.local_relpath), changelistName);
+	                updateChangelist.done();
+	        	}
+	        	stmt.reset();
+	            
+	            if (changelistName != null){
+	            	stmt = wcRoot.getSDb().getTemporaryDb().getStatement(SVNWCDbStatements.MARK_SKIPPED_CHANGELIST_DIRS);
+	            	((SVNSqlJetTableStatement) stmt).addTrigger(changelistTrigger);
+	                stmt.bindf("s", changelistName);
+	                stmt.done();
+	            }
+	            else {
+	            	stmt = wcRoot.getSDb().getStatement(SVNWCDbStatements.DELETE_ACTUAL_EMPTIES);
+	            	stmt.bindf("i", wcRoot.getWcId());
+	                stmt.done();
+	            }
+        	} catch (SVNException e) {
+        		wcRoot.getSDb().rollback();
+        		throw e;
+	        } finally {
+	        	wcRoot.getSDb().commit();
+	        }
+        }
+        
+        public void populateTargetsTree() throws SVNException
+        {
+        	long affectedRows = 0;
+        	
+        	SVNSqlJetStatement stmt = new SVNWCDbCreateSchema(wcRoot.getSDb().getTemporaryDb(), SVNWCDbCreateSchema.TARGETS_LIST, -1);
+        	stmt.done();
+        	    	
+        	if (changeLists != null && changeLists.length > 0) {
+        		if (depth.getId() == SVNDepth.EMPTY.getId()) {
+        			stmt = wcRoot.getSDb().getStatement(SVNWCDbStatements.INSERT_TARGET_WITH_CHANGELIST);
+        		} else if (depth.getId() == SVNDepth.FILES.getId()){
+        			stmt = wcRoot.getSDb().getStatement(SVNWCDbStatements.INSERT_TARGET_DEPTH_FILES_WITH_CHANGELIST);
+        		} else if (depth.getId() == SVNDepth.IMMEDIATES.getId()){
+        			stmt = wcRoot.getSDb().getStatement(SVNWCDbStatements.INSERT_TARGET_DEPTH_IMMEDIATES_WITH_CHANGELIST);
+        		} else if (depth.getId() == SVNDepth.INFINITY.getId()){
+        			stmt = wcRoot.getSDb().getStatement(SVNWCDbStatements.INSERT_TARGET_DEPTH_INFINITY_WITH_CHANGELIST);
+        		}
+        		
+        		//default:
+                /* We don't know how to handle unknown or exclude. */
+                //SVN_ERR_MALFUNCTION();
+                //break;
+        		
+        		for (int i = 0; i < changeLists.length; i++) {
+        			String changelist = changeLists[i];
+        			stmt.bindf("iss", wcRoot.getWcId(), localRelPath, changelist);
+            		affectedRows += stmt.done();
+                }
+        	}
+        	else {
+        		if (depth.getId() == SVNDepth.EMPTY.getId()) {
+        			stmt = wcRoot.getSDb().getStatement(SVNWCDbStatements.INSERT_TARGET2);
+        		} else if (depth.getId() == SVNDepth.FILES.getId()){
+        			stmt = wcRoot.getSDb().getStatement(SVNWCDbStatements.INSERT_TARGET_DEPTH_FILES);
+        		} else if (depth.getId() == SVNDepth.IMMEDIATES.getId()){
+        			stmt = wcRoot.getSDb().getStatement(SVNWCDbStatements.INSERT_TARGET_DEPTH_IMMEDIATES);
+        		} else if (depth.getId() == SVNDepth.INFINITY.getId()){
+        			stmt = wcRoot.getSDb().getStatement(SVNWCDbStatements.INSERT_TARGET_DEPTH_INFINITY);
+        		}
+        		
+        		stmt.bindf("is", wcRoot.getWcId(), localRelPath);
+        		affectedRows = stmt.done();
+    			
+        		//default:
+                /* We don't know how to handle unknown or exclude. */
+                //SVN_ERR_MALFUNCTION();
+                //break;
+        		
+        	}
+        	
+        	/* Does the target exist? */
+        	if (affectedRows == 0)
+        	{
+        		boolean exists = doesNodeExists(wcRoot, localRelPath);
+        	    if (!exists) {
+        	    	SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{0}'' has a corrupt checksum value.", wcRoot.getAbsPath(localRelPath));
+        	    	SVNErrorManager.error(err, SVNLogType.WC);
+        	    }
+        	 }
+        	
+        }
+        
+        public void notifyChangelist() throws SVNException
+        {
+        	if (eventHandler != null)
+    		{
+    	    	SVNSqlJetStatement stmt = wcRoot.getSDb().getTemporaryDb().getStatement(SVNWCDbStatements.SELECT_CHANGELIST_LIST);
+    	    	
+    	    	try {
+	    	    	while (stmt.next()) {
+	    	    		String notifyRelPath = stmt.getColumnString(SVNWCDbSchema.CHANGELIST_LIST__Fields.local_relpath);
+	    	    		File notifyAbspath = SVNFileUtil.createFilePath(localAbsPath, notifyRelPath);
+	    	    		Long notifyAction = stmt.getColumnLong(SVNWCDbSchema.CHANGELIST_LIST__Fields.notify);
+	    	    		String changelistName = stmt.getColumnString(SVNWCDbSchema.CHANGELIST_LIST__Fields.changelist);
+	    	    		SVNEventAction eventAction = null;
+	    	    		if (notifyAction == SVNEventAction.CHANGELIST_CLEAR.getID())
+	    	    			eventAction = SVNEventAction.CHANGELIST_CLEAR;
+	    	    		else if (notifyAction == SVNEventAction.CHANGELIST_MOVED.getID())
+	    	    			eventAction = SVNEventAction.CHANGELIST_MOVED;
+	    	    		else if (notifyAction == SVNEventAction.CHANGELIST_SET.getID())
+	    	    			eventAction = SVNEventAction.CHANGELIST_SET;
+	    	    		
+	    	    		SVNEvent event = SVNEventFactory.createSVNEvent(notifyAbspath, SVNNodeKind.NONE, null, -1, null, null, null,  
+	    	    				eventAction, eventAction, null, null, changelistName);
+	    	    		
+	    	    		eventHandler.checkCancelled();
+	    	    		eventHandler.handleEvent(event, -1);
+	    	    	}
+    	    	} finally {
+    				try {
+    					if (stmt != null) {
+    						stmt.reset();
+    					} 
+    				} catch (SVNException e) {}
+    			}
+            }
+        	
+        	
+        }
 
+
+    };
+    
     public void opSetProps(File localAbsPath, SVNProperties props, SVNSkel conflict, boolean clearRecordedInfo, SVNSkel workItems) throws SVNException {
         assert (SVNFileUtil.isAbsolute(localAbsPath));
         final DirParsedInfo parsed = parseDir(localAbsPath, Mode.ReadWrite);

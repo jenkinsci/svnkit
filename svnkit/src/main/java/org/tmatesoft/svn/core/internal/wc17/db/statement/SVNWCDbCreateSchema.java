@@ -77,7 +77,7 @@ public class SVNWCDbCreateSchema extends SVNSqlJetStatement {
     
     public static final Statement[] TARGETS_LIST = new Statement[] {
         new Statement(Type.TABLE, "TARGETS_LIST", "CREATE TABLE TARGETS_LIST (wc_id  INTEGER NOT NULL, local_relpath TEXT NOT NULL, parent_relpath TEXT, kind TEXT NOT NULL, PRIMARY KEY (wc_id, local_relpath) );", true),
-        new Statement(Type.INDEX, "targets_list_kind", "CREATE INDEX targets_list_kind ON targets_list (kind);", true),
+        new Statement(Type.INDEX, "targets_list_kind", "CREATE INDEX targets_list_kind ON TARGETS_LIST (kind);", true),
     };
     
     public static final Statement[] DROP_TARGETS_LIST = new Statement[] {
@@ -119,7 +119,25 @@ public class SVNWCDbCreateSchema extends SVNSqlJetStatement {
     public static final Statement[] DROP_REVERT_LIST = new Statement[] {
         new Statement(Type.TABLE, "REVERT_LIST", "REVERT_LIST", true, true),
     };
-
+    
+    public static final Statement[] CHANGELIST_LIST = new Statement[] {
+        new Statement(Type.TABLE, "CHANGELIST_LIST", "CREATE TABLE CHANGELIST_LIST (" +
+        		" wc_id  INTEGER NOT NULL REFERENCES WCROOT (id), " +
+        		" local_relpath TEXT NOT NULL, " +
+        		" notify INTEGER, " +
+        		" changelist TEXT NOT NULL, PRIMARY KEY (wc_id, local_relpath) );" 
+                , true) //,
+        //new Statement(Type.INDEX, "changelist_list_index", "CREATE INDEX changelist_list_index ON changelist_list (wc_id, local_relpath);", true)        
+    };
+    
+    public static final Statement[] DROP_CHANGELIST_LIST = new Statement[] {
+        new Statement(Type.TABLE, "CHANGELIST_LIST", "CHANGELIST_LIST", true, true),
+        //new Statement(Type.INDEX, "changelist_list_index", "changelist_list_index", true, true),
+        new Statement(Type.TABLE, "TARGETS_LIST", "TARGETS_LIST", true, true),
+        new Statement(Type.INDEX, "targets_list_kind", "targets_list_kind", true, true)
+    };
+    
+    
 
     private enum Type {
         TABLE, INDEX, VIEW, TRIGGER;

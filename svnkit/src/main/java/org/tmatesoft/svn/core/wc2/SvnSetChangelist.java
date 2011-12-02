@@ -54,9 +54,11 @@ public class SvnSetChangelist extends SvnOperation<Long> {
     protected void ensureArgumentsAreValid() throws SVNException {
         super.ensureArgumentsAreValid();
         
-        if ("".equals(getChangelistName())) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS, "Target changelist name must not be empty");
-            SVNErrorManager.error(err, SVNLogType.WC);
+        if (!isRemove()) {
+        	if ("".equals(getChangelistName())) {
+        		SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_CHANGELIST_NAME, "Target changelist name must not be empty");
+        		SVNErrorManager.error(err, SVNLogType.WC);
+        	}
         }
         
         if (hasRemoteTargets()) {

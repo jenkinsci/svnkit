@@ -170,6 +170,9 @@ public class SVNErrorCode implements Serializable {
     public static final int RA_SERF_CATEGORY = ERR_BASE + 22*ERR_CATEGORY_SIZE;
     public static final int MALFUNC_CATEGORY = ERR_BASE + 23*ERR_CATEGORY_SIZE;
     
+
+    
+    
     public static final SVNErrorCode UNKNOWN = new SVNErrorCode(MISC_CATEGORY, ERR_CATEGORY_SIZE - 100, "Unknown error");
     public static final SVNErrorCode IO_ERROR = new SVNErrorCode(MISC_CATEGORY, ERR_CATEGORY_SIZE - 101, "Generic IO error");
 
@@ -530,7 +533,10 @@ public class SVNErrorCode implements Serializable {
     public static final SVNErrorCode NO_AUTH_FILE_PATH = new SVNErrorCode(MISC_CATEGORY, 18, "No auth file path available");
     public static final SVNErrorCode VERSION_MISMATCH = new SVNErrorCode(MISC_CATEGORY, 19, "Incompatible library version");
     
-    /**
+    
+    
+
+        /**
      * @since  1.2.0, SVN 1.5
      */
     public static final SVNErrorCode MERGE_INFO_PARSE_ERROR = new SVNErrorCode(MISC_CATEGORY, 20, "Merge info parse error");
@@ -602,4 +608,10 @@ public class SVNErrorCode implements Serializable {
      * @since 1.3.3
      */
     public static final SVNErrorCode ASSERTION_FAIL = new SVNErrorCode(MALFUNC_CATEGORY, 0, "Assertion failure");
+    
+    /** 
+     * @since New in 1.7. 
+     */
+    public static final SVNErrorCode BAD_CHANGELIST_NAME = new SVNErrorCode(BAD_CATEGORY, 14, "Invalid changelist name");
 }
+

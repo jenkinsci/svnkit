@@ -8,6 +8,7 @@ import org.tmatesoft.svn.core.SVNAnnotationGenerator;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.io.dav.DAVRepository;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
@@ -65,6 +66,12 @@ public class SvnNgAnnotate extends SvnNgOperationRunner<SvnAnnotateItem, SvnAnno
     	}
     	SVNAnnotationGenerator generator = new SVNAnnotationGenerator(path, tmpFile, startRev, 
     			getOperation().isIgnoreMimeType(), getOperation().isUseMergeHistory(), getOperation().getDiffOptions(), getOperation().getInputEncoding(), this, this);
+    	boolean useSpool = getOperation().getHandler() != null && !getOperation().getHandler().getClass().getName().startsWith("org.tmatesoft.svn.");
+        boolean oldSpool = false;
+        if (useSpool && repository instanceof DAVRepository) {
+            oldSpool = ((DAVRepository) repository).isSpoolResponse();
+            ((DAVRepository) repository).setSpoolResponse(true);
+        }
     	
        try {
     	   	repository.getFileRevisions("", startRev > 0 ? startRev - 1 : startRev, endRev, getOperation().isUseMergeHistory(), generator);
@@ -74,6 +81,9 @@ public class SvnNgAnnotate extends SvnNgOperationRunner<SvnAnnotateItem, SvnAnno
             }
             
         } finally {
+        	 if (useSpool && repository instanceof DAVRepository) {
+                 ((DAVRepository) repository).setSpoolResponse(oldSpool);
+             }
             generator.dispose();
             SVNFileUtil.deleteAll(tmpFile, !"text-base".equals(tmpFile.getName()), null);
         }

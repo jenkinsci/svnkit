@@ -149,4 +149,6 @@ public class StructureFields {
         originalUuid, 
         originalRevision
     }
+    
+    
 }
