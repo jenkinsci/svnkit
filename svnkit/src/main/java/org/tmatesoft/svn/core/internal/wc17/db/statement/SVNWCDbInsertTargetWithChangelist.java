@@ -10,6 +10,7 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetInsertStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODES__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.TARGETS_LIST__Fields;
 
 
@@ -65,10 +66,10 @@ public class SVNWCDbInsertTargetWithChangelist extends SVNSqlJetInsertStatement 
             insertValues = new HashMap<String, Object>();
         }
         insertValues.clear();
-        insertValues.put(TARGETS_LIST__Fields.wc_id.toString(), selectedRow.get(TARGETS_LIST__Fields.wc_id.toString()));
-        insertValues.put(TARGETS_LIST__Fields.local_relpath.toString(), selectedRow.get(TARGETS_LIST__Fields.local_relpath.toString()));
-        insertValues.put(TARGETS_LIST__Fields.parent_relpath.toString(), selectedRow.get(TARGETS_LIST__Fields.parent_relpath.toString()));
-        insertValues.put(TARGETS_LIST__Fields.kind.toString(), selectedRow.get(TARGETS_LIST__Fields.kind.toString()));
+        insertValues.put(TARGETS_LIST__Fields.wc_id.toString(), selectedRow.get(NODES__Fields.wc_id.toString()));
+        insertValues.put(TARGETS_LIST__Fields.local_relpath.toString(), selectedRow.get(NODES__Fields.local_relpath.toString()));
+        insertValues.put(TARGETS_LIST__Fields.parent_relpath.toString(), selectedRow.get(NODES__Fields.parent_relpath.toString()));
+        insertValues.put(TARGETS_LIST__Fields.kind.toString(), selectedRow.get(NODES__Fields.kind.toString()));
         return insertValues;
     }
     

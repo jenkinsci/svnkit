@@ -15,16 +15,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
-import org.tmatesoft.sqljet.core.schema.SqlJetConflictAction;
-import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetInsertStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectFieldsStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectStatement;
-import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODES__Fields;
-import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODES__Indices;
-import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.TARGETS_LIST__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.TARGETS_LIST__Indices;
 
 /**

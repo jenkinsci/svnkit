@@ -14,7 +14,6 @@ package org.tmatesoft.svn.core.internal.wc17.db.statement;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectFieldsStatement;
-import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.TARGETS_LIST__Indices;
 
 /**
  * SELECT local_relpath FROM targets_list 

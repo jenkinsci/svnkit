@@ -63,7 +63,6 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb.Mode;
-import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectFieldsStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetTableStatement;
