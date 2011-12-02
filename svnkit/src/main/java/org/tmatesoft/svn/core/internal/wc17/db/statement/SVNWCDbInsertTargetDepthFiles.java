@@ -48,9 +48,9 @@ public class SVNWCDbInsertTargetDepthFiles extends SVNSqlJetInsertStatement {
             int n = 0;
             select.bindf("i", (Long)getBind(1));
             while (select.next()) {
-            	String localRelPath = getColumnString(SVNWCDbSchema.NODES__Fields.local_relpath);
-                String kind =  getColumnString(SVNWCDbSchema.NODES__Fields.kind);
-                String parentRelPath = getColumnString(SVNWCDbSchema.NODES__Fields.parent_relpath);
+            	String localRelPath = select.getColumnString(SVNWCDbSchema.NODES__Fields.local_relpath);
+                String kind =  select.getColumnString(SVNWCDbSchema.NODES__Fields.kind);
+                String parentRelPath = select.getColumnString(SVNWCDbSchema.NODES__Fields.parent_relpath);
                 String selectPath = getBind(2).toString();
                 if ((selectPath.equals(parentRelPath) && "file".equals(kind)) || selectPath.equals(localRelPath)) {
                 	super.exec();

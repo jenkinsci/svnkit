@@ -50,7 +50,7 @@ public class SVNWCDbInsertTargetDepthInfinity extends SVNSqlJetInsertStatement {
             int n = 0;
             select.bindf("i", (Long)getBind(1));
             while (select.next()) {
-            	String localRelPath = getColumnString(SVNWCDbSchema.NODES__Fields.local_relpath);
+            	String localRelPath = select.getColumnString(SVNWCDbSchema.NODES__Fields.local_relpath);
             	String selectPath = getBind(2).toString();
             	if ("".equals(selectPath) || selectPath.equals(localRelPath) || localRelPath.startsWith(selectPath + '/')) {
             		super.exec();

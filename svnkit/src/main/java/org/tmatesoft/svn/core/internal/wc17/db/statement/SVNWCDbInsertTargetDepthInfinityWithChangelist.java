@@ -34,18 +34,7 @@ public class SVNWCDbInsertTargetDepthInfinityWithChangelist extends SVNSqlJetIns
     public SVNWCDbInsertTargetDepthInfinityWithChangelist(SVNSqlJetDb sDb) throws SVNException {
     	super(sDb.getTemporaryDb(), SVNWCDbSchema.TARGETS_LIST);
     	nodeCurrent = new SVNWCDbNodesCurrent(sDb); 
-    	actualNode = new SVNSqlJetSelectStatement(sDb, SVNWCDbSchema.ACTUAL_NODE) {
-        	@Override
-        	public SVNSqlJetStatement getJoinedStatement(String joinedTable) throws SVNException {
-                if (!eof() && "ACTUAL_NODE".equalsIgnoreCase(joinedTable)) {
-                    SVNSqlJetSelectStatement actualNodesStmt = new SVNSqlJetSelectStatement(sDb, SVNWCDbSchema.ACTUAL_NODE);
-                    actualNodesStmt.bindLong(1, getColumnLong(SVNWCDbSchema.NODES__Fields.wc_id));
-                    actualNodesStmt.bindString(2, getColumnString(SVNWCDbSchema.NODES__Fields.local_relpath));
-                    return actualNodesStmt;
-                }
-                return super.getJoinedStatement(joinedTable);
-            }
-        };
+    	actualNode = new SVNSqlJetSelectStatement(sDb, SVNWCDbSchema.ACTUAL_NODE);
     }
 
     @Override
@@ -71,7 +60,7 @@ public class SVNWCDbInsertTargetDepthInfinityWithChangelist extends SVNSqlJetIns
             	try {
             		nodeCurrent.bindf("is", (Long)getBind(1), (String)getBind(2));
             		if (nodeCurrent.next()) {
-            			String localRelPath = getColumnString(SVNWCDbSchema.NODES__Fields.local_relpath);
+            			String localRelPath = nodeCurrent.getColumnString(SVNWCDbSchema.NODES__Fields.local_relpath);
                     	String selectPath = getBind(2).toString();
                     	if ("".equals(selectPath) || selectPath.equals(localRelPath) || localRelPath.startsWith(selectPath + '/')) {
                         	super.exec();
