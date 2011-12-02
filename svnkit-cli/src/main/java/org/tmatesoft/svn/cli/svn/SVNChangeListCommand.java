@@ -86,16 +86,35 @@ public class SVNChangeListCommand extends SVNCommand {
         if (!getSVNEnvironment().isQuiet()) {
             client.setEventHandler(new SVNNotifyPrinter(getSVNEnvironment()));
         }
-        try {
-            if (changelist != null) {
-                client.doAddToChangelist(files, depth, changelist, getSVNEnvironment().getChangelists());
-            } else {
-                client.doRemoveFromChangelist(files, depth, getSVNEnvironment().getChangelists());
+        Collection<SVNErrorCode> errors = new ArrayList<SVNErrorCode>();
+        for (int i = 0; i < files.length; i++) {
+            try {
+                if (changelist != null) {
+                    client.doAddToChangelist(new File[] {files[i]}, depth, changelist, getSVNEnvironment().getChangelists());
+                } else {
+                    client.doRemoveFromChangelist(new File[] {files[i]}, depth, getSVNEnvironment().getChangelists());
+                }
+            } catch (SVNException e) {
+                if (!getSVNEnvironment().handleWarning(e.getErrorMessage(), 
+                        new SVNErrorCode[] {SVNErrorCode.UNVERSIONED_RESOURCE, SVNErrorCode.WC_PATH_NOT_FOUND},
+                        getSVNEnvironment().isQuiet())) {
+                    errors.add(e.getErrorMessage().getErrorCode());
+                }
             }
-        } catch (SVNException e) {
-            getSVNEnvironment().handleWarning(e.getErrorMessage(), 
-                    new SVNErrorCode[] {SVNErrorCode.UNVERSIONED_RESOURCE, SVNErrorCode.WC_PATH_NOT_FOUND},
-                    getSVNEnvironment().isQuiet());
+        }
+        
+        if (!errors.isEmpty()) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET);
+            for (SVNErrorCode code : errors) {
+                if (code == SVNErrorCode.WC_PATH_NOT_FOUND) {
+                    err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Could not set changelist on all targets because some" +
+                    		" targets don't exist");
+                } else if (code == SVNErrorCode.UNVERSIONED_RESOURCE) {
+                    err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Could not set changelist on all targets because some" +
+                            " targets are not versioned");
+                }
+            }
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
     }
 }
