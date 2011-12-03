@@ -36,6 +36,11 @@
       <version>1.0.7</version>
       <optional>true</optional>
     </dependency>
+    <dependency>
+      <groupId>de.regnis.q.sequence</groupId>
+      <artifactId>sequence-library</artifactId>
+      <version>1.0.0</version>
+    </dependency>
   </dependencies>
   
   <repositories>
