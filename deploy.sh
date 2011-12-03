@@ -2,7 +2,7 @@
 ./gradlew clean assemble
 
 # be sure to update POM as well
-version=1.3.6-jenkins-1
+version=1.3.6.1-jenkins-2
 v=1.3.6-v1
 
 animal-sniffer -t Java5 svnkit/build/libs/svnkit-$v.jar
