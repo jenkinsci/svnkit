@@ -410,9 +410,9 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
         } else if (event.getAction() == SVNEventAction.RESOLVED) {
             buffer.append("Resolved conflicted state of '" + path + "'\n");
         } else if (event.getAction() == SVNEventAction.CHANGELIST_SET) {
-            buffer.append("Path '" + path + "' is now a member of changelist '" + event.getChangelistName() + "'.\n");
+            buffer.append("A [" + event.getChangelistName() + "] " + path + "\n");
         } else if (event.getAction() == SVNEventAction.CHANGELIST_CLEAR) {
-            buffer.append("Path '" + path + "' is no longer a member of a changelist.\n");
+            buffer.append("D [" + event.getChangelistName() + "] " + path + "\n");
         } else if (event.getAction() == SVNEventAction.CHANGELIST_MOVED) {
             myEnvironment.handleWarning(event.getErrorMessage(), new SVNErrorCode[] {
                 event.getErrorMessage().getErrorCode() }, myEnvironment.isQuiet());
