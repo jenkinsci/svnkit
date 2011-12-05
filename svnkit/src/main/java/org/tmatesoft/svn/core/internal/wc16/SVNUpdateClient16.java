@@ -1354,19 +1354,21 @@ public class SVNUpdateClient16 extends SVNBasicDelegate {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "''{0}'' already exists and will not be owerwritten unless forced", to);
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
-            for (Iterator ents = adminArea.entries(false); ents.hasNext();) {
-                SVNEntry childEntry = (SVNEntry) ents.next();
-                if (childEntry.isDirectory()) {
-                    if (adminArea.getThisDirName().equals(childEntry.getName())) {
-                        continue;
-                    } else if (depth == SVNDepth.INFINITY) {
+            if (entry.isDirectory() && entry.isThisDir()) {
+                for (Iterator ents = adminArea.entries(false); ents.hasNext();) {
+                    SVNEntry childEntry = (SVNEntry) ents.next();
+                    if (childEntry.isDirectory()) {
+                        if (adminArea.getThisDirName().equals(childEntry.getName())) {
+                            continue;
+                        } else if (depth == SVNDepth.INFINITY) {
+                            File childTo = new File(to, childEntry.getName());
+                            File childFrom = new File(from, childEntry.getName());
+                            copyVersionedDir(childFrom, childTo, revision, eolStyle, force, depth);
+                        }
+                    } else if (childEntry.isFile()) {
                         File childTo = new File(to, childEntry.getName());
-                        File childFrom = new File(from, childEntry.getName());
-                        copyVersionedDir(childFrom, childTo, revision, eolStyle, force, depth);
+                        copyVersionedFile(childTo, adminArea, childEntry.getName(), revision, eolStyle);
                     }
-                } else if (childEntry.isFile()) {
-                    File childTo = new File(to, childEntry.getName());
-                    copyVersionedFile(childTo, adminArea, childEntry.getName(), revision, eolStyle);
                 }
             }
             if (!isIgnoreExternals() && depth == SVNDepth.INFINITY && entry.getDepth() == SVNDepth.INFINITY) {
