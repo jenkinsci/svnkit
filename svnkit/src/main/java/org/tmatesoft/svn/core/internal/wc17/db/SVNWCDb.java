@@ -2270,7 +2270,7 @@ public class SVNWCDb implements ISVNWCDb {
     	    	try {
 	    	    	while (stmt.next()) {
 	    	    		String notifyRelPath = stmt.getColumnString(SVNWCDbSchema.CHANGELIST_LIST__Fields.local_relpath);
-	    	    		File notifyAbspath = SVNFileUtil.createFilePath(localAbsPath, notifyRelPath);
+	    	    		File notifyAbspath = SVNFileUtil.createFilePath(wcRoot.getAbsPath(), notifyRelPath);
 	    	    		Long notifyAction = stmt.getColumnLong(SVNWCDbSchema.CHANGELIST_LIST__Fields.notify);
 	    	    		String changelistName = stmt.getColumnString(SVNWCDbSchema.CHANGELIST_LIST__Fields.changelist);
 	    	    		SVNEventAction eventAction = null;
