@@ -91,7 +91,6 @@ import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbCreateSchema;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbInsertDeleteList;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.ACTUAL_NODE__Fields;
-import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.CHANGELIST_LIST__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.DELETE_LIST__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODES__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.PRISTINE__Fields;
@@ -111,7 +110,6 @@ import org.tmatesoft.svn.core.wc.SVNTextConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnChecksum;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -2207,26 +2205,22 @@ public class SVNWCDb implements ISVNWCDb {
         	stmt.done();
         	    	
         	if (changeLists != null && changeLists.length > 0) {
-        		if (depth.getId() == SVNDepth.EMPTY.getId()) {
+        		if (depth == SVNDepth.EMPTY) {
         			stmt = wcRoot.getSDb().getStatement(SVNWCDbStatements.INSERT_TARGET_WITH_CHANGELIST);
-        		} else if (depth.getId() == SVNDepth.FILES.getId()){
+        		} else if (depth == SVNDepth.FILES){
         			stmt = wcRoot.getSDb().getStatement(SVNWCDbStatements.INSERT_TARGET_DEPTH_FILES_WITH_CHANGELIST);
-        		} else if (depth.getId() == SVNDepth.IMMEDIATES.getId()){
+        		} else if (depth == SVNDepth.IMMEDIATES){
         			stmt = wcRoot.getSDb().getStatement(SVNWCDbStatements.INSERT_TARGET_DEPTH_IMMEDIATES_WITH_CHANGELIST);
-        		} else if (depth.getId() == SVNDepth.INFINITY.getId()){
+        		} else if (depth == SVNDepth.INFINITY){
         			stmt = wcRoot.getSDb().getStatement(SVNWCDbStatements.INSERT_TARGET_DEPTH_INFINITY_WITH_CHANGELIST);
         		}
-        		
-        		//default:
-                /* We don't know how to handle unknown or exclude. */
-                //SVN_ERR_MALFUNCTION();
-                //break;
-        		
-        		for (int i = 0; i < changeLists.length; i++) {
-        			String changelist = changeLists[i];
-        			stmt.bindf("iss", wcRoot.getWcId(), localRelPath, changelist);
-            		affectedRows += stmt.done();
-                }
+        		if (stmt != null) {
+            		for (int i = 0; i < changeLists.length; i++) {
+            			String changelist = changeLists[i];
+            			stmt.bindf("iss", wcRoot.getWcId(), localRelPath, changelist);
+                		affectedRows += stmt.done();
+                    }
+        		}
         	}
         	else {
         		if (depth.getId() == SVNDepth.EMPTY.getId()) {

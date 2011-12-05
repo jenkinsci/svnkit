@@ -1,6 +1,8 @@
 package org.tmatesoft.svn.core.internal.wc2.old;
 
 import java.io.File;
+import java.util.Collection;
+import java.util.Collections;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc16.SVNChangelistClient16;
@@ -21,14 +23,18 @@ public class SvnOldSetChangelist extends SvnOldRunner<Long, SvnSetChangelist> {
             paths[i++] = target.getFile();
         }
         
+        Collection<String> applicableChangelists = getOperation().getApplicableChangelists();
+        if (applicableChangelists == null) {
+            applicableChangelists = Collections.emptyList();
+        }
         if (getOperation().isRemove()) {
-        	client.doRemoveFromChangelist(paths, getOperation().getDepth(), getOperation().getChangelists());
+        	client.doRemoveFromChangelist(paths, getOperation().getDepth(), applicableChangelists.toArray(new String[applicableChangelists.size()]));
 
         } else {
         	client.doAddToChangelist(paths, 
         			getOperation().getDepth(), 
                     getOperation().getChangelistName(), 
-                    getOperation().getChangelists());
+                    applicableChangelists.toArray(new String[applicableChangelists.size()]));
 
         }
         

@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.Collection;
 
 import org.tmatesoft.svn.core.SVNDepth;
@@ -245,7 +246,9 @@ public class SVNChangelistClient extends SVNBasicClient {
         }
     	cl.setDepth(depth);
         cl.setChangelistName(changelist);
-        cl.setChangelists(changelists);
+        if (changelists != null) {
+            cl.setApplicalbeChangelists(Arrays.asList(changelists));
+        }
         cl.run();
     }
 
@@ -284,7 +287,9 @@ public class SVNChangelistClient extends SVNBasicClient {
             cl.addTarget(SvnTarget.fromFile(paths[i]));            
         }
     	cl.setDepth(depth);
-        cl.setChangelists(changelists);
+    	if (changelists != null) {
+    	    cl.setApplicalbeChangelists(Arrays.asList(changelists));
+    	}
         cl.setRemove(true);
         cl.run();
     }

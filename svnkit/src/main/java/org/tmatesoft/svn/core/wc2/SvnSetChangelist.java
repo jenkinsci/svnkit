@@ -12,7 +12,6 @@ public class SvnSetChangelist extends SvnOperation<Long> {
     private String changelistName;
     private boolean remove;
     private SVNDepth depth;
-    private String[] changelists;
 
     protected SvnSetChangelist(SvnOperationFactory factory) {
         super(factory);
@@ -32,14 +31,6 @@ public class SvnSetChangelist extends SvnOperation<Long> {
 
     public void setDepth(SVNDepth depth) {
         this.depth = depth;
-    }
-    
-    public String[] getChangelists() {
-        return changelists;
-    }
-
-    public void setChangelists(String[] changelists) {
-        this.changelists = changelists;
     }
 
     public boolean isRemove() {

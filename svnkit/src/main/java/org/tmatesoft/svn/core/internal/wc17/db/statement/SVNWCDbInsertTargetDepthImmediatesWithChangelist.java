@@ -7,7 +7,6 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetInsertStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectStatement;
-import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODES__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.TARGETS_LIST__Fields;
 
@@ -30,7 +29,7 @@ public class SVNWCDbInsertTargetDepthImmediatesWithChangelist extends SVNSqlJetI
     public SVNWCDbInsertTargetDepthImmediatesWithChangelist(SVNSqlJetDb sDb) throws SVNException {
     	super(sDb.getTemporaryDb(), SVNWCDbSchema.TARGETS_LIST);
     	nodeCurrent = new SVNWCDbNodesCurrent(sDb); 
-    	actualNode = new SVNSqlJetSelectStatement(sDb, SVNWCDbSchema.ACTUAL_NODE);
+    	actualNode = new SVNSqlJetSelectStatement(sDb, SVNWCDbSchema.ACTUAL_NODE, SVNWCDbSchema.ACTUAL_NODE__Indices.I_ACTUAL_CHANGELIST);
     }
 
     @Override
@@ -51,10 +50,10 @@ public class SVNWCDbInsertTargetDepthImmediatesWithChangelist extends SVNSqlJetI
     public long exec() throws SVNException {
         try {
             int n = 0;
-            actualNode.bindf("is", (Long)getBind(1), (String)getBind(2));
+            actualNode.bindf("is", (String) getBind(3));
             while (actualNode.next()) {
             	try {
-            		nodeCurrent.bindf("is", (Long)getBind(1), (String)getBind(2));
+            		nodeCurrent.bindf("is", (Long) getBind(1), (String) getBind(2));
             		if (nodeCurrent.next()) {
             			String localRelPath = nodeCurrent.getColumnString(SVNWCDbSchema.NODES__Fields.local_relpath);
                         String parentRelPath = nodeCurrent.getColumnString(SVNWCDbSchema.NODES__Fields.parent_relpath);

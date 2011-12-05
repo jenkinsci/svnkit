@@ -32,7 +32,17 @@ public class SVNWCDbInsertTargetWithChangelist extends SVNSqlJetInsertStatement 
     public SVNWCDbInsertTargetWithChangelist(SVNSqlJetDb sDb) throws SVNException {
     	super(sDb.getTemporaryDb(), SVNWCDbSchema.TARGETS_LIST);
     	actualNode = new SVNSqlJetSelectStatement(sDb, SVNWCDbSchema.ACTUAL_NODE) {
+    	    
         	@Override
+            protected boolean isFilterPassed() throws SVNException {
+        	    String rowChangelist = getColumnString(SVNWCDbSchema.ACTUAL_NODE__Fields.changelist);
+        	    if (rowChangelist != null && getBind(3).equals(rowChangelist)) {
+        	        return true;
+        	    }
+                return false;
+            }
+
+            @Override
         	public SVNSqlJetStatement getJoinedStatement(String joinedTable) throws SVNException {
                 if (!eof() && "ACTUAL_NODE".equalsIgnoreCase(joinedTable)) {
                     SVNSqlJetSelectStatement actualNodesStmt = new SVNSqlJetSelectStatement(sDb, SVNWCDbSchema.ACTUAL_NODE);
