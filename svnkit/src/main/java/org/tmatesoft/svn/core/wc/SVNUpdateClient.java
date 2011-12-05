@@ -1300,22 +1300,24 @@ public class SVNUpdateClient extends SVNBasicClient {
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
             // read entries
-            for (Iterator ents = adminArea.entries(false); ents.hasNext();) {
-                SVNEntry childEntry = (SVNEntry) ents.next();
-                if (childEntry.isDirectory()) {
-                    if (adminArea.getThisDirName().equals(childEntry.getName())) {
-                        continue;
-                    } else if (depth == SVNDepth.INFINITY) {
+            if (entry.isThisDir()) {
+                for (Iterator ents = adminArea.entries(false); ents.hasNext();) {
+                    SVNEntry childEntry = (SVNEntry) ents.next();
+                    if (childEntry.isDirectory()) {
+                        if (adminArea.getThisDirName().equals(childEntry.getName())) {
+                            continue;
+                        } else if (depth == SVNDepth.INFINITY) {
+                            File childTo = new File(to, childEntry.getName());
+                            File childFrom = new File(from, childEntry.getName());
+                            copyVersionedDir(childFrom, childTo, revision, eolStyle, force, depth);
+                        }
+                    } else if (childEntry.isFile()) {
                         File childTo = new File(to, childEntry.getName());
-                        File childFrom = new File(from, childEntry.getName());
-                        copyVersionedDir(childFrom, childTo, revision, eolStyle, force, depth);
+                        copyVersionedFile(childTo, adminArea, childEntry.getName(), revision, eolStyle);
                     }
-                } else if (childEntry.isFile()) {
-                    File childTo = new File(to, childEntry.getName());
-                    copyVersionedFile(childTo, adminArea, childEntry.getName(), revision, eolStyle);
                 }
             }
-            if (!isIgnoreExternals() && depth == SVNDepth.INFINITY && entry.getDepth() == SVNDepth.INFINITY) {
+            if (entry.isThisDir() && !isIgnoreExternals() && depth == SVNDepth.INFINITY && entry.getDepth() == SVNDepth.INFINITY) {
                 SVNVersionedProperties properties = adminArea.getProperties(adminArea.getThisDirName());
                 String externalsValue = properties.getStringPropertyValue(SVNProperty.EXTERNALS);
                 if (externalsValue != null) {
