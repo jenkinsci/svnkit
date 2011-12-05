@@ -10,6 +10,7 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetInsertStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.ACTUAL_NODE__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODES__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.TARGETS_LIST__Fields;
 
@@ -89,16 +90,19 @@ public class SVNWCDbInsertTargetWithChangelist extends SVNSqlJetInsertStatement 
             int n = 0;
             actualNode.bindf("is", (Long)getBind(1), (String)getBind(2));
             while (actualNode.next()) {
-            	try {
-            		nodeCurrent.bindf("is", (Long)getBind(1), (String)getBind(2));
-            		if (nodeCurrent.next()) {
-            			super.exec();
-            			n++;
-            		}
-            	}
-            	finally {
-            		nodeCurrent.reset();
-            	}
+                String actualChangelist = actualNode.getColumnString(ACTUAL_NODE__Fields.changelist);
+                if (actualChangelist != null && actualChangelist.equals(getBind(3))) {
+                	try {
+                		nodeCurrent.bindf("is", (Long)getBind(1), (String)getBind(2));
+                		if (nodeCurrent.next()) {
+                			super.exec();
+                			n++;
+                		}
+                	}
+                	finally {
+                		nodeCurrent.reset();
+                	}
+                }
             }
             return n;
         } finally {

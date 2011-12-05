@@ -7,6 +7,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetInsertStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectStatement;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.ACTUAL_NODE__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODES__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.TARGETS_LIST__Fields;
 
@@ -54,9 +55,10 @@ public class SVNWCDbInsertTargetDepthFilesWithChangelist extends SVNSqlJetInsert
             actualNode.bindf("s", getBind(3));
             while (actualNode.next()) {
             	try {
-            		nodeCurrent.bindf("is", (Long)getBind(1), (String)getBind(2));
+                    long wcId = actualNode.getColumnLong(ACTUAL_NODE__Fields.wc_id);
+                    String localRelPath = actualNode.getColumnString(ACTUAL_NODE__Fields.local_relpath);
+                    nodeCurrent.bindf("is", wcId, localRelPath);
             		if (nodeCurrent.next()) {
-            			String localRelPath = nodeCurrent.getColumnString(SVNWCDbSchema.NODES__Fields.local_relpath);
                         String kind =  nodeCurrent.getColumnString(SVNWCDbSchema.NODES__Fields.kind);
                         String parentRelPath = nodeCurrent.getColumnString(SVNWCDbSchema.NODES__Fields.parent_relpath);
                         String selectPath = getBind(2).toString();

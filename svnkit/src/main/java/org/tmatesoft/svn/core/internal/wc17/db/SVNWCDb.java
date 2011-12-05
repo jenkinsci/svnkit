@@ -2107,7 +2107,6 @@ public class SVNWCDb implements ISVNWCDb {
         try {
         	Changelist cl = new Changelist();
         	cl.localRelPath = parsed.localRelPath;
-        	cl.localAbsPath = localAbspath;
         	cl.wcRoot = pdh.getWCRoot();
         	cl.changelistName = changelistName;
         	cl.changeLists = changeLists;
@@ -2131,7 +2130,6 @@ public class SVNWCDb implements ISVNWCDb {
         SVNDepth depth;
         ISVNEventHandler eventHandler;
         File localRelPath;
-        File localAbsPath;
         SVNWCDbRoot wcRoot;
                 
         public void setChangelist() throws SVNException {
