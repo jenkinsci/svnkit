@@ -1,3 +1,11 @@
+== version 1.3.7 ==
+
++ 1.7 Subversion servers compatibility issues fixed.
++ Export operation failed on missing directories, fixed.
+
+* For new 1.7 Subversion working copy format support 
+  please use SVNKit 1.7.0-alpha version.
+
 == version 1.3.6.1 ==
 
 + OSGi bundle exports JavaHL API package.
