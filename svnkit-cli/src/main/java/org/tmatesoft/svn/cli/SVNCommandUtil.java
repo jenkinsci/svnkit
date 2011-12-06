@@ -461,7 +461,7 @@ public class SVNCommandUtil {
     }
 
     public static String getVersion(AbstractSVNCommandEnvironment env, boolean quiet) {
-        String version = Version.getMajorVersion() + "." + Version.getMinorVersion() + "." + Version.getMicroVersion();
+        String version = Version.getShortVersionString();
         String revNumber = Version.getRevisionString() == null ? "SNAPSHOT" : Version.getRevisionString();
         String message = MessageFormat.format(env.getProgramName() + ", version {0}\n", new Object[] {version + " (" + revNumber + ")"});
         if (quiet) {
@@ -469,7 +469,7 @@ public class SVNCommandUtil {
         }
         if (!quiet) {
             message += 
-                "\nCopyright (c) 2004-2009 TMate Software.\n" +
+                "\nCopyright (c) 2004-2011 TMate Software.\n" +
                 "SVNKit is an Open Source software, see http://svnkit.com/ for more information.\n" +
                 "SVNKit is a pure Java (TM) version of Subversion, see http://subversion.tigris.org/";
         }
@@ -480,7 +480,7 @@ public class SVNCommandUtil {
     public static String getGenericHelp(String programName, String header, String footer, Comparator commandComparator) {
         StringBuffer help = new StringBuffer();
         if (header != null) {
-            String version = Version.getMajorVersion() + "." + Version.getMinorVersion() + "." + Version.getMicroVersion();
+            String version = Version.getShortVersionString();
             header = MessageFormat.format(header, new Object[] {programName, version});
             help.append(header);
         }

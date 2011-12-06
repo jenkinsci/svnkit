@@ -26,6 +26,7 @@ public class Version {
 
     private static String PROPERTIES_PATH = "/svnkit.build.properties";
 
+    private static final String SHORT_VERSION_STRING_PROPERTY = "svnkit.version";
     private static final String VERSION_STRING_PROPERTY = "svnkit.version.string";
     private static final String VERSION_MAJOR_PROPERTY = "svnkit.version.major";
     private static final String VERSION_MINOR_PROPERTY = "svnkit.version.minor";
@@ -52,6 +53,11 @@ public class Version {
         return ourProperties.getProperty(VERSION_STRING_PROPERTY, VERSION_STRING_DEFAULT);
     }
     
+    public static String getShortVersionString() {
+        loadProperties();
+        return ourProperties.getProperty(SHORT_VERSION_STRING_PROPERTY, VERSION_STRING_DEFAULT);
+    }
+
     public static String getSVNVersion() {
         loadProperties();
         return ourProperties.getProperty(SVN_VERSION_PROPERTY, SVN_VERSION_DEFAULT);

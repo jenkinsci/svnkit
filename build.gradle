@@ -2,7 +2,7 @@ group = 'org.tmatesoft.svnkit'
 version = '1.7.0'
 release = false
 target = '1.5'
-compatibleSvnVersion = '1.7.0'
+compatibleSvnVersion = '1.7.2'
 
 buildscript {
     apply from: 'build.defaults.gradle'
@@ -11,7 +11,7 @@ buildscript {
             snapshotTimeout = org.gradle.api.internal.artifacts.ivyservice.GradleIBiblioResolver.ALWAYS
         }
     }
-    dependencies { classpath 'org.tmatesoft.build:build:0.9.7-SNAPSHOT' }
+    dependencies { classpath 'org.tmatesoft.build:build:0.9.8-SNAPSHOT' }
 }
 
 task wrapper(type: Wrapper) {}
