@@ -30,8 +30,12 @@ import org.tmatesoft.svn.core.internal.wc17.SVNCommitClient17;
 import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
 import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec.SVNCommitPacketWrapper;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.wc2.SvnCat;
 import org.tmatesoft.svn.core.wc2.SvnCommit;
 import org.tmatesoft.svn.core.wc2.SvnCommitPacket;
+import org.tmatesoft.svn.core.wc2.SvnRemoteDelete;
+import org.tmatesoft.svn.core.wc2.SvnRemoteMkDir;
+import org.tmatesoft.svn.core.wc2.SvnScheduleForAddition;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -266,14 +270,12 @@ public class SVNCommitClient extends SVNBasicClient {
      * @see #doDelete(SVNURL[], String, SVNProperties)
      */
     public SVNCommitInfo doDelete(SVNURL[] urls, String commitMessage) throws SVNException {
-        try {
-            return getSVNCommitClient17().doDelete(urls, commitMessage);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                return getSVNCommitClient16().doDelete(urls, commitMessage);
-            }
-            throw e;
+    	SvnRemoteDelete delete = getOperationsFactory().createRemoteDelete();
+    	for (int i = 0; i < urls.length; i++) {
+    		delete.addTarget(SvnTarget.fromURL(urls[i]));            
         }
+    	delete.setCommitMessage(commitMessage);
+    	return delete.run();
     }
 
     /**
@@ -313,14 +315,13 @@ public class SVNCommitClient extends SVNBasicClient {
      * @since 1.2.0, SVN 1.5.0
      */
     public SVNCommitInfo doDelete(SVNURL[] urls, String commitMessage, SVNProperties revisionProperties) throws SVNException {
-        try {
-            return getSVNCommitClient17().doDelete(urls, commitMessage, revisionProperties);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                return getSVNCommitClient16().doDelete(urls, commitMessage, revisionProperties);
-            }
-            throw e;
+    	SvnRemoteDelete delete = getOperationsFactory().createRemoteDelete();
+    	for (int i = 0; i < urls.length; i++) {
+    		delete.addTarget(SvnTarget.fromURL(urls[i]));            
         }
+    	delete.setCommitMessage(commitMessage);
+    	delete.setRevisionProperties(revisionProperties);
+    	return delete.run();
     }
 
     /**
@@ -336,14 +337,12 @@ public class SVNCommitClient extends SVNBasicClient {
      *             if some of URLs refer to different repositories
      */
     public SVNCommitInfo doMkDir(SVNURL[] urls, String commitMessage) throws SVNException {
-        try {
-            return getSVNCommitClient17().doMkDir(urls, commitMessage);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                return getSVNCommitClient16().doMkDir(urls, commitMessage);
-            }
-            throw e;
+    	SvnRemoteMkDir mkdir = getOperationsFactory().createRemoteMkDir();
+    	for (int i = 0; i < urls.length; i++) {
+    		mkdir.addTarget(SvnTarget.fromURL(urls[i]));            
         }
+    	mkdir.setCommitMessage(commitMessage);
+    	return mkdir.run();
     }
 
     /**
@@ -390,14 +389,14 @@ public class SVNCommitClient extends SVNBasicClient {
      * @since 1.2.0, SVN 1.5.0
      */
     public SVNCommitInfo doMkDir(SVNURL[] urls, String commitMessage, SVNProperties revisionProperties, boolean makeParents) throws SVNException {
-        try {
-            return getSVNCommitClient17().doMkDir(urls, commitMessage, revisionProperties, makeParents);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                return getSVNCommitClient16().doMkDir(urls, commitMessage, revisionProperties, makeParents);
-            }
-            throw e;
+    	SvnRemoteMkDir mkdir = getOperationsFactory().createRemoteMkDir();
+    	for (int i = 0; i < urls.length; i++) {
+    		mkdir.addTarget(SvnTarget.fromURL(urls[i]));            
         }
+    	mkdir.setCommitMessage(commitMessage);
+    	mkdir.setRevisionProperties(revisionProperties);
+    	mkdir.setMakeParents(makeParents);
+    	return mkdir.run();
     }
 
     /**

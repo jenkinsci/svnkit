@@ -77,6 +77,8 @@ import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteGetInfo;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteGetProperties;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteGetRevisionProperties;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteLog;
+import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteRemoteDelete;
+import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteRemoteMkDir;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteSetLock;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteSetRevisionProperty;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteUnlock;
@@ -203,6 +205,9 @@ public class SvnOperationFactory {
         registerOperationRunner(SvnSetChangelist.class, new SvnOldSetChangelist());
         registerOperationRunner(SvnSetChangelist.class, new SvnNgSetChangelist());
         
+        registerOperationRunner(SvnRemoteMkDir.class, new SvnRemoteRemoteMkDir());
+        
+        registerOperationRunner(SvnRemoteDelete.class, new SvnRemoteRemoteDelete());
     }
     
     public boolean isAutoCloseContext() {
@@ -386,7 +391,15 @@ public class SvnOperationFactory {
     public SvnSetChangelist createChangeList() {
         return new SvnSetChangelist(this);
     }
-
+    
+    public SvnRemoteMkDir createMkDir() {
+        return new SvnRemoteMkDir(this);
+    }
+    
+    public SvnRemoteDelete createRemoteDelete() {
+        return new SvnRemoteDelete(this);
+    }
+    
     protected Object run(SvnOperation<?> operation) throws SVNException {
         ISvnOperationRunner<?, SvnOperation<?>> runner = getImplementation(operation);
         if (runner != null) {
