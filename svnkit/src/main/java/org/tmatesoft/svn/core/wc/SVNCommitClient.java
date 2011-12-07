@@ -271,6 +271,8 @@ public class SVNCommitClient extends SVNBasicClient {
      */
     public SVNCommitInfo doDelete(SVNURL[] urls, String commitMessage) throws SVNException {
     	SvnRemoteDelete delete = getOperationsFactory().createRemoteDelete();
+    	if (getCommitHandler() != null)
+    		delete.setCommitHandler(SvnCodec.commitHandler(getCommitHandler()));
     	for (int i = 0; i < urls.length; i++) {
     		delete.addTarget(SvnTarget.fromURL(urls[i]));            
         }
@@ -316,6 +318,8 @@ public class SVNCommitClient extends SVNBasicClient {
      */
     public SVNCommitInfo doDelete(SVNURL[] urls, String commitMessage, SVNProperties revisionProperties) throws SVNException {
     	SvnRemoteDelete delete = getOperationsFactory().createRemoteDelete();
+    	if (getCommitHandler() != null)
+    		delete.setCommitHandler(SvnCodec.commitHandler(getCommitHandler()));
     	for (int i = 0; i < urls.length; i++) {
     		delete.addTarget(SvnTarget.fromURL(urls[i]));            
         }
@@ -338,6 +342,8 @@ public class SVNCommitClient extends SVNBasicClient {
      */
     public SVNCommitInfo doMkDir(SVNURL[] urls, String commitMessage) throws SVNException {
     	SvnRemoteMkDir mkdir = getOperationsFactory().createRemoteMkDir();
+    	if (getCommitHandler() != null)
+    		mkdir.setCommitHandler(SvnCodec.commitHandler(getCommitHandler()));
     	for (int i = 0; i < urls.length; i++) {
     		mkdir.addTarget(SvnTarget.fromURL(urls[i]));            
         }
@@ -390,6 +396,8 @@ public class SVNCommitClient extends SVNBasicClient {
      */
     public SVNCommitInfo doMkDir(SVNURL[] urls, String commitMessage, SVNProperties revisionProperties, boolean makeParents) throws SVNException {
     	SvnRemoteMkDir mkdir = getOperationsFactory().createRemoteMkDir();
+    	if (getCommitHandler() != null)
+    		mkdir.setCommitHandler(SvnCodec.commitHandler(getCommitHandler()));
     	for (int i = 0; i < urls.length; i++) {
     		mkdir.addTarget(SvnTarget.fromURL(urls[i]));            
         }
