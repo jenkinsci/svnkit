@@ -26,6 +26,7 @@ import java.util.Map;
 
 import org.tigris.subversion.javahl.BlameCallback;
 import org.tigris.subversion.javahl.BlameCallback2;
+import org.tigris.subversion.javahl.BlameCallback3;
 import org.tigris.subversion.javahl.ChangelistCallback;
 import org.tigris.subversion.javahl.ClientException;
 import org.tigris.subversion.javahl.CommitItem;
@@ -2265,5 +2266,37 @@ public class SVNClientImpl implements SVNClientInterface {
     public void setRevProperty(String path, String name, Revision rev, String value, String originalValue, boolean force) throws ClientException {
         // TODO use original value.
         setRevProperty(path, name, rev, value, force);
+    }
+
+    public void copy(CopySource[] sources, String destPath, String message,
+            boolean copyAsChild, boolean makeParents, boolean ignoreExternals,
+            Map revpropTable) throws ClientException {
+    }
+
+    public void getMergeinfoLog(int kind, String pathOrUrl,
+            Revision pegRevision, String mergeSourceUrl,
+            Revision srcPegRevision, boolean discoverChangedPaths, int depth,
+            String[] revProps, LogMessageCallback callback)
+            throws ClientException {
+    }
+
+    public void diff(String target1, Revision revision1, String target2,
+            Revision revision2, String relativeToDir, String outFileName,
+            int depth, String[] changelists, boolean ignoreAncestry,
+            boolean noDiffDeleted, boolean force, boolean copiesAsAdds)
+            throws ClientException {
+    }
+
+    public void diff(String target, Revision pegRevision,
+            Revision startRevision, Revision endRevision, String relativeToDir,
+            String outFileName, int depth, String[] changelists,
+            boolean ignoreAncestry, boolean noDiffDeleted, boolean force,
+            boolean copiesAsAdds) throws ClientException {
+    }
+
+    public void blame(String path, Revision pegRevision, Revision revisionStart, Revision revisionEnd, boolean ignoreMimeType, boolean includeMergedRevisions, BlameCallback3 callback) throws ClientException {
+    }
+
+    public void upgrade(String path) throws ClientException {
     }
 }

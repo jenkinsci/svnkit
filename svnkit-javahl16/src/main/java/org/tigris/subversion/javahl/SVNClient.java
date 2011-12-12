@@ -581,4 +581,51 @@ public class SVNClient implements SVNClientInterface {
         myDelegate.setRevProperty(path, name, rev, value, originalValue, force);
     }
 
+    public void copy(CopySource[] sources, String destPath, String message,
+            boolean copyAsChild, boolean makeParents, boolean ignoreExternals,
+            Map revpropTable) throws ClientException {
+        // TODO Auto-generated method stub
+        
+    }
+
+    public void getMergeinfoLog(int kind, String pathOrUrl,
+            Revision pegRevision, String mergeSourceUrl,
+            Revision srcPegRevision, boolean discoverChangedPaths, int depth,
+            String[] revProps, LogMessageCallback callback)
+            throws ClientException {
+        // TODO Auto-generated method stub
+        
+    }
+
+    public void diff(String target1, Revision revision1, String target2,
+            Revision revision2, String relativeToDir, String outFileName,
+            int depth, String[] changelists, boolean ignoreAncestry,
+            boolean noDiffDeleted, boolean force, boolean copiesAsAdds)
+            throws ClientException {
+        // TODO Auto-generated method stub
+        
+    }
+
+    public void diff(String target, Revision pegRevision,
+            Revision startRevision, Revision endRevision, String relativeToDir,
+            String outFileName, int depth, String[] changelists,
+            boolean ignoreAncestry, boolean noDiffDeleted, boolean force,
+            boolean copiesAsAdds) throws ClientException {
+        // TODO Auto-generated method stub
+        
+    }
+
+    public void blame(String path, Revision pegRevision,
+            Revision revisionStart, Revision revisionEnd,
+            boolean ignoreMimeType, boolean includeMergedRevisions,
+            BlameCallback3 callback) throws ClientException {
+        // TODO Auto-generated method stub
+        
+    }
+
+    public void upgrade(String path) throws ClientException {
+        // TODO Auto-generated method stub
+        
+    }
+
 }
