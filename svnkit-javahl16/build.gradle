@@ -33,7 +33,7 @@ classes << {
 }
 
 test {
-    includes = ['**/BasicTests*', '**/SVNAdminTests*']    
+    includes = ['**/tigris/subversion/javahl/BasicTests*', '**/tigris/subversion/javahl/SVNAdminTests*']    
     //does not pass on Windows: BasicTests.testBasicChangelist
     systemProperty 'svnkit.wc.17', 'false'
     ignoreFailures = true
