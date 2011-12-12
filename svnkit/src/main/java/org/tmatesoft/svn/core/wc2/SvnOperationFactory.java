@@ -425,6 +425,14 @@ public class SvnOperationFactory {
         return new SvnLogMergeInfo(this);
     }
     
+    public SvnResolve createResolve() {
+        return new SvnResolve(this);
+    }
+    
+    public SvnCleanup createCleanup() {
+        return new SvnCleanup(this);
+    }
+    
     protected Object run(SvnOperation<?> operation) throws SVNException {
         ISvnOperationRunner<?, SvnOperation<?>> runner = getImplementation(operation);
         if (runner != null) {
