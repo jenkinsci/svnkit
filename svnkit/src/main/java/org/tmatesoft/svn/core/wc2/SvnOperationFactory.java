@@ -413,6 +413,18 @@ public class SvnOperationFactory {
         return new SvnDiffSummarize(this);
     }
     
+    public SvnSuggestMergeSources createSuggestMergeSources() {
+        return new SvnSuggestMergeSources(this);
+    }
+    
+    public SvnGetMergeInfo createGetMergeInfo() {
+        return new SvnGetMergeInfo(this);
+    }
+    
+    public SvnLogMergeInfo createLogMergeInfo() {
+        return new SvnLogMergeInfo(this);
+    }
+    
     protected Object run(SvnOperation<?> operation) throws SVNException {
         ISvnOperationRunner<?, SvnOperation<?>> runner = getImplementation(operation);
         if (runner != null) {
