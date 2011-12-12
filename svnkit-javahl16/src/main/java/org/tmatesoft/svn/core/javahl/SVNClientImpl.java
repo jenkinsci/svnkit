@@ -1183,7 +1183,7 @@ public class SVNClientImpl implements SVNClientInterface {
                 JavaHLObjectFactory.getSVNDepth(depth), changelists);
         Map propsMap = new SVNHashMap();
         for (int i = 0; i < properties.length; i++) {
-            propsMap.put(properties[i].getName(), properties[i].getValue());
+            propsMap.put(properties[i].getName(), properties[i].getData());
         }
         callback.singlePath(path, propsMap);
 	}
