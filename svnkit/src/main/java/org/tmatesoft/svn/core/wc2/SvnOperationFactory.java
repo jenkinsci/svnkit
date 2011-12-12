@@ -405,6 +405,14 @@ public class SvnOperationFactory {
         return new SvnMerge(this);
     }
     
+    public SvnDiff createDiff() {
+        return new SvnDiff(this);
+    }
+    
+    public SvnDiffSummarize createDiffSummarize() {
+        return new SvnDiffSummarize(this);
+    }
+    
     protected Object run(SvnOperation<?> operation) throws SVNException {
         ISvnOperationRunner<?, SvnOperation<?>> runner = getImplementation(operation);
         if (runner != null) {

@@ -4,15 +4,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 
 public class SvnMerge extends SvnOperation<Long> {
     
     private SvnTarget firstSource;
-    private SVNRevision firstRevision;
     private SvnTarget secondSource;
-    private SVNRevision secondRevision;
     
     private boolean ignoreAncestry;
     private boolean force;
@@ -45,15 +42,13 @@ public class SvnMerge extends SvnOperation<Long> {
         this.source = source;
         this.reintegrate = reintegrate;
         if (source != null) {
-            setSourceRange(null, null, null, null);
+            setSources(null, null);
         }
     }
     
-    public void setSourceRange(SvnTarget source1, SVNRevision rev1, SvnTarget source2, SVNRevision rev2) {
+    public void setSources(SvnTarget source1, SvnTarget source2) {
         this.firstSource = source1;
         this.secondSource = source2;
-        this.firstRevision = rev1;
-        this.secondRevision = rev2;
         if (firstSource != null) {
             setSource(null, false);
         }
@@ -69,14 +64,6 @@ public class SvnMerge extends SvnOperation<Long> {
     
     public SvnTarget getSecondSource() {
         return this.secondSource;
-    }
-    
-    public SVNRevision getFirstRevision() {
-        return this.firstRevision;
-    }
-    
-    public SVNRevision getSecondRevision() {
-        return this.secondRevision;
     }
     
     public boolean isReintegrate() {

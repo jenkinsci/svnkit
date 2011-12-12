@@ -1832,7 +1832,7 @@ public class SVNDiffClient extends SVNBasicClient {
     public void doMerge(File path1, SVNRevision revision1, File path2, SVNRevision revision2, File dstPath, SVNDepth depth, boolean useAncestry, boolean force, boolean dryRun, boolean recordOnly) throws SVNException {
         SvnMerge merge = getOperationsFactory().createMerge();
         merge.setMergeOptions(getMergeOptions());
-        merge.setSourceRange(SvnTarget.fromFile(path1), revision1, SvnTarget.fromFile(path2), revision2);
+        merge.setSources(SvnTarget.fromFile(path1, revision1), SvnTarget.fromFile(path2, revision2));
         merge.addTarget(SvnTarget.fromFile(dstPath));
         merge.setDepth(depth);
         merge.setIgnoreAncestry(!useAncestry);
@@ -1999,7 +1999,7 @@ public class SVNDiffClient extends SVNBasicClient {
     public void doMerge(File path1, SVNRevision revision1, SVNURL url2, SVNRevision revision2, File dstPath, SVNDepth depth, boolean useAncestry, boolean force, boolean dryRun, boolean recordOnly) throws SVNException {
         SvnMerge merge = getOperationsFactory().createMerge();
         merge.setMergeOptions(getMergeOptions());
-        merge.setSourceRange(SvnTarget.fromFile(path1), revision1, SvnTarget.fromURL(url2), revision2);
+        merge.setSources(SvnTarget.fromFile(path1, revision1), SvnTarget.fromURL(url2, revision2));
         merge.addTarget(SvnTarget.fromFile(dstPath));
         merge.setDepth(depth);
         merge.setIgnoreAncestry(!useAncestry);
@@ -2165,7 +2165,7 @@ public class SVNDiffClient extends SVNBasicClient {
     public void doMerge(SVNURL url1, SVNRevision revision1, File path2, SVNRevision revision2, File dstPath, SVNDepth depth, boolean useAncestry, boolean force, boolean dryRun, boolean recordOnly) throws SVNException {
         SvnMerge merge = getOperationsFactory().createMerge();
         merge.setMergeOptions(getMergeOptions());
-        merge.setSourceRange(SvnTarget.fromURL(url1), revision1, SvnTarget.fromFile(path2), revision2);
+        merge.setSources(SvnTarget.fromURL(url1, revision1), SvnTarget.fromFile(path2, revision2));
         merge.addTarget(SvnTarget.fromFile(dstPath));
         merge.setDepth(depth);
         merge.setIgnoreAncestry(!useAncestry);
@@ -2330,7 +2330,7 @@ public class SVNDiffClient extends SVNBasicClient {
     public void doMerge(SVNURL url1, SVNRevision revision1, SVNURL url2, SVNRevision revision2, File dstPath, SVNDepth depth, boolean useAncestry, boolean force, boolean dryRun, boolean recordOnly) throws SVNException {
         SvnMerge merge = getOperationsFactory().createMerge();
         merge.setMergeOptions(getMergeOptions());
-        merge.setSourceRange(SvnTarget.fromURL(url1), revision1, SvnTarget.fromURL(url2), revision2);
+        merge.setSources(SvnTarget.fromURL(url1, revision1), SvnTarget.fromURL(url2, revision2));
         merge.addTarget(SvnTarget.fromFile(dstPath));
         merge.setDepth(depth);
         merge.setIgnoreAncestry(!useAncestry);

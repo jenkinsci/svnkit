@@ -35,6 +35,7 @@ import org.tmatesoft.svn.core.wc.SVNCommitItem;
 import org.tmatesoft.svn.core.wc.SVNCommitPacket;
 import org.tmatesoft.svn.core.wc.SVNConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNCopySource;
+import org.tmatesoft.svn.core.wc.SVNDiffStatus;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -50,6 +51,7 @@ import org.tmatesoft.svn.core.wc2.SvnCommit;
 import org.tmatesoft.svn.core.wc2.SvnCommitItem;
 import org.tmatesoft.svn.core.wc2.SvnCommitPacket;
 import org.tmatesoft.svn.core.wc2.SvnCopySource;
+import org.tmatesoft.svn.core.wc2.SvnDiffStatus;
 import org.tmatesoft.svn.core.wc2.SvnInfo;
 import org.tmatesoft.svn.core.wc2.SvnRevisionRange;
 import org.tmatesoft.svn.core.wc2.SvnSchedule;
@@ -60,6 +62,22 @@ import org.tmatesoft.svn.core.wc2.hooks.ISvnCommitHandler;
 import org.tmatesoft.svn.core.wc2.hooks.ISvnFileListHook;
 
 public class SvnCodec {
+    
+    public static SVNDiffStatus diffStatus(SvnDiffStatus diffStatus) {
+        return new SVNDiffStatus(diffStatus.getFile(), diffStatus.getUrl(), diffStatus.getPath(), diffStatus.getModificationType(), diffStatus.isPropertiesModified(), diffStatus.getKind());
+    }
+    
+    public static SvnDiffStatus diffStatus(SVNDiffStatus diffStatus) {
+        SvnDiffStatus result = new SvnDiffStatus();
+        result.setFile(diffStatus.getFile());
+        result.setUrl(diffStatus.getURL());
+        result.setPath(diffStatus.getPath());
+        result.setModificationType(diffStatus.getModificationType());
+        result.setPropertiesModified(diffStatus.isPropertiesModified());
+        result.setKind(diffStatus.getKind());
+        result.setUserData(diffStatus);
+        return result;
+    }
     
     public static ISvnObjectReceiver<SVNPropertyData> propertyReceiver(final ISVNPropertyHandler handler) {
         return new ISvnObjectReceiver<SVNPropertyData>() {
