@@ -29,7 +29,6 @@ import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.internal.wc2.ISvnCommitRunner;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgAdd;
-import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgAnnotate;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgCat;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgCheckout;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgCommit;
@@ -59,6 +58,7 @@ import org.tmatesoft.svn.core.internal.wc2.old.SvnOldExport;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetInfo;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetProperties;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetStatus;
+import org.tmatesoft.svn.core.internal.wc2.old.SvnOldMerge;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldRelocate;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldRemoteCopy;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldRemove;
@@ -199,7 +199,6 @@ public class SvnOperationFactory {
         registerOperationRunner(SvnLog.class, new SvnRemoteLog());
         
         registerOperationRunner(SvnAnnotate.class, new SvnOldAnnotate());
-//        registerOperationRunner(SvnAnnotate.class, new SvnNgAnnotate());
         registerOperationRunner(SvnAnnotate.class, new SvnRemoteAnnotate());
         
         registerOperationRunner(SvnSetChangelist.class, new SvnOldSetChangelist());
@@ -208,6 +207,8 @@ public class SvnOperationFactory {
         registerOperationRunner(SvnRemoteMkDir.class, new SvnRemoteRemoteMkDir());
         
         registerOperationRunner(SvnRemoteDelete.class, new SvnRemoteRemoteDelete());
+        
+        registerOperationRunner(SvnMerge.class, new SvnOldMerge());
     }
     
     public boolean isAutoCloseContext() {
@@ -398,6 +399,10 @@ public class SvnOperationFactory {
     
     public SvnRemoteDelete createRemoteDelete() {
         return new SvnRemoteDelete(this);
+    }
+    
+    public SvnMerge createMerge() {
+        return new SvnMerge(this);
     }
     
     protected Object run(SvnOperation<?> operation) throws SVNException {

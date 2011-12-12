@@ -8,12 +8,10 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc16.SVNLogClient16;
-import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnAnnotate;
 import org.tmatesoft.svn.core.wc2.SvnAnnotateItem;
-import org.tmatesoft.svn.core.wc2.SvnGetProperties;
 import org.tmatesoft.svn.util.SVNLogType;
 
 public class SvnOldAnnotate extends SvnOldRunner<SvnAnnotateItem, SvnAnnotate> implements ISVNAnnotateHandler { 

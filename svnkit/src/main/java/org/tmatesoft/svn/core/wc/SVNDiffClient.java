@@ -13,6 +13,7 @@ package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 
@@ -26,7 +27,10 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc16.SVNDiffClient16;
 import org.tmatesoft.svn.core.internal.wc17.SVNDiffClient17;
+import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.wc2.SvnMerge;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 /**
  * The <b>SVNDiffClient</b> class provides methods allowing to get differences
@@ -104,6 +108,9 @@ public class SVNDiffClient extends SVNBasicClient {
         setMergeOptions(null);
 
         setOptions(options);
+
+        getOperationsFactory().setAuthenticationManager(authManager);
+        getOperationsFactory().setOptions(options);
     }
 
     /**
@@ -133,6 +140,9 @@ public class SVNDiffClient extends SVNBasicClient {
         setMergeOptions(null);
 
         setOptions(options);
+
+        getOperationsFactory().setRepositoryPool(repositoryPool);
+        getOperationsFactory().setOptions(options);
     }
 
     /**
@@ -1717,15 +1727,7 @@ public class SVNDiffClient extends SVNBasicClient {
      *             instead
      */
     public void doMerge(File path1, SVNRevision revision1, File path2, SVNRevision revision2, File dstPath, boolean recursive, boolean useAncestry, boolean force, boolean dryRun) throws SVNException {
-        try {
-            getSVNDiffClient17().doMerge(path1, revision1, path2, revision2, dstPath, recursive, useAncestry, force, dryRun);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNDiffClient16().doMerge(path1, revision1, path2, revision2, dstPath, recursive, useAncestry, force, dryRun);
-                return;
-            }
-            throw e;
-        }
+        doMerge(path1, revision1, path2, revision2, dstPath, SVNDepth.fromRecurse(recursive), useAncestry, force, dryRun, false);
     }
 
     /**
@@ -1827,17 +1829,18 @@ public class SVNDiffClient extends SVNBasicClient {
      *             </ul>
      * @since 1.2, SVN 1.5
      */
-    public void doMerge(File path1, SVNRevision revision1, File path2, SVNRevision revision2, File dstPath, SVNDepth depth, boolean useAncestry, boolean force, boolean dryRun, boolean recordOnly)
-            throws SVNException {
-        try {
-            getSVNDiffClient17().doMerge(path1, revision1, path2, revision2, dstPath, depth, useAncestry, force, dryRun, recordOnly);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNDiffClient16().doMerge(path1, revision1, path2, revision2, dstPath, depth, useAncestry, force, dryRun, recordOnly);
-                return;
-            }
-            throw e;
-        }
+    public void doMerge(File path1, SVNRevision revision1, File path2, SVNRevision revision2, File dstPath, SVNDepth depth, boolean useAncestry, boolean force, boolean dryRun, boolean recordOnly) throws SVNException {
+        SvnMerge merge = getOperationsFactory().createMerge();
+        merge.setMergeOptions(getMergeOptions());
+        merge.setSourceRange(SvnTarget.fromFile(path1), revision1, SvnTarget.fromFile(path2), revision2);
+        merge.addTarget(SvnTarget.fromFile(dstPath));
+        merge.setDepth(depth);
+        merge.setIgnoreAncestry(!useAncestry);
+        merge.setForce(force);
+        merge.setDryRun(dryRun);
+        merge.setRecordOnly(recordOnly);
+        
+        merge.run();
     }
 
     /**
@@ -1891,15 +1894,7 @@ public class SVNDiffClient extends SVNBasicClient {
      *             instead
      */
     public void doMerge(File path1, SVNRevision revision1, SVNURL url2, SVNRevision revision2, File dstPath, boolean recursive, boolean useAncestry, boolean force, boolean dryRun) throws SVNException {
-        try {
-            getSVNDiffClient17().doMerge(path1, revision1, url2, revision2, dstPath, recursive, useAncestry, force, dryRun);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNDiffClient16().doMerge(path1, revision1, url2, revision2, dstPath, recursive, useAncestry, force, dryRun);
-                return;
-            }
-            throw e;
-        }
+        doMerge(path1, revision1, url2, revision2, dstPath, SVNDepth.fromRecurse(recursive), useAncestry, force, dryRun, false);
     }
 
     /**
@@ -2001,17 +1996,18 @@ public class SVNDiffClient extends SVNBasicClient {
      *             </ul>
      * @since 1.2, SVN 1.5
      */
-    public void doMerge(File path1, SVNRevision revision1, SVNURL url2, SVNRevision revision2, File dstPath, SVNDepth depth, boolean useAncestry, boolean force, boolean dryRun, boolean recordOnly)
-            throws SVNException {
-        try {
-            getSVNDiffClient17().doMerge(path1, revision1, url2, revision2, dstPath, depth, useAncestry, force, dryRun, recordOnly);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNDiffClient16().doMerge(path1, revision1, url2, revision2, dstPath, depth, useAncestry, force, dryRun, recordOnly);
-                return;
-            }
-            throw e;
-        }
+    public void doMerge(File path1, SVNRevision revision1, SVNURL url2, SVNRevision revision2, File dstPath, SVNDepth depth, boolean useAncestry, boolean force, boolean dryRun, boolean recordOnly) throws SVNException {
+        SvnMerge merge = getOperationsFactory().createMerge();
+        merge.setMergeOptions(getMergeOptions());
+        merge.setSourceRange(SvnTarget.fromFile(path1), revision1, SvnTarget.fromURL(url2), revision2);
+        merge.addTarget(SvnTarget.fromFile(dstPath));
+        merge.setDepth(depth);
+        merge.setIgnoreAncestry(!useAncestry);
+        merge.setForce(force);
+        merge.setDryRun(dryRun);
+        merge.setRecordOnly(recordOnly);
+        
+        merge.run();
     }
 
     /**
@@ -2064,15 +2060,7 @@ public class SVNDiffClient extends SVNBasicClient {
      *             instead
      */
     public void doMerge(SVNURL url1, SVNRevision revision1, File path2, SVNRevision revision2, File dstPath, boolean recursive, boolean useAncestry, boolean force, boolean dryRun) throws SVNException {
-        try {
-            getSVNDiffClient17().doMerge(url1, revision1, path2, revision2, dstPath, recursive, useAncestry, force, dryRun);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNDiffClient16().doMerge(url1, revision1, path2, revision2, dstPath, recursive, useAncestry, force, dryRun);
-                return;
-            }
-            throw e;
-        }
+        doMerge(url1, revision1, path2, revision2, dstPath, SVNDepth.fromRecurse(recursive), useAncestry, force, dryRun, false);
     }
 
     /**
@@ -2174,17 +2162,18 @@ public class SVNDiffClient extends SVNBasicClient {
      *             </ul>
      * @since 1.2, SVN 1.5
      */
-    public void doMerge(SVNURL url1, SVNRevision revision1, File path2, SVNRevision revision2, File dstPath, SVNDepth depth, boolean useAncestry, boolean force, boolean dryRun, boolean recordOnly)
-            throws SVNException {
-        try {
-            getSVNDiffClient17().doMerge(url1, revision1, path2, revision2, dstPath, depth, useAncestry, force, dryRun, recordOnly);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNDiffClient16().doMerge(url1, revision1, path2, revision2, dstPath, depth, useAncestry, force, dryRun, recordOnly);
-                return;
-            }
-            throw e;
-        }
+    public void doMerge(SVNURL url1, SVNRevision revision1, File path2, SVNRevision revision2, File dstPath, SVNDepth depth, boolean useAncestry, boolean force, boolean dryRun, boolean recordOnly) throws SVNException {
+        SvnMerge merge = getOperationsFactory().createMerge();
+        merge.setMergeOptions(getMergeOptions());
+        merge.setSourceRange(SvnTarget.fromURL(url1), revision1, SvnTarget.fromFile(path2), revision2);
+        merge.addTarget(SvnTarget.fromFile(dstPath));
+        merge.setDepth(depth);
+        merge.setIgnoreAncestry(!useAncestry);
+        merge.setForce(force);
+        merge.setDryRun(dryRun);
+        merge.setRecordOnly(recordOnly);
+        
+        merge.run();
     }
 
     /**
@@ -2238,17 +2227,8 @@ public class SVNDiffClient extends SVNBasicClient {
      *             {@link #doMerge(SVNURL, SVNRevision, SVNURL, SVNRevision, File, SVNDepth, boolean, boolean, boolean, boolean)}
      *             instead
      */
-    public void doMerge(SVNURL url1, SVNRevision revision1, SVNURL url2, SVNRevision revision2, File dstPath, boolean recursive, boolean useAncestry, boolean force, boolean dryRun)
-            throws SVNException {
-        try {
-            getSVNDiffClient17().doMerge(url1, revision1, url2, revision2, dstPath, recursive, useAncestry, force, dryRun);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNDiffClient16().doMerge(url1, revision1, url2, revision2, dstPath, recursive, useAncestry, force, dryRun);
-                return;
-            }
-            throw e;
-        }
+    public void doMerge(SVNURL url1, SVNRevision revision1, SVNURL url2, SVNRevision revision2, File dstPath, boolean recursive, boolean useAncestry, boolean force, boolean dryRun) throws SVNException {
+        doMerge(url1, revision1, url2, revision2, dstPath, SVNDepth.fromRecurse(recursive), useAncestry, force, dryRun, false);
     }
 
     /**
@@ -2347,17 +2327,18 @@ public class SVNDiffClient extends SVNBasicClient {
      *             </ul>
      * @since 1.2, SVN 1.5
      */
-    public void doMerge(SVNURL url1, SVNRevision revision1, SVNURL url2, SVNRevision revision2, File dstPath, SVNDepth depth, boolean useAncestry, boolean force, boolean dryRun, boolean recordOnly)
-            throws SVNException {
-        try {
-            getSVNDiffClient17().doMerge(url1, revision1, url2, revision2, dstPath, depth, useAncestry, force, dryRun, recordOnly);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNDiffClient16().doMerge(url1, revision1, url2, revision2, dstPath, depth, useAncestry, force, dryRun, recordOnly);
-                return;
-            }
-            throw e;
-        }
+    public void doMerge(SVNURL url1, SVNRevision revision1, SVNURL url2, SVNRevision revision2, File dstPath, SVNDepth depth, boolean useAncestry, boolean force, boolean dryRun, boolean recordOnly) throws SVNException {
+        SvnMerge merge = getOperationsFactory().createMerge();
+        merge.setMergeOptions(getMergeOptions());
+        merge.setSourceRange(SvnTarget.fromURL(url1), revision1, SvnTarget.fromURL(url2), revision2);
+        merge.addTarget(SvnTarget.fromFile(dstPath));
+        merge.setDepth(depth);
+        merge.setIgnoreAncestry(!useAncestry);
+        merge.setForce(force);
+        merge.setDryRun(dryRun);
+        merge.setRecordOnly(recordOnly);
+        
+        merge.run();
     }
 
     /**
@@ -2411,17 +2392,10 @@ public class SVNDiffClient extends SVNBasicClient {
      *             {@link #doMerge(SVNURL, SVNRevision, Collection, File, SVNDepth, boolean, boolean, boolean, boolean)}
      *             instead
      */
-    public void doMerge(SVNURL url1, SVNRevision pegRevision, SVNRevision revision1, SVNRevision revision2, File dstPath, boolean recursive, boolean useAncestry, boolean force, boolean dryRun)
-            throws SVNException {
-        try {
-            getSVNDiffClient17().doMerge(url1, pegRevision, revision1, revision2, dstPath, recursive, useAncestry, force, dryRun);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNDiffClient16().doMerge(url1, pegRevision, revision1, revision2, dstPath, recursive, useAncestry, force, dryRun);
-                return;
-            }
-            throw e;
-        }
+    public void doMerge(SVNURL url1, SVNRevision pegRevision, SVNRevision revision1, SVNRevision revision2, File dstPath, boolean recursive, boolean useAncestry, boolean force, boolean dryRun) throws SVNException {
+        Collection<SVNRevisionRange> ranges = new ArrayList<SVNRevisionRange>();
+        ranges.add(new SVNRevisionRange(revision1, revision2));
+        doMerge(url1, pegRevision, ranges, dstPath, SVNDepth.fromRecurse(recursive), useAncestry, force, dryRun, false);
     }
 
     /**
@@ -2473,17 +2447,23 @@ public class SVNDiffClient extends SVNBasicClient {
      *             </ul>
      * @since 1.2, SVN 1.5
      */
-    public void doMerge(SVNURL url1, SVNRevision pegRevision, Collection rangesToMerge, File dstPath, SVNDepth depth, boolean useAncestry, boolean force, boolean dryRun, boolean recordOnly)
-            throws SVNException {
-        try {
-            getSVNDiffClient17().doMerge(url1, pegRevision, rangesToMerge, dstPath, depth, useAncestry, force, dryRun, recordOnly);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNDiffClient16().doMerge(url1, pegRevision, rangesToMerge, dstPath, depth, useAncestry, force, dryRun, recordOnly);
-                return;
+    public void doMerge(SVNURL url1, SVNRevision pegRevision, Collection<SVNRevisionRange> rangesToMerge, File dstPath, SVNDepth depth, boolean useAncestry, boolean force, boolean dryRun, boolean recordOnly) throws SVNException {
+        SvnMerge merge = getOperationsFactory().createMerge();
+        merge.setMergeOptions(getMergeOptions());
+        merge.setSource(SvnTarget.fromURL(url1, pegRevision), false);
+        if (rangesToMerge != null) {
+            for (SVNRevisionRange range : rangesToMerge) {
+                merge.addRevisionRange(SvnCodec.revisionRange(range));
             }
-            throw e;
         }
+        merge.addTarget(SvnTarget.fromFile(dstPath));
+        merge.setDepth(depth);
+        merge.setIgnoreAncestry(!useAncestry);
+        merge.setForce(force);
+        merge.setDryRun(dryRun);
+        merge.setRecordOnly(recordOnly);
+        
+        merge.run();
     }
 
     /**
@@ -2541,17 +2521,10 @@ public class SVNDiffClient extends SVNBasicClient {
      *             {@link #doMerge(File, SVNRevision, Collection, File, SVNDepth, boolean, boolean, boolean, boolean)}
      *             instead
      */
-    public void doMerge(File path1, SVNRevision pegRevision, SVNRevision revision1, SVNRevision revision2, File dstPath, boolean recursive, boolean useAncestry, boolean force, boolean dryRun)
-            throws SVNException {
-        try {
-            getSVNDiffClient17().doMerge(path1, pegRevision, revision1, revision2, dstPath, recursive, useAncestry, force, dryRun);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNDiffClient16().doMerge(path1, pegRevision, revision1, revision2, dstPath, recursive, useAncestry, force, dryRun);
-                return;
-            }
-            throw e;
-        }
+    public void doMerge(File path1, SVNRevision pegRevision, SVNRevision revision1, SVNRevision revision2, File dstPath, boolean recursive, boolean useAncestry, boolean force, boolean dryRun) throws SVNException {
+        Collection<SVNRevisionRange> ranges = new ArrayList<SVNRevisionRange>();
+        ranges.add(new SVNRevisionRange(revision1, revision2));
+        doMerge(path1, pegRevision, ranges, dstPath, SVNDepth.fromRecurse(recursive), useAncestry, force, dryRun, false);
     }
 
     /**
@@ -2603,17 +2576,24 @@ public class SVNDiffClient extends SVNBasicClient {
      *             </ul>
      * @since 1.2, SVN 1.5
      */
-    public void doMerge(File path1, SVNRevision pegRevision, Collection rangesToMerge, File dstPath, SVNDepth depth, boolean useAncestry, boolean force, boolean dryRun, boolean recordOnly)
+    public void doMerge(File path1, SVNRevision pegRevision, Collection<SVNRevisionRange> rangesToMerge, File dstPath, SVNDepth depth, boolean useAncestry, boolean force, boolean dryRun, boolean recordOnly)
             throws SVNException {
-        try {
-            getSVNDiffClient17().doMerge(path1, pegRevision, rangesToMerge, dstPath, depth, useAncestry, force, dryRun, recordOnly);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNDiffClient16().doMerge(path1, pegRevision, rangesToMerge, dstPath, depth, useAncestry, force, dryRun, recordOnly);
-                return;
+        SvnMerge merge = getOperationsFactory().createMerge();
+        merge.setMergeOptions(getMergeOptions());
+        merge.setSource(SvnTarget.fromFile(path1, pegRevision), false);
+        if (rangesToMerge != null) {
+            for (SVNRevisionRange range : rangesToMerge) {
+                merge.addRevisionRange(SvnCodec.revisionRange(range));
             }
-            throw e;
         }
+        merge.addTarget(SvnTarget.fromFile(dstPath));
+        merge.setDepth(depth);
+        merge.setIgnoreAncestry(!useAncestry);
+        merge.setForce(force);
+        merge.setDryRun(dryRun);
+        merge.setRecordOnly(recordOnly);
+        
+        merge.run();
     }
 
     /**
@@ -2659,15 +2639,13 @@ public class SVNDiffClient extends SVNBasicClient {
      * @since 1.2, SVN 1.5
      */
     public void doMergeReIntegrate(File srcPath, SVNRevision pegRevision, File dstPath, boolean dryRun) throws SVNException {
-        try {
-            getSVNDiffClient17().doMergeReIntegrate(srcPath, pegRevision, dstPath, dryRun);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNDiffClient16().doMergeReIntegrate(srcPath, pegRevision, dstPath, dryRun);
-                return;
-            }
-            throw e;
-        }
+        SvnMerge merge = getOperationsFactory().createMerge();
+        merge.setMergeOptions(getMergeOptions());
+        merge.addTarget(SvnTarget.fromFile(dstPath));
+        merge.setSource(SvnTarget.fromFile(srcPath, pegRevision), true);
+        merge.setDryRun(dryRun);
+        
+        merge.run();
     }
 
     /**
@@ -2713,15 +2691,13 @@ public class SVNDiffClient extends SVNBasicClient {
      * @since 1.2, SVN 1.5
      */
     public void doMergeReIntegrate(SVNURL srcURL, SVNRevision pegRevision, File dstPath, boolean dryRun) throws SVNException {
-        try {
-            getSVNDiffClient17().doMergeReIntegrate(srcURL, pegRevision, dstPath, dryRun);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNDiffClient16().doMergeReIntegrate(srcURL, pegRevision, dstPath, dryRun);
-                return;
-            }
-            throw e;
-        }
+        SvnMerge merge = getOperationsFactory().createMerge();
+        merge.setMergeOptions(getMergeOptions());
+        merge.addTarget(SvnTarget.fromFile(dstPath));
+        merge.setSource(SvnTarget.fromURL(srcURL, pegRevision), true);
+        merge.setDryRun(dryRun);
+        
+        merge.run();
     }
 
     /**
