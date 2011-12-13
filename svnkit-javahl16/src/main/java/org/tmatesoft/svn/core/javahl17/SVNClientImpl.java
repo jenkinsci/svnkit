@@ -97,12 +97,7 @@ public class SVNClientImpl implements ISVNClient {
         status.setReportIgnored(noIgnore);
         status.setReportExternals(!ignoreExternals);
         status.setApplicalbeChangelists(changelists);
-        status.setReceiver(new ISvnObjectReceiver<SvnStatus>() {
-            @Override
-            public void receive(SvnTarget target, SvnStatus status) throws SVNException {
-                callback.doStatus(null, getStatus(status));
-            }
-        });
+        status.setReceiver(getStatusReceiver(callback));
 
         status.addTarget(getTarget(path));
         try {
@@ -217,21 +212,7 @@ public class SVNClientImpl implements ISVNClient {
         commit.setKeepChangelists(keepChangelist);
         commit.setApplicalbeChangelists(changelists);
         commit.setRevisionProperties(getSVNProperties(revpropTable));
-        commit.setCommitHandler(new ISvnCommitHandler() {
-            @Override
-            public String getCommitMessage(String message, SvnCommitItem[] commitables) throws SVNException {
-               Set<CommitItem> commitItems = new HashSet<CommitItem>();
-                for (SvnCommitItem commitable : commitables) {
-                    commitItems.add(getSvnCommitItem(commitable));
-                }
-                return handler.getLogMessage(commitItems);
-            }
-
-            @Override
-            public SVNProperties getRevisionProperties(String message, SvnCommitItem[] commitables, SVNProperties revisionProperties) throws SVNException {
-                return revisionProperties;
-            }
-        });
+        commit.setCommitHandler(getCommitHandler(handler));
 
         for (String targetPath : path) {
             commit.addTarget(getTarget(targetPath));
@@ -671,5 +652,38 @@ public class SVNClientImpl implements ISVNClient {
         }
         return new CommitItem(commitable.getPath().getPath(), getNodeKind(commitable.getKind()), commitable.getFlags(),
                 commitable.getUrl().toString(), commitable.getCopyFromUrl().toString(), commitable.getCopyFromRevision());
+    }
+
+    private ISvnObjectReceiver<SvnStatus> getStatusReceiver(final StatusCallback callback) {
+        if (callback == null) {
+            return null;
+        }
+        return new ISvnObjectReceiver<SvnStatus>() {
+            @Override
+            public void receive(SvnTarget target, SvnStatus status) throws SVNException {
+                callback.doStatus(null, getStatus(status));
+            }
+        };
+    }
+
+    private ISvnCommitHandler getCommitHandler(final CommitMessageCallback callback) {
+        if (callback == null) {
+            return null;
+        }
+        return new ISvnCommitHandler() {
+            @Override
+            public String getCommitMessage(String message, SvnCommitItem[] commitables) throws SVNException {
+                Set<CommitItem> commitItems = new HashSet<CommitItem>();
+                for (SvnCommitItem commitable : commitables) {
+                    commitItems.add(getSvnCommitItem(commitable));
+                }
+                return callback.getLogMessage(commitItems);
+            }
+
+            @Override
+            public SVNProperties getRevisionProperties(String message, SvnCommitItem[] commitables, SVNProperties revisionProperties) throws SVNException {
+                return revisionProperties;
+            }
+        };
     }
 }
