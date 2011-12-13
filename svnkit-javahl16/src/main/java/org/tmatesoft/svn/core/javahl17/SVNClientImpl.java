@@ -51,6 +51,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
+import org.tmatesoft.svn.core.wc2.SvnCleanup;
 import org.tmatesoft.svn.core.wc2.SvnCommit;
 import org.tmatesoft.svn.core.wc2.SvnCommitItem;
 import org.tmatesoft.svn.core.wc2.SvnGetStatus;
@@ -281,7 +282,15 @@ public class SVNClientImpl implements ISVNClient {
 
     public void cleanup(String path) throws ClientException {
         // TODO Auto-generated method stub
+        SvnCleanup cleanup = svnOperationFactory.createCleanup();
 
+        cleanup.addTarget(getTarget(path));
+
+        try {
+            cleanup.run();
+        } catch (SVNException e) {
+            throw ClientException.fromException(e);
+        }
     }
 
     public void resolve(String path, Depth depth, Choice conflictResult)
