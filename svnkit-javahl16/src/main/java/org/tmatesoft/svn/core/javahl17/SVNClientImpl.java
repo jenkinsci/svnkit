@@ -42,42 +42,16 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.util.DefaultSVNDebugLogger;
-import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
-import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnGetStatus;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 import org.tmatesoft.svn.core.wc2.SvnStatus;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
-import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.core.wc2.SvnUpdate;
 
 public class SVNClientImpl implements ISVNClient {
-
-    public static void main(String[] args) {
-        try {
-            SVNDebugLog.setDefaultLog(new DefaultSVNDebugLogger());
-
-
-            SVNWCDb db = new SVNWCDb();
-
-            SvnOperationFactory svnOperationFactory = new SvnOperationFactory(new SVNWCContext(db, null));
-
-            SVNClientImpl svnClient = new SVNClientImpl(svnOperationFactory);
-
-            svnClient.status("/tmp/test-co", Depth.infinity, true, true, true, false, null, new StatusCallback() {
-                @Override
-                public void doStatus(String path, Status status) {
-                    System.out.print("path = " + path);
-                }
-            });
-
-        }catch (Exception e){
-            e.printStackTrace(System.err);
-            System.exit(1);
-        }
-    }
 
     private SvnOperationFactory svnOperationFactory;
 
@@ -124,7 +98,7 @@ public class SVNClientImpl implements ISVNClient {
             }
         });
 
-        status.addTarget(SvnTarget.fromFile(new File(path)));
+        status.addTarget(getTarget(path));
         try {
             status.run();
         } catch (SVNException e) {
@@ -208,8 +182,22 @@ public class SVNClientImpl implements ISVNClient {
             boolean depthIsSticky, boolean makeParents,
             boolean ignoreExternals, boolean allowUnverObstructions)
             throws ClientException {
-        // TODO Auto-generated method stub
-        return null;
+        SvnUpdate update = svnOperationFactory.createUpdate();
+        update.setRevision(getSVNRevision(revision));
+        update.setDepth(getSVNDepth(depth));
+        update.setDepthIsSticky(depthIsSticky);
+        update.setMakeParents(makeParents);
+        update.setIgnoreExternals(ignoreExternals);
+        update.setAllowUnversionedObstructions(allowUnverObstructions);
+
+        for (String targetPath : path) {
+            update.addTarget(getTarget(targetPath));
+        }
+        try {
+            return update.run();
+        } catch (SVNException e) {
+            throw ClientException.fromException(e);
+        }
     }
 
     public void commit(Set<String> path, Depth depth, boolean noUnlock,
@@ -559,6 +547,10 @@ public class SVNClientImpl implements ISVNClient {
         return date.getTime();
     }
 
+    private SvnTarget getTarget(String path) {
+        return SvnTarget.fromFile(new File(path));
+    }
+
     private Status.Kind getStatusKind(SVNStatusType statusType) {
         if (statusType == SVNStatusType.STATUS_ADDED) {
             return Status.Kind.added;
@@ -606,6 +598,30 @@ public class SVNClientImpl implements ISVNClient {
             return NodeKind.none;
         } else {
             return NodeKind.unknown;
+        }
+    }
+
+    private SVNRevision getSVNRevision(Revision revision) {
+        switch (revision.getKind()) {
+            case base:
+                return SVNRevision.BASE;
+            case committed:
+                return SVNRevision.COMMITTED;
+            case date:
+                Revision.DateSpec dateSpec = (Revision.DateSpec) revision;
+                return SVNRevision.create(dateSpec.getDate());
+            case head:
+                return SVNRevision.HEAD;
+            case number:
+                Revision.Number number = (Revision.Number) revision;
+                return SVNRevision.create(number.getNumber());
+            case previous:
+                return SVNRevision.PREVIOUS;
+            case working:
+                return SVNRevision.WORKING;
+            case unspecified:
+            default:
+                return SVNRevision.UNDEFINED;
         }
     }
 }
