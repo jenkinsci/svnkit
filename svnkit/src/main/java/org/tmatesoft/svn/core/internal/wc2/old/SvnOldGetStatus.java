@@ -8,6 +8,7 @@ import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc2.SvnGetStatus;
 import org.tmatesoft.svn.core.wc2.SvnStatus;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 public class SvnOldGetStatus extends SvnOldRunner<SvnStatus, SvnGetStatus> implements ISVNStatusHandler {
 
@@ -17,6 +18,7 @@ public class SvnOldGetStatus extends SvnOldRunner<SvnStatus, SvnGetStatus> imple
         client.setFilesProvider(SvnCodec.fileListProvider(getOperation().getFileListHook()));
         client.setIgnoreExternals(!getOperation().isReportExternals());
         client.setEventHandler(getOperation().getEventHandler());
+        client.setDebugLog(SVNDebugLog.getDefaultLog());
         long revision = client.doStatus(getFirstTarget(),
                 getOperation().getRevision(),
                 getOperation().getDepth(),
