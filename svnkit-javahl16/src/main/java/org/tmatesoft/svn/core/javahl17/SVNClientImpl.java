@@ -48,6 +48,7 @@ import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.wc.SVNConflictChoice;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
@@ -57,6 +58,7 @@ import org.tmatesoft.svn.core.wc2.SvnCommitItem;
 import org.tmatesoft.svn.core.wc2.SvnGetStatus;
 import org.tmatesoft.svn.core.wc2.SvnLog;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
+import org.tmatesoft.svn.core.wc2.SvnResolve;
 import org.tmatesoft.svn.core.wc2.SvnRevert;
 import org.tmatesoft.svn.core.wc2.SvnRevisionRange;
 import org.tmatesoft.svn.core.wc2.SvnStatus;
@@ -295,8 +297,17 @@ public class SVNClientImpl implements ISVNClient {
 
     public void resolve(String path, Depth depth, Choice conflictResult)
             throws SubversionException {
-        // TODO Auto-generated method stub
+        SvnResolve resolve = svnOperationFactory.createResolve();
+        resolve.setDepth(getSVNDepth(depth));
+        resolve.setAccept(getSVNConflictChoice(conflictResult));
 
+        resolve.addTarget(getTarget(path));
+
+        try {
+            resolve.run();
+        } catch (SVNException e) {
+            //TODO: cannot instantiate SubversionException
+        }
     }
 
     public long doExport(String srcPath, String destPath, Revision revision,
@@ -779,5 +790,25 @@ public class SVNClientImpl implements ISVNClient {
             revisionProperties.put(svnPropertyName, svnProperties.getBinaryValue(svnPropertyName));
         }
         return revisionProperties;
+    }
+
+    private SVNConflictChoice getSVNConflictChoice(Choice choice) {
+        switch (choice) {
+            case chooseBase:
+                return SVNConflictChoice.BASE;
+            case chooseMerged:
+                return SVNConflictChoice.MERGED;
+            case chooseMineConflict:
+                return SVNConflictChoice.MINE_CONFLICT;
+            case chooseMineFull:
+                return SVNConflictChoice.MINE_FULL;
+            case chooseTheirsConflict:
+                return SVNConflictChoice.THEIRS_CONFLICT;
+            case chooseTheirsFull:
+                return SVNConflictChoice.THEIRS_FULL;
+            case postpone:
+            default:
+                return SVNConflictChoice.POSTPONE;
+        }
     }
 }
