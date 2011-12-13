@@ -2,8 +2,10 @@ package org.tmatesoft.svn.core.javahl17;
 
 import java.io.File;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +44,7 @@ import org.apache.subversion.javahl.types.Version;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
+import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNURL;
@@ -51,7 +54,9 @@ import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnCommit;
 import org.tmatesoft.svn.core.wc2.SvnCommitItem;
 import org.tmatesoft.svn.core.wc2.SvnGetStatus;
+import org.tmatesoft.svn.core.wc2.SvnLog;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
+import org.tmatesoft.svn.core.wc2.SvnRevisionRange;
 import org.tmatesoft.svn.core.wc2.SvnStatus;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.core.wc2.SvnUpdate;
@@ -134,8 +139,23 @@ public class SVNClientImpl implements ISVNClient {
             boolean discoverPath, boolean includeMergedRevisions,
             Set<String> revProps, long limit, LogMessageCallback callback)
             throws ClientException {
-        // TODO Auto-generated method stub
+        SvnLog log = svnOperationFactory.createLog();
+        log.setRevision(getSVNRevision(pegRevision));
+        log.setRevisionRanges(getSvnRevisionRanges(ranges));
+        log.setStopOnCopy(stopOnCopy);
+        log.setDiscoverChangedPaths(discoverPath);
+        log.setUseMergeHistory(includeMergedRevisions);
+        log.setRevisionProperties(getRevisionPropertiesNames(revProps));
+        log.setLimit(limit);
+        log.setReceiver(getLogEntryReceiver(callback));
 
+        log.addTarget(getTarget(path));
+
+        try {
+            log.run();
+        } catch (SVNException e) {
+            throw ClientException.fromException(e);
+        }
     }
 
     public long checkout(String moduleName, String destPath, Revision revision,
@@ -685,5 +705,59 @@ public class SVNClientImpl implements ISVNClient {
                 return revisionProperties;
             }
         };
+    }
+
+    private Collection<SvnRevisionRange> getSvnRevisionRanges(List<RevisionRange> ranges) {
+        if (ranges == null) {
+            return null;
+        }
+        Collection<SvnRevisionRange> svnRevisionRanges = new ArrayList<SvnRevisionRange>(ranges.size());
+        for (RevisionRange range : ranges) {
+            svnRevisionRanges.add(getSvnRevisionRange(range));
+        }
+        return svnRevisionRanges;
+    }
+
+    private SvnRevisionRange getSvnRevisionRange(RevisionRange range) {
+        return SvnRevisionRange.create(getSVNRevision(range.getFromRevision()), getSVNRevision(range.getToRevision()));
+    }
+
+    private String[] getRevisionPropertiesNames(Set<String> revProps) {
+        if (revProps == null) {
+            return null;
+        }
+        String[] revisionPropertiesNames = new String[revProps.size()];
+        int i = 0;
+
+        for (String revProp : revProps) {
+            revisionPropertiesNames[i] = revProp;
+            i++;
+        }
+
+        return revisionPropertiesNames;
+    }
+
+    private ISvnObjectReceiver<SVNLogEntry> getLogEntryReceiver(final LogMessageCallback callback) {
+        if (callback == null) {
+            return null;
+        }
+        return new ISvnObjectReceiver<SVNLogEntry>() {
+            @Override
+            public void receive(SvnTarget target, SVNLogEntry svnLogEntry) throws SVNException {
+                callback.singleMessage(svnLogEntry.getChangedPaths().keySet(), svnLogEntry.getRevision(), getRevisionProperties(svnLogEntry.getRevisionProperties()), svnLogEntry.hasChildren());
+            }
+        };
+    }
+
+    private Map<String, byte[]> getRevisionProperties(SVNProperties svnProperties) {
+        if (svnProperties == null) {
+            return null;
+        }
+        HashMap<String, byte[]> revisionProperties = new HashMap<String, byte[]>();
+        Set<String> svnPropertiesNames = svnProperties.nameSet();
+        for (String svnPropertyName : svnPropertiesNames) {
+            revisionProperties.put(svnPropertyName, svnProperties.getBinaryValue(svnPropertyName));
+        }
+        return revisionProperties;
     }
 }
