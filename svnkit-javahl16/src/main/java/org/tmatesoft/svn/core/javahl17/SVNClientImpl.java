@@ -1,15 +1,17 @@
 package org.tmatesoft.svn.core.javahl17;
 
+import java.io.File;
 import java.io.OutputStream;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.apache.subversion.javahl.ClientException;
+import org.apache.subversion.javahl.ConflictResult.Choice;
 import org.apache.subversion.javahl.ISVNClient;
 import org.apache.subversion.javahl.SubversionException;
-import org.apache.subversion.javahl.ConflictResult.Choice;
 import org.apache.subversion.javahl.callback.BlameCallback;
 import org.apache.subversion.javahl.callback.ChangelistCallback;
 import org.apache.subversion.javahl.callback.ClientNotifyCallback;
@@ -27,13 +29,65 @@ import org.apache.subversion.javahl.callback.StatusCallback;
 import org.apache.subversion.javahl.callback.UserPasswordCallback;
 import org.apache.subversion.javahl.types.CopySource;
 import org.apache.subversion.javahl.types.Depth;
+import org.apache.subversion.javahl.types.Lock;
 import org.apache.subversion.javahl.types.Mergeinfo;
+import org.apache.subversion.javahl.types.Mergeinfo.LogKind;
+import org.apache.subversion.javahl.types.NodeKind;
 import org.apache.subversion.javahl.types.Revision;
 import org.apache.subversion.javahl.types.RevisionRange;
+import org.apache.subversion.javahl.types.Status;
 import org.apache.subversion.javahl.types.Version;
-import org.apache.subversion.javahl.types.Mergeinfo.LogKind;
+import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNLock;
+import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.util.DefaultSVNDebugLogger;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
+import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
+import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
+import org.tmatesoft.svn.core.wc2.SvnGetStatus;
+import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
+import org.tmatesoft.svn.core.wc2.SvnStatus;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 public class SVNClientImpl implements ISVNClient {
+
+    public static void main(String[] args) {
+        try {
+            SVNDebugLog.setDefaultLog(new DefaultSVNDebugLogger());
+
+
+            SVNWCDb db = new SVNWCDb();
+
+            SvnOperationFactory svnOperationFactory = new SvnOperationFactory(new SVNWCContext(db, null));
+
+            SVNClientImpl svnClient = new SVNClientImpl(svnOperationFactory);
+
+            svnClient.status("/tmp/test-co", Depth.infinity, true, true, true, false, null, new StatusCallback() {
+                @Override
+                public void doStatus(String path, Status status) {
+                    System.out.print("path = " + path);
+                }
+            });
+
+        }catch (Exception e){
+            e.printStackTrace(System.err);
+            System.exit(1);
+        }
+    }
+
+    private SvnOperationFactory svnOperationFactory;
+
+    protected SVNClientImpl() {
+        this(null);
+    }
+
+    protected SVNClientImpl(SvnOperationFactory svnOperationFactory) {
+        this.svnOperationFactory = svnOperationFactory == null ? new SvnOperationFactory() : svnOperationFactory;
+    }
 
     public void dispose() {
     }
@@ -52,8 +106,30 @@ public class SVNClientImpl implements ISVNClient {
 
     public void status(String path, Depth depth, boolean onServer,
             boolean getAll, boolean noIgnore, boolean ignoreExternals,
-            Collection<String> changelists, StatusCallback callback)
+            Collection<String> changelists, final StatusCallback callback)
             throws ClientException {
+
+
+        SvnGetStatus status = svnOperationFactory.createGetStatus();
+        status.setDepth(getSVNDepth(depth));
+        status.setRemote(onServer);
+        status.setReportAll(getAll);
+        status.setReportIgnored(noIgnore);
+        status.setReportExternals(!ignoreExternals);
+        status.setApplicalbeChangelists(changelists);
+        status.setReceiver(new ISvnObjectReceiver<SvnStatus>() {
+            @Override
+            public void receive(SvnTarget target, SvnStatus status) throws SVNException {
+                callback.doStatus(null, getStatus(status));
+            }
+        });
+
+        status.addTarget(SvnTarget.fromFile(new File(path)));
+        try {
+            status.run();
+        } catch (SVNException e) {
+            throw ClientException.fromException(e);
+        }
     }
 
     public void list(String url, Revision revision, Revision pegRevision,
@@ -421,4 +497,115 @@ public class SVNClientImpl implements ISVNClient {
 
     }
 
+    private SVNDepth getSVNDepth(Depth depth) {
+        switch (depth) {
+            case empty:
+                return SVNDepth.EMPTY;
+            case exclude:
+                return SVNDepth.EXCLUDE;
+            case files:
+                return SVNDepth.FILES;
+            case immediates:
+                return SVNDepth.IMMEDIATES;
+            case infinity:
+                return SVNDepth.INFINITY;
+            default:
+                return SVNDepth.UNKNOWN;
+        }
+    }
+
+    private Status getStatus(SvnStatus status) throws SVNException {
+        String repositoryRelativePath = status.getRepositoryRelativePath() == null ? "" : status.getRepositoryRelativePath();
+        SVNURL repositoryRootUrl = status.getRepositoryRootUrl();
+
+        //TODO: repositoryRootUrl is currently null whatever 'remote' ('onServer') option is
+        String itemUrl = repositoryRootUrl == null ? null : repositoryRootUrl.appendPath(repositoryRelativePath, false).toString();
+
+        return new Status(
+                status.getPath().getPath(),
+                itemUrl,
+                getNodeKind(status.getKind()),
+                status.getRevision(),
+                status.getChangedRevision(),
+                getLongDate(status.getChangedDate()),
+                status.getChangedAuthor(),
+                getStatusKind(status.getTextStatus()),
+                getStatusKind(status.getPropertiesStatus()),
+                getStatusKind(status.getRepositoryTextStatus()),
+                getStatusKind(status.getRepositoryPropertiesStatus()),
+                status.isWcLocked(),
+                status.isCopied(),
+                status.isConflicted(),
+                status.isSwitched(),
+                status.isFileExternal(),
+                getLock(status.getLock()),
+                getLock(status.getRepositoryLock()),
+                status.getRepositoryChangedRevision(),
+                getLongDate(status.getRepositoryChangedDate()),
+                getNodeKind(status.getRepositoryKind()),
+                status.getRepositoryChangedAuthor(),
+                status.getChangelist()
+        );
+    }
+
+    private Lock getLock(SVNLock lock) {
+        if (lock == null) {
+            return null;
+        }
+        return new Lock(lock.getOwner(), lock.getPath(), lock.getID(), lock.getComment(), getLongDate(lock.getCreationDate()), getLongDate(lock.getExpirationDate()));
+    }
+
+    private long getLongDate(Date date) {
+        return date.getTime();
+    }
+
+    private Status.Kind getStatusKind(SVNStatusType statusType) {
+        if (statusType == SVNStatusType.STATUS_ADDED) {
+            return Status.Kind.added;
+        } else if (statusType == SVNStatusType.STATUS_CONFLICTED) {
+            return Status.Kind.conflicted;
+        } else if (statusType == SVNStatusType.STATUS_DELETED) {
+            return Status.Kind.deleted;
+        } else if (statusType == SVNStatusType.STATUS_EXTERNAL) {
+            return Status.Kind.external;
+        } else if (statusType == SVNStatusType.STATUS_IGNORED) {
+            return Status.Kind.ignored;
+        } else if (statusType == SVNStatusType.STATUS_INCOMPLETE) {
+            return Status.Kind.incomplete;
+        } else if (statusType == SVNStatusType.STATUS_MERGED) {
+            return Status.Kind.merged;
+        } else if (statusType == SVNStatusType.STATUS_MISSING) {
+            return Status.Kind.missing;
+        } else if (statusType == SVNStatusType.STATUS_MODIFIED) {
+            return Status.Kind.modified;
+        } else if (statusType == SVNStatusType.STATUS_NAME_CONFLICT) {
+            //TODO: no analog in Status.Kind
+            return null;
+        } else if (statusType == SVNStatusType.STATUS_NONE) {
+            return Status.Kind.none;
+        } else if (statusType == SVNStatusType.STATUS_NORMAL) {
+            return Status.Kind.normal;
+        } else if (statusType == SVNStatusType.STATUS_OBSTRUCTED) {
+            return Status.Kind.obstructed;
+        } else if (statusType == SVNStatusType.STATUS_REPLACED) {
+            return Status.Kind.replaced;
+        } else if (statusType == SVNStatusType.STATUS_UNVERSIONED) {
+            return Status.Kind.unversioned;
+        } else {
+            //TODO: is it a good default value or should an exception be thrown
+            return Status.Kind.none;
+        }
+    }
+
+    private NodeKind getNodeKind(SVNNodeKind kind) {
+        if (kind == SVNNodeKind.DIR) {
+            return NodeKind.dir;
+        } else if (kind == SVNNodeKind.FILE) {
+            return NodeKind.file;
+        } else if (kind == SVNNodeKind.NONE) {
+            return NodeKind.none;
+        } else {
+            return NodeKind.unknown;
+        }
+    }
 }
