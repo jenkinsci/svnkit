@@ -56,6 +56,7 @@ import org.tmatesoft.svn.core.wc2.SvnCommitItem;
 import org.tmatesoft.svn.core.wc2.SvnGetStatus;
 import org.tmatesoft.svn.core.wc2.SvnLog;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
+import org.tmatesoft.svn.core.wc2.SvnRevert;
 import org.tmatesoft.svn.core.wc2.SvnRevisionRange;
 import org.tmatesoft.svn.core.wc2.SvnStatus;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -190,7 +191,17 @@ public class SVNClientImpl implements ISVNClient {
     public void revert(String path, Depth depth, Collection<String> changelists)
             throws ClientException {
         // TODO Auto-generated method stub
+        SvnRevert revert = svnOperationFactory.createRevert();
+        revert.setDepth(getSVNDepth(depth));
+        revert.setApplicalbeChangelists(changelists);
 
+        revert.addTarget(getTarget(path));
+
+        try {
+            revert.run();
+        } catch (SVNException e) {
+            throw ClientException.fromException(e);
+        }
     }
 
     public void add(String path, Depth depth, boolean force, boolean noIgnores,
