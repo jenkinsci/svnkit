@@ -4,11 +4,13 @@ import java.io.File;
 import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.apache.subversion.javahl.ClientException;
+import org.apache.subversion.javahl.CommitItem;
 import org.apache.subversion.javahl.ConflictResult.Choice;
 import org.apache.subversion.javahl.ISVNClient;
 import org.apache.subversion.javahl.SubversionException;
@@ -41,15 +43,19 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
+import org.tmatesoft.svn.core.wc2.SvnCommit;
+import org.tmatesoft.svn.core.wc2.SvnCommitItem;
 import org.tmatesoft.svn.core.wc2.SvnGetStatus;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 import org.tmatesoft.svn.core.wc2.SvnStatus;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.core.wc2.SvnUpdate;
+import org.tmatesoft.svn.core.wc2.hooks.ISvnCommitHandler;
 
 public class SVNClientImpl implements ISVNClient {
 
@@ -202,10 +208,40 @@ public class SVNClientImpl implements ISVNClient {
 
     public void commit(Set<String> path, Depth depth, boolean noUnlock,
             boolean keepChangelist, Collection<String> changelists,
-            Map<String, String> revpropTable, CommitMessageCallback handler,
+            Map<String, String> revpropTable, final CommitMessageCallback handler,
             CommitCallback callback) throws ClientException {
         // TODO Auto-generated method stub
+        SvnCommit commit = svnOperationFactory.createCommit();
+        commit.setDepth(getSVNDepth(depth));
+        commit.setKeepLocks(!noUnlock);
+        commit.setKeepChangelists(keepChangelist);
+        commit.setApplicalbeChangelists(changelists);
+        commit.setRevisionProperties(getSVNProperties(revpropTable));
+        commit.setCommitHandler(new ISvnCommitHandler() {
+            @Override
+            public String getCommitMessage(String message, SvnCommitItem[] commitables) throws SVNException {
+               Set<CommitItem> commitItems = new HashSet<CommitItem>();
+                for (SvnCommitItem commitable : commitables) {
+                    commitItems.add(getSvnCommitItem(commitable));
+                }
+                return handler.getLogMessage(commitItems);
+            }
 
+            @Override
+            public SVNProperties getRevisionProperties(String message, SvnCommitItem[] commitables, SVNProperties revisionProperties) throws SVNException {
+                return revisionProperties;
+            }
+        });
+
+        for (String targetPath : path) {
+            commit.addTarget(getTarget(targetPath));
+        }
+
+        try {
+            commit.run();
+        } catch (SVNException e) {
+            throw ClientException.fromException(e);
+        }
     }
 
     public void copy(List<CopySource> sources, String destPath,
@@ -623,5 +659,17 @@ public class SVNClientImpl implements ISVNClient {
             default:
                 return SVNRevision.UNDEFINED;
         }
+    }
+
+    private SVNProperties getSVNProperties(Map<String, String> revpropTable) {
+        return SVNProperties.wrap(revpropTable);
+    }
+
+    private CommitItem getSvnCommitItem(SvnCommitItem commitable) {
+        if (commitable == null) {
+            return null;
+        }
+        return new CommitItem(commitable.getPath().getPath(), getNodeKind(commitable.getKind()), commitable.getFlags(),
+                commitable.getUrl().toString(), commitable.getCopyFromUrl().toString(), commitable.getCopyFromRevision());
     }
 }
