@@ -201,7 +201,6 @@ public class SVNClientImpl implements ISVNClient {
 
     public void revert(String path, Depth depth, Collection<String> changelists)
             throws ClientException {
-        // TODO Auto-generated method stub
         SvnRevert revert = svnOperationFactory.createRevert();
         revert.setDepth(getSVNDepth(depth));
         revert.setApplicalbeChangelists(changelists);
@@ -258,7 +257,6 @@ public class SVNClientImpl implements ISVNClient {
             boolean keepChangelist, Collection<String> changelists,
             Map<String, String> revpropTable, final CommitMessageCallback handler,
             CommitCallback callback) throws ClientException {
-        // TODO Auto-generated method stub
         SvnCommit commit = svnOperationFactory.createCommit();
         commit.setDepth(getSVNDepth(depth));
         commit.setKeepLocks(!noUnlock);
@@ -302,7 +300,6 @@ public class SVNClientImpl implements ISVNClient {
     }
 
     public void cleanup(String path) throws ClientException {
-        // TODO Auto-generated method stub
         SvnCleanup cleanup = svnOperationFactory.createCleanup();
 
         cleanup.addTarget(getTarget(path));
