@@ -303,7 +303,13 @@ public class SVNClientImpl implements ISVNClient {
             Map<String, String> revpropTable, CommitMessageCallback handler,
             CommitCallback callback) throws ClientException {
         // TODO Auto-generated method stub
+        final Set<CopySource> localSources = new HashSet<CopySource>();
+        final Set<CopySource> remoteSources = new HashSet<CopySource>();
 
+        fillLocalAndRemoteSources(sources, localSources, remoteSources);
+
+        copyLocal(localSources, destPath, copyAsChild, makeParents, ignoreExternals);
+        copyRemote(remoteSources, destPath, copyAsChild, makeParents, revpropTable, handler, callback);
     }
 
     public void move(Set<String> srcPaths, String destPath, boolean force,
@@ -1078,9 +1084,23 @@ public class SVNClientImpl implements ISVNClient {
         }
     }
 
+    private void fillLocalAndRemoteSources(List<CopySource> sources, Set<CopySource> localSources, Set<CopySource> remoteSources) {
+        for (CopySource source : sources) {
+            if (SVNPathUtil.isURL(source.getPath())) {
+                remoteSources.add(source);
+            } else {
+                localSources.add(source);
+            }
+        }
+    }
+
     private CommitInfo getCommitInfo(SVNCommitInfo commitInfo, SVNURL repositoryRoot) throws ParseException {
         return new CommitInfo(commitInfo.getNewRevision(), SVNDate.formatDate(commitInfo.getDate()),
                 commitInfo.getAuthor(), commitInfo.getErrorMessage().getMessage(), repositoryRoot.toString());
+    }
+
+    private SvnCopySource getSvnCopySource(CopySource localSource) {
+        return SvnCopySource.create(getTarget(localSource.getPath(), localSource.getPegRevision()), getSVNRevision(localSource.getRevision()));
     }
 
     private void mkdirLocal(Set<String> localPaths, boolean makeParents) throws ClientException {
@@ -1211,6 +1231,59 @@ public class SVNClientImpl implements ISVNClient {
 
         for (String remoteUrl : remoteUrls) {
             remoteCopy.addCopySource(SvnCopySource.create(getTarget(remoteUrl), SVNRevision.HEAD)); //TODO: check revision
+        }
+
+        try {
+            remoteCopy.run();
+        } catch (SVNException e) {
+            throw ClientException.fromException(e);
+        }
+    }
+
+    private void copyLocal(Set<CopySource> localSources, String destPath, boolean copyAsChild,
+                           boolean makeParents, boolean ignoreExternals) throws ClientException {
+        if (localSources == null || localSources.size() == 0) {
+            return;
+        }
+
+        SvnCopy copy = svnOperationFactory.createCopy();
+        copy.setSingleTarget(getTarget(destPath));
+        copy.setMakeParents(makeParents);
+        copy.setIgnoreExternals(ignoreExternals);
+        copy.setMove(false);
+
+        //TODO: copy lacks copyAsChild parameter
+
+        for (CopySource localSource : localSources) {
+            copy.addCopySource(getSvnCopySource(localSource));
+        }
+
+        try {
+            copy.run();
+        } catch (SVNException e) {
+            throw ClientException.fromException(e);
+        }
+    }
+
+    private void copyRemote(Set<CopySource> remoteSources, String destPath, boolean copyAsChild,
+                            boolean makeParents,
+                            Map<String, String> revpropTable, CommitMessageCallback handler,
+                            CommitCallback callback) throws ClientException {
+        if (remoteSources == null || remoteSources.size() == 0) {
+            return;
+        }
+        SvnRemoteCopy remoteCopy = svnOperationFactory.createRemoteCopy();
+        remoteCopy.setSingleTarget(getTarget(destPath));
+        remoteCopy.setMakeParents(makeParents);
+        remoteCopy.setRevisionProperties(getSVNProperties(revpropTable));
+        remoteCopy.setCommitHandler(getCommitHandler(handler));
+        remoteCopy.setReceiver(getCommitInfoReceiver(callback));
+        remoteCopy.setMove(false);
+
+        //TODO: remoteCopy lacks copyAsChild
+
+        for (CopySource remoteSource : remoteSources) {
+            remoteCopy.addCopySource(getSvnCopySource(remoteSource));
         }
 
         try {
