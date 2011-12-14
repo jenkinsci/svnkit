@@ -73,11 +73,13 @@ import org.tmatesoft.svn.core.wc2.SvnGetStatus;
 import org.tmatesoft.svn.core.wc2.SvnLog;
 import org.tmatesoft.svn.core.wc2.SvnMerge;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
+import org.tmatesoft.svn.core.wc2.SvnRemoteDelete;
 import org.tmatesoft.svn.core.wc2.SvnRemoteMkDir;
 import org.tmatesoft.svn.core.wc2.SvnResolve;
 import org.tmatesoft.svn.core.wc2.SvnRevert;
 import org.tmatesoft.svn.core.wc2.SvnRevisionRange;
 import org.tmatesoft.svn.core.wc2.SvnScheduleForAddition;
+import org.tmatesoft.svn.core.wc2.SvnScheduleForRemoval;
 import org.tmatesoft.svn.core.wc2.SvnSetProperty;
 import org.tmatesoft.svn.core.wc2.SvnStatus;
 import org.tmatesoft.svn.core.wc2.SvnSwitch;
@@ -207,8 +209,13 @@ public class SVNClientImpl implements ISVNClient {
     public void remove(Set<String> path, boolean force, boolean keepLocal,
             Map<String, String> revpropTable, CommitMessageCallback handler,
             CommitCallback callback) throws ClientException {
-        // TODO Auto-generated method stub
+        Set<String> localPaths = new HashSet<String>();
+        Set<String> remoteUrls = new HashSet<String>();
 
+        fillLocalAndRemoteTargets(path, localPaths, remoteUrls);
+
+        removeLocal(localPaths, force, keepLocal);
+        removeRemote(localPaths, revpropTable, handler, callback);
     }
 
     public void revert(String path, Depth depth, Collection<String> changelists)
@@ -1105,6 +1112,47 @@ public class SVNClientImpl implements ISVNClient {
 
         try {
             mkdir.run();
+        } catch (SVNException e) {
+            throw ClientException.fromException(e);
+        }
+    }
+
+    private void removeLocal(Set<String> localPaths, boolean force, boolean keepLocal) throws ClientException {
+        if (localPaths == null || localPaths.size() == 0) {
+            return;
+        }
+        SvnScheduleForRemoval remove = svnOperationFactory.createScheduleForRemoval();
+        remove.setForce(force);
+        remove.setDeleteFiles(!keepLocal);
+
+        for (String localPath : localPaths) {
+            remove.addTarget(getTarget(localPath));
+        }
+
+        try {
+            remove.run();
+        } catch (SVNException e) {
+            throw ClientException.fromException(e);
+        }
+    }
+
+    private void removeRemote(Set<String> remoteUrls,
+                              Map<String, String> revpropTable, CommitMessageCallback handler,
+                              CommitCallback callback) throws ClientException {
+        if (remoteUrls == null || remoteUrls.size() == 0) {
+            return;
+        }
+        SvnRemoteDelete remoteDelete = svnOperationFactory.createRemoteDelete();
+        remoteDelete.setRevisionProperties(getSVNProperties(revpropTable));
+        remoteDelete.setCommitHandler(getCommitHandler(handler));
+        remoteDelete.setReceiver(getCommitInfoReceiver(callback));
+
+        for (String remoteUrl : remoteUrls) {
+            remoteDelete.addTarget(getTarget(remoteUrl));
+        }
+
+        try {
+            remoteDelete.run();
         } catch (SVNException e) {
             throw ClientException.fromException(e);
         }
