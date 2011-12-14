@@ -568,7 +568,6 @@ public class SVNClientImpl implements ISVNClient {
         final SVNProperties[] svnProperties = new SVNProperties[1];
 
         getProperties.setReceiver(new ISvnObjectReceiver<SVNProperties>() {
-            @Override
             public void receive(SvnTarget target, SVNProperties properties) throws SVNException {
                 svnProperties[0] = properties;
             }
@@ -862,7 +861,6 @@ public class SVNClientImpl implements ISVNClient {
             return null;
         }
         return new ISvnObjectReceiver<SvnStatus>() {
-            @Override
             public void receive(SvnTarget target, SvnStatus status) throws SVNException {
                 callback.doStatus(null, getStatus(status));
             }
@@ -874,7 +872,6 @@ public class SVNClientImpl implements ISVNClient {
             return null;
         }
         return new ISvnCommitHandler() {
-            @Override
             public String getCommitMessage(String message, SvnCommitItem[] commitables) throws SVNException {
                 Set<CommitItem> commitItems = new HashSet<CommitItem>();
                 for (SvnCommitItem commitable : commitables) {
@@ -883,7 +880,6 @@ public class SVNClientImpl implements ISVNClient {
                 return callback.getLogMessage(commitItems);
             }
 
-            @Override
             public SVNProperties getRevisionProperties(String message, SvnCommitItem[] commitables, SVNProperties revisionProperties) throws SVNException {
                 return revisionProperties;
             }
@@ -925,7 +921,6 @@ public class SVNClientImpl implements ISVNClient {
             return null;
         }
         return new ISvnObjectReceiver<SVNLogEntry>() {
-            @Override
             public void receive(SvnTarget target, SVNLogEntry svnLogEntry) throws SVNException {
                 callback.singleMessage(svnLogEntry.getChangedPaths().keySet(), svnLogEntry.getRevision(), getProperties(svnLogEntry.getRevisionProperties()), svnLogEntry.hasChildren());
             }
@@ -949,7 +944,6 @@ public class SVNClientImpl implements ISVNClient {
             return null;
         }
         return new ISvnObjectReceiver<SVNProperties>() {
-            @Override
             public void receive(SvnTarget target, SVNProperties svnProperties) throws SVNException {
                 callback.singlePath(target.getFile().getPath(), getProperties(svnProperties));
             }
@@ -984,7 +978,6 @@ public class SVNClientImpl implements ISVNClient {
 
         final SVNPropertyValue[] propertyValue = new SVNPropertyValue[1];
         getProperties.setReceiver(new ISvnObjectReceiver<SVNProperties>() {
-            @Override
             public void receive(SvnTarget target, SVNProperties svnProperties) throws SVNException {
                 propertyValue[0] = svnProperties.getSVNPropertyValue(name);
             }
@@ -1023,7 +1016,6 @@ public class SVNClientImpl implements ISVNClient {
             return null;
         }
         return new ISvnObjectReceiver<SvnDiffStatus>() {
-            @Override
             public void receive(SvnTarget target, SvnDiffStatus diffStatus) throws SVNException {
                 receiver.onSummary(getDiffSummary(diffStatus));
             }
