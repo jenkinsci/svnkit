@@ -61,6 +61,7 @@ import org.tmatesoft.svn.core.wc2.SvnExport;
 import org.tmatesoft.svn.core.wc2.SvnGetProperties;
 import org.tmatesoft.svn.core.wc2.SvnGetStatus;
 import org.tmatesoft.svn.core.wc2.SvnLog;
+import org.tmatesoft.svn.core.wc2.SvnMerge;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 import org.tmatesoft.svn.core.wc2.SvnResolve;
 import org.tmatesoft.svn.core.wc2.SvnRevert;
@@ -384,16 +385,43 @@ public class SVNClientImpl implements ISVNClient {
             Revision revision2, String localPath, boolean force, Depth depth,
             boolean ignoreAncestry, boolean dryRun, boolean recordOnly)
             throws ClientException {
-        // TODO Auto-generated method stub
+        SvnMerge merge = svnOperationFactory.createMerge();
+        merge.setSources(getTarget(path1, revision1), getTarget(path2, revision2));
+        merge.addTarget(getTarget(localPath));
+        merge.setForce(force);
+        merge.setDepth(getSVNDepth(depth));
+        merge.setIgnoreAncestry(ignoreAncestry);
+        merge.setDryRun(dryRun);
+        merge.setRecordOnly(recordOnly);
 
+        try {
+            merge.run();
+        } catch (SVNException e) {
+            throw ClientException.fromException(e);
+        }
     }
 
     public void merge(String path, Revision pegRevision,
             List<RevisionRange> revisions, String localPath, boolean force,
             Depth depth, boolean ignoreAncestry, boolean dryRun,
             boolean recordOnly) throws ClientException {
-        // TODO Auto-generated method stub
+        SvnMerge merge = svnOperationFactory.createMerge();
+        merge.setSource(getTarget(path, pegRevision), false/*reintegrate=false*/);
+        for (RevisionRange revisionRange : revisions) {
+            merge.addRevisionRange(getSvnRevisionRange(revisionRange));
+        }
+        merge.addTarget(getTarget(localPath));
+        merge.setForce(force);
+        merge.setDepth(getSVNDepth(depth));
+        merge.setIgnoreAncestry(ignoreAncestry);
+        merge.setDryRun(dryRun);
+        merge.setRecordOnly(recordOnly);
 
+        try {
+            merge.run();
+        } catch (SVNException e) {
+            throw ClientException.fromException(e);
+        }
     }
 
     public void mergeReintegrate(String path, Revision pegRevision,
