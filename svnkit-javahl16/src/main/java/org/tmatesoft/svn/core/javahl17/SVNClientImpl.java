@@ -426,8 +426,16 @@ public class SVNClientImpl implements ISVNClient {
 
     public void mergeReintegrate(String path, Revision pegRevision,
             String localPath, boolean dryRun) throws ClientException {
-        // TODO Auto-generated method stub
+        SvnMerge merge = svnOperationFactory.createMerge();
+        merge.setSource(getTarget(path, pegRevision), true/*reintegrate=true*/);
+        merge.addTarget(getTarget(localPath));
+        merge.setDryRun(dryRun);
 
+        try {
+            merge.run();
+        } catch (SVNException e) {
+            throw ClientException.fromException(e);
+        }
     }
 
     public Mergeinfo getMergeinfo(String path, Revision pegRevision)
