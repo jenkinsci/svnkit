@@ -65,6 +65,7 @@ import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 import org.tmatesoft.svn.core.wc2.SvnResolve;
 import org.tmatesoft.svn.core.wc2.SvnRevert;
 import org.tmatesoft.svn.core.wc2.SvnRevisionRange;
+import org.tmatesoft.svn.core.wc2.SvnScheduleForAddition;
 import org.tmatesoft.svn.core.wc2.SvnSetProperty;
 import org.tmatesoft.svn.core.wc2.SvnStatus;
 import org.tmatesoft.svn.core.wc2.SvnSwitch;
@@ -215,8 +216,19 @@ public class SVNClientImpl implements ISVNClient {
 
     public void add(String path, Depth depth, boolean force, boolean noIgnores,
             boolean addParents) throws ClientException {
-        // TODO Auto-generated method stub
+        SvnScheduleForAddition add = svnOperationFactory.createScheduleForAddition();
+        add.setDepth(getSVNDepth(depth));
+        add.setForce(force);
+        add.setIncludeIgnored(noIgnores);
+        add.setAddParents(addParents);
 
+        add.addTarget(getTarget(path));
+
+        try {
+            add.run();
+        } catch (SVNException e) {
+            throw ClientException.fromException(e);
+        }
     }
 
     public long[] update(Set<String> path, Revision revision, Depth depth,
