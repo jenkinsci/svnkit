@@ -57,6 +57,7 @@ import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnCleanup;
 import org.tmatesoft.svn.core.wc2.SvnCommit;
 import org.tmatesoft.svn.core.wc2.SvnCommitItem;
+import org.tmatesoft.svn.core.wc2.SvnExport;
 import org.tmatesoft.svn.core.wc2.SvnGetProperties;
 import org.tmatesoft.svn.core.wc2.SvnGetStatus;
 import org.tmatesoft.svn.core.wc2.SvnLog;
@@ -317,8 +318,19 @@ public class SVNClientImpl implements ISVNClient {
     public long doExport(String srcPath, String destPath, Revision revision,
             Revision pegRevision, boolean force, boolean ignoreExternals,
             Depth depth, String nativeEOL) throws ClientException {
-        // TODO Auto-generated method stub
-        return 0;
+        SvnExport export = svnOperationFactory.createExport();
+        export.setSource(getTarget(srcPath, pegRevision));
+        export.setSingleTarget(getTarget(destPath));
+        export.setRevision(getSVNRevision(revision));
+        export.setForce(force);
+        export.setIgnoreExternals(ignoreExternals);
+        export.setDepth(getSVNDepth(depth));
+        export.setEolStyle(nativeEOL);
+        try {
+            return export.run();
+        } catch (SVNException e) {
+            throw ClientException.fromException(e);
+        }
     }
 
     public long doSwitch(String path, String url, Revision revision,
