@@ -67,6 +67,7 @@ import org.tmatesoft.svn.core.wc2.SvnRevert;
 import org.tmatesoft.svn.core.wc2.SvnRevisionRange;
 import org.tmatesoft.svn.core.wc2.SvnSetProperty;
 import org.tmatesoft.svn.core.wc2.SvnStatus;
+import org.tmatesoft.svn.core.wc2.SvnSwitch;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.core.wc2.SvnUpdate;
 import org.tmatesoft.svn.core.wc2.hooks.ISvnCommitHandler;
@@ -337,8 +338,20 @@ public class SVNClientImpl implements ISVNClient {
             Revision pegRevision, Depth depth, boolean depthIsSticky,
             boolean ignoreExternals, boolean allowUnverObstructions,
             boolean ignoreAncestry) throws ClientException {
-        // TODO Auto-generated method stub
-        return 0;
+        SvnSwitch svnSwitch = svnOperationFactory.createSwitch();
+        svnSwitch.setSingleTarget(getTarget(path));
+        svnSwitch.setSwitchTarget(getTarget(url, pegRevision));
+        svnSwitch.setRevision(getSVNRevision(revision));
+        svnSwitch.setDepth(getSVNDepth(depth));
+        svnSwitch.setDepthIsSticky(depthIsSticky);
+        svnSwitch.setIgnoreExternals(ignoreExternals);
+        svnSwitch.setAllowUnversionedObstructions(allowUnverObstructions);
+        svnSwitch.setIgnoreAncestry(ignoreAncestry);
+        try {
+            return svnSwitch.run();
+        } catch (SVNException e) {
+            throw ClientException.fromException(e);
+        }
     }
 
     public void doImport(String path, String url, Depth depth,
