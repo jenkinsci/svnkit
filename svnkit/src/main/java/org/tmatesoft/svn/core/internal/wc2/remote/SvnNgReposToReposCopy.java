@@ -1,6 +1,7 @@
 package org.tmatesoft.svn.core.internal.wc2.remote;
 
 import java.io.File;
+import java.util.Collection;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
@@ -11,6 +12,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeOriginInfo;
 import org.tmatesoft.svn.core.internal.wc2.SvnRemoteOperationRunner;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
+import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.ISVNExternalsHandler;
 import org.tmatesoft.svn.core.wc.SVNCopySource;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -72,7 +74,15 @@ public class SvnNgReposToReposCopy extends SvnRemoteOperationRunner<SVNCommitInf
         SVNCommitInfo info = client.doCopy(sources, target.getURL(), getOperation().isMove(), getOperation().isMakeParents(), getOperation().isFailWhenDstExists(), 
                 getOperation().getCommitMessage(), getOperation().getRevisionProperties());
         if (info != null) {
-            getOperation().receive(getOperation().getFirstTarget(), info);
+            Collection<SvnTarget> targets = getOperation().getTargets();
+            if (targets != null && targets.size() != 0) {
+                SvnTarget firstTarget = targets.iterator().next();
+
+                SVNRepository repository = getRepositoryAccess().createRepository(firstTarget.getURL(), null, true);
+                SVNURL repositoryRoot = repository.getRepositoryRoot(true);
+
+                getOperation().receive(SvnTarget.fromURL(repositoryRoot), info);
+            }
         }
         return info;
 

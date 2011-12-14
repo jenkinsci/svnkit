@@ -65,6 +65,8 @@ import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnCleanup;
 import org.tmatesoft.svn.core.wc2.SvnCommit;
 import org.tmatesoft.svn.core.wc2.SvnCommitItem;
+import org.tmatesoft.svn.core.wc2.SvnCopy;
+import org.tmatesoft.svn.core.wc2.SvnCopySource;
 import org.tmatesoft.svn.core.wc2.SvnDiffStatus;
 import org.tmatesoft.svn.core.wc2.SvnDiffSummarize;
 import org.tmatesoft.svn.core.wc2.SvnExport;
@@ -73,6 +75,7 @@ import org.tmatesoft.svn.core.wc2.SvnGetStatus;
 import org.tmatesoft.svn.core.wc2.SvnLog;
 import org.tmatesoft.svn.core.wc2.SvnMerge;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
+import org.tmatesoft.svn.core.wc2.SvnRemoteCopy;
 import org.tmatesoft.svn.core.wc2.SvnRemoteDelete;
 import org.tmatesoft.svn.core.wc2.SvnRemoteMkDir;
 import org.tmatesoft.svn.core.wc2.SvnResolve;
@@ -307,8 +310,13 @@ public class SVNClientImpl implements ISVNClient {
             boolean moveAsChild, boolean makeParents,
             Map<String, String> revpropTable, CommitMessageCallback handler,
             CommitCallback callback) throws ClientException {
-        // TODO Auto-generated method stub
+        final Set<String> localPaths = new HashSet<String>();
+        final Set<String> remoteUrls = new HashSet<String>();
 
+        fillLocalAndRemoteTargets(srcPaths, localPaths, remoteUrls);
+
+        moveLocal(localPaths, destPath, force, moveAsChild, makeParents);
+        moveRemote(remoteUrls, destPath, force, moveAsChild, makeParents, revpropTable, handler, callback);
     }
 
     public void mkdir(Set<String> path, boolean makeParents,
@@ -1153,6 +1161,60 @@ public class SVNClientImpl implements ISVNClient {
 
         try {
             remoteDelete.run();
+        } catch (SVNException e) {
+            throw ClientException.fromException(e);
+        }
+    }
+
+    private void moveLocal(Set<String> localPaths, String destPath, boolean force,
+                           boolean moveAsChild, boolean makeParents) throws ClientException {
+        if (localPaths == null || localPaths.size() == 0) {
+            return;
+        }
+        SvnCopy copy = svnOperationFactory.createCopy();
+        copy.setSingleTarget(getTarget(destPath));
+        copy.setFailWhenDstExists(!force);//TODO: recheck
+        copy.setMakeParents(makeParents);
+
+        //TODO: copy should support 1) force 2) moveAsChild
+
+        copy.setMove(true);
+
+        for (String localPath : localPaths) {
+            copy.addCopySource(SvnCopySource.create(getTarget(localPath), SVNRevision.UNDEFINED)); //TODO: recheck revision
+        }
+
+        try {
+            copy.run();
+        } catch (SVNException e) {
+            throw ClientException.fromException(e);
+        }
+    }
+
+    private void moveRemote(Set<String> remoteUrls, String destPath, boolean force,
+                            boolean moveAsChild, boolean makeParents,
+                            Map<String, String> revpropTable, CommitMessageCallback handler,
+                            CommitCallback callback) throws ClientException {
+        if (remoteUrls == null || remoteUrls.size() == 0) {
+            return;
+        }
+        SvnRemoteCopy remoteCopy = svnOperationFactory.createRemoteCopy();
+        remoteCopy.setSingleTarget(getTarget(destPath));
+        remoteCopy.setFailWhenDstExists(!force);//TODO: recheck
+        remoteCopy.setMakeParents(makeParents);
+        remoteCopy.setRevisionProperties(getSVNProperties(revpropTable));
+        remoteCopy.setCommitHandler(getCommitHandler(handler));
+        remoteCopy.setReceiver(getCommitInfoReceiver(callback));
+        remoteCopy.setMove(true);
+
+        //TODO: remoteCopy lacks moveAsChild
+
+        for (String remoteUrl : remoteUrls) {
+            remoteCopy.addCopySource(SvnCopySource.create(getTarget(remoteUrl), SVNRevision.HEAD)); //TODO: check revision
+        }
+
+        try {
+            remoteCopy.run();
         } catch (SVNException e) {
             throw ClientException.fromException(e);
         }
