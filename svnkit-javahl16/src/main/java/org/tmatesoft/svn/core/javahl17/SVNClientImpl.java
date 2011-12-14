@@ -47,6 +47,7 @@ import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNConflictChoice;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -61,6 +62,7 @@ import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 import org.tmatesoft.svn.core.wc2.SvnResolve;
 import org.tmatesoft.svn.core.wc2.SvnRevert;
 import org.tmatesoft.svn.core.wc2.SvnRevisionRange;
+import org.tmatesoft.svn.core.wc2.SvnSetProperty;
 import org.tmatesoft.svn.core.wc2.SvnStatus;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.core.wc2.SvnUpdate;
@@ -420,8 +422,22 @@ public class SVNClientImpl implements ISVNClient {
     public void propertySetLocal(Set<String> paths, String name, byte[] value,
             Depth depth, Collection<String> changelists, boolean force)
             throws ClientException {
-        // TODO Auto-generated method stub
+        SvnSetProperty setProperty = svnOperationFactory.createSetProperty();
+        setProperty.setPropertyName(name);
+        setProperty.setPropertyValue(SVNPropertyValue.create(name, value));
+        setProperty.setDepth(getSVNDepth(depth));
+        setProperty.setApplicalbeChangelists(changelists);
+        setProperty.setForce(force);
 
+        for (String path : paths) {
+            setProperty.addTarget(getTarget(path));
+        }
+
+        try {
+            setProperty.run();
+        } catch (SVNException e) {
+            throw ClientException.fromException(e);
+        }
     }
 
     public void propertySetRemote(String path, long baseRev, String name,
