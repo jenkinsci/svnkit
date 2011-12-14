@@ -143,7 +143,6 @@ project(':svnkit-distribution') {
         osgi 'net.java.dev.jna:jna-osgi:3.2.7'
     }
 }
-
 task publish(dependsOn: [':svnkit-distribution:buildAll']) {
     enabled = project.hasProperty('to')
 } << {
