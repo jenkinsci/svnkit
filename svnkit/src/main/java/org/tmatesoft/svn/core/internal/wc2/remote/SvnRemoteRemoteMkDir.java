@@ -36,6 +36,14 @@ public class SvnRemoteRemoteMkDir extends SvnRemoteOperationRunner<SVNCommitInfo
 
     @Override
     protected SVNCommitInfo run() throws SVNException {
+        SVNCommitInfo info = doRun();
+        if (info != null) {
+            getOperation().receive(getOperation().getFirstTarget(), info);
+        }
+        return info;
+    }
+    
+    protected SVNCommitInfo doRun() throws SVNException {
     	int i = 0;
         SVNURL[] urls = new SVNURL[getOperation().getTargets().size()];
         for (SvnTarget target : getOperation().getTargets()) {

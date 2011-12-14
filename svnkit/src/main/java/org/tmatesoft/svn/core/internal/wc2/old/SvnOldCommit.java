@@ -46,7 +46,11 @@ public class SvnOldCommit extends SvnOldRunner<SVNCommitInfo, SvnCommit> impleme
         client.setEventHandler(getOperation().getEventHandler());
         client.setCommitHandler(this);
         
-        return client.doCommit(oldPacket, getOperation().isKeepLocks(), getOperation().isKeepChangelists(), getOperation().getCommitMessage(), getOperation().getRevisionProperties());
+        SVNCommitInfo info = client.doCommit(oldPacket, getOperation().isKeepLocks(), getOperation().isKeepChangelists(), getOperation().getCommitMessage(), getOperation().getRevisionProperties());
+        if (info != null) {
+            getOperation().receive(getOperation().getFirstTarget(), info);
+        }
+        return info;
     }
 
     public void disposeCommitPacket(Object lockingContext) throws SVNException {

@@ -6,7 +6,7 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.wc2.hooks.ISvnCommitHandler;
 
-public abstract class AbstractSvnCommit extends SvnOperation<SVNCommitInfo> {
+public abstract class AbstractSvnCommit extends SvnReceivingOperation<SVNCommitInfo> {
 
     private String commitMessage;
     private SVNProperties revisionProperties;

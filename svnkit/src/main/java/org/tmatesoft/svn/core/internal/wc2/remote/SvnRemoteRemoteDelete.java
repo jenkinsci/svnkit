@@ -84,6 +84,9 @@ public class SvnRemoteRemoteDelete extends SvnRemoteOperationRunner<SVNCommitInf
         	SVNRepository repository = (SVNRepository)reposInfo.get(reposRoot);
         	ArrayList<String> paths = (ArrayList<String>)relPathInfo.get(reposRoot);
         	info = singleRepositoryDelete(repository, reposRoot, paths);
+        	if (info != null) {
+        	    getOperation().receive(SvnTarget.fromURL(reposRoot), info);
+        	}
         }
         
         return info != null ? info : SVNCommitInfo.NULL;

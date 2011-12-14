@@ -69,7 +69,12 @@ public class SvnNgReposToReposCopy extends SvnRemoteOperationRunner<SVNCommitInf
             i++;
         }
 
-        return client.doCopy(sources, target.getURL(), getOperation().isMove(), getOperation().isMakeParents(), getOperation().isFailWhenDstExists(), 
+        SVNCommitInfo info = client.doCopy(sources, target.getURL(), getOperation().isMove(), getOperation().isMakeParents(), getOperation().isFailWhenDstExists(), 
                 getOperation().getCommitMessage(), getOperation().getRevisionProperties());
+        if (info != null) {
+            getOperation().receive(getOperation().getFirstTarget(), info);
+        }
+        return info;
+
     }
 }

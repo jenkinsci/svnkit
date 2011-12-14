@@ -61,6 +61,14 @@ public class SvnNgWcToReposCopy extends SvnNgOperationRunner<SVNCommitInfo, SvnR
     
     @Override
     protected SVNCommitInfo run(SVNWCContext context) throws SVNException {
+        SVNCommitInfo info = doRun(context);
+        if (info != null) {
+            getOperation().receive(getOperation().getFirstTarget(), info);
+        }
+        return info;
+    }
+    
+    protected SVNCommitInfo doRun(SVNWCContext context) throws SVNException {
         if (getOperation().isMove()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
                     "Moves between the working copy and the repository are not supported");

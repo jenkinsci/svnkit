@@ -104,6 +104,14 @@ public class SvnNgCommit extends SvnNgOperationRunner<SVNCommitInfo, SvnCommit> 
 
     @Override
     protected SVNCommitInfo run(SVNWCContext context) throws SVNException {
+        SVNCommitInfo info = doRun(context);
+        if (info != null) {
+            getOperation().receive(getOperation().getFirstTarget(), info);
+        }
+        return info;
+    }
+    
+    protected SVNCommitInfo doRun(SVNWCContext context) throws SVNException {
         SvnCommitPacket packet = getOperation().collectCommitItems();
         if (packet == null || packet.isEmpty()) {
             return null;
