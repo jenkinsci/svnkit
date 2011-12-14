@@ -49,6 +49,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNConflictChoice;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
@@ -643,12 +644,22 @@ public class SVNClientImpl implements ISVNClient {
         return date.getTime();
     }
 
-    private SvnTarget getTarget(String path) {
-        return SvnTarget.fromFile(new File(path));
+    private SvnTarget getTarget(String path, Revision revision) {
+        SVNRevision svnRevision = revision == null ? SVNRevision.UNDEFINED : getSVNRevision(revision);
+
+        if (SVNPathUtil.isURL(path)) {
+            try {
+                return SvnTarget.fromURL(SVNURL.parseURIEncoded(path), svnRevision);
+            } catch (SVNException e) {
+                //never happens if SVNPathUtil#isURL works correctly
+                throw new IllegalArgumentException(e);
+            }
+        }
+        return SvnTarget.fromFile(new File(path), svnRevision);
     }
 
-    private SvnTarget getTarget(String path, Revision revision) {
-        return SvnTarget.fromFile(new File(path), getSVNRevision(revision));
+    private SvnTarget getTarget(String path) {
+        return getTarget(path, null);
     }
 
     private Status.Kind getStatusKind(SVNStatusType statusType) {
