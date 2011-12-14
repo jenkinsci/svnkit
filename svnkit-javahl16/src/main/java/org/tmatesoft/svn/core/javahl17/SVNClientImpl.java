@@ -534,10 +534,28 @@ public class SVNClientImpl implements ISVNClient {
 
     }
 
-    public byte[] revProperty(String path, String name, Revision rev)
+    public byte[] revProperty(String path, final String name, Revision rev)
             throws ClientException {
-        // TODO Auto-generated method stub
-        return null;
+        SvnGetProperties getProperties = svnOperationFactory.createGetProperties();
+        getProperties.setSingleTarget(getTarget(path));
+        getProperties.setRevision(getSVNRevision(rev));
+        getProperties.setRevisionProperties(true);
+
+        final SVNPropertyValue[] propertyValue = new SVNPropertyValue[1];
+        getProperties.setReceiver(new ISvnObjectReceiver<SVNProperties>() {
+            @Override
+            public void receive(SvnTarget target, SVNProperties svnProperties) throws SVNException {
+                propertyValue[0] = svnProperties.getSVNPropertyValue(name);
+            }
+        });
+
+        try {
+            getProperties.run();
+        } catch (SVNException e) {
+            throw ClientException.fromException(e);
+        }
+
+        return SVNPropertyValue.getPropertyAsBytes(propertyValue[0]);
     }
 
     public Map<String, byte[]> revProperties(String path, Revision rev)
