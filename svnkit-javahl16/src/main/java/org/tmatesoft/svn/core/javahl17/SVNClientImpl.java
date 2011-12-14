@@ -2,6 +2,7 @@ package org.tmatesoft.svn.core.javahl17;
 
 import java.io.File;
 import java.io.OutputStream;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -12,6 +13,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.subversion.javahl.ClientException;
+import org.apache.subversion.javahl.CommitInfo;
 import org.apache.subversion.javahl.CommitItem;
 import org.apache.subversion.javahl.ConflictResult.Choice;
 import org.apache.subversion.javahl.DiffSummary;
@@ -42,7 +44,10 @@ import org.apache.subversion.javahl.types.Revision;
 import org.apache.subversion.javahl.types.RevisionRange;
 import org.apache.subversion.javahl.types.Status;
 import org.apache.subversion.javahl.types.Version;
+import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNLogEntry;
@@ -50,7 +55,9 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.SVNConflictChoice;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
@@ -66,6 +73,7 @@ import org.tmatesoft.svn.core.wc2.SvnGetStatus;
 import org.tmatesoft.svn.core.wc2.SvnLog;
 import org.tmatesoft.svn.core.wc2.SvnMerge;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
+import org.tmatesoft.svn.core.wc2.SvnRemoteMkDir;
 import org.tmatesoft.svn.core.wc2.SvnResolve;
 import org.tmatesoft.svn.core.wc2.SvnRevert;
 import org.tmatesoft.svn.core.wc2.SvnRevisionRange;
@@ -76,6 +84,7 @@ import org.tmatesoft.svn.core.wc2.SvnSwitch;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.core.wc2.SvnUpdate;
 import org.tmatesoft.svn.core.wc2.hooks.ISvnCommitHandler;
+import org.tmatesoft.svn.util.SVNLogType;
 
 public class SVNClientImpl implements ISVNClient {
 
@@ -299,7 +308,13 @@ public class SVNClientImpl implements ISVNClient {
             Map<String, String> revpropTable, CommitMessageCallback handler,
             CommitCallback callback) throws ClientException {
         // TODO Auto-generated method stub
+        final Set<String> localPaths = new HashSet<String>();
+        final Set<String> remoteUrls = new HashSet<String>();
 
+        fillLocalAndRemoteTargets(path, localPaths, remoteUrls);
+
+        mkdirLocal(localPaths, makeParents);
+        mkdirRemote(remoteUrls, makeParents, revpropTable, handler, callback);
     }
 
     public void cleanup(String path) throws ClientException {
@@ -1020,5 +1035,78 @@ public class SVNClientImpl implements ISVNClient {
                 receiver.onSummary(getDiffSummary(diffStatus));
             }
         };
+    }
+
+    private ISvnObjectReceiver<SVNCommitInfo> getCommitInfoReceiver(final CommitCallback callback) {
+        return new ISvnObjectReceiver<SVNCommitInfo>() {
+            public void receive(SvnTarget target, SVNCommitInfo commitInfo) throws SVNException {
+                try {
+                    SVNURL repositoryRoot = target.getURL();
+
+                    callback.commitInfo(getCommitInfo(commitInfo, repositoryRoot));
+                } catch (ParseException e) {
+                    //TODO: review this
+                    SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.UNKNOWN);
+                    SVNErrorManager.error(errorMessage, e, SVNLogType.CLIENT);
+                }
+            }
+        };
+    }
+
+    private void fillLocalAndRemoteTargets(Set<String> path, Set<String> localPaths, Set<String> remoteUrls) {
+        for (String targetPath : path) {
+            if (SVNPathUtil.isURL(targetPath)) {
+                remoteUrls.add(targetPath);
+            } else {
+                localPaths.add(targetPath);
+            }
+        }
+    }
+
+    private CommitInfo getCommitInfo(SVNCommitInfo commitInfo, SVNURL repositoryRoot) throws ParseException {
+        return new CommitInfo(commitInfo.getNewRevision(), SVNDate.formatDate(commitInfo.getDate()),
+                commitInfo.getAuthor(), commitInfo.getErrorMessage().getMessage(), repositoryRoot.toString());
+    }
+
+    private void mkdirLocal(Set<String> localPaths, boolean makeParents) throws ClientException {
+        if (localPaths == null || localPaths.size() == 0) {
+            return;
+        }
+        SvnScheduleForAddition add = svnOperationFactory.createScheduleForAddition();
+        add.setAddParents(makeParents);
+        add.setMkDir(true);
+
+        for (String localPath : localPaths) {
+            add.addTarget(getTarget(localPath));
+        }
+
+        try {
+            add.run();
+        } catch (SVNException e) {
+            throw ClientException.fromException(e);
+        }
+    }
+
+    private void mkdirRemote(Set<String> remoteUrls, boolean makeParents,
+                             Map<String, String> revpropTable, CommitMessageCallback handler,
+                             final CommitCallback callback) throws ClientException {
+        if (remoteUrls == null || remoteUrls.size() == 0) {
+            return;
+        }
+        SvnRemoteMkDir mkdir = svnOperationFactory.createMkDir();
+        mkdir.setMakeParents(makeParents);
+        mkdir.setRevisionProperties(getSVNProperties(revpropTable));
+        mkdir.setCommitHandler(getCommitHandler(handler));
+        mkdir.setReceiver(getCommitInfoReceiver(callback));
+
+        for (String remoteUrl : remoteUrls) {
+            mkdir.addTarget(getTarget(remoteUrl));
+        }
+
+        try {
+            mkdir.run();
+        } catch (SVNException e) {
+            throw ClientException.fromException(e);
+        }
     }
 }
