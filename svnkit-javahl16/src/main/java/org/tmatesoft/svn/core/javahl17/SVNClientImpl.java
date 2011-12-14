@@ -14,6 +14,7 @@ import java.util.Set;
 import org.apache.subversion.javahl.ClientException;
 import org.apache.subversion.javahl.CommitItem;
 import org.apache.subversion.javahl.ConflictResult.Choice;
+import org.apache.subversion.javahl.DiffSummary;
 import org.apache.subversion.javahl.ISVNClient;
 import org.apache.subversion.javahl.SubversionException;
 import org.apache.subversion.javahl.callback.BlameCallback;
@@ -57,6 +58,8 @@ import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnCleanup;
 import org.tmatesoft.svn.core.wc2.SvnCommit;
 import org.tmatesoft.svn.core.wc2.SvnCommitItem;
+import org.tmatesoft.svn.core.wc2.SvnDiffStatus;
+import org.tmatesoft.svn.core.wc2.SvnDiffSummarize;
 import org.tmatesoft.svn.core.wc2.SvnExport;
 import org.tmatesoft.svn.core.wc2.SvnGetProperties;
 import org.tmatesoft.svn.core.wc2.SvnGetStatus;
@@ -472,16 +475,35 @@ public class SVNClientImpl implements ISVNClient {
             String target2, Revision revision2, Depth depth,
             Collection<String> changelists, boolean ignoreAncestry,
             DiffSummaryCallback receiver) throws ClientException {
-        // TODO Auto-generated method stub
+        SvnDiffSummarize diffSummarize = svnOperationFactory.createDiffSummarize();
+        diffSummarize.setSources(getTarget(target1, revision1), getTarget(target2, revision2));
+        diffSummarize.setDepth(getSVNDepth(depth));
+        diffSummarize.setApplicalbeChangelists(changelists);
+        diffSummarize.setIgnoreAncestry(ignoreAncestry);
+        diffSummarize.setReceiver(getDiffStatusReceiver(receiver));
 
+        try {
+            diffSummarize.run();
+        } catch (SVNException e) {
+            throw ClientException.fromException(e);
+        }
     }
 
     public void diffSummarize(String target, Revision pegRevision,
             Revision startRevision, Revision endRevision, Depth depth,
             Collection<String> changelists, boolean ignoreAncestry,
             DiffSummaryCallback receiver) throws ClientException {
-        // TODO Auto-generated method stub
-
+        SvnDiffSummarize diffSummarize = svnOperationFactory.createDiffSummarize();
+        diffSummarize.setSource(getTarget(target, pegRevision), getSVNRevision(startRevision), getSVNRevision(endRevision));
+        diffSummarize.setDepth(getSVNDepth(depth));
+        diffSummarize.setApplicalbeChangelists(changelists);
+        diffSummarize.setIgnoreAncestry(ignoreAncestry);
+        diffSummarize.setReceiver(getDiffStatusReceiver(receiver));
+        try {
+            diffSummarize.run();
+        } catch (SVNException e) {
+            throw ClientException.fromException(e);
+        }
     }
 
     public void properties(String path, Revision revision,
@@ -975,5 +997,36 @@ public class SVNClientImpl implements ISVNClient {
         }
 
         return SVNPropertyValue.getPropertyAsBytes(propertyValue[0]);
+    }
+
+    private DiffSummary getDiffSummary(SvnDiffStatus diffStatus) {
+        return new DiffSummary(diffStatus.getPath(), getDiffKind(diffStatus.getModificationType()), diffStatus.isPropertiesModified(), getNodeKind(diffStatus.getKind()));
+    }
+
+    private DiffSummary.DiffKind getDiffKind(SVNStatusType type) {
+        if (type == SVNStatusType.STATUS_ADDED) {
+            return DiffSummary.DiffKind.added;
+        } else if (type == SVNStatusType.STATUS_DELETED) {
+            return DiffSummary.DiffKind.deleted;
+        } else if (type == SVNStatusType.STATUS_MODIFIED) {
+            return DiffSummary.DiffKind.modified;
+        } else if (type == SVNStatusType.STATUS_NORMAL) {
+            return DiffSummary.DiffKind.normal;
+        } else {
+            //TODO
+            throw new IllegalArgumentException();
+        }
+    }
+
+    private ISvnObjectReceiver<SvnDiffStatus> getDiffStatusReceiver(final DiffSummaryCallback receiver) {
+        if (receiver == null) {
+            return null;
+        }
+        return new ISvnObjectReceiver<SvnDiffStatus>() {
+            @Override
+            public void receive(SvnTarget target, SvnDiffStatus diffStatus) throws SVNException {
+                receiver.onSummary(getDiffSummary(diffStatus));
+            }
+        };
     }
 }
