@@ -56,6 +56,7 @@ import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnCleanup;
 import org.tmatesoft.svn.core.wc2.SvnCommit;
 import org.tmatesoft.svn.core.wc2.SvnCommitItem;
+import org.tmatesoft.svn.core.wc2.SvnGetProperties;
 import org.tmatesoft.svn.core.wc2.SvnGetStatus;
 import org.tmatesoft.svn.core.wc2.SvnLog;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
@@ -415,8 +416,19 @@ public class SVNClientImpl implements ISVNClient {
     public void properties(String path, Revision revision,
             Revision pegRevision, Depth depth, Collection<String> changelists,
             ProplistCallback callback) throws ClientException {
-        // TODO Auto-generated method stub
+        SvnGetProperties getProperties = svnOperationFactory.createGetProperties();
+        getProperties.setRevision(getSVNRevision(revision));
+        getProperties.setDepth(getSVNDepth(depth));
+        getProperties.setApplicalbeChangelists(changelists);
+        getProperties.setReceiver(getSVNPropertiesReceiver(callback));
 
+        getProperties.addTarget(getTarget(path, revision));
+
+        try {
+            getProperties.run();
+        } catch (SVNException e) {
+            throw ClientException.fromException(e);
+        }
     }
 
     public void propertySetLocal(Set<String> paths, String name, byte[] value,
@@ -635,6 +647,10 @@ public class SVNClientImpl implements ISVNClient {
         return SvnTarget.fromFile(new File(path));
     }
 
+    private SvnTarget getTarget(String path, Revision revision) {
+        return SvnTarget.fromFile(new File(path), getSVNRevision(revision));
+    }
+
     private Status.Kind getStatusKind(SVNStatusType statusType) {
         if (statusType == SVNStatusType.STATUS_ADDED) {
             return Status.Kind.added;
@@ -791,12 +807,12 @@ public class SVNClientImpl implements ISVNClient {
         return new ISvnObjectReceiver<SVNLogEntry>() {
             @Override
             public void receive(SvnTarget target, SVNLogEntry svnLogEntry) throws SVNException {
-                callback.singleMessage(svnLogEntry.getChangedPaths().keySet(), svnLogEntry.getRevision(), getRevisionProperties(svnLogEntry.getRevisionProperties()), svnLogEntry.hasChildren());
+                callback.singleMessage(svnLogEntry.getChangedPaths().keySet(), svnLogEntry.getRevision(), getProperties(svnLogEntry.getRevisionProperties()), svnLogEntry.hasChildren());
             }
         };
     }
 
-    private Map<String, byte[]> getRevisionProperties(SVNProperties svnProperties) {
+    private Map<String, byte[]> getProperties(SVNProperties svnProperties) {
         if (svnProperties == null) {
             return null;
         }
@@ -806,6 +822,18 @@ public class SVNClientImpl implements ISVNClient {
             revisionProperties.put(svnPropertyName, svnProperties.getBinaryValue(svnPropertyName));
         }
         return revisionProperties;
+    }
+
+    private ISvnObjectReceiver<SVNProperties> getSVNPropertiesReceiver(final ProplistCallback callback) {
+        if (callback == null) {
+            return null;
+        }
+        return new ISvnObjectReceiver<SVNProperties>() {
+            @Override
+            public void receive(SvnTarget target, SVNProperties svnProperties) throws SVNException {
+                callback.singlePath(target.getFile().getPath(), getProperties(svnProperties));
+            }
+        };
     }
 
     private SVNConflictChoice getSVNConflictChoice(Choice choice) {
