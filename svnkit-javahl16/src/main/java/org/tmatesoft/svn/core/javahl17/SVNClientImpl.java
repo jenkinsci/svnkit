@@ -534,28 +534,9 @@ public class SVNClientImpl implements ISVNClient {
 
     }
 
-    public byte[] revProperty(String path, final String name, Revision rev)
+    public byte[] revProperty(String path, String name, Revision rev)
             throws ClientException {
-        SvnGetProperties getProperties = svnOperationFactory.createGetProperties();
-        getProperties.setSingleTarget(getTarget(path));
-        getProperties.setRevision(getSVNRevision(rev));
-        getProperties.setRevisionProperties(true);
-
-        final SVNPropertyValue[] propertyValue = new SVNPropertyValue[1];
-        getProperties.setReceiver(new ISvnObjectReceiver<SVNProperties>() {
-            @Override
-            public void receive(SvnTarget target, SVNProperties svnProperties) throws SVNException {
-                propertyValue[0] = svnProperties.getSVNPropertyValue(name);
-            }
-        });
-
-        try {
-            getProperties.run();
-        } catch (SVNException e) {
-            throw ClientException.fromException(e);
-        }
-
-        return SVNPropertyValue.getPropertyAsBytes(propertyValue[0]);
+        return getProperty(path, name, rev, null, true);
     }
 
     public Map<String, byte[]> revProperties(String path, Revision rev)
@@ -592,8 +573,7 @@ public class SVNClientImpl implements ISVNClient {
 
     public byte[] propertyGet(String path, String name, Revision revision,
             Revision pegRevision) throws ClientException {
-        // TODO Auto-generated method stub
-        return null;
+        return getProperty(path, name, revision, pegRevision, true);
     }
 
     public byte[] fileContent(String path, Revision revision,
@@ -975,5 +955,28 @@ public class SVNClientImpl implements ISVNClient {
             default:
                 return SVNConflictChoice.POSTPONE;
         }
+    }
+
+    private byte[] getProperty(String path, final String name, Revision rev, Revision pegRevision, boolean revisionProperties) throws ClientException {
+        SvnGetProperties getProperties = svnOperationFactory.createGetProperties();
+        getProperties.setSingleTarget(getTarget(path, pegRevision));
+        getProperties.setRevision(getSVNRevision(rev));
+        getProperties.setRevisionProperties(revisionProperties);
+
+        final SVNPropertyValue[] propertyValue = new SVNPropertyValue[1];
+        getProperties.setReceiver(new ISvnObjectReceiver<SVNProperties>() {
+            @Override
+            public void receive(SvnTarget target, SVNProperties svnProperties) throws SVNException {
+                propertyValue[0] = svnProperties.getSVNPropertyValue(name);
+            }
+        });
+
+        try {
+            getProperties.run();
+        } catch (SVNException e) {
+            throw ClientException.fromException(e);
+        }
+
+        return SVNPropertyValue.getPropertyAsBytes(propertyValue[0]);
     }
 }
