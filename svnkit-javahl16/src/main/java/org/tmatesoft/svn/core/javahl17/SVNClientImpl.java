@@ -395,7 +395,7 @@ public class SVNClientImpl implements ISVNClient {
         try {
             resolve.run();
         } catch (SVNException e) {
-            //TODO: cannot instantiate SubversionException
+            throw ClientException.fromException(e);
         }
     }
 
