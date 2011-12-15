@@ -79,6 +79,7 @@ import org.tmatesoft.svn.core.wc2.SvnImport;
 import org.tmatesoft.svn.core.wc2.SvnLog;
 import org.tmatesoft.svn.core.wc2.SvnMerge;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
+import org.tmatesoft.svn.core.wc2.SvnRelocate;
 import org.tmatesoft.svn.core.wc2.SvnRemoteCopy;
 import org.tmatesoft.svn.core.wc2.SvnRemoteDelete;
 import org.tmatesoft.svn.core.wc2.SvnRemoteMkDir;
@@ -703,8 +704,16 @@ public class SVNClientImpl implements ISVNClient {
 
     public void relocate(String from, String to, String path,
             boolean ignoreExternals) throws ClientException {
-        // TODO Auto-generated method stub
-
+        try {
+            SvnRelocate relocate = svnOperationFactory.createRelocate();
+            relocate.setFromUrl(SVNURL.parseURIEncoded(from));
+            relocate.setToUrl(SVNURL.parseURIEncoded(to));
+            relocate.setSingleTarget(getTarget(path));
+            relocate.setIgnoreExternals(ignoreExternals);
+            relocate.run();
+        } catch (SVNException e) {
+            throw ClientException.fromException(e);
+        }
     }
 
     public void blame(String path, Revision pegRevision,
