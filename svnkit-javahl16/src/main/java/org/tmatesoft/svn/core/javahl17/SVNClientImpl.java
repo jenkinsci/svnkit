@@ -37,6 +37,7 @@ import org.apache.subversion.javahl.callback.StatusCallback;
 import org.apache.subversion.javahl.callback.UserPasswordCallback;
 import org.apache.subversion.javahl.types.CopySource;
 import org.apache.subversion.javahl.types.Depth;
+import org.apache.subversion.javahl.types.Info;
 import org.apache.subversion.javahl.types.Lock;
 import org.apache.subversion.javahl.types.Mergeinfo;
 import org.apache.subversion.javahl.types.Mergeinfo.LogKind;
@@ -73,9 +74,11 @@ import org.tmatesoft.svn.core.wc2.SvnCopySource;
 import org.tmatesoft.svn.core.wc2.SvnDiffStatus;
 import org.tmatesoft.svn.core.wc2.SvnDiffSummarize;
 import org.tmatesoft.svn.core.wc2.SvnExport;
+import org.tmatesoft.svn.core.wc2.SvnGetInfo;
 import org.tmatesoft.svn.core.wc2.SvnGetProperties;
 import org.tmatesoft.svn.core.wc2.SvnGetStatus;
 import org.tmatesoft.svn.core.wc2.SvnImport;
+import org.tmatesoft.svn.core.wc2.SvnInfo;
 import org.tmatesoft.svn.core.wc2.SvnLog;
 import org.tmatesoft.svn.core.wc2.SvnMerge;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
@@ -795,8 +798,18 @@ public class SVNClientImpl implements ISVNClient {
     public void info2(String pathOrUrl, Revision revision,
             Revision pegRevision, Depth depth, Collection<String> changelists,
             InfoCallback callback) throws ClientException {
-        // TODO Auto-generated method stub
+        SvnGetInfo info = svnOperationFactory.createGetInfo();
+        info.setSingleTarget(getTarget(pathOrUrl, pegRevision));
+        info.setRevision(getSVNRevision(revision));
+        info.setDepth(getSVNDepth(depth));
+        info.setApplicalbeChangelists(changelists);
+        info.setReceiver(getInfoReceiver(callback));
 
+        try {
+            info.run();
+        } catch (SVNException e) {
+            throw ClientException.fromException(e);
+        }
     }
 
     public String getVersionInfo(String path, String trailUrl,
@@ -1392,5 +1405,21 @@ public class SVNClientImpl implements ISVNClient {
         } catch (SVNException e) {
             throw ClientException.fromException(e);
         }
+    }
+
+    private ISvnObjectReceiver<SvnInfo> getInfoReceiver(final InfoCallback callback) {
+        if (callback == null) {
+            return null;
+        }
+        return new ISvnObjectReceiver<SvnInfo>() {
+            public void receive(SvnTarget target, SvnInfo info) throws SVNException {
+                callback.singleInfo(getInfo(info));
+            }
+        };
+    }
+
+    private Info getInfo(SvnInfo info) {
+        //TODO: implement
+        return null;
     }
 }
