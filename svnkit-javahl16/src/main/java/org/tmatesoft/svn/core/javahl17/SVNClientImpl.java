@@ -56,6 +56,8 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNLogEntry;
+import org.tmatesoft.svn.core.SVNMergeRange;
+import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
@@ -523,12 +525,13 @@ public class SVNClientImpl implements ISVNClient {
 
     public Mergeinfo getMergeinfo(String path, Revision pegRevision)
             throws SubversionException {
+
         SvnGetMergeInfo getMergeInfo = svnOperationFactory.createGetMergeInfo();
         getMergeInfo.setSingleTarget(getTarget(path, pegRevision));
         try {
-            getMergeInfo.run();
+            return getMergeinfo(getMergeInfo.run());
         } catch (SVNException e) {
-            //TODO: cannot instantiate SubversionException
+            throw ClientException.fromException(e);
         }
     }
 
@@ -1478,5 +1481,35 @@ public class SVNClientImpl implements ISVNClient {
     private Info getInfo(SvnInfo info) {
         //TODO: implement
         return null;
+    }
+
+    private Mergeinfo getMergeinfo(Map<SVNURL, SVNMergeRangeList> mergeInfoMap) {
+        Mergeinfo mergeinfo = new Mergeinfo();
+        for (Map.Entry<SVNURL, SVNMergeRangeList> entry : mergeInfoMap.entrySet()) {
+            SVNURL url = entry.getKey();
+            SVNMergeRangeList mergeRangeList = entry.getValue();
+
+            if (mergeRangeList == null) {
+                continue;
+            }
+
+            String urlString = url.toString();
+
+            SVNMergeRange[] ranges = mergeRangeList.getRanges();
+            for (SVNMergeRange range : ranges) {
+                if (range == null) {
+                    continue;
+                }
+                mergeinfo.addRevisionRange(urlString, getRevisionRange(range));
+            }
+        }
+        return mergeinfo;
+    }
+
+    private RevisionRange getRevisionRange(SVNMergeRange revisionRange) {
+        long startRevision = revisionRange.getStartRevision();
+        long endRevision = revisionRange.getEndRevision();
+
+        return new RevisionRange(Revision.getInstance(startRevision), Revision.getInstance(endRevision));
     }
 }
