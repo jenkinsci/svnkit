@@ -132,16 +132,21 @@ public abstract class SVNAdminAreaFactory implements Comparable {
         if (path == null) {
             return;
         }
-        File dbFile = new File(path, ".svn/wc.db");
-        SVNFileType type = SVNFileType.getType(dbFile);
-        if (type == SVNFileType.FILE) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, 
-                    "The path ''{0}'' appears to be part of Subversion 1.7 (SVNKit 1.4) or greater\n" +
-                    "working copy rooted at ''{1}''.\n" +
-                    "Please upgrade your Subversion (SVNKit) client to use this working copy.", 
-                    new Object[] {targetPath, path});
-            SVNErrorManager.error(err, SVNLogType.WC);
-        }        
+        File adminDir = new File(path, SVNFileUtil.getAdminDirectoryName());
+        if (adminDir.isDirectory()) {
+            File dbFile = new File(adminDir, "wc.db");
+            SVNFileType type = SVNFileType.getType(dbFile);
+            if (type == SVNFileType.FILE) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, 
+                        "The path ''{0}'' appears to be part of Subversion 1.7 (SVNKit 1.4) or greater\n" +
+                        "working copy rooted at ''{1}''.\n" +
+                        "Please upgrade your Subversion (SVNKit) client to use this working copy.", 
+                        new Object[] {targetPath, path});
+                SVNErrorManager.error(err, SVNLogType.WC);
+            } 
+            // there is an admin dir, old format most probably
+            return;
+        }
         checkWCNG(path.getParentFile(), targetPath);
     }
     
