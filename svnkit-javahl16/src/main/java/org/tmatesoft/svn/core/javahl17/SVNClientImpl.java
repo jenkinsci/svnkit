@@ -96,6 +96,7 @@ import org.tmatesoft.svn.core.wc2.SvnSwitch;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.core.wc2.SvnUnlock;
 import org.tmatesoft.svn.core.wc2.SvnUpdate;
+import org.tmatesoft.svn.core.wc2.SvnUpgrade;
 import org.tmatesoft.svn.core.wc2.hooks.ISvnCommitHandler;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -805,8 +806,13 @@ public class SVNClientImpl implements ISVNClient {
     }
 
     public void upgrade(String path) throws ClientException {
-        // TODO Auto-generated method stub
-
+        SvnUpgrade upgrade = svnOperationFactory.createUpgrade();
+        upgrade.setSingleTarget(getTarget(path));
+        try {
+            upgrade.run();
+        } catch (SVNException e) {
+            throw ClientException.fromException(e);
+        }
     }
 
     public void patch(String patchPath, String targetPath, boolean dryRun,
