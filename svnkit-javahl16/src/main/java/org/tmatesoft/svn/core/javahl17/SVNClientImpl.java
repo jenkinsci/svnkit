@@ -1,7 +1,10 @@
 package org.tmatesoft.svn.core.javahl17;
 
+import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -60,6 +63,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.SVNConflictChoice;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
@@ -71,6 +75,7 @@ import org.tmatesoft.svn.core.wc2.SvnCommit;
 import org.tmatesoft.svn.core.wc2.SvnCommitItem;
 import org.tmatesoft.svn.core.wc2.SvnCopy;
 import org.tmatesoft.svn.core.wc2.SvnCopySource;
+import org.tmatesoft.svn.core.wc2.SvnDiff;
 import org.tmatesoft.svn.core.wc2.SvnDiffStatus;
 import org.tmatesoft.svn.core.wc2.SvnDiffSummarize;
 import org.tmatesoft.svn.core.wc2.SvnExport;
@@ -535,8 +540,31 @@ public class SVNClientImpl implements ISVNClient {
             Depth depth, Collection<String> changelists,
             boolean ignoreAncestry, boolean noDiffDeleted, boolean force,
             boolean copiesAsAdds) throws ClientException {
-        // TODO Auto-generated method stub
+        FileOutputStream fileOutputStream = null;
+        BufferedOutputStream bufferedOutputStream = null;
+        try {
+            fileOutputStream = new FileOutputStream(outFileName);
+            bufferedOutputStream = new BufferedOutputStream(fileOutputStream);
 
+            SvnDiff diff = svnOperationFactory.createDiff();
+            diff.setSources(getTarget(target1, revision1), getTarget(target2, revision2));
+            diff.setSingleTarget(getTarget(relativeToDir));
+            diff.setOutput(bufferedOutputStream);
+            diff.setDepth(getSVNDepth(depth));
+            diff.setApplicalbeChangelists(changelists);
+            diff.setIgnoreAncestry(ignoreAncestry);
+            diff.setNoDiffDeleted(noDiffDeleted);
+            diff.setIgnoreContentType(force);
+            diff.setShowCopiesAsAdds(copiesAsAdds);
+            diff.run();
+        } catch (FileNotFoundException e) {
+            throw ClientException.fromException(e);
+        } catch (SVNException e) {
+            throw ClientException.fromException(e);
+        } finally {
+            SVNFileUtil.closeFile(fileOutputStream);
+            SVNFileUtil.closeFile(bufferedOutputStream);
+        }
     }
 
     public void diff(String target, Revision pegRevision,
@@ -544,8 +572,31 @@ public class SVNClientImpl implements ISVNClient {
             String outFileName, Depth depth, Collection<String> changelists,
             boolean ignoreAncestry, boolean noDiffDeleted, boolean force,
             boolean copiesAsAdds) throws ClientException {
-        // TODO Auto-generated method stub
+        FileOutputStream fileOutputStream = null;
+        BufferedOutputStream bufferedOutputStream = null;
+        try {
+            fileOutputStream = new FileOutputStream(outFileName);
+            bufferedOutputStream = new BufferedOutputStream(fileOutputStream);
 
+            SvnDiff diff = svnOperationFactory.createDiff();
+            diff.setSource(getTarget(target, pegRevision), getSVNRevision(startRevision), getSVNRevision(endRevision));
+            diff.setSingleTarget(getTarget(relativeToDir));
+            diff.setOutput(bufferedOutputStream);
+            diff.setDepth(getSVNDepth(depth));
+            diff.setApplicalbeChangelists(changelists);
+            diff.setIgnoreAncestry(ignoreAncestry);
+            diff.setNoDiffDeleted(noDiffDeleted);
+            diff.setIgnoreContentType(force);
+            diff.setShowCopiesAsAdds(copiesAsAdds);
+            diff.run();
+        } catch (FileNotFoundException e) {
+            throw ClientException.fromException(e);
+        } catch (SVNException e) {
+            throw ClientException.fromException(e);
+        } finally {
+            SVNFileUtil.closeFile(fileOutputStream);
+            SVNFileUtil.closeFile(bufferedOutputStream);
+        }
     }
 
     public void diffSummarize(String target1, Revision revision1,
