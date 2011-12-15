@@ -93,6 +93,10 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 public class SVNClientImpl implements ISVNClient {
 
+    public static SVNClientImpl newInstance() {
+        return new SVNClientImpl();
+    }
+
     private SvnOperationFactory svnOperationFactory;
 
     protected SVNClientImpl() {
