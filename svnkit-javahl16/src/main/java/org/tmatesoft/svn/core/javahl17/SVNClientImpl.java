@@ -80,6 +80,7 @@ import org.tmatesoft.svn.core.wc2.SvnDiffStatus;
 import org.tmatesoft.svn.core.wc2.SvnDiffSummarize;
 import org.tmatesoft.svn.core.wc2.SvnExport;
 import org.tmatesoft.svn.core.wc2.SvnGetInfo;
+import org.tmatesoft.svn.core.wc2.SvnGetMergeInfo;
 import org.tmatesoft.svn.core.wc2.SvnGetProperties;
 import org.tmatesoft.svn.core.wc2.SvnGetStatus;
 import org.tmatesoft.svn.core.wc2.SvnImport;
@@ -522,8 +523,13 @@ public class SVNClientImpl implements ISVNClient {
 
     public Mergeinfo getMergeinfo(String path, Revision pegRevision)
             throws SubversionException {
-        // TODO Auto-generated method stub
-        return null;
+        SvnGetMergeInfo getMergeInfo = svnOperationFactory.createGetMergeInfo();
+        getMergeInfo.setSingleTarget(getTarget(path, pegRevision));
+        try {
+            getMergeInfo.run();
+        } catch (SVNException e) {
+            //TODO: cannot instantiate SubversionException
+        }
     }
 
     public void getMergeinfoLog(LogKind kind, String pathOrUrl,
