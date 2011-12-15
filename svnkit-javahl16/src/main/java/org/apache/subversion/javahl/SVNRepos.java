@@ -16,6 +16,10 @@ public class SVNRepos implements ISVNRepos {
 
     private SVNReposImpl delegate;
 
+    public SVNRepos() {
+        this.delegate = new SVNReposImpl();
+    }
+
     public void dispose() {
         delegate.dispose();
     }

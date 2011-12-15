@@ -62,6 +62,7 @@ import org.tmatesoft.svn.core.wc.SVNConflictChoice;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
+import org.tmatesoft.svn.core.wc2.SvnCheckout;
 import org.tmatesoft.svn.core.wc2.SvnCleanup;
 import org.tmatesoft.svn.core.wc2.SvnCommit;
 import org.tmatesoft.svn.core.wc2.SvnCommitItem;
@@ -194,8 +195,20 @@ public class SVNClientImpl implements ISVNClient {
     public long checkout(String moduleName, String destPath, Revision revision,
             Revision pegRevision, Depth depth, boolean ignoreExternals,
             boolean allowUnverObstructions) throws ClientException {
-        // TODO Auto-generated method stub
-        return 0;
+
+        SvnCheckout checkout = svnOperationFactory.createCheckout();
+        checkout.setSource(getTarget(moduleName, pegRevision));
+        checkout.setSingleTarget(getTarget(destPath));
+        checkout.setRevision(getSVNRevision(revision));
+        checkout.setDepth(getSVNDepth(depth));
+        checkout.setIgnoreExternals(ignoreExternals);
+        checkout.setAllowUnversionedObstructions(allowUnverObstructions);
+
+        try {
+            return checkout.run();
+        } catch (SVNException e) {
+            throw ClientException.fromException(e);
+        }
     }
 
     public void notification2(ClientNotifyCallback notify) {
@@ -306,7 +319,6 @@ public class SVNClientImpl implements ISVNClient {
             boolean copyAsChild, boolean makeParents, boolean ignoreExternals,
             Map<String, String> revpropTable, CommitMessageCallback handler,
             CommitCallback callback) throws ClientException {
-        // TODO Auto-generated method stub
         final Set<CopySource> localSources = new HashSet<CopySource>();
         final Set<CopySource> remoteSources = new HashSet<CopySource>();
 
@@ -332,7 +344,6 @@ public class SVNClientImpl implements ISVNClient {
     public void mkdir(Set<String> path, boolean makeParents,
             Map<String, String> revpropTable, CommitMessageCallback handler,
             CommitCallback callback) throws ClientException {
-        // TODO Auto-generated method stub
         final Set<String> localPaths = new HashSet<String>();
         final Set<String> remoteUrls = new HashSet<String>();
 
@@ -789,11 +800,12 @@ public class SVNClientImpl implements ISVNClient {
     }
 
     private long getLongDate(Date date) {
-        return date.getTime();
+        SVNDate svnDate = SVNDate.fromDate(date);
+        return svnDate.getTimeInMicros();
     }
 
     private SvnTarget getTarget(String path, Revision revision) {
-        SVNRevision svnRevision = revision == null ? SVNRevision.UNDEFINED : getSVNRevision(revision);
+        SVNRevision svnRevision = getSVNRevision(revision);
 
         if (SVNPathUtil.isURL(path)) {
             try {
@@ -860,7 +872,10 @@ public class SVNClientImpl implements ISVNClient {
         }
     }
 
-    private SVNRevision getSVNRevision(Revision revision) {
+    static SVNRevision getSVNRevision(Revision revision) {
+        if (revision == null) {
+            return SVNRevision.UNDEFINED;
+        }
         switch (revision.getKind()) {
             case base:
                 return SVNRevision.BASE;

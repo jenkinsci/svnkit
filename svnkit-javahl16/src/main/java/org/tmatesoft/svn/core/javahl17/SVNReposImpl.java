@@ -13,13 +13,21 @@ import org.apache.subversion.javahl.types.Depth;
 import org.apache.subversion.javahl.types.Lock;
 import org.apache.subversion.javahl.types.Revision;
 import org.apache.subversion.javahl.types.Version;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.wc.SVNClientManager;
+import org.tmatesoft.svn.core.wc.admin.SVNAdminClient;
+import org.tmatesoft.svn.core.wc.admin.SVNUUIDAction;
 
 public class SVNReposImpl {
 
+    SVNClientManager svnClientManager;
+
     public SVNReposImpl() {
+        svnClientManager = SVNClientManager.newInstance();
     }
 
     public void dispose() {
+        svnClientManager.dispose();
     }
 
     public Version getVersion() {
@@ -27,15 +35,33 @@ public class SVNReposImpl {
     }
 
     public void create(File path, boolean disableFsyncCommit, boolean keepLog, File configPath, String fstype) throws ClientException {
+        SVNAdminClient svnAdminClient = svnClientManager.getAdminClient();
+        try {
+            svnAdminClient.doCreateRepository(path, null, false, false);
+        } catch (SVNException e) {
+            throw ClientException.fromException(e);
+        }
     }
 
     public void deltify(File path, Revision start, Revision end) throws ClientException {
     }
 
     public void dump(File path, OutputStream dataOut, Revision start, Revision end, boolean incremental, boolean useDeltas, ReposNotifyCallback callback) throws ClientException {
+        SVNAdminClient svnAdminClient = svnClientManager.getAdminClient();
+        try {
+            svnAdminClient.doDump(path, dataOut, SVNClientImpl.getSVNRevision(start), SVNClientImpl.getSVNRevision(end), incremental, useDeltas);
+        } catch (SVNException e) {
+            throw ClientException.fromException(e);
+        }
     }
 
     public void hotcopy(File path, File targetPath, boolean cleanLogs) throws ClientException {
+        SVNAdminClient svnAdminClient = svnClientManager.getAdminClient();
+        try {
+            svnAdminClient.doHotCopy(path, targetPath);
+        } catch (SVNException e) {
+            throw ClientException.fromException(e);
+        }
     }
 
     public void listDBLogs(File path, ISVNRepos.MessageReceiver receiver) throws ClientException {
@@ -45,6 +71,12 @@ public class SVNReposImpl {
     }
 
     public void load(File path, InputStream dataInput, boolean ignoreUUID, boolean forceUUID, boolean usePreCommitHook, boolean usePostCommitHook, String relativePath, ReposNotifyCallback callback) throws ClientException {
+        SVNAdminClient svnAdminClient = svnClientManager.getAdminClient();
+        try {
+            svnAdminClient.doLoad(path, dataInput, usePreCommitHook, usePostCommitHook, SVNUUIDAction.DEFAULT, null);
+        } catch (SVNException e) {
+            throw ClientException.fromException(e);
+        }
     }
 
     public void lstxns(File path, ISVNRepos.MessageReceiver receiver) throws ClientException {
