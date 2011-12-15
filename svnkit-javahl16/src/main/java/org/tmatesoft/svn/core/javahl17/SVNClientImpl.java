@@ -1,5 +1,6 @@
 package org.tmatesoft.svn.core.javahl17;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.OutputStream;
 import java.text.ParseException;
@@ -62,6 +63,7 @@ import org.tmatesoft.svn.core.wc.SVNConflictChoice;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
+import org.tmatesoft.svn.core.wc2.SvnCat;
 import org.tmatesoft.svn.core.wc2.SvnCheckout;
 import org.tmatesoft.svn.core.wc2.SvnCleanup;
 import org.tmatesoft.svn.core.wc2.SvnCommit;
@@ -675,14 +677,28 @@ public class SVNClientImpl implements ISVNClient {
 
     public byte[] fileContent(String path, Revision revision,
             Revision pegRevision) throws ClientException {
-        // TODO Auto-generated method stub
-        return null;
+
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+
+        streamFileContent(path, revision, pegRevision, byteArrayOutputStream);
+
+        return byteArrayOutputStream.toByteArray();
     }
 
     public void streamFileContent(String path, Revision revision,
             Revision pegRevision, OutputStream stream) throws ClientException {
-        // TODO Auto-generated method stub
 
+        SvnCat cat = svnOperationFactory.createCat();
+        cat.setSingleTarget(getTarget(path, pegRevision));
+        cat.setRevision(getSVNRevision(revision));
+        cat.setExpandKeywords(false);
+        cat.setOutput(stream);
+
+        try {
+            cat.run();
+        } catch (SVNException e) {
+            throw ClientException.fromException(e);
+        }
     }
 
     public void relocate(String from, String to, String path,
