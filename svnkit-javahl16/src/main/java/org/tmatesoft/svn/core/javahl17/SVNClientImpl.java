@@ -80,6 +80,7 @@ import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 import org.tmatesoft.svn.core.wc2.SvnRemoteCopy;
 import org.tmatesoft.svn.core.wc2.SvnRemoteDelete;
 import org.tmatesoft.svn.core.wc2.SvnRemoteMkDir;
+import org.tmatesoft.svn.core.wc2.SvnRemoteSetProperty;
 import org.tmatesoft.svn.core.wc2.SvnResolve;
 import org.tmatesoft.svn.core.wc2.SvnRevert;
 import org.tmatesoft.svn.core.wc2.SvnRevisionRange;
@@ -652,8 +653,19 @@ public class SVNClientImpl implements ISVNClient {
     public void setRevProperty(String path, String name, Revision rev,
             String value, String originalValue, boolean force)
             throws ClientException {
-        // TODO Auto-generated method stub
+        SvnRemoteSetProperty remoteSetProperty = svnOperationFactory.createRemoteSetProperty();
+        remoteSetProperty.setSingleTarget(getTarget(path));
+        remoteSetProperty.setPropertyName(name);
+        remoteSetProperty.setRevision(getSVNRevision(rev));
+        remoteSetProperty.setPropertyValue(SVNPropertyValue.create(value));
+        //TODO: no originalValue parameter
+        remoteSetProperty.setForce(force);
 
+        try {
+            remoteSetProperty.run();
+        } catch (SVNException e) {
+            throw ClientException.fromException(e);
+        }
     }
 
     public byte[] propertyGet(String path, String name, Revision revision,
