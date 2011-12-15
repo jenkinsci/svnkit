@@ -89,10 +89,12 @@ import org.tmatesoft.svn.core.wc2.SvnRevert;
 import org.tmatesoft.svn.core.wc2.SvnRevisionRange;
 import org.tmatesoft.svn.core.wc2.SvnScheduleForAddition;
 import org.tmatesoft.svn.core.wc2.SvnScheduleForRemoval;
+import org.tmatesoft.svn.core.wc2.SvnSetLock;
 import org.tmatesoft.svn.core.wc2.SvnSetProperty;
 import org.tmatesoft.svn.core.wc2.SvnStatus;
 import org.tmatesoft.svn.core.wc2.SvnSwitch;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
+import org.tmatesoft.svn.core.wc2.SvnUnlock;
 import org.tmatesoft.svn.core.wc2.SvnUpdate;
 import org.tmatesoft.svn.core.wc2.hooks.ISvnCommitHandler;
 import org.tmatesoft.svn.util.SVNLogType;
@@ -759,13 +761,34 @@ public class SVNClientImpl implements ISVNClient {
 
     public void lock(Set<String> path, String comment, boolean force)
             throws ClientException {
-        // TODO Auto-generated method stub
+        SvnSetLock lock = svnOperationFactory.createSetLock();
+        lock.setLockMessage(comment);
+        lock.setStealLock(force);
 
+        for (String targetPath : path) {
+            lock.addTarget(getTarget(targetPath));
+        }
+
+        try {
+            lock.run();
+        } catch (SVNException e) {
+            throw ClientException.fromException(e);
+        }
     }
 
     public void unlock(Set<String> path, boolean force) throws ClientException {
-        // TODO Auto-generated method stub
+        SvnUnlock unlock = svnOperationFactory.createUnlock();
+        unlock.setBreakLock(force);
 
+        for (String targetPath : path) {
+            unlock.addTarget(getTarget(targetPath));
+        }
+
+        try {
+            unlock.run();
+        } catch (SVNException e) {
+            throw ClientException.fromException(e);
+        }
     }
 
     public void info2(String pathOrUrl, Revision revision,
