@@ -73,6 +73,7 @@ import org.tmatesoft.svn.core.wc2.SvnDiffSummarize;
 import org.tmatesoft.svn.core.wc2.SvnExport;
 import org.tmatesoft.svn.core.wc2.SvnGetProperties;
 import org.tmatesoft.svn.core.wc2.SvnGetStatus;
+import org.tmatesoft.svn.core.wc2.SvnImport;
 import org.tmatesoft.svn.core.wc2.SvnLog;
 import org.tmatesoft.svn.core.wc2.SvnMerge;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
@@ -422,8 +423,23 @@ public class SVNClientImpl implements ISVNClient {
             boolean noIgnore, boolean ignoreUnknownNodeTypes,
             Map<String, String> revpropTable, CommitMessageCallback handler,
             CommitCallback callback) throws ClientException {
-        // TODO Auto-generated method stub
+        SvnImport svnImport = svnOperationFactory.createImport();
+        svnImport.setDepth(getSVNDepth(depth));
+        svnImport.setIncludeIgnored(noIgnore);
+        //TODO: how to respect ignoreUnknownNodeTypes ?
+        svnImport.setRevisionProperties(getSVNProperties(revpropTable));
+        svnImport.setCommitHandler(getCommitHandler(handler));
+        svnImport.setReceiver(getCommitInfoReceiver(callback));
 
+        //TODO: how to specify path and url?
+        svnImport.addTarget(getTarget(path));
+        svnImport.addTarget(getTarget(url));
+
+        try {
+            svnImport.run();
+        } catch (SVNException e) {
+            throw ClientException.fromException(e);
+        }
     }
 
     public Set<String> suggestMergeSources(String path, Revision pegRevision)
