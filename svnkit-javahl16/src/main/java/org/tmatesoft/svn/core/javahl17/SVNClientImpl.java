@@ -88,6 +88,7 @@ import org.tmatesoft.svn.core.wc2.SvnGetStatus;
 import org.tmatesoft.svn.core.wc2.SvnImport;
 import org.tmatesoft.svn.core.wc2.SvnInfo;
 import org.tmatesoft.svn.core.wc2.SvnLog;
+import org.tmatesoft.svn.core.wc2.SvnLogMergeInfo;
 import org.tmatesoft.svn.core.wc2.SvnMerge;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 import org.tmatesoft.svn.core.wc2.SvnRelocate;
@@ -554,8 +555,19 @@ public class SVNClientImpl implements ISVNClient {
             Revision srcPegRevision, boolean discoverChangedPaths, Depth depth,
             Set<String> revProps, LogMessageCallback callback)
             throws ClientException {
-        // TODO Auto-generated method stub
-
+        SvnLogMergeInfo logMergeInfo = svnOperationFactory.createLogMergeInfo();
+        logMergeInfo.setFindMerged(kind == LogKind.merged);
+        logMergeInfo.setSingleTarget(getTarget(pathOrUrl, pegRevision));
+        logMergeInfo.setSource(getTarget(mergeSourceUrl, srcPegRevision));
+        logMergeInfo.setDiscoverChangedPaths(discoverChangedPaths);
+        logMergeInfo.setDepth(getSVNDepth(depth));
+        logMergeInfo.setRevisionProperties(getRevisionPropertiesNames(revProps));
+        logMergeInfo.setReceiver(getLogEntryReceiver(callback));
+        try {
+            logMergeInfo.run();
+        } catch (SVNException e) {
+            throw ClientException.fromException(e);
+        }
     }
 
     public void diff(String target1, Revision revision1, String target2,
