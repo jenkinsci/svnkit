@@ -700,8 +700,20 @@ public class SVNClientImpl implements ISVNClient {
             byte[] value, CommitMessageCallback handler, boolean force,
             Map<String, String> revpropTable, CommitCallback callback)
             throws ClientException {
-        // TODO Auto-generated method stub
-
+        SvnRemoteSetProperty remoteSetProperty = svnOperationFactory.createRemoteSetProperty();
+        remoteSetProperty.setSingleTarget(getTarget(path));
+        remoteSetProperty.setRevision(SVNRevision.create(baseRev));
+        remoteSetProperty.setPropertyName(name);
+        remoteSetProperty.setPropertyValue(SVNPropertyValue.create(name, value));
+        remoteSetProperty.setCommitHandler(getCommitHandler(handler));
+        remoteSetProperty.setForce(force);
+        remoteSetProperty.setRevisionProperties(getSVNProperties(revpropTable));
+        remoteSetProperty.setReceiver(getCommitInfoReceiver(callback));
+        try {
+            remoteSetProperty.run();
+        } catch (SVNException e) {
+            throw ClientException.fromException(e);
+        }
     }
 
     public byte[] revProperty(String path, String name, Revision rev)
