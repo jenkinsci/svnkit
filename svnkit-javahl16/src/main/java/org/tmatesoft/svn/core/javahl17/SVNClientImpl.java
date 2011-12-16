@@ -451,8 +451,7 @@ public class SVNClientImpl implements ISVNClient {
         svnImport.setCommitHandler(getCommitHandler(handler));
         svnImport.setReceiver(getCommitInfoReceiver(callback));
 
-        //TODO: how to specify path and url?
-        svnImport.addTarget(getTarget(path));
+        svnImport.setSource(new File(path));
         svnImport.addTarget(getTarget(url));
 
         try {
