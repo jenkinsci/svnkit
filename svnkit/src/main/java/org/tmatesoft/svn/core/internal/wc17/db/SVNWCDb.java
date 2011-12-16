@@ -166,6 +166,22 @@ public class SVNWCDb implements ISVNWCDb {
         /* Run the cleanup for each WCROOT. */
         closeManyWCRoots(roots);
     }
+    
+    public void ensureNoUnfinishedTransactions() throws SVNException {
+        final Set<SVNWCDbRoot> roots = new HashSet<SVNWCDbRoot>();
+        /* Collect all the unique WCROOT structures, and empty out DIR_DATA. */
+        if (dirData != null) {
+            for (Map.Entry<File, SVNWCDbDir> entry : dirData.entrySet()) {
+                final SVNWCDbDir pdh = entry.getValue();
+                if (pdh.getWCRoot() != null && pdh.getWCRoot().getSDb() != null) {
+                    roots.add(pdh.getWCRoot());
+                }
+            }
+        }
+        for (final SVNWCDbRoot wcRoot : roots) {
+            wcRoot.ensureNoUnfinishedTransactions();
+        }
+    }
 
     private void closeManyWCRoots(final Set<SVNWCDbRoot> roots) {
         for (final SVNWCDbRoot wcRoot : roots) {

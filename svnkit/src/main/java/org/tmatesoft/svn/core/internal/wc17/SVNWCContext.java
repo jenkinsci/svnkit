@@ -4308,4 +4308,8 @@ public class SVNWCContext {
         DirParsedInfo parseDir = ((SVNWCDb) getDb()).parseDir(localAbsPath, Mode.ReadWrite);
         return parseDir.localRelPath;
     }
+
+    public void ensureNoUnfinishedTransactions() throws SVNException {
+        ((SVNWCDb) getDb()).ensureNoUnfinishedTransactions();
+    }
 }

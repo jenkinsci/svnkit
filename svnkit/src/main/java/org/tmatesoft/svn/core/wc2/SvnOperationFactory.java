@@ -455,7 +455,11 @@ public class SvnOperationFactory {
         return null;
     }
 
-    private void releaseWcContext(SVNWCContext wcContext) {
+    private void releaseWcContext(SVNWCContext wcContext) throws SVNException {
+        // check is wcContext is empty of unfinished transactions
+        if (wcContext != null) {
+            wcContext.ensureNoUnfinishedTransactions();
+        }
         if (isAutoCloseContext() && wcContext != null) {
             if (this.wcContext == wcContext) {
                 disposeWcContext();

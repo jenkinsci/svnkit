@@ -55,6 +55,10 @@ public class SVNSqlJetDb {
     public SqlJetDb getDb() {
         return db;
     }
+    
+    public int getOpenCount() {
+        return openCount;
+    }
 
     public void close() throws SVNException {
         if (temporaryDb != null) {

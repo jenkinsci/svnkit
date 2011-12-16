@@ -163,4 +163,13 @@ public class SVNWCDbRoot {
         return SVNFileUtil.createFilePath(getAbsPath(), localRelPath);
     }
 
+    public void ensureNoUnfinishedTransactions() throws SVNException {
+        if (sDb != null) {
+            if (sDb.getOpenCount() != 0) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SQLITE_ERROR, "There are unfinished transactions detected in ''{0}''", absPath);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+        }
+    }
+
 }
