@@ -58,6 +58,7 @@ import org.tmatesoft.svn.core.internal.wc2.old.SvnOldExport;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetInfo;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetProperties;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetStatus;
+import org.tmatesoft.svn.core.internal.wc2.old.SvnOldImport;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldMerge;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldRelocate;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldRemoteCopy;
@@ -209,6 +210,8 @@ public class SvnOperationFactory {
         registerOperationRunner(SvnRemoteDelete.class, new SvnRemoteRemoteDelete());
         
         registerOperationRunner(SvnMerge.class, new SvnOldMerge());
+        
+        registerOperationRunner(SvnImport.class, new SvnOldImport());
     }
     
     public boolean isAutoCloseContext() {

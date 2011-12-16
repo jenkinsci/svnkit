@@ -1,10 +1,15 @@
 package org.tmatesoft.svn.core.wc2;
 
+import java.io.File;
+
 public class SvnImport extends AbstractSvnCommit {
 
     private boolean applyAutoProperties;
+    private boolean useGlobalIgnores;
     private boolean force;
     private boolean includeIgnored;
+    
+    private File source;
     
     public boolean isApplyAutoProperties() {
         return applyAutoProperties;
@@ -12,6 +17,14 @@ public class SvnImport extends AbstractSvnCommit {
 
     public void setApplyAutoProperties(boolean applyAutoProperties) {
         this.applyAutoProperties = applyAutoProperties;
+    }
+
+    public File getSource() {
+        return source;
+    }
+
+    public void setSource(File source) {
+        this.source = source;
     }
 
     public boolean isForce() {
@@ -32,6 +45,14 @@ public class SvnImport extends AbstractSvnCommit {
 
     protected SvnImport(SvnOperationFactory factory) {
         super(factory);
+    }
+
+    public boolean isUseGlobalIgnores() {
+        return useGlobalIgnores;
+    }
+
+    public void setUseGlobalIgnores(boolean useGlobalIgnores) {
+        this.useGlobalIgnores = useGlobalIgnores;
     }
 
 }

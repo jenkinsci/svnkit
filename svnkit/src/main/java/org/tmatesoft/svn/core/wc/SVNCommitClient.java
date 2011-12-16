@@ -30,12 +30,11 @@ import org.tmatesoft.svn.core.internal.wc17.SVNCommitClient17;
 import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
 import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec.SVNCommitPacketWrapper;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.wc2.SvnCat;
 import org.tmatesoft.svn.core.wc2.SvnCommit;
 import org.tmatesoft.svn.core.wc2.SvnCommitPacket;
+import org.tmatesoft.svn.core.wc2.SvnImport;
 import org.tmatesoft.svn.core.wc2.SvnRemoteDelete;
 import org.tmatesoft.svn.core.wc2.SvnRemoteMkDir;
-import org.tmatesoft.svn.core.wc2.SvnScheduleForAddition;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -442,14 +441,7 @@ public class SVNCommitClient extends SVNBasicClient {
      *             instead
      */
     public SVNCommitInfo doImport(File path, SVNURL dstURL, String commitMessage, boolean recursive) throws SVNException {
-        try {
-            return getSVNCommitClient17().doImport(path, dstURL, commitMessage, recursive);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                return getSVNCommitClient16().doImport(path, dstURL, commitMessage, recursive);
-            }
-            throw e;
-        }
+        return doImport(path, dstURL, commitMessage, null, true, true, SVNDepth.fromRecurse(recursive));
     }
 
     /**
@@ -494,14 +486,7 @@ public class SVNCommitClient extends SVNBasicClient {
      *             instead
      */
     public SVNCommitInfo doImport(File path, SVNURL dstURL, String commitMessage, boolean useGlobalIgnores, boolean recursive) throws SVNException {
-        try {
-            return getSVNCommitClient17().doImport(path, dstURL, commitMessage, useGlobalIgnores, recursive);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                return getSVNCommitClient16().doImport(path, dstURL, commitMessage, useGlobalIgnores, recursive);
-            }
-            throw e;
-        }
+        return doImport(path, dstURL, commitMessage, null, useGlobalIgnores, true, SVNDepth.fromRecurse(recursive));
     }
 
     /**
@@ -589,16 +574,16 @@ public class SVNCommitClient extends SVNBasicClient {
      *             </ul>
      * @since 1.2.0, New in SVN 1.5.0
      */
-    public SVNCommitInfo doImport(File path, SVNURL dstURL, String commitMessage, SVNProperties revisionProperties, boolean useGlobalIgnores, boolean ignoreUnknownNodeTypes, SVNDepth depth)
-            throws SVNException {
-        try {
-            return getSVNCommitClient17().doImport(path, dstURL, commitMessage, revisionProperties, useGlobalIgnores, ignoreUnknownNodeTypes, depth);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                return getSVNCommitClient16().doImport(path, dstURL, commitMessage, revisionProperties, useGlobalIgnores, ignoreUnknownNodeTypes, depth);
-            }
-            throw e;
-        }
+    public SVNCommitInfo doImport(File path, SVNURL dstURL, String commitMessage, SVNProperties revisionProperties, boolean useGlobalIgnores, boolean ignoreUnknownNodeTypes, SVNDepth depth) throws SVNException {
+        SvnImport svnImport = getOperationsFactory().createImport();
+        svnImport.setCommitHandler(SvnCodec.commitHandler(getCommitHandler()));
+        svnImport.setCommitMessage(commitMessage);
+        svnImport.setRevisionProperties(revisionProperties);
+        svnImport.addTarget(SvnTarget.fromURL(dstURL));
+        svnImport.setSource(path);
+        svnImport.setUseGlobalIgnores(useGlobalIgnores);
+        
+        return svnImport.run();
     }
 
     /**
