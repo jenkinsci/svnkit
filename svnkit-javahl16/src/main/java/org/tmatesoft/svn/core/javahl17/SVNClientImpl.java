@@ -103,6 +103,7 @@ import org.tmatesoft.svn.core.wc2.SvnScheduleForRemoval;
 import org.tmatesoft.svn.core.wc2.SvnSetLock;
 import org.tmatesoft.svn.core.wc2.SvnSetProperty;
 import org.tmatesoft.svn.core.wc2.SvnStatus;
+import org.tmatesoft.svn.core.wc2.SvnSuggestMergeSources;
 import org.tmatesoft.svn.core.wc2.SvnSwitch;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.core.wc2.SvnUnlock;
@@ -462,8 +463,21 @@ public class SVNClientImpl implements ISVNClient {
 
     public Set<String> suggestMergeSources(String path, Revision pegRevision)
             throws SubversionException {
-        // TODO Auto-generated method stub
-        return null;
+        SvnSuggestMergeSources suggestMergeSources = svnOperationFactory.createSuggestMergeSources();
+        suggestMergeSources.setSingleTarget(getTarget(path, pegRevision));
+
+        Collection<SVNURL> mergeSources;
+        try {
+            mergeSources = suggestMergeSources.run();
+        } catch (SVNException e) {
+            throw ClientException.fromException(e);
+        }
+
+        Set<String> mergeSourcesStrings = new HashSet<String>();
+        for (SVNURL mergeSource : mergeSources) {
+            mergeSourcesStrings.add(mergeSource.toString());
+        }
+        return mergeSourcesStrings;
     }
 
     public void merge(String path1, Revision revision1, String path2,
