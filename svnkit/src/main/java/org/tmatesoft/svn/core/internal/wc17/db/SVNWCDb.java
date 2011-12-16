@@ -4880,51 +4880,55 @@ public class SVNWCDb implements ISVNWCDb {
         SVNWCDbDir dir = wcInfo.wcDbDir;
         SVNSqlJetStatement stmt = dir.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_NODE_INFO);
         File relativePath = wcInfo.localRelPath;
-        stmt.bindf("is", dir.getWCRoot().getWcId(), relativePath);
-        if (!stmt.next()) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{0}'' was not found.", 
-                    localAbspath), SVNLogType.WC);
-        }
-        
-        long opDepth = getColumnInt64(stmt, NODES__Fields.op_depth);
-        SVNWCDbStatus status = getColumnPresence(stmt);
-        
-        if (opDepth > 0 && status == SVNWCDbStatus.BaseDeleted) {
-            boolean hasNext = stmt.next();
-            assert hasNext;
-            opDepth = getColumnInt64(stmt, NODES__Fields.op_depth);
-            status = getColumnPresence(stmt);
-        }
         Structure<PristineInfo> result = Structure.obtain(PristineInfo.class);
-        SVNWCDbKind kind = getColumnKind(stmt, NODES__Fields.kind);
-        result.set(PristineInfo.kind, kind);
-        result.set(PristineInfo.changed_date, SVNWCUtils.readDate(getColumnInt64(stmt, NODES__Fields.changed_date)));
-        result.set(PristineInfo.changed_author, getColumnText(stmt, NODES__Fields.changed_author));
-        result.set(PristineInfo.changed_rev, getColumnInt64(stmt, NODES__Fields.changed_revision));
-        
-        if (opDepth > 0) {
-            result.set(PristineInfo.status, getWorkingStatus(status));
-        } else {
-            result.set(PristineInfo.status, status);
-        }
-        if (kind != SVNWCDbKind.Dir) {
-            result.set(PristineInfo.depth, SVNDepth.UNKNOWN);
-        } else {
-            String depthStr = getColumnText(stmt, NODES__Fields.depth);
-            if (depthStr == null) {
+        try {
+            stmt.bindf("is", dir.getWCRoot().getWcId(), relativePath);
+            if (!stmt.next()) {
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{0}'' was not found.", 
+                        localAbspath), SVNLogType.WC);
+            }
+            
+            long opDepth = getColumnInt64(stmt, NODES__Fields.op_depth);
+            SVNWCDbStatus status = getColumnPresence(stmt);
+            
+            if (opDepth > 0 && status == SVNWCDbStatus.BaseDeleted) {
+                boolean hasNext = stmt.next();
+                assert hasNext;
+                opDepth = getColumnInt64(stmt, NODES__Fields.op_depth);
+                status = getColumnPresence(stmt);
+            }
+            SVNWCDbKind kind = getColumnKind(stmt, NODES__Fields.kind);
+            result.set(PristineInfo.kind, kind);
+            result.set(PristineInfo.changed_date, SVNWCUtils.readDate(getColumnInt64(stmt, NODES__Fields.changed_date)));
+            result.set(PristineInfo.changed_author, getColumnText(stmt, NODES__Fields.changed_author));
+            result.set(PristineInfo.changed_rev, getColumnInt64(stmt, NODES__Fields.changed_revision));
+            
+            if (opDepth > 0) {
+                result.set(PristineInfo.status, getWorkingStatus(status));
+            } else {
+                result.set(PristineInfo.status, status);
+            }
+            if (kind != SVNWCDbKind.Dir) {
                 result.set(PristineInfo.depth, SVNDepth.UNKNOWN);
             } else {
-                result.set(PristineInfo.depth, SVNDepth.fromString(depthStr));
+                String depthStr = getColumnText(stmt, NODES__Fields.depth);
+                if (depthStr == null) {
+                    result.set(PristineInfo.depth, SVNDepth.UNKNOWN);
+                } else {
+                    result.set(PristineInfo.depth, SVNDepth.fromString(depthStr));
+                }
             }
+            if (kind == SVNWCDbKind.File) {
+                SvnChecksum checksum = getColumnChecksum(stmt, NODES__Fields.checksum);
+                result.set(PristineInfo.checksum, checksum);
+            } else if (kind == SVNWCDbKind.Symlink) {
+                // TODO File?
+                result.set(PristineInfo.target, getColumnText(stmt, NODES__Fields.symlink_target));
+            }
+            result.set(PristineInfo.hadProps, hasColumnProperties(stmt, NODES__Fields.properties));
+        } finally {
+            stmt.reset();
         }
-        if (kind == SVNWCDbKind.File) {
-            SvnChecksum checksum = getColumnChecksum(stmt, NODES__Fields.checksum);
-            result.set(PristineInfo.checksum, checksum);
-        } else if (kind == SVNWCDbKind.Symlink) {
-            // TODO File?
-            result.set(PristineInfo.target, getColumnText(stmt, NODES__Fields.symlink_target));
-        }
-        result.set(PristineInfo.hadProps, hasColumnProperties(stmt, NODES__Fields.properties));
             
         return result;
     }
