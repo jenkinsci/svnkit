@@ -958,7 +958,7 @@ public class SVNClientImpl implements ISVNClient {
         String itemUrl = repositoryRootUrl == null ? null : getUrlString(repositoryRootUrl.appendPath(repositoryRelativePath, false));
 
         return new Status(
-                status.getPath().getPath(),
+                getFilePath(status.getPath()),
                 itemUrl,
                 getNodeKind(status.getKind()),
                 status.getRevision(),
@@ -1099,9 +1099,16 @@ public class SVNClientImpl implements ISVNClient {
         if (commitable == null) {
             return null;
         }
-        return new CommitItem(commitable.getPath().getPath(), getNodeKind(commitable.getKind()), commitable.getFlags(),
+        return new CommitItem(getFilePath(commitable.getPath()), getNodeKind(commitable.getKind()), commitable.getFlags(),
                 getUrlString(commitable.getUrl()), getUrlString(commitable.getCopyFromUrl()),
                 commitable.getCopyFromRevision());
+    }
+
+    private String getFilePath(File path) {
+        if (path == null) {
+            return null;
+        }
+        return path.getPath();
     }
 
     private String getUrlString(SVNURL url) {
@@ -1200,7 +1207,7 @@ public class SVNClientImpl implements ISVNClient {
         }
         return new ISvnObjectReceiver<SVNProperties>() {
             public void receive(SvnTarget target, SVNProperties svnProperties) throws SVNException {
-                callback.singlePath(target.getFile().getPath(), getProperties(svnProperties));
+                callback.singlePath(getFilePath(target.getFile()), getProperties(svnProperties));
             }
         };
     }
