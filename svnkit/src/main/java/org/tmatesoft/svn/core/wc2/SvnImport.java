@@ -2,6 +2,9 @@ package org.tmatesoft.svn.core.wc2;
 
 import java.io.File;
 
+import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNException;
+
 public class SvnImport extends AbstractSvnCommit {
 
     private boolean applyAutoProperties;
@@ -54,5 +57,15 @@ public class SvnImport extends AbstractSvnCommit {
     public void setUseGlobalIgnores(boolean useGlobalIgnores) {
         this.useGlobalIgnores = useGlobalIgnores;
     }
+
+    @Override
+    protected void ensureArgumentsAreValid() throws SVNException {
+        if (getDepth() == null || getDepth() == SVNDepth.UNKNOWN) {
+            setDepth(SVNDepth.INFINITY);
+        }
+        super.ensureArgumentsAreValid();
+    }
+    
+    
 
 }
