@@ -1002,6 +1002,19 @@ public class SVNClientImpl implements ISVNClient {
         }
     }
 
+    private static SVNStatusType combineStatus(SvnStatus status) {
+        if (status.getNodeStatus() == SVNStatusType.STATUS_CONFLICTED) {
+            if (!status.isVersioned() && status.isConflicted()) {
+                return SVNStatusType.STATUS_MISSING;
+            }
+            return status.getTextStatus();
+        } else if (status.getNodeStatus() == SVNStatusType.STATUS_MODIFIED) {
+            return status.getTextStatus();
+        }
+        return status.getNodeStatus();
+    }
+
+
     private Status getStatus(SvnStatus status) throws SVNException {
         String repositoryRelativePath = status.getRepositoryRelativePath() == null ? "" : status.getRepositoryRelativePath();
         SVNURL repositoryRootUrl = status.getRepositoryRootUrl();
@@ -1017,7 +1030,7 @@ public class SVNClientImpl implements ISVNClient {
                 status.getChangedRevision(),
                 getLongDate(status.getChangedDate()),
                 status.getChangedAuthor(),
-                getStatusKind(status.getTextStatus()),
+                getStatusKind(combineStatus(status)),
                 getStatusKind(status.getPropertiesStatus()),
                 getStatusKind(status.getRepositoryTextStatus()),
                 getStatusKind(status.getRepositoryPropertiesStatus()),
