@@ -1099,8 +1099,7 @@ public class SVNClientImpl implements ISVNClient {
         } else if (statusType == SVNStatusType.STATUS_UNVERSIONED) {
             return Status.Kind.unversioned;
         } else {
-            //TODO: is it a good default value or should an exception be thrown
-            return Status.Kind.none;
+            throw new IllegalArgumentException("Unknown status type: " + statusType);
         }
     }
 
@@ -1176,7 +1175,7 @@ public class SVNClientImpl implements ISVNClient {
         }
         return new ISvnObjectReceiver<SvnStatus>() {
             public void receive(SvnTarget target, SvnStatus status) throws SVNException {
-                callback.doStatus(null, getStatus(status));
+                callback.doStatus(getFilePath(target.getFile()), getStatus(status));
             }
         };
     }
