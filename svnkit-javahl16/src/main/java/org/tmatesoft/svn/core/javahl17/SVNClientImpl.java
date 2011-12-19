@@ -40,6 +40,7 @@ import org.apache.subversion.javahl.callback.ProgressCallback;
 import org.apache.subversion.javahl.callback.ProplistCallback;
 import org.apache.subversion.javahl.callback.StatusCallback;
 import org.apache.subversion.javahl.callback.UserPasswordCallback;
+import org.apache.subversion.javahl.types.Checksum;
 import org.apache.subversion.javahl.types.ConflictVersion;
 import org.apache.subversion.javahl.types.CopySource;
 import org.apache.subversion.javahl.types.Depth;
@@ -87,6 +88,7 @@ import org.tmatesoft.svn.core.wc2.SvnAnnotate;
 import org.tmatesoft.svn.core.wc2.SvnAnnotateItem;
 import org.tmatesoft.svn.core.wc2.SvnCat;
 import org.tmatesoft.svn.core.wc2.SvnCheckout;
+import org.tmatesoft.svn.core.wc2.SvnChecksum;
 import org.tmatesoft.svn.core.wc2.SvnCleanup;
 import org.tmatesoft.svn.core.wc2.SvnCommit;
 import org.tmatesoft.svn.core.wc2.SvnCommitItem;
@@ -114,6 +116,7 @@ import org.tmatesoft.svn.core.wc2.SvnRemoteSetProperty;
 import org.tmatesoft.svn.core.wc2.SvnResolve;
 import org.tmatesoft.svn.core.wc2.SvnRevert;
 import org.tmatesoft.svn.core.wc2.SvnRevisionRange;
+import org.tmatesoft.svn.core.wc2.SvnSchedule;
 import org.tmatesoft.svn.core.wc2.SvnScheduleForAddition;
 import org.tmatesoft.svn.core.wc2.SvnScheduleForRemoval;
 import org.tmatesoft.svn.core.wc2.SvnSetLock;
@@ -983,6 +986,22 @@ public class SVNClientImpl implements ISVNClient {
         }
     }
 
+    private Depth getDepth(SVNDepth depth) {
+        if (depth == SVNDepth.EMPTY) {
+            return Depth.empty;
+        } else if (depth == SVNDepth.EXCLUDE) {
+            return Depth.exclude;
+        } else if (depth == SVNDepth.FILES) {
+            return Depth.files;
+        } else if (depth == SVNDepth.IMMEDIATES) {
+            return Depth.immediates;
+        } else if (depth == SVNDepth.INFINITY) {
+            return Depth.infinity;
+        } else {
+            return Depth.unknown;
+        }
+    }
+
     private Status getStatus(SvnStatus status) throws SVNException {
         String repositoryRelativePath = status.getRepositoryRelativePath() == null ? "" : status.getRepositoryRelativePath();
         SVNURL repositoryRootUrl = status.getRepositoryRootUrl();
@@ -1574,8 +1593,74 @@ public class SVNClientImpl implements ISVNClient {
     }
 
     private Info getInfo(SvnInfo info) {
-        //TODO: implement
-        return null;
+        String url = getUrlString(info.getUrl());
+        String repositoryRoot = getUrlString(info.getRepositoryRootUrl());
+        String path = SVNPathUtil.getRelativePath(repositoryRoot, url);
+        boolean hasWcInfo = info.getWcInfo() != null;
+
+        return new Info(path,
+                hasWcInfo ? getFilePath(info.getWcInfo().getWcRoot()) : null,
+                url,
+                info.getRevision(),
+                getNodeKind(info.getKind()),
+                repositoryRoot,
+                info.getRepositoryUuid(),
+                info.getLastChangedRevision(),
+                getLongDate(info.getLastChangedDate()),
+                info.getLastChangedAuthor(),
+                getLock(info.getLock()),
+                hasWcInfo,
+                hasWcInfo ? getScheduleKind(info.getWcInfo().getSchedule()) : null,
+                hasWcInfo ? getUrlString(info.getWcInfo().getCopyFromUrl()) : null,
+                hasWcInfo ? info.getWcInfo().getCopyFromRevision() : null,
+                hasWcInfo ? info.getWcInfo().getRecordedTime() : null,
+                hasWcInfo ? getChecksum(info.getWcInfo().getChecksum()) : null,
+                hasWcInfo ? info.getWcInfo().getChangelist() : null,
+                hasWcInfo ? info.getWcInfo().getRecordedSize() : null,
+                info.getSize(),
+                hasWcInfo ? getDepth(info.getWcInfo().getDepth()) : null,
+                hasWcInfo ? getConflictDescriptors(info.getWcInfo().getConflicts()) : null
+                );
+    }
+
+    private Set<ConflictDescriptor> getConflictDescriptors(Collection<SVNConflictDescription> conflicts) {
+        HashSet<ConflictDescriptor> conflictDescriptors = new HashSet<ConflictDescriptor>();
+        for (SVNConflictDescription conflict : conflicts) {
+            conflictDescriptors.add(getConflictDescription(conflict));
+        }
+        return conflictDescriptors;
+    }
+
+    private Checksum getChecksum(SvnChecksum checksum) {
+        return new Checksum(checksum.getDigest().getBytes(), getChecksumKind(checksum.getKind()));
+    }
+
+    private Checksum.Kind getChecksumKind(SvnChecksum.Kind kind) {
+        if (kind == null) {
+            return null;
+        }
+        switch (kind) {
+            case md5:
+                return Checksum.Kind.MD5;
+            case sha1:
+                return Checksum.Kind.SHA1;
+            default:
+                throw new IllegalArgumentException("Unsupported checksum kind: " + kind);
+        }
+    }
+
+    private Info.ScheduleKind getScheduleKind(SvnSchedule schedule) {
+        if (schedule == SvnSchedule.ADD) {
+            return Info.ScheduleKind.add;
+        } else if (schedule == SvnSchedule.DELETE) {
+            return Info.ScheduleKind.delete;
+        } else if (schedule == SvnSchedule.NORMAL) {
+            return Info.ScheduleKind.normal;
+        } else if (schedule == SvnSchedule.REPLACE) {
+            return Info.ScheduleKind.replace;
+        } else {
+            throw new IllegalArgumentException("Unknown schedule kind: " + schedule);
+        }
     }
 
     private Mergeinfo getMergeinfo(Map<SVNURL, SVNMergeRangeList> mergeInfoMap) {
