@@ -1278,6 +1278,9 @@ public class SVNClientImpl implements ISVNClient {
     }
 
     private ISvnObjectReceiver<SVNCommitInfo> getCommitInfoReceiver(final CommitCallback callback) {
+        if (callback == null) {
+            return null;
+        }
         return new ISvnObjectReceiver<SVNCommitInfo>() {
             public void receive(SvnTarget target, SVNCommitInfo commitInfo) throws SVNException {
                 try {
@@ -1315,7 +1318,14 @@ public class SVNClientImpl implements ISVNClient {
 
     private CommitInfo getCommitInfo(SVNCommitInfo commitInfo, SVNURL repositoryRoot) throws ParseException {
         return new CommitInfo(commitInfo.getNewRevision(), SVNDate.formatDate(commitInfo.getDate()),
-                commitInfo.getAuthor(), commitInfo.getErrorMessage().getMessage(), getUrlString(repositoryRoot));
+                commitInfo.getAuthor(), getErrorMessageString(commitInfo.getErrorMessage()), getUrlString(repositoryRoot));
+    }
+
+    private String getErrorMessageString(SVNErrorMessage errorMessage) {
+        if (errorMessage == null) {
+            return null;
+        }
+        return errorMessage.getMessage();
     }
 
     private SvnCopySource getSvnCopySource(CopySource localSource) {
