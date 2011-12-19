@@ -670,7 +670,7 @@ public class SVNCommitClient16 extends SVNBasicDelegate {
             SVNErrorManager.error(err, SVNLogType.WC);
         }
         SVNCommitItem[] items = new SVNCommitItem[1];
-        items[0] = new SVNCommitItem(path, dstURL, null, srcKind == SVNFileType.DIRECTORY ? SVNNodeKind.DIR : SVNNodeKind.FILE, SVNRevision.UNDEFINED, SVNRevision.UNDEFINED, true, false, false,
+        items[0] = new SVNCommitItem(path, null, null, SVNNodeKind.NONE, SVNRevision.UNDEFINED, SVNRevision.UNDEFINED, true, false, false,
                 false, false, false);
         items[0].setPath(path.getName());
         commitMessage = getCommitHandler().getCommitMessage(commitMessage, items);
