@@ -59,7 +59,7 @@ public class SvnRemoteRemoteDelete extends SvnRemoteOperationRunner<SVNCommitInf
             }
     	    
     	    if (repository == null) {
-    	    	repository = getRepositoryAccess().createRepository(url, null, true);
+    	    	repository = getRepositoryAccess().createRepository(url, null, false);
     	    	reposRoot = repository.getRepositoryRoot(true);
     	    	repository.setLocation(reposRoot, false);
     	    	reposInfo.put(reposRoot, repository);
@@ -71,7 +71,7 @@ public class SvnRemoteRemoteDelete extends SvnRemoteOperationRunner<SVNCommitInf
     	    
     	    kind = repository.checkPath(reposRelPath, -1);
     	    if (kind == SVNNodeKind.NONE) {
-            	SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "URL '%s' does not exist", url);
+            	SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "URL '{0}' does not exist", url);
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
         }
