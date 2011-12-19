@@ -8,7 +8,11 @@ import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
 import org.tmatesoft.svn.core.wc2.SvnImport;
 
 public class SvnOldImport extends SvnOldRunner<SVNCommitInfo, SvnImport> {
-    
+
+    public SvnWcGeneration getWcGeneration() {
+        return SvnWcGeneration.NOT_DETECTED;
+    }
+
     @Override
     public boolean isApplicable(SvnImport operation, SvnWcGeneration wcGeneration) throws SVNException {
         return true;
