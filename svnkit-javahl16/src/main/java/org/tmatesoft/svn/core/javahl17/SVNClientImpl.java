@@ -61,6 +61,7 @@ import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -70,6 +71,8 @@ import org.tmatesoft.svn.core.wc.SVNConflictChoice;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
+import org.tmatesoft.svn.core.wc2.SvnAnnotate;
+import org.tmatesoft.svn.core.wc2.SvnAnnotateItem;
 import org.tmatesoft.svn.core.wc2.SvnCat;
 import org.tmatesoft.svn.core.wc2.SvnCheckout;
 import org.tmatesoft.svn.core.wc2.SvnCleanup;
@@ -822,9 +825,20 @@ public class SVNClientImpl implements ISVNClient {
     public void blame(String path, Revision pegRevision,
             Revision revisionStart, Revision revisionEnd,
             boolean ignoreMimeType, boolean includeMergedRevisions,
-            BlameCallback callback) throws ClientException {
-        // TODO Auto-generated method stub
+            final BlameCallback callback) throws ClientException {
+        final SvnAnnotate annotate = svnOperationFactory.createAnnotate();
+        annotate.setSingleTarget(getTarget(path, pegRevision));
+        annotate.setStartRevision(getSVNRevision(pegRevision));
+        annotate.setEndRevision(getSVNRevision(pegRevision));
+        annotate.setIgnoreMimeType(ignoreMimeType);
+        annotate.setUseMergeHistory(includeMergedRevisions);
+        annotate.setReceiver(getAnnotateItemReceiver(callback));
 
+        try {
+            annotate.run();
+        } catch (SVNException e) {
+            throw ClientException.fromException(e);
+        }
     }
 
     public void setConfigDirectory(String configDir) throws ClientException {
@@ -1573,5 +1587,45 @@ public class SVNClientImpl implements ISVNClient {
         long endRevision = revisionRange.getEndRevision();
 
         return new RevisionRange(Revision.getInstance(startRevision), Revision.getInstance(endRevision));
+    }
+
+    private ISvnObjectReceiver<SvnAnnotateItem> getAnnotateItemReceiver(final BlameCallback callback) {
+        if (callback == null) {
+            return null;
+        }
+        return new ISvnObjectReceiver<SvnAnnotateItem>() {
+            public void receive(SvnTarget target, SvnAnnotateItem annotateItem) throws SVNException {
+                try {
+                    if (annotateItem.isLine()) {
+                        callback.singleLine(annotateItem.getLineNumber(),
+                                annotateItem.getRevision(),
+                                getRevisionProperties(annotateItem.getAuthor(), annotateItem.getDate()),
+                                annotateItem.getMergedRevision(),
+                                getRevisionProperties(annotateItem.getMergedAuthor(), annotateItem.getMergedDate()),
+                                annotateItem.getMergedPath(),
+                                annotateItem.getLine(),
+                                !SVNRevision.isValidRevisionNumber(annotateItem.getRevision()));
+                    }
+
+                } catch (ClientException e) {
+                    //TODO: review this
+                    SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.UNKNOWN);
+                    SVNErrorManager.error(errorMessage, e, SVNLogType.CLIENT);
+                }
+            }
+        };
+    }
+
+    private Map<String, byte[]> getRevisionProperties(String author, Date date) {
+        if (author == null && date == null) {
+            return null;
+        }
+        SVNPropertyValue authorPropertyValue = SVNPropertyValue.create(author);
+        SVNPropertyValue datePropertyValue = SVNPropertyValue.create(SVNDate.formatDate(date));
+
+        HashMap<String, byte[]> revisionProperties = new HashMap<String, byte[]>();
+        revisionProperties.put(SVNRevisionProperty.AUTHOR, SVNPropertyValue.getPropertyAsBytes(authorPropertyValue));
+        revisionProperties.put(SVNRevisionProperty.DATE, SVNPropertyValue.getPropertyAsBytes(datePropertyValue));
+        return revisionProperties;
     }
 }
