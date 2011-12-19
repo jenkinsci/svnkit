@@ -31,6 +31,7 @@ import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnCat;
+import org.tmatesoft.svn.core.wc2.SvnCleanup;
 import org.tmatesoft.svn.core.wc2.SvnScheduleForAddition;
 import org.tmatesoft.svn.core.wc2.SvnGetInfo;
 import org.tmatesoft.svn.core.wc2.SvnGetProperties;
@@ -410,15 +411,9 @@ public class SVNWCClient extends SVNBasicClient {
      * @see #doCleanup(File, boolean)
      */
     public void doCleanup(File path) throws SVNException {
-        try {
-            getSVNWCClient17().doCleanup(path);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNWCClient16().doCleanup(path);
-                return;
-            }
-            throw e;
-        }
+    	SvnCleanup cleanup = getOperationsFactory().createCleanup();
+    	cleanup.setSingleTarget(SvnTarget.fromFile(path));
+    	cleanup.run();
     }
 
     /**
@@ -447,15 +442,10 @@ public class SVNWCClient extends SVNBasicClient {
      *             </ul>
      */
     public void doCleanup(File path, boolean deleteWCProperties) throws SVNException {
-        try {
-            getSVNWCClient17().doCleanup(path, deleteWCProperties);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNWCClient16().doCleanup(path, deleteWCProperties);
-                return;
-            }
-            throw e;
-        }
+    	SvnCleanup cleanup = getOperationsFactory().createCleanup();
+    	cleanup.setSingleTarget(SvnTarget.fromFile(path));
+    	cleanup.setDeleteWCProperties(deleteWCProperties);
+    	cleanup.run();
     }
 
     /**

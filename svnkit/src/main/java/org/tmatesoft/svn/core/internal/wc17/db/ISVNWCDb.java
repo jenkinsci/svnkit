@@ -711,6 +711,8 @@ public interface ISVNWCDb {
      * LOCAL_ABSPATH in DB.
      */
     SVNProperties getBaseDavCache(File localAbsPath) throws SVNException;
+    
+    void clearDavCacheRecursive(File localAbsPath) throws SVNException;
 
     /**
      * Get the path to the pristine text file identified by SHA1_CHECKSUM. Error

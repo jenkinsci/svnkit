@@ -51,6 +51,18 @@ public class SVNWCUtils {
         return SVNFileUtil.createFilePath(SVNFileUtil.createFilePath(dirAbsPath, SVNFileUtil.getAdminDirectoryName()), admChildFileName);
     }
 
+    public static void admCleanupTmpArea(SVNWCContext context, File dirAbsPath) throws SVNException {
+    	assert(SVNFileUtil.isAbsolute(dirAbsPath));
+    	context.writeCheck(dirAbsPath);
+    	File tmpPath = admChild(dirAbsPath, SVNWCContext.WC_ADM_TMP);
+    	SVNFileUtil.deleteAll(tmpPath, true);
+    	admInitTmpArea(dirAbsPath);
+    }
+    
+    public static void admInitTmpArea(File dirAbsPath) throws SVNException {
+    	SVNFileUtil.ensureDirectoryExists(SVNWCUtils.admChild(dirAbsPath, SVNWCContext.WC_ADM_TMP));
+    }
+    
     public static SVNDate readDate(long date) {
         long time = date / 1000;
         return new SVNDate(time, (int) (date - time * 1000));

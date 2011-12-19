@@ -84,9 +84,11 @@ svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/SVNUpdateEditor17.java
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/SVNWCConflictDescription17.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/SVNWCUtils.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/SvnChangelistActualNodesTrigger.java -text
+svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/SvnWcDbPristines.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNUpdateBaseNodePresenceRevnumAndReposPath.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbApplyChangesToBaseNode.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbClearActualNodeLeavingConflict.java -text
+svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbClearDavCacheRecursive.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbClearPropsConflict.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbClearTextConflict.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbCreateSchema.java -text
@@ -99,6 +101,7 @@ svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbDe
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbDeleteLowestWorkingNode.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbDeleteNodes.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbDeletePristine.java -text
+svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbDeletePristineIfUnreferenced.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbDeleteWCLock.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbDeleteWorkItem.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbDeleteWorkingNode.java -text
@@ -141,6 +144,7 @@ svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbSe
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbSelectOpDepthChildren.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbSelectRepository.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbSelectTargetslist.java -text
+svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbSelectUnreferencedPristines.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbSelectWorkItem.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbUpdateActualChangelists.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbUpdateActualConflictData.java -text
@@ -155,12 +159,14 @@ svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbUp
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbUpdateNodeFileinfo.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbUpdateNodeWorkingDepth.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/ng/SvnNgAnnotate.java -text
+svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/ng/SvnNgCleanup.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/ng/SvnNgLockUtil.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/ng/SvnNgSetChangelist.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/ng/SvnNgSetLock.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/ng/SvnNgUnlock.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/old/SvnOldAnnotate.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/old/SvnOldCat.java -text
+svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/old/SvnOldCleanup.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/old/SvnOldSetChangelist.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/old/SvnOldSetLock.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/old/SvnOldUnlock.java -text

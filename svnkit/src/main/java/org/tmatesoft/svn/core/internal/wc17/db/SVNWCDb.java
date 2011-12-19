@@ -121,7 +121,7 @@ public class SVNWCDb implements ISVNWCDb {
     public static final int FORMAT_FROM_SDB = -1;
     public static final long UNKNOWN_WC_ID = -1;
     static final long INVALID_REPOS_ID = -1;    
-    private static final String PRISTINE_STORAGE_EXT = ".svn-base";
+    
 
     public static boolean isAbsolute(File localAbsPath) {
         return localAbsPath != null && localAbsPath.isAbsolute();
@@ -516,7 +516,7 @@ public class SVNWCDb implements ISVNWCDb {
         
     }
     
-    public class InsertLock implements SVNSqlJetTransaction {
+    private class InsertLock implements SVNSqlJetTransaction {
 
         public long reposId = INVALID_REPOS_ID;
         public File localAbsPath;
@@ -967,23 +967,7 @@ public class SVNWCDb implements ISVNWCDb {
         DirParsedInfo parseDir = parseDir(wcRootAbsPath, Mode.ReadWrite);
         SVNWCDbDir pdh = parseDir.wcDbDir;
         verifyDirUsable(pdh);
-        boolean haveRow = false;
-        SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_PRISTINE_SHA1_CHECKSUM);
-        stmt.bindf("s", sha1Checksum);
-        try {
-            haveRow = stmt.next();
-        } finally {
-            stmt.reset();
-        }
-        if (haveRow) {
-            File pristineAbspath = getPristineFileName(pdh, sha1Checksum, false);
-            SVNNodeKind kindOnDisk = SVNFileType.getNodeKind(SVNFileType.getType(pristineAbspath));
-            if (kindOnDisk != SVNNodeKind.FILE) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_DB_ERROR, "The pristine text with checksum ''{0}'' was found in the DB but not on disk", sha1Checksum);
-                SVNErrorManager.error(err, SVNLogType.WC);
-            }
-        }
-        return haveRow;
+        return SvnWcDbPristines.checkPristine(pdh.getWCRoot(), sha1Checksum);
     }
 
     public void completedWorkQueue(File wcRootAbsPath, long id) throws SVNException {
@@ -1049,6 +1033,17 @@ public class SVNWCDb implements ISVNWCDb {
             stmt.reset();
         }
     }
+    
+    public void clearDavCacheRecursive(File localAbsPath) throws SVNException {
+    	assert (isAbsolute(localAbsPath));
+        final DirParsedInfo parsed = parseDir(localAbsPath, Mode.ReadWrite);
+        verifyDirUsable(parsed.wcDbDir);
+        final SVNWCDbRoot root = parsed.wcDbDir.getWCRoot();
+        SVNSqlJetStatement stmt = root.getSDb().getStatement(SVNWCDbStatements.CLEAR_BASE_NODE_RECURSIVE_DAV_CACHE);
+    	stmt.bindf("is", root.getWcId(), SVNFileUtil.getFilePath(parsed.localRelPath));
+    	stmt.done();
+    }
+
 
     public WCDbBaseInfo getBaseInfo(File localAbsPath, BaseInfoField... fields) throws SVNException {
         assert (isAbsolute(localAbsPath));
@@ -1271,12 +1266,7 @@ public class SVNWCDb implements ISVNWCDb {
         final DirParsedInfo parsed = parseDir(wcRootAbsPath, Mode.ReadOnly);
         final SVNWCDbDir pdh = parsed.wcDbDir;
         verifyDirUsable(pdh);
-        boolean present = checkPristine(wcRootAbsPath, sha1Checksum);
-        if (!present) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_DB_ERROR, "Pristine text not found");
-            SVNErrorManager.error(err, SVNLogType.WC);
-        }
-        return getPristineFileName(pdh, sha1Checksum, false);
+        return SvnWcDbPristines.getPristinePath(pdh.getWCRoot(), sha1Checksum);
     }
 
     public SvnChecksum getPristineSHA1(File wcRootAbsPath, SvnChecksum md5Checksum) throws SVNException {
@@ -1287,21 +1277,7 @@ public class SVNWCDb implements ISVNWCDb {
         SVNWCDbDir pdh = parsed.wcDbDir;
         verifyDirUsable(pdh);
 
-        SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_PRISTINE_MD5_CHECKSUM);
-        try {
-            stmt.bindChecksum(1, md5Checksum);
-            boolean have_row = stmt.next();
-            if (!have_row) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_DB_ERROR, "The pristine text with MD5 checksum ''{0}'' not found", md5Checksum.toString());
-                SVNErrorManager.error(err, SVNLogType.WC);
-                return null;
-            }
-            SvnChecksum sha1_checksum = getColumnChecksum(stmt, PRISTINE__Fields.checksum);
-            assert (sha1_checksum.getKind() == SvnChecksum.Kind.sha1);
-            return sha1_checksum;
-        } finally {
-            stmt.reset();
-        }
+        return SvnWcDbPristines.getPristineSHA1(pdh.getWCRoot(), md5Checksum);
     }
 
     public File getPristineTempDir(File wcRootAbsPath) throws SVNException {
@@ -1309,7 +1285,7 @@ public class SVNWCDb implements ISVNWCDb {
         final DirParsedInfo parsed = parseDir(wcRootAbsPath, Mode.ReadOnly);
         SVNWCDbDir pdh = parsed.wcDbDir;
         verifyDirUsable(pdh);
-        return SVNFileUtil.createFilePath(SVNFileUtil.createFilePath(pdh.getWCRoot().getAbsPath(), SVNFileUtil.getAdminDirectoryName()), PRISTINE_TEMPDIR_RELPATH);
+        return SvnWcDbPristines.getPristineTempDir(pdh.getWCRoot(), wcRootAbsPath);
     }
 
     public void globalRecordFileinfo(File localAbspath, long translatedSize, SVNDate lastModTime) throws SVNException {
@@ -1360,19 +1336,7 @@ public class SVNWCDb implements ISVNWCDb {
         SVNWCDbDir pdh = parsed.wcDbDir;
         verifyDirUsable(pdh);
         
-        File pristineAbspath = getPristineFileName(pdh, sha1Checksum, true);
-        SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(pristineAbspath));
-        if (kind == SVNNodeKind.FILE) {
-            SVNFileUtil.deleteFile(tempfileAbspath);
-            return;
-        }
-        SVNFileUtil.rename(tempfileAbspath, pristineAbspath);
-        long size = pristineAbspath.length();
-        SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.INSERT_PRISTINE);
-        stmt.bindChecksum(1, sha1Checksum);
-        stmt.bindChecksum(2, md5Checksum);
-        stmt.bindLong(3, size);
-        stmt.done();
+        SvnWcDbPristines.installPristine(pdh.getWCRoot(), tempfileAbspath, sha1Checksum, md5Checksum);
     }
 
     public boolean isNodeHidden(File localAbsPath) throws SVNException {
@@ -2167,10 +2131,14 @@ public class SVNWCDb implements ISVNWCDb {
 	        	ArrayList<String> targetList = new ArrayList<String>();
 	        	stmt = wcRoot.getSDb().getTemporaryDb().getStatement(SVNWCDbStatements.SELECT_TARGETS_LIST); 
 	        	stmt.bindf("i", wcRoot.getWcId());
-	        	while (stmt.next()) {
-	        	 targetList.add(stmt.getColumnString(SVNWCDbSchema.TARGETS_LIST__Fields.local_relpath));
+	        	try {
+	        		while (stmt.next()) {
+	        			targetList.add(stmt.getColumnString(SVNWCDbSchema.TARGETS_LIST__Fields.local_relpath));
+	        		}
 	        	}
-	        	stmt.reset();
+	        	finally {
+	        		stmt.reset();
+	        	}
 	        	
 	        	/* Update our changelists. */
 	        	for (String localRelPath : targetList) {
@@ -2191,8 +2159,8 @@ public class SVNWCDb implements ISVNWCDb {
 	        	}
 	        	stmt.reset();
 	        	*/
-	            
-	            if (changelistName != null){
+	        	
+	        	if (changelistName != null){
 	            	stmt = wcRoot.getSDb().getTemporaryDb().getStatement(SVNWCDbStatements.MARK_SKIPPED_CHANGELIST_DIRS);
 	            	((SVNSqlJetTableStatement) stmt).addTrigger(changelistTrigger);
 	                stmt.bindf("s", changelistName);
@@ -2203,6 +2171,7 @@ public class SVNWCDb implements ISVNWCDb {
 	            	stmt.bindf("i", wcRoot.getWcId());
 	                stmt.done();
 	            }
+	            
         	} catch (SVNException e) {
         		wcRoot.getSDb().rollback();
         		throw e;
@@ -3086,45 +3055,8 @@ public class SVNWCDb implements ISVNWCDb {
 
         /* ### should we look in the PRISTINE table for anything? */
 
-        File pristine_abspath = getPristineFileName(pdh, sha1Checksum, false);
-        return SVNFileUtil.openFileForReading(pristine_abspath);
+        return SvnWcDbPristines.readPristine(pdh.getWCRoot(), wcRootAbsPath, sha1Checksum);
 
-    }
-
-    private File getPristineFileName(SVNWCDbDir pdh, SvnChecksum sha1Checksum, boolean createSubdir) {
-        /* ### code is in transition. make sure we have the proper data. */
-        assert (pdh.getWCRoot() != null);
-        assert (sha1Checksum != null);
-        assert (sha1Checksum.getKind() == SvnChecksum.Kind.sha1);
-
-        /*
-         * ### need to fix this to use a symbol for ".svn". we don't need ### to
-         * use join_many since we know "/" is the separator for ### internal
-         * canonical paths
-         */
-        File base_dir_abspath = SVNFileUtil.createFilePath(SVNFileUtil.createFilePath(pdh.getWCRoot().getAbsPath(), SVNFileUtil.getAdminDirectoryName()), PRISTINE_STORAGE_RELPATH);
-
-        String hexdigest = sha1Checksum.getDigest();
-
-        /* We should have a valid checksum and (thus) a valid digest. */
-        assert (hexdigest != null);
-
-        /* Get the first two characters of the digest, for the subdir. */
-        String subdir = hexdigest.substring(0, 2);
-
-        if (createSubdir) {
-            File subdirAbspath = SVNFileUtil.createFilePath(base_dir_abspath, subdir);
-            subdirAbspath.mkdirs();
-            /*
-             * Whatever error may have occurred... ignore it. Typically, this
-             * will be "directory already exists", but if it is something
-             * different*, then presumably another error will follow when we try
-             * to access the file within this (missing?) pristine subdir.
-             */
-        }
-
-        /* The file is located at DIR/.svn/pristine/XX/XXYYZZ... */
-        return SVNFileUtil.createFilePath(SVNFileUtil.createFilePath(base_dir_abspath, subdir), hexdigest + PRISTINE_STORAGE_EXT);
     }
 
     public SVNProperties readPristineProperties(File localAbsPath) throws SVNException {
@@ -3248,27 +3180,8 @@ public class SVNWCDb implements ISVNWCDb {
         DirParsedInfo parseDir = parseDir(wcRootAbsPath, Mode.ReadWrite);
         SVNWCDbDir pdh = parseDir.wcDbDir;
         verifyDirUsable(pdh);
-        SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.LOOK_FOR_WORK);
-        boolean haveRow;
-        try {
-            haveRow = stmt.next();
-        } finally {
-            stmt.reset();
-        }
-        if (haveRow) {
-            return;
-        }
-        pristineRemove(pdh, sha1Checksum);
-    }
-
-    private void pristineRemove(SVNWCDbDir pdh, SvnChecksum sha1Checksum) throws SVNException {
-        SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.DELETE_PRISTINE);
-        stmt.bindChecksum(1, sha1Checksum);
         
-        if (stmt.done() != 0) {
-            File pristineAbspath = getPristineFileName(pdh, sha1Checksum, true);
-            SVNFileUtil.deleteFile(pristineAbspath);
-        }
+        SvnWcDbPristines.removePristine(pdh.getWCRoot(), sha1Checksum);
     }
 
     public void removeWCLock(File localAbspath) throws SVNException {
@@ -3742,11 +3655,16 @@ public class SVNWCDb implements ISVNWCDb {
         }
     }
 
-    public void cleanupPristine(File wcRootAbsPath) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
-    }
+    public void cleanupPristine(File localAbsPath) throws SVNException {
+    	assert (isAbsolute(localAbsPath));
 
+        final DirParsedInfo parsed = parseDir(localAbsPath, Mode.ReadOnly);
+        SVNWCDbDir pdh = parsed.wcDbDir;
+        verifyDirUsable(pdh);
+        
+        SvnWcDbPristines.cleanupPristine(pdh.getWCRoot(), localAbsPath);
+    }
+    
     private long fetchWCId(SVNSqlJetDb sDb) throws SVNException {
         /*
          * ### cheat. we know there is just one WORKING_COPY row, and it has a

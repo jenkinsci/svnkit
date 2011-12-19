@@ -31,6 +31,7 @@ import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgAdd;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgCat;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgCheckout;
+import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgCleanup;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgCommit;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgExport;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgGetInfo;
@@ -52,6 +53,7 @@ import org.tmatesoft.svn.core.internal.wc2.old.SvnOldAdd;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldAnnotate;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldCat;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldCheckout;
+import org.tmatesoft.svn.core.internal.wc2.old.SvnOldCleanup;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldCommit;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldCopy;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldExport;
@@ -210,8 +212,12 @@ public class SvnOperationFactory {
         registerOperationRunner(SvnRemoteDelete.class, new SvnRemoteRemoteDelete());
         
         registerOperationRunner(SvnMerge.class, new SvnOldMerge());
+
+        registerOperationRunner(SvnCleanup.class, new SvnOldCleanup());
+        registerOperationRunner(SvnCleanup.class, new SvnNgCleanup());
         
         registerOperationRunner(SvnImport.class, new SvnOldImport());
+
     }
     
     public boolean isAutoCloseContext() {
