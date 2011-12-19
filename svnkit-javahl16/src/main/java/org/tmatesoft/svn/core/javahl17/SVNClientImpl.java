@@ -346,6 +346,7 @@ public class SVNClientImpl implements ISVNClient {
         commit.setApplicalbeChangelists(changelists);
         commit.setRevisionProperties(getSVNProperties(revpropTable));
         commit.setCommitHandler(getCommitHandler(handler));
+        commit.setReceiver(getCommitInfoReceiver(callback));
 
         for (String targetPath : path) {
             commit.addTarget(getTarget(targetPath));
