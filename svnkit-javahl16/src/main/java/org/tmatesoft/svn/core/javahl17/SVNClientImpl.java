@@ -475,7 +475,7 @@ public class SVNClientImpl implements ISVNClient {
 
         Set<String> mergeSourcesStrings = new HashSet<String>();
         for (SVNURL mergeSource : mergeSources) {
-            mergeSourcesStrings.add(mergeSource.toString());
+            mergeSourcesStrings.add(getUrlString(mergeSource));
         }
         return mergeSourcesStrings;
     }
@@ -955,7 +955,7 @@ public class SVNClientImpl implements ISVNClient {
         SVNURL repositoryRootUrl = status.getRepositoryRootUrl();
 
         //TODO: repositoryRootUrl is currently null whatever 'remote' ('onServer') option is
-        String itemUrl = repositoryRootUrl == null ? null : repositoryRootUrl.appendPath(repositoryRelativePath, false).toString();
+        String itemUrl = repositoryRootUrl == null ? null : getUrlString(repositoryRootUrl.appendPath(repositoryRelativePath, false));
 
         return new Status(
                 status.getPath().getPath(),
@@ -1100,7 +1100,15 @@ public class SVNClientImpl implements ISVNClient {
             return null;
         }
         return new CommitItem(commitable.getPath().getPath(), getNodeKind(commitable.getKind()), commitable.getFlags(),
-                commitable.getUrl().toString(), commitable.getCopyFromUrl().toString(), commitable.getCopyFromRevision());
+                getUrlString(commitable.getUrl()), getUrlString(commitable.getCopyFromUrl()),
+                commitable.getCopyFromRevision());
+    }
+
+    private String getUrlString(SVNURL url) {
+        if (url == null) {
+            return null;
+        }
+        return url.toString();
     }
 
     private ISvnObjectReceiver<SvnStatus> getStatusReceiver(final StatusCallback callback) {
@@ -1307,7 +1315,7 @@ public class SVNClientImpl implements ISVNClient {
 
     private CommitInfo getCommitInfo(SVNCommitInfo commitInfo, SVNURL repositoryRoot) throws ParseException {
         return new CommitInfo(commitInfo.getNewRevision(), SVNDate.formatDate(commitInfo.getDate()),
-                commitInfo.getAuthor(), commitInfo.getErrorMessage().getMessage(), repositoryRoot.toString());
+                commitInfo.getAuthor(), commitInfo.getErrorMessage().getMessage(), getUrlString(repositoryRoot));
     }
 
     private SvnCopySource getSvnCopySource(CopySource localSource) {
@@ -1530,7 +1538,7 @@ public class SVNClientImpl implements ISVNClient {
                 continue;
             }
 
-            String urlString = url.toString();
+            String urlString = getUrlString(url);
 
             SVNMergeRange[] ranges = mergeRangeList.getRanges();
             for (SVNMergeRange range : ranges) {
