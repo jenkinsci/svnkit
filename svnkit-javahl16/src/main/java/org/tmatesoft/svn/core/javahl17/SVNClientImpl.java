@@ -63,13 +63,17 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNAuthenticationManager;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.SVNConflictChoice;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnAnnotate;
 import org.tmatesoft.svn.core.wc2.SvnAnnotateItem;
@@ -123,6 +127,13 @@ public class SVNClientImpl implements ISVNClient {
     }
 
     private SvnOperationFactory svnOperationFactory;
+    private String username;
+    private String password;
+    private UserPasswordCallback prompt;
+    private String configDir;
+    private DefaultSVNOptions options;
+
+    private ISVNAuthenticationManager authenticationManager;
 
     protected SVNClientImpl() {
         this(null);
@@ -178,18 +189,18 @@ public class SVNClientImpl implements ISVNClient {
     }
 
     public void username(String username) {
-        // TODO Auto-generated method stub
-
+        this.username = username;
+        updateSvnOperationsFactory();
     }
 
     public void password(String password) {
-        // TODO Auto-generated method stub
-
+        this.password = password;
+        updateSvnOperationsFactory();
     }
 
     public void setPrompt(UserPasswordCallback prompt) {
-        // TODO Auto-generated method stub
-
+        this.prompt = prompt;
+        updateSvnOperationsFactory();
     }
 
     public void logMessages(String path, Revision pegRevision,
@@ -842,13 +853,12 @@ public class SVNClientImpl implements ISVNClient {
     }
 
     public void setConfigDirectory(String configDir) throws ClientException {
-        // TODO Auto-generated method stub
-
+        this.configDir = configDir;
+        updateSvnOperationsFactory();
     }
 
     public String getConfigDirectory() throws ClientException {
-        // TODO Auto-generated method stub
-        return null;
+        return configDir;
     }
 
     public void cancelOperation() throws ClientException {
@@ -1628,4 +1638,27 @@ public class SVNClientImpl implements ISVNClient {
         revisionProperties.put(SVNRevisionProperty.DATE, SVNPropertyValue.getPropertyAsBytes(datePropertyValue));
         return revisionProperties;
     }
+
+    private void updateSvnOperationsFactory() {
+        File configDir = this.configDir == null ? null : new File(this.configDir);
+        options = SVNWCUtil.createDefaultOptions(configDir, true);
+        //TODO: setConfliectHandler
+//        options.setConflictHandler(getConflictHandler());
+        authenticationManager = SVNWCUtil.createDefaultAuthenticationManager(configDir, username, password, options.isAuthStorageEnabled());
+        if (prompt != null) {
+            //TODO: implement
+//            authenticationManager.setAuthenticationProvider(new JavaHLAuthenticationProvider(myPrompt));
+        } else {
+            authenticationManager.setAuthenticationProvider(null);
+        }
+        if (authenticationManager instanceof DefaultSVNAuthenticationManager) {
+            //TODO: implement
+//            ((DefaultSVNAuthenticationManager) authenticationManager).setRuntimeStorage(getClientCredentialsStorage());
+        }
+        if (svnOperationFactory != null) {
+            svnOperationFactory.setAuthenticationManager(authenticationManager);
+            svnOperationFactory.setOptions(options);
+        }
+    }
+
 }
