@@ -19,6 +19,8 @@ import java.util.Set;
 import org.apache.subversion.javahl.ClientException;
 import org.apache.subversion.javahl.CommitInfo;
 import org.apache.subversion.javahl.CommitItem;
+import org.apache.subversion.javahl.ConflictDescriptor;
+import org.apache.subversion.javahl.ConflictResult;
 import org.apache.subversion.javahl.ConflictResult.Choice;
 import org.apache.subversion.javahl.DiffSummary;
 import org.apache.subversion.javahl.ISVNClient;
@@ -38,6 +40,7 @@ import org.apache.subversion.javahl.callback.ProgressCallback;
 import org.apache.subversion.javahl.callback.ProplistCallback;
 import org.apache.subversion.javahl.callback.StatusCallback;
 import org.apache.subversion.javahl.callback.UserPasswordCallback;
+import org.apache.subversion.javahl.types.ConflictVersion;
 import org.apache.subversion.javahl.types.CopySource;
 import org.apache.subversion.javahl.types.Depth;
 import org.apache.subversion.javahl.types.Info;
@@ -70,7 +73,12 @@ import org.tmatesoft.svn.core.internal.wc.DefaultSVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.wc.ISVNConflictHandler;
+import org.tmatesoft.svn.core.wc.SVNConflictAction;
 import org.tmatesoft.svn.core.wc.SVNConflictChoice;
+import org.tmatesoft.svn.core.wc.SVNConflictDescription;
+import org.tmatesoft.svn.core.wc.SVNConflictReason;
+import org.tmatesoft.svn.core.wc.SVNConflictResult;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
@@ -1637,6 +1645,126 @@ public class SVNClientImpl implements ISVNClient {
         revisionProperties.put(SVNRevisionProperty.AUTHOR, SVNPropertyValue.getPropertyAsBytes(authorPropertyValue));
         revisionProperties.put(SVNRevisionProperty.DATE, SVNPropertyValue.getPropertyAsBytes(datePropertyValue));
         return revisionProperties;
+    }
+
+    private ISVNConflictHandler getConflictHandler(final ConflictResolverCallback callback) {
+        if (callback == null) {
+            return null;
+        }
+        return new ISVNConflictHandler() {
+            public SVNConflictResult handleConflict(SVNConflictDescription conflictDescription) throws SVNException {
+                try {
+                    return getSVNConflictResult(callback.resolve(getConflictDescription(conflictDescription)));
+                } catch (SubversionException e) {
+                    //TODO: review this
+                    SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.UNKNOWN);
+                    SVNErrorManager.error(errorMessage, e, SVNLogType.CLIENT);
+                    return null;
+                }
+            }
+        };
+    }
+
+    private ConflictDescriptor getConflictDescription(SVNConflictDescription conflictDescription) {
+        //TODO: set the following variables
+        boolean binary = false;
+        String mimeType = null;
+        String basePath = null;
+        String theirPath = null;
+        String myPath = null;
+        String mergedPath = null;
+        ConflictVersion srcLeft = null;
+        ConflictVersion srcRight = null;
+
+        return new ConflictDescriptor(
+                getFilePath(conflictDescription.getPath()),
+                getConflictDescriptorKind(conflictDescription),
+                getNodeKind(conflictDescription.getNodeKind()),
+                conflictDescription.getPropertyName(),
+                binary,
+                mimeType,
+                getConflictDescriptorAction(conflictDescription.getConflictAction()),
+                getConflictDescriptorReason(conflictDescription.getConflictReason()),
+                getConflictDescriptorOperation(conflictDescription),
+                basePath,
+                theirPath,
+                myPath,
+                mergedPath,
+                srcLeft,
+                srcRight
+                );
+    }
+
+    private ConflictDescriptor.Operation getConflictDescriptorOperation(SVNConflictDescription conflictDescription) {
+        //TODO: implement
+        return null;
+    }
+
+    private SVNConflictResult getSVNConflictResult(ConflictResult conflictResult) {
+        return new SVNConflictResult(getSVNConflictChoice(conflictResult.getChoice()), getFile(conflictResult.getMergedPath()));
+    }
+
+    private ConflictDescriptor.Action getConflictDescriptorAction(SVNConflictAction conflictAction) {
+        if (conflictAction == null) {
+            return null;
+        }
+        if (conflictAction == SVNConflictAction.ADD) {
+            return ConflictDescriptor.Action.add;
+        } else if (conflictAction == SVNConflictAction.DELETE) {
+            return ConflictDescriptor.Action.delete;
+        } else if (conflictAction == SVNConflictAction.EDIT) {
+            return ConflictDescriptor.Action.edit;
+        } else if (conflictAction == SVNConflictAction.REPLACE) {
+            //TODO: unsupported
+            throw new IllegalArgumentException("Unknown conflict action: " + conflictAction);
+        } else {
+            throw new IllegalArgumentException("Unknown conflict action: " + conflictAction);
+        }
+    }
+
+    private ConflictDescriptor.Reason getConflictDescriptorReason(SVNConflictReason conflictReason) {
+        if (conflictReason == null) {
+            return null;
+        }
+        if (conflictReason == SVNConflictReason.ADDED) {
+            return ConflictDescriptor.Reason.added;
+        } else if (conflictReason == SVNConflictReason.DELETED) {
+            return ConflictDescriptor.Reason.deleted;
+        } else if (conflictReason == SVNConflictReason.EDITED) {
+            return ConflictDescriptor.Reason.edited;
+        } else if (conflictReason == SVNConflictReason.MISSING) {
+            return ConflictDescriptor.Reason.missing;
+        } else if (conflictReason == SVNConflictReason.OBSTRUCTED) {
+            return ConflictDescriptor.Reason.obstructed;
+        } else if (conflictReason == SVNConflictReason.REPLACED) {
+            throw new IllegalArgumentException("Unknown conflict reason: " + conflictReason);
+        } else if (conflictReason == SVNConflictReason.UNVERSIONED) {
+            return ConflictDescriptor.Reason.unversioned;
+        } else {
+            throw new IllegalArgumentException("Unknown conflict reason: " + conflictReason);
+        }
+    }
+
+    private ConflictDescriptor.Kind getConflictDescriptorKind(SVNConflictDescription conflictDescription) {
+        if (conflictDescription == null) {
+            return null;
+        }
+        if (conflictDescription.isTextConflict()) {
+            return ConflictDescriptor.Kind.text;
+        } else if (conflictDescription.isPropertyConflict()) {
+            return ConflictDescriptor.Kind.property;
+        } else if (conflictDescription.isTreeConflict()) {
+            return ConflictDescriptor.Kind.tree;
+        } else {
+            throw new IllegalArgumentException("Unknown conflict kind: " + conflictDescription);
+        }
+    }
+
+    private File getFile(String path) {
+        if (path == null) {
+            return null;
+        }
+        return new File(path);
     }
 
     private void updateSvnOperationsFactory() {
