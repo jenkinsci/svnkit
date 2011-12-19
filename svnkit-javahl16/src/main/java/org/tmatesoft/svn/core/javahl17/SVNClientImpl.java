@@ -1257,12 +1257,13 @@ public class SVNClientImpl implements ISVNClient {
         if (svnProperties == null) {
             return new HashMap<String, byte[]>();
         }
-        HashMap<String, byte[]> revisionProperties = new HashMap<String, byte[]>();
+        HashMap<String, byte[]> properties = new HashMap<String, byte[]>();
         Set<String> svnPropertiesNames = svnProperties.nameSet();
         for (String svnPropertyName : svnPropertiesNames) {
-            revisionProperties.put(svnPropertyName, svnProperties.getBinaryValue(svnPropertyName));
+            SVNPropertyValue svnPropertyValue = svnProperties.getSVNPropertyValue(svnPropertyName);
+            properties.put(svnPropertyName, SVNPropertyValue.getPropertyAsBytes(svnPropertyValue));
         }
-        return revisionProperties;
+        return properties;
     }
 
     private ISvnObjectReceiver<SVNProperties> getSVNPropertiesReceiver(final ProplistCallback callback) {
