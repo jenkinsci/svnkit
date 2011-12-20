@@ -1644,6 +1644,9 @@ public class SVNClientImpl implements ISVNClient {
     }
 
     private Checksum getChecksum(SvnChecksum checksum) {
+        if (checksum == null) {
+            return null;
+        }
         return new Checksum(checksum.getDigest().getBytes(), getChecksumKind(checksum.getKind()));
     }
 

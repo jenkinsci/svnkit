@@ -2700,7 +2700,7 @@ public class SVNWCDb implements ISVNWCDb {
                     }                
                 }
                 if (f.contains(InfoField.translatedSize)) {
-                    info.translatedSize = getColumnInt64(stmtInfo, SVNWCDbSchema.NODES__Fields.translated_size);
+                    info.translatedSize = getTranslatedSize(stmtInfo, SVNWCDbSchema.NODES__Fields.translated_size);
                 }
                 if (f.contains(InfoField.target)) {
                     info.target = SVNFileUtil.createFilePath(getColumnText(stmtInfo, SVNWCDbSchema.NODES__Fields.symlink_target));
