@@ -220,7 +220,6 @@ public class SVNClientImpl implements ISVNClient {
             Set<String> revProps, long limit, LogMessageCallback callback)
             throws ClientException {
         SvnLog log = svnOperationFactory.createLog();
-        log.setRevision(getSVNRevision(pegRevision));
         log.setRevisionRanges(getSvnRevisionRanges(ranges));
         log.setStopOnCopy(stopOnCopy);
         log.setDiscoverChangedPaths(discoverPath);
@@ -229,7 +228,7 @@ public class SVNClientImpl implements ISVNClient {
         log.setLimit(limit);
         log.setReceiver(getLogEntryReceiver(callback));
 
-        log.addTarget(getTarget(path));
+        log.addTarget(getTarget(path, pegRevision));
 
         try {
             log.run();
@@ -703,7 +702,7 @@ public class SVNClientImpl implements ISVNClient {
         getProperties.setApplicalbeChangelists(changelists);
         getProperties.setReceiver(getSVNPropertiesReceiver(callback));
 
-        getProperties.addTarget(getTarget(path, revision));
+        getProperties.addTarget(getTarget(path, pegRevision));
 
         try {
             getProperties.run();
@@ -851,8 +850,8 @@ public class SVNClientImpl implements ISVNClient {
             final BlameCallback callback) throws ClientException {
         final SvnAnnotate annotate = svnOperationFactory.createAnnotate();
         annotate.setSingleTarget(getTarget(path, pegRevision));
-        annotate.setStartRevision(getSVNRevision(pegRevision));
-        annotate.setEndRevision(getSVNRevision(pegRevision));
+        annotate.setStartRevision(getSVNRevision(revisionStart));
+        annotate.setEndRevision(getSVNRevision(revisionEnd));
         annotate.setIgnoreMimeType(ignoreMimeType);
         annotate.setUseMergeHistory(includeMergedRevisions);
         annotate.setReceiver(getAnnotateItemReceiver(callback));
