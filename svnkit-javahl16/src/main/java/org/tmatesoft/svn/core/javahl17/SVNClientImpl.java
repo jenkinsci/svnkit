@@ -281,7 +281,7 @@ public class SVNClientImpl implements ISVNClient {
         fillLocalAndRemoteTargets(path, localPaths, remoteUrls);
 
         removeLocal(localPaths, force, keepLocal);
-        removeRemote(localPaths, revpropTable, handler, callback);
+        removeRemote(remoteUrls, revpropTable, handler, callback);
     }
 
     public void revert(String path, Depth depth, Collection<String> changelists)
