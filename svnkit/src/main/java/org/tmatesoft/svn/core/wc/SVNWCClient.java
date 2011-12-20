@@ -32,6 +32,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnCat;
 import org.tmatesoft.svn.core.wc2.SvnCleanup;
+import org.tmatesoft.svn.core.wc2.SvnResolve;
 import org.tmatesoft.svn.core.wc2.SvnScheduleForAddition;
 import org.tmatesoft.svn.core.wc2.SvnGetInfo;
 import org.tmatesoft.svn.core.wc2.SvnGetProperties;
@@ -1820,15 +1821,11 @@ public class SVNWCClient extends SVNBasicClient {
      * @since 1.2, SVN 1.5
      */
     public void doResolve(File path, SVNDepth depth, SVNConflictChoice conflictChoice) throws SVNException {
-        try {
-            getSVNWCClient17().doResolve(path, depth, conflictChoice);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNWCClient16().doResolve(path, depth, conflictChoice);
-                return;
-            }
-            throw e;
-        }
+    	SvnResolve resolve = getOperationsFactory().createResolve();
+    	resolve.addTarget(SvnTarget.fromFile(path));
+    	resolve.setDepth(depth);
+    	resolve.setConflictChoice(conflictChoice);
+    	resolve.run();
     }
 
     /**
@@ -1879,15 +1876,13 @@ public class SVNWCClient extends SVNBasicClient {
      * @since 1.2, SVN 1.5
      */
     public void doResolve(File path, SVNDepth depth, final boolean resolveContents, final boolean resolveProperties, SVNConflictChoice conflictChoice) throws SVNException {
-        try {
-            getSVNWCClient17().doResolve(path, depth, resolveContents, resolveProperties, conflictChoice);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNWCClient16().doResolve(path, depth, resolveContents, resolveProperties, conflictChoice);
-                return;
-            }
-            throw e;
-        }
+    	SvnResolve resolve = getOperationsFactory().createResolve();
+    	resolve.addTarget(SvnTarget.fromFile(path));
+    	resolve.setDepth(depth);
+    	resolve.setResolveContents(resolveContents);
+    	resolve.setResolveProperties(resolveProperties);
+    	resolve.setConflictChoice(conflictChoice);
+    	resolve.run();
     }
 
     /**
@@ -1940,15 +1935,14 @@ public class SVNWCClient extends SVNBasicClient {
      * @since 1.3, SVN 1.6
      */
     public void doResolve(File path, SVNDepth depth, final boolean resolveContents, final boolean resolveProperties, final boolean resolveTree, SVNConflictChoice conflictChoice) throws SVNException {
-        try {
-            getSVNWCClient17().doResolve(path, depth, resolveContents, resolveProperties, resolveTree, conflictChoice);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNWCClient16().doResolve(path, depth, resolveContents, resolveProperties, resolveTree, conflictChoice);
-                return;
-            }
-            throw e;
-        }
+    	SvnResolve resolve = getOperationsFactory().createResolve();
+    	resolve.addTarget(SvnTarget.fromFile(path));
+    	resolve.setDepth(depth);
+    	resolve.setResolveContents(resolveContents);
+    	resolve.setResolveProperties(resolveProperties);
+    	resolve.setResolveTree(resolveTree);
+    	resolve.setConflictChoice(conflictChoice);
+    	resolve.run();
     }
 
     /**

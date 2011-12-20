@@ -45,6 +45,8 @@ import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb.Mode;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
@@ -98,6 +100,7 @@ import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNMergeFileSet;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.core.wc2.SvnChecksum;
@@ -4021,7 +4024,136 @@ public class SVNWCContext {
         }
         return didResolve;
     }
+    
+    private void resolveOneConflict(File localAbsPath, boolean resolveText, 
+    		String resolveProps, boolean resolveTree, SVNConflictChoice conflictChoice) throws SVNException {
+    	
+    	List<SVNConflictDescription> conflicts;
+    	boolean resolved = false;
+    	
+    	conflicts = getDb().readConflicts(localAbsPath);
+    	for (SVNConflictDescription desc : conflicts) {
+    		if (desc.isTreeConflict()) {
+    			if (!resolveTree) 
+    				break;
+    			/* For now, we only clear tree conflict information and resolve
+	             * to the working state. There is no way to pick theirs-full
+	             * or mine-full, etc. Throw an error if the user expects us
+	             * to be smarter than we really are. */
+    			if (conflictChoice != SVNConflictChoice.MERGED) {
+    				SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CONFLICT_RESOLVER_FAILURE, "Tree conflicts can only be resolved to 'working' state; {0} not resolved", localAbsPath);
+                    SVNErrorManager.error(err, SVNLogType.WC);
+	            }
+    			getDb().opSetTreeConflict(localAbsPath, null);
+	            resolved = true;
+	            break;
+    		}
+    		else if (desc.isTextConflict()) {
+    			if (!resolveText) 
+    				break;
+    			if (resolveConflictOnNode(localAbsPath, true, false, conflictChoice))
+    				resolved = true;
+    			break;
+    		}
+    		else if (desc.isPropertyConflict()) {
+    			if ("".equals(resolveProps))
+    				break;
+    			
+    			/* ### this is bogus. resolve_conflict_on_node() does not handle
+	               ### individual property resolution.  */
+	            if ("".equals(resolveProps) && !resolveProps.equals(desc.getPropertyName()))
+	                break; /* Skip this property conflict */
 
+	            /* We don't have property name handling here yet :( */
+	            if (resolveConflictOnNode(localAbsPath, false, true, conflictChoice))
+	            	resolved = true;
+	            break;
+    		}
+    		else {
+    			break;
+    		}
+    	}
+
+    	if (resolved && getEventHandler() != null) {
+    		SVNEvent event = new SVNEvent(localAbsPath, null, null, -1, null, null, null, null, SVNEventAction.RESOLVED, null, null, null, null);
+            getEventHandler().handleEvent(event, 0);
+    	}
+    }
+    
+    private void recursiveResolveConflict(File localAbsPath, boolean thisIsConflicted, SVNDepth depth, boolean resolveText, 
+    		String resolveProps, boolean resolveTree, SVNConflictChoice conflictChoice) throws SVNException {
+    	SVNHashMap visited = new SVNHashMap();
+    	SVNDepth childDepth;
+    	
+    	checkCancelled();
+    	
+    	if (thisIsConflicted) {
+    		resolveOneConflict(localAbsPath, resolveText, resolveProps, resolveTree, conflictChoice);
+    	}
+    	
+    	if (depth.getId() < SVNDepth.FILES.getId())
+    		return;
+    	
+    	childDepth = (depth.getId() < SVNDepth.INFINITY.getId()) ? SVNDepth.EMPTY : depth;
+    	Set<String> children = db.readChildren(localAbsPath);
+    	for (String child : children) {
+    		checkCancelled();
+    		File childAbsPath = SVNFileUtil.createFilePath(localAbsPath, child);
+    		WCDbInfo readInfo = db.readInfo(localAbsPath, InfoField.status, InfoField.kind, InfoField.conflicted);
+    		SVNWCDbStatus status = readInfo.status;
+            SVNWCDbKind kind = readInfo.kind;
+            boolean conflicted = readInfo.conflicted;
+            if (status == SVNWCDbStatus.NotPresent || status == SVNWCDbStatus.Excluded || status == SVNWCDbStatus.ServerExcluded) {
+            	continue;
+            }
+            visited.put(child, child);
+            if (kind == SVNWCDbKind.Dir && depth.getId() < SVNDepth.IMMEDIATES.getId())
+            	continue;
+    		if (kind == SVNWCDbKind.Dir)
+    			recursiveResolveConflict(childAbsPath, conflicted, childDepth, resolveText, resolveProps, resolveTree, conflictChoice);
+    		else if (conflicted)
+    			resolveOneConflict(childAbsPath, resolveText, resolveProps, resolveTree, conflictChoice);
+    	}
+    	
+    	List<String> conflictVictims = getDb().readConflictVictims(localAbsPath);
+
+    	for (String child : conflictVictims) {
+    		if (visited.containsKey(child))
+    	        continue; /* Already visited */
+
+    	    checkCancelled();
+    	      
+    	    File childAbsPath = SVNFileUtil.createFilePath(localAbsPath, child);
+
+    	    /* We only have to resolve one level of tree conflicts. All other
+    	        conflicts are resolved in the other loop */
+    	    resolveOneConflict(childAbsPath, false, "", resolveTree, conflictChoice);
+   	    }
+    }
+    
+    public void resolvedConflict(File localAbsPath, SVNDepth depth, boolean resolveText, 
+    		String resolveProps, boolean resolveTree, SVNConflictChoice conflictChoice) throws SVNException {
+    	/* ### the underlying code does NOT support resolving individual
+	       ### properties. bail out if the caller tries it.  */
+	    if (resolveProps != null && !"".equals(resolveProps)) {
+    		SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS, "Resolving a single property is not (yet) supported.");
+            SVNErrorManager.error(err, SVNLogType.WC);
+    	}
+    	
+        WCDbInfo readInfo = db.readInfo(localAbsPath, InfoField.kind, InfoField.conflicted);
+        SVNWCDbKind dbKind = readInfo.kind;
+        boolean conflicted = readInfo.conflicted;
+            
+    	/* When the implementation still used the entry walker, depth
+    	  unknown was translated to infinity. */
+    	if (dbKind != SVNWCDbKind.Dir)
+    		depth = SVNDepth.EMPTY;
+    	else if (depth == SVNDepth.UNKNOWN)
+    		depth = SVNDepth.INFINITY;
+    	
+    	recursiveResolveConflict(localAbsPath, conflicted, depth, resolveText, resolveProps, resolveTree, conflictChoice);
+    }
+            
     private boolean attemptDeletion(File parentDir, File baseName) throws SVNException {
         if (baseName == null) {
             return false;

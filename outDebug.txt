@@ -1,0 +1,391 @@
+19:47:37.640 [INFO] [org.gradle.BuildLogger] Starting Build
+19:47:37.656 [DEBUG] [org.gradle.BuildLogger] Gradle user home: C:\Documents and Settings\Администратор\.gradle
+19:47:37.656 [DEBUG] [org.gradle.BuildLogger] Current dir: C:\Olga\Projects\SvnKit\trunk
+19:47:37.656 [DEBUG] [org.gradle.BuildLogger] Settings file: null
+19:47:37.656 [DEBUG] [org.gradle.BuildLogger] Build file: null
+19:47:37.656 [DEBUG] [org.gradle.BuildLogger] Select default project: with project directory 'C:\Olga\Projects\SvnKit\trunk'
+19:47:37.687 [DEBUG] [org.gradle.initialization.BuildSourceBuilder] Starting to build the build sources.
+19:47:37.687 [DEBUG] [org.gradle.initialization.BuildSourceBuilder] Gradle source dir does not exist. We leave.
+19:47:37.687 [DEBUG] [org.gradle.initialization.DefaultGradlePropertiesLoader] Found env project properties: []
+19:47:37.703 [DEBUG] [org.gradle.initialization.DefaultGradlePropertiesLoader] Found system project properties: []
+19:47:39.484 [DEBUG] [org.gradle.initialization.ScriptEvaluatingSettingsProcessor] Timing: Processing settings took: 1.781 secs
+19:47:39.484 [INFO] [org.gradle.BuildLogger] Settings evaluated using settings file 'C:\Olga\Projects\SvnKit\trunk\settings.gradle'.
+19:47:39.484 [DEBUG] [org.gradle.initialization.BuildLoader] Loading Project objects
+19:47:39.828 [DEBUG] [org.gradle.initialization.BuildLoader] Looking for project properties from: C:\Olga\Projects\SvnKit\trunk\gradle.properties
+19:47:39.843 [DEBUG] [org.gradle.initialization.BuildLoader] project property file does not exists. We continue!
+19:47:39.890 [DEBUG] [org.gradle.initialization.BuildLoader] Looking for project properties from: C:\Olga\Projects\SvnKit\trunk\svnkit\gradle.properties
+19:47:39.890 [DEBUG] [org.gradle.initialization.BuildLoader] project property file does not exists. We continue!
+19:47:39.953 [DEBUG] [org.gradle.initialization.BuildLoader] Looking for project properties from: C:\Olga\Projects\SvnKit\trunk\svnkit-cli\gradle.properties
+19:47:39.953 [DEBUG] [org.gradle.initialization.BuildLoader] project property file does not exists. We continue!
+19:47:40.015 [DEBUG] [org.gradle.initialization.BuildLoader] Looking for project properties from: C:\Olga\Projects\SvnKit\trunk\svnkit-javahl16\gradle.properties
+19:47:40.015 [DEBUG] [org.gradle.initialization.BuildLoader] project property file does not exists. We continue!
+19:47:40.031 [DEBUG] [org.gradle.initialization.BuildLoader] Looking for project properties from: C:\Olga\Projects\SvnKit\trunk\svnkit-dav\gradle.properties
+19:47:40.031 [DEBUG] [org.gradle.initialization.BuildLoader] project property file does not exists. We continue!
+19:47:40.046 [DEBUG] [org.gradle.initialization.BuildLoader] Looking for project properties from: C:\Olga\Projects\SvnKit\trunk\svnkit-test\gradle.properties
+19:47:40.046 [DEBUG] [org.gradle.initialization.BuildLoader] project property file does not exists. We continue!
+19:47:40.078 [DEBUG] [org.gradle.initialization.BuildLoader] Looking for project properties from: C:\Olga\Projects\SvnKit\trunk\svnkit-osgi\gradle.properties
+19:47:40.078 [DEBUG] [org.gradle.initialization.BuildLoader] project property file does not exists. We continue!
+19:47:40.078 [DEBUG] [org.gradle.initialization.BuildLoader] Looking for project properties from: C:\Olga\Projects\SvnKit\trunk\svnkit-distribution\gradle.properties
+19:47:40.078 [DEBUG] [org.gradle.initialization.BuildLoader] project property file does not exists. We continue!
+19:47:40.093 [DEBUG] [org.gradle.initialization.BuildLoader] Timing: Loading projects took: 0.609 secs
+19:47:40.093 [INFO] [org.gradle.BuildLogger] Projects loaded. Root project using build file 'C:\Olga\Projects\SvnKit\trunk\build.gradle'.
+19:47:40.093 [INFO] [org.gradle.BuildLogger] Included projects: [root project 'org.tmatesoft.svnkit', project ':svnkit', project ':svnkit-cli', project ':svnkit-dav', project ':svnkit-distribution', project ':svnkit-javahl16', project ':svnkit-osgi', project ':svnkit-test']
+19:47:40.093 [INFO] [org.gradle.configuration.BuildScriptProcessor] Evaluating root project 'org.tmatesoft.svnkit' using build file 'C:\Olga\Projects\SvnKit\trunk\build.gradle'.
+19:47:40.453 [INFO] [org.gradle.groovy.scripts.DefaultScriptCompilationHandler] Compiling script 'C:\Olga\Projects\SvnKit\trunk\build.defaults.gradle' using BuildScriptClasspathScriptTransformer.
+19:47:42.281 [DEBUG] [org.gradle.groovy.scripts.DefaultScriptCompilationHandler] Timing: Writing script to cache at C:\Documents and Settings\Администратор\.gradle\caches\1.0-milestone-3\scripts\build_defaults_3nklbk6ccb5rppsfkhpsut0kr\buildscript_DefaultScript took: 1.86 secs
+19:47:42.359 [INFO] [org.gradle.groovy.scripts.DefaultScriptCompilationHandler] Compiling script 'C:\Olga\Projects\SvnKit\trunk\build.defaults.gradle' using BuildScriptTransformer.
+19:47:43.437 [DEBUG] [org.gradle.groovy.scripts.DefaultScriptCompilationHandler] Timing: Writing script to cache at C:\Documents and Settings\Администратор\.gradle\caches\1.0-milestone-3\scripts\build_defaults_3nklbk6ccb5rppsfkhpsut0kr\no_buildscript_DefaultScript took: 1.094 secs
+19:47:44.484 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'ivy.default.settings.dir' to 'jar:file:/C:/Documents%20and%20Settings/Администратор/.gradle/wrapper/dists/gradle-1.0-milestone-3/lib/ivy-2.2.0.jar!/org/apache/ivy/core/settings'
+19:47:44.484 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'ivy.basedir' to 'C:\Olga\Projects\SvnKit\trunk\.'
+19:47:44.500 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'ivy.default.conf.dir' to 'jar:file:/C:/Documents%20and%20Settings/Администратор/.gradle/wrapper/dists/gradle-1.0-milestone-3/lib/ivy-2.2.0.jar!/org/apache/ivy/core/settings'
+19:47:44.609 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'java.runtime.name' to 'Java(TM) SE Runtime Environment'
+19:47:44.609 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'sun.boot.library.path' to 'C:\Program Files\Java\jre7\bin'
+19:47:44.609 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'java.vm.version' to '21.0-b17'
+19:47:44.609 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'java.vm.vendor' to 'Oracle Corporation'
+19:47:44.609 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'java.vendor.url' to 'http://java.oracle.com/'
+19:47:44.609 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'path.separator' to ';'
+19:47:44.609 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'java.vm.name' to 'Java HotSpot(TM) Client VM'
+19:47:44.609 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'file.encoding.pkg' to 'sun.io'
+19:47:44.609 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'user.country' to 'RU'
+19:47:44.609 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'user.script' to ''
+19:47:44.609 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'sun.java.launcher' to 'SUN_STANDARD'
+19:47:44.625 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'sun.os.patch.level' to 'Service Pack 3'
+19:47:44.625 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'java.vm.specification.name' to 'Java Virtual Machine Specification'
+19:47:44.625 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'user.dir' to 'C:\Olga\Projects\SvnKit\trunk'
+19:47:44.625 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'java.runtime.version' to '1.7.0-b147'
+19:47:44.625 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'java.awt.graphicsenv' to 'sun.awt.Win32GraphicsEnvironment'
+19:47:44.625 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'java.endorsed.dirs' to 'C:\Program Files\Java\jre7\lib\endorsed'
+19:47:44.625 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'os.arch' to 'x86'
+19:47:44.625 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'java.io.tmpdir' to 'C:\DOCUME~1\9335~1\LOCALS~1\Temp\'
+19:47:44.625 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'line.separator' to '
+'
+19:47:44.625 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'org.gradle.wrapper.properties' to 'C:\Olga\Projects\SvnKit\trunk\\gradle\wrapper\gradle-wrapper.properties'
+19:47:44.625 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'java.vm.specification.vendor' to 'Oracle Corporation'
+19:47:44.625 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'user.variant' to ''
+19:47:44.625 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'os.name' to 'Windows XP'
+19:47:44.625 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'jna.boot.library.path' to 'C:\Documents and Settings\Администратор\.gradle\jna'
+19:47:44.625 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'sun.jnu.encoding' to 'Cp1251'
+19:47:44.625 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'java.library.path' to 'C:\WINDOWS\system32;C:\WINDOWS\Sun\Java\bin;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;.'
+19:47:44.625 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'java.specification.name' to 'Java Platform API Specification'
+19:47:44.640 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'java.class.version' to '51.0'
+19:47:44.640 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'sun.management.compiler' to 'HotSpot Client Compiler'
+19:47:44.640 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'os.version' to '5.1'
+19:47:44.640 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'user.home' to 'C:\Documents and Settings\Администратор'
+19:47:44.640 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'user.timezone' to 'Asia/Yekaterinburg'
+19:47:44.640 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'java.awt.printerjob' to 'sun.awt.windows.WPrinterJob'
+19:47:44.640 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'file.encoding' to 'Cp1251'
+19:47:44.640 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'java.specification.version' to '1.7'
+19:47:44.640 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'java.class.path' to 'C:\Olga\Projects\SvnKit\trunk\\gradle\wrapper\gradle-wrapper.jar'
+19:47:44.640 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'user.name' to 'Администратор'
+19:47:44.640 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'java.vm.specification.version' to '1.7'
+19:47:44.640 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'sun.java.command' to 'org.gradle.wrapper.GradleWrapperMain cleanEclipse eclipse --debug'
+19:47:44.640 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'java.home' to 'C:\Program Files\Java\jre7'
+19:47:44.640 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'sun.arch.data.model' to '32'
+19:47:44.640 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'user.language' to 'ru'
+19:47:44.656 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'java.specification.vendor' to 'Oracle Corporation'
+19:47:44.656 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'awt.toolkit' to 'sun.awt.windows.WToolkit'
+19:47:44.656 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'java.vm.info' to 'mixed mode, sharing'
+19:47:44.656 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'java.version' to '1.7.0'
+19:47:44.656 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'java.ext.dirs' to 'C:\Program Files\Java\jre7\lib\ext;C:\WINDOWS\Sun\Java\lib\ext'
+19:47:44.656 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'sun.boot.class.path' to 'C:\Program Files\Java\jre7\lib\resources.jar;C:\Program Files\Java\jre7\lib\rt.jar;C:\Program Files\Java\jre7\lib\sunrsasign.jar;C:\Program Files\Java\jre7\lib\jsse.jar;C:\Program Files\Java\jre7\lib\jce.jar;C:\Program Files\Java\jre7\lib\charsets.jar;C:\Program Files\Java\jre7\classes'
+19:47:44.656 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'java.vendor' to 'Oracle Corporation'
+19:47:44.656 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'file.separator' to '\'
+19:47:44.656 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'java.vendor.url.bug' to 'http://bugreport.sun.com/bugreport/'
+19:47:44.656 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'sun.io.unicode.encoding' to 'UnicodeLittle'
+19:47:44.671 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'sun.cpu.endian' to 'little'
+19:47:44.671 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'sun.desktop' to 'windows'
+19:47:44.671 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'sun.cpu.isalist' to ''
+19:47:44.671 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'ivy.cache.dir' to 'C:\Documents and Settings\Администратор\.gradle\cache'
+19:47:44.671 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'ivy.log.modules.in.use' to 'false'
+19:47:44.703 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.DefaultSettingsConverter] Timing: Ivy convert for resolve took 0.282 secs
+19:47:44.781 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'ivy.default.settings.dir' to 'jar:file:/C:/Documents%20and%20Settings/Администратор/.gradle/wrapper/dists/gradle-1.0-milestone-3/lib/ivy-2.2.0.jar!/org/apache/ivy/core/settings'
+19:47:44.781 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'ivy.basedir' to 'C:\Olga\Projects\SvnKit\trunk\.'
+19:47:44.781 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'ivy.default.conf.dir' to 'jar:file:/C:/Documents%20and%20Settings/Администратор/.gradle/wrapper/dists/gradle-1.0-milestone-3/lib/ivy-2.2.0.jar!/org/apache/ivy/core/settings'
+19:47:44.796 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'java.runtime.name' to 'Java(TM) SE Runtime Environment'
+19:47:44.796 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'sun.boot.library.path' to 'C:\Program Files\Java\jre7\bin'
+19:47:44.796 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'java.vm.version' to '21.0-b17'
+19:47:44.796 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'java.vm.vendor' to 'Oracle Corporation'
+19:47:44.796 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'java.vendor.url' to 'http://java.oracle.com/'
+19:47:44.796 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'path.separator' to ';'
+19:47:44.796 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'java.vm.name' to 'Java HotSpot(TM) Client VM'
+19:47:44.796 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'file.encoding.pkg' to 'sun.io'
+19:47:44.796 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'user.country' to 'RU'
+19:47:44.796 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'user.script' to ''
+19:47:44.812 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'sun.java.launcher' to 'SUN_STANDARD'
+19:47:44.812 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'sun.os.patch.level' to 'Service Pack 3'
+19:47:44.812 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'java.vm.specification.name' to 'Java Virtual Machine Specification'
+19:47:44.812 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'user.dir' to 'C:\Olga\Projects\SvnKit\trunk'
+19:47:44.812 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'java.runtime.version' to '1.7.0-b147'
+19:47:44.812 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'java.awt.graphicsenv' to 'sun.awt.Win32GraphicsEnvironment'
+19:47:44.812 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'java.endorsed.dirs' to 'C:\Program Files\Java\jre7\lib\endorsed'
+19:47:44.812 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'os.arch' to 'x86'
+19:47:44.812 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'java.io.tmpdir' to 'C:\DOCUME~1\9335~1\LOCALS~1\Temp\'
+19:47:44.812 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'line.separator' to '
+'
+19:47:44.812 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'org.gradle.wrapper.properties' to 'C:\Olga\Projects\SvnKit\trunk\\gradle\wrapper\gradle-wrapper.properties'
+19:47:44.812 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'java.vm.specification.vendor' to 'Oracle Corporation'
+19:47:44.812 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'user.variant' to ''
+19:47:44.812 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'os.name' to 'Windows XP'
+19:47:44.812 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'jna.boot.library.path' to 'C:\Documents and Settings\Администратор\.gradle\jna'
+19:47:44.812 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'sun.jnu.encoding' to 'Cp1251'
+19:47:44.812 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'java.library.path' to 'C:\WINDOWS\system32;C:\WINDOWS\Sun\Java\bin;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;.'
+19:47:44.812 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'java.specification.name' to 'Java Platform API Specification'
+19:47:44.812 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'java.class.version' to '51.0'
+19:47:44.812 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'sun.management.compiler' to 'HotSpot Client Compiler'
+19:47:44.828 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'os.version' to '5.1'
+19:47:44.828 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'user.home' to 'C:\Documents and Settings\Администратор'
+19:47:44.828 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'user.timezone' to 'Asia/Yekaterinburg'
+19:47:44.828 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'java.awt.printerjob' to 'sun.awt.windows.WPrinterJob'
+19:47:44.828 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'file.encoding' to 'Cp1251'
+19:47:44.828 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'java.specification.version' to '1.7'
+19:47:44.828 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'java.class.path' to 'C:\Olga\Projects\SvnKit\trunk\\gradle\wrapper\gradle-wrapper.jar'
+19:47:44.828 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'user.name' to 'Администратор'
+19:47:44.828 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'java.vm.specification.version' to '1.7'
+19:47:44.828 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'sun.java.command' to 'org.gradle.wrapper.GradleWrapperMain cleanEclipse eclipse --debug'
+19:47:44.828 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'java.home' to 'C:\Program Files\Java\jre7'
+19:47:44.828 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'sun.arch.data.model' to '32'
+19:47:44.828 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'user.language' to 'ru'
+19:47:44.828 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'java.specification.vendor' to 'Oracle Corporation'
+19:47:44.828 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'awt.toolkit' to 'sun.awt.windows.WToolkit'
+19:47:44.828 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'java.vm.info' to 'mixed mode, sharing'
+19:47:44.828 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'java.version' to '1.7.0'
+19:47:44.828 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'java.ext.dirs' to 'C:\Program Files\Java\jre7\lib\ext;C:\WINDOWS\Sun\Java\lib\ext'
+19:47:44.828 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'sun.boot.class.path' to 'C:\Program Files\Java\jre7\lib\resources.jar;C:\Program Files\Java\jre7\lib\rt.jar;C:\Program Files\Java\jre7\lib\sunrsasign.jar;C:\Program Files\Java\jre7\lib\jsse.jar;C:\Program Files\Java\jre7\lib\jce.jar;C:\Program Files\Java\jre7\lib\charsets.jar;C:\Program Files\Java\jre7\classes'
+19:47:44.828 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'java.vendor' to 'Oracle Corporation'
+19:47:44.828 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'file.separator' to '\'
+19:47:44.828 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'java.vendor.url.bug' to 'http://bugreport.sun.com/bugreport/'
+19:47:44.828 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'sun.io.unicode.encoding' to 'UnicodeLittle'
+19:47:44.828 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'sun.cpu.endian' to 'little'
+19:47:44.828 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'sun.desktop' to 'windows'
+19:47:44.828 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'sun.cpu.isalist' to ''
+19:47:44.828 [INFO] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] :: loading settings :: url = jar:file:/C:/Documents%20and%20Settings/Администратор/.gradle/wrapper/dists/gradle-1.0-milestone-3/lib/ivy-2.2.0.jar!/org/apache/ivy/core/settings/ivysettings.xml
+19:47:44.843 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'ivy.settings.url' to 'jar:file:/C:/Documents%20and%20Settings/Администратор/.gradle/wrapper/dists/gradle-1.0-milestone-3/lib/ivy-2.2.0.jar!/org/apache/ivy/core/settings/ivysettings.xml'
+19:47:44.843 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'ivy.conf.url' to 'jar:file:/C:/Documents%20and%20Settings/Администратор/.gradle/wrapper/dists/gradle-1.0-milestone-3/lib/ivy-2.2.0.jar!/org/apache/ivy/core/settings/ivysettings.xml'
+19:47:44.843 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'ivy.settings.dir' to 'jar:file:/C:/Documents%20and%20Settings/Администратор/.gradle/wrapper/dists/gradle-1.0-milestone-3/lib/ivy-2.2.0.jar!/org/apache/ivy/core/settings'
+19:47:44.843 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'ivy.conf.dir' to 'jar:file:/C:/Documents%20and%20Settings/Администратор/.gradle/wrapper/dists/gradle-1.0-milestone-3/lib/ivy-2.2.0.jar!/org/apache/ivy/core/settings'
+19:47:44.843 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'ivy.default.ivy.user.dir' to 'C:\Documents and Settings\Администратор\.ivy2'
+19:47:44.843 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'ivy.home' to 'C:\Documents and Settings\Администратор\.ivy2'
+19:47:44.843 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] no default ivy user dir defined: set to C:\Documents and Settings\Администратор\.ivy2
+19:47:44.843 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'ivy.log.modules.in.use' to 'false'
+19:47:44.843 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'ivy.resolver.default.check.modified' to 'false'
+19:47:44.843 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'ivy.default.always.check.exact.revision' to 'false'
+19:47:44.843 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'ivy.retrieve.pattern' to '${ivy.lib.dir}/[artifact]-[revision](-[classifier]).[ext]'
+19:47:44.843 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'ivy.configurations' to '*'
+19:47:44.843 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'ivy.buildlist.ivyfilepath' to 'ivy.xml'
+19:47:44.843 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'ivy.status' to 'integration'
+19:47:44.843 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'ivy.resolve.default.type.filter' to '*'
+19:47:44.843 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'ivy.project.dir' to '${basedir}'
+19:47:44.843 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'ivy.dep.file' to 'ivy.xml'
+19:47:44.843 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'ivy.settings.file' to 'ivysettings.xml'
+19:47:44.843 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'ivy.report.output.pattern' to '[organisation]-[module]-[conf].[ext]'
+19:47:44.843 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'ivy.cache.ttl.default' to '10s'
+19:47:44.843 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'ivy.publish.src.artifacts.pattern' to '${ivy.distrib.dir}/[type]s/[artifact]-[revision](-[classifier]).[ext]'
+19:47:44.843 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'ivy.deliver.ivy.pattern' to '${ivy.distrib.dir}/[type]s/[artifact]-[revision](-[classifier]).[ext]'
+19:47:44.843 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'ivy.build.artifacts.dir' to '${ivy.project.dir}/build/artifacts'
+19:47:44.859 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'ivy.checksums' to 'sha1,md5'
+19:47:44.859 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'ivy.distrib.dir' to '${ivy.project.dir}/distrib'
+19:47:44.859 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'ivy.lib.dir' to '${ivy.project.dir}/lib'
+19:47:45.140 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] including url: jar:file:/C:/Documents%20and%20Settings/Администратор/.gradle/wrapper/dists/gradle-1.0-milestone-3/lib/ivy-2.2.0.jar!/org/apache/ivy/core/settings/ivysettings-public.xml
+19:47:45.171 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'ivy.cache.dir' to 'C:\Documents and Settings\Администратор\.ivy2\cache'
+19:47:45.171 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] no default cache defined: set to C:\Documents and Settings\Администратор\.ivy2\cache
+19:47:45.187 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] public: no namespace defined: using system
+19:47:45.187 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] public: no latest strategy defined: using default
+19:47:45.187 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] including url: jar:file:/C:/Documents%20and%20Settings/Администратор/.gradle/wrapper/dists/gradle-1.0-milestone-3/lib/ivy-2.2.0.jar!/org/apache/ivy/core/settings/ivysettings-shared.xml
+19:47:45.203 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'ivy.shared.default.root' to 'C:\Documents and Settings\Администратор\.ivy2/shared'
+19:47:45.203 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'ivy.shared.default.ivy.pattern' to '[organisation]/[module]/[revision]/[type]s/[artifact].[ext]'
+19:47:45.203 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'ivy.shared.default.artifact.pattern' to '[organisation]/[module]/[revision]/[type]s/[artifact].[ext]'
+19:47:45.218 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] shared: no namespace defined: using system
+19:47:45.218 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] shared: no latest strategy defined: using default
+19:47:45.218 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] public: no namespace defined: using system
+19:47:45.218 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] public: no latest strategy defined: using default
+19:47:45.218 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] including url: jar:file:/C:/Documents%20and%20Settings/Администратор/.gradle/wrapper/dists/gradle-1.0-milestone-3/lib/ivy-2.2.0.jar!/org/apache/ivy/core/settings/ivysettings-local.xml
+19:47:45.218 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'ivy.local.default.root' to 'C:\Documents and Settings\Администратор\.ivy2/local'
+19:47:45.218 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'ivy.local.default.ivy.pattern' to '[organisation]/[module]/[revision]/[type]s/[artifact].[ext]'
+19:47:45.218 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] setting 'ivy.local.default.artifact.pattern' to '[organisation]/[module]/[revision]/[type]s/[artifact].[ext]'
+19:47:45.218 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] shared: no namespace defined: using system
+19:47:45.218 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] shared: no latest strategy defined: using default
+19:47:45.218 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] local: no namespace defined: using system
+19:47:45.234 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] local: no latest strategy defined: using default
+19:47:45.234 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] public: no namespace defined: using system
+19:47:45.234 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] public: no latest strategy defined: using default
+19:47:45.234 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] including url: jar:file:/C:/Documents%20and%20Settings/Администратор/.gradle/wrapper/dists/gradle-1.0-milestone-3/lib/ivy-2.2.0.jar!/org/apache/ivy/core/settings/ivysettings-main-chain.xml
+19:47:45.234 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] shared: no namespace defined: using system
+19:47:45.234 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] shared: no latest strategy defined: using default
+19:47:45.234 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] local: no namespace defined: using system
+19:47:45.234 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] local: no latest strategy defined: using default
+19:47:45.234 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] public: no namespace defined: using system
+19:47:45.234 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] public: no latest strategy defined: using default
+19:47:45.234 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] main: no namespace defined: using system
+19:47:45.234 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] main: no latest strategy defined: using default
+19:47:45.250 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] including url: jar:file:/C:/Documents%20and%20Settings/Администратор/.gradle/wrapper/dists/gradle-1.0-milestone-3/lib/ivy-2.2.0.jar!/org/apache/ivy/core/settings/ivysettings-default-chain.xml
+19:47:45.265 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] shared: no namespace defined: using system
+19:47:45.265 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] shared: no latest strategy defined: using default
+19:47:45.265 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] default: no namespace defined: using system
+19:47:45.265 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] default: no latest strategy defined: using default
+19:47:45.265 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] local: no namespace defined: using system
+19:47:45.265 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] local: no latest strategy defined: using default
+19:47:45.265 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] public: no namespace defined: using system
+19:47:45.265 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] public: no latest strategy defined: using default
+19:47:45.265 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] main: no namespace defined: using system
+19:47:45.265 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] main: no latest strategy defined: using default
+19:47:45.265 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] shared: no namespace defined: using system
+19:47:45.265 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] shared: no latest strategy defined: using default
+19:47:45.265 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] default: no namespace defined: using system
+19:47:45.265 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] default: no latest strategy defined: using default
+19:47:45.265 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] local: no namespace defined: using system
+19:47:45.265 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] local: no latest strategy defined: using default
+19:47:45.265 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] public: no namespace defined: using system
+19:47:45.265 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] public: no latest strategy defined: using default
+19:47:45.265 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] main: no namespace defined: using system
+19:47:45.265 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] main: no latest strategy defined: using default
+19:47:45.265 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 'ivy.default.ivy.user.dir' already set: discarding 'C:\Documents and Settings\Администратор\.ivy2'
+19:47:45.265 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] settings loaded (422ms)
+19:47:45.265 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 	default cache: C:\Documents and Settings\Администратор\.ivy2\cache
+19:47:45.265 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 	default resolver: default
+19:47:45.265 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 	default latest strategy: latest-revision
+19:47:45.265 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 	default conflict manager: latest-revision
+19:47:45.281 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 	circular dependency strategy: warn
+19:47:45.281 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 	validate: true
+19:47:45.281 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 	check up2date: true
+19:47:45.281 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 	-- 5 resolvers:
+19:47:45.281 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 	shared [file]
+19:47:45.281 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 		cache: null
+19:47:45.281 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 		m2compatible: false
+19:47:45.281 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 		ivy patterns:
+19:47:45.281 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 			C:\Documents and Settings\Администратор\.ivy2/shared/[organisation]/[module]/[revision]/[type]s/[artifact].[ext]
+19:47:45.281 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 		artifact patterns:
+19:47:45.281 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 			C:\Documents and Settings\Администратор\.ivy2/shared/[organisation]/[module]/[revision]/[type]s/[artifact].[ext]
+19:47:45.281 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 		repository: shared
+19:47:45.281 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 	default [chain] [local, main]
+19:47:45.281 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 		return first: true
+19:47:45.281 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 		dual: false
+19:47:45.281 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 		-> local
+19:47:45.281 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 		-> main
+19:47:45.281 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 	local [file]
+19:47:45.281 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 		cache: null
+19:47:45.281 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 		m2compatible: false
+19:47:45.281 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 		ivy patterns:
+19:47:45.281 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 			C:\Documents and Settings\Администратор\.ivy2/local/[organisation]/[module]/[revision]/[type]s/[artifact].[ext]
+19:47:45.281 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 		artifact patterns:
+19:47:45.281 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 			C:\Documents and Settings\Администратор\.ivy2/local/[organisation]/[module]/[revision]/[type]s/[artifact].[ext]
+19:47:45.281 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 		repository: local
+19:47:45.281 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 	public [ibiblio]
+19:47:45.281 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 		cache: null
+19:47:45.281 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 		m2compatible: true
+19:47:45.281 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 		ivy patterns:
+19:47:45.281 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 			http://repo1.maven.org/maven2/[organisation]/[module]/[revision]/[artifact]-[revision](-[classifier]).[ext]
+19:47:45.281 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 		artifact patterns:
+19:47:45.281 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 			http://repo1.maven.org/maven2/[organisation]/[module]/[revision]/[artifact]-[revision](-[classifier]).[ext]
+19:47:45.281 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 		repository: public
+19:47:45.281 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 		root: http://repo1.maven.org/maven2/
+19:47:45.281 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 		pattern: [organisation]/[module]/[revision]/[artifact]-[revision](-[classifier]).[ext]
+19:47:45.281 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 		usepoms: true
+19:47:45.281 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 		useMavenMetadata: true
+19:47:45.281 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 	main [chain] [shared, public]
+19:47:45.296 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 		return first: false
+19:47:45.296 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 		dual: true
+19:47:45.296 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 		-> shared
+19:47:45.312 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 		-> public
+19:47:45.312 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 	module settings:
+19:47:45.312 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 		NONE
+19:47:45.328 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.moduleconverter.ResolveModuleDescriptorConverter] Timing: Ivy convert for resolve took 0.563 secs
+19:47:45.328 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.moduleconverter.PublishModuleDescriptorConverter] Timing: Ivy convert for publish took 0.563 secs
+19:47:45.328 [INFO] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] :: resolving dependencies :: #org.tmatesoft.svnkit;unspecified
+19:47:45.328 [INFO] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 	confs: [classpath]
+19:47:45.328 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 	validate = true
+19:47:45.328 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 	refresh = false
+19:47:45.375 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] resolving dependencies for configuration 'classpath'
+19:47:45.390 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] == resolving dependencies for #org.tmatesoft.svnkit;unspecified [classpath]
+19:47:45.390 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] loadData of #org.tmatesoft.svnkit;unspecified of rootConf=classpath
+19:47:45.406 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] == resolving dependencies #org.tmatesoft.svnkit;unspecified->org.tmatesoft.build#build;0.9.7-SNAPSHOT [classpath->default]
+19:47:45.406 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] loadData of org.tmatesoft.build#build;0.9.7-SNAPSHOT of rootConf=classpath
+19:47:45.406 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 	using clientModuleChain to resolve org.tmatesoft.build#build;0.9.7-SNAPSHOT
+19:47:45.406 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] clientModuleChain: Checking cache for: dependency: org.tmatesoft.build#build;0.9.7-SNAPSHOT {classpath=[default]}
+19:47:45.421 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] clientModuleChain: no namespace defined: using system
+19:47:45.500 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 	no ivy file in cache for org.tmatesoft.build#build;0.9.7-SNAPSHOT: tried C:\Documents and Settings\Администратор\.gradle\cache\org.tmatesoft.build\build\ivy-0.9.7-SNAPSHOT.xml
+19:47:45.500 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] clientModuleChain: no latest strategy defined: using default
+19:47:45.500 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] chain: Checking cache for: dependency: org.tmatesoft.build#build;0.9.7-SNAPSHOT {classpath=[default]}
+19:47:45.500 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] chain: no namespace defined: using system
+19:47:45.500 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] don't use cache for org.tmatesoft.build#build;0.9.7-SNAPSHOT: changing=true
+19:47:45.500 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] chain: no latest strategy defined: using default
+19:47:45.500 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] http://maven.tmatesoft.com:8080/content/repositories/snapshots/: no namespace defined: using system
+19:47:45.500 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 	no ivy file in cache for org.tmatesoft.build#build;0.9.7-SNAPSHOT: tried C:\Documents and Settings\Администратор\.gradle\cache\org.tmatesoft.build\build\ivy-0.9.7-SNAPSHOT.xml
+19:47:45.500 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.GradleIBiblioResolver] Dependency not found in cache.
+19:47:45.687 [DEBUG] [sun.net.www.protocol.http.HttpURLConnection] sun.net.www.MessageHeader@12437f75 pairs: {HEAD /content/repositories/snapshots/org/tmatesoft/build/build/0.9.7-SNAPSHOT/maven-metadata.xml HTTP/1.1: null}{User-Agent: Apache Ivy/2.2.0}{Host: maven.tmatesoft.com:8080}{Accept: text/html, image/gif, image/jpeg, *; q=.2, */*; q=.2}{Connection: keep-alive}
+19:47:46.156 [DEBUG] [sun.net.www.protocol.http.HttpURLConnection] sun.net.www.MessageHeader@13b522915 pairs: {null: HTTP/1.1 200 OK}{Date: Wed, 05 Oct 2011 15:51:02 GMT}{Server: Apache}{Set-Cookie: JSESSIONID=e24bf95c-fdc4-42ab-a6c2-b074cbfbcc73; Path=/; HttpOnly}{Set-Cookie: rememberMe=deleteMe; Path=/; Max-Age=0; Expires=Tue, 04-Oct-2011 15:51:02 GMT}{Last-Modified: Thu, 12 May 2011 08:00:56 GMT}{ETag: "a4bd8060205a7cd47f15f0bd8d90d3cf9abb7c97"}{Vary: Accept-Charset,Accept-Encoding,Accept-Language,Accept}{Set-Cookie: rememberMe=deleteMe; Path=/; Max-Age=0; Expires=Tue, 04-Oct-2011 15:51:02 GMT}{Set-Cookie: JSESSIONID=deleteMe; Path=/; Max-Age=0; Expires=Tue, 04-Oct-2011 15:51:02 GMT}{Set-Cookie: rememberMe=deleteMe; Path=/; Max-Age=0; Expires=Tue, 04-Oct-2011 15:51:02 GMT}{Content-Length: 777}{Keep-Alive: timeout=15, max=100}{Connection: Keep-Alive}{Content-Type: application/xml}
+19:47:46.156 [DEBUG] [sun.net.www.protocol.http.HttpURLConnection] sun.net.www.MessageHeader@446fd26 pairs: {GET /content/repositories/snapshots/org/tmatesoft/build/build/0.9.7-SNAPSHOT/maven-metadata.xml HTTP/1.1: null}{User-Agent: Apache Ivy/2.2.0}{Accept-Encoding: gzip,deflate}{Host: maven.tmatesoft.com:8080}{Accept: text/html, image/gif, image/jpeg, *; q=.2, */*; q=.2}{Connection: keep-alive}
+19:47:46.343 [DEBUG] [sun.net.www.protocol.http.HttpURLConnection] sun.net.www.MessageHeader@2d1ea912 pairs: {null: HTTP/1.1 200 OK}{Date: Wed, 05 Oct 2011 15:51:02 GMT}{Server: Apache}{Set-Cookie: JSESSIONID=46678d28-f246-4e9e-861b-e8dc52b66f12; Path=/; HttpOnly}{Set-Cookie: rememberMe=deleteMe; Path=/; Max-Age=0; Expires=Tue, 04-Oct-2011 15:51:02 GMT}{Last-Modified: Thu, 12 May 2011 08:00:56 GMT}{ETag: "a4bd8060205a7cd47f15f0bd8d90d3cf9abb7c97"}{Vary: Accept-Charset,Accept-Encoding,Accept-Language,Accept}{Content-Length: 777}{Keep-Alive: timeout=15, max=99}{Connection: Keep-Alive}{Content-Type: application/xml}
+19:47:46.359 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] [0.9.7-20110511.174809-21] org/tmatesoft/build#build;0.9.7-SNAPSHOT
+19:47:46.359 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 	 trying http://maven.tmatesoft.com:8080/content/repositories/snapshots/org/tmatesoft/build/build/0.9.7-SNAPSHOT/build-0.9.7-20110511.174809-21.pom
+19:47:46.359 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 		tried http://maven.tmatesoft.com:8080/content/repositories/snapshots/org/tmatesoft/build/build/0.9.7-SNAPSHOT/build-0.9.7-20110511.174809-21.pom
+19:47:46.359 [DEBUG] [sun.net.www.protocol.http.HttpURLConnection] sun.net.www.MessageHeader@b697de5 pairs: {HEAD /content/repositories/snapshots/org/tmatesoft/build/build/0.9.7-SNAPSHOT/build-0.9.7-20110511.174809-21.pom HTTP/1.1: null}{User-Agent: Apache Ivy/2.2.0}{Host: maven.tmatesoft.com:8080}{Accept: text/html, image/gif, image/jpeg, *; q=.2, */*; q=.2}{Connection: keep-alive}
+19:47:46.562 [DEBUG] [sun.net.www.protocol.http.HttpURLConnection] sun.net.www.MessageHeader@1aca48015 pairs: {null: HTTP/1.1 200 OK}{Date: Wed, 05 Oct 2011 15:51:03 GMT}{Server: Apache}{Set-Cookie: JSESSIONID=401c10e5-f816-4739-a09f-a7f187a4c1f1; Path=/; HttpOnly}{Set-Cookie: rememberMe=deleteMe; Path=/; Max-Age=0; Expires=Tue, 04-Oct-2011 15:51:03 GMT}{Last-Modified: Wed, 11 May 2011 17:46:12 GMT}{ETag: "8cf59702b681c4bb9ddc43f4d2ff48be150de2d8"}{Vary: Accept-Charset,Accept-Encoding,Accept-Language,Accept}{Set-Cookie: rememberMe=deleteMe; Path=/; Max-Age=0; Expires=Tue, 04-Oct-2011 15:51:03 GMT}{Set-Cookie: JSESSIONID=deleteMe; Path=/; Max-Age=0; Expires=Tue, 04-Oct-2011 15:51:03 GMT}{Set-Cookie: rememberMe=deleteMe; Path=/; Max-Age=0; Expires=Tue, 04-Oct-2011 15:51:03 GMT}{Content-Length: 414}{Keep-Alive: timeout=15, max=98}{Connection: Keep-Alive}{Content-Type: application/xml}
+19:47:46.562 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 	http://maven.tmatesoft.com:8080/content/repositories/snapshots/: found md file for org.tmatesoft.build#build;0.9.7-SNAPSHOT
+19:47:46.562 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 		=> http://maven.tmatesoft.com:8080/content/repositories/snapshots/org/tmatesoft/build/build/0.9.7-SNAPSHOT/build-0.9.7-20110511.174809-21.pom (0.9.7-SNAPSHOT)
+19:47:46.562 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 	parser = pom parser
+19:47:46.578 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 	no ivy file in cache for org.tmatesoft.build#build;0.9.7-SNAPSHOT: tried C:\Documents and Settings\Администратор\.gradle\cache\org.tmatesoft.build\build\ivy-0.9.7-SNAPSHOT.xml
+19:47:46.593 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] downloading http://maven.tmatesoft.com:8080/content/repositories/snapshots/org/tmatesoft/build/build/0.9.7-SNAPSHOT/build-0.9.7-20110511.174809-21.pom ...
+19:47:46.609 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 	http://maven.tmatesoft.com:8080/content/repositories/snapshots/: downloading http://maven.tmatesoft.com:8080/content/repositories/snapshots/org/tmatesoft/build/build/0.9.7-SNAPSHOT/build-0.9.7-20110511.174809-21.pom
+19:47:46.609 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 		to C:\Documents and Settings\Администратор\.gradle\cache\org.tmatesoft.build\build\ivy-0.9.7-SNAPSHOT.xml.original.part
+19:47:46.609 [DEBUG] [sun.net.www.protocol.http.HttpURLConnection] sun.net.www.MessageHeader@19d50bc6 pairs: {GET /content/repositories/snapshots/org/tmatesoft/build/build/0.9.7-SNAPSHOT/build-0.9.7-20110511.174809-21.pom HTTP/1.1: null}{User-Agent: Apache Ivy/2.2.0}{Accept-Encoding: gzip,deflate}{Host: maven.tmatesoft.com:8080}{Accept: text/html, image/gif, image/jpeg, *; q=.2, */*; q=.2}{Connection: keep-alive}
+19:47:46.781 [DEBUG] [sun.net.www.protocol.http.HttpURLConnection] sun.net.www.MessageHeader@11f6c9912 pairs: {null: HTTP/1.1 200 OK}{Date: Wed, 05 Oct 2011 15:51:03 GMT}{Server: Apache}{Set-Cookie: JSESSIONID=4aa757aa-6f2d-4fea-a828-58544d016c0a; Path=/; HttpOnly}{Set-Cookie: rememberMe=deleteMe; Path=/; Max-Age=0; Expires=Tue, 04-Oct-2011 15:51:03 GMT}{Last-Modified: Wed, 11 May 2011 17:46:12 GMT}{ETag: "8cf59702b681c4bb9ddc43f4d2ff48be150de2d8"}{Vary: Accept-Charset,Accept-Encoding,Accept-Language,Accept}{Content-Length: 414}{Keep-Alive: timeout=15, max=97}{Connection: Keep-Alive}{Content-Type: application/xml}
+19:47:46.812 [LIFECYCLE] [org.gradle.api.internal.artifacts.ivyservice.DefaultSettingsConverter] Download http://maven.tmatesoft.com:8080/content/repositories/snapshots/org/tmatesoft/build/build/0.9.7-SNAPSHOT/build-0.9.7-20110511.174809-21.pom
+19:47:46.828 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 	[SUCCESSFUL ] org.tmatesoft.build#build;0.9.7-SNAPSHOT!build.pom(pom.original) (235ms)
+19:47:46.937 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] WARN: io problem while parsing ivy file: http://maven.tmatesoft.com:8080/content/repositories/snapshots/org/tmatesoft/build/build/0.9.7-SNAPSHOT/build-0.9.7-20110511.174809-21.pom: Path contains invalid character: А
+19:47:46.937 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] WARN: 	module not found: org.tmatesoft.build#build;0.9.7-SNAPSHOT
+19:47:46.937 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] WARN: ==== clientModule: tried
+19:47:46.937 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] WARN: ==== internal-repository: tried
+19:47:46.937 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] WARN: ==== http://maven.tmatesoft.com:8080/content/repositories/snapshots/: tried
+19:47:46.937 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] WARN:   http://maven.tmatesoft.com:8080/content/repositories/snapshots/org/tmatesoft/build/build/0.9.7-SNAPSHOT/build-0.9.7-20110511.174809-21.pom
+19:47:46.968 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] Nbr of module to sort : 0
+19:47:47.000 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 	resolved ivy file produced in C:\Documents and Settings\Администратор\.gradle\cache\resolved--org.tmatesoft.svnkit-unspecified.xml
+19:47:47.000 [INFO] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] :: resolution report :: resolve 1672ms :: artifacts dl 0ms
+19:47:47.000 [INFO] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 	---------------------------------------------------------------------
+19:47:47.000 [INFO] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 	|                  |            modules            ||   artifacts   |
+19:47:47.000 [INFO] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 	|       conf       | number| search|dwnlded|evicted|| number|dwnlded|
+19:47:47.015 [INFO] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 	---------------------------------------------------------------------
+19:47:47.015 [INFO] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 	|     classpath    |   1   |   0   |   0   |   0   ||   0   |   0   |
+19:47:47.015 [INFO] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 	---------------------------------------------------------------------
+19:47:47.015 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] WARN: 	::::::::::::::::::::::::::::::::::::::::::::::
+19:47:47.015 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] WARN: 	::          UNRESOLVED DEPENDENCIES         ::
+19:47:47.015 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] WARN: 	::::::::::::::::::::::::::::::::::::::::::::::
+19:47:47.015 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] WARN: 	:: org.tmatesoft.build#build;0.9.7-SNAPSHOT: not found
+19:47:47.015 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] WARN: 	::::::::::::::::::::::::::::::::::::::::::::::
+
+19:47:47.015 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] Nbr of module to sort : 0
+19:47:47.015 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 	report for #org.tmatesoft.svnkit;unspecified classpath produced in C:\Documents and Settings\Администратор\.gradle\cache\-org.tmatesoft.svnkit-classpath.xml
+19:47:47.015 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 	resolve done (1672ms resolve - 0ms download)
+19:47:47.015 [INFO] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 
+19:47:47.031 [WARN] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] :: problems summary ::
+19:47:47.031 [WARN] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] :::: WARNINGS
+19:47:47.031 [WARN] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 	io problem while parsing ivy file: http://maven.tmatesoft.com:8080/content/repositories/snapshots/org/tmatesoft/build/build/0.9.7-SNAPSHOT/build-0.9.7-20110511.174809-21.pom: Path contains invalid character: А
+
+19:47:47.031 [WARN] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 		module not found: org.tmatesoft.build#build;0.9.7-SNAPSHOT
+
+19:47:47.031 [WARN] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 	==== clientModule: tried
+
+19:47:47.031 [WARN] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 	==== internal-repository: tried
+
+19:47:47.031 [WARN] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 	==== http://maven.tmatesoft.com:8080/content/repositories/snapshots/: tried
+
+19:47:47.046 [WARN] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 	  http://maven.tmatesoft.com:8080/content/repositories/snapshots/org/tmatesoft/build/build/0.9.7-SNAPSHOT/build-0.9.7-20110511.174809-21.pom
+
+19:47:47.046 [WARN] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 		::::::::::::::::::::::::::::::::::::::::::::::
+
+19:47:47.046 [WARN] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 		::          UNRESOLVED DEPENDENCIES         ::
+
+19:47:47.046 [WARN] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 		::::::::::::::::::::::::::::::::::::::::::::::
+
+19:47:47.046 [WARN] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 		:: org.tmatesoft.build#build;0.9.7-SNAPSHOT: not found
+
+19:47:47.046 [WARN] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 		::::::::::::::::::::::::::::::::::::::::::::::
+
+
+19:47:47.046 [INFO] [org.gradle.api.internal.artifacts.ivyservice.IvyLoggingAdaper] 
+:: USE VERBOSE OR DEBUG MESSAGE LEVEL FOR MORE DETAILS
+19:47:47.046 [DEBUG] [org.gradle.api.internal.artifacts.ivyservice.DefaultIvyDependencyResolver] Timing: Ivy resolve took 1.718 secs
+19:47:47.078 [DEBUG] [org.gradle.configuration.BuildScriptProcessor] Timing: Running the build script took 6.985 secs
+19:47:47.375 [LIFECYCLE] [org.gradle.BuildResultLogger] 
+19:47:47.375 [LIFECYCLE] [org.gradle.BuildResultLogger] BUILD FAILED
+19:47:47.375 [LIFECYCLE] [org.gradle.BuildResultLogger] 
+19:47:47.375 [LIFECYCLE] [org.gradle.BuildResultLogger] Total time: 13.079 secs

@@ -416,7 +416,7 @@ public class SVNClientImpl implements ISVNClient {
             throws SubversionException {
         SvnResolve resolve = svnOperationFactory.createResolve();
         resolve.setDepth(getSVNDepth(depth));
-        resolve.setAccept(getSVNConflictChoice(conflictResult));
+        resolve.setConflictChoice(getSVNConflictChoice(conflictResult));
 
         resolve.addTarget(getTarget(path));
 

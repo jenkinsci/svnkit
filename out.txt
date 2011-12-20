@@ -1,0 +1,29 @@
+:clean UP-TO-DATE
+:svnkit:clean
+:svnkit-cli:clean
+:svnkit-dav:clean UP-TO-DATE
+:svnkit-distribution:clean
+:svnkit-javahl16:clean
+:svnkit-osgi:clean UP-TO-DATE
+:svnkit-test:clean UP-TO-DATE
+:svnkit:compileJava
+:svnkit:processResources
+:svnkit:classes
+:svnkit:jar
+:svnkit:sourcesJar
+:svnkit-cli:compileJava
+:svnkit-cli:processResources
+:svnkit-cli:classes
+:svnkit-cli:jar
+:svnkit-cli:sourcesJar
+:svnkit-javahl16:compileJava
+:svnkit-javahl16:processResources UP-TO-DATE
+:svnkit-javahl16:classes
+:svnkit-javahl16:jar
+:svnkit-javahl16:sourcesJar
+:svnkit-distribution:buildAll
+:publish
+
+BUILD SUCCESSFUL
+
+Total time: 2 mins 43.407 secs

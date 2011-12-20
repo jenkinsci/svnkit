@@ -6,7 +6,6 @@ import java.util.Set;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
@@ -17,9 +16,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
-import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.core.wc2.SvnCleanup;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
 
 public class SvnNgCleanup extends SvnNgOperationRunner<Long, SvnCleanup> {

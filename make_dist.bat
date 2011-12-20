@@ -1,0 +1,1 @@
+gradlew clean publish -Pto=C:/Olga/Projects/SvnDistrib

@@ -74,6 +74,19 @@ public class SvnWcDbShared {
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{0}'' was not found.", absolutePath);
         SVNErrorManager.error(err, SVNLogType.WC);
     }
+    
+    protected static boolean doesNodeExists(SVNWCDbRoot wcDbRoot, File relpath) throws SVNException {
+        SVNSqlJetStatement stmt = null;
+        try {
+            stmt = wcDbRoot.getSDb().getStatement(SVNWCDbStatements.DOES_NODE_EXIST);
+            stmt.bindf("is", wcDbRoot.getWcId(), relpath);
+            return stmt.next();
+        } finally {
+            if (stmt != null) {
+                stmt.reset();
+            }
+        }
+    }
 
     protected static void nodeNotFound(SVNWCDbRoot root, File relPath) throws SVNException {
         nodeNotFound(root.getAbsPath(relPath));
