@@ -7,9 +7,9 @@ public class SvnResolve extends SvnOperation<Long> {
 
     private SVNConflictChoice conflictChoice;
     private SVNDepth depth;
-    private boolean resolveContents;
-    private boolean resolveProperties;
-    private boolean resolveTree;
+    private boolean resolveContents = true;
+    private boolean resolveProperties = true;
+    private boolean resolveTree = true;
         
     protected SvnResolve(SvnOperationFactory factory) {
         super(factory);
@@ -54,5 +54,7 @@ public class SvnResolve extends SvnOperation<Long> {
     public void setResolveTree(boolean resolveTree) {
         this.resolveTree = resolveTree;
     }
+    
+        
 
 }
