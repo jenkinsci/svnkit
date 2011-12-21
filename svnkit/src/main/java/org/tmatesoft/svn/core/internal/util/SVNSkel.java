@@ -360,7 +360,7 @@ public class SVNSkel {
             SVNSkel nameElement = (SVNSkel) iterator.next();
             SVNSkel valueElement = (SVNSkel) iterator.next();
             String name = nameElement.getValue();
-            byte[] value = valueElement.getData();
+            byte[] value = isAtom() ? valueElement.getData() : null;
             props.put(name, value);
         }
         return props;
