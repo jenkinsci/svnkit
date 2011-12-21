@@ -158,7 +158,7 @@ public class SVNClientImpl implements ISVNClient {
     }
 
     public Version getVersion() {
-        return null;
+        return SVNClientImplVersion.getInstance();
     }
 
     public String getAdminDirectoryName() {
@@ -1890,4 +1890,23 @@ public class SVNClientImpl implements ISVNClient {
         }
     }
 
+    static String versionString() {
+        return org.tmatesoft.svn.util.Version.getVersionString();
+    }
+
+    static int versionMajor() {
+        return org.tmatesoft.svn.util.Version.getMajorVersion();
+    }
+
+    static int versionMinor() {
+        return org.tmatesoft.svn.util.Version.getMinorVersion();
+    }
+
+    static int versionMicro() {
+        return org.tmatesoft.svn.util.Version.getMicroVersion();
+    }
+
+    static long versionRevisionNumber() {
+        return org.tmatesoft.svn.util.Version.getRevisionNumber();
+    }
 }
