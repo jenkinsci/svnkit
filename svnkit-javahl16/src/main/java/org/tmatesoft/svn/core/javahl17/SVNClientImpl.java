@@ -162,11 +162,13 @@ public class SVNClientImpl implements ISVNClient {
     }
 
     public String getAdminDirectoryName() {
-        return null;
+        return SVNFileUtil.getAdminDirectoryName();
     }
 
     public boolean isAdminDirectory(String name) {
-        return false;
+        return name != null && (SVNFileUtil.isWindows) ?
+                SVNFileUtil.getAdminDirectoryName().equalsIgnoreCase(name) :
+                SVNFileUtil.getAdminDirectoryName().equals(name);
     }
 
     public void status(String path, Depth depth, boolean onServer,
