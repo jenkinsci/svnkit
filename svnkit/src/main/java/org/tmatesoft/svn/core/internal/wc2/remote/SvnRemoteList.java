@@ -54,6 +54,7 @@ public class SvnRemoteList extends SvnRemoteOperationRunner<SVNDirEntry, SvnList
     }
 
     public void handleDirEntry(SVNDirEntry dirEntry) throws SVNException {
+        getOperation().receive(SvnTarget.fromURL(dirEntry.getURL()), dirEntry);
     }
 
     private void doList(SVNRepository repos, long rev, final ISVNDirEntryHandler handler, boolean fetchLocks, SVNDepth depth, int entryFields) throws SVNException {
