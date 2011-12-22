@@ -4099,7 +4099,7 @@ public class SVNWCContext {
     	for (String child : children) {
     		checkCancelled();
     		File childAbsPath = SVNFileUtil.createFilePath(localAbsPath, child);
-    		WCDbInfo readInfo = db.readInfo(localAbsPath, InfoField.status, InfoField.kind, InfoField.conflicted);
+    		WCDbInfo readInfo = db.readInfo(childAbsPath, InfoField.status, InfoField.kind, InfoField.conflicted);
     		SVNWCDbStatus status = readInfo.status;
             SVNWCDbKind kind = readInfo.kind;
             boolean conflicted = readInfo.conflicted;
