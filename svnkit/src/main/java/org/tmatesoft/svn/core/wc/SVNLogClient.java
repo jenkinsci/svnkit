@@ -28,7 +28,9 @@ import org.tmatesoft.svn.core.internal.wc16.SVNLogClient16;
 import org.tmatesoft.svn.core.internal.wc17.SVNLogClient17;
 import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnAnnotate;
+import org.tmatesoft.svn.core.wc2.SvnList;
 import org.tmatesoft.svn.core.wc2.SvnLog;
 import org.tmatesoft.svn.core.wc2.SvnRevisionRange;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -1110,15 +1112,7 @@ public class SVNLogClient extends SVNBasicClient {
      *             instead
      */
     public void doList(File path, SVNRevision pegRevision, SVNRevision revision, boolean fetchLocks, boolean recursive, ISVNDirEntryHandler handler) throws SVNException {
-        try {
-            getSVNLogClient17().doList(path, pegRevision, revision, fetchLocks, recursive, handler);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNLogClient16().doList(path, pegRevision, revision, fetchLocks, recursive, handler);
-                return;
-            }
-            throw e;
-        }
+        doList(path, pegRevision, revision, fetchLocks, SVNDepth.fromRecurse(recursive), SVNDirEntry.DIRENT_ALL, handler);
     }
 
     /**
@@ -1176,16 +1170,20 @@ public class SVNLogClient extends SVNBasicClient {
      *             <ul/>
      * @since 1.2, SVN 1.5
      */
-    public void doList(File path, SVNRevision pegRevision, SVNRevision revision, boolean fetchLocks, SVNDepth depth, int entryFields, ISVNDirEntryHandler handler) throws SVNException {
-        try {
-            getSVNLogClient17().doList(path, pegRevision, revision, fetchLocks, depth, entryFields, handler);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNLogClient16().doList(path, pegRevision, revision, fetchLocks, depth, entryFields, handler);
-                return;
+    public void doList(File path, SVNRevision pegRevision, SVNRevision revision, boolean fetchLocks, SVNDepth depth, int entryFields, final ISVNDirEntryHandler handler) throws SVNException {
+        SvnList list = getOperationsFactory().createList();
+        list.setDepth(depth);
+        list.setRevision(revision);
+        list.addTarget(SvnTarget.fromFile(path, pegRevision));
+        list.setFetchLocks(fetchLocks);
+        list.setEntryFields(entryFields);
+        list.setReceiver(new ISvnObjectReceiver<SVNDirEntry>() {            
+            public void receive(SvnTarget target, SVNDirEntry object) throws SVNException {
+                handler.handleDirEntry(object);
             }
-            throw e;
-        }
+        });
+        
+        list.run();
     }
 
     /**
@@ -1219,15 +1217,7 @@ public class SVNLogClient extends SVNBasicClient {
      *             instead
      */
     public void doList(File path, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNDirEntryHandler handler) throws SVNException {
-        try {
-            getSVNLogClient17().doList(path, pegRevision, revision, recursive, handler);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNLogClient16().doList(path, pegRevision, revision, recursive, handler);
-                return;
-            }
-            throw e;
-        }
+        doList(path, pegRevision, revision, false, SVNDepth.fromRecurse(recursive), SVNDirEntry.DIRENT_ALL, handler);
     }
 
     /**
@@ -1263,15 +1253,7 @@ public class SVNLogClient extends SVNBasicClient {
      *      ISVNDirEntryHandler)
      */
     public void doList(SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean fetchLocks, boolean recursive, ISVNDirEntryHandler handler) throws SVNException {
-        try {
-            getSVNLogClient17().doList(url, pegRevision, revision, fetchLocks, recursive, handler);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNLogClient16().doList(url, pegRevision, revision, fetchLocks, recursive, handler);
-                return;
-            }
-            throw e;
-        }
+        doList(url, pegRevision, revision, fetchLocks, SVNDepth.fromRecurse(recursive), SVNDirEntry.DIRENT_ALL, handler);
     }
 
     /**
@@ -1329,16 +1311,20 @@ public class SVNLogClient extends SVNBasicClient {
      *             <ul/>
      * @since 1.2, SVN 1.5
      */
-    public void doList(SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean fetchLocks, SVNDepth depth, int entryFields, ISVNDirEntryHandler handler) throws SVNException {
-        try {
-            getSVNLogClient17().doList(url, pegRevision, revision, fetchLocks, depth, entryFields, handler);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNLogClient16().doList(url, pegRevision, revision, fetchLocks, depth, entryFields, handler);
-                return;
+    public void doList(SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean fetchLocks, SVNDepth depth, int entryFields, final ISVNDirEntryHandler handler) throws SVNException {
+        SvnList list = getOperationsFactory().createList();
+        list.setDepth(depth);
+        list.setRevision(revision);
+        list.addTarget(SvnTarget.fromURL(url, pegRevision));
+        list.setFetchLocks(fetchLocks);
+        list.setEntryFields(entryFields);
+        list.setReceiver(new ISvnObjectReceiver<SVNDirEntry>() {            
+            public void receive(SvnTarget target, SVNDirEntry object) throws SVNException {
+                handler.handleDirEntry(object);
             }
-            throw e;
-        }
+        });
+        
+        list.run();
     }
 
     /**
@@ -1372,15 +1358,7 @@ public class SVNLogClient extends SVNBasicClient {
      *             instead
      */
     public void doList(SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNDirEntryHandler handler) throws SVNException {
-        try {
-            getSVNLogClient17().doList(url, pegRevision, revision, recursive, handler);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNLogClient16().doList(url, pegRevision, revision, recursive, handler);
-                return;
-            }
-            throw e;
-        }
+        doList(url, pegRevision, revision, false, SVNDepth.fromRecurse(recursive), SVNDirEntry.DIRENT_ALL, handler);
     }
 
 }

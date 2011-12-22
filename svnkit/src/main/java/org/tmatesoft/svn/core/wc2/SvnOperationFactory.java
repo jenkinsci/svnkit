@@ -81,6 +81,7 @@ import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteExport;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteGetInfo;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteGetProperties;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteGetRevisionProperties;
+import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteList;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteLog;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteRemoteDelete;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteRemoteMkDir;
@@ -222,6 +223,8 @@ public class SvnOperationFactory {
         
         registerOperationRunner(SvnResolve.class, new SvnOldResolve());
         registerOperationRunner(SvnResolve.class, new SvnNgResolve());
+        
+        registerOperationRunner(SvnList.class, new SvnRemoteList());
     }
     
     public boolean isAutoCloseContext() {
@@ -444,6 +447,10 @@ public class SvnOperationFactory {
     
     public SvnCleanup createCleanup() {
         return new SvnCleanup(this);
+    }
+    
+    public SvnList createList() {
+        return new SvnList(this);
     }
     
     protected Object run(SvnOperation<?> operation) throws SVNException {

@@ -1298,7 +1298,7 @@ public abstract class SVNRepository {
      * @see                 #getDir(String, long, boolean, Collection)
      * @see                 org.tmatesoft.svn.core.SVNDirEntry
      */
-    public Collection getDir(String path, long revision, SVNProperties properties, int entryFields, Collection dirEntries) throws SVNException {
+    public Collection<SVNDirEntry> getDir(String path, long revision, SVNProperties properties, int entryFields, Collection dirEntries) throws SVNException {
         final Collection result = dirEntries != null ? dirEntries : new LinkedList();
         ISVNDirEntryHandler handler;
         handler = new ISVNDirEntryHandler() {
