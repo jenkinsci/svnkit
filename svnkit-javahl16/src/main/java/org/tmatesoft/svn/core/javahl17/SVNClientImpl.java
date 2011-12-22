@@ -148,6 +148,7 @@ public class SVNClientImpl implements ISVNClient {
     private DefaultSVNOptions options;
 
     private ISVNAuthenticationManager authenticationManager;
+    private ISVNConflictHandler conflictHandler;
 
     protected SVNClientImpl() {
         this(null);
@@ -276,9 +277,9 @@ public class SVNClientImpl implements ISVNClient {
 
     }
 
-    public void setConflictResolver(ConflictResolverCallback listener) {
-        // TODO Auto-generated method stub
-
+    public void setConflictResolver(ConflictResolverCallback callback) {
+        conflictHandler = getConflictHandler(callback);
+        updateSvnOperationsFactory();
     }
 
     public void setProgressCallback(ProgressCallback listener) {
@@ -1909,8 +1910,7 @@ public class SVNClientImpl implements ISVNClient {
     private void updateSvnOperationsFactory() {
         File configDir = this.configDir == null ? null : new File(this.configDir);
         options = SVNWCUtil.createDefaultOptions(configDir, true);
-        //TODO: setConfliectHandler
-//        options.setConflictHandler(getConflictHandler());
+        options.setConflictHandler(conflictHandler);
         authenticationManager = SVNWCUtil.createDefaultAuthenticationManager(configDir, username, password, options.isAuthStorageEnabled());
         if (prompt != null) {
             authenticationManager.setAuthenticationProvider(new JavaHLAuthenticationProvider(prompt));
