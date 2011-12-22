@@ -27,14 +27,13 @@ import org.tmatesoft.svn.core.internal.wc2.SvnRemoteOperationRunner;
 import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess.RepositoryInfo;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.wc2.SvnGetInfo;
 import org.tmatesoft.svn.core.wc2.SvnList;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
 
 public class SvnRemoteList extends SvnRemoteOperationRunner<SVNDirEntry, SvnList> implements ISVNDirEntryHandler {
 
-    public boolean isApplicable(SvnGetInfo operation, SvnWcGeneration wcGeneration) throws SVNException {
+    public boolean isApplicable(SvnList operation, SvnWcGeneration wcGeneration) throws SVNException {
         return true;
     }
 
