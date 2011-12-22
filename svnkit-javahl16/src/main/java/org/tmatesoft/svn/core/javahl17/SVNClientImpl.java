@@ -44,6 +44,7 @@ import org.apache.subversion.javahl.types.Checksum;
 import org.apache.subversion.javahl.types.ConflictVersion;
 import org.apache.subversion.javahl.types.CopySource;
 import org.apache.subversion.javahl.types.Depth;
+import org.apache.subversion.javahl.types.DirEntry;
 import org.apache.subversion.javahl.types.Info;
 import org.apache.subversion.javahl.types.Lock;
 import org.apache.subversion.javahl.types.Mergeinfo;
@@ -55,6 +56,7 @@ import org.apache.subversion.javahl.types.Status;
 import org.apache.subversion.javahl.types.Version;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -104,6 +106,7 @@ import org.tmatesoft.svn.core.wc2.SvnGetProperties;
 import org.tmatesoft.svn.core.wc2.SvnGetStatus;
 import org.tmatesoft.svn.core.wc2.SvnImport;
 import org.tmatesoft.svn.core.wc2.SvnInfo;
+import org.tmatesoft.svn.core.wc2.SvnList;
 import org.tmatesoft.svn.core.wc2.SvnLog;
 import org.tmatesoft.svn.core.wc2.SvnLogMergeInfo;
 import org.tmatesoft.svn.core.wc2.SvnMerge;
@@ -197,8 +200,18 @@ public class SVNClientImpl implements ISVNClient {
     public void list(String url, Revision revision, Revision pegRevision,
             Depth depth, int direntFields, boolean fetchLocks,
             ListCallback callback) throws ClientException {
-        // TODO Auto-generated method stub
-
+        SvnList list = svnOperationFactory.createList();
+        list.setSingleTarget(getTarget(url, pegRevision));
+        list.setRevision(getSVNRevision(revision));
+        list.setDepth(getSVNDepth(depth));
+        list.setEntryFields(direntFields);
+        list.setFetchLocks(fetchLocks);
+        list.setReceiver(getDirEntryReceiver(callback));
+        try {
+            list.run();
+        } catch (SVNException e) {
+            throw ClientException.fromException(e);
+        }
     }
 
     public void username(String username) {
@@ -1868,6 +1881,29 @@ public class SVNClientImpl implements ISVNClient {
             return null;
         }
         return new File(path);
+    }
+
+    private ISvnObjectReceiver<SVNDirEntry> getDirEntryReceiver(final ListCallback callback) {
+        if (callback == null) {
+            return null;
+        }
+        return new ISvnObjectReceiver<SVNDirEntry>() {
+            public void receive(SvnTarget target, SVNDirEntry dirEntry) throws SVNException {
+                callback.doEntry(getDirEntry(dirEntry), getLock(dirEntry.getLock()));
+            }
+        };
+    }
+
+    private DirEntry getDirEntry(SVNDirEntry dirEntry) {
+        if (dirEntry == null) {
+            return null;
+        }
+        String repositoryRootString = getUrlString(dirEntry.getRepositoryRoot());
+        String urlString = getUrlString(dirEntry.getURL());
+        String absolutePath = SVNPathUtil.getRelativePath(repositoryRootString, urlString);
+
+        return new DirEntry(dirEntry.getRelativePath(), absolutePath, getNodeKind(dirEntry.getKind()), dirEntry.getSize(),
+                dirEntry.hasProperties(), dirEntry.getRevision(), getLongDate(dirEntry.getDate()), dirEntry.getAuthor());
     }
 
     private void updateSvnOperationsFactory() {
