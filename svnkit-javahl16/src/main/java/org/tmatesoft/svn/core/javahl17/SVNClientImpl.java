@@ -990,6 +990,7 @@ public class SVNClientImpl implements ISVNClient {
 
     public String getVersionInfo(String path, String trailUrl,
             boolean lastChanged) throws ClientException {
+
         // TODO Auto-generated method stub
         return null;
     }
@@ -1403,9 +1404,7 @@ public class SVNClientImpl implements ISVNClient {
 
                     callback.commitInfo(getCommitInfo(commitInfo, repositoryRoot));
                 } catch (ParseException e) {
-                    //TODO: review this
-                    SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.UNKNOWN);
-                    SVNErrorManager.error(errorMessage, e, SVNLogType.CLIENT);
+                    throwSvnException(e);
                 }
             }
         };
@@ -1771,9 +1770,7 @@ public class SVNClientImpl implements ISVNClient {
                     }
 
                 } catch (ClientException e) {
-                    //TODO: review this
-                    SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.UNKNOWN);
-                    SVNErrorManager.error(errorMessage, e, SVNLogType.CLIENT);
+                    throwSvnException(e);
                 }
             }
         };
@@ -1802,8 +1799,7 @@ public class SVNClientImpl implements ISVNClient {
                     return getSVNConflictResult(callback.resolve(getConflictDescription(conflictDescription)));
                 } catch (SubversionException e) {
                     //TODO: review this
-                    SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.UNKNOWN);
-                    SVNErrorManager.error(errorMessage, e, SVNLogType.CLIENT);
+                    throwSvnException(e);
                     return null;
                 }
             }
@@ -1973,5 +1969,10 @@ public class SVNClientImpl implements ISVNClient {
 
     static long versionRevisionNumber() {
         return org.tmatesoft.svn.util.Version.getRevisionNumber();
+    }
+
+    private void throwSvnException(Exception e) throws SVNException {
+        SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.UNKNOWN);
+        SVNErrorManager.error(errorMessage, e, SVNLogType.CLIENT);
     }
 }
