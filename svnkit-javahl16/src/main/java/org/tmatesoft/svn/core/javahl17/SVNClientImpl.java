@@ -122,6 +122,7 @@ import org.tmatesoft.svn.core.wc2.SvnRevisionRange;
 import org.tmatesoft.svn.core.wc2.SvnSchedule;
 import org.tmatesoft.svn.core.wc2.SvnScheduleForAddition;
 import org.tmatesoft.svn.core.wc2.SvnScheduleForRemoval;
+import org.tmatesoft.svn.core.wc2.SvnSetChangelist;
 import org.tmatesoft.svn.core.wc2.SvnSetLock;
 import org.tmatesoft.svn.core.wc2.SvnSetProperty;
 import org.tmatesoft.svn.core.wc2.SvnStatus;
@@ -895,14 +896,41 @@ public class SVNClientImpl implements ISVNClient {
 
     public void addToChangelist(Set<String> paths, String changelist,
             Depth depth, Collection<String> changelists) throws ClientException {
-        // TODO Auto-generated method stub
 
+        SvnSetChangelist setChangeList = svnOperationFactory.createSetChangelist();
+        setChangeList.setChangelistName(changelist);
+        setChangeList.setDepth(getSVNDepth(depth));
+        setChangeList.setApplicalbeChangelists(changelists);
+        setChangeList.setRemove(false);
+
+        for (String path : paths) {
+            setChangeList.addTarget(getTarget(path));
+        }
+
+        try {
+            setChangeList.run();
+        } catch (SVNException e) {
+            throw ClientException.fromException(e);
+        }
     }
 
     public void removeFromChangelists(Set<String> paths, Depth depth,
             Collection<String> changelists) throws ClientException {
-        // TODO Auto-generated method stub
 
+        SvnSetChangelist setChangelist = svnOperationFactory.createSetChangelist();
+        setChangelist.setDepth(getSVNDepth(depth));
+        setChangelist.setApplicalbeChangelists(changelists);
+        setChangelist.setRemove(true);
+
+        for (String path : paths) {
+            setChangelist.addTarget(getTarget(path));
+        }
+
+        try {
+            setChangelist.run();
+        } catch (SVNException e) {
+            throw ClientException.fromException(e);
+        }
     }
 
     public void getChangelists(String rootPath, Collection<String> changelists,
