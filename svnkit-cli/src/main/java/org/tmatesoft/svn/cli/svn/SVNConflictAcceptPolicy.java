@@ -11,6 +11,13 @@
  */
 package org.tmatesoft.svn.cli.svn;
 
+import java.util.Collection;
+import java.util.Map;
+
+import org.tmatesoft.svn.cli.AbstractSVNCommand;
+import org.tmatesoft.svn.cli.AbstractSVNCommandEnvironment;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
+
 
 /**
  * @version 1.3
@@ -56,21 +63,21 @@ public class SVNConflictAcceptPolicy {
     }
     
     public static SVNConflictAcceptPolicy fromString(String accept) {
-        if (POSTPONE.myName.equals(accept)) {
+        if (POSTPONE.myName.equals(accept) || "p".equals(accept) || ":-P".equals(accept)) {
             return SVNConflictAcceptPolicy.POSTPONE;
         } else if (BASE.myName.equals(accept)) {
             return SVNConflictAcceptPolicy.BASE;
-        } else if (MINE_CONFLICT.myName.equals(accept)) {
+        } else if (MINE_CONFLICT.myName.equals(accept) || "mc".equals(accept) || "X-)".equals(accept)) {
             return SVNConflictAcceptPolicy.MINE_CONFLICT;
-        } else if (THEIRS_CONFLICT.myName.equals(accept)) {
+        } else if (THEIRS_CONFLICT.myName.equals(accept) || "tc".equals(accept) || "X-(".equals(accept)) {
             return SVNConflictAcceptPolicy.THEIRS_CONFLICT;
-        } else if (EDIT.myName.equals(accept)) {
+        } else if (EDIT.myName.equals(accept) || "e".equals(accept) || ":-E".equals(accept)) {
             return SVNConflictAcceptPolicy.EDIT;
-        } else if (LAUNCH.myName.equals(accept)) {
+        } else if (LAUNCH.myName.equals(accept) || "l".equals(accept) || ":-l".equals(accept)) {
             return SVNConflictAcceptPolicy.LAUNCH;
-        } else if (MINE_FULL.myName.equals(accept)) {
+        } else if (MINE_FULL.myName.equals(accept) || "mf".equals(accept) || ":-)".equals(accept)) {
             return SVNConflictAcceptPolicy.MINE_FULL;
-        } else if (THEIRS_FULL.myName.equals(accept)) {
+        } else if (THEIRS_FULL.myName.equals(accept) || "tf".equals(accept) || ":-(".equals(accept)) {
             return SVNConflictAcceptPolicy.THEIRS_FULL;
         } else if (WORKING.myName.equals(accept)) {
             return SVNConflictAcceptPolicy.WORKING;
