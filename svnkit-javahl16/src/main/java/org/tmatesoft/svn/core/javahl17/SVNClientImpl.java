@@ -1877,8 +1877,7 @@ public class SVNClientImpl implements ISVNClient {
 //        options.setConflictHandler(getConflictHandler());
         authenticationManager = SVNWCUtil.createDefaultAuthenticationManager(configDir, username, password, options.isAuthStorageEnabled());
         if (prompt != null) {
-            //TODO: implement
-//            authenticationManager.setAuthenticationProvider(new JavaHLAuthenticationProvider(myPrompt));
+            authenticationManager.setAuthenticationProvider(new JavaHLAuthenticationProvider(prompt));
         } else {
             authenticationManager.setAuthenticationProvider(null);
         }
