@@ -54,8 +54,15 @@ public class SvnNgAdd extends SvnNgOperationRunner<SvnScheduleForAddition, SvnSc
         if (getOperation().isAddParents()) {
             existingParent = findExistingParent(parentPath);
         }
+        SVNFileType targetType = SVNFileType.getType(path);
         
-        if (SVNFileType.getType(path) == SVNFileType.NONE && getOperation().isMkDir()) {
+        if (getOperation().isMkDir() && targetType != SVNFileType.NONE) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Can''t created directory " +
+            		"''{0}'': Cannot create a file when that file already exists.", path);
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+        
+        if (targetType == SVNFileType.NONE && getOperation().isMkDir()) {
             SVNFileUtil.ensureDirectoryExists(path);
         }
         
