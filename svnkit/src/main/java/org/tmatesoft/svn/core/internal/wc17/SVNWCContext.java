@@ -905,7 +905,7 @@ public class SVNWCContext {
 
         final SVNURL url = getNodeUrl(localAbsPath);
         final WCDbInfo readInfo = db.readInfo(localAbsPath, InfoField.changedRev, InfoField.changedDate, InfoField.changedAuthor);
-        return SVNTranslator.computeKeywords(list, url.toString(), Long.toString(readInfo.changedRev), readInfo.changedDate.toString(), readInfo.changedAuthor, getOptions());
+        return SVNTranslator.computeKeywords(list, url.toString(), readInfo.changedAuthor, readInfo.changedDate.toString(), Long.toString(readInfo.changedRev), getOptions());
     }
 
     public static class TranslateInfo {
