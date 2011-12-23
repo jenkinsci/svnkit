@@ -1,7 +1,6 @@
 package org.tmatesoft.svn.core.internal.wc2.ng;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 import java.util.StringTokenizer;
@@ -56,13 +55,13 @@ public class SvnNgAdd extends SvnNgOperationRunner<SvnScheduleForAddition, SvnSc
         }
         SVNFileType targetType = SVNFileType.getType(path);
         
-        if (getOperation().isMkDir() && targetType != SVNFileType.NONE) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Can''t created directory " +
+        if (!getOperation().isAddParents() && getOperation().isMkDir() && targetType != SVNFileType.NONE) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Can''t create directory " +
             		"''{0}'': Cannot create a file when that file already exists.", path);
             SVNErrorManager.error(err, SVNLogType.WC);
-        }
-        
-        if (targetType == SVNFileType.NONE && getOperation().isMkDir()) {
+        } else if (getOperation().isMkDir() && getOperation().isAddParents()) {
+            SVNFileUtil.ensureDirectoryExists(path);
+        } else if (targetType == SVNFileType.NONE && getOperation().isMkDir()) {
             SVNFileUtil.ensureDirectoryExists(path);
         }
         
