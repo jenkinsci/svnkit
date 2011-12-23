@@ -7,8 +7,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
@@ -77,6 +79,16 @@ public class SvnCodec {
         result.setKind(diffStatus.getKind());
         result.setUserData(diffStatus);
         return result;
+    }
+    
+    public static ISvnObjectReceiver<SVNDirEntry> dirEntryReceiver(final ISVNDirEntryHandler handler) {
+        return new ISvnObjectReceiver<SVNDirEntry>() {
+            public void receive(SvnTarget target, SVNDirEntry object) throws SVNException {
+                if (handler != null) {
+                    handler.handleDirEntry(object);
+                }
+            }
+        };
     }
     
     public static ISvnObjectReceiver<SVNPropertyData> propertyReceiver(final ISVNPropertyHandler handler) {
