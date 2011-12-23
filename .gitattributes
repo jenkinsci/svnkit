@@ -3,9 +3,6 @@
 /LICENSE.txt eol=lf
 gradle/wrapper/gradle-wrapper.jar -text
 /gradlew eol=lf
-/make_dist.bat -text
-/out.txt -text
-/outDebug.txt -text
 svnkit-cli/src/main/resources/org/tmatesoft/svn/cli/svn/commands.properties eol=lf
 svnkit-cli/src/main/resources/org/tmatesoft/svn/cli/svn/options.properties eol=lf
 svnkit-cli/src/main/scripts/jsvn eol=lf
