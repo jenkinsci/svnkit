@@ -34,6 +34,8 @@ svnkit-test/.project
 svnkit-test/.settings/org.eclipse.jdt.core.prefs
 svnkit-test/bin
 svnkit-test/build
+svnkit-test/configurations/svn16/default.properties
+svnkit-test/configurations/svn17/default.properties
 svnkit-test/python-tests-log.xml
 svnkit-test/python.log.html
 svnkit-test/test.properties
