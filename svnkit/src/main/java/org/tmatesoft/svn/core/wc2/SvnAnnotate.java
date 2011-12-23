@@ -7,7 +7,6 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 public class SvnAnnotate extends SvnReceivingOperation<SvnAnnotateItem> {
     
     private boolean useMergeHistory;
-    private boolean force;
     private boolean ignoreMimeType;
     private ISVNAnnotateHandler handler;
     private SVNRevision startRevision;
@@ -35,14 +34,6 @@ public class SvnAnnotate extends SvnReceivingOperation<SvnAnnotateItem> {
         this.useMergeHistory = useMergeHistory;
     }
 
-    public boolean isForce() {
-        return force;
-    }
-
-    public void setForce(boolean force) {
-        this.force = force;
-    }
-    
     public boolean isIgnoreMimeType() {
         return ignoreMimeType;
     }

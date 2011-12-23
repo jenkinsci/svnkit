@@ -64,7 +64,7 @@ public class SvnNgAnnotate extends SvnNgOperationRunner<SvnAnnotateItem, SvnAnno
             path = getOperation().getFirstTarget().getFile().getAbsolutePath();
     		
     	}
-    	SVNAnnotationGenerator generator = new SVNAnnotationGenerator(path, tmpFile, startRev, getOperation().isForce(),
+    	SVNAnnotationGenerator generator = new SVNAnnotationGenerator(path, tmpFile, startRev, getOperation().isIgnoreMimeType(),
     			getOperation().isUseMergeHistory(), getOperation().getDiffOptions(), getOperation().getInputEncoding(), this, this);
     	boolean useSpool = getOperation().getHandler() != null && !getOperation().getHandler().getClass().getName().startsWith("org.tmatesoft.svn.");
         boolean oldSpool = false;

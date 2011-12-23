@@ -87,7 +87,7 @@ public class SvnRemoteAnnotate extends SvnRemoteOperationRunner<SvnAnnotateItem,
     	}
     	
     	SVNAnnotationGenerator generator = new SVNAnnotationGenerator(path, tmpFile, startRev, 
-    			getOperation().isForce(), getOperation().isUseMergeHistory(), getOperation().getDiffOptions(), getOperation().getInputEncoding(), this, this);
+    			getOperation().isIgnoreMimeType(), getOperation().isUseMergeHistory(), getOperation().getDiffOptions(), getOperation().getInputEncoding(), this, this);
     	
        try {
     	   	repository.getFileRevisions("", startRev > 0 ? startRev - 1 : startRev, endRev, getOperation().isUseMergeHistory(), generator);
