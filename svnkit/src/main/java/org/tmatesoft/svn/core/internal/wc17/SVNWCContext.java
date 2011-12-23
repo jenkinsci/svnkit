@@ -2161,7 +2161,7 @@ public class SVNWCContext {
     private void prependPropValue(SVNPropertyValue fromVal, SVNSkel skel) throws SVNException {
         SVNSkel valueSkel = SVNSkel.createEmptyList();
         if (fromVal != null) {
-            valueSkel.prependString(fromVal.getString());
+            valueSkel.prependPropertyValue(fromVal);
         }
         skel.addChild(valueSkel);
     }

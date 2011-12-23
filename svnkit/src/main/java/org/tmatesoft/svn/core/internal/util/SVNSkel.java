@@ -166,6 +166,16 @@ public class SVNSkel {
         return createAtom(buffer.array(), start, size);
     }
 
+    private static SVNSkel createAtom(SVNPropertyValue propertyValue) {
+        if (propertyValue != null && propertyValue.getString() != null) {
+            return createAtom(propertyValue.getString());
+        } else if (propertyValue != null && propertyValue.getBytes() != null) {
+            return createAtom(propertyValue.getBytes());
+        } else {
+            return createAtom("");
+        }
+    }
+
     public static SVNSkel createAtom(String str) {
         if (str == null) {
             return null;
@@ -207,14 +217,8 @@ public class SVNSkel {
         for(String propertyName : props.keySet()) {
             SVNSkel name = createAtom(propertyName);
             SVNPropertyValue pv = props.get(propertyName);
-            SVNSkel value = null;
-            if (pv != null && pv.getString() != null) {
-                value = createAtom(pv.getString());
-            } else if (pv != null && pv.getBytes() != null) {
-                value = createAtom(pv.getBytes());
-            } else {
-                value = createAtom("");
-            }
+            SVNSkel value = createAtom(pv);
+
             list.addChild(value);
             list.addChild(name);
             
@@ -276,6 +280,11 @@ public class SVNSkel {
 
     public void prependString(String str) throws SVNException {
         SVNSkel skel = SVNSkel.createAtom(str);
+        addChild(skel);
+    }
+
+    public void prependPropertyValue(SVNPropertyValue propertyValue) throws SVNException{
+        SVNSkel skel = SVNSkel.createAtom(propertyValue);
         addChild(skel);
     }
 
