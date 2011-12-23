@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.subversion.javahl.ClientException;
+import org.apache.subversion.javahl.ClientNotifyInformation;
 import org.apache.subversion.javahl.CommitInfo;
 import org.apache.subversion.javahl.CommitItem;
 import org.apache.subversion.javahl.ConflictDescriptor;
@@ -54,6 +55,7 @@ import org.apache.subversion.javahl.types.Revision;
 import org.apache.subversion.javahl.types.RevisionRange;
 import org.apache.subversion.javahl.types.Status;
 import org.apache.subversion.javahl.types.Version;
+import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNDirEntry;
@@ -76,12 +78,16 @@ import org.tmatesoft.svn.core.internal.wc.DefaultSVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.patch.SVNPatchHunkInfo;
 import org.tmatesoft.svn.core.wc.ISVNConflictHandler;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNConflictAction;
 import org.tmatesoft.svn.core.wc.SVNConflictChoice;
 import org.tmatesoft.svn.core.wc.SVNConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNConflictReason;
 import org.tmatesoft.svn.core.wc.SVNConflictResult;
+import org.tmatesoft.svn.core.wc.SVNEvent;
+import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
@@ -145,11 +151,15 @@ public class SVNClientImpl implements ISVNClient {
     private String username;
     private String password;
     private UserPasswordCallback prompt;
+    private ClientNotifyCallback notifyCallback;
     private String configDir;
-    private DefaultSVNOptions options;
 
+    private DefaultSVNOptions options;
     private ISVNAuthenticationManager authenticationManager;
     private ISVNConflictHandler conflictHandler;
+    private ISVNEventHandler eventHandler;
+    private boolean cancelOperation;
+
 
     protected SVNClientImpl() {
         this(null);
@@ -157,6 +167,7 @@ public class SVNClientImpl implements ISVNClient {
 
     protected SVNClientImpl(SvnOperationFactory svnOperationFactory) {
         this.svnOperationFactory = svnOperationFactory == null ? new SvnOperationFactory() : svnOperationFactory;
+        this.svnOperationFactory.setEventHandler(getEventHandler());
     }
 
     public void dispose() {
@@ -273,9 +284,53 @@ public class SVNClientImpl implements ISVNClient {
         }
     }
 
-    public void notification2(ClientNotifyCallback notify) {
-        // TODO Auto-generated method stub
+    public void notification2(ClientNotifyCallback notifyCallback) {
+        this.notifyCallback = notifyCallback;
+    }
 
+    public ISVNEventHandler getEventHandler() {
+        if (eventHandler == null) {
+            eventHandler = new ISVNEventHandler() {
+
+                public void handleEvent(SVNEvent event, double progress) {
+                    if (event.getAction() == SVNEventAction.UPGRADE) {
+                        return;
+                    }
+                    String path = null;
+                    if (event.getFile() != null) {
+                        path = event.getFile().getAbsolutePath();
+                        if (path != null) {
+                            path = path.replace(File.separatorChar, '/');
+                        }
+                    }
+                    if (path == null) {
+                        path = "";
+                    }
+//                    if (notifyCallback != null && event.getErrorMessage() == null) {
+//                        notifyCallback.onNotify(
+//                                path,
+//                                JavaHLObjectFactory.getNotifyActionValue(event.getAction()),
+//                                JavaHLObjectFactory.getNodeKind(event.getNodeKind()),
+//                                event.getMimeType(),
+//                                JavaHLObjectFactory.getStatusValue(event.getContentsStatus()),
+//                                JavaHLObjectFactory.getStatusValue(event.getPropertiesStatus()),
+//                                event.getRevision()
+//                        );
+//                    }
+                    if (notifyCallback != null) {
+                        notifyCallback.onNotify(getClientNotifyInformation(event, path));
+                    }
+                }
+
+                public void checkCancelled() throws SVNCancelException {
+                    if (cancelOperation) {
+                        cancelOperation = false;
+                        SVNErrorManager.cancel("operation cancelled", SVNLogType.DEFAULT);
+                    }
+                }
+            };
+        }
+        return eventHandler;
     }
 
     public void setConflictResolver(ConflictResolverCallback callback) {
@@ -890,8 +945,7 @@ public class SVNClientImpl implements ISVNClient {
     }
 
     public void cancelOperation() throws ClientException {
-        // TODO Auto-generated method stub
-
+        cancelOperation = true;
     }
 
     public void addToChangelist(Set<String> paths, String changelist,
@@ -1058,7 +1112,6 @@ public class SVNClientImpl implements ISVNClient {
         return status.getNodeStatus();
     }
 
-
     private Status getStatus(SvnStatus status) throws SVNException {
         String repositoryRelativePath = status.getRepositoryRelativePath() == null ? "" : status.getRepositoryRelativePath();
         SVNURL repositoryRootUrl = status.getRepositoryRootUrl();
@@ -1099,6 +1152,7 @@ public class SVNClientImpl implements ISVNClient {
         }
         return new Lock(lock.getOwner(), lock.getPath(), lock.getID(), lock.getComment(), getLongDate(lock.getCreationDate()), getLongDate(lock.getExpirationDate()));
     }
+
 
     private long getLongDate(Date date) {
         SVNDate svnDate = SVNDate.fromDate(date);
@@ -1745,6 +1799,9 @@ public class SVNClientImpl implements ISVNClient {
     }
 
     private RevisionRange getRevisionRange(SVNMergeRange revisionRange) {
+        if (revisionRange == null) {
+            return null;
+        }
         long startRevision = revisionRange.getStartRevision();
         long endRevision = revisionRange.getEndRevision();
 
@@ -1886,6 +1943,134 @@ public class SVNClientImpl implements ISVNClient {
         }
     }
 
+    private ClientNotifyInformation.Action getClientNotifyInformationAction(SVNEventAction action) {
+        if (action == null) {
+            return null;
+        }
+        if (action == SVNEventAction.ADD) {
+            return ClientNotifyInformation.Action.add;
+        } else if (action == SVNEventAction.ANNOTATE) {
+            return ClientNotifyInformation.Action.blame_revision;
+        } else if (action == SVNEventAction.CHANGELIST_CLEAR) {
+            return ClientNotifyInformation.Action.changelist_clear;
+        } else if (action == SVNEventAction.CHANGELIST_MOVED) {
+            return ClientNotifyInformation.Action.changelist_moved;
+        } else if (action == SVNEventAction.CHANGELIST_SET) {
+            return ClientNotifyInformation.Action.changelist_set;
+        } else if (action == SVNEventAction.COMMIT_ADDED) {
+            return ClientNotifyInformation.Action.commit_added;
+        } else if (action == SVNEventAction.COMMIT_COMPLETED) {
+            //TODO: no analog
+            return null;
+        } else if (action == SVNEventAction.COMMIT_DELETED) {
+            return ClientNotifyInformation.Action.commit_deleted;
+        } else if (action == SVNEventAction.COMMIT_DELTA_SENT) {
+            //TODO: check
+            return ClientNotifyInformation.Action.commit_postfix_txdelta;
+        } else if (action == SVNEventAction.COMMIT_REPLACED) {
+            return ClientNotifyInformation.Action.commit_replaced;
+        } else if (action == SVNEventAction.COPY) {
+            return ClientNotifyInformation.Action.copy;
+        } else if (action == SVNEventAction.DELETE) {
+            return ClientNotifyInformation.Action.delete;
+        } else if (action == SVNEventAction.FAILED_EXTERNAL) {
+            return ClientNotifyInformation.Action.failed_external;
+        } else if (action == SVNEventAction.FAILED_REVERT) {
+            return ClientNotifyInformation.Action.failed_revert;
+        } else if (action == SVNEventAction.FOREIGN_MERGE_BEGIN) {
+            return ClientNotifyInformation.Action.foreign_merge_begin;
+        } else if (action == SVNEventAction.LOCK_FAILED) {
+            return ClientNotifyInformation.Action.failed_lock;
+        } else if (action == SVNEventAction.LOCKED) {
+            return ClientNotifyInformation.Action.locked;
+        } else if (action == SVNEventAction.MERGE_BEGIN) {
+            return ClientNotifyInformation.Action.merge_begin;
+        } else if (action == SVNEventAction.MERGE_COMPLETE) {
+            return ClientNotifyInformation.Action.merge_completed;
+        } else if (action == SVNEventAction.PATCH) {
+            return ClientNotifyInformation.Action.patch;
+        } else if (action == SVNEventAction.PATCH_APPLIED_HUNK) {
+            return ClientNotifyInformation.Action.patch_applied_hunk;
+        } else if (action == SVNEventAction.PATCH_REJECTED_HUNK) {
+            return ClientNotifyInformation.Action.patch_rejected_hunk;
+        } else if (action == SVNEventAction.PROGRESS) {
+            //TODO: no analog
+            return null;
+        } else if (action == SVNEventAction.PROPERTY_ADD) {
+            return ClientNotifyInformation.Action.property_added;
+        } else if (action == SVNEventAction.PROPERTY_DELETE) {
+            return ClientNotifyInformation.Action.property_deleted;
+        } else if (action == SVNEventAction.PROPERTY_DELETE_NONEXISTENT) {
+            return ClientNotifyInformation.Action.property_deleted_nonexistent;
+        } else if (action == SVNEventAction.PROPERTY_MODIFY) {
+            return ClientNotifyInformation.Action.property_modified;
+        } else if (action == SVNEventAction.RESOLVED) {
+            return ClientNotifyInformation.Action.resolved;
+        } else if (action == SVNEventAction.RESTORE) {
+            return ClientNotifyInformation.Action.restore;
+        } else if (action == SVNEventAction.REVERT) {
+            return ClientNotifyInformation.Action.revert;
+        } else if (action == SVNEventAction.REVPROP_DELETE) {
+            return ClientNotifyInformation.Action.revprop_deleted;
+        } else if (action == SVNEventAction.REVPROPER_SET) {
+            return ClientNotifyInformation.Action.revprop_set;
+        } else if (action == SVNEventAction.SKIP) {
+            return ClientNotifyInformation.Action.skip;
+        } else if (action == SVNEventAction.SKIP_CONFLICTED) {
+            return ClientNotifyInformation.Action.skip_conflicted;
+        } else if (action == SVNEventAction.STATUS_COMPLETED) {
+            return ClientNotifyInformation.Action.status_completed;
+        } else if (action == SVNEventAction.STATUS_EXTERNAL) {
+            return ClientNotifyInformation.Action.status_external;
+        } else if (action == SVNEventAction.TREE_CONFLICT) {
+            return ClientNotifyInformation.Action.tree_conflict;
+        } else if (action == SVNEventAction.UNLOCK_FAILED) {
+            return ClientNotifyInformation.Action.failed_unlock;
+        } else if (action == SVNEventAction.UNLOCKED) {
+            return ClientNotifyInformation.Action.unlocked;
+        } else if (action == SVNEventAction.UPDATE_ADD) {
+            return ClientNotifyInformation.Action.update_add;
+        } else if (action == SVNEventAction.UPDATE_COMPLETED) {
+            return ClientNotifyInformation.Action.update_completed;
+        } else if (action == SVNEventAction.UPDATE_DELETE) {
+            return ClientNotifyInformation.Action.update_delete;
+        } else if (action == SVNEventAction.UPDATE_EXISTS) {
+            return ClientNotifyInformation.Action.exists;
+        } else if (action == SVNEventAction.UPDATE_EXTERNAL) {
+            return ClientNotifyInformation.Action.update_external;
+        } else if (action == SVNEventAction.UPDATE_EXTERNAL_REMOVED) {
+            return ClientNotifyInformation.Action.update_external_removed;
+        } else if (action == SVNEventAction.UPDATE_NONE) {
+            //TODO: no analog
+            return null;
+        } else if (action == SVNEventAction.UPDATE_REPLACE) {
+            return ClientNotifyInformation.Action.update_replaced;
+        } else if (action == SVNEventAction.UPDATE_SHADOWED_ADD) {
+            return ClientNotifyInformation.Action.update_shadowed_add;
+        } else if (action == SVNEventAction.UPDATE_SHADOWED_DELETE) {
+            return ClientNotifyInformation.Action.update_shadowed_delete;
+        } else if (action == SVNEventAction.UPDATE_SHADOWED_UPDATE) {
+            return ClientNotifyInformation.Action.update_shadowed_update;
+        } else if (action == SVNEventAction.UPDATE_SKIP_ACCESS_DENINED) {
+            return ClientNotifyInformation.Action.update_skip_access_denied;
+        } else if (action == SVNEventAction.UPDATE_SKIP_OBSTRUCTION) {
+            return ClientNotifyInformation.Action.update_skip_obstruction;
+        } else if (action == SVNEventAction.UPDATE_SKIP_WORKING_ONLY) {
+            return ClientNotifyInformation.Action.update_skip_working_only;
+        } else if (action == SVNEventAction.UPDATE_STARTED) {
+            return ClientNotifyInformation.Action.update_started;
+        } else if (action == SVNEventAction.UPDATE_UPDATE) {
+            return ClientNotifyInformation.Action.update_update;
+        } else if (action == SVNEventAction.UPGRADE) {
+            //TODO: check
+            return ClientNotifyInformation.Action.upgraded_path;
+        } else if (action == SVNEventAction.WC_PATH_NONEXISTENT) {
+            return ClientNotifyInformation.Action.path_nonexistent;
+        } else {
+            return null;
+        }
+    }
+
     private ConflictDescriptor.Kind getConflictDescriptorKind(SVNConflictDescription conflictDescription) {
         if (conflictDescription == null) {
             return null;
@@ -1931,6 +2116,104 @@ public class SVNClientImpl implements ISVNClient {
                 dirEntry.hasProperties(), dirEntry.getRevision(), getLongDate(dirEntry.getDate()), dirEntry.getAuthor());
     }
 
+    private ClientNotifyInformation getClientNotifyInformation(SVNEvent event, String path) {
+        //TODO: initialize these variables:
+        String pathPrefix = null;
+        String propName = null;
+        Map<String, String> revProps = null;
+
+
+        long hunkOriginalStart = -1;
+        long hunkOriginalLength = -1;
+        long hunkModifiedStart = -1;
+        long hunkModifiedLength = -1;
+        long hunkMatchedLine = -1;
+        int hunkFuzz = -1;
+
+        Object info = event.getInfo();
+        if (info != null && info instanceof SVNPatchHunkInfo) {
+            SVNPatchHunkInfo hunkInfo = (SVNPatchHunkInfo) info;
+            hunkOriginalStart = hunkInfo.getHunk().getOriginal().getStart();
+            hunkOriginalLength = hunkInfo.getHunk().getOriginal().getLength();
+            hunkModifiedStart = hunkInfo.getHunk().getModified().getStart();
+            hunkModifiedLength = hunkInfo.getHunk().getModified().getLength();
+            hunkFuzz = hunkInfo.getFuzz();
+        }
+
+        return new ClientNotifyInformation(path,
+                getClientNotifyInformationAction(event.getAction()),
+                getNodeKind(event.getNodeKind()),
+                event.getMimeType(),
+                getLock(event.getLock()),
+                getErrorMessageString(event.getErrorMessage()),
+                getClientNotifyInformationStatus(event.getContentsStatus()),
+                getClientNotifyInformationStatus(event.getPropertiesStatus()),
+                getClientNotifyInformationLockStatus(event.getLockStatus()),
+                event.getRevision(),
+                event.getChangelistName(),
+                getRevisionRange(event.getMergeRange()),
+                pathPrefix,
+                propName,
+                revProps,
+                event.getPreviousRevision(),
+                hunkOriginalStart,
+                hunkOriginalLength,
+                hunkModifiedStart,
+                hunkModifiedLength,
+                hunkMatchedLine,
+                hunkFuzz
+        );
+    }
+
+    private ClientNotifyInformation.LockStatus getClientNotifyInformationLockStatus(SVNStatusType lockStatus) {
+        if (lockStatus == null) {
+            return null;
+        }
+        if (lockStatus == SVNStatusType.LOCK_LOCKED) {
+            return ClientNotifyInformation.LockStatus.locked;
+        } else if (lockStatus == SVNStatusType.LOCK_INAPPLICABLE) {
+            return ClientNotifyInformation.LockStatus.inapplicable;
+        } else if (lockStatus == SVNStatusType.LOCK_UNCHANGED) {
+            return ClientNotifyInformation.LockStatus.unchanged;
+        } else if (lockStatus == SVNStatusType.LOCK_UNKNOWN) {
+            return ClientNotifyInformation.LockStatus.unknown;
+        } else if (lockStatus == SVNStatusType.LOCK_UNLOCKED) {
+            return ClientNotifyInformation.LockStatus.unlocked;
+        } else {
+            //TODO: or throw an exception?
+            return ClientNotifyInformation.LockStatus.unknown;
+        }
+    }
+
+    private ClientNotifyInformation.Status getClientNotifyInformationStatus(SVNStatusType status) {
+        if (status == null) {
+            return null;
+        }
+        if (status == SVNStatusType.CHANGED) {
+            return ClientNotifyInformation.Status.changed;
+        } else if (status == SVNStatusType.CONFLICTED) {
+            return ClientNotifyInformation.Status.conflicted;
+        } else if (status == SVNStatusType.CONFLICTED_UNRESOLVED) {
+            //TODO: no explicit analog
+            return ClientNotifyInformation.Status.conflicted;
+        } else if (status == SVNStatusType.INAPPLICABLE) {
+            return ClientNotifyInformation.Status.inapplicable;
+        } else if (status == SVNStatusType.MERGED) {
+            return ClientNotifyInformation.Status.merged;
+        } else if (status == SVNStatusType.MISSING) {
+            return ClientNotifyInformation.Status.missing;
+        } else if (status == SVNStatusType.OBSTRUCTED) {
+            return ClientNotifyInformation.Status.obstructed;
+        } else if (status == SVNStatusType.UNCHANGED) {
+            return ClientNotifyInformation.Status.unchanged;
+        } else if (status == SVNStatusType.UNKNOWN) {
+            return ClientNotifyInformation.Status.unknown;
+        } else {
+            //TODO: or throw an exception?
+            return ClientNotifyInformation.Status.unknown;
+        }
+    }
+
     private void updateSvnOperationsFactory() {
         File configDir = this.configDir == null ? null : new File(this.configDir);
         options = SVNWCUtil.createDefaultOptions(configDir, true);
@@ -1948,6 +2231,7 @@ public class SVNClientImpl implements ISVNClient {
         if (svnOperationFactory != null) {
             svnOperationFactory.setAuthenticationManager(authenticationManager);
             svnOperationFactory.setOptions(options);
+            svnOperationFactory.setEventHandler(getEventHandler());
         }
     }
 
