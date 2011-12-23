@@ -79,6 +79,8 @@ import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.patch.SVNPatchHunkInfo;
+import org.tmatesoft.svn.core.javahl.JavaHLCompositeLog;
+import org.tmatesoft.svn.core.javahl.JavaHLDebugLog;
 import org.tmatesoft.svn.core.wc.ISVNConflictHandler;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNConflictAction;
@@ -139,6 +141,8 @@ import org.tmatesoft.svn.core.wc2.SvnUnlock;
 import org.tmatesoft.svn.core.wc2.SvnUpdate;
 import org.tmatesoft.svn.core.wc2.SvnUpgrade;
 import org.tmatesoft.svn.core.wc2.hooks.ISvnCommitHandler;
+import org.tmatesoft.svn.util.ISVNDebugLog;
+import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 public class SVNClientImpl implements ISVNClient {
@@ -160,6 +164,8 @@ public class SVNClientImpl implements ISVNClient {
     private ISVNEventHandler eventHandler;
     private boolean cancelOperation;
 
+    private JavaHLCompositeLog debugLog;
+    private JavaHLProgressLog progressListener;
 
     protected SVNClientImpl() {
         this(null);
@@ -339,8 +345,23 @@ public class SVNClientImpl implements ISVNClient {
     }
 
     public void setProgressCallback(ProgressCallback listener) {
-        // TODO Auto-generated method stub
+        getDebugLog();//make sure debugLog is constructed
+        if (listener != null) {
+            progressListener = new JavaHLProgressLog(listener);
+            debugLog.addLogger(progressListener);
+        } else if (progressListener != null) {
+            debugLog.removeLogger(progressListener);
+            progressListener = null;
+        }
+    }
 
+    public ISVNDebugLog getDebugLog() {
+        if (debugLog == null) {
+            debugLog = new JavaHLCompositeLog();
+            debugLog.addLogger(SVNDebugLog.getDefaultLog());
+            debugLog.addLogger(JavaHLDebugLog.getInstance());
+        }
+        return debugLog;
     }
 
     public void remove(Set<String> path, boolean force, boolean keepLocal,
