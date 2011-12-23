@@ -68,6 +68,10 @@ public class SvnRemoteRemoteDelete extends SvnRemoteOperationRunner<SVNCommitInf
     	    	relPathInfo.put(reposRoot, relPaths);
     	    	relPaths.add(reposRelPath);
     	    }
+    	    if (reposRelPath == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "URL '{0}' not within a repository", url);
+                SVNErrorManager.error(err, SVNLogType.WC);
+    	    }
     	    
     	    kind = repository.checkPath(reposRelPath, -1);
     	    if (kind == SVNNodeKind.NONE) {
@@ -81,8 +85,8 @@ public class SvnRemoteRemoteDelete extends SvnRemoteOperationRunner<SVNCommitInf
         SVNCommitInfo info = null;
         for (Iterator rootUrls = reposInfo.keySet().iterator(); rootUrls.hasNext();) {
         	SVNURL reposRoot = (SVNURL) rootUrls.next();
-        	SVNRepository repository = (SVNRepository)reposInfo.get(reposRoot);
-        	ArrayList<String> paths = (ArrayList<String>)relPathInfo.get(reposRoot);
+        	SVNRepository repository = (SVNRepository) reposInfo.get(reposRoot);
+        	List<String> paths = (List<String>) relPathInfo.get(reposRoot);
         	info = singleRepositoryDelete(repository, reposRoot, paths);
         	if (info != null) {
         	    getOperation().receive(SvnTarget.fromURL(reposRoot), info);
