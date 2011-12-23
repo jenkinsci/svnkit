@@ -124,7 +124,9 @@ public class SVNMkDirCommand extends SVNCommand {
                 		(err.getErrorCode() == SVNErrorCode.IO_ERROR
                 		|| err.getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND
                 		|| err.getErrorCode() == SVNErrorCode.FS_NOT_DIRECTORY
-                		|| err.getErrorCode() == SVNErrorCode.FS_NOT_FOUND)) {
+                		|| err.getErrorCode() == SVNErrorCode.FS_NOT_FOUND
+                		|| err.getErrorCode() == SVNErrorCode.ENTRY_NOT_FOUND
+                		)) {
                 	err = err.wrap("Try 'svn mkdir --parents' instead?");
                 }
                 SVNErrorManager.error(err, SVNLogType.CLIENT);
