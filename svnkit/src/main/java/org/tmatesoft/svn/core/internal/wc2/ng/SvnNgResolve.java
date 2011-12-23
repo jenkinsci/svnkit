@@ -1,7 +1,5 @@
 package org.tmatesoft.svn.core.internal.wc2.ng;
 
-import java.io.File;
-
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -19,12 +17,8 @@ public class SvnNgResolve extends SvnNgOperationRunner<Long, SvnResolve>  {
         			"'{0}' is not a local path", getOperation().getFirstTarget().getURL());
             SVNErrorManager.error(err, SVNLogType.WC);
         }
-        
-        File localAbsPath = getOperation().getFirstTarget().getFile().getAbsoluteFile();
-        
-        context.resolvedConflict(localAbsPath, getOperation().getDepth(), true, "", true, getOperation().getConflictChoice());
-        
-    	return Long.decode("-1");
+        context.resolvedConflict(getFirstTarget(), getOperation().getDepth(), true, null, true, getOperation().getConflictChoice());
+    	return 1l;
     }
     
    
