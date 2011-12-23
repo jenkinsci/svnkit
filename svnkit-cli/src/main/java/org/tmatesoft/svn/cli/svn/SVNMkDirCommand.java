@@ -62,18 +62,13 @@ public class SVNMkDirCommand extends SVNCommand {
         for (Iterator ts = targets.iterator(); ts.hasNext();) {
             String targetName = (String) ts.next();
             if (!SVNCommandUtil.isURL(targetName)) {
-                if (getSVNEnvironment().getMessage() != null || getSVNEnvironment().getFileData() != null || getSVNEnvironment().getRevisionProperties() != null) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_UNNECESSARY_LOG_MESSAGE,
-                            "Local, non-commit operations do not take a log message or revision properties");
-                    SVNErrorManager.error(err, SVNLogType.CLIENT);
-                }
-                hasPaths = true;
+            	hasPaths = true;
             } else {
                 hasURLs = true;
             }
         }
         if (hasURLs && hasPaths) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Specify either URLs or local paths, not both"), SVNLogType.CLIENT);
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Cannot mix repository and working copy targets"), SVNLogType.CLIENT);
         }
         if (hasURLs) {
             SVNCommitClient client = getSVNEnvironment().getClientManager().getCommitClient();
