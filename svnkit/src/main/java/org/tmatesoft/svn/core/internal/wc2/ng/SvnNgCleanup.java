@@ -92,7 +92,7 @@ public class SvnNgCleanup extends SvnNgOperationRunner<Long, SvnCleanup> {
     	if (info.kind == ISVNWCDb.SVNWCDbKind.File
     			|| info.kind == ISVNWCDb.SVNWCDbKind.Symlink) {
     		//boolean modified = 
-    		wcContext.isTextModified(localAbsPath, false);
+    		wcContext.isTextModified(localAbsPath, true);
     	}
     	else if (info.kind == ISVNWCDb.SVNWCDbKind.Dir) {
     		Set<String> children = wcContext.getDb().readChildren(localAbsPath);
