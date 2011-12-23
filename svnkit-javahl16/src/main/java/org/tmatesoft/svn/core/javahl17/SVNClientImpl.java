@@ -72,6 +72,7 @@ import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.internal.io.svn.SVNSSHConnector;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNAuthenticationManager;
@@ -151,7 +152,10 @@ public class SVNClientImpl implements ISVNClient {
         return new SVNClientImpl();
     }
 
+    private static int instanceCount;
+
     private SvnOperationFactory svnOperationFactory;
+    private boolean shouldDisposeSvnOperationsFactory;
     private String username;
     private String password;
     private UserPasswordCallback prompt;
@@ -172,11 +176,27 @@ public class SVNClientImpl implements ISVNClient {
     }
 
     protected SVNClientImpl(SvnOperationFactory svnOperationFactory) {
+        this.shouldDisposeSvnOperationsFactory = svnOperationFactory == null;
         this.svnOperationFactory = svnOperationFactory == null ? new SvnOperationFactory() : svnOperationFactory;
         this.svnOperationFactory.setEventHandler(getEventHandler());
+
+        synchronized (SVNClientImpl.class) {
+            instanceCount++;
+        }
     }
 
     public void dispose() {
+        if (shouldDisposeSvnOperationsFactory && svnOperationFactory != null) {
+            svnOperationFactory.dispose();
+        }
+        synchronized (SVNClientImpl.class) {
+            instanceCount--;
+            if (instanceCount <= 0) {
+                instanceCount = 0;
+                SVNSSHConnector.shutdown();
+            }
+        }
+
     }
 
     public Version getVersion() {
