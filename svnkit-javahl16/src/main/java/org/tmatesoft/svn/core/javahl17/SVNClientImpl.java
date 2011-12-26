@@ -584,7 +584,7 @@ public class SVNClientImpl implements ISVNClient {
             CommitCallback callback) throws ClientException {
         SvnImport svnImport = svnOperationFactory.createImport();
         svnImport.setDepth(getSVNDepth(depth));
-        svnImport.setIncludeIgnored(noIgnore);
+        svnImport.setUseGlobalIgnores(!noIgnore);
         //TODO: how to respect ignoreUnknownNodeTypes ?
         svnImport.setRevisionProperties(getSVNProperties(revpropTable));
         svnImport.setCommitHandler(getCommitHandler(handler));

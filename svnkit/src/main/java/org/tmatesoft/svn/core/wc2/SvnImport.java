@@ -39,6 +39,7 @@ public class SvnImport extends AbstractSvnCommit {
     }
 
     public boolean isIncludeIgnored() {
+        //TODO: it seems the option is the opposite to 'useGlobalIgnores'
         return includeIgnored;
     }
 
