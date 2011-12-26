@@ -1640,18 +1640,26 @@ public class SVNClientImpl implements ISVNClient {
         if (localPaths == null || localPaths.size() == 0) {
             return;
         }
+        for (String localPath : localPaths) {
+            moveLocalPath(localPath, destPath, force, moveAsChild, makeParents);
+        }
+    }
+
+    private void moveLocalPath(String localPath, String destPath, boolean force, boolean moveAsChild, boolean makeParents) throws ClientException {
+        if (moveAsChild) {
+            destPath = SVNPathUtil.append(destPath, SVNPathUtil.tail(localPath));
+        }
+
         SvnCopy copy = svnOperationFactory.createCopy();
         copy.setSingleTarget(getTarget(destPath));
         copy.setFailWhenDstExists(!force);//TODO: recheck
         copy.setMakeParents(makeParents);
 
-        //TODO: copy should support 1) force 2) moveAsChild
+        //TODO: copy should support 1) force
 
         copy.setMove(true);
 
-        for (String localPath : localPaths) {
-            copy.addCopySource(SvnCopySource.create(getTarget(localPath), SVNRevision.UNDEFINED)); //TODO: recheck revision
-        }
+        copy.addCopySource(SvnCopySource.create(getTarget(localPath), SVNRevision.UNDEFINED)); //TODO: recheck revision
 
         try {
             copy.run();
