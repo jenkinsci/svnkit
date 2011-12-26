@@ -405,10 +405,6 @@ public class SvnOperationFactory {
         return new SvnLog(this);
     }
     
-    public SvnSetChangelist createChangeList() {
-        return new SvnSetChangelist(this);
-    }
-    
     public SvnRemoteMkDir createMkDir() {
         return new SvnRemoteMkDir(this);
     }

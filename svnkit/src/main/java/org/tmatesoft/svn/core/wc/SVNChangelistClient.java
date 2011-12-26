@@ -240,7 +240,7 @@ public class SVNChangelistClient extends SVNBasicClient {
      * @since 1.2.0, New in SVN 1.5.0
      */
     public void doAddToChangelist(File[] paths, SVNDepth depth, String changelist, String[] changelists) throws SVNException {
-    	SvnSetChangelist cl = getOperationsFactory().createChangeList();
+    	SvnSetChangelist cl = getOperationsFactory().createSetChangelist();
     	for (int i = 0; i < paths.length; i++) {
             cl.addTarget(SvnTarget.fromFile(paths[i]));            
         }
@@ -282,7 +282,7 @@ public class SVNChangelistClient extends SVNBasicClient {
      * @since 1.2.0, New in SVN 1.5.0
      */
     public void doRemoveFromChangelist(File[] paths, SVNDepth depth, String[] changelists) throws SVNException {
-    	SvnSetChangelist cl = getOperationsFactory().createChangeList();
+    	SvnSetChangelist cl = getOperationsFactory().createSetChangelist();
     	for (int i = 0; i < paths.length; i++) {
             cl.addTarget(SvnTarget.fromFile(paths[i]));            
         }
