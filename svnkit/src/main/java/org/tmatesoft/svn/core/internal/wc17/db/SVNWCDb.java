@@ -2793,17 +2793,21 @@ public class SVNWCDb implements ISVNWCDb {
                 if (f.contains(InfoField.depth)) {
                     info.depth = SVNDepth.UNKNOWN;
                 }
-                if (f.contains(InfoField.originalRevision)) {
-                    info.originalRevision = INVALID_REVNUM;
-                }
                 if (f.contains(InfoField.originalReposId)) {
                     info.originalReposId = INVALID_REPOS_ID;
+                }
+                if (f.contains(InfoField.originalRevision)) {
+                    info.originalRevision = INVALID_REVNUM;
                 }
                 if (f.contains(InfoField.changelist)) {
                     info.changelist = stmtActual.getColumnString(SVNWCDbSchema.ACTUAL_NODE__Fields.changelist);
                 }
-                if (f.contains(InfoField.originalRevision))
+                if (f.contains(InfoField.originalRevision)) {
                     info.originalRevision = INVALID_REVNUM;
+                }
+                if (f.contains(InfoField.conflicted)) {
+                    info.conflicted = true;
+                }
             } else {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{0}'' was not found.", wcRoot.getAbsPath(localRelPath));
                 SVNErrorManager.error(err, SVNLogType.WC);

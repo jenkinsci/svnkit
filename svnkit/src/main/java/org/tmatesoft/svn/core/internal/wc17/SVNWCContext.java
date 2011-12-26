@@ -4091,6 +4091,7 @@ public class SVNWCContext {
     		resolveOneConflict(localAbsPath, resolveText, resolveProps, resolveTree, conflictChoice);
     	}
     	
+    	
     	if (depth.getId() < SVNDepth.FILES.getId())
     		return;
     	
