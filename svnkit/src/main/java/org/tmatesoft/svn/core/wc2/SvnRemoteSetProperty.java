@@ -7,6 +7,7 @@ public class SvnRemoteSetProperty extends AbstractSvnCommit {
     private boolean force;
     private String propertyName;
     private SVNPropertyValue propertyValue;
+    private SVNPropertyValue originalPropertyValue;
 
     protected SvnRemoteSetProperty(SvnOperationFactory factory) {
         super(factory);
@@ -34,5 +35,14 @@ public class SvnRemoteSetProperty extends AbstractSvnCommit {
     
     public void setPropertyValue(SVNPropertyValue propertyValue) {
         this.propertyValue = propertyValue;
+    }
+
+    public SVNPropertyValue getOriginalPropertyValue() {
+        //TODO: never used so far
+        return originalPropertyValue;
+    }
+
+    public void setOriginalPropertyValue(SVNPropertyValue originalPropertyValue) {
+        this.originalPropertyValue = originalPropertyValue;
     }
 }

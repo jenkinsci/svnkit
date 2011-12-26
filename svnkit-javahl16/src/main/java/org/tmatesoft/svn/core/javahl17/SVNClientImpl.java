@@ -903,7 +903,7 @@ public class SVNClientImpl implements ISVNClient {
         remoteSetProperty.setPropertyName(name);
         remoteSetProperty.setRevision(getSVNRevision(rev));
         remoteSetProperty.setPropertyValue(SVNPropertyValue.create(value));
-        //TODO: no originalValue parameter
+        remoteSetProperty.setOriginalPropertyValue(SVNPropertyValue.create(originalValue));
         remoteSetProperty.setForce(force);
 
         try {
