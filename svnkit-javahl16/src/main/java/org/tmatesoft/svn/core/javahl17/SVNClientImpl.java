@@ -141,6 +141,7 @@ import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.core.wc2.SvnUnlock;
 import org.tmatesoft.svn.core.wc2.SvnUpdate;
 import org.tmatesoft.svn.core.wc2.SvnUpgrade;
+import org.tmatesoft.svn.core.wc2.SvnWorkingCopyInfo;
 import org.tmatesoft.svn.core.wc2.hooks.ISvnCommitHandler;
 import org.tmatesoft.svn.util.ISVNDebugLog;
 import org.tmatesoft.svn.util.SVNDebugLog;
@@ -1040,9 +1041,29 @@ public class SVNClientImpl implements ISVNClient {
     }
 
     public void getChangelists(String rootPath, Collection<String> changelists,
-            Depth depth, ChangelistCallback callback) throws ClientException {
-        // TODO Auto-generated method stub
+            Depth depth, final ChangelistCallback callback) throws ClientException {
 
+        SvnGetInfo getInfo = svnOperationFactory.createGetInfo();
+        getInfo.setSingleTarget(getTarget(rootPath));
+        getInfo.setApplicalbeChangelists(changelists);
+        getInfo.setDepth(getSVNDepth(depth));
+        if (callback != null) {
+            getInfo.setReceiver(new ISvnObjectReceiver<SvnInfo>() {
+                public void receive(SvnTarget target, SvnInfo svnInfo) throws SVNException {
+                    SvnWorkingCopyInfo wcInfo = svnInfo.getWcInfo();
+                    if (wcInfo != null) {
+                        String path = getFilePath(wcInfo.getPath());
+                        String changelist = wcInfo.getChangelist();
+                        callback.doChangelist(path, changelist);
+                    }
+                }
+            });
+        }
+        try {
+            getInfo.run();
+        } catch (SVNException e) {
+            throw ClientException.fromException(e);
+        }
     }
 
     public void lock(Set<String> path, String comment, boolean force)
