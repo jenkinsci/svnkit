@@ -77,6 +77,7 @@ import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
+import org.tmatesoft.svn.core.internal.wc.SVNConflictVersion;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.patch.SVNPatchHunkInfo;
@@ -91,8 +92,10 @@ import org.tmatesoft.svn.core.wc.SVNConflictReason;
 import org.tmatesoft.svn.core.wc.SVNConflictResult;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
+import org.tmatesoft.svn.core.wc.SVNOperation;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnAnnotate;
@@ -1777,12 +1780,16 @@ public class SVNClientImpl implements ISVNClient {
         }
         return new ISvnObjectReceiver<SvnInfo>() {
             public void receive(SvnTarget target, SvnInfo info) throws SVNException {
-                callback.singleInfo(getInfo(info));
+                try {
+                    callback.singleInfo(getInfo(info));
+                } catch (ClientException e) {
+                    throwSvnException(e);
+                }
             }
         };
     }
 
-    private Info getInfo(SvnInfo info) {
+    private Info getInfo(SvnInfo info) throws ClientException {
         String url = getUrlString(info.getUrl());
         String repositoryRoot = getUrlString(info.getRepositoryRootUrl());
         String path = SVNPathUtil.getRelativePath(repositoryRoot, url);
@@ -1813,7 +1820,7 @@ public class SVNClientImpl implements ISVNClient {
                 );
     }
 
-    private Set<ConflictDescriptor> getConflictDescriptors(Collection<SVNConflictDescription> conflicts) {
+    private Set<ConflictDescriptor> getConflictDescriptors(Collection<SVNConflictDescription> conflicts) throws ClientException {
         HashSet<ConflictDescriptor> conflictDescriptors = new HashSet<ConflictDescriptor>();
         for (SVNConflictDescription conflict : conflicts) {
             conflictDescriptors.add(getConflictDescription(conflict));
@@ -1943,39 +1950,68 @@ public class SVNClientImpl implements ISVNClient {
         };
     }
 
-    private ConflictDescriptor getConflictDescription(SVNConflictDescription conflictDescription) {
-        //TODO: set the following variables
-        boolean binary = false;
-        String mimeType = null;
-        String basePath = null;
-        String theirPath = null;
-        String myPath = null;
-        String mergedPath = null;
+    private ConflictDescriptor getConflictDescription(SVNConflictDescription conflictDescription) throws ClientException {
         ConflictVersion srcLeft = null;
         ConflictVersion srcRight = null;
+        ConflictDescriptor.Operation operation = null;
 
-        return new ConflictDescriptor(
-                getFilePath(conflictDescription.getPath()),
-                getConflictDescriptorKind(conflictDescription),
-                getNodeKind(conflictDescription.getNodeKind()),
-                conflictDescription.getPropertyName(),
-                binary,
-                mimeType,
-                getConflictDescriptorAction(conflictDescription.getConflictAction()),
-                getConflictDescriptorReason(conflictDescription.getConflictReason()),
-                getConflictDescriptorOperation(conflictDescription),
-                basePath,
-                theirPath,
-                myPath,
-                mergedPath,
-                srcLeft,
-                srcRight
-                );
+        if (conflictDescription instanceof SVNTreeConflictDescription) {
+            SVNTreeConflictDescription treeConflictDescription = (SVNTreeConflictDescription) conflictDescription;
+
+            srcLeft = getConflictVersion(treeConflictDescription.getSourceLeftVersion());
+            srcRight = getConflictVersion(treeConflictDescription.getSourceRightVersion());
+
+            operation = getConflictDescriptorOperation(treeConflictDescription.getOperation());
+        }
+
+        try {
+            return new ConflictDescriptor(
+                    getFilePath(conflictDescription.getPath()),
+                    getConflictDescriptorKind(conflictDescription),
+                    getNodeKind(conflictDescription.getNodeKind()),
+                    conflictDescription.getPropertyName(),
+                    conflictDescription.getMergeFiles().isBinary(),
+                    conflictDescription.getMergeFiles().getMimeType(),
+                    getConflictDescriptorAction(conflictDescription.getConflictAction()),
+                    getConflictDescriptorReason(conflictDescription.getConflictReason()),
+                    operation,
+                    conflictDescription.getMergeFiles().getBasePath(),
+                    conflictDescription.getMergeFiles().getRepositoryPath(),
+                    conflictDescription.getMergeFiles().getLocalPath(),
+                    conflictDescription.getMergeFiles().getResultPath(),
+                    srcLeft,
+                    srcRight
+                    );
+        } catch (SVNException e) {
+            throw ClientException.fromException(e);
+        }
     }
 
-    private ConflictDescriptor.Operation getConflictDescriptorOperation(SVNConflictDescription conflictDescription) {
-        //TODO: implement
-        return null;
+    private ConflictDescriptor.Operation getConflictDescriptorOperation(SVNOperation operation) {
+        if (operation == null) {
+            return null;
+        }
+        if (operation == SVNOperation.MERGE) {
+            return ConflictDescriptor.Operation.merge;
+        } else if (operation == SVNOperation.UPDATE) {
+            return ConflictDescriptor.Operation.update;
+        } else if (operation == SVNOperation.SWITCH) {
+            return ConflictDescriptor.Operation.switched;
+        } else if (operation == SVNOperation.NONE) {
+            return ConflictDescriptor.Operation.none;
+        } else {
+            throw new IllegalArgumentException("Unknown operation: " + operation);
+        }
+    }
+
+    private ConflictVersion getConflictVersion(SVNConflictVersion conflictVersion) {
+        if (conflictVersion == null) {
+            return null;
+        }
+        return new ConflictVersion(getUrlString(conflictVersion.getRepositoryRoot()),
+                conflictVersion.getPegRevision(),
+                conflictVersion.getPath(),
+                getNodeKind(conflictVersion.getKind()));
     }
 
     private SVNConflictResult getSVNConflictResult(ConflictResult conflictResult) {
