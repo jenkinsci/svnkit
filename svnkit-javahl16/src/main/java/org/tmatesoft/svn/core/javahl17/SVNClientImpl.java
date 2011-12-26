@@ -1463,8 +1463,9 @@ public class SVNClientImpl implements ISVNClient {
             case chooseTheirsFull:
                 return SVNConflictChoice.THEIRS_FULL;
             case postpone:
-            default:
                 return SVNConflictChoice.POSTPONE;
+            default:
+                throw new IllegalArgumentException("Unknown choice kind: " + choice);
         }
     }
 
@@ -1504,8 +1505,7 @@ public class SVNClientImpl implements ISVNClient {
         } else if (type == SVNStatusType.STATUS_NORMAL) {
             return DiffSummary.DiffKind.normal;
         } else {
-            //TODO
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("Unknown status type: " + type);
         }
     }
 
@@ -1936,7 +1936,6 @@ public class SVNClientImpl implements ISVNClient {
                 try {
                     return getSVNConflictResult(callback.resolve(getConflictDescription(conflictDescription)));
                 } catch (SubversionException e) {
-                    //TODO: review this
                     throwSvnException(e);
                     return null;
                 }
@@ -2050,6 +2049,8 @@ public class SVNClientImpl implements ISVNClient {
             return ClientNotifyInformation.Action.commit_postfix_txdelta;
         } else if (action == SVNEventAction.COMMIT_REPLACED) {
             return ClientNotifyInformation.Action.commit_replaced;
+        } else if (action == SVNEventAction.COMMIT_MODIFIED) {
+            return ClientNotifyInformation.Action.commit_modified;
         } else if (action == SVNEventAction.COPY) {
             return ClientNotifyInformation.Action.copy;
         } else if (action == SVNEventAction.DELETE) {
@@ -2148,7 +2149,7 @@ public class SVNClientImpl implements ISVNClient {
         } else if (action == SVNEventAction.WC_PATH_NONEXISTENT) {
             return ClientNotifyInformation.Action.path_nonexistent;
         } else {
-            return null;
+            throw new IllegalArgumentException("Unknown action: " + action);
         }
     }
 
@@ -2260,9 +2261,11 @@ public class SVNClientImpl implements ISVNClient {
             return ClientNotifyInformation.LockStatus.unknown;
         } else if (lockStatus == SVNStatusType.LOCK_UNLOCKED) {
             return ClientNotifyInformation.LockStatus.unlocked;
+        } else if (lockStatus == SVNStatusType.INAPPLICABLE) {
+            //TODO: should this ever happen? but it happens actually
+            return ClientNotifyInformation.LockStatus.inapplicable;
         } else {
-            //TODO: or throw an exception?
-            return ClientNotifyInformation.LockStatus.unknown;
+            throw new IllegalArgumentException("Unknown lock status: " + lockStatus);
         }
     }
 
@@ -2290,8 +2293,7 @@ public class SVNClientImpl implements ISVNClient {
         } else if (status == SVNStatusType.UNKNOWN) {
             return ClientNotifyInformation.Status.unknown;
         } else {
-            //TODO: or throw an exception?
-            return ClientNotifyInformation.Status.unknown;
+            throw new IllegalArgumentException("Unknown status type: " + status);
         }
     }
 
@@ -2337,6 +2339,7 @@ public class SVNClientImpl implements ISVNClient {
     }
 
     private void throwSvnException(Exception e) throws SVNException {
+        //TODO: review
         SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.UNKNOWN);
         SVNErrorManager.error(errorMessage, e, SVNLogType.CLIENT);
     }
