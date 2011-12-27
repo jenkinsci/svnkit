@@ -1269,8 +1269,7 @@ public class SVNClientImpl implements ISVNClient {
         } else if (statusType == SVNStatusType.STATUS_MODIFIED) {
             return Status.Kind.modified;
         } else if (statusType == SVNStatusType.STATUS_NAME_CONFLICT) {
-            //TODO: no analog in Status.Kind
-            return null;
+            return Status.Kind.unversioned;
         } else if (statusType == SVNStatusType.STATUS_NONE) {
             return Status.Kind.none;
         } else if (statusType == SVNStatusType.STATUS_NORMAL) {
@@ -1657,7 +1656,7 @@ public class SVNClientImpl implements ISVNClient {
         copy.setMove(true);
 
         for (String localPath : srcPaths) {
-            copy.addCopySource(SvnCopySource.create(getTarget(localPath), SVNRevision.UNDEFINED)); //TODO: recheck revision
+            copy.addCopySource(SvnCopySource.create(getTarget(localPath), SVNRevision.UNDEFINED));
         }
 
         try {
@@ -1684,7 +1683,7 @@ public class SVNClientImpl implements ISVNClient {
         remoteCopy.setMove(true);
 
         for (String remoteUrl : srcPaths) {
-            remoteCopy.addCopySource(SvnCopySource.create(getTarget(remoteUrl), SVNRevision.HEAD)); //TODO: check revision
+            remoteCopy.addCopySource(SvnCopySource.create(getTarget(remoteUrl), SVNRevision.UNDEFINED));
         }
 
         try {
@@ -1999,9 +1998,9 @@ public class SVNClientImpl implements ISVNClient {
             return ConflictDescriptor.Action.delete;
         } else if (conflictAction == SVNConflictAction.EDIT) {
             return ConflictDescriptor.Action.edit;
-        } else if (conflictAction == SVNConflictAction.REPLACE) {
+//        } else if (conflictAction == SVNConflictAction.REPLACE) {
             //TODO: unsupported
-            throw new IllegalArgumentException("Unknown conflict action: " + conflictAction);
+//            throw new IllegalArgumentException("Unknown conflict action: " + conflictAction);
         } else {
             throw new IllegalArgumentException("Unknown conflict action: " + conflictAction);
         }
@@ -2047,12 +2046,10 @@ public class SVNClientImpl implements ISVNClient {
         } else if (action == SVNEventAction.COMMIT_ADDED) {
             return ClientNotifyInformation.Action.commit_added;
         } else if (action == SVNEventAction.COMMIT_COMPLETED) {
-            //TODO: no analog
             return null;
         } else if (action == SVNEventAction.COMMIT_DELETED) {
             return ClientNotifyInformation.Action.commit_deleted;
         } else if (action == SVNEventAction.COMMIT_DELTA_SENT) {
-            //TODO: check
             return ClientNotifyInformation.Action.commit_postfix_txdelta;
         } else if (action == SVNEventAction.COMMIT_REPLACED) {
             return ClientNotifyInformation.Action.commit_replaced;
@@ -2083,7 +2080,6 @@ public class SVNClientImpl implements ISVNClient {
         } else if (action == SVNEventAction.PATCH_REJECTED_HUNK) {
             return ClientNotifyInformation.Action.patch_rejected_hunk;
         } else if (action == SVNEventAction.PROGRESS) {
-            //TODO: no analog
             return null;
         } else if (action == SVNEventAction.PROPERTY_ADD) {
             return ClientNotifyInformation.Action.property_added;
@@ -2130,8 +2126,7 @@ public class SVNClientImpl implements ISVNClient {
         } else if (action == SVNEventAction.UPDATE_EXTERNAL_REMOVED) {
             return ClientNotifyInformation.Action.update_external_removed;
         } else if (action == SVNEventAction.UPDATE_NONE) {
-            //TODO: no analog
-            return null;
+            return ClientNotifyInformation.Action.update_update;
         } else if (action == SVNEventAction.UPDATE_REPLACE) {
             return ClientNotifyInformation.Action.update_replaced;
         } else if (action == SVNEventAction.UPDATE_SHADOWED_ADD) {
@@ -2211,7 +2206,6 @@ public class SVNClientImpl implements ISVNClient {
         String propName = null;
         Map<String, String> revProps = null;
 
-
         long hunkOriginalStart = -1;
         long hunkOriginalLength = -1;
         long hunkModifiedStart = -1;
@@ -2282,7 +2276,6 @@ public class SVNClientImpl implements ISVNClient {
         } else if (status == SVNStatusType.CONFLICTED) {
             return ClientNotifyInformation.Status.conflicted;
         } else if (status == SVNStatusType.CONFLICTED_UNRESOLVED) {
-            //TODO: no explicit analog
             return ClientNotifyInformation.Status.conflicted;
         } else if (status == SVNStatusType.INAPPLICABLE) {
             return ClientNotifyInformation.Status.inapplicable;
