@@ -466,6 +466,19 @@ public class SVNStatusEditor17 {
         stat.setRepositoryRelativePath(SVNFileUtil.getFilePath(reposInfo.relPath));
         stat.setRepositoryUuid(reposInfo.uuid);
 
+        if (stat.isVersioned() && stat.isConflicted()) {
+            SVNWCContext.ConflictInfo conflictInfo = context.getConflicted(stat.getPath(), true, true, true);
+            if (conflictInfo.textConflicted) {
+                stat.setTextStatus(SVNStatusType.STATUS_CONFLICTED);
+            }
+            if (conflictInfo.propConflicted) {
+                stat.setPropertiesStatus(SVNStatusType.STATUS_CONFLICTED);
+            }
+            if (conflictInfo.textConflicted || conflictInfo.propConflicted) {
+                stat.setNodeStatus(SVNStatusType.STATUS_CONFLICTED);
+            }
+        }
+
         if (stat.isSwitched() && stat.isVersioned() && stat.getKind() == SVNNodeKind.FILE) {
             try {
                 Structure<ExternalNodeInfo> externalInfo = SvnWcDbExternals.readExternal(context, stat.getPath(), stat.getPath(), ExternalNodeInfo.kind);
