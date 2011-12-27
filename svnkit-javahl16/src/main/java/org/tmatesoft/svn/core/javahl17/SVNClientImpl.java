@@ -2268,9 +2268,6 @@ public class SVNClientImpl implements ISVNClient {
             return ClientNotifyInformation.LockStatus.unknown;
         } else if (lockStatus == SVNStatusType.LOCK_UNLOCKED) {
             return ClientNotifyInformation.LockStatus.unlocked;
-        } else if (lockStatus == SVNStatusType.INAPPLICABLE) {
-            //TODO: should this ever happen? but it happens actually
-            return ClientNotifyInformation.LockStatus.inapplicable;
         } else {
             throw new IllegalArgumentException("Unknown lock status: " + lockStatus);
         }

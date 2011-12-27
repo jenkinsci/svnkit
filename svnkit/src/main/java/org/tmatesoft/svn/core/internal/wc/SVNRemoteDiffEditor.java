@@ -263,7 +263,7 @@ public class SVNRemoteDiffEditor implements ISVNReusableEditor {
             	File deletedPath = (File) deletedPathsIter.next();
             	KindActionState kas = (KindActionState) myDeletedPaths.get(deletedPath);
                 SVNEvent event = SVNEventFactory.createSVNEvent(deletedPath, kas.myKind, null,
-                		SVNRepository.INVALID_REVISION, kas.myStatus, kas.myStatus, SVNStatusType.INAPPLICABLE,
+                		SVNRepository.INVALID_REVISION, kas.myStatus, kas.myStatus, SVNStatusType.LOCK_INAPPLICABLE,
                 		kas.myAction, kas.myExpectedAction, null, null);
                 myEventHandler.handleEvent(event, ISVNEventHandler.UNKNOWN);
                 deletedPathsIter.remove();
@@ -272,7 +272,7 @@ public class SVNRemoteDiffEditor implements ISVNReusableEditor {
             action = myCurrentDirectory.myIsTreeConflicted ? SVNEventAction.TREE_CONFLICT : action;
             SVNEvent event = SVNEventFactory.createSVNEvent(myCurrentDirectory.myWCFile,
             		SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNStatusType.INAPPLICABLE, type,
-            		SVNStatusType.INAPPLICABLE, action, expectedAction, null, null);
+            		SVNStatusType.LOCK_INAPPLICABLE, action, expectedAction, null, null);
             myEventHandler.handleEvent(event, ISVNEventHandler.UNKNOWN);
         }
         myCurrentDirectory = myCurrentDirectory.myParent;

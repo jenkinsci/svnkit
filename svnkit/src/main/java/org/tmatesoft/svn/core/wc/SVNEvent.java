@@ -168,7 +168,7 @@ public class SVNEvent {
         myRevision = revision;
         myContentsStatus = cstatus == null ? SVNStatusType.INAPPLICABLE : cstatus;
         myPropertiesStatus = pstatus == null ? SVNStatusType.INAPPLICABLE : pstatus;
-        myLockStatus = lstatus == null ? SVNStatusType.INAPPLICABLE : lstatus;
+        myLockStatus = lstatus == null ? SVNStatusType.LOCK_INAPPLICABLE : lstatus;
         myLock = lock;
         myAction = action;
         myExpectedAction = expected == null ? action : expected;
