@@ -1,5 +1,6 @@
 package org.tmatesoft.svn.core.wc2;
 
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -64,4 +65,14 @@ public class SvnRemoteSetProperty extends AbstractSvnCommit {
     public void setOriginalPropertyValue(SVNPropertyValue originalPropertyValue) {
         this.originalPropertyValue = originalPropertyValue;
     }
+
+    @Override
+    protected void ensureArgumentsAreValid() throws SVNException {
+        super.ensureArgumentsAreValid();
+        if (getBaseRevision() == null) {
+            setBaseRevision(SVNRevision.HEAD);
+        }
+    }
+    
+    
 }
