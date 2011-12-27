@@ -121,6 +121,7 @@ public class SVNPathUtil {
         if (path == null){
             return null;           
         }
+        
         StringBuffer result = new StringBuffer();
         int i = 0;
         for (; i < path.length(); i++) {
@@ -146,22 +147,30 @@ public class SVNPathUtil {
         int segmentCount = 0;
         while (index < path.length()) {
             int nextIndex = index;
-            while (nextIndex < path.length() && path.charAt(nextIndex) != '/') {
-                nextIndex++;
+            while (nextIndex < path.length() && path.charAt(nextIndex) != '/' 
+            		 && !(nextIndex + 2 < path.length() && path.charAt(nextIndex) == '%' && path.charAt(nextIndex + 1) == '2' &&
+    				Character.toUpperCase(path.charAt(nextIndex + 2)) == 'F')) {
+            	nextIndex++;
+            }
+            int slashLength = 0;
+            if (nextIndex < path.length()) {
+            	if (path.charAt(nextIndex) == '/')
+            		slashLength = 1;
+            	else if (path.charAt(nextIndex) == '%')
+            		slashLength = 3;
             }
             int segmentLength = nextIndex - index;
-            if (segmentLength == 0 || (segmentLength == 1 && path.charAt(index) == '.')) {
-
+            if (segmentLength == 0 || (segmentLength == 1 && path.charAt(index) == '.')
+            		|| (segmentLength == 3 && path.charAt(index) == '%' && path.charAt(index + 1) == '2' && Character.toUpperCase(path.charAt(index + 2))  == 'E')) {
             } else {
-                if (nextIndex < path.length()) {
-                    segmentLength++;
-                }
                 result.append(path.substring(index, index + segmentLength));
-                segmentCount++;
+            	if (slashLength > 0)
+            		result.append('/');
+            	segmentCount++;
             }
             index = nextIndex;
             if (index < path.length()) {
-                index++;
+                index += slashLength;
             }
         }
         if ((segmentCount > 0 || scheme != null) && result.charAt(result.length() - 1) == '/') {
