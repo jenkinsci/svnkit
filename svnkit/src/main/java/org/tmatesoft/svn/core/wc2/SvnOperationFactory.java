@@ -86,6 +86,7 @@ import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteLog;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteRemoteDelete;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteRemoteMkDir;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteSetLock;
+import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteSetPropertyImpl;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteSetRevisionProperty;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteUnlock;
 import org.tmatesoft.svn.core.wc.DefaultSVNRepositoryPool;
@@ -213,6 +214,7 @@ public class SvnOperationFactory {
         registerOperationRunner(SvnRemoteMkDir.class, new SvnRemoteRemoteMkDir());
         
         registerOperationRunner(SvnRemoteDelete.class, new SvnRemoteRemoteDelete());
+        registerOperationRunner(SvnRemoteSetProperty.class, new SvnRemoteSetPropertyImpl());
         
         registerOperationRunner(SvnMerge.class, new SvnOldMerge());
 
