@@ -501,7 +501,7 @@ public class SVNClientImpl implements ISVNClient {
         fillLocalAndRemoteTargets(srcPaths, localPaths, remoteUrls);
 
         moveLocal(localPaths, destPath, force, moveAsChild, makeParents);
-        moveRemote(remoteUrls, destPath, force, moveAsChild, makeParents, revpropTable, handler, callback);
+        moveRemote(remoteUrls, destPath, moveAsChild, makeParents, revpropTable, handler, callback);
     }
 
     public void mkdir(Set<String> path, boolean makeParents,
@@ -1229,11 +1229,11 @@ public class SVNClientImpl implements ISVNClient {
         return new Lock(lock.getOwner(), lock.getPath(), lock.getID(), lock.getComment(), getLongDate(lock.getCreationDate()), getLongDate(lock.getExpirationDate()));
     }
 
-
     private long getLongDate(Date date) {
         SVNDate svnDate = SVNDate.fromDate(date);
         return svnDate.getTimeInMicros();
     }
+
 
     private SvnTarget getTarget(String path, Revision revision) {
         SVNRevision svnRevision = getSVNRevision(revision);
@@ -1664,26 +1664,15 @@ public class SVNClientImpl implements ISVNClient {
         if (localPaths == null || localPaths.size() == 0) {
             return;
         }
-        for (String localPath : localPaths) {
-            moveLocalPath(localPath, destPath, force, moveAsChild, makeParents);
-        }
-    }
-
-    private void moveLocalPath(String localPath, String destPath, boolean force, boolean moveAsChild, boolean makeParents) throws ClientException {
-        if (moveAsChild) {
-            destPath = SVNPathUtil.append(destPath, SVNPathUtil.tail(localPath));
-        }
-
         SvnCopy copy = svnOperationFactory.createCopy();
         copy.setSingleTarget(getTarget(destPath));
-        copy.setFailWhenDstExists(!force);//TODO: recheck
         copy.setMakeParents(makeParents);
-
-        //TODO: copy should support 1) force
-
+        copy.setFailWhenDstExists(!moveAsChild);
         copy.setMove(true);
 
-        copy.addCopySource(SvnCopySource.create(getTarget(localPath), SVNRevision.UNDEFINED)); //TODO: recheck revision
+        for (String localPath : localPaths) {
+            copy.addCopySource(SvnCopySource.create(getTarget(localPath), SVNRevision.UNDEFINED)); //TODO: recheck revision
+        }
 
         try {
             copy.run();
@@ -1692,7 +1681,7 @@ public class SVNClientImpl implements ISVNClient {
         }
     }
 
-    private void moveRemote(Set<String> remoteUrls, String destPath, boolean force,
+    private void moveRemote(Set<String> remoteUrls, String destPath,
                             boolean moveAsChild, boolean makeParents,
                             Map<String, String> revpropTable, CommitMessageCallback handler,
                             CommitCallback callback) throws ClientException {
@@ -1701,14 +1690,12 @@ public class SVNClientImpl implements ISVNClient {
         }
         SvnRemoteCopy remoteCopy = svnOperationFactory.createRemoteCopy();
         remoteCopy.setSingleTarget(getTarget(destPath));
-        remoteCopy.setFailWhenDstExists(!force);//TODO: recheck
         remoteCopy.setMakeParents(makeParents);
         remoteCopy.setRevisionProperties(getSVNProperties(revpropTable));
         remoteCopy.setCommitHandler(getCommitHandler(handler));
         remoteCopy.setReceiver(getCommitInfoReceiver(callback));
+        remoteCopy.setFailWhenDstExists(!moveAsChild);
         remoteCopy.setMove(true);
-
-        //TODO: remoteCopy lacks moveAsChild
 
         for (String remoteUrl : remoteUrls) {
             remoteCopy.addCopySource(SvnCopySource.create(getTarget(remoteUrl), SVNRevision.HEAD)); //TODO: check revision
@@ -1726,14 +1713,12 @@ public class SVNClientImpl implements ISVNClient {
         if (localSources == null || localSources.size() == 0) {
             return;
         }
-
         SvnCopy copy = svnOperationFactory.createCopy();
         copy.setSingleTarget(getTarget(destPath));
         copy.setMakeParents(makeParents);
         copy.setIgnoreExternals(ignoreExternals);
+        copy.setFailWhenDstExists(!copyAsChild);
         copy.setMove(false);
-
-        //TODO: copy lacks copyAsChild parameter
 
         for (CopySource localSource : localSources) {
             copy.addCopySource(getSvnCopySource(localSource));
@@ -1744,6 +1729,7 @@ public class SVNClientImpl implements ISVNClient {
         } catch (SVNException e) {
             throw ClientException.fromException(e);
         }
+
     }
 
     private void copyRemote(Set<CopySource> remoteSources, String destPath, boolean copyAsChild,
@@ -1759,9 +1745,8 @@ public class SVNClientImpl implements ISVNClient {
         remoteCopy.setRevisionProperties(getSVNProperties(revpropTable));
         remoteCopy.setCommitHandler(getCommitHandler(handler));
         remoteCopy.setReceiver(getCommitInfoReceiver(callback));
+        remoteCopy.setFailWhenDstExists(!copyAsChild);
         remoteCopy.setMove(false);
-
-        //TODO: remoteCopy lacks copyAsChild
 
         for (CopySource remoteSource : remoteSources) {
             remoteCopy.addCopySource(getSvnCopySource(remoteSource));
