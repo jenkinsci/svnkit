@@ -482,26 +482,22 @@ public class SVNClientImpl implements ISVNClient {
             boolean copyAsChild, boolean makeParents, boolean ignoreExternals,
             Map<String, String> revpropTable, CommitMessageCallback handler,
             CommitCallback callback) throws ClientException {
-        final Set<CopySource> localSources = new HashSet<CopySource>();
-        final Set<CopySource> remoteSources = new HashSet<CopySource>();
-
-        fillLocalAndRemoteSources(sources, localSources, remoteSources);
-
-        copyLocal(localSources, destPath, copyAsChild, makeParents, ignoreExternals);
-        copyRemote(remoteSources, destPath, copyAsChild, makeParents, revpropTable, handler, callback);
+        if (SVNPathUtil.isURL(destPath)) {
+            copyRemote(sources, destPath, copyAsChild, makeParents, revpropTable, handler, callback);
+        } else {
+            copyLocal(sources, destPath, copyAsChild, makeParents, ignoreExternals);
+        }
     }
 
     public void move(Set<String> srcPaths, String destPath, boolean force,
             boolean moveAsChild, boolean makeParents,
             Map<String, String> revpropTable, CommitMessageCallback handler,
             CommitCallback callback) throws ClientException {
-        final Set<String> localPaths = new HashSet<String>();
-        final Set<String> remoteUrls = new HashSet<String>();
-
-        fillLocalAndRemoteTargets(srcPaths, localPaths, remoteUrls);
-
-        moveLocal(localPaths, destPath, force, moveAsChild, makeParents);
-        moveRemote(remoteUrls, destPath, moveAsChild, makeParents, revpropTable, handler, callback);
+        if (SVNPathUtil.isURL(destPath)) {
+            moveRemote(srcPaths, destPath, moveAsChild, makeParents, revpropTable, handler, callback);
+        } else {
+            moveLocal(srcPaths, destPath, force, moveAsChild, makeParents);
+        }
     }
 
     public void mkdir(Set<String> path, boolean makeParents,
@@ -1550,16 +1546,6 @@ public class SVNClientImpl implements ISVNClient {
         }
     }
 
-    private void fillLocalAndRemoteSources(List<CopySource> sources, Set<CopySource> localSources, Set<CopySource> remoteSources) {
-        for (CopySource source : sources) {
-            if (SVNPathUtil.isURL(source.getPath())) {
-                remoteSources.add(source);
-            } else {
-                localSources.add(source);
-            }
-        }
-    }
-
     private CommitInfo getCommitInfo(SVNCommitInfo commitInfo, SVNURL repositoryRoot) throws ParseException {
         return new CommitInfo(commitInfo.getNewRevision(), SVNDate.formatDate(commitInfo.getDate()),
                 commitInfo.getAuthor(), getErrorMessageString(commitInfo.getErrorMessage()), getUrlString(repositoryRoot));
@@ -1659,9 +1645,9 @@ public class SVNClientImpl implements ISVNClient {
         }
     }
 
-    private void moveLocal(Set<String> localPaths, String destPath, boolean force,
+    private void moveLocal(Set<String> srcPaths, String destPath, boolean force,
                            boolean moveAsChild, boolean makeParents) throws ClientException {
-        if (localPaths == null || localPaths.size() == 0) {
+        if (srcPaths == null || srcPaths.size() == 0) {
             return;
         }
         SvnCopy copy = svnOperationFactory.createCopy();
@@ -1670,7 +1656,7 @@ public class SVNClientImpl implements ISVNClient {
         copy.setFailWhenDstExists(!moveAsChild);
         copy.setMove(true);
 
-        for (String localPath : localPaths) {
+        for (String localPath : srcPaths) {
             copy.addCopySource(SvnCopySource.create(getTarget(localPath), SVNRevision.UNDEFINED)); //TODO: recheck revision
         }
 
@@ -1681,11 +1667,11 @@ public class SVNClientImpl implements ISVNClient {
         }
     }
 
-    private void moveRemote(Set<String> remoteUrls, String destPath,
+    private void moveRemote(Set<String> srcPaths, String destPath,
                             boolean moveAsChild, boolean makeParents,
                             Map<String, String> revpropTable, CommitMessageCallback handler,
                             CommitCallback callback) throws ClientException {
-        if (remoteUrls == null || remoteUrls.size() == 0) {
+        if (srcPaths == null || srcPaths.size() == 0) {
             return;
         }
         SvnRemoteCopy remoteCopy = svnOperationFactory.createRemoteCopy();
@@ -1697,7 +1683,7 @@ public class SVNClientImpl implements ISVNClient {
         remoteCopy.setFailWhenDstExists(!moveAsChild);
         remoteCopy.setMove(true);
 
-        for (String remoteUrl : remoteUrls) {
+        for (String remoteUrl : srcPaths) {
             remoteCopy.addCopySource(SvnCopySource.create(getTarget(remoteUrl), SVNRevision.HEAD)); //TODO: check revision
         }
 
@@ -1708,7 +1694,7 @@ public class SVNClientImpl implements ISVNClient {
         }
     }
 
-    private void copyLocal(Set<CopySource> localSources, String destPath, boolean copyAsChild,
+    private void copyLocal(List<CopySource> localSources, String destPath, boolean copyAsChild,
                            boolean makeParents, boolean ignoreExternals) throws ClientException {
         if (localSources == null || localSources.size() == 0) {
             return;
@@ -1732,7 +1718,7 @@ public class SVNClientImpl implements ISVNClient {
 
     }
 
-    private void copyRemote(Set<CopySource> remoteSources, String destPath, boolean copyAsChild,
+    private void copyRemote(List<CopySource> remoteSources, String destPath, boolean copyAsChild,
                             boolean makeParents,
                             Map<String, String> revpropTable, CommitMessageCallback handler,
                             CommitCallback callback) throws ClientException {
