@@ -122,6 +122,8 @@ public class SVNPathUtil {
             return null;           
         }
         
+        boolean isUrl = isURL(path);
+        
         StringBuffer result = new StringBuffer();
         int i = 0;
         for (; i < path.length(); i++) {
@@ -148,7 +150,7 @@ public class SVNPathUtil {
         while (index < path.length()) {
             int nextIndex = index;
             while (nextIndex < path.length() && path.charAt(nextIndex) != '/' 
-            		 && !(nextIndex + 2 < path.length() && path.charAt(nextIndex) == '%' && path.charAt(nextIndex + 1) == '2' &&
+            		 && !(isUrl && (nextIndex + 2) < path.length() && path.charAt(nextIndex) == '%' && path.charAt(nextIndex + 1) == '2' &&
     				Character.toUpperCase(path.charAt(nextIndex + 2)) == 'F')) {
             	nextIndex++;
             }
@@ -161,7 +163,7 @@ public class SVNPathUtil {
             }
             int segmentLength = nextIndex - index;
             if (segmentLength == 0 || (segmentLength == 1 && path.charAt(index) == '.')
-            		|| (segmentLength == 3 && path.charAt(index) == '%' && path.charAt(index + 1) == '2' && Character.toUpperCase(path.charAt(index + 2))  == 'E')) {
+            		|| (isUrl && segmentLength == 3 && path.charAt(index) == '%' && path.charAt(index + 1) == '2' && Character.toUpperCase(path.charAt(index + 2))  == 'E')) {
             } else {
                 result.append(path.substring(index, index + segmentLength));
             	if (slashLength > 0)
