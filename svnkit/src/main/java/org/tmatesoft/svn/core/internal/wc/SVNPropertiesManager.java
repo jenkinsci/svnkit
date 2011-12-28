@@ -24,7 +24,6 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNMergeInfo;
 import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
@@ -239,7 +238,7 @@ public class SVNPropertiesManager {
         dir.runLogs();
         final boolean modified = oldValue == null ? propValue != null : !oldValue.equals(propValue);
         if (modified || action == SVNEventAction.PROPERTY_DELETE_NONEXISTENT) {
-            dir.getWCAccess().handleEvent(new SVNEvent(path, entry.getKind(), null, -1, null, null, null, null, action, action, null, null, null));
+            dir.getWCAccess().handleEvent(new SVNEvent(path, entry.getKind(), null, -1, null, null, null, null, action, action, null, null, null, null));
         }
         return modified;
     }

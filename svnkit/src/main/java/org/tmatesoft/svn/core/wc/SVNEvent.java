@@ -17,6 +17,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNMergeRange;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNURL;
 
 /**
@@ -121,6 +122,7 @@ public class SVNEvent {
     private SVNEventAction myExpectedAction;
     private String myChangelistName;
     private SVNMergeRange myRange;
+    private SVNProperties myRevisionProperties;
     private Object info;
 
     /**
@@ -161,7 +163,7 @@ public class SVNEvent {
      */
     public SVNEvent(File file, SVNNodeKind kind, String mimetype, long revision, SVNStatusType cstatus, 
             SVNStatusType pstatus, SVNStatusType lstatus, SVNLock lock, SVNEventAction action, 
-            SVNEventAction expected, SVNErrorMessage error, SVNMergeRange range, String changelistName) {
+            SVNEventAction expected, SVNErrorMessage error, SVNMergeRange range, String changelistName, SVNProperties revisionProperties) {
         myFile = file != null ? file.getAbsoluteFile() : null;
         myNodeKind = kind == null ? SVNNodeKind.UNKNOWN : kind;
         myMimeType = mimetype;
@@ -176,6 +178,7 @@ public class SVNEvent {
         myRange = range;
         myChangelistName = changelistName;
         myPreviousRevision = -1;
+        myRevisionProperties = revisionProperties;
     }
 
     /**
@@ -444,5 +447,12 @@ public class SVNEvent {
     public void setFile(File path) {
         this.myFile = path;
     }
-    
+
+    public SVNProperties getRevisionProperties() {
+        return myRevisionProperties;
+    }
+
+    public void setRevisionProperties(SVNProperties revisionProperties) {
+        this.myRevisionProperties = revisionProperties;
+    }
 }

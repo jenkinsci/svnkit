@@ -46,7 +46,6 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb.Mode;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
-import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
@@ -100,7 +99,6 @@ import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNMergeFileSet;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.core.wc2.SvnChecksum;
@@ -1717,7 +1715,7 @@ public class SVNWCContext {
         }
         db.addBaseExcludedNode(localAbspath, reposRelpath, reposRoot, reposUuid, revision, kind, SVNWCDbStatus.Excluded, null, null);
         if (getEventHandler() != null) {
-            SVNEvent event = new SVNEvent(localAbspath, null, null, -1, null, null, null, null, SVNEventAction.DELETE, null, null, null, null);
+            SVNEvent event = new SVNEvent(localAbspath, null, null, -1, null, null, null, null, SVNEventAction.DELETE, null, null, null, null, null);
             getEventHandler().handleEvent(event, 0);
         }
         return;
@@ -1937,7 +1935,7 @@ public class SVNWCContext {
                 return;
             }
             if (eventHandler != null) {
-                SVNEvent event = new SVNEvent(childAbspath, null, null, -1, null, null, null, null, SVNEventAction.DELETE, null, null, null, null);
+                SVNEvent event = new SVNEvent(childAbspath, null, null, -1, null, null, null, null, SVNEventAction.DELETE, null, null, null, null, null);
                 getEventHandler().handleEvent(event, 0);
             }
         }
@@ -4075,7 +4073,7 @@ public class SVNWCContext {
     	}
 
     	if (resolved && getEventHandler() != null) {
-    		SVNEvent event = new SVNEvent(localAbsPath, null, null, -1, null, null, null, null, SVNEventAction.RESOLVED, null, null, null, null);
+    		SVNEvent event = new SVNEvent(localAbsPath, null, null, -1, null, null, null, null, SVNEventAction.RESOLVED, null, null, null, null, null);
             getEventHandler().handleEvent(event, 0);
     	}
     }
