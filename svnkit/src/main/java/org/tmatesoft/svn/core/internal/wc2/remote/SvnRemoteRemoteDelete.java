@@ -3,6 +3,7 @@ package org.tmatesoft.svn.core.internal.wc2.remote;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -32,69 +33,81 @@ public class SvnRemoteRemoteDelete extends SvnRemoteOperationRunner<SVNCommitInf
 
     @Override
     protected SVNCommitInfo run() throws SVNException {
-    	if (getOperation().getTargets().size() == 0) {
+        if (getOperation().getTargets().size() == 0) {
             return SVNCommitInfo.NULL;
         }
-    	
-    	SVNHashMap reposInfo = new SVNHashMap();
-    	SVNHashMap relPathInfo = new SVNHashMap();
-    	
-    	for (SvnTarget target : getOperation().getTargets()) {
-    		SVNURL url = target.getURL();
-    		SVNRepository repository = null;
-    		SVNURL reposRoot = null;
-    	    String reposRelPath = null;
-    	    ArrayList<String> relPaths;
-    	    SVNNodeKind kind;
-    	      
-    	    for (Iterator rootUrls = reposInfo.keySet().iterator(); rootUrls.hasNext();) {
-                reposRoot = (SVNURL) rootUrls.next();
-                reposRelPath = SVNWCUtils.isChild(reposRoot, url);
-                
-                if (reposRelPath != null) {
-                	repository = (SVNRepository)reposInfo.get(reposRoot);
-                	relPaths = (ArrayList<String>)relPathInfo.get(reposRoot);
-                	relPaths.add(reposRelPath);
-                    break; //appropriate SVNRepository/root was found, stop searching
+
+        SVNHashMap reposInfo = new SVNHashMap();
+        SVNHashMap relPathInfo = new SVNHashMap();
+
+        try {
+
+            for (SvnTarget target : getOperation().getTargets()) {
+                SVNURL url = target.getURL();
+                SVNRepository repository = null;
+                SVNURL reposRoot = null;
+                String reposRelPath = null;
+                ArrayList<String> relPaths;
+                SVNNodeKind kind;
+
+                for (Iterator rootUrls = reposInfo.keySet().iterator(); rootUrls.hasNext(); ) {
+                    reposRoot = (SVNURL) rootUrls.next();
+                    reposRelPath = SVNWCUtils.isChild(reposRoot, url);
+
+                    if (reposRelPath != null) {
+                        repository = (SVNRepository) reposInfo.get(reposRoot);
+                        relPaths = (ArrayList<String>) relPathInfo.get(reposRoot);
+                        relPaths.add(reposRelPath);
+                        break; //appropriate SVNRepository/root was found, stop searching
+                    }
+                }
+
+                if (repository == null) {
+                    repository = getRepositoryAccess().createRepository(url, null, false);
+                    reposRoot = repository.getRepositoryRoot(true);
+                    repository.setLocation(reposRoot, false);
+                    reposInfo.put(reposRoot, repository);
+                    reposRelPath = SVNWCUtils.isChild(reposRoot, url);
+                    relPaths = new ArrayList<String>();
+                    relPathInfo.put(reposRoot, relPaths);
+                    relPaths.add(reposRelPath);
+                }
+                if (reposRelPath == null) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "URL ''{0}'' not within a repository", url);
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                }
+
+                kind = repository.checkPath(reposRelPath, -1);
+                if (kind == SVNNodeKind.NONE) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "URL ''{0}'' does not exist", url);
+                    SVNErrorManager.error(err, SVNLogType.WC);
                 }
             }
-    	    
-    	    if (repository == null) {
-    	    	repository = getRepositoryAccess().createRepository(url, null, false);
-    	    	reposRoot = repository.getRepositoryRoot(true);
-    	    	repository.setLocation(reposRoot, false);
-    	    	reposInfo.put(reposRoot, repository);
-    	    	reposRelPath = SVNWCUtils.isChild(reposRoot, url);
-    	    	relPaths = new ArrayList<String>();
-    	    	relPathInfo.put(reposRoot, relPaths);
-    	    	relPaths.add(reposRelPath);
-    	    }
-    	    if (reposRelPath == null) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "URL ''{0}'' not within a repository", url);
-                SVNErrorManager.error(err, SVNLogType.WC);
-    	    }
-    	    
-    	    kind = repository.checkPath(reposRelPath, -1);
-    	    if (kind == SVNNodeKind.NONE) {
-            	SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "URL ''{0}'' does not exist", url);
-                SVNErrorManager.error(err, SVNLogType.WC);
+
+            SVNPropertiesManager.validateRevisionProperties(getOperation().getRevisionProperties());
+
+            SVNCommitInfo info = null;
+            for (Iterator rootUrls = reposInfo.keySet().iterator(); rootUrls.hasNext(); ) {
+                SVNURL reposRoot = (SVNURL) rootUrls.next();
+                SVNRepository repository = (SVNRepository) reposInfo.get(reposRoot);
+                List<String> paths = (List<String>) relPathInfo.get(reposRoot);
+                info = singleRepositoryDelete(repository, reposRoot, paths);
+                if (info != null) {
+                    getOperation().receive(SvnTarget.fromURL(reposRoot), info);
+                }
+            }
+
+            return info != null ? info : SVNCommitInfo.NULL;
+        } finally {
+            // SvnRepositoryAccess won't close repositories that are created with SvnRepositoryAccess#createRepository
+            // if mayReuse=false, so close all repositories ourselves
+            for (Object entry : reposInfo.entrySet()) {
+                SVNRepository svnRepository = (SVNRepository) (((Map.Entry) entry).getValue());
+                if (svnRepository != null) {
+                    svnRepository.closeSession();
+                }
             }
         }
-     
-        SVNPropertiesManager.validateRevisionProperties(getOperation().getRevisionProperties());
-        
-        SVNCommitInfo info = null;
-        for (Iterator rootUrls = reposInfo.keySet().iterator(); rootUrls.hasNext();) {
-        	SVNURL reposRoot = (SVNURL) rootUrls.next();
-        	SVNRepository repository = (SVNRepository) reposInfo.get(reposRoot);
-        	List<String> paths = (List<String>) relPathInfo.get(reposRoot);
-        	info = singleRepositoryDelete(repository, reposRoot, paths);
-        	if (info != null) {
-        	    getOperation().receive(SvnTarget.fromURL(reposRoot), info);
-        	}
-        }
-        
-        return info != null ? info : SVNCommitInfo.NULL;
     }
     
     private SVNCommitInfo singleRepositoryDelete(SVNRepository repository, SVNURL rootURL, List<String> paths) throws SVNException {
