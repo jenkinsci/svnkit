@@ -14,9 +14,12 @@ public class JavaHLEventHandler implements ISVNEventHandler {
 
     private ClientNotifyCallback notifyCallback;
     private boolean cancelOperation;
+    private String pathPrefix;
 
     public JavaHLEventHandler() {
         this.cancelOperation = false;
+
+        resetPathPrefix();
     }
 
     public void setNotifyCallback(ClientNotifyCallback notifyCallback) {
@@ -25,6 +28,14 @@ public class JavaHLEventHandler implements ISVNEventHandler {
 
     public void cancelOperation() {
         cancelOperation = true;
+    }
+
+    public void setPathPrefix(String pathPrefix) {
+        this.pathPrefix = pathPrefix;
+    }
+
+    public void resetPathPrefix() {
+        setPathPrefix(null);
     }
 
     public void handleEvent(SVNEvent event, double progress) {
@@ -42,7 +53,8 @@ public class JavaHLEventHandler implements ISVNEventHandler {
             path = "";
         }
         if (notifyCallback != null) {
-            notifyCallback.onNotify(SVNClientImpl.getClientNotifyInformation(event, path));
+            String pathPrefix = this.pathPrefix == null ? "" : this.pathPrefix;
+            notifyCallback.onNotify(SVNClientImpl.getClientNotifyInformation(pathPrefix, event, path));
         }
     }
 

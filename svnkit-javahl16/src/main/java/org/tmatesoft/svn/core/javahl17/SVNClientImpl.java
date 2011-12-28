@@ -77,6 +77,7 @@ import org.tmatesoft.svn.core.internal.wc.DefaultSVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNConflictVersion;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.patch.SVNPatchHunkInfo;
 import org.tmatesoft.svn.core.javahl.JavaHLCompositeLog;
@@ -217,38 +218,47 @@ public class SVNClientImpl implements ISVNClient {
             Collection<String> changelists, final StatusCallback callback)
             throws ClientException {
 
-
-        SvnGetStatus status = svnOperationFactory.createGetStatus();
-        status.setDepth(getSVNDepth(depth));
-        status.setRemote(onServer);
-        status.setReportAll(getAll);
-        status.setReportIgnored(noIgnore);
-        status.setReportExternals(!ignoreExternals);
-        status.setApplicalbeChangelists(changelists);
-        status.setReceiver(getStatusReceiver(callback));
-
-        status.addTarget(getTarget(path));
         try {
+            getEventHandler().setPathPrefix(getPathPrefix(path));
+
+            SvnGetStatus status = svnOperationFactory.createGetStatus();
+            status.setDepth(getSVNDepth(depth));
+            status.setRemote(onServer);
+            status.setReportAll(getAll);
+            status.setReportIgnored(noIgnore);
+            status.setReportExternals(!ignoreExternals);
+            status.setApplicalbeChangelists(changelists);
+            status.setReceiver(getStatusReceiver(callback));
+
+            status.addTarget(getTarget(path));
+
             status.run();
         } catch (SVNException e) {
             throw ClientException.fromException(e);
+        } finally {
+            getEventHandler().resetPathPrefix();
         }
     }
 
     public void list(String url, Revision revision, Revision pegRevision,
             Depth depth, int direntFields, boolean fetchLocks,
             ListCallback callback) throws ClientException {
-        SvnList list = svnOperationFactory.createList();
-        list.setSingleTarget(getTarget(url, pegRevision));
-        list.setRevision(getSVNRevision(revision));
-        list.setDepth(getSVNDepth(depth));
-        list.setEntryFields(direntFields);
-        list.setFetchLocks(fetchLocks);
-        list.setReceiver(getDirEntryReceiver(callback));
         try {
+            getEventHandler().setPathPrefix(getPathPrefix(url));
+
+            SvnList list = svnOperationFactory.createList();
+            list.setSingleTarget(getTarget(url, pegRevision));
+            list.setRevision(getSVNRevision(revision));
+            list.setDepth(getSVNDepth(depth));
+            list.setEntryFields(direntFields);
+            list.setFetchLocks(fetchLocks);
+            list.setReceiver(getDirEntryReceiver(callback));
+
             list.run();
         } catch (SVNException e) {
             throw ClientException.fromException(e);
+        } finally {
+            getEventHandler().resetPathPrefix();
         }
     }
 
@@ -272,40 +282,47 @@ public class SVNClientImpl implements ISVNClient {
             boolean discoverPath, boolean includeMergedRevisions,
             Set<String> revProps, long limit, LogMessageCallback callback)
             throws ClientException {
-        SvnLog log = svnOperationFactory.createLog();
-        log.setRevisionRanges(getSvnRevisionRanges(ranges));
-        log.setStopOnCopy(stopOnCopy);
-        log.setDiscoverChangedPaths(discoverPath);
-        log.setUseMergeHistory(includeMergedRevisions);
-        log.setRevisionProperties(getRevisionPropertiesNames(revProps));
-        log.setLimit(limit);
-        log.setReceiver(getLogEntryReceiver(callback));
-
-        log.addTarget(getTarget(path, pegRevision));
-
         try {
+            getEventHandler().setPathPrefix(getPathPrefix(path));
+
+            SvnLog log = svnOperationFactory.createLog();
+            log.setRevisionRanges(getSvnRevisionRanges(ranges));
+            log.setStopOnCopy(stopOnCopy);
+            log.setDiscoverChangedPaths(discoverPath);
+            log.setUseMergeHistory(includeMergedRevisions);
+            log.setRevisionProperties(getRevisionPropertiesNames(revProps));
+            log.setLimit(limit);
+            log.setReceiver(getLogEntryReceiver(callback));
+
+            log.addTarget(getTarget(path, pegRevision));
+
             log.run();
         } catch (SVNException e) {
             throw ClientException.fromException(e);
+        } finally {
+            getEventHandler().resetPathPrefix();
         }
     }
 
     public long checkout(String moduleName, String destPath, Revision revision,
             Revision pegRevision, Depth depth, boolean ignoreExternals,
             boolean allowUnverObstructions) throws ClientException {
-
-        SvnCheckout checkout = svnOperationFactory.createCheckout();
-        checkout.setSource(getTarget(moduleName, pegRevision));
-        checkout.setSingleTarget(getTarget(destPath));
-        checkout.setRevision(getSVNRevision(revision));
-        checkout.setDepth(getSVNDepth(depth));
-        checkout.setIgnoreExternals(ignoreExternals);
-        checkout.setAllowUnversionedObstructions(allowUnverObstructions);
-
         try {
+            getEventHandler().setPathPrefix(getPathPrefix(destPath));
+
+            SvnCheckout checkout = svnOperationFactory.createCheckout();
+            checkout.setSource(getTarget(moduleName, pegRevision));
+            checkout.setSingleTarget(getTarget(destPath));
+            checkout.setRevision(getSVNRevision(revision));
+            checkout.setDepth(getSVNDepth(depth));
+            checkout.setIgnoreExternals(ignoreExternals);
+            checkout.setAllowUnversionedObstructions(allowUnverObstructions);
+
             return checkout.run();
         } catch (SVNException e) {
             throw ClientException.fromException(e);
+        } finally {
+            getEventHandler().resetPathPrefix();
         }
     }
 
@@ -348,44 +365,58 @@ public class SVNClientImpl implements ISVNClient {
     public void remove(Set<String> path, boolean force, boolean keepLocal,
             Map<String, String> revpropTable, CommitMessageCallback handler,
             CommitCallback callback) throws ClientException {
-        Set<String> localPaths = new HashSet<String>();
-        Set<String> remoteUrls = new HashSet<String>();
+        try {
+            getEventHandler().setPathPrefix(getPathPrefix(path));
 
-        fillLocalAndRemoteTargets(path, localPaths, remoteUrls);
+            Set<String> localPaths = new HashSet<String>();
+            Set<String> remoteUrls = new HashSet<String>();
 
-        removeLocal(localPaths, force, keepLocal);
-        removeRemote(remoteUrls, revpropTable, handler, callback);
+            fillLocalAndRemoteTargets(path, localPaths, remoteUrls);
+
+            removeLocal(localPaths, force, keepLocal);
+            removeRemote(remoteUrls, revpropTable, handler, callback);
+        } finally {
+            getEventHandler().resetPathPrefix();
+        }
     }
 
     public void revert(String path, Depth depth, Collection<String> changelists)
             throws ClientException {
-        SvnRevert revert = svnOperationFactory.createRevert();
-        revert.setDepth(getSVNDepth(depth));
-        revert.setApplicalbeChangelists(changelists);
-
-        revert.addTarget(getTarget(path));
-
         try {
+            getEventHandler().setPathPrefix(getPathPrefix(path));
+
+            SvnRevert revert = svnOperationFactory.createRevert();
+            revert.setDepth(getSVNDepth(depth));
+            revert.setApplicalbeChangelists(changelists);
+
+            revert.addTarget(getTarget(path));
+
             revert.run();
         } catch (SVNException e) {
             throw ClientException.fromException(e);
+        } finally {
+            getEventHandler().resetPathPrefix();
         }
     }
 
     public void add(String path, Depth depth, boolean force, boolean noIgnores,
             boolean addParents) throws ClientException {
-        SvnScheduleForAddition add = svnOperationFactory.createScheduleForAddition();
-        add.setDepth(getSVNDepth(depth));
-        add.setForce(force);
-        add.setIncludeIgnored(noIgnores);
-        add.setAddParents(addParents);
-
-        add.addTarget(getTarget(path));
-
         try {
+            getEventHandler().setPathPrefix(getPathPrefix(path));
+
+            SvnScheduleForAddition add = svnOperationFactory.createScheduleForAddition();
+            add.setDepth(getSVNDepth(depth));
+            add.setForce(force);
+            add.setIncludeIgnored(noIgnores);
+            add.setAddParents(addParents);
+
+            add.addTarget(getTarget(path));
+
             add.run();
         } catch (SVNException e) {
             throw ClientException.fromException(e);
+        } finally {
+            getEventHandler().resetPathPrefix();
         }
     }
 
@@ -393,21 +424,26 @@ public class SVNClientImpl implements ISVNClient {
             boolean depthIsSticky, boolean makeParents,
             boolean ignoreExternals, boolean allowUnverObstructions)
             throws ClientException {
-        SvnUpdate update = svnOperationFactory.createUpdate();
-        update.setRevision(getSVNRevision(revision));
-        update.setDepth(getSVNDepth(depth));
-        update.setDepthIsSticky(depthIsSticky);
-        update.setMakeParents(makeParents);
-        update.setIgnoreExternals(ignoreExternals);
-        update.setAllowUnversionedObstructions(allowUnverObstructions);
-
-        for (String targetPath : path) {
-            update.addTarget(getTarget(targetPath));
-        }
         try {
+            getEventHandler().setPathPrefix(getPathPrefix(path));
+
+            SvnUpdate update = svnOperationFactory.createUpdate();
+            update.setRevision(getSVNRevision(revision));
+            update.setDepth(getSVNDepth(depth));
+            update.setDepthIsSticky(depthIsSticky);
+            update.setMakeParents(makeParents);
+            update.setIgnoreExternals(ignoreExternals);
+            update.setAllowUnversionedObstructions(allowUnverObstructions);
+
+            for (String targetPath : path) {
+                update.addTarget(getTarget(targetPath));
+            }
+
             return update.run();
         } catch (SVNException e) {
             throw ClientException.fromException(e);
+        } finally {
+            getEventHandler().resetPathPrefix();
         }
     }
 
@@ -415,23 +451,27 @@ public class SVNClientImpl implements ISVNClient {
             boolean keepChangelist, Collection<String> changelists,
             Map<String, String> revpropTable, final CommitMessageCallback handler,
             CommitCallback callback) throws ClientException {
-        SvnCommit commit = svnOperationFactory.createCommit();
-        commit.setDepth(getSVNDepth(depth));
-        commit.setKeepLocks(!noUnlock);
-        commit.setKeepChangelists(keepChangelist);
-        commit.setApplicalbeChangelists(changelists);
-        commit.setRevisionProperties(getSVNProperties(revpropTable));
-        commit.setCommitHandler(getCommitHandler(handler));
-        commit.setReceiver(getCommitInfoReceiver(callback));
-
-        for (String targetPath : path) {
-            commit.addTarget(getTarget(targetPath));
-        }
-
         try {
+            getEventHandler().setPathPrefix(getPathPrefix(path));
+
+            SvnCommit commit = svnOperationFactory.createCommit();
+            commit.setDepth(getSVNDepth(depth));
+            commit.setKeepLocks(!noUnlock);
+            commit.setKeepChangelists(keepChangelist);
+            commit.setApplicalbeChangelists(changelists);
+            commit.setRevisionProperties(getSVNProperties(revpropTable));
+            commit.setCommitHandler(getCommitHandler(handler));
+            commit.setReceiver(getCommitInfoReceiver(callback));
+
+            for (String targetPath : path) {
+                commit.addTarget(getTarget(targetPath));
+            }
+
             commit.run();
         } catch (SVNException e) {
             throw ClientException.fromException(e);
+        } finally {
+            getEventHandler().resetPathPrefix();
         }
     }
 
@@ -439,10 +479,16 @@ public class SVNClientImpl implements ISVNClient {
             boolean copyAsChild, boolean makeParents, boolean ignoreExternals,
             Map<String, String> revpropTable, CommitMessageCallback handler,
             CommitCallback callback) throws ClientException {
-        if (SVNPathUtil.isURL(destPath)) {
-            copyRemote(sources, destPath, copyAsChild, makeParents, revpropTable, handler, callback);
-        } else {
-            copyLocal(sources, destPath, copyAsChild, makeParents, ignoreExternals);
+        try {
+            getEventHandler().setPathPrefix(getPathPrefix(sources, destPath));
+
+            if (SVNPathUtil.isURL(destPath)) {
+                copyRemote(sources, destPath, copyAsChild, makeParents, revpropTable, handler, callback);
+            } else {
+                copyLocal(sources, destPath, copyAsChild, makeParents, ignoreExternals);
+            }
+        } finally {
+            getEventHandler().resetPathPrefix();
         }
     }
 
@@ -450,67 +496,92 @@ public class SVNClientImpl implements ISVNClient {
             boolean moveAsChild, boolean makeParents,
             Map<String, String> revpropTable, CommitMessageCallback handler,
             CommitCallback callback) throws ClientException {
-        if (SVNPathUtil.isURL(destPath)) {
-            moveRemote(srcPaths, destPath, moveAsChild, makeParents, revpropTable, handler, callback);
-        } else {
-            moveLocal(srcPaths, destPath, force, moveAsChild, makeParents);
+        try {
+            getEventHandler().setPathPrefix(getPathPrefix(srcPaths, destPath));
+
+            if (SVNPathUtil.isURL(destPath)) {
+                moveRemote(srcPaths, destPath, moveAsChild, makeParents, revpropTable, handler, callback);
+            } else {
+                moveLocal(srcPaths, destPath, force, moveAsChild, makeParents);
+            }
+        } finally {
+            getEventHandler().resetPathPrefix();
         }
     }
 
     public void mkdir(Set<String> path, boolean makeParents,
             Map<String, String> revpropTable, CommitMessageCallback handler,
             CommitCallback callback) throws ClientException {
-        final Set<String> localPaths = new HashSet<String>();
-        final Set<String> remoteUrls = new HashSet<String>();
+        try {
+            getEventHandler().setPathPrefix(getPathPrefix(path));
 
-        fillLocalAndRemoteTargets(path, localPaths, remoteUrls);
+            final Set<String> localPaths = new HashSet<String>();
+            final Set<String> remoteUrls = new HashSet<String>();
 
-        mkdirLocal(localPaths, makeParents);
-        mkdirRemote(remoteUrls, makeParents, revpropTable, handler, callback);
+            fillLocalAndRemoteTargets(path, localPaths, remoteUrls);
+
+            mkdirLocal(localPaths, makeParents);
+            mkdirRemote(remoteUrls, makeParents, revpropTable, handler, callback);
+        } finally {
+            getEventHandler().resetPathPrefix();
+        }
     }
 
     public void cleanup(String path) throws ClientException {
-        SvnCleanup cleanup = svnOperationFactory.createCleanup();
-
-        cleanup.addTarget(getTarget(path));
-
         try {
+            getEventHandler().setPathPrefix(getPathPrefix(path));
+
+            SvnCleanup cleanup = svnOperationFactory.createCleanup();
+
+            cleanup.addTarget(getTarget(path));
+
             cleanup.run();
         } catch (SVNException e) {
             throw ClientException.fromException(e);
+        } finally {
+            getEventHandler().resetPathPrefix();
         }
     }
 
     public void resolve(String path, Depth depth, Choice conflictResult)
             throws SubversionException {
-        SvnResolve resolve = svnOperationFactory.createResolve();
-        resolve.setDepth(getSVNDepth(depth));
-        resolve.setConflictChoice(getSVNConflictChoice(conflictResult));
-
-        resolve.addTarget(getTarget(path));
-
         try {
+            getEventHandler().setPathPrefix(getPathPrefix(path));
+
+            SvnResolve resolve = svnOperationFactory.createResolve();
+            resolve.setDepth(getSVNDepth(depth));
+            resolve.setConflictChoice(getSVNConflictChoice(conflictResult));
+
+            resolve.addTarget(getTarget(path));
+
             resolve.run();
         } catch (SVNException e) {
             throw ClientException.fromException(e);
+        } finally {
+            getEventHandler().resetPathPrefix();
         }
     }
 
     public long doExport(String srcPath, String destPath, Revision revision,
             Revision pegRevision, boolean force, boolean ignoreExternals,
             Depth depth, String nativeEOL) throws ClientException {
-        SvnExport export = svnOperationFactory.createExport();
-        export.setSource(getTarget(srcPath, pegRevision));
-        export.setSingleTarget(getTarget(destPath));
-        export.setRevision(getSVNRevision(revision));
-        export.setForce(force);
-        export.setIgnoreExternals(ignoreExternals);
-        export.setDepth(getSVNDepth(depth));
-        export.setEolStyle(nativeEOL);
         try {
+            getPathPrefix(srcPath, destPath);
+
+            SvnExport export = svnOperationFactory.createExport();
+            export.setSource(getTarget(srcPath, pegRevision));
+            export.setSingleTarget(getTarget(destPath));
+            export.setRevision(getSVNRevision(revision));
+            export.setForce(force);
+            export.setIgnoreExternals(ignoreExternals);
+            export.setDepth(getSVNDepth(depth));
+            export.setEolStyle(nativeEOL);
+
             return export.run();
         } catch (SVNException e) {
             throw ClientException.fromException(e);
+        } finally {
+            getEventHandler().resetPathPrefix();
         }
     }
 
@@ -518,19 +589,24 @@ public class SVNClientImpl implements ISVNClient {
             Revision pegRevision, Depth depth, boolean depthIsSticky,
             boolean ignoreExternals, boolean allowUnverObstructions,
             boolean ignoreAncestry) throws ClientException {
-        SvnSwitch svnSwitch = svnOperationFactory.createSwitch();
-        svnSwitch.setSingleTarget(getTarget(path));
-        svnSwitch.setSwitchTarget(getTarget(url, pegRevision));
-        svnSwitch.setRevision(getSVNRevision(revision));
-        svnSwitch.setDepth(getSVNDepth(depth));
-        svnSwitch.setDepthIsSticky(depthIsSticky);
-        svnSwitch.setIgnoreExternals(ignoreExternals);
-        svnSwitch.setAllowUnversionedObstructions(allowUnverObstructions);
-        svnSwitch.setIgnoreAncestry(ignoreAncestry);
         try {
+            getEventHandler().setPathPrefix(getPathPrefix(path));
+
+            SvnSwitch svnSwitch = svnOperationFactory.createSwitch();
+            svnSwitch.setSingleTarget(getTarget(path));
+            svnSwitch.setSwitchTarget(getTarget(url, pegRevision));
+            svnSwitch.setRevision(getSVNRevision(revision));
+            svnSwitch.setDepth(getSVNDepth(depth));
+            svnSwitch.setDepthIsSticky(depthIsSticky);
+            svnSwitch.setIgnoreExternals(ignoreExternals);
+            svnSwitch.setAllowUnversionedObstructions(allowUnverObstructions);
+            svnSwitch.setIgnoreAncestry(ignoreAncestry);
+
             return svnSwitch.run();
         } catch (SVNException e) {
             throw ClientException.fromException(e);
+        } finally {
+            getEventHandler().resetPathPrefix();
         }
     }
 
@@ -538,60 +614,72 @@ public class SVNClientImpl implements ISVNClient {
             boolean noIgnore, boolean ignoreUnknownNodeTypes,
             Map<String, String> revpropTable, CommitMessageCallback handler,
             CommitCallback callback) throws ClientException {
-        SvnImport svnImport = svnOperationFactory.createImport();
-        svnImport.setDepth(getSVNDepth(depth));
-        svnImport.setUseGlobalIgnores(!noIgnore);
-        svnImport.setForce(ignoreUnknownNodeTypes);
-        svnImport.setRevisionProperties(getSVNProperties(revpropTable));
-        svnImport.setCommitHandler(getCommitHandler(handler));
-        svnImport.setReceiver(getCommitInfoReceiver(callback));
+        try{
+            getEventHandler().setPathPrefix(getPathPrefix(path));
 
-        svnImport.setSource(new File(path));
-        svnImport.addTarget(getTarget(url));
+            SvnImport svnImport = svnOperationFactory.createImport();
+            svnImport.setDepth(getSVNDepth(depth));
+            svnImport.setUseGlobalIgnores(!noIgnore);
+            svnImport.setForce(ignoreUnknownNodeTypes);
+            svnImport.setRevisionProperties(getSVNProperties(revpropTable));
+            svnImport.setCommitHandler(getCommitHandler(handler));
+            svnImport.setReceiver(getCommitInfoReceiver(callback));
 
-        try {
+            svnImport.setSource(new File(path));
+            svnImport.addTarget(getTarget(url));
+
             svnImport.run();
         } catch (SVNException e) {
             throw ClientException.fromException(e);
+        } finally {
+            getEventHandler().resetPathPrefix();
         }
     }
 
     public Set<String> suggestMergeSources(String path, Revision pegRevision)
             throws SubversionException {
-        SvnSuggestMergeSources suggestMergeSources = svnOperationFactory.createSuggestMergeSources();
-        suggestMergeSources.setSingleTarget(getTarget(path, pegRevision));
-
-        Collection<SVNURL> mergeSources;
         try {
+            getEventHandler().setPathPrefix(getPathPrefix(path));
+
+            SvnSuggestMergeSources suggestMergeSources = svnOperationFactory.createSuggestMergeSources();
+            suggestMergeSources.setSingleTarget(getTarget(path, pegRevision));
+
+            Collection<SVNURL> mergeSources;
+
             mergeSources = suggestMergeSources.run();
+            Set<String> mergeSourcesStrings = new HashSet<String>();
+            for (SVNURL mergeSource : mergeSources) {
+                mergeSourcesStrings.add(getUrlString(mergeSource));
+            }
+            return mergeSourcesStrings;
         } catch (SVNException e) {
             throw ClientException.fromException(e);
+        } finally {
+            getEventHandler().resetPathPrefix();
         }
-
-        Set<String> mergeSourcesStrings = new HashSet<String>();
-        for (SVNURL mergeSource : mergeSources) {
-            mergeSourcesStrings.add(getUrlString(mergeSource));
-        }
-        return mergeSourcesStrings;
     }
 
     public void merge(String path1, Revision revision1, String path2,
             Revision revision2, String localPath, boolean force, Depth depth,
             boolean ignoreAncestry, boolean dryRun, boolean recordOnly)
             throws ClientException {
-        SvnMerge merge = svnOperationFactory.createMerge();
-        merge.setSources(getTarget(path1, revision1), getTarget(path2, revision2));
-        merge.addTarget(getTarget(localPath));
-        merge.setForce(force);
-        merge.setDepth(getSVNDepth(depth));
-        merge.setIgnoreAncestry(ignoreAncestry);
-        merge.setDryRun(dryRun);
-        merge.setRecordOnly(recordOnly);
-
         try {
+            getEventHandler().setPathPrefix(getPathPrefix(path1, path2));
+
+            SvnMerge merge = svnOperationFactory.createMerge();
+            merge.setSources(getTarget(path1, revision1), getTarget(path2, revision2));
+            merge.addTarget(getTarget(localPath));
+            merge.setForce(force);
+            merge.setDepth(getSVNDepth(depth));
+            merge.setIgnoreAncestry(ignoreAncestry);
+            merge.setDryRun(dryRun);
+            merge.setRecordOnly(recordOnly);
+
             merge.run();
         } catch (SVNException e) {
             throw ClientException.fromException(e);
+        } finally {
+            getEventHandler().resetPathPrefix();
         }
     }
 
@@ -599,48 +687,60 @@ public class SVNClientImpl implements ISVNClient {
             List<RevisionRange> revisions, String localPath, boolean force,
             Depth depth, boolean ignoreAncestry, boolean dryRun,
             boolean recordOnly) throws ClientException {
-        SvnMerge merge = svnOperationFactory.createMerge();
-        merge.setSource(getTarget(path, pegRevision), false/*reintegrate=false*/);
-        for (RevisionRange revisionRange : revisions) {
-            merge.addRevisionRange(getSvnRevisionRange(revisionRange));
-        }
-        merge.addTarget(getTarget(localPath));
-        merge.setForce(force);
-        merge.setDepth(getSVNDepth(depth));
-        merge.setIgnoreAncestry(ignoreAncestry);
-        merge.setDryRun(dryRun);
-        merge.setRecordOnly(recordOnly);
-
         try {
+            getEventHandler().setPathPrefix(getPathPrefix(path, localPath));
+
+            SvnMerge merge = svnOperationFactory.createMerge();
+            merge.setSource(getTarget(path, pegRevision), false/*reintegrate=false*/);
+            for (RevisionRange revisionRange : revisions) {
+                merge.addRevisionRange(getSvnRevisionRange(revisionRange));
+            }
+            merge.addTarget(getTarget(localPath));
+            merge.setForce(force);
+            merge.setDepth(getSVNDepth(depth));
+            merge.setIgnoreAncestry(ignoreAncestry);
+            merge.setDryRun(dryRun);
+            merge.setRecordOnly(recordOnly);
+
             merge.run();
         } catch (SVNException e) {
             throw ClientException.fromException(e);
+        } finally {
+            getEventHandler().resetPathPrefix();
         }
     }
 
     public void mergeReintegrate(String path, Revision pegRevision,
             String localPath, boolean dryRun) throws ClientException {
-        SvnMerge merge = svnOperationFactory.createMerge();
-        merge.setSource(getTarget(path, pegRevision), true/*reintegrate=true*/);
-        merge.addTarget(getTarget(localPath));
-        merge.setDryRun(dryRun);
-
         try {
+            getEventHandler().setPathPrefix(getPathPrefix(path));
+
+            SvnMerge merge = svnOperationFactory.createMerge();
+            merge.setSource(getTarget(path, pegRevision), true/*reintegrate=true*/);
+            merge.addTarget(getTarget(localPath));
+            merge.setDryRun(dryRun);
+
             merge.run();
         } catch (SVNException e) {
             throw ClientException.fromException(e);
+        } finally {
+            getEventHandler().resetPathPrefix();
         }
     }
 
     public Mergeinfo getMergeinfo(String path, Revision pegRevision)
             throws SubversionException {
-
-        SvnGetMergeInfo getMergeInfo = svnOperationFactory.createGetMergeInfo();
-        getMergeInfo.setSingleTarget(getTarget(path, pegRevision));
         try {
+            getEventHandler().setPathPrefix(getPathPrefix(path));
+
+            SvnGetMergeInfo getMergeInfo = svnOperationFactory.createGetMergeInfo();
+            getMergeInfo.setSingleTarget(getTarget(path, pegRevision));
+
             return getMergeinfo(getMergeInfo.run());
         } catch (SVNException e) {
             throw ClientException.fromException(e);
+        } finally {
+            getEventHandler().resetPathPrefix();
         }
     }
 
@@ -649,18 +749,23 @@ public class SVNClientImpl implements ISVNClient {
             Revision srcPegRevision, boolean discoverChangedPaths, Depth depth,
             Set<String> revProps, LogMessageCallback callback)
             throws ClientException {
-        SvnLogMergeInfo logMergeInfo = svnOperationFactory.createLogMergeInfo();
-        logMergeInfo.setFindMerged(kind == LogKind.merged);
-        logMergeInfo.setSingleTarget(getTarget(pathOrUrl, pegRevision));
-        logMergeInfo.setSource(getTarget(mergeSourceUrl, srcPegRevision));
-        logMergeInfo.setDiscoverChangedPaths(discoverChangedPaths);
-        logMergeInfo.setDepth(getSVNDepth(depth));
-        logMergeInfo.setRevisionProperties(getRevisionPropertiesNames(revProps));
-        logMergeInfo.setReceiver(getLogEntryReceiver(callback));
         try {
+            getEventHandler().setPathPrefix(getPathPrefix(pathOrUrl, mergeSourceUrl));
+
+            SvnLogMergeInfo logMergeInfo = svnOperationFactory.createLogMergeInfo();
+            logMergeInfo.setFindMerged(kind == LogKind.merged);
+            logMergeInfo.setSingleTarget(getTarget(pathOrUrl, pegRevision));
+            logMergeInfo.setSource(getTarget(mergeSourceUrl, srcPegRevision));
+            logMergeInfo.setDiscoverChangedPaths(discoverChangedPaths);
+            logMergeInfo.setDepth(getSVNDepth(depth));
+            logMergeInfo.setRevisionProperties(getRevisionPropertiesNames(revProps));
+            logMergeInfo.setReceiver(getLogEntryReceiver(callback));
+
             logMergeInfo.run();
         } catch (SVNException e) {
             throw ClientException.fromException(e);
+        } finally {
+            getEventHandler().resetPathPrefix();
         }
     }
 
@@ -672,6 +777,8 @@ public class SVNClientImpl implements ISVNClient {
         FileOutputStream fileOutputStream = null;
         BufferedOutputStream bufferedOutputStream = null;
         try {
+            getEventHandler().setPathPrefix(getPathPrefix(relativeToDir));//TODO: review
+
             fileOutputStream = new FileOutputStream(outFileName);
             bufferedOutputStream = new BufferedOutputStream(fileOutputStream);
 
@@ -693,6 +800,7 @@ public class SVNClientImpl implements ISVNClient {
         } finally {
             SVNFileUtil.closeFile(fileOutputStream);
             SVNFileUtil.closeFile(bufferedOutputStream);
+            getEventHandler().resetPathPrefix();
         }
     }
 
@@ -704,6 +812,8 @@ public class SVNClientImpl implements ISVNClient {
         FileOutputStream fileOutputStream = null;
         BufferedOutputStream bufferedOutputStream = null;
         try {
+            getEventHandler().setPathPrefix(getPathPrefix(relativeToDir)); //TODO: review
+
             fileOutputStream = new FileOutputStream(outFileName);
             bufferedOutputStream = new BufferedOutputStream(fileOutputStream);
 
@@ -725,6 +835,7 @@ public class SVNClientImpl implements ISVNClient {
         } finally {
             SVNFileUtil.closeFile(fileOutputStream);
             SVNFileUtil.closeFile(bufferedOutputStream);
+            getEventHandler().resetPathPrefix();
         }
     }
 
@@ -732,17 +843,21 @@ public class SVNClientImpl implements ISVNClient {
             String target2, Revision revision2, Depth depth,
             Collection<String> changelists, boolean ignoreAncestry,
             DiffSummaryCallback receiver) throws ClientException {
-        SvnDiffSummarize diffSummarize = svnOperationFactory.createDiffSummarize();
-        diffSummarize.setSources(getTarget(target1, revision1), getTarget(target2, revision2));
-        diffSummarize.setDepth(getSVNDepth(depth));
-        diffSummarize.setApplicalbeChangelists(changelists);
-        diffSummarize.setIgnoreAncestry(ignoreAncestry);
-        diffSummarize.setReceiver(getDiffStatusReceiver(receiver));
-
         try {
+            getEventHandler().setPathPrefix(getPathPrefix(target1, target2));
+
+            SvnDiffSummarize diffSummarize = svnOperationFactory.createDiffSummarize();
+            diffSummarize.setSources(getTarget(target1, revision1), getTarget(target2, revision2));
+            diffSummarize.setDepth(getSVNDepth(depth));
+            diffSummarize.setApplicalbeChangelists(changelists);
+            diffSummarize.setIgnoreAncestry(ignoreAncestry);
+            diffSummarize.setReceiver(getDiffStatusReceiver(receiver));
+
             diffSummarize.run();
         } catch (SVNException e) {
             throw ClientException.fromException(e);
+        } finally {
+            getEventHandler().resetPathPrefix();
         }
     }
 
@@ -750,55 +865,68 @@ public class SVNClientImpl implements ISVNClient {
             Revision startRevision, Revision endRevision, Depth depth,
             Collection<String> changelists, boolean ignoreAncestry,
             DiffSummaryCallback receiver) throws ClientException {
-        SvnDiffSummarize diffSummarize = svnOperationFactory.createDiffSummarize();
-        diffSummarize.setSource(getTarget(target, pegRevision), getSVNRevision(startRevision), getSVNRevision(endRevision));
-        diffSummarize.setDepth(getSVNDepth(depth));
-        diffSummarize.setApplicalbeChangelists(changelists);
-        diffSummarize.setIgnoreAncestry(ignoreAncestry);
-        diffSummarize.setReceiver(getDiffStatusReceiver(receiver));
         try {
+            getEventHandler().setPathPrefix(getPathPrefix(target));
+
+            SvnDiffSummarize diffSummarize = svnOperationFactory.createDiffSummarize();
+            diffSummarize.setSource(getTarget(target, pegRevision), getSVNRevision(startRevision), getSVNRevision(endRevision));
+            diffSummarize.setDepth(getSVNDepth(depth));
+            diffSummarize.setApplicalbeChangelists(changelists);
+            diffSummarize.setIgnoreAncestry(ignoreAncestry);
+            diffSummarize.setReceiver(getDiffStatusReceiver(receiver));
+
             diffSummarize.run();
         } catch (SVNException e) {
             throw ClientException.fromException(e);
+        } finally {
+            getEventHandler().resetPathPrefix();
         }
     }
 
     public void properties(String path, Revision revision,
             Revision pegRevision, Depth depth, Collection<String> changelists,
             ProplistCallback callback) throws ClientException {
-        SvnGetProperties getProperties = svnOperationFactory.createGetProperties();
-        getProperties.setRevision(getSVNRevision(revision));
-        getProperties.setDepth(getSVNDepth(depth));
-        getProperties.setApplicalbeChangelists(changelists);
-        getProperties.setReceiver(getSVNPropertiesReceiver(callback));
-
-        getProperties.addTarget(getTarget(path, pegRevision));
-
         try {
+            getEventHandler().setPathPrefix(getPathPrefix(path));
+
+            SvnGetProperties getProperties = svnOperationFactory.createGetProperties();
+            getProperties.setRevision(getSVNRevision(revision));
+            getProperties.setDepth(getSVNDepth(depth));
+            getProperties.setApplicalbeChangelists(changelists);
+            getProperties.setReceiver(getSVNPropertiesReceiver(callback));
+
+            getProperties.addTarget(getTarget(path, pegRevision));
+
             getProperties.run();
         } catch (SVNException e) {
             throw ClientException.fromException(e);
+        } finally {
+            getEventHandler().resetPathPrefix();
         }
     }
 
     public void propertySetLocal(Set<String> paths, String name, byte[] value,
             Depth depth, Collection<String> changelists, boolean force)
             throws ClientException {
-        SvnSetProperty setProperty = svnOperationFactory.createSetProperty();
-        setProperty.setPropertyName(name);
-        setProperty.setPropertyValue(SVNPropertyValue.create(name, value));
-        setProperty.setDepth(getSVNDepth(depth));
-        setProperty.setApplicalbeChangelists(changelists);
-        setProperty.setForce(force);
-
-        for (String path : paths) {
-            setProperty.addTarget(getTarget(path));
-        }
-
         try {
+            getEventHandler().setPathPrefix(getPathPrefix(paths));
+
+            SvnSetProperty setProperty = svnOperationFactory.createSetProperty();
+            setProperty.setPropertyName(name);
+            setProperty.setPropertyValue(SVNPropertyValue.create(name, value));
+            setProperty.setDepth(getSVNDepth(depth));
+            setProperty.setApplicalbeChangelists(changelists);
+            setProperty.setForce(force);
+
+            for (String path : paths) {
+                setProperty.addTarget(getTarget(path));
+            }
+
             setProperty.run();
         } catch (SVNException e) {
             throw ClientException.fromException(e);
+        } finally {
+            getEventHandler().resetPathPrefix();
         }
     }
 
@@ -806,19 +934,24 @@ public class SVNClientImpl implements ISVNClient {
             byte[] value, CommitMessageCallback handler, boolean force,
             Map<String, String> revpropTable, CommitCallback callback)
             throws ClientException {
-        SvnRemoteSetProperty remoteSetProperty = svnOperationFactory.createRemoteSetProperty();
-        remoteSetProperty.setSingleTarget(getTarget(path));
-        remoteSetProperty.setRevision(SVNRevision.create(baseRev));
-        remoteSetProperty.setPropertyName(name);
-        remoteSetProperty.setPropertyValue(SVNPropertyValue.create(name, value));
-        remoteSetProperty.setCommitHandler(getCommitHandler(handler));
-        remoteSetProperty.setForce(force);
-        remoteSetProperty.setRevisionProperties(getSVNProperties(revpropTable));
-        remoteSetProperty.setReceiver(getCommitInfoReceiver(callback));
         try {
+            getEventHandler().setPathPrefix(getPathPrefix(path));
+
+            SvnRemoteSetProperty remoteSetProperty = svnOperationFactory.createRemoteSetProperty();
+            remoteSetProperty.setSingleTarget(getTarget(path));
+            remoteSetProperty.setRevision(SVNRevision.create(baseRev));
+            remoteSetProperty.setPropertyName(name);
+            remoteSetProperty.setPropertyValue(SVNPropertyValue.create(name, value));
+            remoteSetProperty.setCommitHandler(getCommitHandler(handler));
+            remoteSetProperty.setForce(force);
+            remoteSetProperty.setRevisionProperties(getSVNProperties(revpropTable));
+            remoteSetProperty.setReceiver(getCommitInfoReceiver(callback));
+
             remoteSetProperty.run();
         } catch (SVNException e) {
             throw ClientException.fromException(e);
+        } finally {
+            getEventHandler().resetPathPrefix();
         }
     }
 
@@ -1437,25 +1570,30 @@ public class SVNClientImpl implements ISVNClient {
     }
 
     private byte[] getProperty(String path, final String name, Revision rev, Revision pegRevision, boolean revisionProperties) throws ClientException {
-        SvnGetProperties getProperties = svnOperationFactory.createGetProperties();
-        getProperties.setSingleTarget(getTarget(path, pegRevision));
-        getProperties.setRevision(getSVNRevision(rev));
-        getProperties.setRevisionProperties(revisionProperties);
-
-        final SVNPropertyValue[] propertyValue = new SVNPropertyValue[1];
-        getProperties.setReceiver(new ISvnObjectReceiver<SVNProperties>() {
-            public void receive(SvnTarget target, SVNProperties svnProperties) throws SVNException {
-                propertyValue[0] = svnProperties.getSVNPropertyValue(name);
-            }
-        });
-
         try {
+            getEventHandler().setPathPrefix(getPathPrefix(path));
+
+            SvnGetProperties getProperties = svnOperationFactory.createGetProperties();
+            getProperties.setSingleTarget(getTarget(path, pegRevision));
+            getProperties.setRevision(getSVNRevision(rev));
+            getProperties.setRevisionProperties(revisionProperties);
+
+            final SVNPropertyValue[] propertyValue = new SVNPropertyValue[1];
+
+            getProperties.setReceiver(new ISvnObjectReceiver<SVNProperties>() {
+                public void receive(SvnTarget target, SVNProperties svnProperties) throws SVNException {
+                    propertyValue[0] = svnProperties.getSVNPropertyValue(name);
+                }
+            });
+
             getProperties.run();
+
+            return SVNPropertyValue.getPropertyAsBytes(propertyValue[0]);
         } catch (SVNException e) {
             throw ClientException.fromException(e);
+        } finally {
+            getEventHandler().resetPathPrefix();
         }
-
-        return SVNPropertyValue.getPropertyAsBytes(propertyValue[0]);
     }
 
     private DiffSummary getDiffSummary(SvnDiffStatus diffStatus) {
@@ -2160,9 +2298,8 @@ public class SVNClientImpl implements ISVNClient {
                 dirEntry.hasProperties(), dirEntry.getRevision(), getLongDate(dirEntry.getDate()), dirEntry.getAuthor());
     }
 
-    static ClientNotifyInformation getClientNotifyInformation(SVNEvent event, String path) {
+    static ClientNotifyInformation getClientNotifyInformation(String pathPrefix, SVNEvent event, String path) {
         //TODO: initialize these variables:
-        String pathPrefix = null;
         String propName = null;
 
         long hunkOriginalStart = -1;
@@ -2251,6 +2388,76 @@ public class SVNClientImpl implements ISVNClient {
         } else {
             throw new IllegalArgumentException("Unknown status type: " + status);
         }
+    }
+
+    private String getPathPrefix(String pathOrUrl) {
+        if (pathOrUrl == null) {
+            return null;
+        }
+        if (SVNPathUtil.isURL(pathOrUrl)) {
+            return null;
+        }
+        File file = getFile(pathOrUrl);
+        if (file == null) {
+            return null;
+        }
+
+        //TODO: should we use getAbsolutePath here?
+        //TODO: how should we process symlinks?
+        //TODO: should we resolve canonical path?
+
+        SVNFileType fileType = SVNFileType.getType(file);
+        if (fileType == SVNFileType.FILE) {
+            File parentFile = SVNFileUtil.getParentFile(file);
+            if (parentFile == null) {
+                return null;
+            }
+            return parentFile.getPath();
+        }
+
+        return file.getPath();
+    }
+
+    private String getPathPrefix(Collection pathsOrUrls) {
+        if (pathsOrUrls == null || pathsOrUrls.size() == 0) {
+            return null;
+        }
+        String commonAncestor = null;
+        for (Object pathOrUrl : pathsOrUrls) {
+            String pathOrUrlString = null;
+
+            if (pathOrUrl instanceof String) {
+                pathOrUrlString = (String) pathOrUrl;
+            } else if (pathOrUrl instanceof CopySource) {
+                pathOrUrlString = ((CopySource) pathOrUrl).getPath();
+            }
+
+            if (pathOrUrlString == null) {
+                continue;
+            }
+            commonAncestor = combinePathPrefixes(commonAncestor, pathOrUrlString);
+        }
+        return getPathPrefix(commonAncestor);
+    }
+
+    private String getPathPrefix(Collection pathsOrUrls, String destPath) {
+        String pathPrefix1 = getPathPrefix(pathsOrUrls);
+        String pathPrefix2 = getPathPrefix(destPath);
+        return combinePathPrefixes(pathPrefix1, pathPrefix2);
+    }
+
+    private String getPathPrefix(String pathOrUrl1, String pathOrUrl2) {
+        return combinePathPrefixes(getPathPrefix(pathOrUrl1), getPathPrefix(pathOrUrl2));
+    }
+
+    private String combinePathPrefixes(String pathPrefix1, String pathPrefix2) {
+        if (pathPrefix1 == null) {
+            return pathPrefix2;
+        }
+        if (pathPrefix2 == null) {
+            return pathPrefix1;
+        }
+        return SVNPathUtil.getCommonPathAncestor(pathPrefix1, pathPrefix2);
     }
 
     private void updateSvnOperationsFactory() {
