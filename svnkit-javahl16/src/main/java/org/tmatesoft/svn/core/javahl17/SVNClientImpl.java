@@ -1434,6 +1434,19 @@ public class SVNClientImpl implements ISVNClient {
         return properties;
     }
 
+    private Map<String, String> getRevisionProperties(SVNProperties revisionProperties) {
+        if (revisionProperties == null) {
+            return null;
+        }
+        HashMap<String, String> properties = new HashMap<String, String>();
+        Set<String> svnPropertiesNames = revisionProperties.nameSet();
+        for (String svnPropertyName : svnPropertiesNames) {
+            SVNPropertyValue svnPropertyValue = revisionProperties.getSVNPropertyValue(svnPropertyName);
+            properties.put(svnPropertyName, SVNPropertyValue.getPropertyAsString(svnPropertyValue));
+        }
+        return properties;
+    }
+
     private ISvnObjectReceiver<SVNProperties> getSVNPropertiesReceiver(final ProplistCallback callback) {
         if (callback == null) {
             return null;
@@ -2194,7 +2207,6 @@ public class SVNClientImpl implements ISVNClient {
         //TODO: initialize these variables:
         String pathPrefix = null;
         String propName = null;
-        Map<String, String> revProps = null;
 
         long hunkOriginalStart = -1;
         long hunkOriginalLength = -1;
@@ -2227,7 +2239,7 @@ public class SVNClientImpl implements ISVNClient {
                 getRevisionRange(event.getMergeRange()),
                 pathPrefix,
                 propName,
-                revProps,
+                getRevisionProperties(event.getRevisionProperties()),
                 event.getPreviousRevision(),
                 hunkOriginalStart,
                 hunkOriginalLength,
