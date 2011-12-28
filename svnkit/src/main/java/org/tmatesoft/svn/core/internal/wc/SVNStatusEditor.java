@@ -235,6 +235,7 @@ public class SVNStatusEditor {
                         entry.getCopyFromURL(), SVNRevision.create(entry.getCopyFromRevision()),
                         null, null, entry.asMap(), entry.getChangelistName(), dir.getFormatVersion(), null);                
                 status.setEntry(entry);
+                status.setRepositoryRootURL(myRepositoryRoot);
                 handler.handleStatus(status);                
                 continue;
             } else if (entry.isHidden()) {

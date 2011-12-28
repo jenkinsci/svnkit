@@ -167,6 +167,7 @@ public class SVNStatusUtil {
                     false, false, false, null, null, null, null, null, SVNRevision.UNDEFINED, repositoryLock, null, 
                     null, null, -1, treeConflict);
             status.setRemoteStatus(SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, repositoryLock, SVNNodeKind.NONE);
+            status.setRepositoryRootURL(reposRoot);
             SVNStatusType text = SVNStatusType.STATUS_NONE;
             SVNFileType fileType = SVNFileType.getType(file);
             if (fileType != SVNFileType.NONE) {
@@ -279,6 +280,7 @@ public class SVNStatusUtil {
                 entry.getCopyFromURL(), SVNRevision.create(entry.getCopyFromRevision()),
                 repositoryLock, localLock, entry.asMap(), entry.getChangelistName(), wcFormatNumber, treeConflict);
         status.setEntry(entry);
+        status.setRepositoryRootURL(reposRoot);
         return status;
     }
 
