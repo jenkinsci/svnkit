@@ -69,7 +69,6 @@ import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
-import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.io.svn.SVNSSHConnector;
@@ -1874,11 +1873,15 @@ public class SVNClientImpl implements ISVNClient {
             public void receive(SvnTarget target, SvnAnnotateItem annotateItem) throws SVNException {
                 try {
                     if (annotateItem.isLine()) {
+
+                        Map<String, byte[]> revisionProperties = getProperties(annotateItem.getRevisionProperties());
+                        Map<String, byte[]> mergedRevisionProperties = getProperties(annotateItem.getMergedRevisionProperties());
+
                         callback.singleLine(annotateItem.getLineNumber(),
                                 annotateItem.getRevision(),
-                                getRevisionProperties(annotateItem.getAuthor(), annotateItem.getDate()),
+                                (revisionProperties == null || revisionProperties.isEmpty()) ? null : revisionProperties,
                                 annotateItem.getMergedRevision(),
-                                getRevisionProperties(annotateItem.getMergedAuthor(), annotateItem.getMergedDate()),
+                                (mergedRevisionProperties == null || mergedRevisionProperties.isEmpty()) ? null : mergedRevisionProperties,
                                 annotateItem.getMergedPath(),
                                 annotateItem.getLine(),
                                 !SVNRevision.isValidRevisionNumber(annotateItem.getRevision()));
@@ -1889,19 +1892,6 @@ public class SVNClientImpl implements ISVNClient {
                 }
             }
         };
-    }
-
-    private Map<String, byte[]> getRevisionProperties(String author, Date date) {
-        if (author == null && date == null) {
-            return null;
-        }
-        SVNPropertyValue authorPropertyValue = SVNPropertyValue.create(author);
-        SVNPropertyValue datePropertyValue = SVNPropertyValue.create(SVNDate.formatDate(date));
-
-        HashMap<String, byte[]> revisionProperties = new HashMap<String, byte[]>();
-        revisionProperties.put(SVNRevisionProperty.AUTHOR, SVNPropertyValue.getPropertyAsBytes(authorPropertyValue));
-        revisionProperties.put(SVNRevisionProperty.DATE, SVNPropertyValue.getPropertyAsBytes(datePropertyValue));
-        return revisionProperties;
     }
 
     private ISVNConflictHandler getConflictHandler(final ConflictResolverCallback callback) {
