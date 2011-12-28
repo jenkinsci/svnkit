@@ -16,6 +16,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -32,7 +33,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbLock;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
-import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbAdditionInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbAdditionInfo.AdditionInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbBaseInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbBaseInfo.BaseInfoField;
@@ -42,6 +42,9 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo.RepositoryInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
+import org.tmatesoft.svn.core.internal.wc17.db.Structure;
+import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.AdditionInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbShared;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.wc.SVNConflictChoice;
@@ -86,27 +89,23 @@ public class SVNReporter17 implements ISVNReporterBaton {
     }
 
     public void report(ISVNReporter reporter) throws SVNException {
-
         assert (SVNWCDb.isAbsolute(path));
-
-        /*
-         * The first thing we do is get the base_rev from the working copy's
-         * ROOT_DIRECTORY. This is the first revnum that entries will be
-         * compared to.
-         */
-
-        SVNWCDbStatus status;
-        SVNWCDbKind target_kind;
+        
+        SVNWCDbStatus status = null;
+        SVNWCDbKind target_kind = null;
         long target_rev = 0;
         File repos_relpath = null;
         SVNURL repos_root = null;
         SVNDepth target_depth = SVNDepth.UNKNOWN;
         SVNWCDbLock target_lock = null;
         boolean explicit_rev, start_empty;
-
+        SVNErrorMessage err = null;
+        
         try {
 
-            final WCDbBaseInfo baseInfo = wcContext.getDb().getBaseInfo(path, BaseInfoField.status, BaseInfoField.kind, BaseInfoField.revision, BaseInfoField.reposRelPath, BaseInfoField.reposRootUrl,
+            final WCDbBaseInfo baseInfo = wcContext.getDb().getBaseInfo(path, 
+                    BaseInfoField.status, BaseInfoField.kind, BaseInfoField.revision, 
+                    BaseInfoField.reposRelPath, BaseInfoField.reposRootUrl,
                     BaseInfoField.depth, BaseInfoField.lock);
 
             status = baseInfo.status;
@@ -118,176 +117,103 @@ public class SVNReporter17 implements ISVNReporterBaton {
             target_lock = baseInfo.lock;
 
         } catch (SVNException e) {
-
-            if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND)
+            if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND) {
                 throw e;
-
-            target_kind = wcContext.getDb().readKind(path, true);
-
-            if (target_kind == SVNWCDbKind.File || target_kind == SVNWCDbKind.Symlink)
-                status = SVNWCDbStatus.ServerExcluded; /* Crawl via parent dir */
-            else
-                status = SVNWCDbStatus.NotPresent; /* As checkout */
-
-        }
-
-        if (status == SVNWCDbStatus.NotPresent || status == SVNWCDbStatus.ServerExcluded || (target_kind == SVNWCDbKind.Dir && status != SVNWCDbStatus.Normal && status != SVNWCDbStatus.Incomplete)) {
-            /* The target does not exist or is a local addition */
-
-            if (!SVNRevision.isValidRevisionNumber(target_rev)) {
-                target_rev = 0;
             }
-
+            err = e.getErrorMessage();
+        }
+        if (err != null || (status != SVNWCDbStatus.Normal && status != SVNWCDbStatus.Incomplete)) {
             if (depth == SVNDepth.UNKNOWN) {
                 depth = SVNDepth.INFINITY;
             }
-
-            reporter.setPath("", null, target_rev, depth, false);
+            reporter.setPath("", null, 0, depth, false);
             reporter.deletePath("");
-
-            /*
-             * Finish the report, which causes the update editor to be driven.
-             */
             reporter.finishReport();
-
             return;
         }
-
-        if (repos_root == null || repos_relpath == null) {
-            try {
-                final WCDbRepositoryInfo baseRep = wcContext.getDb().scanBaseRepository(path, RepositoryInfoField.relPath, RepositoryInfoField.rootUrl);
-                repos_root = baseRep.rootUrl;
-                repos_relpath = baseRep.relPath;
-            } catch (SVNException e) {
-                if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND)
-                    throw e;
-            }
-
-            /*
-             * Ok, that leaves a local addition. Deleted and not existing nodes
-             * are already handled.
-             */
-            if (repos_root == null || repos_relpath == null) {
-                final WCDbAdditionInfo addition = wcContext.getDb().scanAddition(path, AdditionInfoField.reposRelPath, AdditionInfoField.reposRootUrl);
-                repos_root = addition.reposRootUrl;
-                repos_relpath = addition.reposRelPath;
-            }
+        
+        if (repos_relpath == null) {
+            WCDbRepositoryInfo rInfo = wcContext.getDb().scanBaseRepository(path, RepositoryInfoField.relPath, RepositoryInfoField.rootUrl);
+            repos_relpath = rInfo.relPath;
+            repos_root = rInfo.rootUrl;
         }
-
-        if (!SVNRevision.isValidRevisionNumber(target_rev)) {
-            target_rev = findBaseRev(path, path);
-            explicit_rev = true;
-        } else
-            explicit_rev = false;
-
-        start_empty = (status == SVNWCDbStatus.Incomplete);
-        if (isUseDepthCompatibilityTrick && target_depth.compareTo(SVNDepth.IMMEDIATES) <= 0 && depth.compareTo(target_depth) > 0) {
+        if (target_depth == SVNDepth.UNKNOWN) {
+            target_depth = SVNDepth.INFINITY;
+        }
+        start_empty = status == SVNWCDbStatus.Incomplete;
+        if (isUseDepthCompatibilityTrick 
+                && target_depth.compareTo(SVNDepth.IMMEDIATES) <= 0 
+                && depth.compareTo(target_depth) > 0) {
             start_empty = true;
         }
-
-        if (target_depth == SVNDepth.UNKNOWN)
-            target_depth = SVNDepth.INFINITY;
-
-        SVNNodeKind disk_kind = SVNFileType.getNodeKind(SVNFileType.getType(path));
-
-        /* Determine if there is a missing node that should be restored */
-        if (disk_kind == SVNNodeKind.NONE) {
-            SVNWCDbStatus wrk_status;
+        SVNFileType diskType = SVNFileType.UNKNOWN;
+        if (isRestoreFiles) {
+            diskType = SVNFileType.getType(path);
+        } 
+            
+        if (isRestoreFiles && diskType == SVNFileType.NONE) {
+            // restore node
+            WCDbInfo wInfo = null;
+            SVNWCDbKind wrkKind;
+            SVNWCDbStatus wrkStatus;
             try {
-                wrk_status = wcContext.getDb().readInfo(path, InfoField.status).status;
+                wInfo = wcContext.getDb().readInfo(path, InfoField.status, InfoField.kind);
+                wrkStatus = wInfo.status;
+                wrkKind = wInfo.kind;
             } catch (SVNException e) {
                 if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND) {
-                    wrk_status = SVNWCDbStatus.NotPresent;
-                } else
+                    wrkStatus = SVNWCDbStatus.NotPresent;
+                    wrkKind = SVNWCDbKind.File;
+                } else {
                     throw e;
+                }
             }
-
-            if (wrk_status == SVNWCDbStatus.Added)
-                wrk_status = wcContext.getDb().scanAddition(path, AdditionInfoField.status).status;
-
-            if (isRestoreFiles && wrk_status != SVNWCDbStatus.Added && wrk_status != SVNWCDbStatus.Deleted && wrk_status != SVNWCDbStatus.Excluded && wrk_status != SVNWCDbStatus.NotPresent
-                    && wrk_status != SVNWCDbStatus.ServerExcluded) {
-                restoreNode(wcContext, path, target_kind, target_rev, isUseCommitTimes);
+            if (wrkStatus == SVNWCDbStatus.Added) {
+                Structure<AdditionInfo> additionInfo = SvnWcDbShared.scanAddition((SVNWCDb) wcContext.getDb(), path, AdditionInfo.status);
+                wrkStatus = additionInfo.get(AdditionInfo.status);
+                additionInfo.release();
+            }
+            if (wrkStatus == SVNWCDbStatus.Normal
+                    || wrkStatus == SVNWCDbStatus.Copied
+                    || wrkStatus == SVNWCDbStatus.MovedHere
+                    || (wrkKind == SVNWCDbKind.Dir && (wrkStatus == SVNWCDbStatus.Added || wrkStatus == SVNWCDbStatus.Incomplete))) {
+                restoreNode(wcContext, path, wrkKind, target_rev, isUseCommitTimes);
             }
         }
-
-        /*
-         * The first call to the reporter merely informs it that the top-level
-         * directory being updated is at BASE_REV. Its PATH argument is ignored.
-         */
-        SVNDepth reportDepth = target_depth;
-        if (isHonorDepthExclude
-                && depth != SVNDepth.UNKNOWN
-                && depth != SVNDepth.EXCLUDE
-                && depth.compareTo(target_depth) < 0) {
-            reportDepth = depth;
-        }
-                
-        reporter.setPath("", null, target_rev, reportDepth, start_empty);
-
+        
         try {
-
+            SVNDepth reportDepth = target_depth;
+            if (isHonorDepthExclude && depth != SVNDepth.UNKNOWN && depth.compareTo(target_depth) < 0) {
+                reportDepth = depth;
+            }
+            reporter.setPath("", null, target_rev, reportDepth, start_empty);
             if (target_kind == SVNWCDbKind.Dir) {
                 if (depth != SVNDepth.EMPTY) {
-                    /*
-                     * Recursively crawl ROOT_DIRECTORY and report differing
-                     * revisions.
-                     */
-                    reportRevisionsAndDepths(path, "", target_rev, reporter, start_empty);
+                    reportRevisionsAndDepths(path, 
+                            SVNFileUtil.createFilePath(""), 
+                            target_rev, repos_relpath, repos_root, reportDepth, reporter, isRestoreFiles, depth, start_empty);
                 }
-            }
-
-            else if (target_kind == SVNWCDbKind.File || target_kind == SVNWCDbKind.Symlink) {
-                boolean skip_set_path = false;
-
-                File parent_abspath = SVNFileUtil.getFileDir(path);
+            } else if (target_kind == SVNWCDbKind.Symlink || target_kind == SVNWCDbKind.File) {
                 String base = SVNFileUtil.getFileName(path);
-
-                /*
-                 * We can assume a file is in the same repository as its parent
-                 * directory, so we only look at the relpath.
-                 */
-                final WCDbBaseInfo baseInfo = wcContext.getDb().getBaseInfo(parent_abspath, BaseInfoField.status, BaseInfoField.reposRelPath);
-                File parent_repos_relpath = baseInfo.reposRelPath;
-
-                if (parent_repos_relpath == null) {
-                    parent_repos_relpath = wcContext.getDb().scanBaseRepository(parent_abspath, RepositoryInfoField.relPath).relPath;
+                File parentPath = SVNFileUtil.getParentFile(path);
+                WCDbBaseInfo parentInfo = wcContext.getDb().getBaseInfo(parentPath, BaseInfoField.reposRelPath);
+                if (!repos_relpath.equals(SVNFileUtil.createFilePath(parentInfo.reposRelPath, base))) {
+                    SVNURL url = SVNWCUtils.join(repos_root, repos_relpath);
+                    reporter.linkPath(url, "", target_lock != null ? target_lock.token : null, target_rev, SVNDepth.INFINITY, false);
+                } else if (target_lock != null) {
+                    reporter.setPath("", target_lock.token, target_rev, SVNDepth.INFINITY, false);
                 }
-
-                if (!repos_relpath.equals(SVNFileUtil.createFilePath(parent_repos_relpath, base))) {
-                    /*
-                     * This file is disjoint with respect to its parent
-                     * directory. Since we are looking at the actual target of
-                     * the report (not some file in a subdirectory of a target
-                     * directory), and that target is a file, we need to pass an
-                     * empty string to link_path.
-                     */
-                    reporter.linkPath(SVNWCUtils.join(repos_root, repos_relpath), "", target_lock != null ? target_lock.token : null, target_rev, target_depth, false);
-                    skip_set_path = true;
-                }
-
-                if (!skip_set_path && (explicit_rev || target_lock != null)) {
-                    /*
-                     * If this entry is a file node, we just want to report that
-                     * node's revision. Since we are looking at the actual
-                     * target of the report (not some file in a subdirectory of
-                     * a target directory), and that target is a file, we need
-                     * to pass an empty string to set_path.
-                     */
-                    reporter.setPath("", target_lock != null ? target_lock.token : null, target_rev, target_depth, false);
-                }
-            }
-
-            /* Finish the report, which causes the update editor to be driven. */
+            } 
             reporter.finishReport();
-
         } catch (SVNException e) {
-            // abort_report:
-            /* Clean up the fs transaction. */
-            reporter.abortReport();
+            // abort report
+            try {
+                reporter.abortReport();
+            } catch (SVNException inner) {
+                e.getErrorMessage().setChildErrorMessage(inner.getErrorMessage());
+            }
             throw e;
         }
-
     }
 
     public static boolean restoreNode(SVNWCContext context, File local_abspath, SVNWCDbKind kind, long target_rev, boolean useCommitTimes) throws SVNException {
@@ -347,6 +273,154 @@ public class SVNReporter17 implements ISVNReporterBaton {
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "Can't retrieve base revision for ''{0}''", top_local_abspath);
         SVNErrorManager.error(err, SVNLogType.WC);
         return SVNWCContext.INVALID_REVNUM;
+    }
+
+    private void reportRevisionsAndDepths(File dirPath, File reportRelPath, long dirRev, File dirReposRelPath, SVNURL dirReposRoot,  
+            SVNDepth dirDepth, ISVNReporter reporter, boolean restoreFiles, SVNDepth depth, boolean reportEverything) throws SVNException {
+        
+        Set<String> baseChildren = wcContext.getDb().getBaseChildren(dirPath);
+        Set<String> dirEntries = null;
+        if (restoreFiles) {
+            dirEntries = new HashSet<String>();
+            File[] list = SVNFileListUtil.listFiles(dirPath);
+            if (list != null) {
+                for (File file : list) {
+                    dirEntries.add(SVNFileUtil.getFileName(file));
+                }
+            }
+        }
+        for (String child : baseChildren) {
+            boolean thisSwitched = false;
+            wcContext.checkCancelled();
+            
+            String thisReportRelpath = SVNFileUtil.getFilePath(SVNFileUtil.createFilePath(reportRelPath, child));
+            File thisAbsPath = SVNFileUtil.createFilePath(dirPath, child);
+            
+            WCDbBaseInfo ths = wcContext.getDb().getBaseInfo(thisAbsPath, BaseInfoField.updateRoot, BaseInfoField.status, BaseInfoField.revision, BaseInfoField.reposRelPath, BaseInfoField.depth, BaseInfoField.kind, BaseInfoField.lock);
+            
+            if (ths.updateRoot) {
+                continue;
+            }
+            if (ths.status == SVNWCDbStatus.Excluded) {
+                if (isHonorDepthExclude) {
+                    reporter.setPath(thisReportRelpath, null, dirRev, SVNDepth.EXCLUDE, false);
+                } else {
+                    if (!reportEverything) {
+                        reporter.deletePath(thisReportRelpath);
+                    }
+                }
+                continue;
+            }
+            if (ths.status == SVNWCDbStatus.Excluded || ths.status == SVNWCDbStatus.NotPresent) {
+                if (!reportEverything) {
+                    reporter.deletePath(thisReportRelpath);
+                }
+                continue;
+            }
+            if (restoreFiles && !dirEntries.contains(child)) {
+                WCDbInfo wInfo = null;
+                SVNWCDbKind wrkKind;
+                SVNWCDbStatus wrkStatus;
+                try {
+                    wInfo = wcContext.getDb().readInfo(thisAbsPath, InfoField.status, InfoField.kind);
+                    wrkStatus = wInfo.status;
+                    wrkKind = wInfo.kind;
+                } catch (SVNException e) {
+                    if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND) {
+                        wrkStatus = SVNWCDbStatus.NotPresent;
+                        wrkKind = SVNWCDbKind.File;
+                    } else {
+                        throw e;
+                    }
+                }
+                if (wrkStatus == SVNWCDbStatus.Added) {
+                    Structure<AdditionInfo> additionInfo = SvnWcDbShared.scanAddition((SVNWCDb) wcContext.getDb(), thisAbsPath, AdditionInfo.status);
+                    wrkStatus = additionInfo.get(AdditionInfo.status);
+                    additionInfo.release();
+                }
+                if (wrkStatus == SVNWCDbStatus.Normal
+                        || wrkStatus == SVNWCDbStatus.Copied
+                        || wrkStatus == SVNWCDbStatus.MovedHere
+                        || (wrkKind == SVNWCDbKind.Dir && (wrkStatus == SVNWCDbStatus.Added || wrkStatus == SVNWCDbStatus.Incomplete))) {
+                    if (SVNFileType.getType(thisAbsPath) == SVNFileType.NONE) {
+                        restoreNode(wcContext, thisAbsPath, wrkKind, dirRev, isUseCommitTimes);
+                    }
+                }                
+            }
+            if (ths.reposRelPath == null) {
+                ths.reposRelPath = SVNFileUtil.createFilePath(dirReposRelPath, child);
+            } else {
+                if (!SVNWCUtils.isChild(dirReposRelPath, ths.reposRelPath)) {
+                    thisSwitched = true;
+                }
+            }
+            if (ths.depth == SVNDepth.UNKNOWN) {
+                ths.depth = SVNDepth.INFINITY;
+            }
+            if (ths.kind == SVNWCDbKind.File || ths.kind == SVNWCDbKind.Symlink) {
+                 if (reportEverything) {
+                     if (thisSwitched) {
+                         SVNURL url = SVNWCUtils.join(dirReposRoot, ths.reposRelPath);
+                         reporter.linkPath(url, thisReportRelpath, 
+                                 ths.lock != null ? ths.lock.token : null, 
+                                         ths.revision, ths.depth, false);
+                     } else {
+                         reporter.setPath(thisReportRelpath, ths.lock != null ? ths.lock.token : null, ths.revision, ths.depth, false);
+                     }
+                 } else if (thisSwitched) {
+                     SVNURL url = SVNWCUtils.join(dirReposRoot, ths.reposRelPath);
+                     reporter.linkPath(url, thisReportRelpath, 
+                             ths.lock != null ? ths.lock.token : null, 
+                                     ths.revision, ths.depth, false);
+                 } else if (ths.revision != dirRev || ths.lock != null || dirDepth == SVNDepth.EMPTY) {
+                     reporter.setPath(thisReportRelpath, ths.lock != null ? ths.lock.token : null, ths.revision, ths.depth, false);
+                 }
+            } else if (ths.kind == SVNWCDbKind.Dir && (depth == SVNDepth.UNKNOWN || depth.compareTo(SVNDepth.FILES) > 0)) {
+                boolean isIncomplete = ths.status == SVNWCDbStatus.Incomplete;
+                boolean startEmpty = isIncomplete;
+                if (isIncomplete && ths.revision < 0) {
+                    ths.revision = dirRev;
+                }
+                if (isUseDepthCompatibilityTrick 
+                        && ths.depth.compareTo(SVNDepth.FILES) <= 0
+                        && depth.compareTo(ths.depth) > 0) {
+                    startEmpty = true;
+                }
+                if (reportEverything) {
+                    if (thisSwitched) {
+                        SVNURL url = SVNWCUtils.join(dirReposRoot, ths.reposRelPath);
+                        reporter.linkPath(url, thisReportRelpath, 
+                                ths.lock != null ? ths.lock.token : null, 
+                                        ths.revision, ths.depth, startEmpty);
+                    } else {
+                        reporter.setPath(thisReportRelpath, ths.lock != null ? ths.lock.token : null, ths.revision, ths.depth, startEmpty);
+                    }
+                } else if (thisSwitched) {
+                    SVNURL url = SVNWCUtils.join(dirReposRoot, ths.reposRelPath);
+                    reporter.linkPath(url, thisReportRelpath, 
+                            ths.lock != null ? ths.lock.token : null, 
+                                    ths.revision, ths.depth, startEmpty);
+                } else if (ths.revision != dirRev 
+                        || ths.lock != null 
+                        || dirDepth == SVNDepth.EMPTY
+                        || dirDepth == SVNDepth.FILES
+                        || (dirDepth == SVNDepth.IMMEDIATES && ths.depth != SVNDepth.EMPTY)
+                        || (ths.depth.compareTo(SVNDepth.INFINITY) < 0 && depth.isRecursive())) {
+                    reporter.setPath(thisReportRelpath, ths.lock != null ? ths.lock.token : null, ths.revision, ths.depth, startEmpty);
+                }
+                if (depth.isRecursive()) {
+                    File reposRelPath = ths.reposRelPath;
+                    if (reposRelPath == null) {
+                        reposRelPath = SVNFileUtil.createFilePath(dirReposRelPath, child);
+                    }
+                    reportRevisionsAndDepths(thisAbsPath, 
+                            SVNFileUtil.createFilePath(thisReportRelpath), 
+                            ths.revision, 
+                            reposRelPath, 
+                            dirReposRoot, ths.depth, reporter, restoreFiles, depth, startEmpty);
+                }
+            }
+        }
     }
 
     private void reportRevisionsAndDepths(File anchor_abspath, String dir_path, long dir_rev, ISVNReporter reporter, boolean report_everything) throws SVNException {
