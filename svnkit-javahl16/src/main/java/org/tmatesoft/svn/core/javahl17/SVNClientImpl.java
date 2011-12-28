@@ -55,7 +55,6 @@ import org.apache.subversion.javahl.types.Revision;
 import org.apache.subversion.javahl.types.RevisionRange;
 import org.apache.subversion.javahl.types.Status;
 import org.apache.subversion.javahl.types.Version;
-import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNDirEntry;
@@ -83,7 +82,6 @@ import org.tmatesoft.svn.core.internal.wc.patch.SVNPatchHunkInfo;
 import org.tmatesoft.svn.core.javahl.JavaHLCompositeLog;
 import org.tmatesoft.svn.core.javahl.JavaHLDebugLog;
 import org.tmatesoft.svn.core.wc.ISVNConflictHandler;
-import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNConflictAction;
 import org.tmatesoft.svn.core.wc.SVNConflictChoice;
 import org.tmatesoft.svn.core.wc.SVNConflictDescription;
@@ -162,14 +160,12 @@ public class SVNClientImpl implements ISVNClient {
     private String username;
     private String password;
     private UserPasswordCallback prompt;
-    private ClientNotifyCallback notifyCallback;
     private String configDir;
 
     private DefaultSVNOptions options;
     private ISVNAuthenticationManager authenticationManager;
     private ISVNConflictHandler conflictHandler;
-    private ISVNEventHandler eventHandler;
-    private boolean cancelOperation;
+    private JavaHLEventHandler eventHandler;
 
     private JavaHLCompositeLog debugLog;
     private JavaHLProgressLog progressListener;
@@ -314,50 +310,12 @@ public class SVNClientImpl implements ISVNClient {
     }
 
     public void notification2(ClientNotifyCallback notifyCallback) {
-        this.notifyCallback = notifyCallback;
+        getEventHandler().setNotifyCallback(notifyCallback);
     }
 
-    public ISVNEventHandler getEventHandler() {
+    public JavaHLEventHandler getEventHandler() {
         if (eventHandler == null) {
-            eventHandler = new ISVNEventHandler() {
-
-                public void handleEvent(SVNEvent event, double progress) {
-                    if (event.getAction() == SVNEventAction.UPGRADE) {
-                        return;
-                    }
-                    String path = null;
-                    if (event.getFile() != null) {
-                        path = event.getFile().getAbsolutePath();
-                        if (path != null) {
-                            path = path.replace(File.separatorChar, '/');
-                        }
-                    }
-                    if (path == null) {
-                        path = "";
-                    }
-//                    if (notifyCallback != null && event.getErrorMessage() == null) {
-//                        notifyCallback.onNotify(
-//                                path,
-//                                JavaHLObjectFactory.getNotifyActionValue(event.getAction()),
-//                                JavaHLObjectFactory.getNodeKind(event.getNodeKind()),
-//                                event.getMimeType(),
-//                                JavaHLObjectFactory.getStatusValue(event.getContentsStatus()),
-//                                JavaHLObjectFactory.getStatusValue(event.getPropertiesStatus()),
-//                                event.getRevision()
-//                        );
-//                    }
-                    if (notifyCallback != null) {
-                        notifyCallback.onNotify(getClientNotifyInformation(event, path));
-                    }
-                }
-
-                public void checkCancelled() throws SVNCancelException {
-                    if (cancelOperation) {
-                        cancelOperation = false;
-                        SVNErrorManager.cancel("operation cancelled", SVNLogType.DEFAULT);
-                    }
-                }
-            };
+            eventHandler = new JavaHLEventHandler();
         }
         return eventHandler;
     }
@@ -996,7 +954,7 @@ public class SVNClientImpl implements ISVNClient {
     }
 
     public void cancelOperation() throws ClientException {
-        cancelOperation = true;
+        getEventHandler().cancelOperation();
     }
 
     public void addToChangelist(Set<String> paths, String changelist,
@@ -1217,18 +1175,17 @@ public class SVNClientImpl implements ISVNClient {
         );
     }
 
-    private Lock getLock(SVNLock lock) {
+    private static Lock getLock(SVNLock lock) {
         if (lock == null) {
             return null;
         }
         return new Lock(lock.getOwner(), lock.getPath(), lock.getID(), lock.getComment(), getLongDate(lock.getCreationDate()), getLongDate(lock.getExpirationDate()));
     }
 
-    private long getLongDate(Date date) {
+    private static long getLongDate(Date date) {
         SVNDate svnDate = SVNDate.fromDate(date);
         return svnDate.getTimeInMicros();
     }
-
 
     private SvnTarget getTarget(String path, Revision revision) {
         SVNRevision svnRevision = getSVNRevision(revision);
@@ -1284,7 +1241,7 @@ public class SVNClientImpl implements ISVNClient {
         }
     }
 
-    private NodeKind getNodeKind(SVNNodeKind kind) {
+    private static NodeKind getNodeKind(SVNNodeKind kind) {
         if (kind == SVNNodeKind.DIR) {
             return NodeKind.dir;
         } else if (kind == SVNNodeKind.FILE) {
@@ -1434,7 +1391,7 @@ public class SVNClientImpl implements ISVNClient {
         return properties;
     }
 
-    private Map<String, String> getRevisionProperties(SVNProperties revisionProperties) {
+    private static Map<String, String> getRevisionProperties(SVNProperties revisionProperties) {
         if (revisionProperties == null) {
             return null;
         }
@@ -1562,7 +1519,7 @@ public class SVNClientImpl implements ISVNClient {
                 commitInfo.getAuthor(), getErrorMessageString(commitInfo.getErrorMessage()), getUrlString(repositoryRoot));
     }
 
-    private String getErrorMessageString(SVNErrorMessage errorMessage) {
+    private static String getErrorMessageString(SVNErrorMessage errorMessage) {
         if (errorMessage == null) {
             return null;
         }
@@ -1868,7 +1825,7 @@ public class SVNClientImpl implements ISVNClient {
         return mergeinfo;
     }
 
-    private RevisionRange getRevisionRange(SVNMergeRange revisionRange) {
+    private static RevisionRange getRevisionRange(SVNMergeRange revisionRange) {
         if (revisionRange == null) {
             return null;
         }
@@ -2032,7 +1989,7 @@ public class SVNClientImpl implements ISVNClient {
         }
     }
 
-    private ClientNotifyInformation.Action getClientNotifyInformationAction(SVNEventAction action) {
+    private static ClientNotifyInformation.Action getClientNotifyInformationAction(SVNEventAction action) {
         if (action == null) {
             return null;
         }
@@ -2203,7 +2160,7 @@ public class SVNClientImpl implements ISVNClient {
                 dirEntry.hasProperties(), dirEntry.getRevision(), getLongDate(dirEntry.getDate()), dirEntry.getAuthor());
     }
 
-    private ClientNotifyInformation getClientNotifyInformation(SVNEvent event, String path) {
+    static ClientNotifyInformation getClientNotifyInformation(SVNEvent event, String path) {
         //TODO: initialize these variables:
         String pathPrefix = null;
         String propName = null;
@@ -2250,7 +2207,7 @@ public class SVNClientImpl implements ISVNClient {
         );
     }
 
-    private ClientNotifyInformation.LockStatus getClientNotifyInformationLockStatus(SVNStatusType lockStatus) {
+    private static ClientNotifyInformation.LockStatus getClientNotifyInformationLockStatus(SVNStatusType lockStatus) {
         if (lockStatus == null) {
             return null;
         }
@@ -2269,7 +2226,7 @@ public class SVNClientImpl implements ISVNClient {
         }
     }
 
-    private ClientNotifyInformation.Status getClientNotifyInformationStatus(SVNStatusType status) {
+    private static ClientNotifyInformation.Status getClientNotifyInformationStatus(SVNStatusType status) {
         if (status == null) {
             return null;
         }
