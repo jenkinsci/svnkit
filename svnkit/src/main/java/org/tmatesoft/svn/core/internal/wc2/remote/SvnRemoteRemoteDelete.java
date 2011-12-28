@@ -55,6 +55,7 @@ public class SvnRemoteRemoteDelete extends SvnRemoteOperationRunner<SVNCommitInf
                 	repository = (SVNRepository)reposInfo.get(reposRoot);
                 	relPaths = (ArrayList<String>)relPathInfo.get(reposRoot);
                 	relPaths.add(reposRelPath);
+                    break; //appropriate SVNRepository/root was found, stop searching
                 }
             }
     	    
