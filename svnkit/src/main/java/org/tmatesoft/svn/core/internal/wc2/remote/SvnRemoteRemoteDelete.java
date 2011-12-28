@@ -69,13 +69,13 @@ public class SvnRemoteRemoteDelete extends SvnRemoteOperationRunner<SVNCommitInf
     	    	relPaths.add(reposRelPath);
     	    }
     	    if (reposRelPath == null) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "URL '{0}' not within a repository", url);
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "URL ''{0}'' not within a repository", url);
                 SVNErrorManager.error(err, SVNLogType.WC);
     	    }
     	    
     	    kind = repository.checkPath(reposRelPath, -1);
     	    if (kind == SVNNodeKind.NONE) {
-            	SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "URL '{0}' does not exist", url);
+            	SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "URL ''{0}'' does not exist", url);
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
         }
