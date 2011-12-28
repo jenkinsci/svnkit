@@ -75,6 +75,7 @@ import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
+import org.tmatesoft.svn.core.internal.wc.ISVNAuthenticationStorage;
 import org.tmatesoft.svn.core.internal.wc.SVNConflictVersion;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
@@ -165,11 +166,14 @@ public class SVNClientImpl implements ISVNClient {
 
     private DefaultSVNOptions options;
     private ISVNAuthenticationManager authenticationManager;
+    private ISVNAuthenticationStorage authenticationStorage;
     private ISVNConflictHandler conflictHandler;
     private JavaHLEventHandler eventHandler;
 
     private JavaHLCompositeLog debugLog;
     private JavaHLProgressLog progressListener;
+
+    private static ISVNAuthenticationStorage runtimeAuthenticationStorage;
 
     protected SVNClientImpl() {
         this(null);
@@ -360,6 +364,33 @@ public class SVNClientImpl implements ISVNClient {
             debugLog.addLogger(JavaHLDebugLog.getInstance());
         }
         return debugLog;
+    }
+
+    public void setClientCredentialsStorage(ISVNAuthenticationStorage storage) {
+        authenticationStorage = storage;
+        updateSvnOperationsFactory();
+    }
+
+    public ISVNAuthenticationStorage getClientCredentialsStorage() {
+        if (authenticationStorage != null) {
+            return authenticationStorage;
+        }
+        return getRuntimeCredentialsStorage();
+    }
+
+    public static void setRuntimeCredentialsStorage(ISVNAuthenticationStorage storage) {
+        synchronized (SVNClientImpl.class) {
+            runtimeAuthenticationStorage = storage == null ? new JavaHLAuthenticationStorage() : storage;
+        }
+    }
+
+    public static ISVNAuthenticationStorage getRuntimeCredentialsStorage() {
+        synchronized (SVNClientImpl.class) {
+            if (runtimeAuthenticationStorage == null) {
+                runtimeAuthenticationStorage = new JavaHLAuthenticationStorage();
+            }
+            return runtimeAuthenticationStorage;
+        }
     }
 
     public void remove(Set<String> path, boolean force, boolean keepLocal,
@@ -2471,8 +2502,7 @@ public class SVNClientImpl implements ISVNClient {
             authenticationManager.setAuthenticationProvider(null);
         }
         if (authenticationManager instanceof DefaultSVNAuthenticationManager) {
-            //TODO: implement
-//            ((DefaultSVNAuthenticationManager) authenticationManager).setRuntimeStorage(getClientCredentialsStorage());
+            ((DefaultSVNAuthenticationManager) authenticationManager).setRuntimeStorage(getClientCredentialsStorage());
         }
         if (svnOperationFactory != null) {
             svnOperationFactory.setAuthenticationManager(authenticationManager);
