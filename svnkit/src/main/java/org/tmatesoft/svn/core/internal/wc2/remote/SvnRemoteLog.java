@@ -42,7 +42,7 @@ public class SvnRemoteLog extends SvnRemoteOperationRunner<SVNLogEntry, SvnLog> 
     protected SVNLogEntry run() throws SVNException {
     	
     	String[] targetPaths = null;
-    	SVNRevision pegRevision = getOperation().getFirstTarget().getResolvedPegRevision();
+    	SVNRevision pegRevision = getOperation().getFirstTarget().getPegRevision();
     	SvnTarget baseTarget = getOperation().getFirstTarget();
     	 
     	SVNRevision sessionRevision = SVNRevision.UNDEFINED;
@@ -55,14 +55,14 @@ public class SvnRemoteLog extends SvnRemoteOperationRunner<SVNLogEntry, SvnLog> 
             } else if (!revRange.getStart().isValid()) {
                 SVNRevision start = SVNRevision.UNDEFINED;
                 SVNRevision end = SVNRevision.UNDEFINED;
-                if (!getOperation().getFirstTarget().getResolvedPegRevision().isValid()) {
-                	if (getOperation().hasRemoteTargets()) {
-                		start = SVNRevision.BASE;
-                	} else {
-                		start = SVNRevision.HEAD;
-                	}
+                if (!getOperation().getFirstTarget().getPegRevision().isValid()) {
+                    if (getOperation().hasRemoteTargets()) {
+                        start = SVNRevision.HEAD;
+                    } else {
+                        start = SVNRevision.BASE;
+                    }
                 } else {
-                    start = getOperation().getFirstTarget().getResolvedPegRevision();
+                    start = getOperation().getFirstTarget().getPegRevision();
                 }
                 
                 if (!revRange.getEnd().isValid()) {

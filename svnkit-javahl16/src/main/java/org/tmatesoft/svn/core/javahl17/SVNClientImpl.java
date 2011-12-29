@@ -41,6 +41,7 @@ import org.apache.subversion.javahl.callback.ProgressCallback;
 import org.apache.subversion.javahl.callback.ProplistCallback;
 import org.apache.subversion.javahl.callback.StatusCallback;
 import org.apache.subversion.javahl.callback.UserPasswordCallback;
+import org.apache.subversion.javahl.types.ChangePath;
 import org.apache.subversion.javahl.types.Checksum;
 import org.apache.subversion.javahl.types.ConflictVersion;
 import org.apache.subversion.javahl.types.CopySource;
@@ -54,6 +55,7 @@ import org.apache.subversion.javahl.types.NodeKind;
 import org.apache.subversion.javahl.types.Revision;
 import org.apache.subversion.javahl.types.RevisionRange;
 import org.apache.subversion.javahl.types.Status;
+import org.apache.subversion.javahl.types.Tristate;
 import org.apache.subversion.javahl.types.Version;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
@@ -63,6 +65,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNLogEntry;
+import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.SVNMergeRange;
 import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNNodeKind;
@@ -285,6 +288,21 @@ public class SVNClientImpl implements ISVNClient {
             boolean discoverPath, boolean includeMergedRevisions,
             Set<String> revProps, long limit, LogMessageCallback callback)
             throws ClientException {
+
+        if (ranges != null) {
+            List<RevisionRange> filteredRanges = new ArrayList<RevisionRange>(ranges.size());
+            for (RevisionRange range : ranges) {
+                RevisionRange filteredRange;
+                if (range.getFromRevision() == null && range.getToRevision() == null) {
+                    filteredRange = new RevisionRange(new Revision.Number(1), Revision.HEAD);
+                } else {
+                    filteredRange = range;
+                }
+                filteredRanges.add(filteredRange);
+            }
+            ranges = filteredRanges;
+        }
+
         try {
             getEventHandler().setPathPrefix(getPathPrefix(path));
 
@@ -1572,9 +1590,38 @@ public class SVNClientImpl implements ISVNClient {
         }
         return new ISvnObjectReceiver<SVNLogEntry>() {
             public void receive(SvnTarget target, SVNLogEntry svnLogEntry) throws SVNException {
-                callback.singleMessage(svnLogEntry.getChangedPaths().keySet(), svnLogEntry.getRevision(), getProperties(svnLogEntry.getRevisionProperties()), svnLogEntry.hasChildren());
+                callback.singleMessage(getChangePaths(svnLogEntry.getChangedPaths()), svnLogEntry.getRevision(), getProperties(svnLogEntry.getRevisionProperties()), svnLogEntry.hasChildren());
             }
         };
+    }
+
+    private Set<ChangePath> getChangePaths(Map<String, SVNLogEntryPath> changedPaths) {
+        if (changedPaths == null) {
+            return null;
+        }
+
+        Set<ChangePath> changePaths = new HashSet<ChangePath>();
+        for (Map.Entry<String, SVNLogEntryPath> entry : changedPaths.entrySet()) {
+            SVNLogEntryPath svnLogEntryPath = entry.getValue();
+            //TODO: replace Tristate.Unknown with correct values in the following
+            changePaths.add(new ChangePath(svnLogEntryPath.getPath(), svnLogEntryPath.getCopyRevision(), svnLogEntryPath.getCopyPath(),
+                    getChangePathAction(svnLogEntryPath.getType()), getNodeKind(svnLogEntryPath.getKind()), Tristate.Unknown, Tristate.Unknown));
+        }
+        return changePaths;
+    }
+
+    private ChangePath.Action getChangePathAction(char type) {
+        if (type == 'A') {
+            return ChangePath.Action.add;
+        } else if (type == 'M') {
+            return ChangePath.Action.modify;
+        } else if (type == 'D') {
+            return ChangePath.Action.delete;
+        } else if (type == 'R') {
+            return ChangePath.Action.replace;
+        } else {
+            throw new IllegalArgumentException("Unknown change action type " + type);
+        }
     }
 
     private Map<String, byte[]> getProperties(SVNProperties svnProperties) {
