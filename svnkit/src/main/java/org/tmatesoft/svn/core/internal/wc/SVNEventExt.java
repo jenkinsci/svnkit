@@ -36,8 +36,8 @@ public class SVNEventExt extends SVNEvent {
         super(errorMessage, null);
     }
 
-    public SVNEventExt(File file, SVNNodeKind kind, String mimetype, long revision, SVNStatusType cstatus, SVNStatusType pstatus, SVNStatusType lstatus, SVNLock lock, SVNEventAction action, SVNEventAction expected, SVNErrorMessage error, SVNMergeRange range, String changelistName, long processedItemsCount, long totalItemsCount, SVNProperties revisionProperties) {
-        super(file, kind, mimetype, revision, cstatus, pstatus, lstatus, lock, action, expected, error, range, changelistName, revisionProperties);
+    public SVNEventExt(File file, SVNNodeKind kind, String mimetype, long revision, SVNStatusType cstatus, SVNStatusType pstatus, SVNStatusType lstatus, SVNLock lock, SVNEventAction action, SVNEventAction expected, SVNErrorMessage error, SVNMergeRange range, String changelistName, long processedItemsCount, long totalItemsCount, SVNProperties revisionProperties, String propertyName) {
+        super(file, kind, mimetype, revision, cstatus, pstatus, lstatus, lock, action, expected, error, range, changelistName, revisionProperties, propertyName);
         myProcessedItemsCount = processedItemsCount;
         myTotalItemsCount = totalItemsCount;
     }

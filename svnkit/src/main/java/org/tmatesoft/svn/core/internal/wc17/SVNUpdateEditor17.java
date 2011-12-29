@@ -338,7 +338,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
 
     private void doNotification(File localAbspath, SVNNodeKind kind, SVNEventAction action) throws SVNException {
         if (myWCContext.getEventHandler() != null) {
-            myWCContext.getEventHandler().handleEvent(new SVNEvent(localAbspath, kind, null, -1, null, null, null, null, action, null, null, null, null, null), 0);
+            myWCContext.getEventHandler().handleEvent(new SVNEvent(localAbspath, kind, null, -1, null, null, null, null, action, null, null, null, null, null, null), 0);
         }
     }
 
@@ -1002,7 +1002,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             } else {
                 action = SVNEventAction.UPDATE_UPDATE;
             }
-            SVNEvent event = new SVNEvent(db.localAbsolutePath, SVNNodeKind.DIR, null, myTargetRevision, null, propStatus[0], null, null, action, null, null, null, null, null);
+            SVNEvent event = new SVNEvent(db.localAbsolutePath, SVNNodeKind.DIR, null, myTargetRevision, null, propStatus[0], null, null, action, null, null, null, null, null, null);
             event.setPreviousRevision(db.oldRevision);
             myWCContext.getEventHandler().handleEvent(event, 0);
         }            

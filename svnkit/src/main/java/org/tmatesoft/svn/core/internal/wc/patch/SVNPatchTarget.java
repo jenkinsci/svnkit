@@ -1209,6 +1209,7 @@ public class SVNPatchTarget {
                     action = SVNEventAction.PATCH_APPLIED_HUNK;
                 }
 
+                //TODO: propertyName should be set in notify2
                 final SVNEvent notify2 = SVNEventFactory.createSVNEvent(target.absPath != null ? target.absPath : target.relPath, target.kind, null, 0, action, null, null, null);
                 notify2.setInfo(hi);
 

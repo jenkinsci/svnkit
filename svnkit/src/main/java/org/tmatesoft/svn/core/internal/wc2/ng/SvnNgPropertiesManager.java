@@ -218,7 +218,7 @@ public class SvnNgPropertiesManager {
         }
         if (eventHandler != null) {
             SVNEvent event = SVNEventFactory.createSVNEvent(path, SVNNodeKind.NONE, 
-                    null, -1, action, action, null, null, 1, 1);
+                    null, -1, action, action, null, null, 1, 1, null, propertyName);
             eventHandler.handleEvent(event, -1);
         }
     }

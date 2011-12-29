@@ -2412,9 +2412,6 @@ public class SVNClientImpl implements ISVNClient {
     }
 
     static ClientNotifyInformation getClientNotifyInformation(String pathPrefix, SVNEvent event, String path) {
-        //TODO: initialize these variables:
-        String propName = null;
-
         long hunkOriginalStart = -1;
         long hunkOriginalLength = -1;
         long hunkModifiedStart = -1;
@@ -2445,7 +2442,7 @@ public class SVNClientImpl implements ISVNClient {
                 event.getChangelistName(),
                 getRevisionRange(event.getMergeRange()),
                 pathPrefix,
-                propName,
+                event.getPropertyName(),
                 getRevisionProperties(event.getRevisionProperties()),
                 event.getPreviousRevision(),
                 hunkOriginalStart,

@@ -36,28 +36,32 @@ public class SVNEventFactory {
     }
 
     public static SVNEvent createLockEvent(File file, SVNEventAction action, SVNLock lock, SVNErrorMessage error){
-        return new SVNEvent(file, SVNNodeKind.FILE, null, SVNRepository.INVALID_REVISION, null, null, null, lock, action, null, error, null, null, null);
+        return new SVNEvent(file, SVNNodeKind.FILE, null, SVNRepository.INVALID_REVISION, null, null, null, lock, action, null, error, null, null, null, null);
     }
 
     public static SVNEvent createSVNEvent(File file, SVNNodeKind kind , String mimetype, long revision, SVNStatusType cstatus, SVNStatusType pstatus,
             SVNStatusType lstatus, SVNEventAction action, SVNEventAction expected, SVNErrorMessage error, SVNMergeRange range, String changelistName){
-        return new SVNEvent(file, kind, mimetype, revision, cstatus, pstatus, lstatus, null, action, expected, error, range, changelistName, null);
+        return new SVNEvent(file, kind, mimetype, revision, cstatus, pstatus, lstatus, null, action, expected, error, range, changelistName, null, null);
     }
 
     public static SVNEvent createSVNEvent(File file, SVNNodeKind kind , String mimetype, long revision, SVNStatusType cstatus, SVNStatusType pstatus,
             SVNStatusType lstatus, SVNEventAction action, SVNEventAction expected, SVNErrorMessage error, SVNMergeRange range){
-        return new SVNEvent(file, kind, mimetype, revision, cstatus, pstatus, lstatus, null, action, expected, error, range, null, null);
+        return new SVNEvent(file, kind, mimetype, revision, cstatus, pstatus, lstatus, null, action, expected, error, range, null, null, null);
     }
 
     public static SVNEvent createSVNEvent(File file, SVNNodeKind kind , String mimetype, long revision, SVNEventAction action, SVNEventAction expected, SVNErrorMessage error, SVNMergeRange range){
-        return new SVNEvent(file, kind, mimetype, revision, SVNStatusType.INAPPLICABLE, SVNStatusType.INAPPLICABLE, SVNStatusType.LOCK_INAPPLICABLE, null, action, expected, error, range, null, null);
+        return new SVNEvent(file, kind, mimetype, revision, SVNStatusType.INAPPLICABLE, SVNStatusType.INAPPLICABLE, SVNStatusType.LOCK_INAPPLICABLE, null, action, expected, error, range, null, null, null);
+    }
+
+    public static SVNEvent createSVNEvent(File file, SVNNodeKind kind , String mimetype, long revision, SVNEventAction action, SVNEventAction expected, SVNErrorMessage error, SVNMergeRange range, long processedItemsCount, long totalItemsCount, SVNProperties revisionProperties, String propertyName) {
+        return new SVNEventExt(file, kind, mimetype, revision, SVNStatusType.INAPPLICABLE, SVNStatusType.INAPPLICABLE, SVNStatusType.LOCK_INAPPLICABLE, null, action, expected, error, range, null, processedItemsCount, totalItemsCount, revisionProperties, propertyName);
     }
 
     public static SVNEvent createSVNEvent(File file, SVNNodeKind kind , String mimetype, long revision, SVNEventAction action, SVNEventAction expected, SVNErrorMessage error, SVNMergeRange range, long processedItemsCount, long totalItemsCount) {
-        return new SVNEventExt(file, kind, mimetype, revision, SVNStatusType.INAPPLICABLE, SVNStatusType.INAPPLICABLE, SVNStatusType.LOCK_INAPPLICABLE, null, action, expected, error, range, null, processedItemsCount, totalItemsCount, null);
+        return new SVNEventExt(file, kind, mimetype, revision, SVNStatusType.INAPPLICABLE, SVNStatusType.INAPPLICABLE, SVNStatusType.LOCK_INAPPLICABLE, null, action, expected, error, range, null, processedItemsCount, totalItemsCount, null, null);
     }
 
-    public static SVNEvent createSVNEvent(File file, SVNNodeKind kind , String mimetype, long revision, SVNEventAction action, SVNEventAction expected, SVNErrorMessage error, SVNMergeRange range, SVNProperties revisionProperties) {
-        return new SVNEvent(file, kind, mimetype, revision, SVNStatusType.INAPPLICABLE, SVNStatusType.INAPPLICABLE, SVNStatusType.LOCK_INAPPLICABLE, null, action, expected, error, range, null, revisionProperties);
+    public static SVNEvent createSVNEvent(File file, SVNNodeKind kind , String mimetype, long revision, SVNEventAction action, SVNEventAction expected, SVNErrorMessage error, SVNMergeRange range, SVNProperties revisionProperties, String propertyName) {
+        return new SVNEvent(file, kind, mimetype, revision, SVNStatusType.INAPPLICABLE, SVNStatusType.INAPPLICABLE, SVNStatusType.LOCK_INAPPLICABLE, null, action, expected, error, range, null, revisionProperties, propertyName);
     }
 }

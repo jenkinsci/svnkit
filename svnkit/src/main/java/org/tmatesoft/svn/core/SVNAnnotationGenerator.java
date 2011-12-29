@@ -234,7 +234,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
         SVNProperties props = fileRevision.getRevisionProperties();
         if (myCancelBaton != null) {
             File file = SVNPathUtil.isURL(myPath) ? null : new File(myPath);
-            SVNEvent event = SVNEventFactory.createSVNEvent(file, SVNNodeKind.NONE, null, myCurrentRevision, SVNEventAction.ANNOTATE, null, null, null, props);
+            SVNEvent event = SVNEventFactory.createSVNEvent(file, SVNNodeKind.NONE, null, myCurrentRevision, SVNEventAction.ANNOTATE, null, null, null, props, null);
             if (file == null) {
                 event.setURL(SVNURL.parseURIDecoded(myPath));
             }

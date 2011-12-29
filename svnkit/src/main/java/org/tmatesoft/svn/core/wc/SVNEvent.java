@@ -123,6 +123,7 @@ public class SVNEvent {
     private String myChangelistName;
     private SVNMergeRange myRange;
     private SVNProperties myRevisionProperties;
+    private String myPropertyName;
     private Object info;
 
     /**
@@ -163,7 +164,8 @@ public class SVNEvent {
      */
     public SVNEvent(File file, SVNNodeKind kind, String mimetype, long revision, SVNStatusType cstatus, 
             SVNStatusType pstatus, SVNStatusType lstatus, SVNLock lock, SVNEventAction action, 
-            SVNEventAction expected, SVNErrorMessage error, SVNMergeRange range, String changelistName, SVNProperties revisionProperties) {
+            SVNEventAction expected, SVNErrorMessage error, SVNMergeRange range, String changelistName, SVNProperties revisionProperties,
+            String propertyName) {
         myFile = file != null ? file.getAbsoluteFile() : null;
         myNodeKind = kind == null ? SVNNodeKind.UNKNOWN : kind;
         myMimeType = mimetype;
@@ -179,6 +181,7 @@ public class SVNEvent {
         myChangelistName = changelistName;
         myPreviousRevision = -1;
         myRevisionProperties = revisionProperties;
+        myPropertyName = propertyName;
     }
 
     /**
@@ -454,5 +457,13 @@ public class SVNEvent {
 
     public void setRevisionProperties(SVNProperties revisionProperties) {
         this.myRevisionProperties = revisionProperties;
+    }
+
+    public String getPropertyName() {
+        return myPropertyName;
+    }
+
+    public void setPropertyName(String propertyName) {
+        this.myPropertyName = propertyName;
     }
 }

@@ -1715,7 +1715,7 @@ public class SVNWCContext {
         }
         db.addBaseExcludedNode(localAbspath, reposRelpath, reposRoot, reposUuid, revision, kind, SVNWCDbStatus.Excluded, null, null);
         if (getEventHandler() != null) {
-            SVNEvent event = new SVNEvent(localAbspath, null, null, -1, null, null, null, null, SVNEventAction.DELETE, null, null, null, null, null);
+            SVNEvent event = new SVNEvent(localAbspath, null, null, -1, null, null, null, null, SVNEventAction.DELETE, null, null, null, null, null, null);
             getEventHandler().handleEvent(event, 0);
         }
         return;
@@ -1935,7 +1935,7 @@ public class SVNWCContext {
                 return;
             }
             if (eventHandler != null) {
-                SVNEvent event = new SVNEvent(childAbspath, null, null, -1, null, null, null, null, SVNEventAction.DELETE, null, null, null, null, null);
+                SVNEvent event = new SVNEvent(childAbspath, null, null, -1, null, null, null, null, SVNEventAction.DELETE, null, null, null, null, null, null);
                 getEventHandler().handleEvent(event, 0);
             }
         }
@@ -4073,7 +4073,7 @@ public class SVNWCContext {
     	}
 
     	if (resolved && getEventHandler() != null) {
-    		SVNEvent event = new SVNEvent(localAbsPath, null, null, -1, null, null, null, null, SVNEventAction.RESOLVED, null, null, null, null, null);
+    		SVNEvent event = new SVNEvent(localAbsPath, null, null, -1, null, null, null, null, SVNEventAction.RESOLVED, null, null, null, null, null, null);
             getEventHandler().handleEvent(event, 0);
     	}
     }
