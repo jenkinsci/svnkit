@@ -1508,7 +1508,7 @@ public class SVNClientImpl implements ISVNClient {
         if (path == null) {
             return null;
         }
-        return path.getPath();
+        return path.getPath().replace(File.separatorChar, '/');
     }
 
     private String getUrlString(SVNURL url) {
