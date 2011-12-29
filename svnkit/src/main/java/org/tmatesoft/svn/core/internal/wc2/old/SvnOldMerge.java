@@ -22,13 +22,13 @@ public class SvnOldMerge extends SvnOldRunner<Long, SvnMerge> {
             if (getOperation().getSource().isURL()) {
                 diffClient.doMergeReIntegrate(
                         getOperation().getSource().getURL(), 
-                        getOperation().getSource().getPegRevision(), 
+                        getOperation().getSource().getResolvedPegRevision(), 
                         getOperation().getFirstTarget().getFile(), 
                         getOperation().isDryRun());
             } else {
                 diffClient.doMergeReIntegrate(
                         getOperation().getSource().getFile(), 
-                        getOperation().getSource().getPegRevision(), 
+                        getOperation().getSource().getResolvedPegRevision(), 
                         getOperation().getFirstTarget().getFile(), 
                         getOperation().isDryRun());
             }
@@ -39,7 +39,7 @@ public class SvnOldMerge extends SvnOldRunner<Long, SvnMerge> {
             }
             if (getOperation().getSource().isURL()) {
                 diffClient.doMerge(getOperation().getSource().getURL(), 
-                        getOperation().getSource().getPegRevision(),
+                        getOperation().getSource().getResolvedPegRevision(),
                         oldRanges,
                         getOperation().getFirstTarget().getFile(), 
                         getOperation().getDepth(), 
@@ -49,7 +49,7 @@ public class SvnOldMerge extends SvnOldRunner<Long, SvnMerge> {
                         getOperation().isRecordOnly());
             } else {
                 diffClient.doMerge(getOperation().getSource().getFile(), 
-                        getOperation().getSource().getPegRevision(),
+                        getOperation().getSource().getResolvedPegRevision(),
                         oldRanges,
                         getOperation().getFirstTarget().getFile(), 
                         getOperation().getDepth(), 
@@ -64,9 +64,9 @@ public class SvnOldMerge extends SvnOldRunner<Long, SvnMerge> {
             
             if (firstSource.isURL() && secondSource.isURL()) {
                 diffClient.doMerge(firstSource.getURL(), 
-                        firstSource.getPegRevision(), 
+                        firstSource.getResolvedPegRevision(), 
                         secondSource.getURL(), 
-                        secondSource.getPegRevision(),
+                        secondSource.getResolvedPegRevision(),
                         getOperation().getFirstTarget().getFile(), 
                         getOperation().getDepth(), 
                         !getOperation().isIgnoreAncestry(), 
@@ -75,9 +75,9 @@ public class SvnOldMerge extends SvnOldRunner<Long, SvnMerge> {
                         getOperation().isRecordOnly());
             } else if (firstSource.isURL() && secondSource.isFile()) {
                 diffClient.doMerge(firstSource.getURL(), 
-                        firstSource.getPegRevision(), 
+                        firstSource.getResolvedPegRevision(), 
                         secondSource.getFile(), 
-                        secondSource.getPegRevision(),
+                        secondSource.getResolvedPegRevision(),
                         getOperation().getFirstTarget().getFile(), 
                         getOperation().getDepth(), 
                         !getOperation().isIgnoreAncestry(), 
@@ -86,9 +86,9 @@ public class SvnOldMerge extends SvnOldRunner<Long, SvnMerge> {
                         getOperation().isRecordOnly());
             } else if (firstSource.isFile() && secondSource.isURL()) {
                 diffClient.doMerge(firstSource.getFile(), 
-                        firstSource.getPegRevision(), 
+                        firstSource.getResolvedPegRevision(), 
                         secondSource.getURL(), 
-                        secondSource.getPegRevision(),
+                        secondSource.getResolvedPegRevision(),
                         getOperation().getFirstTarget().getFile(), 
                         getOperation().getDepth(), 
                         !getOperation().isIgnoreAncestry(), 
@@ -97,9 +97,9 @@ public class SvnOldMerge extends SvnOldRunner<Long, SvnMerge> {
                         getOperation().isRecordOnly());
             } else if (firstSource.isFile() && secondSource.isFile()) {
                 diffClient.doMerge(firstSource.getFile(), 
-                        firstSource.getPegRevision(), 
+                        firstSource.getResolvedPegRevision(), 
                         secondSource.getFile(),
-                        secondSource.getPegRevision(),
+                        secondSource.getResolvedPegRevision(),
                         getOperation().getFirstTarget().getFile(), 
                         getOperation().getDepth(), 
                         !getOperation().isIgnoreAncestry(), 

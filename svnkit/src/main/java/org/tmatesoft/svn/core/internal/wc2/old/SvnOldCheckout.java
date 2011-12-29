@@ -16,7 +16,7 @@ public class SvnOldCheckout extends SvnOldRunner<Long, SvnCheckout> {
         
         return client.doCheckout(getOperation().getSource().getURL(), 
                 getFirstTarget(), 
-                getOperation().getSource().getPegRevision(), 
+                getOperation().getSource().getResolvedPegRevision(), 
                 getOperation().getRevision(), 
                 getOperation().getDepth(), 
                 getOperation().isAllowUnversionedObstructions());

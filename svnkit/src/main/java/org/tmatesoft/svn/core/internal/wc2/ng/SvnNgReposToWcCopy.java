@@ -65,7 +65,7 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
     
     private boolean areAllSourcesRemote(SvnCopy operation) {
         for(SvnCopySource source : operation.getSources()) {
-            if (source.getSource().isFile() && isLocalRevision(source.getRevision()) && isLocalRevision(source.getSource().getPegRevision())) {
+            if (source.getSource().isFile() && isLocalRevision(source.getRevision()) && isLocalRevision(source.getSource().getResolvedPegRevision())) {
                 return false;
             }
         }
@@ -99,19 +99,19 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
                         SVNErrorManager.error(err, SVNLogType.WC);
                     }
                     // resolve peg rev which might be 'WORKING' or 'BASE'. 
-                    if (copySource.getSource().getPegRevision() == SVNRevision.WORKING) {
+                    if (copySource.getSource().getResolvedPegRevision() == SVNRevision.WORKING) {
                         Structure<RevisionsPair> pair = getRepositoryAccess().getRevisionNumber(null, copySource.getSource(), 
-                                copySource.getSource().getPegRevision(), null);
+                                copySource.getSource().getResolvedPegRevision(), null);
                         copyPair.sourcePegRevision = SVNRevision.create(pair.lng(RevisionsPair.revNumber));
                         pair.release();
                     } else {
-                        copyPair.sourcePegRevision = copySource.getSource().getPegRevision();
+                        copyPair.sourcePegRevision = copySource.getSource().getResolvedPegRevision();
                     }
                     copyPair.sourceRevision = copySource.getRevision();
                 } else {
                     copyPair.source = copySource.getSource().getURL();
                     baseName = SVNPathUtil.tail(copyPair.source.getPath());
-                    copyPair.sourcePegRevision = copySource.getSource().getPegRevision();
+                    copyPair.sourcePegRevision = copySource.getSource().getResolvedPegRevision();
                     copyPair.sourceRevision = copySource.getRevision();
                 }
                 copyPair.dst = new File(getFirstTarget(), baseName);
@@ -128,13 +128,13 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
                 copyPair.source = source.getSource().getURL();
                 baseName = SVNPathUtil.tail(copyPair.source.getPath());
             }
-            if (source.getSource().getPegRevision() == SVNRevision.WORKING) {
+            if (source.getSource().getResolvedPegRevision() == SVNRevision.WORKING) {
                 Structure<RevisionsPair> pair = getRepositoryAccess().getRevisionNumber(null, source.getSource(), 
-                        source.getSource().getPegRevision(), null);
+                        source.getSource().getResolvedPegRevision(), null);
                 copyPair.sourcePegRevision = SVNRevision.create(pair.lng(RevisionsPair.revNumber));
                 pair.release();
             } else {
-                copyPair.sourcePegRevision = source.getSource().getPegRevision();
+                copyPair.sourcePegRevision = source.getSource().getResolvedPegRevision();
             }
             copyPair.sourceRevision = source.getRevision();
             copyPair.dst = getFirstTarget();

@@ -36,7 +36,7 @@ public class SvnCheckout extends AbstractSvnUpdate<Long> {
         }
 
         if (!getRevision().isValid() && getFirstTarget() != null) {
-            setRevision(getSource().getPegRevision());            
+            setRevision(getSource().getResolvedPegRevision());            
         }
         if (!getRevision().isValid()) {
             setRevision(SVNRevision.HEAD);

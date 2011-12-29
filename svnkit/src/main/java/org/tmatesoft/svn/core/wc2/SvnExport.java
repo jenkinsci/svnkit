@@ -67,7 +67,7 @@ public class SvnExport extends AbstractSvnUpdate<Long> {
             setDepth(SVNDepth.INFINITY);
         }
         if (getRevision() == SVNRevision.UNDEFINED) {            
-            setRevision(getSource().getPegRevision());
+            setRevision(getSource().getResolvedPegRevision());
         }
         super.ensureArgumentsAreValid();
     }

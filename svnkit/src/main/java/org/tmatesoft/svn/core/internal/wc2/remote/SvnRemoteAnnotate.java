@@ -57,7 +57,7 @@ public class SvnRemoteAnnotate extends SvnRemoteOperationRunner<SvnAnnotateItem,
         }
 		
 		Structure<RepositoryInfo> repositoryInfo = getRepositoryAccess().createRepositoryFor(
-				getOperation().getFirstTarget(), getOperation().getEndRevision(), getOperation().getFirstTarget().getPegRevision(),null);
+				getOperation().getFirstTarget(), getOperation().getEndRevision(), getOperation().getFirstTarget().getResolvedPegRevision(),null);
     	
     	SVNRepository repository = repositoryInfo.<SVNRepository>get(RepositoryInfo.repository);
 		repositoryInfo.release();

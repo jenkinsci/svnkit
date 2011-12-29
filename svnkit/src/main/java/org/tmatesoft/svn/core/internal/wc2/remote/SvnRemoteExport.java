@@ -53,7 +53,7 @@ public class SvnRemoteExport extends SvnRemoteOperationRunner<Long, SvnExport> {
     protected Long run() throws SVNException {
         SvnTarget exportSource = getOperation().getSource();
         Structure<RepositoryInfo> repositoryInfo = 
-            getRepositoryAccess().createRepositoryFor(exportSource, getOperation().getRevision(), exportSource.getPegRevision(), exportSource.getFile());
+            getRepositoryAccess().createRepositoryFor(exportSource, getOperation().getRevision(), exportSource.getResolvedPegRevision(), exportSource.getFile());
         final long revNumber = repositoryInfo.lng(RepositoryInfo.revision);
         SVNRepository repository = repositoryInfo.<SVNRepository>get(RepositoryInfo.repository);
         repositoryInfo.release();

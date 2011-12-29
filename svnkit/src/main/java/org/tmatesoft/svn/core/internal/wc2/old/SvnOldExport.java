@@ -18,7 +18,7 @@ public class SvnOldExport extends SvnOldRunner<Long, SvnExport> {
         return client.doExport(
                 getOperation().getSource().getFile(), 
                 getOperation().getFirstTarget().getFile(), 
-                getOperation().getSource().getPegRevision(), 
+                getOperation().getSource().getResolvedPegRevision(), 
                 getOperation().getRevision(), 
                 getOperation().getEolStyle(),
                 getOperation().isForce(),

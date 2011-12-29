@@ -38,7 +38,7 @@ public class SvnTarget {
     }
     
     public boolean isLocal() {
-        return isFile() && getPegRevision().isLocal();
+        return isFile() && getResolvedPegRevision().isLocal();
     }
     
     public boolean isFile() {
@@ -60,10 +60,28 @@ public class SvnTarget {
     public SVNRevision getPegRevision() {
         return this.pegRevision;
     }
+
+    public SVNRevision getResolvedPegRevision() {
+        return getResolvedPegRevision(SVNRevision.HEAD, SVNRevision.WORKING);
+    }
+    
+    public SVNRevision getResolvedPegRevision(SVNRevision defaultRemote, SVNRevision defaultLocal) {
+        if (getPegRevision() == null || getPegRevision() == SVNRevision.UNDEFINED) {
+            if (defaultLocal == null) {
+                defaultLocal = SVNRevision.WORKING;
+            }
+            if (defaultRemote == null) {
+                defaultRemote = SVNRevision.HEAD;
+            }
+            return isURL() ? defaultRemote : defaultLocal;
+        }
+        
+        return getPegRevision();
+    }
     
     private void setPegRevision(SVNRevision revision) {
-        if (revision == null || revision == SVNRevision.UNDEFINED) {
-            revision = isURL() ? SVNRevision.HEAD : SVNRevision.WORKING;
+        if (revision == null) {
+            revision = SVNRevision.UNDEFINED;
         }
         this.pegRevision = revision;
     }

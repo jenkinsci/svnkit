@@ -55,7 +55,7 @@ public class SvnNgReposToReposCopy extends SvnRemoteOperationRunner<SVNCommitInf
                 Structure<NodeOriginInfo> origin = getWcContext().getNodeOrigin(newSource.getSource().getFile(), true, NodeOriginInfo.reposRelpath, NodeOriginInfo.reposRootUrl, NodeOriginInfo.revision);
                 SVNURL url = origin.get(NodeOriginInfo.reposRootUrl);
                 url = url.appendPath(origin.<File>get(NodeOriginInfo.reposRelpath).getPath(), false);
-                SVNRevision pegRevision = newSource.getSource().getPegRevision();
+                SVNRevision pegRevision = newSource.getSource().getResolvedPegRevision();
                 SVNRevision revision = newSource.getRevision();
                 if (pegRevision == SVNRevision.BASE) {
                     pegRevision = SVNRevision.create(origin.lng(NodeOriginInfo.revision));

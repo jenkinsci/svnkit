@@ -14,7 +14,6 @@ package org.tmatesoft.svn.core.internal.wc17;
 import java.io.File;
 import java.io.OutputStream;
 import java.util.Collection;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;

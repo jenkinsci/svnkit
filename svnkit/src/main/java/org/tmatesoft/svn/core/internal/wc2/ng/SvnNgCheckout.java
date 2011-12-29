@@ -11,7 +11,7 @@ public class SvnNgCheckout extends SvnNgAbstractUpdate<Long, SvnCheckout>{
     @Override
     protected Long run(SVNWCContext context) throws SVNException {
         SvnTarget source = getOperation().getSource();
-        return checkout(source.getURL(), getFirstTarget(), source.getPegRevision(), getOperation().getRevision(), getOperation().getDepth(), getOperation().isIgnoreExternals(), getOperation().isAllowUnversionedObstructions(), getOperation().isSleepForTimestamp());
+        return checkout(source.getURL(), getFirstTarget(), source.getResolvedPegRevision(), getOperation().getRevision(), getOperation().getDepth(), getOperation().isIgnoreExternals(), getOperation().isAllowUnversionedObstructions(), getOperation().isSleepForTimestamp());
     }
 
 }

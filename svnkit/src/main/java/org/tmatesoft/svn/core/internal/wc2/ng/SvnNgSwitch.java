@@ -12,7 +12,7 @@ public class SvnNgSwitch extends SvnNgAbstractUpdate<Long, SvnSwitch> {
     protected Long run(SVNWCContext context) throws SVNException {
         SvnTarget switchTarget = getOperation().getSwitchTarget();
         return doSwitch(getFirstTarget(), switchTarget.getURL(), getOperation().getRevision(), 
-                switchTarget.getPegRevision(),
+                switchTarget.getResolvedPegRevision(),
                 getOperation().getDepth(), getOperation().isDepthIsSticky(), getOperation().isIgnoreExternals(),
                 getOperation().isAllowUnversionedObstructions(), getOperation().isIgnoreAncestry(), getOperation().isSleepForTimestamp());
     }

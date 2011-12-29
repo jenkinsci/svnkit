@@ -679,9 +679,9 @@ public class SvnCodec {
 
     public static SVNCopySource copySource(SvnCopySource newSource) {
         if (newSource.getSource().getURL() != null) {
-            return new SVNCopySource(newSource.getSource().getPegRevision(), newSource.getRevision(), newSource.getSource().getURL());
+            return new SVNCopySource(newSource.getSource().getResolvedPegRevision(), newSource.getRevision(), newSource.getSource().getURL());
         }
-        return new SVNCopySource(newSource.getSource().getPegRevision(), newSource.getRevision(), newSource.getSource().getFile());
+        return new SVNCopySource(newSource.getSource().getResolvedPegRevision(), newSource.getRevision(), newSource.getSource().getFile());
     }
 
     public static SvnCopySource copySource(SVNCopySource oldSource) {

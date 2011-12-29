@@ -35,7 +35,7 @@ public class SvnRemoteCat extends SvnRemoteOperationRunner<Long, SvnCat> {
                 getRepositoryAccess().createRepositoryFor(
                         target, 
                         revision, 
-                        target.getPegRevision(), 
+                        target.getResolvedPegRevision(), 
                         null);
             
         SVNRepository repos = repositoryInfo.<SVNRepository>get(RepositoryInfo.repository);

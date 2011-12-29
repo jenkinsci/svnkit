@@ -42,7 +42,7 @@ public class SvnRemoteLog extends SvnRemoteOperationRunner<SVNLogEntry, SvnLog> 
     protected SVNLogEntry run() throws SVNException {
     	
     	String[] targetPaths = null;
-    	SVNRevision pegRevision = getOperation().getFirstTarget().getPegRevision();
+    	SVNRevision pegRevision = getOperation().getFirstTarget().getResolvedPegRevision();
     	SvnTarget baseTarget = getOperation().getFirstTarget();
     	 
     	SVNRevision sessionRevision = SVNRevision.UNDEFINED;
@@ -55,14 +55,14 @@ public class SvnRemoteLog extends SvnRemoteOperationRunner<SVNLogEntry, SvnLog> 
             } else if (!revRange.getStart().isValid()) {
                 SVNRevision start = SVNRevision.UNDEFINED;
                 SVNRevision end = SVNRevision.UNDEFINED;
-                if (!getOperation().getFirstTarget().getPegRevision().isValid()) {
+                if (!getOperation().getFirstTarget().getResolvedPegRevision().isValid()) {
                 	if (getOperation().hasRemoteTargets()) {
                 		start = SVNRevision.BASE;
                 	} else {
                 		start = SVNRevision.HEAD;
                 	}
                 } else {
-                    start = getOperation().getFirstTarget().getPegRevision();
+                    start = getOperation().getFirstTarget().getResolvedPegRevision();
                 }
                 
                 if (!revRange.getEnd().isValid()) {
@@ -129,7 +129,7 @@ public class SvnRemoteLog extends SvnRemoteOperationRunner<SVNLogEntry, SvnLog> 
                 File path = target.getFile();
                 wcPaths.add(path.getAbsolutePath().replace(File.separatorChar, '/'));
                 
-                Structure<SvnRepositoryAccess.UrlInfo> locationsInfo = getRepositoryAccess().getURLFromPath(target, target.getPegRevision(), repository);
+                Structure<SvnRepositoryAccess.UrlInfo> locationsInfo = getRepositoryAccess().getURLFromPath(target, target.getResolvedPegRevision(), repository);
                 targetUrls[i++] = locationsInfo.<SVNURL>get(SvnRepositoryAccess.UrlInfo.url);
             }
             

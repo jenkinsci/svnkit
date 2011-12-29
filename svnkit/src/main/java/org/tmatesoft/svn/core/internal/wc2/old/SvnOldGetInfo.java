@@ -16,7 +16,7 @@ public class SvnOldGetInfo extends SvnOldRunner<SvnInfo, SvnGetInfo> implements 
         SVNWCClient16 client = new SVNWCClient16(getOperation().getRepositoryPool(), getOperation().getOptions());        
         client.setEventHandler(getOperation().getEventHandler());
         client.doInfo(getFirstTarget(), 
-                getOperation().getFirstTarget().getPegRevision(), 
+                getOperation().getFirstTarget().getResolvedPegRevision(), 
                 getOperation().getRevision(), 
                 getOperation().getDepth(), 
                 getOperation().getApplicableChangelists(), 

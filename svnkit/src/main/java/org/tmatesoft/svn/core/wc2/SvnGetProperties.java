@@ -20,7 +20,7 @@ public class SvnGetProperties extends SvnReceivingOperation<SVNProperties> {
         }
         if (getRevision() == null || !getRevision().isValid()) {
             if (getFirstTarget() != null) {
-                setRevision(getFirstTarget().getPegRevision());
+                setRevision(getFirstTarget().getResolvedPegRevision());
             }
         }
         super.ensureArgumentsAreValid();

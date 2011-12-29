@@ -47,7 +47,7 @@ public class SvnRemoteGetProperties extends SvnRemoteOperationRunner<SVNProperti
             getRepositoryAccess().createRepositoryFor(
                     target, 
                     getOperation().getRevision(), 
-                    target.getPegRevision(), 
+                    target.getResolvedPegRevision(), 
                     null);
         
         SVNRepository repository = repositoryInfo.<SVNRepository>get(RepositoryInfo.repository);

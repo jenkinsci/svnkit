@@ -13,7 +13,7 @@ public class SvnOldCat extends SvnOldRunner<Long, SvnCat> {
         if (getOperation().hasRemoteTargets()) {
         	client.doGetFileContents(
             		getOperation().getFirstTarget().getURL(),
-        			getOperation().getFirstTarget().getPegRevision(), 
+        			getOperation().getFirstTarget().getResolvedPegRevision(), 
         			getOperation().getRevision(),
         			getOperation().isExpandKeywords(),
         			getOperation().getOutput());
@@ -21,7 +21,7 @@ public class SvnOldCat extends SvnOldRunner<Long, SvnCat> {
         else {
         	client.doGetFileContents(
             		getOperation().getFirstTarget().getFile(),
-        			getOperation().getFirstTarget().getPegRevision(), 
+        			getOperation().getFirstTarget().getResolvedPegRevision(), 
         			getOperation().getRevision(),
         			getOperation().isExpandKeywords(),
         			getOperation().getOutput());

@@ -44,7 +44,7 @@ public class SvnRemoteGetInfo extends SvnRemoteOperationRunner<SvnInfo, SvnGetIn
     protected SvnInfo run() throws SVNException {
         SvnTarget infoTarget = getOperation().getFirstTarget();
         Structure<RepositoryInfo> repositoryInfo = 
-            getRepositoryAccess().createRepositoryFor(infoTarget, getOperation().getRevision(), infoTarget.getPegRevision(), null);
+            getRepositoryAccess().createRepositoryFor(infoTarget, getOperation().getRevision(), infoTarget.getResolvedPegRevision(), null);
         
         SVNRepository repository = repositoryInfo.<SVNRepository>get(RepositoryInfo.repository);
         SVNURL url = repositoryInfo.<SVNURL>get(RepositoryInfo.url);
@@ -59,7 +59,7 @@ public class SvnRemoteGetInfo extends SvnRemoteOperationRunner<SvnInfo, SvnGetIn
         SVNDirEntry rootEntry = null;
         
         SVNDepth depth = getOperation().getDepth();
-        SVNRevision pegRevision = infoTarget.getPegRevision();
+        SVNRevision pegRevision = infoTarget.getResolvedPegRevision();
         
         try {
             rootEntry = repository.info("", revNum);

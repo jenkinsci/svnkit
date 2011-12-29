@@ -14,7 +14,7 @@ public class SvnCopySource extends SvnObject {
     private SvnCopySource(SvnTarget source, SVNRevision revision) {
         setSource(source);
         if (revision == null || !revision.isValid()) {
-            revision = source.getPegRevision();
+            revision = source.getResolvedPegRevision();
         }
         setRevision(revision);
     }

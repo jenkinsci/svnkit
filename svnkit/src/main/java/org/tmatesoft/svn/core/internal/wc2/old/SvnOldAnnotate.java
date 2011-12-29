@@ -25,7 +25,7 @@ public class SvnOldAnnotate extends SvnOldRunner<SvnAnnotateItem, SvnAnnotate> i
     		getOperation().setStartRevision(SVNRevision.create(1));
         }
         if (getOperation().getEndRevision() == null || !getOperation().getEndRevision().isValid()) {
-            getOperation().setEndRevision(getOperation().getFirstTarget().getPegRevision());
+            getOperation().setEndRevision(getOperation().getFirstTarget().getResolvedPegRevision());
         }
         if (getOperation().getStartRevision() == SVNRevision.WORKING || getOperation().getEndRevision() == SVNRevision.WORKING) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Blame of the WORKING revision is not supported");
@@ -37,12 +37,12 @@ public class SvnOldAnnotate extends SvnOldRunner<SvnAnnotateItem, SvnAnnotate> i
 		client.setEventHandler(getOperation().getEventHandler());
                 
         if (getOperation().hasRemoteTargets()) {
-        	client.doAnnotate(getOperation().getFirstTarget().getURL(), getOperation().getFirstTarget().getPegRevision(), 
+        	client.doAnnotate(getOperation().getFirstTarget().getURL(), getOperation().getFirstTarget().getResolvedPegRevision(), 
         			getOperation().getStartRevision(), getOperation().getEndRevision(), getOperation().isIgnoreMimeType(), 
         			getOperation().isUseMergeHistory(), this, getOperation().getInputEncoding());   
         }
         else {
-        	client.doAnnotate(getOperation().getFirstTarget().getFile(), getOperation().getFirstTarget().getPegRevision(), 
+        	client.doAnnotate(getOperation().getFirstTarget().getFile(), getOperation().getFirstTarget().getResolvedPegRevision(), 
         			getOperation().getStartRevision(), getOperation().getEndRevision(), getOperation().isIgnoreMimeType(), 
         			getOperation().isUseMergeHistory(), this, getOperation().getInputEncoding());        
         }

@@ -40,7 +40,7 @@ public class SvnRemoteList extends SvnRemoteOperationRunner<SVNDirEntry, SvnList
     protected SVNDirEntry run() throws SVNException {
         SvnTarget infoTarget = getOperation().getFirstTarget();
         Structure<RepositoryInfo> repositoryInfo = 
-            getRepositoryAccess().createRepositoryFor(infoTarget, getOperation().getRevision(), infoTarget.getPegRevision(), null);
+            getRepositoryAccess().createRepositoryFor(infoTarget, getOperation().getRevision(), infoTarget.getResolvedPegRevision(), null);
         
         SVNRepository repository = repositoryInfo.<SVNRepository>get(RepositoryInfo.repository);
         long revNum = repositoryInfo.lng(RepositoryInfo.revision);                

@@ -14,7 +14,7 @@ public class SvnOldSwitch extends SvnOldRunner<Long, SvnSwitch> {
         client.setEventHandler(getOperation().getEventHandler());
         return client.doSwitch(getFirstTarget(), 
                 getOperation().getSwitchTarget().getURL(), 
-                getOperation().getSwitchTarget().getPegRevision(), 
+                getOperation().getSwitchTarget().getResolvedPegRevision(), 
                 getOperation().getRevision(), 
                 getOperation().getDepth(), 
                 getOperation().isAllowUnversionedObstructions(),
