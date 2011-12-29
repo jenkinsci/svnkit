@@ -28,6 +28,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
 import org.tmatesoft.svn.core.internal.wc2.ISvnCommitRunner;
 import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
+import org.tmatesoft.svn.core.wc.ISVNChangelistHandler;
 import org.tmatesoft.svn.core.wc.ISVNCommitHandler;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
 import org.tmatesoft.svn.core.wc.ISVNStatusFileProvider;
@@ -77,6 +78,18 @@ public class SvnCodec {
         result.setKind(diffStatus.getKind());
         result.setUserData(diffStatus);
         return result;
+    }
+    
+    
+    
+    public static ISvnObjectReceiver<String> changelistReceiver(final ISVNChangelistHandler handler) {
+        return new ISvnObjectReceiver<String>() {
+            public void receive(SvnTarget target, String object) throws SVNException {
+                if (handler != null) {
+                    handler.handle(target.getFile(), object);
+                }
+            }
+        };
     }
     
     public static ISvnObjectReceiver<SVNPropertyData> propertyReceiver(final ISVNPropertyHandler handler) {

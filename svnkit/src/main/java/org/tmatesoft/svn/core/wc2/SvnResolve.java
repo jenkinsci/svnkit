@@ -1,12 +1,10 @@
 package org.tmatesoft.svn.core.wc2;
 
-import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.wc.SVNConflictChoice;
 
 public class SvnResolve extends SvnOperation<Long> {
 
     private SVNConflictChoice conflictChoice;
-    private SVNDepth depth;
     private boolean resolveContents = true;
     private boolean resolveProperties = true;
     private boolean resolveTree = true;
@@ -21,14 +19,6 @@ public class SvnResolve extends SvnOperation<Long> {
 
     public void setConflictChoice(SVNConflictChoice conflictChoice) {
         this.conflictChoice = conflictChoice;
-    }
-    
-    public SVNDepth getDepth() {
-        return depth;
-    }
-
-    public void setDepth(SVNDepth depth) {
-        this.depth = depth;
     }
     
     public boolean isResolveContents() {

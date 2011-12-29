@@ -21,8 +21,9 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc16.SVNChangelistClient16;
 import org.tmatesoft.svn.core.internal.wc17.SVNChangelistClient17;
+import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.wc2.SvnCat;
+import org.tmatesoft.svn.core.wc2.SvnGetChangelistPaths;
 import org.tmatesoft.svn.core.wc2.SvnSetChangelist;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -317,15 +318,15 @@ public class SVNChangelistClient extends SVNBasicClient {
      * @throws SVNException
      */
     public void doGetChangeListPaths(Collection changeLists, Collection targets, SVNDepth depth, ISVNChangelistHandler handler) throws SVNException {
-        try {
-            getSVNChangelistClient17().doGetChangeListPaths(changeLists, targets, depth, handler);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNChangelistClient16().doGetChangeListPaths(changeLists, targets, depth, handler);
-                return;
-            }
-            throw e;
+    	SvnGetChangelistPaths gp = getOperationsFactory().createGetChangelistPaths();
+    	for (Object file : targets) {
+    		gp.addTarget(SvnTarget.fromFile((File)file));
         }
+    	gp.setReceiver(SvnCodec.changelistReceiver(handler));
+    	gp.setDepth(depth);
+    	if (changeLists != null)
+    		gp.setApplicalbeChangelists(changeLists);
+    	gp.run();
     }
 
     /**
@@ -362,15 +363,13 @@ public class SVNChangelistClient extends SVNBasicClient {
      * @since 1.2.0, New in SVN 1.5.0
      */
     public void doGetChangeLists(File path, final Collection changeLists, SVNDepth depth, final ISVNChangelistHandler handler) throws SVNException {
-        try {
-            getSVNChangelistClient17().doGetChangeLists(path, changeLists, depth, handler);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNChangelistClient16().doGetChangeLists(path, changeLists, depth, handler);
-                return;
-            }
-            throw e;
-        }
+    	SvnGetChangelistPaths gp = getOperationsFactory().createGetChangelistPaths();
+    	gp.addTarget(SvnTarget.fromFile(path));
+        gp.setReceiver(SvnCodec.changelistReceiver(handler));
+    	gp.setDepth(depth);
+    	if (changeLists != null)
+    		gp.setApplicalbeChangelists(changeLists);
+    	gp.run();
     }
 
 }

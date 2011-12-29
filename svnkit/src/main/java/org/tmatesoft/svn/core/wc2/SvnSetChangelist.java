@@ -1,6 +1,5 @@
 package org.tmatesoft.svn.core.wc2;
 
-import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -11,8 +10,7 @@ public class SvnSetChangelist extends SvnOperation<Long> {
 
     private String changelistName;
     private boolean remove;
-    private SVNDepth depth;
-
+    
     protected SvnSetChangelist(SvnOperationFactory factory) {
         super(factory);
     }
@@ -25,14 +23,6 @@ public class SvnSetChangelist extends SvnOperation<Long> {
         this.changelistName = changelistName;
     }
     
-    public SVNDepth getDepth() {
-        return depth;
-    }
-
-    public void setDepth(SVNDepth depth) {
-        this.depth = depth;
-    }
-
     public boolean isRemove() {
         return remove;
     }
