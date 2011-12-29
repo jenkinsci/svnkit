@@ -98,7 +98,7 @@ public class SVNReporter17 implements ISVNReporterBaton {
         SVNURL repos_root = null;
         SVNDepth target_depth = SVNDepth.UNKNOWN;
         SVNWCDbLock target_lock = null;
-        boolean explicit_rev, start_empty;
+        boolean start_empty;
         SVNErrorMessage err = null;
         
         try {
@@ -350,7 +350,8 @@ public class SVNReporter17 implements ISVNReporterBaton {
             if (ths.reposRelPath == null) {
                 ths.reposRelPath = SVNFileUtil.createFilePath(dirReposRelPath, child);
             } else {
-                if (!SVNWCUtils.isChild(dirReposRelPath, ths.reposRelPath)) {
+                String childName = SVNWCUtils.getPathAsChild(dirReposRelPath, ths.reposRelPath);
+                if (childName == null || "".equals(childName)) {
                     thisSwitched = true;
                 }
             }
