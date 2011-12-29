@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNCancelException;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -116,7 +117,8 @@ public class SvnNgGetStatus extends SvnNgOperationRunner<SvnStatus, SvnGetStatus
                         getOperation().getDepth(), false, true, true, false, null);
                 SVNStatusReporter17 statusReporter = new SVNStatusReporter17(locksRepos, reporter, editor);
                 String target = "".equals(targetName) ? null : targetName;
-                repository.status(rev, target, getOperation().getDepth(), statusReporter, SVNCancellableEditor.newInstance((ISVNEditor) editor, this, null));
+                SVNDepth statusDepth = getOperation().isDepthAsSticky() ? getOperation().getDepth() : SVNDepth.UNKNOWN;
+                repository.status(rev, target, statusDepth, statusReporter, SVNCancellableEditor.newInstance((ISVNEditor) editor, this, null));
             }
             getOperation().setRemoteRevision(editor.getTargetRevision());                
             
