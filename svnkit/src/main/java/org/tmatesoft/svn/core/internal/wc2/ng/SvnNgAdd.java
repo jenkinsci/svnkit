@@ -68,6 +68,11 @@ public class SvnNgAdd extends SvnNgOperationRunner<SvnScheduleForAddition, SvnSc
         File lockRoot = getWcContext().acquireWriteLock(existingParent, false, true);
         try {
             add(path, parentPath, existingParent);
+        } catch (SVNException e) {
+            if (targetType == SVNFileType.NONE) {
+                SVNFileUtil.deleteAll(path, true);
+            }
+            throw e;
         } finally {
             getWcContext().releaseWriteLock(lockRoot);
         }
@@ -160,7 +165,7 @@ public class SvnNgAdd extends SvnNgOperationRunner<SvnScheduleForAddition, SvnSc
         try {
             addFromDisk(path, true);
         } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() != SVNErrorCode.ENTRY_EXISTS) {
+            if (!(getOperation().isForce() && e.getErrorMessage().getErrorCode() == SVNErrorCode.ENTRY_EXISTS)) {
                 throw e;
             }
         }
