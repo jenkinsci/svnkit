@@ -1057,18 +1057,6 @@ public class SVNClientImpl implements ISVNClient {
 
     public void streamFileContent(String path, Revision revision,
             Revision pegRevision, OutputStream stream) throws ClientException {
-
-        if (pegRevision == null) {
-            pegRevision = SVNPathUtil.isURL(path) ? Revision.HEAD : Revision.WORKING;
-            if (revision == null) {
-                revision = SVNPathUtil.isURL(path) ? Revision.HEAD : Revision.BASE;
-            }
-        } else {
-            if (revision == null) {
-                revision = pegRevision;
-            }
-        }
-
         try {
             getEventHandler().setPathPrefix(getPathPrefix(path));
 

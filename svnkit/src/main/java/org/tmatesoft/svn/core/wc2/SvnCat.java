@@ -33,14 +33,32 @@ public class SvnCat extends SvnOperation<Long> {
     @Override
     protected void ensureArgumentsAreValid() throws SVNException {
         super.ensureArgumentsAreValid();
-        if (getRevision() == SVNRevision.UNDEFINED) {
-            if (getFirstTarget().getResolvedPegRevision().isValid()) {
-                setRevision(getFirstTarget().getResolvedPegRevision());
+
+        //here we assume we have one target
+
+        SVNRevision resolvedPegRevision;
+        SVNRevision resolvedRevision;
+
+        if (getFirstTarget().getPegRevision() == SVNRevision.UNDEFINED) {
+            resolvedPegRevision = getFirstTarget().getResolvedPegRevision(SVNRevision.HEAD, SVNRevision.WORKING);
+            if (getRevision() == null || getRevision() == SVNRevision.UNDEFINED) {
+                resolvedRevision = getFirstTarget().isURL() ? SVNRevision.HEAD : SVNRevision.BASE;
             } else {
-                setRevision(hasRemoteTargets() ? SVNRevision.HEAD : SVNRevision.BASE);
+                resolvedRevision = getRevision();
+            }
+        } else {
+            resolvedPegRevision = getFirstTarget().getPegRevision();
+            if (getRevision() == null || getRevision() == SVNRevision.UNDEFINED) {
+                resolvedRevision = resolvedPegRevision;
+            } else {
+                resolvedRevision = getRevision();
             }
         }
-    }
 
-    
+        setRevision(resolvedRevision);
+        setSingleTarget(
+                getFirstTarget().isURL() ?
+                        SvnTarget.fromURL(getFirstTarget().getURL(), resolvedPegRevision) :
+                        SvnTarget.fromFile(getFirstTarget().getFile(), resolvedPegRevision));
+    }
 }
