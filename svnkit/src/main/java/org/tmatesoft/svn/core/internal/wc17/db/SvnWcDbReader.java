@@ -55,9 +55,7 @@ public class SvnWcDbReader extends SvnWcDbShared {
     public static Structure<ReplaceInfo> readNodeReplaceInfo(SVNWCDb db, File localAbspath, ReplaceInfo... fields) throws SVNException {
         
         Structure<ReplaceInfo> result = Structure.obtain(ReplaceInfo.class, fields);
-        if (result.hasField(ReplaceInfo.replaced)) {
-            result.set(ReplaceInfo.replaced, false);
-        }
+        result.set(ReplaceInfo.replaced, false);
         if (result.hasField(ReplaceInfo.baseReplace)) {
             result.set(ReplaceInfo.baseReplace, false);
         }
