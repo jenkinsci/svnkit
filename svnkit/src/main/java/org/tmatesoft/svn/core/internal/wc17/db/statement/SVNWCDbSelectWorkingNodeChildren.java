@@ -16,9 +16,14 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectFieldsStatement;
 
 /**
- * SELECT DISTINCT local_relpath FROM nodes WHERE wc_id = ?1 AND parent_relpath
- * = ?2 AND op_depth > 0;
- *
+ * SELECT local_relpath FROM nodes
+ * WHERE wc_id = ?1 AND parent_relpath = ?2
+ * AND (op_depth > (SELECT MAX(op_depth) FROM nodes
+ *                   WHERE wc_id = ?1 AND local_relpath = ?2)
+ *       OR
+ *       (op_depth = (SELECT MAX(op_depth) FROM nodes
+ *                    WHERE wc_id = ?1 AND local_relpath = ?2)
+ *        AND presence != 'base-deleted'))
  * @author TMate Software Ltd.
  */
 public class SVNWCDbSelectWorkingNodeChildren extends SVNSqlJetSelectFieldsStatement<SVNWCDbSchema.NODES__Fields> {
@@ -36,7 +41,10 @@ public class SVNWCDbSelectWorkingNodeChildren extends SVNSqlJetSelectFieldsState
     }
 
     protected boolean isFilterPassed() throws SVNException {
-        return getColumnLong(SVNWCDbSchema.NODES__Fields.op_depth) > 0;
+        return 
+        	(getColumnLong(SVNWCDbSchema.NODES__Fields.op_depth) > 0 ||
+        	(getColumnLong(SVNWCDbSchema.NODES__Fields.op_depth) == 0 
+        		&& !"base-deleted".equalsIgnoreCase(getColumnString(SVNWCDbSchema.NODES__Fields.presence))));
     }
 
 }
