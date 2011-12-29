@@ -8,6 +8,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc16.SVNWCClient16;
 import org.tmatesoft.svn.core.internal.wc2.SvnRemoteOperationRunner;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
+import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc2.SvnRemoteSetProperty;
@@ -24,6 +25,8 @@ public class SvnRemoteSetPropertyImpl extends SvnRemoteOperationRunner<SVNCommit
     protected SVNCommitInfo run() throws SVNException {
         //
         SVNWCClient16 wcClient = new SVNWCClient16(getOperation().getAuthenticationManager(), getOperation().getOptions());
+        wcClient.setCommitHandler(SvnCodec.commitHandler(getOperation().getCommitHandler()));
+        
         for (SvnTarget target : getOperation().getTargets()) {
             SVNURL url = target.getURL();
             if (url == null) {

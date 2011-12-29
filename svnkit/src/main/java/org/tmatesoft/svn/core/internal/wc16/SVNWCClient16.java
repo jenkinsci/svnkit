@@ -872,12 +872,20 @@ public class SVNWCClient16 extends SVNBasicDelegate {
         Collection commitItems = new ArrayList(2);
         SVNCommitItem commitItem = new SVNCommitItem(null, url, null, kind, SVNRevision.create(revNumber), SVNRevision.UNDEFINED, false, false, true, false, false, false);
         commitItems.add(commitItem);
-        commitMessage = getCommitHandler().getCommitMessage(commitMessage, (SVNCommitItem[]) commitItems.toArray(new SVNCommitItem[commitItems.size()]));
+        SVNCommitItem[] commitItemsArray = (SVNCommitItem[]) commitItems.toArray(new SVNCommitItem[commitItems.size()]);
+        commitMessage = getCommitHandler() != null ? 
+                getCommitHandler().getCommitMessage(commitMessage, commitItemsArray) :
+                (commitMessage == null ? "" : commitMessage);
+
         if (commitMessage == null) {
             return SVNCommitInfo.NULL;
         }
         commitMessage = SVNCommitUtil.validateCommitMessage(commitMessage);
+        if (getCommitHandler() != null) {
+            revisionProperties = getCommitHandler().getRevisionProperties(commitMessage, commitItemsArray, revisionProperties);
+        }
         SVNPropertiesManager.validateRevisionProperties(revisionProperties);
+        
         SVNCommitInfo commitInfo = null;
         ISVNEditor commitEditor = repos.getCommitEditor(commitMessage, null, true, revisionProperties, null);
         try {
