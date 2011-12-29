@@ -2521,10 +2521,10 @@ public class SVNClientImpl implements ISVNClient {
             if (parentFile == null) {
                 return null;
             }
-            return parentFile.getAbsolutePath();
+            return getFilePath(parentFile.getAbsoluteFile());
         }
 
-        return file.getAbsolutePath();
+        return getFilePath(file.getAbsoluteFile());
     }
 
     private String getPathPrefix(Collection pathsOrUrls) {
