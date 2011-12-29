@@ -98,9 +98,6 @@ public class SvnRemoteLog extends SvnRemoteOperationRunner<SVNLogEntry, SvnLog> 
         }
         
         if (getOperation().hasRemoteTargets()) {
-        	if (!pegRevision.isValid()) {
-        		pegRevision = SVNRevision.BASE;
-        	}
         	if (getOperation().getTargetPaths() == null) {
         		targetPaths = new String[] {""};
         	} else {
