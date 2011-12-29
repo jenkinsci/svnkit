@@ -78,7 +78,6 @@ import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.ISVNAuthenticationStorage;
 import org.tmatesoft.svn.core.internal.wc.SVNConflictVersion;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.patch.SVNPatchHunkInfo;
 import org.tmatesoft.svn.core.javahl.JavaHLCompositeLog;
@@ -2433,20 +2432,16 @@ public class SVNClientImpl implements ISVNClient {
             return null;
         }
 
-        //TODO: should we use getAbsolutePath here?
-        //TODO: how should we process symlinks?
-        //TODO: should we resolve canonical path?
-
-        SVNFileType fileType = SVNFileType.getType(file);
-        if (fileType == SVNFileType.FILE) {
+        boolean isFile = file.isFile();
+        if (isFile) {
             File parentFile = SVNFileUtil.getParentFile(file);
             if (parentFile == null) {
                 return null;
             }
-            return parentFile.getPath();
+            return parentFile.getAbsolutePath();
         }
 
-        return file.getPath();
+        return file.getAbsolutePath();
     }
 
     private String getPathPrefix(Collection pathsOrUrls) {
