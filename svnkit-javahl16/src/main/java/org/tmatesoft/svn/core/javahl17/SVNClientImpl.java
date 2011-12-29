@@ -1060,7 +1060,7 @@ public class SVNClientImpl implements ISVNClient {
 
     public byte[] propertyGet(String path, String name, Revision revision,
             Revision pegRevision) throws ClientException {
-        return getProperty(path, name, revision, pegRevision, true);
+        return getProperty(path, name, revision, pegRevision, false);
     }
 
     public byte[] fileContent(String path, Revision revision,
