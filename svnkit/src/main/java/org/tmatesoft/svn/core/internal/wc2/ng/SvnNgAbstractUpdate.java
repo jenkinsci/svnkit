@@ -211,7 +211,7 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
                 preservedExts);
                 
         try {
-            repos.update(revNumber, target, depth, false, reporter, editor);
+            repos.update(revNumber, target, depthIsSticky ? depth : SVNDepth.UNKNOWN, false, reporter, editor);
         } catch(SVNException e) {
             sleepForTimestamp();
             throw e;
@@ -665,7 +665,7 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
                 false, serverSupportsDepth, false, dirFetcher, externalsStore, preservedExts);
         
         try {
-            repository.update(switchRevUrl, revnum, target, depth, reporter, editor);
+            repository.update(switchRevUrl, revnum, target, depthIsSticky ? depth : SVNDepth.UNKNOWN, reporter, editor);
         } catch (SVNException e) {
             sleepForTimestamp();
             throw e;

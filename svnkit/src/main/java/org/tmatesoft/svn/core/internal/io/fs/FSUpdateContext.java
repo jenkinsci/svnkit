@@ -227,6 +227,7 @@ public class FSUpdateContext {
             SVNErrorManager.error(err, ioe, SVNLogType.FSFS);
         } finally {
             SVNFileUtil.closeFile(reportOS);
+            myReportOS = null;
         }
 
         PathInfo info = null;
@@ -257,6 +258,9 @@ public class FSUpdateContext {
             if ("".equals(getReportTarget())) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_BAD_REVISION_REPORT, "Two top-level reports with no target");
                 SVNErrorManager.error(err, SVNLogType.FSFS);
+            }
+            if (lookahead.getRevision() < 0) {
+                lookahead.myDepth = info.getDepth();
             }
 
             info = lookahead;
