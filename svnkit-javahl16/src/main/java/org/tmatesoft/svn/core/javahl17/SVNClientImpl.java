@@ -86,6 +86,7 @@ import org.tmatesoft.svn.core.internal.wc.patch.SVNPatchHunkInfo;
 import org.tmatesoft.svn.core.javahl.JavaHLCompositeLog;
 import org.tmatesoft.svn.core.javahl.JavaHLDebugLog;
 import org.tmatesoft.svn.core.wc.ISVNConflictHandler;
+import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNConflictAction;
 import org.tmatesoft.svn.core.wc.SVNConflictChoice;
 import org.tmatesoft.svn.core.wc.SVNConflictDescription;
@@ -176,6 +177,7 @@ public class SVNClientImpl implements ISVNClient {
     private JavaHLProgressLog progressListener;
 
     private static ISVNAuthenticationStorage runtimeAuthenticationStorage;
+    private ConflictResolverCallback conflictResolverCallback;
 
     protected SVNClientImpl() {
         this(null);
@@ -217,6 +219,22 @@ public class SVNClientImpl implements ISVNClient {
         return name != null && (SVNFileUtil.isWindows) ?
                 SVNFileUtil.getAdminDirectoryName().equalsIgnoreCase(name) :
                 SVNFileUtil.getAdminDirectoryName().equals(name);
+    }
+
+    public ISVNOptions getOptions() {
+        if (options == null) {
+            File configDir = this.configDir == null ? null : new File(this.configDir);
+            options = SVNWCUtil.createDefaultOptions(configDir, true);
+            options.setConflictHandler(getConflictHandler());
+        }
+        return options;
+    }
+
+    protected ISVNConflictHandler getConflictHandler() {
+        if (conflictHandler == null && conflictResolverCallback != null) {
+            conflictHandler = getConflictHandler(conflictResolverCallback);
+        }
+        return conflictHandler;
     }
 
     public void status(String path, Depth depth, boolean onServer,
@@ -359,7 +377,8 @@ public class SVNClientImpl implements ISVNClient {
     }
 
     public void setConflictResolver(ConflictResolverCallback callback) {
-        conflictHandler = getConflictHandler(callback);
+        conflictResolverCallback = callback;
+        conflictHandler = null;
         updateSvnOperationsFactory();
     }
 
@@ -1392,7 +1411,7 @@ public class SVNClientImpl implements ISVNClient {
         );
     }
 
-    private static Lock getLock(SVNLock lock) {
+    static Lock getLock(SVNLock lock) {
         if (lock == null) {
             return null;
         }
