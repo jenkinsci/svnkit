@@ -1507,7 +1507,6 @@ public class SVNClientImpl implements ISVNClient {
         String repositoryRelativePath = status.getRepositoryRelativePath() == null ? "" : status.getRepositoryRelativePath();
         SVNURL repositoryRootUrl = status.getRepositoryRootUrl();
 
-        //TODO: repositoryRootUrl is currently null whatever 'remote' ('onServer') option is
         String itemUrl = repositoryRootUrl == null ? null : getUrlString(repositoryRootUrl.appendPath(repositoryRelativePath, false));
 
         return new Status(
