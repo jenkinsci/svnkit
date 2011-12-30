@@ -243,6 +243,8 @@ public class SVNClientImpl implements ISVNClient {
             Collection<String> changelists, final StatusCallback callback)
             throws ClientException {
 
+        beforeOperation();
+
         try {
             getEventHandler().setPathPrefix(getPathPrefix(path));
 
@@ -261,13 +263,16 @@ public class SVNClientImpl implements ISVNClient {
         } catch (SVNException e) {
             throw ClientException.fromException(e);
         } finally {
-            getEventHandler().resetPathPrefix();
+            afterOperation();
         }
     }
 
     public void list(String url, Revision revision, Revision pegRevision,
             Depth depth, int direntFields, boolean fetchLocks,
             ListCallback callback) throws ClientException {
+
+        beforeOperation();
+
         try {
             getEventHandler().setPathPrefix(getPathPrefix(url));
 
@@ -283,7 +288,7 @@ public class SVNClientImpl implements ISVNClient {
         } catch (SVNException e) {
             throw ClientException.fromException(e);
         } finally {
-            getEventHandler().resetPathPrefix();
+            afterOperation();
         }
     }
 
@@ -307,6 +312,8 @@ public class SVNClientImpl implements ISVNClient {
             boolean discoverPath, boolean includeMergedRevisions,
             Set<String> revProps, long limit, LogMessageCallback callback)
             throws ClientException {
+
+        beforeOperation();
 
         if (ranges != null) {
             List<RevisionRange> filteredRanges = new ArrayList<RevisionRange>(ranges.size());
@@ -340,13 +347,16 @@ public class SVNClientImpl implements ISVNClient {
         } catch (SVNException e) {
             throw ClientException.fromException(e);
         } finally {
-            getEventHandler().resetPathPrefix();
+            afterOperation();
         }
     }
 
     public long checkout(String moduleName, String destPath, Revision revision,
             Revision pegRevision, Depth depth, boolean ignoreExternals,
             boolean allowUnverObstructions) throws ClientException {
+
+        beforeOperation();
+
         try {
             getEventHandler().setPathPrefix(getPathPrefix(destPath));
 
@@ -362,7 +372,7 @@ public class SVNClientImpl implements ISVNClient {
         } catch (SVNException e) {
             throw ClientException.fromException(e);
         } finally {
-            getEventHandler().resetPathPrefix();
+            afterOperation();
         }
     }
 
@@ -433,6 +443,9 @@ public class SVNClientImpl implements ISVNClient {
     public void remove(Set<String> path, boolean force, boolean keepLocal,
             Map<String, String> revpropTable, CommitMessageCallback handler,
             CommitCallback callback) throws ClientException {
+
+        beforeOperation();
+
         try {
             getEventHandler().setPathPrefix(getPathPrefix(path));
 
@@ -444,12 +457,15 @@ public class SVNClientImpl implements ISVNClient {
             removeLocal(localPaths, force, keepLocal);
             removeRemote(remoteUrls, revpropTable, handler, callback);
         } finally {
-            getEventHandler().resetPathPrefix();
+            afterOperation();
         }
     }
 
     public void revert(String path, Depth depth, Collection<String> changelists)
             throws ClientException {
+
+        beforeOperation();
+
         try {
             getEventHandler().setPathPrefix(getPathPrefix(path));
 
@@ -463,12 +479,15 @@ public class SVNClientImpl implements ISVNClient {
         } catch (SVNException e) {
             throw ClientException.fromException(e);
         } finally {
-            getEventHandler().resetPathPrefix();
+            afterOperation();
         }
     }
 
     public void add(String path, Depth depth, boolean force, boolean noIgnores,
             boolean addParents) throws ClientException {
+
+        beforeOperation();
+
         try {
             getEventHandler().setPathPrefix(getPathPrefix(path));
 
@@ -484,7 +503,7 @@ public class SVNClientImpl implements ISVNClient {
         } catch (SVNException e) {
             throw ClientException.fromException(e);
         } finally {
-            getEventHandler().resetPathPrefix();
+            afterOperation();
         }
     }
 
@@ -492,6 +511,9 @@ public class SVNClientImpl implements ISVNClient {
             boolean depthIsSticky, boolean makeParents,
             boolean ignoreExternals, boolean allowUnverObstructions)
             throws ClientException {
+
+        beforeOperation();
+
         try {
             getEventHandler().setPathPrefix(getPathPrefix(path));
 
@@ -511,7 +533,7 @@ public class SVNClientImpl implements ISVNClient {
         } catch (SVNException e) {
             throw ClientException.fromException(e);
         } finally {
-            getEventHandler().resetPathPrefix();
+            afterOperation();
         }
     }
 
@@ -519,6 +541,9 @@ public class SVNClientImpl implements ISVNClient {
             boolean keepChangelist, Collection<String> changelists,
             Map<String, String> revpropTable, final CommitMessageCallback handler,
             CommitCallback callback) throws ClientException {
+
+        beforeOperation();
+
         try {
             getEventHandler().setPathPrefix(getPathPrefix(path));
 
@@ -539,7 +564,7 @@ public class SVNClientImpl implements ISVNClient {
         } catch (SVNException e) {
             throw ClientException.fromException(e);
         } finally {
-            getEventHandler().resetPathPrefix();
+            afterOperation();
         }
     }
 
@@ -547,6 +572,9 @@ public class SVNClientImpl implements ISVNClient {
             boolean copyAsChild, boolean makeParents, boolean ignoreExternals,
             Map<String, String> revpropTable, CommitMessageCallback handler,
             CommitCallback callback) throws ClientException {
+
+        beforeOperation();
+
         try {
             getEventHandler().setPathPrefix(getPathPrefix(sources, destPath));
 
@@ -556,7 +584,7 @@ public class SVNClientImpl implements ISVNClient {
                 copyLocal(sources, destPath, copyAsChild, makeParents, ignoreExternals);
             }
         } finally {
-            getEventHandler().resetPathPrefix();
+            afterOperation();
         }
     }
 
@@ -564,6 +592,9 @@ public class SVNClientImpl implements ISVNClient {
             boolean moveAsChild, boolean makeParents,
             Map<String, String> revpropTable, CommitMessageCallback handler,
             CommitCallback callback) throws ClientException {
+
+        beforeOperation();
+
         try {
             getEventHandler().setPathPrefix(getPathPrefix(srcPaths, destPath));
 
@@ -573,13 +604,16 @@ public class SVNClientImpl implements ISVNClient {
                 moveLocal(srcPaths, destPath, force, moveAsChild, makeParents);
             }
         } finally {
-            getEventHandler().resetPathPrefix();
+            afterOperation();
         }
     }
 
     public void mkdir(Set<String> path, boolean makeParents,
             Map<String, String> revpropTable, CommitMessageCallback handler,
             CommitCallback callback) throws ClientException {
+
+        beforeOperation();
+
         try {
             getEventHandler().setPathPrefix(getPathPrefix(path));
 
@@ -591,11 +625,14 @@ public class SVNClientImpl implements ISVNClient {
             mkdirLocal(localPaths, makeParents);
             mkdirRemote(remoteUrls, makeParents, revpropTable, handler, callback);
         } finally {
-            getEventHandler().resetPathPrefix();
+            afterOperation();
         }
     }
 
     public void cleanup(String path) throws ClientException {
+
+        beforeOperation();
+
         try {
             getEventHandler().setPathPrefix(getPathPrefix(path));
 
@@ -607,12 +644,15 @@ public class SVNClientImpl implements ISVNClient {
         } catch (SVNException e) {
             throw ClientException.fromException(e);
         } finally {
-            getEventHandler().resetPathPrefix();
+            afterOperation();
         }
     }
 
     public void resolve(String path, Depth depth, Choice conflictResult)
             throws SubversionException {
+
+        beforeOperation();
+
         try {
             getEventHandler().setPathPrefix(getPathPrefix(path));
 
@@ -626,13 +666,16 @@ public class SVNClientImpl implements ISVNClient {
         } catch (SVNException e) {
             throw ClientException.fromException(e);
         } finally {
-            getEventHandler().resetPathPrefix();
+            afterOperation();
         }
     }
 
     public long doExport(String srcPath, String destPath, Revision revision,
             Revision pegRevision, boolean force, boolean ignoreExternals,
             Depth depth, String nativeEOL) throws ClientException {
+
+        beforeOperation();
+
         try {
             getPathPrefix(srcPath, destPath);
 
@@ -649,7 +692,7 @@ public class SVNClientImpl implements ISVNClient {
         } catch (SVNException e) {
             throw ClientException.fromException(e);
         } finally {
-            getEventHandler().resetPathPrefix();
+            afterOperation();
         }
     }
 
@@ -657,6 +700,9 @@ public class SVNClientImpl implements ISVNClient {
             Revision pegRevision, Depth depth, boolean depthIsSticky,
             boolean ignoreExternals, boolean allowUnverObstructions,
             boolean ignoreAncestry) throws ClientException {
+
+        beforeOperation();
+
         try {
             getEventHandler().setPathPrefix(getPathPrefix(path));
 
@@ -674,7 +720,7 @@ public class SVNClientImpl implements ISVNClient {
         } catch (SVNException e) {
             throw ClientException.fromException(e);
         } finally {
-            getEventHandler().resetPathPrefix();
+            afterOperation();
         }
     }
 
@@ -682,6 +728,9 @@ public class SVNClientImpl implements ISVNClient {
             boolean noIgnore, boolean ignoreUnknownNodeTypes,
             Map<String, String> revpropTable, CommitMessageCallback handler,
             CommitCallback callback) throws ClientException {
+
+        beforeOperation();
+
         try{
             getEventHandler().setPathPrefix(getPathPrefix(path));
 
@@ -700,12 +749,15 @@ public class SVNClientImpl implements ISVNClient {
         } catch (SVNException e) {
             throw ClientException.fromException(e);
         } finally {
-            getEventHandler().resetPathPrefix();
+            afterOperation();
         }
     }
 
     public Set<String> suggestMergeSources(String path, Revision pegRevision)
             throws SubversionException {
+
+        beforeOperation();
+
         try {
             getEventHandler().setPathPrefix(getPathPrefix(path));
 
@@ -723,7 +775,7 @@ public class SVNClientImpl implements ISVNClient {
         } catch (SVNException e) {
             throw ClientException.fromException(e);
         } finally {
-            getEventHandler().resetPathPrefix();
+            afterOperation();
         }
     }
 
@@ -731,6 +783,9 @@ public class SVNClientImpl implements ISVNClient {
             Revision revision2, String localPath, boolean force, Depth depth,
             boolean ignoreAncestry, boolean dryRun, boolean recordOnly)
             throws ClientException {
+
+        beforeOperation();
+
         try {
             getEventHandler().setPathPrefix(getPathPrefix(path1, path2));
 
@@ -747,7 +802,7 @@ public class SVNClientImpl implements ISVNClient {
         } catch (SVNException e) {
             throw ClientException.fromException(e);
         } finally {
-            getEventHandler().resetPathPrefix();
+            afterOperation();
         }
     }
 
@@ -755,6 +810,9 @@ public class SVNClientImpl implements ISVNClient {
             List<RevisionRange> revisions, String localPath, boolean force,
             Depth depth, boolean ignoreAncestry, boolean dryRun,
             boolean recordOnly) throws ClientException {
+
+        beforeOperation();
+
         try {
             getEventHandler().setPathPrefix(getPathPrefix(path, localPath));
 
@@ -774,12 +832,15 @@ public class SVNClientImpl implements ISVNClient {
         } catch (SVNException e) {
             throw ClientException.fromException(e);
         } finally {
-            getEventHandler().resetPathPrefix();
+            afterOperation();
         }
     }
 
     public void mergeReintegrate(String path, Revision pegRevision,
             String localPath, boolean dryRun) throws ClientException {
+
+        beforeOperation();
+
         try {
             getEventHandler().setPathPrefix(getPathPrefix(path));
 
@@ -792,12 +853,15 @@ public class SVNClientImpl implements ISVNClient {
         } catch (SVNException e) {
             throw ClientException.fromException(e);
         } finally {
-            getEventHandler().resetPathPrefix();
+            afterOperation();
         }
     }
 
     public Mergeinfo getMergeinfo(String path, Revision pegRevision)
             throws SubversionException {
+
+        beforeOperation();
+
         try {
             getEventHandler().setPathPrefix(getPathPrefix(path));
 
@@ -808,7 +872,7 @@ public class SVNClientImpl implements ISVNClient {
         } catch (SVNException e) {
             throw ClientException.fromException(e);
         } finally {
-            getEventHandler().resetPathPrefix();
+            afterOperation();
         }
     }
 
@@ -817,6 +881,9 @@ public class SVNClientImpl implements ISVNClient {
             Revision srcPegRevision, boolean discoverChangedPaths, Depth depth,
             Set<String> revProps, LogMessageCallback callback)
             throws ClientException {
+
+        beforeOperation();
+
         try {
             getEventHandler().setPathPrefix(getPathPrefix(pathOrUrl, mergeSourceUrl));
 
@@ -833,7 +900,7 @@ public class SVNClientImpl implements ISVNClient {
         } catch (SVNException e) {
             throw ClientException.fromException(e);
         } finally {
-            getEventHandler().resetPathPrefix();
+            afterOperation();
         }
     }
 
@@ -842,6 +909,9 @@ public class SVNClientImpl implements ISVNClient {
             Depth depth, Collection<String> changelists,
             boolean ignoreAncestry, boolean noDiffDeleted, boolean force,
             boolean copiesAsAdds) throws ClientException {
+
+        beforeOperation();
+
         FileOutputStream fileOutputStream = null;
         BufferedOutputStream bufferedOutputStream = null;
         try {
@@ -868,7 +938,7 @@ public class SVNClientImpl implements ISVNClient {
         } finally {
             SVNFileUtil.closeFile(fileOutputStream);
             SVNFileUtil.closeFile(bufferedOutputStream);
-            getEventHandler().resetPathPrefix();
+            afterOperation();
         }
     }
 
@@ -877,6 +947,9 @@ public class SVNClientImpl implements ISVNClient {
             String outFileName, Depth depth, Collection<String> changelists,
             boolean ignoreAncestry, boolean noDiffDeleted, boolean force,
             boolean copiesAsAdds) throws ClientException {
+
+        beforeOperation();
+
         FileOutputStream fileOutputStream = null;
         BufferedOutputStream bufferedOutputStream = null;
         try {
@@ -903,7 +976,7 @@ public class SVNClientImpl implements ISVNClient {
         } finally {
             SVNFileUtil.closeFile(fileOutputStream);
             SVNFileUtil.closeFile(bufferedOutputStream);
-            getEventHandler().resetPathPrefix();
+            afterOperation();
         }
     }
 
@@ -911,6 +984,9 @@ public class SVNClientImpl implements ISVNClient {
             String target2, Revision revision2, Depth depth,
             Collection<String> changelists, boolean ignoreAncestry,
             DiffSummaryCallback receiver) throws ClientException {
+
+        beforeOperation();
+
         try {
             getEventHandler().setPathPrefix(getPathPrefix(target1, target2));
 
@@ -925,7 +1001,7 @@ public class SVNClientImpl implements ISVNClient {
         } catch (SVNException e) {
             throw ClientException.fromException(e);
         } finally {
-            getEventHandler().resetPathPrefix();
+            afterOperation();
         }
     }
 
@@ -933,6 +1009,9 @@ public class SVNClientImpl implements ISVNClient {
             Revision startRevision, Revision endRevision, Depth depth,
             Collection<String> changelists, boolean ignoreAncestry,
             DiffSummaryCallback receiver) throws ClientException {
+
+        beforeOperation();
+
         try {
             getEventHandler().setPathPrefix(getPathPrefix(target));
 
@@ -947,13 +1026,16 @@ public class SVNClientImpl implements ISVNClient {
         } catch (SVNException e) {
             throw ClientException.fromException(e);
         } finally {
-            getEventHandler().resetPathPrefix();
+            afterOperation();
         }
     }
 
     public void properties(String path, Revision revision,
             Revision pegRevision, Depth depth, Collection<String> changelists,
             ProplistCallback callback) throws ClientException {
+
+        beforeOperation();
+
         try {
             getEventHandler().setPathPrefix(getPathPrefix(path));
 
@@ -969,13 +1051,16 @@ public class SVNClientImpl implements ISVNClient {
         } catch (SVNException e) {
             throw ClientException.fromException(e);
         } finally {
-            getEventHandler().resetPathPrefix();
+            afterOperation();
         }
     }
 
     public void propertySetLocal(Set<String> paths, String name, byte[] value,
             Depth depth, Collection<String> changelists, boolean force)
             throws ClientException {
+
+        beforeOperation();
+
         try {
             getEventHandler().setPathPrefix(getPathPrefix(paths));
 
@@ -994,7 +1079,7 @@ public class SVNClientImpl implements ISVNClient {
         } catch (SVNException e) {
             throw ClientException.fromException(e);
         } finally {
-            getEventHandler().resetPathPrefix();
+            afterOperation();
         }
     }
 
@@ -1002,6 +1087,9 @@ public class SVNClientImpl implements ISVNClient {
             byte[] value, CommitMessageCallback handler, boolean force,
             Map<String, String> revpropTable, CommitCallback callback)
             throws ClientException {
+
+        beforeOperation();
+
         try {
             getEventHandler().setPathPrefix(getPathPrefix(path));
 
@@ -1019,7 +1107,7 @@ public class SVNClientImpl implements ISVNClient {
         } catch (SVNException e) {
             throw ClientException.fromException(e);
         } finally {
-            getEventHandler().resetPathPrefix();
+            afterOperation();
         }
     }
 
@@ -1030,6 +1118,9 @@ public class SVNClientImpl implements ISVNClient {
 
     public Map<String, byte[]> revProperties(String path, Revision rev)
             throws ClientException {
+
+        beforeOperation();
+
         try {
             getEventHandler().setPathPrefix(getPathPrefix(path));
 
@@ -1052,13 +1143,16 @@ public class SVNClientImpl implements ISVNClient {
         } catch (SVNException e) {
             throw ClientException.fromException(e);
         } finally {
-            getEventHandler().resetPathPrefix();
+            afterOperation();
         }
     }
 
     public void setRevProperty(String path, String name, Revision rev,
             String value, String originalValue, boolean force)
             throws ClientException {
+
+        beforeOperation();
+
         try {
             getEventHandler().setPathPrefix(getPathPrefix(path));
 
@@ -1074,7 +1168,7 @@ public class SVNClientImpl implements ISVNClient {
         } catch (SVNException e) {
             throw ClientException.fromException(e);
         } finally {
-            getEventHandler().resetPathPrefix();
+            afterOperation();
         }
     }
 
@@ -1086,6 +1180,8 @@ public class SVNClientImpl implements ISVNClient {
     public byte[] fileContent(String path, Revision revision,
             Revision pegRevision) throws ClientException {
 
+        beforeOperation();
+
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
         streamFileContent(path, revision, pegRevision, byteArrayOutputStream);
@@ -1095,6 +1191,9 @@ public class SVNClientImpl implements ISVNClient {
 
     public void streamFileContent(String path, Revision revision,
             Revision pegRevision, OutputStream stream) throws ClientException {
+
+        beforeOperation();
+
         try {
             getEventHandler().setPathPrefix(getPathPrefix(path));
 
@@ -1108,12 +1207,15 @@ public class SVNClientImpl implements ISVNClient {
         } catch (SVNException e) {
             throw ClientException.fromException(e);
         } finally {
-            getEventHandler().resetPathPrefix();
+            afterOperation();
         }
     }
 
     public void relocate(String from, String to, String path,
             boolean ignoreExternals) throws ClientException {
+
+        beforeOperation();
+
         try {
             getEventHandler().setPathPrefix(getPathPrefix(path));
 
@@ -1126,7 +1228,7 @@ public class SVNClientImpl implements ISVNClient {
         } catch (SVNException e) {
             throw ClientException.fromException(e);
         } finally {
-            getEventHandler().resetPathPrefix();
+            afterOperation();
         }
     }
 
@@ -1134,6 +1236,9 @@ public class SVNClientImpl implements ISVNClient {
             Revision revisionStart, Revision revisionEnd,
             boolean ignoreMimeType, boolean includeMergedRevisions,
             final BlameCallback callback) throws ClientException {
+
+        beforeOperation();
+
         try {
             getEventHandler().setPathPrefix(getPathPrefix(path));
 
@@ -1149,7 +1254,7 @@ public class SVNClientImpl implements ISVNClient {
         } catch (SVNException e) {
             throw ClientException.fromException(e);
         } finally {
-            getEventHandler().resetPathPrefix();
+            afterOperation();
         }
     }
 
@@ -1168,6 +1273,9 @@ public class SVNClientImpl implements ISVNClient {
 
     public void addToChangelist(Set<String> paths, String changelist,
             Depth depth, Collection<String> changelists) throws ClientException {
+
+        beforeOperation();
+
         try {
              getEventHandler().setPathPrefix(getPathPrefix(paths));
 
@@ -1185,12 +1293,15 @@ public class SVNClientImpl implements ISVNClient {
         } catch (SVNException e) {
             throw ClientException.fromException(e);
         } finally {
-            getEventHandler().resetPathPrefix();
+            afterOperation();
         }
     }
 
     public void removeFromChangelists(Set<String> paths, Depth depth,
             Collection<String> changelists) throws ClientException {
+
+        beforeOperation();
+
         try {
             getEventHandler().setPathPrefix(getPathPrefix(paths));
 
@@ -1207,12 +1318,14 @@ public class SVNClientImpl implements ISVNClient {
         } catch (SVNException e) {
             throw ClientException.fromException(e);
         } finally {
-            getEventHandler().resetPathPrefix();
+            afterOperation();
         }
     }
 
     public void getChangelists(String rootPath, Collection<String> changelists,
             Depth depth, final ChangelistCallback callback) throws ClientException {
+
+        beforeOperation();
 
         try {
             getEventHandler().setPathPrefix(getPathPrefix(rootPath));
@@ -1238,12 +1351,15 @@ public class SVNClientImpl implements ISVNClient {
         } catch (SVNException e) {
             throw ClientException.fromException(e);
         } finally {
-            getEventHandler().resetPathPrefix();
+            afterOperation();
         }
     }
 
     public void lock(Set<String> path, String comment, boolean force)
             throws ClientException {
+
+        beforeOperation();
+
         try {
             getEventHandler().setPathPrefix(getPathPrefix(path));
 
@@ -1259,11 +1375,14 @@ public class SVNClientImpl implements ISVNClient {
         } catch (SVNException e) {
             throw ClientException.fromException(e);
         } finally {
-            getEventHandler().resetPathPrefix();
+            afterOperation();
         }
     }
 
     public void unlock(Set<String> path, boolean force) throws ClientException {
+
+        beforeOperation();
+
         try {
             getEventHandler().setPathPrefix(getPathPrefix(path));
 
@@ -1278,13 +1397,16 @@ public class SVNClientImpl implements ISVNClient {
         } catch (SVNException e) {
             throw ClientException.fromException(e);
         } finally {
-            getEventHandler().resetPathPrefix();
+            afterOperation();
         }
     }
 
     public void info2(String pathOrUrl, Revision revision,
             Revision pegRevision, Depth depth, Collection<String> changelists,
             InfoCallback callback) throws ClientException {
+
+        beforeOperation();
+
         try {
             getEventHandler().setPathPrefix(getPathPrefix(pathOrUrl));
 
@@ -1299,7 +1421,7 @@ public class SVNClientImpl implements ISVNClient {
         } catch (SVNException e) {
             throw ClientException.fromException(e);
         } finally {
-            getEventHandler().resetPathPrefix();
+            afterOperation();
         }
     }
 
@@ -1311,6 +1433,9 @@ public class SVNClientImpl implements ISVNClient {
     }
 
     public void upgrade(String path) throws ClientException {
+
+        beforeOperation();
+
         try {
             getEventHandler().setPathPrefix(getPathPrefix(path));
 
@@ -1321,7 +1446,7 @@ public class SVNClientImpl implements ISVNClient {
         } catch (SVNException e) {
             throw ClientException.fromException(e);
         } finally {
-            getEventHandler().resetPathPrefix();
+            afterOperation();
         }
     }
 
@@ -1725,7 +1850,7 @@ public class SVNClientImpl implements ISVNClient {
         } catch (SVNException e) {
             throw ClientException.fromException(e);
         } finally {
-            getEventHandler().resetPathPrefix();
+            afterOperation();
         }
     }
 
@@ -2630,5 +2755,21 @@ public class SVNClientImpl implements ISVNClient {
         //TODO: review
         SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.UNKNOWN);
         SVNErrorManager.error(errorMessage, e, SVNLogType.CLIENT);
+    }
+
+    private void resetLog() {
+        if (progressListener != null) {
+            progressListener.reset();
+        }
+    }
+
+    private void beforeOperation() {
+        getEventHandler().setCancelOperation(false);
+    }
+
+    private void afterOperation() {
+        getEventHandler().setCancelOperation(false);
+        getEventHandler().resetPathPrefix();
+        resetLog();
     }
 }

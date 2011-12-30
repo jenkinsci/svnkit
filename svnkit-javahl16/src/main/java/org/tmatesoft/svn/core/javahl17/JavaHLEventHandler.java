@@ -26,8 +26,12 @@ public class JavaHLEventHandler implements ISVNEventHandler {
         this.notifyCallback = notifyCallback;
     }
 
+    public void setCancelOperation(boolean cancelOperation) {
+        this.cancelOperation = cancelOperation;
+    }
+
     public void cancelOperation() {
-        cancelOperation = true;
+        setCancelOperation(true);
     }
 
     public void setPathPrefix(String pathPrefix) {
