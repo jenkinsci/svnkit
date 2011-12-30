@@ -64,7 +64,9 @@ public class Version {
     }
     
     public static void setUserAgent(String userAgent) {
-        ourUserAgent = userAgent;
+        synchronized (Version.class) {
+            ourUserAgent = userAgent;
+        }
     }
 
     public static String getUserAgent() {
@@ -134,27 +136,28 @@ public class Version {
     }
 
     private static void loadProperties() {
-        if (ourProperties != null) {
-            return;
-        }
-        ourProperties = new Properties();
-        URL resourceURL = Version.class.getResource(PROPERTIES_PATH);
-        if (resourceURL != null) {
-            if (resourceURL.toString().lastIndexOf(".jar!/") < 0) {
+        synchronized (Version.class) {
+            if (ourProperties != null) {
                 return;
             }
+            ourProperties = new Properties();
+            URL resourceURL = Version.class.getResource(PROPERTIES_PATH);
+            if (resourceURL != null) {
+                if (resourceURL.toString().lastIndexOf(".jar!/") < 0) {
+                    return;
+                }
+            }
+            InputStream is = Version.class.getResourceAsStream(PROPERTIES_PATH);
+            if (is == null) {
+                return;
+            }
+            try {
+                ourProperties.load(is);
+            } catch (IOException e) {
+                //
+            } finally {
+                SVNFileUtil.closeFile(is);
+            }
         }
-        InputStream is = Version.class.getResourceAsStream(PROPERTIES_PATH);
-        if (is == null) {
-            return;
-        }
-        try {
-            ourProperties.load(is);
-        } catch (IOException e) {
-            //
-        } finally {
-            SVNFileUtil.closeFile(is);
-        }
-
     }
 }
