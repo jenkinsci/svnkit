@@ -184,6 +184,7 @@ public class SVNClientImpl implements ISVNClient {
     }
 
     protected SVNClientImpl(SvnOperationFactory svnOperationFactory) {
+        this.configDir = SVNWCUtil.getDefaultConfigurationDirectory().getAbsolutePath();
         this.shouldDisposeSvnOperationsFactory = svnOperationFactory == null;
         this.svnOperationFactory = svnOperationFactory == null ? new SvnOperationFactory() : svnOperationFactory;
         this.svnOperationFactory.setEventHandler(getEventHandler());
