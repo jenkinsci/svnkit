@@ -86,7 +86,10 @@ public class SVNReposImpl {
     }
 
     public void dump(File path, OutputStream dataOut, Revision start, Revision end, boolean incremental, boolean useDeltas, ReposNotifyCallback callback) throws ClientException {
-        final OutputStream errorOut = null;
+        dump(path, dataOut, null, start, end, incremental, useDeltas, callback);
+    }
+
+    public void dump(File path, OutputStream dataOut, final OutputStream errorOut, Revision start, Revision end, boolean incremental, boolean useDeltas, ReposNotifyCallback callback) throws ClientException {
         OutputStream os = dataOut;
         try {
             getAdminClient().setEventHandler(new SVNAdminEventAdapter() {
@@ -137,8 +140,11 @@ public class SVNReposImpl {
     }
 
     public void load(File path, InputStream dataInput, boolean ignoreUUID, boolean forceUUID, boolean usePreCommitHook, boolean usePostCommitHook, String relativePath, ReposNotifyCallback callback) throws ClientException {
+        load(path, dataInput, null, ignoreUUID, forceUUID, usePreCommitHook, usePostCommitHook, relativePath, callback);
+    }
+
+    public void load(File path, InputStream dataInput, final OutputStream messageOutput, boolean ignoreUUID, boolean forceUUID, boolean usePreCommitHook, boolean usePostCommitHook, String relativePath, ReposNotifyCallback callback) throws ClientException {
         InputStream is = dataInput;
-        final OutputStream messageOutput = null;
         try {
             SVNUUIDAction uuidAction = SVNUUIDAction.DEFAULT;
             if (ignoreUUID) {
@@ -239,7 +245,10 @@ public class SVNReposImpl {
     }
 
     public void verify(File path, Revision start, Revision end, ReposNotifyCallback callback) throws ClientException {
-        final OutputStream messageOut = null;
+        verify(path, null, start, end, callback);
+    }
+
+    public void verify(File path, final OutputStream messageOut, Revision start, Revision end, ReposNotifyCallback callback) throws ClientException {
         try {
             getAdminClient().setEventHandler(new SVNAdminEventAdapter() {
                 public void handleAdminEvent(SVNAdminEvent event, double progress) throws SVNException {
