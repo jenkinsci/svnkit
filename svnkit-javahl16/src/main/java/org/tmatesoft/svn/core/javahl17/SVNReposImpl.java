@@ -15,6 +15,7 @@ import org.apache.subversion.javahl.types.Depth;
 import org.apache.subversion.javahl.types.Lock;
 import org.apache.subversion.javahl.types.Revision;
 import org.apache.subversion.javahl.types.Version;
+import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -22,6 +23,7 @@ import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepository;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
@@ -36,6 +38,7 @@ public class SVNReposImpl {
 
     private SVNClientImpl client;
     private SVNAdminClient svnAdminClient;
+    private boolean cancelOperation;
 
     /**
      * Filesystem in a Berkeley DB
@@ -48,6 +51,7 @@ public class SVNReposImpl {
 
     public SVNReposImpl() {
         client = SVNClientImpl.newInstance();
+        cancelOperation = false;
     }
 
     public void dispose() {
@@ -68,6 +72,7 @@ public class SVNReposImpl {
 
 
     public void create(File path, boolean disableFsyncCommit, boolean keepLog, File configPath, String fstype) throws ClientException {
+        beforeOperation();
         if (BDB.equalsIgnoreCase(fstype)) {
             notImplementedYet("Only " + FSFS + " type of repositories are supported by " + getVersion().toString());
         }
@@ -78,6 +83,8 @@ public class SVNReposImpl {
             }
         } catch (SVNException e) {
             throwException(e, client);
+        } finally {
+            afterOperation();
         }
     }
 
@@ -90,9 +97,16 @@ public class SVNReposImpl {
     }
 
     public void dump(File path, OutputStream dataOut, final OutputStream errorOut, Revision start, Revision end, boolean incremental, boolean useDeltas, ReposNotifyCallback callback) throws ClientException {
+        beforeOperation();
+
         OutputStream os = dataOut;
         try {
             getAdminClient().setEventHandler(new SVNAdminEventAdapter() {
+                @Override
+                public void checkCancelled() throws SVNCancelException {
+                    SVNReposImpl.this.checkCancelled();
+                }
+
                 public void handleAdminEvent(SVNAdminEvent event, double progress) throws SVNException {
                     if (errorOut != null && event.getAction() == SVNAdminEventAction.REVISION_DUMPED) {
                         try {
@@ -115,15 +129,23 @@ public class SVNReposImpl {
             }
             throwException(e, client);
         } finally {
-            getAdminClient().setEventHandler(null);
+            afterOperation();
         }
     }
 
     public void hotcopy(File path, File targetPath, boolean cleanLogs) throws ClientException {
+        beforeOperation();
         try {
+            getAdminClient().setEventHandler(new SVNAdminEventAdapter() {
+                public void checkCancelled() throws SVNCancelException {
+                    SVNReposImpl.this.checkCancelled();
+                }
+            });
             getAdminClient().doHotCopy(path.getAbsoluteFile(), targetPath.getAbsoluteFile());
         } catch (SVNException e) {
             throwException(e, client);
+        } finally {
+            afterOperation();
         }
     }
 
@@ -144,6 +166,8 @@ public class SVNReposImpl {
     }
 
     public void load(File path, InputStream dataInput, final OutputStream messageOutput, boolean ignoreUUID, boolean forceUUID, boolean usePreCommitHook, boolean usePostCommitHook, String relativePath, ReposNotifyCallback callback) throws ClientException {
+        beforeOperation();
+
         InputStream is = dataInput;
         try {
             SVNUUIDAction uuidAction = SVNUUIDAction.DEFAULT;
@@ -155,6 +179,11 @@ public class SVNReposImpl {
             getAdminClient().setEventHandler(new SVNAdminEventAdapter() {
 
                 private boolean myIsNodeOpened;
+
+                @Override
+                public void checkCancelled() throws SVNCancelException {
+                    SVNReposImpl.this.checkCancelled();
+                }
 
                 public void handleAdminEvent(SVNAdminEvent event, double progress) throws SVNException {
                     if (messageOutput != null) {
@@ -195,12 +224,19 @@ public class SVNReposImpl {
             }
             throwException(e, client);
         } finally {
-            getAdminClient().setEventHandler(null);
+            afterOperation();
         }
     }
 
     public void lstxns(File path, final ISVNRepos.MessageReceiver receiver) throws ClientException {
+        beforeOperation();
+
         getAdminClient().setEventHandler(new SVNAdminEventAdapter() {
+            @Override
+            public void checkCancelled() throws SVNCancelException {
+                SVNReposImpl.this.checkCancelled();
+            }
+
             public void handleAdminEvent(SVNAdminEvent event, double progress) throws SVNException {
                 if (receiver != null && event.getTxnName() != null) {
                     receiver.receiveMessageLine(event.getTxnName());
@@ -212,35 +248,58 @@ public class SVNReposImpl {
         } catch (SVNException e) {
             throwException(e, client);
         } finally {
-            getAdminClient().setEventHandler(null);
+            afterOperation();
         }
     }
 
     public long recover(File path, ReposNotifyCallback callback) throws ClientException {
+        beforeOperation();
+
         try {
             File repositoryRoot = path.getAbsoluteFile();
             getAdminClient().doRecover(repositoryRoot);
+            getAdminClient().setEventHandler(new SVNAdminEventAdapter(){
+                @Override
+                public void checkCancelled() throws SVNCancelException {
+                    SVNReposImpl.this.checkCancelled();
+                }
+            });
             return getAdminClient().getYoungestRevision(repositoryRoot);
         } catch (SVNException e) {
             throwException(e, client);
+        } finally {
+            afterOperation();
         }
         return -1;
 
     }
 
     public void rmtxns(File path, String[] transactions) throws ClientException {
+        beforeOperation();
+
         try {
+            getAdminClient().setEventHandler(new SVNAdminEventAdapter() {
+                @Override
+                public void checkCancelled() throws SVNCancelException {
+                    SVNReposImpl.this.checkCancelled();
+                }
+            });
             getAdminClient().doRemoveTransactions(path.getAbsoluteFile(), transactions);
         } catch (SVNException e) {
             throwException(e, client);
+        } finally {
+            afterOperation();
         }
     }
 
     public void setRevProp(File path, Revision rev, String propName, String propValue, boolean usePreRevPropChangeHook, boolean usePostRevPropChangeHook) throws SubversionException {
+        beforeOperation();
         try {
             setRevisionProperty(path, rev, propName, propValue, !usePreRevPropChangeHook, !usePostRevPropChangeHook);
         } catch (SVNException e) {
             throwException(e, client);
+        } finally {
+            afterOperation();
         }
     }
 
@@ -249,6 +308,8 @@ public class SVNReposImpl {
     }
 
     public void verify(File path, final OutputStream messageOut, Revision start, Revision end, ReposNotifyCallback callback) throws ClientException {
+        beforeOperation();
+
         try {
             getAdminClient().setEventHandler(new SVNAdminEventAdapter() {
                 public void handleAdminEvent(SVNAdminEvent event, double progress) throws SVNException {
@@ -273,11 +334,13 @@ public class SVNReposImpl {
             }
             throwException(e, client);
         } finally {
-            getAdminClient().setEventHandler(null);
+            afterOperation();
         }
     }
 
     public Set<Lock> lslocks(File path, Depth depth) throws ClientException {
+        beforeOperation();
+
         final Set<Lock> locks = new HashSet<Lock>();
         getAdminClient().setEventHandler(new SVNAdminEventAdapter() {
             public void handleAdminEvent(SVNAdminEvent event, double progress) throws SVNException {
@@ -294,19 +357,21 @@ public class SVNReposImpl {
         } catch (SVNException e) {
             throwException(e, client);
         } finally {
-            getAdminClient().setEventHandler(null);
+            afterOperation();
         }
 
         return locks;
     }
 
     public void rmlocks(File path, String[] locks) throws ClientException {
+        beforeOperation();
+
         try {
             getAdminClient().doRemoveLocks(path.getAbsoluteFile(), locks);
         } catch (SVNException e) {
             throwException(e, client);
         } finally {
-            getAdminClient().setEventHandler(null);
+            afterOperation();
         }
     }
 
@@ -319,7 +384,14 @@ public class SVNReposImpl {
     }
 
     public void cancelOperation() throws ClientException {
-        notImplementedYet();
+        cancelOperation = true;
+    }
+
+    private void checkCancelled() throws SVNCancelException {
+        if (cancelOperation) {
+            cancelOperation = false;
+            SVNErrorManager.cancel("operation cancelled", SVNLogType.DEFAULT);
+        }
     }
 
     private static void setRevisionProperty(File path, Revision rev, String propName, String propValue, boolean bypassPreRevPropChangeHook, boolean bypassPostRevPropChangeHook) throws SVNException {
@@ -343,5 +415,14 @@ public class SVNReposImpl {
         svnClient.getDebugLog().logFine(SVNLogType.DEFAULT, ec);
         svnClient.getDebugLog().logFine(SVNLogType.DEFAULT, e);
         throw ec;
+    }
+
+    private void beforeOperation() {
+        cancelOperation = false;
+    }
+
+    private void afterOperation() {
+        cancelOperation = false;
+        getAdminClient().setEventHandler(null);
     }
 }
