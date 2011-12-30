@@ -4,7 +4,9 @@
       label="JNA Library"
       version="${jna_osgi_version}">
 
-   <description url="http://jna.dev.java.net/">JNA Library</description>
+   <description url="http://jna.dev.java.net/">
+      JNA Library
+   </description>
 
    <copyright url="http://jna.dev.java.net/">
       Copyright (c) 2008 Timothy Wall, All Rights Reserved
@@ -23,7 +25,7 @@
          id="${jna_osgi_name}"
          download-size="0"
          install-size="0"
-         unpack="true"
-         version="${jna_osgi_version}"/>
+         version="${jna_osgi_version}"
+         unpack="false"/>
 
 </feature>
