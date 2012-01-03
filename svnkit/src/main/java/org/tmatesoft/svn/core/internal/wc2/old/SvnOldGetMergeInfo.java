@@ -23,12 +23,12 @@ public class SvnOldGetMergeInfo extends SvnOldRunner<SVNLogEntry, SvnLogMergeInf
     @Override
     public boolean isApplicable(SvnLogMergeInfo operation, SvnWcGeneration wcGeneration) throws SVNException {
         // both source and url are either from old wc or url.
-        if (getOperation().getSource().isFile()) {
+        if (operation.getSource().isFile()) {
             if (SvnOperationFactory.detectWcGeneration(operation.getSource().getFile(), true) != SvnWcGeneration.V16) {
                 return false;
             }
         }
-        if (getOperation().getFirstTarget().isFile()) {
+        if (operation.getFirstTarget().isFile()) {
             if (SvnOperationFactory.detectWcGeneration(operation.getFirstTarget().getFile(), true) != SvnWcGeneration.V16) {
                 return false;
             }
