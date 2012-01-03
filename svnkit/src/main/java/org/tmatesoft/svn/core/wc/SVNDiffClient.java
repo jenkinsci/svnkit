@@ -21,6 +21,7 @@ import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNMergeRange;
 import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNURL;
@@ -29,6 +30,8 @@ import org.tmatesoft.svn.core.internal.wc16.SVNDiffClient16;
 import org.tmatesoft.svn.core.internal.wc17.SVNDiffClient17;
 import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
+import org.tmatesoft.svn.core.wc2.SvnLogMergeInfo;
 import org.tmatesoft.svn.core.wc2.SvnMerge;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -2741,16 +2744,20 @@ public class SVNDiffClient extends SVNBasicClient {
      * @since 1.2, SVN 1.5
      */
     public void doGetLogMergedMergeInfo(File path, SVNRevision pegRevision, SVNURL mergeSrcURL, SVNRevision srcPegRevision, boolean discoverChangedPaths, String[] revisionProperties,
-            ISVNLogEntryHandler handler) throws SVNException {
-        try {
-            getSVNDiffClient17().doGetLogMergedMergeInfo(path, pegRevision, mergeSrcURL, srcPegRevision, discoverChangedPaths, revisionProperties, handler);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNDiffClient16().doGetLogMergedMergeInfo(path, pegRevision, mergeSrcURL, srcPegRevision, discoverChangedPaths, revisionProperties, handler);
-                return;
+            final ISVNLogEntryHandler handler) throws SVNException {
+        SvnLogMergeInfo mergeinfo = getOperationsFactory().createLogMergeInfo();
+
+        mergeinfo.addTarget(SvnTarget.fromFile(path, pegRevision));
+        mergeinfo.setSource(SvnTarget.fromURL(mergeSrcURL, srcPegRevision));
+        mergeinfo.setDiscoverChangedPaths(discoverChangedPaths);
+        mergeinfo.setRevisionProperties(revisionProperties);
+        mergeinfo.setFindMerged(true);
+        mergeinfo.setReceiver(new ISvnObjectReceiver<SVNLogEntry>() {
+            public void receive(SvnTarget target, SVNLogEntry object) throws SVNException {
+                handler.handleLogEntry(object);
             }
-            throw e;
-        }
+        });
+        mergeinfo.run();
     }
 
     /**
@@ -2794,16 +2801,20 @@ public class SVNDiffClient extends SVNBasicClient {
      * @since 1.2, SVN 1.5
      */
     public void doGetLogMergedMergeInfo(SVNURL url, SVNRevision pegRevision, SVNURL mergeSrcURL, SVNRevision srcPegRevision, boolean discoverChangedPaths, String[] revisionProperties,
-            ISVNLogEntryHandler handler) throws SVNException {
-        try {
-            getSVNDiffClient17().doGetLogMergedMergeInfo(url, pegRevision, mergeSrcURL, srcPegRevision, discoverChangedPaths, revisionProperties, handler);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNDiffClient16().doGetLogMergedMergeInfo(url, pegRevision, mergeSrcURL, srcPegRevision, discoverChangedPaths, revisionProperties, handler);
-                return;
+            final ISVNLogEntryHandler handler) throws SVNException {
+        SvnLogMergeInfo mergeinfo = getOperationsFactory().createLogMergeInfo();
+
+        mergeinfo.addTarget(SvnTarget.fromURL(url, pegRevision));
+        mergeinfo.setSource(SvnTarget.fromURL(mergeSrcURL, srcPegRevision));
+        mergeinfo.setDiscoverChangedPaths(discoverChangedPaths);
+        mergeinfo.setRevisionProperties(revisionProperties);
+        mergeinfo.setFindMerged(true);
+        mergeinfo.setReceiver(new ISvnObjectReceiver<SVNLogEntry>() {
+            public void receive(SvnTarget target, SVNLogEntry object) throws SVNException {
+                handler.handleLogEntry(object);
             }
-            throw e;
-        }
+        });
+        mergeinfo.run();
     }
 
     /**
@@ -2847,16 +2858,20 @@ public class SVNDiffClient extends SVNBasicClient {
      * @since 1.2, SVN 1.5
      */
     public void doGetLogMergedMergeInfo(File path, SVNRevision pegRevision, File mergeSrcPath, SVNRevision srcPegRevision, boolean discoverChangedPaths, String[] revisionProperties,
-            ISVNLogEntryHandler handler) throws SVNException {
-        try {
-            getSVNDiffClient17().doGetLogMergedMergeInfo(path, pegRevision, mergeSrcPath, srcPegRevision, discoverChangedPaths, revisionProperties, handler);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNDiffClient16().doGetLogMergedMergeInfo(path, pegRevision, mergeSrcPath, srcPegRevision, discoverChangedPaths, revisionProperties, handler);
-                return;
+            final ISVNLogEntryHandler handler) throws SVNException {
+        SvnLogMergeInfo mergeinfo = getOperationsFactory().createLogMergeInfo();
+
+        mergeinfo.addTarget(SvnTarget.fromFile(path, pegRevision));
+        mergeinfo.setSource(SvnTarget.fromFile(mergeSrcPath, srcPegRevision));
+        mergeinfo.setDiscoverChangedPaths(discoverChangedPaths);
+        mergeinfo.setRevisionProperties(revisionProperties);
+        mergeinfo.setFindMerged(true);
+        mergeinfo.setReceiver(new ISvnObjectReceiver<SVNLogEntry>() {
+            public void receive(SvnTarget target, SVNLogEntry object) throws SVNException {
+                handler.handleLogEntry(object);
             }
-            throw e;
-        }
+        });
+        mergeinfo.run();
     }
 
     /**
@@ -2900,16 +2915,20 @@ public class SVNDiffClient extends SVNBasicClient {
      * @since 1.2, SVN 1.5
      */
     public void doGetLogMergedMergeInfo(SVNURL url, SVNRevision pegRevision, File mergeSrcPath, SVNRevision srcPegRevision, boolean discoverChangedPaths, String[] revisionProperties,
-            ISVNLogEntryHandler handler) throws SVNException {
-        try {
-            getSVNDiffClient17().doGetLogMergedMergeInfo(url, pegRevision, mergeSrcPath, srcPegRevision, discoverChangedPaths, revisionProperties, handler);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNDiffClient16().doGetLogMergedMergeInfo(url, pegRevision, mergeSrcPath, srcPegRevision, discoverChangedPaths, revisionProperties, handler);
-                return;
+            final ISVNLogEntryHandler handler) throws SVNException {
+        SvnLogMergeInfo mergeinfo = getOperationsFactory().createLogMergeInfo();
+
+        mergeinfo.addTarget(SvnTarget.fromURL(url, pegRevision));
+        mergeinfo.setSource(SvnTarget.fromFile(mergeSrcPath, srcPegRevision));
+        mergeinfo.setDiscoverChangedPaths(discoverChangedPaths);
+        mergeinfo.setRevisionProperties(revisionProperties);
+        mergeinfo.setFindMerged(true);
+        mergeinfo.setReceiver(new ISvnObjectReceiver<SVNLogEntry>() {
+            public void receive(SvnTarget target, SVNLogEntry object) throws SVNException {
+                handler.handleLogEntry(object);
             }
-            throw e;
-        }
+        });
+        mergeinfo.run();
     }
 
     /**
@@ -2953,16 +2972,21 @@ public class SVNDiffClient extends SVNBasicClient {
      * @since 1.2, SVN 1.5
      */
     public void doGetLogEligibleMergeInfo(File path, SVNRevision pegRevision, SVNURL mergeSrcURL, SVNRevision srcPegRevision, boolean discoverChangedPaths, String[] revisionProperties,
-            ISVNLogEntryHandler handler) throws SVNException {
-        try {
-            getSVNDiffClient17().doGetLogEligibleMergeInfo(path, pegRevision, mergeSrcURL, srcPegRevision, discoverChangedPaths, revisionProperties, handler);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNDiffClient16().doGetLogEligibleMergeInfo(path, pegRevision, mergeSrcURL, srcPegRevision, discoverChangedPaths, revisionProperties, handler);
-                return;
+            final ISVNLogEntryHandler handler) throws SVNException {
+        SvnLogMergeInfo mergeinfo = getOperationsFactory().createLogMergeInfo();
+
+        mergeinfo.addTarget(SvnTarget.fromFile(path, pegRevision));
+        mergeinfo.setSource(SvnTarget.fromURL(mergeSrcURL, srcPegRevision));
+        mergeinfo.setDiscoverChangedPaths(discoverChangedPaths);
+        mergeinfo.setRevisionProperties(revisionProperties);
+        mergeinfo.setFindMerged(false);
+        
+        mergeinfo.setReceiver(new ISvnObjectReceiver<SVNLogEntry>() {
+            public void receive(SvnTarget target, SVNLogEntry object) throws SVNException {
+                handler.handleLogEntry(object);
             }
-            throw e;
-        }
+        });
+        mergeinfo.run();
     }
 
     /**
@@ -3006,18 +3030,21 @@ public class SVNDiffClient extends SVNBasicClient {
      * @since 1.2, SVN 1.5
      */
     public void doGetLogEligibleMergeInfo(SVNURL url, SVNRevision pegRevision, SVNURL mergeSrcURL, SVNRevision srcPegRevision, boolean discoverChangedPaths, String[] revisionProperties,
-            ISVNLogEntryHandler handler) throws SVNException {
-        try {
-            getSVNDiffClient17().doGetLogEligibleMergeInfo(url, pegRevision, mergeSrcURL, srcPegRevision, discoverChangedPaths, revisionProperties, handler);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNDiffClient16().doGetLogEligibleMergeInfo(url, pegRevision, mergeSrcURL, srcPegRevision, discoverChangedPaths, revisionProperties, handler);
-                return;
-            }
-            throw e;
-        }
-    }
+            final ISVNLogEntryHandler handler) throws SVNException {
+        SvnLogMergeInfo mergeinfo = getOperationsFactory().createLogMergeInfo();
 
+        mergeinfo.addTarget(SvnTarget.fromURL(url, pegRevision));
+        mergeinfo.setSource(SvnTarget.fromURL(mergeSrcURL, srcPegRevision));
+        mergeinfo.setDiscoverChangedPaths(discoverChangedPaths);
+        mergeinfo.setRevisionProperties(revisionProperties);
+        mergeinfo.setFindMerged(false);
+        mergeinfo.setReceiver(new ISvnObjectReceiver<SVNLogEntry>() {
+            public void receive(SvnTarget target, SVNLogEntry object) throws SVNException {
+                handler.handleLogEntry(object);
+            }
+        });
+        mergeinfo.run();
+    }
     /**
      * Drives a log entry <code>handler</code> with the revisions eligible for
      * merge from <code>mergeSrcPath</code> (as of <code>srcPegRevision</code>)
@@ -3059,16 +3086,20 @@ public class SVNDiffClient extends SVNBasicClient {
      * @since 1.2, SVN 1.5
      */
     public void doGetLogEligibleMergeInfo(File path, SVNRevision pegRevision, File mergeSrcPath, SVNRevision srcPegRevision, boolean discoverChangedPaths, String[] revisionProperties,
-            ISVNLogEntryHandler handler) throws SVNException {
-        try {
-            getSVNDiffClient17().doGetLogEligibleMergeInfo(path, pegRevision, mergeSrcPath, srcPegRevision, discoverChangedPaths, revisionProperties, handler);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNDiffClient16().doGetLogEligibleMergeInfo(path, pegRevision, mergeSrcPath, srcPegRevision, discoverChangedPaths, revisionProperties, handler);
-                return;
+            final ISVNLogEntryHandler handler) throws SVNException {
+        SvnLogMergeInfo mergeinfo = getOperationsFactory().createLogMergeInfo();
+
+        mergeinfo.addTarget(SvnTarget.fromFile(path, pegRevision));
+        mergeinfo.setSource(SvnTarget.fromFile(mergeSrcPath, srcPegRevision));
+        mergeinfo.setDiscoverChangedPaths(discoverChangedPaths);
+        mergeinfo.setRevisionProperties(revisionProperties);
+        mergeinfo.setFindMerged(false);
+        mergeinfo.setReceiver(new ISvnObjectReceiver<SVNLogEntry>() {
+            public void receive(SvnTarget target, SVNLogEntry object) throws SVNException {
+                handler.handleLogEntry(object);
             }
-            throw e;
-        }
+        });
+        mergeinfo.run();
     }
 
     /**
@@ -3112,16 +3143,20 @@ public class SVNDiffClient extends SVNBasicClient {
      * @since 1.2, SVN 1.5
      */
     public void doGetLogEligibleMergeInfo(SVNURL url, SVNRevision pegRevision, File mergeSrcPath, SVNRevision srcPegRevision, boolean discoverChangedPaths, String[] revisionProperties,
-            ISVNLogEntryHandler handler) throws SVNException {
-        try {
-            getSVNDiffClient17().doGetLogEligibleMergeInfo(url, pegRevision, mergeSrcPath, srcPegRevision, discoverChangedPaths, revisionProperties, handler);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNDiffClient16().doGetLogEligibleMergeInfo(url, pegRevision, mergeSrcPath, srcPegRevision, discoverChangedPaths, revisionProperties, handler);
-                return;
+            final ISVNLogEntryHandler handler) throws SVNException {
+        SvnLogMergeInfo mergeinfo = getOperationsFactory().createLogMergeInfo();
+
+        mergeinfo.addTarget(SvnTarget.fromURL(url, pegRevision));
+        mergeinfo.setSource(SvnTarget.fromFile(mergeSrcPath, srcPegRevision));
+        mergeinfo.setDiscoverChangedPaths(discoverChangedPaths);
+        mergeinfo.setRevisionProperties(revisionProperties);
+        mergeinfo.setFindMerged(false);
+        mergeinfo.setReceiver(new ISvnObjectReceiver<SVNLogEntry>() {
+            public void receive(SvnTarget target, SVNLogEntry object) throws SVNException {
+                handler.handleLogEntry(object);
             }
-            throw e;
-        }
+        });
+        mergeinfo.run();
     }
 
     /**

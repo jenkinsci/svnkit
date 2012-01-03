@@ -45,5 +45,4 @@ public class SvnLogMergeInfo extends SvnReceivingOperation<SVNLogEntry> {
     protected SvnLogMergeInfo(SvnOperationFactory factory) {
         super(factory);
     }
-
 }
