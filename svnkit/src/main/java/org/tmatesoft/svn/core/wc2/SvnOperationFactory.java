@@ -61,6 +61,7 @@ import org.tmatesoft.svn.core.internal.wc2.old.SvnOldCopy;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldExport;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetChangelistPaths;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetInfo;
+import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetMergeInfo;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetProperties;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetStatus;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldImport;
@@ -232,6 +233,7 @@ public class SvnOperationFactory {
         registerOperationRunner(SvnResolve.class, new SvnNgResolve());
         
         registerOperationRunner(SvnList.class, new SvnRemoteList());
+        registerOperationRunner(SvnLogMergeInfo.class, new SvnOldGetMergeInfo());
     }
     
     public boolean isAutoCloseContext() {

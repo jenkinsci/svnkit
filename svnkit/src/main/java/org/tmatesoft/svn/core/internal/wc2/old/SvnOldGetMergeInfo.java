@@ -4,10 +4,39 @@ import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.internal.wc16.SVNDiffClient16;
+import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.wc2.SvnLogMergeInfo;
+import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 public class SvnOldGetMergeInfo extends SvnOldRunner<SVNLogEntry, SvnLogMergeInfo> implements ISVNLogEntryHandler {
+    
+    
+
+    @Override
+    public SvnWcGeneration getWcGeneration() {
+        return SvnWcGeneration.NOT_DETECTED;
+    }
+    
+    
+
+    @Override
+    public boolean isApplicable(SvnLogMergeInfo operation, SvnWcGeneration wcGeneration) throws SVNException {
+        // both source and url are either from old wc or url.
+        if (getOperation().getSource().isFile()) {
+            if (SvnOperationFactory.detectWcGeneration(operation.getSource().getFile(), true) != SvnWcGeneration.V16) {
+                return false;
+            }
+        }
+        if (getOperation().getFirstTarget().isFile()) {
+            if (SvnOperationFactory.detectWcGeneration(operation.getFirstTarget().getFile(), true) != SvnWcGeneration.V16) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+
 
     @Override
     protected SVNLogEntry run() throws SVNException {
