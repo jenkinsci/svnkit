@@ -48,10 +48,14 @@ public class SvnNgAdd extends SvnNgOperationRunner<SvnScheduleForAddition, SvnSc
             SVNErrorManager.error(err, SVNLogType.WC);
         }
         File path = target.getFile();
-        File parentPath = SVNFileUtil.getParentFile(path);
-        File existingParent = parentPath;
-        if (getOperation().isAddParents()) {
-            existingParent = findExistingParent(parentPath);
+        File existingParent = path;
+        File parentPath = path;
+        if (!getWcContext().getDb().isWCRoot(path)) {
+            parentPath = SVNFileUtil.getParentFile(path);
+            existingParent = parentPath;
+            if (getOperation().isAddParents()) {
+                existingParent = findExistingParent(parentPath);
+            }
         }
         SVNFileType targetType = SVNFileType.getType(path);
         
