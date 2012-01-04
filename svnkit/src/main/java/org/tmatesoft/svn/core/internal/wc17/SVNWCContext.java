@@ -296,7 +296,7 @@ public class SVNWCContext {
         this.eventHandler = new Stack<ISVNEventHandler>();
         this.eventHandler.push(eventHandler);
     }
-
+    
     public ISVNEventHandler getEventHandler() {
         return eventHandler.peek();
     }
@@ -307,6 +307,15 @@ public class SVNWCContext {
 
     public void popEventHandler() {
         eventHandler.pop();
+    }
+    
+    public void setEventHandler(ISVNEventHandler handler) {
+        if (!eventHandler.isEmpty()) {
+            eventHandler.clear();
+        }
+        if (handler != null) {
+            pushEventHandler(handler);
+        }
     }
 
     public void close() {

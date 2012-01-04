@@ -293,7 +293,11 @@ public class SvnOperationFactory {
 
     public void setEventHandler(ISVNEventHandler eventHandler) {
         this.eventHandler = eventHandler;
-        disposeWcContext();
+        if (this.wcContext != null) {
+            this.wcContext.setEventHandler(eventHandler);
+        } else {
+            disposeWcContext();
+        }
     }
 
     public void setOptions(ISVNOptions options) {
