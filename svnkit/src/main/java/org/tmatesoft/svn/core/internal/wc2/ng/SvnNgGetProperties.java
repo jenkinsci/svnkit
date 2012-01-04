@@ -52,7 +52,7 @@ public class SvnNgGetProperties extends SvnNgOperationRunner<SVNProperties, SvnG
                 if (properties != null && !properties.isEmpty()) {
                     getOperation().receive(SvnTarget.fromFile(target), properties);
                 }
-            } else if (matchesChangelist(target)) {
+            } else {
                 SVNWCDb db = (SVNWCDb) context.getDb();
                 db.readPropertiesRecursively(
                         target, 
