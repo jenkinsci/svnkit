@@ -4579,7 +4579,7 @@ public class SVNWCDb implements ISVNWCDb {
         }
 
         private void commitDescendant(File parentLocalRelPath, File parentReposRelPath, long opDepth, long revision) throws SVNException {
-            List<String> children = gatherRepoChildren(pdh, parentReposRelPath, opDepth);
+            List<String> children = gatherRepoChildren(pdh, parentLocalRelPath, opDepth);
             SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.COMMIT_DESCENDANT_TO_BASE);
             for (String name : children) {
                 File childLocalRelPath = SVNFileUtil.createFilePath(parentLocalRelPath, name);
