@@ -457,7 +457,7 @@ public class SVNWCContext {
         return -1;
     }
 
-    private WCDbInfo getNodeChangedInfo(File path) throws SVNException {
+    public WCDbInfo getNodeChangedInfo(File path) throws SVNException {
         return db.readInfo(path, InfoField.changedRev, InfoField.changedDate, InfoField.changedAuthor);
     }
 
