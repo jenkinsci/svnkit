@@ -28,6 +28,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbOpenMode;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.internal.wc2.ISvnCommitRunner;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
+import org.tmatesoft.svn.core.internal.wc2.admin.SvnRepositoryDumpImpl;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgAdd;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgCat;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgCheckout;
@@ -97,6 +98,7 @@ import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.ISVNRepositoryPool;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
+import org.tmatesoft.svn.core.wc2.admin.SvnRepositoryDump;
 import org.tmatesoft.svn.util.SVNLogType;
 
 public class SvnOperationFactory {
@@ -234,6 +236,8 @@ public class SvnOperationFactory {
         
         registerOperationRunner(SvnList.class, new SvnRemoteList());
         registerOperationRunner(SvnLogMergeInfo.class, new SvnOldGetMergeInfo());
+        
+        registerOperationRunner(SvnRepositoryDump.class, new SvnRepositoryDumpImpl());
     }
     
     public boolean isAutoCloseContext() {
@@ -464,6 +468,10 @@ public class SvnOperationFactory {
     
     public SvnList createList() {
         return new SvnList(this);
+    }
+    
+    public SvnRepositoryDump createRepositoryDump() {
+        return new SvnRepositoryDump(this);
     }
     
     protected Object run(SvnOperation<?> operation) throws SVNException {
