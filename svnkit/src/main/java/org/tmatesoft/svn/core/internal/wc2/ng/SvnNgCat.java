@@ -28,10 +28,10 @@ import org.tmatesoft.svn.core.wc2.SvnCat;
 import org.tmatesoft.svn.core.wc2.SvnStatus;
 import org.tmatesoft.svn.util.SVNLogType;
 
-public class SvnNgCat extends SvnNgOperationRunner<Long, SvnCat> {
+public class SvnNgCat extends SvnNgOperationRunner<Void, SvnCat> {
 
     @Override
-    protected Long run(SVNWCContext context) throws SVNException {
+    protected Void run(SVNWCContext context) throws SVNException {
         
         SVNNodeKind kind = context.readKind(getFirstTarget(), false);
         if (kind == SVNNodeKind.UNKNOWN || kind == SVNNodeKind.NONE) {

@@ -324,8 +324,9 @@ public class SVNChangelistClient extends SVNBasicClient {
         }
     	gp.setReceiver(SvnCodec.changelistReceiver(handler));
     	gp.setDepth(depth);
-    	if (changeLists != null)
+    	if (changeLists != null) {
     		gp.setApplicalbeChangelists(changeLists);
+    	}
     	gp.run();
     }
 

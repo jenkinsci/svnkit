@@ -56,7 +56,7 @@ import org.tmatesoft.svn.core.wc2.SvnScheduleForAddition;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
 
-public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
+public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
 
     @Override
     public boolean isApplicable(SvnCopy operation, SvnWcGeneration wcGeneration) throws SVNException {
@@ -77,7 +77,7 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
     }
     
     @Override
-    protected Long run(SVNWCContext context) throws SVNException {
+    protected Void run(SVNWCContext context) throws SVNException {
         if (getOperation().isMove()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
                     "Moves between the working copy and the repository are not supported");
@@ -172,7 +172,7 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
         return copy(copyPairs, getOperation().isMakeParents(), getOperation().isIgnoreExternals());
     }
     
-    private long copy(Collection<SvnCopyPair> copyPairs, boolean makeParents, boolean ignoreExternals) throws SVNException {
+    private Void copy(Collection<SvnCopyPair> copyPairs, boolean makeParents, boolean ignoreExternals) throws SVNException {
         for (SvnCopyPair pair : copyPairs) {
             Structure<LocationsInfo> locations = getRepositoryAccess().getLocations(null, 
                     pair.sourceFile != null ? SvnTarget.fromFile(pair.sourceFile) : SvnTarget.fromURL(pair.source), 
@@ -253,7 +253,7 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
         }
     }
     
-    private long copy(Collection<SvnCopyPair> copyPairs, File topDst, boolean ignoreExternals, SVNRepository repository) throws SVNException {
+    private Void copy(Collection<SvnCopyPair> copyPairs, File topDst, boolean ignoreExternals, SVNRepository repository) throws SVNException {
         for (SvnCopyPair pair : copyPairs) {
             SVNNodeKind dstKind  = getWcContext().readKind(pair.dst, false);
             if (dstKind == SVNNodeKind.NONE) {
@@ -292,13 +292,12 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
                 throw e;
             }
         }
-        long rev = -1;
         for (SvnCopyPair pair : copyPairs) {
-            rev = copy(pair, sameRepositories, ignoreExternals, repository);
+            copy(pair, sameRepositories, ignoreExternals, repository);
         }
         sleepForTimestamp();
         
-        return rev;
+        return null;
     }
 
     private long copy(final SvnCopyPair pair, boolean sameRepositories, boolean ignoreExternals, SVNRepository repository) throws SVNException {

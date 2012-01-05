@@ -19,10 +19,10 @@ import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc2.SvnCleanup;
 import org.tmatesoft.svn.util.SVNLogType;
 
-public class SvnNgCleanup extends SvnNgOperationRunner<Long, SvnCleanup> {
+public class SvnNgCleanup extends SvnNgOperationRunner<Void, SvnCleanup> {
 
     @Override
-    protected Long run(SVNWCContext context) throws SVNException {
+    protected Void run(SVNWCContext context) throws SVNException {
         
         if (getOperation().getFirstTarget().isURL()) {
         	SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET,
@@ -35,7 +35,8 @@ public class SvnNgCleanup extends SvnNgOperationRunner<Long, SvnCleanup> {
     	SVNWCContext wcContext = new SVNWCContext(db, context.getEventHandler());
         cleanup(wcContext, localAbsPath);
         sleepForTimestamp();
-        return Long.decode("-1");
+        
+        return null;
     }
     
     private void cleanup(SVNWCContext wcContext, File localAbsPath) throws SVNException {

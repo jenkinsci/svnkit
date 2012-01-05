@@ -32,14 +32,14 @@ import org.tmatesoft.svn.core.wc2.SvnScheduleForAddition;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
 
-public class SvnNgAdd extends SvnNgOperationRunner<SvnScheduleForAddition, SvnScheduleForAddition> {
+public class SvnNgAdd extends SvnNgOperationRunner<Void, SvnScheduleForAddition> {
 
     @Override
-    protected SvnScheduleForAddition run(SVNWCContext context) throws SVNException {
+    protected Void run(SVNWCContext context) throws SVNException {
         for (SvnTarget target : getOperation().getTargets()) {
             add(target);            
         }
-        return getOperation();
+        return null;
     }
 
     private void add(SvnTarget target) throws SVNException {

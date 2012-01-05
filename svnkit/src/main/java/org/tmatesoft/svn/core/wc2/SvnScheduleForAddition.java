@@ -1,6 +1,6 @@
 package org.tmatesoft.svn.core.wc2;
 
-public class SvnScheduleForAddition extends SvnOperation<SvnScheduleForAddition> {
+public class SvnScheduleForAddition extends SvnOperation<Void> {
     
     private boolean force;
     private boolean includeIgnored;

@@ -3,7 +3,7 @@ package org.tmatesoft.svn.core.wc2;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 
-public class SvnRevert extends SvnOperation<SvnRevert> {
+public class SvnRevert extends SvnOperation<Void> {
     
     protected SvnRevert(SvnOperationFactory factory) {
         super(factory);

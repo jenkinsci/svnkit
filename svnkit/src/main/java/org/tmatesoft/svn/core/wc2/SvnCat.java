@@ -5,7 +5,7 @@ import java.io.OutputStream;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
-public class SvnCat extends SvnOperation<Long> {
+public class SvnCat extends SvnOperation<Void> {
 
     private boolean expandKeywords;
     private OutputStream output;

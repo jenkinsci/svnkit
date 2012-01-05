@@ -9,10 +9,10 @@ import org.tmatesoft.svn.core.wc2.SvnCopy;
 import org.tmatesoft.svn.core.wc2.SvnCopySource;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
-public class SvnOldCopy extends SvnOldRunner<Long, SvnCopy> {
+public class SvnOldCopy extends SvnOldRunner<Void, SvnCopy> {
 
     @Override
-    protected Long run() throws SVNException {
+    protected Void run() throws SVNException {
         SVNCopyClient16 client = new SVNCopyClient16(getOperation().getRepositoryPool(), getOperation().getOptions());
         client.setEventHandler(getOperation().getEventHandler());
         client.setCommitHandler(null);
@@ -33,6 +33,6 @@ public class SvnOldCopy extends SvnOldRunner<Long, SvnCopy> {
             client.doCopy(sources, target.getFile(), getOperation().isMove(), getOperation().isMakeParents(), getOperation().isFailWhenDstExists());
         }
         
-        return new Long(-1);
+        return null;
     }
 }

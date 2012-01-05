@@ -6,10 +6,10 @@ import org.tmatesoft.svn.core.wc.SVNWCClient;
 import org.tmatesoft.svn.core.wc2.SvnScheduleForRemoval;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
-public class SvnOldRemove extends SvnOldRunner<SvnScheduleForRemoval, SvnScheduleForRemoval> {
+public class SvnOldRemove extends SvnOldRunner<Void, SvnScheduleForRemoval> {
 
     @Override
-    protected SvnScheduleForRemoval run() throws SVNException {
+    protected Void run() throws SVNException {
         SVNWCClient16 client = new SVNWCClient16(getOperation().getRepositoryPool(), getOperation().getOptions());
         client.setEventHandler(getOperation().getEventHandler());
         client.setAddParameters(SVNWCClient.DEFAULT_ADD_PARAMETERS);
@@ -20,7 +20,7 @@ public class SvnOldRemove extends SvnOldRunner<SvnScheduleForRemoval, SvnSchedul
                     getOperation().isDeleteFiles(), 
                     getOperation().isDryRun());
         }
-        return getOperation();
+        return null;
     }
 
 }

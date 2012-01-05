@@ -4,9 +4,9 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc16.SVNWCClient16;
 import org.tmatesoft.svn.core.wc2.SvnCat;
 
-public class SvnOldCat extends SvnOldRunner<Long, SvnCat> {
+public class SvnOldCat extends SvnOldRunner<Void, SvnCat> {
     @Override
-    protected Long run() throws SVNException {
+    protected Void run() throws SVNException {
         
         SVNWCClient16 client = new SVNWCClient16(getOperation().getRepositoryPool(), getOperation().getOptions());
         
@@ -27,7 +27,7 @@ public class SvnOldCat extends SvnOldRunner<Long, SvnCat> {
         			getOperation().getOutput());
         }
         
-        return Long.decode("1");
+        return null;
     }
 
 }

@@ -4,10 +4,10 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc16.SVNWCClient16;
 import org.tmatesoft.svn.core.wc2.SvnResolve;
 
-public class SvnOldResolve extends SvnOldRunner<Long, SvnResolve> {
+public class SvnOldResolve extends SvnOldRunner<Void, SvnResolve> {
 
     @Override
-    protected Long run() throws SVNException {
+    protected Void run() throws SVNException {
         SVNWCClient16 client = new SVNWCClient16(getOperation().getRepositoryPool(), getOperation().getOptions());
         client.setEventHandler(getOperation().getEventHandler());
         client.doResolve(
@@ -18,7 +18,7 @@ public class SvnOldResolve extends SvnOldRunner<Long, SvnResolve> {
         		getOperation().isResolveTree(),
         		getOperation().getConflictChoice());
 
-        return Long.decode("-1");
+        return null;
     }
 
 }

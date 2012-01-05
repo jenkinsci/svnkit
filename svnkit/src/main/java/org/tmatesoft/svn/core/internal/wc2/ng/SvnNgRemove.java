@@ -27,10 +27,10 @@ import org.tmatesoft.svn.core.wc2.SvnStatus;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
 
-public class SvnNgRemove extends SvnNgOperationRunner<SvnScheduleForRemoval, SvnScheduleForRemoval> {
+public class SvnNgRemove extends SvnNgOperationRunner<Void, SvnScheduleForRemoval> {
 
     @Override
-    protected SvnScheduleForRemoval run(SVNWCContext context) throws SVNException {
+    protected Void run(SVNWCContext context) throws SVNException {
         
         for(SvnTarget target : getOperation().getTargets()) {
             File path = target.getFile();
@@ -49,7 +49,7 @@ public class SvnNgRemove extends SvnNgOperationRunner<SvnScheduleForRemoval, Svn
             }
         }
         
-        return getOperation();
+        return null;
     }
     
     private void checkCanDelete(File path) throws SVNException {

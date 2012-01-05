@@ -23,10 +23,10 @@ import org.tmatesoft.svn.core.wc2.SvnCat;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
 
-public class SvnRemoteCat extends SvnRemoteOperationRunner<Long, SvnCat> {
+public class SvnRemoteCat extends SvnRemoteOperationRunner<Void, SvnCat> {
 
     @Override
-    protected Long run() throws SVNException {
+    protected Void run() throws SVNException {
     	SVNRevision revision = getOperation().getRevision() == null || !getOperation().getRevision().isValid() ? 
     			SVNRevision.HEAD : getOperation().getRevision();
     	SvnTarget target = getOperation().getFirstTarget();
@@ -103,6 +103,6 @@ public class SvnRemoteCat extends SvnRemoteOperationRunner<Long, SvnCat> {
         } catch (IOException e) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage()), SVNLogType.WC);
         }
-        return revNumber;
+        return null;
     }
 }

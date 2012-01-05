@@ -8,10 +8,10 @@ import org.tmatesoft.svn.core.wc.SVNWCClient;
 import org.tmatesoft.svn.core.wc2.SvnScheduleForAddition;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
-public class SvnOldAdd extends SvnOldRunner<SvnScheduleForAddition, SvnScheduleForAddition> {
+public class SvnOldAdd extends SvnOldRunner<Void, SvnScheduleForAddition> {
 
     @Override
-    protected SvnScheduleForAddition run() throws SVNException {
+    protected Void run() throws SVNException {
         
         SVNWCClient16 client = new SVNWCClient16(getOperation().getRepositoryPool(), getOperation().getOptions());
         client.setEventHandler(getOperation().getEventHandler());
@@ -32,7 +32,7 @@ public class SvnOldAdd extends SvnOldRunner<SvnScheduleForAddition, SvnScheduleF
                 getOperation().isIncludeIgnored(), 
                 getOperation().isAddParents());
 
-        return getOperation();
+        return null;
     }
 
 }

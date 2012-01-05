@@ -4,7 +4,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 
-public class SvnCopy extends SvnOperation<Long> {
+public class SvnCopy extends SvnOperation<Void> {
     
     private Collection<SvnCopySource> sources = new HashSet<SvnCopySource>();
     private boolean move;

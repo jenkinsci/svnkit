@@ -11,10 +11,10 @@ import org.tmatesoft.svn.core.wc2.SvnMerge;
 import org.tmatesoft.svn.core.wc2.SvnRevisionRange;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
-public class SvnOldMerge extends SvnOldRunner<Long, SvnMerge> {
+public class SvnOldMerge extends SvnOldRunner<Void, SvnMerge> {
 
     @Override
-    protected Long run() throws SVNException {
+    protected Void run() throws SVNException {
         
         SVNDiffClient16 diffClient = new SVNDiffClient16(getOperation().getRepositoryPool(), getOperation().getOptions());
         diffClient.setMergeOptions(getOperation().getMergeOptions());
@@ -108,7 +108,7 @@ public class SvnOldMerge extends SvnOldRunner<Long, SvnMerge> {
                         getOperation().isRecordOnly());
             }
         }
-        return 0l;
+        return null;
     }
 
 }

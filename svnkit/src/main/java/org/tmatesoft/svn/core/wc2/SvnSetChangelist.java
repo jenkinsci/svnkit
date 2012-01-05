@@ -6,7 +6,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.util.SVNLogType;
 
-public class SvnSetChangelist extends SvnOperation<Long> {
+public class SvnSetChangelist extends SvnOperation<Void> {
 
     private String changelistName;
     private boolean remove;

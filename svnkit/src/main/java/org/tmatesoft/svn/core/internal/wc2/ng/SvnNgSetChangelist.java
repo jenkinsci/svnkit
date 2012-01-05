@@ -9,10 +9,10 @@ import org.tmatesoft.svn.core.wc2.SvnSetChangelist;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 
-public class SvnNgSetChangelist extends SvnNgOperationRunner<Long, SvnSetChangelist> {
+public class SvnNgSetChangelist extends SvnNgOperationRunner<Void, SvnSetChangelist> {
 
     @Override
-    protected Long run(SVNWCContext context) throws SVNException {
+    protected Void run(SVNWCContext context) throws SVNException {
         
         Collection<String> applicableChangelists = getOperation().getApplicableChangelists();
         String[] listsNames = null;

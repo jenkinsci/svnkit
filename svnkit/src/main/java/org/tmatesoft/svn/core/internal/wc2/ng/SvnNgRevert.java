@@ -32,10 +32,10 @@ import org.tmatesoft.svn.core.wc2.SvnRevert;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
 
-public class SvnNgRevert extends SvnNgOperationRunner<SvnRevert, SvnRevert> {
+public class SvnNgRevert extends SvnNgOperationRunner<Void, SvnRevert> {
 
     @Override
-    protected SvnRevert run(SVNWCContext context) throws SVNException {
+    protected Void run(SVNWCContext context) throws SVNException {
         boolean useCommitTimes = getOperation().getOptions().isUseCommitTimes();
         
         for (SvnTarget target : getOperation().getTargets()) {
@@ -66,7 +66,7 @@ public class SvnNgRevert extends SvnNgOperationRunner<SvnRevert, SvnRevert> {
         if (!useCommitTimes) {
             sleepForTimestamp();
         }
-        return getOperation();
+        return null;
     }
 
     private void revert(File localAbsPath, SVNDepth depth, boolean useCommitTimes, Collection<String> changelists) throws SVNException {

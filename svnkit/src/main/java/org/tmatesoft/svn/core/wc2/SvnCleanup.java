@@ -2,7 +2,7 @@ package org.tmatesoft.svn.core.wc2;
 
 import org.tmatesoft.svn.core.wc2.SvnOperation;
 
-public class SvnCleanup extends SvnOperation<Long> {
+public class SvnCleanup extends SvnOperation<Void> {
 	
 	private boolean deleteWCProperties;
 

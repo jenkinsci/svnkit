@@ -6,7 +6,7 @@ import java.util.Collection;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 
 
-public class SvnMerge extends SvnOperation<Long> {
+public class SvnMerge extends SvnOperation<Void> {
     
     private SvnTarget firstSource;
     private SvnTarget secondSource;

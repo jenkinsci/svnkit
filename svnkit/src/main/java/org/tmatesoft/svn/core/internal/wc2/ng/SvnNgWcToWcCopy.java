@@ -49,7 +49,7 @@ import org.tmatesoft.svn.core.wc2.SvnScheduleForAddition;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
 
-public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
+public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
 
     @Override
     public boolean isApplicable(SvnCopy operation, SvnWcGeneration wcGeneration) throws SVNException {
@@ -72,7 +72,7 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
     }
 
     @Override
-    protected Long run(SVNWCContext context) throws SVNException {
+    protected Void run(SVNWCContext context) throws SVNException {
         Collection<SvnCopySource> sources = getOperation().getSources();
         try {
             return tryRun(context, sources, getFirstTarget());
@@ -87,9 +87,9 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
             throw e;            
         } finally {
             sleepForTimestamp();
-        }
+        }        
     }
-    protected Long tryRun(SVNWCContext context, Collection<SvnCopySource> sources, File target) throws SVNException {
+    protected Void tryRun(SVNWCContext context, Collection<SvnCopySource> sources, File target) throws SVNException {
         Collection<SvnCopyPair> copyPairs = new ArrayList<SvnNgWcToWcCopy.SvnCopyPair>();
 
         if (sources.size() > 1) {
@@ -164,7 +164,7 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Long, SvnCopy> {
             }
         }
         
-        return new Long(-1);
+        return null;
     }
 
     private void move(Collection<SvnCopyPair> pairs) throws SVNException {

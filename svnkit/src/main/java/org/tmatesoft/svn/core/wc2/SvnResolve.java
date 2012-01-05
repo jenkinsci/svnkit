@@ -2,7 +2,7 @@ package org.tmatesoft.svn.core.wc2;
 
 import org.tmatesoft.svn.core.wc.SVNConflictChoice;
 
-public class SvnResolve extends SvnOperation<Long> {
+public class SvnResolve extends SvnOperation<Void> {
 
     private SVNConflictChoice conflictChoice;
     private boolean resolveContents = true;

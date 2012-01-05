@@ -9,10 +9,10 @@ import org.tmatesoft.svn.core.internal.wc16.SVNChangelistClient16;
 import org.tmatesoft.svn.core.wc2.SvnSetChangelist;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
-public class SvnOldSetChangelist extends SvnOldRunner<Long, SvnSetChangelist> {
+public class SvnOldSetChangelist extends SvnOldRunner<Void, SvnSetChangelist> {
 
     @Override
-    protected Long run() throws SVNException {
+    protected Void run() throws SVNException {
         
     	SVNChangelistClient16 client = new SVNChangelistClient16(getOperation().getRepositoryPool(), getOperation().getOptions());
         client.setEventHandler(getOperation().getEventHandler());
@@ -38,7 +38,7 @@ public class SvnOldSetChangelist extends SvnOldRunner<Long, SvnSetChangelist> {
 
         }
         
-        return Long.decode("1");
+        return null;
     }
 
 }

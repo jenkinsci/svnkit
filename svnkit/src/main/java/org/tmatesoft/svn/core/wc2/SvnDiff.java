@@ -7,7 +7,7 @@ import org.tmatesoft.svn.core.wc.ISVNDiffGenerator;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
-public class SvnDiff extends SvnOperation<Long> {
+public class SvnDiff extends SvnOperation<Void> {
     
     private ISVNDiffGenerator diffGenerator;
     private SVNDiffOptions diffOptions;
