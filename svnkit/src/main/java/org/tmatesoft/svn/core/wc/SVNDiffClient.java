@@ -33,6 +33,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnLogMergeInfo;
 import org.tmatesoft.svn.core.wc2.SvnMerge;
+import org.tmatesoft.svn.core.wc2.SvnSuggestMergeSources;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 /**
@@ -3254,15 +3255,10 @@ public class SVNDiffClient extends SVNBasicClient {
      * @return potential merge sources for <code>path</code>
      * @since 1.2, SVN 1.5
      */
-    public Collection doSuggestMergeSources(File path, SVNRevision pegRevision) throws SVNException {
-        try {
-            return getSVNDiffClient17().doSuggestMergeSources(path, pegRevision);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                return getSVNDiffClient16().doSuggestMergeSources(path, pegRevision);
-            }
-            throw e;
-        }
+    public Collection<SVNURL> doSuggestMergeSources(File path, SVNRevision pegRevision) throws SVNException {
+        SvnSuggestMergeSources sms = getOperationsFactory().createSuggestMergeSources();
+        sms.setSingleTarget(SvnTarget.fromFile(path, pegRevision));
+        return sms.run();
     }
 
     /**
@@ -3278,15 +3274,10 @@ public class SVNDiffClient extends SVNBasicClient {
      * @return potential merge sources for <code>url</code>
      * @since 1.2, SVN 1.5
      */
-    public Collection doSuggestMergeSources(SVNURL url, SVNRevision pegRevision) throws SVNException {
-        try {
-            return getSVNDiffClient17().doSuggestMergeSources(url, pegRevision);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                return getSVNDiffClient16().doSuggestMergeSources(url, pegRevision);
-            }
-            throw e;
-        }
+    public Collection<SVNURL> doSuggestMergeSources(SVNURL url, SVNRevision pegRevision) throws SVNException {
+        SvnSuggestMergeSources sms = getOperationsFactory().createSuggestMergeSources();
+        sms.setSingleTarget(SvnTarget.fromURL(url, pegRevision));
+        return sms.run();
     }
 
     public void doPatch(File absPatchPath, File localAbsPath, boolean dryRun, int stripCount) throws SVNException {

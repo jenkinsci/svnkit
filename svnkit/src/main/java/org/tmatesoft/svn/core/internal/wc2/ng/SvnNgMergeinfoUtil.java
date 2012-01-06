@@ -27,6 +27,8 @@ import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeOriginInfo;
 import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess;
+import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess.RepositoryInfo;
+import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
@@ -259,7 +261,8 @@ public class SvnNgMergeinfoUtil {
         return result;
     }
     
-    public static Map<String, Map<String, SVNMergeRangeList>> getMergeInfo(SVNWCContext context, SvnRepositoryAccess repoAccess, SvnTarget target, boolean includeDescendants, boolean ignoreInvalidMergeInfo) throws SVNException {
+    public static Map<String, Map<String, SVNMergeRangeList>> getMergeInfo(SVNWCContext context, SvnRepositoryAccess repoAccess, 
+            SvnTarget target, boolean includeDescendants, boolean ignoreInvalidMergeInfo, SVNURL[] root) throws SVNException {
         Structure<SvnRepositoryAccess.RepositoryInfo> repositoryInfo = repoAccess.createRepositoryFor(target, SVNRevision.UNDEFINED, target.getPegRevision(), null);
         SVNURL url = repositoryInfo.get(SvnRepositoryAccess.RepositoryInfo.url);
         long pegRev = repositoryInfo.lng(SvnRepositoryAccess.RepositoryInfo.revision);
@@ -285,6 +288,10 @@ public class SvnNgMergeinfoUtil {
             nodeOriginInfo.release();
         }
         
+        if (root != null && root.length > 0) {
+            root[0] = repository.getRepositoryRoot(true);
+        }
+        
         if (useURL) {
             rev = pegRev;
             return getReposMergeInfoCatalog(repository, "", rev, SVNMergeInfoInheritance.INHERITED, false, includeDescendants).catalog;
@@ -292,4 +299,5 @@ public class SvnNgMergeinfoUtil {
             return getWcOrReposMergeInfoCatalog(context, repository, target.getFile(), includeDescendants, false, ignoreInvalidMergeInfo, SVNMergeInfoInheritance.INHERITED).catalog;
         }
     }
+    
  }

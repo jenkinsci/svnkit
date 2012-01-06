@@ -47,6 +47,7 @@ import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgRevert;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgSetChangelist;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgSetLock;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgSetProperty;
+import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgSuggestMergeSources;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgSwitch;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgUnlock;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgUpdate;
@@ -75,6 +76,7 @@ import org.tmatesoft.svn.core.internal.wc2.old.SvnOldRevert;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldSetChangelist;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldSetLock;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldSetProperty;
+import org.tmatesoft.svn.core.internal.wc2.old.SvnOldSuggestMergeSources;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldSwitch;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldUnlock;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldUpdate;
@@ -235,7 +237,11 @@ public class SvnOperationFactory {
         registerOperationRunner(SvnResolve.class, new SvnNgResolve());
         
         registerOperationRunner(SvnList.class, new SvnRemoteList());
+        
         registerOperationRunner(SvnLogMergeInfo.class, new SvnOldGetMergeInfo());
+
+        registerOperationRunner(SvnSuggestMergeSources.class, new SvnNgSuggestMergeSources());
+        registerOperationRunner(SvnSuggestMergeSources.class, new SvnOldSuggestMergeSources());
         
         registerOperationRunner(SvnRepositoryDump.class, new SvnRepositoryDumpImpl());
     }

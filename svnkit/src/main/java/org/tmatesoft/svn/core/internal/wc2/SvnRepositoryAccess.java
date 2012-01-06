@@ -19,6 +19,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
+import org.tmatesoft.svn.core.io.ISVNLocationSegmentHandler;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.SVNLocationSegment;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -344,5 +345,37 @@ public abstract class SvnRepositoryAccess {
             result.put(path, SVNMergeRangeList.fromCollection(pathRanges));
         }
         return result;
+    }
+
+    public SVNLocationEntry getCopySource(SvnTarget target, SVNRevision revision) throws SVNException {
+        Structure<RepositoryInfo> repositoryInfo = createRepositoryFor(target, revision, revision, null);
+        SVNRepository repository = repositoryInfo.get(RepositoryInfo.repository);
+        long atRev = repositoryInfo.lng(RepositoryInfo.revision);
+        repositoryInfo.release();
+        
+        final Object[] copyFrom = new Object[3];
+        try {
+            repository.getLocationSegments("", atRev, atRev, -1, new ISVNLocationSegmentHandler() {
+                public void handleLocationSegment(SVNLocationSegment locationSegment) throws SVNException {
+                    // skip first.
+                    if (copyFrom[0] == null) {
+                        copyFrom[0] = Boolean.TRUE;
+                    } else if (copyFrom[1] != null) {
+                        return;
+                    } else if (locationSegment.getPath() != null) {
+                        copyFrom[1] = locationSegment.getPath();
+                        copyFrom[2] = locationSegment.getEndRevision();
+                    }
+                }
+            });
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.FS_NOT_FOUND ||
+                    e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_DAV_REQUEST_FAILED) {
+                return new SVNLocationEntry(-1, null);
+            } else {
+                throw e;
+            }
+        }
+        return new SVNLocationEntry((Long) copyFrom[2], (String) copyFrom[1]);
     }
 }
