@@ -54,6 +54,7 @@ public class SVNLogEntry implements Serializable {
     private SVNProperties myRevisionProperties;
     private boolean myHasChildren;
     private boolean myIsSubtractiveMerge;
+    private boolean myIsNonInheritable;
     
     /**
      * Constructs an <b>SVNLogEntry</b> object. 
@@ -124,7 +125,7 @@ public class SVNLogEntry implements Serializable {
      *              were changed in the revision and values represent information about each changed path
      * 
      */
-    public Map getChangedPaths() {
+    public Map<String, SVNLogEntryPath> getChangedPaths() {
         return myChangedPaths;
     }
     
@@ -288,4 +289,12 @@ public class SVNLogEntry implements Serializable {
         return myIsSubtractiveMerge;
     }
 
+
+    public void setNonInheriable(boolean nonInheritable) {
+        myIsNonInheritable = nonInheritable;
+    }
+    
+    public boolean isNonInheritable() {
+        return myIsNonInheritable;
+    }
 }

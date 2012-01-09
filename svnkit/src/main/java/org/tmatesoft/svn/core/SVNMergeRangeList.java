@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -118,8 +119,8 @@ public class SVNMergeRangeList {
      * 
      * @return a new list instance containing all of the ranges stored in this merge range list 
      */
-    public List getRangesAsList() {
-    	LinkedList list = new LinkedList();
+    public List<SVNMergeRange> getRangesAsList() {
+    	List<SVNMergeRange> list = new ArrayList<SVNMergeRange>();
     	for (int i = 0; i < myRanges.length; i++) {
 			SVNMergeRange range = myRanges[i];
 			list.add(range);

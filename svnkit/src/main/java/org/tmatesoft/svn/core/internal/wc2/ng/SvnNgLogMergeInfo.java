@@ -2,12 +2,11 @@ package org.tmatesoft.svn.core.internal.wc2.ng;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
@@ -16,14 +15,15 @@ import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
+import org.tmatesoft.svn.core.wc2.SvnLog;
 import org.tmatesoft.svn.core.wc2.SvnLogMergeInfo;
+import org.tmatesoft.svn.core.wc2.SvnRevisionRange;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
-import org.tmatesoft.svn.util.SVNLogType;
 
 public class SvnNgLogMergeInfo extends SvnNgOperationRunner<SVNLogEntry, SvnLogMergeInfo> {
 
@@ -155,30 +155,107 @@ public class SvnNgLogMergeInfo extends SvnNgOperationRunner<SVNLogEntry, SvnLogM
         }
         
         SVNURL logTargetURL = logTarget != null ? SVNWCUtils.join(root[0], SVNFileUtil.createFilePath(logTarget)) : root[0];
+        
+        logForMergeInfoRangeList(logTargetURL, 
+                mergeSourcePaths, 
+                getOperation().isFindMerged(), 
+                masterInheritableRangeList, 
+                mergeInfoCatalog, 
+                "/" + reposRelPathStr, 
+                getOperation().isDiscoverChangedPaths(), 
+                getOperation().getRevisionProperties(), 
+                getOperation());
+        
         return getOperation().first();
     }
-
-    private static class LogHandlerFilter implements ISVNLogEntryHandler {
-        ISVNLogEntryHandler realHandler;
-        SVNMergeRangeList rangeList;
-        
-        public LogHandlerFilter(ISVNLogEntryHandler handler, SVNMergeRangeList rangeList) {
-            this.realHandler = handler;
-            this.rangeList = rangeList;
+    
+    private void logForMergeInfoRangeList(SVNURL sourceURL, List<String> mergeSourcePaths, boolean filteringMerged, 
+            SVNMergeRangeList rangelist, Map<String, Map<String, SVNMergeRangeList>> targetCatalog, String absReposTargetPath, boolean discoverChangedPaths,
+            String[] revprops, ISvnObjectReceiver<SVNLogEntry> receiver) throws SVNException {
+        if (rangelist.isEmpty()) {
+            return;
         }
+        if (targetCatalog == null) {
+            targetCatalog = new TreeMap<String, Map<String,SVNMergeRangeList>>();
+        }
+        List<SVNMergeRange> ranges = rangelist.getRangesAsList();
+        Collections.sort(ranges);
+        SVNMergeRange youngestRange = ranges.get(ranges.size() - 1);
+        SVNMergeRange oldestRange = ranges.get(0);
+        long youngestRev = youngestRange.getEndRevision();
+        long oldestRev = oldestRange.getStartRevision();
         
-        public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
-            SVNMergeRange range = new SVNMergeRange(logEntry.getRevision() - 1, logEntry.getRevision(), true);
-            SVNMergeRangeList thisRangeList = new SVNMergeRangeList(range);
-            SVNMergeRangeList intersection = thisRangeList.intersect(rangeList, true);
+        LogEntryReceiver filteringReceiver = new LogEntryReceiver();
+        filteringReceiver.receiver = receiver;
+        filteringReceiver.rangelist = rangelist;
+        filteringReceiver.isFilteringMerged = filteringMerged;
+        filteringReceiver.targetCatalog = targetCatalog;
+        filteringReceiver.mergeSourcePaths = mergeSourcePaths;
+        filteringReceiver.reposTargertAbsPath = absReposTargetPath;
+        
+        SvnLog log = getOperation().getOperationFactory().createLog();
+        
+        log.setSingleTarget(SvnTarget.fromURL(sourceURL, SVNRevision.create(youngestRev)));
+        log.setDiscoverChangedPaths(getOperation().isDiscoverChangedPaths());
+        log.setRevisionProperties(getOperation().getRevisionProperties());
+        log.setLimit(-1);
+        log.setStopOnCopy(false);
+        log.setUseMergeHistory(false);
+        log.addRange(SvnRevisionRange.create(SVNRevision.create(oldestRev), SVNRevision.create(youngestRev)));
+        log.setReceiver(filteringReceiver);
+        
+        log.run();
+    }
+
+    private static class LogEntryReceiver implements ISvnObjectReceiver<SVNLogEntry> {
+
+        private boolean isFilteringMerged;
+        private List<String> mergeSourcePaths;
+        private String reposTargertAbsPath;
+        private Map<String, Map<String, SVNMergeRangeList>> targetCatalog;
+        private SVNMergeRangeList rangelist;
+        private ISvnObjectReceiver<SVNLogEntry> receiver;
+        
+        public LogEntryReceiver() {
+        }
+
+        public void receive(SvnTarget target, SVNLogEntry logEntry) throws SVNException {
+            if (logEntry.getRevision() == 0) {
+                return;
+            }
+            SVNMergeRangeList thisRangeList = new SVNMergeRangeList(logEntry.getRevision() - 1, logEntry.getRevision(), true);
+            SVNMergeRangeList intersection = this.rangelist.intersect(thisRangeList, false);
+            
             if (intersection == null || intersection.isEmpty()) {
                 return;
             }
+            intersection = this.rangelist.intersect(thisRangeList, true);
+            logEntry.setNonInheriable(!intersection.isEmpty());
             
-            SVNErrorManager.assertionFailure(intersection.getSize() == 1, "intersection list size is " + intersection.getSize(), SVNLogType.WC);
-            if (realHandler != null) {
-                realHandler.handleLogEntry(logEntry);
+            if ((logEntry.isNonInheritable() || !isFilteringMerged) && logEntry.getChangedPaths() != null) {
+                boolean allSubtreesHaveThisRev = true;
+                SVNMergeRangeList thisRevRangeList = new SVNMergeRangeList(logEntry.getRevision() - 1, logEntry.getRevision(), true);
+                for (String changedPath : logEntry.getChangedPaths().keySet()) {
+                    File mergeSourceRelTarget = null;
+                    boolean inteerupted = false;
+                    for (String mergeSourcePath : this.mergeSourcePaths) {
+                        mergeSourceRelTarget = SVNWCUtils.skipAncestor(SVNFileUtil.createFilePath(mergeSourcePath), SVNFileUtil.createFilePath(changedPath));
+                        if (mergeSourceRelTarget != null) {
+                            if ("".equals(mergeSourceRelTarget.getPath()) && logEntry.getChangedPaths().get(changedPath).getType() != 'M') {
+                                inteerupted = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (!inteerupted) {
+                        continue;
+                    }
+                    
+                }
             }
+            
+            receiver.receive(target, logEntry);
+            
         }
     }
 
