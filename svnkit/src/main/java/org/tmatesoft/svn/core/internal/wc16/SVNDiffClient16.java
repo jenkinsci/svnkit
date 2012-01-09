@@ -2889,8 +2889,8 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * @return potential merge sources for <code>path</code>
      * @since 1.2, SVN 1.5
      */
-    public Collection doSuggestMergeSources(File path, SVNRevision pegRevision) throws SVNException {
-        LinkedList suggestions = new LinkedList();
+    public Collection<SVNURL> doSuggestMergeSources(File path, SVNRevision pegRevision) throws SVNException {
+        LinkedList<SVNURL> suggestions = new LinkedList<SVNURL>();
         SVNURL reposRoot = getReposRoot(path, null, pegRevision, null, null);
         SVNLocationEntry copyFromInfo = getCopySource(path, null, pegRevision);
         String copyFromPath = copyFromInfo.getPath();
@@ -2925,8 +2925,8 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * @return potential merge sources for <code>url</code>
      * @since 1.2, SVN 1.5
      */
-    public Collection doSuggestMergeSources(SVNURL url, SVNRevision pegRevision) throws SVNException {
-        LinkedList suggestions = new LinkedList();
+    public Collection<SVNURL> doSuggestMergeSources(SVNURL url, SVNRevision pegRevision) throws SVNException {
+        LinkedList<SVNURL> suggestions = new LinkedList<SVNURL>();
         SVNURL reposRoot = getReposRoot(null, url, pegRevision, null, null);
         SVNLocationEntry copyFromInfo = getCopySource(null, url, pegRevision);
         String copyFromPath = copyFromInfo.getPath();
