@@ -27,8 +27,6 @@ import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeOriginInfo;
 import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess;
-import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess.RepositoryInfo;
-import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;

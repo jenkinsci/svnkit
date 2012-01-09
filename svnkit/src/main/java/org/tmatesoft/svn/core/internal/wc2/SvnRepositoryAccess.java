@@ -17,6 +17,7 @@ import org.tmatesoft.svn.core.SVNMergeRange;
 import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNMergeDriver;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.io.ISVNLocationSegmentHandler;
@@ -377,5 +378,40 @@ public abstract class SvnRepositoryAccess {
             }
         }
         return new SVNLocationEntry((Long) copyFrom[2], (String) copyFrom[1]);
+    }
+
+    public Map<String, SVNMergeRangeList> getHistoryAsMergeInfo(SVNRepository repos, SvnTarget target, long youngest, long oldest) throws SVNException {
+        long pegRevnum = -1;
+        if (repos == null) {
+            Structure<RepositoryInfo> reposInfo = createRepositoryFor(target, SVNRevision.UNDEFINED, target.getResolvedPegRevision(), null);
+            pegRevnum = reposInfo.lng(RepositoryInfo.revision);
+            repos = reposInfo.get(RepositoryInfo.repository);
+            reposInfo.release();
+        } else {
+            if (target.getPegRevision() == SVNRevision.HEAD || target.getPegRevision() == SVNRevision.UNDEFINED) {
+                pegRevnum = repos.getLatestRevision();
+            } else if (target.getPegRevision().getNumber() >= 0) {
+                pegRevnum = target.getPegRevision().getNumber();
+            } else if (target.getPegRevision().getDate() != null) {
+                pegRevnum = repos.getDatedRevision(target.getPegRevision().getDate());
+            } else {
+                if (target.isURL()) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_VERSIONED_PATH_REQUIRED);
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                }
+                Structure<RevisionsPair> pair = getRevisionNumber(repos, target, target.getPegRevision(), null);
+                pegRevnum = pair.lng(RevisionsPair.revNumber);
+                pair.release();
+            }
+        }
+        
+        if (youngest < 0) {
+            youngest = pegRevnum;
+        }
+        if (oldest < 0) {
+            oldest = 0;
+        }
+        List<SVNLocationSegment> segments = repos.getLocationSegments("", pegRevnum, youngest, oldest);
+        return SVNMergeDriver.getMergeInfoFromSegments(segments);
     }
 }

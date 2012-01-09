@@ -2233,7 +2233,7 @@ public abstract class SVNMergeDriver extends SVNBasicDelegate implements ISVNMer
         }
     }
 
-    public static Map getMergeInfoFromSegments(Collection segments) {
+    public static Map<String, SVNMergeRangeList> getMergeInfoFromSegments(Collection segments) {
         Map mergeInfo = new TreeMap();
         for (Iterator segmentsIter = segments.iterator(); segmentsIter.hasNext();) {
             SVNLocationSegment segment = (SVNLocationSegment) segmentsIter.next();
@@ -2250,7 +2250,7 @@ public abstract class SVNMergeDriver extends SVNBasicDelegate implements ISVNMer
                     segment.getEndRevision(), true);
             pathRanges.add(range);
         }
-        Map result = new TreeMap();
+        Map<String, SVNMergeRangeList> result = new TreeMap<String, SVNMergeRangeList>();
         for (Iterator paths = mergeInfo.keySet().iterator(); paths.hasNext();) {
             String path = (String) paths.next();
             Collection pathRanges = (Collection) mergeInfo.get(path);

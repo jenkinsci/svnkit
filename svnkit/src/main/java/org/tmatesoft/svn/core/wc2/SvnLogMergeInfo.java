@@ -1,6 +1,12 @@
 package org.tmatesoft.svn.core.wc2;
 
+import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.util.SVNLogType;
 
 public class SvnLogMergeInfo extends SvnReceivingOperation<SVNLogEntry> {
     
@@ -9,6 +15,10 @@ public class SvnLogMergeInfo extends SvnReceivingOperation<SVNLogEntry> {
 
     private boolean discoverChangedPaths;
     private String[] revisionProperties;
+    
+    protected SvnLogMergeInfo(SvnOperationFactory factory) {
+        super(factory);
+    }
 
     public boolean isFindMerged() {
         return findMerged;
@@ -41,8 +51,15 @@ public class SvnLogMergeInfo extends SvnReceivingOperation<SVNLogEntry> {
     public void setRevisionProperties(String[] revisionProperties) {
         this.revisionProperties = revisionProperties;
     }
-    
-    protected SvnLogMergeInfo(SvnOperationFactory factory) {
-        super(factory);
+
+    @Override
+    protected void ensureArgumentsAreValid() throws SVNException {
+        super.ensureArgumentsAreValid();
+        if (getDepth() != SVNDepth.INFINITY && getDepth() != SVNDepth.EMPTY) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Only depths 'infinity' and 'empty' are currently supported");
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
     }
+    
+    
 }

@@ -332,6 +332,10 @@ public class SVNMergeRangeList {
      *                     this range list
      */
     public SVNMergeRangeList getInheritableRangeList(long startRev, long endRev) {
+        return getInheritableRangeList(startRev, endRev, true);
+    }
+
+    public SVNMergeRangeList getInheritableRangeList(long startRev, long endRev, boolean inheritable) {
         LinkedList inheritableRanges = new LinkedList();
         if (myRanges.length > 0) {
             if (!SVNRevision.isValidRevisionNumber(startRev) ||
@@ -339,7 +343,7 @@ public class SVNMergeRangeList {
                 endRev < startRev) {
                 for (int i = 0; i < myRanges.length; i++) {
                     SVNMergeRange range = myRanges[i];
-                    if (range.isInheritable()) {
+                    if (range.isInheritable() == inheritable) {
                         SVNMergeRange inheritableRange = new SVNMergeRange(range.getStartRevision(),
                                                                            range.getEndRevision(), 
                                                                            true);

@@ -517,6 +517,10 @@ public class SVNMergeInfoUtil {
     }
     
     public static Map<String, SVNMergeRangeList> getInheritableMergeInfo(Map<String, SVNMergeRangeList> mergeInfo, String path, long startRev, long endRev) {
+        return getInheritableMergeInfo(mergeInfo, path, startRev, endRev, true);
+    }
+
+    public static Map<String, SVNMergeRangeList> getInheritableMergeInfo(Map<String, SVNMergeRangeList> mergeInfo, String path, long startRev, long endRev, boolean inheritable) {
         Map<String, SVNMergeRangeList> inheritableMergeInfo = new TreeMap<String, SVNMergeRangeList>();
         if (mergeInfo != null) {
             for (Iterator<String> paths = mergeInfo.keySet().iterator(); paths.hasNext();) {
@@ -524,7 +528,7 @@ public class SVNMergeInfoUtil {
                 SVNMergeRangeList rangeList = (SVNMergeRangeList) mergeInfo.get(mergeSrcPath);
                 SVNMergeRangeList inheritableRangeList = null;
                 if (path == null || path.equals(mergeSrcPath)) {
-                    inheritableRangeList = rangeList.getInheritableRangeList(startRev, endRev);
+                    inheritableRangeList = rangeList.getInheritableRangeList(startRev, endRev, inheritable);
                 } else {
                     inheritableRangeList = rangeList.dup();
                 }
@@ -550,8 +554,8 @@ public class SVNMergeInfoUtil {
         return intersectMergeInfo(mergeInfo1, mergeInfo2, true);
     }
 
-    public static Map intersectMergeInfo(Map mergeInfo1, Map mergeInfo2, boolean considerInheritance) {
-        Map mergeInfo = new TreeMap();
+    public static Map<String, SVNMergeRangeList> intersectMergeInfo(Map mergeInfo1, Map mergeInfo2, boolean considerInheritance) {
+        Map<String, SVNMergeRangeList> mergeInfo = new TreeMap<String, SVNMergeRangeList>();
         for (Iterator pathsIter = mergeInfo1.keySet().iterator(); pathsIter.hasNext();) {
             String path = (String) pathsIter.next();
             SVNMergeRangeList rangeList1 = (SVNMergeRangeList) mergeInfo1.get(path);
@@ -643,6 +647,15 @@ public class SVNMergeInfoUtil {
         }
         
         return (SVNMergeRange[]) ranges.toArray(new SVNMergeRange[ranges.size()]);
+    }
+    
+    public static Map<String, SVNMergeRangeList> appendSuffix(Map<String, SVNMergeRangeList> mergeinfo, String suffix) {
+        Map<String, SVNMergeRangeList> result = new TreeMap<String, SVNMergeRangeList>();
+        for (String path : mergeinfo.keySet()) {
+            String pathWithSuffix = SVNPathUtil.append(path, suffix);
+            result.put(pathWithSuffix, mergeinfo.get(path));
+        }
+        return result;
     }
 
     /**
