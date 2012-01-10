@@ -93,7 +93,7 @@ public class SVNMergeInfoCommand extends SVNCommand implements ISVNLogEntryHandl
         
         SvnLogMergeInfo logMergeInfo = of.createLogMergeInfo();
         logMergeInfo.setDepth(getSVNEnvironment().getDepth());
-        logMergeInfo.setDiscoverChangedPaths(false);
+        logMergeInfo.setDiscoverChangedPaths(true);
         logMergeInfo.setRevisionProperties(null);
         logMergeInfo.setReceiver(new ISvnObjectReceiver<SVNLogEntry>() {            
             public void receive(SvnTarget target, SVNLogEntry object) throws SVNException {

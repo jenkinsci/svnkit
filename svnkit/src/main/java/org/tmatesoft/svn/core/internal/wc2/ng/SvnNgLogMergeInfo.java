@@ -256,7 +256,7 @@ public class SvnNgLogMergeInfo extends SvnNgOperationRunner<SVNLogEntry, SvnLogM
                 return;
             }
             intersection = this.rangelist.intersect(thisRangeList, true);
-            logEntry.setNonInheriable(!intersection.isEmpty());
+            logEntry.setNonInheriable(intersection.isEmpty());
             
             if ((logEntry.isNonInheritable() || !isFilteringMerged) && logEntry.getChangedPaths() != null) {
                 boolean allSubtreesHaveThisRev = true;
