@@ -5,10 +5,12 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.logging.Level;
 
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
@@ -2808,12 +2810,17 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      *             </ul>
      * @since 1.2, SVN 1.5
      */
-    public Map doGetMergedMergeInfo(File path, SVNRevision pegRevision) throws SVNException {
+    public Map<SVNURL, SVNMergeRangeList> doGetMergedMergeInfo(File path, SVNRevision pegRevision) throws SVNException {
         SVNURL reposRoot[] = new SVNURL[1];
         Map mergeInfo = getMergeInfo(path, pegRevision, reposRoot);
         SVNURL repositoryRoot = reposRoot[0];
         if (mergeInfo != null) {
-            Map fullPathMergeInfo = new SVNHashMap();
+            Map<SVNURL, SVNMergeRangeList> fullPathMergeInfo = new TreeMap<SVNURL, SVNMergeRangeList>(new Comparator<SVNURL>() {
+                public int compare(SVNURL o1, SVNURL o2) {
+                    return o1.toString().compareTo(o2.toString());
+                }
+            });
+
             for (Iterator paths = mergeInfo.keySet().iterator(); paths.hasNext();) {
                 String mergeSrcPath = (String) paths.next();
                 SVNMergeRangeList rangeList = (SVNMergeRangeList) mergeInfo.get(mergeSrcPath);
@@ -2856,12 +2863,16 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      *             </ul>
      * @since 1.2, SVN 1.5
      */
-    public Map doGetMergedMergeInfo(SVNURL url, SVNRevision pegRevision) throws SVNException {
+    public Map<SVNURL, SVNMergeRangeList> doGetMergedMergeInfo(SVNURL url, SVNRevision pegRevision) throws SVNException {
         SVNURL reposRoot[] = new SVNURL[1];
         Map mergeInfo = getMergeInfo(url, pegRevision, reposRoot);
         SVNURL repositoryRoot = reposRoot[0];
         if (mergeInfo != null) {
-            Map fullPathMergeInfo = new SVNHashMap();
+            Map<SVNURL, SVNMergeRangeList> fullPathMergeInfo = new TreeMap<SVNURL, SVNMergeRangeList>(new Comparator<SVNURL>() {
+                public int compare(SVNURL o1, SVNURL o2) {
+                    return o1.toString().compareTo(o2.toString());
+                }
+            });
             for (Iterator paths = mergeInfo.keySet().iterator(); paths.hasNext();) {
                 String mergeSrcPath = (String) paths.next();
                 SVNMergeRangeList rangeList = (SVNMergeRangeList) mergeInfo.get(mergeSrcPath);

@@ -54,6 +54,9 @@ public class SvnLogMergeInfo extends SvnReceivingOperation<SVNLogEntry> {
 
     @Override
     protected void ensureArgumentsAreValid() throws SVNException {
+        if (getDepth() == null || getDepth() == SVNDepth.UNKNOWN) {
+            setDepth(SVNDepth.INFINITY);
+        }
         super.ensureArgumentsAreValid();
         if (getDepth() != SVNDepth.INFINITY && getDepth() != SVNDepth.EMPTY) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Only depths 'infinity' and 'empty' are currently supported");

@@ -31,6 +31,7 @@ import org.tmatesoft.svn.core.internal.wc17.SVNDiffClient17;
 import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
+import org.tmatesoft.svn.core.wc2.SvnGetMergeInfo;
 import org.tmatesoft.svn.core.wc2.SvnLogMergeInfo;
 import org.tmatesoft.svn.core.wc2.SvnMerge;
 import org.tmatesoft.svn.core.wc2.SvnSuggestMergeSources;
@@ -3190,15 +3191,10 @@ public class SVNDiffClient extends SVNBasicClient {
      *             </ul>
      * @since 1.2, SVN 1.5
      */
-    public Map doGetMergedMergeInfo(File path, SVNRevision pegRevision) throws SVNException {
-        try {
-            return getSVNDiffClient17().doGetMergedMergeInfo(path, pegRevision);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                return getSVNDiffClient16().doGetMergedMergeInfo(path, pegRevision);
-            }
-            throw e;
-        }
+    public Map<SVNURL, SVNMergeRangeList> doGetMergedMergeInfo(File path, SVNRevision pegRevision) throws SVNException {
+        SvnGetMergeInfo mi = getOperationsFactory().createGetMergeInfo();
+        mi.setSingleTarget(SvnTarget.fromFile(path, pegRevision));
+        return mi.run();
     }
 
     /**
@@ -3231,15 +3227,10 @@ public class SVNDiffClient extends SVNBasicClient {
      *             </ul>
      * @since 1.2, SVN 1.5
      */
-    public Map doGetMergedMergeInfo(SVNURL url, SVNRevision pegRevision) throws SVNException {
-        try {
-            return getSVNDiffClient17().doGetMergedMergeInfo(url, pegRevision);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                return getSVNDiffClient16().doGetMergedMergeInfo(url, pegRevision);
-            }
-            throw e;
-        }
+    public Map<SVNURL, SVNMergeRangeList> doGetMergedMergeInfo(SVNURL url, SVNRevision pegRevision) throws SVNException {
+        SvnGetMergeInfo mi = getOperationsFactory().createGetMergeInfo();
+        mi.setSingleTarget(SvnTarget.fromURL(url, pegRevision));
+        return mi.run();
     }
 
     /**

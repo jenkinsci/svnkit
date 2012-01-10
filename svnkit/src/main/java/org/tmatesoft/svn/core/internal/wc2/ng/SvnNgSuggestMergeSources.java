@@ -15,8 +15,6 @@ import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 import org.tmatesoft.svn.core.wc2.SvnSuggestMergeSources;
 
 public class SvnNgSuggestMergeSources extends SvnNgOperationRunner<Collection<SVNURL>, SvnSuggestMergeSources> {
-    
-    
 
     @Override
     public boolean isApplicable(SvnSuggestMergeSources operation, SvnWcGeneration wcGeneration) throws SVNException {

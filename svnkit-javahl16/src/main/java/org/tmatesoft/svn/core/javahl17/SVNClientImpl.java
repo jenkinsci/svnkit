@@ -857,11 +857,8 @@ public class SVNClientImpl implements ISVNClient {
         }
     }
 
-    public Mergeinfo getMergeinfo(String path, Revision pegRevision)
-            throws SubversionException {
-
+    public Mergeinfo getMergeinfo(String path, Revision pegRevision) throws SubversionException {
         beforeOperation();
-
         try {
             getEventHandler().setPathPrefix(getPathPrefix(path));
 

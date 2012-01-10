@@ -37,8 +37,10 @@ import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgCommit;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgExport;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgGetChangelistPaths;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgGetInfo;
+import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgGetMergeInfo;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgGetProperties;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgGetStatus;
+import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgLogMergeInfo;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgRelocate;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgRemove;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgReposToWcCopy;
@@ -64,6 +66,7 @@ import org.tmatesoft.svn.core.internal.wc2.old.SvnOldExport;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetChangelistPaths;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetInfo;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetMergeInfo;
+import org.tmatesoft.svn.core.internal.wc2.old.SvnOldLogMergeInfo;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetProperties;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetStatus;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldImport;
@@ -238,7 +241,10 @@ public class SvnOperationFactory {
         
         registerOperationRunner(SvnList.class, new SvnRemoteList());
         
-        registerOperationRunner(SvnLogMergeInfo.class, new SvnOldGetMergeInfo());
+        registerOperationRunner(SvnLogMergeInfo.class, new SvnOldLogMergeInfo());
+        registerOperationRunner(SvnLogMergeInfo.class, new SvnNgLogMergeInfo());
+        registerOperationRunner(SvnGetMergeInfo.class, new SvnOldGetMergeInfo());
+        registerOperationRunner(SvnGetMergeInfo.class, new SvnNgGetMergeInfo());
 
         registerOperationRunner(SvnSuggestMergeSources.class, new SvnNgSuggestMergeSources());
         registerOperationRunner(SvnSuggestMergeSources.class, new SvnOldSuggestMergeSources());
