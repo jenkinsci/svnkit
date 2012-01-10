@@ -107,9 +107,9 @@ public class SVNMergeInfoCommand extends SVNCommand implements ISVNLogEntryHandl
             logMergeInfo.setSingleTarget(SvnTarget.fromFile(target.getFile(), tgtPegRevision));
         }
         if (source.isURL()) {
-            logMergeInfo.setSource(SvnTarget.fromURL(source.getURL(), tgtPegRevision));
+            logMergeInfo.setSource(SvnTarget.fromURL(source.getURL(), srcPegRevision));
         } else {
-            logMergeInfo.setSource(SvnTarget.fromFile(source.getFile(), tgtPegRevision));
+            logMergeInfo.setSource(SvnTarget.fromFile(source.getFile(), srcPegRevision));
         }
         
         logMergeInfo.run();
