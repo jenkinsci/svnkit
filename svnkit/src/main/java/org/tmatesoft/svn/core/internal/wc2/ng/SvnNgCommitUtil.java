@@ -70,7 +70,7 @@ public class SvnNgCommitUtil {
         public SVNNodeKind getUrlKind(SVNURL url, long revision) throws SVNException;
     }
     
-    public static SvnCommitPacket harvestCopyCommitables(SVNWCContext context, File path, SVNURL dst, SvnCommitPacket packet, ISvnUrlKindCallback urlKindCallback) throws SVNException {
+    public static SvnCommitPacket harvestCopyCommitables(SVNWCContext context, File path, SVNURL dst, SvnCommitPacket packet, ISvnUrlKindCallback urlKindCallback, Map<File, String> externalsStorage) throws SVNException {
         SVNWCNodeReposInfo reposInfo = context.getNodeReposInfo(path);
         File commitRelPath = new File(SVNEncodingUtil.uriDecode(SVNURLUtil.getRelativeURL(reposInfo.reposRootUrl, dst)));
         
@@ -81,6 +81,7 @@ public class SvnNgCommitUtil {
                 false, null, 
                 false, false, 
                 urlKindCallback, 
+                externalsStorage,
                 context.getEventHandler());
         
         return packet;
@@ -89,7 +90,7 @@ public class SvnNgCommitUtil {
     public static SvnCommitPacket harversCommittables(SVNWCContext context, SvnCommitPacket packet, Map<SVNURL, String> lockTokens,
             File baseDirPath,
             Collection<String> targets,
-            SVNDepth depth, boolean justLocked, Collection<String> changelists, ISvnUrlKindCallback urlKindCallback) throws SVNException {
+            SVNDepth depth, boolean justLocked, Collection<String> changelists, ISvnUrlKindCallback urlKindCallback, Map<File, String> externalsStorage) throws SVNException {
         
         Map<File, File> danglers = new HashMap<File, File>();
         
@@ -130,7 +131,7 @@ public class SvnNgCommitUtil {
                 }
             }
             bailOnTreeConflictedAncestor(context, targetPath);
-            harvestCommittables(context, targetPath, packet, lockTokens, repositoryRootUrl, null, false, depth, justLocked, changelists, false, false, urlKindCallback, context.getEventHandler());
+            harvestCommittables(context, targetPath, packet, lockTokens, repositoryRootUrl, null, false, depth, justLocked, changelists, false, false, urlKindCallback, externalsStorage, context.getEventHandler());
         }
         for(SVNURL root : packet.getRepositoryRoots()) {
             handleDescendants(context, packet, root, new ArrayList<SvnCommitItem>(packet.getItems(root)), urlKindCallback, context.getEventHandler());
@@ -186,7 +187,7 @@ public class SvnNgCommitUtil {
     public static void harvestCommittables(SVNWCContext context, File localAbsPath, SvnCommitPacket committables, 
             Map<SVNURL, String> lockTokens, SVNURL repositoryRootUrl, File commitRelPath, boolean copyModeRoot, 
             SVNDepth depth, boolean justLocked, Collection<String> changelists, boolean skipFiles, boolean skipDirs, 
-            ISvnUrlKindCallback urlKindCallback, ISVNEventHandler eventHandler) throws SVNException {
+            ISvnUrlKindCallback urlKindCallback, Map<File, String> externalsStorage, ISVNEventHandler eventHandler) throws SVNException {
         
         if (committables.hasItem(localAbsPath)) {
             return;
@@ -350,6 +351,18 @@ public class SvnNgCommitUtil {
                 lockTokens.put(item.getUrl(), commitStatus.<String>get(NodeCommitStatus.lockToken));
             }
         }
+        if (matchesChangelists) {            
+            if (externalsStorage != null) {
+                SVNProperties properties = context.getActualProps(localAbsPath);
+                if (properties != null) {
+                    String externalsProperty = properties.getStringValue(SVNProperty.EXTERNALS);
+                    if (externalsProperty != null) {
+                        externalsStorage.put(localAbsPath, externalsProperty);
+                    }
+                }
+            }
+
+        }
         if (lockTokens != null && (stateFlags & SvnCommitItem.DELETE) != 0) {
             collectLocks(context, localAbsPath, lockTokens);
         }
@@ -377,7 +390,7 @@ public class SvnNgCommitUtil {
                 harvestCommittables(context, child, committables, lockTokens, repositoryRootUrl, childCommitRelPath, false, depthBelowHere, justLocked, changelists, 
                         depth.compareTo(SVNDepth.FILES) < 0, 
                         depth.compareTo(SVNDepth.IMMEDIATES) < 0, 
-                        urlKindCallback, eventHandler);
+                        urlKindCallback, externalsStorage, eventHandler);
             }
         }
 

@@ -3,6 +3,8 @@ package org.tmatesoft.svn.core.internal.wc2.ng;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -22,6 +24,7 @@ import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNExternal;
 import org.tmatesoft.svn.core.internal.wc17.SVNCommitter17;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
@@ -101,10 +104,6 @@ public class SvnNgWcToReposCopy extends SvnNgOperationRunner<SVNCommitInfo, SvnR
     }
 
     private SVNCommitInfo copy(Collection<SvnCopyPair> copyPairs, boolean makeParents, SVNProperties revisionProperties, String commitMessage, ISvnCommitHandler commitHandler) throws SVNException {
-        
-        for (SvnCopyPair pair : copyPairs) {
-            pair.srcRevNum = getWcContext().getNodeBaseRev(pair.source);
-        }
         SvnCopyPair firstPair = copyPairs.iterator().next();
         SVNURL topDstUrl = firstPair.dst.removePathTail();
         for (SvnCopyPair pair : copyPairs) {
@@ -163,10 +162,9 @@ public class SvnNgWcToReposCopy extends SvnNgOperationRunner<SVNCommitInfo, SvnR
             }
         }
         for (SvnCopyPair svnCopyPair : copyPairs) {
-            SvnNgCommitUtil.harvestCopyCommitables(getWcContext(), svnCopyPair.source, svnCopyPair.dst, packet, this);
-        }
-
-        for (SvnCopyPair svnCopyPair : copyPairs) {
+            Map<File, String> externals = getOperation().getExternalsHandler() != null ? new HashMap<File, String>() : null;
+            SvnNgCommitUtil.harvestCopyCommitables(getWcContext(), svnCopyPair.source, svnCopyPair.dst, packet, this, externals);
+            
             SvnCommitItem item = packet.getItem(svnCopyPair.source);
             if (item == null) {
                 continue;
@@ -185,12 +183,92 @@ public class SvnNgWcToReposCopy extends SvnNgOperationRunner<SVNCommitInfo, SvnR
                 extendedMergeInfoValue = SVNMergeInfoUtil.formatMergeInfoToString(wcMergeInfo, null);
                 item.addOutgoingProperty(SVNProperty.MERGE_INFO, SVNPropertyValue.create(extendedMergeInfoValue));
             }
+            // append externals changes
+            if (externals != null && !externals.isEmpty()) {
+                includeExternalsChanges(repository, packet, externals);
+            }
         }
         Map<String, SvnCommitItem> committables = new TreeMap<String, SvnCommitItem>();
         SVNURL url = SvnNgCommitUtil.translateCommitables(packet.getItems(packet.getRepositoryRoots().iterator().next()), committables);
         repository.setLocation(url, false);
         ISVNEditor commitEditor = repository.getCommitEditor(commitMessage, null, false, revisionProperties, null);
         return SVNCommitter17.commit(getWcContext(), null, committables, repositoryRoot, commitEditor, null, null);
+    }
+    
+    private void includeExternalsChanges(SVNRepository repos, SvnCommitPacket packet, Map<File, String> externalsStorage) throws SVNException {
+        for (File externalHolder : externalsStorage.keySet()) {
+            String externalsPropString = (String) externalsStorage.get(externalHolder);
+            SVNExternal[] externals = SVNExternal.parseExternals(externalHolder.getAbsolutePath(), externalsPropString);
+            boolean introduceVirtualExternalChange = false;
+            List<String> newExternals = new ArrayList<String>();
+            SVNURL ownerURL = getWcContext().getNodeUrl(externalHolder);
+            if (ownerURL == null) {
+                continue;
+            }
+            long ownerRev = getWcContext().getNodeBaseRev(externalHolder);
+            for (int k = 0; k < externals.length; k++) {
+                File externalWC = new File(externalHolder, externals[k].getPath());
+                SVNRevision externalsWCRevision = SVNRevision.UNDEFINED;
+                
+                try {
+                    long rev = getWcContext().getNodeBaseRev(externalWC);
+                    if (rev >= 0) {
+                        externalsWCRevision = SVNRevision.create(rev);
+                    }
+                } catch (SVNException e) {
+                    // smthing went wrong.                    
+                }
+                
+                SVNURL resolvedURL = externals[k].resolveURL(repos.getRepositoryRoot(true), ownerURL);
+                String unresolvedURL = externals[k].getUnresolvedUrl();
+                if (unresolvedURL != null && !SVNPathUtil.isURL(unresolvedURL) && unresolvedURL.startsWith("../"))  {
+                    unresolvedURL = SVNURLUtil.getRelativeURL(repos.getRepositoryRoot(true), resolvedURL);
+                    if (unresolvedURL.startsWith("/")) {
+                        unresolvedURL = "^" + unresolvedURL;
+                    } else {
+                        unresolvedURL = "^/" + unresolvedURL;
+                    }
+                }
+
+                SVNRevision[] revs = getOperation().getExternalsHandler().handleExternal(
+                        externalWC,
+                        resolvedURL,
+                        externals[k].getRevision(),
+                        externals[k].getPegRevision(),
+                        externals[k].getRawValue(),
+                        externalsWCRevision);
+
+                if (revs != null && revs.length == 2 && !revs[0].equals(externals[k].getRevision())) {
+                    SVNExternal newExternal = new SVNExternal(externals[k].getPath(),
+                            unresolvedURL,
+                            revs[1],
+                            revs[0], 
+                            true, 
+                            externals[k].isPegRevisionExplicit(),
+                            externals[k].isNewFormat());
+                    newExternals.add(newExternal.toString());
+
+                    if (!introduceVirtualExternalChange) {
+                        introduceVirtualExternalChange = true;
+                    }
+                } else if (revs != null) {
+                    newExternals.add(externals[k].getRawValue());
+                }
+            } 
+            if (introduceVirtualExternalChange) {
+                String newExternalsProp = "";
+                for (String external : newExternals) {
+                    newExternalsProp += external + '\n';
+                }
+
+                SvnCommitItem itemWithExternalsChanges = packet.getItem(externalHolder);
+                if (itemWithExternalsChanges == null) {
+                    itemWithExternalsChanges = packet.addItem(externalHolder, repos.getRepositoryRoot(true), SVNNodeKind.DIR, ownerURL, ownerRev, null, -1, 
+                            SvnCommitItem.PROPS_MODIFIED);
+                } 
+                itemWithExternalsChanges.addOutgoingProperty(SVNProperty.EXTERNALS, SVNPropertyValue.create(newExternalsProp));
+            }
+        }
     }
     
     private Collection<SVNURL> findMissingParents(SVNURL targetURL, SVNRepository repository) throws SVNException {
@@ -261,8 +339,6 @@ public class SvnNgWcToReposCopy extends SvnNgOperationRunner<SVNCommitInfo, SvnR
     }
 
     private static class SvnCopyPair {
-        long srcRevNum;
-        
         File source;
         SVNURL dst;
     }

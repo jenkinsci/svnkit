@@ -81,7 +81,7 @@ public class SvnNgCommit extends SvnNgOperationRunner<SVNCommitInfo, SvnCommit> 
             SvnNgCommitUtil.harversCommittables(getWcContext(), packet, lockTokens, 
                     baseDir, targets, getOperation().getDepth(), 
                     !getOperation().isKeepLocks(), getOperation().getApplicableChangelists(), 
-                    this);
+                    this, null);
             packet.setLockTokens(lockTokens);
             if (packet.getRepositoryRoots().size() > 1) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 

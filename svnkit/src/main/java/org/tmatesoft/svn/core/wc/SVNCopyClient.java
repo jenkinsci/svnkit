@@ -501,6 +501,7 @@ public class SVNCopyClient extends SVNBasicClient {
         cp.setMakeParents(makeParents);
         cp.setCommitMessage(commitMessage);
         cp.setRevisionProperties(revisionProperties);
+        cp.setExternalsHandler(SvnCodec.externalsHandler(getExternalsHandler()));
         cp.setCommitHandler(SvnCodec.commitHandler(getCommitHandler()));
         
         for (int i = 0; i < sources.length; i++) {
