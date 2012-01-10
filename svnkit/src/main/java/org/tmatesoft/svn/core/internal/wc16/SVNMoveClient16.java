@@ -766,7 +766,7 @@ public class SVNMoveClient16 extends SVNCopyDriver {
             dstArea.saveVersionedProperties(log, true);
             log.save();
             dstArea.runLogs();
-            SVNEvent event = SVNEventFactory.createSVNEvent(dst, SVNNodeKind.FILE, null, SVNRepository.INVALID_REVISION, SVNEventAction.ADD, null, null, null);
+            SVNEvent event = SVNEventFactory.createSVNEvent(dst, SVNNodeKind.FILE, null, SVNRepository.INVALID_REVISION, SVNEventAction.COPY, null, null, null);
             dispatchEvent(event);
         } finally {
             srcAccess.close();

@@ -172,7 +172,7 @@ public class SVNWCManager {
                 SVNPropertiesManager.deleteWCProperties(dir, null, true);
             }
         }
-        SVNEvent event = SVNEventFactory.createSVNEvent(parentDir.getFile(name), kind, null, 0, SVNEventAction.ADD, null, null, null);
+        SVNEvent event = SVNEventFactory.createSVNEvent(parentDir.getFile(name), kind, null, 0, copyFromURL != null ? SVNEventAction.COPY : SVNEventAction.ADD, null, null, null);
         parentDir.getWCAccess().handleEvent(event);
     }
 

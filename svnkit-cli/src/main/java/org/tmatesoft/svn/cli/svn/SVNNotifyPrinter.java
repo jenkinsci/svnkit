@@ -385,7 +385,7 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
                 buffer.append("Transmitting file data ");
             }
             buffer.append('.');
-        } else if (event.getAction() == SVNEventAction.ADD) {
+        } else if (event.getAction() == SVNEventAction.ADD || event.getAction() == SVNEventAction.COPY) {
             if (SVNProperty.isBinaryMimeType(event.getMimeType())) {
                 buffer.append("A  (bin)  " + path + "\n");
             } else {

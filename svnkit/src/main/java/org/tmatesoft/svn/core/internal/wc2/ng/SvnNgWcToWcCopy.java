@@ -428,7 +428,7 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
         wcContext.wqRun(SVNFileUtil.getParentFile(dst));
         
         if (notify) {
-            SVNEvent event = SVNEventFactory.createSVNEvent(dst, SVNNodeKind.DIR, null, -1, SVNEventAction.ADD, SVNEventAction.ADD, null, null, 1, 1);
+            SVNEvent event = SVNEventFactory.createSVNEvent(dst, SVNNodeKind.DIR, null, -1, SVNEventAction.COPY, SVNEventAction.COPY, null, null, 1, 1);
             handleEvent(event);
         }
         
@@ -562,7 +562,7 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
         wcContext.getDb().opCopy(source, dst, workItems);
         wcContext.wqRun(SVNFileUtil.getParentFile(dst));
         if (notify) {
-            SVNEvent event = SVNEventFactory.createSVNEvent(dst, SVNNodeKind.FILE, null, -1, SVNEventAction.ADD, SVNEventAction.ADD, null, null, 1, 1);
+            SVNEvent event = SVNEventFactory.createSVNEvent(dst, SVNNodeKind.FILE, null, -1, SVNEventAction.COPY, SVNEventAction.COPY, null, null, 1, 1);
             handleEvent(event, -1);
         }
     }

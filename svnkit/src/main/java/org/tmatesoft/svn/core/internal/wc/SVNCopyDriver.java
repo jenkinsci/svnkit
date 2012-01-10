@@ -1486,7 +1486,7 @@ public class SVNCopyDriver extends SVNBasicDelegate {
                 dstDir.runLogs();
             }
         }
-        SVNEvent event = SVNEventFactory.createSVNEvent(dst, SVNNodeKind.FILE, null, SVNRepository.INVALID_REVISION, SVNEventAction.ADD, null, null, null);
+        SVNEvent event = SVNEventFactory.createSVNEvent(dst, SVNNodeKind.FILE, null, SVNRepository.INVALID_REVISION, SVNEventAction.COPY, null, null, null);
         dstAccess.handleEvent(event);
     }
 
