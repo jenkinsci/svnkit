@@ -223,7 +223,7 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
         }
     }
 
-    public List combineTargets(Collection targets, boolean warnReserved) throws SVNException {
+    public List<String> combineTargets(Collection targets, boolean warnReserved) throws SVNException {
         List result = new LinkedList();
         result.addAll(getArguments());
         if (targets != null) {
