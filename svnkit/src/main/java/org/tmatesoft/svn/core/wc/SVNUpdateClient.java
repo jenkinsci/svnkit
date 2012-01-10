@@ -20,6 +20,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc16.SVNUpdateClient16;
 import org.tmatesoft.svn.core.internal.wc17.SVNUpdateClient17;
+import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc2.SvnCheckout;
 import org.tmatesoft.svn.core.wc2.SvnExport;
@@ -70,6 +71,8 @@ import org.tmatesoft.svn.core.wc2.SvnUpdate;
  * @see <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>
  */
 public class SVNUpdateClient extends SVNBasicClient {
+
+    private ISVNExternalsHandler myExternalsHandler;
 
     private SVNUpdateClient16 getSVNUpdateClient16() {
         return (SVNUpdateClient16) getDelegate16();
@@ -152,14 +155,7 @@ public class SVNUpdateClient extends SVNBasicClient {
      * @since 1.2
      */
     public void setExternalsHandler(ISVNExternalsHandler externalsHandler) {
-        if (externalsHandler == null) {
-            externalsHandler = ISVNExternalsHandler.DEFAULT;
-        }
-        getSVNUpdateClient16().setExternalsHandler(externalsHandler);
-        try {
-            getSVNUpdateClient17().setExternalsHandler(externalsHandler);
-        } catch (SVNException e) {
-        }
+        myExternalsHandler = externalsHandler;
     }
 
     /**
@@ -179,7 +175,10 @@ public class SVNUpdateClient extends SVNBasicClient {
      * @since 1.2
      */
     public ISVNExternalsHandler getExternalsHandler() {
-        return getSVNUpdateClient16().getExternalsHandler();
+        if (myExternalsHandler == null) {
+            return ISVNExternalsHandler.DEFAULT;
+        }
+        return myExternalsHandler;
     }
 
     /**
@@ -327,6 +326,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         up.setAllowUnversionedObstructions(allowUnversionedObstructions);
         up.setIgnoreExternals(isIgnoreExternals());
         up.setMakeParents(makeParents);
+        up.setExternalsHandler(SvnCodec.externalsHandler(getExternalsHandler()));
 
         return up.run();
     }
@@ -638,6 +638,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         sw.setAllowUnversionedObstructions(allowUnversionedObstructions);
         sw.setIgnoreAncestry(ignoreAncestry);
         sw.setIgnoreExternals(isIgnoreExternals());
+        sw.setExternalsHandler(SvnCodec.externalsHandler(getExternalsHandler()));
         
         return sw.run();
     }
@@ -795,6 +796,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         co.setDepth(depth);
         co.setAllowUnversionedObstructions(allowUnversionedObstructions);
         co.setIgnoreExternals(isIgnoreExternals());        
+        co.setExternalsHandler(SvnCodec.externalsHandler(getExternalsHandler()));
         
         return co.run();
     }
@@ -914,6 +916,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         export.setDepth(depth);
         export.setExpandKeywords(isExportExpandsKeywords());
         export.setIgnoreExternals(isIgnoreExternals());
+        export.setExternalsHandler(SvnCodec.externalsHandler(getExternalsHandler()));
         
         return export.run();
     }
@@ -1060,6 +1063,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         export.setIgnoreExternals(isIgnoreExternals());
         export.setDepth(depth);
         export.setExpandKeywords(isExportExpandsKeywords());
+        export.setExternalsHandler(SvnCodec.externalsHandler(getExternalsHandler()));
         
         return export.run();
     }
@@ -1094,7 +1098,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         relocate.setFromUrl(oldURL);
         relocate.setToUrl(newURL);
         relocate.setRecursive(recursive);
-        
+
         relocate.run();
     }
 

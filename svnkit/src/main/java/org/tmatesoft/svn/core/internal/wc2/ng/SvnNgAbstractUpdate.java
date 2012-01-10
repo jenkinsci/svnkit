@@ -34,10 +34,10 @@ import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.ExternalNodeInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnExternalFileReporter;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnExternalUpdateEditor;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbExternals;
-import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
 import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess.RepositoryInfo;
 import org.tmatesoft.svn.core.io.SVNCapability;
 import org.tmatesoft.svn.core.io.SVNLocationSegment;
@@ -327,8 +327,24 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
 
     private void handleExternalItemChange(SVNURL rootUrl, File parentPath, SVNURL parentUrl, File localAbsPath, File oldDefiningPath, SVNExternal newItem) throws SVNException {
         SVNURL newUrl = newItem.resolveURL(rootUrl, parentUrl);
+        SVNRevision externalRevision  = newItem.getRevision();
+        SVNRevision externalPegRevision = newItem.getPegRevision();
         
-        Structure<RepositoryInfo> repositoryInfo = getRepositoryAccess().createRepositoryFor(SvnTarget.fromURL(newUrl), newItem.getRevision(), newItem.getPegRevision(), null);
+        if (getOperation().getExternalsHandler() != null) {
+            SVNRevision[] revs = getOperation().getExternalsHandler().handleExternal(localAbsPath, newUrl, 
+                    externalRevision, externalPegRevision, newItem.getRawValue(), 
+                    SVNRevision.UNDEFINED);
+            
+            if (revs == null) {
+                handleEvent(SVNEventFactory.createSVNEvent(localAbsPath, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.SKIP, SVNEventAction.UPDATE_EXTERNAL, null, null));
+                return;
+            }
+            externalRevision = revs.length > 0 && revs[0] != null ? revs[0] : externalRevision;
+            externalPegRevision = revs.length > 1 && revs[1] != null ? revs[1] : externalPegRevision;
+        }
+
+        
+        Structure<RepositoryInfo> repositoryInfo = getRepositoryAccess().createRepositoryFor(SvnTarget.fromURL(newUrl), externalRevision, externalPegRevision, null);
         SVNRepository repository = repositoryInfo.<SVNRepository>get(RepositoryInfo.repository);
         long externalRevnum = repositoryInfo.lng(RepositoryInfo.revision);
         repositoryInfo.release();
@@ -345,21 +361,22 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
                     repository.getLocation(), externalRevnum);
             SVNErrorManager.error(err, SVNLogType.WC);
         }
+
         handleEvent(SVNEventFactory.createSVNEvent(localAbsPath, externalKind, null, -1, SVNEventAction.UPDATE_EXTERNAL, null, null, null, 0, 0));
         if (oldDefiningPath == null) {
             // checkout or export.
             if (externalKind == SVNNodeKind.DIR) {                
                 SVNFileUtil.ensureDirectoryExists(SVNFileUtil.getParentFile(localAbsPath));
-                switchDirExternal(localAbsPath, newUrl, newItem.getRevision(), newItem.getPegRevision(), parentPath);
+                switchDirExternal(localAbsPath, newUrl, externalRevision, externalPegRevision, parentPath);
             } else if (externalKind == SVNNodeKind.FILE) {
-                switchFileExternal(localAbsPath, newUrl, newItem.getPegRevision(), newItem.getRevision(), parentPath, repository, externalRevnum, repository.getRepositoryRoot(true));
+                switchFileExternal(localAbsPath, newUrl, externalPegRevision, externalRevision, parentPath, repository, externalRevnum, repository.getRepositoryRoot(true));
             }
         } else {
             // modification or update
             if (externalKind == SVNNodeKind.DIR) {                
-                switchDirExternal(localAbsPath, newUrl, newItem.getRevision(), newItem.getPegRevision(), parentPath);
+                switchDirExternal(localAbsPath, newUrl, externalRevision, externalPegRevision, parentPath);
             } else if (externalKind == SVNNodeKind.FILE) {
-                switchFileExternal(localAbsPath, newUrl, newItem.getPegRevision(), newItem.getRevision(), parentPath, repository, externalRevnum, repository.getRepositoryRoot(true));
+                switchFileExternal(localAbsPath, newUrl, externalPegRevision, externalRevision, parentPath, repository, externalRevnum, repository.getRepositoryRoot(true));
             }
         }
     }

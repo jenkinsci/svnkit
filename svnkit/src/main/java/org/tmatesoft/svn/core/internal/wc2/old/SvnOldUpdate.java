@@ -4,6 +4,7 @@ import java.io.File;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc16.SVNUpdateClient16;
+import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.core.wc2.SvnUpdate;
 
@@ -15,6 +16,7 @@ public class SvnOldUpdate extends SvnOldRunner<long[], SvnUpdate> {
         client.setIgnoreExternals(getOperation().isIgnoreExternals());
         client.setUpdateLocksOnDemand(getOperation().isUpdateLocksOnDemand());
         client.setEventHandler(getOperation().getEventHandler());
+        client.setExternalsHandler(SvnCodec.externalsHandler(getOperation().getExternalsHandler()));
         
         File[] paths = new File[getOperation().getTargets().size()];
         int i = 0;

@@ -30,6 +30,7 @@ import org.tmatesoft.svn.core.internal.wc2.ISvnCommitRunner;
 import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
 import org.tmatesoft.svn.core.wc.ISVNChangelistHandler;
 import org.tmatesoft.svn.core.wc.ISVNCommitHandler;
+import org.tmatesoft.svn.core.wc.ISVNExternalsHandler;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
 import org.tmatesoft.svn.core.wc.ISVNStatusFileProvider;
 import org.tmatesoft.svn.core.wc.SVNCommitItem;
@@ -60,6 +61,7 @@ import org.tmatesoft.svn.core.wc2.SvnStatus;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.core.wc2.SvnWorkingCopyInfo;
 import org.tmatesoft.svn.core.wc2.hooks.ISvnCommitHandler;
+import org.tmatesoft.svn.core.wc2.hooks.ISvnExternalsHandler;
 import org.tmatesoft.svn.core.wc2.hooks.ISvnFileListHook;
 
 public class SvnCodec {
@@ -740,6 +742,32 @@ public class SvnCodec {
             }
         };
         
+    }
+    
+    public static ISVNExternalsHandler externalsHandler(final ISvnExternalsHandler target) {
+        if (target == null) {
+            return null;
+        }
+        return new ISVNExternalsHandler() {
+            public SVNRevision[] handleExternal(File externalPath, SVNURL externalURL,
+                    SVNRevision externalRevision, SVNRevision externalPegRevision,
+                    String externalsDefinition, SVNRevision externalsWorkingRevision) {
+                return target.handleExternal(externalPath, externalURL, externalRevision, externalPegRevision, externalsDefinition, externalsWorkingRevision);
+            }
+        };
+    }
+
+    public static ISvnExternalsHandler externalsHandler(final ISVNExternalsHandler target) {
+        if (target == null) {
+            return null;
+        }
+        return new ISvnExternalsHandler() {
+            public SVNRevision[] handleExternal(File externalPath, SVNURL externalURL,
+                    SVNRevision externalRevision, SVNRevision externalPegRevision,
+                    String externalsDefinition, SVNRevision externalsWorkingRevision) {
+                return target.handleExternal(externalPath, externalURL, externalRevision, externalPegRevision, externalsDefinition, externalsWorkingRevision);
+            }
+        };
     }
     
 }
