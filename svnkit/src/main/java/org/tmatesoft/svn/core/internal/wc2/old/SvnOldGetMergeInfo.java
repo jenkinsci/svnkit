@@ -6,9 +6,15 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc16.SVNDiffClient16;
+import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.wc2.SvnGetMergeInfo;
 
 public class SvnOldGetMergeInfo extends SvnOldRunner<Map<SVNURL, SVNMergeRangeList>, SvnGetMergeInfo> {
+
+    @Override
+    public boolean isApplicable(SvnGetMergeInfo operation, SvnWcGeneration wcGeneration) throws SVNException {
+        return wcGeneration == SvnWcGeneration.V16;
+    }
 
     @Override
     protected Map<SVNURL, SVNMergeRangeList> run() throws SVNException {

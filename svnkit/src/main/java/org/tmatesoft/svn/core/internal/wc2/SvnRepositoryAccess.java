@@ -377,7 +377,10 @@ public abstract class SvnRepositoryAccess {
                 throw e;
             }
         }
-        return new SVNLocationEntry((Long) copyFrom[2], (String) copyFrom[1]);
+        if (copyFrom[1] != null) {
+            return new SVNLocationEntry((Long) copyFrom[2], (String) copyFrom[1]);
+        }
+        return null;
     }
 
     public Map<String, SVNMergeRangeList> getHistoryAsMergeInfo(SVNRepository repos, SvnTarget target, long youngest, long oldest) throws SVNException {
