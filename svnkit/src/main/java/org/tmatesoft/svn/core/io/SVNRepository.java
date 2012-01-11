@@ -36,7 +36,9 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
+import org.tmatesoft.svn.core.SVNMergeInfo;
 import org.tmatesoft.svn.core.SVNMergeInfoInheritance;
+import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
@@ -2532,7 +2534,7 @@ public abstract class SVNRepository {
  
      * @since SVNKit 1.2.0, SVN 1.5.0 
      */
-    public Map getMergeInfo(String[] paths, long revision, SVNMergeInfoInheritance inherit, 
+    public Map<String, SVNMergeInfo> getMergeInfo(String[] paths, long revision, SVNMergeInfoInheritance inherit, 
             boolean includeDescendants) throws SVNException {
         if (paths == null) {
             return null;

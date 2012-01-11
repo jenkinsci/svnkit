@@ -18,7 +18,6 @@ import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.SVNWCNodeReposInfo;
@@ -175,15 +174,10 @@ public class SvnNgMergeinfoUtil {
         
         if (reposMeregInfo != null && !reposMeregInfo.isEmpty()) {
             result.catalog = new TreeMap<String, Map<String,SVNMergeRangeList>>();
-            SVNURL location = repository.getLocation();
-            SVNURL root = repository.getRepositoryRoot(true);
-            String prefix = SVNURLUtil.getRelativeURL(root, location);
             for (String reposRelativePath : reposMeregInfo.keySet()) {
                 SVNMergeInfo mi = reposMeregInfo.get(reposRelativePath);
-                if ("".equals(reposRelativePath)) {
-                    reposRelativePath = prefix;
-                } else {
-                    reposRelativePath = SVNPathUtil.append(prefix, reposRelativePath);
+                if (reposRelativePath.startsWith("/")) {
+                    reposRelativePath = reposRelativePath.substring(1);
                 }
                 result.catalog.put(reposRelativePath, mi.getMergeSourcesToMergeLists());
             }
