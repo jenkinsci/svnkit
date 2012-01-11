@@ -28,7 +28,19 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbOpenMode;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.internal.wc2.ISvnCommitRunner;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
+import org.tmatesoft.svn.core.internal.wc2.admin.SvnRepositoryHotCopyImpl;
+import org.tmatesoft.svn.core.internal.wc2.admin.SvnRepositoryListLocksImpl;
+import org.tmatesoft.svn.core.internal.wc2.admin.SvnRepositoryListTransactionsImpl;
+import org.tmatesoft.svn.core.internal.wc2.admin.SvnRepositoryLoadImpl;
+import org.tmatesoft.svn.core.internal.wc2.admin.SvnRepositoryPackImpl;
+import org.tmatesoft.svn.core.internal.wc2.admin.SvnRepositoryRecoverImpl;
+import org.tmatesoft.svn.core.internal.wc2.admin.SvnRepositoryRemoveLocksImpl;
+import org.tmatesoft.svn.core.internal.wc2.admin.SvnRepositoryCreateImpl;
 import org.tmatesoft.svn.core.internal.wc2.admin.SvnRepositoryDumpImpl;
+import org.tmatesoft.svn.core.internal.wc2.admin.SvnRepositoryRemoveTransactionsImpl;
+import org.tmatesoft.svn.core.internal.wc2.admin.SvnRepositorySetUUIDImpl;
+import org.tmatesoft.svn.core.internal.wc2.admin.SvnRepositoryUpgradeImpl;
+import org.tmatesoft.svn.core.internal.wc2.admin.SvnRepositoryVerifyImpl;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgAdd;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgCat;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgCheckout;
@@ -103,7 +115,19 @@ import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.ISVNRepositoryPool;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
+import org.tmatesoft.svn.core.wc2.admin.SvnRepositoryHotCopy;
+import org.tmatesoft.svn.core.wc2.admin.SvnRepositoryListLocks;
+import org.tmatesoft.svn.core.wc2.admin.SvnRepositoryListTransactions;
+import org.tmatesoft.svn.core.wc2.admin.SvnRepositoryLoad;
+import org.tmatesoft.svn.core.wc2.admin.SvnRepositoryPack;
+import org.tmatesoft.svn.core.wc2.admin.SvnRepositoryRecover;
+import org.tmatesoft.svn.core.wc2.admin.SvnRepositoryRemoveLocks;
+import org.tmatesoft.svn.core.wc2.admin.SvnRepositoryCreate;
 import org.tmatesoft.svn.core.wc2.admin.SvnRepositoryDump;
+import org.tmatesoft.svn.core.wc2.admin.SvnRepositoryRemoveTransactions;
+import org.tmatesoft.svn.core.wc2.admin.SvnRepositorySetUUID;
+import org.tmatesoft.svn.core.wc2.admin.SvnRepositoryUpgrade;
+import org.tmatesoft.svn.core.wc2.admin.SvnRepositoryVerify;
 import org.tmatesoft.svn.util.SVNLogType;
 
 public class SvnOperationFactory {
@@ -250,6 +274,18 @@ public class SvnOperationFactory {
         registerOperationRunner(SvnSuggestMergeSources.class, new SvnOldSuggestMergeSources());
         
         registerOperationRunner(SvnRepositoryDump.class, new SvnRepositoryDumpImpl());
+        registerOperationRunner(SvnRepositoryCreate.class, new SvnRepositoryCreateImpl());
+        registerOperationRunner(SvnRepositoryHotCopy.class, new SvnRepositoryHotCopyImpl());
+        registerOperationRunner(SvnRepositoryLoad.class, new SvnRepositoryLoadImpl());
+        registerOperationRunner(SvnRepositoryListLocks.class, new SvnRepositoryListLocksImpl());
+        registerOperationRunner(SvnRepositoryListTransactions.class, new SvnRepositoryListTransactionsImpl());
+        registerOperationRunner(SvnRepositoryPack.class, new SvnRepositoryPackImpl());
+        registerOperationRunner(SvnRepositoryRecover.class, new SvnRepositoryRecoverImpl());
+        registerOperationRunner(SvnRepositoryRemoveLocks.class, new SvnRepositoryRemoveLocksImpl());
+        registerOperationRunner(SvnRepositoryRemoveTransactions.class, new SvnRepositoryRemoveTransactionsImpl());
+        registerOperationRunner(SvnRepositorySetUUID.class, new SvnRepositorySetUUIDImpl());
+        registerOperationRunner(SvnRepositoryUpgrade.class, new SvnRepositoryUpgradeImpl());
+        registerOperationRunner(SvnRepositoryVerify.class, new SvnRepositoryVerifyImpl());
     }
     
     public boolean isAutoCloseContext() {
@@ -484,6 +520,54 @@ public class SvnOperationFactory {
     
     public SvnRepositoryDump createRepositoryDump() {
         return new SvnRepositoryDump(this);
+    }
+    
+    public SvnRepositoryCreate createRepositoryCreate() {
+        return new SvnRepositoryCreate(this);
+    }
+    
+    public SvnRepositoryHotCopy createRepositoryHotCopy() {
+        return new SvnRepositoryHotCopy(this);
+    }
+    
+    public SvnRepositoryLoad createRepositoryLoad() {
+        return new SvnRepositoryLoad(this);
+    }
+    
+    public SvnRepositoryListLocks createRepositoryListLocks() {
+        return new SvnRepositoryListLocks(this);
+    }
+    
+    public SvnRepositoryListTransactions createRepositoryListTransactions() {
+        return new SvnRepositoryListTransactions(this);
+    }
+    
+    public SvnRepositoryPack createRepositoryPack() {
+        return new SvnRepositoryPack(this);
+    }
+    
+    public SvnRepositoryRecover createRepositoryRecover() {
+        return new SvnRepositoryRecover(this);
+    }
+    
+    public SvnRepositoryRemoveLocks createRepositoryRemoveLocks() {
+        return new SvnRepositoryRemoveLocks(this);
+    }
+    
+    public SvnRepositoryRemoveTransactions createRepositoryRemoveTransactions() {
+        return new SvnRepositoryRemoveTransactions(this);
+    }
+    
+    public SvnRepositorySetUUID createRepositorySetUUID() {
+        return new SvnRepositorySetUUID(this);
+    }
+    
+    public SvnRepositoryUpgrade createRepositoryUpgrade() {
+        return new SvnRepositoryUpgrade(this);
+    }
+    
+    public SvnRepositoryVerify createRepositoryVerify() {
+        return new SvnRepositoryVerify(this);
     }
     
     protected Object run(SvnOperation<?> operation) throws SVNException {

@@ -13,8 +13,7 @@ public class SvnRepositoryDumpImpl extends SvnRepositoryOperationRunner<SVNAdmin
     protected SVNAdminEvent run() throws SVNException {
         SVNAdminClient ac = new SVNAdminClient(getOperation().getAuthenticationManager(), getOperation().getOptions());
         ac.setEventHandler(this);
-        ac.setEventHandler(this);
-        
+                
         ac.doDump(getOperation().getRepository(), 
                 getOperation().getOut(), 
                 getOperation().getStartRevision(), 
