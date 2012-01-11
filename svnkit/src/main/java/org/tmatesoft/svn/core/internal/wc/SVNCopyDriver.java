@@ -1136,7 +1136,7 @@ public class SVNCopyDriver extends SVNBasicDelegate {
             Map mergeInfo = calculateTargetMergeInfo(null, null, url, srcRevNum, topSrcRepos, false);
             extendWCMergeInfo(dst, entry, mergeInfo, dstAccess);
 
-            SVNEvent event = SVNEventFactory.createSVNEvent(dst, SVNNodeKind.FILE, null, SVNRepository.INVALID_REVISION, SVNEventAction.ADD, null, null, null);
+            SVNEvent event = SVNEventFactory.createSVNEvent(dst, SVNNodeKind.FILE, null, SVNRepository.INVALID_REVISION, SVNEventAction.COPY, null, null, null);
             dstAccess.handleEvent(event);
 
             sleepForTimeStamp();

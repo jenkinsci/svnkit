@@ -412,7 +412,7 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
                 SVNDepth.EMPTY, true, null, null);
 
         SVNEvent event = SVNEventFactory.createSVNEvent(pair.dst, pair.srcKind, null, pair.revNum, 
-                SVNEventAction.ADD, SVNEventAction.ADD, null, null, 1, 1);
+                SVNEventAction.COPY, SVNEventAction.COPY, null, null, 1, 1);
         handleEvent(event);
         
         return rev;
