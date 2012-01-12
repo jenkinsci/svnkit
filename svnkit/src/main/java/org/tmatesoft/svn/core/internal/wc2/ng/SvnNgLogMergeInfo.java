@@ -256,7 +256,7 @@ public class SvnNgLogMergeInfo extends SvnNgOperationRunner<SVNLogEntry, SvnLogM
             if (intersection == null || intersection.isEmpty()) {
                 return;
             }
-            intersection = this.rangelist.intersect(thisRangeList, true);
+            intersection = thisRangeList.intersect(rangelist, true);
             logEntry.setNonInheriable(intersection.isEmpty());
             
             if ((logEntry.isNonInheritable() || !isFilteringMerged) && logEntry.getChangedPaths() != null) {

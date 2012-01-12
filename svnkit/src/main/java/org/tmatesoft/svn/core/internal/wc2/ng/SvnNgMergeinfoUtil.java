@@ -216,11 +216,11 @@ public class SvnNgMergeinfoUtil {
         if (!reposOnly) {
             SvnMergeInfoCatalogInfo catalogInfo = getWcMergeInfoCatalog(context, includeDescendants, inheritance, wcPath, null, ignoreInvalidMergeInfo);
             wcMergeInfoCatalog = catalogInfo.catalog;
-            if (catalogInfo.inherited 
+            if (!(catalogInfo.inherited 
                     || (inheritance == SVNMergeInfoInheritance.EXPLICIT)
                     || (reposRelPath != null 
                         && wcMergeInfoCatalog != null
-                        && wcMergeInfoCatalog.get(SVNFileUtil.getFilePath(reposRelPath)) != null)) {
+                        && wcMergeInfoCatalog.get(SVNFileUtil.getFilePath(reposRelPath)) != null))) {
                 reposOnly = true;
                 includeDescendants = false;
             }

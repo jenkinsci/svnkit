@@ -17,6 +17,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -90,9 +91,12 @@ public class SVNMergeInfoCommand extends SVNCommand implements ISVNLogEntryHandl
         
         SVNDiffClient client = getSVNEnvironment().getClientManager().getDiffClient();
         SvnOperationFactory of = client.getOperationsFactory();
-        
+        SVNDepth depth = getSVNEnvironment().getDepth();
+        if (depth == SVNDepth.UNKNOWN) {
+            depth = SVNDepth.EMPTY;
+        }
         SvnLogMergeInfo logMergeInfo = of.createLogMergeInfo();
-        logMergeInfo.setDepth(getSVNEnvironment().getDepth());
+        logMergeInfo.setDepth(depth);
         logMergeInfo.setDiscoverChangedPaths(true);
         logMergeInfo.setRevisionProperties(null);
         logMergeInfo.setReceiver(new ISvnObjectReceiver<SVNLogEntry>() {            
