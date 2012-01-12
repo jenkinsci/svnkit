@@ -32,11 +32,8 @@ This version of SVNKit supports Subversion 1.7.0 and newer servers, and provides
 for the new Subversion 1.7 working copy format. Some of the operations are not yet implemented for the new
 working copy format, in particular:
 
-- merge, mergeinfo, resolve, resolved
+- merge
 - diff
-- cleanup 
-
-New JavaHL API is not yet implemented in this version of SVNKit.
 
 4. RESOURCES
 

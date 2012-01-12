@@ -1,7 +1,17 @@
+== version 1.7.0-alpha2 ==
+
++ New JavaHL API (org.apache.subversion.javahl) implementation
++ Lot of fixes and improvements in the new working copy format support
+
+* This is alpha version and it may not be stable enough for production environment
+* The following operations are not yet implemented for the new working copy format:
+  - merge
+  - diff
+
 == version 1.7.0-alpha1 ==
 
 + New Subversion 1.7 working copy format support
-+ New hihg-level API (see org.tmatesoft.svnkit.core.wc2)
++ New high-level API (see org.tmatesoft.svnkit.core.wc2)
 
 * This is alpha version and it may not be stable enough for production environment
 * The following operations are not yet implemented for the new working copy format:
