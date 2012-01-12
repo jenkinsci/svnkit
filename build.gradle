@@ -140,7 +140,7 @@ project(':svnkit-distribution') {
         osgi project(path: ':svnkit-osgi', configuration: 'archives')
         osgi 'com.trilead:trilead-ssh2-osgi:1.0.0-build214'
         osgi 'org.tmatesoft.sqljet:sqljet-osgi:1.1.0-SNAPSHOT'
-        osgi 'net.java.dev.jna:jna-osgi:3.2.7'
+        osgi 'net.java.dev.jna:jna-osgi:3.4.0'
     }
 }
 task publish(dependsOn: [':svnkit-distribution:buildAll']) {
