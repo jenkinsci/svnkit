@@ -17,7 +17,9 @@ import java.util.EnumMap;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
+import org.tmatesoft.sqljet.core.table.ISqlJetBusyHandler;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
+import org.tmatesoft.sqljet.core.table.SqlJetTimeoutBusyHandler;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -40,6 +42,8 @@ public class SVNSqlJetDb {
         /** open/create the database read-write */
         RWCreate
     };
+    
+    private static final ISqlJetBusyHandler DEFAULT_BUSY_HANDLER = new SqlJetTimeoutBusyHandler(10000);
 
     private SqlJetDb db;
     private EnumMap<SVNWCDbStatements, SVNSqlJetStatement> statements;
@@ -88,6 +92,7 @@ public class SVNSqlJetDb {
         }
         try {
             SqlJetDb db = SqlJetDb.open(sdbAbsPath, mode != Mode.ReadOnly);
+            db.setBusyHandler(DEFAULT_BUSY_HANDLER);
             SVNSqlJetDb sDb = new SVNSqlJetDb(db);
             return sDb;
         } catch (SqlJetException e) {
