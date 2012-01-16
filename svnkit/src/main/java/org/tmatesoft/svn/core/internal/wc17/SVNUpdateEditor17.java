@@ -319,18 +319,19 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         if (alreadyConflicted) {
             myCurrentDirectory.skipThis = true;
             myCurrentDirectory.alreadyNotified = true;
-            doNotification(myTargetAbspath, SVNNodeKind.UNKNOWN, SVNEventAction.SKIP_CONFLICTED, myCurrentDirectory.getURL(), null);
+            doNotification(myTargetAbspath, SVNNodeKind.UNKNOWN, SVNEventAction.SKIP_CONFLICTED, null, null);
             return;
         }
         
         if ("".equals(myTargetBasename) || myTargetBasename == null) {
-            WCDbBaseInfo baseInfo = myWCContext.getDb().getBaseInfo(myCurrentDirectory.localAbsolutePath, BaseInfoField.changedAuthor, BaseInfoField.changedDate, BaseInfoField.changedRev, BaseInfoField.status, BaseInfoField.depth);
+            WCDbBaseInfo baseInfo = myWCContext.getDb().getBaseInfo(myCurrentDirectory.localAbsolutePath, BaseInfoField.reposRelPath, BaseInfoField.changedAuthor, BaseInfoField.changedDate, BaseInfoField.changedRev, BaseInfoField.status, BaseInfoField.depth);
             
             myCurrentDirectory.ambientDepth = baseInfo.depth;
             myCurrentDirectory.wasIncomplete = baseInfo.status == SVNWCDbStatus.Incomplete;
             myCurrentDirectory.changedAuthor = baseInfo.changedAuthor;
             myCurrentDirectory.changedDate = baseInfo.changedDate;
             myCurrentDirectory.changedRevsion = baseInfo.changedRev;
+            myCurrentDirectory.oldRelativePath = baseInfo.reposRelPath;
             
             myWCContext.getDb().opStartDirectoryUpdateTemp(myCurrentDirectory.localAbsolutePath, myCurrentDirectory.newRelativePath, myTargetRevision);
         }
@@ -341,7 +342,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             SVNEvent event = new SVNEvent(localAbspath, kind, null, -1, null, null, null, null, action, null, null, null, null, null, null);
             
             event.setURL(url);
-            event.setPreviousURL(url);
+            event.setPreviousURL(previousURL);
             
             myWCContext.getEventHandler().handleEvent(event, 0);
         }
@@ -377,10 +378,9 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         File localAbsPath = SVNFileUtil.createFilePath(myCurrentDirectory.localAbsolutePath, base);
         
         boolean isRoot = myWCContext.getDb().isWCRoot(localAbsPath);
-        SVNURL url = myCurrentDirectory.getURL().appendPath(base, false);
         if (isRoot) {
             rememberSkippedTree(localAbsPath);
-            doNotification(localAbsPath, SVNNodeKind.UNKNOWN, SVNEventAction.UPDATE_SKIP_OBSTRUCTION, url, null);
+            doNotification(localAbsPath, SVNNodeKind.UNKNOWN, SVNEventAction.UPDATE_SKIP_OBSTRUCTION, null, null);
             return;
         }       
         
@@ -389,7 +389,8 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         SVNWCDbKind baseKind;
         
         WCDbInfo info = myWCContext.getDb().readInfo(localAbsPath, InfoField.status, InfoField.kind, InfoField.reposRelPath, InfoField.conflicted, InfoField.haveBase, InfoField.haveWork);
-       
+        SVNURL previousURL = info.reposRelPath != null ? SVNWCUtils.join(myReposRootURL, info.reposRelPath) : null;
+        
         if (!info.haveWork) {
             baseStatus = info.status;
             baseKind = info.kind;
@@ -405,7 +406,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         }
         if (info.conflicted) {
             rememberSkippedTree(localAbsPath);
-            doNotification(localAbsPath, SVNNodeKind.UNKNOWN, SVNEventAction.SKIP_CONFLICTED, url, null);
+            doNotification(localAbsPath, SVNNodeKind.UNKNOWN, SVNEventAction.SKIP_CONFLICTED, null, null);
             return;
         }
         
@@ -427,7 +428,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             }
             myCurrentDirectory.deletionConflicts.put(base, treeConflict);
             myWCContext.getDb().opSetTreeConflict(localAbsPath, treeConflict);
-            doNotification(localAbsPath, SVNNodeKind.UNKNOWN, SVNEventAction.TREE_CONFLICT, url, null);
+            doNotification(localAbsPath, SVNNodeKind.UNKNOWN, SVNEventAction.TREE_CONFLICT, null, null);
             
             if (treeConflict.getConflictReason() == SVNConflictReason.EDITED) {
                 myWCContext.getDb().opMakeCopyTemp(localAbsPath, false);
@@ -452,7 +453,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             if (myCurrentDirectory.shadowed) {
                 action = SVNEventAction.UPDATE_SHADOWED_DELETE;
             }
-            doNotification(localAbsPath, info.kind == SVNWCDbKind.Dir ? SVNNodeKind.DIR : SVNNodeKind.FILE, action, url, null);
+            doNotification(localAbsPath, info.kind == SVNWCDbKind.Dir ? SVNNodeKind.DIR : SVNNodeKind.FILE, action, null, previousURL);
         }
         
     }
@@ -649,11 +650,12 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         boolean versionedLocallyAndPresent;
         boolean error = false;
         try {
-            WCDbInfo readInfo = myWCContext.getDb().readInfo(db.localAbsolutePath, InfoField.status, InfoField.kind, InfoField.conflicted);
+            WCDbInfo readInfo = myWCContext.getDb().readInfo(db.localAbsolutePath, InfoField.status, InfoField.kind, InfoField.conflicted, InfoField.reposRelPath);
             status = readInfo.status;
             wc_kind = readInfo.kind;
             conflicted = readInfo.conflicted;
             versionedLocallyAndPresent = isNodePresent(status);
+            db.oldRelativePath = readInfo.reposRelPath;
         } catch (SVNException e) {
             if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND) {
                 throw e;
@@ -670,13 +672,13 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                 rememberSkippedTree(db.localAbsolutePath);
                 db.skipThis = true;
                 db.alreadyNotified = true;
-                doNotification(db.localAbsolutePath, SVNNodeKind.DIR, SVNEventAction.UPDATE_SKIP_OBSTRUCTION, db.getURL(), null);
+                doNotification(db.localAbsolutePath, SVNNodeKind.DIR, SVNEventAction.UPDATE_SKIP_OBSTRUCTION, db.getURL(), db.getPreviousURL());
                 return;
             } else if (status == SVNWCDbStatus.Normal && (wc_kind == SVNWCDbKind.File ||  wc_kind == SVNWCDbKind.Symlink)) {
                 rememberSkippedTree(db.localAbsolutePath);
                 db.skipThis = true;
                 db.alreadyNotified = true;
-                doNotification(db.localAbsolutePath, SVNNodeKind.FILE, SVNEventAction.UPDATE_SKIP_OBSTRUCTION, db.getURL(), null);
+                doNotification(db.localAbsolutePath, SVNNodeKind.FILE, SVNEventAction.UPDATE_SKIP_OBSTRUCTION, db.getURL(), db.getPreviousURL());
                 return;
             } else if (wc_kind == SVNWCDbKind.Unknown) {
                 versionedLocallyAndPresent = false;
@@ -704,7 +706,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             db.skipThis = true;
             db.alreadyNotified = true;
             myWCContext.getDb().addBaseNotPresentNode(db.localAbsolutePath, db.newRelativePath, myReposRootURL, myReposUuid, myTargetRevision, SVNWCDbKind.Dir, null, null);
-            doNotification(db.localAbsolutePath, SVNNodeKind.DIR, SVNEventAction.SKIP_CONFLICTED, db.getURL(), null);
+            doNotification(db.localAbsolutePath, SVNNodeKind.DIR, SVNEventAction.SKIP_CONFLICTED, db.getURL(), db.getPreviousURL());
             return;
         }
         if (db.shadowed) {
@@ -743,7 +745,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         if (treeConflict != null) {
             myWCContext.getDb().opSetTreeConflict(db.localAbsolutePath, treeConflict);
             db.alreadyNotified = true;
-            doNotification(db.localAbsolutePath, SVNNodeKind.DIR, SVNEventAction.TREE_CONFLICT, db.getURL(), null);
+            doNotification(db.localAbsolutePath, SVNNodeKind.DIR, SVNEventAction.TREE_CONFLICT, db.getURL(), db.getPreviousURL());
         }
         
         if (myWCContext.getEventHandler() != null && !db.alreadyNotified && !db.addExisted) {
@@ -756,7 +758,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                 action = SVNEventAction.UPDATE_ADD;
             }
             db.alreadyNotified = true;
-            doNotification(db.localAbsolutePath, SVNNodeKind.DIR, action, db.getURL(), null);
+            doNotification(db.localAbsolutePath, SVNNodeKind.DIR, action, db.getURL(), db.getPreviousURL());
             
         }
         return;
@@ -775,12 +777,12 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             rememberSkippedTree(db.localAbsolutePath);
             db.skipThis = true;
             db.alreadyNotified = true;
-            doNotification(db.localAbsolutePath, SVNNodeKind.DIR, SVNEventAction.UPDATE_SKIP_OBSTRUCTION, db.getURL(), null);
+            doNotification(db.localAbsolutePath, SVNNodeKind.DIR, SVNEventAction.UPDATE_SKIP_OBSTRUCTION, null, null);
             return;
         }
         
         myWCContext.writeCheck(db.localAbsolutePath);
-        WCDbInfo readInfo = myWCContext.getDb().readInfo(db.localAbsolutePath, InfoField.status, InfoField.kind, InfoField.revision, InfoField.changedRev, InfoField.changedDate, InfoField.changedAuthor, InfoField.depth, InfoField.haveWork, InfoField.conflicted, InfoField.haveWork);
+        WCDbInfo readInfo = myWCContext.getDb().readInfo(db.localAbsolutePath, InfoField.reposRelPath, InfoField.status, InfoField.kind, InfoField.revision, InfoField.changedRev, InfoField.changedDate, InfoField.changedAuthor, InfoField.depth, InfoField.haveWork, InfoField.conflicted, InfoField.haveWork);
         SVNWCDbStatus status = readInfo.status;
         SVNWCDbKind wcKind = readInfo.kind;
         db.oldRevision = readInfo.revision;
@@ -788,6 +790,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         db.changedRevsion = readInfo.changedRev;
         db.changedAuthor = readInfo.changedAuthor;
         db.changedDate = readInfo.changedDate;
+        db.oldRelativePath = readInfo.reposRelPath;
         
         boolean have_work = readInfo.haveWork;
         boolean conflicted = readInfo.conflicted;
@@ -815,7 +818,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             rememberSkippedTree(db.localAbsolutePath);
             db.skipThis = true;
             db.alreadyNotified = true;
-            doNotification(db.localAbsolutePath, SVNNodeKind.UNKNOWN, SVNEventAction.SKIP_CONFLICTED, db.getURL(), null);
+            doNotification(db.localAbsolutePath, SVNNodeKind.UNKNOWN, SVNEventAction.SKIP_CONFLICTED, null, null);
             return;
         }
         if (!db.shadowed) {
@@ -1010,6 +1013,8 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             }
             SVNEvent event = new SVNEvent(db.localAbsolutePath, SVNNodeKind.DIR, null, myTargetRevision, null, propStatus[0], null, null, action, null, null, null, null, null, null);
             event.setPreviousRevision(db.oldRevision);
+            event.setURL(db.getURL());
+            event.setPreviousURL(db.getPreviousURL());
             myWCContext.getEventHandler().handleEvent(event, 0);
         }            
         maybeBumpDirInfo(db.bumpInfo);
@@ -1043,10 +1048,11 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         if (!myIsCleanCheckout) {
             kind = SVNFileType.getNodeKind(SVNFileType.getType(fb.localAbsolutePath));
             try {
-                WCDbInfo readInfo = myWCContext.getDb().readInfo(fb.localAbsolutePath, InfoField.status, InfoField.kind, InfoField.conflicted);
+                WCDbInfo readInfo = myWCContext.getDb().readInfo(fb.localAbsolutePath, InfoField.status, InfoField.kind, InfoField.conflicted, InfoField.reposRelPath);
                 status = readInfo.status;
                 wcKind = readInfo.kind;
                 conflicted = readInfo.conflicted;
+                fb.oldRelativePath = readInfo.reposRelPath;
                 versionedLocallyAndPresent = isNodePresent(status);
             } catch (SVNException e) {
                 if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND) {
@@ -1068,13 +1074,13 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                 rememberSkippedTree(fb.localAbsolutePath);
                 fb.skipThis = true;
                 fb.alreadyNotified = true;
-                doNotification(fb.localAbsolutePath, SVNNodeKind.FILE, SVNEventAction.UPDATE_SKIP_OBSTRUCTION, fb.getURL(), null);
+                doNotification(fb.localAbsolutePath, SVNNodeKind.FILE, SVNEventAction.UPDATE_SKIP_OBSTRUCTION, fb.getURL(), fb.getPreviousURL());
                 return;
             } else if (status == SVNWCDbStatus.Normal && (wcKind == SVNWCDbKind.File || wcKind == SVNWCDbKind.Symlink)) {
                 rememberSkippedTree(fb.localAbsolutePath);
                 fb.skipThis = true;
                 fb.alreadyNotified = true;
-                doNotification(fb.localAbsolutePath, SVNNodeKind.FILE, SVNEventAction.UPDATE_SKIP_OBSTRUCTION, fb.getURL(), null);
+                doNotification(fb.localAbsolutePath, SVNNodeKind.FILE, SVNEventAction.UPDATE_SKIP_OBSTRUCTION, fb.getURL(), fb.getPreviousURL());
                 return;
             } else if (wcKind == SVNWCDbKind.Unknown) {
                 versionedLocallyAndPresent = false;
@@ -1106,7 +1112,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                 pb.notPresentFiles = new HashSet<String>();
             }
             pb.notPresentFiles.add(fb.name);
-            doNotification(fb.localAbsolutePath, SVNNodeKind.UNKNOWN, SVNEventAction.SKIP_CONFLICTED, fb.getURL(), null);
+            doNotification(fb.localAbsolutePath, SVNNodeKind.UNKNOWN, SVNEventAction.SKIP_CONFLICTED, fb.getURL(), fb.getPreviousURL());
             return;
         }
         
@@ -1144,7 +1150,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         if (treeConflict != null) {
             myWCContext.getDb().opSetTreeConflict(fb.localAbsolutePath, treeConflict);
             fb.alreadyNotified = true;
-            doNotification(fb.localAbsolutePath, SVNNodeKind.FILE, SVNEventAction.TREE_CONFLICT, fb.getURL(), null);
+            doNotification(fb.localAbsolutePath, SVNNodeKind.FILE, SVNEventAction.TREE_CONFLICT, fb.getURL(), fb.getPreviousURL());
         }
         return;
     }
@@ -1161,7 +1167,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             rememberSkippedTree(fb.localAbsolutePath);
             fb.skipThis = true;
             fb.alreadyNotified = true;
-            doNotification(fb.localAbsolutePath, SVNNodeKind.FILE, SVNEventAction.UPDATE_SKIP_OBSTRUCTION, fb.getURL(), null);
+            doNotification(fb.localAbsolutePath, SVNNodeKind.FILE, SVNEventAction.UPDATE_SKIP_OBSTRUCTION, null, null);
             return;
         }
         boolean conflicted = false;
@@ -1171,13 +1177,15 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         
         WCDbInfo readInfo = myWCContext.getDb().readInfo(fb.localAbsolutePath, InfoField.status, InfoField.kind,
                 InfoField.revision, InfoField.changedRev, InfoField.changedDate, InfoField.changedRev,
-                InfoField.checksum, InfoField.haveWork, InfoField.conflicted);
+                InfoField.checksum, InfoField.haveWork, InfoField.conflicted, InfoField.reposRelPath);
         status = readInfo.status;
         fb.changedAuthor = readInfo.changedAuthor;
         fb.changedDate = readInfo.changedDate;
         fb.changedRevison = readInfo.changedRev;
         fb.oldRevision = readInfo.revision;
         fb.originalChecksum = readInfo.checksum;
+        fb.oldRelativePath = readInfo.reposRelPath;
+        
         conflicted = readInfo.conflicted;
         
         if (readInfo.haveWork) {
@@ -1197,7 +1205,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             rememberSkippedTree(fb.localAbsolutePath);
             fb.skipThis  = true;
             fb.alreadyNotified = true;
-            doNotification(fb.localAbsolutePath, SVNNodeKind.UNKNOWN, SVNEventAction.SKIP_CONFLICTED, fb.getURL(), null);
+            doNotification(fb.localAbsolutePath, SVNNodeKind.UNKNOWN, SVNEventAction.SKIP_CONFLICTED, fb.getURL(), fb.getPreviousURL());
             return;
         }
         fb.shadowed = pb.shadowed;
@@ -1333,7 +1341,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                 treeConflict = checkTreeConflict(fb.localAbsolutePath, SVNWCDbStatus.Added, SVNWCDbKind.File, true, SVNConflictAction.ADD, SVNNodeKind.FILE, fb.newRelativePath);
                 myWCContext.getDb().opSetTreeConflict(fb.localAbsolutePath, treeConflict);
                 fb.alreadyNotified = true;
-                doNotification(fb.localAbsolutePath, SVNNodeKind.UNKNOWN, SVNEventAction.TREE_CONFLICT, fb.getURL(), null);
+                doNotification(fb.localAbsolutePath, SVNNodeKind.UNKNOWN, SVNEventAction.TREE_CONFLICT, fb.getURL(), fb.getPreviousURL());
             }
         }
         
@@ -1366,7 +1374,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                     installPristine = fileInfo.installPristine;
                 } catch (SVNException e) {
                     if (SVNWCContext.isErrorAccess(e)) {
-                        doNotification(fb.localAbsolutePath, SVNNodeKind.FILE, SVNEventAction.UPDATE_SKIP_ACCESS_DENINED, fb.getURL(), null);                        
+                        doNotification(fb.localAbsolutePath, SVNNodeKind.FILE, SVNEventAction.UPDATE_SKIP_ACCESS_DENINED, fb.getURL(), fb.getPreviousURL());                        
                         rememberSkippedTree(fb.localAbsolutePath);
                         fb.skipThis = true;
                         maybeBumpDirInfo(fb.bumpInfo);
@@ -1454,7 +1462,9 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             
             String mimeType = myWCContext.getProperty(fb.localAbsolutePath, SVNProperty.MIME_TYPE);
             SVNEvent event = SVNEventFactory.createSVNEvent(fb.localAbsolutePath, SVNNodeKind.FILE, mimeType, myTargetRevision, contentState, propState[0], lockState, action, null, null, null);
+            SVNURL url = myReposRootURL.appendPath(path, false);
             event.setPreviousRevision(fb.oldRevision);
+            event.setURL(url);
             myWCContext.getEventHandler().handleEvent(event, 0);
         }
         maybeBumpDirInfo(fb.bumpInfo);
@@ -1587,6 +1597,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         private String name;
         private File localAbsolutePath;
         private File newRelativePath;
+        private File oldRelativePath;
         
         private long oldRevision;
         DirectoryBaton parentBaton;
@@ -1627,13 +1638,23 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             edited = true;
             if (editConflict != null) {
                 myWCContext.getDb().opSetTreeConflict(localAbsolutePath, editConflict);
-                doNotification(localAbsolutePath, SVNNodeKind.DIR, SVNEventAction.TREE_CONFLICT, getURL(), null);
+                doNotification(localAbsolutePath, SVNNodeKind.DIR, SVNEventAction.TREE_CONFLICT, getURL(), getPreviousURL());
                 alreadyNotified = true;
             }
         }
 
         public SVNURL getURL() throws SVNException {
-            return SVNWCUtils.join(myReposRootURL, newRelativePath);
+            if (newRelativePath != null) {
+                return SVNWCUtils.join(myReposRootURL, newRelativePath);
+            }
+            return null;
+        }
+
+        public SVNURL getPreviousURL() throws SVNException {
+            if (oldRelativePath != null) {
+                return SVNWCUtils.join(myReposRootURL, oldRelativePath);
+            }
+            return null;
         }
     }
     
@@ -1641,6 +1662,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         private String name;
         private File localAbsolutePath;
         private File newRelativePath;
+        private File oldRelativePath;
         private long oldRevision;
         private DirectoryBaton directoryBaton;
         
@@ -1677,13 +1699,23 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             edited = true;
             if (editConflict != null) {
                 myWCContext.getDb().opSetTreeConflict(localAbsolutePath, editConflict);
-                doNotification(localAbsolutePath, SVNNodeKind.FILE, SVNEventAction.TREE_CONFLICT, getURL(), null);
+                doNotification(localAbsolutePath, SVNNodeKind.FILE, SVNEventAction.TREE_CONFLICT, getURL(), getPreviousURL());
                 alreadyNotified = true;
             }
         }
         
         public SVNURL getURL() throws SVNException {
-            return SVNWCUtils.join(myReposRootURL, newRelativePath);
+            if (newRelativePath != null) {
+                return SVNWCUtils.join(myReposRootURL, newRelativePath);
+            }
+            return null;
+        }
+
+        public SVNURL getPreviousURL() throws SVNException {
+            if (oldRelativePath != null) {
+                return SVNWCUtils.join(myReposRootURL, oldRelativePath);
+            }
+            return null;
         }
 
         // delta handling
