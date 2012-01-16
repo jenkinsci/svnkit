@@ -56,6 +56,8 @@ import java.util.Stack;
  * @version 1.3
  */
 public class DAVEditorHandler extends BasicDAVDeltaHandler {
+    
+    public static final String PLACEHOLDER_PROPERTY_NAME = SVNProperty.SVN_PREFIX + "BOGOSITY";
 
     public static StringBuffer generateEditorRequest(final DAVConnection connection, StringBuffer xmlBuffer, 
             String url, long targetRevision, String target, String dstPath, SVNDepth depth, 
@@ -441,9 +443,9 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
         } else if (element == FETCH_PROPS) {
             if (!myIsFetchContent) {
                 if (myIsDirectory) {
-                    myEditor.changeDirProperty(SVNProperty.SVN_PREFIX + "BOGOSITY", null);
+                    myEditor.changeDirProperty(PLACEHOLDER_PROPERTY_NAME, null);
                 } else {
-                    myEditor.changeFileProperty(myPath, SVNProperty.SVN_PREFIX + "BOGOSITY", null);
+                    myEditor.changeFileProperty(myPath, PLACEHOLDER_PROPERTY_NAME, null);
                 }
             } else {
                 if (myIsDirectory) {
