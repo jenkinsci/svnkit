@@ -518,12 +518,8 @@ public class SVNWCDb implements ISVNWCDb {
     
     private class InsertLock implements SVNSqlJetTransaction {
 
-        public long reposId = INVALID_REPOS_ID;
         public File localAbsPath;
         public SVNWCDbLock lock;
-        
-        public SVNURL reposRootURL;
-        public String reposUUID;
         
         public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
         	
@@ -1388,22 +1384,6 @@ public class SVNWCDb implements ISVNWCDb {
         String buildRelPath;
         boolean always_check = false;
         boolean obstruction_possible = false;
-
-        /*
-         * ### we need more logic for finding the database (if it is located ###
-         * outside of the wcroot) and then managing all of that within DB. ###
-         * for now: play quick & dirty.
-         */
-
-        /*
-         * ### for now, overwrite the provided mode. We currently cache the ###
-         * sdb handles, which is great but for the occasion where we ###
-         * initially open the sdb in readonly mode and then later want ### to
-         * but that assumes we can track the fact that it was ### originally
-         * write to it. The solution is to reopen the db in readwrite ### mode,
-         * opened readonly. So for now, just punt and open ### everything in
-         * readwrite mode.
-         */
         sMode = Mode.ReadWrite;
 
         info.wcDbDir = dirData.get(localAbsPath);
@@ -2245,7 +2225,7 @@ public class SVNWCDb implements ISVNWCDb {
         gather.nodes = children;
         gather.conflicts = conflicts;
         
-        pdh.getWCRoot().getSDb().runTransaction(gather);
+        pdh.getWCRoot().getSDb().runTransaction(gather, SqlJetTransactionMode.READ_ONLY);
         
     }
     
@@ -2916,7 +2896,7 @@ public class SVNWCDb implements ISVNWCDb {
 
     private SVNSqlJetStatement getStatementForPath(File localAbsPath, SVNWCDbStatements statementIndex) throws SVNException {
         assert (isAbsolute(localAbsPath));
-        final DirParsedInfo parsed = parseDir(localAbsPath, Mode.ReadWrite);
+        final DirParsedInfo parsed = parseDir(localAbsPath, Mode.ReadOnly);
         verifyDirUsable(parsed.wcDbDir);
         final SVNWCDbRoot wcRoot = parsed.wcDbDir.getWCRoot();
         final SVNSqlJetStatement statement = wcRoot.getSDb().getStatement(statementIndex);

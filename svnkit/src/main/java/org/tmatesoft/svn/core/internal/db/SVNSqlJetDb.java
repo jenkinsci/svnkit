@@ -205,8 +205,12 @@ public class SVNSqlJetDb {
     }
 
     public void runTransaction(final SVNSqlJetTransaction transaction) throws SVNException {
+        runTransaction(transaction, SqlJetTransactionMode.WRITE);
+    }
+    
+    public void runTransaction(final SVNSqlJetTransaction transaction, SqlJetTransactionMode mode) throws SVNException {
         try {
-            beginTransaction(SqlJetTransactionMode.WRITE);
+            beginTransaction(mode);
             transaction.transaction(SVNSqlJetDb.this);
         } catch (SqlJetException e) {
             try {
