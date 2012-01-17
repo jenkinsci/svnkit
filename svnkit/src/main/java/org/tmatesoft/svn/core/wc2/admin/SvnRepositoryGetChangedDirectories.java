@@ -1,16 +1,15 @@
 package org.tmatesoft.svn.core.wc2.admin;
 
 import java.io.File;
-
-import org.tmatesoft.svn.core.wc.admin.SVNAdminEvent;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 import org.tmatesoft.svn.core.wc2.SvnReceivingOperation;
 
-public class SvnRepositoryPack extends SvnReceivingOperation<SVNAdminEvent> {
+public class SvnRepositoryGetChangedDirectories extends SvnReceivingOperation<String> {
     
     private File repositoryRoot;
-    
-    public SvnRepositoryPack(SvnOperationFactory factory) {
+    private String transactionName;
+               
+    public SvnRepositoryGetChangedDirectories(SvnOperationFactory factory) {
         super(factory);
     }
 
@@ -21,6 +20,21 @@ public class SvnRepositoryPack extends SvnReceivingOperation<SVNAdminEvent> {
 	public void setRepositoryRoot(File repositoryRoot) {
 		this.repositoryRoot = repositoryRoot;
 	}
+
+	public String getTransactionName() {
+		return transactionName;
+	}
+
+	public void setTransactionName(String transactionName) {
+		this.transactionName = transactionName;
+	}
+
+	
+
+		
+	
+
+	
 
 	    
 }

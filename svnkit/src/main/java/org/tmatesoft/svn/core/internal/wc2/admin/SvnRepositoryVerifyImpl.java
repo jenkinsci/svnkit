@@ -4,6 +4,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.admin.ISVNAdminEventHandler;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminClient;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminEvent;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.core.wc2.admin.SvnRepositoryVerify;
 
 
@@ -20,6 +21,6 @@ public class SvnRepositoryVerifyImpl extends SvnRepositoryOperationRunner<SVNAdm
     }
     
     public void handleAdminEvent(SVNAdminEvent event, double progress) throws SVNException {
-        getOperation().receive(getOperation().getFirstTarget(), event);
+        getOperation().receive(SvnTarget.fromFile(getOperation().getRepositoryRoot()), event);
     }
 }

@@ -1,16 +1,14 @@
 package org.tmatesoft.svn.core.wc2.admin;
 
 import java.io.File;
-
-import org.tmatesoft.svn.core.wc.admin.SVNAdminEvent;
+import org.tmatesoft.svn.core.wc2.SvnOperation;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
-import org.tmatesoft.svn.core.wc2.SvnReceivingOperation;
 
-public class SvnRepositoryPack extends SvnReceivingOperation<SVNAdminEvent> {
+public class SvnRepositoryGetUUID extends SvnOperation<String> {
     
     private File repositoryRoot;
-    
-    public SvnRepositoryPack(SvnOperationFactory factory) {
+        
+    public SvnRepositoryGetUUID(SvnOperationFactory factory) {
         super(factory);
     }
 
@@ -21,6 +19,10 @@ public class SvnRepositoryPack extends SvnReceivingOperation<SVNAdminEvent> {
 	public void setRepositoryRoot(File repositoryRoot) {
 		this.repositoryRoot = repositoryRoot;
 	}
+	
+	
+
+	
 
 	    
 }

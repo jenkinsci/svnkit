@@ -46,6 +46,12 @@ import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
+import org.tmatesoft.svn.core.wc.admin.ISVNChangeEntryHandler;
+import org.tmatesoft.svn.core.wc.admin.ISVNChangedDirectoriesHandler;
+import org.tmatesoft.svn.core.wc.admin.ISVNHistoryHandler;
+import org.tmatesoft.svn.core.wc.admin.ISVNTreeHandler;
+import org.tmatesoft.svn.core.wc.admin.SVNAdminPath;
+import org.tmatesoft.svn.core.wc.admin.SVNChangeEntry;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnAnnotateItem;
 import org.tmatesoft.svn.core.wc2.SvnChecksum;
@@ -80,6 +86,46 @@ public class SvnCodec {
         result.setKind(diffStatus.getKind());
         result.setUserData(diffStatus);
         return result;
+    }
+    
+    public static ISvnObjectReceiver<SVNAdminPath> treeReceiver(final ISVNTreeHandler handler) {
+        return new ISvnObjectReceiver<SVNAdminPath>() {
+            public void receive(SvnTarget target, SVNAdminPath path) throws SVNException {
+                if (handler != null) {
+                    handler.handlePath(path);
+                }
+            }
+        };
+    }
+    
+    public static ISvnObjectReceiver<SVNAdminPath> changedHistoryReceiver(final ISVNHistoryHandler handler) {
+        return new ISvnObjectReceiver<SVNAdminPath>() {
+            public void receive(SvnTarget target, SVNAdminPath path) throws SVNException {
+                if (handler != null) {
+                    handler.handlePath(path);
+                }
+            }
+        };
+    }
+    
+    public static ISvnObjectReceiver<String> changedDirectoriesReceiver(final ISVNChangedDirectoriesHandler handler) {
+        return new ISvnObjectReceiver<String>() {
+            public void receive(SvnTarget target, String path) throws SVNException {
+                if (handler != null) {
+                    handler.handleDir(path);
+                }
+            }
+        };
+    }
+    
+    public static ISvnObjectReceiver<SVNChangeEntry> changeEntryReceiver(final ISVNChangeEntryHandler handler) {
+        return new ISvnObjectReceiver<SVNChangeEntry>() {
+            public void receive(SvnTarget target, SVNChangeEntry entry) throws SVNException {
+                if (handler != null) {
+                    handler.handleEntry(entry);
+                }
+            }
+        };
     }
     
     
