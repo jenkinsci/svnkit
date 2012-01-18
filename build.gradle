@@ -1,5 +1,5 @@
 group = 'org.tmatesoft.svnkit'
-version = '1.3.7'
+version = '1.3.7-sgk'
 release = true
 target = '1.4'
 compatibleSvnVersion = '1.6.17'
