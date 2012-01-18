@@ -4,9 +4,12 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -155,14 +158,33 @@ public class WorkingCopyTest {
     }
 
     public void deleteChildren() throws SVNException {
+        final List<File> childrenList = getChildren();
+
+        for (File child : childrenList) {
+            deleteAll(child);
+        }
+    }
+
+    public List<File> getChildren() {
+        final List<File> childrenList = new ArrayList<File>();
+
         final File[] children = SVNFileListUtil.listFiles(getWorkingCopyDirectory());
         if (children != null) {
             for (File child : children) {
                 if (!child.getName().equals(SVNFileUtil.getAdminDirectoryName())) {
-                    deleteAll(child);
+                    childrenList.add(child);
                 }
             }
         }
+        return childrenList;
+    }
+
+    public void setProperty(File file, String propertyName, SVNPropertyValue propertyValue) throws SVNException {
+        final SVNWCClient wcClient = getClientManager().getWCClient();
+
+        wcClient.doSetProperty(file, propertyName, propertyValue, true, SVNDepth.INFINITY, null, null);
+
+        checkWorkingCopyConsistency();
     }
 
     private void deleteAll(File file) throws SVNException {
@@ -208,6 +230,13 @@ public class WorkingCopyTest {
         return dbFile;
     }
 
+    public File getWorkingCopyDirectory() {
+        if (workingDirectory == null) {
+            workingDirectory = TestUtil.createDirectory(getTestDirectory(), "wc").getAbsoluteFile();
+        }
+        return workingDirectory;
+    }
+
     public void dispose() {
         if (clientManager != null) {
             clientManager.dispose();
@@ -239,13 +268,6 @@ public class WorkingCopyTest {
 
     private String getSqlite3Command() {
         return getTestOptions().getSqlite3Command();
-    }
-
-    private File getWorkingCopyDirectory() {
-        if (workingDirectory == null) {
-            workingDirectory = TestUtil.createDirectory(getTestDirectory(), "wc").getAbsoluteFile();
-        }
-        return workingDirectory;
     }
 
     private File getTestDirectory() {

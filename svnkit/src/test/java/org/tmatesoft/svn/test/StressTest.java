@@ -4,6 +4,8 @@ import java.io.File;
 
 import org.junit.Test;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
 public class StressTest {
@@ -24,6 +26,9 @@ public class StressTest {
 
             runRevert(workingCopyTest);
 
+            runSetProperties(workingCopyTest);
+
+            runRevert(workingCopyTest);
         } finally {
             workingCopyTest.dispose();
         }
@@ -74,6 +79,27 @@ public class StressTest {
 
     private void runDeletes(WorkingCopyTest workingCopyTest) throws SVNException {
         workingCopyTest.deleteChildren();
+    }
+
+    private void runSetProperties(WorkingCopyTest workingCopyTest) throws SVNException {
+        final File workingCopyDirectory = workingCopyTest.getWorkingCopyDirectory();
+
+        setProperties(workingCopyTest, workingCopyDirectory, 0);
+    }
+
+    private int setProperties(WorkingCopyTest workingCopyTest, File directory, int counter) throws SVNException {
+        final File[] children = directory.isDirectory() ? SVNFileListUtil.listFiles(directory) : null;
+
+        if (children != null) {
+            for (File child : children) {
+                if (!child.getName().equals(SVNFileUtil.getAdminDirectoryName())) {
+                    workingCopyTest.setProperty(child, "property" + counter, SVNPropertyValue.create(child.getAbsolutePath()));
+                    counter++;
+                    counter = setProperties(workingCopyTest, child, counter);
+                }
+            }
+        }
+        return counter;
     }
 
     private String getTestName() {
