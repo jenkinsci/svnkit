@@ -7,6 +7,7 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
@@ -106,10 +107,10 @@ public class WorkingCopy {
         checkWorkingCopyConsistency();
     }
 
-    public void commit(String commitMessage) throws SVNException {
+    public long commit(String commitMessage) throws SVNException {
         final SVNCommitClient commitClient = getClientManager().getCommitClient();
 
-        commitClient.doCommit(new File[]{getWorkingCopyDirectory()},
+        final SVNCommitInfo commitInfo = commitClient.doCommit(new File[]{getWorkingCopyDirectory()},
                 false,
                 commitMessage,
                 null, null,
@@ -117,6 +118,8 @@ public class WorkingCopy {
                 SVNDepth.INFINITY);
 
         checkWorkingCopyConsistency();
+
+        return commitInfo.getNewRevision();
     }
 
     public void add(File file) throws SVNException {
@@ -170,7 +173,7 @@ public class WorkingCopy {
     }
 
     private void checkWorkingCopyConsistency() {
-        final String wcDbPath = getSql3DbFile().getAbsolutePath().replace('/', File.separatorChar);
+        final String wcDbPath = getWCDbFile().getAbsolutePath().replace('/', File.separatorChar);
 
         final ProcessBuilder processBuilder = new ProcessBuilder();
         processBuilder.command(getSqlite3Command(), wcDbPath, "pragma integrity_check;");
@@ -197,11 +200,9 @@ public class WorkingCopy {
         }
     }
 
-    private File getSql3DbFile() {
-        final File workingCopyDirectory = getWorkingCopyDirectory();
+    public File getWCDbFile() {
         final File dotSvnDirectory = new File(getWorkingCopyDirectory(), SVNFileUtil.getAdminDirectoryName());
-        final File dbFile = new File(dotSvnDirectory, ISVNWCDb.SDB_FILE);
-        return dbFile;
+        return new File(dotSvnDirectory, ISVNWCDb.SDB_FILE);
     }
 
     public void dispose() {

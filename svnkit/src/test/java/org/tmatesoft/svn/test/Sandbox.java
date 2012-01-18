@@ -7,12 +7,12 @@ import java.util.List;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.wc.SVNClientManager;
+import org.tmatesoft.svn.core.wc.admin.SVNAdminClient;
 
 public class Sandbox {
 
-    public static Sandbox createWithCleanup(String testName) throws SVNException {
-        final TestOptions testOptions = TestOptions.getInstance();
-
+    public static Sandbox createWithCleanup(String testName, TestOptions testOptions) throws SVNException {
         final Sandbox sandbox = new Sandbox(testName, testOptions);
         sandbox.cleanup();
         return sandbox;
@@ -37,8 +37,12 @@ public class Sandbox {
     }
 
     public WorkingCopy checkoutWorkingCopy() throws SVNException {
+        return checkoutWorkingCopy(getRepositoryUrl());
+    }
+
+    public WorkingCopy checkoutWorkingCopy(SVNURL repositoryUrl) throws SVNException {
         final WorkingCopy workingCopy = new WorkingCopy(getTestOptions(), createWorkingCopyDirectory());
-        workingCopy.checkoutLatestRevision(getRepositoryUrl());
+        workingCopy.checkoutLatestRevision(repositoryUrl);
         workingCopies.add(workingCopy);
         return workingCopy;
     }
@@ -64,8 +68,25 @@ public class Sandbox {
         return testDirectory;
     }
 
+    public SVNURL createSvnRepository() throws SVNException {
+        final File repositoryDirectory = createDirectory("svn.repo");
+
+        final SVNClientManager clientManager = SVNClientManager.newInstance();
+        try {
+            SVNAdminClient adminClient = clientManager.getAdminClient();
+            adminClient.doCreateRepository(repositoryDirectory, null, true, false);
+            return SVNURL.fromFile(repositoryDirectory);
+        } finally {
+            clientManager.dispose();
+        }
+    }
+
     private File createWorkingCopyDirectory() {
-        return TestUtil.createDirectory(getTestDirectory(), "wc").getAbsoluteFile();
+        return createDirectory("wc");
+    }
+
+    private File createDirectory(String suggestedName) {
+        return TestUtil.createDirectory(getTestDirectory(), suggestedName).getAbsoluteFile();
     }
 
     private File createTestDirectory() {
