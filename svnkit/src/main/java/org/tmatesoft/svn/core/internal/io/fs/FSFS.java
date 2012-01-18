@@ -149,11 +149,22 @@ public class FSFS {
     private SVNConfigFile myConfig;
     private IFSRepresentationCacheManager myReposCacheManager;
     
+    private boolean myIsHooksEnabled;
+
     public FSFS(File repositoryRoot) {
         myRepositoryRoot = repositoryRoot;
         myMaxFilesPerDirectory = 0;
+        setHooksEnabled(true);
     }
     
+    public void setHooksEnabled(boolean enabled) {
+        myIsHooksEnabled = enabled;
+    }
+    
+    public boolean isHooksEnabled() {
+        return myIsHooksEnabled;
+    }
+
     public int getDBFormat() {
         return myDBFormat;
     }
@@ -1271,7 +1282,7 @@ public class FSFS {
             SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         
-        if (enableHooks) {
+        if (enableHooks && isHooksEnabled()) {
             FSHooks.runPreUnlockHook(myRepositoryRoot, path, username);
         }
 
@@ -1286,7 +1297,7 @@ public class FSFS {
             }
         }
 
-        if (enableHooks) {
+        if (enableHooks && isHooksEnabled()) {
             try {
                 FSHooks.runPostUnlockHook(myRepositoryRoot, paths, username);
             } catch (SVNException svne) {
@@ -1309,7 +1320,9 @@ public class FSFS {
             SVNErrorManager.error(err, SVNLogType.FSFS);
         }
 
-        FSHooks.runPreLockHook(myRepositoryRoot, path, username);
+        if (isHooksEnabled()) {
+            FSHooks.runPreLockHook(myRepositoryRoot, path, username);
+        }
         SVNLock lock = null;
         
         FSWriteLock writeLock = FSWriteLock.getWriteLockForDB(this);
@@ -1324,12 +1337,14 @@ public class FSFS {
             }
         }
 
-        try {
-            FSHooks.runPostLockHook(myRepositoryRoot, paths, username);
-        } catch (SVNException svne) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_POST_LOCK_HOOK_FAILED, "Lock succeeded, but post-lock hook failed");
-            err.setChildErrorMessage(svne.getErrorMessage());
-            SVNErrorManager.error(err, svne, SVNLogType.FSFS);
+        if (isHooksEnabled()) {
+            try {
+                FSHooks.runPostLockHook(myRepositoryRoot, paths, username);
+            } catch (SVNException svne) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_POST_LOCK_HOOK_FAILED, "Lock succeeded, but post-lock hook failed");
+                err.setChildErrorMessage(svne.getErrorMessage());
+                SVNErrorManager.error(err, svne, SVNLogType.FSFS);
+            }
         }
         return lock;
     }
