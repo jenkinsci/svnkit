@@ -13,53 +13,54 @@ public class StressTest {
 
     @Test
     public void testWorkingCopy() throws Exception {
-        final WorkingCopyTest workingCopyTest = WorkingCopyTest.createWithInitialization(getTestName());
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testWorkingCopy");
         try {
-            final long latestRevision = workingCopyTest.checkoutLatestRevision();
+            final WorkingCopy workingCopy = sandbox.checkoutWorkingCopy();
+            final long latestRevision = workingCopy.getCurrentRevision();
 
-            runUpdates(workingCopyTest, latestRevision);
+            runUpdates(workingCopy, latestRevision);
 
-            runAdds(workingCopyTest);
+            runAdds(workingCopy);
 
-            runRevert(workingCopyTest);
+            runRevert(workingCopy);
 
-            runDeletes(workingCopyTest);
+            runDeletes(workingCopy);
 
-            runRevert(workingCopyTest);
+            runRevert(workingCopy);
 
-            runSetProperties(workingCopyTest);
+            runSetProperties(workingCopy);
 
-            runRevert(workingCopyTest);
+            runRevert(workingCopy);
         } finally {
-            workingCopyTest.dispose();
+            sandbox.dispose();
         }
     }
 
-    private void runUpdates(WorkingCopyTest workingCopyTest, long latestRevision) throws SVNException {
+    private void runUpdates(WorkingCopy workingCopy, long latestRevision) throws SVNException {
         for (long revision = latestRevision - 1; revision >= 1; revision--) {
-            workingCopyTest.updateToRevision(revision);
+            workingCopy.updateToRevision(revision);
         }
 
         for (long revision = 2; revision <= latestRevision; revision++) {
-            workingCopyTest.updateToRevision(revision);
+            workingCopy.updateToRevision(revision);
         }
 
         for (long revision = latestRevision - 1; revision >= 1; revision -= 10) {
-            workingCopyTest.updateToRevision(revision);
+            workingCopy.updateToRevision(revision);
         }
 
         for (long revision = 2; revision <= latestRevision; revision += 10) {
-            workingCopyTest.updateToRevision(revision);
+            workingCopy.updateToRevision(revision);
         }
 
-        workingCopyTest.updateToRevision(latestRevision);
+        workingCopy.updateToRevision(latestRevision);
     }
 
-    private void runAdds(WorkingCopyTest workingCopyTest) throws SVNException {
-        final File originalDirectory = workingCopyTest.findAnyDirectory();
+    private void runAdds(WorkingCopy workingCopy) throws SVNException {
+        final File originalDirectory = workingCopy.findAnyDirectory();
         File directory = originalDirectory;
 
-        final File originalAnotherDirectory = workingCopyTest.findAnotherDirectory(directory);
+        final File originalAnotherDirectory = workingCopy.findAnotherDirectory(directory);
         File anotherDirectory = originalAnotherDirectory;
 
         for (int i = 0; i < 5; i++) {
@@ -70,37 +71,37 @@ public class StressTest {
             anotherDirectory = tmp;
         }
 
-        workingCopyTest.add(new File(originalDirectory, originalAnotherDirectory.getName()));
-        workingCopyTest.add(new File(originalAnotherDirectory, originalDirectory.getName()));
+        workingCopy.add(new File(originalDirectory, originalAnotherDirectory.getName()));
+        workingCopy.add(new File(originalAnotherDirectory, originalDirectory.getName()));
     }
 
-    private void runRevert(WorkingCopyTest workingCopyTest) throws SVNException {
-        workingCopyTest.revert();
+    private void runRevert(WorkingCopy workingCopy) throws SVNException {
+        workingCopy.revert();
     }
 
-    private void runDeletes(WorkingCopyTest workingCopyTest) throws SVNException {
-        final List<File> childrenList = workingCopyTest.getChildren();
+    private void runDeletes(WorkingCopy workingCopy) throws SVNException {
+        final List<File> childrenList = workingCopy.getChildren();
 
         for (File child : childrenList) {
-            workingCopyTest.delete(child);
+            workingCopy.delete(child);
         }
     }
 
-    private void runSetProperties(WorkingCopyTest workingCopyTest) throws SVNException {
-        final File workingCopyDirectory = workingCopyTest.getWorkingCopyDirectory();
+    private void runSetProperties(WorkingCopy workingCopy) throws SVNException {
+        final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
 
-        setProperties(workingCopyTest, workingCopyDirectory, 0);
+        setProperties(workingCopy, workingCopyDirectory, 0);
     }
 
-    private int setProperties(WorkingCopyTest workingCopyTest, File directory, int counter) throws SVNException {
+    private int setProperties(WorkingCopy workingCopy, File directory, int counter) throws SVNException {
         final File[] children = directory.isDirectory() ? SVNFileListUtil.listFiles(directory) : null;
 
         if (children != null) {
             for (File child : children) {
                 if (!child.getName().equals(SVNFileUtil.getAdminDirectoryName())) {
-                    workingCopyTest.setProperty(child, "property" + counter, SVNPropertyValue.create(child.getAbsolutePath()));
+                    workingCopy.setProperty(child, "property" + counter, SVNPropertyValue.create(child.getAbsolutePath()));
                     counter++;
-                    counter = setProperties(workingCopyTest, child, counter);
+                    counter = setProperties(workingCopy, child, counter);
                 }
             }
         }

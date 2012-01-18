@@ -22,50 +22,28 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 
-public class WorkingCopyTest {
-
-    public static WorkingCopyTest createWithInitialization(String testName) throws SVNException {
-        final WorkingCopyTest workingCopyTest = new WorkingCopyTest(testName);
-        workingCopyTest.initialize();
-        return workingCopyTest;
-    }
-
-    private final String testName;
+public class WorkingCopy {
 
     private final TestOptions testOptions;
-    private File workingDirectory;
+    private final File workingCopyDirectory;
 
-    private File testDirectory;
     private SVNClientManager clientManager;
+    private long currentRevision;
 
-    public WorkingCopyTest(String testName) {
-        this(testName, TestOptions.getInstance());
+    public WorkingCopy(String testName, File workingCopyDirectory) {
+        this(TestOptions.getInstance(), workingCopyDirectory);
     }
 
-    public WorkingCopyTest(String testName, TestOptions testOptions) {
-        this.testName = testName;
+    public WorkingCopy(TestOptions testOptions, File workingCopyDirectory) {
         this.testOptions = testOptions;
+        this.workingCopyDirectory = workingCopyDirectory;
+        this.currentRevision = -1;
     }
 
-    private void initialize() throws SVNException {
-        checkOptions();
-        cleanup();
-    }
-
-    private void checkOptions() {
-        if  (getTestOptions().getRepositoryUrl() == null) {
-            throw new RuntimeException("Unable to start the test: repository URL is not specified.");
-        }
-    }
-
-    private void cleanup() throws SVNException {
-        SVNFileUtil.deleteAll(getTestDirectory(), null);
-    }
-
-    public long checkoutLatestRevision() throws SVNException {
+    public long checkoutLatestRevision(SVNURL repositoryUrl) throws SVNException {
         final SVNUpdateClient updateClient = getClientManager().getUpdateClient();
 
-        final long revisionCheckedOut = updateClient.doCheckout(getRepositoryUrl(),
+        currentRevision = updateClient.doCheckout(repositoryUrl,
                 getWorkingCopyDirectory(),
                 SVNRevision.HEAD,
                 SVNRevision.HEAD,
@@ -74,13 +52,13 @@ public class WorkingCopyTest {
 
         checkWorkingCopyConsistency();
 
-        return revisionCheckedOut;
+        return currentRevision;
     }
 
     public void updateToRevision(long revision) throws SVNException {
         final SVNUpdateClient updateClient = getClientManager().getUpdateClient();
 
-        updateClient.doUpdate(getWorkingCopyDirectory(),
+        currentRevision = updateClient.doUpdate(getWorkingCopyDirectory(),
                 SVNRevision.create(revision),
                 SVNDepth.INFINITY,
                 true,
@@ -187,6 +165,10 @@ public class WorkingCopyTest {
         checkWorkingCopyConsistency();
     }
 
+    public long getCurrentRevision() {
+        return currentRevision;
+    }
+
     private void checkWorkingCopyConsistency() {
         final String wcDbPath = getSql3DbFile().getAbsolutePath().replace('/', File.separatorChar);
 
@@ -222,13 +204,6 @@ public class WorkingCopyTest {
         return dbFile;
     }
 
-    public File getWorkingCopyDirectory() {
-        if (workingDirectory == null) {
-            workingDirectory = TestUtil.createDirectory(getTestDirectory(), "wc").getAbsoluteFile();
-        }
-        return workingDirectory;
-    }
-
     public void dispose() {
         if (clientManager != null) {
             clientManager.dispose();
@@ -242,36 +217,15 @@ public class WorkingCopyTest {
         return clientManager;
     }
 
-    private String getTestName() {
-        return testName;
-    }
-
     private TestOptions getTestOptions() {
         return testOptions;
     }
 
-    private SVNURL getRepositoryUrl() {
-        return getTestOptions().getRepositoryUrl();
-    }
-
-    private File getTempDirectory() {
-        return getTestOptions().getTempDirectory();
+    public File getWorkingCopyDirectory() {
+        return workingCopyDirectory;
     }
 
     private String getSqlite3Command() {
         return getTestOptions().getSqlite3Command();
-    }
-
-    private File getTestDirectory() {
-        if (testDirectory == null) {
-            testDirectory = createTestDirectory();
-        }
-        return testDirectory;
-    }
-
-    private File createTestDirectory() {
-        final File testDirectory = new File(getTempDirectory(), getTestName());
-        testDirectory.mkdirs();
-        return testDirectory;
     }
 }
