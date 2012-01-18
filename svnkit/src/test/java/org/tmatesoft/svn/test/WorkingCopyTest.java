@@ -1,12 +1,16 @@
 package org.tmatesoft.svn.test;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
 
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNCommitClient;
 import org.tmatesoft.svn.core.wc.SVNCopyClient;
@@ -170,7 +174,38 @@ public class WorkingCopyTest {
     }
 
     private void checkWorkingCopyConsistency() {
-        //TODO
+        final String wcDbPath = getSql3DbFile().getAbsolutePath().replace('/', File.separatorChar);
+
+        final ProcessBuilder processBuilder = new ProcessBuilder();
+        processBuilder.command(getSqlite3Command(), wcDbPath, "pragma integrity_check;");
+
+        BufferedReader bufferedReader = null;
+        try {
+            final Process process = processBuilder.start();
+            if (process != null) {
+                bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+
+                final String line = bufferedReader.readLine();
+                if (line == null || !"ok".equals(line.trim())) {
+                    throw new RuntimeException("SVN working copy database is not consistent.");
+                }
+
+                process.waitFor();
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } finally {
+            SVNFileUtil.closeFile(bufferedReader);
+        }
+    }
+
+    private File getSql3DbFile() {
+        final File workingCopyDirectory = getWorkingCopyDirectory();
+        final File dotSvnDirectory = new File(getWorkingCopyDirectory(), SVNFileUtil.getAdminDirectoryName());
+        final File dbFile = new File(dotSvnDirectory, ISVNWCDb.SDB_FILE);
+        return dbFile;
     }
 
     public void dispose() {
@@ -200,6 +235,10 @@ public class WorkingCopyTest {
 
     private File getTempDirectory() {
         return getTestOptions().getTempDirectory();
+    }
+
+    private String getSqlite3Command() {
+        return getTestOptions().getSqlite3Command();
     }
 
     private File getWorkingCopyDirectory() {

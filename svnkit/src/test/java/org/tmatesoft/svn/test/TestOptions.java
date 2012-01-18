@@ -19,15 +19,18 @@ public class TestOptions {
     public static TestOptions loadFrom(Properties properties) {
         final SVNURL repositoryUrl = getRepositoryUrl(properties);
         final File tempDirectory = getTempDirectory(properties);
-        return new TestOptions(repositoryUrl, tempDirectory);
+        final String sqlite3Command = getSqlite3Command(properties);
+        return new TestOptions(repositoryUrl, tempDirectory, sqlite3Command);
     }
 
     private final SVNURL repositoryUrl;
     private final File tempDirectory;
+    private final String sqlite3Command;
 
-    public TestOptions(SVNURL repositoryUrl, File tempDirectory) {
+    public TestOptions(SVNURL repositoryUrl, File tempDirectory, String sqlite3Command) {
         this.repositoryUrl = repositoryUrl;
         this.tempDirectory = tempDirectory;
+        this.sqlite3Command = sqlite3Command;
     }
 
     public SVNURL getRepositoryUrl() {
@@ -36,6 +39,10 @@ public class TestOptions {
 
     public File getTempDirectory() {
         return tempDirectory;
+    }
+
+    public String getSqlite3Command() {
+        return sqlite3Command;
     }
 
     public static TestOptions getInstance() {
@@ -85,5 +92,10 @@ public class TestOptions {
     private static File getTempDirectory(Properties properties) {
         final String tempDirectoryPath = properties.getProperty("temp.dir");
         return tempDirectoryPath == null ? new File(".tests") : new File(tempDirectoryPath);
+    }
+
+    private static String getSqlite3Command(Properties properties) {
+        final String sqlite3Command = properties.getProperty("sqlite3.command");
+        return sqlite3Command == null ? "sqlite3" : sqlite3Command;
     }
 }
