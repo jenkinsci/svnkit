@@ -12,6 +12,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 public class TestOptions {
 
     public static final String TEST_PROPERTIES_RESOURCE = "/org/tmatesoft/svn/test/test.properties";
+    public static final String TEST_PROPERTIES_TEMPLATE_RESOURCE = "/org/tmatesoft/svn/test/test.properties.template";
 
     public static TestOptions instance;
 
@@ -39,11 +40,20 @@ public class TestOptions {
 
     public static TestOptions getInstance() {
         if (instance == null) {
-            final Properties properties = loadPropertiesFromResource(TEST_PROPERTIES_RESOURCE);
-            if (properties == null) {
-                throw new RuntimeException("Unable to load properties resource " + TEST_PROPERTIES_RESOURCE);
+            Properties properties;
+
+            properties = loadPropertiesFromResource(TEST_PROPERTIES_RESOURCE);
+            if (properties != null) {
+                instance = TestOptions.loadFrom(properties);
+                return instance;
             }
-            instance = TestOptions.loadFrom(properties);
+            properties = loadPropertiesFromResource(TEST_PROPERTIES_TEMPLATE_RESOURCE);
+            if (properties != null) {
+                instance = TestOptions.loadFrom(properties);
+                return instance;
+            }
+
+            throw new RuntimeException("Unable to load properties resources: " + TEST_PROPERTIES_RESOURCE + " and " + TEST_PROPERTIES_TEMPLATE_RESOURCE);
         }
         return instance;
     }
