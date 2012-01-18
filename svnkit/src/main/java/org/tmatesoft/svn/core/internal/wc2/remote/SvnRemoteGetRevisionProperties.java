@@ -14,6 +14,7 @@ import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnGetProperties;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
 
 public class SvnRemoteGetRevisionProperties extends SvnRemoteOperationRunner<SVNProperties, SvnGetProperties> {
@@ -36,7 +37,7 @@ public class SvnRemoteGetRevisionProperties extends SvnRemoteOperationRunner<SVN
         SVNRepository repository = repositoryInfo.get(RepositoryInfo.repository);
         repositoryInfo.release();
 
-        Structure<RevisionsPair> revPair = access.getRevisionNumber(repository, null, getOperation().getRevision(), null);
+        Structure<RevisionsPair> revPair = access.getRevisionNumber(repository, getOperation().getFirstTarget(), getOperation().getRevision(), null);
         long revNumber = revPair.lng(RevisionsPair.revNumber);
         getOperation().setRevisionNumber(revNumber);
         
