@@ -1,6 +1,7 @@
 package org.tmatesoft.svn.test;
 
 import java.io.File;
+import java.util.List;
 
 import org.junit.Test;
 import org.tmatesoft.svn.core.SVNException;
@@ -78,7 +79,11 @@ public class StressTest {
     }
 
     private void runDeletes(WorkingCopyTest workingCopyTest) throws SVNException {
-        workingCopyTest.deleteChildren();
+        final List<File> childrenList = workingCopyTest.getChildren();
+
+        for (File child : childrenList) {
+            workingCopyTest.delete(child);
+        }
     }
 
     private void runSetProperties(WorkingCopyTest workingCopyTest) throws SVNException {

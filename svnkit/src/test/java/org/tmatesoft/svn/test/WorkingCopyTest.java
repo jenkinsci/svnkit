@@ -157,14 +157,6 @@ public class WorkingCopyTest {
         checkWorkingCopyConsistency();
     }
 
-    public void deleteChildren() throws SVNException {
-        final List<File> childrenList = getChildren();
-
-        for (File child : childrenList) {
-            deleteAll(child);
-        }
-    }
-
     public List<File> getChildren() {
         final List<File> childrenList = new ArrayList<File>();
 
@@ -187,7 +179,7 @@ public class WorkingCopyTest {
         checkWorkingCopyConsistency();
     }
 
-    private void deleteAll(File file) throws SVNException {
+    public void delete(File file) throws SVNException {
         final SVNWCClient wcClient = getClientManager().getWCClient();
 
         wcClient.doDelete(file, true, false);
