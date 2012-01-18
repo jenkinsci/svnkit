@@ -20,6 +20,10 @@ public class StressTest {
 
             runRevert(workingCopyTest);
 
+            runDeletes(workingCopyTest);
+
+            runRevert(workingCopyTest);
+
         } finally {
             workingCopyTest.dispose();
         }
@@ -66,6 +70,10 @@ public class StressTest {
 
     private void runRevert(WorkingCopyTest workingCopyTest) throws SVNException {
         workingCopyTest.revert();
+    }
+
+    private void runDeletes(WorkingCopyTest workingCopyTest) throws SVNException {
+        workingCopyTest.deleteChildren();
     }
 
     private String getTestName() {

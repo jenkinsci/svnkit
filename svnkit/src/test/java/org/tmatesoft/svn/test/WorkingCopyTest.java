@@ -150,6 +150,25 @@ public class WorkingCopyTest {
         checkWorkingCopyConsistency();
     }
 
+    public void deleteChildren() throws SVNException {
+        final File[] children = SVNFileListUtil.listFiles(getWorkingCopyDirectory());
+        if (children != null) {
+            for (File child : children) {
+                if (!child.getName().equals(SVNFileUtil.getAdminDirectoryName())) {
+                    deleteAll(child);
+                }
+            }
+        }
+    }
+
+    private void deleteAll(File file) throws SVNException {
+        final SVNWCClient wcClient = getClientManager().getWCClient();
+
+        wcClient.doDelete(file, true, false);
+
+        checkWorkingCopyConsistency();
+    }
+
     private void checkWorkingCopyConsistency() {
         //TODO
     }
