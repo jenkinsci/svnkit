@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.junit.Assume;
 import org.junit.Test;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
@@ -22,7 +23,10 @@ public class StressTest {
 
     @Test
     public void testWorkingCopy() throws Exception {
-        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testWorkingCopy", TestOptions.getInstance());
+        final TestOptions testOptions = TestOptions.getInstance();
+        Assume.assumeNotNull(testOptions.getRepositoryUrl());
+
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testWorkingCopy", testOptions);
         try {
             final WorkingCopy workingCopy = sandbox.checkoutWorkingCopy();
             final long latestRevision = workingCopy.getCurrentRevision();
@@ -48,6 +52,7 @@ public class StressTest {
     @Test
     public void testCommits() throws Exception {
         final TestOptions testOptions = TestOptions.getInstance();
+        Assume.assumeNotNull(testOptions.getRepositoryUrl());
 
         final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testCommits", testOptions);
         try {
