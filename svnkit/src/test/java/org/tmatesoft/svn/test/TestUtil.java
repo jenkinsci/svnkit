@@ -21,4 +21,8 @@ public class TestUtil {
 
         throw new RuntimeException("Unable to create directory in " + parentPath);
     }
+
+    public static void log(String message) {
+        System.out.println(message);
+    }
 }

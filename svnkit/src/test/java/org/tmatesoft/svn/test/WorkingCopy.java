@@ -42,6 +42,10 @@ public class WorkingCopy {
     }
 
     public long checkoutLatestRevision(SVNURL repositoryUrl) throws SVNException {
+        beforeOperation();
+
+        log("Checking out " + repositoryUrl);
+
         final SVNUpdateClient updateClient = getClientManager().getUpdateClient();
 
         currentRevision = updateClient.doCheckout(repositoryUrl,
@@ -51,12 +55,18 @@ public class WorkingCopy {
                 SVNDepth.INFINITY,
                 true);
 
-        checkWorkingCopyConsistency();
+        log("Checked out " + repositoryUrl);
+
+        afterOperation();
 
         return currentRevision;
     }
 
     public void updateToRevision(long revision) throws SVNException {
+        beforeOperation();
+
+        log("Updating to revision " + revision);
+
         final SVNUpdateClient updateClient = getClientManager().getUpdateClient();
 
         currentRevision = updateClient.doUpdate(getWorkingCopyDirectory(),
@@ -65,7 +75,9 @@ public class WorkingCopy {
                 true,
                 true);
 
-        checkWorkingCopyConsistency();
+        log("Updated to revision " + currentRevision);
+
+        afterOperation();
     }
 
     public File findAnyDirectory() {
@@ -97,6 +109,10 @@ public class WorkingCopy {
     }
 
     public void copyAsChild(File directory, File anotherDirectory) throws SVNException {
+        beforeOperation();
+
+        log("Copying " + directory + " as a child of " + anotherDirectory);
+
         final SVNCopyClient copyClient = getClientManager().getCopyClient();
 
         copyClient.doCopy(new SVNCopySource[]{
@@ -104,10 +120,16 @@ public class WorkingCopy {
                 anotherDirectory,
                 false, false, false);
 
-        checkWorkingCopyConsistency();
+        log("Copyied " + directory + " as a child of " + anotherDirectory);
+
+        afterOperation();
     }
 
     public long commit(String commitMessage) throws SVNException {
+        beforeOperation();
+
+        log("Committing ");
+
         final SVNCommitClient commitClient = getClientManager().getCommitClient();
 
         final SVNCommitInfo commitInfo = commitClient.doCommit(new File[]{getWorkingCopyDirectory()},
@@ -117,25 +139,39 @@ public class WorkingCopy {
                 false, true,
                 SVNDepth.INFINITY);
 
-        checkWorkingCopyConsistency();
+        log("Committed revision " + commitInfo.getNewRevision());
+
+        afterOperation();
 
         return commitInfo.getNewRevision();
     }
 
     public void add(File file) throws SVNException {
+        beforeOperation();
+
+        log("Adding " + file);
+
         final SVNWCClient wcClient = getClientManager().getWCClient();
 
         wcClient.doAdd(file, false, false, false, SVNDepth.INFINITY, true, true, true);
 
-        checkWorkingCopyConsistency();
+        log("Added " + file);
+
+        afterOperation();
     }
 
     public void revert() throws SVNException {
+        beforeOperation();
+
+        log("Reverting working copy");
+
         final SVNWCClient wcClient = getClientManager().getWCClient();
 
         wcClient.doRevert(new File[]{getWorkingCopyDirectory()}, SVNDepth.INFINITY, null);
 
-        checkWorkingCopyConsistency();
+        log("Reverted working copy");
+
+        afterOperation();
     }
 
     public List<File> getChildren() {
@@ -153,23 +189,47 @@ public class WorkingCopy {
     }
 
     public void setProperty(File file, String propertyName, SVNPropertyValue propertyValue) throws SVNException {
+        beforeOperation();
+
+        log("Setting property " + propertyName + " on " + file);
+
         final SVNWCClient wcClient = getClientManager().getWCClient();
 
         wcClient.doSetProperty(file, propertyName, propertyValue, true, SVNDepth.INFINITY, null, null);
 
-        checkWorkingCopyConsistency();
+        log("Set property " + propertyName + " on " + file);
+
+        afterOperation();
     }
 
     public void delete(File file) throws SVNException {
+        beforeOperation();
+
+        log("Deleting " + file);
+
         final SVNWCClient wcClient = getClientManager().getWCClient();
 
         wcClient.doDelete(file, true, false);
 
-        checkWorkingCopyConsistency();
+        log("Deleted " + file);
+
+        afterOperation();
     }
 
     public long getCurrentRevision() {
         return currentRevision;
+    }
+
+    private void backupWcDbFile() throws SVNException {
+        final File wcDbFile = getWCDbFile();
+        if (!wcDbFile.exists()) {
+            return;
+        }
+
+        final File wcDbBackupFile = new File(getWCDbFile().getAbsolutePath() + ".backup");
+        SVNFileUtil.copy(wcDbFile, wcDbBackupFile, false, false);
+
+        log("Backed up wc.db");
     }
 
     private void checkWorkingCopyConsistency() {
@@ -201,8 +261,11 @@ public class WorkingCopy {
     }
 
     public File getWCDbFile() {
-        final File dotSvnDirectory = new File(getWorkingCopyDirectory(), SVNFileUtil.getAdminDirectoryName());
-        return new File(dotSvnDirectory, ISVNWCDb.SDB_FILE);
+        return new File(getAdminDirectory(), ISVNWCDb.SDB_FILE);
+    }
+
+    private File getAdminDirectory() {
+        return new File(getWorkingCopyDirectory(), SVNFileUtil.getAdminDirectoryName());
     }
 
     public void dispose() {
@@ -228,5 +291,21 @@ public class WorkingCopy {
 
     private String getSqlite3Command() {
         return getTestOptions().getSqlite3Command();
+    }
+
+    private static void log(String message) {
+        TestUtil.log(message);
+    }
+
+    private void beforeOperation() throws SVNException {
+        log("");
+
+        backupWcDbFile();
+    }
+
+    private void afterOperation() {
+        checkWorkingCopyConsistency();
+
+        log("Checked for consistency");
     }
 }

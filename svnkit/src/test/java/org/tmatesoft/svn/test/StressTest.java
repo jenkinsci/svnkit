@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.Assume;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
@@ -21,6 +22,7 @@ import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 
 public class StressTest {
 
+    @Ignore("Temporarily ignored")
     @Test
     public void testWorkingCopy() throws Exception {
         final TestOptions testOptions = TestOptions.getInstance();
@@ -29,9 +31,6 @@ public class StressTest {
         final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testWorkingCopy", testOptions);
         try {
             final WorkingCopy workingCopy = sandbox.checkoutWorkingCopy();
-            final long latestRevision = workingCopy.getCurrentRevision();
-
-            runUpdates(workingCopy, latestRevision);
 
             runAdds(workingCopy);
 
@@ -49,6 +48,23 @@ public class StressTest {
         }
     }
 
+    @Test
+    public void testUpdates() throws Exception {
+        final TestOptions testOptions = TestOptions.getInstance();
+        Assume.assumeNotNull(testOptions.getRepositoryUrl());
+
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testUpdates", testOptions);
+        try {
+            final WorkingCopy workingCopy = sandbox.checkoutWorkingCopy();
+            final long latestRevision = workingCopy.getCurrentRevision();
+
+            runUpdates(workingCopy, latestRevision);
+        } finally {
+            sandbox.dispose();
+        }
+    }
+
+    @Ignore("Temporarily ignored")
     @Test
     public void testCommits() throws Exception {
         final TestOptions testOptions = TestOptions.getInstance();
