@@ -2,9 +2,12 @@ package org.tmatesoft.svn.test;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
@@ -30,6 +33,8 @@ public class WorkingCopy {
 
     private SVNClientManager clientManager;
     private long currentRevision;
+
+    private PrintWriter logger;
 
     public WorkingCopy(String testName, File workingCopyDirectory) {
         this(TestOptions.getInstance(), workingCopyDirectory);
@@ -246,7 +251,10 @@ public class WorkingCopy {
 
                 final String line = bufferedReader.readLine();
                 if (line == null || !"ok".equals(line.trim())) {
-                    throw new RuntimeException("SVN working copy database is not consistent.");
+                    final String notConsistentMessage = "SVN working copy database is not consistent.";
+
+                    log(notConsistentMessage);
+                    throw new RuntimeException(notConsistentMessage);
                 }
 
                 process.waitFor();
@@ -271,7 +279,11 @@ public class WorkingCopy {
     public void dispose() {
         if (clientManager != null) {
             clientManager.dispose();
+            clientManager = null;
         }
+
+        SVNFileUtil.closeFile(logger);
+        logger = null;
     }
 
     private SVNClientManager getClientManager() {
@@ -293,8 +305,36 @@ public class WorkingCopy {
         return getTestOptions().getSqlite3Command();
     }
 
-    private static void log(String message) {
-        TestUtil.log(message);
+    public PrintWriter getLogger() {
+        if (logger == null) {
+
+            final File adminDirectory = getAdminDirectory();
+            if (!adminDirectory.exists()) {
+                //not checked out yet
+                return null;
+            }
+
+            final File testLogFile = new File(adminDirectory, "test.log");
+
+            FileWriter fileWriter = null;
+            try {
+                fileWriter = new FileWriter(testLogFile, true);
+            } catch (IOException e) {
+                SVNFileUtil.closeFile(fileWriter);
+                throw new RuntimeException(e);
+            }
+
+            logger = new PrintWriter(fileWriter);
+        }
+        return logger;
+    }
+
+    private void log(String message) {
+        final PrintWriter logger = getLogger();
+        if (logger != null) {
+            logger.println("[" + new Date() + "]" + message);
+            logger.flush();
+        }
     }
 
     private void beforeOperation() throws SVNException {
