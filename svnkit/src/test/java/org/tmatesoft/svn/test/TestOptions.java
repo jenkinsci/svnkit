@@ -20,17 +20,20 @@ public class TestOptions {
         final SVNURL repositoryUrl = getRepositoryUrl(properties);
         final File tempDirectory = getTempDirectory(properties);
         final String sqlite3Command = getSqlite3Command(properties);
-        return new TestOptions(repositoryUrl, tempDirectory, sqlite3Command);
+        final long largeUpdateStep = getLargeUpdateStep(properties);
+        return new TestOptions(repositoryUrl, tempDirectory, sqlite3Command, largeUpdateStep);
     }
 
     private final SVNURL repositoryUrl;
+
     private final File tempDirectory;
     private final String sqlite3Command;
-
-    public TestOptions(SVNURL repositoryUrl, File tempDirectory, String sqlite3Command) {
+    private final long largeUpdateStep;
+    public TestOptions(SVNURL repositoryUrl, File tempDirectory, String sqlite3Command, long largeUpdateStep) {
         this.repositoryUrl = repositoryUrl;
         this.tempDirectory = tempDirectory;
         this.sqlite3Command = sqlite3Command;
+        this.largeUpdateStep = largeUpdateStep;
     }
 
     public SVNURL getRepositoryUrl() {
@@ -43,6 +46,10 @@ public class TestOptions {
 
     public String getSqlite3Command() {
         return sqlite3Command;
+    }
+
+    public long getLargeUpdateStep() {
+        return largeUpdateStep;
     }
 
     public static TestOptions getInstance() {
@@ -97,5 +104,22 @@ public class TestOptions {
     private static String getSqlite3Command(Properties properties) {
         final String sqlite3Command = properties.getProperty("sqlite3.command");
         return sqlite3Command == null ? "sqlite3" : sqlite3Command;
+    }
+
+    private static long getLargeUpdateStep(Properties properties) {
+        return getLongProperty(properties, "large.update.step", 10);
+    }
+
+    private static long getLongProperty(Properties properties, String propertyName, long defaultValue) {
+        final String valueString = properties.getProperty(propertyName);
+        if (valueString == null) {
+            return defaultValue;
+        }
+
+        try {
+            return Long.parseLong(valueString);
+        } catch (NumberFormatException e) {
+            return defaultValue;
+        }
     }
 }

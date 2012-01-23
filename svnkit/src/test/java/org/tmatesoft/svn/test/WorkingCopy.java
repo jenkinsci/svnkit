@@ -35,6 +35,7 @@ public class WorkingCopy {
     private long currentRevision;
 
     private PrintWriter logger;
+    private SVNURL repositoryUrl;
 
     public WorkingCopy(String testName, File workingCopyDirectory) {
         this(TestOptions.getInstance(), workingCopyDirectory);
@@ -52,6 +53,8 @@ public class WorkingCopy {
         log("Checking out " + repositoryUrl);
 
         final SVNUpdateClient updateClient = getClientManager().getUpdateClient();
+
+        this.repositoryUrl = repositoryUrl;
 
         currentRevision = updateClient.doCheckout(repositoryUrl,
                 getWorkingCopyDirectory(),
@@ -223,6 +226,10 @@ public class WorkingCopy {
 
     public long getCurrentRevision() {
         return currentRevision;
+    }
+
+    public SVNURL getRepositoryUrl() {
+        return repositoryUrl;
     }
 
     private void backupWcDbFile() throws SVNException {

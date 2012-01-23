@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -56,9 +57,8 @@ public class StressTest {
         final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testUpdates", testOptions);
         try {
             final WorkingCopy workingCopy = sandbox.checkoutWorkingCopy();
-            final long latestRevision = workingCopy.getCurrentRevision();
 
-            runUpdates(workingCopy, latestRevision);
+            runUpdates(workingCopy, testOptions.getLargeUpdateStep());
         } finally {
             sandbox.dispose();
         }
@@ -81,24 +81,24 @@ public class StressTest {
         }
     }
 
-    private void runUpdates(WorkingCopy workingCopy, long latestRevision) throws SVNException {
-        for (long revision = latestRevision - 1; revision >= 1; revision--) {
-            workingCopy.updateToRevision(revision);
+    private void runUpdates(WorkingCopy workingCopy, long stepForLargeUpdatesInRevisions) throws SVNException {
+        final List<SVNLogEntry> logEntries = getLogEntries(workingCopy.getRepositoryUrl());
+        Assert.assertTrue(logEntries.size() > 0);
+
+        updateToOldestRevisionAndBack(workingCopy, logEntries, 1);
+        updateToOldestRevisionAndBack(workingCopy, logEntries, stepForLargeUpdatesInRevisions);
+
+        workingCopy.updateToRevision(logEntries.get(logEntries.size() - 1).getRevision());
+    }
+
+    private void updateToOldestRevisionAndBack(WorkingCopy workingCopy, List<SVNLogEntry> allLogEntries, long stepInRevisions) throws SVNException {
+        for (int i = allLogEntries.size() - 1; i >= 0; i-=stepInRevisions) {
+            workingCopy.updateToRevision(allLogEntries.get(i).getRevision());
         }
 
-        for (long revision = 2; revision <= latestRevision; revision++) {
-            workingCopy.updateToRevision(revision);
+        for (int i = 1; i < allLogEntries.size(); i+= stepInRevisions) {
+            workingCopy.updateToRevision(allLogEntries.get(i).getRevision());
         }
-
-        for (long revision = latestRevision - 1; revision >= 1; revision -= 10) {
-            workingCopy.updateToRevision(revision);
-        }
-
-        for (long revision = 2; revision <= latestRevision; revision += 10) {
-            workingCopy.updateToRevision(revision);
-        }
-
-        workingCopy.updateToRevision(latestRevision);
     }
 
     private void runAdds(WorkingCopy workingCopy) throws SVNException {

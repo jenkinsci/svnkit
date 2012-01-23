@@ -1,3 +1,4 @@
 # repository.url=
 # temp.dir=
 sqlite3.command=sqlite3
+large.update.step=10
