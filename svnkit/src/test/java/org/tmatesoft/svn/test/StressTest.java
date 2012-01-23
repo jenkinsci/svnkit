@@ -23,6 +23,10 @@ import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 
 public class StressTest {
 
+    static {
+        SVNFileUtil.setSleepForTimestamp(false);
+    }
+
     @Ignore("Temporarily ignored")
     @Test
     public void testWorkingCopy() throws Exception {
