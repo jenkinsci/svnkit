@@ -379,7 +379,7 @@ public interface ISVNWCDb {
      *            operations should be allowed.
      */
     void open(SVNWCDbOpenMode mode, ISVNOptions config, boolean autoUpgrade, boolean enforceEmptyWQ);
-
+    
     /** Close DB. */
     void close();
 
@@ -1696,4 +1696,13 @@ public interface ISVNWCDb {
     Set<String> getChildrenOfWorkingNode(File dirAbsPath) throws SVNException;
 
     void opRemoveNode(File localAbspath, long revision, SVNWCDbKind kind) throws SVNException;
+    
+    class WCDbUpgradeData {
+		public SVNSqlJetDb sDb;
+		public File rootAbsPath;
+		long repositoryId;
+		long workingCopyId;
+	}
+    
+    void upgradeBegin(File localAbspath, WCDbUpgradeData upgradeData, SVNURL repositoryRootUrl, String repositoryUUID) throws SVNException;
 }

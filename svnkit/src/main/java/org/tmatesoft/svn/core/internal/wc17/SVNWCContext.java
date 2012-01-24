@@ -85,6 +85,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.PristineInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.WalkerChildInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbReader;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbShared;
+import org.tmatesoft.svn.core.internal.wc2.old.SvnOldUpgrade;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.ISVNConflictHandler;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
@@ -150,12 +151,15 @@ public class SVNWCContext {
     public static final byte[] CONFLICT_SEPARATOR = ("=======").getBytes();
 
     public static final int WC_NG_VERSION = 12;
-
+    public static final int WC_WCPROPS_MANY_FILES_VERSION = 7;
+    public static final int WC_WCPROPS_LOST = 12;
+    
     public static final String WC_ADM_FORMAT = "format";
     public static final String WC_ADM_ENTRIES = "entries";
     public static final String WC_ADM_TMP = "tmp";
     public static final String WC_ADM_PRISTINE = "pristine";
     public static final String WC_ADM_NONEXISTENT_PATH = "nonexistent-path";
+    public static final String WC_NON_ENTRIES_STRING = "12\n";
 
     public interface CleanupHandler {
 
@@ -3274,7 +3278,13 @@ public class SVNWCContext {
         result.appendChild(workItem);
         getDb().addWorkQueue(localAbspath, result);
     }
-
+    
+    public SVNSkel wqBuildPostUpgrade() throws SVNException {
+    	SVNSkel workItem = SVNSkel.createEmptyList();
+    	workItem.prependString(WorkQueueOperation.POSTUPGRADE.getOpName());
+    	return workItem;
+    }
+    
     public SVNSkel wqMerge(SVNSkel workItem1, SVNSkel workItem2) throws SVNException {
         if (workItem1 == null) {
             return workItem2;
@@ -3615,9 +3625,33 @@ public class SVNWCContext {
 
     public static class RunPostUpgrade implements RunWorkQueueOperation {
 
-        public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) {
-            // TODO
-            throw new UnsupportedOperationException();
+    	public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) throws SVNException {
+    		
+    		try {
+    			SvnOldUpgrade.wipePostUpgrade(ctx, wcRootAbspath, false);
+    		} catch (SVNException ex) {
+    			/* No entry, this can happen when the wq item is rerun. */
+    			if (ex.getErrorMessage().getErrorCode() != SVNErrorCode.ENTRY_NOT_FOUND)
+    				throw ex;
+    		}
+    		
+    		File adminPath = SVNFileUtil.createFilePath(wcRootAbspath, SVNFileUtil.getAdminDirectoryName());
+    		File entriesPath = SVNFileUtil.createFilePath(adminPath, WC_ADM_ENTRIES);
+    		File formatPath = SVNFileUtil.createFilePath(adminPath, WC_ADM_FORMAT);
+    		
+    		/* Write the 'format' and 'entries' files.
+
+   	     	### The order may matter for some sufficiently old clients.. but
+   	     	### this code only runs during upgrade after the files had been
+   	     	### removed earlier during the upgrade. */
+    		
+    		File tempFile = SVNFileUtil.createUniqueFile(adminPath, "svn-XXXXXX", ".tmp", false);
+    		SVNFileUtil.writeToFile(tempFile, "WC_NON_ENTRIES_STRING", "US-ASCII");
+    		SVNFileUtil.rename(tempFile, formatPath);
+            
+    		tempFile = SVNFileUtil.createUniqueFile(adminPath, "svn-XXXXXX", ".tmp", false);
+    		SVNFileUtil.writeToFile(tempFile, "WC_NON_ENTRIES_STRING", "US-ASCII");
+    		SVNFileUtil.rename(tempFile, entriesPath);
         }
     }
 

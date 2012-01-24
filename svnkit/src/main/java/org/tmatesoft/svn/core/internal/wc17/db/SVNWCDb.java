@@ -79,6 +79,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNTreeConflictUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNExternalsStore;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbUpgradeData;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbAdditionInfo.AdditionInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbBaseInfo.BaseInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbDeletionInfo.DeletionInfoField;
@@ -1377,8 +1378,12 @@ public class SVNWCDb implements ISVNWCDb {
         public SVNWCDbDir wcDbDir;
         public File localRelPath;
     }
-
+    
     public DirParsedInfo parseDir(File localAbsPath, Mode sMode) throws SVNException {
+    	return parseDir(localAbsPath, sMode, false);
+    }
+
+    public DirParsedInfo parseDir(File localAbsPath, Mode sMode, boolean isDetectWCGeneration) throws SVNException {
 
         DirParsedInfo info = new DirParsedInfo();
         String buildRelPath;
@@ -1587,8 +1592,10 @@ public class SVNWCDb implements ISVNWCDb {
              */
             obstruction_possible = false;
 
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT);
-            SVNErrorManager.error(err, SVNLogType.WC);
+            if (isDetectWCGeneration) {
+            	SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT);
+            	SVNErrorManager.error(err, SVNLogType.WC);
+            }
 
         }
 
@@ -4693,6 +4700,19 @@ public class SVNWCDb implements ISVNWCDb {
             pdh.getWCRoot().getSDb().commit();
         }
         pdh.flushEntries(localAbspath);
+    }
+    
+    public void upgradeBegin(File localAbspath, WCDbUpgradeData upgradeData, SVNURL repositoryRootUrl, String repositoryUUID) throws SVNException {
+    	CreateDbInfo dbInfo =  createDb(localAbspath, repositoryRootUrl, repositoryUUID, SDB_FILE);
+    	upgradeData.sDb = dbInfo.sDb;
+    	upgradeData.repositoryId = dbInfo.reposId;
+    	upgradeData.workingCopyId = dbInfo.wcId;
+    	    	
+    	SVNWCDbDir pdh = new SVNWCDbDir(localAbspath);
+    	
+        pdh.setWCRoot(new SVNWCDbRoot(this, localAbspath, dbInfo.sDb, dbInfo.wcId, FORMAT_FROM_SDB, false, false));
+
+        dirData.put(upgradeData.rootAbsPath, pdh);
     }
 
 }

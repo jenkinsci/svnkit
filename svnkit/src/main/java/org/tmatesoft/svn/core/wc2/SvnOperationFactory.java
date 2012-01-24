@@ -117,6 +117,7 @@ import org.tmatesoft.svn.core.internal.wc2.old.SvnOldSuggestMergeSources;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldSwitch;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldUnlock;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldUpdate;
+import org.tmatesoft.svn.core.internal.wc2.old.SvnOldUpgrade;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnNgReposToReposCopy;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteAnnotate;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteCat;
@@ -352,6 +353,8 @@ public class SvnOperationFactory {
         registerOperationRunner(SvnRepositoryGetDiff.class, new SvnRepositoryGetDiffImpl());
         registerOperationRunner(SvnRepositoryGetHistory.class, new SvnRepositoryGetHistoryImpl());
         registerOperationRunner(SvnRepositoryGetTree.class, new SvnRepositoryGetTreeImpl());
+        
+        registerOperationRunner(SvnUpgrade.class, new SvnOldUpgrade());
     }
     
     public boolean isAutoCloseContext() {
@@ -859,7 +862,7 @@ public class SvnOperationFactory {
             SVNWCDb db = new SVNWCDb();
             try {
                 db.open(SVNWCDbOpenMode.ReadOnly, (ISVNOptions) null, false, false);
-                db.parseDir(path, Mode.ReadOnly);
+                db.parseDir(path, Mode.ReadOnly, true);
                 return SvnWcGeneration.V17;
             } catch (SVNException e) {
                 if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_WORKING_COPY) {

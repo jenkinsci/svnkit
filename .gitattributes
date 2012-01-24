@@ -3,6 +3,7 @@
 /LICENSE.txt eol=lf
 gradle/wrapper/gradle-wrapper.jar -text
 /gradlew eol=lf
+svnkit-cli/src/main/java/org/tmatesoft/svn/cli/svn/SVNUpgradeCommand.java -text
 svnkit-cli/src/main/resources/org/tmatesoft/svn/cli/svn/commands.properties eol=lf
 svnkit-cli/src/main/resources/org/tmatesoft/svn/cli/svn/options.properties eol=lf
 svnkit-cli/src/main/scripts/jsvn eol=lf
@@ -208,6 +209,7 @@ svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/old/SvnOldResolve.java 
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/old/SvnOldSetChangelist.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/old/SvnOldSetLock.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/old/SvnOldUnlock.java -text
+svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/old/SvnOldUpgrade.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/remote/SvnRemoteAnnotate.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/remote/SvnRemoteCat.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/remote/SvnRemoteLog.java -text
