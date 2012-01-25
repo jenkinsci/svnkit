@@ -90,6 +90,22 @@ public class SVNSqlJetSelectStatement extends SVNSqlJetTableStatement {
         return eof;
     }
 
+    public Map<String, Object> getRowValues2() throws SVNException {
+        HashMap<String, Object> v = new HashMap<String, Object>();
+        try {
+            Object[] values = getCursor().getRowValues();
+            List<ISqlJetColumnDef> columns = getTable().getDefinition().getColumns();
+            for (int i = 0; i < values.length; i++) {
+                String colName = columns.get(i).getName();
+                v.put(colName, values[i]);
+            }
+            return v;
+        } catch (SqlJetException e) {
+            SVNSqlJetDb.createSqlJetError(e);
+            return null;
+        }
+    }
+
     public Map<String, Object> getRowValues() throws SVNException {
         HashMap<String, Object> v = new HashMap<String, Object>();
         try {

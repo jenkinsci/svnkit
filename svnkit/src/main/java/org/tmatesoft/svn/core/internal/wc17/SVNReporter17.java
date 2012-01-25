@@ -13,6 +13,7 @@ package org.tmatesoft.svn.core.internal.wc17;
 
 import java.io.File;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.tmatesoft.svn.core.SVNDepth;
@@ -36,6 +37,8 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo.RepositoryInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
+import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.DirParsedInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDbRoot;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.AdditionInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbShared;
@@ -181,7 +184,8 @@ public class SVNReporter17 implements ISVNReporterBaton {
             reporter.setPath("", null, target_rev, reportDepth, start_empty);
             if (target_kind == SVNWCDbKind.Dir) {
                 if (depth != SVNDepth.EMPTY) {
-                    reportRevisionsAndDepths(path, 
+                    DirParsedInfo rootInfo = ((SVNWCDb) wcContext.getDb()).obtainWcRoot(path);
+                    reportRevisionsAndDepths(rootInfo.wcDbDir.getWCRoot(), path, rootInfo.localRelPath, 
                             SVNFileUtil.createFilePath(""), 
                             target_rev, repos_relpath, repos_root, reportDepth, reporter, isRestoreFiles, depth, start_empty);
                 }
@@ -235,10 +239,10 @@ public class SVNReporter17 implements ISVNReporterBaton {
     }
 
 
-    private void reportRevisionsAndDepths(File dirPath, File reportRelPath, long dirRev, File dirReposRelPath, SVNURL dirReposRoot,  
+    private void reportRevisionsAndDepths(SVNWCDbRoot root, File dirPath, File dirLocalRelPath, File reportRelPath, long dirRev, File dirReposRelPath, SVNURL dirReposRoot,  
             SVNDepth dirDepth, ISVNReporter reporter, boolean restoreFiles, SVNDepth depth, boolean reportEverything) throws SVNException {
         
-        Set<String> baseChildren = wcContext.getDb().getBaseChildren(dirPath);
+        Map<String, WCDbBaseInfo> baseChildren = wcContext.getDb().getBaseChildrenMap(root, dirLocalRelPath, true);
         Set<String> dirEntries = null;
         if (restoreFiles) {
             dirEntries = new HashSet<String>();
@@ -249,15 +253,14 @@ public class SVNReporter17 implements ISVNReporterBaton {
                 }
             }
         }
-        for (String child : baseChildren) {
+        for (String child : baseChildren.keySet()) {
             boolean thisSwitched = false;
             wcContext.checkCancelled();
             
             String thisReportRelpath = SVNFileUtil.getFilePath(SVNFileUtil.createFilePath(reportRelPath, child));
             File thisAbsPath = SVNFileUtil.createFilePath(dirPath, child);
             
-            WCDbBaseInfo ths = wcContext.getDb().getBaseInfo(thisAbsPath, BaseInfoField.updateRoot, BaseInfoField.status, BaseInfoField.revision, BaseInfoField.reposRelPath, BaseInfoField.depth, BaseInfoField.kind, BaseInfoField.lock);
-            
+            WCDbBaseInfo ths = baseChildren.get(child); 
             if (ths.updateRoot) {
                 continue;
             }
@@ -374,7 +377,7 @@ public class SVNReporter17 implements ISVNReporterBaton {
                     if (reposRelPath == null) {
                         reposRelPath = SVNFileUtil.createFilePath(dirReposRelPath, child);
                     }
-                    reportRevisionsAndDepths(thisAbsPath, 
+                    reportRevisionsAndDepths(root, thisAbsPath, SVNFileUtil.createFilePath(dirLocalRelPath, child), 
                             SVNFileUtil.createFilePath(thisReportRelpath), 
                             ths.revision, 
                             reposRelPath, 

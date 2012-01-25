@@ -702,6 +702,8 @@ public interface ISVNWCDb {
      */
     Set<String> getBaseChildren(File localAbsPath) throws SVNException;
 
+    Map<String, WCDbBaseInfo> getBaseChildrenMap(SVNWCDbRoot root, File localRelPath, boolean fetchLocks) throws SVNException;
+
     /** Set the dav cache for LOCAL_ABSPATH to PROPS. */
     void setBaseDavCache(File localAbsPath, SVNProperties props) throws SVNException;
 

@@ -78,6 +78,7 @@ public enum SVNWCDbStatements {
     SELECT_BASE_DAV_CACHE(SVNWCDbSelectBaseDavCache.class),
     SELECT_BASE_NODE(SVNWCDbSelectBaseNode.class),
     SELECT_BASE_NODE_CHILDREN(SVNWCDbSelectBaseNodeChildren.class),
+    SELECT_LOCK(SVNWCDbSelectLock.class),
     SELECT_BASE_NODE_WITH_LOCK(SVNWCDbSelectBaseNodeWithLock.class),
     SELECT_BASE_PROPS(SVNWCDbSelectBaseProperties.class),
     SELECT_CONFLICT_DETAILS(SVNWCDbSelectConflictDetails.class),
