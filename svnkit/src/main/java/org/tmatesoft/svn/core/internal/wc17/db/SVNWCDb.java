@@ -3855,7 +3855,9 @@ public class SVNWCDb implements ISVNWCDb {
             SVNWCDbStatus status = null;
             WCDbBaseInfo baseInfo = null;
             try {
-                baseInfo = getBaseInfo(dbWcRoot, localRelPath, BaseInfoField.status, BaseInfoField.kind);
+                baseInfo = getBaseInfo(dbWcRoot, localRelPath, 
+                        BaseInfoField.status, BaseInfoField.kind, BaseInfoField.reposRelPath, BaseInfoField.updateRoot,
+                        BaseInfoField.revision);
                 status = baseInfo.status;
             } catch (SVNException e) {
                 if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND) {
