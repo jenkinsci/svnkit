@@ -49,7 +49,7 @@ public class WorkingCopy {
 
     public long checkoutLatestRevision(SVNURL repositoryUrl) throws SVNException {
         beforeOperation();
-        delete(getLogFile());
+        SVNFileUtil.deleteFile(getLogFile());
         
         log("Checking out " + repositoryUrl);
 
