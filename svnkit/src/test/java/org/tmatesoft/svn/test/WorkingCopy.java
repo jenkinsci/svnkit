@@ -49,22 +49,40 @@ public class WorkingCopy {
 
     public long checkoutLatestRevision(SVNURL repositoryUrl) throws SVNException {
         beforeOperation();
-
+        delete(getLogFile());
+        
         log("Checking out " + repositoryUrl);
 
         final SVNUpdateClient updateClient = getClientManager().getUpdateClient();
 
         this.repositoryUrl = repositoryUrl;
 
-        currentRevision = updateClient.doCheckout(repositoryUrl,
-                getWorkingCopyDirectory(),
-                SVNRevision.HEAD,
-                SVNRevision.HEAD,
-                SVNDepth.INFINITY,
-                true);
+        final boolean isWcExists = getWorkingCopyDirectory().isDirectory();
+        try {
+            currentRevision = updateClient.doCheckout(repositoryUrl,
+                    getWorkingCopyDirectory(),
+                    SVNRevision.HEAD,
+                    SVNRevision.HEAD,
+                    SVNDepth.INFINITY,
+                    true);
+        } catch (SVNException e) {
+            if (isWcExists) {
+                SVNFileUtil.deleteAll(getWorkingCopyDirectory(), true);
+
+                currentRevision = updateClient.doCheckout(repositoryUrl,
+                        getWorkingCopyDirectory(),
+                        SVNRevision.HEAD,
+                        SVNRevision.HEAD,
+                        SVNDepth.INFINITY,
+                        true);
+            } else {
+                throw e;
+            }
+                
+            
+        }
 
         log("Checked out " + repositoryUrl);
-
         afterOperation();
 
         return currentRevision;
@@ -321,7 +339,7 @@ public class WorkingCopy {
                 return null;
             }
 
-            final File testLogFile = new File(adminDirectory, "test.log");
+            final File testLogFile = getLogFile();
 
             FileWriter fileWriter = null;
             try {
@@ -334,6 +352,10 @@ public class WorkingCopy {
             logger = new PrintWriter(fileWriter);
         }
         return logger;
+    }
+
+    private File getLogFile() {
+        return new File(getAdminDirectory(), "test.log");
     }
 
     private void log(String message) {

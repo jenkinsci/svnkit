@@ -12,9 +12,11 @@ import org.tmatesoft.svn.core.wc.admin.SVNAdminClient;
 
 public class Sandbox {
 
-    public static Sandbox createWithCleanup(String testName, TestOptions testOptions) throws SVNException {
+    public static Sandbox create(String testName, TestOptions testOptions, boolean cleanup) throws SVNException {
         final Sandbox sandbox = new Sandbox(testName, testOptions);
-        sandbox.cleanup();
+        if (cleanup) {
+            sandbox.cleanup();
+        }
         return sandbox;
     }
 
