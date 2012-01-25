@@ -43,7 +43,7 @@ public class Sandbox {
     }
 
     public WorkingCopy checkoutWorkingCopy(SVNURL repositoryUrl) throws SVNException {
-        final WorkingCopy workingCopy = new WorkingCopy(getTestOptions(), createWorkingCopyDirectory());
+        final WorkingCopy workingCopy = new WorkingCopy(getTestOptions(), getWorkingCopyDirectory());
         workingCopy.checkoutLatestRevision(repositoryUrl);
         workingCopies.add(workingCopy);
         return workingCopy;
@@ -83,8 +83,8 @@ public class Sandbox {
         }
     }
 
-    private File createWorkingCopyDirectory() {
-        return createDirectory("wc");
+    private File getWorkingCopyDirectory() {
+        return new File(getTestDirectory(), "wc");
     }
 
     private File createDirectory(String suggestedName) {
