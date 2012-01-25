@@ -153,18 +153,28 @@ public class FSHooks {
         String executableName = hookFile.getName().toLowerCase();
         boolean useCmd = (executableName.endsWith(".bat") || executableName.endsWith(".cmd")) && SVNFileUtil.isWindows;
         String[] cmd = useCmd ? new String[4 + args.length] : new String[2 + args.length];
-        int i = 0;
+        
         if (useCmd) {
-            cmd[0] = "cmd";
-            cmd[1] = "/C";
-            i = 2;
-        }
-        cmd[i] = hookFile.getAbsolutePath();
-        i++;
-        cmd[i] = reposPath;
-        i++;
-        for(int j = 0; j < args.length; j++) {
-            cmd[i + j] = args[j];
+            cmd = new String[] {"cmd", "/C", ""};
+            cmd[2] = "\"" + "\"" + hookFile.getAbsolutePath() + "\" \"" + reposPath + "\"";
+            for (int i = 0; i < args.length; i++) {
+                cmd[2] += " \"" + args[i] + "\"";
+            }
+            cmd[2] += "\"";
+        } else {
+            int i = 0;
+            if (useCmd) {
+                cmd[0] = "cmd";
+                cmd[1] = "/C";
+                i = 2;
+            }
+            cmd[i] = hookFile.getAbsolutePath();
+            i++;
+            cmd[i] = reposPath;
+            i++;
+            for(int j = 0; j < args.length; j++) {
+                cmd[i + j] = args[j];
+            }
         }
         try {
             hookProc = Runtime.getRuntime().exec(cmd);
