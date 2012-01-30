@@ -3,16 +3,19 @@ package org.tmatesoft.svn.test;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
-import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
+import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
@@ -20,6 +23,8 @@ import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
+import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNRevisionRange;
 
 public class StressTest {
 
@@ -58,11 +63,20 @@ public class StressTest {
         final TestOptions testOptions = TestOptions.getInstance();
         Assume.assumeNotNull(testOptions.getRepositoryUrl());
 
+        final List<SVNRevision> revisionsToUpdate = getRevisionsToUpdate(testOptions, testOptions.getRepositoryUrl());
+        if (revisionsToUpdate != null && revisionsToUpdate.size() == 0) {
+            System.out.println("Nothing to do");
+            return;
+        }
+
         final Sandbox sandbox = Sandbox.create(getTestName() + ".testUpdates", testOptions, false);
         try {
-            final WorkingCopy workingCopy = sandbox.checkoutWorkingCopy();
+            final long revisionToCheckout = revisionsToUpdate.get(0).getNumber();
+            revisionsToUpdate.remove(0);
 
-            runUpdates(workingCopy, testOptions.getLargeUpdateStep());
+            final WorkingCopy workingCopy = sandbox.checkoutWorkingCopyOrUpdateTo(revisionToCheckout);
+
+            runUpdates(workingCopy, revisionsToUpdate);
         } finally {
             sandbox.dispose();
         }
@@ -85,23 +99,9 @@ public class StressTest {
         }
     }
 
-    private void runUpdates(WorkingCopy workingCopy, long stepForLargeUpdatesInRevisions) throws SVNException {
-        final List<SVNLogEntry> logEntries = getLogEntries(workingCopy.getRepositoryUrl());
-        Assert.assertTrue(logEntries.size() > 0);
-
-        updateToOldestRevisionAndBack(workingCopy, logEntries, 1);
-        updateToOldestRevisionAndBack(workingCopy, logEntries, stepForLargeUpdatesInRevisions);
-
-        workingCopy.updateToRevision(logEntries.get(logEntries.size() - 1).getRevision());
-    }
-
-    private void updateToOldestRevisionAndBack(WorkingCopy workingCopy, List<SVNLogEntry> allLogEntries, long stepInRevisions) throws SVNException {
-        for (int i = allLogEntries.size() - 1; i >= 0; i-=stepInRevisions) {
-            workingCopy.updateToRevision(allLogEntries.get(i).getRevision());
-        }
-
-        for (int i = 1; i < allLogEntries.size(); i+= stepInRevisions) {
-            workingCopy.updateToRevision(allLogEntries.get(i).getRevision());
+    private void runUpdates(WorkingCopy workingCopy, List<SVNRevision> revisionsToUpdate) throws SVNException {
+        for (SVNRevision revision : revisionsToUpdate) {
+            workingCopy.updateToRevision(revision.getNumber());
         }
     }
 
@@ -162,7 +162,7 @@ public class StressTest {
     }
 
     private void translateRevisionByRevision(Sandbox sandbox, SVNURL originalRepositoryUrl, SVNURL targetRepositoryUrl) throws SVNException {
-        final WorkingCopy workingCopy = sandbox.checkoutWorkingCopy(targetRepositoryUrl);
+        final WorkingCopy workingCopy = sandbox.checkoutWorkingCopy(targetRepositoryUrl, -1);
 
         final List<SVNLogEntry> logEntries = getLogEntries(originalRepositoryUrl);
         long previousRevision = -1;
@@ -192,16 +192,84 @@ public class StressTest {
     }
 
     private List<SVNLogEntry> getLogEntries(SVNURL originalRepositoryUrl) throws SVNException {
+        return getLogEntries(originalRepositoryUrl, 0, -1);
+    }
+
+    private List<SVNLogEntry> getLogEntries(SVNURL originalRepositoryUrl, long startRevision, long endRevision) throws SVNException {
         SVNRepository svnRepository = null;
         try {
             svnRepository = SVNRepositoryFactory.create(originalRepositoryUrl);
 
-            return (List<SVNLogEntry>) svnRepository.log(new String[]{""}, new ArrayList<SVNLogEntry>(), 0, svnRepository.getLatestRevision(), false, true);
+            if (endRevision < 0) {
+                endRevision = svnRepository.getLatestRevision();
+            }
+
+            final SVNURL repositoryRoot = svnRepository.getRepositoryRoot(true);
+            final String relativePath = SVNPathUtil.getRelativePath(repositoryRoot.toString(), originalRepositoryUrl.toString());
+
+            svnRepository.setLocation(repositoryRoot, true);
+
+            final List<SVNLogEntry> logEntries = new ArrayList<SVNLogEntry>();
+
+            svnRepository.log(new String[]{"/"}, startRevision, endRevision, true, true, new ISVNLogEntryHandler() {
+                public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
+                    final Map<String,SVNLogEntryPath> changedPaths = logEntry.getChangedPaths();
+
+                    if (relativePath.length() == 0) {
+                        logEntries.add(logEntry);
+                        return;
+                    }
+
+                    for (String path : changedPaths.keySet()) {
+                        if (SVNPathUtil.isAncestor("/"+relativePath, path)) {
+                            logEntries.add(logEntry);
+                            break;
+                        }
+                    }
+                }
+            });
+
+            return logEntries;
         } finally {
             if (svnRepository != null) {
                 svnRepository.closeSession();
             }
         }
+    }
+
+    private List<SVNRevision> getRevisionsToUpdate(TestOptions testOptions, SVNURL repositoryUrl) throws SVNException {
+        final List<SVNRevision> revisions = new ArrayList<SVNRevision>();
+
+        final List<SVNRevisionRange> updateSchedule = testOptions.getUpdateSchedule();
+        if (updateSchedule == null) {
+            revisions.addAll(getRevisions(repositoryUrl));
+            return revisions;
+        }
+
+        for (SVNRevisionRange svnRevisionRange : updateSchedule) {
+            final SVNRevision startRevision = svnRevisionRange.getStartRevision();
+            final SVNRevision endRevision = svnRevisionRange.getEndRevision();
+
+            revisions.addAll(getRevisions(repositoryUrl, startRevision, endRevision));
+        }
+
+        return revisions;
+    }
+
+    private List<SVNRevision> getRevisions(SVNURL repositoryUrl, SVNRevision startRevision, SVNRevision endRevision) throws SVNException {
+        return getRevisions(getLogEntries(repositoryUrl, startRevision.getNumber(), endRevision.getNumber()));
+    }
+
+    private List<SVNRevision> getRevisions(SVNURL repositoryUrl) throws SVNException {
+        return getRevisions(getLogEntries(repositoryUrl));
+    }
+
+    private List<SVNRevision> getRevisions(List<SVNLogEntry> logEntries) {
+        final List<SVNRevision> revisions = new ArrayList<SVNRevision>();
+        for (SVNLogEntry logEntry : logEntries) {
+            revisions.add(SVNRevision.create(logEntry.getRevision()));
+        }
+        return revisions;
     }
 
     private class RevisionByRevisionReporter implements ISVNReporterBaton {

@@ -3,11 +3,15 @@ package org.tmatesoft.svn.test;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNRevisionRange;
 
 public class TestOptions {
 
@@ -22,7 +26,8 @@ public class TestOptions {
         final String sqlite3Command = getSqlite3Command(properties);
         final long largeUpdateStep = getLargeUpdateStep(properties);
         final String svnCommand = getSvnCommand(properties);
-        return new TestOptions(repositoryUrl, tempDirectory, sqlite3Command, largeUpdateStep, svnCommand);
+        final List<SVNRevisionRange> updateSchedule = getUpdateSchedule(properties);
+        return new TestOptions(repositoryUrl, tempDirectory, sqlite3Command, largeUpdateStep, svnCommand, updateSchedule);
     }
 
     private final SVNURL repositoryUrl;
@@ -30,15 +35,18 @@ public class TestOptions {
     private final File tempDirectory;
 
     private final String sqlite3Command;
+
     private final long largeUpdateStep;
     private final String svnCommand;
+    private final List<SVNRevisionRange> updateSchedule;
 
-    public TestOptions(SVNURL repositoryUrl, File tempDirectory, String sqlite3Command, long largeUpdateStep, String svnCommand) {
+    public TestOptions(SVNURL repositoryUrl, File tempDirectory, String sqlite3Command, long largeUpdateStep, String svnCommand, List<SVNRevisionRange> updateSchedule) {
         this.repositoryUrl = repositoryUrl;
         this.tempDirectory = tempDirectory;
         this.sqlite3Command = sqlite3Command;
         this.largeUpdateStep = largeUpdateStep;
         this.svnCommand = svnCommand;
+        this.updateSchedule = updateSchedule;
     }
 
     public SVNURL getRepositoryUrl() {
@@ -59,6 +67,10 @@ public class TestOptions {
 
     public String getSvnCommand() {
         return svnCommand;
+    }
+
+    public List<SVNRevisionRange> getUpdateSchedule() {
+        return updateSchedule;
     }
 
     public static TestOptions getInstance() {
@@ -134,5 +146,28 @@ public class TestOptions {
         } catch (NumberFormatException e) {
             return defaultValue;
         }
+    }
+
+    private static List<SVNRevisionRange> getUpdateSchedule(Properties properties) {
+        final String updateScheduleString = properties.getProperty("update.schedule");
+        if (updateScheduleString == null) {
+            return null;
+        }
+
+        final String[] rangeStrings = updateScheduleString.split(",");
+
+        final List<SVNRevisionRange> ranges = new ArrayList<SVNRevisionRange>();
+        for (String rangeString : rangeStrings) {
+            final int dashIndex = rangeString.indexOf('-');
+            if (dashIndex >= 0) {
+                final String startRevisionString = rangeString.substring(0, dashIndex);
+                final String endRevisionString = rangeString.substring(dashIndex+1);
+                ranges.add(new SVNRevisionRange(SVNRevision.parse(startRevisionString), SVNRevision.parse(endRevisionString)));
+            } else {
+                final SVNRevision revision = SVNRevision.parse(rangeString);
+                ranges.add(new SVNRevisionRange(revision, revision));
+            }
+        }
+        return ranges;
     }
 }

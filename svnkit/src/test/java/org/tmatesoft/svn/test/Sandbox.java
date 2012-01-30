@@ -7,6 +7,7 @@ import java.util.List;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminClient;
 
@@ -39,12 +40,29 @@ public class Sandbox {
     }
 
     public WorkingCopy checkoutWorkingCopy() throws SVNException {
-        return checkoutWorkingCopy(getRepositoryUrl());
+        return checkoutWorkingCopyOrUpdateTo(SVNRepository.INVALID_REVISION);
     }
 
-    public WorkingCopy checkoutWorkingCopy(SVNURL repositoryUrl) throws SVNException {
+    public WorkingCopy checkoutWorkingCopyOrUpdateTo(long revision) throws SVNException {
+        if (getWorkingCopyDirectory().exists()) {
+            final WorkingCopy workingCopy = openExistingWorkingCopy();
+            workingCopy.updateToRevision(revision);
+            return workingCopy;
+        } else {
+            return checkoutWorkingCopy(getRepositoryUrl(), revision);
+        }
+    }
+
+    private WorkingCopy openExistingWorkingCopy() {
         final WorkingCopy workingCopy = new WorkingCopy(getTestOptions(), getWorkingCopyDirectory());
-        workingCopy.checkoutLatestRevision(repositoryUrl);
+        workingCopy.setRepositoryUrl(getRepositoryUrl());
+        workingCopies.add(workingCopy);
+        return workingCopy;
+    }
+
+    public WorkingCopy checkoutWorkingCopy(SVNURL repositoryUrl, long revision) throws SVNException {
+        final WorkingCopy workingCopy = new WorkingCopy(getTestOptions(), getWorkingCopyDirectory());
+        workingCopy.checkoutRevision(repositoryUrl, revision);
         workingCopies.add(workingCopy);
         return workingCopy;
     }

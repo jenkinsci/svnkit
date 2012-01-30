@@ -18,6 +18,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
+import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNCommitClient;
 import org.tmatesoft.svn.core.wc.SVNCopyClient;
@@ -47,7 +48,15 @@ public class WorkingCopy {
         this.currentRevision = -1;
     }
 
+    public void setRepositoryUrl(SVNURL repositoryUrl) {
+        this.repositoryUrl = repositoryUrl;
+    }
+
     public long checkoutLatestRevision(SVNURL repositoryUrl) throws SVNException {
+        return checkoutRevision(repositoryUrl, SVNRepository.INVALID_REVISION);
+    }
+
+    public long checkoutRevision(SVNURL repositoryUrl, long revision) throws SVNException {
         SVNFileUtil.deleteFile(getLogFile());
 
         beforeOperation();
@@ -62,8 +71,8 @@ public class WorkingCopy {
         try {
             currentRevision = updateClient.doCheckout(repositoryUrl,
                     getWorkingCopyDirectory(),
-                    SVNRevision.HEAD,
-                    SVNRevision.HEAD,
+                    SVNRevision.create(revision),
+                    SVNRevision.create(revision),
                     SVNDepth.INFINITY,
                     true);
         } catch (Throwable th) {
@@ -72,8 +81,8 @@ public class WorkingCopy {
 
                 currentRevision = updateClient.doCheckout(repositoryUrl,
                         getWorkingCopyDirectory(),
-                        SVNRevision.HEAD,
-                        SVNRevision.HEAD,
+                        SVNRevision.create(revision),
+                        SVNRevision.create(revision),
                         SVNDepth.INFINITY,
                         true);
             } else {
