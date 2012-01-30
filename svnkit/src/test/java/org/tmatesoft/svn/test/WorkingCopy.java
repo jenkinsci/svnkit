@@ -325,11 +325,11 @@ public class WorkingCopy {
     }
 
     public File getWCDbFile() {
-        return new File(getAdminDirectory(), ISVNWCDb.SDB_FILE);
+        return new File(getAdminDirectory(), ISVNWCDb.SDB_FILE).getAbsoluteFile();
     }
 
     private File getAdminDirectory() {
-        return new File(getWorkingCopyDirectory(), SVNFileUtil.getAdminDirectoryName());
+        return new File(getWorkingCopyDirectory(), SVNFileUtil.getAdminDirectoryName()).getAbsoluteFile();
     }
 
     public void dispose() {
@@ -354,7 +354,7 @@ public class WorkingCopy {
     }
 
     public File getWorkingCopyDirectory() {
-        return workingCopyDirectory;
+        return workingCopyDirectory.getAbsoluteFile();
     }
 
     private String getSqlite3Command() {
