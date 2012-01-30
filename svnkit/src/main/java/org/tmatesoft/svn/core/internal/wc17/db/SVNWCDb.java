@@ -3889,7 +3889,6 @@ public class SVNWCDb implements ISVNWCDb {
             if (baseInfo.updateRoot && baseInfo.kind == SVNWCDbKind.File && !isRoot) {
                 return;
             }
-            File absPath = SVNFileUtil.createFilePath(wcRoot, localRelPath);
             if (skipWhenDir && baseInfo.kind == SVNWCDbKind.Dir) {
                 return;
             }
@@ -3904,7 +3903,7 @@ public class SVNWCDb implements ISVNWCDb {
                 setReposRelPath = true;
             }
             if (setReposRelPath || (newRevision >= 0 && newRevision != baseInfo.revision)) {
-                opSetRevAndReposRelpathTemp(absPath, newRevision, setReposRelPath, newReposRelPath, newReposRootURL, newReposUUID);
+                opSetRevAndReposRelpath(root, localRelPath, newRevision, setReposRelPath, newReposRelPath, newReposRootURL, newReposUUID);
             }
             
             if (depth.compareTo(SVNDepth.EMPTY) <= 0 ||
@@ -4068,7 +4067,7 @@ public class SVNWCDb implements ISVNWCDb {
         stmt.done();
     }
 
-    public void opSetRevAndReposRelpathTemp(File localAbspath, long revision, boolean setReposRelpath, File reposRelpath, SVNURL reposRootUrl, String reposUuid) throws SVNException {
+    public void opSetRevAndReposRelpathTemp(File localAbspath, long revision, boolean setReposRelpath, final File reposRelpath, SVNURL reposRootUrl, String reposUuid) throws SVNException {
         assert (isAbsolute(localAbspath));
         assert (SVNRevision.isValidRevisionNumber(revision) || setReposRelpath);
         DirParsedInfo parseDir = parseDir(localAbspath, Mode.ReadWrite);
@@ -4084,6 +4083,32 @@ public class SVNWCDb implements ISVNWCDb {
         baton.reposUuid = reposUuid;
         pdh.flushEntries(localAbspath);
         pdh.getWCRoot().getSDb().runTransaction(baton);
+    }
+
+    private void opSetRevAndReposRelpath(SVNWCDbRoot wcRoot, File localRelpath, long revision, boolean setReposRelpath, final File reposRelpath, SVNURL reposRootUrl, String reposUuid) throws SVNException {
+        assert (SVNRevision.isValidRevisionNumber(revision) || setReposRelpath);
+        SVNSqlJetStatement stmt;
+        if (SVNRevision.isValidRevisionNumber(revision)) {
+            stmt = wcRoot.getSDb().getStatement(SVNWCDbStatements.UPDATE_BASE_REVISION);
+            stmt.bindf("isi", wcRoot.getWcId(), localRelpath, revision);
+            stmt.done();
+        }
+        
+        if (setReposRelpath) {
+            final long reposId = createReposId(wcRoot.getSDb(), reposRootUrl, reposUuid);
+            stmt = new SVNSqlJetUpdateStatement(wcRoot.getSDb(), SVNWCDbSchema.NODES) {
+                @Override
+                public Map<String, Object> getUpdateValues() throws SVNException {
+                    Map<String, Object> values = new HashMap<String, Object>();
+                    values.put(NODES__Fields.repos_id.toString(), reposId);
+                    values.put(NODES__Fields.repos_path.toString(), SVNFileUtil.getFilePath(reposRelpath));
+                    return values;
+                }
+            };
+            stmt.bindf("isi", wcRoot.getWcId(), localRelpath, 0);
+            stmt.done();
+            
+        }
     }
 
     private class SetRevRelpath implements SVNSqlJetTransaction {

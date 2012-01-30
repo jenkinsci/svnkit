@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.wc17.db.statement;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;
@@ -37,7 +38,7 @@ public class SVNWCDbUpdateBaseRevision extends SVNSqlJetUpdateStatement {
     }
 
     public Map<String, Object> getUpdateValues() throws SVNException {
-        Map<String, Object> rowValues = getRowValues();
+        Map<String, Object> rowValues = new HashMap<String, Object>();
         rowValues.put(SVNWCDbSchema.NODES__Fields.revision.toString(), getBind(3));
         return rowValues;
     }
