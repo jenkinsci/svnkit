@@ -83,6 +83,7 @@ public class WorkingCopy {
         }
 
         log("Checked out " + repositoryUrl);
+        checkNativeStatusShowsNoChanges();
         afterOperation();
 
         return currentRevision;
@@ -106,7 +107,7 @@ public class WorkingCopy {
         }
 
         log("Updated to revision " + currentRevision);
-
+        checkNativeStatusShowsNoChanges();
         afterOperation();
     }
 
@@ -181,7 +182,7 @@ public class WorkingCopy {
         }
 
         log("Committed revision " + (commitInfo == null ? "none" : commitInfo.getNewRevision()));
-
+        checkNativeStatusShowsNoChanges();
         afterOperation();
 
         return commitInfo == null ? -1 : commitInfo.getNewRevision();
@@ -219,7 +220,7 @@ public class WorkingCopy {
         }
 
         log("Reverted working copy");
-
+        checkNativeStatusShowsNoChanges();
         afterOperation();
     }
 
@@ -410,6 +411,39 @@ public class WorkingCopy {
         checkWorkingCopyConsistency();
 
         log("Checked for consistency");
+    }
+
+    private void checkNativeStatusShowsNoChanges() {
+        log("Checking for local changes with native svn");
+
+        final ProcessBuilder processBuilder = new ProcessBuilder();
+        processBuilder.command(getSvnCommand(), "status", "--ignore-externals", "-q");
+        processBuilder.directory(getWorkingCopyDirectory());
+
+        BufferedReader bufferedReader = null;
+        try {
+            final Process process = processBuilder.start();
+            if (process != null) {
+                bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+
+                final String line = bufferedReader.readLine();
+                if (line != null && line.trim().length() > 0) {
+                    final String localChangesMessage = "SVN status shows local changes for the working copy.";
+                    throwException(localChangesMessage);
+                }
+
+                process.waitFor();
+            }
+
+        } catch (IOException e) {
+            wrapThrowable(e);
+        } catch (InterruptedException e) {
+            wrapThrowable(e);
+        } finally {
+            SVNFileUtil.closeFile(bufferedReader);
+        }
+
+        log("No local changes");
     }
 
     private void throwException(String message) {
