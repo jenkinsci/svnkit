@@ -21,19 +21,24 @@ public class TestOptions {
         final File tempDirectory = getTempDirectory(properties);
         final String sqlite3Command = getSqlite3Command(properties);
         final long largeUpdateStep = getLargeUpdateStep(properties);
-        return new TestOptions(repositoryUrl, tempDirectory, sqlite3Command, largeUpdateStep);
+        final String svnCommand = getSvnCommand(properties);
+        return new TestOptions(repositoryUrl, tempDirectory, sqlite3Command, largeUpdateStep, svnCommand);
     }
 
     private final SVNURL repositoryUrl;
 
     private final File tempDirectory;
+
     private final String sqlite3Command;
     private final long largeUpdateStep;
-    public TestOptions(SVNURL repositoryUrl, File tempDirectory, String sqlite3Command, long largeUpdateStep) {
+    private final String svnCommand;
+
+    public TestOptions(SVNURL repositoryUrl, File tempDirectory, String sqlite3Command, long largeUpdateStep, String svnCommand) {
         this.repositoryUrl = repositoryUrl;
         this.tempDirectory = tempDirectory;
         this.sqlite3Command = sqlite3Command;
         this.largeUpdateStep = largeUpdateStep;
+        this.svnCommand = svnCommand;
     }
 
     public SVNURL getRepositoryUrl() {
@@ -50,6 +55,10 @@ public class TestOptions {
 
     public long getLargeUpdateStep() {
         return largeUpdateStep;
+    }
+
+    public String getSvnCommand() {
+        return svnCommand;
     }
 
     public static TestOptions getInstance() {
@@ -108,6 +117,10 @@ public class TestOptions {
 
     private static long getLargeUpdateStep(Properties properties) {
         return getLongProperty(properties, "large.update.step", 10);
+    }
+
+    private static String getSvnCommand(Properties properties) {
+        return properties.getProperty("svn.command", "svn");
     }
 
     private static long getLongProperty(Properties properties, String propertyName, long defaultValue) {
