@@ -66,7 +66,7 @@ public class WorkingCopy {
                     SVNRevision.HEAD,
                     SVNDepth.INFINITY,
                     true);
-        } catch (SVNException e) {
+        } catch (Throwable th) {
             if (isWcExists) {
                 SVNFileUtil.deleteAll(getWorkingCopyDirectory(), true);
 
@@ -77,10 +77,9 @@ public class WorkingCopy {
                         SVNDepth.INFINITY,
                         true);
             } else {
-                throw e;
+                wrapThrowable(th);
             }
                 
-            
         }
 
         log("Checked out " + repositoryUrl);
@@ -96,11 +95,15 @@ public class WorkingCopy {
 
         final SVNUpdateClient updateClient = getClientManager().getUpdateClient();
 
-        currentRevision = updateClient.doUpdate(getWorkingCopyDirectory(),
-                SVNRevision.create(revision),
-                SVNDepth.INFINITY,
-                true,
-                true);
+        try {
+            currentRevision = updateClient.doUpdate(getWorkingCopyDirectory(),
+                    SVNRevision.create(revision),
+                    SVNDepth.INFINITY,
+                    true,
+                    true);
+        } catch (Throwable th) {
+            wrapThrowable(th);
+        }
 
         log("Updated to revision " + currentRevision);
 
@@ -118,7 +121,8 @@ public class WorkingCopy {
             }
         }
 
-        throw new RuntimeException("The repository contains no directories, run the tests with another repository");
+        throwException("The repository contains no directories, run the tests with another repository");
+        return null;
     }
 
     public File findAnotherDirectory(File directory) {
@@ -132,7 +136,8 @@ public class WorkingCopy {
             }
         }
 
-        throw new RuntimeException("The repository root should contain at least two directories, please run the tests with another repository");
+        throwException("The repository root should contain at least two directories, please run the tests with another repository");
+        return null;
     }
 
     public void copyAsChild(File directory, File anotherDirectory) throws SVNException {
@@ -142,10 +147,14 @@ public class WorkingCopy {
 
         final SVNCopyClient copyClient = getClientManager().getCopyClient();
 
-        copyClient.doCopy(new SVNCopySource[]{
-                new SVNCopySource(SVNRevision.WORKING, SVNRevision.WORKING, directory)},
-                anotherDirectory,
-                false, false, false);
+        try {
+            copyClient.doCopy(new SVNCopySource[]{
+                    new SVNCopySource(SVNRevision.WORKING, SVNRevision.WORKING, directory)},
+                    anotherDirectory,
+                    false, false, false);
+        } catch (Throwable th) {
+            wrapThrowable(th);
+        }
 
         log("Copyied " + directory + " as a child of " + anotherDirectory);
 
@@ -159,18 +168,23 @@ public class WorkingCopy {
 
         final SVNCommitClient commitClient = getClientManager().getCommitClient();
 
-        final SVNCommitInfo commitInfo = commitClient.doCommit(new File[]{getWorkingCopyDirectory()},
-                false,
-                commitMessage,
-                null, null,
-                false, true,
-                SVNDepth.INFINITY);
+        SVNCommitInfo commitInfo = null;
+        try {
+            commitInfo = commitClient.doCommit(new File[]{getWorkingCopyDirectory()},
+                    false,
+                    commitMessage,
+                    null, null,
+                    false, true,
+                    SVNDepth.INFINITY);
+        } catch (Throwable th) {
+            wrapThrowable(th);
+        }
 
-        log("Committed revision " + commitInfo.getNewRevision());
+        log("Committed revision " + (commitInfo == null ? "none" : commitInfo.getNewRevision()));
 
         afterOperation();
 
-        return commitInfo.getNewRevision();
+        return commitInfo == null ? -1 : commitInfo.getNewRevision();
     }
 
     public void add(File file) throws SVNException {
@@ -180,7 +194,11 @@ public class WorkingCopy {
 
         final SVNWCClient wcClient = getClientManager().getWCClient();
 
-        wcClient.doAdd(file, false, false, false, SVNDepth.INFINITY, true, true, true);
+        try {
+            wcClient.doAdd(file, false, false, false, SVNDepth.INFINITY, true, true, true);
+        } catch (Throwable th) {
+            wrapThrowable(th);
+        }
 
         log("Added " + file);
 
@@ -194,7 +212,11 @@ public class WorkingCopy {
 
         final SVNWCClient wcClient = getClientManager().getWCClient();
 
-        wcClient.doRevert(new File[]{getWorkingCopyDirectory()}, SVNDepth.INFINITY, null);
+        try {
+            wcClient.doRevert(new File[]{getWorkingCopyDirectory()}, SVNDepth.INFINITY, null);
+        } catch (Throwable th) {
+            wrapThrowable(th);
+        }
 
         log("Reverted working copy");
 
@@ -222,7 +244,11 @@ public class WorkingCopy {
 
         final SVNWCClient wcClient = getClientManager().getWCClient();
 
-        wcClient.doSetProperty(file, propertyName, propertyValue, true, SVNDepth.INFINITY, null, null);
+        try {
+            wcClient.doSetProperty(file, propertyName, propertyValue, true, SVNDepth.INFINITY, null, null);
+        } catch (Throwable th) {
+            wrapThrowable(th);
+        }
 
         log("Set property " + propertyName + " on " + file);
 
@@ -236,7 +262,11 @@ public class WorkingCopy {
 
         final SVNWCClient wcClient = getClientManager().getWCClient();
 
-        wcClient.doDelete(file, true, false);
+        try {
+            wcClient.doDelete(file, true, false);
+        } catch (Throwable th) {
+            wrapThrowable(th);
+        }
 
         log("Deleted " + file);
 
@@ -279,16 +309,15 @@ public class WorkingCopy {
                 if (line == null || !"ok".equals(line.trim())) {
                     final String notConsistentMessage = "SVN working copy database is not consistent.";
 
-                    log(notConsistentMessage);
-                    throw new RuntimeException(notConsistentMessage);
+                    throwException(notConsistentMessage);
                 }
 
                 process.waitFor();
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            wrapThrowable(e);
         } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+            wrapThrowable(e);
         } finally {
             SVNFileUtil.closeFile(bufferedReader);
         }
@@ -329,6 +358,10 @@ public class WorkingCopy {
 
     private String getSqlite3Command() {
         return getTestOptions().getSqlite3Command();
+    }
+
+    public String getSvnCommand() {
+        return getTestOptions().getSvnCommand();
     }
 
     public PrintWriter getLogger() {
@@ -377,5 +410,16 @@ public class WorkingCopy {
         checkWorkingCopyConsistency();
 
         log("Checked for consistency");
+    }
+
+    private void throwException(String message) {
+        final RuntimeException runtimeException = new RuntimeException(message);
+        runtimeException.printStackTrace(getLogger());
+        throw runtimeException;
+    }
+
+    private void wrapThrowable(Throwable th) {
+        th.printStackTrace(getLogger());
+        throw new RuntimeException(th);
     }
 }
