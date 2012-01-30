@@ -64,6 +64,7 @@ public class WorkingCopy {
         log("Checking out " + repositoryUrl);
 
         final SVNUpdateClient updateClient = getClientManager().getUpdateClient();
+        updateClient.setIgnoreExternals(true);
 
         this.repositoryUrl = repositoryUrl;
 
@@ -104,6 +105,7 @@ public class WorkingCopy {
         log("Updating to revision " + revision);
 
         final SVNUpdateClient updateClient = getClientManager().getUpdateClient();
+        updateClient.setIgnoreExternals(true);
 
         try {
             currentRevision = updateClient.doUpdate(getWorkingCopyDirectory(),
