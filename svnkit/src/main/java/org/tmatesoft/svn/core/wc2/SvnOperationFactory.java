@@ -63,6 +63,7 @@ import org.tmatesoft.svn.core.internal.wc2.admin.SvnRepositorySetUUIDImpl;
 import org.tmatesoft.svn.core.internal.wc2.admin.SvnRepositorySynchronizeImpl;
 import org.tmatesoft.svn.core.internal.wc2.admin.SvnRepositoryUpgradeImpl;
 import org.tmatesoft.svn.core.internal.wc2.admin.SvnRepositoryVerifyImpl;
+import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgGetWCId;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgAdd;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgCat;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgCheckout;
@@ -100,6 +101,7 @@ import org.tmatesoft.svn.core.internal.wc2.old.SvnOldExport;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetChangelistPaths;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetInfo;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetMergeInfo;
+import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetWCId;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldLogMergeInfo;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetProperties;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetStatus;
@@ -218,6 +220,9 @@ public class SvnOperationFactory {
         v16OperationRunners = new HashMap<Class<?>, List<ISvnOperationRunner<?, SvnOperation<?>>>>();
         anyFormatOperationRunners = new HashMap<Class<?>, List<ISvnOperationRunner<?, SvnOperation<?>>>>();
         noneOperationRunners = new HashMap<Class<?>, List<ISvnOperationRunner<?, SvnOperation<?>>>>();
+
+        registerOperationRunner(SvnGetWCId.class, new SvnNgGetWCId());
+        registerOperationRunner(SvnGetWCId.class, new SvnOldGetWCId());
 
         registerOperationRunner(SvnGetInfo.class, new SvnRemoteGetInfo());
         registerOperationRunner(SvnGetInfo.class, new SvnNgGetInfo());
@@ -439,6 +444,10 @@ public class SvnOperationFactory {
         if (isAutoDisposeRepositoryPool() && repositoryPool != null) {
             repositoryPool.dispose();
         }
+    }
+
+    public SvnGetWCId createGetWCId() {
+        return new SvnGetWCId(this);
     }
     
     public SvnAnnotate createAnnotate() {

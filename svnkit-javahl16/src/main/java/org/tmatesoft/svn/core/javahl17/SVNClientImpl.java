@@ -118,6 +118,7 @@ import org.tmatesoft.svn.core.wc2.SvnGetInfo;
 import org.tmatesoft.svn.core.wc2.SvnGetMergeInfo;
 import org.tmatesoft.svn.core.wc2.SvnGetProperties;
 import org.tmatesoft.svn.core.wc2.SvnGetStatus;
+import org.tmatesoft.svn.core.wc2.SvnGetWCId;
 import org.tmatesoft.svn.core.wc2.SvnImport;
 import org.tmatesoft.svn.core.wc2.SvnInfo;
 import org.tmatesoft.svn.core.wc2.SvnList;
@@ -1425,8 +1426,21 @@ public class SVNClientImpl implements ISVNClient {
     public String getVersionInfo(String path, String trailUrl,
             boolean lastChanged) throws ClientException {
 
-        // TODO Auto-generated method stub
-        return null;
+        beforeOperation();
+
+        try{
+            getEventHandler().setPathPrefix(getPathPrefix(path));
+
+            final SvnGetWCId getWCId = svnOperationFactory.createGetWCId();
+            getWCId.setSingleTarget(getTarget(path));
+            getWCId.setCommitted(lastChanged);
+            getWCId.setTrailUrl(trailUrl);
+            return getWCId.run();
+        } catch (SVNException e) {
+            throw ClientException.fromException(e);
+        } finally {
+            afterOperation();
+        }
     }
 
     public void upgrade(String path) throws ClientException {
