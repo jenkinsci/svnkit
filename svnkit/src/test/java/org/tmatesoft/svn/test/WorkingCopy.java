@@ -57,6 +57,8 @@ public class WorkingCopy {
     }
 
     public long checkoutRevision(SVNURL repositoryUrl, long revision) throws SVNException {
+        SVNFileUtil.closeFile(logger);
+        logger = null;
         SVNFileUtil.deleteFile(getLogFile());
 
         beforeOperation();
@@ -437,10 +439,39 @@ public class WorkingCopy {
             if (process != null) {
                 bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
 
-                final String line = bufferedReader.readLine();
-                if (line != null && line.trim().length() > 0) {
-                    final String localChangesMessage = "SVN status shows local changes for the working copy.";
-                    throwException(localChangesMessage);
+                final List<String> lines = new ArrayList<String>();
+                while (true) {
+                    String line = bufferedReader.readLine();
+                    if (line == null) {
+                        break;
+                    }
+                    if (line.endsWith("\n")) {
+                        line = line.substring(0, line.length() - 1);
+                    }
+                    if (line.endsWith("\r")) {
+                        line = line.substring(0, line.length() - 1);
+                    }
+                    if (line.length() > 0) {
+                        lines.add(line);
+                    }
+                }
+
+                if (lines.size() > 0) {
+                    final StringBuilder stringBuilder = new StringBuilder("SVN status showed:").append('\n');
+                    for (String line : lines) {
+                        stringBuilder.append(line).append('\n');
+                    }
+                    log(stringBuilder.toString());
+                    log("");
+                }
+
+                final String localChangesMessage = "SVN status shows local changes for the working copy.";
+                for (String line : lines) {
+                    if (line.charAt(0) != ' ' && line.charAt(0) != 'M') {
+                        throwException(localChangesMessage);
+                    } else if (line.charAt(1) != ' ') {
+                        throwException(localChangesMessage);
+                    }
                 }
 
                 process.waitFor();
