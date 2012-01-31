@@ -121,6 +121,7 @@ import org.tmatesoft.svn.core.internal.wc2.old.SvnOldUpgrade;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnNgReposToReposCopy;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteAnnotate;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteCat;
+import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteDiffSummarize;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteExport;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteGetInfo;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteGetProperties;
@@ -273,6 +274,8 @@ public class SvnOperationFactory {
         registerOperationRunner(SvnCat.class, new SvnRemoteCat());
         registerOperationRunner(SvnCat.class, new SvnNgCat());
         registerOperationRunner(SvnCat.class, new SvnOldCat());
+
+        registerOperationRunner(SvnDiffSummarize.class, new SvnRemoteDiffSummarize());
         
         registerOperationRunner(SvnCopy.class, new SvnNgWcToWcCopy());
         registerOperationRunner(SvnCopy.class, new SvnNgReposToWcCopy());
