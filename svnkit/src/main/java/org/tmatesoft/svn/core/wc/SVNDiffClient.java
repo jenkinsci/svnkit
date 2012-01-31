@@ -31,9 +31,11 @@ import org.tmatesoft.svn.core.internal.wc17.SVNDiffClient17;
 import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
+import org.tmatesoft.svn.core.wc2.SvnDiffSummarize;
 import org.tmatesoft.svn.core.wc2.SvnGetMergeInfo;
 import org.tmatesoft.svn.core.wc2.SvnLogMergeInfo;
 import org.tmatesoft.svn.core.wc2.SvnMerge;
+import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 import org.tmatesoft.svn.core.wc2.SvnSuggestMergeSources;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -1205,15 +1207,7 @@ public class SVNDiffClient extends SVNBasicClient {
      *             instead
      */
     public void doDiffStatus(File path1, SVNRevision rN, File path2, SVNRevision rM, boolean recursive, boolean useAncestry, ISVNDiffStatusHandler handler) throws SVNException {
-        try {
-            getSVNDiffClient17().doDiffStatus(path1, rN, path2, rM, recursive, useAncestry, handler);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNDiffClient16().doDiffStatus(path1, rN, path2, rM, recursive, useAncestry, handler);
-                return;
-            }
-            throw e;
-        }
+        doDiffStatus(SvnTarget.fromFile(path1, SVNRevision.UNDEFINED), rN, rM, SVNDepth.getInfinityOrFilesDepth(recursive), useAncestry, handler);
     }
 
     /**
@@ -1264,15 +1258,7 @@ public class SVNDiffClient extends SVNBasicClient {
      * @since 1.2, SVN 1.5
      */
     public void doDiffStatus(File path, SVNRevision rN, SVNRevision rM, SVNRevision pegRevision, SVNDepth depth, boolean useAncestry, ISVNDiffStatusHandler handler) throws SVNException {
-        try {
-            getSVNDiffClient17().doDiffStatus(path, rN, rM, pegRevision, depth, useAncestry, handler);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNDiffClient16().doDiffStatus(path, rN, rM, pegRevision, depth, useAncestry, handler);
-                return;
-            }
-            throw e;
-        }
+        doDiffStatus(SvnTarget.fromFile(path, pegRevision), rN, rM, depth, useAncestry, handler);
     }
 
     /**
@@ -1323,15 +1309,7 @@ public class SVNDiffClient extends SVNBasicClient {
      * @since 1.2, SVN 1.5
      */
     public void doDiffStatus(File path1, SVNRevision rN, File path2, SVNRevision rM, SVNDepth depth, boolean useAncestry, ISVNDiffStatusHandler handler) throws SVNException {
-        try {
-            getSVNDiffClient17().doDiffStatus(path1, rN, path2, rM, depth, useAncestry, handler);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNDiffClient16().doDiffStatus(path1, rN, path2, rM, depth, useAncestry, handler);
-                return;
-            }
-            throw e;
-        }
+        doDiffStatus(SvnTarget.fromFile(path1, rN), SvnTarget.fromFile(path2, rM), depth, useAncestry, handler);
     }
 
     /**
@@ -1362,15 +1340,7 @@ public class SVNDiffClient extends SVNBasicClient {
      *             instead
      */
     public void doDiffStatus(File path1, SVNRevision rN, SVNURL url2, SVNRevision rM, boolean recursive, boolean useAncestry, ISVNDiffStatusHandler handler) throws SVNException {
-        try {
-            getSVNDiffClient17().doDiffStatus(path1, rN, url2, rM, recursive, useAncestry, handler);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNDiffClient16().doDiffStatus(path1, rN, url2, rM, recursive, useAncestry, handler);
-                return;
-            }
-            throw e;
-        }
+        doDiffStatus(SvnTarget.fromFile(path1, rN), SvnTarget.fromURL(url2, rM), SVNDepth.getInfinityOrFilesDepth(recursive), useAncestry, handler);
     }
 
     /**
@@ -1421,15 +1391,7 @@ public class SVNDiffClient extends SVNBasicClient {
      * @since 1.2, SVN 1.5
      */
     public void doDiffStatus(File path1, SVNRevision rN, SVNURL url2, SVNRevision rM, SVNDepth depth, boolean useAncestry, ISVNDiffStatusHandler handler) throws SVNException {
-        try {
-            getSVNDiffClient17().doDiffStatus(path1, rN, url2, rM, depth, useAncestry, handler);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNDiffClient16().doDiffStatus(path1, rN, url2, rM, depth, useAncestry, handler);
-                return;
-            }
-            throw e;
-        }
+        doDiffStatus(SvnTarget.fromFile(path1, rN), SvnTarget.fromURL(url2, rM), depth, useAncestry, handler);
     }
 
     /**
@@ -1460,15 +1422,7 @@ public class SVNDiffClient extends SVNBasicClient {
      *             instead
      */
     public void doDiffStatus(SVNURL url1, SVNRevision rN, File path2, SVNRevision rM, boolean recursive, boolean useAncestry, ISVNDiffStatusHandler handler) throws SVNException {
-        try {
-            getSVNDiffClient17().doDiffStatus(url1, rN, path2, rM, recursive, useAncestry, handler);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNDiffClient16().doDiffStatus(url1, rN, path2, rM, recursive, useAncestry, handler);
-                return;
-            }
-            throw e;
-        }
+        doDiffStatus(url1, rN, path2, rM, SVNDepth.getUnknownOrFilesDepth(recursive), useAncestry, handler);
     }
 
     /**
@@ -1519,15 +1473,7 @@ public class SVNDiffClient extends SVNBasicClient {
      * @since 1.2, SVN 1.5
      */
     public void doDiffStatus(SVNURL url1, SVNRevision rN, File path2, SVNRevision rM, SVNDepth depth, boolean useAncestry, ISVNDiffStatusHandler handler) throws SVNException {
-        try {
-            getSVNDiffClient17().doDiffStatus(url1, rN, path2, rM, depth, useAncestry, handler);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNDiffClient16().doDiffStatus(url1, rN, path2, rM, depth, useAncestry, handler);
-                return;
-            }
-            throw e;
-        }
+        doDiffStatus(SvnTarget.fromURL(url1, rN), SvnTarget.fromFile(path2, rM), depth, useAncestry, handler);
     }
 
     /**
@@ -1558,15 +1504,7 @@ public class SVNDiffClient extends SVNBasicClient {
      *             instead
      */
     public void doDiffStatus(SVNURL url1, SVNRevision rN, SVNURL url2, SVNRevision rM, boolean recursive, boolean useAncestry, ISVNDiffStatusHandler handler) throws SVNException {
-        try {
-            getSVNDiffClient17().doDiffStatus(url1, rN, url2, rM, recursive, useAncestry, handler);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNDiffClient16().doDiffStatus(url1, rN, url2, rM, recursive, useAncestry, handler);
-                return;
-            }
-            throw e;
-        }
+        doDiffStatus(SvnTarget.fromURL(url1, rN), SvnTarget.fromURL(url2, rM), SVNDepth.getInfinityOrFilesDepth(recursive), useAncestry, handler);
     }
 
     /**
@@ -1617,15 +1555,7 @@ public class SVNDiffClient extends SVNBasicClient {
      * @since 1.2, SVN 1.5
      */
     public void doDiffStatus(SVNURL url, SVNRevision rN, SVNRevision rM, SVNRevision pegRevision, SVNDepth depth, boolean useAncestry, ISVNDiffStatusHandler handler) throws SVNException {
-        try {
-            getSVNDiffClient17().doDiffStatus(url, rN, rM, pegRevision, depth, useAncestry, handler);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNDiffClient16().doDiffStatus(url, rN, rM, pegRevision, depth, useAncestry, handler);
-                return;
-            }
-            throw e;
-        }
+        doDiffStatus(SvnTarget.fromURL(url, pegRevision), rN, rM, depth, useAncestry, handler);
     }
 
     /**
@@ -1667,15 +1597,7 @@ public class SVNDiffClient extends SVNBasicClient {
      * @since 1.2, SVN 1.5
      */
     public void doDiffStatus(SVNURL url1, SVNRevision rN, SVNURL url2, SVNRevision rM, SVNDepth depth, boolean useAncestry, ISVNDiffStatusHandler handler) throws SVNException {
-        try {
-            getSVNDiffClient17().doDiffStatus(url1, rN, url2, rM, depth, useAncestry, handler);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNDiffClient16().doDiffStatus(url1, rN, url2, rM, depth, useAncestry, handler);
-                return;
-            }
-            throw e;
-        }
+        doDiffStatus(SvnTarget.fromURL(url1, rN), SvnTarget.fromURL(url2, rM), depth, useAncestry, handler);
     }
 
     /**
@@ -3283,6 +3205,34 @@ public class SVNDiffClient extends SVNBasicClient {
             throw e;
         }
 
+    }
+
+    private void doDiffStatus(SvnTarget source, SVNRevision rN, SVNRevision rM, SVNDepth depth, boolean useAncestry, ISVNDiffStatusHandler handler) throws SVNException {
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        try{
+            final SvnDiffSummarize diffSummarize = svnOperationFactory.createDiffSummarize();
+            diffSummarize.setSource(source, rN, rM);
+            diffSummarize.setDepth(depth);
+            diffSummarize.setIgnoreAncestry(!useAncestry);
+            diffSummarize.setReceiver(SvnCodec.diffStatusReceiver(handler));
+            diffSummarize.run();
+        } finally {
+            svnOperationFactory.dispose();
+        }
+    }
+
+    private void doDiffStatus(SvnTarget source1, SvnTarget source2, SVNDepth depth, boolean useAncestry, ISVNDiffStatusHandler handler) throws SVNException {
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        try{
+            final SvnDiffSummarize diffSummarize = svnOperationFactory.createDiffSummarize();
+            diffSummarize.setSources(source1, source2);
+            diffSummarize.setDepth(depth);
+            diffSummarize.setIgnoreAncestry(!useAncestry);
+            diffSummarize.setReceiver(SvnCodec.diffStatusReceiver(handler));
+            diffSummarize.run();
+        } finally {
+            svnOperationFactory.dispose();
+        }
     }
 
 }

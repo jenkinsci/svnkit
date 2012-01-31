@@ -30,6 +30,7 @@ import org.tmatesoft.svn.core.internal.wc2.ISvnCommitRunner;
 import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
 import org.tmatesoft.svn.core.wc.ISVNChangelistHandler;
 import org.tmatesoft.svn.core.wc.ISVNCommitHandler;
+import org.tmatesoft.svn.core.wc.ISVNDiffStatusHandler;
 import org.tmatesoft.svn.core.wc.ISVNExternalsHandler;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
 import org.tmatesoft.svn.core.wc.ISVNStatusFileProvider;
@@ -171,7 +172,17 @@ public class SvnCodec {
                 				item.getMergedRevision(), item.getMergedAuthor(), item.getMergedPath(), item.getLineNumber());
                 	else if (item.isRevision())
                 		item.setReturnResult(handler.handleRevision(item.getDate(), item.getRevision(), item.getAuthor(), item.getContents()));
-                	
+
+                }
+            }
+        };
+    }
+
+    public static ISvnObjectReceiver<SvnDiffStatus> diffStatusReceiver(final ISVNDiffStatusHandler handler) {
+        return new ISvnObjectReceiver<SvnDiffStatus>() {
+            public void receive(SvnTarget target, SvnDiffStatus svnDiffStatus) throws SVNException {
+                if (handler != null) {
+                    handler.handleDiffStatus(diffStatus(svnDiffStatus));
                 }
             }
         };
