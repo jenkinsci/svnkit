@@ -48,6 +48,7 @@ public enum SVNWCDbStatements {
     INSERT_LOCK(SVNWCDbInsertLock.class),
     INSERT_NODE(SVNWCDbInsertNode.class),
     INSERT_PRISTINE(SVNWCDbInsertPristine.class),
+    INSERT_OR_IGNORE_PRISTINE(SVNWCDbInsertOrIgnorePristine.class),
     INSERT_REPOSITORY(SVNWCDbInsertRepository.class),
     INSERT_WC_LOCK(SVNWCDbInsertWCLock.class),
     INSERT_WCROOT(SVNWCDbInsertWCRoot.class),

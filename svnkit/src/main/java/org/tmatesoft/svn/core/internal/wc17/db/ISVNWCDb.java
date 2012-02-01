@@ -1699,12 +1699,12 @@ public interface ISVNWCDb {
 
     void opRemoveNode(File localAbspath, long revision, SVNWCDbKind kind) throws SVNException;
     
-    class WCDbUpgradeData {
-		public SVNSqlJetDb sDb;
+    class SVNWCDbUpgradeData {
 		public File rootAbsPath;
-		long repositoryId;
-		long workingCopyId;
+		public long repositoryId;
+		public long workingCopyId;
+		public SVNWCDbRoot root; 
 	}
     
-    void upgradeBegin(File localAbspath, WCDbUpgradeData upgradeData, SVNURL repositoryRootUrl, String repositoryUUID) throws SVNException;
+    void upgradeBegin(File localAbspath, SVNWCDbUpgradeData upgradeData, SVNURL repositoryRootUrl, String repositoryUUID) throws SVNException;
 }

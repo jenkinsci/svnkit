@@ -4772,16 +4772,15 @@ public class SVNWCDb implements ISVNWCDb {
         pdh.flushEntries(localAbspath);
     }
     
-    public void upgradeBegin(File localAbspath, WCDbUpgradeData upgradeData, SVNURL repositoryRootUrl, String repositoryUUID) throws SVNException {
+    public void upgradeBegin(File localAbspath, SVNWCDbUpgradeData upgradeData, SVNURL repositoryRootUrl, String repositoryUUID) throws SVNException {
     	CreateDbInfo dbInfo =  createDb(localAbspath, repositoryRootUrl, repositoryUUID, SDB_FILE);
-    	upgradeData.sDb = dbInfo.sDb;
     	upgradeData.repositoryId = dbInfo.reposId;
     	upgradeData.workingCopyId = dbInfo.wcId;
     	    	
     	SVNWCDbDir pdh = new SVNWCDbDir(localAbspath);
-    	
-        pdh.setWCRoot(new SVNWCDbRoot(this, localAbspath, dbInfo.sDb, dbInfo.wcId, FORMAT_FROM_SDB, false, false));
-
+    	SVNWCDbRoot root = new SVNWCDbRoot(this, localAbspath, dbInfo.sDb, dbInfo.wcId, FORMAT_FROM_SDB, false, false);     	
+        pdh.setWCRoot(root);
+        upgradeData.root = root;
         dirData.put(upgradeData.rootAbsPath, pdh);
     }
 

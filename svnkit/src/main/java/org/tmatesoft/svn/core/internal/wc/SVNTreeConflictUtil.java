@@ -189,7 +189,7 @@ public class SVNTreeConflictUtil {
     }
 
 
-    private static SVNSkel getConflictSkel(SVNConflictVersion nullVersion, SVNTreeConflictDescription conflict) throws SVNException {
+    public static SVNSkel getConflictSkel(SVNConflictVersion nullVersion, SVNTreeConflictDescription conflict) throws SVNException {
         SVNSkel conflictSkel = SVNSkel.createEmptyList();
 
         SVNConflictVersion sourceRightVersion = conflict.getSourceRightVersion();

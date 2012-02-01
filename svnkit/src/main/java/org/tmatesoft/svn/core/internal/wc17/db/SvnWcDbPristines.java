@@ -87,6 +87,10 @@ public class SvnWcDbPristines {
 	 public static File getPristineTempDir(SVNWCDbRoot root, File wcRootAbsPath) throws SVNException {
 	        return SVNFileUtil.createFilePath(SVNFileUtil.createFilePath(root.getAbsPath(), SVNFileUtil.getAdminDirectoryName()), ISVNWCDb.PRISTINE_TEMPDIR_RELPATH);
 	 }
+	 
+	 public static File getPristineFuturePath(SVNWCDbRoot root, SvnChecksum sha1Checksum) {
+		 return getPristineFileName(root, sha1Checksum, false);
+	 }
 	    
 	 public static File getPristineFileName(SVNWCDbRoot root, SvnChecksum sha1Checksum, boolean createSubdir) {
 	        /* ### code is in transition. make sure we have the proper data. */

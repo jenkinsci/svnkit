@@ -103,6 +103,10 @@ public class SVNTreeConflictDescription extends SVNConflictDescription {
     public SVNConflictVersion getSourceLeftVersion() {
         return mySourceLeftVersion;
     }
+    
+    public void setSourceLeftVersion(SVNConflictVersion sourceLeftVersion) {
+        mySourceLeftVersion = sourceLeftVersion;
+    }
 
     /**
      * Returns info on the "merge-right source" or "their" version of incoming change.
