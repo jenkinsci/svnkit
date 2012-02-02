@@ -1061,6 +1061,11 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             }
             if (handler != null) {
                 SVNLock lock = items == null ? null : SVNReader.getLock(items);
+                if (lock != null) {
+                    path = lock.getPath();
+                } else {
+                    path = getRepositoryPath(path);
+                }
                 handler.handleLock(path, lock, error);
             }
         }
@@ -1178,6 +1183,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 }
             }
             if (handler != null) {
+                path = getRepositoryPath(path);
                 SVNLock lock = new SVNLock(path, id, null, null, null, null);
                 handler.handleUnlock(path, lock, error);
             }
