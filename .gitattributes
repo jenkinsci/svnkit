@@ -3,7 +3,7 @@
 /LICENSE.txt eol=lf
 gradle/wrapper/gradle-wrapper.jar -text
 /gradlew eol=lf
-svnkit-cli/src/main/java/org/tmatesoft/svn/cli/svn/SVNUpgradeCommand.java -text
+svnkit-cli/src/main/java/org/tmatesoft/svn/cli/svn/SVNUpgradeCommand.java -text svneol=native#unset
 svnkit-cli/src/main/resources/org/tmatesoft/svn/cli/svn/commands.properties eol=lf
 svnkit-cli/src/main/resources/org/tmatesoft/svn/cli/svn/options.properties eol=lf
 svnkit-cli/src/main/scripts/jsvn eol=lf
@@ -36,7 +36,7 @@ svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/SvnWcDbChangelist.j
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbClearDavCacheRecursive.java -text svneol=native#unset
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbDeletePristineIfUnreferenced.java -text svneol=native#unset
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbInsertActualEmpties.java -text svneol=native#unset
-svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbInsertOrIgnorePristine.java -text
+svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbInsertOrIgnorePristine.java -text svneol=native#unset
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbInsertTarget2.java -text svneol=native#unset
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbInsertTargetDepthFiles.java -text svneol=native#unset
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbInsertTargetDepthFilesWithChangelist.java -text svneol=native#unset
