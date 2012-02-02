@@ -76,7 +76,9 @@ public class SvnRemoteDiffSummarize extends SvnRemoteOperationRunner<SvnDiffStat
             basePath = path2;
         }
         if (pegRevision.isValid()) {
-            final Structure<SvnRepositoryAccess.LocationsInfo> locationsInfo = getRepositoryAccess().getLocations(null, SvnTarget.fromURL(url2), pegRevision, revision1, revision2);
+            final Structure<SvnRepositoryAccess.LocationsInfo> locationsInfo = getRepositoryAccess().getLocations(null,
+                    url2 == null ? SvnTarget.fromFile(path2) : SvnTarget.fromURL(url2),
+                    pegRevision, revision1, revision2);
             url1 = locationsInfo.get(SvnRepositoryAccess.LocationsInfo.startUrl);
             url2 = locationsInfo.get(SvnRepositoryAccess.LocationsInfo.endUrl);
 
