@@ -30,7 +30,7 @@ public class VirtualCopyTest {
         final TestOptions options = TestOptions.getInstance();
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
-        final Sandbox sandbox = Sandbox.createWithCleanup("testFileMovedVirtuallyMoved", options);
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testFileMovedVirtuallyMoved", options);
         try {
             final SVNURL url = sandbox.createSvnRepository();
 
@@ -74,7 +74,7 @@ public class VirtualCopyTest {
         final TestOptions options = TestOptions.getInstance();
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
-        final Sandbox sandbox = Sandbox.createWithCleanup("testFileMovedVirtuallyCopied", options);
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testFileMovedVirtuallyCopied", options);
         try {
             final SVNURL url = sandbox.createSvnRepository();
 
@@ -118,7 +118,7 @@ public class VirtualCopyTest {
         final TestOptions options = TestOptions.getInstance();
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
-        final Sandbox sandbox = Sandbox.createWithCleanup("testFileCopiedVirtuallyCopied", options);
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testFileCopiedVirtuallyCopied", options);
         try {
             final SVNURL url = sandbox.createSvnRepository();
 
@@ -162,7 +162,7 @@ public class VirtualCopyTest {
         final TestOptions options = TestOptions.getInstance();
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
-        final Sandbox sandbox = Sandbox.createWithCleanup("testFileCopiedVirtualMoveFailed", options);
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testFileCopiedVirtualMoveFailed", options);
         try {
             final SVNURL url = sandbox.createSvnRepository();
 
@@ -209,7 +209,7 @@ public class VirtualCopyTest {
         final TestOptions options = TestOptions.getInstance();
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
-        final Sandbox sandbox = Sandbox.createWithCleanup("testFileUnversionedToVersionedVirutalMoveFailed", options);
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testFileUnversionedToVersionedVirutalMoveFailed", options);
         try {
             final SVNURL url = sandbox.createSvnRepository();
 
@@ -249,7 +249,7 @@ public class VirtualCopyTest {
         final TestOptions options = TestOptions.getInstance();
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
-        final Sandbox sandbox = Sandbox.createWithCleanup("testFileUnversionedToUnversionedVirutalMoveFailed", options);
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testFileUnversionedToUnversionedVirutalMoveFailed", options);
         try {
             final SVNURL url = sandbox.createSvnRepository();
 
@@ -294,7 +294,7 @@ public class VirtualCopyTest {
         final TestOptions options = TestOptions.getInstance();
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
-        final Sandbox sandbox = Sandbox.createWithCleanup("testCopyingAlreadyCopied", options);
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testCopyingAlreadyCopied", options);
         try {
             final SVNURL url = sandbox.createSvnRepository();
 
@@ -345,7 +345,7 @@ public class VirtualCopyTest {
         final TestOptions options = TestOptions.getInstance();
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
-        final Sandbox sandbox = Sandbox.createWithCleanup("testMovingAlreadyCopied", options);
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testMovingAlreadyCopied", options);
         try {
             final SVNURL url = sandbox.createSvnRepository();
 
@@ -395,7 +395,7 @@ public class VirtualCopyTest {
         final TestOptions options = TestOptions.getInstance();
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
-        final Sandbox sandbox = Sandbox.createWithCleanup("testCopyingAlreadyMoved", options);
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testCopyingAlreadyMoved", options);
         try {
             final SVNURL url = sandbox.createSvnRepository();
 
@@ -446,7 +446,7 @@ public class VirtualCopyTest {
         final TestOptions options = TestOptions.getInstance();
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
-        final Sandbox sandbox = Sandbox.createWithCleanup("testMovingAlreadyMoved", options);
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testMovingAlreadyMoved", options);
         try {
             final SVNURL url = sandbox.createSvnRepository();
 
@@ -496,7 +496,7 @@ public class VirtualCopyTest {
         final TestOptions options = TestOptions.getInstance();
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
-        final Sandbox sandbox = Sandbox.createWithCleanup("testCopyingWronglyCopied", options);
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testCopyingWronglyCopied", options);
         try {
             final SVNURL url = sandbox.createSvnRepository();
 
@@ -547,7 +547,7 @@ public class VirtualCopyTest {
         final TestOptions options = TestOptions.getInstance();
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
-        final Sandbox sandbox = Sandbox.createWithCleanup("testMovingWronglyCopied", options);
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testMovingWronglyCopied", options);
         try {
             final SVNURL url = sandbox.createSvnRepository();
 
@@ -597,7 +597,7 @@ public class VirtualCopyTest {
         final TestOptions options = TestOptions.getInstance();
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
-        final Sandbox sandbox = Sandbox.createWithCleanup("testCopyingWronglyMoved", options);
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testCopyingWronglyMoved", options);
         try {
             final SVNURL url = sandbox.createSvnRepository();
 
@@ -648,7 +648,7 @@ public class VirtualCopyTest {
         final TestOptions options = TestOptions.getInstance();
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
-        final Sandbox sandbox = Sandbox.createWithCleanup("testMovingWronglyMoved", options);
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testMovingWronglyMoved", options);
         try {
             final SVNURL url = sandbox.createSvnRepository();
 
@@ -698,7 +698,7 @@ public class VirtualCopyTest {
         final TestOptions options = TestOptions.getInstance();
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
-        final Sandbox sandbox = Sandbox.createWithCleanup("testDirectoryCopiedFileVirtuallyCopied", options);
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testDirectoryCopiedFileVirtuallyCopied", options);
         try {
             final SVNURL url = sandbox.createSvnRepository();
 
@@ -748,7 +748,7 @@ public class VirtualCopyTest {
         final TestOptions options = TestOptions.getInstance();
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
-        final Sandbox sandbox = Sandbox.createWithCleanup("testDirectoryMovedFileVirtuallyCopied", options);
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testDirectoryMovedFileVirtuallyCopied", options);
         try {
             final SVNURL url = sandbox.createSvnRepository();
 
@@ -798,7 +798,7 @@ public class VirtualCopyTest {
         final TestOptions options = TestOptions.getInstance();
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
-        final Sandbox sandbox = Sandbox.createWithCleanup("testDirectoryCopiedFileVirtuallyMoved", options);
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testDirectoryCopiedFileVirtuallyMoved", options);
         try {
             final SVNURL url = sandbox.createSvnRepository();
 
@@ -848,7 +848,7 @@ public class VirtualCopyTest {
         final TestOptions options = TestOptions.getInstance();
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
-        final Sandbox sandbox = Sandbox.createWithCleanup("testDirectoryMovedFileVirtuallyMoved", options);
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testDirectoryMovedFileVirtuallyMoved", options);
         try {
             final SVNURL url = sandbox.createSvnRepository();
 
@@ -981,5 +981,9 @@ public class VirtualCopyTest {
         scheduleForAddition.setForce(false);
         scheduleForAddition.setIncludeIgnored(true);
         scheduleForAddition.run();
+    }
+
+    private String getTestName() {
+        return getClass().getSimpleName();
     }
 }
