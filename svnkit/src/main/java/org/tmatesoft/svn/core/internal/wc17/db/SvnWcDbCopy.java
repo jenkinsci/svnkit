@@ -181,12 +181,12 @@ public class SvnWcDbCopy extends SvnWcDbShared {
                     dstRelpath,
                     dstOpDepth,
                     SVNFileUtil.getFileDir(dstRelpath),
-                    dstPresence);
+                    SvnWcDbStatementUtil.getPresenceText(dstPresence));
             stmt.done();
             
             InsertWorking iw = dstPdh.getWCRoot().getDb().new InsertWorking();
             iw.opDepth = delOpDepth;
-            iw.status = SVNWCDbStatus.Deleted;
+            iw.status = SVNWCDbStatus.BaseDeleted;
             iw.kind = depthInfo.get(NodeInfo.kind);
             iw.changedRev = -1;
             iw.depth = SVNDepth.INFINITY;
