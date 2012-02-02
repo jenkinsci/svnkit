@@ -19,6 +19,10 @@ import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc16.SVNMoveClient16;
 import org.tmatesoft.svn.core.internal.wc17.SVNMoveClient17;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.wc2.SvnCopy;
+import org.tmatesoft.svn.core.wc2.SvnCopySource;
+import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.ISVNDebugLog;
 
 /**
@@ -326,14 +330,16 @@ public class SVNMoveClient extends SVNBasicClient {
      *             </ul>
      */
     public void doVirtualCopy(File src, File dst, boolean move) throws SVNException {
-        try {
-            getSVNMoveClient17().doVirtualCopy(src, dst, move);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNMoveClient16().doVirtualCopy(src, dst, move);
-                return;
-            }
-            throw e;
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        try{
+            final SvnCopy copy = svnOperationFactory.createCopy();
+            copy.addCopySource(SvnCopySource.create(SvnTarget.fromFile(src), SVNRevision.WORKING));
+            copy.setSingleTarget(SvnTarget.fromFile(dst));
+            copy.setMove(move);
+            copy.setVirtual(true);
+            copy.run();
+        } finally {
+            svnOperationFactory.dispose();
         }
     }
 
