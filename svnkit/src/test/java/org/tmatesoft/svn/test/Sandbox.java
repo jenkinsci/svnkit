@@ -13,18 +13,18 @@ import org.tmatesoft.svn.core.wc.admin.SVNAdminClient;
 
 public class Sandbox {
 
-    public static Sandbox create(String testName, TestOptions testOptions, boolean cleanup) throws SVNException {
-        final Sandbox sandbox = new Sandbox(testName, testOptions);
-        if (cleanup) {
-            sandbox.cleanup();
-        }
-        return sandbox;
+    public static Sandbox createWithoutCleanup(String testName, TestOptions testOptions) throws SVNException {
+        return create(testName, testOptions, false);
+    }
+
+    public static Sandbox createWithCleanup(String testName, TestOptions testOptions) throws SVNException {
+        return create(testName, testOptions, true);
     }
 
     private final String testName;
+
     private final TestOptions testOptions;
     private final List<WorkingCopy> workingCopies;
-
     private File testDirectory;
 
     private Sandbox(String testName, TestOptions testOptions) {
@@ -125,5 +125,13 @@ public class Sandbox {
 
     private void cleanup() throws SVNException {
         SVNFileUtil.deleteAll(getTestDirectory(), null);
+    }
+
+    private static Sandbox create(String testName, TestOptions testOptions, boolean cleanup) throws SVNException {
+        final Sandbox sandbox = new Sandbox(testName, testOptions);
+        if (cleanup) {
+            sandbox.cleanup();
+        }
+        return sandbox;
     }
 }

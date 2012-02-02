@@ -38,7 +38,7 @@ public class StressTest {
         final TestOptions testOptions = TestOptions.getInstance();
         Assume.assumeNotNull(testOptions.getRepositoryUrl());
 
-        final Sandbox sandbox = Sandbox.create(getTestName() + ".testWorkingCopy", testOptions, false);
+        final Sandbox sandbox = Sandbox.createWithoutCleanup(getTestName() + ".testWorkingCopy", testOptions);
         try {
             final WorkingCopy workingCopy = sandbox.checkoutWorkingCopy();
 
@@ -69,7 +69,7 @@ public class StressTest {
             return;
         }
 
-        final Sandbox sandbox = Sandbox.create(getTestName() + ".testUpdates", testOptions, false);
+        final Sandbox sandbox = Sandbox.createWithoutCleanup(getTestName() + ".testUpdates", testOptions);
         try {
             final long revisionToCheckout = revisionsToUpdate.get(0).getNumber();
             revisionsToUpdate.remove(0);
@@ -88,7 +88,7 @@ public class StressTest {
         final TestOptions testOptions = TestOptions.getInstance();
         Assume.assumeNotNull(testOptions.getRepositoryUrl());
 
-        final Sandbox sandbox = Sandbox.create(getTestName() + ".testCommits", testOptions, false);
+        final Sandbox sandbox = Sandbox.createWithoutCleanup(getTestName() + ".testCommits", testOptions);
         try {
             final SVNURL originalRepositoryUrl = testOptions.getRepositoryUrl();
             final SVNURL targetRepositoryUrl = sandbox.createSvnRepository();
