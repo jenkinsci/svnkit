@@ -693,6 +693,206 @@ public class VirtualCopyTest {
         }
     }
 
+    @Test
+    public void testDirectoryCopiedFileVirtuallyCopied() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.create("testDirectoryCopiedFileVirtuallyCopied", options, true);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final String versionedFile = "directory1/versionedFile.txt";
+            final String targetFile = "directory3/versionedFile.txt";
+            final String anotherTargetFile = "directory4/anotherTargetFile.txt";
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.setCommitMessage("Added 2 files into repository.");
+            commitBuilder.addFile(versionedFile);
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutWorkingCopy(url, SVNRevision.HEAD.getNumber());
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+
+            final File wcVersionedFile = new File(workingCopyDirectory, versionedFile);
+            final File wcTargetFile = new File(workingCopyDirectory, targetFile);
+            final File wcAnotherTargetFile = new File(workingCopyDirectory, anotherTargetFile);
+
+            SVNFileUtil.ensureDirectoryExists(wcAnotherTargetFile.getParentFile());
+
+            copy(svnOperationFactory, wcVersionedFile.getParentFile(), wcTargetFile.getParentFile());
+
+            SVNFileUtil.copyFile(wcTargetFile, wcAnotherTargetFile, false);
+
+            copyVirtual(svnOperationFactory, wcTargetFile, wcAnotherTargetFile);
+
+            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+            assertStatus(SVNStatusType.STATUS_NORMAL, wcVersionedFile, statuses);
+            assertStatus(SVNStatusType.STATUS_NORMAL, wcVersionedFile.getParentFile(), statuses);
+
+            assertStatus(SVNStatusType.STATUS_NORMAL, wcTargetFile, statuses);
+            assertStatus(SVNStatusType.STATUS_ADDED, wcTargetFile.getParentFile(), statuses);
+
+            assertStatus(SVNStatusType.STATUS_ADDED, wcAnotherTargetFile, statuses);
+            assertStatus(SVNStatusType.STATUS_ADDED, wcAnotherTargetFile.getParentFile(), statuses);
+
+            Assert.assertEquals(url.appendPath(versionedFile, false), statuses.get(wcAnotherTargetFile).getCopyFromUrl());
+        } finally {
+            sandbox.dispose();
+            svnOperationFactory.dispose();
+        }
+    }
+
+    @Test
+    public void testDirectoryMovedFileVirtuallyCopied() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.create("testDirectoryMovedFileVirtuallyCopied", options, true);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final String versionedFile = "directory1/versionedFile.txt";
+            final String targetFile = "directory3/versionedFile.txt";
+            final String anotherTargetFile = "directory4/anotherTargetFile.txt";
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.setCommitMessage("Added 2 files into repository.");
+            commitBuilder.addFile(versionedFile);
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutWorkingCopy(url, SVNRevision.HEAD.getNumber());
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+
+            final File wcVersionedFile = new File(workingCopyDirectory, versionedFile);
+            final File wcTargetFile = new File(workingCopyDirectory, targetFile);
+            final File wcAnotherTargetFile = new File(workingCopyDirectory, anotherTargetFile);
+
+            SVNFileUtil.ensureDirectoryExists(wcAnotherTargetFile.getParentFile());
+
+            move(svnOperationFactory, wcVersionedFile.getParentFile(), wcTargetFile.getParentFile());
+
+            SVNFileUtil.copyFile(wcTargetFile, wcAnotherTargetFile, false);
+
+            copyVirtual(svnOperationFactory, wcTargetFile, wcAnotherTargetFile);
+
+            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+            assertStatus(SVNStatusType.STATUS_DELETED, wcVersionedFile, statuses);
+            assertStatus(SVNStatusType.STATUS_DELETED, wcVersionedFile.getParentFile(), statuses);
+
+            assertStatus(SVNStatusType.STATUS_NORMAL, wcTargetFile, statuses);
+            assertStatus(SVNStatusType.STATUS_ADDED, wcTargetFile.getParentFile(), statuses);
+
+            assertStatus(SVNStatusType.STATUS_ADDED, wcAnotherTargetFile, statuses);
+            assertStatus(SVNStatusType.STATUS_ADDED, wcAnotherTargetFile.getParentFile(), statuses);
+
+            Assert.assertEquals(url.appendPath(versionedFile, false), statuses.get(wcAnotherTargetFile).getCopyFromUrl());
+        } finally {
+            sandbox.dispose();
+            svnOperationFactory.dispose();
+        }
+    }
+
+    @Test
+    public void testDirectoryCopiedFileVirtuallyMoved() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.create("testDirectoryCopiedFileVirtuallyMoved", options, true);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final String versionedFile = "directory1/versionedFile.txt";
+            final String targetFile = "directory3/versionedFile.txt";
+            final String anotherTargetFile = "directory4/anotherTargetFile.txt";
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.setCommitMessage("Added 2 files into repository.");
+            commitBuilder.addFile(versionedFile);
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutWorkingCopy(url, SVNRevision.HEAD.getNumber());
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+
+            final File wcVersionedFile = new File(workingCopyDirectory, versionedFile);
+            final File wcTargetFile = new File(workingCopyDirectory, targetFile);
+            final File wcAnotherTargetFile = new File(workingCopyDirectory, anotherTargetFile);
+
+            SVNFileUtil.ensureDirectoryExists(wcAnotherTargetFile.getParentFile());
+
+            copy(svnOperationFactory, wcVersionedFile.getParentFile(), wcTargetFile.getParentFile());
+
+            SVNFileUtil.rename(wcTargetFile, wcAnotherTargetFile);
+
+            moveVirtual(svnOperationFactory, wcTargetFile, wcAnotherTargetFile);
+
+            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+            assertStatus(SVNStatusType.STATUS_NORMAL, wcVersionedFile, statuses);
+            assertStatus(SVNStatusType.STATUS_NORMAL, wcVersionedFile.getParentFile(), statuses);
+
+            assertStatus(SVNStatusType.STATUS_DELETED, wcTargetFile, statuses);
+            assertStatus(SVNStatusType.STATUS_ADDED, wcTargetFile.getParentFile(), statuses);
+
+            assertStatus(SVNStatusType.STATUS_ADDED, wcAnotherTargetFile, statuses);
+            assertStatus(SVNStatusType.STATUS_ADDED, wcAnotherTargetFile.getParentFile(), statuses);
+
+            Assert.assertEquals(url.appendPath(versionedFile, false), statuses.get(wcAnotherTargetFile).getCopyFromUrl());
+        } finally {
+            sandbox.dispose();
+            svnOperationFactory.dispose();
+        }
+    }
+
+    @Test
+    public void testDirectoryMovedFileVirtuallyMoved() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.create("testDirectoryMovedFileVirtuallyMoved", options, true);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final String versionedFile = "directory1/versionedFile.txt";
+            final String targetFile = "directory3/versionedFile.txt";
+            final String anotherTargetFile = "directory4/anotherTargetFile.txt";
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.setCommitMessage("Added 2 files into repository.");
+            commitBuilder.addFile(versionedFile);
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutWorkingCopy(url, SVNRevision.HEAD.getNumber());
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+
+            final File wcVersionedFile = new File(workingCopyDirectory, versionedFile);
+            final File wcTargetFile = new File(workingCopyDirectory, targetFile);
+            final File wcAnotherTargetFile = new File(workingCopyDirectory, anotherTargetFile);
+
+            SVNFileUtil.ensureDirectoryExists(wcAnotherTargetFile.getParentFile());
+
+            move(svnOperationFactory, wcVersionedFile.getParentFile(), wcTargetFile.getParentFile());
+
+            SVNFileUtil.rename(wcTargetFile, wcAnotherTargetFile);
+
+            moveVirtual(svnOperationFactory, wcTargetFile, wcAnotherTargetFile);
+
+            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+            assertStatus(SVNStatusType.STATUS_DELETED, wcVersionedFile, statuses);
+            assertStatus(SVNStatusType.STATUS_DELETED, wcVersionedFile.getParentFile(), statuses);
+
+            assertStatus(SVNStatusType.STATUS_DELETED, wcTargetFile, statuses);
+            assertStatus(SVNStatusType.STATUS_ADDED, wcTargetFile.getParentFile(), statuses);
+
+            assertStatus(SVNStatusType.STATUS_ADDED, wcAnotherTargetFile, statuses);
+            assertStatus(SVNStatusType.STATUS_ADDED, wcAnotherTargetFile.getParentFile(), statuses);
+
+            Assert.assertEquals(url.appendPath(versionedFile, false), statuses.get(wcAnotherTargetFile).getCopyFromUrl());
+        } finally {
+            sandbox.dispose();
+            svnOperationFactory.dispose();
+        }
+    }
+
     private void assertStatus(SVNStatusType statusType, File file, Map<File, SvnStatus> statuses) {
         if (statusType == SVNStatusType.STATUS_NORMAL && statuses.get(file) == null) {
             return;
