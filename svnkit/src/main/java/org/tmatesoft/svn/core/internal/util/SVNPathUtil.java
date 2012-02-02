@@ -413,22 +413,22 @@ public class SVNPathUtil {
         return count;
     }
 
-    public static boolean isAncestor(String parentPath, String ancestorPath) {
+    public static boolean isAncestor(String parentPath, String childPath) {
         parentPath = parentPath == null ? "" : parentPath;
-        ancestorPath = ancestorPath == null ? "" : ancestorPath;
+        childPath = childPath == null ? "" : childPath;
 
         if (parentPath.length() == 0) {
-            return !ancestorPath.startsWith("/");
+            return !childPath.startsWith("/");
         }
 
-        if (ancestorPath.startsWith(parentPath)) {
-            if (parentPath.length() != ancestorPath.length() && !parentPath.endsWith("/") &&
-                    ancestorPath.charAt(parentPath.length()) != '/') {
-                if (parentPath.startsWith("file://") && ancestorPath.startsWith("file://")) {
+        if (childPath.startsWith(parentPath)) {
+            if (parentPath.length() != childPath.length() && !parentPath.endsWith("/") &&
+                    childPath.charAt(parentPath.length()) != '/') {
+                if (parentPath.startsWith("file://") && childPath.startsWith("file://")) {
                     //HACK: maybe encoded back slashes (UNC path)?
                     String encodedSlash = SVNEncodingUtil.uriEncode("\\");
                     return parentPath.endsWith(encodedSlash) ||
-                            ancestorPath.substring(parentPath.length()).startsWith(encodedSlash);
+                            childPath.substring(parentPath.length()).startsWith(encodedSlash);
                 }
                 return false;
             }
