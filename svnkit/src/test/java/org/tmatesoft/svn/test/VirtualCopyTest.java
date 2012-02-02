@@ -7,6 +7,7 @@ import java.util.Map;
 import junit.framework.Assert;
 import org.junit.Test;
 import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -64,16 +65,6 @@ public class VirtualCopyTest {
             sandbox.dispose();
             svnOperationFactory.dispose();
         }
-    }
-
-    private void assertStatus(SVNStatusType statusType, File file, Map<File, SvnStatus> statuses) {
-        if (statusType == SVNStatusType.STATUS_NORMAL && statuses.get(file) == null) {
-            return;
-        }
-        if (statusType == SVNStatusType.STATUS_NONE && statuses.get(file) == null) {
-            return;
-        }
-        Assert.assertEquals(statusType, statuses.get(file).getNodeStatus());
     }
 
     @Test
@@ -196,6 +187,7 @@ public class VirtualCopyTest {
                 Assert.fail("An exception should be thrown");
             } catch (SVNException e) {
                 e.printStackTrace();
+                Assert.assertEquals(SVNErrorCode.ENTRY_EXISTS, e.getErrorMessage().getErrorCode());
                 //expected
             }
 
@@ -238,6 +230,7 @@ public class VirtualCopyTest {
                 Assert.fail("An exception should be thrown");
             } catch (SVNException e) {
                 e.printStackTrace();
+                Assert.assertEquals(SVNErrorCode.ENTRY_ATTRIBUTE_INVALID, e.getErrorMessage().getErrorCode());
                 //expected
             }
             final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
@@ -282,6 +275,7 @@ public class VirtualCopyTest {
                 Assert.fail("An exception should be thrown");
             } catch (SVNException e) {
                 e.printStackTrace();
+                Assert.assertEquals(SVNErrorCode.ENTRY_NOT_FOUND, e.getErrorMessage().getErrorCode());
                 //expected
             }
             final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
@@ -291,6 +285,16 @@ public class VirtualCopyTest {
             sandbox.dispose();
             svnOperationFactory.dispose();
         }
+    }
+
+    private void assertStatus(SVNStatusType statusType, File file, Map<File, SvnStatus> statuses) {
+        if (statusType == SVNStatusType.STATUS_NORMAL && statuses.get(file) == null) {
+            return;
+        }
+        if (statusType == SVNStatusType.STATUS_NONE && statuses.get(file) == null) {
+            return;
+        }
+        Assert.assertEquals(statusType, statuses.get(file).getNodeStatus());
     }
 
     private Map<File, SvnStatus> getStatus(SvnOperationFactory svnOperationFactory, File workingCopyDirectory) throws SVNException {
