@@ -893,6 +893,55 @@ public class VirtualCopyTest {
         }
     }
 
+    @Test
+    public void testVirtualCopyBetweenDifferentWorkingCopiesFailed() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testVirtualCopyBetweenDifferentWorkingCopiesFailed", options);
+        try {
+            final SVNURL url1 = sandbox.createSvnRepository();
+            final SVNURL url2 = sandbox.createSvnRepository();
+
+            final String filePath = "directory1/file1.txt";
+
+            //we commit only to the first repository
+            final CommitBuilder commitBuilder1 = new CommitBuilder(url1);
+            commitBuilder1.setCommitMessage("Added a file into repository.");
+            commitBuilder1.addFile(filePath);
+            commitBuilder1.commit();
+
+            final WorkingCopy workingCopy1 = sandbox.checkoutNewWorkingCopy(url1, SVNRevision.HEAD.getNumber());
+            final WorkingCopy workingCopy2 = sandbox.checkoutNewWorkingCopy(url2, SVNRevision.HEAD.getNumber());
+
+            final File workingCopyDirectory1 = workingCopy1.getWorkingCopyDirectory();
+            final File workingCopyDirectory2 = workingCopy2.getWorkingCopyDirectory();
+
+            Assert.assertNotSame(workingCopyDirectory1, workingCopyDirectory2);
+
+            final File file1 = new File(workingCopyDirectory1, filePath);
+            final File file2 = new File(workingCopyDirectory2, filePath);
+
+            SVNFileUtil.ensureDirectoryExists(file1.getParentFile());
+            SVNFileUtil.ensureDirectoryExists(file2.getParentFile());
+
+            SVNFileUtil.copyFile(file1, file2, false);
+
+            try {
+                copyVirtual(svnOperationFactory, file1, file2);
+                Assert.fail("An exception should be thrown");
+            } catch (SVNException e) {
+                e.printStackTrace();
+                Assert.assertEquals(SVNErrorCode.WC_INVALID_SCHEDULE, e.getErrorMessage().getErrorCode());
+                //expected
+            }
+        } finally {
+            sandbox.dispose();
+            svnOperationFactory.dispose();
+        }
+    }
+
+
     private void assertStatus(SVNStatusType statusType, File file, Map<File, SvnStatus> statuses) {
         if (statusType == SVNStatusType.STATUS_NORMAL && statuses.get(file) == null) {
             return;
