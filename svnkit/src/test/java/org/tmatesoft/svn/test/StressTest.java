@@ -162,7 +162,7 @@ public class StressTest {
     }
 
     private void translateRevisionByRevision(Sandbox sandbox, SVNURL originalRepositoryUrl, SVNURL targetRepositoryUrl) throws SVNException {
-        final WorkingCopy workingCopy = sandbox.checkoutWorkingCopy(targetRepositoryUrl, -1);
+        final WorkingCopy workingCopy = sandbox.checkoutOrUpdateExistingWorkingCopy(targetRepositoryUrl, -1);
 
         final List<SVNLogEntry> logEntries = getLogEntries(originalRepositoryUrl);
         long previousRevision = -1;

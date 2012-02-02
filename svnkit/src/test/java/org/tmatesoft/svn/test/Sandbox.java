@@ -49,7 +49,7 @@ public class Sandbox {
             workingCopy.updateToRevision(revision);
             return workingCopy;
         } else {
-            return checkoutWorkingCopy(getRepositoryUrl(), revision);
+            return checkoutOrUpdateExistingWorkingCopy(getRepositoryUrl(), revision);
         }
     }
 
@@ -60,8 +60,15 @@ public class Sandbox {
         return workingCopy;
     }
 
-    public WorkingCopy checkoutWorkingCopy(SVNURL repositoryUrl, long revision) throws SVNException {
+    public WorkingCopy checkoutOrUpdateExistingWorkingCopy(SVNURL repositoryUrl, long revision) throws SVNException {
         final WorkingCopy workingCopy = new WorkingCopy(getTestOptions(), getWorkingCopyDirectory());
+        workingCopy.checkoutRevision(repositoryUrl, revision);
+        workingCopies.add(workingCopy);
+        return workingCopy;
+    }
+
+    public WorkingCopy checkoutNewWorkingCopy(SVNURL repositoryUrl, long revision) throws SVNException {
+        final WorkingCopy workingCopy = new WorkingCopy(getTestOptions(), createWorkingCopyDirectory());
         workingCopy.checkoutRevision(repositoryUrl, revision);
         workingCopies.add(workingCopy);
         return workingCopy;
@@ -103,6 +110,10 @@ public class Sandbox {
 
     private File getWorkingCopyDirectory() {
         return new File(getTestDirectory(), "wc");
+    }
+
+    private File createWorkingCopyDirectory() {
+        return createDirectory("wc");
     }
 
     private File createDirectory(String suggestedName) {

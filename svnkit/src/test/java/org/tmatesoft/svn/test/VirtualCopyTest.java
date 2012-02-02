@@ -43,7 +43,7 @@ public class VirtualCopyTest {
             commitBuilder.addFile(versionedFile);
             commitBuilder.commit();
 
-            final WorkingCopy workingCopy = sandbox.checkoutWorkingCopy(url, SVNRevision.HEAD.getNumber());
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, SVNRevision.HEAD.getNumber());
             final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
 
             final File wcVersionedFile = new File(workingCopyDirectory, versionedFile);
@@ -87,7 +87,7 @@ public class VirtualCopyTest {
             commitBuilder.addFile(versionedFile);
             commitBuilder.commit();
 
-            final WorkingCopy workingCopy = sandbox.checkoutWorkingCopy(url, SVNRevision.HEAD.getNumber());
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, SVNRevision.HEAD.getNumber());
             final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
 
             final File wcVersionedFile = new File(workingCopyDirectory, versionedFile);
@@ -131,7 +131,7 @@ public class VirtualCopyTest {
             commitBuilder.addFile(versionedFile);
             commitBuilder.commit();
 
-            final WorkingCopy workingCopy = sandbox.checkoutWorkingCopy(url, SVNRevision.HEAD.getNumber());
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, SVNRevision.HEAD.getNumber());
             final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
 
             final File wcVersionedFile = new File(workingCopyDirectory, versionedFile);
@@ -174,7 +174,7 @@ public class VirtualCopyTest {
             commitBuilder.addFile(versionedFile);
             commitBuilder.commit();
 
-            final WorkingCopy workingCopy = sandbox.checkoutWorkingCopy(url, SVNRevision.HEAD.getNumber());
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, SVNRevision.HEAD.getNumber());
             final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
 
             final File wcVersionedFile = new File(workingCopyDirectory, versionedFile);
@@ -221,7 +221,7 @@ public class VirtualCopyTest {
             commitBuilder.addFile(versionedFile);
             commitBuilder.commit();
 
-            final WorkingCopy workingCopy = sandbox.checkoutWorkingCopy(url, SVNRevision.HEAD.getNumber());
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, SVNRevision.HEAD.getNumber());
             final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
 
             final File wcVersionedFile = new File(workingCopyDirectory, versionedFile);
@@ -262,7 +262,7 @@ public class VirtualCopyTest {
             commitBuilder.addFile(versionedFile);
             commitBuilder.commit();
 
-            final WorkingCopy workingCopy = sandbox.checkoutWorkingCopy(url, SVNRevision.HEAD.getNumber());
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, SVNRevision.HEAD.getNumber());
             final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
 
             final File wcUnversionedFile = new File(workingCopyDirectory, unversionedFile);
@@ -307,7 +307,7 @@ public class VirtualCopyTest {
             commitBuilder.addFile(versionedFile);
             commitBuilder.commit();
 
-            final WorkingCopy workingCopy = sandbox.checkoutWorkingCopy(url, SVNRevision.HEAD.getNumber());
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, SVNRevision.HEAD.getNumber());
             final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
 
             final File wcVersionedFile = new File(workingCopyDirectory, versionedFile);
@@ -358,7 +358,7 @@ public class VirtualCopyTest {
             commitBuilder.addFile(versionedFile);
             commitBuilder.commit();
 
-            final WorkingCopy workingCopy = sandbox.checkoutWorkingCopy(url, SVNRevision.HEAD.getNumber());
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, SVNRevision.HEAD.getNumber());
             final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
 
             final File wcVersionedFile = new File(workingCopyDirectory, versionedFile);
@@ -408,7 +408,7 @@ public class VirtualCopyTest {
             commitBuilder.addFile(versionedFile);
             commitBuilder.commit();
 
-            final WorkingCopy workingCopy = sandbox.checkoutWorkingCopy(url, SVNRevision.HEAD.getNumber());
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, SVNRevision.HEAD.getNumber());
             final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
 
             final File wcVersionedFile = new File(workingCopyDirectory, versionedFile);
@@ -459,7 +459,7 @@ public class VirtualCopyTest {
             commitBuilder.addFile(versionedFile);
             commitBuilder.commit();
 
-            final WorkingCopy workingCopy = sandbox.checkoutWorkingCopy(url, SVNRevision.HEAD.getNumber());
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, SVNRevision.HEAD.getNumber());
             final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
 
             final File wcVersionedFile = new File(workingCopyDirectory, versionedFile);
@@ -509,7 +509,7 @@ public class VirtualCopyTest {
             commitBuilder.addFile(versionedFile);
             commitBuilder.commit();
 
-            final WorkingCopy workingCopy = sandbox.checkoutWorkingCopy(url, SVNRevision.HEAD.getNumber());
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, SVNRevision.HEAD.getNumber());
             final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
 
             final File wcVersionedFile = new File(workingCopyDirectory, versionedFile);
@@ -560,7 +560,7 @@ public class VirtualCopyTest {
             commitBuilder.addFile(versionedFile);
             commitBuilder.commit();
 
-            final WorkingCopy workingCopy = sandbox.checkoutWorkingCopy(url, SVNRevision.HEAD.getNumber());
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, SVNRevision.HEAD.getNumber());
             final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
 
             final File wcVersionedFile = new File(workingCopyDirectory, versionedFile);
@@ -610,7 +610,7 @@ public class VirtualCopyTest {
             commitBuilder.addFile(versionedFile);
             commitBuilder.commit();
 
-            final WorkingCopy workingCopy = sandbox.checkoutWorkingCopy(url, SVNRevision.HEAD.getNumber());
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, SVNRevision.HEAD.getNumber());
             final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
 
             final File wcVersionedFile = new File(workingCopyDirectory, versionedFile);
@@ -661,7 +661,7 @@ public class VirtualCopyTest {
             commitBuilder.addFile(versionedFile);
             commitBuilder.commit();
 
-            final WorkingCopy workingCopy = sandbox.checkoutWorkingCopy(url, SVNRevision.HEAD.getNumber());
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, SVNRevision.HEAD.getNumber());
             final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
 
             final File wcVersionedFile = new File(workingCopyDirectory, versionedFile);
@@ -711,7 +711,7 @@ public class VirtualCopyTest {
             commitBuilder.addFile(versionedFile);
             commitBuilder.commit();
 
-            final WorkingCopy workingCopy = sandbox.checkoutWorkingCopy(url, SVNRevision.HEAD.getNumber());
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, SVNRevision.HEAD.getNumber());
             final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
 
             final File wcVersionedFile = new File(workingCopyDirectory, versionedFile);
@@ -761,7 +761,7 @@ public class VirtualCopyTest {
             commitBuilder.addFile(versionedFile);
             commitBuilder.commit();
 
-            final WorkingCopy workingCopy = sandbox.checkoutWorkingCopy(url, SVNRevision.HEAD.getNumber());
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, SVNRevision.HEAD.getNumber());
             final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
 
             final File wcVersionedFile = new File(workingCopyDirectory, versionedFile);
@@ -811,7 +811,7 @@ public class VirtualCopyTest {
             commitBuilder.addFile(versionedFile);
             commitBuilder.commit();
 
-            final WorkingCopy workingCopy = sandbox.checkoutWorkingCopy(url, SVNRevision.HEAD.getNumber());
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, SVNRevision.HEAD.getNumber());
             final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
 
             final File wcVersionedFile = new File(workingCopyDirectory, versionedFile);
@@ -861,7 +861,7 @@ public class VirtualCopyTest {
             commitBuilder.addFile(versionedFile);
             commitBuilder.commit();
 
-            final WorkingCopy workingCopy = sandbox.checkoutWorkingCopy(url, SVNRevision.HEAD.getNumber());
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, SVNRevision.HEAD.getNumber());
             final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
 
             final File wcVersionedFile = new File(workingCopyDirectory, versionedFile);
