@@ -1180,6 +1180,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 }
             }
             if (handler != null) {
+                path = getRepositoryPath(path);
                 SVNLock lock = new SVNLock(path, id, null, null, null, null);
                 handler.handleUnlock(path, lock, error);
             }
