@@ -39,7 +39,7 @@ public class VirtualCopyTest {
             final String fileNotToAdd = "directory3/fileNotToAdd.txt"; //if makeParents for unversionedFile calls "svn add" with infinite depth, this file will be added (that is not expected)
 
             final CommitBuilder commitBuilder = new CommitBuilder(url);
-            commitBuilder.setCommitMessage("Added 2 files into repository.");
+            commitBuilder.setCommitMessage("Added a file into repository.");
             commitBuilder.addFile(versionedFile);
             commitBuilder.commit();
 
@@ -83,7 +83,7 @@ public class VirtualCopyTest {
             final String fileNotToAdd = "directory3/fileNotToAdd.txt"; //if makeParents for unversionedFile calls "svn add" with infinite depth, this file will be added (that is not expected)
 
             final CommitBuilder commitBuilder = new CommitBuilder(url);
-            commitBuilder.setCommitMessage("Added 2 files into repository.");
+            commitBuilder.setCommitMessage("Added a file into repository.");
             commitBuilder.addFile(versionedFile);
             commitBuilder.commit();
 
@@ -127,7 +127,7 @@ public class VirtualCopyTest {
             final String fileNotToAdd = "directory3/fileNotToAdd.txt"; //if makeParents for unversionedFile calls "svn add" with infinite depth, this file will be added (that is not expected)
 
             final CommitBuilder commitBuilder = new CommitBuilder(url);
-            commitBuilder.setCommitMessage("Added 2 files into repository.");
+            commitBuilder.setCommitMessage("Added a file into repository.");
             commitBuilder.addFile(versionedFile);
             commitBuilder.commit();
 
@@ -170,7 +170,7 @@ public class VirtualCopyTest {
             final String unversionedFile = "directory3/unversionedFile.txt";
 
             final CommitBuilder commitBuilder = new CommitBuilder(url);
-            commitBuilder.setCommitMessage("Added 2 files into repository.");
+            commitBuilder.setCommitMessage("Added a file into repository.");
             commitBuilder.addFile(versionedFile);
             commitBuilder.commit();
 
@@ -217,7 +217,7 @@ public class VirtualCopyTest {
             final String unversionedFile = "directory3/unversionedFile.txt";
 
             final CommitBuilder commitBuilder = new CommitBuilder(url);
-            commitBuilder.setCommitMessage("Added 2 files into repository.");
+            commitBuilder.setCommitMessage("Added a file into repository.");
             commitBuilder.addFile(versionedFile);
             commitBuilder.commit();
 
@@ -258,7 +258,7 @@ public class VirtualCopyTest {
             final String anotherUnversionedFile = "directory4/anotherUnversionedFile.txt";
 
             final CommitBuilder commitBuilder = new CommitBuilder(url);
-            commitBuilder.setCommitMessage("Added 2 files into repository.");
+            commitBuilder.setCommitMessage("Added a file into repository.");
             commitBuilder.addFile(versionedFile);
             commitBuilder.commit();
 
@@ -303,7 +303,7 @@ public class VirtualCopyTest {
             final String anotherUnversionedFile = "directory4/anotherUnversionedFile.txt";
 
             final CommitBuilder commitBuilder = new CommitBuilder(url);
-            commitBuilder.setCommitMessage("Added 2 files into repository.");
+            commitBuilder.setCommitMessage("Added a file into repository.");
             commitBuilder.addFile(versionedFile);
             commitBuilder.commit();
 
@@ -354,7 +354,7 @@ public class VirtualCopyTest {
             final String anotherUnversionedFile = "directory4/anotherUnversionedFile.txt";
 
             final CommitBuilder commitBuilder = new CommitBuilder(url);
-            commitBuilder.setCommitMessage("Added 2 files into repository.");
+            commitBuilder.setCommitMessage("Added a file into repository.");
             commitBuilder.addFile(versionedFile);
             commitBuilder.commit();
 
@@ -404,7 +404,7 @@ public class VirtualCopyTest {
             final String anotherUnversionedFile = "directory4/anotherUnversionedFile.txt";
 
             final CommitBuilder commitBuilder = new CommitBuilder(url);
-            commitBuilder.setCommitMessage("Added 2 files into repository.");
+            commitBuilder.setCommitMessage("Added a file into repository.");
             commitBuilder.addFile(versionedFile);
             commitBuilder.commit();
 
@@ -455,7 +455,7 @@ public class VirtualCopyTest {
             final String anotherUnversionedFile = "directory4/anotherUnversionedFile.txt";
 
             final CommitBuilder commitBuilder = new CommitBuilder(url);
-            commitBuilder.setCommitMessage("Added 2 files into repository.");
+            commitBuilder.setCommitMessage("Added a file into repository.");
             commitBuilder.addFile(versionedFile);
             commitBuilder.commit();
 
@@ -505,7 +505,7 @@ public class VirtualCopyTest {
             final String anotherUnversionedFile = "directory4/anotherUnversionedFile.txt";
 
             final CommitBuilder commitBuilder = new CommitBuilder(url);
-            commitBuilder.setCommitMessage("Added 2 files into repository.");
+            commitBuilder.setCommitMessage("Added a file into repository.");
             commitBuilder.addFile(versionedFile);
             commitBuilder.commit();
 
@@ -556,7 +556,7 @@ public class VirtualCopyTest {
             final String anotherUnversionedFile = "directory4/anotherUnversionedFile.txt";
 
             final CommitBuilder commitBuilder = new CommitBuilder(url);
-            commitBuilder.setCommitMessage("Added 2 files into repository.");
+            commitBuilder.setCommitMessage("Added a file into repository.");
             commitBuilder.addFile(versionedFile);
             commitBuilder.commit();
 
@@ -606,7 +606,7 @@ public class VirtualCopyTest {
             final String anotherUnversionedFile = "directory4/anotherUnversionedFile.txt";
 
             final CommitBuilder commitBuilder = new CommitBuilder(url);
-            commitBuilder.setCommitMessage("Added 2 files into repository.");
+            commitBuilder.setCommitMessage("Added a file into repository.");
             commitBuilder.addFile(versionedFile);
             commitBuilder.commit();
 
@@ -657,7 +657,7 @@ public class VirtualCopyTest {
             final String anotherUnversionedFile = "directory4/anotherUnversionedFile.txt";
 
             final CommitBuilder commitBuilder = new CommitBuilder(url);
-            commitBuilder.setCommitMessage("Added 2 files into repository.");
+            commitBuilder.setCommitMessage("Added a file into repository.");
             commitBuilder.addFile(versionedFile);
             commitBuilder.commit();
 
@@ -707,7 +707,7 @@ public class VirtualCopyTest {
             final String anotherTargetFile = "directory4/anotherTargetFile.txt";
 
             final CommitBuilder commitBuilder = new CommitBuilder(url);
-            commitBuilder.setCommitMessage("Added 2 files into repository.");
+            commitBuilder.setCommitMessage("Added a file into repository.");
             commitBuilder.addFile(versionedFile);
             commitBuilder.commit();
 
@@ -757,7 +757,7 @@ public class VirtualCopyTest {
             final String anotherTargetFile = "directory4/anotherTargetFile.txt";
 
             final CommitBuilder commitBuilder = new CommitBuilder(url);
-            commitBuilder.setCommitMessage("Added 2 files into repository.");
+            commitBuilder.setCommitMessage("Added a file into repository.");
             commitBuilder.addFile(versionedFile);
             commitBuilder.commit();
 
@@ -807,7 +807,7 @@ public class VirtualCopyTest {
             final String anotherTargetFile = "directory4/anotherTargetFile.txt";
 
             final CommitBuilder commitBuilder = new CommitBuilder(url);
-            commitBuilder.setCommitMessage("Added 2 files into repository.");
+            commitBuilder.setCommitMessage("Added a file into repository.");
             commitBuilder.addFile(versionedFile);
             commitBuilder.commit();
 
@@ -857,7 +857,7 @@ public class VirtualCopyTest {
             final String anotherTargetFile = "directory4/anotherTargetFile.txt";
 
             final CommitBuilder commitBuilder = new CommitBuilder(url);
-            commitBuilder.setCommitMessage("Added 2 files into repository.");
+            commitBuilder.setCommitMessage("Added a file into repository.");
             commitBuilder.addFile(versionedFile);
             commitBuilder.commit();
 
