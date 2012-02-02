@@ -42,10 +42,14 @@ import org.tmatesoft.svn.core.wc.SVNConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc2.SvnChecksum;
 import org.tmatesoft.svn.core.wc2.SvnCopy;
 import org.tmatesoft.svn.core.wc2.SvnCopySource;
+import org.tmatesoft.svn.core.wc2.SvnGetStatus;
+import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 import org.tmatesoft.svn.core.wc2.SvnScheduleForAddition;
+import org.tmatesoft.svn.core.wc2.SvnStatus;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -157,7 +161,7 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
                 for (SvnCopyPair copyPair : copyPairs) {
                     checkCancelled();
                     File dstPath = SVNFileUtil.createFilePath(copyPair.dstParent, copyPair.baseName);
-                    copy(context, copyPair.source, dstPath, false);
+                    copy(context, copyPair.source, dstPath, getOperation().isVirtual());
                 }
             } finally {
                 context.releaseWriteLock(ancestor);
@@ -188,7 +192,7 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
                     lockedPaths.add(getWcContext().acquireWriteLock(file, false, true));
                 }
                 
-                move(getWcContext(), copyPair.source, SVNFileUtil.createFilePath(copyPair.dstParent, copyPair.baseName), false);
+                move(getWcContext(), copyPair.source, SVNFileUtil.createFilePath(copyPair.dstParent, copyPair.baseName), getOperation().isVirtual());
             } finally {
                 for (File file : lockedPaths) {
                     getWcContext().releaseWriteLock(file);
@@ -215,38 +219,26 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
     private void verifyPaths(Collection<SvnCopyPair> copyPairs, boolean makeParents, boolean move) throws SVNException {
         for (SvnCopyPair copyPair : copyPairs) {
             SVNFileType srcType = SVNFileType.getType(copyPair.source);
-            if (srcType == SVNFileType.NONE) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNKNOWN_KIND, "Path ''{0}'' does not exist", copyPair.source);
-                SVNErrorManager.error(err, SVNLogType.WC);
-            }
             SVNFileType dstType = SVNFileType.getType(copyPair.dst);
-            if (dstType != SVNFileType.NONE) {
-                if (move && copyPairs.size() == 1) {
-                    File srcDir = SVNFileUtil.getFileDir(copyPair.source);
-                    File dstDir = SVNFileUtil.getFileDir(copyPair.dst);
-                    if (srcDir.equals(dstDir)) {
-                        // check if it is case-only rename
-                        if (copyPair.source.getName().equalsIgnoreCase(copyPair.dst.getName())) {
-                            copyPair.dstParent = new File(SVNPathUtil.validateFilePath(dstDir.getAbsolutePath()));
-                            copyPair.baseName = SVNFileUtil.getFileName(copyPair.dst);
-                            return;
-                        }
-                    }
-                    
-                }
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, "Path ''{0}'' already exists", copyPair.dst);
-                SVNErrorManager.error(err, SVNLogType.WC);
-            }
 
+            if (getOperation().isVirtual()) {
+                verifyPathsExistenceForVirtualCopy(copyPair.source, copyPair.dst, srcType, dstType, copyPair, move);
+            } else {
+                final boolean caseOnlyRename = verifyPaths(srcType, dstType, copyPair, copyPairs.size(), move);
+                if (caseOnlyRename) {
+                    return;
+                }
+            }
             copyPair.dstParent = new File(SVNPathUtil.validateFilePath(SVNFileUtil.getParentFile(copyPair.dst).getAbsolutePath()));
             copyPair.baseName = SVNFileUtil.getFileName(copyPair.dst);
-            
-            if (makeParents && SVNFileType.getType(copyPair.dstParent) == SVNFileType.NONE) {
+
+            final SVNFileType dstParentType = SVNFileType.getType(copyPair.dstParent);
+            if (makeParents && (dstParentType == SVNFileType.NONE || getOperation().isVirtual())) {
                 SVNFileUtil.ensureDirectoryExists(copyPair.dstParent);
                 
                 SvnScheduleForAddition add = getOperation().getOperationFactory().createScheduleForAddition();
                 add.setSingleTarget(SvnTarget.fromFile(copyPair.dstParent));
-                add.setDepth(SVNDepth.INFINITY);
+                add.setDepth(getOperation().isVirtual() ? SVNDepth.EMPTY : SVNDepth.INFINITY);
                 add.setIncludeIgnored(true);
                 add.setForce(false);
                 add.setAddParents(true);
@@ -255,14 +247,101 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
                 try {
                     add.run();
                 } catch (SVNException e) {
-                    SVNFileUtil.deleteAll(copyPair.dstParent, true);
+                    if (dstParentType == SVNFileType.NONE) {
+                        SVNFileUtil.deleteAll(copyPair.dstParent, true);
+                    }
                     throw e;
                 }
-            } else if (SVNFileType.getType(copyPair.dstParent) != SVNFileType.DIRECTORY) {
+            } else if (dstParentType != SVNFileType.DIRECTORY) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_WORKING_COPY, "Path ''{0}'' is not a directory", copyPair.dstParent);
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
         }
+    }
+
+    private boolean verifyPaths(SVNFileType srcType, SVNFileType dstType, SvnCopyPair copyPair, int copyPairsCount, boolean move) throws SVNException {
+        if (srcType == SVNFileType.NONE) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNKNOWN_KIND, "Path ''{0}'' does not exist", copyPair.source);
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+
+        if (dstType != SVNFileType.NONE) {
+            if (move && copyPairsCount == 1) {
+                File srcDir = SVNFileUtil.getFileDir(copyPair.source);
+                File dstDir = SVNFileUtil.getFileDir(copyPair.dst);
+                if (srcDir.equals(dstDir)) {
+                    // check if it is case-only rename
+                    if (copyPair.source.getName().equalsIgnoreCase(copyPair.dst.getName())) {
+                        copyPair.dstParent = new File(SVNPathUtil.validateFilePath(dstDir.getAbsolutePath()));
+                        copyPair.baseName = SVNFileUtil.getFileName(copyPair.dst);
+                        return true;
+                    }
+                }
+
+            }
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, "Path ''{0}'' already exists", copyPair.dst);
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+        return false;
+    }
+
+    private void verifyPathsExistenceForVirtualCopy(File source, File dst, SVNFileType srcType, SVNFileType dstType, SvnCopyPair copyPair, boolean move) throws SVNException {
+        String opName = move ? "move" : "copy";
+        if (move && srcType != SVNFileType.NONE) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, "Cannot perform 'virtual' {0}: ''{1}'' still exists", new Object[] {
+                    opName, copyPair.source
+            });
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+        if (dstType == SVNFileType.NONE) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "Cannot perform 'virtual' {0}: ''{1}'' does not exist", new Object[] {
+                    opName, copyPair.dst
+            });
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+        if (dstType == SVNFileType.DIRECTORY) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Cannot perform 'virtual' {0}: ''{1}'' is a directory", new Object[] {
+                    opName, copyPair.dst
+            });
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+        if (!move && srcType == SVNFileType.DIRECTORY) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Cannot perform 'virtual' {0}: ''{1}'' is a directory", new Object[] {
+                    opName, copyPair.source
+            });
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+
+        final SvnStatus dstStatus = getStatus(dst);
+        if (dstStatus != null &&
+                (dstStatus.getNodeStatus() != SVNStatusType.STATUS_UNVERSIONED &&
+                        dstStatus.getNodeStatus() != SVNStatusType.STATUS_ADDED &&
+                        dstStatus.getNodeStatus() != SVNStatusType.STATUS_REPLACED)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_ATTRIBUTE_INVALID, "Cannot perform 'virtual' {0}: ''{1}'' is scheduled neither for addition nor for replacement",
+                    new Object[] {
+                            opName, dst
+                    });
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+
+        final SvnStatus sourceStatus = getStatus(source);
+        if (sourceStatus == null || sourceStatus.getNodeStatus() == SVNStatusType.STATUS_UNVERSIONED)  {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "''{0}'' is not under version control", source);
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+    }
+
+    private SvnStatus getStatus(File source) throws SVNException {
+        final SvnOperationFactory operationFactory = getOperation().getOperationFactory();
+        final SvnGetStatus status = operationFactory.createGetStatus();
+        status.setDepth(SVNDepth.INFINITY);
+        status.setRemote(false);
+        status.setReportAll(true);
+        status.setReportIgnored(true);
+        status.setReportExternals(false);
+        status.setApplicalbeChangelists(null);
+        status.addTarget(SvnTarget.fromFile(source.getParentFile()));
+        return status.run();
     }
 
     protected void move(SVNWCContext context, File source, File dst, boolean metadataOnly) throws SVNException {

@@ -11,6 +11,7 @@ public class SvnCopy extends SvnOperation<Void> {
     private boolean makeParents;
     private boolean failWhenDstExist;
     private boolean ignoreExternals;
+    private boolean virtual;
 
     protected SvnCopy(SvnOperationFactory factory) {
         super(factory);
@@ -57,5 +58,13 @@ public class SvnCopy extends SvnOperation<Void> {
 
     public void setIgnoreExternals(boolean ignoreExternals) {
         this.ignoreExternals = ignoreExternals;
+    }
+
+    public boolean isVirtual() {
+        return virtual;
+    }
+
+    public void setVirtual(boolean virtual) {
+        this.virtual = virtual;
     }
 }
