@@ -3,6 +3,7 @@ package org.tmatesoft.svn.core.wc2;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.wc.ISVNCommitParameters;
 
 /**
  * @author alex
@@ -12,6 +13,7 @@ public class SvnCommit extends AbstractSvnCommit {
     
     private boolean keepChangelists;
     private boolean keepLocks;
+    private ISVNCommitParameters commitParameters;
     
     private SvnCommitPacket packet;
 
@@ -33,6 +35,14 @@ public class SvnCommit extends AbstractSvnCommit {
 
     public void setKeepLocks(boolean keepLocks) {
         this.keepLocks = keepLocks;
+    }
+
+    public ISVNCommitParameters getCommitParameters() {
+        return commitParameters;
+    }
+
+    public void setCommitParameters(ISVNCommitParameters commitParameters) {
+        this.commitParameters = commitParameters;
     }
     
     public SvnCommitPacket collectCommitItems() throws SVNException {

@@ -22,6 +22,7 @@ public class SvnOldCommit extends SvnOldRunner<SVNCommitInfo, SvnCommit> impleme
         SVNCommitClient16 client = new SVNCommitClient16(getOperation().getRepositoryPool(), getOperation().getOptions());
         client.setEventHandler(getOperation().getEventHandler());
         client.setCommitHandler(this);
+        client.setCommitParameters(getOperation().getCommitParameters());
 
         File[] paths = new File[getOperation().getTargets().size()];
         int i = 0;
@@ -45,6 +46,7 @@ public class SvnOldCommit extends SvnOldRunner<SVNCommitInfo, SvnCommit> impleme
         SVNCommitClient16 client = new SVNCommitClient16(getOperation().getRepositoryPool(), getOperation().getOptions());
         client.setEventHandler(getOperation().getEventHandler());
         client.setCommitHandler(this);
+        client.setCommitParameters(getOperation().getCommitParameters());
         
         SVNCommitInfo info = client.doCommit(oldPacket, getOperation().isKeepLocks(), getOperation().isKeepChangelists(), getOperation().getCommitMessage(), getOperation().getRevisionProperties());
         if (info != null) {

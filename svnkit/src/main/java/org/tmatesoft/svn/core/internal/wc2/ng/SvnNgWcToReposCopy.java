@@ -163,7 +163,7 @@ public class SvnNgWcToReposCopy extends SvnNgOperationRunner<SVNCommitInfo, SvnR
         }
         for (SvnCopyPair svnCopyPair : copyPairs) {
             Map<File, String> externals = getOperation().getExternalsHandler() != null ? new HashMap<File, String>() : null;
-            SvnNgCommitUtil.harvestCopyCommitables(getWcContext(), svnCopyPair.source, svnCopyPair.dst, packet, this, externals);
+            SvnNgCommitUtil.harvestCopyCommitables(getWcContext(), svnCopyPair.source, svnCopyPair.dst, packet, this, getOperation().getCommitParameters(), externals);
             
             SvnCommitItem item = packet.getItem(svnCopyPair.source);
             if (item == null) {
