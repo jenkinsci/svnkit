@@ -132,6 +132,8 @@ import org.tmatesoft.svn.core.wc2.SvnUnlock;
  */
 public class SVNWCClient extends SVNBasicClient {
 
+    private ISVNAddParameters addParameters;
+
     private SVNWCClient16 getSVNWCClient16() {
         return (SVNWCClient16) getDelegate16();
     }
@@ -231,6 +233,7 @@ public class SVNWCClient extends SVNBasicClient {
         if (addParameters == null) {
             addParameters = DEFAULT_ADD_PARAMETERS;
         }
+        this.addParameters = addParameters;
         getSVNWCClient16().setAddParameters(addParameters);
         try {
             getSVNWCClient17().setAddParameters(addParameters);
@@ -1550,6 +1553,7 @@ public class SVNWCClient extends SVNBasicClient {
         add.setDepth(depth);
         add.setIncludeIgnored(includeIgnored);
         add.setAddParents(makeParents);
+        add.setAddParameters(addParameters);
         
         add.run();
     }

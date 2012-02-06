@@ -1,6 +1,10 @@
 package org.tmatesoft.svn.test;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
 public class TestUtil {
     public static File createDirectory(File parentPath, String suggestedName) {
@@ -24,5 +28,14 @@ public class TestUtil {
 
     public static void log(String message) {
         System.out.println(message);
+    }
+
+    public static void writeFileContentsString(File file, String contentsString) throws IOException {
+        final FileOutputStream fileOutputStream = new FileOutputStream(file);
+        try {
+            fileOutputStream.write(contentsString.getBytes());
+        } finally {
+            SVNFileUtil.closeFile(fileOutputStream);
+        }
     }
 }

@@ -1,5 +1,7 @@
 package org.tmatesoft.svn.core.wc2;
 
+import org.tmatesoft.svn.core.wc.ISVNAddParameters;
+
 public class SvnScheduleForAddition extends SvnOperation<Void> {
     
     private boolean force;
@@ -7,6 +9,7 @@ public class SvnScheduleForAddition extends SvnOperation<Void> {
     private boolean applyAutoProperties;
     private boolean addParents;
     private boolean mkDir;
+    private ISVNAddParameters addParameters;
 
     protected SvnScheduleForAddition(SvnOperationFactory factory) {
         super(factory);
@@ -68,4 +71,11 @@ public class SvnScheduleForAddition extends SvnOperation<Void> {
         return true;
     }
 
+    public ISVNAddParameters getAddParameters() {
+        return addParameters;
+    }
+
+    public void setAddParameters(ISVNAddParameters addParameters) {
+        this.addParameters = addParameters;
+    }
 }

@@ -116,7 +116,7 @@ public class Sandbox {
         return createDirectory("wc");
     }
 
-    private File createDirectory(String suggestedName) {
+    public File createDirectory(String suggestedName) {
         return TestUtil.createDirectory(getTestDirectory(), suggestedName).getAbsoluteFile();
     }
 

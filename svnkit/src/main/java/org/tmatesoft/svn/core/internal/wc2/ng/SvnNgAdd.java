@@ -27,7 +27,12 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
+import org.tmatesoft.svn.core.wc.ISVNAddParameters;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
+import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
+import org.tmatesoft.svn.core.wc2.SvnRevert;
 import org.tmatesoft.svn.core.wc2.SvnScheduleForAddition;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
@@ -154,14 +159,56 @@ public class SvnNgAdd extends SvnNgOperationRunner<Void, SvnScheduleForAddition>
             for (String propertyName : properties.nameSet()) {
                 SVNPropertyValue value = properties.getSVNPropertyValue(propertyName);
                 if (value != null) {
-                    SvnNgPropertiesManager.setProperty(getWcContext(), path, propertyName, value, SVNDepth.EMPTY, false, null, null);
+                    try {
+                        SvnNgPropertiesManager.setProperty(getWcContext(), path, propertyName, value, SVNDepth.EMPTY, false, null, null);
+                    } catch (SVNException e) {
+                        if (SVNProperty.EOL_STYLE.equals(propertyName) &&
+                                e.getErrorMessage().getErrorCode() == SVNErrorCode.ILLEGAL_TARGET &&
+                                e.getErrorMessage().getMessage().indexOf("newlines") >= 0) {
+                            final ISVNAddParameters addParameters = getOperation().getAddParameters() == null ? SVNWCClient.DEFAULT_ADD_PARAMETERS :
+                                    getOperation().getAddParameters();
+                            ISVNAddParameters.Action action = addParameters.onInconsistentEOLs(path);
+                            if (action == ISVNAddParameters.REPORT_ERROR) {
+                                doRevert(path);
+                                throw e;
+                            } else if (action == ISVNAddParameters.ADD_AS_IS) {
+                                SvnNgPropertiesManager.setProperty(getWcContext(), path, propertyName, null, SVNDepth.EMPTY, false, null, null);
+                            } else if (action == ISVNAddParameters.ADD_AS_BINARY) {
+                                SvnNgPropertiesManager.setProperty(getWcContext(), path, propertyName, null, SVNDepth.EMPTY, false, null, null);
+                                mimeType = SVNFileUtil.BINARY_MIME_TYPE;
+                            }
+                        } else {
+                            doRevert(path);
+                            throw e;
+                        }
+                    }
                 }
             }
-            // TODO revert addition if propset fails.
+            if (mimeType != null) {
+                SvnNgPropertiesManager.setProperty(getWcContext(), path, SVNProperty.MIME_TYPE, SVNPropertyValue.create(mimeType), SVNDepth.EMPTY, false, null, null);
+            } else {
+                mimeType = properties.getStringValue(SVNProperty.MIME_TYPE);
+            }
         }
-        
+
         handleEvent(SVNEventFactory.createSVNEvent(path, SVNNodeKind.FILE, mimeType, -1, SVNEventAction.ADD, 
                 SVNEventAction.ADD, null, null, 1, 1));
+    }
+
+    private void doRevert(File path) {
+        final SvnOperationFactory svnOperationFactory = getOperation().getOperationFactory();
+        final ISVNEventHandler eventHandler = svnOperationFactory.getEventHandler();
+        try {
+            final SvnRevert revert = svnOperationFactory.createRevert();
+            revert.addTarget(SvnTarget.fromFile(path));
+            revert.setDepth(SVNDepth.EMPTY);
+            revert.run();
+
+            svnOperationFactory.setEventHandler(null);
+        } catch (SVNException svne) {
+        } finally {
+            svnOperationFactory.setEventHandler(eventHandler);
+        }
     }
 
     private void addDirectory(File path, SVNDepth depth) throws SVNException {
