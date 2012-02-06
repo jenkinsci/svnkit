@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import junit.framework.Assert;
+import org.junit.Assume;
 import org.junit.Test;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -50,6 +51,9 @@ public class VirtualCopyTest {
             final File wcUnversionedFile = new File(workingCopyDirectory, unversionedFile);
             final File wcFileNotToAdd = new File(workingCopyDirectory, fileNotToAdd);
 
+            SVNFileUtil.ensureDirectoryExists(wcUnversionedFile.getParentFile());
+            add(svnOperationFactory, wcUnversionedFile.getParentFile());
+
             SVNFileUtil.rename(wcVersionedFile, wcUnversionedFile);
 
             moveVirtual(svnOperationFactory, wcVersionedFile, wcUnversionedFile);
@@ -93,6 +97,9 @@ public class VirtualCopyTest {
             final File wcVersionedFile = new File(workingCopyDirectory, versionedFile);
             final File wcUnversionedFile = new File(workingCopyDirectory, unversionedFile);
             final File wcFileNotToAdd = new File(workingCopyDirectory, fileNotToAdd);
+
+            SVNFileUtil.ensureDirectoryExists(wcUnversionedFile.getParentFile());
+            add(svnOperationFactory, wcUnversionedFile.getParentFile());
 
             SVNFileUtil.rename(wcVersionedFile, wcUnversionedFile);
 
@@ -138,6 +145,9 @@ public class VirtualCopyTest {
             final File wcUnversionedFile = new File(workingCopyDirectory, unversionedFile);
             final File wcFileNotToAdd = new File(workingCopyDirectory, fileNotToAdd);
 
+            SVNFileUtil.ensureDirectoryExists(wcUnversionedFile.getParentFile());
+            add(svnOperationFactory, wcUnversionedFile.getParentFile());
+
             SVNFileUtil.copyFile(wcVersionedFile, wcUnversionedFile, false);
 
             copyVirtual(svnOperationFactory, wcVersionedFile, wcUnversionedFile);
@@ -180,6 +190,9 @@ public class VirtualCopyTest {
             final File wcVersionedFile = new File(workingCopyDirectory, versionedFile);
             final File wcUnversionedFile = new File(workingCopyDirectory, unversionedFile);
 
+            SVNFileUtil.ensureDirectoryExists(wcUnversionedFile.getParentFile());
+            add(svnOperationFactory, wcUnversionedFile.getParentFile());
+
             SVNFileUtil.copyFile(wcVersionedFile, wcUnversionedFile, false);
 
             Assert.assertTrue(wcUnversionedFile.exists());
@@ -196,8 +209,8 @@ public class VirtualCopyTest {
             final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
             assertStatus(SVNStatusType.STATUS_NORMAL, wcVersionedFile, statuses);
             assertStatus(SVNStatusType.STATUS_NORMAL, wcVersionedFile.getParentFile(), statuses);
-            assertStatus(SVNStatusType.STATUS_NONE, wcUnversionedFile, statuses);
-            assertStatus(SVNStatusType.STATUS_UNVERSIONED, wcUnversionedFile.getParentFile(), statuses);
+            assertStatus(SVNStatusType.STATUS_UNVERSIONED, wcUnversionedFile, statuses);
+            assertStatus(SVNStatusType.STATUS_ADDED, wcUnversionedFile.getParentFile(), statuses);
         } finally {
             sandbox.dispose();
             svnOperationFactory.dispose();
@@ -269,6 +282,10 @@ public class VirtualCopyTest {
             final File wcAnotherUnversionedFile = new File(workingCopyDirectory, anotherUnversionedFile);
 
             SVNFileUtil.ensureDirectoryExists(wcAnotherUnversionedFile.getParentFile());
+            SVNFileUtil.ensureDirectoryExists(wcUnversionedFile.getParentFile());
+
+            add(svnOperationFactory, wcAnotherUnversionedFile.getParentFile());
+            add(svnOperationFactory, wcUnversionedFile.getParentFile());
 
             Assert.assertTrue(wcAnotherUnversionedFile.createNewFile());
 
@@ -282,7 +299,9 @@ public class VirtualCopyTest {
             }
             final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
             assertStatus(SVNStatusType.STATUS_NONE, wcUnversionedFile, statuses);
-            assertStatus(SVNStatusType.STATUS_NONE, wcUnversionedFile.getParentFile(), statuses);
+            assertStatus(SVNStatusType.STATUS_ADDED, wcUnversionedFile.getParentFile(), statuses);
+            assertStatus(SVNStatusType.STATUS_UNVERSIONED, wcAnotherUnversionedFile, statuses);
+            assertStatus(SVNStatusType.STATUS_ADDED, wcAnotherUnversionedFile.getParentFile(), statuses);
         } finally {
             sandbox.dispose();
             svnOperationFactory.dispose();
@@ -315,6 +334,10 @@ public class VirtualCopyTest {
             final File wcAnotherUnversionedFile = new File(workingCopyDirectory, anotherUnversionedFile);
 
             SVNFileUtil.ensureDirectoryExists(wcAnotherUnversionedFile.getParentFile());
+            add(svnOperationFactory, wcAnotherUnversionedFile.getParentFile());
+
+            SVNFileUtil.ensureDirectoryExists(wcUnversionedFile.getParentFile());
+            add(svnOperationFactory, wcUnversionedFile.getParentFile());
 
             copy(svnOperationFactory, wcVersionedFile, wcUnversionedFile);
 
@@ -342,6 +365,7 @@ public class VirtualCopyTest {
 
     @Test
     public void testMovingAlreadyCopied() throws Exception {
+        Assume.assumeTrue(isNewWorkingCopyTest());
         final TestOptions options = TestOptions.getInstance();
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
@@ -366,6 +390,10 @@ public class VirtualCopyTest {
             final File wcAnotherUnversionedFile = new File(workingCopyDirectory, anotherUnversionedFile);
 
             SVNFileUtil.ensureDirectoryExists(wcAnotherUnversionedFile.getParentFile());
+            add(svnOperationFactory, wcAnotherUnversionedFile.getParentFile());
+
+            SVNFileUtil.ensureDirectoryExists(wcUnversionedFile.getParentFile());
+            add(svnOperationFactory, wcUnversionedFile.getParentFile());
 
             copy(svnOperationFactory, wcVersionedFile, wcUnversionedFile);
 
@@ -416,6 +444,10 @@ public class VirtualCopyTest {
             final File wcAnotherUnversionedFile = new File(workingCopyDirectory, anotherUnversionedFile);
 
             SVNFileUtil.ensureDirectoryExists(wcAnotherUnversionedFile.getParentFile());
+            add(svnOperationFactory, wcAnotherUnversionedFile.getParentFile());
+
+            SVNFileUtil.ensureDirectoryExists(wcUnversionedFile.getParentFile());
+            add(svnOperationFactory, wcUnversionedFile.getParentFile());
 
             move(svnOperationFactory, wcVersionedFile, wcUnversionedFile);
 
@@ -443,6 +475,7 @@ public class VirtualCopyTest {
 
     @Test
     public void testMovingAlreadyMoved() throws Exception {
+        Assume.assumeTrue(isNewWorkingCopyTest());
         final TestOptions options = TestOptions.getInstance();
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
@@ -467,6 +500,10 @@ public class VirtualCopyTest {
             final File wcAnotherUnversionedFile = new File(workingCopyDirectory, anotherUnversionedFile);
 
             SVNFileUtil.ensureDirectoryExists(wcAnotherUnversionedFile.getParentFile());
+            add(svnOperationFactory, wcAnotherUnversionedFile.getParentFile());
+
+            SVNFileUtil.ensureDirectoryExists(wcUnversionedFile.getParentFile());
+            add(svnOperationFactory, wcUnversionedFile.getParentFile());
 
             move(svnOperationFactory, wcVersionedFile, wcUnversionedFile);
 
@@ -517,6 +554,7 @@ public class VirtualCopyTest {
             final File wcAnotherUnversionedFile = new File(workingCopyDirectory, anotherUnversionedFile);
 
             SVNFileUtil.ensureDirectoryExists(wcAnotherUnversionedFile.getParentFile());
+            add(svnOperationFactory, wcAnotherUnversionedFile.getParentFile());
 
             wronglyCopy(svnOperationFactory, wcVersionedFile, wcUnversionedFile);
 
@@ -544,6 +582,7 @@ public class VirtualCopyTest {
 
     @Test
     public void testMovingWronglyCopied() throws Exception {
+        Assume.assumeTrue(isNewWorkingCopyTest());
         final TestOptions options = TestOptions.getInstance();
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
@@ -568,6 +607,7 @@ public class VirtualCopyTest {
             final File wcAnotherUnversionedFile = new File(workingCopyDirectory, anotherUnversionedFile);
 
             SVNFileUtil.ensureDirectoryExists(wcAnotherUnversionedFile.getParentFile());
+            add(svnOperationFactory, wcAnotherUnversionedFile.getParentFile());
 
             wronglyCopy(svnOperationFactory, wcVersionedFile, wcUnversionedFile);
 
@@ -618,6 +658,7 @@ public class VirtualCopyTest {
             final File wcAnotherUnversionedFile = new File(workingCopyDirectory, anotherUnversionedFile);
 
             SVNFileUtil.ensureDirectoryExists(wcAnotherUnversionedFile.getParentFile());
+            add(svnOperationFactory, wcAnotherUnversionedFile.getParentFile());
 
             wronglyMove(svnOperationFactory, wcVersionedFile, wcUnversionedFile);
 
@@ -645,6 +686,7 @@ public class VirtualCopyTest {
 
     @Test
     public void testMovingWronglyMoved() throws Exception {
+        Assume.assumeTrue(isNewWorkingCopyTest());
         final TestOptions options = TestOptions.getInstance();
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
@@ -669,6 +711,7 @@ public class VirtualCopyTest {
             final File wcAnotherUnversionedFile = new File(workingCopyDirectory, anotherUnversionedFile);
 
             SVNFileUtil.ensureDirectoryExists(wcAnotherUnversionedFile.getParentFile());
+            add(svnOperationFactory, wcAnotherUnversionedFile.getParentFile());
 
             wronglyMove(svnOperationFactory, wcVersionedFile, wcUnversionedFile);
 
@@ -719,6 +762,7 @@ public class VirtualCopyTest {
             final File wcAnotherTargetFile = new File(workingCopyDirectory, anotherTargetFile);
 
             SVNFileUtil.ensureDirectoryExists(wcAnotherTargetFile.getParentFile());
+            add(svnOperationFactory, wcAnotherTargetFile.getParentFile());
 
             copy(svnOperationFactory, wcVersionedFile.getParentFile(), wcTargetFile.getParentFile());
 
@@ -769,6 +813,7 @@ public class VirtualCopyTest {
             final File wcAnotherTargetFile = new File(workingCopyDirectory, anotherTargetFile);
 
             SVNFileUtil.ensureDirectoryExists(wcAnotherTargetFile.getParentFile());
+            add(svnOperationFactory, wcAnotherTargetFile.getParentFile());
 
             move(svnOperationFactory, wcVersionedFile.getParentFile(), wcTargetFile.getParentFile());
 
@@ -819,6 +864,7 @@ public class VirtualCopyTest {
             final File wcAnotherTargetFile = new File(workingCopyDirectory, anotherTargetFile);
 
             SVNFileUtil.ensureDirectoryExists(wcAnotherTargetFile.getParentFile());
+            add(svnOperationFactory, wcAnotherTargetFile.getParentFile());
 
             copy(svnOperationFactory, wcVersionedFile.getParentFile(), wcTargetFile.getParentFile());
 
@@ -869,6 +915,7 @@ public class VirtualCopyTest {
             final File wcAnotherTargetFile = new File(workingCopyDirectory, anotherTargetFile);
 
             SVNFileUtil.ensureDirectoryExists(wcAnotherTargetFile.getParentFile());
+            add(svnOperationFactory, wcAnotherTargetFile.getParentFile());
 
             move(svnOperationFactory, wcVersionedFile.getParentFile(), wcTargetFile.getParentFile());
 
@@ -895,6 +942,7 @@ public class VirtualCopyTest {
 
     @Test
     public void testVirtualCopyBetweenDifferentWorkingCopiesFailed() throws Exception {
+        Assume.assumeTrue(isNewWorkingCopyTest());
         final TestOptions options = TestOptions.getInstance();
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
@@ -924,6 +972,7 @@ public class VirtualCopyTest {
 
             SVNFileUtil.ensureDirectoryExists(file1.getParentFile());
             SVNFileUtil.ensureDirectoryExists(file2.getParentFile());
+            add(svnOperationFactory, file2.getParentFile());
 
             SVNFileUtil.copyFile(file1, file2, false);
 
@@ -941,7 +990,6 @@ public class VirtualCopyTest {
         }
     }
 
-
     private void assertStatus(SVNStatusType statusType, File file, Map<File, SvnStatus> statuses) {
         if (statusType == SVNStatusType.STATUS_NORMAL && statuses.get(file) == null) {
             return;
@@ -951,6 +999,7 @@ public class VirtualCopyTest {
         }
         Assert.assertEquals(statusType, statuses.get(file).getNodeStatus());
     }
+
 
     private Map<File, SvnStatus> getStatus(SvnOperationFactory svnOperationFactory, File workingCopyDirectory) throws SVNException {
         final Map<File, SvnStatus> pathToStatus = new HashMap<File, SvnStatus>();
@@ -994,7 +1043,7 @@ public class VirtualCopyTest {
         copy.setSingleTarget(SvnTarget.fromFile(toFile));
         copy.setFailWhenDstExists(true);//fail when dst exists = !copy as child
         copy.setIgnoreExternals(true);
-        copy.setMakeParents(true);
+        copy.setMakeParents(false);
         copy.setVirtual(virtual);
         copy.setMove(move);
         copy.run();
@@ -1034,5 +1083,10 @@ public class VirtualCopyTest {
 
     private String getTestName() {
         return getClass().getSimpleName();
+    }
+
+    private boolean isNewWorkingCopyTest() {
+        final String propertyValue = System.getProperty("svnkit.wc.17", "true");
+        return "true".equals(propertyValue);
     }
 }
