@@ -13,6 +13,7 @@ public class SvnOldRevert extends SvnOldRunner<Void, SvnRevert> {
     protected Void run() throws SVNException {
         SVNWCClient16 client = new SVNWCClient16(getOperation().getRepositoryPool(), getOperation().getOptions());
         client.setEventHandler(getOperation().getEventHandler());
+        client.setRevertMissingDirectories(getOperation().isRevertMissingDirectories());
         
         File[] paths = new File[getOperation().getTargets().size()];
         int i = 0;
