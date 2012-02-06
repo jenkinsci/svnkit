@@ -164,7 +164,7 @@ public class SVNReporter17 implements ISVNReporterBaton {
                 }
             }
             if (wrkStatus == SVNWCDbStatus.Added) {
-                Structure<AdditionInfo> additionInfo = SvnWcDbShared.scanAddition((SVNWCDb) wcContext.getDb(), path, AdditionInfo.status);
+                Structure<AdditionInfo> additionInfo = SvnWcDbShared.scanAddition((SVNWCDb) wcContext.getDb(), path);
                 wrkStatus = additionInfo.get(AdditionInfo.status);
                 additionInfo.release();
             }
@@ -297,7 +297,7 @@ public class SVNReporter17 implements ISVNReporterBaton {
                     }
                 }
                 if (wrkStatus == SVNWCDbStatus.Added) {
-                    Structure<AdditionInfo> additionInfo = SvnWcDbShared.scanAddition((SVNWCDb) wcContext.getDb(), thisAbsPath, AdditionInfo.status);
+                    Structure<AdditionInfo> additionInfo = SvnWcDbShared.scanAddition((SVNWCDb) wcContext.getDb(), thisAbsPath);
                     wrkStatus = additionInfo.get(AdditionInfo.status);
                     additionInfo.release();
                 }

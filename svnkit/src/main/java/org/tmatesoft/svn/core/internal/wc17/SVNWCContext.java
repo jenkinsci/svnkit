@@ -994,7 +994,7 @@ public class SVNWCContext {
         
         if (reposRelPath == null) {
             if (status == SVNWCDbStatus.Added) {
-                Structure<AdditionInfo> additionInfo = SvnWcDbShared.scanAddition((SVNWCDb) db, path, AdditionInfo.reposRelPath, AdditionInfo.reposId);
+                Structure<AdditionInfo> additionInfo = SvnWcDbShared.scanAddition((SVNWCDb) db, path);
                 reposRelPath = additionInfo.get(AdditionInfo.reposRelPath);
                 reposId = additionInfo.lng(AdditionInfo.reposId);
                 additionInfo.release();
@@ -1013,7 +1013,7 @@ public class SVNWCContext {
                     reposRelPath = SVNFileUtil.createFilePath(reposRelPath, SVNWCUtils.skipAncestor(baseDelRelpath, localRelPath));
                 } else {
                     File workRelpath = SVNFileUtil.getFileDir(workDelRelpath); 
-                    Structure<AdditionInfo> additionInfo = SvnWcDbShared.scanAddition((SVNWCDb) db, db.fromRelPath(db.getWCRoot(path), workRelpath), AdditionInfo.reposRelPath, AdditionInfo.reposId);
+                    Structure<AdditionInfo> additionInfo = SvnWcDbShared.scanAddition((SVNWCDb) db, db.fromRelPath(db.getWCRoot(path), workRelpath));
                     reposRelPath = additionInfo.get(AdditionInfo.reposRelPath);
                     reposId = additionInfo.lng(AdditionInfo.reposId);
                     additionInfo.release();

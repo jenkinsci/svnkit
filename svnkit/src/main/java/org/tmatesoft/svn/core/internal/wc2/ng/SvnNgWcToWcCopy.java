@@ -407,7 +407,7 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
         
         if (srcReposRootUrl == null) {
             if (srcStatus == SVNWCDbStatus.Added) {
-                Structure<AdditionInfo> additionInfo = SvnWcDbShared.scanAddition((SVNWCDb) context.getDb(), source, AdditionInfo.reposRootUrl, AdditionInfo.reposUuid);
+                Structure<AdditionInfo> additionInfo = SvnWcDbShared.scanAddition((SVNWCDb) context.getDb(), source);
                 srcReposRootUrl = additionInfo.get(AdditionInfo.reposRootUrl);
                 srcReposUuid = additionInfo.get(AdditionInfo.reposUuid);
                 additionInfo.release();
@@ -420,7 +420,7 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
         
         if (dstReposRootUrl == null) {
             if (dstDirStatus == SVNWCDbStatus.Added) {
-                Structure<AdditionInfo> additionInfo = SvnWcDbShared.scanAddition((SVNWCDb) context.getDb(), dstDirectory, AdditionInfo.reposRootUrl, AdditionInfo.reposUuid);
+                Structure<AdditionInfo> additionInfo = SvnWcDbShared.scanAddition((SVNWCDb) context.getDb(), dstDirectory);
                 dstReposRootUrl = additionInfo.get(AdditionInfo.reposRootUrl);
                 dstReposUuid = additionInfo.get(AdditionInfo.reposUuid);
                 additionInfo.release();

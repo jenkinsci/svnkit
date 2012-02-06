@@ -191,7 +191,7 @@ public class SvnNgGetInfo extends SvnNgOperationRunner<SvnInfo, SvnGetInfo> impl
                 }
             } else if (readInfo.opRoot) {
                 Structure<AdditionInfo> additionInfo = 
-                        SvnWcDbShared.scanAddition((SVNWCDb) getWcContext().getDb(), localAbspath, AdditionInfo.reposRelPath, AdditionInfo.reposRootUrl, AdditionInfo.reposUuid);
+                        SvnWcDbShared.scanAddition((SVNWCDb) getWcContext().getDb(), localAbspath);
                 info.setRepositoryRootURL(additionInfo.<SVNURL>get(AdditionInfo.reposRootUrl));
                 info.setRepositoryUuid(additionInfo.<String>get(AdditionInfo.reposUuid));
                 if (readInfo.haveBase) {
@@ -228,8 +228,8 @@ public class SvnNgGetInfo extends SvnNgOperationRunner<SvnInfo, SvnGetInfo> impl
             if (workDelAbsPath != null) {
                 File addedAbsPath = SVNFileUtil.getFileDir(workDelAbsPath);
                 Structure<AdditionInfo> additionInfo = 
-                        SvnWcDbShared.scanAddition((SVNWCDb) getWcContext().getDb(), addedAbsPath, 
-                                AdditionInfo.reposRelPath, AdditionInfo.reposRootUrl, AdditionInfo.reposUuid, AdditionInfo.originalRevision);
+                        SvnWcDbShared.scanAddition((SVNWCDb) getWcContext().getDb(), addedAbsPath
+                        );
                 reposRelPath = additionInfo.<File>get(AdditionInfo.reposRelPath);
                 info.setRepositoryRootURL(additionInfo.<SVNURL>get(AdditionInfo.reposRootUrl));
                 info.setRepositoryUuid(additionInfo.<String>get(AdditionInfo.reposUuid));

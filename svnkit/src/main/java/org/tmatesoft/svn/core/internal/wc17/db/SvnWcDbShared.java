@@ -114,12 +114,12 @@ public class SvnWcDbShared {
         }
     }
 
-    public static Structure<AdditionInfo> scanAddition(SVNWCDb db, File localAbsPath, AdditionInfo... fields) throws SVNException {
+    public static Structure<AdditionInfo> scanAddition(SVNWCDb db, File localAbsPath) throws SVNException {
         DirParsedInfo parsed = db.parseDir(localAbsPath, Mode.ReadOnly);
         SVNWCDbDir pdh = parsed.wcDbDir;
         File localRelpath = parsed.localRelPath;
 
-        Structure<AdditionInfo> additionInfo = scanAddition(pdh.getWCRoot(), localRelpath, fields);
+        Structure<AdditionInfo> additionInfo = scanAddition(pdh.getWCRoot(), localRelpath);
         if (additionInfo.hasField(AdditionInfo.reposRootUrl)) {
             ReposInfo reposInfo = db.fetchReposInfo(pdh.getWCRoot().getSDb(), additionInfo.lng(AdditionInfo.reposId));
             additionInfo.set(AdditionInfo.reposRootUrl, SVNURL.parseURIEncoded(reposInfo.reposRootUrl));
