@@ -330,7 +330,7 @@ public class SVNMoveClient extends SVNBasicClient {
      *             </ul>
      */
     public void doVirtualCopy(File src, File dst, boolean move) throws SVNException {
-        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final SvnOperationFactory svnOperationFactory = getOperationsFactory();
         try{
             final SvnCopy copy = svnOperationFactory.createCopy();
             copy.addCopySource(SvnCopySource.create(SvnTarget.fromFile(src), SVNRevision.WORKING));

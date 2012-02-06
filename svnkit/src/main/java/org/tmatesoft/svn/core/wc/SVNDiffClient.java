@@ -3208,7 +3208,7 @@ public class SVNDiffClient extends SVNBasicClient {
     }
 
     private void doDiffStatus(SvnTarget source, SVNRevision rN, SVNRevision rM, SVNDepth depth, boolean useAncestry, ISVNDiffStatusHandler handler) throws SVNException {
-        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final SvnOperationFactory svnOperationFactory = getOperationsFactory();
         try{
             final SvnDiffSummarize diffSummarize = svnOperationFactory.createDiffSummarize();
             diffSummarize.setSource(source, rN, rM);
@@ -3222,7 +3222,7 @@ public class SVNDiffClient extends SVNBasicClient {
     }
 
     private void doDiffStatus(SvnTarget source1, SvnTarget source2, SVNDepth depth, boolean useAncestry, ISVNDiffStatusHandler handler) throws SVNException {
-        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final SvnOperationFactory svnOperationFactory = getOperationsFactory();
         try{
             final SvnDiffSummarize diffSummarize = svnOperationFactory.createDiffSummarize();
             diffSummarize.setSources(source1, source2);
