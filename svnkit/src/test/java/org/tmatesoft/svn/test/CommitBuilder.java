@@ -115,7 +115,9 @@ public class CommitBuilder {
         directoriesToVisit.addAll(directoriesToAdd);
         for (String file : filesToAdd.keySet()) {
             final String directory = getParent(file);
-            addDirectoryToVisit(directory, directoriesToVisit);
+            if (directory != null) {
+                addDirectoryToVisit(directory, directoriesToVisit);
+            }
         }
         return directoriesToVisit;
     }
