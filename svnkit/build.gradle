@@ -5,3 +5,7 @@ processResources {
         }
     }
 }
+
+test {
+    systemProperty 'svnkit.wc.17', (project.svnVersion == '17')
+}
