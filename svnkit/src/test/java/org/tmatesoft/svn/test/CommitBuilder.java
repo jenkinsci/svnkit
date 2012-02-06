@@ -61,6 +61,8 @@ public class CommitBuilder {
             addChildrensFiles(commitEditor, directory);
         }
 
+        addChildrensFiles(commitEditor, "");
+
         closeUntilCommonAncestor(commitEditor, currentDirectory, "");
 
         commitEditor.closeDir();
@@ -69,7 +71,11 @@ public class CommitBuilder {
 
     private void addChildrensFiles(ISVNEditor commitEditor, String directory) throws SVNException {
         for (String file : filesToAdd.keySet()) {
-            if (directory.equals(getParent(file))) {
+            String parent = getParent(file);
+            if (parent == null) {
+                parent = "";
+            }
+            if (directory.equals(parent)) {
                 addFile(commitEditor, file, filesToAdd.get(file));
             }
         }
