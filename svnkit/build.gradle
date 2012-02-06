@@ -1,3 +1,4 @@
+svnVersion  = project.hasProperty('svnVersion') ? project.getProperty('svnVersion') : '16'
 processResources {
     eachFile {
         if (it.name == 'svnkit.build.properties') {
