@@ -38,4 +38,9 @@ public class TestUtil {
             SVNFileUtil.closeFile(fileOutputStream);
         }
     }
+
+    static boolean isNewWorkingCopyTest() {
+        final String propertyValue = System.getProperty("svnkit.wc.17", "true");
+        return "true".equals(propertyValue);
+    }
 }

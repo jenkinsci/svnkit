@@ -365,7 +365,7 @@ public class VirtualCopyTest {
 
     @Test
     public void testMovingAlreadyCopied() throws Exception {
-        Assume.assumeTrue(isNewWorkingCopyTest());
+        Assume.assumeTrue(TestUtil.isNewWorkingCopyTest());
         final TestOptions options = TestOptions.getInstance();
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
@@ -475,7 +475,7 @@ public class VirtualCopyTest {
 
     @Test
     public void testMovingAlreadyMoved() throws Exception {
-        Assume.assumeTrue(isNewWorkingCopyTest());
+        Assume.assumeTrue(TestUtil.isNewWorkingCopyTest());
         final TestOptions options = TestOptions.getInstance();
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
@@ -582,7 +582,7 @@ public class VirtualCopyTest {
 
     @Test
     public void testMovingWronglyCopied() throws Exception {
-        Assume.assumeTrue(isNewWorkingCopyTest());
+        Assume.assumeTrue(TestUtil.isNewWorkingCopyTest());
         final TestOptions options = TestOptions.getInstance();
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
@@ -686,7 +686,7 @@ public class VirtualCopyTest {
 
     @Test
     public void testMovingWronglyMoved() throws Exception {
-        Assume.assumeTrue(isNewWorkingCopyTest());
+        Assume.assumeTrue(TestUtil.isNewWorkingCopyTest());
         final TestOptions options = TestOptions.getInstance();
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
@@ -942,7 +942,7 @@ public class VirtualCopyTest {
 
     @Test
     public void testVirtualCopyBetweenDifferentWorkingCopiesFailed() throws Exception {
-        Assume.assumeTrue(isNewWorkingCopyTest());
+        Assume.assumeTrue(TestUtil.isNewWorkingCopyTest());
         final TestOptions options = TestOptions.getInstance();
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
@@ -1083,10 +1083,5 @@ public class VirtualCopyTest {
 
     private String getTestName() {
         return getClass().getSimpleName();
-    }
-
-    private boolean isNewWorkingCopyTest() {
-        final String propertyValue = System.getProperty("svnkit.wc.17", "true");
-        return "true".equals(propertyValue);
     }
 }
