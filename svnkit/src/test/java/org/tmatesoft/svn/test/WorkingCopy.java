@@ -308,7 +308,12 @@ public class WorkingCopy {
     }
 
     private void checkWorkingCopyConsistency() {
-        final String wcDbPath = getWCDbFile().getAbsolutePath().replace('/', File.separatorChar);
+        final File wcDbFile = getWCDbFile();
+        if (!wcDbFile.exists()) {
+            log("No wc.db, maybe running on the old SVN working copy format, integrity check skipped");
+            return;
+        }
+        final String wcDbPath = wcDbFile.getAbsolutePath().replace('/', File.separatorChar);
 
         final ProcessBuilder processBuilder = new ProcessBuilder();
         processBuilder.command(getSqlite3Command(), wcDbPath, "pragma integrity_check;");
