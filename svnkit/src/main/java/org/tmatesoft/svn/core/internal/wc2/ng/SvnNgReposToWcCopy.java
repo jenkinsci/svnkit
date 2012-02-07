@@ -337,7 +337,9 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
                                 event.setFile(pair.dst);
                             }
                         }
-                        oldHandler.handleEvent(event, progress);
+                        if (oldHandler != null) {
+                            oldHandler.handleEvent(event, progress);
+                        }
                     }
                 });
                 try {
