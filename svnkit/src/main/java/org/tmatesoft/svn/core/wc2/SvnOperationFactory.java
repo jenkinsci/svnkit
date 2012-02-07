@@ -76,6 +76,7 @@ import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgGetMergeInfo;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgGetProperties;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgGetStatus;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgLogMergeInfo;
+import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgMarkReplaced;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgRelocate;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgRemove;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgReposToWcCopy;
@@ -106,6 +107,7 @@ import org.tmatesoft.svn.core.internal.wc2.old.SvnOldLogMergeInfo;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetProperties;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetStatus;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldImport;
+import org.tmatesoft.svn.core.internal.wc2.old.SvnOldMarkReplaced;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldMerge;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldRelocate;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldRemoteCopy;
@@ -263,6 +265,9 @@ public class SvnOperationFactory {
 
         registerOperationRunner(SvnRevert.class, new SvnNgRevert());
         registerOperationRunner(SvnRevert.class, new SvnOldRevert());
+
+        registerOperationRunner(SvnMarkReplaced.class, new SvnNgMarkReplaced());
+        registerOperationRunner(SvnMarkReplaced.class, new SvnOldMarkReplaced());
 
         registerOperationRunner(SvnSetProperty.class, new SvnRemoteSetRevisionProperty());
         registerOperationRunner(SvnSetProperty.class, new SvnOldSetProperty());
@@ -541,6 +546,10 @@ public class SvnOperationFactory {
     
     public SvnScheduleForRemoval createScheduleForRemoval() {
         return new SvnScheduleForRemoval(this);
+    }
+
+    public SvnMarkReplaced createMarkReplaced() {
+        return new SvnMarkReplaced(this);
     }
 
     public SvnRevert createRevert() {
