@@ -15,6 +15,7 @@ public class SvnRemoteCopy extends AbstractSvnCommit {
     private boolean failWhenDstExists;
     private ISvnExternalsHandler externalsHandler;
     private ISVNCommitParameters commitParameters;
+    private boolean disableLocalModifications;
 
     private Collection<SvnCopySource> sources;
     
@@ -37,6 +38,14 @@ public class SvnRemoteCopy extends AbstractSvnCommit {
 
     public void setMakeParents(boolean makeParents) {
         this.makeParents = makeParents;
+    }
+
+    public boolean isDisableLocalModifications() {
+        return disableLocalModifications;
+    }
+
+    public void setDisableLocalModifications(boolean disableLocalModifications) {
+        this.disableLocalModifications = disableLocalModifications;
     }
 
     public Collection<SvnCopySource> getSources() {

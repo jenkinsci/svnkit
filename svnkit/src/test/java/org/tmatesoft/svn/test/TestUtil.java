@@ -1,6 +1,9 @@
 package org.tmatesoft.svn.test;
 
+import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
@@ -36,6 +39,29 @@ public class TestUtil {
             fileOutputStream.write(contentsString.getBytes());
         } finally {
             SVNFileUtil.closeFile(fileOutputStream);
+        }
+    }
+
+    public static String readFileContentsString(File file) throws IOException {
+        FileInputStream fileInputStream = null;
+        BufferedInputStream bufferedInputStream = null;
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        byte[] buffer = new byte[1024];
+        try {
+            fileInputStream = new FileInputStream(file);
+            bufferedInputStream = new BufferedInputStream(fileInputStream);
+
+            while (true) {
+                final int bytesRead = bufferedInputStream.read(buffer);
+                if (bytesRead < 0)  {
+                    break;
+                }
+                byteArrayOutputStream.write(buffer, 0, bytesRead);
+            }
+
+            return new String(byteArrayOutputStream.toByteArray());
+        } finally {
+            SVNFileUtil.closeFile(bufferedInputStream);
         }
     }
 
