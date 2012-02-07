@@ -43,6 +43,7 @@ import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnChecksum;
 import org.tmatesoft.svn.core.wc2.SvnCopy;
 import org.tmatesoft.svn.core.wc2.SvnCopySource;
@@ -331,7 +332,11 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
         }
     }
 
-    private SvnStatus getStatus(File source) throws SVNException {
+    private SvnStatus getStatus(File interestingFile) throws SVNException {
+        final String interestingPath = interestingFile.getPath().replace(File.separatorChar, '/');
+
+        final SvnStatus[] status2 = new SvnStatus[1];
+
         final SvnOperationFactory operationFactory = getOperation().getOperationFactory();
         final SvnGetStatus status = operationFactory.createGetStatus();
         status.setDepth(SVNDepth.INFINITY);
@@ -340,8 +345,24 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
         status.setReportIgnored(true);
         status.setReportExternals(false);
         status.setApplicalbeChangelists(null);
-        status.addTarget(SvnTarget.fromFile(source.getParentFile()));
-        return status.run();
+        status.addTarget(SvnTarget.fromFile(interestingFile.getParentFile()));
+        status.setReceiver(new ISvnObjectReceiver<SvnStatus>() {
+            public void receive(SvnTarget target, SvnStatus svnStatus) throws SVNException {
+                if (svnStatus == null) {
+                    return;
+                }
+                final File path = svnStatus.getPath();
+                if (path == null) {
+                    return;
+                }
+                final String statusPath = path.getPath().replace(File.separatorChar, '/');
+                if (statusPath.equals(interestingPath)) {
+                    status2[0] = svnStatus;
+                }
+            }
+        });
+        status.run();
+        return status2[0];
     }
 
     protected void move(SVNWCContext context, File source, File dst, boolean metadataOnly) throws SVNException {
