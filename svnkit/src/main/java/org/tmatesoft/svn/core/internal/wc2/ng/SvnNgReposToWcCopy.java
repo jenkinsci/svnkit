@@ -5,10 +5,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -83,7 +85,7 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
                     "Moves between the working copy and the repository are not supported");
             SVNErrorManager.error(err, SVNLogType.WC);
         }
-        Collection<SvnCopySource> sources = getOperation().getSources();
+        Collection<SvnCopySource> sources = expandCopySources(getOperation().getSources());
         Collection<SvnCopyPair> copyPairs = new ArrayList<SvnNgReposToWcCopy.SvnCopyPair>();
         boolean srcsAreUrls = sources.iterator().next().getSource().isURL();
         if (sources.size() > 1) {
@@ -171,6 +173,40 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
         }
         return copy(copyPairs, getOperation().isMakeParents(), getOperation().isIgnoreExternals());
     }
+
+
+    protected Collection<SvnCopySource> expandCopySources(Collection<SvnCopySource> sources) throws SVNException {
+        Collection<SvnCopySource> expanded = new ArrayList<SvnCopySource>(sources.size());
+        for (SvnCopySource source : sources) {
+            if (source.isCopyContents() && source.getSource().isURL()) {
+                // get children at revision.
+                SVNRevision pegRevision = source.getSource().getResolvedPegRevision();
+                if (!pegRevision.isValid()) {
+                    pegRevision = SVNRevision.HEAD;
+                }
+                SVNRevision startRevision = source.getRevision();
+                if (!startRevision.isValid()) {
+                    startRevision = pegRevision;
+                }
+
+                final SVNRepository svnRepository = getRepositoryAccess().createRepository(source.getSource().getURL(), null, true);
+
+                final Structure<LocationsInfo> locations = getRepositoryAccess().getLocations(svnRepository, source.getSource(), pegRevision, startRevision, SVNRevision.UNDEFINED);
+                long revision = locations.lng(LocationsInfo.startRevision);
+                Collection entries = new ArrayList();
+                svnRepository.getDir("", revision, null, 0, entries);
+                for (Iterator ents = entries.iterator(); ents.hasNext();) {
+                    SVNDirEntry entry = (SVNDirEntry) ents.next();
+                    // add new copy source.
+                    expanded.add(SvnCopySource.create(SvnTarget.fromURL(entry.getURL()), source.getRevision()));
+                }
+            } else {
+                expanded.add(source);
+            }
+        }
+        return expanded;
+    }
+
     
     private Void copy(Collection<SvnCopyPair> copyPairs, boolean makeParents, boolean ignoreExternals) throws SVNException {
         for (SvnCopyPair pair : copyPairs) {

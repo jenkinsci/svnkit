@@ -6,6 +6,7 @@ public class SvnCopySource extends SvnObject {
     
     private SvnTarget source;
     private SVNRevision revision;
+    private boolean copyContents;
     
     public static SvnCopySource create(SvnTarget source, SVNRevision revision) {
         return new SvnCopySource(source, revision);
@@ -36,6 +37,14 @@ public class SvnCopySource extends SvnObject {
     }
     private void setRevision(SVNRevision revision) {
         this.revision = revision;
+    }
+
+    public boolean isCopyContents() {
+        return copyContents;
+    }
+
+    public void setCopyContents(boolean copyContents) {
+        this.copyContents = copyContents;
     }
     
     @Override

@@ -738,9 +738,13 @@ public class SvnCodec {
 
     public static SVNCopySource copySource(SvnCopySource newSource) {
         if (newSource.getSource().getURL() != null) {
-            return new SVNCopySource(newSource.getSource().getResolvedPegRevision(), newSource.getRevision(), newSource.getSource().getURL());
+            final SVNCopySource copySource = new SVNCopySource(newSource.getSource().getResolvedPegRevision(), newSource.getRevision(), newSource.getSource().getURL());
+            copySource.setCopyContents(newSource.isCopyContents());
+            return copySource;
         }
-        return new SVNCopySource(newSource.getSource().getResolvedPegRevision(), newSource.getRevision(), newSource.getSource().getFile());
+        final SVNCopySource copySource = new SVNCopySource(newSource.getSource().getResolvedPegRevision(), newSource.getRevision(), newSource.getSource().getFile());
+        copySource.setCopyContents(newSource.isCopyContents());
+        return copySource;
     }
 
     public static SvnCopySource copySource(SVNCopySource oldSource) {
@@ -750,7 +754,9 @@ public class SvnCodec {
         } else {
             target = SvnTarget.fromFile(oldSource.getFile(), oldSource.getPegRevision());
         }
-        return SvnCopySource.create(target, oldSource.getRevision());
+        final SvnCopySource copySource = SvnCopySource.create(target, oldSource.getRevision());
+        copySource.setCopyContents(oldSource.isCopyContents());
+        return copySource;
     }
     
     public static ISvnCommitHandler commitHandler(final ISVNCommitHandler target) {

@@ -36,6 +36,10 @@ public class CommitBuilder {
         this.commitMessage = commitMessage;
     }
 
+    public void addDirectory(String directory) {
+        directoriesToAdd.add(directory);
+    }
+
     public CommitBuilder addFile(String path) {
         return addFile(path, new byte[0]);
     }
