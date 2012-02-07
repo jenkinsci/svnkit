@@ -2,7 +2,7 @@ package org.tmatesoft.svn.core.internal.wc2.old;
 
 import java.io.File;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
+import java.security.KeyStore.Entry;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
@@ -18,13 +18,11 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
-import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNConflictVersion;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
@@ -35,24 +33,22 @@ import org.tmatesoft.svn.core.internal.wc.admin.ISVNEntryHandler;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumInputStream;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
-import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
-import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbLock;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbUpgradeData;
-import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbOpenMode;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDbRoot;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbPristines;
-import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil;
+import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbProperties;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
-import org.tmatesoft.svn.core.wc.SVNConflictReason;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
@@ -63,6 +59,7 @@ import org.tmatesoft.svn.core.wc2.SvnGetProperties;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.core.wc2.SvnUpgrade;
 import org.tmatesoft.svn.util.SVNLogType;
+import org.tmatesoft.svn.core.internal.wc2.old.SvnOldUpgradeEntries.WriteBaton;
 
 public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 	
@@ -132,10 +129,8 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
         RepositoryInfo reposInfo = new RepositoryInfo();
         wcUpgrade(localAbsPath, reposInfo);
         
-        /* Now it's time to upgrade the externals too. We do it after the wc
-        upgrade to avoid that errors in the externals causes the wc upgrade to
-        fail. Thanks to caching the performance penalty of walking the wc a
-        second time shouldn't be too severe */
+        /* Now it's time to upgrade the externals too. We do it after the wc upgrade to avoid that errors in the externals causes the 
+         * wc upgrade to fail. Thanks to caching the performance penalty of walking the wc a second time shouldn't be too severe */
         
         final ArrayList<SvnTarget> externals = new ArrayList<SvnTarget>();
         SvnGetProperties getProperties = getOperation().getOperationFactory().createGetProperties();
@@ -350,13 +345,14 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 	    	File dbFrom = SVNFileUtil.createFilePath(rootAdmAbsPath, SDB_FILE);
 	    	File dbTo = SVNWCUtils.admChild(localAbsPath, SDB_FILE);
 	    	SVNFileUtil.rename(dbFrom, dbTo);
-	    	/*!!!	
+	    	
 	    	db.open(SVNWCDbOpenMode.ReadWrite, (ISVNOptions)null, false, false);
 	    	wcContext = new SVNWCContext(db, getOperation().getEventHandler());
 	    	wcContext.wqRun(localAbsPath);
-	    	*/
+	    	
 	    	db.close();
     	} finally {
+    		db.close();
     		SVNFileUtil.deleteAll(upgradeData.rootAbsPath, true);
     	}
 	    			
@@ -378,7 +374,7 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
     		return;
     	}
     	
-    	SVNHashSet children = new SVNHashSet();
+    	ArrayList<File> children = new ArrayList<File>();
     	try {
     		getVesionedSubdirs(dirAbsPath, children, false, false);
     	}
@@ -397,8 +393,7 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 			getOperation().getEventHandler().handleEvent(event, -1);
 		}
 
-    	for (Iterator<File> dirs = children.iterator(); dirs.hasNext();) {
-			File childAbsPath = dirs.next();
+    	for (File childAbsPath : children) {
 			upgradeWorkingCopy(dirBaton, db, childAbsPath, data, reposCache, reposInfo);
 		} 
     }
@@ -458,9 +453,8 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 				reposCache.put(thisDir.getRepositoryRootURL(), thisDir.getUUID());
 			}
 			
-			String dirAbsPathString = dirAbsPath.getAbsolutePath().replace(File.separatorChar, '/');
-	        String rootAbsPathString = data.rootAbsPath.getAbsolutePath().replace(File.separatorChar, '/'); 
-			String oldWcRootAbsPath = SVNPathUtil.getCommonPathAncestor(dirAbsPathString, rootAbsPathString);
+			String dirAbsPathString = SVNFileUtil.getFilePath(dirAbsPath);
+	        String oldWcRootAbsPath = SVNPathUtil.getCommonPathAncestor(dirAbsPathString, SVNFileUtil.getFilePath(data.rootAbsPath));
 			File dirRelPath = new File(SVNPathUtil.getRelativePath(oldWcRootAbsPath, dirAbsPathString));
 			
 			
@@ -470,7 +464,7 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 			
 			/***** ENTRIES - WRITE *****/
 			try {
-				dirBaton = writeUpgradedEntries(parentDirBaton, db, data, dirAbsPath, entries, textBases);
+				dirBaton = SvnOldUpgradeEntries.writeUpgradedEntries(parentDirBaton, db, data, dirAbsPath, entries, textBases);
 			}
 			catch (SVNException ex) {
 				if (ex.getErrorMessage().getErrorCode() == SVNErrorCode.WC_CORRUPT) {
@@ -483,37 +477,32 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 			/* If we don't know precisely where the wcprops are, ignore them.  */
 			if (oldFormat != SVNWCContext.WC_WCPROPS_LOST)
 			{
-				PropFetchHandler propGetHandler = new PropFetchHandler();
-		    	access.walkEntries(dirAbsPath, propGetHandler, false, SVNDepth.FILES);
-		    				
-		    	SVNHashMap allProps = propGetHandler.getAllProps();
-		    	
-		    	int i = 1;
 				/*
 				if (oldFormat <= SVNWCContext.WC_WCPROPS_MANY_FILES_VERSION)
 					allProps = readManyWcProps(dirAbsPath);
 				else
 					allProps = readWcProps(dirAbsPath);
 				*/
-								
-				/*!!!
-				SVN_ERR(svn_wc__db_upgrade_apply_dav_cache(data->sdb, dir_relpath,
-			                  allProps, scratch_pool));
-			    */
+				
+				
+				SVNHashMap cachedProps = new SVNHashMap();
+				SVNVersionedProperties verProps = area.getWCProperties("");
+				cachedProps.put("", verProps.asMap());
+				SVNHashSet children = getVesionedFiles(dirRelPath, data.root.getSDb(), data.workingCopyId);
+				for (Iterator<File> files = children.iterator(); files.hasNext();) {
+					File file = files.next();
+					verProps = area.getWCProperties(SVNFileUtil.getFileName(file));
+					cachedProps.put(SVNFileUtil.getFileName(file), verProps.asMap());
+				} 
+				SvnWcDbProperties.upgradeApplyDavCache(data.root, dirRelPath, cachedProps);
 			}
 			
+			
 			/* Upgrade all the properties (including "this dir").
-			
-			Note: this must come AFTER the entries have been migrated into the
-			database. The upgrade process needs the children in BASE_NODE and
-			WORKING_NODE, and to examine the resultant WORKING state.  */
-			
-			/*!!!
-			SVN_ERR(migrate_props(dir_abspath, data->root_abspath, data->sdb, old_format,
-			wc_id, scratch_pool));
-			*/
-		
-    	}
+			Note: this must come AFTER the entries have been migrated into the database. 
+			The upgrade process needs the children in BASE_NODE and WORKING_NODE, and to examine the resultant WORKING state.  */
+			migrateProps(dirAbsPath, data, oldFormat, area);
+		}
 		finally {
 			access.close();
 		}
@@ -522,14 +511,14 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
     }
     
     /* The checksums of one pre-1.7 text-base file.  If the text-base file exists, both checksums are filled in, otherwise both fields are NULL. */
-    private class TextBaseFileInfo
+    public class TextBaseFileInfo
     {
       public SvnChecksum sha1Checksum;
       public SvnChecksum md5Checksum;
     }
 
     /* The text-base checksums of the normal base and/or the revert-base of one pre-1.7 versioned text file. */
-    private class TextBaseInfo
+    public class TextBaseInfo
     {
     	public TextBaseFileInfo normalBase;
     	public TextBaseFileInfo revertBase;
@@ -688,88 +677,10 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
     }
     */
     
-    private class PropFetchHandler implements ISVNEntryHandler {
-    	private SVNHashMap allProps = new SVNHashMap();
-    	
-    	public SVNHashMap getAllProps() {
-    		return allProps;
-    	}
-    	
-        public void handleEntry(File path, SVNEntry entry) throws SVNException {
-            SVNAdminArea adminArea = entry.getAdminArea();
-            if (entry.isDirectory() && !entry.isThisDir()) {
-                return;
-            }
-            SVNProperties props = adminArea.getBaseProperties(entry.getName()).asMap();
-            props.putAll(adminArea.getProperties(entry.getName()).asMap());
-            props.putAll(adminArea.getRevertProperties(entry.getName()).asMap());
-            if (props.size() > 0)
-            	allProps.put(path, props);
-        }
-
-        public void handleError(File path, SVNErrorMessage error) throws SVNException {
-            SVNErrorManager.error(error, SVNLogType.WC);
-        }
-    }
-   
-	 
-	/* Return in CHILDREN, the list of all 1.6 versioned subdirectories which also exist on disk as directories.
-
-    If DELETE_DIR is not NULL set *DELETE_DIR to TRUE if the directory should be deleted after migrating to WC-NG, otherwise to FALSE.
-
-    If SKIP_MISSING is TRUE, don't add missing or obstructed subdirectories to the list of children. 
-    */
-    public static boolean getVesionedSubdirs(File localAbsPath, SVNHashSet children, boolean isCalculateDoDeleteDir, boolean isSkipMissing) throws SVNException {
-    	boolean isDoDeleteDir = false;
-    	
-    	SVNWCAccess access = SVNWCAccess.newInstance(null);
-    	Map<String, SVNEntry> entries = null;
-    	
-    	try {
-    		SVNAdminArea area = access.probeOpen(localAbsPath, false, 0);
-    		entries = area.getEntries();
-    	}
-		finally {
-			access.close();
-		}
-    	    	
-    	SVNEntry thisDir = null;
-    	for (Iterator<String> names = entries.keySet().iterator(); names.hasNext();) {
-            String name = (String) names.next();
-            SVNEntry entry = (SVNEntry) entries.get(name);
-            
-            /* skip "this dir"  */
-            if ("".equals(name)) {
-            	thisDir = entry;
-            	continue;
-            }
-            else if (entry == null || entry.getKind() != SVNNodeKind.DIR) {
-            	continue;
-            }
-            
-            File childAbsPath =  SVNFileUtil.createFilePath(localAbsPath, name);
-            
-            if (isSkipMissing)
-            {
-              SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(childAbsPath));
-              if (kind != SVNNodeKind.DIR)
-                continue;
-            }
-            
-            children.add(childAbsPath);
-        }
-    	
-    	if (isCalculateDoDeleteDir) {
-    		isDoDeleteDir = (thisDir != null && thisDir.isScheduledForDeletion() && !thisDir.isKeepLocal());
-    	}
-    	
-    	return isDoDeleteDir;
-    }
-    
     public static void wipePostUpgrade(SVNWCContext ctx, File dirAbsPath, boolean isWholeAdmin) throws SVNException {
     	ctx.checkCancelled();
 		
-		SVNHashSet subDirs = new SVNHashSet();
+		ArrayList<File> subDirs = new ArrayList<File>();
 		boolean isDoDeleteDir = false;
 		try {
 			getVesionedSubdirs(dirAbsPath, subDirs, true, true);
@@ -777,8 +688,7 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 			return;
 		}
 		
-		for (Iterator<File> dirs = subDirs.iterator(); dirs.hasNext();) {
-			File childAbsPath = dirs.next();
+		for (File childAbsPath : subDirs) {
 			wipePostUpgrade(ctx, childAbsPath, true);
 		}
 				
@@ -838,655 +748,138 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 		return SVNWCUtils.admChild(dirAbsPath, ADM_LOCK);
 	}
 	
-	private WriteBaton writeUpgradedEntries(WriteBaton parentNode, SVNWCDb db,  SVNWCDbUpgradeData upgradeData, File dirAbsPath, 
-			Map<String, SVNEntry> entries, SVNHashMap textBases) throws SVNException {
-		WriteBaton dirNode = new WriteBaton();
-		
-		SVNEntry thisDir = entries.get("");
-		/* If there is no "this dir" entry, something is wrong. */
-		if (thisDir == null) {
-			SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "No default entry in directory '{0}'", dirAbsPath);
-            SVNErrorManager.error(err, SVNLogType.WC);
+	/* Return in CHILDREN, the list of all 1.6 versioned subdirectories which also exist on disk as directories.
+    If DELETE_DIR is not NULL set *DELETE_DIR to TRUE if the directory should be deleted after migrating to WC-NG, otherwise to FALSE.
+    If SKIP_MISSING is TRUE, don't add missing or obstructed subdirectories to the list of children. 
+    */
+    public static boolean getVesionedSubdirs(File localAbsPath, ArrayList<File> children, boolean isCalculateDoDeleteDir, boolean isSkipMissing) throws SVNException {
+    	boolean isDoDeleteDir = false;
+    	
+    	SVNWCAccess access = SVNWCAccess.newInstance(null);
+    	Map<String, SVNEntry> entries = null;
+    	
+    	try {
+    		SVNAdminArea area = access.probeOpen(localAbsPath, false, 0);
+    		entries = area.getEntries();
+    	}
+		finally {
+			access.close();
 		}
-		File oldRootAbsPath = SVNFileUtil.createFilePath(SVNPathUtil.getCommonPathAncestor(
-				SVNPathUtil.getAbsolutePath(dirAbsPath.getAbsolutePath()), SVNPathUtil.getAbsolutePath(upgradeData.rootAbsPath.getAbsolutePath())));
-		
-		assert(oldRootAbsPath != null);
-		File dirRelPath = SVNWCUtils.skipAncestor(oldRootAbsPath, dirAbsPath);
-		
-		/* Write out "this dir" */
-		dirNode = writeEntry(true, parentNode, db, upgradeData, thisDir, null, dirRelPath, 
-				SVNFileUtil.createFilePath(upgradeData.rootAbsPath, dirRelPath), oldRootAbsPath, thisDir, false);
-				
-		for (Iterator<String> names = entries.keySet().iterator(); names.hasNext();) {
+    	    	
+    	SVNEntry thisDir = null;
+    	for (Iterator<String> names = entries.keySet().iterator(); names.hasNext();) {
             String name = (String) names.next();
             SVNEntry entry = (SVNEntry) entries.get(name);
-            TextBaseInfo info = (TextBaseInfo)textBases.get(name);
-            if ("".equals(name)) 
-            	continue;
             
-            /* Write the entry. Pass TRUE for create locks, because we still use this function for upgrading old working copies. */
-            File childAbsPath =  SVNFileUtil.createFilePath(dirAbsPath, name);
-            File childRelPath = SVNWCUtils.skipAncestor(oldRootAbsPath, childAbsPath);
-            writeEntry(false, dirNode, db, upgradeData, entry, info, childRelPath, 
-            		SVNFileUtil.createFilePath(upgradeData.rootAbsPath, childRelPath), oldRootAbsPath, thisDir, true);
-		}
-		
-		if (dirNode.treeConflicts != null) {
-			writeActualOnlyEntries(dirNode.treeConflicts, upgradeData.root.getSDb(), upgradeData.workingCopyId, SVNFileUtil.getFilePath(dirRelPath));
-		}
+            /* skip "this dir"  */
+            if ("".equals(name)) {
+            	thisDir = entry;
+            	continue;
+            }
+            else if (entry == null || entry.getKind() != SVNNodeKind.DIR) {
+            	continue;
+            }
+            
+            File childAbsPath =  SVNFileUtil.createFilePath(localAbsPath, name);
+            
+            if (isSkipMissing)
+            {
+              SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(childAbsPath));
+              if (kind != SVNNodeKind.DIR)
+                continue;
+            }
+            
+            children.add(childAbsPath);
+        }
+    	
+    	if (isCalculateDoDeleteDir) {
+    		isDoDeleteDir = (thisDir != null && thisDir.isScheduledForDeletion() && !thisDir.isKeepLocal());
+    	}
+    	
+    	return isDoDeleteDir;
+    }
+
+    /* Return in CHILDREN the list of all versioned *files* in SDB that are children of PARENT_RELPATH.  
+     * These files' existence on disk is not tested.
+
+     * This set of children is intended for property upgrades. Subdirectory's properties exist in the subdirs.
+
+     * Note that this uses just the SDB to locate children, which means that the children must have been upgraded to wc-ng format. */
+    
+    
+    private SVNHashSet getVesionedFiles(File parentRelPath, SVNSqlJetDb sDb, long wcId) throws SVNException {
+    	SVNHashSet children = new SVNHashSet();
+    	
+    	/* ### just select 'file' children. do we need 'symlink' in the future?  */
+    	SVNSqlJetStatement stmt = sDb.getStatement(SVNWCDbStatements.SELECT_ALL_FILES);
+    	try {
+	    	stmt.bindLong(1, wcId);
+	    	stmt.bindString(2, SVNFileUtil.getFilePath(parentRelPath));
+	    	
+	    	/* ### 10 is based on Subversion's average of 8.5 files per versioned directory in its repository. maybe use a different value? or
+		     ### count rows first?  */
+	    	
+	    	boolean haveRow = stmt.next();
+	        while (haveRow) {
+	            File localRelPath = SVNFileUtil.createFilePath(stmt.getColumnString(SVNWCDbSchema.NODES__Fields.local_relpath));
+	            if (!children.contains(localRelPath)) 
+	            	children.add(localRelPath);
+	            haveRow = stmt.next();
+	        }
+    	} finally {
+            stmt.reset();
+        }    
+    	return children;
+    }
+  
 	
-		return dirNode;
-	}
-	
-	private class DbNode {
-		long wcId;
-		String localRelPath;
-		long opDepth;
-		long reposId;
-		String reposRelPath;
-		String parentRelPath;
-		SVNWCDbStatus presence = SVNWCDbStatus.Normal;
-		long revision;
-		SVNNodeKind kind;  /* ### should switch to svn_wc__db_kind_t */
-		SvnChecksum checksum;
-		long translatedSize;
-		long changedRev;
-		SVNDate changedDate;
-		String changedAuthor;
-		SVNDepth depth;
-		SVNDate lastModTime;
-		SVNProperties properties;
-		boolean isFileExternal;
-	};
-	
-	private class DbActualNode {
-		long wcId;
-		String localRelPath;
-		String parentRelPath;
-		SVNProperties properties;
-		String conflictOld;
-		String conflictNew;
-		String conflictWorking;
-		String propReject;
-		String changelist;
-		/* ### enum for text_mod */
-		String treeConflictData;
-	}
-		
-	private class WriteBaton {
-		DbNode base;
-		DbNode work;
-		DbNode belowWork;
-		SVNHashMap treeConflicts;
-	};
-	
-	/* Write the information for ENTRY to WC_DB.  The WC_ID, REPOS_ID and REPOS_ROOT will all be used for writing ENTRY.
-	   ### transitioning from straight sql to using the wc_db APIs.  For the time being, we'll need both parameters. */
-	private WriteBaton writeEntry(boolean isCalculateEntryNode, WriteBaton parentNode, SVNWCDb db, SVNWCDbUpgradeData upgradeData, SVNEntry entry, TextBaseInfo textBaseInfo,
-			File localRelPath, File tmpEntryAbsPath, File rootAbsPath, SVNEntry thisDir, boolean isCreateLocks) throws SVNException {
-		DbNode baseNode = null;
-		DbNode workingNode = null;
-		DbNode belowWorkingNode = null;
-		DbActualNode actualNode = null;
-		
-		String parentRelPath = null;
-		if (localRelPath != null)
-			parentRelPath = SVNFileUtil.getFilePath(SVNFileUtil.getFileDir(localRelPath)); 
-		
-		/* This is how it should work, it doesn't work like this yet because we need proper op_depth to layer the working nodes.
+	private void migrateProps(File dirAbsPath, SVNWCDbUpgradeData data, int originalFormat, SVNAdminArea area) throws SVNException {
+	 /* General logic here: iterate over all the immediate children of the root
+	    (since we aren't yet in a centralized system), and for any properties that exist, map them as follows:
 
-	     Using "svn add", "svn rm", "svn cp" only files can be replaced pre-wcng; directories can only be normal, deleted or added.
-	     Files cannot be replaced within a deleted directory, so replaced files can only exist in a normal directory, or a directory that
-	     is added+copied.  In a normal directory a replaced file needs a base node and a working node, in an added+copied directory a
-	     replaced file needs two working nodes at different op-depths.
+	     if (revert props exist):
+	       revert  -> BASE
+	       base    -> WORKING
+	       working -> ACTUAL
+	     else if (prop pristine is working [as defined in props.c] ):
+	       base    -> WORKING
+	       working -> ACTUAL
+	     else:
+	       base    -> BASE
+	       working -> ACTUAL
 
-	     With just the above operations the conversion for files and directories is straightforward:
+	     ### the middle "test" should simply look for a WORKING_NODE row
 
-	           pre-wcng                             wcng
-	     parent         child                 parent     child
-
-	     normal         normal                base       base
-	     add+copied     normal+copied         work       work
-	     normal+copied  normal+copied         work       work
-	     normal         delete                base       base+work
-	     delete         delete                base+work  base+work
-	     add+copied     delete                work       work
-	     normal         add                   base       work
-	     add            add                   work       work
-	     add+copied     add                   work       work
-	     normal         add+copied            base       work
-	     add            add+copied            work       work
-	     add+copied     add+copied            work       work
-	     normal         replace               base       base+work
-	     add+copied     replace               work       work+work
-	     normal         replace+copied        base       base+work
-	     add+copied     replace+copied        work       work+work
-
-	     However "svn merge" make this more complicated.  The pre-wcng "svn merge" is capable of replacing a directory, that is it can
-	     mark the whole tree deleted, and then copy another tree on top. 
-	     The entries then represent the replacing tree overlayed on the deleted tree.
-
-	       original       replace          schedule in
-	       tree           tree             combined tree
-
-	       A              A                replace+copied
-	       A/f                             delete+copied
-	       A/g            A/g              replace+copied
-	                      A/h              add+copied
-	       A/B            A/B              replace+copied
-	       A/B/f                           delete+copied
-	       A/B/g          A/B/g            replace+copied
-	                      A/B/h            add+copied
-	       A/C                             delete+copied
-	       A/C/f                           delete+copied
-	                      A/D              add+copied
-	                      A/D/f            add+copied
-
-	     The original tree could be normal tree, or an add+copied tree. 
-	     Committing such a merge generally worked, but making further tree modifications before commit sometimes failed.
-
-	     The root of the replace is handled like the file replace:
-
-	           pre-wcng                             wcng
-	     parent         child                 parent     child
-
-	     normal         replace+copied        base       base+work
-	     add+copied     replace+copied        work       work+work
-
-	     although obviously the node is a directory rather then a file.
-	     There are then more conversion states where the parent is replaced.
-
-	           pre-wcng                                wcng
-	     parent           child              parent            child
-
-	     replace+copied   add                [base|work]+work  work
-	     replace+copied   add+copied         [base|work]+work  work
-	     replace+copied   delete+copied      [base|work]+work  [base|work]+work
-	     delete+copied    delete+copied      [base|work]+work  [base|work]+work
-	     replace+copied   replace+copied     [base|work]+work  [base|work]+work
+	     Note that it is legal for "working" props to be missing. That implies no local changes to the properties.
 	  */
 		
-		assert(parentNode != null || entry.getSchedule() == null);
-		assert(parentNode == null || parentNode.base != null || parentNode.belowWork != null || parentNode.work != null);
+		String dirAbsPathString = SVNFileUtil.getFilePath(dirAbsPath);
+        String oldWcRootAbsPath = SVNPathUtil.getCommonPathAncestor(dirAbsPathString, SVNFileUtil.getFilePath(data.rootAbsPath));
+		File dirRelPath = new File(SVNPathUtil.getRelativePath(oldWcRootAbsPath, dirAbsPathString));
 		
-		if (entry.getSchedule() == null) {
-			if (entry.isCopied() || 
-				(entry.getDepth() == SVNDepth.EXCLUDE && parentNode != null && parentNode.base == null && parentNode.work != null)) {
-				workingNode = new DbNode();
-			} else {
-				baseNode = new DbNode();
-			}
-		}
-		else if (entry.isScheduledForAddition()) {
-			workingNode = new DbNode();
-			if (entry.isDeleted()) {
-				if (parentNode != null && parentNode.base != null)
-					baseNode = new DbNode();
-				else
-					belowWorkingNode = new DbNode();
-			}
-		}
-		else if (entry.isScheduledForDeletion()) {
-			workingNode = new DbNode();
-			if (parentNode != null && parentNode.base != null) 
-				baseNode = new DbNode();
-			if (parentNode != null && parentNode.work != null)
-				belowWorkingNode = new DbNode();
-		}
-		else if (entry.isScheduledForReplacement()) {
-			workingNode = new DbNode();
-			if (parentNode != null && parentNode.base != null) 
-				baseNode = new DbNode();
-			else
-				belowWorkingNode = new DbNode();
-		}
+		 /* Migrate the props for "this dir".  */
+		migrateNodeProps(dirAbsPath, data, "", originalFormat, area);
 		
-		/* Something deleted in this revision means there should always be a BASE node to indicate the not-present node.  */
-		if (entry.isDeleted()) {
-			assert(baseNode != null || belowWorkingNode != null);
-			assert(!entry.isIncomplete());
-			if (baseNode != null)
-				baseNode.presence = SVNWCDbStatus.NotPresent;
-			else
-				belowWorkingNode.presence = SVNWCDbStatus.NotPresent;
-		} else if (entry.isAbsent()) {
-			assert(baseNode != null && workingNode == null && belowWorkingNode == null);
-			assert(!entry.isIncomplete());
-			baseNode.presence = SVNWCDbStatus.Excluded;
-		}
+		SVNHashSet children = getVesionedFiles(dirRelPath, data.root.getSDb(), data.workingCopyId);
 		
-		if (entry.isCopied()) {
-			if (entry.getCopyFromSVNURL() != null) {
-				workingNode.reposId = upgradeData.repositoryId;
-				String relPath = SVNURLUtil.getRelativeURL(thisDir.getRepositoryRootURL(), entry.getCopyFromSVNURL());
-				if (relPath == null)
-					workingNode.reposRelPath = null;
-				else 
-					workingNode.reposRelPath = relPath;
-				workingNode.revision = entry.getCopyFromRevision();
-				workingNode.opDepth = SVNWCUtils.relpathDepth(localRelPath);
-			} else if (parentNode != null && parentNode.work != null && parentNode.work.reposRelPath != null) {
-				workingNode.reposId = upgradeData.repositoryId;
-				workingNode.reposRelPath = SVNPathUtil.append(parentNode.work.reposRelPath, SVNFileUtil.getFileName(localRelPath));
-				workingNode.revision = parentNode.work.revision;
-				workingNode.opDepth = parentNode.work.opDepth;
-			} else {
-				SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "No copyfrom URL for '{0}'", localRelPath);
-	            SVNErrorManager.error(err, SVNLogType.WC);
-			}
-		}
-		
-		if (entry.getConflictOld() != null) {
-			actualNode = new DbActualNode();
-			if (parentRelPath != null && entry.getConflictOld() != null)
-				actualNode.conflictOld = SVNPathUtil.append(parentRelPath, entry.getConflictOld());
-			else
-				actualNode.conflictOld = entry.getConflictOld();
-			
-			if (parentRelPath != null && entry.getConflictNew() != null)
-				actualNode.conflictNew = SVNPathUtil.append(parentRelPath, entry.getConflictNew());
-			else
-				actualNode.conflictNew = entry.getConflictNew();
-			
-			if (parentRelPath != null && entry.getConflictWorking() != null)
-				actualNode.conflictWorking = SVNPathUtil.append(parentRelPath, entry.getConflictWorking());
-			else
-				actualNode.conflictWorking = entry.getConflictWorking();
-		}
-		
-		if (entry.getPropRejectFile() != null) {
-			actualNode = new DbActualNode();
-			actualNode.propReject = SVNPathUtil.append(
-					entry.isDirectory() ? SVNFileUtil.getFilePath(localRelPath) : parentRelPath, entry.getPropRejectFile());
-			
-		}
-		
-		if (entry.getChangelistName() != null) {
-			actualNode = new DbActualNode();
-			actualNode.changelist = entry.getChangelistName();
-		}
-		
-		SVNHashMap treeConflicts = null;
-		/* ### set the text_mod value? */
-		if (isCalculateEntryNode && entry.getTreeConflictData() != null) {
-			/* Issues #3840/#3916: 1.6 stores multiple tree conflicts on the parent node, 1.7 stores them directly on the conflited nodes.
-	         So "((skel1) (skel2))" becomes "(skel1)" and "(skel2)" */
-			
-			treeConflicts = new SVNHashMap();
-			Map tcs = entry.getTreeConflicts();
-	        for (Iterator keys = tcs.keySet().iterator(); keys.hasNext();) {
-	            File entryPath = (File) keys.next();
-	            SVNTreeConflictDescription conflict = (SVNTreeConflictDescription) tcs.get(entryPath);
-				assert(conflict.isTreeConflict());
-				/* Fix dubious data stored by old clients, local adds don't have a repository URL. */
-				if (conflict.getConflictReason() == SVNConflictReason.ADDED)
-					conflict.setSourceLeftVersion(null);
-				SVNConflictVersion nullVersion = new SVNConflictVersion(null, null, SVNRepository.INVALID_REVISION, SVNNodeKind.UNKNOWN);
-				SVNSkel newSkel = SVNTreeConflictUtil.getConflictSkel(nullVersion, conflict);
-				String key = SVNFileUtil.getFilePath(SVNWCUtils.skipAncestor(rootAbsPath, conflict.getPath()));
-				treeConflicts.put(key, newSkel.toString());
-            }
-		}
-		
-		if (parentNode != null && parentNode.treeConflicts != null) {
-			String treeConflictData = (String)parentNode.treeConflicts.get(SVNFileUtil.getFilePath(localRelPath));
-			if (treeConflictData != null) {
-				actualNode = new DbActualNode();
-				actualNode.treeConflictData = treeConflictData;
-				/* Reset hash so that we don't write the row again when writing actual-only nodes */
-				parentNode.treeConflicts.remove(SVNFileUtil.getFilePath(localRelPath));
-			}
-			
-			
-		}
-		
-		if (entry.getExternalFilePath() != null) {
-			baseNode = new DbNode();
-		}
-		
-		/* Insert the base node. */
-		if (baseNode != null) {
-			baseNode.wcId = upgradeData.workingCopyId;
-			baseNode.localRelPath = SVNFileUtil.getFilePath(localRelPath);
-			baseNode.opDepth = 0;
-			baseNode.parentRelPath = parentRelPath;
-			baseNode.revision = entry.getRevision();
-			baseNode.lastModTime = SVNDate.parseDate(entry.getTextTime());
-			baseNode.translatedSize = entry.getWorkingSize();
-			if (entry.getDepth() != SVNDepth.EXCLUDE) {
-				baseNode.depth = entry.getDepth();
-			} else {
-				baseNode.presence = SVNWCDbStatus.Excluded;
-				baseNode.depth = SVNDepth.INFINITY;
-			}
-			if (entry.isDeleted()) {
-				assert(baseNode.presence == SVNWCDbStatus.NotPresent);
-				baseNode.kind = entry.getKind();
-			} else if (entry.isAbsent()) {
-				assert(baseNode.presence == SVNWCDbStatus.ServerExcluded);
-				/* ### should be svn_node_unknown, but let's store what we have. */
-				baseNode.kind = entry.getKind();
-				/* Store the most likely revision in the node to avoid base nodes without a valid revision. Of course
-	             we remember that the data is still incomplete. */
-				if (baseNode.revision == ISVNWCDb.INVALID_REVNUM && parentNode != null && parentNode.base != null)
-					baseNode.revision = parentNode.base.revision;
-			} else {
-				baseNode.kind = entry.getKind();
-				if (baseNode.presence != SVNWCDbStatus.ServerExcluded) {
-					/* All subdirs are initially incomplete, they stop being incomplete when the entries file in the subdir is
-	                 upgraded and remain incomplete if that doesn't happen. */
-					if (entry.isDirectory() && "".equals(entry.getName())) {
-						baseNode.presence = SVNWCDbStatus.Incomplete;
-						/* Store the most likely revision in the node to avoid base nodes without a valid revision. Of course
-	                     we remember that the data is still incomplete. */
-						if (parentNode != null && parentNode.base != null) {
-							baseNode.revision = parentNode.base.revision;
-						}
-					} else if (entry.isIncomplete()) {
-							/* ### nobody should have set the presence.  */
-							assert(baseNode.presence == SVNWCDbStatus.Normal);
-							baseNode.presence = SVNWCDbStatus.Incomplete;
-						}
-					}
-			}
-			
-			if (entry.isDirectory()) {
-				baseNode.checksum = null;
-			} else {
-				if (textBaseInfo != null && textBaseInfo.revertBase != null && textBaseInfo.revertBase.sha1Checksum != null) {
-					baseNode.checksum = textBaseInfo.revertBase.sha1Checksum;
-				} else if (textBaseInfo != null && textBaseInfo.normalBase != null && textBaseInfo.normalBase.sha1Checksum != null) {
-					baseNode.checksum = textBaseInfo.normalBase.sha1Checksum;
-				} else {
-					baseNode.checksum = null;
-				}
-				 /* The base MD5 checksum is available in the entry, unless there is a copied WORKING node.  
-				  * If possible, verify that the entry checksum matches the base file that we found. */
-				if (!(workingNode != null && entry.isCopied())) {
-					SvnChecksum entryMd5Checksum = new SvnChecksum(Kind.md5, entry.getChecksum());
-					SvnChecksum foundMd5Checksum = null;
-					if (textBaseInfo != null && textBaseInfo.revertBase != null && textBaseInfo.revertBase.md5Checksum != null) {
-						foundMd5Checksum = textBaseInfo.revertBase.md5Checksum;
-					} else if (textBaseInfo != null && textBaseInfo.normalBase != null && textBaseInfo.normalBase.md5Checksum != null) {
-						foundMd5Checksum = textBaseInfo.normalBase.md5Checksum;
-					}
-					
-					
-					if (entryMd5Checksum != null && foundMd5Checksum != null && !entryMd5Checksum.equals(foundMd5Checksum)) {
-						SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, 
-							"Bad base MD5 checksum for '{0}'; expected: '{1}'; found '{2}';", 
-									SVNFileUtil.createFilePath(rootAbsPath, localRelPath), entryMd5Checksum, foundMd5Checksum);
-			           SVNErrorManager.error(err, SVNLogType.WC);
-					}  else {
-		                  /* ### Not sure what conditions this should cover. */
-		                  /* SVN_ERR_ASSERT(entry->deleted || ...); */
-		            }
-					
-				}
-			}
-			
-			if (thisDir.getRepositoryRootURL() != null) {
-				baseNode.reposId = upgradeData.repositoryId;
-				if (entry.getSVNURL() != null) {
-					String relPath = SVNURLUtil.getRelativeURL(thisDir.getRepositoryRootURL(), entry.getSVNURL());
-					baseNode.reposRelPath = relPath != null ? relPath : "";
-				} else {
-					String relPath = SVNURLUtil.getRelativeURL(thisDir.getRepositoryRootURL(), thisDir.getSVNURL());
-					if (relPath == null) {
-						baseNode.reposRelPath = entry.getName();
-					} else {
-						baseNode.reposRelPath = SVNPathUtil.append(relPath, entry.getName());
-					}
-				}
-			}
-
-		      /* TODO: These values should always be present, if they are missing 
-		       * during an upgrade, set a flag, and then ask the user to talk to the server.
-
-		         Note: cmt_rev is the distinguishing value. The others may be 0 or NULL if the corresponding revprop has been deleted.  */
-			
-			baseNode.changedRev = entry.getCommittedRevision();
-			baseNode.changedDate = SVNDate.parseDate(entry.getCommittedDate());
-			baseNode.changedAuthor = entry.getAuthor();
-			
-			if (entry.getExternalFilePath() != null) {
-				baseNode.isFileExternal = true;
-			}
-			
-			insertNode(upgradeData.root.getSDb(), baseNode);
-			
-			/* We have to insert the lock after the base node, because the node
-	         must exist to lookup various bits of repos related information for the abs path. */
-			
-			if (entry.getLockToken() != null && isCreateLocks) {
-				SVNWCDbLock lock = new SVNWCDbLock();
-				lock.token = entry.getLockToken();
-				lock.owner = entry.getLockOwner();
-				lock.comment = entry.getLockComment();
-				lock.date = SVNDate.parseDate(entry.getLockCreationDate());
-				
-				db.addLock(tmpEntryAbsPath, lock);
-			}
-		}
-		
-		if (belowWorkingNode != null) {
-			DbNode work = parentNode.belowWork != null ? parentNode.belowWork : parentNode.work;
-			belowWorkingNode.wcId = upgradeData.workingCopyId;
-			belowWorkingNode.localRelPath = SVNFileUtil.getFilePath(localRelPath);
-			belowWorkingNode.opDepth = work.opDepth;
-			belowWorkingNode.parentRelPath = parentRelPath;
-			belowWorkingNode.presence = SVNWCDbStatus.Normal;
-			belowWorkingNode.kind = entry.getKind();
-			belowWorkingNode.reposId = upgradeData.repositoryId;
-			
-			if (work.reposRelPath != null) {
-				belowWorkingNode.reposRelPath = SVNPathUtil.append(work.reposRelPath, entry.getName());
-			} else {
-				belowWorkingNode.reposRelPath = null;
-			}
-			belowWorkingNode.revision = parentNode.work.revision;
-		    
-			/* The revert_base checksum isn't available in the entry structure, so the caller provides it. */
-
-			/* text_base_info is NULL for files scheduled to be added. */
-			belowWorkingNode.checksum = null;
-			if (textBaseInfo != null) {
-				if (entry.isScheduledForDeletion()) {
-					belowWorkingNode.checksum = textBaseInfo.normalBase.sha1Checksum;
-				} else {
-					belowWorkingNode.checksum = textBaseInfo.revertBase.sha1Checksum;
-				}
-			}
-			
-			belowWorkingNode.translatedSize = 0;
-			belowWorkingNode.changedRev = ISVNWCDb.INVALID_REVNUM;
-			belowWorkingNode.changedDate = null;
-			belowWorkingNode.changedAuthor = null;
-			belowWorkingNode.depth = SVNDepth.INFINITY;
-			belowWorkingNode.lastModTime = null;
-			belowWorkingNode.properties = null;
-			
-			insertNode(upgradeData.root.getSDb(), belowWorkingNode);
-		}
-		
-		/* Insert the working node. */
-		if (workingNode != null) {
-			workingNode.wcId = upgradeData.workingCopyId;
-			workingNode.localRelPath = SVNFileUtil.getFilePath(localRelPath);
-			workingNode.parentRelPath = parentRelPath;
-			workingNode.changedRev = ISVNWCDb.INVALID_REVNUM;
-			workingNode.lastModTime = SVNDate.parseDate(entry.getTextTime());
-			workingNode.translatedSize = entry.getWorkingSize();
-			
-			if (entry.getDepth() != SVNDepth.EXCLUDE) {
-				workingNode.depth = entry.getDepth();
-			} else {
-				workingNode.presence = SVNWCDbStatus.Excluded;
-				workingNode.depth = SVNDepth.INFINITY;
-			}
-			
-			if (entry.isDirectory()) {
-				workingNode.checksum = null;
-			} else {
-				/* text_base_info is NULL for files scheduled to be added. */
-				if (textBaseInfo != null) {
-					workingNode.checksum = textBaseInfo.normalBase.sha1Checksum;
-				}
-				/* If an MD5 checksum is present in the entry, we can verify that it matches the MD5 of the base file we found earlier. */
-				/*#ifdef SVN_DEBUG
-				if (entry->checksum && text_base_info)
-		          {
-		            svn_checksum_t *md5_checksum;
-		            SVN_ERR(svn_checksum_parse_hex(&md5_checksum, svn_checksum_md5,
-		                                           entry->checksum, result_pool));
-		            SVN_ERR_ASSERT(
-		              md5_checksum && text_base_info->normal_base.md5_checksum);
-		            SVN_ERR_ASSERT(svn_checksum_match(
-		              md5_checksum, text_base_info->normal_base.md5_checksum));
-		          }
-		         #endif*/
-			}
-			workingNode.kind = entry.getKind();
-			if (workingNode.presence != SVNWCDbStatus.Excluded) {
-				/* All subdirs start of incomplete, and stop being incomplete when the entries file in the subdir is upgraded. */
-				if (entry.isDirectory() && "".equals(entry.getName())) {
-					workingNode.presence = SVNWCDbStatus.Incomplete;
-					workingNode.kind = SVNNodeKind.DIR;
-				} else if (entry.isScheduledForDeletion()) {
-					workingNode.presence = SVNWCDbStatus.BaseDeleted;
-					workingNode.kind = entry.getKind();
-				} else {
-					/* presence == normal  */
-					workingNode.kind = entry.getKind();
-					if (entry.isIncomplete()) {
-						/* We shouldn't be overwriting another status.  */
-						assert(workingNode.presence == SVNWCDbStatus.Normal);
-						workingNode.presence = SVNWCDbStatus.Incomplete;
-					}
-				}
-			}
-			
-			 /* These should generally be unset for added and deleted files,
-	         and contain whatever information we have for copied files. Let's just store whatever we have.
-
-	         Note: cmt_rev is the distinguishing value. The others may be 0 or NULL if the corresponding revprop has been deleted.  */
-			if (workingNode.presence != SVNWCDbStatus.BaseDeleted) {
-				workingNode.changedRev = entry.getCommittedRevision();
-				workingNode.changedDate =  SVNDate.parseDate(entry.getCommittedDate());
-				workingNode.changedAuthor = entry.getAuthor();
-			}
-			
-			if (entry.isScheduledForDeletion() && parentNode != null && parentNode.work != null && parentNode.work.presence == SVNWCDbStatus.BaseDeleted) {
-				workingNode.opDepth = parentNode.work.opDepth;
-			} else {
-				workingNode.opDepth = SVNWCUtils.relpathDepth(localRelPath);
-			}
-			
-			insertNode(upgradeData.root.getSDb(), workingNode);
-		}
-		
-		/* Insert the actual node. */
-		if (actualNode != null) {
-			actualNode.wcId = upgradeData.workingCopyId;
-			actualNode.localRelPath = SVNFileUtil.getFilePath(localRelPath);
-			actualNode.parentRelPath = parentRelPath;
-			insertActualNode(upgradeData.root.getSDb(), actualNode);
-		}
-		
-		WriteBaton entryNode = null;
-		if (isCalculateEntryNode) {
-			entryNode = new WriteBaton();
-			entryNode.base = baseNode;
-			entryNode.work = workingNode;
-			entryNode.belowWork = belowWorkingNode;
-			entryNode.treeConflicts = treeConflicts;
-		}
-		
-		if (entry.getExternalFilePath() != null) {
-			/* TODO: Maybe add a file external registration inside EXTERNALS here, 
-            to allow removing file externals that aren't referenced from svn:externals.
-      		The svn:externals values are processed anyway after everything is upgraded */
-		}
-		return entryNode;
+		/* Iterate over all the files in this SDB.  */
+		for (Iterator<File> files = children.iterator(); files.hasNext();) {
+			File file = files.next();
+			migrateNodeProps(dirAbsPath, data, SVNFileUtil.getFileName(file), originalFormat, area);
+		} 
 	}
 	
-	/* No transaction required: called from write_entry which is itself transaction-wrapped. */
-	private void insertNode(SVNSqlJetDb sDb, DbNode node) throws SVNException {
-		assert(node.opDepth > 0 || node.reposRelPath != null);
-		SVNSqlJetStatement stmt = sDb.getStatement(SVNWCDbStatements.INSERT_NODE);
-		stmt.bindf("isisnnnnsnrisnnni",  
-				node.wcId,
-				node.localRelPath == null ? "" : node.localRelPath,
-				node.opDepth,
-				node.parentRelPath,
-				/* Setting depth for files? */
-				(node.kind == SVNNodeKind.DIR) ? SVNDepth.asString(node.depth) : null,
-				node.changedRev,
-				node.changedDate != null ? node.changedDate : 0,
-				node.changedAuthor,
-				node.lastModTime
-				);
+	/* Migrate the properties for one node (LOCAL_ABSPATH).  */
+	private void migrateNodeProps(File dirAbsPath, SVNWCDbUpgradeData data, String name, int originalFormat, SVNAdminArea area) throws SVNException {
+		String dirAbsPathString = SVNFileUtil.getFilePath(dirAbsPath);
+        String oldWcRootAbsPath = SVNPathUtil.getCommonPathAncestor(dirAbsPathString, SVNFileUtil.getFilePath(data.rootAbsPath));
+		File dirRelPath = new File(SVNPathUtil.getRelativePath(oldWcRootAbsPath, dirAbsPathString));
 		
-		if (node.reposRelPath != null) {
-			stmt.bindLong(5, node.reposId);
-			stmt.bindString(6, node.reposRelPath);
-			stmt.bindLong(7, node.revision);
-		}
-		
-		stmt.bindString(8, SvnWcDbStatementUtil.getPresenceText(node.presence));
-		
-		if (node.kind == SVNNodeKind.NONE) 
-			stmt.bindString(10, "unknown");
-		else
-			stmt.bindString(10, node.kind.toString());
-			
-		if (node.kind == SVNNodeKind.FILE) 
-			stmt.bindChecksum(14, node.checksum);
-		
-		if (node.properties != null)  /* ### Never set, props done later */
-			stmt.bindProperties(15, node.properties);
-		
-		if (node.translatedSize != ISVNWCDb.INVALID_FILESIZE) 
-			stmt.bindLong(16, node.translatedSize);
-		
-		if (node.isFileExternal)
-			stmt.bindLong(20, 1);
-		
-		stmt.done();
+		SvnWcDbProperties.upgradeApplyProperties(data.root, data.rootAbsPath, SVNFileUtil.createFilePath(dirRelPath, name), 
+    			area.getBaseProperties(name).asMap(), area.getProperties(name).asMap(), area.getRevertProperties(name).asMap(), originalFormat);
+    	
 	}
 	
-	private void insertActualNode(SVNSqlJetDb sDb, DbActualNode actualNode) throws SVNException {
-		SVNSqlJetStatement stmt = sDb.getStatement(SVNWCDbStatements.INSERT_ACTUAL_NODE);
-		stmt.bindLong(1, actualNode.wcId);
-		stmt.bindString(2, actualNode.localRelPath);
-		stmt.bindString(3, actualNode.parentRelPath);
-		if (actualNode.properties != null)
-			stmt.bindProperties(4, actualNode.properties);
-		if (actualNode.conflictOld != null) {
-			stmt.bindString(5, actualNode.conflictOld);
-			stmt.bindString(6, actualNode.conflictNew);
-			stmt.bindString(7, actualNode.conflictWorking);
-		}
-		if (actualNode.propReject != null) 
-			stmt.bindString(8, actualNode.propReject);
-		if (actualNode.changelist != null) 
-			stmt.bindString(9, actualNode.changelist);
-		if (actualNode.treeConflictData != null) 
-			stmt.bindString(10, actualNode.treeConflictData);
-		stmt.done();
-	}
 	
-	private void writeActualOnlyEntries(SVNHashMap treeConflicts, SVNSqlJetDb sDb, long wcId, String dirRelPath) throws SVNException {
-		for (Iterator<String> items = treeConflicts.keySet().iterator(); items.hasNext();) {
-			String path = items.next();
-			DbActualNode actualNode = new DbActualNode();
-			actualNode.wcId = wcId;
-			actualNode.localRelPath = path;
-			actualNode.parentRelPath = dirRelPath;
-			actualNode.treeConflictData = (String)treeConflicts.get(path);
-			insertActualNode(sDb, actualNode);
-		}
-	}
 	
- }
+}

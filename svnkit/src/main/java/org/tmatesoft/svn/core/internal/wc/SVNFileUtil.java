@@ -505,12 +505,15 @@ public class SVNFileUtil {
             deleteFile(dst);
             return;
         }
+        //TODO directory cannot be renamed????
+        /*
         if (dst.isDirectory()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot rename file ''{0}'' to ''{1}''; file ''{1}'' is a directory", new Object[] {
                     src, dst
             });
             SVNErrorManager.error(err, Level.FINE, SVNLogType.WC);
         }
+        */
         boolean renamed = false;
         if (!isWindows) {
             renamed = src.renameTo(dst);

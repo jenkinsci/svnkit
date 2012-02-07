@@ -3280,9 +3280,11 @@ public class SVNWCContext {
     }
     
     public SVNSkel wqBuildPostUpgrade() throws SVNException {
+    	SVNSkel result = SVNSkel.createEmptyList();
     	SVNSkel workItem = SVNSkel.createEmptyList();
     	workItem.prependString(WorkQueueOperation.POSTUPGRADE.getOpName());
-    	return workItem;
+    	result.addChild(workItem);
+    	return result;
     }
     
     public SVNSkel wqMerge(SVNSkel workItem1, SVNSkel workItem2) throws SVNException {
