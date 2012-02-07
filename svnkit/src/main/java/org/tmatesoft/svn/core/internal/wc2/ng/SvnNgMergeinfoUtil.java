@@ -18,6 +18,7 @@ import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.SVNWCNodeReposInfo;
@@ -27,13 +28,16 @@ import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeOriginInfo;
 import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.wc.SVNEvent;
+import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 public class SvnNgMergeinfoUtil {
     
-    private static class SvnMergeInfoInfo {
+    public static class SvnMergeInfoInfo {
         Map<String, SVNMergeRangeList> mergeinfo;
         boolean inherited;
         String walkRelPath;
@@ -53,7 +57,76 @@ public class SvnNgMergeinfoUtil {
         return null;
     }
     
-    private static SvnMergeInfoInfo getWCMergeInfo(SVNWCContext context, File localAbsPath, File limitAbsPath, SVNMergeInfoInheritance inheritance, 
+    public static void elideMergeInfo(SVNWCContext context, SVNRepository repos, File targetAbsPath, File limitAbsPath) throws SVNException {
+        if (limitAbsPath == null || !limitAbsPath.equals(targetAbsPath)) {
+            
+            SvnMergeInfoInfo targetMergeinfo = null;
+            try {
+                targetMergeinfo = getWCMergeInfo(context, targetAbsPath, limitAbsPath, SVNMergeInfoInheritance.INHERITED, false);
+            } catch (SVNException e) {
+                if (e.getErrorMessage().getErrorCode() != SVNErrorCode.MERGE_INFO_PARSE_ERROR) {
+                    throw e;
+                }
+            }
+            if (targetMergeinfo == null || targetMergeinfo.inherited || targetMergeinfo.mergeinfo == null) {
+                return;
+            }
+            SvnMergeInfoInfo mergeinfo = null;
+            try {
+                mergeinfo = getWCMergeInfo(context, targetAbsPath, limitAbsPath, SVNMergeInfoInheritance.NEAREST_ANCESTOR, false);
+            } catch (SVNException e) {
+                if (e.getErrorMessage().getErrorCode() != SVNErrorCode.MERGE_INFO_PARSE_ERROR) {
+                    throw e;
+                }
+            }
+            if ((mergeinfo == null || mergeinfo.mergeinfo == null) && limitAbsPath == null) {
+                mergeinfo = new SvnMergeInfoInfo();
+                try {
+                    mergeinfo.mergeinfo = getWCOrReposMergeInfo(context, targetAbsPath, repos, true, SVNMergeInfoInheritance.NEAREST_ANCESTOR);
+                } catch (SVNException e) {
+                    if (e.getErrorMessage().getErrorCode() != SVNErrorCode.MERGE_INFO_PARSE_ERROR) {
+                        throw e;
+                    }
+                }
+            } 
+            if (mergeinfo.mergeinfo == null && limitAbsPath != null) {
+                return;
+            }
+            elideMergeInfo(context, mergeinfo.mergeinfo, targetMergeinfo.mergeinfo, targetAbsPath);
+            
+        }
+    }
+    
+    private static void elideMergeInfo(SVNWCContext context, Map<String, SVNMergeRangeList> mergeinfo, Map<String, SVNMergeRangeList> mergeinfo2, File targetAbsPath) throws SVNException {
+        if (SVNMergeInfoUtil.shouldElideMergeInfo(mergeinfo, mergeinfo2, null)) {
+            SvnNgPropertiesManager.setProperty(context, targetAbsPath, SVNProperty.MERGE_INFO, null, SVNDepth.EMPTY, true, null, null);
+            
+            if (context.getEventHandler() != null) {
+                SVNEvent event = SVNEventFactory.createSVNEvent(targetAbsPath, 
+                        SVNNodeKind.UNKNOWN, 
+                        null, -1, 
+                        SVNStatusType.INAPPLICABLE, 
+                        SVNStatusType.INAPPLICABLE, 
+                        SVNStatusType.INAPPLICABLE, 
+                        SVNEventAction.MERGE_ELIDE_INFO, 
+                        null, 
+                        null, null, null);
+                context.getEventHandler().handleEvent(event, -1);
+                event = SVNEventFactory.createSVNEvent(targetAbsPath, 
+                        SVNNodeKind.UNKNOWN, 
+                        null, -1, 
+                        SVNStatusType.INAPPLICABLE, 
+                        SVNStatusType.INAPPLICABLE, 
+                        SVNStatusType.INAPPLICABLE, 
+                        SVNEventAction.UPDATE_UPDATE, 
+                        null, 
+                        null, null, null);
+                context.getEventHandler().handleEvent(event, -1);
+            }
+        }
+    }
+
+    public static SvnMergeInfoInfo getWCMergeInfo(SVNWCContext context, File localAbsPath, File limitAbsPath, SVNMergeInfoInheritance inheritance, 
             boolean ignoreInvalidMergeInfo) throws SVNException {
         long baseRevision = context.getNodeBaseRev(localAbsPath);
         Map<String, SVNMergeRangeList> wcMergeInfo = null;
@@ -292,4 +365,37 @@ public class SvnNgMergeinfoUtil {
         }
     }
     
- }
+    public static Map<String, SVNMergeRangeList> getWCOrReposMergeInfo(SVNWCContext context, File wcPath, SVNRepository repository, boolean reposOnly, SVNMergeInfoInheritance inheritance) throws SVNException {
+        SvnMergeInfoCatalogInfo catalog = getWcOrReposMergeInfoCatalog(context, repository, wcPath, false, reposOnly, false, inheritance);
+        if (catalog != null && catalog.catalog != null) {
+            return catalog.catalog.values().iterator().next();
+        }
+        return null;
+    }
+    
+    public static Map<String, Map<String, SVNMergeRangeList>> convertToCatalog(Map<String, SVNMergeInfo> catalog) {
+        if (catalog == null) {
+            return new TreeMap<String, Map<String,SVNMergeRangeList>>();
+        }
+        Map<String, Map<String, SVNMergeRangeList>> result = new TreeMap<String, Map<String,SVNMergeRangeList>>();
+        for (String path : catalog.keySet()) {
+            SVNMergeInfo mi = catalog.get(path);
+            result.put(path, mi.getMergeSourcesToMergeLists());
+        }
+        return result;
+    }
+    
+    public static Map<String, Map<String, SVNMergeRangeList>> addPrefixToCatalog(Map<String, Map<String, SVNMergeRangeList>> catalog, File prefix) {
+        Map<String, Map<String, SVNMergeRangeList>> result = new TreeMap<String, Map<String,SVNMergeRangeList>>();
+        for (String path : catalog.keySet()) {
+            Map<String, SVNMergeRangeList> mi = catalog.get(path);
+            if (path.startsWith("/")) {
+                path = path.substring(1);
+            }
+            String prefixedPath = SVNFileUtil.createFilePath(prefix, path).getPath();
+            result.put(prefixedPath, mi);
+        }
+        return result;
+    }
+
+}

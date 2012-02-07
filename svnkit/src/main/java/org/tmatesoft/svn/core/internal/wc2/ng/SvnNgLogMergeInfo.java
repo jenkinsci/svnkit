@@ -223,7 +223,7 @@ public class SvnNgLogMergeInfo extends SvnNgOperationRunner<SVNLogEntry, SvnLogM
         SvnLog log = getOperation().getOperationFactory().createLog();
         
         log.setSingleTarget(SvnTarget.fromURL(sourceURL, SVNRevision.create(youngestRev)));
-        log.setDiscoverChangedPaths(getOperation().isDiscoverChangedPaths());
+        log.setDiscoverChangedPaths(true /*getOperation().isDiscoverChangedPaths()*/);
         log.setRevisionProperties(getOperation().getRevisionProperties());
         log.setLimit(-1);
         log.setStopOnCopy(false);
@@ -263,12 +263,12 @@ public class SvnNgLogMergeInfo extends SvnNgOperationRunner<SVNLogEntry, SvnLogM
                 boolean allSubtreesHaveThisRev = true;
                 SVNMergeRangeList thisRevRangeList = new SVNMergeRangeList(logEntry.getRevision() - 1, logEntry.getRevision(), true);
                 for (String changedPath : logEntry.getChangedPaths().keySet()) {
-                    String mergeSourceRelTarget = null;
+                    File mergeSourceRelTarget = null;
                     boolean interrupted = false;
                     String mSourcePath = null;
                     for (String mergeSourcePath : this.mergeSourcePaths) {
                         mSourcePath = mergeSourcePath;
-                        mergeSourceRelTarget = SVNPathUtil.getPathAsChild(mergeSourcePath, changedPath);
+                        mergeSourceRelTarget = mergeSourcePath.equals(changedPath) ? new File("") : 
                                 SVNWCUtils.skipAncestor(SVNFileUtil.createFilePath(mergeSourcePath), SVNFileUtil.createFilePath(changedPath));
                         if (mergeSourceRelTarget != null) {
                             interrupted = true;
@@ -281,7 +281,7 @@ public class SvnNgLogMergeInfo extends SvnNgOperationRunner<SVNLogEntry, SvnLogM
                     if (!interrupted) {
                         continue;
                     }
-                    String targetPathAffected = SVNPathUtil.append(reposTargertAbsPath, mergeSourceRelTarget);
+                    String targetPathAffected = SVNPathUtil.append(reposTargertAbsPath, mergeSourceRelTarget.getPath());
                     Map<String, SVNMergeRangeList> nearestAncestorMergeInfo = null;
                     boolean ancestorIsSelf = false;
                     for(String path : targetCatalog.keySet()) {

@@ -388,9 +388,21 @@ public class SVNClientImpl implements ISVNClient {
         return eventHandler;
     }
 
-    public void setConflictResolver(ConflictResolverCallback callback) {
+    public void setConflictResolver(final ConflictResolverCallback callback) {
         conflictResolverCallback = callback;
-        conflictHandler = null;
+        conflictHandler = callback != null ? new ISVNConflictHandler() {
+            public SVNConflictResult handleConflict(SVNConflictDescription conflictDescription) throws SVNException {
+                ConflictResult result = null;
+                try {
+                    result = callback.resolve(getConflictDescription(conflictDescription));
+                } catch (ClientException e) {
+                    throwSvnException(e);
+                } catch (SubversionException e) {
+                    throwSvnException(e);
+                }
+                return result != null ? getSVNConflictResult(result) : null;
+            }
+        } : null;
         updateSvnOperationsFactory();
     }
 
@@ -852,7 +864,9 @@ public class SVNClientImpl implements ISVNClient {
 
             merge.run();
         } catch (SVNException e) {
-            throw ClientException.fromException(e);
+            ClientException ce = ClientException.fromException(e);
+            ce.initCause(e);
+            throw ce;
         } finally {
             afterOperation();
         }
@@ -2212,6 +2226,9 @@ public class SVNClientImpl implements ISVNClient {
     }
 
     private Mergeinfo getMergeinfo(Map<SVNURL, SVNMergeRangeList> mergeInfoMap) {
+        if (mergeInfoMap == null) {
+            return null;
+        }
         Mergeinfo mergeinfo = new Mergeinfo();
         for (Map.Entry<SVNURL, SVNMergeRangeList> entry : mergeInfoMap.entrySet()) {
             SVNURL url = entry.getKey();
@@ -2519,6 +2536,12 @@ public class SVNClientImpl implements ISVNClient {
             return ClientNotifyInformation.Action.upgraded_path;
         } else if (action == SVNEventAction.WC_PATH_NONEXISTENT) {
             return ClientNotifyInformation.Action.path_nonexistent;
+        } else if (action == SVNEventAction.MERGE_ELIDE_INFO) {
+            return ClientNotifyInformation.Action.merge_elide_info;
+        } else if (action == SVNEventAction.MERGE_RECORD_INFO) {
+            return ClientNotifyInformation.Action.merge_record_info;
+        } else if (action == SVNEventAction.RECORD_MERGE_BEGIN) {
+            return ClientNotifyInformation.Action.merge_record_info_begin;
         } else {
             throw new IllegalArgumentException("Unknown action: " + action);
         }

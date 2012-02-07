@@ -15,6 +15,7 @@ import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
@@ -22,6 +23,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.DirParsedInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.WalkerChildInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODES__Fields;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 
 public class SvnWcDbReader extends SvnWcDbShared {
@@ -32,6 +34,28 @@ public class SvnWcDbReader extends SvnWcDbShared {
         replaceRoot
     }
     
+    public static Collection<File> getServerExcludedNodes(SVNWCDb db, File path) throws SVNException {
+        DirParsedInfo dirInfo = db.obtainWcRoot(path);
+        SVNSqlJetDb sdb = dirInfo.wcDbDir.getWCRoot().getSDb();
+        long wcId = dirInfo.wcDbDir.getWCRoot().getWcId();
+        File localRelPath = dirInfo.localRelPath;
+        
+        Collection<File> result = new ArrayList<File>();
+        SVNSqlJetStatement stmt = sdb.getStatement(SVNWCDbStatements.SELECT_ALL_SERVER_EXCLUDED_NODES);
+        try {
+            stmt.bindf("isi", wcId, localRelPath, 0);
+            while(stmt.next()) {
+                final File localPath = getColumnPath(stmt, NODES__Fields.local_relpath);
+                final File absPath = dirInfo.wcDbDir.getWCRoot().getAbsPath(localPath);
+                result.add(absPath);
+            }
+        } finally {
+            reset(stmt);
+        }
+        return result;
+        
+    }
+
     public static Collection<File> getNotPresentDescendants(SVNWCDb db, File parentPath) throws SVNException {
         DirParsedInfo dirInfo = db.obtainWcRoot(parentPath);
         SVNSqlJetDb sdb = dirInfo.wcDbDir.getWCRoot().getSDb();
@@ -135,6 +159,64 @@ public class SvnWcDbReader extends SvnWcDbShared {
             commitTransaction(dirInfo.wcDbDir.getWCRoot());
         }
         return result;
+    }
+    
+    public static long[] getMinAndMaxRevisions(SVNWCDb db, File localAbsPath) throws SVNException {
+
+        DirParsedInfo dirInfo = db.obtainWcRoot(localAbsPath);
+        SVNSqlJetDb sdb = dirInfo.wcDbDir.getWCRoot().getSDb();
+        final long wcId = dirInfo.wcDbDir.getWCRoot().getWcId();
+        final File localRelpath = dirInfo.localRelPath;
+        final long[] revs = new long[] { -1, -1, -1, -1 };
+
+        SVNSqlJetSelectStatement stmt = new SVNSqlJetSelectStatement(sdb, SVNWCDbSchema.NODES) {
+            
+            @Override
+            protected Object[] getWhere() throws SVNException {
+                return new Object[] {wcId};
+            }
+
+            @Override
+            protected boolean isFilterPassed() throws SVNException {
+                
+                String path = getColumnString(SVNWCDbSchema.NODES__Fields.local_relpath);
+                if ("".equals(localRelpath.getPath()) || path.equals(localRelpath.getPath()) || path.startsWith(localRelpath.getPath() + "/")) {
+                    long depth = getColumnLong(SVNWCDbSchema.NODES__Fields.op_depth);
+                    if (depth != 0) {
+                        return false;
+                    }
+                    String presence = getColumnString(SVNWCDbSchema.NODES__Fields.presence);
+                    if (!("normal".equals(presence) || "incomplete".equals(presence))) {
+                        return false;
+                    }
+                    long rev = getColumnLong(SVNWCDbSchema.NODES__Fields.revision);
+                    long changedRev = getColumnLong(SVNWCDbSchema.NODES__Fields.revision);
+                    if (getColumnBoolean(SVNWCDbSchema.NODES__Fields.file_external)) {
+                        return false;
+                    }
+                    if (revs[0] < 0 || revs[0] > rev) {
+                        revs[0] = rev;
+                    }
+                    if (revs[1] < 0 || revs[1] < rev) {
+                        revs[1] = rev;
+                    }
+                    if (revs[2] < 0 || revs[2] > changedRev) {
+                        revs[2] = changedRev;
+                    }
+                    if (revs[3] < 0 || revs[3] < changedRev) {
+                        revs[3] = changedRev;
+                    }
+                }
+                return false;
+            }
+        };
+        try {
+            while(stmt.next()) {}
+        } finally {
+            reset(stmt);
+        }
+                
+        return revs;
     }
     
     public static Map<String, Structure<WalkerChildInfo>> readWalkerChildrenInfo(SVNWCDb db, File localAbspath, Map<String, Structure<WalkerChildInfo>> children) throws SVNException {

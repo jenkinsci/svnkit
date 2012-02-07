@@ -1981,4 +1981,22 @@ public class SVNFileUtil {
         return null;
     }
 
+    public static boolean compare(InputStream is, InputStream old) {
+        try {
+            while(true) {
+                int r1 = is.read();
+                int r2 = old.read();
+                if (r1 != r2) {
+                    return false;
+                }
+                if (r1 < 0) {
+                    break;
+                }
+            }
+        } catch (IOException e) {
+            return false;
+        }
+        return true;
+    }
+
 }

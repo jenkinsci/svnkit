@@ -736,6 +736,16 @@ public class SvnCodec {
         return result;
     }
 
+    public static Collection<SVNRevisionRange> oldRevisionRanges(Collection<SvnRevisionRange> ranges) {
+        Collection<SVNRevisionRange> result = new ArrayList<SVNRevisionRange>();
+        if (ranges != null) {
+            for (SvnRevisionRange range : ranges) {
+                result.add(revisionRange(range));
+            }
+        }
+        return result;
+    }
+
     public static SVNCopySource copySource(SvnCopySource newSource) {
         if (newSource.getSource().getURL() != null) {
             final SVNCopySource copySource = new SVNCopySource(newSource.getSource().getResolvedPegRevision(), newSource.getRevision(), newSource.getSource().getURL());

@@ -302,7 +302,7 @@ public class SVNWCContext {
     }
     
     public ISVNEventHandler getEventHandler() {
-        return eventHandler.peek();
+        return eventHandler.isEmpty() ? null : eventHandler.peek();
     }
     
     public void pushEventHandler(ISVNEventHandler handler) {
@@ -2045,6 +2045,67 @@ public class SVNWCContext {
         return db.readProperties(localAbspath);
     }
     
+    public MergePropertiesInfo mergeProperties(File localAbsPath, SVNConflictVersion leftVersion, SVNConflictVersion rightVersion, 
+            SVNProperties baseProperties, SVNProperties propChanges, boolean dryRun) throws SVNException {
+        Structure<NodeInfo> info = getDb().readInfo(localAbsPath, NodeInfo.status, NodeInfo.kind, NodeInfo.hadProps, NodeInfo.propsMod, NodeInfo.haveBase);
+        SVNWCDbStatus status = info.get(NodeInfo.status);
+        
+        if (status == SVNWCDbStatus.NotPresent 
+                || status == SVNWCDbStatus.ServerExcluded
+                || status == SVNWCDbStatus.Excluded) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{0}'' was not found.", localAbsPath);
+            SVNErrorManager.error(err, SVNLogType.WC);
+        } else if (status != SVNWCDbStatus.Normal
+                && status != SVNWCDbStatus.Added
+                && status != SVNWCDbStatus.Incomplete) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS, 
+                    "The node ''{0}'' does not have properties in this state.", localAbsPath);
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+        
+        for (String propName : propChanges.nameSet()) {
+            if (!SVNProperty.isRegularProperty(propName)) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_PROP_KIND, 
+                        "The property ''{0}'' may not be merged into ''{1}''", propName, localAbsPath);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+        }
+        SVNProperties pristineProps = null;
+        if (info.is(NodeInfo.hadProps)) {
+            pristineProps = getPristineProps(localAbsPath);
+        }
+        if (pristineProps == null) {
+            pristineProps = new SVNProperties();
+        }
+        SVNProperties actualProps;
+        if (info.is(NodeInfo.propsMod)) {
+            actualProps = getActualProperties(localAbsPath);
+        } else {
+            actualProps = new SVNProperties();
+        }
+        SVNWCDbKind kind = info.get(NodeInfo.kind);
+        info.release();
+        MergePropertiesInfo result = mergeProperties2(null, localAbsPath, kind, leftVersion, rightVersion, baseProperties, pristineProps, actualProps, propChanges, false, dryRun);
+        if (dryRun) {
+            return result;
+        }
+        File dirAbsPath;
+        if (kind == SVNWCDbKind.Dir) {
+            dirAbsPath = localAbsPath;
+        } else {
+            dirAbsPath = SVNFileUtil.getParentFile(localAbsPath);
+        }
+        writeCheck(dirAbsPath);
+        SVNSkel workItems = result.workItems;
+        if (workItems == null) {
+            workItems = SVNSkel.createEmptyList();
+        }
+        getDb().opSetProps(localAbsPath, result.newActualProperties, null, hasMagicProperty(propChanges), workItems);
+        getDb().addWorkQueue(localAbsPath, workItems);
+        wqRun(localAbsPath);
+        return result;
+    }
+    
     public MergePropertiesInfo mergeProperties2(MergePropertiesInfo mergeInfo, File localAbsPath, SVNWCDbKind kind, SVNConflictVersion leftVersion, SVNConflictVersion rightVersion,
             SVNProperties serverBaseProperties, SVNProperties pristineProperties, SVNProperties actualProperties, SVNProperties propChanges, 
             boolean baseMerge, boolean dryRun) throws SVNException {
@@ -2574,6 +2635,31 @@ public class SVNWCContext {
         public SVNStatusType mergeOutcome;
         public SVNProperties newBaseProperties;
         public SVNProperties newActualProperties;
+        public boolean treeConflicted;
+    }
+    
+    public MergeInfo mergeText(File left, File right, File target, String leftLabel, String rightLabel, String targetLabel, 
+            SVNConflictVersion leftVersion, SVNConflictVersion rightVersion, boolean dryRun, SVNDiffOptions options, SVNProperties propDiff) throws SVNException {
+        if (!dryRun) {
+            writeCheck(target);
+        }
+        MergeInfo result = new MergeInfo();
+        SVNWCDbKind kind = getDb().readKind(target, true);
+        if (kind == SVNWCDbKind.Unknown) {
+            result.mergeOutcome = SVNStatusType.NO_MERGE;
+            return result;
+        }
+        if (getDb().isNodeHidden(target)) {
+            result.mergeOutcome = SVNStatusType.NO_MERGE;
+            return result;
+        }
+        SVNProperties actualProps = getDb().readProperties(target);
+        result = merge(left, leftVersion, right, rightVersion, target, target, leftLabel, rightLabel, targetLabel, actualProps, dryRun, options, propDiff);
+        if (!dryRun) {
+            getDb().addWorkQueue(target, result.workItems);
+            wqRun(target);
+        }
+        return result;
     }
 
     public MergeInfo merge(File leftAbspath, SVNConflictVersion leftVersion, File rightAbspath, SVNConflictVersion rightVersion, File targetAbspath, File wriAbspath, String leftLabel,
@@ -2589,13 +2675,13 @@ public class SVNWCContext {
             boolean hidden;
 
             if (kind == SVNWCDbKind.Unknown) {
-                info.mergeOutcome = SVNStatusType.UNCHANGED; // svn_wc_merge_no_merge;
+                info.mergeOutcome = SVNStatusType.NO_MERGE; // svn_wc_merge_no_merge;
                 return info;
             }
 
             hidden = db.isNodeHidden(targetAbspath);
             if (hidden) {
-                info.mergeOutcome = SVNStatusType.UNCHANGED; // svn_wc_merge_no_merge;
+                info.mergeOutcome = SVNStatusType.NO_MERGE; // svn_wc_merge_no_merge;
                 return info;
             }
         }

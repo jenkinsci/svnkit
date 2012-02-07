@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 
 
 public class SvnMerge extends SvnOperation<Void> {
@@ -30,8 +31,15 @@ public class SvnMerge extends SvnOperation<Void> {
     public void addRevisionRange(SvnRevisionRange range) {
         if (ranges == null) {
             ranges = new ArrayList<SvnRevisionRange>();
-            ranges.add(range);
         }
+        SVNRevision start = range.getStart();
+        SVNRevision end = range.getEnd();        
+        if (start == SVNRevision.UNDEFINED && end == SVNRevision.UNDEFINED) {
+            start = SVNRevision.create(0);
+            end = getSource().getResolvedPegRevision();
+            range  = SvnRevisionRange.create(start, end);
+        }
+        ranges.add(range);
     }
     
     public Collection<SvnRevisionRange> getRevisionRanges() {

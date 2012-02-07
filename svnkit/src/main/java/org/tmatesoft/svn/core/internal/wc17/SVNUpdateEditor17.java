@@ -2038,4 +2038,6 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         }
         return mergeFileInfo;
     }
+    
+    
 }

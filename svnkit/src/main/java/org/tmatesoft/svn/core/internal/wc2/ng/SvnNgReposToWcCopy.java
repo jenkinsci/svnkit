@@ -481,7 +481,7 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
         return new File(ancestor);
     }
     
-    private static void addFileToWc(SVNWCContext context, File path, InputStream newBaseContents, InputStream newContents,
+    public static void addFileToWc(SVNWCContext context, File path, InputStream newBaseContents, InputStream newContents,
             SVNProperties newBaseProps, SVNProperties newProps, SVNURL copyFromURL, long copyFromRev) throws SVNException {
         context.writeCheck(path);
         

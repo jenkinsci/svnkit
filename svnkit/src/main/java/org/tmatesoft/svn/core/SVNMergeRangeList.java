@@ -598,4 +598,13 @@ public class SVNMergeRangeList {
         }
         return lastRange;
     }
+
+    public SVNMergeRangeList mergeRevision(long revision) {
+        if (getSize() > 0 && getRanges()[getSize() - 1].getEndRevision() == revision - 1) {
+            getRanges()[getSize() - 1].setEndRevision(revision);
+            return this;
+        }
+        pushRange(revision -1 , revision, true);
+        return this;
+    }
 }
