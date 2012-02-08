@@ -263,13 +263,12 @@ public class SvnNgLogMergeInfo extends SvnNgOperationRunner<SVNLogEntry, SvnLogM
                 boolean allSubtreesHaveThisRev = true;
                 SVNMergeRangeList thisRevRangeList = new SVNMergeRangeList(logEntry.getRevision() - 1, logEntry.getRevision(), true);
                 for (String changedPath : logEntry.getChangedPaths().keySet()) {
-                    File mergeSourceRelTarget = null;
+                    String mergeSourceRelTarget = null;
                     boolean interrupted = false;
                     String mSourcePath = null;
                     for (String mergeSourcePath : this.mergeSourcePaths) {
                         mSourcePath = mergeSourcePath;
-                        mergeSourceRelTarget = mergeSourcePath.equals(changedPath) ? new File("") : 
-                                SVNWCUtils.skipAncestor(SVNFileUtil.createFilePath(mergeSourcePath), SVNFileUtil.createFilePath(changedPath));
+                        mergeSourceRelTarget = mergeSourcePath.equals(changedPath) ? "" : SVNPathUtil.getPathAsChild(mergeSourcePath, changedPath);
                         if (mergeSourceRelTarget != null) {
                             interrupted = true;
                             if ("".equals(mergeSourceRelTarget) && logEntry.getChangedPaths().get(changedPath).getType() != 'M') {                                
@@ -281,7 +280,10 @@ public class SvnNgLogMergeInfo extends SvnNgOperationRunner<SVNLogEntry, SvnLogM
                     if (!interrupted) {
                         continue;
                     }
-                    String targetPathAffected = SVNPathUtil.append(reposTargertAbsPath, mergeSourceRelTarget.getPath());
+                    String targetPathAffected = SVNPathUtil.append(reposTargertAbsPath, mergeSourceRelTarget);
+                    if (!targetPathAffected.startsWith("/")) {
+                        targetPathAffected = "/" + targetPathAffected;
+                    }
                     Map<String, SVNMergeRangeList> nearestAncestorMergeInfo = null;
                     boolean ancestorIsSelf = false;
                     for(String path : targetCatalog.keySet()) {
