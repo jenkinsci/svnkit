@@ -578,7 +578,12 @@ public class SVNStatusEditor17 {
         File anchorAbsPath;
         String targetName;
         boolean skipRoot;
-        if (dirInfo != null && dirInfo.kind == SVNWCDbKind.Dir) {
+        if (dirInfo != null 
+                && dirInfo.kind == SVNWCDbKind.Dir
+                && dirInfo.status != SVNWCDbStatus.Excluded
+                && dirInfo.status != SVNWCDbStatus.NotPresent
+                && dirInfo.status != SVNWCDbStatus.ServerExcluded) {
+            
             anchorAbsPath = localAbsPath;
             targetName = null;
             skipRoot = false;
