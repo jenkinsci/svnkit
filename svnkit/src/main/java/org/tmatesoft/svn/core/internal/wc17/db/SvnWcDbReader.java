@@ -2,9 +2,9 @@ package org.tmatesoft.svn.core.internal.wc17.db;
 
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnInt64;
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnKind;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnPath;
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnPresence;
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnText;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnPath;
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.reset;
 
 import java.io.File;
@@ -13,18 +13,30 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.tmatesoft.sqljet.core.SqlJetException;
+import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
+import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
+import org.tmatesoft.sqljet.core.table.ISqlJetTable;
+import org.tmatesoft.sqljet.core.table.SqlJetDb;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.DirParsedInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.WalkerChildInfo;
-import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODES__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODES__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
+import org.tmatesoft.svn.util.SVNLogType;
 
 public class SvnWcDbReader extends SvnWcDbShared {
     
@@ -231,7 +243,7 @@ public class SvnWcDbReader extends SvnWcDbShared {
         }
         
         try {
-            stmt.bindf("is", wcId, dirInfo.localRelPath); //SVNFileUtil.getFileDir(dirInfo.localRelPath));
+            stmt.bindf("is", wcId, dirInfo.localRelPath);
             while(stmt.next()) {
                 File childPath = SVNFileUtil.createFilePath(getColumnText(stmt, NODES__Fields.local_relpath));
                 String childName = SVNFileUtil.getFileName(childPath);
@@ -254,6 +266,195 @@ public class SvnWcDbReader extends SvnWcDbShared {
         }
         
         return children;
+    }
+
+    public static boolean hasSwitchedSubtrees(SVNWCDb db, File localAbspath) throws SVNException {
+        DirParsedInfo dirInfo = db.obtainWcRoot(localAbspath);
+        SVNSqlJetDb sdb = dirInfo.wcDbDir.getWCRoot().getSDb();
+        long wcId = dirInfo.wcDbDir.getWCRoot().getWcId();
+        String localRelPathStr = dirInfo.localRelPath.getPath().replace(File.separatorChar, '/');
+        
+        SqlJetDb sqljetDb = sdb.getDb();
+        String parentReposRelpath = ""; 
+
+        ISqlJetCursor cursor = null;
+        try {
+            sqljetDb.beginTransaction(SqlJetTransactionMode.READ_ONLY);
+            ISqlJetTable nodesTable = sqljetDb.getTable(SVNWCDbSchema.NODES.toString());
+            String parentRelPath = null;
+            Map<String, String> parents = new HashMap<String, String>();
+            cursor = nodesTable.scope(null, new Object[] {wcId, localRelPathStr}, null);
+            if ("".equals(localRelPathStr)) {
+                if (!cursor.eof()) {
+                    parentReposRelpath = cursor.getString(SVNWCDbSchema.NODES__Fields.repos_path.toString());
+                    parents.put("", parentReposRelpath);
+                    cursor.next();
+                } 
+            } else if (!"".equals(localRelPathStr)) {
+                parentRelPath = localRelPathStr;
+            }
+            boolean matched = false;
+            while(!cursor.eof()) {
+                String rowRelPath = cursor.getString(SVNWCDbSchema.NODES__Fields.local_relpath.toString());
+                if (rowRelPath.equals(parentRelPath)) {
+                    long opDepth = cursor.getInteger(SVNWCDbSchema.NODES__Fields.op_depth.toString());
+                    if (opDepth == 0) {
+                        parents.put(rowRelPath, cursor.getString(SVNWCDbSchema.NODES__Fields.repos_path.toString()));
+                    }
+                } else if ("".equals(localRelPathStr) || rowRelPath.startsWith(localRelPathStr + "/")) {
+                    matched = true;
+                    long opDepth = cursor.getInteger(SVNWCDbSchema.NODES__Fields.op_depth.toString());
+                    if (opDepth == 0) {
+                        String rowReposRelpath = cursor.getString(SVNWCDbSchema.NODES__Fields.repos_path.toString());
+                        String rowParentRelpath = cursor.getString(SVNWCDbSchema.NODES__Fields.parent_relpath.toString());
+                        if ("dir".equals(cursor.getString(SVNWCDbSchema.NODES__Fields.kind.toString()))) {
+                            parents.put(rowRelPath, rowReposRelpath);
+                        }
+                        parentReposRelpath = parents.get(rowParentRelpath);
+                        String expectedReposRelpath = SVNPathUtil.append(parentReposRelpath, SVNPathUtil.tail(rowRelPath));
+                        if (!rowReposRelpath.equals(expectedReposRelpath)) {
+                            return true;
+                        }
+                    }
+                } else if (matched) {
+                    matched = false;
+                    break;
+                }
+                cursor.next();
+            }
+        } catch (SqlJetException e) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SQLITE_ERROR, e);
+            SVNErrorManager.error(err, SVNLogType.WC);
+        } finally {
+            if (cursor != null) {
+                try {
+                    cursor.close();
+                } catch (SqlJetException e) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SQLITE_ERROR, e);
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                }
+            }
+            try {
+                sqljetDb.commit();
+            } catch (SqlJetException e) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SQLITE_ERROR, e);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+        }
+        
+        return false;
+    }
+
+    public static boolean hasLocalModifications(SVNWCContext context, File localAbspath) throws SVNException {
+        SVNWCDb db = (SVNWCDb) context.getDb();
+        DirParsedInfo dirInfo = db.obtainWcRoot(localAbspath);
+        SVNSqlJetDb sdb = dirInfo.wcDbDir.getWCRoot().getSDb();
+        long wcId = dirInfo.wcDbDir.getWCRoot().getWcId();
+        String localRelPathStr = dirInfo.localRelPath.getPath().replace(File.separatorChar, '/');
+        
+        SqlJetDb sqljetDb = sdb.getDb();
+        ISqlJetCursor cursor = null;
+        boolean matched = false;
+        try {
+            sqljetDb.beginTransaction(SqlJetTransactionMode.READ_ONLY);
+            ISqlJetTable nodesTable = sqljetDb.getTable(SVNWCDbSchema.NODES.toString());
+            cursor = nodesTable.scope(null, new Object[] {wcId, localRelPathStr}, null);
+            // tree modifications
+            while(!cursor.eof()) {
+                String rowRelPath = cursor.getString(SVNWCDbSchema.NODES__Fields.local_relpath.toString());
+                if ("".equals(localRelPathStr) || rowRelPath.equals(localRelPathStr) || rowRelPath.startsWith(localRelPathStr + "/")) {
+                    matched = true;
+                    long opDepth = cursor.getInteger(SVNWCDbSchema.NODES__Fields.op_depth.toString());
+                    if (opDepth > 0) {
+                        return true;
+                    }
+                } else if (matched) {
+                    matched = false;
+                    break;
+                }
+                cursor.next();
+            }
+            cursor.close();
+            ISqlJetTable actualNodesTable = sqljetDb.getTable(SVNWCDbSchema.ACTUAL_NODE.toString());
+            
+            // prop mods
+            cursor = actualNodesTable.scope(null, new Object[] {wcId, localRelPathStr}, null);
+            while(!cursor.eof()) {
+                String rowRelPath = cursor.getString(SVNWCDbSchema.NODES__Fields.local_relpath.toString());
+                if ("".equals(localRelPathStr) || rowRelPath.equals(localRelPathStr) || rowRelPath.startsWith(localRelPathStr + "/")) {
+                    matched = true;
+                    if (cursor.getBlobAsArray(SVNWCDbSchema.ACTUAL_NODE__Fields.properties.toString()) != null) {
+                        return true;
+                    }
+                } else if (matched) {
+                    matched = false;
+                    break;
+                }
+                cursor.next();
+            }
+            cursor.close();
+            
+            // text mods.
+            cursor = nodesTable.scope(null, new Object[] {wcId, localRelPathStr}, null);
+            while(!cursor.eof()) {
+                String rowRelPath = cursor.getString(SVNWCDbSchema.NODES__Fields.local_relpath.toString());
+                if ("".equals(localRelPathStr) || rowRelPath.equals(localRelPathStr) || rowRelPath.startsWith(localRelPathStr + "/")) {
+                    matched = true;
+                    String kind = cursor.getString(SVNWCDbSchema.NODES__Fields.kind.toString());
+                    if ("file".equals(kind)) {
+                        String presence = cursor.getString(SVNWCDbSchema.NODES__Fields.presence.toString());
+                        if ("normal".equals(presence) && !cursor.getBoolean(SVNWCDbSchema.NODES__Fields.file_external.toString())) {
+                            // check for mods.
+                            File localFile = dirInfo.wcDbDir.getWCRoot().getAbsPath(new File(rowRelPath));
+                            SVNFileType ft = SVNFileType.getType(localFile);
+                            if (ft != SVNFileType.FILE) {
+                                return true;
+                            }
+                            long size = cursor.getInteger(SVNWCDbSchema.NODES__Fields.translated_size.toString());
+                            long date = cursor.getInteger(SVNWCDbSchema.NODES__Fields.last_mod_time.toString());
+                            if (size != -1 && date != 0) {
+                                if (size != localFile.length()) {
+                                    return true;
+                                }
+                                if (date/1000 == localFile.lastModified()) {
+                                    cursor.next();
+                                    continue;
+                                }
+                            }
+                            if (context.isTextModified(localFile, false)) {
+                                return true;
+                            }
+                        }
+                    }
+                } else if (matched) {
+                    matched = false;
+                    break;
+                }
+                cursor.next();
+            }
+            cursor.close();
+
+        } catch (SqlJetException e) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SQLITE_ERROR, e);
+            SVNErrorManager.error(err, SVNLogType.WC);
+        } finally {
+            if (cursor != null) {
+                try {
+                    cursor.close();
+                } catch (SqlJetException e) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SQLITE_ERROR, e);
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                }
+            }
+            try {
+                sqljetDb.commit();
+            } catch (SqlJetException e) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SQLITE_ERROR, e);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+        }
+        
+        return false;
     }
 
 }

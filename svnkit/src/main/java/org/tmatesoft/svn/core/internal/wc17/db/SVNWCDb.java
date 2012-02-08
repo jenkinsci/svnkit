@@ -3600,8 +3600,14 @@ public class SVNWCDb implements ISVNWCDb {
         return errorCode == SVNErrorCode.ENTRY_NOT_FOUND || errorCode == SVNErrorCode.FS_NOT_FOUND || errorCode == SVNErrorCode.FS_NOT_OPEN || errorCode == SVNErrorCode.FS_NOT_FILE;
     }
 
-    private static void verifyDirUsable(SVNWCDbDir pdh) {
-        assert (SVNWCDbDir.isUsable(pdh));
+    private static void verifyDirUsable(SVNWCDbDir pdh) throws SVNException {
+        if (!SVNWCDbDir.isUsable(pdh)) {
+            if (pdh != null && pdh.getWCRoot() != null && pdh.getWCRoot().getFormat() != ISVNWCDb.WC_FORMAT_17) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+        }
+        assert (false);
     }
 
     public SVNSqlJetDb borrowDbTemp(File localDirAbsPath, SVNWCDbOpenMode mode) throws SVNException {

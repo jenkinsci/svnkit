@@ -2540,7 +2540,7 @@ public class SVNClientImpl implements ISVNClient {
             return ClientNotifyInformation.Action.merge_elide_info;
         } else if (action == SVNEventAction.MERGE_RECORD_INFO) {
             return ClientNotifyInformation.Action.merge_record_info;
-        } else if (action == SVNEventAction.RECORD_MERGE_BEGIN) {
+        } else if (action == SVNEventAction.MERGE_RECORD_BEGIN) {
             return ClientNotifyInformation.Action.merge_record_info_begin;
         } else {
             throw new IllegalArgumentException("Unknown action: " + action);

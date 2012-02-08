@@ -117,13 +117,13 @@ public class SVNMergeInfoUtil {
         return filteredMergeInfo;
     }
     
-    public static long[] getRangeEndPoints(Map mergeInfo) {
+    public static long[] getRangeEndPoints(Map<?, SVNMergeRangeList> mergeInfo) {
         //long[] { youngestRange, oldestRange }
         long[] rangePoints = { SVNRepository.INVALID_REVISION, SVNRepository.INVALID_REVISION };
         
         if (mergeInfo != null) {
-            for (Iterator mergeInfoIter = mergeInfo.keySet().iterator(); mergeInfoIter.hasNext();) {
-                String path = (String) mergeInfoIter.next();
+            for (Iterator<?> mergeInfoIter = mergeInfo.keySet().iterator(); mergeInfoIter.hasNext();) {
+                Object path = mergeInfoIter.next();
                 SVNMergeRangeList rangeList = (SVNMergeRangeList) mergeInfo.get(path);
                 if (!rangeList.isEmpty()) {
                     SVNMergeRange[] ranges = rangeList.getRanges();
