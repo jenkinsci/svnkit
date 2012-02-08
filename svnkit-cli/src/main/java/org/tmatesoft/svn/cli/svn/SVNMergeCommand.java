@@ -181,7 +181,7 @@ public class SVNMergeCommand extends SVNCommand {
         if (!getSVNEnvironment().isQuiet()) {
             client.setEventHandler(new SVNNotifyPrinter(getSVNEnvironment()));
         }
-        client.setAllowMixedRevisions(getSVNEnvironment().isAllowMixedRevisions());
+        client.setAllowMixedRevisionsWCForMerge(getSVNEnvironment().isAllowMixedRevisions());
         try {
             client.setMergeOptions(getSVNEnvironment().getDiffOptions());
             if (!twoSourcesSpecified) {
