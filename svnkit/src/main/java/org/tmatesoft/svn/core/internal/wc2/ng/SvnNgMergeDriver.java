@@ -40,6 +40,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNStatusEditor17;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.ConflictInfo;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.PropDiffs;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
@@ -585,7 +586,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
                 mergeTarget.implicitMergeInfo = mis[1];
                 targetMergeInfo = mis[0];
             } catch (SVNException e) {
-                
+                throw e;
             }
             repos1.setLocation(url1, false);
             if (!recordOnly) {
@@ -1974,7 +1975,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
                     SVNEvent mergeBeginEvent = SVNEventFactory.createSVNEvent(child.absPath, 
                             SVNNodeKind.NONE, 
                             null, -1, SVNEventAction.MERGE_RECORD_BEGIN, 
-                                    null, null, null);
+                                    null, null, mergeRange);
                     if (context.getEventHandler() != null) {
                         context.getEventHandler().handleEvent(mergeBeginEvent, -1);
                     }
@@ -2157,12 +2158,24 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
         if (mergeinfo != null) {
             mergeInfoValue = SVNMergeInfoUtil.formatMergeInfoToString(mergeinfo, null);
         }                    
+        boolean mergeInfoChanged = false;
+        if (notify && context.getEventHandler() != null) {
+            PropDiffs propDiff = context.getPropDiffs(localAbsPath);
+            mergeInfoChanged = propDiff.propChanges != null && propDiff.propChanges.containsName(SVNProperty.MERGE_INFO);
+        }
+
         SvnNgPropertiesManager.setProperty(context, localAbsPath, SVNProperty.MERGE_INFO, 
                 mergeInfoValue != null ? SVNPropertyValue.create(mergeInfoValue) : null, 
                 SVNDepth.EMPTY, true, null, null);
+        
         if (notify && context.getEventHandler() != null) {
-            SVNEvent event = SVNEventFactory.createSVNEvent(localAbsPath, SVNNodeKind.UNKNOWN, null, -1, 
-                    SVNEventAction.MERGE_RECORD_INFO, null, null, null);
+            SVNEvent event = SVNEventFactory.createSVNEvent(localAbsPath, 
+                    SVNNodeKind.UNKNOWN, null, -1, 
+                    SVNStatusType.INAPPLICABLE,
+                    mergeInfoChanged ? SVNStatusType.MERGED : SVNStatusType.CHANGED, 
+                    SVNStatusType.LOCK_INAPPLICABLE,
+                    SVNEventAction.MERGE_RECORD_INFO, 
+                    null, null, null);
             context.getEventHandler().handleEvent(event, -1);
         }
     }

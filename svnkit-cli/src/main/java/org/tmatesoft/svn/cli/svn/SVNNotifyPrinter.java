@@ -192,9 +192,9 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
                         myTextConflicts++;
                     }
                     buffer.append('C');
-                } else if (event.getContentsStatus() == SVNStatusType.MERGED){
+                } else if (event.getContentsStatus() == SVNStatusType.MERGED) {
                     buffer.append('G');
-                } else if (event.getContentsStatus() == SVNStatusType.CHANGED){
+                } else if (event.getContentsStatus() == SVNStatusType.CHANGED) {
                     buffer.append('U');
                 } else {
                     buffer.append(' ');
@@ -209,9 +209,9 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
                     myPropConflicts++;
                 }
                 buffer.append('C');
-            } else if (event.getPropertiesStatus() == SVNStatusType.MERGED){
+            } else if (event.getPropertiesStatus() == SVNStatusType.MERGED) {
                 buffer.append('G');
-            } else if (event.getPropertiesStatus() == SVNStatusType.CHANGED){
+            } else if (event.getPropertiesStatus() == SVNStatusType.CHANGED) {
                 buffer.append('U');
             } else {
                 buffer.append(' ');
