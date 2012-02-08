@@ -510,7 +510,7 @@ public class SvnNgRemoteDiffEditor implements ISVNEditor {
                         b.wcPath,
                         b.endRevisionFile != null ? b.startRevisionFile : null, 
                         b.endRevisionFile, 
-                        0, 
+                        revision, 
                         targetRevision, 
                         mTypes[0], 
                         mTypes[1], 
