@@ -702,7 +702,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
                 merges.put(targetPath, filteredRangeList);
                 if (!squelchMergeinfoNotifications) {
                     long[] revs = SVNMergeInfoUtil.getRangeEndPoints(merges);
-                    SVNMergeRange r = new SVNMergeRange(revs[0], revs[1], true);
+                    SVNMergeRange r = new SVNMergeRange(revs[1], revs[0], true);
                     
                     SVNEvent mergeBeginEvent = SVNEventFactory.createSVNEvent(targetAbsPath, 
                             SVNNodeKind.FILE, 
