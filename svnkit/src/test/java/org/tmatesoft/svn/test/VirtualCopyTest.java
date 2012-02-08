@@ -1112,6 +1112,47 @@ public class VirtualCopyTest {
     }
 
     @Test
+    public void testVirtualCopyReplacedToUnversioned() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testVirtualCopyReplacedToUnversioned", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("replaced");
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, SVNRevision.HEAD.getNumber());
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+
+            final File unversionedFile = new File(workingCopyDirectory, "unversioned");
+            //noinspection ResultOfMethodCallIgnored
+            unversionedFile.createNewFile();
+
+            final File replacedFile = new File(workingCopyDirectory, "replaced");
+            workingCopy.delete(replacedFile);
+            //noinspection ResultOfMethodCallIgnored
+            replacedFile.createNewFile();
+            workingCopy.add(replacedFile);
+
+            copyVirtual(svnOperationFactory, replacedFile, unversionedFile);
+
+            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+
+            assertStatus(SVNStatusType.STATUS_ADDED, unversionedFile, statuses);
+            assertStatus(SVNStatusType.STATUS_REPLACED, replacedFile, statuses);
+
+            Assert.assertEquals(url.appendPath("replaced", false), statuses.get(unversionedFile).getCopyFromUrl());
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
     public void testVirtualCopyMissingToAdded() throws Exception {
         final TestOptions options = TestOptions.getInstance();
 
@@ -1189,6 +1230,48 @@ public class VirtualCopyTest {
     }
 
     @Test
+    public void testVirtualCopyReplacedToAdded() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testVirtualCopyReplacedToAdded", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("replaced");
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, SVNRevision.HEAD.getNumber());
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+
+            final File addedFile = new File(workingCopyDirectory, "added");
+            //noinspection ResultOfMethodCallIgnored
+            addedFile.createNewFile();
+            add(svnOperationFactory, addedFile);
+
+            final File replacedFile = new File(workingCopyDirectory, "replaced");
+            workingCopy.delete(replacedFile);
+            //noinspection ResultOfMethodCallIgnored
+            replacedFile.createNewFile();
+            workingCopy.add(replacedFile);
+
+            copyVirtual(svnOperationFactory, replacedFile, addedFile);
+
+            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+
+            assertStatus(SVNStatusType.STATUS_ADDED, addedFile, statuses);
+            assertStatus(SVNStatusType.STATUS_REPLACED, replacedFile, statuses);
+
+            Assert.assertEquals(url.appendPath("replaced", false), statuses.get(addedFile).getCopyFromUrl());
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
     public void testVirtualCopyMissingToCopied() throws Exception {
         final TestOptions options = TestOptions.getInstance();
 
@@ -1238,7 +1321,7 @@ public class VirtualCopyTest {
 
             final CommitBuilder commitBuilder = new CommitBuilder(url);
             commitBuilder.addFile("source");
-            commitBuilder.addFile("missing");
+            commitBuilder.addFile("deleted");
             commitBuilder.commit();
 
             final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, SVNRevision.HEAD.getNumber());
@@ -1248,18 +1331,60 @@ public class VirtualCopyTest {
             final File copiedFile = new File(workingCopyDirectory, "copied");
             copy(svnOperationFactory, sourceFile, copiedFile);
 
-            final File missingFile = new File(workingCopyDirectory, "missing");
-            SVNFileUtil.deleteFile(missingFile);
+            final File deletedFile = new File(workingCopyDirectory, "deleted");
+            workingCopy.delete(deletedFile);
 
-            copyVirtual(svnOperationFactory, missingFile, copiedFile);
+            copyVirtual(svnOperationFactory, deletedFile, copiedFile);
 
 
             final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
 
             assertStatus(SVNStatusType.STATUS_ADDED, copiedFile, statuses);
-            assertStatus(SVNStatusType.STATUS_MISSING, missingFile, statuses);
+            assertStatus(SVNStatusType.STATUS_DELETED, deletedFile, statuses);
 
-            Assert.assertEquals(url.appendPath("missing", false), statuses.get(copiedFile).getCopyFromUrl());
+            Assert.assertEquals(url.appendPath("deleted", false), statuses.get(copiedFile).getCopyFromUrl());
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testVirtualCopyReplacedToCopied() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testVirtualCopyReplacedToCopied", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("source");
+            commitBuilder.addFile("replaced");
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, SVNRevision.HEAD.getNumber());
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+
+            final File sourceFile = new File(workingCopyDirectory, "source");
+            final File copiedFile = new File(workingCopyDirectory, "copied");
+            copy(svnOperationFactory, sourceFile, copiedFile);
+
+            final File missingFile = new File(workingCopyDirectory, "replaced");
+            workingCopy.delete(missingFile);
+            //noinspection ResultOfMethodCallIgnored
+            missingFile.createNewFile();
+            workingCopy.add(missingFile);
+
+            copyVirtual(svnOperationFactory, missingFile, copiedFile);
+
+            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+
+            assertStatus(SVNStatusType.STATUS_ADDED, copiedFile, statuses);
+            assertStatus(SVNStatusType.STATUS_REPLACED, missingFile, statuses);
+
+            Assert.assertEquals(url.appendPath("replaced", false), statuses.get(copiedFile).getCopyFromUrl());
 
         } finally {
             svnOperationFactory.dispose();
@@ -1319,7 +1444,7 @@ public class VirtualCopyTest {
 
             final CommitBuilder commitBuilder = new CommitBuilder(url);
             commitBuilder.addFile("replaced");
-            commitBuilder.addFile("missing");
+            commitBuilder.addFile("deleted");
             commitBuilder.commit();
 
             final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, SVNRevision.HEAD.getNumber());
@@ -1331,18 +1456,62 @@ public class VirtualCopyTest {
             replacedFile.createNewFile();
             workingCopy.add(replacedFile);
 
-            final File missingFile = new File(workingCopyDirectory, "missing");
-            SVNFileUtil.deleteFile(missingFile);
+            final File deletedFile = new File(workingCopyDirectory, "deleted");
+            workingCopy.delete(deletedFile);
 
-            copyVirtual(svnOperationFactory, missingFile, replacedFile);
+            copyVirtual(svnOperationFactory, deletedFile, replacedFile);
+
+            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+
+            assertStatus(SVNStatusType.STATUS_REPLACED, replacedFile, statuses);
+            assertStatus(SVNStatusType.STATUS_DELETED, deletedFile, statuses);
+
+            Assert.assertEquals(url.appendPath("deleted", false), statuses.get(replacedFile).getCopyFromUrl());
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testVirtualCopyReplacedToReplaced() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testVirtualCopyReplacedToReplaced", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("replaced");
+            commitBuilder.addFile("anotherReplaced");
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, SVNRevision.HEAD.getNumber());
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+
+            final File replacedFile = new File(workingCopyDirectory, "replaced");
+            workingCopy.delete(replacedFile);
+            //noinspection ResultOfMethodCallIgnored
+            replacedFile.createNewFile();
+            workingCopy.add(replacedFile);
+
+            final File anotherReplacedFile = new File(workingCopyDirectory, "anotherReplaced");
+            workingCopy.delete(anotherReplacedFile);
+            //noinspection ResultOfMethodCallIgnored
+            anotherReplacedFile.createNewFile();
+            workingCopy.add(anotherReplacedFile);
+
+            copyVirtual(svnOperationFactory, anotherReplacedFile, replacedFile);
 
 
             final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
 
             assertStatus(SVNStatusType.STATUS_REPLACED, replacedFile, statuses);
-            assertStatus(SVNStatusType.STATUS_MISSING, missingFile, statuses);
+            assertStatus(SVNStatusType.STATUS_REPLACED, anotherReplacedFile, statuses);
 
-            Assert.assertEquals(url.appendPath("missing", false), statuses.get(replacedFile).getCopyFromUrl());
+            Assert.assertEquals(url.appendPath("anotherReplaced", false), statuses.get(replacedFile).getCopyFromUrl());
 
         } finally {
             svnOperationFactory.dispose();

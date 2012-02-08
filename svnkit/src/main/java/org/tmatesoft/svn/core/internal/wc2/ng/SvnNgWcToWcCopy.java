@@ -23,6 +23,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc17.SVNStatusEditor17;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.PristineContentsInfo;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
@@ -512,7 +513,9 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
         File tmpDir = context.getDb().getWCRootTempDir(dst);
         if (srcKind == SVNWCDbKind.File || srcKind == SVNWCDbKind.Symlink) {
 
-            if (srcStatus == SVNWCDbStatus.Deleted && metadataOnly)  {
+            final boolean shouldCopyBaseData = shouldCopyBaseData(context, source, metadataOnly, srcStatus);
+
+            if (shouldCopyBaseData)  {
                 copyDeletedFile(context, source, dst);
             } else {
                 copyVersionedFile(context, source, dst, dst, tmpDir, srcChecksum, metadataOnly, srcConflicted, true);
@@ -527,6 +530,19 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
                 copyVersionedDirectory(context, source, dst, dst, tmpDir, metadataOnly, true);
             }
         }
+    }
+
+    private boolean shouldCopyBaseData(SVNWCContext context, File source, boolean metadataOnly, SVNWCDbStatus srcStatus) throws SVNException {
+        if (!metadataOnly) {
+            return false;
+        }
+
+        if (srcStatus == SVNWCDbStatus.Deleted) {
+            return true;
+        }
+
+        final SvnStatus svnStatus = SVNStatusEditor17.internalStatus(context, source);
+        return svnStatus != null && svnStatus.getNodeStatus() == SVNStatusType.STATUS_REPLACED;
     }
 
     private void copyDeletedFile(SVNWCContext context, File source, File dst) throws SVNException {
