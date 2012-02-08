@@ -12,8 +12,10 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -397,9 +399,11 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
         ISVNWCDb.SVNWCDbStatus srcStatus = srcInfo.get(NodeInfo.status);
         switch (srcStatus) {
         case Deleted:
-            SVNErrorMessage err1 = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS, 
-                    "Deleted node ''{0}'' can''t be copied.", source);
-            SVNErrorManager.error(err1, SVNLogType.WC);
+            if (!metadataOnly) {
+                SVNErrorMessage err1 = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS,
+                        "Deleted node ''{0}'' can''t be copied.", source);
+                SVNErrorManager.error(err1, SVNLogType.WC);
+            }
             break;
         case Excluded:
         case ServerExcluded:
@@ -482,10 +486,12 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
             case NotPresent:
                 break;
             default:
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, 
-                        "There is already a versioned item ''{0}''", dst);
-                SVNErrorManager.error(err, SVNLogType.WC);
-                break;
+                if (!metadataOnly || dstStatus != SVNWCDbStatus.Added) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS,
+                            "There is already a versioned item ''{0}''", dst);
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                    break;
+                }
             }
             dstInfo.release();
         } catch (SVNException e) {
@@ -505,11 +511,44 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
         
         File tmpDir = context.getDb().getWCRootTempDir(dst);
         if (srcKind == SVNWCDbKind.File || srcKind == SVNWCDbKind.Symlink) {
-            copyVersionedFile(context, source, dst, dst, tmpDir, srcChecksum, metadataOnly, srcConflicted, true);
+
+            if (srcStatus == SVNWCDbStatus.Deleted && metadataOnly)  {
+                copyDeletedFile(context, source, dst);
+            } else {
+                copyVersionedFile(context, source, dst, dst, tmpDir, srcChecksum, metadataOnly, srcConflicted, true);
+            }
         } else {
-            copyVersionedDirectory(context, source, dst, dst, tmpDir, metadataOnly, true);
+            if (srcStatus == SVNWCDbStatus.Deleted && metadataOnly) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Cannot perform 'virtual' {0}: ''{1}'' is a directory", new Object[] {
+                        "copy", source
+                });
+                SVNErrorManager.error(err, SVNLogType.WC);
+            } else {
+                copyVersionedDirectory(context, source, dst, dst, tmpDir, metadataOnly, true);
+            }
         }
-        
+    }
+
+    private void copyDeletedFile(SVNWCContext context, File source, File dst) throws SVNException {
+        final SVNProperties pristineProps = context.getPristineProps(source);
+
+        final ISVNWCDb.WCDbBaseInfo baseInfo = context.getDb().getBaseInfo(source,
+                ISVNWCDb.WCDbBaseInfo.BaseInfoField.changedAuthor, ISVNWCDb.WCDbBaseInfo.BaseInfoField.changedDate, ISVNWCDb.WCDbBaseInfo.BaseInfoField.changedRev,
+                ISVNWCDb.WCDbBaseInfo.BaseInfoField.checksum, ISVNWCDb.WCDbBaseInfo.BaseInfoField.revision,
+                ISVNWCDb.WCDbBaseInfo.BaseInfoField.reposRootUrl, ISVNWCDb.WCDbBaseInfo.BaseInfoField.reposUuid);
+
+        final String changedAuthor = baseInfo.changedAuthor;
+        final SVNDate changedDate = baseInfo.changedDate;
+        final long changedRev = baseInfo.changedRev;
+        final SvnChecksum checksum = baseInfo.checksum;
+        final long revision = baseInfo.revision;
+        final SVNURL reposRootUrl = baseInfo.reposRootUrl;
+        final String reposUuid = baseInfo.reposUuid;
+
+        final String relativePath = SVNPathUtil.getRelativePath(context.getDb().getWCRoot(source).getAbsolutePath(), source.getAbsolutePath());
+
+        context.getDb().opCopyFile(dst, pristineProps, changedRev, changedDate, changedAuthor,
+                new File(relativePath), reposRootUrl, reposUuid, revision, checksum, null, null);
     }
 
     private void copyVersionedDirectory(SVNWCContext wcContext, File source, File dst, File dstOpRoot, File tmpDir, boolean metadataOnly, boolean notify) throws SVNException {
