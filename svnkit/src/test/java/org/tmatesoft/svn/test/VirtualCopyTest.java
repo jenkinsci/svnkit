@@ -1267,10 +1267,90 @@ public class VirtualCopyTest {
         }
     }
 
-    private void assertStatus(SVNStatusType statusType, File file, Map<File, SvnStatus> statuses) {
-        if (statusType == SVNStatusType.STATUS_NORMAL && statuses.get(file) == null) {
-            return;
+    @Test
+    public void testVirtualCopyMissingToReplaced() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testVirtualCopyMissingToReplaced", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("replaced");
+            commitBuilder.addFile("missing");
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, SVNRevision.HEAD.getNumber());
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+
+            final File replacedFile = new File(workingCopyDirectory, "replaced");
+            workingCopy.delete(replacedFile);
+            //noinspection ResultOfMethodCallIgnored
+            replacedFile.createNewFile();
+            workingCopy.add(replacedFile);
+
+            final File missingFile = new File(workingCopyDirectory, "missing");
+            SVNFileUtil.deleteFile(missingFile);
+
+            copyVirtual(svnOperationFactory, missingFile, replacedFile);
+
+            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+
+            assertStatus(SVNStatusType.STATUS_REPLACED, replacedFile, statuses);
+            assertStatus(SVNStatusType.STATUS_MISSING, missingFile, statuses);
+
+            Assert.assertEquals(url.appendPath("missing", false), statuses.get(replacedFile).getCopyFromUrl());
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
         }
+    }
+
+    @Test
+    public void testVirtualCopyDeletedToReplaced() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testVirtualCopyDeletedToReplaced", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("replaced");
+            commitBuilder.addFile("missing");
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, SVNRevision.HEAD.getNumber());
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+
+            final File replacedFile = new File(workingCopyDirectory, "replaced");
+            workingCopy.delete(replacedFile);
+            //noinspection ResultOfMethodCallIgnored
+            replacedFile.createNewFile();
+            workingCopy.add(replacedFile);
+
+            final File missingFile = new File(workingCopyDirectory, "missing");
+            SVNFileUtil.deleteFile(missingFile);
+
+            copyVirtual(svnOperationFactory, missingFile, replacedFile);
+
+
+            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+
+            assertStatus(SVNStatusType.STATUS_REPLACED, replacedFile, statuses);
+            assertStatus(SVNStatusType.STATUS_MISSING, missingFile, statuses);
+
+            Assert.assertEquals(url.appendPath("missing", false), statuses.get(replacedFile).getCopyFromUrl());
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    private void assertStatus(SVNStatusType statusType, File file, Map<File, SvnStatus> statuses) {
         if (statusType == SVNStatusType.STATUS_NONE && statuses.get(file) == null) {
             return;
         }
