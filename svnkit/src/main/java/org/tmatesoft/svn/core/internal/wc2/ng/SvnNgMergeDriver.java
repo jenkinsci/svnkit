@@ -637,9 +637,17 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
                 OutputStream os2 = null;
                 try {
                     os1 = SVNFileUtil.openFileForWriting(tmpFile1);
+                    try {
+                        rep1.getFile("", rng.getStartRevision(), props1, os1);
+                    } finally {
+                        SVNFileUtil.closeFile(os1);
+                    }
                     os2 = SVNFileUtil.openFileForWriting(tmpFile2);
-                    rep1.getFile("", rng.getStartRevision(), props1, os1);
-                    rep2.getFile("", rng.getEndRevision(), props2, os2);
+                    try {
+                        rep2.getFile("", rng.getEndRevision(), props2, os2);
+                    } finally {
+                        SVNFileUtil.closeFile(os2);
+                    }
                     
                     String mType1 = props1.getStringValue(SVNProperty.MIME_TYPE);
                     String mType2 = props2.getStringValue(SVNProperty.MIME_TYPE);
@@ -673,9 +681,6 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
                                 mergeBeginEvent, false);
                     }
                 } finally {
-                    SVNFileUtil.closeFile(os1);
-                    SVNFileUtil.closeFile(os2);
-                    
                     SVNFileUtil.deleteFile(tmpFile1);
                     SVNFileUtil.deleteFile(tmpFile2);
                 }

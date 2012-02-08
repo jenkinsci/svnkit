@@ -3606,8 +3606,8 @@ public class SVNWCDb implements ISVNWCDb {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT);
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
+            assert (false);
         }
-        assert (false);
     }
 
     public SVNSqlJetDb borrowDbTemp(File localDirAbsPath, SVNWCDbOpenMode mode) throws SVNException {
