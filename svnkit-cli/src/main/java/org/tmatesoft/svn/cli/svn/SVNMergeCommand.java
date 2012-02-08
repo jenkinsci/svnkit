@@ -56,6 +56,7 @@ public class SVNMergeCommand extends SVNCommand {
         options.add(SVNOption.IGNORE_ANCESTRY);
         options.add(SVNOption.ACCEPT);
         options.add(SVNOption.REINTEGRATE);
+        options.add(SVNOption.ALLOW_MIXED_REVISIONS);
         return options;
     }
     
@@ -180,6 +181,7 @@ public class SVNMergeCommand extends SVNCommand {
         if (!getSVNEnvironment().isQuiet()) {
             client.setEventHandler(new SVNNotifyPrinter(getSVNEnvironment()));
         }
+        client.setAllowMixedRevisions(getSVNEnvironment().isAllowMixedRevisions());
         try {
             client.setMergeOptions(getSVNEnvironment().getDiffOptions());
             if (!twoSourcesSpecified) {

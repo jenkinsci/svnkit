@@ -103,7 +103,7 @@ public class SVNMoveCommand extends SVNCommand {
             if (code == SVNErrorCode.UNVERSIONED_RESOURCE || code == SVNErrorCode.CLIENT_MODIFIED) {
                 err = err.wrap("Use --force to override this restriction");
             }
-            SVNErrorManager.error(err, SVNLogType.CLIENT);
+            SVNErrorManager.error(err, e, SVNLogType.CLIENT);
         }
     }
 

@@ -95,6 +95,7 @@ public class SVNOption extends AbstractSVNOption {
     public static final SVNOption TRUST_SERVER_CERT = new SVNOption("trust-server-cert");
 
     public static final SVNOption STRIP = new SVNOption("strip", "p");
+    public static final Object ALLOW_MIXED_REVISIONS = new SVNOption("allow-mixed-revisions");
 
     public static Collection addLogMessageOptions(Collection target) {
         if (target != null) {

@@ -77,6 +77,8 @@ import org.tmatesoft.svn.core.wc2.SvnTarget;
  */
 public class SVNDiffClient extends SVNBasicClient {
 
+    private boolean myIsAllowMixedRevisions;
+
     private SVNDiffClient16 getSVNDiffClient16() {
         return (SVNDiffClient16) getDelegate16();
     }
@@ -1759,6 +1761,8 @@ public class SVNDiffClient extends SVNBasicClient {
     public void doMerge(File path1, SVNRevision revision1, File path2, SVNRevision revision2, File dstPath, SVNDepth depth, boolean useAncestry, boolean force, boolean dryRun, boolean recordOnly) throws SVNException {
         SvnMerge merge = getOperationsFactory().createMerge();
         merge.setMergeOptions(getMergeOptions());
+        merge.setAllowMixedRevisions(isAllowMixedRevisionsWCForMerge());
+
         merge.setSources(SvnTarget.fromFile(path1, revision1), SvnTarget.fromFile(path2, revision2));
         merge.addTarget(SvnTarget.fromFile(dstPath));
         merge.setDepth(depth);
@@ -1926,6 +1930,8 @@ public class SVNDiffClient extends SVNBasicClient {
     public void doMerge(File path1, SVNRevision revision1, SVNURL url2, SVNRevision revision2, File dstPath, SVNDepth depth, boolean useAncestry, boolean force, boolean dryRun, boolean recordOnly) throws SVNException {
         SvnMerge merge = getOperationsFactory().createMerge();
         merge.setMergeOptions(getMergeOptions());
+        merge.setAllowMixedRevisions(isAllowMixedRevisionsWCForMerge());
+
         merge.setSources(SvnTarget.fromFile(path1, revision1), SvnTarget.fromURL(url2, revision2));
         merge.addTarget(SvnTarget.fromFile(dstPath));
         merge.setDepth(depth);
@@ -2092,6 +2098,8 @@ public class SVNDiffClient extends SVNBasicClient {
     public void doMerge(SVNURL url1, SVNRevision revision1, File path2, SVNRevision revision2, File dstPath, SVNDepth depth, boolean useAncestry, boolean force, boolean dryRun, boolean recordOnly) throws SVNException {
         SvnMerge merge = getOperationsFactory().createMerge();
         merge.setMergeOptions(getMergeOptions());
+        merge.setAllowMixedRevisions(isAllowMixedRevisionsWCForMerge());
+
         merge.setSources(SvnTarget.fromURL(url1, revision1), SvnTarget.fromFile(path2, revision2));
         merge.addTarget(SvnTarget.fromFile(dstPath));
         merge.setDepth(depth);
@@ -2257,6 +2265,8 @@ public class SVNDiffClient extends SVNBasicClient {
     public void doMerge(SVNURL url1, SVNRevision revision1, SVNURL url2, SVNRevision revision2, File dstPath, SVNDepth depth, boolean useAncestry, boolean force, boolean dryRun, boolean recordOnly) throws SVNException {
         SvnMerge merge = getOperationsFactory().createMerge();
         merge.setMergeOptions(getMergeOptions());
+        merge.setAllowMixedRevisions(isAllowMixedRevisionsWCForMerge());
+
         merge.setSources(SvnTarget.fromURL(url1, revision1), SvnTarget.fromURL(url2, revision2));
         merge.addTarget(SvnTarget.fromFile(dstPath));
         merge.setDepth(depth);
@@ -2377,6 +2387,8 @@ public class SVNDiffClient extends SVNBasicClient {
     public void doMerge(SVNURL url1, SVNRevision pegRevision, Collection<SVNRevisionRange> rangesToMerge, File dstPath, SVNDepth depth, boolean useAncestry, boolean force, boolean dryRun, boolean recordOnly) throws SVNException {
         SvnMerge merge = getOperationsFactory().createMerge();
         merge.setMergeOptions(getMergeOptions());
+        merge.setAllowMixedRevisions(isAllowMixedRevisionsWCForMerge());
+
         merge.setSource(SvnTarget.fromURL(url1, pegRevision), false);
         if (rangesToMerge != null) {
             for (SVNRevisionRange range : rangesToMerge) {
@@ -2507,6 +2519,7 @@ public class SVNDiffClient extends SVNBasicClient {
             throws SVNException {
         SvnMerge merge = getOperationsFactory().createMerge();
         merge.setMergeOptions(getMergeOptions());
+        merge.setAllowMixedRevisions(isAllowMixedRevisionsWCForMerge());
         merge.setSource(SvnTarget.fromFile(path1, pegRevision), false);
         if (rangesToMerge != null) {
             for (SVNRevisionRange range : rangesToMerge) {
@@ -2521,6 +2534,10 @@ public class SVNDiffClient extends SVNBasicClient {
         merge.setRecordOnly(recordOnly);
         
         merge.run();
+    }
+
+    public boolean isAllowMixedRevisionsWCForMerge() {
+        return myIsAllowMixedRevisions;
     }
 
     /**
@@ -2568,6 +2585,8 @@ public class SVNDiffClient extends SVNBasicClient {
     public void doMergeReIntegrate(File srcPath, SVNRevision pegRevision, File dstPath, boolean dryRun) throws SVNException {
         SvnMerge merge = getOperationsFactory().createMerge();
         merge.setMergeOptions(getMergeOptions());
+        merge.setAllowMixedRevisions(isAllowMixedRevisionsWCForMerge());
+
         merge.addTarget(SvnTarget.fromFile(dstPath));
         merge.setSource(SvnTarget.fromFile(srcPath, pegRevision), true);
         merge.setDryRun(dryRun);
@@ -2620,6 +2639,8 @@ public class SVNDiffClient extends SVNBasicClient {
     public void doMergeReIntegrate(SVNURL srcURL, SVNRevision pegRevision, File dstPath, boolean dryRun) throws SVNException {
         SvnMerge merge = getOperationsFactory().createMerge();
         merge.setMergeOptions(getMergeOptions());
+        merge.setAllowMixedRevisions(isAllowMixedRevisionsWCForMerge());
+
         merge.addTarget(SvnTarget.fromFile(dstPath));
         merge.setSource(SvnTarget.fromURL(srcURL, pegRevision), true);
         merge.setDryRun(dryRun);
@@ -3233,6 +3254,10 @@ public class SVNDiffClient extends SVNBasicClient {
         } finally {
             svnOperationFactory.dispose();
         }
+    }
+
+    public void setAllowMixedRevisionsWCForMerge(boolean allowMixedRevisions) {
+        myIsAllowMixedRevisions = allowMixedRevisions;
     }
 
 }

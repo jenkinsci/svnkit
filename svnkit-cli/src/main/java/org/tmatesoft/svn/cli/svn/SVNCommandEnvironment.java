@@ -133,6 +133,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
     private boolean myIsWithAllRevprops;
     private boolean myIsReIntegrate;
     private boolean myIsTrustServerCertificate;
+    private boolean myIsAllowMixedRevisions;
     private List myRevisionRanges;
     private SVNShowRevisionType myShowRevsType;
     private Collection myChangelists;
@@ -621,6 +622,8 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
             }
         } else if (option == SVNOption.REINTEGRATE) {
             myIsReIntegrate = true;
+        } else if (option == SVNOption.ALLOW_MIXED_REVISIONS) {
+            myIsAllowMixedRevisions = true;
         } else if (option == SVNOption.AUTHOR_OF_INTEREST) {
             myAuthorOfInterest = optionValue.getValue();
         } else if (option == SVNOption.REGULAR_EXPRESSION) {
@@ -937,6 +940,9 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         return new SVNDiffOptions(ignoreAllWS, ignoreAmountOfWS, ignoreEOLStyle);
     }
 
+    public boolean isAllowMixedRevisions() {
+        return myIsAllowMixedRevisions;
+    }
 
     public SVNProperties getRevisionProperties(String message, SVNCommitItem[] commitables, SVNProperties revisionProperties) throws SVNException {
         return revisionProperties == null ? new SVNProperties() : revisionProperties;
@@ -1109,5 +1115,4 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         }
         return buffer.toString();
     }
-
 }
