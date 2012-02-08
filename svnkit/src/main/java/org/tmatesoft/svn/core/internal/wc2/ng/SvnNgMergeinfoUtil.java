@@ -43,7 +43,7 @@ public class SvnNgMergeinfoUtil {
         String walkRelPath;
     }
 
-    private static class SvnMergeInfoCatalogInfo {
+    public static class SvnMergeInfoCatalogInfo {
         Map<String, Map<String, SVNMergeRangeList>> catalog;
         boolean inherited;
         String walkRelPath;
@@ -269,7 +269,7 @@ public class SvnNgMergeinfoUtil {
         return result;
     }
 
-    private static SvnMergeInfoCatalogInfo getWcOrReposMergeInfoCatalog(SVNWCContext context, SVNRepository repository, File wcPath, 
+    static SvnMergeInfoCatalogInfo getWcOrReposMergeInfoCatalog(SVNWCContext context, SVNRepository repository, File wcPath, 
             boolean includeDescendants, boolean reposOnly, boolean ignoreInvalidMergeInfo, SVNMergeInfoInheritance inheritance) throws SVNException {
         SvnMergeInfoCatalogInfo result = new SvnMergeInfoCatalogInfo();
         
@@ -288,6 +288,7 @@ public class SvnNgMergeinfoUtil {
         
         if (!reposOnly) {
             SvnMergeInfoCatalogInfo catalogInfo = getWcMergeInfoCatalog(context, includeDescendants, inheritance, wcPath, null, ignoreInvalidMergeInfo);
+            result.inherited = catalogInfo.inherited;
             wcMergeInfoCatalog = catalogInfo.catalog;
             if (!(catalogInfo.inherited 
                     || (inheritance == SVNMergeInfoInheritance.EXPLICIT)

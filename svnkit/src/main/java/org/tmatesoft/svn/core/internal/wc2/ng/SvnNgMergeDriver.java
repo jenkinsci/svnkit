@@ -55,6 +55,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbReader;
 import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess;
 import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess.LocationsInfo;
 import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess.RevisionsPair;
+import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgMergeinfoUtil.SvnMergeInfoCatalogInfo;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgMergeinfoUtil.SvnMergeInfoInfo;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
@@ -1405,8 +1406,11 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
         SVNErrorManager.assertionFailure(SVNRevision.isValidRevisionNumber(start) && SVNRevision.isValidRevisionNumber(end) && start > end, null, SVNLogType.WC);
         
         if (getRecorded) {
-            result[0] = SvnNgMergeinfoUtil.getWCOrReposMergeInfo(context, target, repos, false, inherit);
-            // TODO track inherited info.
+            SvnMergeInfoCatalogInfo catalog = SvnNgMergeinfoUtil.getWcOrReposMergeInfoCatalog(context, repos, target, false, false, false, inherit);
+            if (catalog != null) {
+                result[0] = catalog.catalog != null ? catalog.catalog.values().iterator().next() : null;
+                inherited[0] = catalog.inherited;
+            }
         }
 
         if (getImplicit) {
@@ -2162,6 +2166,9 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
         String mergeInfoValue = null;
         if (mergeinfo != null) {
             mergeInfoValue = SVNMergeInfoUtil.formatMergeInfoToString(mergeinfo, null);
+            if ("".equals(mergeInfoValue)) {
+                mergeInfoValue = null;
+            }
         }                    
         boolean mergeInfoChanged = false;
         if (notify && context.getEventHandler() != null) {
