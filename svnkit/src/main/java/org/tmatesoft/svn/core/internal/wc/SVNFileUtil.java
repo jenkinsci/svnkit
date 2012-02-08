@@ -235,6 +235,9 @@ public class SVNFileUtil {
     }
 
     public static File getParentFile(File file) {
+        if (file == null) {
+            return null;
+        }
         String path = file.getAbsolutePath();
         path = path.replace(File.separatorChar, '/');
         path = SVNPathUtil.canonicalizePath(path);

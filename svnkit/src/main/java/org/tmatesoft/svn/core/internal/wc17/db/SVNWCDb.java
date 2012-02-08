@@ -147,10 +147,6 @@ public class SVNWCDb implements ISVNWCDb {
         this.dirData = new HashMap<File, SVNWCDbDir>();
     }
 
-    public void open(SVNWCDbOpenMode mode, SVNConfigFile config, boolean autoUpgrade, boolean enforceEmptyWQ) throws SVNException {
-        throw new UnsupportedOperationException();
-    }
-
     public void close() {
         final Set<SVNWCDbRoot> roots = new HashSet<SVNWCDbRoot>();
         /* Collect all the unique WCROOT structures, and empty out DIR_DATA. */
@@ -1407,6 +1403,7 @@ public class SVNWCDb implements ISVNWCDb {
          * into wc_db which references a file. calls for directories could ###
          * get an early-exit in the hash lookup just above.
          */
+        File original_abspath = localAbsPath;
         SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(localAbsPath));
         if (kind != SVNNodeKind.DIR) {
             /*
@@ -1483,7 +1480,6 @@ public class SVNWCDb implements ISVNWCDb {
          * peel off some components, and try again.
          */
 
-        File original_abspath = localAbsPath;
         SVNWCDbDir found_pdh = null;
         SVNWCDbDir child_pdh;
         SVNSqlJetDb sDb = null;
@@ -1722,6 +1718,9 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     private int getOldVersion(File localAbsPath) {
+        if (localAbsPath == null) {
+            return 0;
+        }
         try {
             int formatVersion = 0;
             File adminDir = new File(localAbsPath, SVNFileUtil.getAdminDirectoryName());
