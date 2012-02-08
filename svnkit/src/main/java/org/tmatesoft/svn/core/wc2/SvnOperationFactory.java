@@ -92,6 +92,7 @@ import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgSuggestMergeSources;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgSwitch;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgUnlock;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgUpdate;
+import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgUpgrade;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgWcToReposCopy;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgWcToWcCopy;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldAdd;
@@ -374,6 +375,7 @@ public class SvnOperationFactory {
         registerOperationRunner(SvnRepositoryGetTree.class, new SvnRepositoryGetTreeImpl());
         
         registerOperationRunner(SvnUpgrade.class, new SvnOldUpgrade());
+        registerOperationRunner(SvnUpgrade.class, new SvnNgUpgrade());
     }
     
     public boolean isAutoCloseContext() {

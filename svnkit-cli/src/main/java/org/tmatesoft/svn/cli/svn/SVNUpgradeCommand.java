@@ -63,8 +63,13 @@ public class SVNUpgradeCommand extends SVNCommand {
         if (targets.isEmpty()) {
             targets.add("");
         }
-        SvnUpgrade upgrade = (new SvnOperationFactory()).createUpgrade();
-    	
+        SvnOperationFactory factory = new SvnOperationFactory();
+        if (!getSVNEnvironment().isQuiet()) {
+        	factory.setEventHandler(new SVNNotifyPrinter(getSVNEnvironment()));
+        }
+        
+        SvnUpgrade upgrade = factory.createUpgrade();
+        
         for (Iterator ts = targets.iterator(); ts.hasNext();) {
         	String targetName = (String) ts.next();
             SVNPath target = new SVNPath(targetName);

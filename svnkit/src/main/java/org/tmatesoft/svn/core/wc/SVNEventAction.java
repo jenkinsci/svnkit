@@ -266,6 +266,11 @@ public class SVNEventAction {
      * area is upgraded to a newer one.
      */
     public static final SVNEventAction UPGRADE = new SVNEventAction(-2, "wc_upgrade");
+    /**
+     * An working copy directory was upgraded to the latest format
+     * @since New in 1.7. 
+     */
+    public static final SVNEventAction UPGRADED_PATH = new SVNEventAction(-3, "wc_upgrade");
 
     /**
      * Denotes that tried adding a path that already exists.

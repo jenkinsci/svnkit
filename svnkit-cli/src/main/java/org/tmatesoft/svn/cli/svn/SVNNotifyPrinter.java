@@ -524,6 +524,9 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
             buffer.append(hunk.getModified().getLength());
             buffer.append(" @@\n");
 
+        } else if (event.getAction() == SVNEventAction.UPGRADED_PATH) {
+        	myIsChangesReceived = true;
+            buffer.append("Upgraded '" + path + "'\n");
         }
 
         if (buffer.length() > 0) {
