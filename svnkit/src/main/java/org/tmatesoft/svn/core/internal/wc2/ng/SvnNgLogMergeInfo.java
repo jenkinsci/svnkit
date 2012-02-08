@@ -311,10 +311,15 @@ public class SvnNgLogMergeInfo extends SvnNgOperationRunner<SVNLogEntry, SvnLogM
                             if (SVNPathUtil.isAncestor(mSourcePath, path)) {
                                 SVNMergeRangeList inter = rlist.intersect(thisRevRangeList, false);
                                 if (!inter.isEmpty()) {
-                                    inter = rlist.intersect(thisRevRangeList, true);
-                                    if (!inter.isEmpty()) {
+                                    if (ancestorIsSelf) {
                                         foundThisRevision = true;
                                         break;
+                                    } else {
+                                        inter = rlist.intersect(thisRevRangeList, true);
+                                        if (!inter.isEmpty()) {
+                                            foundThisRevision = true;
+                                            break;
+                                        }
                                     }
                                 }
                                 
