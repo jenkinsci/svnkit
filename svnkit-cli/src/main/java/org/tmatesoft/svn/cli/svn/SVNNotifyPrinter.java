@@ -178,7 +178,7 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
                 buffer.append(' ');
             }
             buffer.append("   " + path + "\n");
-        } else if (event.getAction() == SVNEventAction.UPDATE_UPDATE) {
+        } else if (event.getAction() == SVNEventAction.UPDATE_UPDATE || event.getAction() == SVNEventAction.MERGE_RECORD_INFO) {
             SVNStatusType propStatus = event.getPropertiesStatus();
             if (event.getNodeKind() == SVNNodeKind.DIR &&
                     (propStatus == SVNStatusType.INAPPLICABLE || propStatus == SVNStatusType.UNKNOWN || propStatus == SVNStatusType.UNCHANGED)) {
@@ -245,6 +245,23 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
                     buffer.append("--- Reverse-merging r" + start + " through r" + (end + 1) + " into '" + path + "':\n");
                 }
             }
+        } else if (event.getAction() == SVNEventAction.MERGE_RECORD_BEGIN) {
+            SVNMergeRange range = event.getMergeRange();
+            if (range == null) {
+                buffer.append("--- Recording mergeinfo for merge between repository URLs into '" + path + "':\n");
+            } else {
+                long start = range.getStartRevision();
+                long end = range.getEndRevision();
+                if (start == end || start == end - 1) {
+                    buffer.append("--- Recording mergeinfo for merge of r" + end + " into '" + path + "':\n");
+                } else if (start - 1 == end) {
+                    buffer.append("--- Recording mergeinfo for reverse merge of r" + start + " into '" + path + "':\n");
+                } else if (start < end) {
+                    buffer.append("--- Recording mergeinfo for merge of r" + (start + 1) + " through r" + end + " into '" + path + "':\n");
+                } else {
+                    buffer.append("--- Recording mergeinfo for reverse merge of r" + start + " through r" + (end + 1) + " into '" + path + "':\n");
+                }
+            }
         }  else if (event.getAction() == SVNEventAction.FOREIGN_MERGE_BEGIN) {
             SVNMergeRange range = event.getMergeRange();
             if (range == null) {
@@ -262,6 +279,8 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
                     buffer.append("--- Reverse-merging (from foreign repository) r" + start + " through r" + (end + 1) + " into '" + path + "':\n");
                 }
             }
+        } else if (event.getAction() == SVNEventAction.MERGE_ELIDE_INFO) {
+            buffer.append("--- Eliding mergeinfo from '" + path + "':\n");
         } else if (event.getAction() == SVNEventAction.TREE_CONFLICT) {
             if (myIsInExternal) {
                 myExternalTreeConflicts++;
