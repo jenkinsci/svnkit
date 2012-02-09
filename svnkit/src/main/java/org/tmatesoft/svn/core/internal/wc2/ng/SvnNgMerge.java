@@ -88,7 +88,7 @@ public class SvnNgMerge extends SvnNgOperationRunner<Void, SvnMerge> {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", source1.getFile());
             SVNErrorManager.error(err, SVNLogType.WC);
         }
-        SVNURL url2 = getRepositoryAccess().getTargetURL(source1);
+        SVNURL url2 = getRepositoryAccess().getTargetURL(source2);
         if (url2 == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", source2.getFile());
             SVNErrorManager.error(err, SVNLogType.WC);
