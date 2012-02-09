@@ -119,7 +119,7 @@ public class SvnNgRemoteDiffEditor implements ISVNEditor {
         public void loadFile(SVNWCContext context, SVNRepository repos, boolean propsOnly, Collection<File> tmpFiles) throws SVNException {
             if (!propsOnly) {
                 File tmpDir = context.getDb().getWCRootTempDir(wcPath);
-                startRevisionFile = SVNFileUtil.createUniqueFile(tmpDir, "diff.", ".tmp", false);
+                startRevisionFile = SVNFileUtil.createUniqueFile(tmpDir, "diff", ".tmp", false);
                 tmpFiles.add(startRevisionFile);
                 OutputStream os = null;
                 try {
@@ -280,9 +280,8 @@ public class SvnNgRemoteDiffEditor implements ISVNEditor {
     private File getEmptyFile() throws SVNException {
         if (emptyFile == null) {
             emptyFile = context.getDb().getWCRootTempDir(target);
-            emptyFile = SVNFileUtil.createUniqueFile(emptyFile, "empty.", ".tmp", false);
+            emptyFile = SVNFileUtil.createUniqueFile(emptyFile, "empty", ".tmp", false);
             tmpFiles.add(emptyFile);
-            SVNFileUtil.createEmptyFile(emptyFile);
         }
         return emptyFile;
     }

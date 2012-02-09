@@ -92,6 +92,38 @@ public class SvnWcDbCopy extends SvnWcDbShared {
         pdh.flushEntries(pdh.getWCRoot().getAbsPath());
     }
 
+    public static void copyDir(SVNWCDbDir pdh, File localRelpath,
+            SVNProperties props, long changedRev, SVNDate changedDate, String changedAuthor, File originalReposRelPath, SVNURL originalRootUrl, String originalUuid,
+            long originalRevision, List<File> children, SVNDepth depth, SVNSkel conflict, SVNSkel workItems) throws SVNException {
+
+        InsertWorking iw = pdh.getWCRoot().getDb().new InsertWorking();
+        iw.status = SVNWCDbStatus.Normal;
+        iw.kind = SVNWCDbKind.Dir;
+        iw.props = props;
+        iw.changedAuthor = changedAuthor;
+        iw.changedDate = changedDate;
+        iw.changedRev = changedRev;
+        
+        if (originalRootUrl != null) {
+            long reposId = pdh.getWCRoot().getDb().createReposId(pdh.getWCRoot().getSDb(), originalRootUrl, originalUuid);
+            iw.originalReposId = reposId;
+            iw.originalReposRelPath = originalReposRelPath;
+            iw.originalRevision = originalRevision;
+        }
+        long[] depths = getOpDepthForCopy(pdh.getWCRoot(), localRelpath, iw.originalReposId, originalReposRelPath, originalRevision);
+        iw.opDepth = depths[0];
+        iw.notPresentOpDepth = depths[1];
+        iw.children = children;
+        iw.depth = depth;
+        iw.workItems = workItems;
+
+        iw.wcId = pdh.getWCRoot().getWcId();
+        iw.localRelpath = localRelpath;
+        
+        pdh.getWCRoot().getSDb().runTransaction(iw);
+        pdh.flushEntries(pdh.getWCRoot().getAbsPath());
+    }
+
     private static void copyShadowedLayer(SVNWCDbDir srcPdh, File srcRelpath, long srcOpDepth, 
             SVNWCDbDir dstPdh, File dstRelpath, long dstOpDepth, long delOpDepth, long reposId, File reposRelPath, long revision) throws SVNException {
         Structure<NodeInfo> depthInfo = null;
