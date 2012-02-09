@@ -3,6 +3,7 @@ package org.tmatesoft.svn.core.wc2;
 import java.io.File;
 import java.io.OutputStream;
 
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.ISVNDiffGenerator;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -24,6 +25,7 @@ public class SvnDiff extends SvnOperation<Void> {
     private boolean noDiffDeleted;
     private boolean showCopiesAsAdds;
     private boolean ignoreContentType;
+    private File relativeToDirectory;
 
     protected SvnDiff(SvnOperationFactory factory) {
         super(factory);
@@ -64,6 +66,14 @@ public class SvnDiff extends SvnOperation<Void> {
 
     public SvnTarget getSecondSource() {
         return secondSource;
+    }
+
+    public void setRelativeToDirectory(File relativeToDirectory) {
+        this.relativeToDirectory = relativeToDirectory;
+    }
+
+    public File getRelativeToDirectory() {
+        return relativeToDirectory;
     }
 
     public ISVNDiffGenerator getDiffGenerator() {
@@ -120,6 +130,10 @@ public class SvnDiff extends SvnOperation<Void> {
 
     public void setIgnoreContentType(boolean ignoreContentType) {
         this.ignoreContentType = ignoreContentType;
+    }
+
+    @Override
+    protected void ensureArgumentsAreValid() throws SVNException {
     }
 
     @Override

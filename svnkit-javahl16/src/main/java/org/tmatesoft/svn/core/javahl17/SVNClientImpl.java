@@ -934,7 +934,7 @@ public class SVNClientImpl implements ISVNClient {
 
             SvnDiff diff = svnOperationFactory.createDiff();
             diff.setSources(getTarget(target1, revision1), getTarget(target2, revision2));
-            diff.setSingleTarget(getTarget(relativeToDir));
+            diff.setRelativeToDirectory(getFile(relativeToDir));
             diff.setOutput(bufferedOutputStream);
             diff.setDepth(getSVNDepth(depth));
             diff.setApplicalbeChangelists(changelists);
@@ -972,7 +972,7 @@ public class SVNClientImpl implements ISVNClient {
 
             SvnDiff diff = svnOperationFactory.createDiff();
             diff.setSource(getTarget(target, pegRevision), getSVNRevision(startRevision), getSVNRevision(endRevision));
-            diff.setSingleTarget(getTarget(relativeToDir));
+            diff.setRelativeToDirectory(getFile(relativeToDir));
             diff.setOutput(bufferedOutputStream);
             diff.setDepth(getSVNDepth(depth));
             diff.setApplicalbeChangelists(changelists);
