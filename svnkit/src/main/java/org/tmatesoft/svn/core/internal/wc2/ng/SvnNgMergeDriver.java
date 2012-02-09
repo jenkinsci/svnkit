@@ -942,69 +942,64 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
             final String targetPath = targetWCPath.getAbsolutePath().replace(File.separatorChar, '/');
 
             repos1.diff(url2, revision2, revision2, null, ignoreAncestry, depth, true,
-                    new ISVNReporterBaton() {
-                        public void report(ISVNReporter reporter) throws SVNException {
-                            
-                            reporter.setPath("", null, reportStart, reportDepth, false);
+            new ISVNReporterBaton() {
+                public void report(ISVNReporter reporter) throws SVNException {
 
-                            if (honorMergeInfo && childrenWithMergeInfo != null) {
-                                for (int i = 1; i < childrenWithMergeInfo.size(); i++) {
-                                   MergePath childMergePath = (MergePath) childrenWithMergeInfo.get(i);
-                                   MergePath parent = null;
-                                   if (childMergePath == null || childMergePath.absent) {
-                                       continue;
-                                   }
-                                   //
-                                   Object[] childrenWithMergeInfoArray = childrenWithMergeInfo.values().toArray();
-                                   int parentIndex = findNearestAncestor(childrenWithMergeInfoArray, false, childMergePath.absPath);
-                                   if (parentIndex >= 0 && parentIndex < childrenWithMergeInfoArray.length) {
-                                       parent = (MergePath) childrenWithMergeInfoArray[parentIndex];
-                                   }
-                                   
-                                   SVNMergeRange range = null;
-                                   if (childMergePath.remainingRanges != null && 
-                                           !childMergePath.remainingRanges.isEmpty()) {
-                                       SVNMergeRangeList remainingRangesList = childMergePath.remainingRanges; 
-                                       SVNMergeRange[] remainingRanges = remainingRangesList.getRanges();
-                                       range = remainingRanges[0];
-                                       
-                                       if ((!isRollBack && range.getStartRevision() > revision2) ||
-                                               (isRollBack && range.getStartRevision() < revision2)) {
-                                           continue;
-                                       } else if (parent.remainingRanges != null && !parent.remainingRanges.isEmpty()) {
-                                           SVNMergeRange parentRange = parent.remainingRanges.getRanges()[0];
-                                           SVNMergeRange childRange = childMergePath.remainingRanges.getRanges()[0];
-                                           if (parentRange.getStartRevision() == childRange.getStartRevision()) {
-                                               continue;
-                                           }
-                                       }
-                                   } else {
-                                       if (parent.remainingRanges == null || parent.remainingRanges.isEmpty()) {
-                                           continue;
-                                       }
-                                   }
-                                     
-                                   String childPath = childMergePath.absPath.getAbsolutePath();
-                                   childPath = childPath.replace(File.separatorChar, '/');
-                                   String relChildPath = childPath.substring(targetPath.length());
-                                   if (relChildPath.startsWith("/")) {
-                                       relChildPath = relChildPath.substring(1);
-                                   }
-                                   
-                                   if (childMergePath.remainingRanges == null || 
-                                           childMergePath.remainingRanges.isEmpty() ||
-                                           (isRollBack && range.getStartRevision() < revision2) ||
-                                           (!isRollBack && range.getStartRevision() > revision2)) {
-                                       reporter.setPath(relChildPath, null, revision2, reportDepth, false);
-                                   } else {
-                                       reporter.setPath(relChildPath, null, range.getStartRevision(), reportDepth, false);
-                                   }
+                    reporter.setPath("", null, reportStart, reportDepth, false);
+
+                    if (honorMergeInfo && childrenWithMergeInfo != null) {
+                        Object[] childrenWithMergeInfoArray = childrenWithMergeInfo.values().toArray();
+                        for (int i = 0; i < childrenWithMergeInfoArray.length; i++) {
+                            MergePath childMergePath = (MergePath) childrenWithMergeInfoArray[i];
+                            MergePath parent = null;
+                            if (childMergePath == null || childMergePath.absent) {
+                                continue;
+                            }
+                            //
+                            int parentIndex = findNearestAncestor(childrenWithMergeInfoArray, false, childMergePath.absPath);
+                            if (parentIndex >= 0 && parentIndex < childrenWithMergeInfoArray.length) {
+                                parent = (MergePath) childrenWithMergeInfoArray[parentIndex];
+                            }
+
+                            SVNMergeRange range = null;
+                            if (childMergePath.remainingRanges != null && !childMergePath.remainingRanges.isEmpty()) {
+                                SVNMergeRangeList remainingRangesList = childMergePath.remainingRanges;
+                                SVNMergeRange[] remainingRanges = remainingRangesList.getRanges();
+                                range = remainingRanges[0];
+
+                                if ((!isRollBack && range.getStartRevision() > revision2) || (isRollBack && range.getStartRevision() < revision2)) {
+                                    continue;
+                                } else if (parent.remainingRanges != null && !parent.remainingRanges.isEmpty()) {
+                                    SVNMergeRange parentRange = parent.remainingRanges.getRanges()[0];
+                                    SVNMergeRange childRange = childMergePath.remainingRanges.getRanges()[0];
+                                    if (parentRange.getStartRevision() == childRange.getStartRevision()) {
+                                        continue;
+                                    }
+                                }
+                            } else {
+                                if (parent.remainingRanges == null || parent.remainingRanges.isEmpty()) {
+                                    continue;
                                 }
                             }
-                            reporter.finishReport();
+
+                            String childPath = childMergePath.absPath.getAbsolutePath();
+                            childPath = childPath.replace(File.separatorChar, '/');
+                            String relChildPath = childPath.substring(targetPath.length());
+                            if (relChildPath.startsWith("/")) {
+                                relChildPath = relChildPath.substring(1);
+                            }
+
+                            if (childMergePath.remainingRanges == null || childMergePath.remainingRanges.isEmpty() || (isRollBack && range.getStartRevision() < revision2) || (!isRollBack && range.getStartRevision() > revision2)) {
+                                reporter.setPath(relChildPath, null, revision2, reportDepth, false);
+                            } else {
+                                reporter.setPath(relChildPath, null, range.getStartRevision(), reportDepth, false);
+                            }
                         }
-                    }, 
-                    SVNCancellableEditor.newInstance(editor, operation.getCanceller(), SVNDebugLog.getDefaultLog()));
+                    }
+                    reporter.finishReport();
+                }
+            }, 
+            SVNCancellableEditor.newInstance(editor, operation.getCanceller(), SVNDebugLog.getDefaultLog()));
         } finally {
             if (oldURL != null) {
                 repos2.setLocation(oldURL, false);
