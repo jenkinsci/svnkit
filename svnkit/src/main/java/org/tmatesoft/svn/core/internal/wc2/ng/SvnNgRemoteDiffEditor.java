@@ -401,10 +401,8 @@ public class SvnNgRemoteDiffEditor implements ISVNEditor {
         }
         diffCallback.dirClosed(null, b.wcPath, b.added);
         if (!skipped && !b.added) {
-            Collection<File> ds = new ArrayList<File>();
             for (File d : deletedPaths.keySet()) {
                 DeletedPath dp = deletedPaths.get(d);
-                
                 SVNEvent event = SVNEventFactory.createSVNEvent(d, 
                         dp.kind, null, -1, 
                         dp.state, 
@@ -413,11 +411,8 @@ public class SvnNgRemoteDiffEditor implements ISVNEditor {
                         dp.action, 
                         dp.action, null, null, null);
                 handleEvent(event);
-                ds.add(d);
             }
-            for (File file : ds) {
-                deletedPaths.put(file, null);
-            }
+            deletedPaths.clear();
         }
         if (!b.added) {
             SVNEventAction action = null;
