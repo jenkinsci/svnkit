@@ -2526,26 +2526,26 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
                     event.getPropertiesStatus() == SVNStatusType.CHANGED ||
                     event.getAction() == SVNEventAction.UPDATE_ADD) {
                 if (mergedPaths == null) {
-                    mergedPaths = new ArrayList<File>();
+                    mergedPaths = new HashSet<File>();
                 }
                 mergedPaths.add(event.getFile());
             }
             if (event.getAction() == SVNEventAction.SKIP) {
                 if (skippedPaths == null) {
-                    skippedPaths = new ArrayList<File>();
+                    skippedPaths = new HashSet<File>();
                 }
                 skippedPaths.add(event.getFile());
             }
             if (event.getAction() == SVNEventAction.TREE_CONFLICT) {
                 if (treeConflictedPaths == null) {
-                    treeConflictedPaths = new ArrayList<File>();
+                    treeConflictedPaths = new HashSet<File>();
                 }
                 treeConflictedPaths.add(event.getFile());
             }
             if (event.getAction() == SVNEventAction.UPDATE_ADD) {
                 boolean subtreeRoot;
                 if (addedPaths == null) {
-                    treeConflictedPaths = new ArrayList<File>();
+                    addedPaths = new HashSet<File>();
                     subtreeRoot = true;
                 } else {
                     subtreeRoot = !addedPaths.contains(SVNFileUtil.getFileDir(event.getFile()));
