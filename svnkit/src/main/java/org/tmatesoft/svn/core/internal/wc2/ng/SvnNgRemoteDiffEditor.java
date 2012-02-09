@@ -330,6 +330,7 @@ public class SvnNgRemoteDiffEditor implements ISVNEditor {
         if (dp != null) {
             currentResult.contentState = dp.state;
             kind = dp.kind;
+            deletedPaths.remove(db.wcPath);
         }
         if (db.treeConflicted) {
             action = SVNEventAction.TREE_CONFLICT;
