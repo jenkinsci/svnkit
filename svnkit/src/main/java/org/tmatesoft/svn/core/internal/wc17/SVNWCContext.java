@@ -4018,7 +4018,6 @@ public class SVNWCContext {
         String message = messageFromSkel(propSkel);
         try {
             stream.write(message.getBytes());
-            stream.write("\n".getBytes());
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
             SVNErrorManager.error(err, e, Level.FINE, SVNLogType.DEFAULT);
@@ -4069,7 +4068,7 @@ public class SVNWCContext {
             if (mineIsBinary) {
                 conflictMessage += "Cannot display: property value is binary data\n";
             } else {
-                conflictMessage += SVNPropertyValue.getPropertyAsString(mine) + "\n";
+                conflictMessage += SVNPropertyValue.getPropertyAsString(mine);
             }
             conflictMessage += "\n";
         }
@@ -4078,7 +4077,7 @@ public class SVNWCContext {
             if (incomingIsBinary) {
                 conflictMessage += "Cannot display: property value is binary data\n";
             } else {
-                conflictMessage += SVNPropertyValue.getPropertyAsString(incoming) + "\n";
+                conflictMessage += SVNPropertyValue.getPropertyAsString(incoming);
             }
             conflictMessage += "\n";
         }
