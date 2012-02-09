@@ -556,7 +556,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
         SVNMergeRange itemRange = new SVNMergeRange(revision1, revision2, true);
         item.remainingRanges = new SVNMergeRangeList(itemRange);
         
-        Map<File, MergePath> childrenWithMergeInfo = new TreeMap<File, SvnNgMergeDriver.MergePath>();
+        childrenWithMergeInfo = new TreeMap<File, SvnNgMergeDriver.MergePath>();
         childrenWithMergeInfo.put(targetPath, item);
 
         SvnNgMergeCallback mergeCallback = new SvnNgMergeCallback(this);
@@ -2686,7 +2686,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
                 return;
             }
         }
-        result.kind = dbKind.toNodeKind();
+        result.kind = dbKind.toNodeKind(status, false);
         switch (status) {
         case Deleted:
             result.deleted = true;

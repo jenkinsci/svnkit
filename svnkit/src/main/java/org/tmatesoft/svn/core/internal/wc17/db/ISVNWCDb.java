@@ -151,6 +151,19 @@ public interface ISVNWCDb {
             }
         }
 
+        public SVNNodeKind toNodeKind(SVNWCDbStatus status, boolean showHidden) throws SVNException {
+            SVNNodeKind nKind = toNodeKind();
+            if (!showHidden && status != null) {
+                switch (status) {
+                case NotPresent:
+                case ServerExcluded:
+                case Excluded:
+                    nKind = SVNNodeKind.NONE;
+                }
+            }
+            return nKind;
+        }
+
     }
 
     /** Enumerated values describing the state of a node. */

@@ -41,6 +41,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNConflictAction;
 import org.tmatesoft.svn.core.wc.SVNConflictReason;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
+import org.tmatesoft.svn.core.wc.SVNOperation;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
@@ -791,7 +792,7 @@ public class SvnNgMergeCallback implements ISvnDiffCallback {
     
     private SVNTreeConflictDescription makeTreeConflict(File path, SVNNodeKind kind, SVNConflictAction action, SVNConflictReason reason) throws SVNException {
         final SVNConflictVersion[] cvs = makeConflictVersions(path, kind);
-        final SVNTreeConflictDescription tc = new SVNTreeConflictDescription(path, kind, action, reason, null, cvs[0], cvs[1]);
+        final SVNTreeConflictDescription tc = new SVNTreeConflictDescription(path, kind, action, reason, SVNOperation.MERGE, cvs[0], cvs[1]);
         return tc;
     }
     

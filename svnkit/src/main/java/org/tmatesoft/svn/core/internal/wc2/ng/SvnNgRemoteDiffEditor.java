@@ -489,7 +489,7 @@ public class SvnNgRemoteDiffEditor implements ISVNEditor {
             }
             removeNonPropChanges(b.pristineProps, b.propChanges);
         }
-        if (b.endRevisionFile != null || b.added) {
+        if (b.endRevisionFile != null || b.propChanges.size() > 0) {
             String[] mTypes = b.getMimeTypes();
             if (b.added) {
                 diffCallback.fileAdded(currentResult.reset(),
