@@ -516,14 +516,14 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
             final boolean shouldCopyBaseData = shouldCopyBaseData(context, source, metadataOnly, srcStatus);
 
             if (shouldCopyBaseData)  {
-                copyDeletedFile(context, source, dst);
+                copyBaseDataOfFile(context, source, dst);
             } else {
                 copyVersionedFile(context, source, dst, dst, tmpDir, srcChecksum, metadataOnly, srcConflicted, true);
             }
         } else {
             if (srcStatus == SVNWCDbStatus.Deleted && metadataOnly) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Cannot perform 'virtual' {0}: ''{1}'' is a directory", new Object[] {
-                        "copy", source
+                        getOperation().isMove() ? "move" : "copy", source
                 });
                 SVNErrorManager.error(err, SVNLogType.WC);
             } else {
@@ -545,7 +545,7 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
         return svnStatus != null && svnStatus.getNodeStatus() == SVNStatusType.STATUS_REPLACED;
     }
 
-    private void copyDeletedFile(SVNWCContext context, File source, File dst) throws SVNException {
+    private void copyBaseDataOfFile(SVNWCContext context, File source, File dst) throws SVNException {
         final SVNProperties pristineProps = context.getPristineProps(source);
 
         final ISVNWCDb.WCDbBaseInfo baseInfo = context.getDb().getBaseInfo(source,
