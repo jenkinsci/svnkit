@@ -68,6 +68,7 @@ import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgCat;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgCheckout;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgCleanup;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgCommit;
+import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgDiff;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgExport;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgGetChangelistPaths;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgGetInfo;
@@ -102,6 +103,7 @@ import org.tmatesoft.svn.core.internal.wc2.old.SvnOldCheckout;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldCleanup;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldCommit;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldCopy;
+import org.tmatesoft.svn.core.internal.wc2.old.SvnOldDiff;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldExport;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetChangelistPaths;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetInfo;
@@ -129,6 +131,7 @@ import org.tmatesoft.svn.core.internal.wc2.old.SvnOldUpgrade;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnNgReposToReposCopy;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteAnnotate;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteCat;
+import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteDiff;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteDiffSummarize;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteExport;
 import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteGetInfo;
@@ -319,6 +322,10 @@ public class SvnOperationFactory {
         registerOperationRunner(SvnMerge.class, new SvnNgMergePegged());
         registerOperationRunner(SvnMerge.class, new SvnNgMergeReintegrate());
         registerOperationRunner(SvnMerge.class, new SvnNgMerge());
+
+        registerOperationRunner(SvnDiff.class, new SvnOldDiff());
+        registerOperationRunner(SvnDiff.class, new SvnNgDiff());
+        registerOperationRunner(SvnDiff.class, new SvnRemoteDiff());
 
         registerOperationRunner(SvnCleanup.class, new SvnOldCleanup());
         registerOperationRunner(SvnCleanup.class, new SvnNgCleanup());

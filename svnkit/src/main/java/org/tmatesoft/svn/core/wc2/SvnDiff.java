@@ -4,10 +4,14 @@ import java.io.File;
 import java.io.OutputStream;
 import java.util.Iterator;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.ISVNDiffGenerator;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.util.SVNLogType;
 
 public class SvnDiff extends SvnOperation<Void> {
     
@@ -110,7 +114,7 @@ public class SvnDiff extends SvnOperation<Void> {
         this.ignoreContentType = ignoreContentType;
     }
 
-    private SvnTarget getSecondTarget() {
+    public SvnTarget getSecondTarget() {
         if (getTargets().size() < 2) {
             return null;
         }
@@ -121,7 +125,30 @@ public class SvnDiff extends SvnOperation<Void> {
     }
 
     @Override
+    protected int getMinimumTargetsCount() {
+        return super.getMinimumTargetsCount();
+    }
+
+    @Override
+    protected int getMaximumTargetsCount() {
+        return Integer.MAX_VALUE;
+    }
+
+    @Override
     protected void ensureArgumentsAreValid() throws SVNException {
+        super.ensureArgumentsAreValid();
+
+        if (getRelativeToDirectory() != null && hasRemoteTargets()) {
+            //TODO
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Relative directory cannot be specified with remote targets");
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
+        }
+
+        if (getOutput() == null) {
+            //TODO
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "No output is specified.");
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
+        }
     }
 
     @Override
