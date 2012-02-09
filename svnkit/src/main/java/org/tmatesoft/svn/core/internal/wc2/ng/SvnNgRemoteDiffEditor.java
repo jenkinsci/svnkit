@@ -534,6 +534,8 @@ public class SvnNgRemoteDiffEditor implements ISVNEditor {
             } else {
                 action = dp.action;
             }
+        } else if (currentResult.contentState == SVNStatusType.OBSTRUCTED || currentResult.contentState == SVNStatusType.MISSING) {
+            action = SVNEventAction.SKIP;
         } else if (b.added) {
             action = SVNEventAction.UPDATE_ADD;
         } else {
