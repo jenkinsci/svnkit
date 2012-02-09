@@ -496,7 +496,7 @@ public class SvnNgMergeCallback implements ISvnDiffCallback {
         }
         MergePropertiesInfo info = mergePropChanges(path, propChanges, originalProperties);
         result.treeConflicted = info != null ? info.treeConflicted : false;
-        result.contentState = info != null ? info.mergeOutcome : null;
+        result.propState = info != null ? info.mergeOutcome : null;
     }
 
     public void dirClosed(SvnDiffCallbackResult result, File path, boolean isAdded) throws SVNException {

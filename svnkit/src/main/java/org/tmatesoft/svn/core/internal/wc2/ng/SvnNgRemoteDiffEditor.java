@@ -356,7 +356,7 @@ public class SvnNgRemoteDiffEditor implements ISVNEditor {
     }
 
     public void openDir(String path, long revision) throws SVNException {
-        DirBaton db = makeDirBaton(path, currentDir, true);
+        DirBaton db = makeDirBaton(path, currentDir, false);
         db.pristineProperties = new SVNProperties();
         DirBaton pb = currentDir;
         currentDir = db;

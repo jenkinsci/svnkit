@@ -2290,20 +2290,25 @@ public class SVNWCContext {
         if (conflictResolver == null || dryRun) {
             return true;
         }
+        oldVal = oldVal == null || (oldVal.getString() == null && oldVal.getBytes() == null) ? null : oldVal;
+        newVal = newVal == null || (newVal.getString() == null && newVal.getBytes() == null) ? null : newVal;
+        baseVal = baseVal == null || (baseVal.getString() == null && baseVal.getBytes() == null) ? null : baseVal;
+        workingVal = workingVal == null || (workingVal.getString() == null && workingVal.getBytes() == null) ? null : workingVal;
+        
         boolean conflictRemains = false;
         SVNWCConflictDescription17 cdesc = SVNWCConflictDescription17.createProp(localAbspath, isDir ? SVNNodeKind.DIR : SVNNodeKind.FILE, propname);
         cdesc.setSrcLeftVersion(leftVersion);
         cdesc.setSrcRightVersion(rightVersion);
         if (workingVal != null) {
-            cdesc.setMyFile(writeUnique(localAbspath, workingVal.getBytes()));
+            cdesc.setMyFile(writeUnique(localAbspath, SVNPropertyValue.getPropertyAsBytes(workingVal)));
         }
         if (newVal != null) {
-            cdesc.setTheirFile(writeUnique(localAbspath, newVal.getBytes()));
+            cdesc.setTheirFile(writeUnique(localAbspath, SVNPropertyValue.getPropertyAsBytes(newVal)));
         }
         if (baseVal == null && oldVal == null) {
         } else if ((baseVal != null && oldVal == null) || (baseVal == null && oldVal != null)) {
             SVNPropertyValue theVal = baseVal != null ? baseVal : oldVal;
-            cdesc.setBaseFile(writeUnique(localAbspath, theVal.getBytes()));
+            cdesc.setBaseFile(writeUnique(localAbspath, SVNPropertyValue.getPropertyAsBytes(theVal)));
         } else {
             SVNPropertyValue theVal;
             if (!baseVal.equals(oldVal)) {
@@ -2314,7 +2319,7 @@ public class SVNWCContext {
             } else {
                 theVal = baseVal;
             }
-            cdesc.setBaseFile(writeUnique(localAbspath, theVal.getBytes()));
+            cdesc.setBaseFile(writeUnique(localAbspath, SVNPropertyValue.getPropertyAsBytes(theVal)));
             if (workingVal != null && newVal != null) {
                 FSMergerBySequence merger = new FSMergerBySequence(CONFLICT_START, CONFLICT_SEPARATOR, CONFLICT_END);
                 OutputStream result = null;
