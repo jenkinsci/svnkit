@@ -1,6 +1,7 @@
 package org.tmatesoft.svn.test;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -12,6 +13,7 @@ import java.util.Map;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumInputStream;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnGetStatus;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
@@ -97,5 +99,22 @@ public class TestUtil {
         status.addTarget(SvnTarget.fromFile(workingCopyDirectory));
         status.run();
         return pathToStatus;
+    }
+
+    public static String md5(byte[] contents) {
+        final byte[] tmp = new byte[1024];
+        final SVNChecksumInputStream checksumStream = new SVNChecksumInputStream(new ByteArrayInputStream(contents), "md5");
+        try {
+            while (checksumStream.read(tmp) > 0) {
+                //
+            }
+            return checksumStream.getDigest();
+        } catch (IOException e) {
+            //never happens
+            e.printStackTrace();
+            return null;
+        } finally {
+            SVNFileUtil.closeFile(checksumStream);
+        }
     }
 }
