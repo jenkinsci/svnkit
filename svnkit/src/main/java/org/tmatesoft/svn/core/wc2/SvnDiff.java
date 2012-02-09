@@ -42,6 +42,14 @@ public class SvnDiff extends SvnOperation<Void> {
         setTwoTargets(target1, target2);
     }
 
+    public void setStartRevision(SVNRevision startRevision) {
+        this.startRevision = startRevision;
+    }
+
+    public void setEndRevision(SVNRevision endRevision) {
+        this.endRevision = endRevision;
+    }
+
     public SVNRevision getStartRevision() {
         return startRevision;
     }

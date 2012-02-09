@@ -13,7 +13,14 @@ public class SvnRemoteDiff extends SvnRemoteOperationRunner<Void, SvnDiff> {
 
     @Override
     public boolean isApplicable(SvnDiff operation, SvnWcGeneration wcGeneration) throws SVNException {
-        return !operation.hasLocalTargets();
+        final Collection<SvnTarget> targets = operation.getTargets();
+        for (SvnTarget target : targets) {
+            if (!target.isURL()) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     @Override

@@ -1,6 +1,7 @@
 package org.tmatesoft.svn.test;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 
 import junit.framework.Assert;
 import org.junit.Test;
@@ -98,6 +99,49 @@ public class DiffTest {
         }
     }
 
+    @Test
+    public void testLocalDiffOneFile() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testLocalDiffOneFile", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder1 = new CommitBuilder(url);
+            commitBuilder1.addFile("directory/file", "contents1".getBytes());
+            final SVNCommitInfo commitInfo1 = commitBuilder1.commit();
+
+            final CommitBuilder commitBuilder2 = new CommitBuilder(url);
+            commitBuilder2.changeFile("directory/file", "contents2".getBytes());
+            final SVNCommitInfo commitInfo2 = commitBuilder2.commit();
+
+            final SVNRevision svnRevision1 = SVNRevision.create(commitInfo1.getNewRevision());
+            final SVNRevision svnRevision2 = SVNRevision.create(commitInfo2.getNewRevision());
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, SVNRevision.HEAD.getNumber());
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+
+            final File file = new File(workingCopyDirectory, "directory/file");
+
+            final String actualDiffOutput = runDiff(svnOperationFactory, file, svnRevision1, svnRevision2);
+
+            final String expectedDiffOutput = "Index: " + file.getPath() + "\n" +
+                    "===================================================================\n" +
+                    "--- " + file.getPath() + "\t(revision " + svnRevision1.getNumber() + ")\n" +
+                    "+++ " + file.getPath() + "\t(revision " + svnRevision2.getNumber() + ")\n" +
+                    "@@ -1 +1 @@\n" +
+                    "-contents1\n" +
+                    "\\ No newline at end of file\n" +
+                    "+contents2\n" +
+                    "\\ No newline at end of file\n";
+
+            Assert.assertEquals(expectedDiffOutput, actualDiffOutput);
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
     private String runDiff(SvnOperationFactory svnOperationFactory, SVNURL fileUrl, SVNRevision startRevision, SVNRevision endRevision) throws SVNException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
@@ -114,6 +158,16 @@ public class DiffTest {
 
         final SvnDiff diff = svnOperationFactory.createDiff();
         diff.setTargets(SvnTarget.fromURL(url1, svnRevision1), SvnTarget.fromURL(url2, svnRevision2));
+        diff.setOutput(byteArrayOutputStream);
+        diff.run();
+
+        return new String(byteArrayOutputStream.toByteArray());
+    }
+    private String runDiff(SvnOperationFactory svnOperationFactory, File file, SVNRevision startRevision, SVNRevision endRevision) throws SVNException {
+        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+
+        final SvnDiff diff = svnOperationFactory.createDiff();
+        diff.setTarget(SvnTarget.fromFile(file, startRevision), startRevision, endRevision);
         diff.setOutput(byteArrayOutputStream);
         diff.run();
 
