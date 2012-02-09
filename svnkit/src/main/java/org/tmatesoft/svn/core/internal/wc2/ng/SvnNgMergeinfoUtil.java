@@ -116,7 +116,7 @@ public class SvnNgMergeinfoUtil {
                         SVNNodeKind.UNKNOWN, 
                         null, -1, 
                         SVNStatusType.INAPPLICABLE, 
-                        SVNStatusType.INAPPLICABLE, 
+                        SVNStatusType.CHANGED, 
                         SVNStatusType.INAPPLICABLE, 
                         SVNEventAction.UPDATE_UPDATE, 
                         null, 

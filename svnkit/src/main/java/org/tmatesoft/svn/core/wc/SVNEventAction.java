@@ -416,5 +416,5 @@ public class SVNEventAction {
 
     public static final SVNEventAction MERGE_RECORD_BEGIN = new SVNEventAction(52, "record_merge_begin");
     public static final SVNEventAction MERGE_RECORD_INFO = new SVNEventAction(53, "merge_record_info");
-    public static final SVNEventAction MERGE_ELIDE_INFO = new SVNEventAction(54, "mergee_elide_info");
+    public static final SVNEventAction MERGE_ELIDE_INFO = new SVNEventAction(54, "merge_elide_info");
 }
