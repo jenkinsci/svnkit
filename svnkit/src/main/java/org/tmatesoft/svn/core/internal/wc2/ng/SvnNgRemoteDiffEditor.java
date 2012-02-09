@@ -224,7 +224,7 @@ public class SvnNgRemoteDiffEditor implements ISVNEditor {
         if (currentDir.skip || currentDir.skipChildren || currentDir.treeConflicted) {
             return;
         }
-        SVNNodeKind kind = repository.checkPath(path, revision);
+        SVNNodeKind kind = repository.checkPath(path, this.revision);
         SVNEventAction action = SVNEventAction.SKIP;
         currentResult.contentState = SVNStatusType.INAPPLICABLE;
         
