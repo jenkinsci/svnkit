@@ -2225,6 +2225,7 @@ public class SVNWCContext {
         prependPropValue(toVal, propSkel);
         prependPropValue(mineVal, propSkel);
         prependPropValue(baseVal, propSkel);
+        
         propSkel.prependString(propName);
         propSkel.prependString(CONFLICT_KIND_PROP);
         skel.appendChild(propSkel);
@@ -2232,7 +2233,7 @@ public class SVNWCContext {
 
     private void prependPropValue(SVNPropertyValue fromVal, SVNSkel skel) throws SVNException {
         SVNSkel valueSkel = SVNSkel.createEmptyList();
-        if (fromVal != null) {
+        if (fromVal != null && (fromVal.getBytes() != null || fromVal.getString() != null)) {
             valueSkel.prependPropertyValue(fromVal);
         }
         skel.addChild(valueSkel);
@@ -4026,61 +4027,115 @@ public class SVNWCContext {
 
     private String messageFromSkel(SVNSkel skel) throws SVNException {
         String propname = skel.getChild(1).getValue();
-        String original = maybePropValue(skel.getChild(2));
-        String mine = maybePropValue(skel.getChild(3));
-        String incoming = maybePropValue(skel.getChild(4));
-        String incomingBase = maybePropValue(skel.getChild(5));
-        return generateConflictMessage(propname, original, mine, incoming, incomingBase);
+        
+        SVNPropertyValue original = maybePropValue(propname, skel.getChild(2));
+        SVNPropertyValue mine = maybePropValue(propname, skel.getChild(3));
+        SVNPropertyValue incoming = maybePropValue(propname, skel.getChild(4));
+        SVNPropertyValue incomingBase = maybePropValue(propname, skel.getChild(5));
+        
+        String conflictMessage = generateConflictMessage(propname, original, mine, incoming, incomingBase);
+        
+        if (mine == null) {
+            mine = SVNPropertyValue.create("");
+        }
+        if (incoming == null) {
+            incoming = SVNPropertyValue.create("");
+        }
+        if (original == null) {
+            if (incomingBase != null) {
+                original = incomingBase;
+            } else {
+                original = SVNPropertyValue.create("");
+            }
+        }
+        
+        byte[] mineBytes = SVNPropertyValue.getPropertyAsBytes(mine);
+        byte[] incomingBytes = SVNPropertyValue.getPropertyAsBytes(incoming);
+        boolean mineIsBinary = false;
+        try {
+            mineIsBinary = mineBytes != null && SVNFileUtil.detectMimeType(new ByteArrayInputStream(mineBytes)) != null;
+        } catch (IOException e) {
+        }  
+        boolean incomingIsBinary = false;
+        try {
+            incomingIsBinary = incomingBytes != null && SVNFileUtil.detectMimeType(new ByteArrayInputStream(incomingBytes)) != null;
+        } catch (IOException e) {
+        }  
+
+        // TODO generate conflict for non-binary props.
+
+        if (mineBytes != null && mineBytes.length > 0) {
+            conflictMessage += "Local property value:\n";
+            if (mineIsBinary) {
+                conflictMessage += "Cannot display: property value is binary data\n";
+            } else {
+                conflictMessage += SVNPropertyValue.getPropertyAsString(mine) + "\n";
+            }
+            conflictMessage += "\n";
+        }
+        if (incomingBytes != null && incomingBytes.length > 0) {
+            conflictMessage += "Incoming property value:\n";
+            if (incomingIsBinary) {
+                conflictMessage += "Cannot display: property value is binary data\n";
+            } else {
+                conflictMessage += SVNPropertyValue.getPropertyAsString(incoming) + "\n";
+            }
+            conflictMessage += "\n";
+        }
+        
+        return conflictMessage;
     }
 
-    private String maybePropValue(SVNSkel child) throws SVNException {
-        if (child.getListSize() == 0) {
+    private SVNPropertyValue maybePropValue(String propname, SVNSkel child) throws SVNException {
+        if (child.getListSize() != 1) {
             return null;
         }
-        return child.getChild(0).getValue();
+        byte[] data = child.getChild(0).getData();
+        return SVNPropertyValue.create(propname, data);
     }
 
-    private String generateConflictMessage(String propname, String original, String mine, String incoming, String incomingBase) {
+    private String generateConflictMessage(String propname, SVNPropertyValue original, SVNPropertyValue mine, SVNPropertyValue incoming, SVNPropertyValue incomingBase) {
         if (incomingBase == null) {
             assert (incoming != null);
             if (mine != null) {
                 assert (!mine.equals(incoming));
-                return String.format("Trying to add new property '%s' with value '%s',\nbut property already exists with value '%s'.", propname, incoming, mine);
+                return String.format("Trying to add new property '%s'\nbut the property already exists.\n", propname);
             }
             assert (original != null);
-            return String.format("Trying to create property '%s' with value '%s',\nbut it has been locally deleted.", propname, incoming);
+            return String.format("Trying to add new property '%s'\nbut the property has been locally deleted.\n", propname);
         }
+        
         if (incoming == null) {
             assert (incomingBase != null);
             if (original == null && mine != null) {
-                return String.format("Trying to delete property '%s' with value '%s',\nbut property has been locally added with value '%s'.", propname, incomingBase, mine);
+                return String.format("Trying to delete property '%s'\nbut the property has been locally added.\n", propname);
             }
             assert (original != null);
             if (original.equals(incomingBase)) {
                 if (mine != null) {
-                    return String.format("Trying to delete property '%s' with value '%s',\nbut it has been modified from '%s' to '%s'.", propname, incomingBase, original, mine);
+                    return String.format("Trying to delete property '%s'\nbut the property has been locally modified.\n", propname);
                 }
             } else if (mine == null) {
-                return String.format("Trying to delete property '%s' with value '%s',\nbut property with value '%s' is locally deleted.", propname, incomingBase, original);
+                return String.format("Trying to delete property '%s'\nbut the property has been locally deleted and had a different value.\n", propname);
             }
             assert (!original.equals(incomingBase));
-            return String.format("Trying to delete property '%s' with value '%s',\nbut the local value is '%s'.", propname, incomingBase, mine);
+            return String.format("Trying to delete property '%s'\nbut the local property value is different.\n", propname);
         }
         assert (mine == null || !mine.equals(incomingBase));
         if (original != null && mine != null && original.equals(mine)) {
             assert (!original.equals(incomingBase));
-            return String.format("Trying to change property '%s' from '%s' to '%s',\nbut property already exists with value '%s'.", propname, incomingBase, incoming, mine);
+            return String.format("Trying to change property '%s'\nbut the local property value conflicts with the incoming change.\n", propname);
         }
         if (original != null && mine != null) {
-            return String.format("Trying to change property '%s' from '%s' to '%s',\nbut the property has been locally changed from '%s' to '%s'.", propname, incomingBase, incoming, original, mine);
+            return String.format("Trying to change property '%s'\nbut the property has already been locally changed to a different value.\n", propname);
         }
         if (original != null) {
-            return String.format("Trying to change property '%s' from '%s' to '%s',\nbut it has been locally deleted.", propname, incomingBase, incoming);
+            return String.format("Trying to change property '%s'\nbut the property has been locally deleted.\n", propname);
         }
         if (mine != null) {
-            return String.format("Trying to change property '%s' from '%s' to '%s',\nbut property has been locally " + "added with value '%s'.", propname, incomingBase, incoming, mine);
+            return String.format("Trying to change property '%s'\nbut the property has been locally added with a different value.\n", propname);
         }
-        return String.format("Trying to change property '%s' from '%s' to '%s',\nbut the property does not exist.", propname, incomingBase, incoming);
+        return String.format("Trying to change property '%s'\nbut the property does not exist locally.\n", propname);
     }
 
     public boolean resolveConflictOnNode(File localAbsPath, boolean resolveText, boolean resolveProps, SVNConflictChoice conflictChoice) throws SVNException {

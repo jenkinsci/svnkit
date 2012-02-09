@@ -2161,9 +2161,6 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
         String mergeInfoValue = null;
         if (mergeinfo != null) {
             mergeInfoValue = SVNMergeInfoUtil.formatMergeInfoToString(mergeinfo, null);
-            if ("".equals(mergeInfoValue)) {
-                mergeInfoValue = null;
-            }
         }                    
         boolean mergeInfoChanged = false;
         if (notify && context.getEventHandler() != null) {
