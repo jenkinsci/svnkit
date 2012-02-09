@@ -2696,22 +2696,48 @@ public class SVNWCContext {
         
         File detranslatedTargetAbspath = detranslateWCFile(targetAbspath, !isBinary, propDiff, targetAbspath);
         leftAbspath = maybeUpdateTargetEols(leftAbspath, propDiff);
-        if (isBinary) {
-            if (dryRun) {
-                info.mergeOutcome = SVNStatusType.CONFLICTED;
+        attemptTrivialMerge(info, leftAbspath, rightAbspath, targetAbspath, dryRun);
+        if (info.mergeOutcome == SVNStatusType.NO_MERGE) {
+            if (isBinary) {
+                if (dryRun) {
+                    info.mergeOutcome = SVNStatusType.CONFLICTED;
+                } else {
+                    info = mergeBinaryFile(leftAbspath, rightAbspath, targetAbspath, leftLabel, rightLabel, targetLabel, leftVersion, rightVersion, detranslatedTargetAbspath, mimeprop, 
+                            getOptions().getConflictResolver());
+                }
             } else {
-                info = mergeBinaryFile(leftAbspath, rightAbspath, targetAbspath, leftLabel, rightLabel, targetLabel, leftVersion, rightVersion, detranslatedTargetAbspath, mimeprop, getOptions()
-                        .getConflictResolver());
+                info = mergeTextFile(leftAbspath, rightAbspath, targetAbspath, leftLabel, rightLabel, targetLabel, dryRun, options, leftVersion, rightVersion, null, detranslatedTargetAbspath,
+                        mimeprop, getOptions().getConflictResolver());
             }
-        } else {
-            info = mergeTextFile(leftAbspath, rightAbspath, targetAbspath, leftLabel, rightLabel, targetLabel, dryRun, options, leftVersion, rightVersion, null, detranslatedTargetAbspath,
-                    mimeprop, getOptions().getConflictResolver());
         }
         if (!dryRun) {
             SVNSkel workItem = wqBuildSyncFileFlags(targetAbspath);
             info.workItems = wqMerge(info.workItems, workItem);
         }
         return info;
+    }
+
+    private void attemptTrivialMerge(MergeInfo info, File leftAbspath, File rightAbspath, File targetAbspath, boolean dryRun) throws SVNException {
+        SVNFileType ft = SVNFileType.getType(targetAbspath);
+        if (ft != SVNFileType.FILE) {
+            info.mergeOutcome = SVNStatusType.NO_MERGE;
+            return;
+        }
+        boolean sameContents = SVNFileUtil.compareFiles(leftAbspath, targetAbspath, null);
+        info.mergeOutcome = SVNStatusType.NO_MERGE;
+        
+        if (sameContents) {
+            sameContents = SVNFileUtil.compareFiles(leftAbspath, rightAbspath, null);
+            if (sameContents) {
+                info.mergeOutcome = SVNStatusType.UNCHANGED;
+            } else {
+                info.mergeOutcome = SVNStatusType.MERGED;
+                if (!dryRun) {
+                    SVNSkel item = wqBuildFileInstall(targetAbspath, rightAbspath, false, false);
+                    info.workItems = wqMerge(info.workItems, item);
+                }                
+            }
+        }
     }
 
     private boolean isMarkedAsBinary(File localAbsPath) throws SVNException {
