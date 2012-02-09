@@ -552,9 +552,9 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
         SVNProperties entryProps = new SVNProperties();
         SvnNgPropertiesManager.categorizeProperties(newBaseProps, regularProps, entryProps, null);
         newBaseProps = regularProps;
-        long changedRev = Long.parseLong(entryProps.getStringValue(SVNProperty.COMMITTED_REVISION));
+        long changedRev = entryProps.containsName(SVNProperty.COMMITTED_REVISION) ? Long.parseLong(entryProps.getStringValue(SVNProperty.COMMITTED_REVISION)) : - 1;
         String changedAuthor = entryProps.getStringValue(SVNProperty.LAST_AUTHOR);
-        SVNDate changedDate = SVNDate.parseDate(entryProps.getStringValue(SVNProperty.COMMITTED_DATE));
+        SVNDate changedDate = entryProps.containsName(SVNProperty.COMMITTED_REVISION) ? SVNDate.parseDate(entryProps.getStringValue(SVNProperty.COMMITTED_DATE)) : new SVNDate(0, 0);
         
         WritableBaseInfo wbInfo = context.openWritableBase(path, true, true);
         try {

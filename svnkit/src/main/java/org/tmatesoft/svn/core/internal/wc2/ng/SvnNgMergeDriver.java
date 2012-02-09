@@ -1941,11 +1941,10 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
         if (!recordOnly && range.getStartRevision() <= range.getEndRevision() && depth == SVNDepth.IMMEDIATES) {
             inoperativeImmediateChildren = getInoperativeImmediateChildrent(mergeInfoPath, range.getStartRevision() + 1, range.getEndRevision(), targetAbsPath, repos1);
         }
-        int index = 0;
-        for (File childPath : childrenWithMergeInfo.keySet()) {
-            MergePath child = childrenWithMergeInfo.get(childPath);
+        Object[] array = childrenWithMergeInfo.values().toArray();
+        for (int index = 0; index < array.length; index++) {
+            MergePath child = (MergePath) array[index];
             if (child.absent) {
-                index++;
                 continue;
             }
             if (index > 0
@@ -1955,11 +1954,9 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
                 if (child.childOfNonInheritable) {
                     recordMergeinfo(child.absPath, null, false);
                 }
-                index++;
             } else {
                 boolean childNodeDeleted = context.isNodeStatusDeleted(child.absPath);
                 if (childNodeDeleted) {
-                    index++;
                     continue;
                 }
                 String childReposPath = SVNWCUtils.getPathAsChild(targetAbsPath, child.absPath);
@@ -1972,7 +1969,6 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
                 }
                 SVNMergeRangeList childMergeRangelist = filterNaturalHistoryFromMergeInfo(childMergeSrcCanonPath, child.implicitMergeInfo, range);
                 if (childMergeRangelist.isEmpty()) {
-                    index++;
                     continue;
                 }
                 if (!squelchMergeinfoNotifications) {
@@ -1987,7 +1983,6 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
                 if (index == 0) {
                     recordSkips(mergeInfoPath, childMergeRangelist, isRollBack);
                 } else if (skippedPaths != null && skippedPaths.contains(child.absPath)) {
-                    index++;
                     continue;
                 }
                 
@@ -2036,7 +2031,6 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
                     inSwitchedSubtree = true;
                 } else if (index > 1) {
                     int j = index - 1;
-                    Object[] array = childrenWithMergeInfo.values().toArray();
                     for(; j > 0; j--) {
                         MergePath parent = (MergePath) array[j];
                         if (parent != null && parent.switched && SVNWCUtils.isAncestor(parent.absPath, child.absPath)) {
@@ -2047,7 +2041,6 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
                 }
                 SvnNgMergeinfoUtil.elideMergeInfo(context, repos1, child.absPath, inSwitchedSubtree ? null : targetAbsPath);
             }
-            index++;            
         } 
     }
 
