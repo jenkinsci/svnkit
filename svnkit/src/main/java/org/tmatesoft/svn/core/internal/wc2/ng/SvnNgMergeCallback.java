@@ -412,6 +412,7 @@ public class SvnNgMergeCallback implements ISvnDiffCallback {
                     setDryRunAddtions(new HashSet<File>());
                 }
                 getDryRunAdditions().add(path);
+                setAddedPath(path);
             } else {
                 path.mkdir();
                 if (copyFromUrl != null) {
