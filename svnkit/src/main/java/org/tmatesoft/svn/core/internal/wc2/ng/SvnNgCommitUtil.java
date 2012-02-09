@@ -74,7 +74,7 @@ public class SvnNgCommitUtil {
     
     public static SvnCommitPacket harvestCopyCommitables(SVNWCContext context, File path, SVNURL dst, SvnCommitPacket packet, ISvnUrlKindCallback urlKindCallback, ISVNCommitParameters commitParameters, Map<File, String> externalsStorage) throws SVNException {
         SVNWCNodeReposInfo reposInfo = context.getNodeReposInfo(path);
-        File commitRelPath = new File(SVNEncodingUtil.uriDecode(SVNURLUtil.getRelativeURL(reposInfo.reposRootUrl, dst)));
+        File commitRelPath = new File(SVNURLUtil.getRelativeURL(reposInfo.reposRootUrl, dst, false));
         
         harvestCommittables(context, path, packet, null, 
                 reposInfo.reposRootUrl, 

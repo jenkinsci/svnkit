@@ -76,7 +76,7 @@ public class SvnNgRelocate extends SvnNgOperationRunner<SVNURL, SvnRelocate> imp
         SVNURL urlRoot = null;
         for (String uu : collectedUuids.keySet()) {
             SVNURL root = collectedUuids.get(uu);
-            if (SVNURLUtil.getRelativeURL(root, url) != null) {
+            if (SVNURLUtil.getRelativeURL(root, url, false) != null) {
                 urlUuid = uu;
                 urlRoot = root;
                 break;

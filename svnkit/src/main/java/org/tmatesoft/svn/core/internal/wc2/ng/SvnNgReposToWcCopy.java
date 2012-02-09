@@ -233,7 +233,7 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
         }
         
         for (SvnCopyPair pair : copyPairs) {
-            String relativePath = SVNURLUtil.getRelativeURL(topSrcUrl, pair.source);
+            String relativePath = SVNURLUtil.getRelativeURL(topSrcUrl, pair.source, false);
             relativePath = SVNEncodingUtil.uriDecode(relativePath);
             SVNNodeKind sourceKind = repository.checkPath(relativePath, pair.revNum);
             if (sourceKind == SVNNodeKind.NONE) {

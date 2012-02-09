@@ -89,7 +89,7 @@ public class SvnExternalUpdateEditor implements ISVNUpdateEditor {
         editor.extPatterns = preservedExts;
         
         editor.recordAncestorAbspath = recordAncestorAbsPath;
-        editor.recordedReposRelPath = SVNFileUtil.createFilePath(SVNEncodingUtil.uriDecode(SVNURLUtil.getRelativeURL(reposRootUrl, recordedUrl)));
+        editor.recordedReposRelPath = SVNFileUtil.createFilePath(SVNURLUtil.getRelativeURL(reposRootUrl, recordedUrl, false));
         editor.recordedPegRevision = recordedPegRev != null ? recordedPegRev.getNumber() : SVNWCContext.INVALID_REVNUM;
         editor.recordedRevision = recordedRev != null ? recordedRev.getNumber() : SVNWCContext.INVALID_REVNUM;
         
@@ -195,7 +195,7 @@ public class SvnExternalUpdateEditor implements ISVNUpdateEditor {
             SVNFileUtil.deleteFile(currentBase.tempBaseAbspath);
         }
         boolean added = originalRevision == SVNWCContext.INVALID_REVNUM;
-        File reposRelPath = SVNFileUtil.createFilePath(SVNEncodingUtil.uriDecode(SVNURLUtil.getRelativeURL(reposRootUrl, url)));
+        File reposRelPath = SVNFileUtil.createFilePath(SVNURLUtil.getRelativeURL(reposRootUrl, url, false));
         
         SvnChecksum newChecksum = null;
         SVNProperties actualProperties = null;

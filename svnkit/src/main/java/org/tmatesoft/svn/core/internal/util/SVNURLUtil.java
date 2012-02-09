@@ -23,9 +23,9 @@ import org.tmatesoft.svn.core.SVNURL;
  */
 public class SVNURLUtil {
 
-    public static String getRelativeURL(SVNURL parent, SVNURL child) {
-        String parentURLAsString = parent.toString();
-        String childURLAsString = child.toString();
+    public static String getRelativeURL(SVNURL parent, SVNURL child, boolean encoded) {
+        String parentURLAsString = encoded ? parent.toString() : parent.toDecodedString();
+        String childURLAsString = encoded ? child.toString() : child.toDecodedString();
         String relativePath = SVNPathUtil.getPathAsChild(parentURLAsString, childURLAsString);
         return relativePath == null ? "" : relativePath;
     }

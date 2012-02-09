@@ -19,7 +19,6 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
@@ -119,8 +118,7 @@ public class SvnNgWcToReposCopy extends SvnNgOperationRunner<SVNCommitInfo, SvnR
             parents = findMissingParents(topDstUrl, repository);
         }
         for (SvnCopyPair pair : copyPairs) {
-            String path = SVNURLUtil.getRelativeURL(repository.getLocation(), pair.dst);
-            path = SVNEncodingUtil.uriDecode(path);
+            String path = SVNURLUtil.getRelativeURL(repository.getLocation(), pair.dst, false);
             if (repository.checkPath(path, -1) != SVNNodeKind.NONE) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS,
                         "Path ''{0}'' already exists", pair.dst);
@@ -158,7 +156,7 @@ public class SvnNgWcToReposCopy extends SvnNgOperationRunner<SVNCommitInfo, SvnR
         SVNURL repositoryRoot = repository.getRepositoryRoot(true);
         if (parents != null) {
             for (SVNURL parent : parents) {
-                String parentPath = SVNURLUtil.getRelativeURL(repositoryRoot, parent);
+                String parentPath = SVNURLUtil.getRelativeURL(repositoryRoot, parent, false);
                 packet.addItem(null, SVNNodeKind.DIR, repositoryRoot, parentPath, -1, null, -1, SvnCommitItem.ADD);
             }
         }
@@ -278,7 +276,7 @@ public class SvnNgWcToReposCopy extends SvnNgOperationRunner<SVNCommitInfo, SvnR
                 SVNURL resolvedURL = externals[k].resolveURL(repos.getRepositoryRoot(true), ownerURL);
                 String unresolvedURL = externals[k].getUnresolvedUrl();
                 if (unresolvedURL != null && !SVNPathUtil.isURL(unresolvedURL) && unresolvedURL.startsWith("../"))  {
-                    unresolvedURL = SVNURLUtil.getRelativeURL(repos.getRepositoryRoot(true), resolvedURL);
+                    unresolvedURL = SVNURLUtil.getRelativeURL(repos.getRepositoryRoot(true), resolvedURL, true);
                     if (unresolvedURL.startsWith("/")) {
                         unresolvedURL = "^" + unresolvedURL;
                     } else {

@@ -35,7 +35,7 @@ public class SvnNgGetMergeInfo extends SvnNgOperationRunner<Map<SVNURL, SVNMerge
         if (catalog != null) {
             String relativePath;
             if (getOperation().getFirstTarget().isURL()) {
-                relativePath = SVNURLUtil.getRelativeURL(root[0], getOperation().getFirstTarget().getURL());
+                relativePath = SVNURLUtil.getRelativeURL(root[0], getOperation().getFirstTarget().getURL(), false);
             } else {
                 relativePath = SVNFileUtil.getFilePath(getWcContext().getNodeReposRelPath(getFirstTarget()));
             }

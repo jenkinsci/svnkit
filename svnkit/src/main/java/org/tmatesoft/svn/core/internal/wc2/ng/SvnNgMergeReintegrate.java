@@ -103,7 +103,7 @@ public class SvnNgMergeReintegrate extends SvnNgOperationRunner<Void, SvnMerge>{
         
         long targetBaseRev = context.getNodeBaseRev(mergeTarget);
         long rev1 = targetBaseRev;
-        File sourceReposRelPath = new File(SVNURLUtil.getRelativeURL(wcReposRoot, url2));
+        File sourceReposRelPath = new File(SVNURLUtil.getRelativeURL(wcReposRoot, url2, false));
         File targetReposRelPath = context.getNodeReposRelPath(mergeTarget);
         
         if ("".equals(sourceReposRelPath.getPath()) || "".equals(targetReposRelPath.getPath())) {

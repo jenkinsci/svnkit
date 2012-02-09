@@ -417,7 +417,7 @@ public class SvnNgMergeCallback implements ISvnDiffCallback {
                 path.mkdir();
                 if (copyFromUrl != null) {
                     SVNWCNodeReposInfo reposInfo = getContext().getNodeReposInfo(parentPath);
-                    File reposRelPath = new File(SVNURLUtil.getRelativeURL(reposInfo.reposRootUrl, copyFromUrl));
+                    File reposRelPath = new File(SVNURLUtil.getRelativeURL(reposInfo.reposRootUrl, copyFromUrl, false));
                     getContext().getDb().opCopyDir(path, new SVNProperties(), 
                             copyFromRev, new SVNDate(0, 0), null, 
                             reposRelPath, 
@@ -438,7 +438,7 @@ public class SvnNgMergeCallback implements ISvnDiffCallback {
                 if (!isDryRun()) {
                     if (copyFromUrl != null) {
                         SVNWCNodeReposInfo reposInfo = getContext().getNodeReposInfo(parentPath);
-                        File reposRelPath = new File(SVNURLUtil.getRelativeURL(reposInfo.reposRootUrl, copyFromUrl));
+                        File reposRelPath = new File(SVNURLUtil.getRelativeURL(reposInfo.reposRootUrl, copyFromUrl, false));
                         getContext().getDb().opCopyDir(path, new SVNProperties(), 
                                 copyFromRev, new SVNDate(0, 0), null, 
                                 reposRelPath, 

@@ -1501,9 +1501,9 @@ public abstract class SVNMergeDriver extends SVNBasicDelegate implements ISVNMer
             rightURL = myCurrentMergeSource.myURL2;
         }
         
-        SVNConflictVersion leftConflictVersion = new SVNConflictVersion(srcReposRoot, SVNURLUtil.getRelativeURL(srcReposRoot, leftURL), 
+        SVNConflictVersion leftConflictVersion = new SVNConflictVersion(srcReposRoot, SVNURLUtil.getRelativeURL(srcReposRoot, leftURL, false), 
                 myCurrentMergeSource.myRevision1, kind);
-        SVNConflictVersion rightConflictVersion = new SVNConflictVersion(srcReposRoot, SVNURLUtil.getRelativeURL(srcReposRoot, rightURL), 
+        SVNConflictVersion rightConflictVersion = new SVNConflictVersion(srcReposRoot, SVNURLUtil.getRelativeURL(srcReposRoot, rightURL, false), 
                 myCurrentMergeSource.myRevision2, kind);
         SVNTreeConflictDescription conflictDescription  = new SVNTreeConflictDescription(victim, kind, action, reason, SVNOperation.MERGE, 
                 leftConflictVersion, rightConflictVersion);

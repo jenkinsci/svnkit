@@ -800,7 +800,7 @@ public class SVNCopyDriver extends SVNBasicDelegate {
                             SVNURL resolvedURL = externals[k].resolveURL(repos.getRepositoryRoot(true), ownerURL);
                             String unresolvedURL = externals[k].getUnresolvedUrl();
                             if (unresolvedURL != null && !SVNPathUtil.isURL(unresolvedURL) && unresolvedURL.startsWith("../"))  {
-                                unresolvedURL = SVNURLUtil.getRelativeURL(repos.getRepositoryRoot(true), resolvedURL);
+                                unresolvedURL = SVNURLUtil.getRelativeURL(repos.getRepositoryRoot(true), resolvedURL, true);
                                 if (unresolvedURL.startsWith("/")) {
                                     unresolvedURL = "^" + unresolvedURL;
                                 } else {
