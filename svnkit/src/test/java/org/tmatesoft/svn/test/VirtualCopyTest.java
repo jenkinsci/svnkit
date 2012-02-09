@@ -1371,18 +1371,18 @@ public class VirtualCopyTest {
             final File copiedFile = new File(workingCopyDirectory, "copied");
             copy(svnOperationFactory, sourceFile, copiedFile);
 
-            final File missingFile = new File(workingCopyDirectory, "replaced");
-            workingCopy.delete(missingFile);
+            final File replacedFile = new File(workingCopyDirectory, "replaced");
+            workingCopy.delete(replacedFile);
             //noinspection ResultOfMethodCallIgnored
-            missingFile.createNewFile();
-            workingCopy.add(missingFile);
+            replacedFile.createNewFile();
+            workingCopy.add(replacedFile);
 
-            copyVirtual(svnOperationFactory, missingFile, copiedFile);
+            copyVirtual(svnOperationFactory, replacedFile, copiedFile);
 
             final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
 
             assertStatus(SVNStatusType.STATUS_ADDED, copiedFile, statuses);
-            assertStatus(SVNStatusType.STATUS_REPLACED, missingFile, statuses);
+            assertStatus(SVNStatusType.STATUS_REPLACED, replacedFile, statuses);
 
             Assert.assertEquals(url.appendPath("replaced", false), statuses.get(copiedFile).getCopyFromUrl());
 
