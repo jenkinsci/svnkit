@@ -2,6 +2,7 @@ package org.tmatesoft.svn.core.wc2;
 
 import java.io.File;
 import java.io.OutputStream;
+import java.util.Iterator;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.ISVNDiffGenerator;
@@ -14,10 +15,6 @@ public class SvnDiff extends SvnOperation<Void> {
     private SVNDiffOptions diffOptions;
     private OutputStream output;
     
-    private SvnTarget firstSource;
-    private SvnTarget secondSource;
-    
-    private SvnTarget source;
     private SVNRevision startRevision;
     private SVNRevision endRevision;
     
@@ -31,27 +28,16 @@ public class SvnDiff extends SvnOperation<Void> {
         super(factory);
     }
 
-    public void setSource(SvnTarget source, SVNRevision start, SVNRevision end) {
-        this.source = source;
+    public void setTarget(SvnTarget source, SVNRevision start, SVNRevision end) {
+        setSingleTarget(source);
         this.startRevision = start;
         this.endRevision = end;
-        if (source != null) {
-            setSources(null, null);
-        }
     }
     
-    public void setSources(SvnTarget source1, SvnTarget source2) {
-        this.firstSource = source1;
-        this.secondSource = source2;
-        if (firstSource != null) {
-            setSource(null, null, null);
-        }
+    public void setTargets(SvnTarget target1, SvnTarget target2) {
+        setTwoTargets(target1, target2);
     }
-    
-    public SvnTarget getSource() {
-        return source;
-    }
-    
+
     public SVNRevision getStartRevision() {
         return startRevision;
     }
@@ -60,14 +46,6 @@ public class SvnDiff extends SvnOperation<Void> {
         return endRevision;
     }
     
-    public SvnTarget getFirstSource() {
-        return firstSource;
-    }
-
-    public SvnTarget getSecondSource() {
-        return secondSource;
-    }
-
     public void setRelativeToDirectory(File relativeToDirectory) {
         this.relativeToDirectory = relativeToDirectory;
     }
@@ -132,20 +110,30 @@ public class SvnDiff extends SvnOperation<Void> {
         this.ignoreContentType = ignoreContentType;
     }
 
+    private SvnTarget getSecondTarget() {
+        if (getTargets().size() < 2) {
+            return null;
+        }
+
+        final Iterator<SvnTarget> iterator = getTargets().iterator();
+        iterator.next();
+        return iterator.next();
+    }
+
     @Override
     protected void ensureArgumentsAreValid() throws SVNException {
     }
 
     @Override
     protected File getOperationalWorkingCopy() {
-        if (getSource() != null && getSource().isFile()) {
-            return getSource().getFile();
-        } else if (getFirstSource() != null && getFirstSource().isFile()) {
-            return getFirstSource().getFile();
-        } else if (getSecondSource() != null && getSecondSource().isFile()) {
-            return getSecondSource().getFile();
+        if (getTargets().size() == 1 && getFirstTarget().isFile()) {
+            return getFirstTarget().getFile();
+        } else if (getTargets().size() == 2 && getFirstTarget() != null && getFirstTarget().isFile()) {
+            return getFirstTarget().getFile();
+        } else if (getTargets().size() == 2 && getSecondTarget() != null && getSecondTarget().isFile()) {
+            return getSecondTarget().getFile();
         }
-        
+
         return null;
     }
 }
