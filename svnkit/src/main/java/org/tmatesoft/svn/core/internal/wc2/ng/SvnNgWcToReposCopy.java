@@ -28,6 +28,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNExternal;
 import org.tmatesoft.svn.core.internal.wc17.SVNCommitter17;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeOriginInfo;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
@@ -188,11 +189,66 @@ public class SvnNgWcToReposCopy extends SvnNgOperationRunner<SVNCommitInfo, SvnR
                 includeExternalsChanges(repository, packet, externals);
             }
         }
+
+        if (getOperation().isDisableLocalModifications()) {
+            packet = filterLocalModifications(packet);
+        }
+
         Map<String, SvnCommitItem> committables = new TreeMap<String, SvnCommitItem>();
         SVNURL url = SvnNgCommitUtil.translateCommitables(packet.getItems(packet.getRepositoryRoots().iterator().next()), committables);
         repository.setLocation(url, false);
         ISVNEditor commitEditor = repository.getCommitEditor(commitMessage, null, false, revisionProperties, null);
         return SVNCommitter17.commit(getWcContext(), null, committables, repositoryRoot, commitEditor, null, null);
+    }
+
+    private SvnCommitPacket filterLocalModifications(SvnCommitPacket packet) throws SVNException {
+        final SvnCommitPacket filteredPacket = new SvnCommitPacket();
+        filteredPacket.setLockTokens(packet.getLockTokens());
+        filteredPacket.setLockingContext(packet.getRunner(), packet.getLockingContext());
+
+        final Collection<SVNURL> repositoryRoots = packet.getRepositoryRoots();
+        for (SVNURL repositoryRoot : repositoryRoots) {
+            final Collection<SvnCommitItem> items = packet.getItems(repositoryRoot);
+            for (SvnCommitItem item : items) {
+
+                if (item.hasFlag(SvnCommitItem.DELETE)) {
+                    continue;
+                }
+
+                if (item.hasFlag(SvnCommitItem.ADD)) {
+                    if (!item.hasFlag(SvnCommitItem.COPY)) {
+                        continue;
+                    }
+
+                    final SVNURL copyFromUrl = item.getCopyFromUrl();
+                    if (copyFromUrl == null) {
+                        continue;
+                    }
+
+                    final ISVNWCDb.WCDbBaseInfo baseInfo;
+                    try {
+                        baseInfo = getWcContext().getDb().getBaseInfo(item.getPath(), ISVNWCDb.WCDbBaseInfo.BaseInfoField.reposRootUrl, ISVNWCDb.WCDbBaseInfo.BaseInfoField.reposRelPath);
+                    } catch (SVNException e) {
+                        if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND) {
+                            throw e;
+                        } else {
+                            continue;
+                        }
+                    }
+                    final SVNURL url = baseInfo.reposRootUrl.appendPath(baseInfo.reposRelPath.getPath(), false);
+
+                    if (!copyFromUrl.equals(url)) {
+                        continue;
+                    }
+                }
+
+                item.setFlags(item.getFlags() & (~SvnCommitItem.TEXT_MODIFIED) & (~SvnCommitItem.PROPS_MODIFIED));
+
+                filteredPacket.addItem(item, repositoryRoot);
+            }
+        }
+
+        return filteredPacket;
     }
     
     private void includeExternalsChanges(SVNRepository repos, SvnCommitPacket packet, Map<File, String> externalsStorage) throws SVNException {

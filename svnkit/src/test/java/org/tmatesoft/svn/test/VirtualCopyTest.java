@@ -1,23 +1,19 @@
 package org.tmatesoft.svn.test;
 
 import java.io.File;
-import java.util.HashMap;
 import java.util.Map;
 
 import junit.framework.Assert;
 import org.junit.Assume;
 import org.junit.Test;
-import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
-import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnCopy;
 import org.tmatesoft.svn.core.wc2.SvnCopySource;
-import org.tmatesoft.svn.core.wc2.SvnGetStatus;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 import org.tmatesoft.svn.core.wc2.SvnScheduleForAddition;
 import org.tmatesoft.svn.core.wc2.SvnScheduleForRemoval;
@@ -58,7 +54,7 @@ public class VirtualCopyTest {
 
             moveVirtual(svnOperationFactory, wcVersionedFile, wcUnversionedFile);
 
-            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
 
             assertStatus(SVNStatusType.STATUS_ADDED, wcUnversionedFile, statuses);
             assertStatus(SVNStatusType.STATUS_ADDED, wcUnversionedFile.getParentFile(), statuses);
@@ -105,7 +101,7 @@ public class VirtualCopyTest {
 
             copyVirtual(svnOperationFactory, wcVersionedFile, wcUnversionedFile);
 
-            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
 
             assertStatus(SVNStatusType.STATUS_ADDED, wcUnversionedFile.getParentFile(), statuses);
             assertStatus(SVNStatusType.STATUS_ADDED, wcUnversionedFile, statuses);
@@ -152,7 +148,7 @@ public class VirtualCopyTest {
 
             copyVirtual(svnOperationFactory, wcVersionedFile, wcUnversionedFile);
 
-            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
 
             assertStatus(SVNStatusType.STATUS_ADDED, wcUnversionedFile.getParentFile(), statuses);
             assertStatus(SVNStatusType.STATUS_NORMAL, wcVersionedFile, statuses);
@@ -206,7 +202,7 @@ public class VirtualCopyTest {
                 //expected
             }
 
-            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
             assertStatus(SVNStatusType.STATUS_NORMAL, wcVersionedFile, statuses);
             assertStatus(SVNStatusType.STATUS_NORMAL, wcVersionedFile.getParentFile(), statuses);
             assertStatus(SVNStatusType.STATUS_UNVERSIONED, wcUnversionedFile, statuses);
@@ -248,7 +244,7 @@ public class VirtualCopyTest {
                 Assert.assertEquals(SVNErrorCode.ENTRY_ATTRIBUTE_INVALID, e.getErrorMessage().getErrorCode());
                 //expected
             }
-            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
             assertStatus(SVNStatusType.STATUS_NONE, wcUnversionedFile, statuses);
             assertStatus(SVNStatusType.STATUS_NONE, wcUnversionedFile.getParentFile(), statuses);
         } finally {
@@ -297,7 +293,7 @@ public class VirtualCopyTest {
                 Assert.assertEquals(SVNErrorCode.ENTRY_NOT_FOUND, e.getErrorMessage().getErrorCode());
                 //expected
             }
-            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
             assertStatus(SVNStatusType.STATUS_NONE, wcUnversionedFile, statuses);
             assertStatus(SVNStatusType.STATUS_ADDED, wcUnversionedFile.getParentFile(), statuses);
             assertStatus(SVNStatusType.STATUS_UNVERSIONED, wcAnotherUnversionedFile, statuses);
@@ -345,7 +341,7 @@ public class VirtualCopyTest {
 
             copyVirtual(svnOperationFactory, wcUnversionedFile, wcAnotherUnversionedFile);
 
-            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
             assertStatus(SVNStatusType.STATUS_NORMAL, wcVersionedFile, statuses);
             assertStatus(SVNStatusType.STATUS_NORMAL, wcVersionedFile.getParentFile(), statuses);
 
@@ -401,7 +397,7 @@ public class VirtualCopyTest {
 
             moveVirtual(svnOperationFactory, wcUnversionedFile, wcAnotherUnversionedFile);
 
-            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
             assertStatus(SVNStatusType.STATUS_NORMAL, wcVersionedFile, statuses);
             assertStatus(SVNStatusType.STATUS_NORMAL, wcVersionedFile.getParentFile(), statuses);
 
@@ -455,7 +451,7 @@ public class VirtualCopyTest {
 
             copyVirtual(svnOperationFactory, wcUnversionedFile, wcAnotherUnversionedFile);
 
-            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
             assertStatus(SVNStatusType.STATUS_DELETED, wcVersionedFile, statuses);
             assertStatus(SVNStatusType.STATUS_NORMAL, wcVersionedFile.getParentFile(), statuses);
 
@@ -511,7 +507,7 @@ public class VirtualCopyTest {
 
             moveVirtual(svnOperationFactory, wcUnversionedFile, wcAnotherUnversionedFile);
 
-            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
             assertStatus(SVNStatusType.STATUS_DELETED, wcVersionedFile, statuses);
             assertStatus(SVNStatusType.STATUS_NORMAL, wcVersionedFile.getParentFile(), statuses);
 
@@ -562,7 +558,7 @@ public class VirtualCopyTest {
 
             copyVirtual(svnOperationFactory, wcUnversionedFile, wcAnotherUnversionedFile);
 
-            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
             assertStatus(SVNStatusType.STATUS_NORMAL, wcVersionedFile, statuses);
             assertStatus(SVNStatusType.STATUS_NORMAL, wcVersionedFile.getParentFile(), statuses);
 
@@ -615,7 +611,7 @@ public class VirtualCopyTest {
 
             moveVirtual(svnOperationFactory, wcUnversionedFile, wcAnotherUnversionedFile);
 
-            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
             assertStatus(SVNStatusType.STATUS_NORMAL, wcVersionedFile, statuses);
             assertStatus(SVNStatusType.STATUS_NORMAL, wcVersionedFile.getParentFile(), statuses);
 
@@ -666,7 +662,7 @@ public class VirtualCopyTest {
 
             copyVirtual(svnOperationFactory, wcUnversionedFile, wcAnotherUnversionedFile);
 
-            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
             assertStatus(SVNStatusType.STATUS_DELETED, wcVersionedFile, statuses);
             assertStatus(SVNStatusType.STATUS_NORMAL, wcVersionedFile.getParentFile(), statuses);
 
@@ -719,7 +715,7 @@ public class VirtualCopyTest {
 
             moveVirtual(svnOperationFactory, wcUnversionedFile, wcAnotherUnversionedFile);
 
-            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
             assertStatus(SVNStatusType.STATUS_DELETED, wcVersionedFile, statuses);
             assertStatus(SVNStatusType.STATUS_NORMAL, wcVersionedFile.getParentFile(), statuses);
 
@@ -770,7 +766,7 @@ public class VirtualCopyTest {
 
             copyVirtual(svnOperationFactory, wcTargetFile, wcAnotherTargetFile);
 
-            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
             assertStatus(SVNStatusType.STATUS_NORMAL, wcVersionedFile, statuses);
             assertStatus(SVNStatusType.STATUS_NORMAL, wcVersionedFile.getParentFile(), statuses);
 
@@ -821,7 +817,7 @@ public class VirtualCopyTest {
 
             copyVirtual(svnOperationFactory, wcTargetFile, wcAnotherTargetFile);
 
-            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
             assertStatus(SVNStatusType.STATUS_DELETED, wcVersionedFile, statuses);
             assertStatus(SVNStatusType.STATUS_DELETED, wcVersionedFile.getParentFile(), statuses);
 
@@ -872,7 +868,7 @@ public class VirtualCopyTest {
 
             moveVirtual(svnOperationFactory, wcTargetFile, wcAnotherTargetFile);
 
-            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
             assertStatus(SVNStatusType.STATUS_NORMAL, wcVersionedFile, statuses);
             assertStatus(SVNStatusType.STATUS_NORMAL, wcVersionedFile.getParentFile(), statuses);
 
@@ -923,7 +919,7 @@ public class VirtualCopyTest {
 
             moveVirtual(svnOperationFactory, wcTargetFile, wcAnotherTargetFile);
 
-            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
             assertStatus(SVNStatusType.STATUS_DELETED, wcVersionedFile, statuses);
             assertStatus(SVNStatusType.STATUS_DELETED, wcVersionedFile.getParentFile(), statuses);
 
@@ -970,7 +966,7 @@ public class VirtualCopyTest {
 
             moveVirtual(svnOperationFactory, wcVersionedFile, wcUnversionedFile);
 
-            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
 
             assertStatus(SVNStatusType.STATUS_ADDED, wcUnversionedFile, statuses);
             assertStatus(SVNStatusType.STATUS_NORMAL, wcUnversionedFile.getParentFile(), statuses);
@@ -1060,7 +1056,7 @@ public class VirtualCopyTest {
 
             copyVirtual(svnOperationFactory, missingFile, unversionedFile);
 
-            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
 
             assertStatus(SVNStatusType.STATUS_ADDED, unversionedFile, statuses);
             assertStatus(SVNStatusType.STATUS_MISSING, missingFile, statuses);
@@ -1098,7 +1094,7 @@ public class VirtualCopyTest {
 
             copyVirtual(svnOperationFactory, deletedFile, unversionedFile);
 
-            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
 
             assertStatus(SVNStatusType.STATUS_ADDED, unversionedFile, statuses);
             assertStatus(SVNStatusType.STATUS_DELETED, deletedFile, statuses);
@@ -1139,7 +1135,7 @@ public class VirtualCopyTest {
 
             copyVirtual(svnOperationFactory, replacedFile, unversionedFile);
 
-            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
 
             assertStatus(SVNStatusType.STATUS_ADDED, unversionedFile, statuses);
             assertStatus(SVNStatusType.STATUS_REPLACED, replacedFile, statuses);
@@ -1178,7 +1174,7 @@ public class VirtualCopyTest {
 
             copyVirtual(svnOperationFactory, missingFile, addedFile);
 
-            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
 
             assertStatus(SVNStatusType.STATUS_ADDED, addedFile, statuses);
             assertStatus(SVNStatusType.STATUS_MISSING, missingFile, statuses);
@@ -1216,7 +1212,7 @@ public class VirtualCopyTest {
 
             copyVirtual(svnOperationFactory, deletedFile, addedFile);
 
-            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
 
             assertStatus(SVNStatusType.STATUS_ADDED, addedFile, statuses);
             assertStatus(SVNStatusType.STATUS_DELETED, deletedFile, statuses);
@@ -1258,7 +1254,7 @@ public class VirtualCopyTest {
 
             copyVirtual(svnOperationFactory, replacedFile, addedFile);
 
-            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
 
             assertStatus(SVNStatusType.STATUS_ADDED, addedFile, statuses);
             assertStatus(SVNStatusType.STATUS_REPLACED, replacedFile, statuses);
@@ -1297,7 +1293,7 @@ public class VirtualCopyTest {
 
             copyVirtual(svnOperationFactory, missingFile, copiedFile);
 
-            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
 
             assertStatus(SVNStatusType.STATUS_ADDED, copiedFile, statuses);
             assertStatus(SVNStatusType.STATUS_MISSING, missingFile, statuses);
@@ -1337,7 +1333,7 @@ public class VirtualCopyTest {
             copyVirtual(svnOperationFactory, deletedFile, copiedFile);
 
 
-            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
 
             assertStatus(SVNStatusType.STATUS_ADDED, copiedFile, statuses);
             assertStatus(SVNStatusType.STATUS_DELETED, deletedFile, statuses);
@@ -1379,7 +1375,7 @@ public class VirtualCopyTest {
 
             copyVirtual(svnOperationFactory, replacedFile, copiedFile);
 
-            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
 
             assertStatus(SVNStatusType.STATUS_ADDED, copiedFile, statuses);
             assertStatus(SVNStatusType.STATUS_REPLACED, replacedFile, statuses);
@@ -1420,7 +1416,7 @@ public class VirtualCopyTest {
 
             copyVirtual(svnOperationFactory, missingFile, replacedFile);
 
-            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
 
             assertStatus(SVNStatusType.STATUS_REPLACED, replacedFile, statuses);
             assertStatus(SVNStatusType.STATUS_MISSING, missingFile, statuses);
@@ -1461,7 +1457,7 @@ public class VirtualCopyTest {
 
             copyVirtual(svnOperationFactory, deletedFile, replacedFile);
 
-            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
 
             assertStatus(SVNStatusType.STATUS_REPLACED, replacedFile, statuses);
             assertStatus(SVNStatusType.STATUS_DELETED, deletedFile, statuses);
@@ -1506,7 +1502,7 @@ public class VirtualCopyTest {
             copyVirtual(svnOperationFactory, anotherReplacedFile, replacedFile);
 
 
-            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
 
             assertStatus(SVNStatusType.STATUS_REPLACED, replacedFile, statuses);
             assertStatus(SVNStatusType.STATUS_REPLACED, anotherReplacedFile, statuses);
@@ -1545,7 +1541,7 @@ public class VirtualCopyTest {
 
             moveVirtual(svnOperationFactory, missingFile, unversionedFile);
 
-            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
 
             assertStatus(SVNStatusType.STATUS_ADDED, unversionedFile, statuses);
             assertStatus(SVNStatusType.STATUS_DELETED, missingFile, statuses);
@@ -1583,7 +1579,7 @@ public class VirtualCopyTest {
 
             moveVirtual(svnOperationFactory, deletedFile, unversionedFile);
 
-            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
 
             assertStatus(SVNStatusType.STATUS_ADDED, unversionedFile, statuses);
             assertStatus(SVNStatusType.STATUS_DELETED, deletedFile, statuses);
@@ -1631,7 +1627,7 @@ public class VirtualCopyTest {
                 //expected
             }
 
-            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
 
             assertStatus(SVNStatusType.STATUS_UNVERSIONED, unversionedFile, statuses);
             assertStatus(SVNStatusType.STATUS_REPLACED, replacedFile, statuses);
@@ -1670,7 +1666,7 @@ public class VirtualCopyTest {
 
             moveVirtual(svnOperationFactory, missingFile, addedFile);
 
-            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
 
             assertStatus(SVNStatusType.STATUS_ADDED, addedFile, statuses);
             assertStatus(SVNStatusType.STATUS_DELETED, missingFile, statuses);
@@ -1708,7 +1704,7 @@ public class VirtualCopyTest {
 
             moveVirtual(svnOperationFactory, deletedFile, addedFile);
 
-            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
 
             assertStatus(SVNStatusType.STATUS_ADDED, addedFile, statuses);
             assertStatus(SVNStatusType.STATUS_DELETED, deletedFile, statuses);
@@ -1757,7 +1753,7 @@ public class VirtualCopyTest {
                 //expected
             }
 
-            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
 
             assertStatus(SVNStatusType.STATUS_ADDED, addedFile, statuses);
             assertStatus(SVNStatusType.STATUS_REPLACED, replacedFile, statuses);
@@ -1796,7 +1792,7 @@ public class VirtualCopyTest {
 
             moveVirtual(svnOperationFactory, missingFile, copiedFile);
 
-            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
 
             assertStatus(SVNStatusType.STATUS_ADDED, copiedFile, statuses);
             assertStatus(SVNStatusType.STATUS_DELETED, missingFile, statuses);
@@ -1835,7 +1831,7 @@ public class VirtualCopyTest {
 
             moveVirtual(svnOperationFactory, deletedFile, copiedFile);
 
-            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
 
             assertStatus(SVNStatusType.STATUS_ADDED, copiedFile, statuses);
             assertStatus(SVNStatusType.STATUS_DELETED, deletedFile, statuses);
@@ -1884,7 +1880,7 @@ public class VirtualCopyTest {
                 //expected
             }
 
-            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
 
             assertStatus(SVNStatusType.STATUS_ADDED, copiedFile, statuses);
             assertStatus(SVNStatusType.STATUS_REPLACED, replacedFile, statuses);
@@ -1925,7 +1921,7 @@ public class VirtualCopyTest {
 
             moveVirtual(svnOperationFactory, missingFile, replacedFile);
 
-            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
 
             assertStatus(SVNStatusType.STATUS_REPLACED, replacedFile, statuses);
             assertStatus(SVNStatusType.STATUS_DELETED, missingFile, statuses);
@@ -1966,7 +1962,7 @@ public class VirtualCopyTest {
 
             moveVirtual(svnOperationFactory, deletedFile, replacedFile);
 
-            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
 
             assertStatus(SVNStatusType.STATUS_REPLACED, replacedFile, statuses);
             assertStatus(SVNStatusType.STATUS_DELETED, deletedFile, statuses);
@@ -2017,7 +2013,7 @@ public class VirtualCopyTest {
                 //expected
             }
 
-            final Map<File, SvnStatus> statuses = getStatus(svnOperationFactory, workingCopyDirectory);
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
 
             assertStatus(SVNStatusType.STATUS_REPLACED, replacedFile, statuses);
             assertStatus(SVNStatusType.STATUS_REPLACED, anotherReplacedFile, statuses);
@@ -2037,26 +2033,6 @@ public class VirtualCopyTest {
         Assert.assertEquals(statusType, statuses.get(file).getNodeStatus());
     }
 
-
-    private Map<File, SvnStatus> getStatus(SvnOperationFactory svnOperationFactory, File workingCopyDirectory) throws SVNException {
-        final Map<File, SvnStatus> pathToStatus = new HashMap<File, SvnStatus>();
-        final SvnGetStatus status = svnOperationFactory.createGetStatus();
-        status.setDepth(SVNDepth.INFINITY);
-        status.setRemote(false);
-        status.setReportAll(true);
-        status.setReportIgnored(true);
-        status.setReportExternals(false);
-        status.setApplicalbeChangelists(null);
-        status.setReceiver(new ISvnObjectReceiver<SvnStatus>() {
-            public void receive(SvnTarget target, SvnStatus status) throws SVNException {
-                pathToStatus.put(status.getPath(), status);
-            }
-        });
-
-        status.addTarget(SvnTarget.fromFile(workingCopyDirectory));
-        status.run();
-        return pathToStatus;
-    }
 
     private void copyVirtual(SvnOperationFactory svnOperationFactory, File fromFile, File toFile) throws SVNException {
         copy(svnOperationFactory, fromFile, toFile, false, true);

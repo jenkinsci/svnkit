@@ -41,6 +41,15 @@ public class SvnCommitPacket {
     public Collection<SvnCommitItem> getItems(SVNURL url) {
         return Collections.unmodifiableCollection(items.get(url));
     }
+
+    public void addItem(SvnCommitItem item, SVNURL repositoryRoot) {
+        if (!items.containsKey(repositoryRoot)) {
+            items.put(repositoryRoot, new HashSet<SvnCommitItem>());
+        }
+
+        items.get(repositoryRoot).add(item);
+        itemsByPath.put(item.getPath(), item);
+    }
     
     public SvnCommitItem addItem(File path, SVNNodeKind kind, SVNURL repositoryRoot, String repositoryPath, long revision,
             String copyFromPath, long copyFromRevision, int flags) throws SVNException {
@@ -56,13 +65,8 @@ public class SvnCommitPacket {
             item.setCopyFromRevision(-1);
         }
         item.setFlags(flags);
-        
-        if (!items.containsKey(repositoryRoot)) {
-            items.put(repositoryRoot, new HashSet<SvnCommitItem>());
-        }
-        
-        items.get(repositoryRoot).add(item);
-        itemsByPath.put(path, item);
+
+        addItem(item, repositoryRoot);
         
         return item;
     }
@@ -135,5 +139,9 @@ public class SvnCommitPacket {
 
     public Object getLockingContext() {
         return lockingContext;
+    }
+
+    public ISvnCommitRunner getRunner() {
+        return runner;
     }
 }
