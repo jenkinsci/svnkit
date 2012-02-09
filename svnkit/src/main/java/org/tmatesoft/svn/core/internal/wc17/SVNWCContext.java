@@ -2081,7 +2081,7 @@ public class SVNWCContext {
         if (info.is(NodeInfo.propsMod)) {
             actualProps = getActualProperties(localAbsPath);
         } else {
-            actualProps = new SVNProperties();
+            actualProps = new SVNProperties(pristineProps);
         }
         SVNWCDbKind kind = info.get(NodeInfo.kind);
         info.release();
