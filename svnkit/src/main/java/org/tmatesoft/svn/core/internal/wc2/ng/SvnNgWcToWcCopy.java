@@ -41,6 +41,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbExternals;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbReader;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbShared;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
+import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
@@ -565,6 +566,9 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
 
         context.getDb().opCopyFile(dst, pristineProps, changedRev, changedDate, changedAuthor,
                 new File(relativePath), reposRootUrl, reposUuid, revision, checksum, null, null);
+
+        final SVNEvent event = SVNEventFactory.createSVNEvent(dst, SVNNodeKind.FILE, null, SVNRepository.INVALID_REVISION, SVNEventAction.COPY, null, null, null);
+        handleEvent(event);
     }
 
     private void copyVersionedDirectory(SVNWCContext wcContext, File source, File dst, File dstOpRoot, File tmpDir, boolean metadataOnly, boolean notify) throws SVNException {
