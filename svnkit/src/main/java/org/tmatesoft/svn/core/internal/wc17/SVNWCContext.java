@@ -3447,10 +3447,6 @@ public class SVNWCContext {
         File wcRootAbspath = getDb().getWCRoot(dirAbspath);
         while (true) {
             checkCancelled();
-            SVNWCDbKind kind = db.readKind(dirAbspath, true);
-            if (kind == SVNWCDbKind.Unknown) {
-                break;
-            }
             WCDbWorkQueueInfo fetchWorkQueue = db.fetchWorkQueue(dirAbspath);
             if (fetchWorkQueue.workItem == null) {
                 break;
