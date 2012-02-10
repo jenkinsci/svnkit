@@ -9,7 +9,9 @@ import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
@@ -74,6 +76,10 @@ public class SvnNgMarkReplaced extends SvnNgOperationRunner<Void, SvnMarkReplace
         } else if (kind == ISVNWCDb.SVNWCDbKind.File) {
             db.opAddFile(path, null);
         }
+        final SVNEvent event = SVNEventFactory.createSVNEvent(path,
+                kind == ISVNWCDb.SVNWCDbKind.Dir ? SVNNodeKind.DIR : SVNNodeKind.FILE, null, -1, SVNEventAction.ADD,
+                SVNEventAction.ADD, null, null, 1, 1);
+        handleEvent(event);
     }
 
     private List<File> markDeletedRecursively(ISVNWCDb db, File path) throws SVNException {
