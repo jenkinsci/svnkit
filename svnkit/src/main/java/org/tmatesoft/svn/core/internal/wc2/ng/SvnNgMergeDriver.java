@@ -1281,7 +1281,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
                         continue;
                     }
                 }
-                childrenWithMergeInfo.put(file, siblingMp);
+                childrenWithMergeInfo.put(file, new MergePath(file));
             }
         }
     }
@@ -2406,9 +2406,6 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
         protected boolean scheduledForDeletion;
         protected boolean immediateChildDir;
         
-        public MergePath() {
-        }
-
         public MergePath(File path) {
             absPath = path;
         }
