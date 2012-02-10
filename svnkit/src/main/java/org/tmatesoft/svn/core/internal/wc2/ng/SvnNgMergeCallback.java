@@ -131,21 +131,21 @@ public class SvnNgMergeCallback implements ISvnDiffCallback {
             final ISVNConflictHandler[] conflictHandler =  new ISVNConflictHandler[1];
             if (opts instanceof DefaultSVNOptions) {
                 conflictHandler[0] = ((DefaultSVNOptions) opts).getConflictResolver();
-                if (conflictHandler[0] != null) {
-                    ((DefaultSVNOptions) opts).setConflictHandler(new ISVNConflictHandler() {
-                        public SVNConflictResult handleConflict(SVNConflictDescription conflictDescription) throws SVNException {
-                            SVNConflictResult result = conflictHandler[0].handleConflict(conflictDescription);
-                            if (result != null && result.getConflictChoice() == SVNConflictChoice.POSTPONE) {
-                                if (conflictedPaths == null) {
-                                    conflictedPaths = new HashSet<File>();
-                                }
-                                conflictedPaths.add(path);
+                ((DefaultSVNOptions) opts).setConflictHandler(new ISVNConflictHandler() {
+                    public SVNConflictResult handleConflict(SVNConflictDescription conflictDescription) throws SVNException {
+                        SVNConflictResult result = conflictHandler[0] == null ? 
+                                new SVNConflictResult(SVNConflictChoice.POSTPONE, null) : 
+                                conflictHandler[0].handleConflict(conflictDescription);
+
+                        if (result != null && result.getConflictChoice() == SVNConflictChoice.POSTPONE) {
+                            if (conflictedPaths == null) {
+                                conflictedPaths = new HashSet<File>();
                             }
-                            return result;
+                            conflictedPaths.add(path);
                         }
-                    });
-                    
-                }
+                        return result;
+                    }
+                });
             }
             try { 
                 MergeInfo mergeOutcome = getContext().mergeText(tmpFile1, tmpFile2, path, leftLabel, rightLabel, targetLabel, cvs[0], cvs[1], isDryRun(), getDiffOptions(), propChanges);
@@ -161,7 +161,7 @@ public class SvnNgMergeCallback implements ISvnDiffCallback {
                     result.contentState = SVNStatusType.UNCHANGED;
                 }
             } finally {
-                if (conflictHandler[0] != null) {
+                if (opts instanceof DefaultSVNOptions) {
                     ((DefaultSVNOptions) opts).setConflictHandler(conflictHandler[0]);
                 }
             }
