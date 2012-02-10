@@ -460,7 +460,7 @@ public class SVNMergeInfoUtil {
         return result;
     }
 
-    public static boolean shouldElideMergeInfo(Map parentMergeInfo, Map childMergeInfo, String pathSuffix) {
+    public static boolean shouldElideMergeInfo(Map<String, SVNMergeRangeList> parentMergeInfo, Map<String, SVNMergeRangeList> childMergeInfo, String pathSuffix) {
         boolean elides = false;
         if (childMergeInfo != null) {
             if (childMergeInfo.isEmpty()) {

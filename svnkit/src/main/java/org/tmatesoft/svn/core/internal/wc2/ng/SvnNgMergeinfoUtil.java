@@ -21,8 +21,10 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.CheckWCRootInfo;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.SVNWCNodeReposInfo;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeOriginInfo;
@@ -67,6 +69,7 @@ public class SvnNgMergeinfoUtil {
                 if (e.getErrorMessage().getErrorCode() != SVNErrorCode.MERGE_INFO_PARSE_ERROR) {
                     throw e;
                 }
+                return;
             }
             if (targetMergeinfo == null || targetMergeinfo.inherited || targetMergeinfo.mergeinfo == null) {
                 return;
@@ -78,6 +81,7 @@ public class SvnNgMergeinfoUtil {
                 if (e.getErrorMessage().getErrorCode() != SVNErrorCode.MERGE_INFO_PARSE_ERROR) {
                     throw e;
                 }
+                return;
             }
             if ((mergeinfo == null || mergeinfo.mergeinfo == null) && limitAbsPath == null) {
                 mergeinfo = new SvnMergeInfoInfo();
@@ -87,6 +91,7 @@ public class SvnNgMergeinfoUtil {
                     if (e.getErrorMessage().getErrorCode() != SVNErrorCode.MERGE_INFO_PARSE_ERROR) {
                         throw e;
                     }
+                    return;
                 }
             } 
             if (mergeinfo.mergeinfo == null && limitAbsPath != null) {
@@ -97,8 +102,8 @@ public class SvnNgMergeinfoUtil {
         }
     }
     
-    private static void elideMergeInfo(SVNWCContext context, Map<String, SVNMergeRangeList> mergeinfo, Map<String, SVNMergeRangeList> mergeinfo2, File targetAbsPath) throws SVNException {
-        if (SVNMergeInfoUtil.shouldElideMergeInfo(mergeinfo, mergeinfo2, null)) {
+    private static void elideMergeInfo(SVNWCContext context, Map<String, SVNMergeRangeList> parent, Map<String, SVNMergeRangeList> child, File targetAbsPath) throws SVNException {
+        if (SVNMergeInfoUtil.shouldElideMergeInfo(parent, child, null)) {
             SvnNgPropertiesManager.setProperty(context, targetAbsPath, SVNProperty.MERGE_INFO, null, SVNDepth.EMPTY, true, null, null);
             
             if (context.getEventHandler() != null) {
@@ -154,7 +159,8 @@ public class SvnNgMergeinfoUtil {
                 if (limitAbsPath != null && localAbsPath.equals(limitAbsPath)) {
                     break;
                 }
-                if (context.getDb().isWCRoot(localAbsPath)) {
+                CheckWCRootInfo rootInfo = context.checkWCRoot(localAbsPath, true);
+                if (rootInfo.wcRoot || (rootInfo.switched && rootInfo.kind == SVNWCDbKind.Dir)) {
                     break;
                 }
                 walkRelPath = SVNPathUtil.append(SVNFileUtil.getFileName(localAbsPath), walkRelPath);
