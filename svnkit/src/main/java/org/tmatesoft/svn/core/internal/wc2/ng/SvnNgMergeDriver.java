@@ -1138,7 +1138,6 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
             }
         });
         statusEditor.walkStatus(targetAbsPath, depth, true, true, true, null);
-        
         if (!missingSubtrees.isEmpty()) {
             final StringBuffer errorMessage = new StringBuffer("Merge tracking not allowed with missing "
                     + "subtrees; try restoring these items "
@@ -1342,10 +1341,10 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
             SVNURL childURL2 = url2.appendPath(childRelativePath, false);
             
             boolean inherited[] = { false };
-            Map mergeInfo[] = getFullMergeInfo(child.preMergeMergeInfo != null, index == 0, inherited, SVNMergeInfoInheritance.INHERITED, 
+            Map mergeInfo[] = getFullMergeInfo(child.preMergeMergeInfo == null, index == 0, inherited, SVNMergeInfoInheritance.INHERITED, 
                     repository, child.absPath, Math.max(revision1, revision2), Math.min(revision1, revision2));
         
-            if (child.preMergeMergeInfo != null) {
+            if (child.preMergeMergeInfo == null) {
                 child.preMergeMergeInfo = mergeInfo[0];
             }
             if (index == 0) {
@@ -1430,8 +1429,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
                 result[1] = new TreeMap<String, SVNMergeRangeList>();
             } else {
                 SVNURL url = SVNWCUtils.join(reposRootUrl, reposRelPath);
-                SVNURL sessionUrl = repos.getLocation();
-                ensureSessionURL(repos, url);
+                SVNURL sessionUrl = ensureSessionURL(repos, url);
                 if (targetRevision < start) {
                     start = targetRevision;
                 }
@@ -1494,8 +1492,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
         if (childInheritsParent) {
             inheritImplicitMergeinfoFromParent(parent, child, revision1, revision2, repository);
         } else {
-            boolean[] indirect = {false};
-            Map<String, SVNMergeRangeList>[] mergeinfo = getFullMergeInfo(false, true, indirect, SVNMergeInfoInheritance.INHERITED, repository, child.absPath, Math.max(revision1, revision2), Math.min(revision1, revision2));
+            Map<String, SVNMergeRangeList>[] mergeinfo = getFullMergeInfo(false, true, null, SVNMergeInfoInheritance.INHERITED, repository, child.absPath, Math.max(revision1, revision2), Math.min(revision1, revision2));
             child.implicitMergeInfo = mergeinfo[1];
         }
     }
@@ -2426,7 +2423,8 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
         }
         
         public String toString() {
-            return absPath.toString();
+            String str = String.format("missingChild=%s,switched=%s,hasNonInheritable=%s,absent=%s, childOfNonInh=%s,inhMi=%s,scheduledForDeletion=%s,immediateChildDir=%s", missingChild, switched, hasNonInheritable, absent, childOfNonInheritable, inheritedMergeInfo, scheduledForDeletion, immediateChildDir);
+            return absPath.toString() + " [" + str + "]";
         }
     }
     
