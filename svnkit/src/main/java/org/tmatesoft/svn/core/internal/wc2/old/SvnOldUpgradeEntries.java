@@ -51,7 +51,7 @@ public class SvnOldUpgradeEntries {
 		if (thisDir == null) {
 			SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "No default entry in directory '{0}'", dirAbsPath);
             SVNErrorManager.error(err, SVNLogType.WC);
-		}
+		}  
 		File oldRootAbsPath = SVNFileUtil.createFilePath(SVNPathUtil.getCommonPathAncestor(
 				SVNPathUtil.getAbsolutePath(dirAbsPath.getAbsolutePath()), SVNPathUtil.getAbsolutePath(upgradeData.rootAbsPath.getAbsolutePath())));
 		
@@ -380,7 +380,7 @@ public class SvnOldUpgradeEntries {
 				if (baseNode.presence != SVNWCDbStatus.ServerExcluded) {
 					/* All subdirs are initially incomplete, they stop being incomplete when the entries file in the subdir is
 	                 upgraded and remain incomplete if that doesn't happen. */
-					if (entry.isDirectory() && "".equals(entry.getName())) {
+					if (entry.isDirectory() && !"".equals(entry.getName())) {
 						baseNode.presence = SVNWCDbStatus.Incomplete;
 						/* Store the most likely revision in the node to avoid base nodes without a valid revision. Of course
 	                     we remember that the data is still incomplete. */
