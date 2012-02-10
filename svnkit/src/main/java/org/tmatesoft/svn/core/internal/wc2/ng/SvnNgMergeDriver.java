@@ -1297,7 +1297,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
                 child.remainingRanges = new SVNMergeRangeList(range);
                 if (index == 0) {
                     boolean indirect[] = { false };
-                    Map[] mergeInfo = getFullMergeInfo(false, true, indirect, SVNMergeInfoInheritance.INHERITED, repository, 
+                    Map<String, SVNMergeRangeList>[] mergeInfo = getFullMergeInfo(false, true, indirect, SVNMergeInfoInheritance.INHERITED, repository, 
                             child.absPath, Math.max(revision1, revision2), Math.min(revision1, revision2));
                     child.implicitMergeInfo = mergeInfo[1];
                 } else {
@@ -1335,15 +1335,17 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
             SVNURL childURL1 = url1.appendPath(childRelativePath, false);
             SVNURL childURL2 = url2.appendPath(childRelativePath, false);
             
-            boolean indirect[] = { false };
-            Map mergeInfo[] = getFullMergeInfo(true, index == 0, indirect, SVNMergeInfoInheritance.INHERITED, 
+            boolean inherited[] = { false };
+            Map mergeInfo[] = getFullMergeInfo(child.preMergeMergeInfo != null, index == 0, inherited, SVNMergeInfoInheritance.INHERITED, 
                     repository, child.absPath, Math.max(revision1, revision2), Math.min(revision1, revision2));
         
-            child.preMergeMergeInfo = mergeInfo[0];
+            if (child.preMergeMergeInfo != null) {
+                child.preMergeMergeInfo = mergeInfo[0];
+            }
             if (index == 0) {
                 child.implicitMergeInfo = mergeInfo[1];
             }
-            child.inheritedMergeInfo = indirect[0];
+            child.inheritedMergeInfo = inherited[0];
 
             if (index > 0) {
                 Object[] childrenWithMergeInfoArray = childrenWithMergeInfo.values().toArray();
@@ -1957,6 +1959,9 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
             } else {
                 boolean childNodeDeleted = context.isNodeStatusDeleted(child.absPath);
                 if (childNodeDeleted) {
+                    continue;
+                }
+                if (inoperativeImmediateChildren != null && inoperativeImmediateChildren.containsKey(child.absPath)) {
                     continue;
                 }
                 String childReposPath = SVNWCUtils.getPathAsChild(targetAbsPath, child.absPath);
