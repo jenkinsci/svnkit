@@ -24,6 +24,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNConflictVersion;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
@@ -38,8 +39,13 @@ import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess;
 import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess.LocationsInfo;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgMergeDriver.ObstructionState;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.wc.ISVNConflictHandler;
+import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNConflictAction;
+import org.tmatesoft.svn.core.wc.SVNConflictChoice;
+import org.tmatesoft.svn.core.wc.SVNConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNConflictReason;
+import org.tmatesoft.svn.core.wc.SVNConflictResult;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNOperation;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -65,7 +71,7 @@ public class SvnNgMergeCallback implements ISvnDiffCallback {
         // do nothing
     }
 
-    public void fileChanged(SvnDiffCallbackResult result, File path,
+    public void fileChanged(SvnDiffCallbackResult result, final File path,
             File tmpFile1, File tmpFile2, long rev1, long rev2,
             String mimetype1, String mimeType2, SVNProperties propChanges,
             SVNProperties originalProperties) throws SVNException {
@@ -121,17 +127,43 @@ public class SvnNgMergeCallback implements ISvnDiffCallback {
             String rightLabel = ".merge-right.r" + rev2;
             SVNConflictVersion[] cvs = makeConflictVersions(path, SVNNodeKind.FILE);
             
-            MergeInfo mergeOutcome = getContext().mergeText(tmpFile1, tmpFile2, path, leftLabel, rightLabel, targetLabel, cvs[0], cvs[1], isDryRun(), getDiffOptions(), propChanges);
-            if (mergeOutcome.mergeOutcome == SVNStatusType.CONFLICTED) {
-                result.contentState = SVNStatusType.CONFLICTED;
-            } else if (hasLocalMods && mergeOutcome.mergeOutcome != SVNStatusType.UNCHANGED) {
-                result.contentState = SVNStatusType.MERGED;
-            } else if (mergeOutcome.mergeOutcome == SVNStatusType.MERGED) {
-                result.contentState = SVNStatusType.CHANGED;
-            } else if (mergeOutcome.mergeOutcome == SVNStatusType.NO_MERGE) {
-                result.contentState = SVNStatusType.MISSING;
-            } else {
-                result.contentState = SVNStatusType.UNCHANGED;
+            ISVNOptions opts = getContext().getOptions();
+            final ISVNConflictHandler[] conflictHandler =  new ISVNConflictHandler[1];
+            if (opts instanceof DefaultSVNOptions) {
+                conflictHandler[0] = ((DefaultSVNOptions) opts).getConflictResolver();
+                if (conflictHandler[0] != null) {
+                    ((DefaultSVNOptions) opts).setConflictHandler(new ISVNConflictHandler() {
+                        public SVNConflictResult handleConflict(SVNConflictDescription conflictDescription) throws SVNException {
+                            SVNConflictResult result = conflictHandler[0].handleConflict(conflictDescription);
+                            if (result != null && result.getConflictChoice() == SVNConflictChoice.POSTPONE) {
+                                if (conflictedPaths == null) {
+                                    conflictedPaths = new HashSet<File>();
+                                }
+                                conflictedPaths.add(path);
+                            }
+                            return result;
+                        }
+                    });
+                    
+                }
+            }
+            try { 
+                MergeInfo mergeOutcome = getContext().mergeText(tmpFile1, tmpFile2, path, leftLabel, rightLabel, targetLabel, cvs[0], cvs[1], isDryRun(), getDiffOptions(), propChanges);
+                if (mergeOutcome.mergeOutcome == SVNStatusType.CONFLICTED) {
+                    result.contentState = SVNStatusType.CONFLICTED;
+                } else if (hasLocalMods && mergeOutcome.mergeOutcome != SVNStatusType.UNCHANGED) {
+                    result.contentState = SVNStatusType.MERGED;
+                } else if (mergeOutcome.mergeOutcome == SVNStatusType.MERGED) {
+                    result.contentState = SVNStatusType.CHANGED;
+                } else if (mergeOutcome.mergeOutcome == SVNStatusType.NO_MERGE) {
+                    result.contentState = SVNStatusType.MISSING;
+                } else {
+                    result.contentState = SVNStatusType.UNCHANGED;
+                }
+            } finally {
+                if (conflictHandler[0] != null) {
+                    ((DefaultSVNOptions) opts).setConflictHandler(conflictHandler[0]);
+                }
             }
         }
     }

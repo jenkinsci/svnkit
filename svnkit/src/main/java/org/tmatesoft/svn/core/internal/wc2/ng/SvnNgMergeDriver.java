@@ -425,7 +425,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
             SVNDepth depth,
             SVNDiffOptions diffOptions) throws SVNException {
         
-        if (recordOnly) {
+       if (recordOnly) {
             if (!sourcesAncestral) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS,
                         "Use of two URLs is not compatible with mergeinfo modification"); 
@@ -718,7 +718,8 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
             }
         }
         if (conflictedRange != null) {
-            makeMergeConflictError(targetPath, conflictedRange);
+            SVNErrorMessage err = makeMergeConflictError(targetPath, conflictedRange);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
     }
     
@@ -1007,7 +1008,6 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
             editor.cleanup();
         }
         
-        SVNFileUtil.sleepForTimestamp();
         if (conflictedPaths == null) {
             conflictedPaths = mergeCallback.getConflictedPaths();
         }
