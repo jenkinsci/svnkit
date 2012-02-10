@@ -144,8 +144,6 @@ public class SvnDiff extends SvnOperation<Void> {
 
     @Override
     protected void ensureArgumentsAreValid() throws SVNException {
-        super.ensureArgumentsAreValid();
-
         if (getRelativeToDirectory() != null && hasRemoteTargets()) {
             //TODO
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Relative directory cannot be specified with remote targets");

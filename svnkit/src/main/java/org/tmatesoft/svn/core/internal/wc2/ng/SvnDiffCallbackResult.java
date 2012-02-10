@@ -2,7 +2,8 @@ package org.tmatesoft.svn.core.internal.wc2.ng;
 
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 
-class SvnDiffCallbackResult {
+public class
+        SvnDiffCallbackResult {
     
     public SVNStatusType contentState;
     public SVNStatusType propState;

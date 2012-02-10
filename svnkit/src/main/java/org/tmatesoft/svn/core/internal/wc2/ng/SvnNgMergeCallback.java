@@ -169,8 +169,8 @@ public class SvnNgMergeCallback implements ISvnDiffCallback {
     }
 
     public void fileAdded(SvnDiffCallbackResult result, File path,
-            File tmpFile1, File tmpFile2, long rev1, long rev2,
-            String mimetype1, String mimeType2, File copyFromPath,
+            File leftFile, File rightFile, long rev1, long rev2,
+            String mimeType1, String mimeType2, File copyFromPath,
             long copyFromRevision, SVNProperties propChanges,
             SVNProperties originalProperties) throws SVNException {
         if (isRecordOnly()) {
@@ -229,7 +229,7 @@ public class SvnNgMergeCallback implements ISvnDiffCallback {
                         }
                         copyFromRev = rev2;
                         checkReposMatch(path, copyFromUrl);
-                        newBaseContents = SVNFileUtil.openFileForReading(tmpFile2);
+                        newBaseContents = SVNFileUtil.openFileForReading(rightFile);
                         newContents = null;
                         newBaseProps = fileProps;
                         newProps = null;
@@ -237,7 +237,7 @@ public class SvnNgMergeCallback implements ISvnDiffCallback {
                         newBaseProps = new SVNProperties();
                         newProps = fileProps;
                         newBaseContents = SVNFileUtil.DUMMY_IN;
-                        newContents = SVNFileUtil.openFileForReading(tmpFile2);
+                        newContents = SVNFileUtil.openFileForReading(rightFile);
                     }
                     SVNTreeConflictDescription tc = getContext().getTreeConflict(path);
                     if (tc != null) {
@@ -277,7 +277,7 @@ public class SvnNgMergeCallback implements ISvnDiffCallback {
     }
 
     public void fileDeleted(SvnDiffCallbackResult result, File path,
-            File tmpFile1, File tmpFile2, String mimetype1, String mimeType2,
+            File leftFile, File rightFile, String mimeType1, String mimeType2,
             SVNProperties originalProperties) throws SVNException {
         
         if (isDryRun()) {
@@ -298,7 +298,7 @@ public class SvnNgMergeCallback implements ISvnDiffCallback {
         
         SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(path));
         if (kind == SVNNodeKind.FILE) {
-            boolean same = compareFiles(tmpFile1, originalProperties, path);
+            boolean same = compareFiles(leftFile, originalProperties, path);
             if (same || isForce() || isRecordOnly()) {
                 if (!isDryRun()) {
                     SvnNgRemove.delete(getContext(), path, false, true, null);

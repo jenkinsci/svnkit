@@ -2561,8 +2561,8 @@ public class SVNWCDb implements ISVNWCDb {
         final File localRelPath = wcInfo.localRelPath;
         final SVNSqlJetDb sDb = wcInfo.wcDbDir.getWCRoot().getSDb();
         
-        WCDbInfo info = readInfo(wcInfo.wcDbDir.getWCRoot(), localRelPath, fields);
-        
+        final WCDbInfo info = readInfo(wcInfo.wcDbDir.getWCRoot(), localRelPath, fields);
+
         final EnumSet<InfoField> f = getInfoFields(InfoField.class, fields);
         if (f.contains(InfoField.reposRootUrl) || f.contains(InfoField.reposUuid)) {
             ReposInfo reposInfo = fetchReposInfo(sDb, info.reposId);

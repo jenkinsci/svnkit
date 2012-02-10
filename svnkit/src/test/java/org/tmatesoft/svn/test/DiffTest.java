@@ -142,6 +142,48 @@ public class DiffTest {
             sandbox.dispose();
         }
     }
+
+    @Test
+    public void testLocalToRemoteDiffOneFile() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testLocalDiffOneFile", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder1 = new CommitBuilder(url);
+            commitBuilder1.addFile("directory/file", "contents1".getBytes());
+            commitBuilder1.addFile("directory/anotherFile", "anotherContents".getBytes());
+            final SVNCommitInfo commitInfo1 = commitBuilder1.commit();
+
+            final CommitBuilder commitBuilder2 = new CommitBuilder(url);
+            commitBuilder2.changeFile("directory/file", "contents2".getBytes());
+            final SVNCommitInfo commitInfo2 = commitBuilder2.commit();
+
+            final SVNRevision svnRevision1 = SVNRevision.create(commitInfo1.getNewRevision());
+            final SVNRevision svnRevision2 = SVNRevision.create(commitInfo2.getNewRevision());
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, SVNRevision.HEAD.getNumber());
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+
+            final File file = new File(workingCopyDirectory, "directory/file");
+
+            final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+
+            final SvnDiff diff = svnOperationFactory.createDiff();
+            diff.setTargets(SvnTarget.fromFile(file, SVNRevision.WORKING), SvnTarget.fromURL(url.appendPath("directory/anotherFile", false), SVNRevision.create(1)));
+            diff.setOutput(byteArrayOutputStream);
+            diff.run();
+
+            final String diffOutput = new String(byteArrayOutputStream.toByteArray());
+
+            //TODO finish the test
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
     private String runDiff(SvnOperationFactory svnOperationFactory, SVNURL fileUrl, SVNRevision startRevision, SVNRevision endRevision) throws SVNException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 

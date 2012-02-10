@@ -5,22 +5,22 @@ import java.io.File;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
 
-interface ISvnDiffCallback {
+public interface ISvnDiffCallback {
     
    
     
     public void fileOpened(SvnDiffCallbackResult result, File path, long revision) throws SVNException;
     
     public void fileChanged(SvnDiffCallbackResult result, 
-            File path, File tmpFile1, File tmpFile2, long rev1, long rev2, String mimetype1, String mimeType2,
+            File path, File leftFile, File rightFile, long rev1, long rev2, String mimeType1, String mimeType2,
             SVNProperties propChanges, SVNProperties originalProperties) throws SVNException;
     
     public void fileAdded(SvnDiffCallbackResult result,  
-            File path, File tmpFile1, File tmpFile2, long rev1, long rev2, String mimetype1, String mimeType2,
+            File path, File leftFile, File rightFile, long rev1, long rev2, String mimeType1, String mimeType2,
             File copyFromPath, long copyFromRevision, SVNProperties propChanges, SVNProperties originalProperties) throws SVNException;
     
     public void fileDeleted(SvnDiffCallbackResult result,  
-            File path, File tmpFile1, File tmpFile2, String mimetype1, String mimeType2,
+            File path, File leftFile, File rightFile, String mimeType1, String mimeType2,
             SVNProperties originalProperties) throws SVNException;
 
 
