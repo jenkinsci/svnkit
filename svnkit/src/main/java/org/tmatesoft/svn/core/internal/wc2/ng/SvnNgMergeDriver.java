@@ -1108,8 +1108,14 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
             public void receive(SvnTarget target, SvnStatus status) throws SVNException {
                 boolean fileExternal = false;
                 if (status.isVersioned() && status.isSwitched() && status.getKind() == SVNNodeKind.FILE) {
-                    Structure<ExternalNodeInfo> info = SvnWcDbExternals.readExternal(context, status.getPath(), targetAbsPath, ExternalNodeInfo.kind);
-                    fileExternal = info.get(ExternalNodeInfo.kind) == SVNWCDbKind.File;
+                    try {
+                        Structure<ExternalNodeInfo> info = SvnWcDbExternals.readExternal(context, status.getPath(), targetAbsPath, ExternalNodeInfo.kind);
+                        fileExternal = info.get(ExternalNodeInfo.kind) == SVNWCDbKind.File;
+                    } catch (SVNException e) {
+                        if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND) {
+                            throw e;
+                        }
+                    }
                 }
                 if (status.isSwitched() && !fileExternal) {
                     switchedSubtrees.add(status.getPath());
