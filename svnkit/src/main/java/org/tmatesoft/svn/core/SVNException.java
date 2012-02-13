@@ -81,4 +81,9 @@ public class SVNException extends Exception {
         }
         return super.getMessage();
     }
+    
+    public boolean isEnoent() {
+    	SVNErrorCode errorCode = getErrorMessage().getErrorCode();
+        return errorCode == SVNErrorCode.ENTRY_NOT_FOUND || errorCode == SVNErrorCode.FS_NOT_FOUND || errorCode == SVNErrorCode.FS_NOT_OPEN || errorCode == SVNErrorCode.FS_NOT_FILE;
+    }
 }

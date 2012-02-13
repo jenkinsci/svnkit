@@ -535,7 +535,7 @@ public class SVNCommitUtil {
             File file = (File) ds.next();
             if (!commitables.containsKey(file)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, 
-                        "''{0}'' is not under version control\n"
+                        "''{0}'' is not known to exist in the repository\n"
                         + "and is not part of the commit, \n"
                         + "yet its child is part of the commit", file);
                 SVNErrorManager.error(err, SVNLogType.WC);

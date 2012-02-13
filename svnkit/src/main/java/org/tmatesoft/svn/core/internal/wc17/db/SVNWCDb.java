@@ -1492,7 +1492,7 @@ public class SVNWCDb implements ISVNWCDb {
                 sDb = openDb(localAbsPath, SDB_FILE, sMode);
                 break;
             } catch (SVNException e) {
-                if (e.getErrorMessage().getErrorCode() != SVNErrorCode.SQLITE_ERROR && !isErrorNOENT(e.getErrorMessage().getErrorCode()))
+                if (e.getErrorMessage().getErrorCode() != SVNErrorCode.SQLITE_ERROR && !e.isEnoent())
                     throw e;
             }
 
@@ -1627,7 +1627,7 @@ public class SVNWCDb implements ISVNWCDb {
                     sDb = openDb(parent_dir, SDB_FILE, sMode);
                 } catch (SVNException e) {
                     err = true;
-                    if (!isErrorNOENT(e.getErrorMessage().getErrorCode())) {
+                    if (!e.isEnoent()) {
                         throw e;
                     }
                 }
@@ -3600,10 +3600,6 @@ public class SVNWCDb implements ISVNWCDb {
 
     private static SVNSqlJetDb openDb(File dirAbsPath, String sdbFileName, Mode sMode) throws SVNException {
         return SVNSqlJetDb.open(SVNWCUtils.admChild(dirAbsPath, sdbFileName), sMode);
-    }
-
-    private static boolean isErrorNOENT(final SVNErrorCode errorCode) {
-        return errorCode == SVNErrorCode.ENTRY_NOT_FOUND || errorCode == SVNErrorCode.FS_NOT_FOUND || errorCode == SVNErrorCode.FS_NOT_OPEN || errorCode == SVNErrorCode.FS_NOT_FILE;
     }
 
     private static void verifyDirUsable(SVNWCDbDir pdh) throws SVNException {

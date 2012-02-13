@@ -117,9 +117,7 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 	protected SvnWcGeneration run() throws SVNException {
 
 		if (getOperation().getFirstTarget().isURL()) {
-			SVNErrorMessage err = SVNErrorMessage.create(
-					SVNErrorCode.ILLEGAL_TARGET, "'{0}' is not a local path",
-					getOperation().getFirstTarget().getURL());
+			SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "'{0}' is not a local path", getOperation().getFirstTarget().getURL());
 			SVNErrorManager.error(err, SVNLogType.WC);
 		}
 
@@ -128,15 +126,12 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 		wcUpgrade(localAbsPath, reposInfo);
 
 		/*
-		 * Now it's time to upgrade the externals too. We do it after the wc
-		 * upgrade to avoid that errors in the externals causes the wc upgrade
-		 * to fail. Thanks to caching the performance penalty of walking the wc
-		 * a second time shouldn't be too severe
+		 * Now it's time to upgrade the externals too. We do it after the wc upgrade to avoid that errors in the externals causes the wc upgrade
+		 * to fail. Thanks to caching the performance penalty of walking the wc a second time shouldn't be too severe
 		 */
 
 		final ArrayList<SvnTarget> externals = new ArrayList<SvnTarget>();
-		SvnGetProperties getProperties = getOperation().getOperationFactory()
-				.createGetProperties();
+		SvnGetProperties getProperties = getOperation().getOperationFactory().createGetProperties();
 		getProperties.addTarget(getOperation().getFirstTarget());
 		getProperties.setDepth(SVNDepth.INFINITY);
 		getProperties.setReceiver(new ISvnObjectReceiver<SVNProperties>() {
@@ -373,8 +368,7 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 
 	}
 
-	private void upgradeWorkingCopy(WriteBaton parentDirBaton, SVNWCDb db,
-			File dirAbsPath, SVNWCDbUpgradeData data, SVNHashMap reposCache,
+	private void upgradeWorkingCopy(WriteBaton parentDirBaton, SVNWCDb db, File dirAbsPath, SVNWCDbUpgradeData data, SVNHashMap reposCache,
 			RepositoryInfo reposInfo) throws SVNException {
 
 		WriteBaton dirBaton = null;
@@ -385,9 +379,7 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 
 		if (oldFormat >= SVNWCContext.WC_NG_VERSION) {
 			if (getOperation().getEventHandler() != null) {
-				SVNEvent event = SVNEventFactory.createSVNEvent(dirAbsPath,
-						SVNNodeKind.DIR, null, -1, SVNEventAction.SKIP, null,
-						null, null);
+				SVNEvent event = SVNEventFactory.createSVNEvent(dirAbsPath,SVNNodeKind.DIR, null, -1, SVNEventAction.SKIP, null, null, null);
 				getOperation().getEventHandler().handleEvent(event, -1);
 			}
 			return;
@@ -395,13 +387,13 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 
 		ArrayList<File> children = new ArrayList<File>();
 		try {
-			getVesionedSubdirs(dirAbsPath, children, false, false);
+			getVersionedSubdirs(getWCAccess(), dirAbsPath, children, false, false);
 		} catch (SVNException ex) {
-			if (getOperation().getEventHandler() != null) {
-				SVNEvent event = SVNEventFactory.createSVNEvent(dirAbsPath,
-						SVNNodeKind.DIR, null, -1, SVNEventAction.SKIP, null,
-						null, null);
-				getOperation().getEventHandler().handleEvent(event, -1);
+			if (ex.isEnoent()) {
+				if (getOperation().getEventHandler() != null) {
+					SVNEvent event = SVNEventFactory.createSVNEvent(dirAbsPath, SVNNodeKind.DIR, null, -1, SVNEventAction.SKIP, null, null, null);
+					getOperation().getEventHandler().handleEvent(event, -1);
+				}
 			}
 			return;
 		}
@@ -410,33 +402,26 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 				data, reposCache, reposInfo);
 
 		if (getOperation().getEventHandler() != null) {
-			SVNEvent event = SVNEventFactory.createSVNEvent(dirAbsPath,
-					SVNNodeKind.DIR, null, -1, SVNEventAction.UPGRADED_PATH, null,
-					null, null);
+			SVNEvent event = SVNEventFactory.createSVNEvent(dirAbsPath, SVNNodeKind.DIR, null, -1, SVNEventAction.UPGRADED_PATH, null, null, null);
 			getOperation().getEventHandler().handleEvent(event, -1);
 		}
 
 		for (File childAbsPath : children) {
-			upgradeWorkingCopy(dirBaton, db, childAbsPath, data, reposCache,
-					reposInfo);
+			upgradeWorkingCopy(dirBaton, db, childAbsPath, data, reposCache, reposInfo);
 		}
 	}
 
-	private WriteBaton upgradeToWcng(WriteBaton parentDirBaton, SVNWCDb db,
-			File dirAbsPath, int oldFormat, SVNWCDbUpgradeData data,
-			SVNHashMap reposCache, RepositoryInfo reposInfo)
-			throws SVNException {
+	private WriteBaton upgradeToWcng(WriteBaton parentDirBaton, SVNWCDb db, File dirAbsPath, int oldFormat, SVNWCDbUpgradeData data, 
+			SVNHashMap reposCache, RepositoryInfo reposInfo) throws SVNException {
 		WriteBaton dirBaton = null;
 		File logFilePath = SVNWCUtils.admChild(dirAbsPath, ADM_LOG);
 
 		/* Don't try to mess with the WC if there are old log files left. */
 
 		/* Is the (first) log file present? */
-		SVNNodeKind logFileKind = SVNFileType.getNodeKind(SVNFileType
-				.getType(logFilePath));
+		SVNNodeKind logFileKind = SVNFileType.getNodeKind(SVNFileType.getType(logFilePath));
 		if (logFileKind == SVNNodeKind.FILE) {
-			SVNErrorMessage err = SVNErrorMessage
-					.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT,
+			SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT,
 							"Cannot upgrade with existing logs; run a cleanup operation on this working copy using "
 									+ "a client version which is compatible with this working copy's format (such as the version "
 									+ "you are upgrading from), then retry the upgrade with the current version");
@@ -444,28 +429,23 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 		}
 
 		/*
-		 * Lock this working copy directory, or steal an existing lock. Do this
-		 * BEFORE we read the entries. We don't want another process to modify
-		 * the entries after we've read them into memory.
+		 * Lock this working copy directory, or steal an existing lock. Do this 
+		 * BEFORE we read the entries. We don't want another process to modify the entries after we've read them into memory.
 		 */
 		createPhysicalLock(dirAbsPath);
 
 		/*
 		 * What's going on here?
 		 * 
-		 * We're attempting to upgrade an older working copy to the new wc-ng
-		 * format. The semantics and storage mechanisms between the two are
-		 * vastly different, so it's going to be a bit painful. Here's a plan
-		 * for the operation:
+		 * We're attempting to upgrade an older working copy to the new wc-ng format. The semantics and storage mechanisms between the two are
+		 * vastly different, so it's going to be a bit painful. Here's a plan for the operation:
 		 * 
 		 * 1) Read the old 'entries' using the old-format reader.
 		 * 
 		 * 2) Create the new DB if it hasn't already been created.
 		 * 
-		 * 3) Use our compatibility code for writing entries to fill out the
-		 * (new) DB state. Use the remembered checksums, since an entry has only
-		 * the MD5 not the SHA1 checksum, and in the case of a revert-base
-		 * doesn't even have that.
+		 * 3) Use our compatibility code for writing entries to fill out the (new) DB state. Use the remembered checksums, since an entry has only
+		 * the MD5 not the SHA1 checksum, and in the case of a revert-base doesn't even have that.
 		 * 
 		 * 4) Convert wcprop to the wc-ng format
 		 * 
@@ -482,8 +462,7 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 			SVNEntry thisDir = entries.get("");
 			ensureReposInfo(thisDir, dirAbsPath, reposInfo, reposCache);
 			/*
-			 * Cache repos UUID pairs for when a subdir doesn't have this
-			 * information
+			 * Cache repos UUID pairs for when a subdir doesn't have this information
 			 */
 			if (!reposCache.containsKey(thisDir.getRepositoryRootURL())) {
 				reposCache.put(thisDir.getRepositoryRootURL(),
@@ -491,21 +470,15 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 			}
 
 			String dirAbsPathString = SVNFileUtil.getFilePath(dirAbsPath);
-			String oldWcRootAbsPath = SVNPathUtil
-					.getCommonPathAncestor(dirAbsPathString,
-							SVNFileUtil.getFilePath(data.rootAbsPath));
-			File dirRelPath = new File(SVNPathUtil.getRelativePath(
-					oldWcRootAbsPath, dirAbsPathString));
+			String oldWcRootAbsPath = SVNPathUtil.getCommonPathAncestor(dirAbsPathString, SVNFileUtil.getFilePath(data.rootAbsPath));
+			File dirRelPath = new File(SVNPathUtil.getRelativePath(oldWcRootAbsPath, dirAbsPathString));
 
 			/***** TEXT BASES *****/
-			SVNHashMap textBases = migrateTextBases(dirAbsPath,
-					data.rootAbsPath, data.root);
+			SVNHashMap textBases = migrateTextBases(dirAbsPath, data.rootAbsPath, data.root);
 
 			/***** ENTRIES - WRITE *****/
 			try {
-				dirBaton = SvnOldUpgradeEntries.writeUpgradedEntries(
-						parentDirBaton, db, data, dirAbsPath, entries,
-						textBases);
+				dirBaton = SvnOldUpgradeEntries.writeUpgradedEntries(parentDirBaton, db, data, dirAbsPath, entries, textBases);
 			} catch (SVNException ex) {
 				if (ex.getErrorMessage().getErrorCode() == SVNErrorCode.WC_CORRUPT) {
 					SVNErrorMessage err = ex.getErrorMessage().wrap("This working copy is corrupt and cannot be upgraded. Please check out a new working copy.");
@@ -668,14 +641,12 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 	}
 
 	/*
-	 * If File name ends with SUFFIX and is longer than SUFFIX, return the part
-	 * of STR that comes before SUFFIX; else return NULL.
+	 * If File name ends with SUFFIX and is longer than SUFFIX, return the part of STR that comes before SUFFIX; else return NULL.
 	 */
 	private File removeSuffix(File file, String suffix) {
 		String fileName = SVNPathUtil.getAbsolutePath(file.getPath());
 		if (fileName.length() > suffix.length() && fileName.endsWith(suffix)) {
-			return SVNFileUtil.createFilePath(fileName.substring(0,
-					fileName.length() - suffix.length()));
+			return SVNFileUtil.createFilePath(fileName.substring(0, fileName.length() - suffix.length()));
 		}
 		return null;
 	}
@@ -692,8 +663,7 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 	}
 
 	/*
-	 * Read the properties from the file at propfileAbsPath, returning them If
-	 * the propfile is NOT present, then NULL will be returned
+	 * Read the properties from the file at propfileAbsPath, returning them If the propfile is NOT present, then NULL will be returned
 	 */
 	/*
 	 * private SVNHashMap readPropFile(File propfileAbsPath) throws SVNException
@@ -703,19 +673,21 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 	/* Read the wcprops from all the files in the admin area of dirAbsPath */
 	/*
 	 * private SVNHashMap readManyWcProps(File dirAbsPath, SVNAdminArea area)
-	 * throws SVNException { File propsFileAbsPath =
-	 * SVNWCUtils.admChild(dirAbsPath, WCPROPS_FNAME_FOR_DIR);
+	 * throws SVNException { File propsFileAbsPath = SVNWCUtils.admChild(dirAbsPath, WCPROPS_FNAME_FOR_DIR);
 	 * 
 	 * SVNHashMap allProps = new SVNHashMap();
 	 * 
 	 * SVNHashMap props = readPropFile(propsFileAbsPath); if (props != null) {
 	 * allProps.put("SVN_WC_ENTRY_THIS_DIR", props); }
 	 * 
-	 * File propsDirAbsPath = SVNWCUtils.admChild(dirAbsPath,
-	 * WCPROPS_SUBDIR_FOR_FILES); File[] files =
-	 * SVNFileListUtil.listFiles(propsDirAbsPath); for (File file : files) {
-	 * props = readPropFile(file); assert(props != null);
-	 * allProps.put(file.getAbsolutePath(), props); } return allProps; }
+	 * File propsDirAbsPath = SVNWCUtils.admChild(dirAbsPath, WCPROPS_SUBDIR_FOR_FILES); 
+	 * File[] files = SVNFileListUtil.listFiles(propsDirAbsPath); 
+	 * 	for (File file : files) {
+	 * 		props = readPropFile(file); assert(props != null);
+	 * 		allProps.put(file.getAbsolutePath(), props); 
+	 * 	} 
+	 * 	return allProps; 
+	 * }
 	 */
 
 	/* For wcprops stored in a single file in this working copy */
@@ -723,14 +695,16 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 	 * private SVNHashMap readWcProps(File dirAbsPath) { return null; }
 	 */
 
-	public static void wipePostUpgrade(SVNWCContext ctx, File dirAbsPath,
-			boolean isWholeAdmin) throws SVNException {
+	public static void wipePostUpgrade(SVNWCContext ctx, File dirAbsPath, boolean isWholeAdmin) throws SVNException {
 		ctx.checkCancelled();
+		
+		SVNWCAccess access = SVNWCAccess.newInstance(ctx.getEventHandler());
+		access.setOptions(ctx.getOptions());
 
 		ArrayList<File> subDirs = new ArrayList<File>();
 		boolean isDoDeleteDir = false;
 		try {
-			getVesionedSubdirs(dirAbsPath, subDirs, true, true);
+			getVersionedSubdirs(access, dirAbsPath, subDirs, true, true);
 		} catch (SVNException ex) {
 			return;
 		}
@@ -741,71 +715,48 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 
 		/* ### Should we really be ignoring errors here? */
 		if (isWholeAdmin)
-			SVNFileUtil.deleteAll(
-					SVNFileUtil.createFilePath(dirAbsPath,
-							SVNFileUtil.getAdminDirectoryName()), true);
+			SVNFileUtil.deleteAll(SVNFileUtil.createFilePath(dirAbsPath, SVNFileUtil.getAdminDirectoryName()), true);
 		else {
 			wipeObsoleteFiles(dirAbsPath);
 		}
 
 		if (isDoDeleteDir) {
 			/*
-			 * If this was a WC-NG single database copy, this directory wouldn't
-			 * be here (unless it was deleted with --keep-local)
+			 * If this was a WC-NG single database copy, this directory wouldn't be here (unless it was deleted with --keep-local)
 			 * 
-			 * If the directory is empty, we can just delete it; if not we keep
-			 * it.
+			 * If the directory is empty, we can just delete it; if not we keep it.
 			 */
 			SVNFileUtil.deleteAll(dirAbsPath, true);
 		}
 	}
 
 	public static void wipeObsoleteFiles(File dirAbsPath) throws SVNException {
-		SVNFileUtil.deleteAll(
-				SVNWCUtils.admChild(dirAbsPath, SVNWCContext.WC_ADM_FORMAT),
-				true);
-		SVNFileUtil.deleteAll(
-				SVNWCUtils.admChild(dirAbsPath, SVNWCContext.WC_ADM_ENTRIES),
-				true);
-		SVNFileUtil.deleteAll(SVNWCUtils.admChild(dirAbsPath, ADM_EMPTY_FILE),
-				true);
-		SVNFileUtil
-				.deleteAll(SVNWCUtils.admChild(dirAbsPath, ADM_README), true);
+		SVNFileUtil.deleteAll(SVNWCUtils.admChild(dirAbsPath, SVNWCContext.WC_ADM_FORMAT), true);
+		SVNFileUtil.deleteAll(SVNWCUtils.admChild(dirAbsPath, SVNWCContext.WC_ADM_ENTRIES), true);
+		SVNFileUtil.deleteAll(SVNWCUtils.admChild(dirAbsPath, ADM_EMPTY_FILE), true);
+		SVNFileUtil.deleteAll(SVNWCUtils.admChild(dirAbsPath, ADM_README), true);
 
 		/*
-		 * For formats <= SVN_WC__WCPROPS_MANY_FILES_VERSION, we toss the
-		 * wcprops for the directory itself, and then all the wcprops for the
-		 * files.
+		 * For formats <= SVN_WC__WCPROPS_MANY_FILES_VERSION, we toss the wcprops for the directory itself, and then all the wcprops for the files.
 		 */
-		SVNFileUtil.deleteAll(
-				SVNWCUtils.admChild(dirAbsPath, WCPROPS_FNAME_FOR_DIR), true);
-		SVNFileUtil
-				.deleteAll(SVNWCUtils.admChild(dirAbsPath,
-						WCPROPS_SUBDIR_FOR_FILES), true);
+		SVNFileUtil.deleteAll(SVNWCUtils.admChild(dirAbsPath, WCPROPS_FNAME_FOR_DIR), true);
+		SVNFileUtil.deleteAll(SVNWCUtils.admChild(dirAbsPath, WCPROPS_SUBDIR_FOR_FILES), true);
 
 		/* And for later formats, they are aggregated into one file. */
-		SVNFileUtil.deleteAll(
-				SVNWCUtils.admChild(dirAbsPath, WCPROPS_ALL_DATA), true);
+		SVNFileUtil.deleteAll(SVNWCUtils.admChild(dirAbsPath, WCPROPS_ALL_DATA), true);
 
 		/* Remove the old text-base directory and the old text-base files. */
-		SVNFileUtil.deleteAll(
-				SVNWCUtils.admChild(dirAbsPath, TEXT_BASE_SUBDIR), true);
+		SVNFileUtil.deleteAll(SVNWCUtils.admChild(dirAbsPath, TEXT_BASE_SUBDIR), true);
 
 		/* Remove the old properties files... whole directories at a time. */
-		SVNFileUtil.deleteAll(SVNWCUtils.admChild(dirAbsPath, PROPS_SUBDIR),
-				true);
-		SVNFileUtil.deleteAll(
-				SVNWCUtils.admChild(dirAbsPath, PROP_BASE_SUBDIR), true);
-		SVNFileUtil.deleteAll(
-				SVNWCUtils.admChild(dirAbsPath, PROP_WORKING_FOR_DIR), true);
-		SVNFileUtil.deleteAll(
-				SVNWCUtils.admChild(dirAbsPath, PROP_BASE_FOR_DIR), true);
-		SVNFileUtil.deleteAll(
-				SVNWCUtils.admChild(dirAbsPath, PROP_REVERT_FOR_DIR), true);
+		SVNFileUtil.deleteAll(SVNWCUtils.admChild(dirAbsPath, PROPS_SUBDIR), true);
+		SVNFileUtil.deleteAll(SVNWCUtils.admChild(dirAbsPath, PROP_BASE_SUBDIR), true);
+		SVNFileUtil.deleteAll(SVNWCUtils.admChild(dirAbsPath, PROP_WORKING_FOR_DIR), true);
+		SVNFileUtil.deleteAll(SVNWCUtils.admChild(dirAbsPath, PROP_BASE_FOR_DIR), true);
+		SVNFileUtil.deleteAll(SVNWCUtils.admChild(dirAbsPath, PROP_REVERT_FOR_DIR), true);
 
 		/*
-		 * #if 0 ### this checks for a write-lock, and we are not (always)
-		 * taking out ### a write lock in all callers. *
+		 * #if 0 ### this checks for a write-lock, and we are not (always) taking out ### a write lock in all callers. *
 		 * SVN_ERR(svn_wc__adm_cleanup_tmp_area(db, wcroot_abspath, iterpool));
 		 * #endif
 		 */
@@ -815,8 +766,7 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 	}
 
 	/*
-	 * Return the path of the old-school administrative lock file associated
-	 * with LOCAL_DIR_ABSPATH, allocated from RESULT_POOL.
+	 * Return the path of the old-school administrative lock file associated with LOCAL_DIR_ABSPATH, allocated from RESULT_POOL.
 	 */
 	private static File buildLockfilePath(File dirAbsPath) {
 		return SVNWCUtils.admChild(dirAbsPath, ADM_LOCK);
@@ -829,24 +779,24 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 	 * WC-NG, otherwise to FALSE. If SKIP_MISSING is TRUE, don't add missing or
 	 * obstructed subdirectories to the list of children.
 	 */
-	public static boolean getVesionedSubdirs(File localAbsPath,
-			ArrayList<File> children, boolean isCalculateDoDeleteDir,
-			boolean isSkipMissing) throws SVNException {
+	public static boolean getVersionedSubdirs(SVNWCAccess access, File localAbsPath, ArrayList<File> children, boolean isCalculateDoDeleteDir, boolean isSkipMissing) throws SVNException {
 		boolean isDoDeleteDir = false;
 
-		SVNWCAccess access = SVNWCAccess.newInstance(null);
 		Map<String, SVNEntry> entries = null;
-
+		
 		try {
 			SVNAdminArea area = access.probeOpen(localAbsPath, false, 0);
+			if (!area.getRoot().equals(localAbsPath)) {
+				SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "'{0}' is not versioned directory", localAbsPath);
+				SVNErrorManager.error(err, SVNLogType.WC);
+			}
 			entries = area.getEntries();
 		} finally {
 			access.close();
 		}
 
 		SVNEntry thisDir = null;
-		for (Iterator<String> names = entries.keySet().iterator(); names
-				.hasNext();) {
+		for (Iterator<String> names = entries.keySet().iterator(); names.hasNext();) {
 			String name = (String) names.next();
 			SVNEntry entry = (SVNEntry) entries.get(name);
 
@@ -861,8 +811,7 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 			File childAbsPath = SVNFileUtil.createFilePath(localAbsPath, name);
 
 			if (isSkipMissing) {
-				SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType
-						.getType(childAbsPath));
+				SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(childAbsPath));
 				if (kind != SVNNodeKind.DIR)
 					continue;
 			}
@@ -871,9 +820,7 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 		}
 
 		if (isCalculateDoDeleteDir) {
-			isDoDeleteDir = (thisDir != null
-					&& thisDir.isScheduledForDeletion() && !thisDir
-					.isKeepLocal());
+			isDoDeleteDir = (thisDir != null && thisDir.isScheduledForDeletion() && !thisDir.isKeepLocal());
 		}
 
 		return isDoDeleteDir;
