@@ -827,7 +827,7 @@ public class SvnOperationFactory {
         if (operation.getOperationalWorkingCopy() != null) {
             wcGeneration = detectWcGeneration(operation.getOperationalWorkingCopy(), operation.isUseParentWcFormat());
         }
-        if (wcGeneration == SvnWcGeneration.V16 && isPrimaryWcGenerationOnly()) {
+        if (wcGeneration == SvnWcGeneration.V16 && isPrimaryWcGenerationOnly() && operation.getClass() != SvnUpgrade.class) {
             File wcPath = operation.getOperationalWorkingCopy();
             int format = SVNAdminAreaFactory.checkWC(wcPath, true);
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UPGRADE_REQUIRED, "Working copy ''{0}'' is too old (format ''{1}'', created  by Subversion 1.6)", 
