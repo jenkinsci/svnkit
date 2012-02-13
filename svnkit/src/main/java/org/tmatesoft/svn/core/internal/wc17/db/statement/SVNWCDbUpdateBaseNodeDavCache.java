@@ -37,7 +37,7 @@ public class SVNWCDbUpdateBaseNodeDavCache extends SVNSqlJetUpdateStatement {
 
     public Map<String, Object> getUpdateValues() throws SVNException {
         Map<String, Object> rowValues = getRowValues();
-        rowValues.put(SVNWCDbSchema.NODES__Fields.properties.toString(), getBind(3));
+        rowValues.put(SVNWCDbSchema.NODES__Fields.dav_cache.toString(), getBind(3));
         return rowValues;
     }
 

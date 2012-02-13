@@ -508,9 +508,7 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 						textBases);
 			} catch (SVNException ex) {
 				if (ex.getErrorMessage().getErrorCode() == SVNErrorCode.WC_CORRUPT) {
-					SVNErrorMessage err = ex
-							.getErrorMessage()
-							.wrap("This working copy is corrupt and cannot be upgraded. Please check out a new working copy.");
+					SVNErrorMessage err = ex.getErrorMessage().wrap("This working copy is corrupt and cannot be upgraded. Please check out a new working copy.");
 					SVNErrorManager.error(err, SVNLogType.WC);
 				}
 			}
@@ -520,32 +518,24 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 			if (oldFormat != SVNWCContext.WC_WCPROPS_LOST) {
 				/*
 				 * if (oldFormat <= SVNWCContext.WC_WCPROPS_MANY_FILES_VERSION)
-				 * allProps = readManyWcProps(dirAbsPath); else allProps =
-				 * readWcProps(dirAbsPath);
+				 * allProps = readManyWcProps(dirAbsPath); else allProps = readWcProps(dirAbsPath);
 				 */
 
 				SVNHashMap cachedProps = new SVNHashMap();
 				SVNVersionedProperties verProps = area.getWCProperties("");
 				cachedProps.put("", verProps.asMap());
-				SVNHashSet children = getVesionedFiles(dirRelPath,
-						data.root.getSDb(), data.workingCopyId);
-				for (Iterator<File> files = children.iterator(); files
-						.hasNext();) {
+				SVNHashSet children = getVesionedFiles(dirRelPath, data.root.getSDb(), data.workingCopyId);
+				for (Iterator<File> files = children.iterator(); files.hasNext();) {
 					File file = files.next();
-					verProps = area.getWCProperties(SVNFileUtil
-							.getFileName(file));
-					cachedProps.put(SVNFileUtil.getFileName(file),
-							verProps.asMap());
+					verProps = area.getWCProperties(SVNFileUtil.getFileName(file));
+					cachedProps.put(SVNFileUtil.getFileName(file), verProps.asMap());
 				}
-				SvnWcDbProperties.upgradeApplyDavCache(data.root, dirRelPath,
-						cachedProps);
+				SvnWcDbProperties.upgradeApplyDavCache(data.root, dirRelPath, cachedProps);
 			}
 
 			/*
-			 * Upgrade all the properties (including "this dir"). Note: this
-			 * must come AFTER the entries have been migrated into the database.
-			 * The upgrade process needs the children in BASE_NODE and
-			 * WORKING_NODE, and to examine the resultant WORKING state.
+			 * Upgrade all the properties (including "this dir"). Note: this must come AFTER the entries have been migrated into the database.
+			 * The upgrade process needs the children in BASE_NODE and WORKING_NODE, and to examine the resultant WORKING state.
 			 */
 			migrateProps(dirAbsPath, data, oldFormat, area);
 		} finally {
