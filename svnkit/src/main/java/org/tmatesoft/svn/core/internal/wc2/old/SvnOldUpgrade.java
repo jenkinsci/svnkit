@@ -583,6 +583,9 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 		SVNHashMap textBasesInfo = new SVNHashMap();
 		File textBaseDir = SVNWCUtils.admChild(dirAbsPath, TEXT_BASE_SUBDIR);
 		File[] files = SVNFileListUtil.listFiles(textBaseDir);
+		if (files == null)
+			return textBasesInfo;
+		
 		for (File textBasePath : files) {
 			SvnChecksum md5Checksum = null;
 			SvnChecksum sha1Checksum = null;
