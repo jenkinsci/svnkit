@@ -22,6 +22,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbOpenMode;
@@ -823,9 +824,15 @@ public class SvnOperationFactory {
             return null;
         }
         SvnWcGeneration wcGeneration = SvnWcGeneration.NOT_DETECTED;
-        
         if (operation.getOperationalWorkingCopy() != null) {
             wcGeneration = detectWcGeneration(operation.getOperationalWorkingCopy(), operation.isUseParentWcFormat());
+        }
+        if (wcGeneration == SvnWcGeneration.V16 && isPrimaryWcGenerationOnly()) {
+            File wcPath = operation.getOperationalWorkingCopy();
+            int format = SVNAdminAreaFactory.checkWC(wcPath, true);
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UPGRADE_REQUIRED, "Working copy ''{0}'' is too old (format ''{1}'', created  by Subversion 1.6)", 
+                    new Object[] {wcPath, new Integer(format)});
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         final List<ISvnOperationRunner<?, SvnOperation<?>>> candidateRunners = new LinkedList<ISvnOperationRunner<?, SvnOperation<?>>>();
         
@@ -858,6 +865,10 @@ public class SvnOperationFactory {
         return runner;
     }
     
+    private boolean isPrimaryWcGenerationOnly() {
+        return "true".equalsIgnoreCase(System.getProperty("svnkit.wc.17only", null));
+    }
+
     @SuppressWarnings("unchecked")
     protected void registerOperationRunner(Class<?> operationClass, ISvnOperationRunner<?, ? extends SvnOperation<?>> runner) {
         if (operationClass == null || runner == null) {
