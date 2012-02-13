@@ -326,10 +326,8 @@ public class SvnOldUpgradeEntries {
 				/* Fix dubious data stored by old clients, local adds don't have a repository URL. */
 				if (conflict.getConflictReason() == SVNConflictReason.ADDED)
 					conflict.setSourceLeftVersion(null);
-				SVNConflictVersion nullVersion = new SVNConflictVersion(null, null, SVNRepository.INVALID_REVISION, SVNNodeKind.UNKNOWN);
-				SVNSkel newSkel = SVNTreeConflictUtil.getConflictSkel(nullVersion, conflict);
 				String key = SVNFileUtil.getFilePath(SVNWCUtils.skipAncestor(rootAbsPath, conflict.getPath()));
-				treeConflicts.put(key, newSkel.toString());
+				treeConflicts.put(key, SVNTreeConflictUtil.getSingleTreeConflictData(conflict));
             }
 		}
 		
