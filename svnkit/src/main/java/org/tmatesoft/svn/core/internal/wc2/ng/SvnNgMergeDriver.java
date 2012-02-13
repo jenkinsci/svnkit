@@ -2245,7 +2245,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
                             }
                         }
                         if (removedPath != null) {
-                            result.put(removedPath, null);
+                            result.remove(removedPath);
                         }
                     }
                 }
