@@ -27,7 +27,8 @@ svnBinariesDir = getSvnBinariesLocation()
 
 pythonTestsDir = new File(sandboxDir, 'svn-python-tests')
 testPropertiesFile = new File(sandboxDir, 'test.properties')
-svnVersion  = project.hasProperty('svnVersion') ? project.getProperty('svnVersion') : '16'
+svnVersion = project.hasProperty('svnVersion') ? project.getProperty('svnVersion') : '16'
+singleFormat = project.hasProperty('singleFormat')
 testConfiguration = project.hasProperty('testConfiguration') ? project.getProperty('testConfiguration') : 'default'
 
 test.dependsOn configurations."pythonTests${project.svnVersion}"
@@ -124,6 +125,7 @@ def runPythonTests() {
         systemProperty 'sun.io.useCanonCaches', 'false'
         systemProperty 'svnkit.compatibleHash', 'true'
         systemProperty 'svnkit.wc.17', (project.svnVersion == '17')
+        systemProperty 'svnkit.wc.17only', project.singleFormat
 
         environment 'LD_LIBRARY_PATH' : new File(svnBinariesDir, 'lib').absolutePath
         main = 'org.tmatesoft.svn.core.test.PythonTests'
