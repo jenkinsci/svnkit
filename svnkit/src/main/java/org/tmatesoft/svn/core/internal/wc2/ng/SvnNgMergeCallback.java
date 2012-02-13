@@ -520,7 +520,7 @@ public class SvnNgMergeCallback implements ISvnDiffCallback {
     public void dirPropsChanged(SvnDiffCallbackResult result, File path, boolean isAdded, SVNProperties propChanges, SVNProperties originalProperties) throws SVNException {
         ObstructionState os = driver.performObstructionCheck(path, SVNNodeKind.UNKNOWN);
         if (os.obstructionState != SVNStatusType.INAPPLICABLE) {
-            result.contentState = os.obstructionState;
+            result.propState = os.obstructionState;
             return;
         }
         if (isAdded && isDryRun() && driver.isDryRunAddition(path)) {

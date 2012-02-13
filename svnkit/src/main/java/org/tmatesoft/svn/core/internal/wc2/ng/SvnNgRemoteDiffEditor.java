@@ -92,9 +92,9 @@ public class SvnNgRemoteDiffEditor implements ISVNEditor {
         SVNProperties propChanges;
         SVNProperties pristineProperties;
         
-        public void loadProperties(SVNRepository repos, long revision) throws SVNException {
+        public void loadProperties(SVNRepository repos, String path, long revision) throws SVNException {
             pristineProperties = new SVNProperties();
-            repos.getDir("", revision, pristineProperties, 0, (ISVNDirEntryHandler) null);
+            repos.getDir(path, revision, pristineProperties, 0, (ISVNDirEntryHandler) null);
         }
     }
 
@@ -214,7 +214,7 @@ public class SvnNgRemoteDiffEditor implements ISVNEditor {
         DirBaton baton = makeDirBaton("", null, false);
         baton.wcPath = target;
         
-        baton.loadProperties(repository, revision);
+        baton.loadProperties(repository, "", revision);
         
         this.currentDir = baton;
         
@@ -366,7 +366,7 @@ public class SvnNgRemoteDiffEditor implements ISVNEditor {
             currentDir.skip = true;
             return;
         }
-        db.loadProperties(repository, revision);
+        db.loadProperties(repository, path, revision);
         diffCallback.dirOpened(currentResult.reset(), db.wcPath, revision);
         db.skip = currentResult.skip;
         db.skipChildren = currentResult.skipChildren;
@@ -552,9 +552,11 @@ public class SvnNgRemoteDiffEditor implements ISVNEditor {
         Set<String> removed = new HashSet<String>();
         for (String propertyName : propChanges.nameSet()) {
             SVNPropertyValue newValue = propChanges.getSVNPropertyValue(propertyName);
-            SVNPropertyValue oldValue = pristineProps.getSVNPropertyValue(propertyName);
-            if (oldValue == newValue || (oldValue != null && oldValue.equals(newValue))) {
-                removed.add(propertyName);
+            if (newValue != null) {
+                SVNPropertyValue oldValue = pristineProps.getSVNPropertyValue(propertyName);
+                if (oldValue != null && oldValue.equals(newValue)) {
+                    removed.add(propertyName);
+                }
             }
         }
         for (String name : removed) {

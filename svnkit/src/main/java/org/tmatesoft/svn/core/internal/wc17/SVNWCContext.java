@@ -4096,21 +4096,17 @@ public class SVNWCContext {
 
     private String generateConflictMessage(String propname, SVNPropertyValue original, SVNPropertyValue mine, SVNPropertyValue incoming, SVNPropertyValue incomingBase) {
         if (incomingBase == null) {
-            assert (incoming != null);
             if (mine != null) {
                 assert (!mine.equals(incoming));
                 return String.format("Trying to add new property '%s'\nbut the property already exists.\n", propname);
             }
-            assert (original != null);
             return String.format("Trying to add new property '%s'\nbut the property has been locally deleted.\n", propname);
         }
         
         if (incoming == null) {
-            assert (incomingBase != null);
             if (original == null && mine != null) {
                 return String.format("Trying to delete property '%s'\nbut the property has been locally added.\n", propname);
             }
-            assert (original != null);
             if (original.equals(incomingBase)) {
                 if (mine != null) {
                     return String.format("Trying to delete property '%s'\nbut the property has been locally modified.\n", propname);
@@ -4118,12 +4114,9 @@ public class SVNWCContext {
             } else if (mine == null) {
                 return String.format("Trying to delete property '%s'\nbut the property has been locally deleted and had a different value.\n", propname);
             }
-            assert (!original.equals(incomingBase));
             return String.format("Trying to delete property '%s'\nbut the local property value is different.\n", propname);
         }
-        assert (mine == null || !mine.equals(incomingBase));
         if (original != null && mine != null && original.equals(mine)) {
-            assert (!original.equals(incomingBase));
             return String.format("Trying to change property '%s'\nbut the local property value conflicts with the incoming change.\n", propname);
         }
         if (original != null && mine != null) {
