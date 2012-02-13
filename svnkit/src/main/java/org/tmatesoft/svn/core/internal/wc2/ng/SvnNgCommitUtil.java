@@ -144,7 +144,7 @@ public class SvnNgCommitUtil {
             if (!packet.hasItem(danglingParent)) {
                 // TODO fail no parent event
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, 
-                        "''{0}'' is not under version control and is not part of the commit, yet its child ''{1}'' is part of the commit",
+                        "''{0}'' is not known to exist in the repository and is not part of the commit, yet its child ''{1}'' is part of the commit",
                         danglingParent, danglers.get(danglingParent));
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
