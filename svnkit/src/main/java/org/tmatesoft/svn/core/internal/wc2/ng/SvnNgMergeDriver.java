@@ -2616,7 +2616,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
             }
         }
         
-        boolean checkRoot = !localAbsPath.equals(targetAbsPath);
+        boolean checkRoot = localAbsPath.equals(targetAbsPath);
         checkWcForObstruction(result, localAbsPath, checkRoot);
         if (result.obstructionState == SVNStatusType.INAPPLICABLE &&
                 expectedKind != SVNNodeKind.UNKNOWN &&
