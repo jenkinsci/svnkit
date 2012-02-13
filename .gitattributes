@@ -43,7 +43,6 @@ svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbIn
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbInsertTargetDepthImmediatesWithChangelist.java -text svneol=native#unset
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbInsertTargetDepthInfinity.java -text svneol=native#unset
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbInsertTargetDepthInfinityWithChangelist.java -text svneol=native#unset
-svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbInsertTargetWithChangelist.java -text svneol=native#unset
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbMarkSkippedChangelistDirs.java -text svneol=native#unset
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbSelectAllFiles.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbSelectChangelist.java -text svneol=native#unset

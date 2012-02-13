@@ -37,7 +37,7 @@ public class SVNWCDbInsertTargetWithChangelist extends SVNSqlJetInsertStatement 
         	@Override
             protected boolean isFilterPassed() throws SVNException {
         	    String rowChangelist = getColumnString(SVNWCDbSchema.ACTUAL_NODE__Fields.changelist);
-        	    if (rowChangelist != null && getBind(3).equals(rowChangelist)) {
+        	    if (rowChangelist != null && rowChangelist.equals(SVNWCDbInsertTargetWithChangelist.this.getBind(3))) {
         	        return true;
         	    }
                 return false;
