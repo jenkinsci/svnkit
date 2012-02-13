@@ -130,6 +130,45 @@ public class SvnCopyDisableLocalModificationsTest {
         }
     }
 
+    @Test
+    public void testCopyEmptyDirectoryNoLocalModifications() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testCopyEmptyDirectoryNoLocalModifications", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addDirectory("source/directory");
+            commitBuilder.addDirectory("target");
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, SVNRevision.HEAD.getNumber());
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+
+            final File source = new File(workingCopyDirectory, "source");
+            final File target = new File(workingCopyDirectory, "target");
+            final File sourceDirectory = new File(source, "directory");
+            final File targetDirectory = new File(target, "directory");
+
+            final SvnRemoteCopy remoteCopy = svnOperationFactory.createRemoteCopy();
+            remoteCopy.addCopySource(SvnCopySource.create(SvnTarget.fromFile(sourceDirectory, SVNRevision.WORKING), SVNRevision.WORKING));
+            remoteCopy.setSingleTarget(SvnTarget.fromURL(url.appendPath(target.getName(), false).appendPath(targetDirectory.getName(), false)));
+            remoteCopy.setDisableLocalModifications(true);
+            remoteCopy.setMove(false);
+            remoteCopy.setFailWhenDstExists(true);
+            remoteCopy.setMakeParents(true);
+
+            final SVNCommitInfo commitInfo = remoteCopy.run();
+            Assert.assertEquals(2, commitInfo.getNewRevision());
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
     private void copy(SvnOperationFactory svnOperationFactory, File sourceSourceFile, File sourceCopiedFile) throws SVNException {
         final SvnCopy copy = svnOperationFactory.createCopy();
         copy.addCopySource(SvnCopySource.create(SvnTarget.fromFile(sourceSourceFile), SVNRevision.WORKING));
