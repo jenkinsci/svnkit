@@ -273,26 +273,21 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 		fetchReposInfo(entry, lastRepositoryInfo);
 	}
 
-	private void wcUpgrade(File localAbsPath, RepositoryInfo reposInfo)
-			throws SVNException {
+	private void wcUpgrade(File localAbsPath, RepositoryInfo reposInfo) throws SVNException {
 		SVNWCDbUpgradeData upgradeData = new SVNWCDbUpgradeData();
 
 		checkIsOldWCRoot(localAbsPath);
 
 		/*
-		 * Given a pre-wcng root some/wc we create a temporary wcng in
-		 * some/wc/.svn/tmp/wcng/wc.db and copy the metadata from one to the
-		 * other, then the temporary wc.db file gets moved into the original
-		 * root. Until the wc.db file is moved the original working copy remains
-		 * a pre-wcng and 'cleanup' with an old client will remove the partial
-		 * upgrade. Moving the wc.db file creates a wcng, and 'cleanup' with a
+		 * Given a pre-wcng root some/wc we create a temporary wcng in some/wc/.svn/tmp/wcng/wc.db and copy the metadata from one to the
+		 * other, then the temporary wc.db file gets moved into the original root. Until the wc.db file is moved the original working copy remains
+		 * a pre-wcng and 'cleanup' with an old client will remove the partial upgrade. Moving the wc.db file creates a wcng, and 'cleanup' with a
 		 * new client will complete any outstanding upgrade.
 		 */
 
 		SVNWCDb db = new SVNWCDb();
 		db.open(SVNWCDbOpenMode.ReadWrite, (ISVNOptions) null, false, false);
-		SVNWCContext wcContext = new SVNWCContext(db, getOperation()
-				.getEventHandler());
+		SVNWCContext wcContext = new SVNWCContext(db, getOperation().getEventHandler());
 
 		SVNWCAccess wcAccess = getWCAccess();
 		SVNEntry thisDir = null;
@@ -307,17 +302,14 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 		ensureReposInfo(thisDir, localAbsPath, reposInfo, reposCache);
 
 		/*
-		 * Cache repos UUID pairs for when a subdir doesn't have this
-		 * information
+		 * Cache repos UUID pairs for when a subdir doesn't have this information
 		 */
 		if (!reposCache.containsKey(thisDir.getRepositoryRootURL()))
 			reposCache.put(thisDir.getRepositoryRootURL(), thisDir.getUUID());
 		/* Create the new DB in the temporary root wc/.svn/tmp/wcng/.svn */
 
-		upgradeData.rootAbsPath = SVNFileUtil.createFilePath(
-				SVNWCUtils.admChild(localAbsPath, "tmp"), "wcng");
-		File rootAdmAbsPath = SVNWCUtils.admChild(upgradeData.rootAbsPath,
-				"tmp");
+		upgradeData.rootAbsPath = SVNFileUtil.createFilePath(SVNWCUtils.admChild(localAbsPath, "tmp"), "wcng");
+		File rootAdmAbsPath = SVNWCUtils.admChild(upgradeData.rootAbsPath, "tmp");
 
 		try {
 
@@ -325,15 +317,12 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 			SVNFileUtil.ensureDirectoryExists(rootAdmAbsPath);
 
 			/*
-			 * Create an empty sqlite database for this directory and store it
-			 * in DB.
+			 * Create an empty sqlite database for this directory and store it in DB.
 			 */
-			db.upgradeBegin(upgradeData.rootAbsPath, upgradeData,
-					thisDir.getRepositoryRootURL(), thisDir.getUUID());
+			db.upgradeBegin(upgradeData.rootAbsPath, upgradeData, thisDir.getRepositoryRootURL(), thisDir.getUUID());
 
 			/*
-			 * Migrate the entries over to the new database. ### We need to
-			 * think about atomicity here.
+			 * Migrate the entries over to the new database. ### We need to think about atomicity here.
 			 * 
 			 * entries_write_new() writes in current format rather than f12.
 			 * Thus, this function bumps a working copy all the way to current.
@@ -341,11 +330,9 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 
 			db.obtainWCLock(upgradeData.rootAbsPath, 0, false);
 
-			upgradeData.root.getSDb().beginTransaction(
-					SqlJetTransactionMode.WRITE);
+			upgradeData.root.getSDb().beginTransaction(SqlJetTransactionMode.WRITE);
 			try {
-				upgradeWorkingCopy(null, db, localAbsPath, upgradeData,
-						reposCache, reposInfo);
+				upgradeWorkingCopy(null, db, localAbsPath, upgradeData, reposCache, reposInfo);
 			} catch (SVNException ex) {
 				upgradeData.root.getSDb().rollback();
 				throw ex;
@@ -354,15 +341,12 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 			}
 
 			/* A workqueue item to move the pristine dir into place */
-			File pristineFrom = SVNFileUtil.createFilePath(rootAdmAbsPath,
-					PRISTINE_STORAGE_RELPATH);
-			File pristineTo = SVNWCUtils.admChild(localAbsPath,
-					PRISTINE_STORAGE_RELPATH);
+			File pristineFrom = SVNWCUtils.admChild(upgradeData.rootAbsPath, PRISTINE_STORAGE_RELPATH);
+			File pristineTo = SVNWCUtils.admChild(localAbsPath, PRISTINE_STORAGE_RELPATH);
 			SVNFileUtil.ensureDirectoryExists(pristineFrom);
 
 			SVNSkel workItems = null;
-			SVNSkel workItem = wcContext.wqBuildFileMove(localAbsPath,
-					pristineFrom, pristineTo);
+			SVNSkel workItem = wcContext.wqBuildFileMove(localAbsPath, pristineFrom, pristineTo);
 			workItems = wcContext.wqMerge(workItems, workItem);
 
 			/* A workqueue item to remove pre-wcng metadata */
@@ -375,8 +359,7 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 			db.close();
 
 			/* Renaming the db file is what makes the pre-wcng into a wcng */
-			File dbFrom = SVNWCUtils
-					.admChild(upgradeData.rootAbsPath, SDB_FILE);
+			File dbFrom = SVNWCUtils.admChild(upgradeData.rootAbsPath, SDB_FILE);
 			File dbTo = SVNWCUtils.admChild(localAbsPath, SDB_FILE);
 			SVNFileUtil.rename(dbFrom, dbTo);
 
@@ -596,8 +579,7 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 	 * newWcRootAbsPath. Returns SVNHashMap that maps name of the versioned file
 	 * to (svn_wc__text_base_info_t *) information about the pristine text.
 	 */
-	private SVNHashMap migrateTextBases(File dirAbsPath, File newWcRootAbsPath,
-			SVNWCDbRoot root) throws SVNException {
+	private SVNHashMap migrateTextBases(File dirAbsPath, File newWcRootAbsPath, SVNWCDbRoot root) throws SVNException {
 		SVNHashMap textBasesInfo = new SVNHashMap();
 		File textBaseDir = SVNWCUtils.admChild(dirAbsPath, TEXT_BASE_SUBDIR);
 		File[] files = SVNFileListUtil.listFiles(textBaseDir);
@@ -608,53 +590,43 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 
 			/* Calculate its checksums and copy it to the pristine store */
 			{
-				File tempPath = SVNFileUtil.createUniqueFile(newWcRootAbsPath,
-						"upgrade", ".tmp", false);
+				File tempPath = SVNFileUtil.createUniqueFile(newWcRootAbsPath, "upgrade", ".tmp", false);
 
-				InputStream readStream = SVNFileUtil
-						.openFileForReading(textBasePath);
+				InputStream readStream = SVNFileUtil.openFileForReading(textBasePath);
 
 				SVNChecksumInputStream readChecksummedIS = null;
 				try {
-					readChecksummedIS = new SVNChecksumInputStream(readStream,
-							"SHA1");
+					readChecksummedIS = new SVNChecksumInputStream(readStream, "SHA1");
 				} finally {
 					SVNFileUtil.closeFile(readChecksummedIS);
 					SVNFileUtil.closeFile(readStream);
 				}
-				sha1Checksum = readChecksummedIS != null ? new SvnChecksum(
-						Kind.sha1, readChecksummedIS.getDigest()) : null;
+				sha1Checksum = readChecksummedIS != null ? new SvnChecksum(Kind.sha1, readChecksummedIS.getDigest()) : null;
 				readStream = SVNFileUtil.openFileForReading(textBasePath);
 				try {
-					readChecksummedIS = new SVNChecksumInputStream(readStream,
-							SVNChecksumInputStream.MD5_ALGORITHM);
+					readChecksummedIS = new SVNChecksumInputStream(readStream, SVNChecksumInputStream.MD5_ALGORITHM);
 				} finally {
 					SVNFileUtil.closeFile(readChecksummedIS);
 					SVNFileUtil.closeFile(readStream);
 				}
-				md5Checksum = readChecksummedIS != null ? new SvnChecksum(
-						Kind.md5, readChecksummedIS.getDigest()) : null;
+				md5Checksum = readChecksummedIS != null ? new SvnChecksum(Kind.md5, readChecksummedIS.getDigest()) : null;
 
 				SVNFileUtil.copyFile(textBasePath, tempPath, true);
 
 				/* Insert a row into the pristine table. */
-				SVNSqlJetStatement stmt = root.getSDb().getStatement(
-						SVNWCDbStatements.INSERT_OR_IGNORE_PRISTINE);
+				SVNSqlJetStatement stmt = root.getSDb().getStatement(SVNWCDbStatements.INSERT_OR_IGNORE_PRISTINE);
 				stmt.bindChecksum(1, sha1Checksum);
 				stmt.bindChecksum(2, md5Checksum);
 				stmt.bindLong(3, textBasePath.length());
 				stmt.exec();
 
-				pristinePath = SvnWcDbPristines.getPristineFuturePath(root,
-						sha1Checksum);
+				pristinePath = SvnWcDbPristines.getPristineFuturePath(root, sha1Checksum);
 
 				/* Ensure any sharding directories exist. */
-				SVNFileUtil.ensureDirectoryExists(SVNFileUtil
-						.getFileDir(pristinePath));
+				SVNFileUtil.ensureDirectoryExists(SVNFileUtil.getFileDir(pristinePath));
 
 				/*
-				 * Now move the file into the pristine store, overwriting
-				 * existing files with the same checksum.
+				 * Now move the file into the pristine store, overwriting existing files with the same checksum.
 				 */
 				SVNFileUtil.rename(tempPath, pristinePath);
 			}
@@ -662,8 +634,7 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 			/* Add the checksums for this text-base to *TEXT_BASES_INFO. */
 			{
 				boolean isRevertBase;
-				File versionedFile = removeSuffix(textBasePath,
-						SVN_WC__REVERT_EXT);
+				File versionedFile = removeSuffix(textBasePath, SVN_WC__REVERT_EXT);
 				if (versionedFile != null) {
 					isRevertBase = true;
 				} else {
@@ -673,25 +644,19 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 
 				if (versionedFile == null) {
 					/*
-					 * Some file that doesn't end with .svn-base or .svn-revert.
-					 * No idea why that would be in our administrative area, but
-					 * we shouldn't segfault on this case. Note that we already
-					 * copied this file in the pristine store, but the next
+					 * Some file that doesn't end with .svn-base or .svn-revert. No idea why that would be in our administrative area, but
+					 * we shouldn't segfault on this case. Note that we already copied this file in the pristine store, but the next
 					 * cleanup will take care of that.
 					 */
 					continue;
 				}
 
-				String versionedFileName = SVNFileUtil
-						.getFileName(versionedFile);
+				String versionedFileName = SVNFileUtil.getFileName(versionedFile);
 
 				/*
-				 * Create a new info for this versioned file, or fill in the
-				 * existing one if this is the second text-base we've found for
-				 * it.
+				 * Create a new info for this versioned file, or fill in the existing one if this is the second text-base we've found for it.
 				 */
-				TextBaseInfo info = (TextBaseInfo) textBasesInfo
-						.get(versionedFileName);
+				TextBaseInfo info = (TextBaseInfo) textBasesInfo.get(versionedFileName);
 				if (info == null)
 					info = new TextBaseInfo();
 				TextBaseFileInfo fileInfo = new TextBaseFileInfo();

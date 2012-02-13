@@ -554,7 +554,7 @@ public class SvnOldUpgradeEntries {
 			workingNode.kind = entry.getKind();
 			if (workingNode.presence != SVNWCDbStatus.Excluded) {
 				/* All subdirs start of incomplete, and stop being incomplete when the entries file in the subdir is upgraded. */
-				if (entry.isDirectory() && "".equals(entry.getName())) {
+				if (entry.isDirectory() && !"".equals(entry.getName())) {
 					workingNode.presence = SVNWCDbStatus.Incomplete;
 					workingNode.kind = SVNNodeKind.DIR;
 				} else if (entry.isScheduledForDeletion()) {

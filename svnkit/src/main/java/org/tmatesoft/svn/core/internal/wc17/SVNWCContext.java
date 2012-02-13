@@ -3657,7 +3657,12 @@ public class SVNWCContext {
             File srcAbspath = !SVNFileUtil.isAbsolute(srcRelPath) ? SVNFileUtil.createFilePath(wcRootAbspath, srcRelPath) : srcRelPath;
             File dstAbspath = !SVNFileUtil.isAbsolute(dstRelPath) ? SVNFileUtil.createFilePath(wcRootAbspath, dstRelPath) : dstRelPath;
             if (srcAbspath.exists()) {
-                SVNFileUtil.rename(srcAbspath, dstAbspath);
+                //SVNFileUtil.rename(srcAbspath, dstAbspath);
+            	/* Use svn_io_file_move() instead of svn_io_file_rename() to allow cross device copies. We should not fail in the workqueue. */
+            	if (srcAbspath.isFile())
+            		SVNFileUtil.moveFile(srcAbspath, dstAbspath);
+            	else
+            		SVNFileUtil.moveDir(srcAbspath, dstAbspath);
             }
         }
     }

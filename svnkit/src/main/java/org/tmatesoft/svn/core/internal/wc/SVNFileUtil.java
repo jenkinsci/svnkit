@@ -502,6 +502,128 @@ public class SVNFileUtil {
         SVNErrorManager.error(err, Level.FINE, SVNLogType.WC);
         return null;
     }
+    
+    public static synchronized File createUniqueDir(File parent, String name, String suffix, boolean useUUIDGenerator) throws SVNException {
+        StringBuffer fileName = new StringBuffer();
+        fileName.append(name);
+        if (useUUIDGenerator) {
+            fileName.append(".");
+            fileName.append(SVNUUIDGenerator.generateUUIDString());
+        }
+        fileName.append(suffix);
+        File file = new File(parent, fileName.toString());
+        int i = 2;
+        do {
+            if (SVNFileType.getType(file) == SVNFileType.NONE) {
+                file.mkdir();
+                return file;
+            }
+            fileName.setLength(0);
+            fileName.append(name);
+            fileName.append(".");
+            if (useUUIDGenerator) {
+                fileName.append(SVNUUIDGenerator.generateUUIDString());
+            } else {
+                fileName.append(i);
+            }
+            fileName.append(suffix);
+            file = new File(parent, fileName.toString());
+            i++;
+        } while (i < 99999);
+        
+
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_UNIQUE_NAMES_EXHAUSTED, "Unable to make name for ''{0}''", new File(parent, name));
+        SVNErrorManager.error(err, Level.FINE, SVNLogType.WC);
+        return null;
+    }
+    
+    public static void moveFile(File src, File dst) throws SVNException {
+    	
+    	File tmpPath = SVNFileUtil.createUniqueFile(SVNFileUtil.getFileDir(dst), SVNFileUtil.getFileName(src), "tmp", false);
+    	
+    	try {
+    		SVNFileUtil.copyFile(src, tmpPath, true);
+    	}
+    	catch (SVNException ex) {
+    		try {
+    		SVNFileUtil.deleteFile(tmpPath);
+    		} catch (SVNException ex2) {}
+    		throw ex;
+    	}
+    	
+    	try {
+    		SVNFileUtil.rename(tmpPath, dst);
+    	}
+    	catch (SVNException ex) {
+    		try {
+    			SVNFileUtil.deleteFile(tmpPath);
+    		} catch (SVNException ex2) {}
+    		throw ex;
+    	}
+    	
+    	try {
+    		SVNFileUtil.deleteFile(src);
+    	}
+    	catch (SVNException ex) {
+    		try {
+    		SVNFileUtil.deleteFile(dst);
+    		} catch (SVNException ex2) {}
+    		throw ex;
+    	}
+    }
+    
+    public static void moveDir(File src, File dst) throws SVNException {
+    	File tmpPath = SVNFileUtil.createUniqueDir(SVNFileUtil.getFileDir(dst), SVNFileUtil.getFileName(src), "tmp", false);
+    	
+    	try {
+    		SVNFileUtil.copyDirectory(src, tmpPath, false, null);
+    	}
+    	catch (SVNException ex) {
+    		SVNFileUtil.deleteAll(tmpPath, true);
+    		throw ex;
+    	}
+    	
+    	try {
+    		SVNFileUtil.rename(tmpPath, dst);
+    	}
+    	catch (SVNException ex) {
+    		SVNFileUtil.deleteAll(tmpPath, true);
+    		throw ex;
+    	}
+    	
+    	try {
+    		SVNFileUtil.deleteAll(src, true, null);
+    	}
+    	catch (SVNException ex) {
+    		SVNFileUtil.deleteAll(dst, true);
+    		throw ex;
+    	}
+    	
+    	
+    	
+    }
+    
+    /*
+    
+      
+          
+
+         
+
+          err = svn_io_remove_file2(from_path, FALSE, pool);
+          if (! err)
+            return SVN_NO_ERROR;
+
+          svn_error_clear(svn_io_remove_file2(to_path, FALSE, pool));
+
+          return err;
+
+        failed_tmp:
+          svn_error_clear(svn_io_remove_file2(tmp_to_path, FALSE, pool));
+        }
+
+      return err;
+    */
 
     public static void rename(File src, File dst) throws SVNException {
         if (SVNFileType.getType(src) == SVNFileType.NONE) {
