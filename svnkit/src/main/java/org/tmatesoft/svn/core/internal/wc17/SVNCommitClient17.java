@@ -1284,7 +1284,7 @@ public class SVNCommitClient17 extends SVNBaseClient17 {
     private void validateDangler(Map<String, SVNCommitItem> committables, File danglingParent, File danglingChild) throws SVNException {
         if (!committables.containsKey(SVNFileUtil.getFilePath(danglingParent))) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET,
-                    "''{0}'' is not under version control and is not part of the commit, yet its child ''{1}'' is part of the commit", new Object[] {
+                    "''{0}'' is not known to exist in the repository and is not part of the commit, yet its child ''{1}'' is part of the commit", new Object[] {
                             danglingParent, danglingChild
                     });
             SVNErrorManager.error(err, SVNLogType.CLIENT);
