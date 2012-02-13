@@ -1031,7 +1031,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
             repository.setLocation(url, false);
             return oldURL;
         }
-        return null;
+        return oldURL;
     }
 
     private int findNearestAncestor(Object[] childrenWithMergeInfoArray, boolean pathIsOwnAncestor, File path) {
