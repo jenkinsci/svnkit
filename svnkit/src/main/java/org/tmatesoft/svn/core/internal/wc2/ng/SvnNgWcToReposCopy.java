@@ -189,7 +189,11 @@ public class SvnNgWcToReposCopy extends SvnNgOperationRunner<SVNCommitInfo, SvnR
         }
 
         if (getOperation().isDisableLocalModifications()) {
+            SvnCommitPacket oldPacket = packet;
             packet = filterLocalModifications(packet);
+            if (packet.isEmpty()) {
+                throw new IllegalStateException(buildErrorMessageWithDebugInformation(oldPacket));
+            }
         }
 
         Map<String, SvnCommitItem> committables = new TreeMap<String, SvnCommitItem>();
@@ -197,6 +201,30 @@ public class SvnNgWcToReposCopy extends SvnNgOperationRunner<SVNCommitInfo, SvnR
         repository.setLocation(url, false);
         ISVNEditor commitEditor = repository.getCommitEditor(commitMessage, null, false, revisionProperties, null);
         return SVNCommitter17.commit(getWcContext(), null, committables, repositoryRoot, commitEditor, null, null);
+    }
+
+    private String buildErrorMessageWithDebugInformation(SvnCommitPacket oldPacket) {
+        StringBuilder stringBuilder = new StringBuilder("Unable to perform wc to remote copy without local modifications:").append('\n');
+        stringBuilder.append("Commit packet was:").append('\n');
+
+        final Collection<SVNURL> repositoryRoots = oldPacket.getRepositoryRoots();
+        for (SVNURL oldRoot : repositoryRoots) {
+            stringBuilder.append(oldRoot).append("  :").append('\n');
+            Collection<SvnCommitItem> oldItems = oldPacket.getItems(oldRoot);
+            if (oldItems != null) {
+                for (SvnCommitItem oldItem : oldItems) {
+                    stringBuilder.append("path=").append(oldItem.getPath()).append('\n');
+                    stringBuilder.append("kind=").append(oldItem.getKind()).append('\n');
+                    stringBuilder.append("url=").append(oldItem.getUrl()).append('\n');
+                    stringBuilder.append("revision=").append(oldItem.getRevision()).append('\n');
+                    stringBuilder.append("copyUrl=").append(oldItem.getCopyFromUrl()).append('\n');
+                    stringBuilder.append("copyRevision=").append(oldItem.getCopyFromRevision()).append('\n');
+                    stringBuilder.append("flags=").append(oldItem.getFlags()).append('\n');
+                }
+            }
+        }
+
+        return stringBuilder.toString();
     }
 
     private SvnCommitPacket filterLocalModifications(SvnCommitPacket packet) throws SVNException {
