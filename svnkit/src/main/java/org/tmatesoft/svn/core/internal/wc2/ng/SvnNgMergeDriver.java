@@ -653,7 +653,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
                     String mType1 = props1.getStringValue(SVNProperty.MIME_TYPE);
                     String mType2 = props2.getStringValue(SVNProperty.MIME_TYPE);
                     
-                    SVNProperties propChanges = props2.compareTo(props1);
+                    SVNProperties propChanges = props1.compareTo(props2);
                     SvnNgMergeCallback callback = new SvnNgMergeCallback(this);
                     SvnDiffCallbackResult result = new SvnDiffCallbackResult();
                     if (!(ignoreAncestry || sourceRelated)) {
