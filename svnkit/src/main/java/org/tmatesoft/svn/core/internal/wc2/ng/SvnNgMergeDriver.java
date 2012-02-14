@@ -1917,9 +1917,6 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
             String childPathStr = child.absPath.getAbsolutePath().replace(File.separatorChar, '/');
             if (child != null && (child.absent || child.scheduledForDeletion) && 
                     SVNPathUtil.isAncestor(topDir, childPathStr)) {
-                if (skippedPaths != null) {
-                    skippedPaths.remove(child.absPath);
-                }
                 children.remove();
             }
         }
@@ -2111,7 +2108,10 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
                 throw e;
             }
             if (mergeinfo == null && ranges.isEmpty()) {
-                SvnNgMergeinfoUtil.getWCMergeInfo(context, localAbsPath, targetAbsPath, SVNMergeInfoInheritance.NEAREST_ANCESTOR, false);
+                SvnMergeInfoInfo mergeinfoInfo = SvnNgMergeinfoUtil.getWCMergeInfo(context, localAbsPath, targetAbsPath, SVNMergeInfoInheritance.NEAREST_ANCESTOR, false);
+                if (mergeinfoInfo != null) {
+                    mergeinfo = mergeinfoInfo.mergeinfo;
+                }
             }
             if (mergeinfo == null) {
                 mergeinfo = new TreeMap<String, SVNMergeRangeList>();
