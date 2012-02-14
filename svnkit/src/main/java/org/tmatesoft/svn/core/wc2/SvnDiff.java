@@ -40,6 +40,8 @@ public class SvnDiff extends SvnOperation<Void> {
     
     public void setTargets(SvnTarget target1, SvnTarget target2) {
         setTwoTargets(target1, target2);
+        this.startRevision = target1.getPegRevision();
+        this.endRevision = target2.getPegRevision();
     }
 
     public void setStartRevision(SVNRevision startRevision) {

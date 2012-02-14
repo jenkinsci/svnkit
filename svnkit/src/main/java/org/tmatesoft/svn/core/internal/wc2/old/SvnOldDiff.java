@@ -13,13 +13,16 @@ public class SvnOldDiff extends SvnOldRunner<Void, SvnDiff> {
 
     @Override
     public boolean isApplicable(SvnDiff operation, SvnWcGeneration wcGeneration) throws SVNException {
-        final Collection<SvnTarget> targets = operation.getTargets();
+        if (wcGeneration != SvnWcGeneration.V16) {
+            return false;
+        }
+        Collection<SvnTarget> targets = operation.getTargets();
         for (SvnTarget target : targets) {
-            if (!target.isFile()) {
-                return false;
+            if (target.isFile()) {
+                return true;
             }
         }
-        return wcGeneration == SvnWcGeneration.V16;
+        return false;
     }
 
     @Override
@@ -28,13 +31,29 @@ public class SvnOldDiff extends SvnOldRunner<Void, SvnDiff> {
         diffClient.setDiffGenerator(getOperation().getDiffGenerator());
         diffClient.setMergeOptions(getOperation().getDiffOptions());
 
-        final Collection<SvnTarget> targets = getOperation().getTargets();
-        for (SvnTarget target : targets) {
-            final SVNRevision startRevision = getOperation().getStartRevision() == null ? SVNRevision.UNDEFINED : getOperation().getStartRevision();
-            final SVNRevision endRevision = getOperation().getEndRevision() == null ? SVNRevision.UNDEFINED : getOperation().getEndRevision();
-            diffClient.doDiff(target.getFile(), target.getResolvedPegRevision(), startRevision, endRevision,
+        final SVNRevision startRevision = getOperation().getStartRevision() == null ? SVNRevision.UNDEFINED : getOperation().getStartRevision();
+        final SVNRevision endRevision = getOperation().getEndRevision() == null ? SVNRevision.UNDEFINED : getOperation().getEndRevision();
+
+        final SvnTarget firstTarget = getOperation().getFirstTarget();
+        final SvnTarget secondTarget = getOperation().getSecondTarget();
+
+        final boolean peggedDiff = secondTarget == null;
+        if (peggedDiff) {
+            diffClient.doDiff(firstTarget.getFile(), firstTarget.getResolvedPegRevision(), startRevision, endRevision,
                     getOperation().getDepth(), !getOperation().isIgnoreAncestry(), getOperation().getOutput(), getOperation().getApplicableChangelists());
+        } else {
+            if (firstTarget.isURL() && secondTarget.isFile()) {
+                diffClient.doDiff(firstTarget.getURL(), startRevision, secondTarget.getFile(), endRevision,
+                        getOperation().getDepth(), !getOperation().isIgnoreAncestry(), getOperation().getOutput(), getOperation().getApplicableChangelists());
+            } else if (firstTarget.isFile() && secondTarget.isURL()) {
+                diffClient.doDiff(firstTarget.getFile(), startRevision, secondTarget.getURL(), endRevision, getOperation().getDepth(), !getOperation().isIgnoreAncestry(), getOperation().getOutput(), getOperation().getApplicableChangelists());
+            } else if (firstTarget.isFile() && secondTarget.isFile()) {
+                diffClient.doDiff(firstTarget.getFile(), startRevision, secondTarget.getFile(), endRevision, getOperation().getDepth(), !getOperation().isIgnoreAncestry(), getOperation().getOutput(), getOperation().getApplicableChangelists());
+            } else {
+                throw new UnsupportedOperationException("URL-URL diff is not supported");
+            }
         }
+
         return null;
     }
 }

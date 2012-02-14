@@ -20,6 +20,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.ISVNUpdateEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
@@ -32,14 +33,13 @@ import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields;
 import org.tmatesoft.svn.core.internal.wc2.ng.ISvnDiffCallback;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnDiffCallbackResult;
-import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaProcessor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.util.SVNLogType;
 
-public class SVNDiffEditor17 implements ISVNEditor {
+public class SVNDiffEditor17 implements ISVNUpdateEditor {
     private long targetRevision;
     private boolean isRootOpen;
     private SVNDepth depth;
@@ -73,6 +73,10 @@ public class SVNDiffEditor17 implements ISVNEditor {
         this.diffUnversioned = diffUnversioned;
         this.diffCopiedAsAdded = diffCopiedAsAdded;
         this.deltaProcessor = new SVNDeltaProcessor();
+    }
+
+    public long getTargetRevision() {
+        return targetRevision;
     }
 
     public File getWorkingCopyRoot() {
