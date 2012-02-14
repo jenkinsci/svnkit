@@ -123,6 +123,7 @@ public class SvnNgMergeReintegrate extends SvnNgOperationRunner<Void, SvnMerge>{
                 }
             }
         });
+        pg.run();
         
         sourceReposInfo = getRepositoryAccess().createRepositoryFor(SvnTarget.fromURL(url2), SVNRevision.UNDEFINED, mergeSource.getPegRevision(), null);
         SVNRepository sourceRepository = sourceReposInfo.get(RepositoryInfo.repository);
@@ -135,8 +136,8 @@ public class SvnNgMergeReintegrate extends SvnNgOperationRunner<Void, SvnMerge>{
         //
         try {
             SvnTarget url1 = calculateLeftHandSide(context,
-                    new HashMap<String, Map<String,SVNMergeRangeList>>(),
-                    new HashMap<String, Map<String,SVNMergeRangeList>>(), 
+                    new HashMap<File, Map<String,SVNMergeRangeList>>(),
+                    new HashMap<File, Map<String,SVNMergeRangeList>>(), 
                     mergeTarget,
                     targetReposRelPath,
                     explicitMergeInfo,
@@ -152,7 +153,7 @@ public class SvnNgMergeReintegrate extends SvnNgOperationRunner<Void, SvnMerge>{
                 return;
             }
             
-            if (!url1.equals(targetUrl)) {
+            if (!url1.getURL().equals(targetUrl)) {
                 targetRepository.setLocation(url1.getURL(), false);
             }
             rev1 = url1.getPegRevision().getNumber();
@@ -186,8 +187,8 @@ public class SvnNgMergeReintegrate extends SvnNgOperationRunner<Void, SvnMerge>{
     }
     
     private SvnTarget calculateLeftHandSide(SVNWCContext context,
-            Map<String, Map<String, SVNMergeRangeList>>  mergedToSourceCatalog,
-            Map<String, Map<String, SVNMergeRangeList>>  unmergedToSourceCatalog,
+            Map<File, Map<String, SVNMergeRangeList>>  mergedToSourceCatalog,
+            Map<File, Map<String, SVNMergeRangeList>>  unmergedToSourceCatalog,
             File targetAbsPath,
             File targetReposRelPath,
             Map<File, String> subtreesWithMergeInfo,
@@ -240,16 +241,19 @@ public class SvnNgMergeReintegrate extends SvnNgOperationRunner<Void, SvnMerge>{
             return null;
         }
         
-        Map<String, Map<String, SVNMergeRangeList>> mergeInfoCatalog = 
-                SvnNgMergeinfoUtil.convertToCatalog(sourceRepository.getMergeInfo(new String[] {""}, sourceRev, SVNMergeInfoInheritance.INHERITED, true));
-        mergeInfoCatalog = SvnNgMergeinfoUtil.addPrefixToCatalog(mergeInfoCatalog, sourceReposRelPath);
+        Map<File, Map<String, SVNMergeRangeList>> mergeInfoCatalog = 
+                SvnNgMergeinfoUtil.convertToCatalog2(sourceRepository.getMergeInfo(new String[] {""}, sourceRev, SVNMergeInfoInheritance.INHERITED, true));
+        // TODO
+//        mergeInfoCatalog = SvnNgMergeinfoUtil.addPrefixToCatalog(mergeInfoCatalog, sourceReposRelPath);
         if (mergedToSourceCatalog != null) {
             mergedToSourceCatalog.putAll(mergeInfoCatalog);
         }
         UnmergedMergeInfo unmergedMergeInfo = findUnmergedMergeInfo(yc.getStartRevision(), mergeInfoCatalog, segmentsMap, sourceReposRelPath, targetReposRelPath, targetRev, sourceRev, sourceRepository, targetRepository);
         unmergedMergeInfo.catalog = SVNMergeInfoUtil.elideMergeInfoCatalog(unmergedMergeInfo.catalog);
-        if (unmergedToSourceCatalog != null) {
-            unmergedToSourceCatalog.putAll(unmergedMergeInfo.catalog);
+        if (unmergedToSourceCatalog != null && unmergedMergeInfo.catalog != null) {
+            for (String path : unmergedMergeInfo.catalog.keySet()) {
+                unmergedToSourceCatalog.put(new File(path), unmergedMergeInfo.catalog.get(path));
+            }
         }
         if (unmergedMergeInfo.neverSynced) {
             return SvnTarget.fromURL(sourceReposRoot.appendPath(yc.getPath(), false), SVNRevision.create(yc.getStartRevision()));
@@ -264,7 +268,7 @@ public class SvnNgMergeReintegrate extends SvnNgOperationRunner<Void, SvnMerge>{
         }
     }
 
-    private UnmergedMergeInfo findUnmergedMergeInfo(long ycAncestorRev, Map<String, Map<String, SVNMergeRangeList>> sourceCatalog, Map<File, List<SVNLocationSegment>> targetSegments,
+    private UnmergedMergeInfo findUnmergedMergeInfo(long ycAncestorRev, Map<File, Map<String, SVNMergeRangeList>> sourceCatalog, Map<File, List<SVNLocationSegment>> targetSegments,
             File sourceReposRelPath, File targetReposRelPath, long targetRev, long sourceRev, SVNRepository sourceRepos, SVNRepository targetRepos) throws SVNException {
         UnmergedMergeInfo result = new UnmergedMergeInfo();
         result.neverSynced = true;
@@ -278,10 +282,10 @@ public class SvnNgMergeReintegrate extends SvnNgOperationRunner<Void, SvnMerge>{
             File sourcePath = SVNFileUtil.createFilePath(sourceReposRelPath, sourcePathRelToSession);
             Map<String, SVNMergeRangeList> targetHistoryAsMergeInfo = SvnRepositoryAccess.getMergeInfoFromSegments(segments);
             targetHistoryAsMergeInfo = SVNMergeInfoUtil.filterMergeInfoByRanges(targetHistoryAsMergeInfo, sourceRev, ycAncestorRev);
-            Map<String, SVNMergeRangeList> sourceMergeInfo = sourceCatalog.get(sourcePath.getPath());
+            Map<String, SVNMergeRangeList> sourceMergeInfo = sourceCatalog.get(sourcePath);
             
             if (sourceMergeInfo != null) {
-                sourceCatalog.remove(sourcePath.getParentFile());
+                sourceCatalog.remove(SVNFileUtil.getFileDir(sourcePath));
                 Map<String, SVNMergeRangeList> explicitIntersection = SVNMergeInfoUtil.intersectMergeInfo(sourceMergeInfo, targetHistoryAsMergeInfo, true);
                 if (explicitIntersection != null && !explicitIntersection.isEmpty()) {
                     result.neverSynced = false;
@@ -295,9 +299,9 @@ public class SvnNgMergeReintegrate extends SvnNgOperationRunner<Void, SvnMerge>{
                 if (kind == SVNNodeKind.NONE) {
                     continue;
                 }
-                Map<String, Map<String, SVNMergeRangeList>> subtreeCatalog = 
-                        SvnNgMergeinfoUtil.convertToCatalog(sourceRepos.getMergeInfo(new String[] {sourcePathRelToSession.getPath()}, sourceRev, SVNMergeInfoInheritance.INHERITED, false));
-                sourceMergeInfo = subtreeCatalog.get(sourcePathRelToSession.getPath());
+                Map<File, Map<String, SVNMergeRangeList>> subtreeCatalog = 
+                        SvnNgMergeinfoUtil.convertToCatalog2(sourceRepos.getMergeInfo(new String[] {sourcePathRelToSession.getPath()}, sourceRev, SVNMergeInfoInheritance.INHERITED, false));
+                sourceMergeInfo = subtreeCatalog.get(sourcePathRelToSession);
                 if (sourceMergeInfo == null) {
                     sourceMergeInfo = new HashMap<String, SVNMergeRangeList>();
                 }
@@ -313,9 +317,9 @@ public class SvnNgMergeReintegrate extends SvnNgOperationRunner<Void, SvnMerge>{
         }
         
         if (!sourceCatalog.isEmpty()) {
-            for(String path : sourceCatalog.keySet()) {
-                File sourcePathRelToSession = SVNWCUtils.skipAncestor(sourceReposRelPath, new File(path));
-                File targetPath = SVNWCUtils.skipAncestor(sourceReposRelPath, new File(path));
+            for(File path : sourceCatalog.keySet()) {
+                File sourcePathRelToSession = SVNWCUtils.skipAncestor(sourceReposRelPath, path);
+                File targetPath = SVNWCUtils.skipAncestor(sourceReposRelPath, path);
                 List<SVNLocationSegment> segments = null;
                 Map<String, SVNMergeRangeList> sourceMergeInfo = sourceCatalog.get(path);
                 try {
@@ -343,7 +347,7 @@ public class SvnNgMergeReintegrate extends SvnNgOperationRunner<Void, SvnMerge>{
                 Map<String, SVNMergeRangeList> commonMergeInfo = SVNMergeInfoUtil.intersectMergeInfo(sourceMergeInfo, targetHistoryAsMergeInfo, true);
                 Map<String, SVNMergeRangeList> filteredMergeInfo = SVNMergeInfoUtil.removeMergeInfo(commonMergeInfo, targetHistoryAsMergeInfo, true);
                 if (!filteredMergeInfo.isEmpty()) {
-                    newCatalog.put(path, filteredMergeInfo);
+                    newCatalog.put(path.getPath().replace(File.separatorChar, '/'), filteredMergeInfo);
                 }
             }
         }

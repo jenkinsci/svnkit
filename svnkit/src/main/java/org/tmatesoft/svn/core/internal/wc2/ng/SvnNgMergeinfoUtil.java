@@ -391,6 +391,21 @@ public class SvnNgMergeinfoUtil {
         }
         return result;
     }
+
+    public static Map<File, Map<String, SVNMergeRangeList>> convertToCatalog2(Map<String, SVNMergeInfo> catalog) {
+        if (catalog == null) {
+            return new TreeMap<File, Map<String,SVNMergeRangeList>>();
+        }
+        Map<File, Map<String, SVNMergeRangeList>> result = new TreeMap<File, Map<String,SVNMergeRangeList>>();
+        for (String path : catalog.keySet()) {
+            SVNMergeInfo mi = catalog.get(path);
+            if (path.startsWith("/")) {
+                path = path.substring(1);
+            }
+            result.put(new File(path), mi.getMergeSourcesToMergeLists());
+        }
+        return result;
+    }
     
     public static Map<String, Map<String, SVNMergeRangeList>> addPrefixToCatalog(Map<String, Map<String, SVNMergeRangeList>> catalog, File prefix) {
         Map<String, Map<String, SVNMergeRangeList>> result = new TreeMap<String, Map<String,SVNMergeRangeList>>();
