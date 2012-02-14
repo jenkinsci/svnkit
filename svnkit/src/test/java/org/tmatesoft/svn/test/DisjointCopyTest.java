@@ -19,7 +19,7 @@ import org.tmatesoft.svn.core.wc2.SvnScheduleForRemoval;
 import org.tmatesoft.svn.core.wc2.SvnStatus;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
-public class DisjointCopy {
+public class DisjointCopyTest {
 
     @Test
     public void testBasics() throws Exception {
@@ -227,7 +227,7 @@ public class DisjointCopy {
         final TestOptions options = TestOptions.getInstance();
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
-        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testBasics", options);
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testDisjointCopyToChildFails", options);
         try {
             final SVNURL url = sandbox.createSvnRepository();
 
@@ -267,6 +267,6 @@ public class DisjointCopy {
     }
 
     private String getTestName() {
-        return "DisjointCopy";
+        return "DisjointCopyTest";
     }
 }
