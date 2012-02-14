@@ -184,7 +184,7 @@ public class SvnNgWcToReposCopy extends SvnNgOperationRunner<SVNCommitInfo, SvnR
             }
             // append externals changes
             if (externals != null && !externals.isEmpty()) {
-                includeExternalsChanges(repository, packet, externals);
+                includeExternalsChanges(repository, packet, externals, svnCopyPair);
             }
         }
 
@@ -277,7 +277,7 @@ public class SvnNgWcToReposCopy extends SvnNgOperationRunner<SVNCommitInfo, SvnR
         return filteredPacket;
     }
     
-    private void includeExternalsChanges(SVNRepository repos, SvnCommitPacket packet, Map<File, String> externalsStorage) throws SVNException {
+    private void includeExternalsChanges(SVNRepository repos, SvnCommitPacket packet, Map<File, String> externalsStorage, SvnCopyPair svnCopyPair) throws SVNException {
         for (File externalHolder : externalsStorage.keySet()) {
             String externalsPropString = (String) externalsStorage.get(externalHolder);
             SVNExternal[] externals = SVNExternal.parseExternals(externalHolder.getAbsolutePath(), externalsPropString);
@@ -288,6 +288,12 @@ public class SvnNgWcToReposCopy extends SvnNgOperationRunner<SVNCommitInfo, SvnR
                 continue;
             }
             long ownerRev = getWcContext().getNodeBaseRev(externalHolder);
+
+            File ownerReposRelPath = getWcContext().getNodeReposRelPath(externalHolder);
+            File sourceReposRelPath = getWcContext().getNodeReposRelPath(svnCopyPair.source);
+            String relativePath = SVNWCUtils.getPathAsChild(sourceReposRelPath, ownerReposRelPath);
+            SVNURL targetURL = svnCopyPair.dst.appendPath(relativePath, false);
+            
             for (int k = 0; k < externals.length; k++) {
                 File externalWC = new File(externalHolder, externals[k].getPath());
                 SVNRevision externalsWCRevision = SVNRevision.UNDEFINED;
@@ -345,7 +351,7 @@ public class SvnNgWcToReposCopy extends SvnNgOperationRunner<SVNCommitInfo, SvnR
 
                 SvnCommitItem itemWithExternalsChanges = packet.getItem(externalHolder);
                 if (itemWithExternalsChanges == null) {
-                    itemWithExternalsChanges = packet.addItem(externalHolder, repos.getRepositoryRoot(true), SVNNodeKind.DIR, ownerURL, ownerRev, null, -1, 
+                    itemWithExternalsChanges = packet.addItem(externalHolder, repos.getRepositoryRoot(true), SVNNodeKind.DIR, targetURL, -1, ownerURL, ownerRev, 
                             SvnCommitItem.PROPS_MODIFIED);
                 } 
                 itemWithExternalsChanges.addOutgoingProperty(SVNProperty.EXTERNALS, SVNPropertyValue.create(newExternalsProp));
