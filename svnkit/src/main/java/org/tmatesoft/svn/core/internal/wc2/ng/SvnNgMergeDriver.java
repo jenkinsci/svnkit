@@ -1247,8 +1247,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
                         childrenWithMergeInfo.put(mpOfNonInheritable.absPath, mpOfNonInheritable);
                         if (!dryRun && sameRepos) {
                             SvnMergeInfoInfo info = SvnNgMergeinfoUtil.getWCMergeInfo(context, mpOfNonInheritable.absPath, targetAbsPath, SVNMergeInfoInheritance.NEAREST_ANCESTOR, false);
-                            String value = SVNMergeInfoUtil.formatMergeInfoToString(info.mergeinfo, null);
-                            SvnNgPropertiesManager.setProperty(context, childOfNonInheritable, SVNProperty.MERGE_INFO, SVNPropertyValue.create(value), SVNDepth.EMPTY, true, null, null);
+                            recordMergeinfo(childOfNonInheritable, info.mergeinfo, false);
                         }
                     }
                 } 
