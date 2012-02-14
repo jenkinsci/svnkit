@@ -33,6 +33,8 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo.RepositoryInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
+import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDbDir;
+import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDbRoot;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.AdditionInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.ExternalNodeInfo;
@@ -98,8 +100,208 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
             sleepForTimestamp();
         }        
     }
+
     protected Void tryRun(SVNWCContext context, Collection<SvnCopySource> sources, File target) throws SVNException {
-        Collection<SvnCopyPair> copyPairs = new ArrayList<SvnNgWcToWcCopy.SvnCopyPair>();
+        if (getOperation().isDisjoint()) {
+            return disjointCopy(context, target);
+        } else {
+            return copy(context, sources, target);
+        }
+    }
+
+    /**
+     * The method performs "disjoint" copy (see SVNCopyClient#doCopy(File))
+     * The algorithm is:
+     * 1. Create a fake working copy
+     * 2. Move wc.db from the nested working copy to the fake
+     * 3. Move all pristine files to the parent working copy
+     * 4. Perform metadata copying
+     * @param context
+     * @param nestedWC
+     * @return
+     * @throws SVNException
+     */
+    private Void disjointCopy(SVNWCContext context, File nestedWC) throws SVNException {
+        nestedWC = new File(nestedWC.getAbsolutePath().replace(File.separatorChar, '/'));
+        final File nestedWCParent = nestedWC.getParentFile();
+
+        checkForDisjointCopyPossibility(context, nestedWC, nestedWCParent);
+
+        final File wcRoot = context.getDb().getWCRoot(nestedWCParent);
+
+        final File fakeWorkingCopyDirectory = SVNFileUtil.createTempDirectory("disjoint-copy");
+        moveWcDb(nestedWC, fakeWorkingCopyDirectory);
+        copyPristineFiles(nestedWC, wcRoot, true);
+        SVNFileUtil.deleteAll(getAdminDirectory(nestedWC), true);
+        context.getDb().forgetDirectoryTemp(nestedWC);
+
+        try {
+            context.acquireWriteLock(wcRoot, true, false);
+            copy(context, fakeWorkingCopyDirectory, nestedWC, true);
+        } finally {
+            context.releaseWriteLock(wcRoot);
+        }
+
+        return null;
+    }
+
+    private void checkForDisjointCopyPossibility(SVNWCContext context, File nestedWC, File nestedWCParent) throws SVNException {
+        SVNFileType nestedWCType = SVNFileType.getType(nestedWC);
+
+        if (nestedWCType != SVNFileType.DIRECTORY) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
+                    "This kind of copy can be run on a root of a disjoint wc directory only");
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+
+        if (nestedWCParent == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
+                    "{0} seems to be not a disjoint wc since it has no parent", nestedWC);
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+
+        if (!(context.getDb() instanceof SVNWCDb)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
+                    "Unsupported working copy format", nestedWC);
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+
+        SVNWCDb wcdb = (SVNWCDb) context.getDb();
+
+        if (hasMetadataInParentWc(wcdb, nestedWC, nestedWCParent)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS,
+                    "Entry ''{0}'' already exists in parent directory", nestedWC.getName());
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+
+        final ISVNWCDb.WCDbBaseInfo baseInfo = context.getDb().getBaseInfo(nestedWC,
+                ISVNWCDb.WCDbBaseInfo.BaseInfoField.reposRootUrl, ISVNWCDb.WCDbBaseInfo.BaseInfoField.reposRelPath);
+
+        final ISVNWCDb.WCDbBaseInfo parentBaseInfo = context.getDb().getBaseInfo(nestedWCParent,
+                ISVNWCDb.WCDbBaseInfo.BaseInfoField.reposRootUrl, ISVNWCDb.WCDbBaseInfo.BaseInfoField.reposRelPath);
+
+        if (baseInfo.reposRootUrl != null && parentBaseInfo.reposRootUrl != null &&
+                !baseInfo.reposRootUrl.equals(parentBaseInfo.reposRootUrl)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_SCHEDULE,
+                    "Cannot copy to ''{0}'', as it is not from repository ''{1}''; it is from ''{2}''",
+                    new Object[] { nestedWCParent, baseInfo.reposRootUrl,
+                    baseInfo.reposRootUrl });
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+
+        SVNWCContext.ScheduleInternalInfo parentSchedule = context.getNodeScheduleInternal(nestedWCParent, true, true);
+
+        if (parentSchedule.schedule == SVNWCContext.SVNWCSchedule.delete) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_SCHEDULE,
+                    "Cannot copy to ''{0}'', as it is scheduled for deletion", nestedWCParent);
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+
+        SVNWCContext.ScheduleInternalInfo schedule = context.getNodeScheduleInternal(nestedWC, true, true);
+
+        if (schedule.schedule == SVNWCContext.SVNWCSchedule.delete) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_SCHEDULE,
+                    "Cannot copy ''{0}'', as it is scheduled for deletion", nestedWC);
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+
+        File relativePath = baseInfo.reposRelPath;
+        File parentRelativePath = parentBaseInfo.reposRelPath;
+
+        if (relativePath == null || parentRelativePath == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_SCHEDULE,
+                    "Cannot copy ''{0}'': cannot resolve its relative path, perhaps it is obstructed", nestedWC);
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+
+        if (SVNPathUtil.isAncestor(relativePath.getPath(), parentRelativePath.getPath())) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
+                    "Cannot copy path ''{0}'' into its own child ''{1}",
+                    new Object[] { nestedWC, nestedWCParent });
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+
+        if ((schedule.schedule == SVNWCContext.SVNWCSchedule.add && !schedule.copied) ||
+                context.getNodeUrl(nestedWC) == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS,
+                    "Cannot copy or move ''{0}'': it is not in repository yet; " +
+                    "try committing first", nestedWC);
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+    }
+
+    private void moveWcDb(File sourceWc, File targetWc) throws SVNException {
+        final File sourceWcDbFile = getWCDbFile(sourceWc);
+        final File targetWcDbFile = getWCDbFile(targetWc);
+
+        SVNFileUtil.ensureDirectoryExists(targetWcDbFile.getParentFile());
+        SVNFileUtil.rename(sourceWcDbFile, targetWcDbFile);
+    }
+
+    private void copyPristineFiles(File sourceWc, File targetWc, boolean move) throws SVNException {
+        final File sourcePristineDirectory = getPristineDirectory(sourceWc);
+        final File targetPristineDirectory = getPristineDirectory(targetWc);
+
+        final File[] sourceDirectories = SVNFileListUtil.listFiles(sourcePristineDirectory);
+        if (sourceDirectories != null) {
+            for (File sourceDirectory : sourceDirectories) {
+                final File targetDirectory = new File(targetPristineDirectory, sourceDirectory.getName());
+                SVNFileUtil.ensureDirectoryExists(targetDirectory);
+                final File[] sourcePristineFiles = SVNFileListUtil.listFiles(sourceDirectory);
+                if (sourcePristineFiles != null) {
+                    for (File sourcePristineFile : sourcePristineFiles) {
+                        final File targetPristineFile = new File(targetDirectory, sourcePristineFile.getName());
+                        if (!targetPristineFile.exists()) {
+                            if (move) {
+                                SVNFileUtil.rename(sourcePristineFile, targetPristineFile);
+                            } else {
+                                SVNFileUtil.copyFile(sourcePristineFile, targetPristineFile, false);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        SVNFileUtil.deleteAll(sourcePristineDirectory, true);
+    }
+
+    private File getPristineDirectory(File workingCopyDirectory) {
+        return new File(getAdminDirectory(workingCopyDirectory), "pristine");
+    }
+
+    private File getWCDbFile(File nestedWC) {
+        return new File(getAdminDirectory(nestedWC), "wc.db");
+    }
+
+    private File getAdminDirectory(File parentWC) {
+        final String adminDirectoryName = SVNFileUtil.getAdminDirectoryName();
+        return new File(parentWC, adminDirectoryName);
+    }
+
+    private boolean hasMetadataInParentWc(SVNWCDb wcdb, File nestedWC, File nestedWCParent) throws SVNException {
+        SVNWCDb.DirParsedInfo parsedInfo = wcdb.obtainWcRoot(nestedWCParent);
+        SVNWCDbDir wcDbDir = parsedInfo == null ? null : parsedInfo.wcDbDir;
+        SVNWCDbRoot wcdbRoot = wcDbDir == null ? null : wcDbDir.getWCRoot();
+
+        if (wcdbRoot == null) {
+            return false;
+        }
+
+        try {
+            wcdb.readInfo(wcdbRoot, new File(SVNPathUtil.getRelativePath(nestedWCParent.getPath(),nestedWC.getPath())));
+            return true;
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.ENTRY_NOT_FOUND || e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND) {
+                return false;
+            } else {
+                throw e;
+            }
+        }
+    }
+
+    private Void copy(SVNWCContext context, Collection<SvnCopySource> sources, File target) throws SVNException {
+        Collection<SvnCopyPair> copyPairs = new ArrayList<SvnCopyPair>();
 
         if (sources.size() > 1) {
             if (getOperation().isFailWhenDstExists()) {
@@ -488,7 +690,7 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
             case NotPresent:
                 break;
             default:
-                if (!metadataOnly || dstStatus != SVNWCDbStatus.Added) {
+                if (!metadataOnly) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS,
                             "There is already a versioned item ''{0}''", dst);
                     SVNErrorManager.error(err, SVNLogType.WC);

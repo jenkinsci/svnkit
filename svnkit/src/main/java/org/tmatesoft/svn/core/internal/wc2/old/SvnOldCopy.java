@@ -1,5 +1,7 @@
 package org.tmatesoft.svn.core.internal.wc2.old;
 
+import java.util.Collection;
+
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -18,11 +20,33 @@ public class SvnOldCopy extends SvnOldRunner<Void, SvnCopy> {
 
     @Override
     protected Void run() throws SVNException {
-        if (getOperation().isVirtual()) {
+        if (getOperation().isDisjoint()) {
+            return disjointCopy();
+        } else if (getOperation().isVirtual()) {
             return virtualCopy();
         } else {
             return copy();
         }
+    }
+
+    private Void disjointCopy() throws SVNException {
+        assert !getOperation().isMove();
+
+        final SVNCopyClient16 client = new SVNCopyClient16(getOperation().getRepositoryPool(), getOperation().getOptions());
+        client.setEventHandler(getOperation().getEventHandler());
+        client.setCommitHandler(null);
+        client.setExternalsHandler(ISVNExternalsHandler.DEFAULT);
+        client.setOptions(getOperation().getOptions());
+
+        Collection<SvnTarget> targets = getOperation().getTargets();
+        for (SvnTarget target : targets) {
+            if (target.isURL()) {
+                throwCannotPerformOnUrl(target, "disjoint", "copy");
+            }
+            client.doCopy(target.getFile());
+        }
+
+        return null;
     }
 
     private Void virtualCopy() throws SVNException {
@@ -32,11 +56,7 @@ public class SvnOldCopy extends SvnOldRunner<Void, SvnCopy> {
 
         final SvnTarget target = getOperation().getFirstTarget();
         if (target.isURL()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
-                    "Cannot perform 'virtual' {0}: ''{1}'' is URL", new Object[] {
-                    getOperation().isMove() ? "move" : "copy", target
-            });
-            SVNErrorManager.error(err, SVNLogType.WC);
+            throwCannotPerformOnUrl(target, "virtual", getOperation().isMove() ? "move" : "copy");
         }
 
         final SVNCopySource[] sources = getCopySources();
@@ -75,5 +95,13 @@ public class SvnOldCopy extends SvnOldRunner<Void, SvnCopy> {
             i++;
         }
         return sources;
+    }
+
+    private void throwCannotPerformOnUrl(SvnTarget target, String kind, String operation) throws SVNException {
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
+                "Cannot perform '{0}' {1}: ''{2}'' is URL", new Object[] {
+                kind, operation, target
+        });
+        SVNErrorManager.error(err, SVNLogType.WC);
     }
 }

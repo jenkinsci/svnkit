@@ -12,6 +12,7 @@ public class SvnCopy extends SvnOperation<Void> {
     private boolean failWhenDstExist;
     private boolean ignoreExternals;
     private boolean virtual;
+    private boolean disjoint;
 
     protected SvnCopy(SvnOperationFactory factory) {
         super(factory);
@@ -66,5 +67,13 @@ public class SvnCopy extends SvnOperation<Void> {
 
     public void setVirtual(boolean virtual) {
         this.virtual = virtual;
+    }
+
+    public boolean isDisjoint() {
+        return disjoint;
+    }
+
+    public void setDisjoint(boolean disjoint) {
+        this.disjoint = disjoint;
     }
 }
