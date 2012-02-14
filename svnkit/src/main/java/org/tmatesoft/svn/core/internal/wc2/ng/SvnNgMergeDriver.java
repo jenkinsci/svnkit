@@ -2099,7 +2099,8 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
             Map<String, SVNMergeRangeList> mergeinfo = null;
             SVNMergeRangeList ranges = merges.get(localAbsPath);
             try {
-                String propValue = context.getProperty(localAbsPath, SVNProperty.MERGE_INFO);
+                SVNProperties properties = context.getDb().readProperties(localAbsPath);
+                String propValue = properties != null ? properties.getStringValue(SVNProperty.MERGE_INFO) : null;
                 if (propValue != null) {
                     mergeinfo = SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(propValue), null);
                 }
