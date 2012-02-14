@@ -318,8 +318,9 @@ public class SvnNgMergeReintegrate extends SvnNgOperationRunner<Void, SvnMerge>{
         
         if (!sourceCatalog.isEmpty()) {
             for(File path : sourceCatalog.keySet()) {
-                File sourcePathRelToSession = SVNWCUtils.skipAncestor(sourceReposRelPath, path);
-                File targetPath = SVNWCUtils.skipAncestor(sourceReposRelPath, path);
+                File sourcePathRelToSession =  sourceReposRelPath.equals(path) ? new File("") : SVNWCUtils.skipAncestor(sourceReposRelPath, path);
+                
+                File targetPath = sourceReposRelPath.equals(path) ? new File("") : SVNWCUtils.skipAncestor(sourceReposRelPath, path);
                 List<SVNLocationSegment> segments = null;
                 Map<String, SVNMergeRangeList> sourceMergeInfo = sourceCatalog.get(path);
                 try {
