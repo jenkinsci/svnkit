@@ -122,7 +122,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
     SVNRepository repos1;
     SVNRepository repos2;
     
-    private SvnMerge operation;
+    SvnMerge operation;
     SvnRepositoryAccess repositoryAccess; 
     
     private Map<File, MergePath> childrenWithMergeInfo;

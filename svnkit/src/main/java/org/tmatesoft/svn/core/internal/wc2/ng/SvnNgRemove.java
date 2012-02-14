@@ -22,6 +22,7 @@ import org.tmatesoft.svn.core.wc.SVNConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnGetStatus;
+import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 import org.tmatesoft.svn.core.wc2.SvnScheduleForRemoval;
 import org.tmatesoft.svn.core.wc2.SvnStatus;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -39,7 +40,7 @@ public class SvnNgRemove extends SvnNgOperationRunner<Void, SvnScheduleForRemova
             File lockRoot = getWcContext().acquireWriteLock(path, true, true);
             try {
                 if (!getOperation().isForce() && getOperation().isDeleteFiles()) {
-                    checkCanDelete(path);
+                    checkCanDelete(getOperation().getOperationFactory(), context, path);
                 }
                 if (!getOperation().isDryRun()) {
                     delete(context, path, !getOperation().isDeleteFiles(), true, this);
@@ -52,10 +53,10 @@ public class SvnNgRemove extends SvnNgOperationRunner<Void, SvnScheduleForRemova
         return null;
     }
     
-    private void checkCanDelete(File path) throws SVNException {
+    public static void checkCanDelete(SvnOperationFactory opFactory, SVNWCContext context, File path) throws SVNException {
         Structure<ExternalNodeInfo> info = null;
         try {
-            info = SvnWcDbExternals.readExternal(getWcContext(), path, path, ExternalNodeInfo.kind);
+            info = SvnWcDbExternals.readExternal(context, path, path, ExternalNodeInfo.kind);
             if (info != null && info.get(ExternalNodeInfo.kind) == SVNWCDbKind.File) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CANNOT_DELETE_FILE_EXTERNAL,
                         "Cannot remove the external at ''{0}''; please edit or delete the svn:externals property on ''{1}''",
@@ -71,7 +72,7 @@ public class SvnNgRemove extends SvnNgOperationRunner<Void, SvnScheduleForRemova
                 info.release();
             }
         }
-        SvnGetStatus status = getOperation().getOperationFactory().createGetStatus();
+        SvnGetStatus status = opFactory.createGetStatus();
         status.setSingleTarget(SvnTarget.fromFile(path));
         status.setDepth(SVNDepth.INFINITY);
         status.setReceiver(new ISvnObjectReceiver<SvnStatus>() {

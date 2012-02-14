@@ -354,7 +354,7 @@ public class SvnNgMergeCallback implements ISvnDiffCallback {
             if (isVersioned && !os.deleted) {
                 try {
                     if (!isForce()) {
-                        // TODO check it could be deleted.
+                        SvnNgRemove.checkCanDelete(driver.operation.getOperationFactory(), getContext(), path);
                     }
                     if (!isDryRun()) {
                         SvnNgRemove.delete(getContext(), path, false, false, null);
