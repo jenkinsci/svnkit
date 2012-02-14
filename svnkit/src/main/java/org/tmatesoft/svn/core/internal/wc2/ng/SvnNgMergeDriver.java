@@ -1146,7 +1146,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
             int index = 0;
             for(File missingPath : missingSubtrees) {
                 values[index] = missingPath;
-                errorMessage.append("''{" + index + "}''\n");
+                errorMessage.append("{" + index + "}\n");
                 index++;
             }
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_NOT_READY_TO_MERGE, errorMessage.toString(), values);
