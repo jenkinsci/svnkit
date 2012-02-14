@@ -6,17 +6,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNMergeInfoInheritance;
+import org.tmatesoft.svn.core.SVNMergeRange;
 import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
@@ -135,9 +139,11 @@ public class SvnNgMergeReintegrate extends SvnNgOperationRunner<Void, SvnMerge>{
         SVNRepository targetRepository = getRepositoryAccess().createRepository(targetUrl, null, false);
         //
         try {
+            Map<File, Map<String, SVNMergeRangeList>> mergedToSourceCatalog = new HashMap<File, Map<String,SVNMergeRangeList>>();
+            Map<File, Map<String, SVNMergeRangeList>> unmergedToSourceCatalog = new HashMap<File, Map<String,SVNMergeRangeList>>();
             SvnTarget url1 = calculateLeftHandSide(context,
-                    new HashMap<File, Map<String,SVNMergeRangeList>>(),
-                    new HashMap<File, Map<String,SVNMergeRangeList>>(), 
+                    mergedToSourceCatalog,
+                    unmergedToSourceCatalog, 
                     mergeTarget,
                     targetReposRelPath,
                     explicitMergeInfo,
@@ -166,7 +172,22 @@ public class SvnNgMergeReintegrate extends SvnNgOperationRunner<Void, SvnMerge>{
             }
             
             if (rev1 > yc.getStartRevision()) {
-                // TODO check already merged revs for continuosity.
+                Map<File, Map<String, SVNMergeRangeList>> finalUnmergedCatalog = new HashMap<File, Map<String,SVNMergeRangeList>>();
+                String ycPath = yc.getPath();
+                if (ycPath.startsWith("/")) {
+                    ycPath = ycPath.substring(1);
+                }
+                findUnsyncedRanges(sourceReposRelPath, new File(ycPath), 
+                        unmergedToSourceCatalog, mergedToSourceCatalog, finalUnmergedCatalog, targetRepository);
+                
+                if (!finalUnmergedCatalog.isEmpty()) {
+                    String catalog = SVNMergeInfoUtil.formatMergeInfoCatalogToString2(finalUnmergedCatalog, "  ", "    Missing ranges: ");
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_NOT_READY_TO_MERGE, 
+                            "Reintegrate can only be used if revisions {0} through {1} were " +
+                            "previously merged from {2} to the reintegrate source, but this is " +
+                            "not the case:\n{3}", new Object[] {new Long(yc.getStartRevision() + 1), new Long(rev2), targetUrl, catalog});
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                }
             }
             
             mergeDriver.mergeCousinsAndSupplementMergeInfo(mergeTarget, 
@@ -186,6 +207,102 @@ public class SvnNgMergeReintegrate extends SvnNgOperationRunner<Void, SvnMerge>{
         }
     }
     
+    private void findUnsyncedRanges(
+            final File sourceReposRelPath,
+            final File targetReposRelPath,
+            Map<File, Map<String, SVNMergeRangeList>> unmergedToSourceCatalog,
+            final Map<File, Map<String, SVNMergeRangeList>> mergedToSourceCatalog,
+            final Map<File, Map<String, SVNMergeRangeList>> finalUnmergedCatalog, SVNRepository repos) throws SVNException {
+        
+        SVNMergeRangeList potentiallyUnmergedRanges = null;
+        if (unmergedToSourceCatalog != null) {
+            potentiallyUnmergedRanges = new SVNMergeRangeList(new SVNMergeRange[0]);
+            for (File cpath : unmergedToSourceCatalog.keySet()) {
+                Map<String, SVNMergeRangeList> mi = unmergedToSourceCatalog.get(cpath);
+                for (SVNMergeRangeList mrl : mi.values()) {
+                    potentiallyUnmergedRanges = potentiallyUnmergedRanges.merge(mrl);
+                }
+            }
+        }
+        if (potentiallyUnmergedRanges != null) {
+            long youngest = potentiallyUnmergedRanges.getRanges()[0].getStartRevision() + 1;
+            long oldest = potentiallyUnmergedRanges.getRanges()[potentiallyUnmergedRanges.getSize() - 1].getEndRevision();
+            repos.log(new String[] {""}, youngest, oldest, true, false, -1, false, null, new ISVNLogEntryHandler() {
+                public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
+                    for (String changedPath : logEntry.getChangedPaths().keySet()) {
+                        if (changedPath.startsWith("/")) {
+                            changedPath = changedPath.substring(1);
+                        }
+                        String relPath = SVNWCUtils.isChild(SVNFileUtil.getFilePath(targetReposRelPath), changedPath);
+                        if (relPath == null) {
+                            continue;
+                        }
+                        File sourceRelpath = SVNFileUtil.createFilePath(sourceReposRelPath, relPath);
+                        String mergeInfoForPath = "/" + changedPath + ":" + logEntry.getRevision();
+                        Map<String, SVNMergeRangeList> mi = SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(mergeInfoForPath), null);
+                        File[] subtreeMissing = new File[1];
+                        boolean inCatalog = isMergeinfoInCatalog(sourceRelpath, subtreeMissing, mi, logEntry.getRevision(), mergedToSourceCatalog);
+                        if (!inCatalog) {
+                            File missingPath = null;
+                            File subtreeMissingInThisRev = subtreeMissing[0];
+                            if (subtreeMissingInThisRev == null) {
+                                subtreeMissingInThisRev = sourceReposRelPath;
+                            }
+                            if (subtreeMissingInThisRev != null && !subtreeMissingInThisRev.equals(sourceRelpath)) {
+                                missingPath = SVNWCUtils.skipAncestor(subtreeMissingInThisRev, sourceRelpath);
+                                missingPath = new File(changedPath.substring(0, changedPath.length() - missingPath.getPath().length()));
+                            } else {
+                                missingPath = new File(changedPath);
+                            }
+                            Map<String, SVNMergeRangeList> mi2 = SVNMergeInfoUtil.parseMergeInfo(new StringBuffer("/" + SVNFileUtil.getFilePath(missingPath) + ":" + logEntry.getRevision()), null);
+                            Map<String, SVNMergeRangeList> existing = finalUnmergedCatalog.get(missingPath);
+                            if (existing != null) {
+                                existing = SVNMergeInfoUtil.mergeMergeInfos(existing, mi2);
+                            } else {
+                                existing = mi2;
+                            }
+                            finalUnmergedCatalog.put(subtreeMissingInThisRev, existing);
+                        }
+                    }
+                }
+            });
+        }
+        
+    }
+    
+    private boolean isMergeinfoInCatalog(File sourceRelpath, File[] catPath, Map<String, SVNMergeRangeList> mergeinfo, 
+            long revision, Map<File, Map<String, SVNMergeRangeList>> catalog) throws SVNException {
+        if (mergeinfo != null && catalog != null && !catalog.isEmpty()) {
+            File path = sourceRelpath;
+            String walkPath = null;
+            Map<String, SVNMergeRangeList> miInCatalog = null;
+            while(true) {
+                miInCatalog = catalog.get(path);
+                if (miInCatalog != null) {
+                    if (catPath != null) {
+                        catPath[0] = path;
+                    }
+                    break;
+                } else {
+                    walkPath = walkPath != null ? SVNPathUtil.append(SVNFileUtil.getFileName(path), walkPath) : SVNFileUtil.getFileName(path);
+                    path = path.getParentFile();
+                    if (path == null) {
+                        break;
+                    }
+                }
+            }
+            if (miInCatalog != null) {
+                if (walkPath != null) { 
+                    miInCatalog = SVNMergeInfoUtil.adjustMergeInfoSourcePaths(null, walkPath, miInCatalog);
+                }
+                miInCatalog = SVNMergeInfoUtil.intersectMergeInfo(miInCatalog, mergeinfo, true);
+                return SVNMergeInfoUtil.mergeInfoEquals(mergeinfo, miInCatalog, true);
+                
+            }
+        }
+        return false;
+    }
+
     private SvnTarget calculateLeftHandSide(SVNWCContext context,
             Map<File, Map<String, SVNMergeRangeList>>  mergedToSourceCatalog,
             Map<File, Map<String, SVNMergeRangeList>>  unmergedToSourceCatalog,
@@ -243,8 +360,6 @@ public class SvnNgMergeReintegrate extends SvnNgOperationRunner<Void, SvnMerge>{
         
         Map<File, Map<String, SVNMergeRangeList>> mergeInfoCatalog = 
                 SvnNgMergeinfoUtil.convertToCatalog2(sourceRepository.getMergeInfo(new String[] {""}, sourceRev, SVNMergeInfoInheritance.INHERITED, true));
-        // TODO
-//        mergeInfoCatalog = SvnNgMergeinfoUtil.addPrefixToCatalog(mergeInfoCatalog, sourceReposRelPath);
         if (mergedToSourceCatalog != null) {
             mergedToSourceCatalog.putAll(mergeInfoCatalog);
         }
@@ -252,7 +367,12 @@ public class SvnNgMergeReintegrate extends SvnNgOperationRunner<Void, SvnMerge>{
         unmergedMergeInfo.catalog = SVNMergeInfoUtil.elideMergeInfoCatalog(unmergedMergeInfo.catalog);
         if (unmergedToSourceCatalog != null && unmergedMergeInfo.catalog != null) {
             for (String path : unmergedMergeInfo.catalog.keySet()) {
-                unmergedToSourceCatalog.put(new File(path), unmergedMergeInfo.catalog.get(path));
+                Map<String, SVNMergeRangeList> mi = unmergedMergeInfo.catalog.get(path);
+                if (path.startsWith("/")) {
+                    path = path.substring(1);
+                }
+                path = path.replace(File.separatorChar, '/');
+                unmergedToSourceCatalog.put(new File(path), mi);
             }
         }
         if (unmergedMergeInfo.neverSynced) {

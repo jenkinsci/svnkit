@@ -429,6 +429,29 @@ public class SVNMergeInfoUtil {
         }
         return buffer != null ? buffer.toString() : "\n";
     }
+
+    public static String formatMergeInfoCatalogToString2(Map<File, Map<String, SVNMergeRangeList>> catalog, String keyPrefix, String valuePrefix) {
+        StringBuffer buffer = null;
+        if (catalog != null && !catalog.isEmpty()) {
+            buffer = new StringBuffer();
+            for (Iterator<File> catalogIter = catalog.keySet().iterator(); catalogIter.hasNext();) {
+                File path1 = catalogIter.next();
+                String path1Str = SVNFileUtil.getFilePath(path1);
+                if (path1Str.startsWith("/")) {
+                    path1Str = path1Str.substring(1);
+                }
+                Map<String, SVNMergeRangeList> mergeInfo = catalog.get(path1);
+                if (keyPrefix != null) {
+                    buffer.append(keyPrefix);
+                }
+                buffer.append(path1Str);
+                buffer.append('\n');
+                buffer.append(formatMergeInfoToString(mergeInfo, valuePrefix != null ? valuePrefix : ""));
+                buffer.append('\n');
+            }
+        }
+        return buffer != null ? buffer.toString() : "\n";
+    }
     
     /**
      * Each element of the resultant array is formed like this:

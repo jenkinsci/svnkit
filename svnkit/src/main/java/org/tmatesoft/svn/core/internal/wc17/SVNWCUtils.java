@@ -155,7 +155,7 @@ public class SVNWCUtils {
         return isChild(SVNFileUtil.getFilePath(parent), SVNFileUtil.getFilePath(child)) != null;
     }
 
-    private static String isChild(String parentPath, String childPath) {
+    public static String isChild(String parentPath, String childPath) {
         if (childPath.equals(parentPath)) {
             return "";
         }

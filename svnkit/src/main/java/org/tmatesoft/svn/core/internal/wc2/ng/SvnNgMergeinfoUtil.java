@@ -402,7 +402,7 @@ public class SvnNgMergeinfoUtil {
             if (path.startsWith("/")) {
                 path = path.substring(1);
             }
-            result.put(new File(path), mi.getMergeSourcesToMergeLists());
+            result.put(new File(path.replace(File.separatorChar, '/')), mi.getMergeSourcesToMergeLists());
         }
         return result;
     }
