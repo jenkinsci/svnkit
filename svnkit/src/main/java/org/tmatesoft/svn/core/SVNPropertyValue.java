@@ -243,7 +243,7 @@ public class SVNPropertyValue implements Serializable {
         if (obj instanceof SVNPropertyValue) {
             SVNPropertyValue value = (SVNPropertyValue) obj;
             if (isString()) {
-                return myValue.equals(value.getString());
+                return myValue.equals(getPropertyAsString(value));
             } else if (isBinary()) {
                 return Arrays.equals(myData, getPropertyAsBytes(value));
             }
