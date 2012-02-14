@@ -763,7 +763,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
         
         SVNMergeRange range = new SVNMergeRange(revision1, revision2, true);
         SVNErrorMessage err = null;
-        if (honorMergeInfo && !recordOnly) {
+        if (honorMergeInfo && !reintegrateMerge) {
             long newRangeStart = getMostInclusiveStartRevision(childrenWithMergeInfo, isRollBack);
             if (SVNRevision.isValidRevisionNumber(newRangeStart)) {
                 range.setStartRevision(newRangeStart);
