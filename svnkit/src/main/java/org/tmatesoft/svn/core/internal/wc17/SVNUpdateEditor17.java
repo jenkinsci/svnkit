@@ -601,7 +601,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             status = info.status;
             kind = info.kind;
         } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND) {
+            if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND) {
                 throw e;
             }
             status = SVNWCDbStatus.NotPresent;
