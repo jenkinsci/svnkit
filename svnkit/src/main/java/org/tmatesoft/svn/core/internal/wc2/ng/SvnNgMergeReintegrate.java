@@ -224,7 +224,7 @@ public class SvnNgMergeReintegrate extends SvnNgOperationRunner<Void, SvnMerge>{
                 }
             }
         }
-        if (potentiallyUnmergedRanges != null) {
+        if (potentiallyUnmergedRanges != null && !potentiallyUnmergedRanges.isEmpty()) {
             long youngest = potentiallyUnmergedRanges.getRanges()[0].getStartRevision() + 1;
             long oldest = potentiallyUnmergedRanges.getRanges()[potentiallyUnmergedRanges.getSize() - 1].getEndRevision();
             repos.log(new String[] {""}, youngest, oldest, true, false, -1, false, null, new ISVNLogEntryHandler() {
