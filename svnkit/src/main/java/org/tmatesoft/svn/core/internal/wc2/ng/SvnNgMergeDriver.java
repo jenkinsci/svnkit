@@ -2239,7 +2239,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
                         for (Iterator<File> immediateChildAbsPath = result.keySet().iterator(); immediateChildAbsPath.hasNext();) {
                             File iPath = immediateChildAbsPath.next();
                             String reposPath = result.get(iPath);
-                            if (reposPath != null && SVNPathUtil.isAncestor(changedPath, reposPath)) {
+                            if (reposPath != null && SVNPathUtil.isAncestor(reposPath, changedPath)) {
                                 removedPath = iPath;
                                 break;
                             }
