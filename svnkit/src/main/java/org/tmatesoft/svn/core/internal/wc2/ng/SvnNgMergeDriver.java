@@ -1125,7 +1125,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
                 }
                 if (status.getNodeStatus() == SVNStatusType.STATUS_MISSING) {
                     boolean parentPresent = false;
-                    for (File missingRoot : switchedSubtrees) {
+                    for (File missingRoot : missingSubtrees) {
                         if (SVNWCUtils.isAncestor(missingRoot, status.getPath())) {
                             parentPresent = true;
                             break;
