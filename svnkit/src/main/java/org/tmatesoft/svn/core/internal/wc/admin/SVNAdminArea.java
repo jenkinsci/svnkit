@@ -1117,7 +1117,7 @@ public abstract class SVNAdminArea {
         return propertiesFile;
     }
 
-    protected File getRevertPropertiesFile(String name, boolean tmp) {
+    public File getRevertPropertiesFile(String name, boolean tmp) {
         String path = !tmp ? "" : "tmp/";
         path += getThisDirName().equals(name) ? "dir-prop-revert" : "prop-base/" + name + ".svn-revert";
         File propertiesFile = getAdminFile(path);

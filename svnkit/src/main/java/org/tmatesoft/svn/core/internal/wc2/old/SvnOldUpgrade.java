@@ -29,6 +29,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNExternal;
 import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNWCProperties;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumInputStream;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
@@ -919,14 +920,23 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 			String name, int originalFormat, SVNAdminArea area)
 			throws SVNException {
 		String dirAbsPathString = SVNFileUtil.getFilePath(dirAbsPath);
-		String oldWcRootAbsPath = SVNPathUtil.getCommonPathAncestor(
-				dirAbsPathString, SVNFileUtil.getFilePath(data.rootAbsPath));
-		File dirRelPath = new File(SVNPathUtil.getRelativePath(
-				oldWcRootAbsPath, dirAbsPathString));
+		String oldWcRootAbsPath = SVNPathUtil.getCommonPathAncestor(dirAbsPathString, SVNFileUtil.getFilePath(data.rootAbsPath));
+		File dirRelPath = new File(SVNPathUtil.getRelativePath(oldWcRootAbsPath, dirAbsPathString));
 
+		File basePropsFile = area.getBasePropertiesFile(name, false);
+        File revertPropsFile = area.getRevertPropertiesFile(name, false);
+        File propsFile = area.getPropertiesFile(name, false);
+        
+        SVNProperties baseProps = basePropsFile.isFile() ? new SVNWCProperties(basePropsFile, null).asMap() : null;
+        SVNProperties revertProps = revertPropsFile.isFile() ? new SVNWCProperties(revertPropsFile, null).asMap() : null;
+        SVNProperties props = propsFile.isFile() ? new SVNWCProperties(propsFile, null).asMap() : null;
+        
 		SvnWcDbProperties.upgradeApplyProperties(data.root, data.rootAbsPath,
-				SVNFileUtil.createFilePath(dirRelPath, name), area.getBaseProperties(name).asMap(),
-				area.getProperties(name).asMap(), area.getRevertProperties(name).asMap(), originalFormat);
+				SVNFileUtil.createFilePath(dirRelPath, name), 
+				baseProps,
+				props, 
+				revertProps, 
+				originalFormat);
 
 	}
 

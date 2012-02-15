@@ -1,8 +1,13 @@
 package org.tmatesoft.svn.core.internal.wc17.db;
 
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnBlob;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnInt64;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnPath;
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnPresence;
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnProperties;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnText;
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.isColumnNull;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.reset;
 
 import java.io.File;
 import java.util.Collection;
@@ -34,17 +39,15 @@ import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbCreateSchema;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbNodesBase;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbNodesCurrent;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.ACTUAL_NODE__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODES__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODE_PROPS_CACHE__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.TARGETS_LIST__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.WCROOT__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
-import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.ACTUAL_NODE__Fields;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
-
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.*;
 
 public class SvnWcDbProperties extends SvnWcDbShared {
 	
@@ -161,28 +164,6 @@ public class SvnWcDbProperties extends SvnWcDbShared {
     
     public static void upgradeApplyProperties(SVNWCDbRoot root, File dirAbsPath, File localRelPath, 
     		SVNProperties baseProps, SVNProperties workingProps, SVNProperties revertProps, int originalFormat) throws SVNException {
-    	/* 
-    	### working_props: use set_props_txn.
-       	### if working_props == NULL, then skip. what if they equal the pristine props? we should probably do the compare here.
-        ###
-        ### base props go into WORKING_NODE if avail, otherwise BASE.
-        ###
-        ### revert only goes into BASE. (and WORKING better be there!)
-
-        Prior to 1.4.0 (ORIGINAL_FORMAT < 8), REVERT_PROPS did not exist. If a file was deleted, then a copy (potentially with props) was disallowed
-        and could not replace the deletion. An addition *could* be performed, but that would never bring its own props.
-
-        1.4.0 through 1.4.5 created the concept of REVERT_PROPS, but had a bug in svn_wc_add_repos_file2() whereby a copy-with-props did NOT
-        construct a REVERT_PROPS if the target had no props. Thus, reverting the delete/copy would see no REVERT_PROPS to restore, leaving the
-        props from the copy source intact, and appearing as if they are (now) the base props for the previously-deleted file. (wc corruption)
-
-        1.4.6 ensured that an empty REVERT_PROPS would be established at all times. See issue 2530, and r861670 as starting points.
-
-        We will use ORIGINAL_FORMAT and SVN_WC__NO_REVERT_FILES to determine the handling of our inputs, relative to the state of this node.
-     */
-    	if (baseProps.size() == 0 && revertProps.size() == 0 && workingProps.size() == 0)
-    		return;
-    	
     	long topOpDepth = -1;
     	long belowOpDepth = -1;
     	SVNWCDbStatus topPresence = SVNWCDbStatus.NotPresent;
@@ -206,9 +187,9 @@ public class SvnWcDbProperties extends SvnWcDbShared {
     	} finally {
     		stmt.reset();
     	}
-    	/* Detect the buggy scenario described above. We cannot upgrade this working copy if we have no idea where BASE_PROPS should go.  */
+
     	if (originalFormat > WC__NO_REVERT_FILES 
-    	        && revertProps.isEmpty()
+    	        && revertProps == null 
     	        && topOpDepth != -1
     	        && topPresence == SVNWCDbStatus.Normal
     			&& belowOpDepth != -1 
@@ -221,7 +202,7 @@ public class SvnWcDbProperties extends SvnWcDbShared {
             return;
     	}
     	/* Need at least one row, or two rows if there are revert props */
-    	if (topOpDepth == -1 || (belowOpDepth == -1 && revertProps.size() > 0)) {
+    	if (topOpDepth == -1 || (belowOpDepth == -1 && revertProps != null)) {
     		SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, 
     				"Insufficient NODES rows for '{0}'", SVNFileUtil.createFilePath(dirAbsPath, localRelPath));
             SVNErrorManager.error(err, SVNLogType.WC);
@@ -231,7 +212,7 @@ public class SvnWcDbProperties extends SvnWcDbShared {
         two rows, base props only: lower row gets base props
         two rows, revert props only: lower row gets revert props
         two rows, base and revert props: upper row gets base, lower gets revert */
-    	if (revertProps.size() > 0 || belowOpDepth == -1) {
+    	if (revertProps != null || belowOpDepth == -1) {
     		stmt = root.getSDb().getStatement(SVNWCDbStatements.UPDATE_NODE_PROPS);
     		try {
     			stmt.bindf("isi", root.getWcId(), localRelPath, topOpDepth);
@@ -245,7 +226,7 @@ public class SvnWcDbProperties extends SvnWcDbShared {
     	}
     	
     	if (belowOpDepth != -1) {
-    		SVNProperties props = revertProps.size() > 0 ? revertProps : baseProps;
+    		SVNProperties props = revertProps != null ? revertProps : baseProps;
     		stmt = root.getSDb().getStatement(SVNWCDbStatements.UPDATE_NODE_PROPS);
     		try {
     			stmt.bindf("isi", root.getWcId(), localRelPath, belowOpDepth);
@@ -257,22 +238,20 @@ public class SvnWcDbProperties extends SvnWcDbShared {
     			stmt.reset();
     		}
     	}
-    	/* If there are WORKING_PROPS, then they always go into ACTUAL_NODE.  */
-    	if (workingProps.size() > 0 && baseProps.size() > 0) {
+
+    	if (workingProps != null && baseProps != null) {
     		SVNProperties diffs = FSRepositoryUtil.getPropsDiffs(workingProps, baseProps);
-    		if (diffs.size() == 0)
-    			workingProps.clear(); /* No differences */
+    		if (diffs.isEmpty())
+    			workingProps.clear(); 
     	}
-    	
-    	
-    	if (workingProps.size() > 0) {
+    	if (workingProps != null) {
     		setActualProps(root, localRelPath, workingProps);
     	}
-    	
     	if (kind == SVNWCDbKind.Dir) {
     		SVNProperties props = workingProps;
-    		if (props.size() == 0)
+    		if (props == null) {
     			props = baseProps;
+    		}
     		String externals = props.getStringValue(SVNProperty.EXTERNALS);
     		if (externals != null && !"".equals(externals)) {
     			stmt = root.getSDb().getStatement(SVNWCDbStatements.INSERT_EXTERNAL_UPGRADE);
@@ -284,7 +263,7 @@ public class SvnWcDbProperties extends SvnWcDbShared {
     						root.getWcId(), 
     						itemRelPah, 
     						SVNFileUtil.getFilePath(SVNFileUtil.getFileDir(itemRelPah)), 
-    						SVNWCDbStatus.Normal, 
+    						SvnWcDbStatementUtil.getPresenceText(SVNWCDbStatus.Normal), 
     						localRelPath, 
     						1, /* repos_id */ 
     						""  /* repos_relpath */);
