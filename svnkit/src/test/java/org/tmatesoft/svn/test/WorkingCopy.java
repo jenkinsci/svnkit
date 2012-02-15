@@ -169,7 +169,7 @@ public class WorkingCopy {
             wrapThrowable(th);
         }
 
-        log("Copyied " + directory + " as a child of " + anotherDirectory);
+        log("Copied " + directory + " as a child of " + anotherDirectory);
 
         afterOperation();
     }
