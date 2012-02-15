@@ -13,7 +13,7 @@ public class SvnNgUpgrade extends SvnNgOperationRunner<SvnWcGeneration, SvnUpgra
 
     @Override
     protected SvnWcGeneration run(SVNWCContext context) throws SVNException {
-        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_OP_ON_CWD, "Can't upgrade '{0}' as it is not a pre-1.7 working copy directory", 
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_OP_ON_CWD, "Can''t upgrade ''{0}'' as it is not a pre-1.7 working copy directory", 
         		getOperation().getFirstTarget().getFile().getAbsolutePath());
 		SVNErrorManager.error(err, SVNLogType.WC);
 		return SvnWcGeneration.V17;

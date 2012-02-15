@@ -145,7 +145,10 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 		getProperties.run();
 
 		for (SvnTarget target : externals) {
-			if (SVNFileType.getType(target.getFile()) == SVNFileType.DIRECTORY) {
+			SVNWCContext ctx = new SVNWCContext((ISVNOptions) null, null);
+			try {
+				ctx.readKind(target.getFile().getAbsoluteFile(), false);
+			} catch (SVNException e){
 				wcUpgrade(target.getFile(), reposInfo);
 			}
 		}
@@ -160,7 +163,7 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 				return;
 		} catch (SVNException e) {
 			SVNErrorMessage err = SVNErrorMessage.create(
-					SVNErrorCode.WC_INVALID_OP_ON_CWD, "Can't upgrade '{0}' as it is not a pre-1.7 working copy directory", localAbsPath);
+					SVNErrorCode.WC_INVALID_OP_ON_CWD, "Can''t upgrade ''{0}'' as it is not a pre-1.7 working copy directory", localAbsPath);
 			SVNErrorManager.error(err, SVNLogType.WC);
 		} finally {
 			wcAccess.close();
