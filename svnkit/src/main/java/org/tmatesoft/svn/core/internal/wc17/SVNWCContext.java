@@ -3774,11 +3774,11 @@ public class SVNWCContext {
    	     	### removed earlier during the upgrade. */
     		
     		File tempFile = SVNFileUtil.createUniqueFile(adminPath, "svn-XXXXXX", ".tmp", false);
-    		SVNFileUtil.writeToFile(tempFile, "WC_NON_ENTRIES_STRING", "US-ASCII");
+    		SVNFileUtil.writeToFile(tempFile, WC_NON_ENTRIES_STRING, "US-ASCII");
     		SVNFileUtil.rename(tempFile, formatPath);
             
     		tempFile = SVNFileUtil.createUniqueFile(adminPath, "svn-XXXXXX", ".tmp", false);
-    		SVNFileUtil.writeToFile(tempFile, "WC_NON_ENTRIES_STRING", "US-ASCII");
+    		SVNFileUtil.writeToFile(tempFile, WC_NON_ENTRIES_STRING, "US-ASCII");
     		SVNFileUtil.rename(tempFile, entriesPath);
         }
     }
