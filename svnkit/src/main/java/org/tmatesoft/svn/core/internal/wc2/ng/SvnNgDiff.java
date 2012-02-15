@@ -77,8 +77,8 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
             SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
 
-        final boolean startRevisionIsLocal = startRevision == SVNRevision.BASE || endRevision == SVNRevision.WORKING;
-        final boolean endRevisionIsLocal = startRevision == SVNRevision.BASE || endRevision == SVNRevision.WORKING;
+        final boolean startRevisionIsLocal = startRevision == SVNRevision.BASE || startRevision == SVNRevision.WORKING;
+        final boolean endRevisionIsLocal = endRevision == SVNRevision.BASE || endRevision == SVNRevision.WORKING;
 
         if (startRevisionIsLocal && endRevisionIsLocal) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "At least one revision must be non-local for a pegged diff");
