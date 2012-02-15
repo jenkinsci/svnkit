@@ -150,3 +150,4 @@ svnkit/src/main/java/org/tmatesoft/svn/core/wc2/admin/SvnRepositoryVerify.java -
 svnkit/src/main/resources/org/tmatesoft/svn/core/internal/wc/config eol=lf
 svnkit/src/main/resources/org/tmatesoft/svn/core/internal/wc/servers eol=lf
 svnkit/src/main/resources/org/tmatesoft/svn/core/io/repository/template.jar -text
+svnkit/src/test/java/org/tmatesoft/svn/test/DumpNodeReplacementTest.java -text
