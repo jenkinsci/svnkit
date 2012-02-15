@@ -385,13 +385,19 @@ public class SvnCodec {
                 (st != SVNWCDbStatus.Added && st != SVNWCDbStatus.Deleted)) {
             info.release();
             
-            ISVNWCDb.WCDbBaseInfo binfo = context.getDb().getBaseInfo(source.getPath(), BaseInfoField.revision, BaseInfoField.changedRev, BaseInfoField.changedAuthor, BaseInfoField.changedDate);            
-            if (source.getNodeStatus() == SVNStatusType.STATUS_DELETED) {
-                result.setAuthor(binfo.changedAuthor);
-                result.setCommittedDate(binfo.changedDate);
-                result.setCommittedRevision(SVNRevision.create(binfo.changedRev));
+            try {
+                ISVNWCDb.WCDbBaseInfo binfo = context.getDb().getBaseInfo(source.getPath(), BaseInfoField.revision, BaseInfoField.changedRev, BaseInfoField.changedAuthor, BaseInfoField.changedDate);            
+                if (source.getNodeStatus() == SVNStatusType.STATUS_DELETED) {
+                    result.setAuthor(binfo.changedAuthor);
+                    result.setCommittedDate(binfo.changedDate);
+                    result.setCommittedRevision(SVNRevision.create(binfo.changedRev));
+                }
+                result.setRevision(SVNRevision.create(binfo.revision));
+            } catch (SVNException e) {
+                if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND) {
+                    throw e;
+                }
             }
-            result.setRevision(SVNRevision.create(binfo.revision));
         } else {
             info.release();
         }
