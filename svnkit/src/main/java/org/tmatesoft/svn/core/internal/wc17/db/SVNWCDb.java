@@ -1419,6 +1419,11 @@ public class SVNWCDb implements ISVNWCDb {
             buildRelPath = SVNFileUtil.getFileName(localAbsPath);
             localAbsPath = SVNFileUtil.getParentFile(localAbsPath);
 
+            if (localAbsPath == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_WORKING_COPY, "''{0}'' is not a working copy", original_abspath);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+
             /*
              * ### if *pdh != NULL (from further above), then there is (quite
              * ### probably) a bogus value in the DIR_DATA hash table. maybe ###
@@ -1426,7 +1431,7 @@ public class SVNWCDb implements ISVNWCDb {
              */
 
             /* Is this directory in our hash? */
-            info.wcDbDir = info.wcDbDir = dirData.get(localAbsPath);
+            info.wcDbDir = dirData.get(localAbsPath);
             if (info.wcDbDir != null && info.wcDbDir.getWCRoot() != null) {
                 /* Stashed directory's local_relpath + basename. */
                 info.localRelPath = SVNFileUtil.createFilePath(info.wcDbDir.computeRelPath(), buildRelPath);
@@ -1519,7 +1524,6 @@ public class SVNWCDb implements ISVNWCDb {
              */
             localAbsPath = SVNFileUtil.getParentFile(localAbsPath);
             if (localAbsPath == null) {
-                /* Hit the root without finding a wcroot. */
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_WORKING_COPY, "''{0}'' is not a working copy", original_abspath);
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
@@ -3599,6 +3603,10 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     private static SVNSqlJetDb openDb(File dirAbsPath, String sdbFileName, Mode sMode) throws SVNException {
+        if (dirAbsPath == null || sdbFileName == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND);
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
         return SVNSqlJetDb.open(SVNWCUtils.admChild(dirAbsPath, sdbFileName), sMode);
     }
 
