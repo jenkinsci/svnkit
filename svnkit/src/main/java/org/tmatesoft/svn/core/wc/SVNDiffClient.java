@@ -3221,31 +3221,21 @@ public class SVNDiffClient extends SVNBasicClient {
     }
 
     private void doDiffStatus(SvnTarget source, SVNRevision rN, SVNRevision rM, SVNDepth depth, boolean useAncestry, ISVNDiffStatusHandler handler) throws SVNException {
-        final SvnOperationFactory svnOperationFactory = getOperationsFactory();
-        try{
-            final SvnDiffSummarize diffSummarize = svnOperationFactory.createDiffSummarize();
-            diffSummarize.setSource(source, rN, rM);
-            diffSummarize.setDepth(depth);
-            diffSummarize.setIgnoreAncestry(!useAncestry);
-            diffSummarize.setReceiver(SvnCodec.diffStatusReceiver(handler));
-            diffSummarize.run();
-        } finally {
-            svnOperationFactory.dispose();
-        }
+        final SvnDiffSummarize diffSummarize = getOperationsFactory().createDiffSummarize();
+        diffSummarize.setSource(source, rN, rM);
+        diffSummarize.setDepth(depth);
+        diffSummarize.setIgnoreAncestry(!useAncestry);
+        diffSummarize.setReceiver(SvnCodec.diffStatusReceiver(handler));
+        diffSummarize.run();
     }
 
     private void doDiffStatus(SvnTarget source1, SvnTarget source2, SVNDepth depth, boolean useAncestry, ISVNDiffStatusHandler handler) throws SVNException {
-        final SvnOperationFactory svnOperationFactory = getOperationsFactory();
-        try{
-            final SvnDiffSummarize diffSummarize = svnOperationFactory.createDiffSummarize();
-            diffSummarize.setSources(source1, source2);
-            diffSummarize.setDepth(depth);
-            diffSummarize.setIgnoreAncestry(!useAncestry);
-            diffSummarize.setReceiver(SvnCodec.diffStatusReceiver(handler));
-            diffSummarize.run();
-        } finally {
-            svnOperationFactory.dispose();
-        }
+        final SvnDiffSummarize diffSummarize = getOperationsFactory().createDiffSummarize();
+        diffSummarize.setSources(source1, source2);
+        diffSummarize.setDepth(depth);
+        diffSummarize.setIgnoreAncestry(!useAncestry);
+        diffSummarize.setReceiver(SvnCodec.diffStatusReceiver(handler));
+        diffSummarize.run();
     }
 
     public void setAllowMixedRevisionsWCForMerge(boolean allowMixedRevisions) {
