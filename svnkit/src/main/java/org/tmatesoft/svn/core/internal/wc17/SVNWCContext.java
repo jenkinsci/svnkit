@@ -2825,9 +2825,9 @@ public class SVNWCContext {
             }
         }
         if (forceCopy || keywords != null || eol != null || special) {
-            File detranslated = openUniqueFile(null, false).path;
+            File detranslated = openUniqueFile(getDb().getWCRootTempDir(targetAbspath), false).path;
             if (style == SVNEolStyle.Native) {
-                eol = SVNEolStyleInfo.NATIVE_EOL_STR;
+                eol = SVNEolStyleInfo.LF_EOL_STR;
             } else if (style != SVNEolStyle.Fixed && style != SVNEolStyle.None) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_UNKNOWN_EOL);
                 SVNErrorManager.error(err, SVNLogType.WC);
@@ -2849,7 +2849,7 @@ public class SVNWCContext {
         if (dirPath == null) {
             dirPath = SVNFileUtil.createFilePath(System.getProperty("java.io.tmpdir"));
         }
-        info.path = SVNFileUtil.createUniqueFile(dirPath, "svn", ".tmp", true);
+        info.path = SVNFileUtil.createUniqueFile(dirPath, "svn", ".tmp", false);
         if (openStream) {
             info.stream = SVNFileUtil.openFileForWriting(info.path);
         }
