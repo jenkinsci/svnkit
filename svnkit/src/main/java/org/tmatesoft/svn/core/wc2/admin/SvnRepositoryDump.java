@@ -2,6 +2,7 @@ package org.tmatesoft.svn.core.wc2.admin;
 
 import java.io.OutputStream;
 
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminEvent;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
@@ -58,4 +59,17 @@ public class SvnRepositoryDump extends SvnRepositoryReceivingOperation<SVNAdminE
     public void setIncremental(boolean incremental) {
         this.incremental = incremental;
     }
+
+    @Override
+    protected void ensureArgumentsAreValid() throws SVNException {
+        if (getStartRevision() == null) {
+            setStartRevision(SVNRevision.create(0));
+        }
+        if (getEndRevision() == null) {
+            setEndRevision(SVNRevision.HEAD);
+        }
+        super.ensureArgumentsAreValid();
+    }
+    
+    
 }
