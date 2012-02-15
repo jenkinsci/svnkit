@@ -31,6 +31,7 @@ import org.tmatesoft.svn.core.internal.wc17.SVNDiffClient17;
 import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
+import org.tmatesoft.svn.core.wc2.SvnDiff;
 import org.tmatesoft.svn.core.wc2.SvnDiffSummarize;
 import org.tmatesoft.svn.core.wc2.SvnGetMergeInfo;
 import org.tmatesoft.svn.core.wc2.SvnLogMergeInfo;
@@ -258,15 +259,15 @@ public class SVNDiffClient extends SVNBasicClient {
      *             instead
      */
     public void doDiff(SVNURL url, SVNRevision pegRevision, SVNRevision rN, SVNRevision rM, boolean recursive, boolean useAncestry, OutputStream result) throws SVNException {
-        try {
-            getSVNDiffClient17().doDiff(url, pegRevision, rN, rM, recursive, useAncestry, result);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNDiffClient16().doDiff(url, pegRevision, rN, rM, recursive, useAncestry, result);
-                return;
-            }
-            throw e;
-        }
+        final SvnDiff diff = getOperationsFactory().createDiff();
+        diff.setDiffGenerator(getDiffGenerator());
+        diff.setSingleTarget(SvnTarget.fromURL(url, pegRevision));
+        diff.setStartRevision(rN);
+        diff.setEndRevision(rM);
+        diff.setDepth(SVNDepth.getInfinityOrEmptyDepth(recursive));
+        diff.setIgnoreAncestry(!useAncestry);
+        diff.setOutput(result);
+        diff.run();
     }
 
     /**
@@ -316,15 +317,15 @@ public class SVNDiffClient extends SVNBasicClient {
      * @since 1.2, SVN 1.5
      */
     public void doDiff(SVNURL url, SVNRevision pegRevision, SVNRevision rN, SVNRevision rM, SVNDepth depth, boolean useAncestry, OutputStream result) throws SVNException {
-        try {
-            getSVNDiffClient17().doDiff(url, pegRevision, rN, rM, depth, useAncestry, result);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNDiffClient16().doDiff(url, pegRevision, rN, rM, depth, useAncestry, result);
-                return;
-            }
-            throw e;
-        }
+        final SvnDiff diff = getOperationsFactory().createDiff();
+        diff.setDiffGenerator(getDiffGenerator());
+        diff.setSingleTarget(SvnTarget.fromURL(url, pegRevision));
+        diff.setStartRevision(rN);
+        diff.setEndRevision(rM);
+        diff.setDepth(depth);
+        diff.setIgnoreAncestry(!useAncestry);
+        diff.setOutput(result);
+        diff.run();
     }
 
     /**
@@ -374,15 +375,15 @@ public class SVNDiffClient extends SVNBasicClient {
      *             instead
      */
     public void doDiff(File path, SVNRevision pegRevision, SVNRevision rN, SVNRevision rM, boolean recursive, boolean useAncestry, OutputStream result) throws SVNException {
-        try {
-            getSVNDiffClient17().doDiff(path, pegRevision, rN, rM, recursive, useAncestry, result);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNDiffClient16().doDiff(path, pegRevision, rN, rM, recursive, useAncestry, result);
-                return;
-            }
-            throw e;
-        }
+        final SvnDiff diff = getOperationsFactory().createDiff();
+        diff.setDiffGenerator(getDiffGenerator());
+        diff.setSingleTarget(SvnTarget.fromFile(path, pegRevision));
+        diff.setStartRevision(rN);
+        diff.setEndRevision(rM);
+        diff.setDepth(SVNDepth.getInfinityOrEmptyDepth(recursive));
+        diff.setIgnoreAncestry(!useAncestry);
+        diff.setOutput(result);
+        diff.run();
     }
 
     /**
@@ -414,14 +415,17 @@ public class SVNDiffClient extends SVNBasicClient {
      * @since 1.2, SVN 1.5
      */
     public void doDiff(File[] paths, SVNRevision rN, SVNRevision rM, SVNRevision pegRevision, SVNDepth depth, boolean useAncestry, OutputStream result, Collection changeLists) throws SVNException {
-        try {
-            getSVNDiffClient17().doDiff(paths, rN, rM, pegRevision, depth, useAncestry, result, changeLists);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNDiffClient16().doDiff(paths, rN, rM, pegRevision, depth, useAncestry, result, changeLists);
-                return;
-            }
-            throw e;
+        for (File path : paths) {
+            final SvnDiff diff = getOperationsFactory().createDiff();
+            diff.setDiffGenerator(getDiffGenerator());
+            diff.setSingleTarget(SvnTarget.fromFile(path, pegRevision));
+            diff.setStartRevision(rN);
+            diff.setEndRevision(rM);
+            diff.setDepth(depth);
+            diff.setIgnoreAncestry(!useAncestry);
+            diff.setOutput(result);
+            diff.setApplicalbeChangelists(changeLists);
+            diff.run();
         }
     }
 
@@ -484,15 +488,16 @@ public class SVNDiffClient extends SVNBasicClient {
      * @since 1.2, SVN 1.5
      */
     public void doDiff(File path, SVNRevision pegRevision, SVNRevision rN, SVNRevision rM, SVNDepth depth, boolean useAncestry, OutputStream result, Collection changeLists) throws SVNException {
-        try {
-            getSVNDiffClient17().doDiff(path, pegRevision, rN, rM, depth, useAncestry, result, changeLists);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNDiffClient16().doDiff(path, pegRevision, rN, rM, depth, useAncestry, result, changeLists);
-                return;
-            }
-            throw e;
-        }
+        final SvnDiff diff = getOperationsFactory().createDiff();
+        diff.setDiffGenerator(getDiffGenerator());
+        diff.setSingleTarget(SvnTarget.fromFile(path, pegRevision));
+        diff.setStartRevision(rN);
+        diff.setEndRevision(rM);
+        diff.setDepth(depth);
+        diff.setIgnoreAncestry(!useAncestry);
+        diff.setOutput(result);
+        diff.setApplicalbeChangelists(changeLists);
+        diff.run();
     }
 
     /**
@@ -532,15 +537,13 @@ public class SVNDiffClient extends SVNBasicClient {
      *             instead
      */
     public void doDiff(SVNURL url1, SVNRevision rN, SVNURL url2, SVNRevision rM, boolean recursive, boolean useAncestry, OutputStream result) throws SVNException {
-        try {
-            getSVNDiffClient17().doDiff(url1, rN, url2, rM, recursive, useAncestry, result);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNDiffClient16().doDiff(url1, rN, url2, rM, recursive, useAncestry, result);
-                return;
-            }
-            throw e;
-        }
+        final SvnDiff diff = getOperationsFactory().createDiff();
+        diff.setDiffGenerator(getDiffGenerator());
+        diff.setTargets(SvnTarget.fromURL(url1, rN), SvnTarget.fromURL(url2, rM));
+        diff.setDepth(SVNDepth.getInfinityOrEmptyDepth(recursive));
+        diff.setIgnoreAncestry(!useAncestry);
+        diff.setOutput(result);
+        diff.run();
     }
 
     /**
@@ -628,15 +631,13 @@ public class SVNDiffClient extends SVNBasicClient {
      * @since 1.2, SVN 1.5
      */
     public void doDiff(SVNURL url1, SVNRevision rN, SVNURL url2, SVNRevision rM, SVNDepth depth, boolean useAncestry, OutputStream result) throws SVNException {
-        try {
-            getSVNDiffClient17().doDiff(url1, rN, url2, rM, depth, useAncestry, result);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNDiffClient16().doDiff(url1, rN, url2, rM, depth, useAncestry, result);
-                return;
-            }
-            throw e;
-        }
+        final SvnDiff diff = getOperationsFactory().createDiff();
+        diff.setDiffGenerator(getDiffGenerator());
+        diff.setTargets(SvnTarget.fromURL(url1, rN), SvnTarget.fromURL(url2, rM));
+        diff.setDepth(depth);
+        diff.setIgnoreAncestry(!useAncestry);
+        diff.setOutput(result);
+        diff.run();
     }
 
     /**
@@ -686,15 +687,13 @@ public class SVNDiffClient extends SVNBasicClient {
      *             instead
      */
     public void doDiff(File path1, SVNRevision rN, SVNURL url2, SVNRevision rM, boolean recursive, boolean useAncestry, OutputStream result) throws SVNException {
-        try {
-            getSVNDiffClient17().doDiff(path1, rN, url2, rM, recursive, useAncestry, result);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNDiffClient16().doDiff(path1, rN, url2, rM, recursive, useAncestry, result);
-                return;
-            }
-            throw e;
-        }
+        final SvnDiff diff = getOperationsFactory().createDiff();
+        diff.setDiffGenerator(getDiffGenerator());
+        diff.setTargets(SvnTarget.fromFile(path1, rN), SvnTarget.fromURL(url2, rM));
+        diff.setDepth(SVNDepth.getInfinityOrEmptyDepth(recursive));
+        diff.setIgnoreAncestry(!useAncestry);
+        diff.setOutput(result);
+        diff.run();
     }
 
     /**
@@ -802,15 +801,14 @@ public class SVNDiffClient extends SVNBasicClient {
      * @since 1.2, SVN 1.5
      */
     public void doDiff(File path1, SVNRevision rN, SVNURL url2, SVNRevision rM, SVNDepth depth, boolean useAncestry, OutputStream result, Collection changeLists) throws SVNException {
-        try {
-            getSVNDiffClient17().doDiff(path1, rN, url2, rM, depth, useAncestry, result, changeLists);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNDiffClient16().doDiff(path1, rN, url2, rM, depth, useAncestry, result, changeLists);
-                return;
-            }
-            throw e;
-        }
+        final SvnDiff diff = getOperationsFactory().createDiff();
+        diff.setDiffGenerator(getDiffGenerator());
+        diff.setTargets(SvnTarget.fromFile(path1, rN), SvnTarget.fromURL(url2, rM));
+        diff.setDepth(depth);
+        diff.setIgnoreAncestry(!useAncestry);
+        diff.setOutput(result);
+        diff.setApplicalbeChangelists(changeLists);
+        diff.run();
     }
 
     /**
@@ -860,15 +858,13 @@ public class SVNDiffClient extends SVNBasicClient {
      * 
      */
     public void doDiff(SVNURL url1, SVNRevision rN, File path2, SVNRevision rM, boolean recursive, boolean useAncestry, OutputStream result) throws SVNException {
-        try {
-            getSVNDiffClient17().doDiff(url1, rN, path2, rM, recursive, useAncestry, result);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNDiffClient16().doDiff(url1, rN, path2, rM, recursive, useAncestry, result);
-                return;
-            }
-            throw e;
-        }
+        final SvnDiff diff = getOperationsFactory().createDiff();
+        diff.setDiffGenerator(getDiffGenerator());
+        diff.setTargets(SvnTarget.fromURL(url1, rN), SvnTarget.fromFile(path2, rM));
+        diff.setDepth(SVNDepth.getInfinityOrEmptyDepth(recursive));
+        diff.setIgnoreAncestry(!useAncestry);
+        diff.setOutput(result);
+        diff.run();
     }
 
     /**
@@ -975,15 +971,14 @@ public class SVNDiffClient extends SVNBasicClient {
      * @since 1.2, SVN 1.5
      */
     public void doDiff(SVNURL url1, SVNRevision rN, File path2, SVNRevision rM, SVNDepth depth, boolean useAncestry, OutputStream result, Collection changeLists) throws SVNException {
-        try {
-            getSVNDiffClient17().doDiff(url1, rN, path2, rM, depth, useAncestry, result, changeLists);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNDiffClient16().doDiff(url1, rN, path2, rM, depth, useAncestry, result, changeLists);
-                return;
-            }
-            throw e;
-        }
+        final SvnDiff diff = getOperationsFactory().createDiff();
+        diff.setDiffGenerator(getDiffGenerator());
+        diff.setTargets(SvnTarget.fromURL(url1, rN), SvnTarget.fromFile(path2, rM));
+        diff.setDepth(depth);
+        diff.setIgnoreAncestry(!useAncestry);
+        diff.setOutput(result);
+        diff.setApplicalbeChangelists(changeLists);
+        diff.run();
     }
 
     /**
@@ -1052,15 +1047,13 @@ public class SVNDiffClient extends SVNBasicClient {
      *             instead
      */
     public void doDiff(File path1, SVNRevision rN, File path2, SVNRevision rM, boolean recursive, boolean useAncestry, OutputStream result) throws SVNException {
-        try {
-            getSVNDiffClient17().doDiff(path1, rN, path2, rM, recursive, useAncestry, result);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNDiffClient16().doDiff(path1, rN, path2, rM, recursive, useAncestry, result);
-                return;
-            }
-            throw e;
-        }
+        final SvnDiff diff = getOperationsFactory().createDiff();
+        diff.setDiffGenerator(getDiffGenerator());
+        diff.setTargets(SvnTarget.fromFile(path1, rN), SvnTarget.fromFile(path2, rM));
+        diff.setDepth(SVNDepth.getInfinityOrEmptyDepth(recursive));
+        diff.setIgnoreAncestry(!useAncestry);
+        diff.setOutput(result);
+        diff.run();
     }
 
     /**
@@ -1170,15 +1163,14 @@ public class SVNDiffClient extends SVNBasicClient {
      * @since 1.2, SVN 1.5
      */
     public void doDiff(File path1, SVNRevision rN, File path2, SVNRevision rM, SVNDepth depth, boolean useAncestry, OutputStream result, Collection changeLists) throws SVNException {
-        try {
-            getSVNDiffClient17().doDiff(path1, rN, path2, rM, depth, useAncestry, result, changeLists);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNDiffClient16().doDiff(path1, rN, path2, rM, depth, useAncestry, result, changeLists);
-                return;
-            }
-            throw e;
-        }
+        final SvnDiff diff = getOperationsFactory().createDiff();
+        diff.setDiffGenerator(getDiffGenerator());
+        diff.setTargets(SvnTarget.fromFile(path1, rN), SvnTarget.fromFile(path2, rM));
+        diff.setDepth(depth);
+        diff.setIgnoreAncestry(!useAncestry);
+        diff.setOutput(result);
+        diff.setApplicalbeChangelists(changeLists);
+        diff.run();
     }
 
     /**

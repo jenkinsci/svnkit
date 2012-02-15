@@ -162,7 +162,7 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
         boolean startRevisionIsLocal = startRevision == SVNRevision.WORKING || startRevision == SVNRevision.BASE;
         boolean endRevisionIsLocal = endRevision == SVNRevision.WORKING || endRevision == SVNRevision.BASE;
         final ISVNDiffGenerator generator = new DefaultSVNDiffGenerator();
-        generator.init(firstTarget.getFile().getAbsolutePath(), secondTarget.getURL().toString());
+        generator.init(firstTarget.getFile().getAbsolutePath(), secondTarget.getFile().toString());
         if (startRevisionIsLocal && endRevisionIsLocal) {
             doDiffWCWC(firstTarget.getFile(), startRevision, secondTarget.getFile(), endRevision);
         } else if (startRevisionIsLocal) {
