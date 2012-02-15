@@ -130,7 +130,9 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
 
         final File wcRoot = context.getDb().getWCRoot(nestedWCParent);
 
-        final File fakeWorkingCopyDirectory = SVNFileUtil.createTempDirectory("disjoint-copy");
+        final File tempDirectory = new File(getAdminDirectory(wcRoot), "tmp");
+        SVNFileUtil.ensureDirectoryExists(tempDirectory);
+        final File fakeWorkingCopyDirectory = SVNFileUtil.createUniqueDir(tempDirectory, "disjoint-copy", "tmp", true);
         
         moveWcDb(nestedWC, fakeWorkingCopyDirectory);
         copyPristineFiles(nestedWC, wcRoot, true);
