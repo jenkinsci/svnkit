@@ -166,37 +166,40 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 			SVNErrorManager.error(err, SVNLogType.WC);
 		} 
 		
-		if (wcAccess.isWCRoot(localAbsPath))
+		if (SVNFileUtil.getParentFile(localAbsPath) == null) {
 			return;
+		}
 
 		File parentAbsPath = SVNFileUtil.getParentFile(localAbsPath);
 		SVNEntry entry = null;
+		Map<String, SVNEntry> entries = null;
 		try {
-			readEntries(wcAccess, parentAbsPath);
+			entries = readEntries(wcAccess, parentAbsPath);
 		} catch (SVNException ex) {
 			return;
-		}
-		
-		entry = wcAccess.getEntry(localAbsPath, false);
-
-		if (entry == null || entry.isAbsent()
+		}		
+		entry = entries.get(localAbsPath.getName());
+		if (entry == null 
+		        || entry.isAbsent()
 				|| (entry.isDeleted() && !entry.isScheduledForAddition())
-				|| entry.getDepth() == SVNDepth.EXCLUDE)
+				|| entry.getDepth() == SVNDepth.EXCLUDE) {
 			return;
+		}
 
 		File childAbsPath;
-		while (!wcAccess.isWCRoot(parentAbsPath)) {
+		while (SVNFileUtil.getParentFile(parentAbsPath) != null) {
 			childAbsPath = parentAbsPath;
 			parentAbsPath = SVNFileUtil.getParentFile(parentAbsPath);
 			try {
-				readEntries(wcAccess, parentAbsPath);
+				entries = readEntries(wcAccess, parentAbsPath);
 			} catch (SVNException e) {
 				parentAbsPath = childAbsPath;
 				break;
 			}
-			entry = wcAccess.getEntry(localAbsPath, false);
+			entry = entries.get(localAbsPath.getName());
 
-			if (entry == null || entry.isAbsent()
+			if (entry == null 
+			        || entry.isAbsent()
 					|| (entry.isDeleted() && !entry.isScheduledForAddition())
 					|| entry.getDepth() == SVNDepth.EXCLUDE) {
 				parentAbsPath = childAbsPath;
@@ -204,7 +207,7 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 			}
 		}
 		SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_OP_ON_CWD,
-						"Can't upgrade '{0}' as it is not a pre-1.7 working copy root, the root is '{1}'", localAbsPath, parentAbsPath);
+						"Can''t upgrade ''{0}'' as it is not a pre-1.7 working copy root, the root is ''{1}''", localAbsPath, parentAbsPath);
 		SVNErrorManager.error(err, SVNLogType.WC);
 	}
 
@@ -230,16 +233,16 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 		lastRepositoryInfo.UUID = entry.getUUID();
 	}
 
-	private void ensureReposInfo(SVNEntry entry, File localAbsPath,
-			RepositoryInfo lastRepositoryInfo, SVNHashMap reposCache)
+	private void ensureReposInfo(SVNEntry entry, File localAbsPath, RepositoryInfo lastRepositoryInfo, SVNHashMap reposCache)
 			throws SVNException {
-		if (entry.getRepositoryRootURL() != null && entry.getUUID() != null)
+		if (entry.getRepositoryRootURL() != null && entry.getUUID() != null) {
 			return;
+		}
 
 		if ((entry.getRepositoryRootURL() == null || entry.getUUID() == null)
 				&& entry.getSVNURL() != null) {
-			for (Iterator<SVNURL> items = reposCache.keySet().iterator(); items
-					.hasNext();) {
+		    
+			for (Iterator<SVNURL> items = reposCache.keySet().iterator(); items.hasNext();) {
 				SVNURL reposRootUrl = items.next();
 				if (SVNURLUtil.isAncestor(reposRootUrl, entry.getSVNURL())) {
 					if (entry.getRepositoryRootURL() == null)
