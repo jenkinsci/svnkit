@@ -210,7 +210,7 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
             }
         }
         SVNRepository repository = getRepositoryAccess().createRepository(anchorUrl, null, true);
-        long revNumber = getRepositoryAccess().getRevisionNumber(repository, SvnTarget.fromURL(url1), revision1, null).lng(SvnRepositoryAccess.RevisionsPair.youngestRevision);
+        long revNumber = getRepositoryAccess().getRevisionNumber(repository, SvnTarget.fromURL(url1), revision1, null).lng(SvnRepositoryAccess.RevisionsPair.revNumber);
         ISvnDiffCallback callback = new SvnDiffCallback(generator, reverse ? -1 : revNumber, reverse ? revNumber : -1, getOperation().getOutput());
         SVNDiffEditor17 editor = new SVNDiffEditor17(getWcContext(), pathForUrl, getOperation().getDepth(), revision2 == SVNRevision.BASE || revision2 == SVNRevision.COMMITTED,
                 reverse, callback, !getOperation().isIgnoreAncestry(), getOperation().getApplicableChangelists(), false, getOperation().isShowCopiesAsAdds());
@@ -411,7 +411,7 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
 
 
         SVNRepository repository = getRepositoryAccess().createRepository(anchorUrl, null, true);
-        long revNumber = getRepositoryAccess().getRevisionNumber(repository, SvnTarget.fromURL(url1), revision1, null).lng(SvnRepositoryAccess.RevisionsPair.youngestRevision);
+        long revNumber = getRepositoryAccess().getRevisionNumber(repository, SvnTarget.fromURL(url1, pegRevision), revision1, null).lng(SvnRepositoryAccess.RevisionsPair.revNumber);
         ISvnDiffCallback callback = new SvnDiffCallback(generator, reverse ? -1 : revNumber, reverse ? revNumber : -1, getOperation().getOutput());
         SVNDiffEditor17 editor = new SVNDiffEditor17(getWcContext(), pathForUrl, getOperation().getDepth(), revision2 == SVNRevision.BASE || revision2 == SVNRevision.COMMITTED,
                 reverse, callback, !getOperation().isIgnoreAncestry(), getOperation().getApplicableChangelists(), false, getOperation().isShowCopiesAsAdds());
