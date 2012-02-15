@@ -254,6 +254,11 @@ public abstract class FSRoot {
         if (newChange != null) {
             newChange.setCopyPath(copyfromPath);
             newChange.setCopyRevision(copyfromRevision);
+
+            final SVNNodeKind nodeKind = change.getKind();
+            if (nodeKind != null && nodeKind != SVNNodeKind.UNKNOWN) {
+                newChange.setNodeKind(nodeKind);
+            }
             mapChanges.put(change.getPath(), newChange);
         }
     }

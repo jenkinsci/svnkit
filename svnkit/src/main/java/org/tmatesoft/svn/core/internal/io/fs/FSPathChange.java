@@ -92,6 +92,10 @@ public class FSPathChange extends SVNLogEntryPath {
         super.setCopyPath(path);
     }
 
+    public void setNodeKind(SVNNodeKind nodeKind) {
+        super.setNodeKind(nodeKind);
+    }
+
     public static FSPathChange fromString(String changeLine, String copyfromLine) throws SVNException {
         int delimiterInd = changeLine.indexOf(' ');
 
