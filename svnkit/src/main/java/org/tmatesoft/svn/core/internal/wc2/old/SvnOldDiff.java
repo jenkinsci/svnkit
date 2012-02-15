@@ -3,8 +3,10 @@ package org.tmatesoft.svn.core.internal.wc2.old;
 import java.util.Collection;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.wc16.SVNDiffClient16;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
-import org.tmatesoft.svn.core.wc.SVNDiffClient;
+import org.tmatesoft.svn.core.wc.DefaultSVNDiffGenerator;
+import org.tmatesoft.svn.core.wc.ISVNDiffGenerator;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnDiff;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -27,8 +29,8 @@ public class SvnOldDiff extends SvnOldRunner<Void, SvnDiff> {
 
     @Override
     protected Void run() throws SVNException {
-        final SVNDiffClient diffClient = new SVNDiffClient(getOperation().getRepositoryPool(), getOperation().getOptions());
-        diffClient.setDiffGenerator(getOperation().getDiffGenerator());
+        final SVNDiffClient16 diffClient = new SVNDiffClient16(getOperation().getRepositoryPool(), getOperation().getOptions());
+        diffClient.setDiffGenerator(getDiffGenerator());
         diffClient.setMergeOptions(getOperation().getDiffOptions());
 
         final SVNRevision startRevision = getOperation().getStartRevision() == null ? SVNRevision.UNDEFINED : getOperation().getStartRevision();
@@ -55,5 +57,9 @@ public class SvnOldDiff extends SvnOldRunner<Void, SvnDiff> {
         }
 
         return null;
+    }
+
+    private ISVNDiffGenerator getDiffGenerator() {
+        return getOperation().getDiffGenerator() != null ? getOperation().getDiffGenerator() : new DefaultSVNDiffGenerator();
     }
 }

@@ -6,6 +6,8 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc16.SVNDiffClient16;
 import org.tmatesoft.svn.core.internal.wc2.SvnRemoteOperationRunner;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
+import org.tmatesoft.svn.core.wc.DefaultSVNDiffGenerator;
+import org.tmatesoft.svn.core.wc.ISVNDiffGenerator;
 import org.tmatesoft.svn.core.wc2.SvnDiff;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -28,7 +30,7 @@ public class SvnRemoteDiff extends SvnRemoteOperationRunner<Void, SvnDiff> {
         assert getOperation().getTargets().size() == 1 || getOperation().getTargets().size() == 2;
 
         final SVNDiffClient16 diffClient = new SVNDiffClient16(getOperation().getRepositoryPool(), getOperation().getOptions());
-        diffClient.setDiffGenerator(getOperation().getDiffGenerator());
+        diffClient.setDiffGenerator(getDiffGenerator());
         diffClient.setMergeOptions(getOperation().getDiffOptions());
 
         final Collection<SvnTarget> targets = getOperation().getTargets();
@@ -49,5 +51,9 @@ public class SvnRemoteDiff extends SvnRemoteOperationRunner<Void, SvnDiff> {
         }
 
         return null;
+    }
+
+    private ISVNDiffGenerator getDiffGenerator() {
+        return getOperation().getDiffGenerator() != null ? getOperation().getDiffGenerator() : new DefaultSVNDiffGenerator();
     }
 }
