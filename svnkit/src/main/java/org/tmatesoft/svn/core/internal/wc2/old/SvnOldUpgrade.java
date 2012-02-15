@@ -157,30 +157,27 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 
 	private void checkIsOldWCRoot(File localAbsPath) throws SVNException {
 		SVNWCAccess wcAccess = getWCAccess();
+		
 		try {
-			wcAccess.probeOpen(localAbsPath, false, 0);
-			if (wcAccess.isWCRoot(localAbsPath))
-				return;
+			readEntries(wcAccess, localAbsPath);
 		} catch (SVNException e) {
 			SVNErrorMessage err = SVNErrorMessage.create(
 					SVNErrorCode.WC_INVALID_OP_ON_CWD, "Can''t upgrade ''{0}'' as it is not a pre-1.7 working copy directory", localAbsPath);
 			SVNErrorManager.error(err, SVNLogType.WC);
-		} finally {
-			wcAccess.close();
-		}
+		} 
+		
+		if (wcAccess.isWCRoot(localAbsPath))
+			return;
 
 		File parentAbsPath = SVNFileUtil.getParentFile(localAbsPath);
 		SVNEntry entry = null;
 		try {
-			try {
-				wcAccess.probeOpen(parentAbsPath, false, 0);
-			} catch (SVNException e) {
-				return;
-			}
-			entry = wcAccess.getEntry(localAbsPath, false);
-		} finally {
-			wcAccess.close();
+			readEntries(wcAccess, parentAbsPath);
+		} catch (SVNException ex) {
+			return;
 		}
+		
+		entry = wcAccess.getEntry(localAbsPath, false);
 
 		if (entry == null || entry.isAbsent()
 				|| (entry.isDeleted() && !entry.isScheduledForAddition())
@@ -192,16 +189,12 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 			childAbsPath = parentAbsPath;
 			parentAbsPath = SVNFileUtil.getParentFile(parentAbsPath);
 			try {
-				try {
-					wcAccess.probeOpen(parentAbsPath, false, 0);
-				} catch (SVNException e) {
-					parentAbsPath = childAbsPath;
-					break;
-				}
-				entry = wcAccess.getEntry(localAbsPath, false);
-			} finally {
-				wcAccess.close();
+				readEntries(wcAccess, parentAbsPath);
+			} catch (SVNException e) {
+				parentAbsPath = childAbsPath;
+				break;
 			}
+			entry = wcAccess.getEntry(localAbsPath, false);
 
 			if (entry == null || entry.isAbsent()
 					|| (entry.isDeleted() && !entry.isScheduledForAddition())
@@ -210,10 +203,8 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 				break;
 			}
 		}
-		SVNErrorMessage err = SVNErrorMessage
-				.create(SVNErrorCode.WC_INVALID_OP_ON_CWD,
-						"Can't upgrade '{0}' as it is not a pre-1.7 working copy root, the root is '%s'",
-						localAbsPath, parentAbsPath);
+		SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_OP_ON_CWD,
+						"Can't upgrade '{0}' as it is not a pre-1.7 working copy root, the root is '{1}'", localAbsPath, parentAbsPath);
 		SVNErrorManager.error(err, SVNLogType.WC);
 	}
 
@@ -768,17 +759,9 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 	private static File buildLockfilePath(File dirAbsPath) {
 		return SVNWCUtils.admChild(dirAbsPath, ADM_LOCK);
 	}
-
-	/*
-	 * Return in CHILDREN, the list of all 1.6 versioned subdirectories which also exist on disk as directories. If DELETE_DIR is not NULL set
-	 * DELETE_DIR to TRUE if the directory should be deleted after migrating to WC-NG, otherwise to FALSE. If SKIP_MISSING is TRUE, don't add missing or 
-	 * obstructed subdirectories to the list of children.
-	 */
-	public static boolean getVersionedSubdirs(SVNWCAccess access, File localAbsPath, ArrayList<File> children, boolean isCalculateDoDeleteDir, boolean isSkipMissing) throws SVNException {
-		boolean isDoDeleteDir = false;
-
+	
+	private static Map<String, SVNEntry> readEntries(SVNWCAccess access, File localAbsPath) throws SVNException {
 		Map<String, SVNEntry> entries = null;
-		
 		try {
 			SVNAdminArea area = access.probeOpen(localAbsPath, false, 0);
 			if (!area.getRoot().equals(localAbsPath)) {
@@ -789,7 +772,18 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 		} finally {
 			access.close();
 		}
+		return entries;
+	}
 
+	/*
+	 * Return in CHILDREN, the list of all 1.6 versioned subdirectories which also exist on disk as directories. If DELETE_DIR is not NULL set
+	 * DELETE_DIR to TRUE if the directory should be deleted after migrating to WC-NG, otherwise to FALSE. If SKIP_MISSING is TRUE, don't add missing or 
+	 * obstructed subdirectories to the list of children.
+	 */
+	public static boolean getVersionedSubdirs(SVNWCAccess access, File localAbsPath, ArrayList<File> children, boolean isCalculateDoDeleteDir, boolean isSkipMissing) throws SVNException {
+		boolean isDoDeleteDir = false;
+
+		Map<String, SVNEntry> entries = readEntries(access, localAbsPath);
 		SVNEntry thisDir = null;
 		for (Iterator<String> names = entries.keySet().iterator(); names.hasNext();) {
 			String name = (String) names.next();
