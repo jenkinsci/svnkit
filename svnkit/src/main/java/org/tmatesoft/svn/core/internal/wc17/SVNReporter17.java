@@ -364,7 +364,8 @@ public class SVNReporter17 implements ISVNReporterBaton {
                     reporter.linkPath(url, thisReportRelpath, 
                             ths.lock != null ? ths.lock.token : null, 
                                     ths.revision, ths.depth, startEmpty);
-                } else if (ths.revision != dirRev 
+                } else if (ths.revision != dirRev
+                        || isIncomplete
                         || ths.lock != null 
                         || dirDepth == SVNDepth.EMPTY
                         || dirDepth == SVNDepth.FILES
