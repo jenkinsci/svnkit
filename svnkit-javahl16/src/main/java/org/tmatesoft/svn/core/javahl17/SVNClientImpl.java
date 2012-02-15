@@ -2593,6 +2593,10 @@ public class SVNClientImpl implements ISVNClient {
     }
 
     static ClientNotifyInformation getClientNotifyInformation(String pathPrefix, SVNEvent event, String path) {
+        ClientNotifyInformation.Action action = getClientNotifyInformationAction(event.getAction());
+        if (action == null) {
+            return null; 
+        }
         long hunkOriginalStart = -1;
         long hunkOriginalLength = -1;
         long hunkModifiedStart = -1;
@@ -2611,7 +2615,7 @@ public class SVNClientImpl implements ISVNClient {
         }
 
         return new ClientNotifyInformation(path,
-                getClientNotifyInformationAction(event.getAction()),
+                action,
                 getNodeKind(event.getNodeKind()),
                 event.getMimeType(),
                 getLock(event.getLock()),

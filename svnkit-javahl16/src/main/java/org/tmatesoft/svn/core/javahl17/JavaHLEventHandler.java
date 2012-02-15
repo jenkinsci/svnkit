@@ -2,6 +2,7 @@ package org.tmatesoft.svn.core.javahl17;
 
 import java.io.File;
 
+import org.apache.subversion.javahl.ClientNotifyInformation;
 import org.apache.subversion.javahl.callback.ClientNotifyCallback;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -58,7 +59,10 @@ public class JavaHLEventHandler implements ISVNEventHandler {
         }
         if (notifyCallback != null) {
             String pathPrefix = this.pathPrefix == null ? "" : this.pathPrefix;
-            notifyCallback.onNotify(SVNClientImpl.getClientNotifyInformation(pathPrefix, event, path));
+            ClientNotifyInformation ni = SVNClientImpl.getClientNotifyInformation(pathPrefix, event, path);
+            if (ni != null) {
+                notifyCallback.onNotify(ni);
+            }
         }
     }
 
