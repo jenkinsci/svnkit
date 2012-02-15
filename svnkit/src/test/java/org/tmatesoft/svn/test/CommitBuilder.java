@@ -2,7 +2,6 @@ package org.tmatesoft.svn.test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -206,7 +205,14 @@ public class CommitBuilder {
     }
 
     private String getParent(String file) {
-        return new File(file).getParent();
+        if ("".equals(file)) {
+            return null;
+        }
+        String parent = SVNPathUtil.removeTail(file);
+        if ("".equals(parent)) {
+            return null;
+        }
+        return parent;
     }
 
     private SVNRepository createSvnRepository() throws SVNException {
