@@ -375,7 +375,7 @@ public class SvnOldUpgradeEntries {
 					baseNode.revision = parentNode.base.revision;
 			} else {
 				baseNode.kind = entry.getKind();
-				if (baseNode.presence != SVNWCDbStatus.ServerExcluded) {
+				if (baseNode.presence != SVNWCDbStatus.Excluded) {
 					/* All subdirs are initially incomplete, they stop being incomplete when the entries file in the subdir is
 	                 upgraded and remain incomplete if that doesn't happen. */
 					if (entry.isDirectory() && !"".equals(entry.getName())) {

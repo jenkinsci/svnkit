@@ -704,7 +704,7 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 		ArrayList<File> subDirs = new ArrayList<File>();
 		boolean isDoDeleteDir = false;
 		try {
-			getVersionedSubdirs(access, dirAbsPath, subDirs, true, true);
+			isDoDeleteDir = getVersionedSubdirs(access, dirAbsPath, subDirs, true, true);
 		} catch (SVNException ex) {
 			return;
 		}
@@ -773,10 +773,8 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 	}
 
 	/*
-	 * Return in CHILDREN, the list of all 1.6 versioned subdirectories which
-	 * also exist on disk as directories. If DELETE_DIR is not NULL set
-	 * *DELETE_DIR to TRUE if the directory should be deleted after migrating to
-	 * WC-NG, otherwise to FALSE. If SKIP_MISSING is TRUE, don't add missing or
+	 * Return in CHILDREN, the list of all 1.6 versioned subdirectories which also exist on disk as directories. If DELETE_DIR is not NULL set
+	 * DELETE_DIR to TRUE if the directory should be deleted after migrating to WC-NG, otherwise to FALSE. If SKIP_MISSING is TRUE, don't add missing or 
 	 * obstructed subdirectories to the list of children.
 	 */
 	public static boolean getVersionedSubdirs(SVNWCAccess access, File localAbsPath, ArrayList<File> children, boolean isCalculateDoDeleteDir, boolean isSkipMissing) throws SVNException {
