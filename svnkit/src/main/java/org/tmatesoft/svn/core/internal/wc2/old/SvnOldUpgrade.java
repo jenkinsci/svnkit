@@ -3,6 +3,7 @@ package org.tmatesoft.svn.core.internal.wc2.old;
 import java.io.File;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -24,6 +25,7 @@ import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
+import org.tmatesoft.svn.core.internal.wc.SVNExternal;
 import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -34,9 +36,9 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbOpenMode;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbUpgradeData;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
-import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbOpenMode;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDbRoot;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbPristines;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbProperties;
@@ -44,6 +46,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
+import org.tmatesoft.svn.core.internal.wc2.old.SvnOldUpgradeEntries.WriteBaton;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNEvent;
@@ -55,7 +58,6 @@ import org.tmatesoft.svn.core.wc2.SvnGetProperties;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.core.wc2.SvnUpgrade;
 import org.tmatesoft.svn.util.SVNLogType;
-import org.tmatesoft.svn.core.internal.wc2.old.SvnOldUpgradeEntries.WriteBaton;
 
 public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 
@@ -130,27 +132,36 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 		 * to fail. Thanks to caching the performance penalty of walking the wc a second time shouldn't be too severe
 		 */
 
-		final ArrayList<SvnTarget> externals = new ArrayList<SvnTarget>();
+		final Map<SvnTarget, String> externals = new HashMap<SvnTarget, String>();
 		SvnGetProperties getProperties = getOperation().getOperationFactory().createGetProperties();
 		getProperties.addTarget(getOperation().getFirstTarget());
 		getProperties.setDepth(SVNDepth.INFINITY);
 		getProperties.setReceiver(new ISvnObjectReceiver<SVNProperties>() {
 			public void receive(SvnTarget target, SVNProperties object)
 					throws SVNException {
-				if (object.containsName(SVNProperty.EXTERNALS)) {
-					externals.add(target);
+                String value = object.getStringValue(SVNProperty.EXTERNALS);
+				if (value != null) {
+					externals.put(target, value);
 				}
 			}
 		});
 		getProperties.run();
 
-		for (SvnTarget target : externals) {
-			SVNWCContext ctx = new SVNWCContext((ISVNOptions) null, null);
-			try {
-				ctx.readKind(target.getFile().getAbsoluteFile(), false);
-			} catch (SVNException e){
-				wcUpgrade(target.getFile(), reposInfo);
-			}
+		for (SvnTarget target : externals.keySet()) {
+		    SVNExternal[] externalDefs = SVNExternal.parseExternals(target.getFile(), externals.get(target));
+		    for (int i = 0; i < externalDefs.length; i++) {
+                File externalPath = SVNFileUtil.createFilePath(target.getFile(), externalDefs[i].getPath());
+                try {
+                    getWcContext().readKind(externalPath.getAbsoluteFile(), false);
+                } catch (SVNException e) {
+                    if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                        wcUpgrade(externalPath, reposInfo);
+                    } else {
+                        throw e;
+                    }
+                    
+                }
+            }
 		}
 		return SvnWcGeneration.V17;
 	}
