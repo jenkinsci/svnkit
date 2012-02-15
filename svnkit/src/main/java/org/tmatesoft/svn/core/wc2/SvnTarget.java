@@ -3,6 +3,8 @@ package org.tmatesoft.svn.core.wc2;
 import java.io.File;
 
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 public class SvnTarget {
@@ -28,7 +30,7 @@ public class SvnTarget {
     }
     
     private SvnTarget(File file, SVNRevision pegRevision) {
-        this.file = file;
+        this.file = new File(SVNPathUtil.validateFilePath(file.getAbsolutePath()));
         setPegRevision(pegRevision);
     }
     
