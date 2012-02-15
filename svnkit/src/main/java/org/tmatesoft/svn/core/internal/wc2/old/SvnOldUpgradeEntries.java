@@ -413,9 +413,8 @@ public class SvnOldUpgradeEntries {
 					} else if (textBaseInfo != null && textBaseInfo.normalBase != null && textBaseInfo.normalBase.md5Checksum != null) {
 						foundMd5Checksum = textBaseInfo.normalBase.md5Checksum;
 					}
-					
-					
-					if (entryMd5Checksum != null && foundMd5Checksum != null && !entryMd5Checksum.equals(foundMd5Checksum)) {
+										
+					if (entryMd5Checksum.getDigest() != null && foundMd5Checksum != null && !entryMd5Checksum.equals(foundMd5Checksum)) {
 						SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, 
 							"Bad base MD5 checksum for '{0}'; expected: '{1}'; found '{2}';", 
 									SVNFileUtil.createFilePath(rootAbsPath, localRelPath), entryMd5Checksum, foundMd5Checksum);

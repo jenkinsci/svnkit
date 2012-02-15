@@ -530,8 +530,8 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 	 * pre-1.7 versioned text file.
 	 */
 	public class TextBaseInfo {
-		public TextBaseFileInfo normalBase;
-		public TextBaseFileInfo revertBase;
+		public TextBaseFileInfo normalBase = new TextBaseFileInfo();
+		public TextBaseFileInfo revertBase = new TextBaseFileInfo();
 	}
 
 	/*
@@ -623,13 +623,9 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 				TextBaseInfo info = (TextBaseInfo) textBasesInfo.get(versionedFileName);
 				if (info == null)
 					info = new TextBaseInfo();
-				TextBaseFileInfo fileInfo = new TextBaseFileInfo();
+				TextBaseFileInfo fileInfo = isRevertBase ? info.revertBase : info.normalBase;
 				fileInfo.sha1Checksum = sha1Checksum;
 				fileInfo.md5Checksum = md5Checksum;
-				if (isRevertBase)
-					info.revertBase = fileInfo;
-				else
-					info.normalBase = fileInfo;
 				textBasesInfo.put(versionedFileName, info);
 			}
 
