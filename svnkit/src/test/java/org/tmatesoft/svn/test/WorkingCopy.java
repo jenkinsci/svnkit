@@ -57,8 +57,7 @@ public class WorkingCopy {
     }
 
     public long checkoutRevision(SVNURL repositoryUrl, long revision) throws SVNException {
-        SVNFileUtil.closeFile(logger);
-        logger = null;
+        disposeLogger();
         SVNFileUtil.deleteFile(getLogFile());
 
         beforeOperation();
@@ -355,7 +354,10 @@ public class WorkingCopy {
             clientManager.dispose();
             clientManager = null;
         }
+        disposeLogger();
+    }
 
+    private void disposeLogger() {
         SVNFileUtil.closeFile(logger);
         logger = null;
     }
@@ -427,8 +429,9 @@ public class WorkingCopy {
 
     private void afterOperation() {
         checkWorkingCopyConsistency();
-
         log("Checked for consistency");
+        
+        disposeLogger();
     }
 
     private void checkNativeStatusShowsNoChanges() {
