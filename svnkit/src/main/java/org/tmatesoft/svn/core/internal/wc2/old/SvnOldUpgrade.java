@@ -925,10 +925,8 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 				oldWcRootAbsPath, dirAbsPathString));
 
 		SvnWcDbProperties.upgradeApplyProperties(data.root, data.rootAbsPath,
-				SVNFileUtil.createFilePath(dirRelPath, name), area
-						.getBaseProperties(name).asMap(),
-				area.getProperties(name).asMap(), area
-						.getRevertProperties(name).asMap(), originalFormat);
+				SVNFileUtil.createFilePath(dirRelPath, name), area.getBaseProperties(name).asMap(),
+				area.getProperties(name).asMap(), area.getRevertProperties(name).asMap(), originalFormat);
 
 	}
 

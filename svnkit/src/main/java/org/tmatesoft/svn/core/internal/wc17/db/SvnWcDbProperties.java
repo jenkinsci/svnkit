@@ -207,11 +207,15 @@ public class SvnWcDbProperties extends SvnWcDbShared {
     		stmt.reset();
     	}
     	/* Detect the buggy scenario described above. We cannot upgrade this working copy if we have no idea where BASE_PROPS should go.  */
-    	if (originalFormat > WC__NO_REVERT_FILES && revertProps.size() > 0 && topOpDepth != -1 && topPresence != SVNWCDbStatus.Normal
-    			&& belowOpDepth != -1 && belowPresence != SVNWCDbStatus.NotPresent) {
+    	if (originalFormat > WC__NO_REVERT_FILES 
+    	        && revertProps.isEmpty()
+    	        && topOpDepth != -1
+    	        && topPresence == SVNWCDbStatus.Normal
+    			&& belowOpDepth != -1 
+    			&& belowPresence != SVNWCDbStatus.NotPresent) {
     		/* There should be REVERT_PROPS, so it appears that we just ran into the described bug. Sigh.  */
     		SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, 
-    				"The properties of '{0}' are in an indeterminate state and cannot be upgraded. See issue #2530.", 
+    				"The properties of ''{0}'' are in an indeterminate state and cannot be upgraded. See issue #2530.", 
     					SVNFileUtil.createFilePath(dirAbsPath, localRelPath));
             SVNErrorManager.error(err, SVNLogType.WC);
             return;
