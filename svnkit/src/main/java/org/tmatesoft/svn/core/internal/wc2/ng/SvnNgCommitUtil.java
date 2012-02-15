@@ -17,11 +17,9 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.CheckSpecialInfo;
@@ -145,7 +143,7 @@ public class SvnNgCommitUtil {
                 // TODO fail no parent event
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, 
                         "''{0}'' is not known to exist in the repository and is not part of the commit, yet its child ''{1}'' is part of the commit",
-                        danglingParent, danglers.get(danglingParent));
+                        danglingParent.getAbsolutePath(), danglers.get(danglingParent).getAbsolutePath());
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
         }
