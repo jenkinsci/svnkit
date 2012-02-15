@@ -502,12 +502,16 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 
 				SVNHashMap cachedProps = new SVNHashMap();
 				SVNVersionedProperties verProps = area.getWCProperties("");
-				cachedProps.put("", verProps.asMap());
+				if (verProps != null) {
+				    cachedProps.put("", verProps.asMap());
+				}
 				SVNHashSet children = getVesionedFiles(dirRelPath, data.root.getSDb(), data.workingCopyId);
 				for (Iterator<File> files = children.iterator(); files.hasNext();) {
 					File file = files.next();
 					verProps = area.getWCProperties(SVNFileUtil.getFileName(file));
-					cachedProps.put(SVNFileUtil.getFileName(file), verProps.asMap());
+					if (verProps != null) {
+					    cachedProps.put(SVNFileUtil.getFileName(file), verProps.asMap());
+					}
 				}
 				SvnWcDbProperties.upgradeApplyDavCache(data.root, dirRelPath, cachedProps);
 			}
