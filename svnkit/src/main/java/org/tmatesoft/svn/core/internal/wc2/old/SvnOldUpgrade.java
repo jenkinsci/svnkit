@@ -398,8 +398,7 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 			return;
 		}
 
-		dirBaton = upgradeToWcng(parentDirBaton, db, dirAbsPath, oldFormat,
-				data, reposCache, reposInfo);
+		dirBaton = upgradeToWcng(parentDirBaton, db, dirAbsPath, oldFormat, data, reposCache, reposInfo);
 
 		if (getOperation().getEventHandler() != null) {
 			SVNEvent event = SVNEventFactory.createSVNEvent(dirAbsPath, SVNNodeKind.DIR, null, -1, SVNEventAction.UPGRADED_PATH, null, null, null);
@@ -465,8 +464,7 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 			 * Cache repos UUID pairs for when a subdir doesn't have this information
 			 */
 			if (!reposCache.containsKey(thisDir.getRepositoryRootURL())) {
-				reposCache.put(thisDir.getRepositoryRootURL(),
-						thisDir.getUUID());
+				reposCache.put(thisDir.getRepositoryRootURL(), thisDir.getUUID());
 			}
 
 			String dirAbsPathString = SVNFileUtil.getFilePath(dirAbsPath);

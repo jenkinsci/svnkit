@@ -581,7 +581,7 @@ public class SvnOldUpgradeEntries {
 			
 			if (entry.isScheduledForDeletion() && parentNode != null && parentNode.work != null && parentNode.work.presence == SVNWCDbStatus.BaseDeleted) {
 				workingNode.opDepth = parentNode.work.opDepth;
-			} else {
+			} else if (!entry.isCopied()) {
 				workingNode.opDepth = SVNWCUtils.relpathDepth(localRelPath);
 			}
 			
