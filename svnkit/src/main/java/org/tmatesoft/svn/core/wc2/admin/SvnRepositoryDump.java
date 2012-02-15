@@ -1,17 +1,13 @@
 package org.tmatesoft.svn.core.wc2.admin;
 
-import java.io.File;
 import java.io.OutputStream;
 
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminEvent;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
-import org.tmatesoft.svn.core.wc2.SvnReceivingOperation;
 
-public class SvnRepositoryDump extends SvnReceivingOperation<SVNAdminEvent> {
-    
-    private File repository;
-    
+public class SvnRepositoryDump extends SvnRepositoryReceivingOperation<SVNAdminEvent> {
+
     private OutputStream out;
     
     private SVNRevision startRevision;
@@ -21,14 +17,6 @@ public class SvnRepositoryDump extends SvnReceivingOperation<SVNAdminEvent> {
 
     public SvnRepositoryDump(SvnOperationFactory factory) {
         super(factory);
-    }
-
-    public File getRepository() {
-        return repository;
-    }
-
-    public void setRepository(File repository) {
-        this.repository = repository;
     }
 
     public OutputStream getOut() {

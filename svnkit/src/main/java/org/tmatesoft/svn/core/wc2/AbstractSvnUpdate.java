@@ -1,6 +1,5 @@
 package org.tmatesoft.svn.core.wc2;
 
-import org.tmatesoft.svn.core.wc.ISVNExternalsHandler;
 import org.tmatesoft.svn.core.wc2.hooks.ISvnExternalsHandler;
 
 public abstract class AbstractSvnUpdate<V> extends SvnOperation<V> {

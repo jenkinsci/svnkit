@@ -13,7 +13,7 @@ public class SvnRepositoryCreateImpl extends SvnRepositoryOperationRunner<SVNURL
         ac.setEventHandler(this);
                 
         return ac.doCreateRepository(
-        		getOperation().getPath(),
+        		getOperation().getRepositoryRoot(),
         		getOperation().getUuid(), 
         		getOperation().isEnableRevisionProperties(),  
                 getOperation().isForce(), 

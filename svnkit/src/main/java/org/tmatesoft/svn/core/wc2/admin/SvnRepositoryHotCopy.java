@@ -1,13 +1,12 @@
 package org.tmatesoft.svn.core.wc2.admin;
 
 import java.io.File;
-import org.tmatesoft.svn.core.wc2.SvnOperation;
+
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 
-public class SvnRepositoryHotCopy extends SvnOperation<Long> {
+public class SvnRepositoryHotCopy extends SvnRepositoryOperation<Long> {
     
     private File srcRepositoryRoot;
-    private File newRepositoryRoot;
 
     public SvnRepositoryHotCopy(SvnOperationFactory factory) {
         super(factory);
@@ -22,12 +21,10 @@ public class SvnRepositoryHotCopy extends SvnOperation<Long> {
 	}
 
 	public File getNewRepositoryRoot() {
-		return newRepositoryRoot;
+		return getRepositoryRoot();
 	}
 
 	public void setNewRepositoryRoot(File newRepositoryRoot) {
-		this.newRepositoryRoot = newRepositoryRoot;
+	    setRepositoryRoot(newRepositoryRoot);
 	}
-
-    
 }

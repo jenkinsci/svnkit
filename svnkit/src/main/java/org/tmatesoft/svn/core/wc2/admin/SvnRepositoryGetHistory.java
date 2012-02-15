@@ -1,15 +1,10 @@
 package org.tmatesoft.svn.core.wc2.admin;
 
-import java.io.File;
-
 import org.tmatesoft.svn.core.wc.admin.SVNAdminPath;
-import org.tmatesoft.svn.core.wc.admin.SVNChangeEntry;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
-import org.tmatesoft.svn.core.wc2.SvnReceivingOperation;
 
-public class SvnRepositoryGetHistory extends SvnReceivingOperation<SVNAdminPath> {
+public class SvnRepositoryGetHistory extends SvnRepositoryReceivingOperation<SVNAdminPath> {
     
-    private File repositoryRoot;
     private String path;
     private boolean includeIDs;
     private long limit;
@@ -19,15 +14,7 @@ public class SvnRepositoryGetHistory extends SvnReceivingOperation<SVNAdminPath>
         super(factory);
     }
 
-	public File getRepositoryRoot() {
-		return repositoryRoot;
-	}
-
-	public void setRepositoryRoot(File repositoryRoot) {
-		this.repositoryRoot = repositoryRoot;
-	}
-
-	public String getPath() {
+    public String getPath() {
 		return path;
 	}
 

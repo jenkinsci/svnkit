@@ -14,7 +14,7 @@ public class SvnRepositoryDumpImpl extends SvnRepositoryOperationRunner<SVNAdmin
         SVNAdminClient ac = new SVNAdminClient(getOperation().getAuthenticationManager(), getOperation().getOptions());
         ac.setEventHandler(this);
                 
-        ac.doDump(getOperation().getRepository(), 
+        ac.doDump(getOperation().getRepositoryRoot(), 
                 getOperation().getOut(), 
                 getOperation().getStartRevision(), 
                 getOperation().getEndRevision(), 
@@ -25,6 +25,6 @@ public class SvnRepositoryDumpImpl extends SvnRepositoryOperationRunner<SVNAdmin
     }
 
     public void handleAdminEvent(SVNAdminEvent event, double progress) throws SVNException {
-        getOperation().receive(SvnTarget.fromFile(getOperation().getRepository()), event);
+        getOperation().receive(SvnTarget.fromFile(getOperation().getRepositoryRoot()), event);
     }
 }

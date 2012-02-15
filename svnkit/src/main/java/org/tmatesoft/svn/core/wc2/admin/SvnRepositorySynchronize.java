@@ -4,6 +4,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminEvent;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 import org.tmatesoft.svn.core.wc2.SvnReceivingOperation;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 public class SvnRepositorySynchronize extends SvnReceivingOperation<SVNAdminEvent> {
     
@@ -19,9 +20,6 @@ public class SvnRepositorySynchronize extends SvnReceivingOperation<SVNAdminEven
 
 	public void setToURL(SVNURL toURL) {
 		this.toURL = toURL;
+		setSingleTarget(toURL != null ? SvnTarget.fromURL(toURL) : null);
 	}
-
-	
-
-	    
 }

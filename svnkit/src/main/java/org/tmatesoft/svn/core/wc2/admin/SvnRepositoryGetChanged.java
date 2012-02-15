@@ -1,28 +1,16 @@
 package org.tmatesoft.svn.core.wc2.admin;
 
-import java.io.File;
-
 import org.tmatesoft.svn.core.wc.admin.SVNChangeEntry;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
-import org.tmatesoft.svn.core.wc2.SvnReceivingOperation;
 
-public class SvnRepositoryGetChanged extends SvnReceivingOperation<SVNChangeEntry> {
-    
-    private File repositoryRoot;
+public class SvnRepositoryGetChanged extends SvnRepositoryReceivingOperation<SVNChangeEntry> {
+
     private String transactionName;
     private boolean includeCopyInfo;
             
     public SvnRepositoryGetChanged(SvnOperationFactory factory) {
         super(factory);
     }
-
-	public File getRepositoryRoot() {
-		return repositoryRoot;
-	}
-
-	public void setRepositoryRoot(File repositoryRoot) {
-		this.repositoryRoot = repositoryRoot;
-	}
 
 	public String getTransactionName() {
 		return transactionName;
@@ -39,11 +27,4 @@ public class SvnRepositoryGetChanged extends SvnReceivingOperation<SVNChangeEntr
 	public void setIncludeCopyInfo(boolean includeCopyInfo) {
 		this.includeCopyInfo = includeCopyInfo;
 	}
-
-		
-	
-
-	
-
-	    
 }

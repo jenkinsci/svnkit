@@ -87,6 +87,8 @@ public class SvnRepositoryFilter extends SvnReceivingOperation<SVNAdminEvent> {
 		this.skipMissingMergeSources = skipMissingMergeSources;
 	}
 
-
-	    
+    @Override
+    protected int getMinimumTargetsCount() {
+        return 0;
+    }
 }

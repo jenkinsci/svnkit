@@ -1,14 +1,11 @@
 package org.tmatesoft.svn.core.wc2.admin;
 
-import java.io.File;
 import java.io.OutputStream;
 
-import org.tmatesoft.svn.core.wc2.SvnOperation;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 
-public class SvnRepositoryGetDiff extends SvnOperation<Long> {
+public class SvnRepositoryGetDiff extends SvnRepositoryOperation<Long> {
     
-    private File repositoryRoot;
     private String transactionName;
     private boolean diffDeleted;
     private boolean diffAdded;
@@ -19,15 +16,7 @@ public class SvnRepositoryGetDiff extends SvnOperation<Long> {
         super(factory);
     }
 
-	public File getRepositoryRoot() {
-		return repositoryRoot;
-	}
-
-	public void setRepositoryRoot(File repositoryRoot) {
-		this.repositoryRoot = repositoryRoot;
-	}
-
-	public String getTransactionName() {
+    public String getTransactionName() {
 		return transactionName;
 	}
 
@@ -66,10 +55,4 @@ public class SvnRepositoryGetDiff extends SvnOperation<Long> {
 	public void setOutputStream(OutputStream outputStream) {
 		this.outputStream = outputStream;
 	}
-	
-	
-
-	
-
-	    
 }

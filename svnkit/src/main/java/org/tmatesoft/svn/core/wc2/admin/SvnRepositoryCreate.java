@@ -1,14 +1,10 @@
 package org.tmatesoft.svn.core.wc2.admin;
 
-import java.io.File;
-
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc2.SvnOperation;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 
-public class SvnRepositoryCreate extends SvnOperation<SVNURL> {
+public class SvnRepositoryCreate extends SvnRepositoryOperation<SVNURL> {
     
-	private File path;
     private String uuid;
     private boolean enableRevisionProperties;
     private boolean force;
@@ -85,13 +81,4 @@ public class SvnRepositoryCreate extends SvnOperation<SVNURL> {
 	public void setPre14Compatible(boolean pre14Compatible) {
 		this.pre14Compatible = pre14Compatible;
 	}
-
-	public File getPath() {
-		return path;
-	}
-
-	public void setPath(File path) {
-		this.path = path;
-	}
-
 }

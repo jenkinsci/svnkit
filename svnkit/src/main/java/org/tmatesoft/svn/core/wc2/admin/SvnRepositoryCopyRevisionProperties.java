@@ -1,16 +1,15 @@
 package org.tmatesoft.svn.core.wc2.admin;
 
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminEvent;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
-import org.tmatesoft.svn.core.wc2.SvnReceivingOperation;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
-public class SvnRepositoryCopyRevisionProperties extends SvnReceivingOperation<SVNAdminEvent> {
+public class SvnRepositoryCopyRevisionProperties extends SvnRepositoryReceivingOperation<SVNAdminEvent> {
     
     private SVNURL toURL;
-    private Long startRevision;
-    private Long endRevision;
+    private long startRevision;
+    private long endRevision;
     
     public SvnRepositoryCopyRevisionProperties(SvnOperationFactory factory) {
         super(factory);
@@ -22,25 +21,22 @@ public class SvnRepositoryCopyRevisionProperties extends SvnReceivingOperation<S
 
 	public void setToURL(SVNURL toURL) {
 		this.toURL = toURL;
+		setSingleTarget(SvnTarget.fromURL(toURL));
 	}
 	
-	public Long getStartRevision() {
+	public long getStartRevision() {
         return startRevision;
     }
 
-    public void setStartRevision(Long startRevision) {
+    public void setStartRevision(long startRevision) {
         this.startRevision = startRevision;
     }
 
-    public Long getEndRevision() {
+    public long getEndRevision() {
         return endRevision;
     }
 
-    public void setEndRevision(Long endRevision) {
+    public void setEndRevision(long endRevision) {
         this.endRevision = endRevision;
     }
-
-	
-
-	    
 }

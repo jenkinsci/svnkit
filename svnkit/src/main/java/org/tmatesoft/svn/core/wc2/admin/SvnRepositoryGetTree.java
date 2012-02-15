@@ -1,14 +1,10 @@
 package org.tmatesoft.svn.core.wc2.admin;
 
-import java.io.File;
-
 import org.tmatesoft.svn.core.wc.admin.SVNAdminPath;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
-import org.tmatesoft.svn.core.wc2.SvnReceivingOperation;
 
-public class SvnRepositoryGetTree extends SvnReceivingOperation<SVNAdminPath> {
+public class SvnRepositoryGetTree extends SvnRepositoryReceivingOperation<SVNAdminPath> {
     
-    private File repositoryRoot;
     private String transactionName;
     private String path;
     private boolean includeIDs;
@@ -18,15 +14,7 @@ public class SvnRepositoryGetTree extends SvnReceivingOperation<SVNAdminPath> {
         super(factory);
     }
 
-	public File getRepositoryRoot() {
-		return repositoryRoot;
-	}
-
-	public void setRepositoryRoot(File repositoryRoot) {
-		this.repositoryRoot = repositoryRoot;
-	}
-
-	public String getTransactionName() {
+    public String getTransactionName() {
 		return transactionName;
 	}
 
