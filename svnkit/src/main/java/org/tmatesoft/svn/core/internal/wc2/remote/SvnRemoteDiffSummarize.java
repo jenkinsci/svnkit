@@ -88,13 +88,13 @@ public class SvnRemoteDiffSummarize extends SvnRemoteOperationRunner<SvnDiffStat
         }
         SVNRepository repository1 = createRepository(url1, null, true);
         SVNRepository repository2 = createRepository(url2, null, false);
-        final long rev1 = getRevisionNumber(revision1, repository1, path1);
+        final long rev1 = getRevisionNumber(revision1, repository1, url1);
         long rev2 = -1;
         SVNNodeKind kind1 = null;
         SVNNodeKind kind2 = null;
         String target1 = null;
         try {
-            rev2 = getRevisionNumber(revision2, repository2, path2);
+            rev2 = getRevisionNumber(revision2, repository2, url2);
             kind1 = repository1.checkPath("", rev1);
             kind2 = repository2.checkPath("", rev2);
             if (kind1 == SVNNodeKind.NONE) {
@@ -139,8 +139,8 @@ public class SvnRemoteDiffSummarize extends SvnRemoteOperationRunner<SvnDiffStat
         return SVNDebugLog.getDefaultLog();
     }
 
-    private long getRevisionNumber(SVNRevision revision1, SVNRepository repository1, File path1) throws SVNException {
-        final Structure<SvnRepositoryAccess.RevisionsPair> revisionNumber = getRepositoryAccess().getRevisionNumber(repository1, SvnTarget.fromFile(path1), revision1, null);
+    private long getRevisionNumber(SVNRevision revision1, SVNRepository repository1, SVNURL url1) throws SVNException {
+        final Structure<SvnRepositoryAccess.RevisionsPair> revisionNumber = getRepositoryAccess().getRevisionNumber(repository1, SvnTarget.fromURL(url1, revision1), revision1, null);
         return revisionNumber.lng(SvnRepositoryAccess.RevisionsPair.revNumber);
     }
 
