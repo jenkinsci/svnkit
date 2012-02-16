@@ -138,6 +138,9 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
             path = SVNCommandUtil.getLocalPath(path);
         } else {
             path = info.getPath();
+            if ("".equals(path) && info.getURL() != null) {
+                path = SVNPathUtil.tail(info.getURL().getPath());
+            }
         }
         buffer.append("Path: " + path + "\n");
         if (info.getKind() != SVNNodeKind.DIR) {
