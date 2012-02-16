@@ -221,7 +221,7 @@ public class SVNDiffEditor17 implements ISVNUpdateEditor {
         } else {
             sourceFile = detranslateFile(entryPath);
         }
-        getDiffCallback().fileAdded(getDiffCallbackResult(), entryPath, null, sourceFile, 0, wcDbInfo.revision, null, mimeType, null, -1, propDiff, null);
+        getDiffCallback().fileAdded(getDiffCallbackResult(), entryPath, null, sourceFile, -1, wcDbInfo.revision, null, mimeType, null, -1, propDiff, null);
     }
 
     private void reportModifiedFile(SVNDirectoryInfo dirInfo, File entryPath) throws SVNException {
@@ -295,7 +295,7 @@ public class SVNDiffEditor17 implements ISVNUpdateEditor {
             } else {
                 originalProperties = pristineProps;
             }
-            getDiffCallback().fileAdded(getDiffCallbackResult(), entryPath, null, tmpFile, 0, revision, mimeType, null, null, -1, propDiff, originalProperties);
+            getDiffCallback().fileAdded(getDiffCallbackResult(), entryPath, null, tmpFile, -1, revision, mimeType, null, null, -1, propDiff, originalProperties);
         } else if (newSchedule == null || schedule.schedule == SVNWCContext.SVNWCSchedule.normal) {
             boolean modified = wcContext.isTextModified(entryPath, false);
             File tmpFile = null;
@@ -437,7 +437,7 @@ public class SVNDiffEditor17 implements ISVNUpdateEditor {
 
         if (currentFile.isAdded || (!isCompareToBase && schedule.schedule == SVNWCContext.SVNWCSchedule.delete)) {
             if (isReverseDiff) {
-                getDiffCallback().fileAdded(getDiffCallbackResult(), new File(getWorkingCopyRoot(), commitPath), null, reposFile, 0, targetRevision, reposMimeType, null, null, -1,
+                getDiffCallback().fileAdded(getDiffCallbackResult(), new File(getWorkingCopyRoot(), commitPath), null, reposFile, -1, targetRevision, reposMimeType, null, null, -1,
                         currentFile.propertyDiff, null);
             } else {
                 getDiffCallback().fileDeleted(getDiffCallbackResult(), new File(getWorkingCopyRoot(), commitPath), reposFile, null, reposMimeType, null, reposProperties);
@@ -634,7 +634,7 @@ public class SVNDiffEditor17 implements ISVNUpdateEditor {
                 String mimeType1 = null;
                 String mimeType2 = SVNFileUtil.detectMimeType(file, null);
                 String filePath = SVNPathUtil.append(parentRelativePath, file.getName());
-                getDiffCallback().fileAdded(getDiffCallbackResult(), new File(getWorkingCopyRoot(), filePath), null, file, 0, 0, mimeType1, mimeType2, null, -1, null, null);
+                getDiffCallback().fileAdded(getDiffCallbackResult(), new File(getWorkingCopyRoot(), filePath), null, file, -1, -1, mimeType1, mimeType2, null, -1, null, null);
             }
         }
     }
