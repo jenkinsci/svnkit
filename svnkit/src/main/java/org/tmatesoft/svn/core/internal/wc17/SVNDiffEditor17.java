@@ -231,29 +231,40 @@ public class SVNDiffEditor17 implements ISVNUpdateEditor {
 
         final SVNWCContext.ScheduleInternalInfo schedule = wcContext.getNodeScheduleInternal(entryPath, true, true);
 
+        SVNWCContext.SVNWCSchedule newSchedule = schedule.schedule;
         if (!isDiffCopiedAsAdded() && schedule.copied) {
-            schedule.schedule = null;
+            newSchedule = null;
         }
         if (!useAncestry && schedule.schedule == SVNWCContext.SVNWCSchedule.replace) {
-            schedule.schedule = null;
+            newSchedule = null;
         }
         SVNProperties propDiff = null;
         SVNProperties baseProps = null;
 
-        final File pristineFile;
-        if (schedule.schedule != SVNWCContext.SVNWCSchedule.add) {
-            final Structure<StructureFields.NodeInfo> infoStructure = wcContext.getDb().readInfo(entryPath, StructureFields.NodeInfo.checksum);
-            pristineFile = wcContext.getDb().getPristinePath(entryPath, infoStructure.<SvnChecksum>get(StructureFields.NodeInfo.checksum));
-        } else {
-            pristineFile = null;
-        }
 
+        SvnChecksum checksum;
+        try {
+            final Structure<StructureFields.NodeInfo> infoStructure = wcContext.getDb().readInfo(entryPath, StructureFields.NodeInfo.checksum);
+            checksum = infoStructure.<SvnChecksum>get(StructureFields.NodeInfo.checksum);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.ENTRY_NOT_FOUND) {
+                checksum = null;
+            } else {
+                throw e;
+            }
+        }
+        final File pristineFile = checksum == null ? null : wcContext.getDb().getPristinePath(entryPath, checksum);
+
+        SVNProperties pristineProps = wcContext.getPristineProps(entryPath);
+        if (pristineProps == null) {
+            pristineProps = new SVNProperties();
+        }
         if (schedule.schedule != SVNWCContext.SVNWCSchedule.delete) {
             if (isDiffCopiedAsAdded() && schedule.copied) {
                 baseProps = new SVNProperties();
                 propDiff = wcContext.getActualProps(entryPath);
             } else {
-                baseProps = wcContext.getPristineProps(entryPath);
+                baseProps = pristineProps;
                 boolean modified = wcContext.isPropsModified(entryPath);
                 if (modified) {
                     propDiff = computePropsDiff(baseProps, wcContext.getActualProps(entryPath));
@@ -262,13 +273,13 @@ public class SVNDiffEditor17 implements ISVNUpdateEditor {
                 }
             }
         } else {
-            baseProps = wcContext.getPristineProps(entryPath);
+            baseProps = pristineProps;
         }
-        boolean isAdded = schedule.schedule == SVNWCContext.SVNWCSchedule.add;
+        boolean isAdded = newSchedule != null && schedule.schedule == SVNWCContext.SVNWCSchedule.add;
         if ((schedule.schedule == SVNWCContext.SVNWCSchedule.delete || schedule.schedule == SVNWCContext.SVNWCSchedule.replace)) {
-            String mimeType = wcContext.getPristineProps(entryPath).getStringValue(SVNProperty.MIME_TYPE);
+            String mimeType = pristineProps.getStringValue(SVNProperty.MIME_TYPE);
             getDiffCallback().fileDeleted(getDiffCallbackResult(), entryPath, pristineFile, null, mimeType, null,
-                    wcContext.getPristineProps(entryPath));
+                    pristineProps);
             isAdded = schedule.schedule == SVNWCContext.SVNWCSchedule.replace;
         }
         if (isAdded) {
@@ -282,17 +293,17 @@ public class SVNDiffEditor17 implements ISVNUpdateEditor {
                 originalProperties = new SVNProperties();
                 revision = 0;
             } else {
-                originalProperties = wcContext.getPristineProps(entryPath);
+                originalProperties = pristineProps;
             }
             getDiffCallback().fileAdded(getDiffCallbackResult(), entryPath, null, tmpFile, 0, revision, mimeType, null, null, -1, propDiff, originalProperties);
-        } else if (schedule.schedule == SVNWCContext.SVNWCSchedule.normal) {
+        } else if (newSchedule == null || schedule.schedule == SVNWCContext.SVNWCSchedule.normal) {
             boolean modified = wcContext.isTextModified(entryPath, false);
             File tmpFile = null;
             if (modified) {
                 tmpFile = detranslateFile(entryPath);
             }
             if (modified || (propDiff != null && !propDiff.isEmpty())) {
-                String baseMimeType = wcContext.getPristineProps(entryPath).getStringValue(SVNProperty.MIME_TYPE);
+                String baseMimeType = pristineProps.getStringValue(SVNProperty.MIME_TYPE);
                 String mimeType = wcContext.getActualProps(entryPath).getStringValue(SVNProperty.MIME_TYPE);
                 final ISVNWCDb.WCDbInfo wcDbInfo = wcContext.getDb().readInfo(entryPath, ISVNWCDb.WCDbInfo.InfoField.revision);
 

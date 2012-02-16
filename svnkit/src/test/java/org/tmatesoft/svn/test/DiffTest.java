@@ -220,6 +220,45 @@ public class DiffTest {
         }
     }
 
+    @Test
+    public void testDiffReplacedFile() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testDiffReplacedFile", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("fileToReplace");
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, SVNRevision.HEAD.getNumber());
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+
+            final File fileToReplace = new File(workingCopyDirectory, "fileToReplace");
+            workingCopy.delete(fileToReplace);
+            //noinspection ResultOfMethodCallIgnored
+            fileToReplace.createNewFile();
+            workingCopy.add(fileToReplace);
+
+            final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            final SvnDiff diff = svnOperationFactory.createDiff();
+            diff.setTargets(SvnTarget.fromFile(workingCopyDirectory, SVNRevision.BASE), SvnTarget.fromFile(workingCopyDirectory, SVNRevision.WORKING));
+            diff.setOutput(byteArrayOutputStream);
+            diff.run();
+
+            String actualDiffOutput = new String(byteArrayOutputStream.toByteArray());
+            final String expectedDiffOutput = "Index: " + fileToReplace.getPath() + "\n" +
+                             "===================================================================\n";
+            Assert.assertEquals(expectedDiffOutput, actualDiffOutput);
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
     private String runDiff(SvnOperationFactory svnOperationFactory, SVNURL fileUrl, SVNRevision startRevision, SVNRevision endRevision) throws SVNException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
