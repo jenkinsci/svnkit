@@ -115,15 +115,16 @@ public class SvnNgAdd extends SvnNgOperationRunner<Void, SvnScheduleForAddition>
             } else if (kind == SVNNodeKind.FILE) {
                 addFile(path);
             } else if (kind == SVNNodeKind.NONE) {
+                ConflictInfo conflictInfo = null;
                 try {
-                    ConflictInfo conflictInfo = getWcContext().getConflicted(path, false, false, true);
-                    if (conflictInfo != null && conflictInfo.treeConflict != null)  {
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_FOUND_CONFLICT, 
-                                "''{0}'' is an existing item in conflict; please mark the conflict as resolved before adding a new item here", 
-                                path);
-                        SVNErrorManager.error(err, SVNLogType.WC);
-                    }
+                    conflictInfo = getWcContext().getConflicted(path, false, false, true);
                 } catch (SVNException e) {                    
+                }
+                if (conflictInfo != null && conflictInfo.treeConflicted)  {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_FOUND_CONFLICT, 
+                            "''{0}'' is an existing item in conflict; please mark the conflict as resolved before adding a new item here", 
+                            path);
+                    SVNErrorManager.error(err, SVNLogType.WC);
                 }
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, 
                         "''{0}'' not found", path);
