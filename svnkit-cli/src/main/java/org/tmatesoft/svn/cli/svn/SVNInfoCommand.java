@@ -199,16 +199,24 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
                 buffer.append("Checksum: " + info.getChecksum() + "\n");
             }
             if (info.getConflictOldFile() != null) {
-                buffer.append("Conflict Previous Base File: " + info.getConflictOldFile().getName() + "\n");
+                String cpath = getSVNEnvironment().getRelativePath(info.getConflictOldFile());
+                cpath = SVNCommandUtil.getLocalPath(cpath);
+                buffer.append("Conflict Previous Base File: " + cpath + "\n");
             }
             if (info.getConflictWrkFile() != null) {
-                buffer.append("Conflict Previous Working File: " + info.getConflictWrkFile().getName() + "\n");
+                String cpath = getSVNEnvironment().getRelativePath(info.getConflictWrkFile());
+                cpath = SVNCommandUtil.getLocalPath(cpath);
+                buffer.append("Conflict Previous Working File: " + cpath + "\n");
             }
             if (info.getConflictNewFile() != null) {
-                buffer.append("Conflict Current Base File: " + info.getConflictNewFile().getName() + "\n");
+                String cpath = getSVNEnvironment().getRelativePath(info.getConflictNewFile());
+                cpath = SVNCommandUtil.getLocalPath(cpath);
+                buffer.append("Conflict Current Base File: " + cpath + "\n");
             }
             if (info.getPropConflictFile() != null) {
-                buffer.append("Conflict Properties File: " + info.getPropConflictFile().getName() + "\n");
+                String cpath = getSVNEnvironment().getRelativePath(info.getPropConflictFile());
+                cpath = SVNCommandUtil.getLocalPath(cpath);
+                buffer.append("Conflict Properties File: " + cpath + "\n");
             }
         }
         if (info.getLock() != null) {
