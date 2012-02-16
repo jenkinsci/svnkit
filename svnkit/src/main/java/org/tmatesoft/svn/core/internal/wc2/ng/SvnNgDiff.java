@@ -288,7 +288,17 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
         final String target = isRoot ? null : SVNFileUtil.getFileName(path2);
         final File pathForUrl = isRoot ? path2 : SVNFileUtil.getParentFile(path2);
 
-        long revNumber = getRepositoryAccess().getRevisionNumber(null, SvnTarget.fromFile(path1), revision1, null).lng(SvnRepositoryAccess.RevisionsPair.revNumber);
+        long revNumber = 0;
+        try {
+            revNumber = getRepositoryAccess().getRevisionNumber(null, SvnTarget.fromFile(path1), revision1, null).lng(SvnRepositoryAccess.RevisionsPair.revNumber);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.CLIENT_BAD_REVISION) {
+                revNumber = 0;
+            } else {
+                throw e;
+            }
+        }
+
         ISvnDiffCallback callback = new SvnDiffCallback(generator, revNumber, -1, getOperation().getOutput());
         SVNDiffEditor17 editor = new SVNDiffEditor17(getWcContext(), pathForUrl, getOperation().getDepth(), revision2 == SVNRevision.BASE || revision2 == SVNRevision.COMMITTED,
                 false, callback, !getOperation().isIgnoreAncestry(), getOperation().getApplicableChangelists(), false, getOperation().isShowCopiesAsAdds());
