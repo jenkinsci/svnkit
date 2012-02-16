@@ -110,4 +110,9 @@ public class SvnGetStatus extends SvnReceivingOperation<SvnStatus> {
     public long getRemoteRevision() {
         return this.remoteRevision;
     }
+
+    @Override
+    public boolean isUseParentWcFormat() {
+        return true;
+    }
 }

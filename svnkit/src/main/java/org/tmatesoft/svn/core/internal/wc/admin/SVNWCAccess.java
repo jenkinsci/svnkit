@@ -590,7 +590,8 @@ public class SVNWCAccess implements ISVNEventHandler {
                     parentArea = open(parent, false, 0);
                     closeParentArea = true;
                 } catch (SVNException internal) {
-                    if (internal.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
+                    if (internal.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY
+                            || internal.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
                         return null;
                     }
                     e = internal;
