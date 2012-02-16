@@ -173,7 +173,7 @@ public class SvnWcDbExternals extends SvnWcDbShared {
         }
     }
     
-    private static void removeExternalNode(SVNWCContext context, File wriAbsPath, File localAbsPath, SVNSkel workItems) throws SVNException {
+    private static void removeExternalNode(SVNWCContext context, File localAbsPath, File wriAbsPath, SVNSkel workItems) throws SVNException {
         if (wriAbsPath == null) {
             wriAbsPath = SVNFileUtil.getParentFile(localAbsPath);
         }
