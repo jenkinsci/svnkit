@@ -27,6 +27,10 @@ public class SvnNgRelocate extends SvnNgOperationRunner<SVNURL, SvnRelocate> imp
 
     @Override
     protected SVNURL run(SVNWCContext context) throws SVNException {
+        if (getOperation().getFromUrl() == null) {
+            SVNURL fromURL = context.getNodeUrl(getFirstTarget());
+            getOperation().setFromUrl(fromURL);
+        }
         if (getOperation().isIgnoreExternals()) {
             SvnWcDbRelocate.relocate(context, getFirstTarget(), getOperation().getFromUrl(), getOperation().getToUrl(), this);
             return getOperation().getToUrl();
@@ -35,7 +39,7 @@ public class SvnNgRelocate extends SvnNgOperationRunner<SVNURL, SvnRelocate> imp
         SVNURL oldReposRootUrl = context.getNodeReposInfo(getFirstTarget()).reposRootUrl;
         
         SvnWcDbRelocate.relocate(context, getFirstTarget(), getOperation().getFromUrl(), getOperation().getToUrl(), this);
-
+        
         SVNURL newReposRootUrl = context.getNodeReposInfo(getFirstTarget()).reposRootUrl;
         SVNExternalsStore externalsStore = new SVNExternalsStore();        
         context.getDb().gatherExternalDefinitions(getFirstTarget(), externalsStore);
