@@ -322,14 +322,21 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
         if (path2 != null) {
             basePath = path2;
         }
+
+        url1 = getRepositoryAccess().getTargetURL(target1);
+        url2 = getRepositoryAccess().getTargetURL(target2);
+
         if (pegRevision.isValid()) {
-            Structure<SvnRepositoryAccess.LocationsInfo> locations = getRepositoryAccess().getLocations(null, target2, pegRevision, revision1, revision2);
-            url1 = locations.get(SvnRepositoryAccess.LocationsInfo.startUrl);
-            url2 = locations.get(SvnRepositoryAccess.LocationsInfo.endUrl);
-            generator.init(url1.toString(), url2.toString());
-        } else {
-            url1 = getRepositoryAccess().getTargetURL(target1);
-            url2 = getRepositoryAccess().getTargetURL(target2);
+            try {
+                Structure<SvnRepositoryAccess.LocationsInfo> locations = getRepositoryAccess().getLocations(null, target2, pegRevision, revision1, revision2);
+                url1 = locations.get(SvnRepositoryAccess.LocationsInfo.startUrl);
+                url2 = locations.get(SvnRepositoryAccess.LocationsInfo.endUrl);
+                generator.init(url1.toString(), url2.toString());
+            } catch (SVNException e) {
+                if (e.getErrorMessage().getErrorCode() != SVNErrorCode.CLIENT_UNRELATED_RESOURCES) {
+                    throw e;
+                }
+            }
         }
         SVNRepository repository1 = getRepositoryAccess().createRepository(url1, null, true);
         SVNRepository repository2 = getRepositoryAccess().createRepository(url2, null, false);
@@ -342,16 +349,27 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
             rev2 = getRepositoryAccess().getRevisionNumber(repository2, target2, revision2, null).lng(SvnRepositoryAccess.RevisionsPair.revNumber);
             kind1 = repository1.checkPath("", rev1);
             kind2 = repository2.checkPath("", rev2);
-            if (kind1 == SVNNodeKind.NONE) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "''{0}'' was not found in the repository at revision {1}", new Object[]{
-                        url1, new Long(rev1)
-                });
-                SVNErrorManager.error(err, SVNLogType.WC);
+            if (kind1 == SVNNodeKind.NONE && kind2 == SVNNodeKind.NONE) {
+                if (url1.equals(url2)) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND,
+                            "Diff target ''{0}'' was not found in the " +
+                                    "repository at revisions ''{1}'' and ''{2}''", new Object[]{
+                            url1, new Long(rev1), new Long(rev2)
+                    });
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                } else {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND,
+                            "Diff targets ''{0}'' and ''{1}'' were not found " +
+                                    "in the repository at revisions ''{2}'' and " +
+                                    "''{3}''", new Object[]{
+                            url1, url2, new Long(rev1), new Long(rev2)
+                    });
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                }
+            } else if (kind1 == SVNNodeKind.NONE) {
+                checkDiffTargetExists(url1, rev2, rev1, repository1);
             } else if (kind2 == SVNNodeKind.NONE) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "''{0}'' was not found in the repository at revision {1}", new Object[]{
-                        url2, new Long(rev2)
-                });
-                SVNErrorManager.error(err, SVNLogType.WC);
+                checkDiffTargetExists(url2, rev1, rev2, repository2);
             }
         } finally {
             repository2.closeSession();
@@ -387,7 +405,28 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
         }
     }
 
-        private void doDiffURLWC(File path1, SVNRevision revision1, SVNRevision pegRevision, File path2, SVNRevision revision2, boolean reverse, SVNDepth depth, boolean b, OutputStream output, Collection<String> applicableChangelists, ISVNDiffGenerator generator) throws SVNException {
+    private void checkDiffTargetExists(SVNURL url1, long revision, long otherRevision, SVNRepository repository) throws SVNException {
+        SVNNodeKind kind = repository.checkPath("", revision);
+        if (kind == SVNNodeKind.NONE) {
+            if (revision == otherRevision) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND,
+                        "Diff target ''{0}'' was not found in the " +
+                                "repository at revision ''{1}''", new Object[]{
+                        url1, new Long(revision)
+                });
+                SVNErrorManager.error(err, SVNLogType.WC);
+            } else {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND,
+                        "Diff target ''{0}'' was not found in the " +
+                                "repository at revisions ''{1}'' and ''{2}''", new Object[]{
+                        url1, new Long(revision), new Long(otherRevision)
+                });
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+        }
+    }
+
+    private void doDiffURLWC(File path1, SVNRevision revision1, SVNRevision pegRevision, File path2, SVNRevision revision2, boolean reverse, SVNDepth depth, boolean b, OutputStream output, Collection<String> applicableChangelists, ISVNDiffGenerator generator) throws SVNException {
             boolean isRoot = getWcContext().getDb().isWCRoot(path2);
             final String target = isRoot ? null : SVNFileUtil.getFileName(path2);
             final File pathForUrl = isRoot ? path2 : SVNFileUtil.getParentFile(path2);
