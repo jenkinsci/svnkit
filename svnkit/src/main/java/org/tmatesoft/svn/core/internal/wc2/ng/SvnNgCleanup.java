@@ -26,7 +26,7 @@ public class SvnNgCleanup extends SvnNgOperationRunner<Void, SvnCleanup> {
         
         if (getOperation().getFirstTarget().isURL()) {
         	SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET,
-        			"'{0}' is not a local path", getOperation().getFirstTarget().getURL());
+        			"''{0}'' is not a local path", getOperation().getFirstTarget().getURL());
             SVNErrorManager.error(err, SVNLogType.WC);
         }
         
@@ -54,7 +54,7 @@ public class SvnNgCleanup extends SvnNgOperationRunner<Void, SvnCleanup> {
     	int wcFormat = wcContext.checkWC(localAbsPath);
     	if (wcFormat == 0) {
     		SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_WORKING_COPY,
-        			"'{0}' is not a working copy directory", localAbsPath);
+        			"''{0}'' is not a working copy directory", localAbsPath);
             SVNErrorManager.error(err, SVNLogType.WC);
     	}
     	if (wcFormat < SVNWCContext.WC_NG_VERSION) {
@@ -104,8 +104,4 @@ public class SvnNgCleanup extends SvnNgOperationRunner<Void, SvnCleanup> {
     	}
     	return;
     }
-    
-    
-    
-    
 }
