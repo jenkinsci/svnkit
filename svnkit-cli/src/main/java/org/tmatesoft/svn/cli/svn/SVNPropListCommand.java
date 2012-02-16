@@ -23,13 +23,16 @@ import java.util.Map;
 import org.tmatesoft.svn.cli.SVNCommandUtil;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -119,6 +122,7 @@ public class SVNPropListCommand extends SVNPropertiesCommand {
             
             Collection changeLists = getSVNEnvironment().getChangelistsCollection();
             SVNWCClient client = getSVNEnvironment().getClientManager().getWCClient();
+            SVNErrorCode errorCode = null;
             for (Iterator ts = targets.iterator(); ts.hasNext();) {
                 String targetPath = (String) ts.next();
                 SVNPath target = new SVNPath(targetPath, true);
@@ -134,6 +138,7 @@ public class SVNPropListCommand extends SVNPropertiesCommand {
                     getSVNEnvironment().handleWarning(e.getErrorMessage(), 
                             new SVNErrorCode[] {SVNErrorCode.UNVERSIONED_RESOURCE, SVNErrorCode.ENTRY_NOT_FOUND},
                             getSVNEnvironment().isQuiet());
+                    errorCode = e.getErrorMessage().getErrorCode();
                 }
                 if (!getSVNEnvironment().isXML()) {
                     printCollectedProperties(target.isURL());
@@ -144,6 +149,13 @@ public class SVNPropListCommand extends SVNPropertiesCommand {
             }
             if (getSVNEnvironment().isXML()) {
                 printXMLFooter("properties");
+            }
+            if (errorCode == SVNErrorCode.UNVERSIONED_RESOURCE) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Could not display properties of all targets because some targets don't exist");
+                SVNErrorManager.error(err, SVNLogType.CLIENT);
+            } else if (errorCode == SVNErrorCode.ENTRY_NOT_FOUND) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Could not display properties of all targets because some targets are not versioned");
+                SVNErrorManager.error(err, SVNLogType.CLIENT);
             }
         }
     }
