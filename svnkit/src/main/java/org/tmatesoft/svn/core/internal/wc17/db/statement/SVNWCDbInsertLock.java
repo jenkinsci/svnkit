@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
+import org.tmatesoft.sqljet.core.schema.SqlJetConflictAction;
 import org.tmatesoft.sqljet.core.table.ISqlJetTable;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
@@ -45,7 +46,7 @@ public class SVNWCDbInsertLock extends SVNSqlJetStatement {
         values.put(SVNWCDbSchema.LOCK__Fields.lock_comment.toString(), getBind(5));
         values.put(SVNWCDbSchema.LOCK__Fields.lock_date.toString(), getBind(6));
         try {
-            return table.insertByFieldNames(values);
+            return table.insertByFieldNamesOr(SqlJetConflictAction.REPLACE, values);
         } catch (SqlJetException e) {
             SVNSqlJetDb.createSqlJetError(e);
             return 0;
