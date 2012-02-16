@@ -37,6 +37,7 @@ import org.tmatesoft.svn.core.io.diff.SVNDeltaProcessor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
+import org.tmatesoft.svn.core.wc2.SvnChecksum;
 import org.tmatesoft.svn.util.SVNLogType;
 
 public class SVNDiffEditor17 implements ISVNUpdateEditor {
@@ -239,8 +240,13 @@ public class SVNDiffEditor17 implements ISVNUpdateEditor {
         SVNProperties propDiff = null;
         SVNProperties baseProps = null;
 
-        final ISVNWCDb.WCDbBaseInfo baseInfo = wcContext.getDb().getBaseInfo(entryPath, ISVNWCDb.WCDbBaseInfo.BaseInfoField.checksum);
-        File pristineFile = wcContext.getDb().getPristinePath(entryPath, baseInfo.checksum);
+        final File pristineFile;
+        if (schedule.schedule != SVNWCContext.SVNWCSchedule.add) {
+            final Structure<StructureFields.NodeInfo> infoStructure = wcContext.getDb().readInfo(entryPath, StructureFields.NodeInfo.checksum);
+            pristineFile = wcContext.getDb().getPristinePath(entryPath, infoStructure.<SvnChecksum>get(StructureFields.NodeInfo.checksum));
+        } else {
+            pristineFile = null;
+        }
 
         if (schedule.schedule != SVNWCContext.SVNWCSchedule.delete) {
             if (isDiffCopiedAsAdded() && schedule.copied) {
@@ -542,11 +548,12 @@ public class SVNDiffEditor17 implements ISVNUpdateEditor {
             }
             info.comparedEntries.add(child.getName());
 
-            final ISVNWCDb.WCDbBaseInfo baseInfo = wcContext.getDb().getBaseInfo(child, ISVNWCDb.WCDbBaseInfo.BaseInfoField.kind);
+            final Structure<StructureFields.NodeInfo> nodeInfoStructure = wcContext.getDb().readInfo(child, StructureFields.NodeInfo.kind);
+            final ISVNWCDb.SVNWCDbKind kind = nodeInfoStructure.get(StructureFields.NodeInfo.kind);
 
-            if (baseInfo.kind == ISVNWCDb.SVNWCDbKind.File) {
+            if (kind == ISVNWCDb.SVNWCDbKind.File) {
                 reportModifiedFile(info, child);
-            } else if (baseInfo.kind == ISVNWCDb.SVNWCDbKind.Dir) {
+            } else if (kind == ISVNWCDb.SVNWCDbKind.Dir) {
                 if (info.depth.compareTo(SVNDepth.FILES) > 0 ||
                     info.depth == SVNDepth.UNKNOWN) {
                     SVNDepth depthBelowHere = info.depth;
@@ -645,7 +652,10 @@ public class SVNDiffEditor17 implements ISVNUpdateEditor {
     }
 
     private File detranslateFile(File fullPath) throws SVNException {
-        final SVNProperties properties = wcContext.getPristineProps(fullPath);
+        SVNProperties properties = wcContext.getPristineProps(fullPath);
+        if (properties == null) {
+            properties = new SVNProperties();
+        }
 //        SVNVersionedProperties properties = dir.getProperties(name);
         String keywords = properties.getStringValue(SVNProperty.KEYWORDS);
         String eolStyle = properties.getStringValue(SVNProperty.EOL_STYLE);

@@ -184,6 +184,42 @@ public class DiffTest {
             sandbox.dispose();
         }
     }
+
+    @Test
+    public void testDiffAddedFile() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testDiffAddedFile", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, SVNRevision.HEAD.getNumber());
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+
+            final File fileToAdd = new File(workingCopyDirectory, "fileToAdd");
+            //noinspection ResultOfMethodCallIgnored
+            fileToAdd.createNewFile();
+
+            workingCopy.add(fileToAdd);
+
+            final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            final SvnDiff diff = svnOperationFactory.createDiff();
+            diff.setTargets(SvnTarget.fromFile(workingCopyDirectory, SVNRevision.BASE), SvnTarget.fromFile(workingCopyDirectory, SVNRevision.WORKING));
+            diff.setOutput(byteArrayOutputStream);
+            diff.run();
+
+            String actualDiffOutput = new String(byteArrayOutputStream.toByteArray());
+            final String expectedDiffOutput = "Index: " + fileToAdd.getPath() + "\n" +
+                             "===================================================================\n";
+            Assert.assertEquals(expectedDiffOutput, actualDiffOutput);
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
     private String runDiff(SvnOperationFactory svnOperationFactory, SVNURL fileUrl, SVNRevision startRevision, SVNRevision endRevision) throws SVNException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
