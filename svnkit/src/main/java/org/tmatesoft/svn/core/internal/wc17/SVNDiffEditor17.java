@@ -43,6 +43,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 public class SVNDiffEditor17 implements ISVNUpdateEditor {
     private long targetRevision;
     private boolean isRootOpen;
+    private File localTarget;
     private SVNDepth depth;
     private SVNDirectoryInfo currentDirectory;
     private SVNWCContext wcContext;
@@ -60,11 +61,12 @@ public class SVNDiffEditor17 implements ISVNUpdateEditor {
     private boolean diffUnversioned;
     private boolean diffCopiedAsAdded;
 
-    public SVNDiffEditor17(SVNWCContext wcContext, File workingCopyRoot, SVNDepth depth,
+    public SVNDiffEditor17(SVNWCContext wcContext, File workingCopyRoot, File localTarget, SVNDepth depth,
                            boolean compareToBase, boolean reverseDiff, ISvnDiffCallback diffCallback, boolean useAncestry,
                            Collection<String> changeLists, boolean diffUnversioned, boolean diffCopiedAsAdded) {
         this.wcContext = wcContext;
         this.workingCopyRoot = workingCopyRoot;
+        this.localTarget = localTarget;
         this.depth = depth;
         isCompareToBase = compareToBase;
         isReverseDiff = reverseDiff;
@@ -195,6 +197,10 @@ public class SVNDiffEditor17 implements ISVNUpdateEditor {
             return;
         }
 
+        if (!matchesLocalTarget(entryPath)) {
+            return;
+        }
+
         final SVNWCContext.ScheduleInternalInfo schedule = wcContext.getNodeScheduleInternal(entryPath, false, true);
         final ISVNWCDb.WCDbInfo wcDbInfo = wcContext.getDb().readInfo(entryPath, ISVNWCDb.WCDbInfo.InfoField.revision);
 
@@ -226,6 +232,10 @@ public class SVNDiffEditor17 implements ISVNUpdateEditor {
 
     private void reportModifiedFile(SVNDirectoryInfo dirInfo, File entryPath) throws SVNException {
         if (!wcContext.matchesChangelist(entryPath, changeLists)) {
+            return;
+        }
+
+        if (!matchesLocalTarget(entryPath)) {
             return;
         }
 
@@ -551,7 +561,7 @@ public class SVNDiffEditor17 implements ISVNUpdateEditor {
 
         if (wcContext.matchesChangelist(new File(getWorkingCopyRoot(), info.path), changeLists) && !info.comparedEntries.contains("")) {
             // generate prop diff for dir.
-            if (wcContext.isPropsModified(fullPath)) {
+            if (wcContext.isPropsModified(fullPath) && matchesLocalTarget(fullPath)) {
                 final SVNProperties baseProps = wcContext.getPristineProps(fullPath);
                 SVNProperties propDiff = baseProps.compareTo(wcContext.getActualProps(fullPath));
                 getDiffCallback().dirPropsChanged(getDiffCallbackResult(), new File(getWorkingCopyRoot(), info.path), info.isAdded, propDiff, baseProps);
@@ -602,6 +612,10 @@ public class SVNDiffEditor17 implements ISVNUpdateEditor {
 //            String relativePath = dir.getRelativePath(myAdminInfo.getAnchor());
 //            diffUnversioned(dir.getRoot(), dir, relativePath, anchor, processedFiles);
         }
+    }
+
+    private boolean matchesLocalTarget(File fullPath) {
+        return (localTarget == null || SVNPathUtil.isWithinBasePath(localTarget.getAbsolutePath(), fullPath.getAbsolutePath()));
     }
 
     private void diffUnversioned(File root, SVNAdminArea dir, String parentRelativePath, boolean anchor, Set processedFiles) throws SVNException {

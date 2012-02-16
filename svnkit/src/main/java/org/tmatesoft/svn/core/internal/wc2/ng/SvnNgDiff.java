@@ -212,7 +212,7 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
         SVNRepository repository = getRepositoryAccess().createRepository(anchorUrl, null, true);
         long revNumber = getRepositoryAccess().getRevisionNumber(repository, SvnTarget.fromURL(url1), revision1, null).lng(SvnRepositoryAccess.RevisionsPair.revNumber);
         ISvnDiffCallback callback = new SvnDiffCallback(generator, reverse ? -1 : revNumber, reverse ? revNumber : -1, getOperation().getOutput());
-        SVNDiffEditor17 editor = new SVNDiffEditor17(getWcContext(), pathForUrl, getOperation().getDepth(), revision2 == SVNRevision.BASE || revision2 == SVNRevision.COMMITTED,
+        SVNDiffEditor17 editor = new SVNDiffEditor17(getWcContext(), pathForUrl, null, getOperation().getDepth(), revision2 == SVNRevision.BASE || revision2 == SVNRevision.COMMITTED,
                 reverse, callback, !getOperation().isIgnoreAncestry(), getOperation().getApplicableChangelists(), false, getOperation().isShowCopiesAsAdds());
         boolean serverSupportsDepth = repository.hasCapability(SVNCapability.DEPTH);
         final SVNReporter17 reporter17 = new SVNReporter17(path2, getWcContext(), false, !serverSupportsDepth, getOperation().getDepth(), false, false, true, false, SVNDebugLog.getDefaultLog());
@@ -260,7 +260,7 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
         long revNumber = getRepositoryAccess().getRevisionNumber(repository, SvnTarget.fromFile(path1), revision1, null).lng(SvnRepositoryAccess.RevisionsPair.revNumber);
 
         ISvnDiffCallback callback = new SvnDiffCallback(generator, reverse ? -1 : revNumber, reverse ? revNumber : -1, getOperation().getOutput());
-        SVNDiffEditor17 editor = new SVNDiffEditor17(getWcContext(), pathForUrl, getOperation().getDepth(), revision2 == SVNRevision.BASE || revision2 == SVNRevision.COMMITTED,
+        SVNDiffEditor17 editor = new SVNDiffEditor17(getWcContext(), pathForUrl, null, getOperation().getDepth(), revision2 == SVNRevision.BASE || revision2 == SVNRevision.COMMITTED,
                 reverse, callback, !getOperation().isIgnoreAncestry(), getOperation().getApplicableChangelists(), false, getOperation().isShowCopiesAsAdds());
         boolean serverSupportsDepth = repository.hasCapability(SVNCapability.DEPTH);
         final SVNReporter17 reporter17 = new SVNReporter17(path2, getWcContext(), false, !serverSupportsDepth, getOperation().getDepth(), false, false, true, false, SVNDebugLog.getDefaultLog());
@@ -300,7 +300,7 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
         }
 
         ISvnDiffCallback callback = new SvnDiffCallback(generator, revNumber, -1, getOperation().getOutput());
-        SVNDiffEditor17 editor = new SVNDiffEditor17(getWcContext(), pathForUrl, getOperation().getDepth(), revision2 == SVNRevision.BASE || revision2 == SVNRevision.COMMITTED,
+        SVNDiffEditor17 editor = new SVNDiffEditor17(getWcContext(), pathForUrl, path2, getOperation().getDepth(), revision2 == SVNRevision.BASE || revision2 == SVNRevision.COMMITTED,
                 false, callback, !getOperation().isIgnoreAncestry(), getOperation().getApplicableChangelists(), false, getOperation().isShowCopiesAsAdds());
 
         try {
@@ -423,7 +423,7 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
         SVNRepository repository = getRepositoryAccess().createRepository(anchorUrl, null, true);
         long revNumber = getRepositoryAccess().getRevisionNumber(repository, SvnTarget.fromURL(url1, pegRevision), revision1, null).lng(SvnRepositoryAccess.RevisionsPair.revNumber);
         ISvnDiffCallback callback = new SvnDiffCallback(generator, reverse ? -1 : revNumber, reverse ? revNumber : -1, getOperation().getOutput());
-        SVNDiffEditor17 editor = new SVNDiffEditor17(getWcContext(), pathForUrl, getOperation().getDepth(), revision2 == SVNRevision.BASE || revision2 == SVNRevision.COMMITTED,
+        SVNDiffEditor17 editor = new SVNDiffEditor17(getWcContext(), pathForUrl, null, getOperation().getDepth(), revision2 == SVNRevision.BASE || revision2 == SVNRevision.COMMITTED,
                 reverse, callback, !getOperation().isIgnoreAncestry(), getOperation().getApplicableChangelists(), false, getOperation().isShowCopiesAsAdds());
         boolean serverSupportsDepth = repository.hasCapability(SVNCapability.DEPTH);
         final SVNReporter17 reporter17 = new SVNReporter17(path2, getWcContext(), false, !serverSupportsDepth, getOperation().getDepth(), false, false, true, false, SVNDebugLog.getDefaultLog());
