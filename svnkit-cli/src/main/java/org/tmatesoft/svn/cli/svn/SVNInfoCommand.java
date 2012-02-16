@@ -87,6 +87,7 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
             depth = SVNDepth.EMPTY;
         }
         SVNWCClient client = getSVNEnvironment().getClientManager().getWCClient();
+        boolean seenNonExistingTargets = false;
         for(int i = 0; i < targets.size(); i++) {
             String targetName = (String) targets.get(i);
             SVNPath target = new SVNPath(targetName, true);
@@ -105,14 +106,19 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
                 SVNErrorMessage err = e.getErrorMessage();
                 if (err.getErrorCode() == SVNErrorCode.UNVERSIONED_RESOURCE) {
                     getSVNEnvironment().getErr().print(SVNCommandUtil.getLocalPath(target.getTarget()) + ": (Not a versioned resource)\n\n");
-                } else {
+                }  else {
                     getSVNEnvironment().handleWarning(err, new SVNErrorCode[] {SVNErrorCode.RA_ILLEGAL_URL, SVNErrorCode.WC_PATH_NOT_FOUND}, 
                         getSVNEnvironment().isQuiet());
+                    getSVNEnvironment().getErr().println();
+                    seenNonExistingTargets = true;
                 }
             }
         }
         if (getSVNEnvironment().isXML() && !getSVNEnvironment().isIncremental()) {
             printXMLFooter("info");
+        }
+        if (seenNonExistingTargets) {
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Could not display info for all targets because some targets don't exist"), SVNLogType.CLIENT);
         }
     }
 
