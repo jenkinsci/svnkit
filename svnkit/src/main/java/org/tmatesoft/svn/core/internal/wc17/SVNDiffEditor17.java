@@ -395,8 +395,17 @@ public class SVNDiffEditor17 implements ISVNUpdateEditor {
 
     public void applyTextDelta(String path, String baseChecksum) throws SVNException {
         final File fullPath = new File(getWorkingCopyRoot(), path);
-        final SVNWCContext.ScheduleInternalInfo schedule = wcContext.getNodeScheduleInternal(fullPath, false, true);
-        if (schedule.copied) {
+        SVNWCContext.ScheduleInternalInfo schedule;
+        try {
+            schedule = wcContext.getNodeScheduleInternal(fullPath, false, true);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND) {
+                schedule = null;
+            } else {
+                throw e;
+            }
+        }
+        if (schedule != null && schedule.copied) {
             currentFile.isAdded = false;
         }
         if (!currentFile.isAdded) {
@@ -416,7 +425,7 @@ public class SVNDiffEditor17 implements ISVNUpdateEditor {
     }
 
     public void closeFile(String commitPath, String textChecksum) throws SVNException {
-        final File fullPath = new File(workingCopyRoot, currentFile.path);
+        final File fullPath = new File(workingCopyRoot, commitPath);
         SVNProperties baseProperties = null;
         if (!currentFile.isAdded) {
             baseProperties = wcContext.getDb().getBaseProps(fullPath);
@@ -433,9 +442,18 @@ public class SVNDiffEditor17 implements ISVNUpdateEditor {
             reposFile = wcContext.getDb().getPristinePath(fullPath, baseInfo.checksum);
         }
 
-        final SVNWCContext.ScheduleInternalInfo schedule = wcContext.getNodeScheduleInternal(fullPath, true, false);
+        SVNWCContext.ScheduleInternalInfo schedule;
+        try {
+            schedule = wcContext.getNodeScheduleInternal(fullPath, true, false);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.ENTRY_NOT_FOUND || e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND) {
+                schedule = null;
+            } else {
+                throw e;
+            }
+        }
 
-        if (currentFile.isAdded || (!isCompareToBase && schedule.schedule == SVNWCContext.SVNWCSchedule.delete)) {
+        if (currentFile.isAdded || (!isCompareToBase && schedule != null && schedule.schedule == SVNWCContext.SVNWCSchedule.delete)) {
             if (isReverseDiff) {
                 getDiffCallback().fileAdded(getDiffCallbackResult(), new File(getWorkingCopyRoot(), commitPath), null, reposFile, -1, targetRevision, reposMimeType, null, null, -1,
                         currentFile.propertyDiff, null);
