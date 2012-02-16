@@ -191,6 +191,10 @@ public class SVNLogEntryPath implements Serializable {
     protected void setCopyPath(String path) {
         myCopyPath = path;
     }
+
+    protected void setNodeKind(SVNNodeKind nodeKind) {
+        myNodeKind = nodeKind;
+    }
     
     /**
      * Calculates and returns a hash code for this object.
