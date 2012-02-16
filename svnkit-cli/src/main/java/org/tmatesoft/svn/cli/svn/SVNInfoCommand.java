@@ -137,6 +137,9 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
         if (info.getKind() != SVNNodeKind.DIR) {
             buffer.append("Name: " + SVNPathUtil.tail(path.replace(File.separatorChar, '/')) + "\n");
         }
+        if (info.getWorkingCopyRoot() != null) {
+            buffer.append("Working Copy Root Path: " + SVNPathUtil.validateFilePath(info.getWorkingCopyRoot().getAbsolutePath())+ "\n");
+        }
         buffer.append("URL: " + info.getURL() + "\n");
         if (info.getRepositoryRootURL() != null) {
             buffer.append("Repository Root: " + info.getRepositoryRootURL() + "\n");
@@ -275,6 +278,9 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
         }   
         if (info.getFile() != null) {
             buffer = openXMLTag("wc-info", SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
+            if (info.getWorkingCopyRoot() != null) {
+                buffer = openCDataTag("wcroot-abspath", SVNPathUtil.validateFilePath(info.getWorkingCopyRoot().getAbsolutePath()), buffer);
+            }
             String schedule = info.getSchedule();
             if (schedule == null || "".equals(schedule)) {
                 schedule = "normal";

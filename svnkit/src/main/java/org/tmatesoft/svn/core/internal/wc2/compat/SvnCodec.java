@@ -516,7 +516,7 @@ public class SvnCodec {
         }
         
         String schedule = wcInfo.getSchedule() != null ? wcInfo.getSchedule().asString() : null;
-        return new SVNInfo(wcInfo.getPath(), 
+        SVNInfo i = new SVNInfo(wcInfo.getPath(), 
                 info.getUrl(), 
                 info.getRepositoryRootUrl(), 
                 info.getRevision(), 
@@ -540,6 +540,8 @@ public class SvnCodec {
                 wcInfo.getChangelist(), 
                 wcInfo.getRecordedSize(), 
                 treeConflict);
+        i.setWorkingCopyRoot(wcInfo.getWcRoot());
+        return i;
     }
     
     public static ISvnFileListHook fileListHook(final ISVNStatusFileProvider provider) {

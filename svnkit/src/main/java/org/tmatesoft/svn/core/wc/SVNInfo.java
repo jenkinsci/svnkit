@@ -103,6 +103,8 @@ public class SVNInfo {
     private long myRepositorySize;
     private SVNTreeConflictDescription myTreeConflict;
     
+    private File myWorkingCopyRoot;
+    
     public static SVNInfo createInfo(File file, SVNEntry entry) throws SVNException {
         if (entry == null) {
             return null;
@@ -530,6 +532,14 @@ public class SVNInfo {
      */
     public long getRepositorySize() {
         return myRepositorySize;
+    }
+    
+    public File getWorkingCopyRoot() {
+        return myWorkingCopyRoot;
+    }
+    
+    public void setWorkingCopyRoot(File root) {
+        myWorkingCopyRoot = root;
     }
 
 }
