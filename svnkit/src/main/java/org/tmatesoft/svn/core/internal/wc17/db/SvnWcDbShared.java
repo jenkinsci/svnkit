@@ -585,8 +585,8 @@ public class SvnWcDbShared {
                 if (isColumnNull(stmtActual, SVNWCDbSchema.ACTUAL_NODE__Fields.tree_conflict_data)) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "Corrupt data for ''{0}''", wcRoot.getAbsPath(localRelPath));
                     SVNErrorManager.error(err, SVNLogType.WC);
-                }    
-                assert (info.hasField(NodeInfo.conflicted));    
+                }
+                info.set(NodeInfo.conflicted, true);
                 if (info.hasField(NodeInfo.opRoot)) {
                     info.set(NodeInfo.opRoot, false);
                 }
