@@ -160,7 +160,6 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
                     } else {
                         throw e;
                     }
-                    
                 }
             }
 		}
@@ -845,31 +844,24 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 	 * children must have been upgraded to wc-ng format.
 	 */
 
-	private SVNHashSet getVesionedFiles(File parentRelPath, SVNSqlJetDb sDb,
-			long wcId) throws SVNException {
+	private SVNHashSet getVesionedFiles(File parentRelPath, SVNSqlJetDb sDb, long wcId) throws SVNException {
 		SVNHashSet children = new SVNHashSet();
 
 		/* ### just select 'file' children. do we need 'symlink' in the future? */
-		SVNSqlJetStatement stmt = sDb
-				.getStatement(SVNWCDbStatements.SELECT_ALL_FILES);
+		SVNSqlJetStatement stmt = sDb.getStatement(SVNWCDbStatements.SELECT_ALL_FILES);
 		try {
 			stmt.bindLong(1, wcId);
 			stmt.bindString(2, SVNFileUtil.getFilePath(parentRelPath));
 
 			/*
-			 * ### 10 is based on Subversion's average of 8.5 files per
-			 * versioned directory in its repository. maybe use a different
+			 * ### 10 is based on Subversion's average of 8.5 files per versioned directory in its repository. maybe use a different
 			 * value? or ### count rows first?
 			 */
 
-			boolean haveRow = stmt.next();
-			while (haveRow) {
-				File localRelPath = SVNFileUtil
-						.createFilePath(stmt
-								.getColumnString(SVNWCDbSchema.NODES__Fields.local_relpath));
+			while (stmt.next()) {
+				File localRelPath = SVNFileUtil.createFilePath(stmt.getColumnString(SVNWCDbSchema.NODES__Fields.local_relpath));
 				if (!children.contains(localRelPath))
 					children.add(localRelPath);
-				haveRow = stmt.next();
 			}
 		} finally {
 			stmt.reset();
@@ -939,5 +931,5 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 				originalFormat);
 
 	}
-
+	
 }

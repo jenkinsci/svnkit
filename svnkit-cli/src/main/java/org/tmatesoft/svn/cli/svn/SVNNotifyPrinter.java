@@ -545,7 +545,7 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
 
         } else if (event.getAction() == SVNEventAction.UPGRADED_PATH) {
         	myIsChangesReceived = true;
-            buffer.append("Upgraded '" + path + "'\n");
+            buffer.append("Upgraded ''" + path + "''\n");
         }
 
         if (buffer.length() > 0) {
