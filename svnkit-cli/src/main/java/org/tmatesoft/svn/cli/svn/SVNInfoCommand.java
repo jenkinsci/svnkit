@@ -259,7 +259,7 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
         Map attrs = new LinkedHashMap();
         attrs.put("kind", info.getKind().toString());
         attrs.put("path", path);
-        attrs.put("revision", info.getRevision().toString());
+        attrs.put("revision", info.getRevision() != SVNRevision.UNDEFINED ? info.getRevision().toString() : "Resource is not under version control.");
         buffer = openXMLTag("entry", SVNXMLUtil.XML_STYLE_NORMAL, attrs, buffer);
         
         String url = info.getURL() != null ? info.getURL().toString() : null;
@@ -281,7 +281,11 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
             }
             buffer = openCDataTag("schedule", schedule, buffer);
             if (info.getDepth() != null) {
-                buffer = openCDataTag("depth", info.getDepth().getName(), buffer);
+                SVNDepth depth = info.getDepth();
+                if (depth == SVNDepth.UNKNOWN && info.getKind() == SVNNodeKind.FILE) {
+                    depth = SVNDepth.INFINITY;
+                }
+                buffer = openCDataTag("depth", depth.getName(), buffer);
             }
             if (info.getCopyFromURL() != null) {
                 buffer = openCDataTag("copy-from-url", info.getCopyFromURL().toString(), buffer);
