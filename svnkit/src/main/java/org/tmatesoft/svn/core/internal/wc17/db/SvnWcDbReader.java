@@ -296,7 +296,9 @@ public class SvnWcDbReader extends SvnWcDbShared {
             boolean matched = false;
             while(!cursor.eof()) {
                 String rowRelPath = cursor.getString(SVNWCDbSchema.NODES__Fields.local_relpath.toString());
-                if (rowRelPath.equals(parentRelPath)) {
+                boolean fileExternal = cursor.getBoolean(SVNWCDbSchema.NODES__Fields.file_external.toString());
+                if (fileExternal) {
+                } else if (rowRelPath.equals(parentRelPath)) {
                     long opDepth = cursor.getInteger(SVNWCDbSchema.NODES__Fields.op_depth.toString());
                     if (opDepth == 0) {
                         parents.put(rowRelPath, cursor.getString(SVNWCDbSchema.NODES__Fields.repos_path.toString()));
