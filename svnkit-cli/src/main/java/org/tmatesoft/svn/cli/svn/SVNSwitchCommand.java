@@ -97,6 +97,12 @@ public class SVNSwitchCommand extends SVNCommand {
                 getSVNEnvironment().getStartRevision(), depth, 
                 getSVNEnvironment().isForce(), depthIsSticky, ignoreAncestry);    
 
+        if (!getSVNEnvironment().isQuiet()) {
+            StringBuffer status = new StringBuffer();
+            printer.printConflictStatus(status);
+            getSVNEnvironment().getOut().print(status);
+        }
+
         if (printer.hasExternalErrors()) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ERROR_PROCESSING_EXTERNALS, 
                     "Failure occurred processing one or more externals definitions"), SVNLogType.CLIENT);

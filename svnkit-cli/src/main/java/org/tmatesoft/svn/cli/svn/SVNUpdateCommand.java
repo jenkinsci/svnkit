@@ -109,19 +109,39 @@ public class SVNUpdateCommand extends SVNCommand {
             String targetName = (String) ts.next();
             SVNPath target = new SVNPath(targetName);
             if (!target.isFile()) {
-                // skip it.
                 getSVNEnvironment().getOut().println("Skipped '" + targetName + "'");
                 continue;
             }
             files.add(target.getFile());
         }
         File[] filesArray = (File[]) files.toArray(new File[files.size()]);
-        client.doUpdate(filesArray, getSVNEnvironment().getStartRevision(), depth, 
+        long[] results = client.doUpdate(filesArray, getSVNEnvironment().getStartRevision(), depth, 
                 getSVNEnvironment().isForce(), depthIsSticky, getSVNEnvironment().isParents());
 
+        if (!getSVNEnvironment().isQuiet()) {
+            StringBuffer status = new StringBuffer();
+            printUpdateSummary(filesArray, results, status);
+            printer.printConflictStatus(status);
+            getSVNEnvironment().getOut().print(status);
+        }
+        
         if (printer.hasExternalErrors()) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ERROR_PROCESSING_EXTERNALS, 
                 "Failure occurred processing one or more externals definitions"), SVNLogType.CLIENT);
+        }
+    }
+
+    private void printUpdateSummary(File[] targets, long[] results, StringBuffer status) {
+        if (targets == null || targets.length < 2 || results == null || results.length < 2) {
+            return;
+        }
+        status.append("Summary of updates:\n");
+        for (int i = 0; i < targets.length; i++) {
+            long rev = i < results.length ? results[i] : -1;
+            if (rev < 0) {
+                continue;
+            }
+            status.append("  Updated '" + getSVNEnvironment().getRelativePath(targets[i]) + "' to r" + rev + ".\n");
         }
     } 
 
