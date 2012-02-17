@@ -88,7 +88,11 @@ public class SVNBase64 {
      *             if <tt>s</tt> is not a valid SVNBase64 string.
      */
     public static int base64ToByteArray(StringBuffer s, byte[] buffer) {
+      try {
         return base64ToByteArray(s, buffer, false);
+      } catch (ArrayIndexOutOfBoundsException e) {
+        throw new IllegalArgumentException("Invalid SVNBase64 string: " + s.toString(), e);
+      }
     }
     
     public static StringBuffer normalizeBase64(StringBuffer in) {

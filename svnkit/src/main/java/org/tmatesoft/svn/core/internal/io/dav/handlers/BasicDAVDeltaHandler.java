@@ -92,9 +92,11 @@ public abstract class BasicDAVDeltaHandler extends BasicDAVHandler {
                 index--;
             }
             byte[] buffer = allocateBuffer(toDecode.length());
-            int decodedLength = SVNBase64.base64ToByteArray(toDecode, buffer);
             try {
+                int decodedLength = SVNBase64.base64ToByteArray(toDecode, buffer);
                 myDeltaReader.nextWindow(buffer, 0, decodedLength, getCurrentPath(), getDeltaConsumer());
+            } catch (IllegalArgumentException e) {
+                throw new SAXException(e);
             } catch (SVNException e) {
                 throw new SAXException(e);
             }
