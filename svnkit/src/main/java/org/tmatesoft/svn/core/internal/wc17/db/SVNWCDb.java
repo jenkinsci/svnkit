@@ -4182,6 +4182,11 @@ public class SVNWCDb implements ISVNWCDb {
                     SVNErrorManager.error(err, SVNLogType.WC);
                 }
             }
+            WCDbWorkQueueInfo wq = fetchWorkQueue(pdh.getWCRoot().getAbsPath());
+            if (wq != null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LOCKED, "There are unfinished work items in ''{0}''; run ''svn cleanup'' first.", pdh.getWCRoot().getAbsPath());
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
         }
         baton.stealLock = stealLock;
         baton.levelsToLock = levelsToLock;
