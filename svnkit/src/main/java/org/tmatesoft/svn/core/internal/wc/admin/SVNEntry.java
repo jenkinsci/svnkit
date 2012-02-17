@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.wc.admin;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
@@ -26,6 +27,7 @@ import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNTreeConflictUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 
 /**
  * @version 1.3
@@ -461,7 +463,7 @@ public abstract class SVNEntry {
         return treeConflictData;
     }
 
-    public abstract Map getTreeConflicts() throws SVNException;
+    public abstract Map<File, SVNTreeConflictDescription> getTreeConflicts() throws SVNException;
 
     public void setTreeConflictData(String conflictData) {
         treeConflictData = conflictData;

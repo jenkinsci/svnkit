@@ -1,10 +1,10 @@
 package org.tmatesoft.svn.core.internal.wc2.old;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import org.tmatesoft.svn.core.internal.wc2.old.SvnOldUpgrade.TextBaseInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -16,9 +16,7 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNConflictVersion;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNTreeConflictUtil;
@@ -26,12 +24,12 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbLock;
-import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbUpgradeData;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbUpgradeData;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
-import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.internal.wc2.old.SvnOldUpgrade.TextBaseInfo;
 import org.tmatesoft.svn.core.wc.SVNConflictReason;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.core.wc2.SvnChecksum;
@@ -40,9 +38,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 public class SvnOldUpgradeEntries {
 	
-	
-    
-    public static WriteBaton writeUpgradedEntries(WriteBaton parentNode, SVNWCDb db,  SVNWCDbUpgradeData upgradeData, File dirAbsPath, 
+	public static WriteBaton writeUpgradedEntries(WriteBaton parentNode, SVNWCDb db,  SVNWCDbUpgradeData upgradeData, File dirAbsPath, 
 			Map<String, SVNEntry> entries, SVNHashMap textBases) throws SVNException {
 		WriteBaton dirNode = new WriteBaton();
 		
@@ -122,7 +118,7 @@ public class SvnOldUpgradeEntries {
 		DbNode base;
 		DbNode work;
 		DbNode belowWork;
-		SVNHashMap treeConflicts;
+		Map<String, String> treeConflicts;
 	};
 	
 	/* Write the information for ENTRY to WC_DB.  The WC_ID, REPOS_ID and REPOS_ROOT will all be used for writing ENTRY.
@@ -257,7 +253,7 @@ public class SvnOldUpgradeEntries {
 		} else if (entry.isAbsent()) {
 			assert(baseNode != null && workingNode == null && belowWorkingNode == null);
 			assert(!entry.isIncomplete());
-			baseNode.presence = SVNWCDbStatus.Excluded;
+			baseNode.presence = SVNWCDbStatus.ServerExcluded;
 		}
 		
 		if (entry.isCopied()) {
@@ -311,16 +307,16 @@ public class SvnOldUpgradeEntries {
 			actualNode.changelist = entry.getChangelistName();
 		}
 		
-		SVNHashMap treeConflicts = null;
+		Map<String, String> treeConflicts = null;
 		/* ### set the text_mod value? */
 		if (isCalculateEntryNode && entry.getTreeConflictData() != null) {
 			/* Issues #3840/#3916: 1.6 stores multiple tree conflicts on the parent node, 1.7 stores them directly on the conflited nodes.
 	         So "((skel1) (skel2))" becomes "(skel1)" and "(skel2)" */
 			
-			treeConflicts = new SVNHashMap();
-			Map tcs = entry.getTreeConflicts();
-	        for (Iterator keys = tcs.keySet().iterator(); keys.hasNext();) {
-	            File entryPath = (File) keys.next();
+			treeConflicts = new HashMap<String,String>();
+			Map<File, SVNTreeConflictDescription> tcs = entry.getTreeConflicts();
+	        for (Iterator<File> keys = tcs.keySet().iterator(); keys.hasNext();) {
+	            File entryPath = keys.next();
 	            SVNTreeConflictDescription conflict = (SVNTreeConflictDescription) tcs.get(entryPath);
 				assert(conflict.isTreeConflict());
 				/* Fix dubious data stored by old clients, local adds don't have a repository URL. */
@@ -679,14 +675,14 @@ public class SvnOldUpgradeEntries {
 		stmt.done();
 	}
 	
-	private static void writeActualOnlyEntries(SVNHashMap treeConflicts, SVNSqlJetDb sDb, long wcId, String dirRelPath) throws SVNException {
+	private static void writeActualOnlyEntries(Map<String, String> treeConflicts, SVNSqlJetDb sDb, long wcId, String dirRelPath) throws SVNException {
 		for (Iterator<String> items = treeConflicts.keySet().iterator(); items.hasNext();) {
 			String path = items.next();
 			DbActualNode actualNode = new DbActualNode();
 			actualNode.wcId = wcId;
 			actualNode.localRelPath = path;
 			actualNode.parentRelPath = dirRelPath;
-			actualNode.treeConflictData = (String)treeConflicts.get(path);
+			actualNode.treeConflictData = treeConflicts.get(path);
 			insertActualNode(sDb, actualNode);
 		}
 	}
