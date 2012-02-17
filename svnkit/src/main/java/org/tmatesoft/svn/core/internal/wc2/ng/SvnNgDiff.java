@@ -195,9 +195,6 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
         if (pegRevision.isValid()) {
             final Structure<SvnRepositoryAccess.LocationsInfo> locations = getRepositoryAccess().getLocations(null, SvnTarget.fromURL(url1), pegRevision, revision1, revision2);
             final SVNURL startUrl = locations.get(SvnRepositoryAccess.LocationsInfo.startUrl);
-            final SVNURL endUrl = locations.get(SvnRepositoryAccess.LocationsInfo.endUrl);
-            final long startRevision = locations.lng(SvnRepositoryAccess.LocationsInfo.startRevision);
-            final long endRevision = locations.lng(SvnRepositoryAccess.LocationsInfo.endRevision);
 
             url1 = startUrl;
             String anchorPath2 = SVNPathUtil.append(anchorUrl.toString(), target == null ? "" : target);
@@ -243,9 +240,6 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
         if (pegRevision.isValid()) {
             final Structure<SvnRepositoryAccess.LocationsInfo> locations = getRepositoryAccess().getLocations(null, SvnTarget.fromFile(path1), pegRevision, revision1, revision2);
             final SVNURL startUrl = locations.get(SvnRepositoryAccess.LocationsInfo.startUrl);
-            final SVNURL endUrl = locations.get(SvnRepositoryAccess.LocationsInfo.endUrl);
-            final long startRevision = locations.lng(SvnRepositoryAccess.LocationsInfo.startRevision);
-            final long endRevision = locations.lng(SvnRepositoryAccess.LocationsInfo.endRevision);
 
             url1 = startUrl;
             String anchorPath2 = SVNPathUtil.append(anchorUrl.toString(), target == null ? "" : target);
@@ -439,9 +433,6 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
             if (pegRevision.isValid()) {
                 final Structure<SvnRepositoryAccess.LocationsInfo> locations = getRepositoryAccess().getLocations(null, SvnTarget.fromFile(path1), pegRevision, revision1, revision2);
                 final SVNURL startUrl = locations.get(SvnRepositoryAccess.LocationsInfo.startUrl);
-                final SVNURL endUrl = locations.get(SvnRepositoryAccess.LocationsInfo.endUrl);
-                final long startRevision = locations.lng(SvnRepositoryAccess.LocationsInfo.startRevision);
-                final long endRevision = locations.lng(SvnRepositoryAccess.LocationsInfo.endRevision);
 
                 url1 = startUrl;
                 String anchorPath2 = SVNPathUtil.append(anchorUrl.toString(), target == null ? "" : target);
