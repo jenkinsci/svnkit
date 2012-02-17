@@ -347,7 +347,7 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
     public void handleError(SVNErrorMessage err) {
         Collection codes = new SVNHashSet();
         int count = 0;
-        while(err != null && count < 2) {
+        while(err != null && count < 3) {
             SVNErrorCode errorCode = err.getErrorCode();
             if ("".equals(err.getMessageTemplate()) && codes.contains(errorCode)) {
                 err = err.hasChildErrorMessage() ? err.getChildErrorMessage() : null;

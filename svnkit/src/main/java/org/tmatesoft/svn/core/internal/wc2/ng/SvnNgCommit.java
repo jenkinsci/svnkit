@@ -171,7 +171,7 @@ public class SvnNgCommit extends SvnNgOperationRunner<SVNCommitInfo, SvnCommit> 
                 info = new SVNCommitInfo(-1, null, null, err);
                 handleEvent(SVNEventFactory.createErrorEvent(err, SVNEventAction.COMMIT_COMPLETED), ISVNEventHandler.UNKNOWN);
                 if (packet.getRepositoryRoots().size() == 1) {
-                    SVNErrorManager.error(err, e, SVNLogType.WC);
+                    SVNErrorManager.error(err, SVNLogType.WC);
                 }
             } finally {
                 if (commitEditor != null) {
