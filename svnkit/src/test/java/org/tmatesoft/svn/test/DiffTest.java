@@ -3,10 +3,12 @@ package org.tmatesoft.svn.test;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 
-import junit.framework.Assert;
+import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnDiff;
@@ -257,6 +259,61 @@ public class DiffTest {
             svnOperationFactory.dispose();
             sandbox.dispose();
         }
+    }
+
+    @Ignore("Temporarily ignored")
+    @Test
+    public void testPropertiesChangedOnlyHeaderIsPrinted() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testPropertiesChangedOnlyHeaderIsPrinted", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("file");
+            commitBuilder.addDirectory("directory");
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, SVNRevision.HEAD.getNumber());
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+
+            final File file = new File(workingCopyDirectory, "file");
+            final File directory = new File(workingCopyDirectory, "directory");
+
+            workingCopy.setProperty(file, "fileProperty", SVNPropertyValue.create("filePropertyValue"));
+            workingCopy.setProperty(directory, "directoryProperty", SVNPropertyValue.create("directoryPropertyValue"));
+
+            final String fileDiffHeader = "Index: file\n" +
+                    "===================================================================\n" +
+                    "--- file\t(revision 1)\n" +
+                    "+++ file\t(working copy)\n";
+            final String directoryDiffHeader = "Index: directory\n" +
+                    "===================================================================\n" +
+                    "--- directory\t(revision 1)\n" +
+                    "+++ directory\t(working copy)\n";
+
+            final String actualFileDiffOutput = runLocalDiff(svnOperationFactory, file, workingCopyDirectory);
+            final String actualDirectoryDiffOutput = runLocalDiff(svnOperationFactory, directory, workingCopyDirectory);
+
+            Assert.assertTrue(actualFileDiffOutput.startsWith(fileDiffHeader));
+            Assert.assertTrue(actualDirectoryDiffOutput.startsWith(directoryDiffHeader));
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    private String runLocalDiff(SvnOperationFactory svnOperationFactory, File target, File relativeToDirectory) throws SVNException {
+        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+
+        final SvnDiff diff = svnOperationFactory.createDiff();
+        diff.setTargets(SvnTarget.fromFile(target, SVNRevision.BASE), SvnTarget.fromFile(target, SVNRevision.WORKING));
+        diff.setOutput(byteArrayOutputStream);
+        diff.setRelativeToDirectory(relativeToDirectory);
+        diff.run();
+        return new String(byteArrayOutputStream.toByteArray());
     }
 
     private String runDiff(SvnOperationFactory svnOperationFactory, SVNURL fileUrl, SVNRevision startRevision, SVNRevision endRevision) throws SVNException {
