@@ -16,6 +16,7 @@ public class SvnCommit extends AbstractSvnCommit {
     private ISVNCommitParameters commitParameters;
     
     private SvnCommitPacket packet;
+    private boolean force;
 
     protected SvnCommit(SvnOperationFactory factory) {
         super(factory);
@@ -72,5 +73,13 @@ public class SvnCommit extends AbstractSvnCommit {
     @Override
     protected int getMaximumTargetsCount() {
         return Integer.MAX_VALUE;
+    }
+
+    public void setForce(boolean force) {
+        this.force = force;
+    }
+    
+    public boolean isForce() {
+        return this.force;
     }
 }
