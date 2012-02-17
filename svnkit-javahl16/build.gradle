@@ -45,6 +45,7 @@ task testJavaHL2(type: Test) {
     //does not pass on Windows: BasicTests.testBasicChangelist
     ignoreFailures = true
     workingDir = file('build/tests-working-dir')
+    enableAssertions = true
 }
 
 test.doFirst() {

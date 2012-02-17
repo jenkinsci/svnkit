@@ -127,6 +127,8 @@ def runPythonTests() {
     	if (project.hasProperty('debug')) { debug = true }
 
         workingDir = sandboxDir
+        
+        enableAssertions = true
 
         systemProperty 'sun.io.useCanonCaches', 'false'
         systemProperty 'svnkit.compatibleHash', 'true'
