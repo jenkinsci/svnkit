@@ -305,7 +305,7 @@ public class SVNDiffEditor17 implements ISVNUpdateEditor {
             } else {
                 originalProperties = pristineProps;
             }
-            getDiffCallback().fileAdded(getDiffCallbackResult(), entryPath, null, tmpFile, 0, revision, mimeType, null, null, -1, propDiff, originalProperties);
+            getDiffCallback().fileAdded(getDiffCallbackResult(), entryPath, null, tmpFile, -1, revision, mimeType, null, null, -1, propDiff, originalProperties);
         } else if (newSchedule == null || schedule.schedule == SVNWCContext.SVNWCSchedule.normal) {
             boolean modified = wcContext.isTextModified(entryPath, false);
             File tmpFile = null;
@@ -419,8 +419,8 @@ public class SVNDiffEditor17 implements ISVNUpdateEditor {
             currentFile.isAdded = false;
         }
         if (!currentFile.isAdded) {
-            final ISVNWCDb.WCDbBaseInfo baseInfo = wcContext.getDb().getBaseInfo(fullPath, ISVNWCDb.WCDbBaseInfo.BaseInfoField.checksum);
-            currentFile.pristineFile = wcContext.getDb().getPristinePath(getWorkingCopyRoot(), baseInfo.checksum);
+            SVNWCContext.PristineContentsInfo pristineContents = wcContext.getPristineContents(fullPath, false, true);
+            currentFile.pristineFile = pristineContents.path;
         }
         currentFile.file = createTempFile();
         deltaProcessor.applyTextDelta(currentFile.pristineFile, currentFile.file, false);
@@ -438,7 +438,13 @@ public class SVNDiffEditor17 implements ISVNUpdateEditor {
         final File fullPath = new File(workingCopyRoot, commitPath);
         SVNProperties baseProperties = null;
         if (!currentFile.isAdded) {
-            baseProperties = wcContext.getDb().getBaseProps(fullPath);
+            try {
+                baseProperties = wcContext.getDb().getBaseProps(fullPath);
+            } catch (SVNException e) {
+                if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND) {
+                    throw e;
+                }
+            }
         }
         if (baseProperties == null) {
             baseProperties = new SVNProperties();

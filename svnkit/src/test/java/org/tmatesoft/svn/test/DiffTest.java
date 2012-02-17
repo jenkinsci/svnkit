@@ -11,6 +11,8 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc2.SvnCopy;
+import org.tmatesoft.svn.core.wc2.SvnCopySource;
 import org.tmatesoft.svn.core.wc2.SvnDiff;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -299,6 +301,88 @@ public class DiffTest {
 
             Assert.assertTrue(actualFileDiffOutput.startsWith(fileDiffHeader));
             Assert.assertTrue(actualDirectoryDiffOutput.startsWith(directoryDiffHeader));
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testDiffLocalReplacedFile() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testDiffLocalReplacedFile", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("fileToReplace");
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, SVNRevision.HEAD.getNumber());
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+
+            final File fileToReplace = new File(workingCopyDirectory, "fileToReplace");
+            workingCopy.delete(fileToReplace);
+            //noinspection ResultOfMethodCallIgnored
+            fileToReplace.createNewFile();
+            TestUtil.writeFileContentsString(fileToReplace, "newContents");
+            workingCopy.add(fileToReplace);
+
+            final String actualDiffOutput = runLocalDiff(svnOperationFactory, fileToReplace, workingCopyDirectory);
+            final String expectedDiffOutput = "Index: " + fileToReplace.getPath() + "\n" +
+                    "===================================================================\n" +
+                    "--- " + fileToReplace.getPath() + "\t(working copy)\n" +
+                    "+++ " + fileToReplace.getPath() + "\t(working copy)\n" +
+                    "@@ -0,0 +1 @@\n" +
+                    "+newContents\n" +
+                    "\\ No newline at end of file\n";
+            Assert.assertEquals(expectedDiffOutput, actualDiffOutput);
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testDiffLocalCopiedFile() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testDiffLocalCopiedFile", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder1 = new CommitBuilder(url);
+            commitBuilder1.addFile("sourceFile");
+            commitBuilder1.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, 1);
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+
+            final File targetFile = new File(workingCopyDirectory, "targetFile");
+            final File sourceFile = new File(workingCopyDirectory, "sourceFile");
+
+            final SvnCopy copy = svnOperationFactory.createCopy();
+            copy.addCopySource(SvnCopySource.create(SvnTarget.fromFile(sourceFile), SVNRevision.WORKING));
+            copy.setSingleTarget(SvnTarget.fromFile(targetFile));
+            copy.setFailWhenDstExists(true);
+            copy.setMove(true);
+            copy.run();
+
+            final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+
+            final SvnDiff diff = svnOperationFactory.createDiff();
+            diff.setTarget(SvnTarget.fromFile(targetFile, SVNRevision.WORKING), SVNRevision.HEAD, SVNRevision.WORKING);
+            diff.setOutput(byteArrayOutputStream);
+            diff.run();
+
+            final String actualDiffOutput =  new String(byteArrayOutputStream.toByteArray());
+            final String expectedDiffOutput = "";
+
+            Assert.assertEquals(expectedDiffOutput, actualDiffOutput);
+
         } finally {
             svnOperationFactory.dispose();
             sandbox.dispose();
