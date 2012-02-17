@@ -24,8 +24,6 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
-import org.tmatesoft.svn.core.internal.wc16.SVNLogClient16;
-import org.tmatesoft.svn.core.internal.wc17.SVNLogClient17;
 import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
@@ -68,13 +66,7 @@ import org.tmatesoft.svn.core.wc2.SvnTarget;
  */
 public class SVNLogClient extends SVNBasicClient {
 
-    private SVNLogClient16 getSVNLogClient16() {
-        return (SVNLogClient16) getDelegate16();
-    }
-
-    private SVNLogClient17 getSVNLogClient17() throws SVNException {
-        return (SVNLogClient17) getDelegate17();
-    }
+    private SVNDiffOptions diffOptions;
 
     /**
      * Constructs and initializes an <b>SVNLogClient</b> object with the
@@ -101,12 +93,8 @@ public class SVNLogClient extends SVNBasicClient {
      *            a run-time configuration options driver
      */
     public SVNLogClient(ISVNAuthenticationManager authManager, ISVNOptions options) {
-        super(new SVNLogClient16(authManager, options), new SVNLogClient17(authManager, options));
+        super(authManager, options);
         setDiffOptions(null);
-        setOptions(options);
-
-        getOperationsFactory().setAuthenticationManager(authManager);
-        getOperationsFactory().setOptions(options);
     }
 
     /**
@@ -131,12 +119,8 @@ public class SVNLogClient extends SVNBasicClient {
      *            a run-time configuration options driver
      */
     public SVNLogClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
-        super(new SVNLogClient16(repositoryPool, options), new SVNLogClient17(repositoryPool, options));
+        super(repositoryPool, options);
         setDiffOptions(null);
-        setOptions(options);
-        
-        getOperationsFactory().setRepositoryPool(repositoryPool);
-        getOperationsFactory().setOptions(options);
     }
 
     /**
@@ -149,11 +133,7 @@ public class SVNLogClient extends SVNBasicClient {
         if (diffOptions == null) {
             diffOptions = new SVNDiffOptions();
         }
-        getSVNLogClient16().setDiffOptions(diffOptions);
-        try {
-            getSVNLogClient17().setDiffOptions(diffOptions);
-        } catch (SVNException e) {
-        }
+        this.diffOptions = diffOptions;
     }
 
     /**
@@ -163,7 +143,7 @@ public class SVNLogClient extends SVNBasicClient {
      * @return diff options
      */
     public SVNDiffOptions getDiffOptions() {
-        return getSVNLogClient16().getDiffOptions();
+        return diffOptions;
     }
 
     /**

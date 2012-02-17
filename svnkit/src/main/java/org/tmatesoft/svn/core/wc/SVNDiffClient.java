@@ -20,14 +20,14 @@ import java.util.Map;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNMergeRange;
 import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
-import org.tmatesoft.svn.core.internal.wc16.SVNDiffClient16;
-import org.tmatesoft.svn.core.internal.wc17.SVNDiffClient17;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
@@ -36,9 +36,9 @@ import org.tmatesoft.svn.core.wc2.SvnDiffSummarize;
 import org.tmatesoft.svn.core.wc2.SvnGetMergeInfo;
 import org.tmatesoft.svn.core.wc2.SvnLogMergeInfo;
 import org.tmatesoft.svn.core.wc2.SvnMerge;
-import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 import org.tmatesoft.svn.core.wc2.SvnSuggestMergeSources;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * The <b>SVNDiffClient</b> class provides methods allowing to get differences
@@ -79,14 +79,8 @@ import org.tmatesoft.svn.core.wc2.SvnTarget;
 public class SVNDiffClient extends SVNBasicClient {
 
     private boolean myIsAllowMixedRevisions;
-
-    private SVNDiffClient16 getSVNDiffClient16() {
-        return (SVNDiffClient16) getDelegate16();
-    }
-
-    private SVNDiffClient17 getSVNDiffClient17() throws SVNException {
-        return (SVNDiffClient17) getDelegate17();
-    }
+    private ISVNDiffGenerator diffGenerator;
+    private SVNDiffOptions diffOptions;
 
     /**
      * Constructs and initializes an <b>SVNDiffClient</b> object with the
@@ -113,14 +107,9 @@ public class SVNDiffClient extends SVNBasicClient {
      *            a run-time configuration options driver
      */
     public SVNDiffClient(ISVNAuthenticationManager authManager, ISVNOptions options) {
-        super(new SVNDiffClient16(authManager, options), new SVNDiffClient17(authManager, options));
+        super(authManager, options);
         setDiffGenerator(null);
         setMergeOptions(null);
-
-        setOptions(options);
-
-        getOperationsFactory().setAuthenticationManager(authManager);
-        getOperationsFactory().setOptions(options);
     }
 
     /**
@@ -145,14 +134,9 @@ public class SVNDiffClient extends SVNBasicClient {
      *            a run-time configuration options driver
      */
     public SVNDiffClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
-        super(new SVNDiffClient16(repositoryPool, options), new SVNDiffClient17(repositoryPool, options));
+        super(repositoryPool, options);
         setDiffGenerator(null);
         setMergeOptions(null);
-
-        setOptions(options);
-
-        getOperationsFactory().setRepositoryPool(repositoryPool);
-        getOperationsFactory().setOptions(options);
     }
 
     /**
@@ -171,11 +155,7 @@ public class SVNDiffClient extends SVNBasicClient {
         if (diffGenerator == null) {
             diffGenerator = new DefaultSVNDiffGenerator();
         }
-        getSVNDiffClient16().setDiffGenerator(diffGenerator);
-        try {
-            getSVNDiffClient17().setDiffGenerator(diffGenerator);
-        } catch (SVNException e) {
-        }
+        this.diffGenerator = diffGenerator;
     }
 
     /**
@@ -189,7 +169,7 @@ public class SVNDiffClient extends SVNBasicClient {
      * @see #setDiffGenerator(ISVNDiffGenerator)
      */
     public ISVNDiffGenerator getDiffGenerator() {
-        return getSVNDiffClient16().getDiffGenerator();
+        return this.diffGenerator;
     }
 
     /**
@@ -202,11 +182,7 @@ public class SVNDiffClient extends SVNBasicClient {
         if (diffOptions == null) {
             diffOptions = new SVNDiffOptions();
         }
-        getSVNDiffClient16().setMergeOptions(diffOptions);
-        try {
-            getSVNDiffClient17().setMergeOptions(diffOptions);
-        } catch (SVNException e) {
-        }
+        this.diffOptions = diffOptions;
     }
 
     /**
@@ -217,7 +193,7 @@ public class SVNDiffClient extends SVNBasicClient {
      * @return diff options
      */
     public SVNDiffOptions getMergeOptions() {
-        return getSVNDiffClient16().getMergeOptions();
+        return this.diffOptions;
     }
 
     /**
@@ -414,7 +390,7 @@ public class SVNDiffClient extends SVNBasicClient {
      * @throws SVNException
      * @since 1.2, SVN 1.5
      */
-    public void doDiff(File[] paths, SVNRevision rN, SVNRevision rM, SVNRevision pegRevision, SVNDepth depth, boolean useAncestry, OutputStream result, Collection changeLists) throws SVNException {
+    public void doDiff(File[] paths, SVNRevision rN, SVNRevision rM, SVNRevision pegRevision, SVNDepth depth, boolean useAncestry, OutputStream result, Collection<String> changeLists) throws SVNException {
         for (File path : paths) {
             final SvnDiff diff = getOperationsFactory().createDiff();
             diff.setDiffGenerator(getDiffGenerator());
@@ -487,7 +463,7 @@ public class SVNDiffClient extends SVNBasicClient {
      *             </ul>
      * @since 1.2, SVN 1.5
      */
-    public void doDiff(File path, SVNRevision pegRevision, SVNRevision rN, SVNRevision rM, SVNDepth depth, boolean useAncestry, OutputStream result, Collection changeLists) throws SVNException {
+    public void doDiff(File path, SVNRevision pegRevision, SVNRevision rN, SVNRevision rM, SVNDepth depth, boolean useAncestry, OutputStream result, Collection<String> changeLists) throws SVNException {
         final SvnDiff diff = getOperationsFactory().createDiff();
         diff.setDiffGenerator(getDiffGenerator());
         diff.setSingleTarget(SvnTarget.fromFile(path, pegRevision));
@@ -800,7 +776,7 @@ public class SVNDiffClient extends SVNBasicClient {
      *             </ul>
      * @since 1.2, SVN 1.5
      */
-    public void doDiff(File path1, SVNRevision rN, SVNURL url2, SVNRevision rM, SVNDepth depth, boolean useAncestry, OutputStream result, Collection changeLists) throws SVNException {
+    public void doDiff(File path1, SVNRevision rN, SVNURL url2, SVNRevision rM, SVNDepth depth, boolean useAncestry, OutputStream result, Collection<String> changeLists) throws SVNException {
         final SvnDiff diff = getOperationsFactory().createDiff();
         diff.setDiffGenerator(getDiffGenerator());
         diff.setTargets(SvnTarget.fromFile(path1, rN), SvnTarget.fromURL(url2, rM));
@@ -970,7 +946,7 @@ public class SVNDiffClient extends SVNBasicClient {
      *             </ul>
      * @since 1.2, SVN 1.5
      */
-    public void doDiff(SVNURL url1, SVNRevision rN, File path2, SVNRevision rM, SVNDepth depth, boolean useAncestry, OutputStream result, Collection changeLists) throws SVNException {
+    public void doDiff(SVNURL url1, SVNRevision rN, File path2, SVNRevision rM, SVNDepth depth, boolean useAncestry, OutputStream result, Collection<String> changeLists) throws SVNException {
         final SvnDiff diff = getOperationsFactory().createDiff();
         diff.setDiffGenerator(getDiffGenerator());
         diff.setTargets(SvnTarget.fromURL(url1, rN), SvnTarget.fromFile(path2, rM));
@@ -1162,7 +1138,7 @@ public class SVNDiffClient extends SVNBasicClient {
      *             </ul>
      * @since 1.2, SVN 1.5
      */
-    public void doDiff(File path1, SVNRevision rN, File path2, SVNRevision rM, SVNDepth depth, boolean useAncestry, OutputStream result, Collection changeLists) throws SVNException {
+    public void doDiff(File path1, SVNRevision rN, File path2, SVNRevision rM, SVNDepth depth, boolean useAncestry, OutputStream result, Collection<String> changeLists) throws SVNException {
         final SvnDiff diff = getOperationsFactory().createDiff();
         diff.setDiffGenerator(getDiffGenerator());
         diff.setTargets(SvnTarget.fromFile(path1, rN), SvnTarget.fromFile(path2, rM));
@@ -3207,17 +3183,8 @@ public class SVNDiffClient extends SVNBasicClient {
     }
 
     public void doPatch(File absPatchPath, File localAbsPath, boolean dryRun, int stripCount) throws SVNException {
-
-        try {
-            getSVNDiffClient17().doPatch(absPatchPath, localAbsPath, dryRun, stripCount);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNDiffClient16().doPatch(absPatchPath, localAbsPath, dryRun, stripCount);
-                return;
-            }
-            throw e;
-        }
-
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE);
+        SVNErrorManager.error(err, SVNLogType.WC);
     }
 
     private void doDiffStatus(SvnTarget source, SVNRevision rN, SVNRevision rM, SVNDepth depth, boolean useAncestry, ISVNDiffStatusHandler handler) throws SVNException {

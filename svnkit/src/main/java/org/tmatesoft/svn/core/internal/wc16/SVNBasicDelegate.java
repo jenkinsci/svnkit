@@ -79,7 +79,7 @@ public class SVNBasicDelegate implements ISVNEventHandler {
     private ISVNDebugLog myDebugLog;
     private ISVNPathListHandler myPathListHandler;
 
-    protected SVNBasicDelegate(final ISVNAuthenticationManager authManager, ISVNOptions options) {
+    public SVNBasicDelegate(final ISVNAuthenticationManager authManager, ISVNOptions options) {
         this(new DefaultSVNRepositoryPool(authManager == null ? SVNWCUtil.createDefaultAuthenticationManager() : authManager, options, 0, false), options);
     }
 

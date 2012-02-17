@@ -19,7 +19,6 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc16.SVNUpdateClient16;
-import org.tmatesoft.svn.core.internal.wc17.SVNUpdateClient17;
 import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc2.SvnCheckout;
@@ -73,14 +72,8 @@ import org.tmatesoft.svn.core.wc2.SvnUpdate;
 public class SVNUpdateClient extends SVNBasicClient {
 
     private ISVNExternalsHandler myExternalsHandler;
-
-    private SVNUpdateClient16 getSVNUpdateClient16() {
-        return (SVNUpdateClient16) getDelegate16();
-    }
-
-    private SVNUpdateClient17 getSVNUpdateClient17() throws SVNException {
-        return (SVNUpdateClient17) getDelegate17();
-    }
+    private boolean updateLocksOnDemand;
+    private boolean exportExpandsKeywords;
 
     /**
      * Constructs and initializes an <b>SVNUpdateClient</b> object with the
@@ -107,13 +100,8 @@ public class SVNUpdateClient extends SVNBasicClient {
      *            a run-time configuration options driver
      */
     public SVNUpdateClient(ISVNAuthenticationManager authManager, ISVNOptions options) {
-        super(new SVNUpdateClient16(authManager, options), new SVNUpdateClient17(authManager, options));
+        super(authManager, options);
         setExternalsHandler(null);
-
-        setOptions(options);
-        
-        getOperationsFactory().setAuthenticationManager(authManager);
-        getOperationsFactory().setOptions(options);
     }
 
     /**
@@ -138,12 +126,8 @@ public class SVNUpdateClient extends SVNBasicClient {
      *            a run-time configuration options driver
      */
     public SVNUpdateClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
-        super(new SVNUpdateClient16(repositoryPool, options), new SVNUpdateClient17(repositoryPool, options));
+        super(repositoryPool, options);
         setExternalsHandler(null);
-
-        setOptions(options);
-        getOperationsFactory().setRepositoryPool(repositoryPool);
-        getOperationsFactory().setOptions(options);
     }
 
     /**
@@ -422,11 +406,7 @@ public class SVNUpdateClient extends SVNBasicClient {
      *            only which will be changed by update)
      */
     public void setUpdateLocksOnDemand(boolean locksOnDemand) {
-        getSVNUpdateClient16().setUpdateLocksOnDemand(locksOnDemand);
-        try {
-            getSVNUpdateClient17().setUpdateLocksOnDemand(locksOnDemand);
-        } catch (SVNException e) {
-        }
+        this.updateLocksOnDemand = locksOnDemand;
     }
 
     /**
@@ -454,7 +434,7 @@ public class SVNUpdateClient extends SVNBasicClient {
      * @return <span class="javakeyword">true</span> when locking wc on demand
      */
     public boolean isUpdateLocksOnDemand() {
-        return getSVNUpdateClient16().isUpdateLocksOnDemand();
+        return this.updateLocksOnDemand;
     }
 
     /**
@@ -1116,15 +1096,8 @@ public class SVNUpdateClient extends SVNBasicClient {
      * @throws SVNException
      */
     public void doCanonicalizeURLs(File dst, boolean omitDefaultPort, boolean recursive) throws SVNException {
-        try {
-            getSVNUpdateClient17().doCanonicalizeURLs(dst, omitDefaultPort, recursive);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNUpdateClient16().doCanonicalizeURLs(dst, omitDefaultPort, recursive);
-                return;
-            }
-            throw e;
-        }
+        SVNUpdateClient16 oldClient = new SVNUpdateClient16(getOperationsFactory().getAuthenticationManager(), getOptions());
+        oldClient.doCanonicalizeURLs(dst, omitDefaultPort, recursive);
     }
 
     /**
@@ -1136,11 +1109,7 @@ public class SVNUpdateClient extends SVNBasicClient {
      * @since 1.3
      */
     public void setExportExpandsKeywords(boolean expand) {
-        getSVNUpdateClient16().setExportExpandsKeywords(expand);
-        try {
-            getSVNUpdateClient17().setExportExpandsKeywords(expand);
-        } catch (SVNException e) {
-        }
+        this.exportExpandsKeywords = expand;
     }
 
     /**
@@ -1152,6 +1121,6 @@ public class SVNUpdateClient extends SVNBasicClient {
      * @since 1.3
      */
     public boolean isExportExpandsKeywords() {
-        return getSVNUpdateClient16().isExportExpandsKeywords();
+        return this.exportExpandsKeywords;
     }
 }

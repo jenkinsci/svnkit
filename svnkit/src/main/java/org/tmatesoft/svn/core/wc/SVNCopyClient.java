@@ -22,8 +22,6 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
-import org.tmatesoft.svn.core.internal.wc16.SVNCopyClient16;
-import org.tmatesoft.svn.core.internal.wc17.SVNCopyClient17;
 import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc2.SvnCopy;
@@ -84,13 +82,10 @@ import org.tmatesoft.svn.core.wc2.SvnTarget;
  */
 public class SVNCopyClient extends SVNBasicClient {
 
-    private SVNCopyClient16 getSVNCopyClient16() {
-        return (SVNCopyClient16) getDelegate16();
-    }
-
-    private SVNCopyClient17 getSVNCopyClient17() throws SVNException {
-        return (SVNCopyClient17) getDelegate17();
-    }
+    private ISVNCommitHandler commitHandler;
+    private ISVNCommitParameters commitParamaters;
+    private ISVNExternalsHandler externalsHandler;
+    private boolean disableLocalModifications;
 
     /**
      * Constructs and initializes an <b>SVNCopyClient</b> object with the
@@ -117,15 +112,10 @@ public class SVNCopyClient extends SVNBasicClient {
      *            a run-time configuration options driver
      */
     public SVNCopyClient(ISVNAuthenticationManager authManager, ISVNOptions options) {
-        super(new SVNCopyClient16(authManager, options), new SVNCopyClient17(authManager, options));
+        super(authManager, options);
         setCommitParameters(null);
         setCommitHandler(null);
         setExternalsHandler(null);
-
-        setOptions(options);
-
-        getOperationsFactory().setAuthenticationManager(authManager);
-        getOperationsFactory().setOptions(options);
     }
 
     /**
@@ -150,15 +140,10 @@ public class SVNCopyClient extends SVNBasicClient {
      *            a run-time configuration options driver
      */
     public SVNCopyClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
-        super(new SVNCopyClient16(repositoryPool, options), new SVNCopyClient17(repositoryPool, options));
+        super(repositoryPool, options);
         setCommitParameters(null);
         setCommitHandler(null);
         setExternalsHandler(null);
-
-        setOptions(options);
-
-        getOperationsFactory().setRepositoryPool(repositoryPool);
-        getOperationsFactory().setOptions(options);
     }
 
     /**
@@ -183,11 +168,7 @@ public class SVNCopyClient extends SVNBasicClient {
         if (handler == null) {
             handler = new DefaultSVNCommitHandler();
         }
-        getSVNCopyClient16().setCommitHandler(handler);
-        try {
-            getSVNCopyClient17().setCommitHandler(handler);
-        } catch (SVNException e) {
-        }
+        this.commitHandler = handler;
     }
 
     /**
@@ -200,7 +181,7 @@ public class SVNCopyClient extends SVNBasicClient {
      * @see DefaultSVNCommitHandler
      */
     public ISVNCommitHandler getCommitHandler() {
-        return getSVNCopyClient16().getCommitHandler();
+        return commitHandler;
     }
 
     /**
@@ -218,11 +199,7 @@ public class SVNCopyClient extends SVNBasicClient {
         if (parameters == null) {
             parameters = new DefaultSVNCommitParameters();
         }
-        getSVNCopyClient16().setCommitParameters(parameters);
-        try {
-            getSVNCopyClient17().setCommitParameters(parameters);
-        } catch (SVNException e) {
-        }
+        this.commitParamaters = parameters;
     }
 
     /**
@@ -236,7 +213,7 @@ public class SVNCopyClient extends SVNBasicClient {
      * @see #setCommitParameters(ISVNCommitParameters)
      */
     public ISVNCommitParameters getCommitParameters() {
-        return getSVNCopyClient16().getCommitParameters();
+        return this.commitParamaters;
     }
 
     /**
@@ -251,20 +228,11 @@ public class SVNCopyClient extends SVNBasicClient {
         if (externalsHandler == null) {
             externalsHandler = ISVNExternalsHandler.DEFAULT;
         }
-        getSVNCopyClient16().setExternalsHandler(externalsHandler);
-        try {
-            getSVNCopyClient17().setExternalsHandler(externalsHandler);
-        } catch (SVNException e) {
-        }
+        this.externalsHandler = externalsHandler;
     }
 
     public void setDisableLocalModificationCopying(boolean disable) {
-        getSVNCopyClient16().setDisableLocalModificationCopying(disable);
-        try {
-            getSVNCopyClient17().setDisableLocalModificationCopying(disable);
-        } catch (SVNException e) {
-        }
-        
+        this.disableLocalModifications = disable;
     }
     
     /**
@@ -285,7 +253,7 @@ public class SVNCopyClient extends SVNBasicClient {
      * @since 1.2
      */
     public ISVNExternalsHandler getExternalsHandler() {
-        return getSVNCopyClient16().getExternalsHandler();
+        return this.externalsHandler;
     }
 
     /**
@@ -503,12 +471,11 @@ public class SVNCopyClient extends SVNBasicClient {
         cp.setRevisionProperties(revisionProperties);
         cp.setExternalsHandler(SvnCodec.externalsHandler(getExternalsHandler()));
         cp.setCommitHandler(SvnCodec.commitHandler(getCommitHandler()));
+        cp.setDisableLocalModifications(disableLocalModifications);
         
         for (int i = 0; i < sources.length; i++) {
             cp.addCopySource(SvnCodec.copySource(sources[i]));
         }
-
-        // TODO use commit handler.
         return cp.run();
     }
 
@@ -546,14 +513,9 @@ public class SVNCopyClient extends SVNBasicClient {
      * @since 1.2.0
      */
     public void doCopy(File nestedWC) throws SVNException {
-        try {
-            getSVNCopyClient17().doCopy(nestedWC);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNCopyClient16().doCopy(nestedWC);
-                return;
-            }
-            throw e;
-        }
+        SvnCopy cp = getOperationsFactory().createCopy();
+        cp.setDisjoint(true);
+        cp.setSingleTarget(SvnTarget.fromFile(nestedWC));
+        cp.run();
     }
 }

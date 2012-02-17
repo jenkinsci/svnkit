@@ -27,7 +27,6 @@ import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.admin.ISVNEntryHandler;
 import org.tmatesoft.svn.core.internal.wc16.SVNWCClient16;
-import org.tmatesoft.svn.core.internal.wc17.SVNWCClient17;
 import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
@@ -37,6 +36,8 @@ import org.tmatesoft.svn.core.wc2.SvnGetInfo;
 import org.tmatesoft.svn.core.wc2.SvnGetProperties;
 import org.tmatesoft.svn.core.wc2.SvnGetStatusSummary;
 import org.tmatesoft.svn.core.wc2.SvnInfo;
+import org.tmatesoft.svn.core.wc2.SvnMarkReplaced;
+import org.tmatesoft.svn.core.wc2.SvnRemoteSetProperty;
 import org.tmatesoft.svn.core.wc2.SvnResolve;
 import org.tmatesoft.svn.core.wc2.SvnRevert;
 import org.tmatesoft.svn.core.wc2.SvnScheduleForAddition;
@@ -137,13 +138,9 @@ public class SVNWCClient extends SVNBasicClient {
 
     private ISVNAddParameters addParameters;
 
-    private SVNWCClient16 getSVNWCClient16() {
-        return (SVNWCClient16) getDelegate16();
-    }
+    private ISVNCommitHandler commitHandler;
 
-    private SVNWCClient17 getSVNWCClient17() throws SVNException {
-        return (SVNWCClient17) getDelegate17();
-    }
+    private boolean revertMissingDirectories;
 
     /**
      * Default implementation of {@link ISVNAddParameters} which
@@ -184,13 +181,9 @@ public class SVNWCClient extends SVNBasicClient {
      *            a run-time configuration options driver
      */
     public SVNWCClient(ISVNAuthenticationManager authManager, ISVNOptions options) {
-        super(new SVNWCClient16(authManager, options), new SVNWCClient17(authManager, options));
+        super(authManager, options);
         setCommitHandler(null);
         setAddParameters(null);
-        setOptions(options);
-        
-        getOperationsFactory().setAuthenticationManager(authManager);
-        getOperationsFactory().setOptions(options);
     }
 
     /**
@@ -215,14 +208,9 @@ public class SVNWCClient extends SVNBasicClient {
      *            a run-time configuration options driver
      */
     public SVNWCClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
-        super(new SVNWCClient16(repositoryPool, options), new SVNWCClient17(repositoryPool, options));
+        super(repositoryPool, options);
         setCommitHandler(null);
         setAddParameters(null);
-
-        setOptions(options);
-
-        getOperationsFactory().setRepositoryPool(repositoryPool);
-        getOperationsFactory().setOptions(options);
     }
 
     /**
@@ -237,11 +225,6 @@ public class SVNWCClient extends SVNBasicClient {
             addParameters = DEFAULT_ADD_PARAMETERS;
         }
         this.addParameters = addParameters;
-        getSVNWCClient16().setAddParameters(addParameters);
-        try {
-            getSVNWCClient17().setAddParameters(addParameters);
-        } catch (SVNException e) {
-        }
     }
 
     /**
@@ -254,7 +237,7 @@ public class SVNWCClient extends SVNBasicClient {
      * @see DefaultSVNCommitHandler
      */
     public ISVNCommitHandler getCommitHandler() {
-        return getSVNWCClient16().getCommitHandler();
+        return this.commitHandler;
     }
 
     /**
@@ -279,23 +262,15 @@ public class SVNWCClient extends SVNBasicClient {
         if (handler == null) {
             handler = new DefaultSVNCommitHandler();
         }
-        getSVNWCClient16().setCommitHandler(handler);
-        try {
-            getSVNWCClient17().setCommitHandler(handler);
-        } catch (SVNException e) {
-        }
+        this.commitHandler = handler;
     }
 
     public void setRevertMissingDirectories(boolean revertMissing) {
-        getSVNWCClient16().setRevertMissingDirectories(revertMissing);
-        try {
-            getSVNWCClient17().setRevertMissingDirectories(revertMissing);
-        } catch (SVNException e) {
-        }
+        this.revertMissingDirectories = revertMissing;
     }
 
     public boolean isRevertMissingDirectories() {
-        return getSVNWCClient16().isRevertMissingDirectories();
+        return revertMissingDirectories;
     }
 
     /**
@@ -603,15 +578,7 @@ public class SVNWCClient extends SVNBasicClient {
      * @since 1.2, SVN 1.5
      */
     public void doSetProperty(File path, ISVNPropertyValueProvider propertyValueProvider, boolean skipChecks, SVNDepth depth, ISVNPropertyHandler handler, Collection<String> changeLists) throws SVNException {
-        try {
-            getSVNWCClient17().doSetProperty(path, propertyValueProvider, skipChecks, depth, handler, changeLists);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNWCClient16().doSetProperty(path, propertyValueProvider, skipChecks, depth, handler, changeLists);
-                return;
-            }
-            throw e;
-        }
+        // TODO
     }
 
     /**
@@ -689,16 +656,23 @@ public class SVNWCClient extends SVNBasicClient {
      *      ISVNPropertyHandler, Collection)
      * @since 1.2, SVN 1.5
      */
-    public SVNCommitInfo doSetProperty(SVNURL url, String propName, SVNPropertyValue propValue, SVNRevision baseRevision, String commitMessage, SVNProperties revisionProperties, boolean skipChecks,
-            ISVNPropertyHandler handler) throws SVNException {
-        try {
-            return getSVNWCClient17().doSetProperty(url, propName, propValue, baseRevision, commitMessage, revisionProperties, skipChecks, handler);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                return getSVNWCClient16().doSetProperty(url, propName, propValue, baseRevision, commitMessage, revisionProperties, skipChecks, handler);
+    public SVNCommitInfo doSetProperty(SVNURL url, String propName, SVNPropertyValue propValue, SVNRevision baseRevision, String commitMessage, SVNProperties revisionProperties, boolean skipChecks, final ISVNPropertyHandler handler) throws SVNException {
+        SvnRemoteSetProperty ps = getOperationsFactory().createRemoteSetProperty();
+        ps.setSingleTarget(SvnTarget.fromURL(url));
+        ps.setPropertyName(propName);
+        ps.setPropertyValue(propValue);
+        ps.setCommitHandler(SvnCodec.commitHandler(getCommitHandler()));
+        ps.setRevisionProperties(revisionProperties);
+        ps.setCommitMessage(commitMessage);
+        ps.setPropertyReceiver(new ISvnObjectReceiver<SVNPropertyData>() {
+
+            public void receive(SvnTarget target, SVNPropertyData object) throws SVNException {
+                if (handler != null) {
+                    handler.handleProperty(target.getURL(), object);
+                }
             }
-            throw e;
-        }
+        });
+        return ps.run();
     }
 
     /**
@@ -1648,15 +1622,9 @@ public class SVNWCClient extends SVNBasicClient {
      * @since 1.2
      */
     public void doMarkReplaced(File path) throws SVNException {
-        try {
-            getSVNWCClient17().doMarkReplaced(path);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNWCClient16().doMarkReplaced(path);
-                return;
-            }
-            throw e;
-        }
+        SvnMarkReplaced mr = getOperationsFactory().createMarkReplaced();
+        mr.setSingleTarget(SvnTarget.fromFile(path));
+        mr.run();
     }
 
     /**
@@ -1751,6 +1719,7 @@ public class SVNWCClient extends SVNBasicClient {
         }
         revert.setDepth(depth);
         revert.setApplicalbeChangelists(changeLists);
+        revert.setRevertMissingDirectories(revertMissingDirectories);
         
         revert.run();
     }
@@ -1769,15 +1738,7 @@ public class SVNWCClient extends SVNBasicClient {
      *             instead
      */
     public void doResolve(File path, boolean recursive) throws SVNException {
-        try {
-            getSVNWCClient17().doResolve(path, recursive);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNWCClient16().doResolve(path, recursive);
-                return;
-            }
-            throw e;
-        }
+        doResolve(path, SVNDepth.fromRecurse(recursive), SVNConflictChoice.MINE_FULL);
     }
 
     /**
@@ -2500,15 +2461,8 @@ public class SVNWCClient extends SVNBasicClient {
      * @since 1.2
      */
     public void doCleanupWCProperties(File directory) throws SVNException {
-        try {
-            getSVNWCClient17().doCleanupWCProperties(directory);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNWCClient16().doCleanupWCProperties(directory);
-                return;
-            }
-            throw e;
-        }
+        SVNWCClient16 oldClient = new SVNWCClient16(getOperationsFactory().getAuthenticationManager(), getOptions());
+        oldClient.doCleanupWCProperties(directory);
     }
 
     /**
@@ -2534,15 +2488,8 @@ public class SVNWCClient extends SVNBasicClient {
      * @since 1.2
      */
     public void doSetWCFormat(File directory, int format) throws SVNException {
-        try {
-            getSVNWCClient17().doSetWCFormat(directory, format);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNWCClient16().doSetWCFormat(directory, format);
-                return;
-            }
-            throw e;
-        }
+        SVNWCClient16 oldClient = new SVNWCClient16(getOperationsFactory().getAuthenticationManager(), getOptions());
+        oldClient.doSetWCFormat(directory, format);
     }
 
     /**

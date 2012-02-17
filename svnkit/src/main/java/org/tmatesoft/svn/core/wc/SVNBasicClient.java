@@ -18,6 +18,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
@@ -52,14 +53,42 @@ public class SVNBasicClient {
     private static final String SVNKIT_WC_17_DEFAULT = "true";
     private static final String SVNKIT_WC_17_EXPECTED = "true";
 
-    private SVNBasicDelegate delegate16;
-    private SVNBasicDelegate delegate17;
     private SvnOperationFactory operationFactory;
+    private boolean ignoreExternals;
+    private boolean leaveConflictsUnresolved;
+    private ISVNPathListHandler pathListHandler;
+    private ISVNDebugLog debugLog;
 
-    protected SVNBasicClient(SVNBasicDelegate delegate16, SVNBasicDelegate delegate17) {
-        this.delegate16 = delegate16;
-        this.delegate17 = delegate17;
+    protected SVNBasicClient(ISVNAuthenticationManager authManager, ISVNOptions options) {
+        if (authManager == null) {
+            authManager = SVNWCUtil.createDefaultAuthenticationManager();
+        }
+        if (options == null) {
+            options = SVNWCUtil.createDefaultOptions(true);
+        }
         this.operationFactory = new SvnOperationFactory();
+        this.operationFactory.setAuthenticationManager(authManager);
+        this.operationFactory.setOptions(options);
+        this.operationFactory.setRepositoryPool(new DefaultSVNRepositoryPool(authManager, options));
+        
+        setPathListHandler(null);
+        setDebugLog(null);
+        setEventPathPrefix(null);
+        setOptions(null);
+        setEventHandler(null);
+    }
+
+    protected SVNBasicClient(ISVNRepositoryPool pool, ISVNOptions options) {
+        if (pool == null) {
+            pool = new DefaultSVNRepositoryPool(SVNWCUtil.createDefaultAuthenticationManager(), options);
+        }
+        if (options == null) {
+            options = SVNWCUtil.createDefaultOptions(true);
+        }
+        this.operationFactory = new SvnOperationFactory();
+        this.operationFactory.setOptions(options);
+        this.operationFactory.setRepositoryPool(pool);
+        
         setPathListHandler(null);
         setDebugLog(null);
         setEventPathPrefix(null);
@@ -77,24 +106,13 @@ public class SVNBasicClient {
         return null;
     }
 
-    protected SVNBasicDelegate getDelegate17() throws SVNException {
-        if(isWC17Supported()) {
-            return this.delegate17;
-        }
-        return dontWC17Support();
-    }
-
-    protected SVNBasicDelegate getDelegate16() {
-        return this.delegate16;
-    }
-
     /**
      * Gets run-time configuration options used by this object.
      *
      * @return the run-time options being in use
      */
     public ISVNOptions getOptions() {
-        return getDelegate16().getOptions();
+        return getOperationsFactory().getOptions();
     }
 
     /**
@@ -107,14 +125,7 @@ public class SVNBasicClient {
         if (options == null) {
             options = SVNWCUtil.createDefaultOptions(true);
         }
-        getDelegate16().setOptions(options);
-        try {
-            getDelegate17().setOptions(options);
-        } catch (SVNException e) {
-        }
-        if (getOperationsFactory() != null) {
-            getOperationsFactory().setOptions(options);
-        }
+        getOperationsFactory().setOptions(options);
     }
 
     /**
@@ -130,11 +141,7 @@ public class SVNBasicClient {
      * @see #isIgnoreExternals()
      */
     public void setIgnoreExternals(boolean ignore) {
-        getDelegate16().setIgnoreExternals(ignore);
-        try {
-            getDelegate17().setIgnoreExternals(ignore);
-        } catch (SVNException e) {
-        }
+        this.ignoreExternals = ignore;
     }
 
     /**
@@ -145,7 +152,7 @@ public class SVNBasicClient {
      * @see #setIgnoreExternals(boolean)
      */
     public boolean isIgnoreExternals() {
-        return getDelegate16().isIgnoreExternals();
+        return this.ignoreExternals;
     }
 
     /**
@@ -194,11 +201,7 @@ public class SVNBasicClient {
      * @deprecated this method should not be used anymore
      */
     public void setLeaveConflictsUnresolved(boolean leave) {
-        getDelegate16().setLeaveConflictsUnresolved(leave);
-        try {
-            getDelegate17().setLeaveConflictsUnresolved(leave);
-        } catch (SVNException e) {
-        }
+        this.leaveConflictsUnresolved = leave;
     }
 
     /**
@@ -212,7 +215,7 @@ public class SVNBasicClient {
      * @deprecated this method should not be used anymore
      */
     public boolean isLeaveConflictsUnresolved() {
-        return getDelegate16().isLeaveConflictsUnresolved();
+        return leaveConflictsUnresolved;
     }
 
     /**
@@ -225,14 +228,7 @@ public class SVNBasicClient {
      *            an event handler
      */
     public void setEventHandler(ISVNEventHandler dispatcher) {
-        getDelegate16().setEventHandler(dispatcher);
-        try {
-            getDelegate17().setEventHandler(dispatcher);
-        } catch (SVNException e) {
-        }
-        if (getOperationsFactory() != null) {
-            getOperationsFactory().setEventHandler(dispatcher);
-        }
+        getOperationsFactory().setEventHandler(dispatcher);
     }
 
     /**
@@ -243,11 +239,11 @@ public class SVNBasicClient {
      * @since 1.2.0
      */
     public void setPathListHandler(ISVNPathListHandler handler) {
-        getDelegate16().setPathListHandler(handler);
-        try {
-            getDelegate17().setPathListHandler(handler);
-        } catch (SVNException e) {
-        }
+        this.pathListHandler = handler;
+    }
+    
+    public ISVNPathListHandler getPathListHandler() {
+        return this.pathListHandler;
     }
 
     /**
@@ -260,11 +256,7 @@ public class SVNBasicClient {
         if (log == null) {
             log = SVNDebugLog.getDefaultLog();
         }
-        getDelegate16().setDebugLog(log);
-        try {
-            getDelegate17().setDebugLog(log);
-        } catch (SVNException e) {
-        }
+        this.debugLog = log;
     }
 
     /**
@@ -279,7 +271,7 @@ public class SVNBasicClient {
      * @return a debug logger
      */
     public ISVNDebugLog getDebugLog() {
-        return getDelegate16().getDebugLog();
+        return debugLog;
     }
 
     /**
@@ -321,14 +313,8 @@ public class SVNBasicClient {
      * @deprecated
      */
     public SVNURL getReposRoot(File path, SVNURL url, SVNRevision pegRevision, SVNAdminArea adminArea, SVNWCAccess access) throws SVNException {
-        try {
-            return getDelegate17().getReposRoot(path, url, pegRevision, adminArea, access);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                return getDelegate16().getReposRoot(path, url, pegRevision, adminArea, access);
-            }
-            throw e;
-        }
+        SVNBasicDelegate delegate = new SVNBasicDelegate(getOperationsFactory().getAuthenticationManager(), getOperationsFactory().getOptions());
+        return delegate.getReposRoot(path, url, pegRevision, adminArea, access);
     }
 
     /**
@@ -376,13 +362,9 @@ public class SVNBasicClient {
      *
      * @param prefix
      *            a path prefix
+     * @deprecated
      */
     public void setEventPathPrefix(String prefix) {
-        getDelegate16().setEventPathPrefix(prefix);
-        try {
-            getDelegate17().setEventPathPrefix(prefix);
-        } catch (SVNException e) {
-        }
     }
     
     public SvnOperationFactory getOperationsFactory() {

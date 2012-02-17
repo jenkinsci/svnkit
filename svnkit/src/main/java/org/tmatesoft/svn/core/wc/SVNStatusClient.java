@@ -17,8 +17,6 @@ import java.util.Collection;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
-import org.tmatesoft.svn.core.internal.wc16.SVNStatusClient16;
-import org.tmatesoft.svn.core.internal.wc17.SVNStatusClient17;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -87,12 +85,8 @@ public class SVNStatusClient extends SVNBasicClient {
      *            a run-time configuration options driver
      */
     public SVNStatusClient(ISVNAuthenticationManager authManager, ISVNOptions options) {
-        super(new SVNStatusClient16(authManager, options), new SVNStatusClient17(authManager, options));
+        super(authManager, options);
         setFilesProvider(null);
-        setOptions(options);
-        
-        getOperationsFactory().setAuthenticationManager(authManager);
-        getOperationsFactory().setOptions(options);
     }
 
     /**
@@ -118,12 +112,8 @@ public class SVNStatusClient extends SVNBasicClient {
      */
 
     public SVNStatusClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
-        super(new SVNStatusClient16(repositoryPool, options), new SVNStatusClient17(repositoryPool, options));
+        super(repositoryPool, options);
         setFilesProvider(null);
-        setOptions(options);
-        
-        getOperationsFactory().setRepositoryPool(repositoryPool);
-        getOperationsFactory().setOptions(options);
     }
 
     /**

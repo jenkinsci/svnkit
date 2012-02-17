@@ -25,8 +25,6 @@ import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc16.SVNCommitClient16;
-import org.tmatesoft.svn.core.internal.wc17.SVNCommitClient17;
 import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
 import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec.SVNCommitPacketWrapper;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -79,13 +77,8 @@ import org.tmatesoft.svn.util.SVNLogType;
  */
 public class SVNCommitClient extends SVNBasicClient {
 
-    private SVNCommitClient16 getSVNCommitClient16() {
-        return (SVNCommitClient16) getDelegate16();
-    }
-
-    private SVNCommitClient17 getSVNCommitClient17() throws SVNException {
-        return (SVNCommitClient17) getDelegate17();
-    }
+    private ISVNCommitHandler commitHandler;
+    private ISVNCommitParameters commitParameters;
 
     /**
      * Constructs and initializes an <b>SVNCommitClient</b> object with the
@@ -112,15 +105,10 @@ public class SVNCommitClient extends SVNBasicClient {
      *            a run-time configuration options driver
      */
     public SVNCommitClient(ISVNAuthenticationManager authManager, ISVNOptions options) {
-        super(new SVNCommitClient16(authManager, options), new SVNCommitClient17(authManager, options));
+        super(authManager, options);
         setCommitHander(null);
         setCommitParameters(null);
         setCommitHandler(null);
-
-        setOptions(options);
-        
-        getOperationsFactory().setAuthenticationManager(authManager);
-        getOperationsFactory().setOptions(options);
     }
 
     /**
@@ -145,15 +133,10 @@ public class SVNCommitClient extends SVNBasicClient {
      *            a run-time configuration options driver
      */
     public SVNCommitClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
-        super(new SVNCommitClient16(repositoryPool, options), new SVNCommitClient17(repositoryPool, options));
+        super(repositoryPool, options);
         setCommitHander(null);
         setCommitParameters(null);
         setCommitHandler(null);
-
-        setOptions(options);
-
-        getOperationsFactory().setRepositoryPool(repositoryPool);
-        getOperationsFactory().setOptions(options);
     }
 
     /**
@@ -164,11 +147,7 @@ public class SVNCommitClient extends SVNBasicClient {
         if (handler == null) {
             handler = new DefaultSVNCommitHandler();
         }
-        getSVNCommitClient16().setCommitHander(handler);
-        try {
-            getSVNCommitClient17().setCommitHander(handler);
-        } catch (SVNException e) {
-        }
+        this.commitHandler = handler;
     }
 
     /**
@@ -193,11 +172,7 @@ public class SVNCommitClient extends SVNBasicClient {
         if (handler == null) {
             handler = new DefaultSVNCommitHandler();
         }
-        getSVNCommitClient16().setCommitHandler(handler);
-        try {
-            getSVNCommitClient17().setCommitHandler(handler);
-        } catch (SVNException e) {
-        }
+        this.commitHandler = handler;
     }
 
     /**
@@ -211,7 +186,7 @@ public class SVNCommitClient extends SVNBasicClient {
      * @see DefaultSVNCommitHandler
      */
     public ISVNCommitHandler getCommitHandler() {
-        return getSVNCommitClient16().getCommitHandler();
+        return this.commitHandler;
     }
 
     /**
@@ -229,11 +204,7 @@ public class SVNCommitClient extends SVNBasicClient {
         if (parameters == null) {
             parameters = new DefaultSVNCommitParameters();
         }
-        getSVNCommitClient16().setCommitParameters(parameters);
-        try {
-            getSVNCommitClient17().setCommitParameters(parameters);
-        } catch (SVNException e) {
-        }
+        this.commitParameters = parameters;
     }
 
     /**
@@ -247,7 +218,7 @@ public class SVNCommitClient extends SVNBasicClient {
      * @see #setCommitParameters(ISVNCommitParameters)
      */
     public ISVNCommitParameters getCommitParameters() {
-        return getSVNCommitClient16().getCommitParameters();
+        return this.commitParameters;
     }
 
     /**

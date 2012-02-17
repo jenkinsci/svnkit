@@ -17,12 +17,10 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc16.SVNMoveClient16;
-import org.tmatesoft.svn.core.internal.wc17.SVNMoveClient17;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc2.SvnCopy;
 import org.tmatesoft.svn.core.wc2.SvnCopySource;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
-import org.tmatesoft.svn.util.ISVNDebugLog;
 
 /**
  * The <b>SVNMoveClient</b> provides an extra client-side functionality over
@@ -52,14 +50,6 @@ import org.tmatesoft.svn.util.ISVNDebugLog;
  */
 public class SVNMoveClient extends SVNBasicClient {
 
-    private SVNMoveClient16 getSVNMoveClient16() {
-        return (SVNMoveClient16) getDelegate16();
-    }
-
-    private SVNMoveClient17 getSVNMoveClient17() throws SVNException {
-        return (SVNMoveClient17) getDelegate17();
-    }
-
     /**
      * Constructs and initializes an <b>SVNMoveClient</b> object with the
      * specified run-time configuration and authentication drivers.
@@ -85,12 +75,7 @@ public class SVNMoveClient extends SVNBasicClient {
      *            a run-time configuration options driver
      */
     public SVNMoveClient(ISVNAuthenticationManager authManager, ISVNOptions options) {
-        super(new SVNMoveClient16(authManager, options), new SVNMoveClient17(authManager, options));
-        setDebugLog(null);
-        setOptions(null);
-        setEventHandler(null);
-
-        setOptions(options);
+        super(authManager, options);
     }
 
     /**
@@ -115,36 +100,12 @@ public class SVNMoveClient extends SVNBasicClient {
      *            a run-time configuration options driver
      */
     public SVNMoveClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
-        super(new SVNMoveClient16(repositoryPool, options), new SVNMoveClient17(repositoryPool, options));
+        super(repositoryPool, options);
         setDebugLog(null);
         setOptions(null);
         setEventHandler(null);
 
         setOptions(options);
-    }
-
-    public void setEventHandler(ISVNEventHandler dispatcher) {
-        getSVNMoveClient16().setEventHandler(dispatcher);
-        try {
-            getSVNMoveClient17().setEventHandler(dispatcher);
-        } catch (SVNException e) {
-        }
-    }
-
-    public void setDebugLog(ISVNDebugLog log) {
-        getSVNMoveClient16().setDebugLog(log);
-        try {
-            getSVNMoveClient17().setDebugLog(log);
-        } catch (SVNException e) {
-        }
-    }
-
-    public void setOptions(ISVNOptions options) {
-        getSVNMoveClient16().setOptions(options);
-        try {
-            getSVNMoveClient17().setOptions(options);
-        } catch (SVNException e) {
-        }
     }
 
     /**
@@ -195,13 +156,15 @@ public class SVNMoveClient extends SVNBasicClient {
      */
     public void doMove(File src, File dst) throws SVNException {
         try {
-            getSVNMoveClient17().doMove(src, dst);
+            SVNMoveClient16 oldClient = new SVNMoveClient16(getOperationsFactory().getAuthenticationManager(), getOptions());
+            oldClient.doMove(src, dst);
         } catch (SVNException e) {
             if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNMoveClient16().doMove(src, dst);
-                return;
+                SvnCopy cp = getOperationsFactory().createCopy();
+                cp.setSingleTarget(SvnTarget.fromFile(dst));
+                cp.addCopySource(SvnCopySource.create(SvnTarget.fromFile(src), SVNRevision.WORKING));
+                cp.run();
             }
-            throw e;
         }
     }
 
@@ -279,15 +242,8 @@ public class SVNMoveClient extends SVNBasicClient {
      */
     // move that considered as move undo.
     public void undoMove(File src, File dst) throws SVNException {
-        try {
-            getSVNMoveClient17().undoMove(src, dst);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                getSVNMoveClient16().undoMove(src, dst);
-                return;
-            }
-            throw e;
-        }
+        SVNMoveClient16 oldClient = new SVNMoveClient16(getOperationsFactory().getAuthenticationManager(), getOptions());
+        oldClient.undoMove(src, dst);
     }
 
     /**
