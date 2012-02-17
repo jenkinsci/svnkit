@@ -1944,6 +1944,7 @@ public class SVNWCDb implements ISVNWCDb {
             }
         } catch (SVNException e) {
             pdh.getWCRoot().getSDb().rollback();
+            throw e;
         } finally {
             pdh.getWCRoot().getSDb().commit();
         }
