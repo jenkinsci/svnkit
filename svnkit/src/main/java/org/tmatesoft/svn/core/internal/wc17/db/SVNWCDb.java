@@ -1090,9 +1090,7 @@ public class SVNWCDb implements ISVNWCDb {
                             info.lock.date = SVNWCUtils.readDate(getColumnInt64(lockStmt, SVNWCDbSchema.LOCK__Fields.lock_date));
                     }
                 }
-                if (f.contains(BaseInfoField.reposId)) {
-                    info.reposId = getColumnInt64(stmt, NODES__Fields.repos_id);
-                }
+                info.reposId = getColumnInt64(stmt, NODES__Fields.repos_id);
                 
                 if (f.contains(BaseInfoField.reposRootUrl) || f.contains(BaseInfoField.reposUuid)) {
                     /* Fetch repository information via REPOS_ID. */
@@ -1104,6 +1102,7 @@ public class SVNWCDb implements ISVNWCDb {
                     } else {
                         final ReposInfo reposInfo = fetchReposInfo(root.getSDb(), getColumnInt64(stmt, SVNWCDbSchema.NODES__Fields.repos_id));
                         info.reposRootUrl = SVNURL.parseURIEncoded(reposInfo.reposRootUrl);
+                        info.reposUuid = reposInfo.reposUuid;
                     }
                 }
                 if (f.contains(BaseInfoField.changedRev)) {
