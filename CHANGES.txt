@@ -1,3 +1,9 @@
+== version 1.7.0-beta1 ==
+
+* First beta version with new Subversion 1.7 working copy format support
++ Lot of fixes and improvements in the new working copy format support, since alpha2
+* This is a beta version and it may not be stable enough for production environment
+
 == version 1.7.0-alpha2 ==
 
 + New JavaHL API (org.apache.subversion.javahl) implementation

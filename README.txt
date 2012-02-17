@@ -28,12 +28,8 @@ available with the command line Subversion client.
 
 This alpha version of SVNKit supports all Subversion 1.6.17 features and supports older Subversion repositories.
 
-This version of SVNKit supports Subversion 1.7.0 and newer servers, and provides alpha-level support 
-for the new Subversion 1.7 working copy format. Some of the operations are not yet implemented for the new
-working copy format, in particular:
-
-- merge
-- diff
+This version of SVNKit supports Subversion 1.7 and newer servers, and provides beta-level support 
+for the new Subversion 1.7 working copy format. 
 
 4. RESOURCES
 
