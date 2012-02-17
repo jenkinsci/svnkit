@@ -241,4 +241,14 @@ public class SVNSqlJetDb {
         }
     }
 
+    public boolean hasTable(String tableName) throws SVNException {
+        try {
+            return tableName != null && db.getSchema().getTableNames().contains(tableName);
+        } catch (SqlJetException e) {
+            SVNErrorMessage err1 = SVNErrorMessage.create(SVNErrorCode.SQLITE_ERROR, e);
+            SVNErrorManager.error(err1, SVNLogType.DEFAULT);
+        }
+        return false;
+    }
+
 }

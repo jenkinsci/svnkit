@@ -1927,7 +1927,7 @@ public class SVNWCDb implements ISVNWCDb {
                 SVNSqlJetDb.createSqlJetError(e);
             }
             // fire events.
-            if (notifyHandler != null) {
+            if (notifyHandler != null && pdh.getWCRoot().getSDb().getTemporaryDb().hasTable(SVNWCDbSchema.DELETE_LIST.toString())) {
                 SVNSqlJetStatement selectDeleteList = new SVNSqlJetSelectStatement(pdh.getWCRoot().getSDb().getTemporaryDb(), SVNWCDbSchema.DELETE_LIST);
                 try {
                     while(selectDeleteList.next()) {
