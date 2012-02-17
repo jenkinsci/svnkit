@@ -596,6 +596,13 @@ public class PythonTests {
         generateClientScript(template, new File("daemon/jsvnlook"), NailgunProcessor.class.getName(), "svnlook", portNumber, svnHome, pattern);
         generateClientScript(template, new File("daemon/jsvnsync"), NailgunProcessor.class.getName(), "svnsync", portNumber, svnHome, pattern);
         generateClientScript(template, new File("daemon/jsvndumpfilter"), NailgunProcessor.class.getName(), "svndumpfilter", portNumber, svnHome, pattern);
+        // generate dumb jsvnmucc.
+        File svnMuccScriptFile = new File("daemon/jsvnmucc");
+        try {
+            SVNFileUtil.writeToFile(svnMuccScriptFile, "#!/bin/bash\n" + svnHome + "/bin/svnmucc \"$@\" < /dev/stdin\nexit $?", "UTF-8");
+            SVNFileUtil.setExecutable(svnMuccScriptFile, true);
+        } catch (SVNException e) {
+        }
         
         if (SVNFileUtil.isWindows) {
             generateClientScript(templatePy, new File("daemon/jsvn.py"), NailgunProcessor.class.getName(), "svn", portNumber, svnHome, pattern);
