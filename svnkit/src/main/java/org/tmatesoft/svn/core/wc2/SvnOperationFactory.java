@@ -76,7 +76,7 @@ import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgGetInfo;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgGetMergeInfo;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgGetProperties;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgGetStatus;
-import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgGetWCId;
+import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgGetStatusSummary;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgLogMergeInfo;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgMarkReplaced;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgMerge;
@@ -111,7 +111,7 @@ import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetInfo;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetMergeInfo;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetProperties;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetStatus;
-import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetWCId;
+import org.tmatesoft.svn.core.internal.wc2.old.SvnOldGetStatusSummary;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldImport;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldLogMergeInfo;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldMarkReplaced;
@@ -230,9 +230,6 @@ public class SvnOperationFactory {
         v16OperationRunners = new HashMap<Class<?>, List<ISvnOperationRunner<?, SvnOperation<?>>>>();
         anyFormatOperationRunners = new HashMap<Class<?>, List<ISvnOperationRunner<?, SvnOperation<?>>>>();
         noneOperationRunners = new HashMap<Class<?>, List<ISvnOperationRunner<?, SvnOperation<?>>>>();
-
-        registerOperationRunner(SvnGetWCId.class, new SvnNgGetWCId());
-        registerOperationRunner(SvnGetWCId.class, new SvnOldGetWCId());
 
         registerOperationRunner(SvnGetInfo.class, new SvnRemoteGetInfo());
         registerOperationRunner(SvnGetInfo.class, new SvnNgGetInfo());
@@ -384,6 +381,9 @@ public class SvnOperationFactory {
         
         registerOperationRunner(SvnUpgrade.class, new SvnOldUpgrade());
         registerOperationRunner(SvnUpgrade.class, new SvnNgUpgrade());
+
+        registerOperationRunner(SvnGetStatusSummary.class, new SvnOldGetStatusSummary());
+        registerOperationRunner(SvnGetStatusSummary.class, new SvnNgGetStatusSummary());
     }
     
     public boolean isAutoCloseContext() {
@@ -465,10 +465,6 @@ public class SvnOperationFactory {
         if (isAutoDisposeRepositoryPool() && repositoryPool != null) {
             repositoryPool.dispose();
         }
-    }
-
-    public SvnGetWCId createGetWCId() {
-        return new SvnGetWCId(this);
     }
     
     public SvnAnnotate createAnnotate() {
@@ -762,6 +758,10 @@ public class SvnOperationFactory {
     
     public SvnRepositoryGetRevisionProperties createRepositoryGetRevisionProperties() {
         return new SvnRepositoryGetRevisionProperties(this);
+    }
+
+    public SvnGetStatusSummary createGetStatusSummary() {
+        return new SvnGetStatusSummary(this);
     }
     
     protected Object run(SvnOperation<?> operation) throws SVNException {

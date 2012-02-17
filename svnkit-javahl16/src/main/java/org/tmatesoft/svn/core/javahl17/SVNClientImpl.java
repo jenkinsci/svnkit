@@ -118,7 +118,7 @@ import org.tmatesoft.svn.core.wc2.SvnGetInfo;
 import org.tmatesoft.svn.core.wc2.SvnGetMergeInfo;
 import org.tmatesoft.svn.core.wc2.SvnGetProperties;
 import org.tmatesoft.svn.core.wc2.SvnGetStatus;
-import org.tmatesoft.svn.core.wc2.SvnGetWCId;
+import org.tmatesoft.svn.core.wc2.SvnGetStatusSummary;
 import org.tmatesoft.svn.core.wc2.SvnImport;
 import org.tmatesoft.svn.core.wc2.SvnInfo;
 import org.tmatesoft.svn.core.wc2.SvnList;
@@ -141,6 +141,7 @@ import org.tmatesoft.svn.core.wc2.SvnSetChangelist;
 import org.tmatesoft.svn.core.wc2.SvnSetLock;
 import org.tmatesoft.svn.core.wc2.SvnSetProperty;
 import org.tmatesoft.svn.core.wc2.SvnStatus;
+import org.tmatesoft.svn.core.wc2.SvnStatusSummary;
 import org.tmatesoft.svn.core.wc2.SvnSuggestMergeSources;
 import org.tmatesoft.svn.core.wc2.SvnSwitch;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -1437,24 +1438,27 @@ public class SVNClientImpl implements ISVNClient {
         }
     }
 
-    public String getVersionInfo(String path, String trailUrl,
-            boolean lastChanged) throws ClientException {
+    public String getVersionInfo(String path, String trailUrl, boolean lastChanged) throws ClientException {
 
         beforeOperation();
 
         try{
             getEventHandler().setPathPrefix(getPathPrefix(path));
-
-            final SvnGetWCId getWCId = svnOperationFactory.createGetWCId();
+            final SvnGetStatusSummary getWCId = svnOperationFactory.createGetStatusSummary();
             getWCId.setSingleTarget(getTarget(path));
             getWCId.setCommitted(lastChanged);
             getWCId.setTrailUrl(trailUrl);
-            return getWCId.run();
+            
+            SvnStatusSummary summary = getWCId.run();
+            if (summary != null) {
+                return summary.toString();
+            }
         } catch (SVNException e) {
             throw ClientException.fromException(e);
         } finally {
             afterOperation();
         }
+        return null;
     }
 
     public void upgrade(String path) throws ClientException {

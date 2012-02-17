@@ -24,6 +24,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.admin.ISVNEntryHandler;
 import org.tmatesoft.svn.core.internal.wc16.SVNWCClient16;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCClient17;
@@ -32,15 +33,17 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnCat;
 import org.tmatesoft.svn.core.wc2.SvnCleanup;
-import org.tmatesoft.svn.core.wc2.SvnResolve;
-import org.tmatesoft.svn.core.wc2.SvnScheduleForAddition;
 import org.tmatesoft.svn.core.wc2.SvnGetInfo;
 import org.tmatesoft.svn.core.wc2.SvnGetProperties;
+import org.tmatesoft.svn.core.wc2.SvnGetStatusSummary;
 import org.tmatesoft.svn.core.wc2.SvnInfo;
-import org.tmatesoft.svn.core.wc2.SvnScheduleForRemoval;
+import org.tmatesoft.svn.core.wc2.SvnResolve;
 import org.tmatesoft.svn.core.wc2.SvnRevert;
+import org.tmatesoft.svn.core.wc2.SvnScheduleForAddition;
+import org.tmatesoft.svn.core.wc2.SvnScheduleForRemoval;
 import org.tmatesoft.svn.core.wc2.SvnSetLock;
 import org.tmatesoft.svn.core.wc2.SvnSetProperty;
+import org.tmatesoft.svn.core.wc2.SvnStatusSummary;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.core.wc2.SvnUnlock;
 
@@ -2315,14 +2318,7 @@ public class SVNWCClient extends SVNBasicClient {
      * @see #doGetWorkingCopyID(File, String, boolean)
      */
     public String doGetWorkingCopyID(final File path, String trailURL) throws SVNException {
-        try {
-            return getSVNWCClient17().doGetWorkingCopyID(path, trailURL);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                return getSVNWCClient16().doGetWorkingCopyID(path, trailURL);
-            }
-            throw e;
-        }
+        return doGetWorkingCopyID(path, trailURL, false);
     }
 
     /**
@@ -2367,14 +2363,44 @@ public class SVNWCClient extends SVNBasicClient {
      * @since 1.2
      */
     public String doGetWorkingCopyID(final File path, String trailURL, final boolean committed) throws SVNException {
+        SvnGetStatusSummary gs = getOperationsFactory().createGetStatusSummary();
+        gs.addTarget(SvnTarget.fromFile(path));
+        gs.setTrailUrl(trailURL);
+        gs.setCommitted(committed);
+        SvnStatusSummary summary;
         try {
-            return getSVNWCClient17().doGetWorkingCopyID(path, trailURL, committed);
+            summary = gs.run();
         } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                return getSVNWCClient16().doGetWorkingCopyID(path, trailURL, committed);
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND 
+                    || e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_WORKING_COPY) {
+                SVNFileType ft = SVNFileType.getType(path);
+                if (ft == SVNFileType.SYMLINK) {
+                    return "Unversioned symlink";
+                } else if (ft == SVNFileType.DIRECTORY) {
+                    return "Unversioned directory";
+                } else if (ft == SVNFileType.FILE) {
+                    return "Unversioned file";
+                }
+                return "'" + path.getPath() + "' doesn't exist";
+            } else {
+                throw e;
             }
-            throw e;
+            
         }
+        if (summary.getMinRevision() < 0) {
+            return "Uncommitted local addition, copy or move";
+        }
+        StringBuffer result = new StringBuffer();
+        result.append(summary.getMinRevision());
+        if (summary.getMaxRevision() != summary.getMinRevision()) {
+            result.append(":");
+            result.append(summary.getMaxRevision());
+        }
+        result.append(summary.isModified() ? "M" : "");
+        result.append(summary.isSwitched() ? "S" : "");
+        result.append(summary.isSparseCheckout() ? "P" : "");
+        
+        return result.toString();
     }
 
     /**

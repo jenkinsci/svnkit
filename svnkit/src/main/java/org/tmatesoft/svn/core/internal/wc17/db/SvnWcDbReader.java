@@ -18,6 +18,7 @@ import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
 import org.tmatesoft.sqljet.core.table.ISqlJetTable;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -436,6 +437,66 @@ public class SvnWcDbReader extends SvnWcDbShared {
             }
             cursor.close();
 
+        } catch (SqlJetException e) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SQLITE_ERROR, e);
+            SVNErrorManager.error(err, SVNLogType.WC);
+        } finally {
+            if (cursor != null) {
+                try {
+                    cursor.close();
+                } catch (SqlJetException e) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SQLITE_ERROR, e);
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                }
+            }
+            try {
+                sqljetDb.commit();
+            } catch (SqlJetException e) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SQLITE_ERROR, e);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+        }
+        
+        return false;
+    }
+
+    public static boolean isSparseCheckout(SVNWCDb db, File localAbspath) throws SVNException {
+        DirParsedInfo dirInfo = db.obtainWcRoot(localAbspath);
+        SVNSqlJetDb sdb = dirInfo.wcDbDir.getWCRoot().getSDb();
+        long wcId = dirInfo.wcDbDir.getWCRoot().getWcId();
+        String localRelPathStr = dirInfo.localRelPath.getPath().replace(File.separatorChar, '/');
+        
+        SqlJetDb sqljetDb = sdb.getDb();
+
+        ISqlJetCursor cursor = null;
+        try {
+            sqljetDb.beginTransaction(SqlJetTransactionMode.READ_ONLY);
+            ISqlJetTable nodesTable = sqljetDb.getTable(SVNWCDbSchema.NODES.toString());
+            cursor = nodesTable.scope(null, new Object[] {wcId, localRelPathStr}, null);
+            boolean matched = false;
+            while(!cursor.eof()) {
+                String rowRelPath = cursor.getString(SVNWCDbSchema.NODES__Fields.local_relpath.toString());
+                boolean fileExternal = cursor.getBoolean(SVNWCDbSchema.NODES__Fields.file_external.toString());
+                if (fileExternal) {
+                } else if ("".equals(localRelPathStr) || rowRelPath.equals(localRelPathStr) || rowRelPath.startsWith(localRelPathStr + "/")) {
+                    matched = true;
+                    long opDepth = cursor.getInteger(SVNWCDbSchema.NODES__Fields.op_depth.toString());
+                    if (opDepth == 0) {
+                        SVNWCDbStatus presence = SvnWcDbStatementUtil.parsePresence(cursor.getString(SVNWCDbSchema.NODES__Fields.presence.toString()));
+                        if (presence == SVNWCDbStatus.Excluded || presence == SVNWCDbStatus.ServerExcluded) {
+                            return true;
+                        }
+                        SVNDepth depth = SvnWcDbStatementUtil.parseDepth(cursor.getString(SVNWCDbSchema.NODES__Fields.depth.toString()));
+                        if (depth != SVNDepth.UNKNOWN && depth != SVNDepth.INFINITY) {
+                            return true;
+                        }
+                    }
+                } else if (matched) {
+                    matched = false;
+                    break;
+                }
+                cursor.next();
+            }
         } catch (SqlJetException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SQLITE_ERROR, e);
             SVNErrorManager.error(err, SVNLogType.WC);
