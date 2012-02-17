@@ -1,8 +1,8 @@
 package org.tmatesoft.svn.core.internal.wc2.ng;
 
 import java.io.File;
+
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.ISVNWCNodeHandler;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
@@ -19,21 +19,14 @@ public class SvnNgGetChangelistPaths extends SvnNgOperationRunner<String, SvnGet
 	
     @Override
     protected String run(SVNWCContext context) throws SVNException {
-    	if (getOperation().getApplicableChangelists() == null)
-    		return null;
-    		
     	this.context = context;
-    	    	
     	for (SvnTarget target: getOperation().getTargets()) {
             doGetChangeLists(target.getFile());
         }
-    	
-    	
         return getOperation().first();
     }
     
     public void doGetChangeLists(File file) throws SVNException {
-    	 File localAbsPath = getOperation().getFirstTarget().getFile().getAbsoluteFile();
     	 context.nodeWalkChildren(file, this, false, getOperation().getDepth(), getOperation().getApplicableChangelists());
     }
     
@@ -46,11 +39,8 @@ public class SvnNgGetChangelistPaths extends SvnNgOperationRunner<String, SvnGet
    
 	public void handle(File path, String changelistName) {
 		try {
-			getOperation().receive(SvnTarget.fromFile(path), changelistName);
-		} catch (SVNException e) {}
-		
+            getOperation().receive(SvnTarget.fromFile(path), changelistName);
+        } catch (SVNException e) {
+        }
 	}
-    
-    
-
 }
