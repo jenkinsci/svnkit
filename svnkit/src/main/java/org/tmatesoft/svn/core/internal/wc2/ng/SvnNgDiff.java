@@ -12,10 +12,8 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNCancellableEditor;
-import org.tmatesoft.svn.core.internal.wc.SVNDiffCallback;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNRemoteDiffEditor;
 import org.tmatesoft.svn.core.internal.wc17.SVNAmbientDepthFilterEditor17;
 import org.tmatesoft.svn.core.internal.wc17.SVNDiffEditor17;
 import org.tmatesoft.svn.core.internal.wc17.SVNReporter17;
@@ -383,12 +381,11 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
             repository1 = getRepositoryAccess().createRepository(url1, null, true);
         }
         repository2 = getRepositoryAccess().createRepository(url1, null, false);
-        SVNRemoteDiffEditor editor = null;
+        SvnNgRemoteDiffEditor editor = null;
         try {
-            SVNDiffCallback callback = new SVNDiffCallback(null, generator, rev1, rev2, getOperation().getOutput());
-            callback.setBasePath(basePath);
-            editor = new SVNRemoteDiffEditor(null, null, callback, repository2, rev1, rev2, false, null, this);
-            editor.setUseGlobalTmp(true);
+            ISvnDiffCallback callback = new SvnDiffCallback(generator, rev1, rev2, getOperation().getOutput());
+            editor = SvnNgRemoteDiffEditor.createEditor(getWcContext(), basePath, getOperation().getDepth(),
+                    repository2, rev1, false, false, callback, getOperation().getEventHandler());
             ISVNReporterBaton reporter = new ISVNReporterBaton() {
 
                 public void report(ISVNReporter reporter) throws SVNException {
