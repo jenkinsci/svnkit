@@ -67,14 +67,13 @@ public class SVNBasicClient {
             options = SVNWCUtil.createDefaultOptions(true);
         }
         this.operationFactory = new SvnOperationFactory();
+        setOptions(options);
         this.operationFactory.setAuthenticationManager(authManager);
-        this.operationFactory.setOptions(options);
         this.operationFactory.setRepositoryPool(new DefaultSVNRepositoryPool(authManager, options));
         
         setPathListHandler(null);
         setDebugLog(null);
         setEventPathPrefix(null);
-        setOptions(null);
         setEventHandler(null);
     }
 
@@ -86,13 +85,12 @@ public class SVNBasicClient {
             options = SVNWCUtil.createDefaultOptions(true);
         }
         this.operationFactory = new SvnOperationFactory();
-        this.operationFactory.setOptions(options);
+        setOptions(options);
         this.operationFactory.setRepositoryPool(pool);
         
         setPathListHandler(null);
         setDebugLog(null);
         setEventPathPrefix(null);
-        setOptions(null);
         setEventHandler(null);
     }
 
