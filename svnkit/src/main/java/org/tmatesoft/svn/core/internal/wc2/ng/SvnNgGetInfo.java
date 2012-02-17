@@ -251,7 +251,13 @@ public class SvnNgGetInfo extends SvnNgOperationRunner<SvnInfo, SvnGetInfo> impl
         } else if (readInfo.status == SVNWCDbStatus.NotPresent || readInfo.status == SVNWCDbStatus.ServerExcluded) {
             return null;
         } else {
-            info.setUrl(SVNWCUtils.join(info.getRepositoryRootUrl(), reposRelPath));
+            if (info.getRepositoryRootUrl() != null) {
+                if (reposRelPath != null) {
+                    info.setUrl(SVNWCUtils.join(info.getRepositoryRootUrl(), reposRelPath));
+                } else {
+                    info.setUrl(info.getRepositoryRootUrl());
+                }
+            }
             wcInfo.setSchedule(SvnSchedule.NORMAL);          
         }
         
