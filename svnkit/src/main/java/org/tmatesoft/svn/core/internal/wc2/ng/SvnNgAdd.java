@@ -14,6 +14,7 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNDiffEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
@@ -23,6 +24,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.ConflictInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
+import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbRevert;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
@@ -197,19 +199,16 @@ public class SvnNgAdd extends SvnNgOperationRunner<Void, SvnScheduleForAddition>
     }
 
     private void doRevert(File path) {
-        final SvnOperationFactory svnOperationFactory = getOperation().getOperationFactory();
-        final ISVNEventHandler eventHandler = svnOperationFactory.getEventHandler();
         try {
-            final SvnRevert revert = svnOperationFactory.createRevert();
-            revert.addTarget(SvnTarget.fromFile(path));
-            revert.setDepth(SVNDepth.EMPTY);
-            revert.run();
-
-            svnOperationFactory.setEventHandler(null);
+            try {
+                getWcContext().getDb().opRevert(path, SVNDepth.EMPTY);
+                SvnNgRevert.restore(getWcContext(), path, SVNDepth.EMPTY, false, null);
+            } finally {
+                SvnWcDbRevert.dropRevertList(getWcContext(), path);
+            }
         } catch (SVNException svne) {
-        } finally {
-            svnOperationFactory.setEventHandler(eventHandler);
-        }
+            //
+        } 
     }
 
     private void addDirectory(File path, SVNDepth depth) throws SVNException {

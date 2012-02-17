@@ -330,19 +330,23 @@ public class SvnWcDbRevert extends SvnWcDbShared {
             }
         };
         stmt.bindf("s", localRelpath);
-        
-        File previousPath = null;
-        while(stmt.next()) {
-            File notifyRelPath = getColumnPath(stmt, REVERT_LIST__Fields.local_relpath);
-            if (previousPath != null && notifyRelPath.equals(previousPath)) {
-                continue;
+        try {
+            if (eventHandler != null) {
+                File previousPath = null;
+                while(stmt.next()) {
+                    File notifyRelPath = getColumnPath(stmt, REVERT_LIST__Fields.local_relpath);
+                    if (previousPath != null && notifyRelPath.equals(previousPath)) {
+                        continue;
+                    }
+                    previousPath = notifyRelPath;
+                    File notifyAbsPath = SVNFileUtil.createFilePath(root.getAbsPath(), notifyRelPath);
+                    eventHandler.handleEvent(SVNEventFactory.createSVNEvent(notifyAbsPath, SVNNodeKind.NONE, null, -1, SVNEventAction.REVERT, 
+                            SVNEventAction.REVERT, null, null, -1, -1), -1);
+                }
             }
-            previousPath = notifyRelPath;
-            File notifyAbsPath = SVNFileUtil.createFilePath(root.getAbsPath(), notifyRelPath);
-            eventHandler.handleEvent(SVNEventFactory.createSVNEvent(notifyAbsPath, SVNNodeKind.NONE, null, -1, SVNEventAction.REVERT, 
-                    SVNEventAction.REVERT, null, null, -1, -1), -1);
+        } finally {
+            reset(stmt);
         }
-        reset(stmt);
 
         stmt = new SVNSqlJetDeleteStatement(root.getSDb().getTemporaryDb(), SVNWCDbSchema.REVERT_LIST) {
             @Override
