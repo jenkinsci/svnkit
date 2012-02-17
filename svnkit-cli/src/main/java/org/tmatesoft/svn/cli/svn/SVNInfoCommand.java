@@ -255,13 +255,9 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
         	String description = SVNTreeConflictUtil.getHumanReadableConflictDescription(tc);
             buffer.append("Tree conflict: " + description + "\n");
             SVNConflictVersion left = tc.getSourceLeftVersion();
-            if (left != null) {
-                buffer.append("  Source  left: " + SVNTreeConflictUtil.getHumanReadableConflictVersion(left) + "\n");
-            }
+            buffer.append("  Source  left: " + SVNTreeConflictUtil.getHumanReadableConflictVersion(left) + "\n");
             SVNConflictVersion right = tc.getSourceRightVersion();
-            if (right != null) {
-                buffer.append("  Source right: " + SVNTreeConflictUtil.getHumanReadableConflictVersion(right) + "\n");
-            }
+            buffer.append("  Source right: " + SVNTreeConflictUtil.getHumanReadableConflictVersion(right) + "\n");
         }
         buffer.append("\n");
         getSVNEnvironment().getOut().print(buffer.toString());

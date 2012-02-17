@@ -1853,16 +1853,17 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         assert (reposRootUrl.equals(myReposRootURL));
         File rightReposRelpath;
         if (mySwitchRelpath != null) {
-            if (theirRelpath != null)
+            if (theirRelpath != null) {
                 rightReposRelpath = theirRelpath;
-            else {
+            } else {
                 rightReposRelpath = mySwitchRelpath;
                 rightReposRelpath = SVNFileUtil.createFilePath(rightReposRelpath.getPath() + "_THIS_IS_INCOMPLETE");
             }
         } else {
             rightReposRelpath = (reason == SVNConflictReason.ADDED ? addedReposRelpath : leftReposRelpath);
-            if (rightReposRelpath == null)
+            if (rightReposRelpath == null) {
                 rightReposRelpath = theirRelpath;
+            }
         }
         assert (rightReposRelpath != null);
         SVNNodeKind conflictNodeKind = (action == SVNConflictAction.DELETE ? leftKind : theirNodeKind);

@@ -103,6 +103,9 @@ public class SVNTreeConflictUtil {
         }
         String repoURLString = skel.getChild(1).getValue();
         SVNURL repoURL = repoURLString.length() == 0 ? null : SVNURL.parseURIEncoded(repoURLString);
+        if (repoURL == null) {
+            return null;
+        }
         long pegRevision = Long.parseLong(skel.getChild(2).getValue());
         String path = skel.getChild(3).getValue();
         path = path.length() == 0 ? null : path;
@@ -232,6 +235,9 @@ public class SVNTreeConflictUtil {
     }
 
     public static String getHumanReadableConflictVersion(SVNConflictVersion version) {
+        if (version == null) {
+            return "(none)";
+        }
     	String url = version.getRepositoryRoot() != null ? version.getRepositoryRoot().toString() : null;
     	if (url != null && version.getPath() != null) {
     		url = url + "/" + version.getPath();
