@@ -27,6 +27,7 @@ import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.CheckWCRootInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbBaseInfo;
@@ -166,14 +167,27 @@ public class SvnWcDbExternals extends SvnWcDbShared {
         SVNWCDbKind kind = info.<SVNWCDbKind>get(ExternalNodeInfo.kind);
         info.release();
         if (kind == SVNWCDbKind.Dir) {
-            context.removeFromRevisionControl(localAbsPath, true, false);
+            CheckWCRootInfo wcRootInfo = context.checkWCRoot(localAbsPath, false);
+            if (wcRootInfo != null && wcRootInfo.wcRoot) {
+                context.removeFromRevisionControl(localAbsPath, true, false);
+            }
         } else {
+            try {
+                WCDbBaseInfo baseInfo = context.getDb().getBaseInfo(localAbsPath, BaseInfoField.updateRoot);
+                if (baseInfo != null && !baseInfo.updateRoot) {
+                    return;
+                }                
+            } catch (SVNException e) {
+                if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND) {
+                    throw e;
+                }
+            }
             context.getDb().removeBase(localAbsPath);
             SVNFileUtil.deleteFile(localAbsPath);
         }
     }
     
-    private static void removeExternalNode(SVNWCContext context, File localAbsPath, File wriAbsPath, SVNSkel workItems) throws SVNException {
+    public static void removeExternalNode(SVNWCContext context, File localAbsPath, File wriAbsPath, SVNSkel workItems) throws SVNException {
         if (wriAbsPath == null) {
             wriAbsPath = SVNFileUtil.getParentFile(localAbsPath);
         }
