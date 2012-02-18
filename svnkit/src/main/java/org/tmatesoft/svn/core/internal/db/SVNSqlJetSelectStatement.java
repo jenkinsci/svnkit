@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.db;
 
+import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -152,10 +153,11 @@ public class SVNSqlJetSelectStatement extends SVNSqlJetTableStatement {
         if (rowValues == null) {
             return 0;
         }
-        if (rowValues.get(f) == null) {
+        Object v = rowValues.get(f);
+        if (!(v instanceof Long)) {
             return 0;
         }
-        return (Long) rowValues.get(f);
+        return (Long) v;
     }
 
     @Override
@@ -163,7 +165,11 @@ public class SVNSqlJetSelectStatement extends SVNSqlJetTableStatement {
         if (rowValues == null) {
             return null;
         }
-        return (String) rowValues.get(f);
+        Object v = rowValues.get(f);
+        if (v == null) {
+            return null;
+        }
+        return v instanceof String ? (String) rowValues.get(f) : v.toString();
     }
 
     @Override
@@ -179,7 +185,19 @@ public class SVNSqlJetSelectStatement extends SVNSqlJetTableStatement {
         if (rowValues == null) {
             return null;
         }
-        ISqlJetMemoryPointer buffer = (ISqlJetMemoryPointer) rowValues.get(f);
-        return buffer != null ? SqlJetUtility.readByteBuffer(buffer) : null;
+        Object v = rowValues.get(f);
+        if (v instanceof ISqlJetMemoryPointer) {
+            ISqlJetMemoryPointer buffer = (ISqlJetMemoryPointer) v;
+            return buffer != null ? SqlJetUtility.readByteBuffer(buffer) : null;
+        } else if (v instanceof String) {
+            try {
+                return ((String) v).getBytes("UTF-8");
+            } catch (UnsupportedEncodingException e) {
+                return ((String) v).getBytes();
+            }
+        } else if (v instanceof byte[]) {
+            return (byte[]) v;
+        }
+        return null;
     }
 }
