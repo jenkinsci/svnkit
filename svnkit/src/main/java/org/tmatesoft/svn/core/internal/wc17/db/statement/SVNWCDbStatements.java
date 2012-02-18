@@ -103,7 +103,6 @@ public enum SVNWCDbStatements {
     SELECT_NODE_INFO_WITH_LOCK(SVNWCDbSelectNodeInfoWithLock.class),
     SELECT_WORKING_NODE(SVNWCDbSelectWorkingNode.class),
     SELECT_WORKING_NODE_CHILDREN(SVNWCDbSelectWorkingNodeChildren.class),
-    SELECT_WORKING_OP_DEPTH_RECURSIVE,
     SELECT_CHANGELIST_LIST(SVNWCDbSelectChangelist.class),
     SELECT_TARGETS_LIST(SVNWCDbSelectTargetslist.class),
     UPDATE_ACTUAL_CONFLICT_DATA(SVNWCDbUpdateActualConflictData.class),

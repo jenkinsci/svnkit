@@ -17,6 +17,8 @@ import java.util.Map;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetValueType;
+import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
+import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 import org.tmatesoft.sqljet.core.schema.ISqlJetColumnDef;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
 import org.tmatesoft.svn.core.SVNException;
@@ -28,6 +30,7 @@ import org.tmatesoft.svn.core.SVNException;
 public class SVNSqlJetSelectStatement extends SVNSqlJetTableStatement {
 
     private String indexName;
+    private Map<String, Object> rowValues;
 
     public SVNSqlJetSelectStatement(SVNSqlJetDb sDb, Enum<?> fromTable) throws SVNException {
         this(sDb, fromTable.toString());
@@ -72,8 +75,10 @@ public class SVNSqlJetSelectStatement extends SVNSqlJetTableStatement {
 
     public boolean next() throws SVNException {
         boolean next = super.next();
+        loadRowValues(next);
         while (next && !isFilterPassed()) {
             next = super.next();
+            loadRowValues(next);
         }
         return next;
     }
@@ -84,14 +89,24 @@ public class SVNSqlJetSelectStatement extends SVNSqlJetTableStatement {
 
     public boolean eof() throws SVNException {
         boolean eof = super.eof();
+        loadRowValues(!eof);
         while (!eof && !isFilterPassed()) {
             eof = !super.next();
+            loadRowValues(!eof);
         }
         return eof;
     }
 
-    public Map<String, Object> getRowValues2() throws SVNException {
-        HashMap<String, Object> v = new HashMap<String, Object>();
+    private void loadRowValues(boolean has) throws SVNException {
+        if (has) {
+            rowValues = getRowValues2(rowValues);
+        } else if (rowValues != null) {
+            rowValues.clear();
+        }
+    }
+
+    public Map<String, Object> getRowValues2(Map<String, Object> v) throws SVNException {
+        v = v == null ? new HashMap<String, Object>() : v;
         try {
             Object[] values = getCursor().getRowValues();
             List<ISqlJetColumnDef> columns = getTable().getDefinition().getColumns();
@@ -126,5 +141,45 @@ public class SVNSqlJetSelectStatement extends SVNSqlJetTableStatement {
             SVNSqlJetDb.createSqlJetError(e);
             return null;
         }
+    }
+
+    @Override
+    protected Object getColumn(String f) throws SVNException {
+        return rowValues != null ? rowValues.get(f) : null;
+    }
+    @Override
+    protected long getColumnLong(String f) throws SVNException {
+        if (rowValues == null) {
+            return 0;
+        }
+        if (rowValues.get(f) == null) {
+            return 0;
+        }
+        return (Long) rowValues.get(f);
+    }
+
+    @Override
+    protected String getColumnString(String f) throws SVNException {
+        if (rowValues == null) {
+            return null;
+        }
+        return (String) rowValues.get(f);
+    }
+
+    @Override
+    protected boolean isColumnNull(String f) throws SVNException {
+        if (rowValues == null) {
+            return true;
+        }
+        return rowValues.get(f) == null;
+    }
+
+    @Override
+    protected byte[] getColumnBlob(String f) throws SVNException {
+        if (rowValues == null) {
+            return null;
+        }
+        ISqlJetMemoryPointer buffer = (ISqlJetMemoryPointer) rowValues.get(f);
+        return buffer != null ? SqlJetUtility.readByteBuffer(buffer) : null;
     }
 }

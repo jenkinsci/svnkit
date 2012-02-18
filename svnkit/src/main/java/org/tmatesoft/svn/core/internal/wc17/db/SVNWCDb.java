@@ -71,7 +71,6 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetUpdateStatement;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
-import org.tmatesoft.svn.core.internal.wc.SVNConfigFile;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
@@ -2413,10 +2412,11 @@ public class SVNWCDb implements ISVNWCDb {
         final SVNSqlJetSelectStatement baseStmt = (SVNSqlJetSelectStatement) sDb.getStatement(SVNWCDbStatements.SELECT_BASE_NODE_CHILDREN);
         final SVNSqlJetStatement lockStmt = fetchLocks ? sDb.getStatement(SVNWCDbStatements.SELECT_LOCK) : null;
         baseStmt.bindf("is", wcId, localRelPath);
+        Map<String, Object> row = null;
         try {
             while(baseStmt.next()) {
                 WCDbBaseInfo child = new WCDbBaseInfo();
-                Map<String, Object> row = baseStmt.getRowValues2();
+                row = baseStmt.getRowValues2(row);
                 
                 child.updateRoot = row.get(SVNWCDbSchema.NODES__Fields.file_external.toString()) != null; 
                 child.status = SvnWcDbStatementUtil.parsePresence((String) row.get(SVNWCDbSchema.NODES__Fields.presence.toString()));
