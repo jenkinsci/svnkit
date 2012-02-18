@@ -1815,6 +1815,11 @@ public class SVNWCContext {
                             throw e;
                         }
                         leftSomething = true;
+                    } else if (e.getErrorMessage().getErrorCode() == SVNErrorCode.IO_ERROR) {
+                        if (instantError) {
+                            throw e;
+                        }
+                        leftSomething = true;
                     } else {
                         throw e;
                     }
