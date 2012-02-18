@@ -177,7 +177,7 @@ public class Structure<T extends Enum<T>> {
     public int hashCode() {
         int code = enumClass.hashCode();
         for (int i = 0; i < nonPrimitiveValues.length; i++) {
-            if (nonPrimitiveValues != null) {
+            if (nonPrimitiveValues != null && nonPrimitiveValues[i] != null) {
                 code += 13*nonPrimitiveValues[i].hashCode();
             }
         }
@@ -283,7 +283,9 @@ public class Structure<T extends Enum<T>> {
         }
         
         public void release(Structure<?> t) {
-            objectsQueues.offer(t);
+            if (!objectsQueues.contains(t)) {
+                objectsQueues.offer(t);
+            } 
         }        
     }
 }
