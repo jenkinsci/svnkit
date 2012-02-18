@@ -193,9 +193,9 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
 
                 final Structure<LocationsInfo> locations = getRepositoryAccess().getLocations(svnRepository, source.getSource(), pegRevision, startRevision, SVNRevision.UNDEFINED);
                 long revision = locations.lng(LocationsInfo.startRevision);
-                Collection entries = new ArrayList();
+                Collection<SVNDirEntry> entries = new ArrayList<SVNDirEntry>();
                 svnRepository.getDir("", revision, null, 0, entries);
-                for (Iterator ents = entries.iterator(); ents.hasNext();) {
+                for (Iterator<SVNDirEntry> ents = entries.iterator(); ents.hasNext();) {
                     SVNDirEntry entry = (SVNDirEntry) ents.next();
                     // add new copy source.
                     expanded.add(SvnCopySource.create(SvnTarget.fromURL(entry.getURL()), source.getRevision()));
