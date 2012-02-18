@@ -81,7 +81,7 @@ public class SVNStatusEditor17 {
     protected Collection<String> myGlobalIgnores;
 
     protected SVNURL myRepositoryRoot;
-    protected Map myRepositoryLocks;
+    protected Map<String, SVNLock> myRepositoryLocks;
     protected long myTargetRevision;
     protected String myWCRootPath;
     protected ISvnFileListHook myFileListHook;
@@ -336,7 +336,7 @@ public class SVNStatusEditor17 {
                     (pathKind != null && 
                             info.recordedSize != -1 &&
                             info.recordedModTime != 0 &&
-                            info.recordedModTime == fileTime &&
+                            (info.recordedModTime / 1000) == fileTime &&
                             info.recordedSize == fileSize)) {
                     text_modified_p = false;
                 } else {
