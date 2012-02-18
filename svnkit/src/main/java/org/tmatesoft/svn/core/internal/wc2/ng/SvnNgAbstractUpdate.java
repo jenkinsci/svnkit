@@ -268,6 +268,8 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
     private void handleExternalItemRemoval(File definingAbsPath, File localAbsPath) throws SVNException {
         SVNNodeKind kind = getWcContext().readKind(localAbsPath, false);
         if (kind == SVNNodeKind.NONE) {
+            SvnWcDbExternals.removeExternalNode(getWcContext(), localAbsPath, definingAbsPath, null);
+            handleEvent(SVNEventFactory.createSVNEvent(localAbsPath, SVNNodeKind.NONE, null, -1, SVNEventAction.UPDATE_EXTERNAL_REMOVED, SVNEventAction.UPDATE_EXTERNAL_REMOVED, null, null, 1, 1));
             return;
         }
         File lockRootAbsPath = null;
