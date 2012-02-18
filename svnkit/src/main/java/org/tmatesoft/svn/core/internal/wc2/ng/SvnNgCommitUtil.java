@@ -119,7 +119,12 @@ public class SvnNgCommitUtil {
                 File parentPath = SVNFileUtil.getParentFile(targetPath);
                 try {
                     boolean parentIsAdded = context.isNodeAdded(parentPath);
-                    if (parentIsAdded) {
+                    if (parentIsAdded) {                        
+                        Structure<NodeOriginInfo> origin = context.getNodeOrigin(parentPath, false, NodeOriginInfo.copyRootAbsPath, NodeOriginInfo.isCopy);
+                        if (origin.is(NodeOriginInfo.isCopy)) {
+                            parentPath = origin.get(NodeOriginInfo.copyRootAbsPath);
+                        }
+                        origin.release();
                         danglers.put(parentPath, targetPath);
                     }
                 } catch (SVNException e) {

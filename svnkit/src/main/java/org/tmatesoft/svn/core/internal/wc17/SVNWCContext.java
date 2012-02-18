@@ -1362,8 +1362,10 @@ public class SVNWCContext {
             from(NodeInfo.originalRevision, NodeInfo.originalReposRelpath, NodeInfo.originalRootUrl, NodeInfo.originalUuid).
             into(result, NodeOriginInfo.revision, NodeOriginInfo.reposRelpath, NodeOriginInfo.reposRootUrl, NodeOriginInfo.reposUuid);
             
-            readInfo.release();
-            return result;
+            if (!result.hasField(NodeOriginInfo.copyRootAbsPath)) {
+                readInfo.release();
+                return result;
+            }
         }
         
         boolean scanWorking = false;
@@ -1390,6 +1392,9 @@ public class SVNWCContext {
             
             File relPath = SVNFileUtil.createFilePath(addInfo.originalReposRelPath, SVNWCUtils.skipAncestor(addInfo.opRootAbsPath, localAbsPath));
             result.set(NodeOriginInfo.reposRelpath, relPath);
+            if (result.hasField(NodeOriginInfo.copyRootAbsPath)) {
+                result.set(NodeOriginInfo.copyRootAbsPath, addInfo.opRootAbsPath);
+            }
         } else {
             WCDbBaseInfo baseInfo = db.getBaseInfo(localAbsPath, BaseInfoField.revision, BaseInfoField.reposRelPath, BaseInfoField.reposRootUrl, BaseInfoField.reposUuid);
             result.set(NodeOriginInfo.reposRootUrl, baseInfo.reposRootUrl);

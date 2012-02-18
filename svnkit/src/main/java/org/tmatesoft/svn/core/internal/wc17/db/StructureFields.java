@@ -59,7 +59,8 @@ public class StructureFields {
         revision,
         reposRelpath,
         reposRootUrl,
-        reposUuid;
+        reposUuid,
+        copyRootAbsPath;
     }
     
     public enum NodeInfo {
