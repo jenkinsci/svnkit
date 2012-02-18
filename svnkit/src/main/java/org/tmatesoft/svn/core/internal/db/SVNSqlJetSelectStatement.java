@@ -154,10 +154,16 @@ public class SVNSqlJetSelectStatement extends SVNSqlJetTableStatement {
             return 0;
         }
         Object v = rowValues.get(f);
-        if (!(v instanceof Long)) {
-            return 0;
+        if (v instanceof Long) {
+            return (Long) v;
+        } else if (v instanceof String) {
+            try {
+                return Long.parseLong((String) v);
+            } catch (NumberFormatException nfe) {
+                return 0;
+            }
         }
-        return (Long) v;
+        return 0;
     }
 
     @Override
