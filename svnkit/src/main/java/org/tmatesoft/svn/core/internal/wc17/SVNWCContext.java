@@ -38,6 +38,7 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
@@ -231,8 +232,6 @@ public class SVNWCContext {
         BASE_REMOVE("base-remove", new RunBaseRemove()),
 
         DELETION_POSTCOMMIT("deletion-postcommit", new RunDeletionPostCommit()),
-
-        POSTCOMMIT("postcommit", new RunPostCommit()),
 
         FILE_INSTALL("file-install", new RunFileInstall()),
 
@@ -857,7 +856,7 @@ public class SVNWCContext {
         return null;
     }
 
-    private boolean isTranslationRequired(SVNEolStyle style, byte[] eol, Map keywords, boolean special, boolean force_eol_check) {
+    private boolean isTranslationRequired(SVNEolStyle style, byte[] eol, Map<String, String> keywords, boolean special, boolean force_eol_check) {
         return (special 
                 || (keywords != null && !keywords.isEmpty()) 
                 || (style != SVNEolStyle.None && force_eol_check)
@@ -895,7 +894,7 @@ public class SVNWCContext {
 
     // TODO merget isSpecial()/getEOLStyle()/getKeyWords() into
     // getTranslateInfo()
-    public Map getKeyWords(File localAbsPath, String forceList) throws SVNException {
+    public Map<String, String> getKeyWords(File localAbsPath, String forceList) throws SVNException {
         assert (isAbsolute(localAbsPath));
 
         String list;
@@ -922,7 +921,7 @@ public class SVNWCContext {
     public static class TranslateInfo {
 
         public SVNEolStyleInfo eolStyleInfo;
-        public Map<?,?> keywords;
+        public Map<String,String> keywords;
         public boolean special;
     }
     public TranslateInfo getTranslateInfo(File localAbspath, boolean fetchEolStyle, boolean fetchKeywords, boolean fetchSpecial) throws SVNException {
@@ -951,7 +950,7 @@ public class SVNWCContext {
         return info;
     }
     
-    private Map<?, ?> expandKeywords(File localAbsPath, File wriAbspath, String keywordsList, boolean forNormalization) throws SVNException {
+    private Map<String, String> expandKeywords(File localAbsPath, File wriAbspath, String keywordsList, boolean forNormalization) throws SVNException {
         String url = null;
         SVNDate changedDate = null;
         long changedRev;
@@ -2508,8 +2507,8 @@ public class SVNWCContext {
                 conflictRemains = maybeGeneratePropConflict(localAbspath, leftVersion, rightVersion, isDir, propname, workingProps, oldVal, newVal, baseVal, workingVal, conflictResolver, dryRun);
             }
         } else if (workingVal == null) {
-            Map deleted = new HashMap();
-            Map added = new HashMap();
+            Map<String, SVNMergeRangeList> deleted = new HashMap<String, SVNMergeRangeList>();
+            Map<String, SVNMergeRangeList> added = new HashMap<String, SVNMergeRangeList>();
             SVNMergeInfoUtil.diffMergeInfoProperties(deleted, added, oldVal.getString(), null, newVal.toString(), null);
             String mergeinfoString = SVNMergeInfoUtil.formatMergeInfoToString(added, null);
             workingProps.put(propname, mergeinfoString);
@@ -2568,8 +2567,8 @@ public class SVNWCContext {
     }
 
     public boolean hasMagicProperty(SVNProperties properties) {
-        for (Iterator i = properties.nameSet().iterator(); i.hasNext();) {
-            String property = (String) i.next();
+        for (Iterator<String> i = properties.nameSet().iterator(); i.hasNext();) {
+            String property = i.next();
             if (SVNProperty.EXECUTABLE.equals(property) || SVNProperty.KEYWORDS.equals(property) || SVNProperty.EOL_STYLE.equals(property) || SVNProperty.SPECIAL.equals(property)
                     || SVNProperty.NEEDS_LOCK.equals(property))
                 return true;
@@ -2612,7 +2611,7 @@ public class SVNWCContext {
         TranslateInfo translateInfo = getTranslateInfo(versionedAbspath, true, true, true);
         SVNEolStyle style = translateInfo.eolStyleInfo.eolStyle;
         byte[] eol = translateInfo.eolStyleInfo.eolStr;
-        Map keywords = translateInfo.keywords;
+        Map<String, String> keywords = translateInfo.keywords;
         boolean special = translateInfo.special;
         File xlated_path;
         if (!isTranslationRequired(style, eol, keywords, special, true) && !forceCopy) {
@@ -2782,7 +2781,7 @@ public class SVNWCContext {
         }
         SVNEolStyle style;
         byte[] eol;
-        Map keywords;
+        Map<String, String> keywords;
         boolean special;
         if (isBinary && (((prop = propDiff.getSVNPropertyValue(SVNProperty.MIME_TYPE)) != null && prop.isString() && mimeTypeIsBinary(prop.getString())) || prop == null)) {
             keywords = null;
@@ -3390,29 +3389,6 @@ public class SVNWCContext {
         result.appendChild(workItem);
         getDb().addWorkQueue(localAbspath, result);
     }
-
-    public void wqAddPostCommit(File localAbspath, long newRevision, long changedRev, SVNDate changedDate, String changedAuthor, SvnChecksum newChecksum, Map newDavCache, boolean keepChangelist,
-            boolean noUnlock) throws SVNException {
-        SVNSkel workItem = SVNSkel.createEmptyList();
-        workItem.prependString(Long.toString(changedRev));
-        workItem.prependString(noUnlock ? "1" : "0");
-        workItem.prependString(keepChangelist ? "1" : "0");
-        if (newDavCache == null || newDavCache.isEmpty()) {
-            workItem.prependString("");
-        } else {
-            SVNSkel propSkel = SVNSkel.createPropList(newDavCache);
-            workItem.addChild(propSkel);
-        }
-        workItem.prependString(newChecksum != null ? newChecksum.toString() : "");
-        workItem.prependString(changedAuthor != null ? changedAuthor : "");
-        workItem.prependString(String.format("%d", changedDate.getTimeInMicros()));
-        workItem.prependString(Long.toString(newRevision));
-        workItem.prependString(SVNFileUtil.getFilePath(localAbspath));
-        workItem.prependString(WorkQueueOperation.POSTCOMMIT.getOpName());
-        SVNSkel result = SVNSkel.createEmptyList();
-        result.appendChild(workItem);
-        getDb().addWorkQueue(localAbspath, result);
-    }
     
     public SVNSkel wqBuildPostUpgrade() throws SVNException {
     	SVNSkel result = SVNSkel.createEmptyList();
@@ -3545,51 +3521,6 @@ public class SVNWCContext {
             ctx.removeFromRevisionControl(localAbspath, false, false);
             if (newRevision > parentRevision) {
                 ctx.getDb().addBaseNotPresentNode(localAbspath, reposRelpath, reposRootUrl, reposUuid, newRevision, kind, null, null);
-            }
-        }
-    }
-
-    public static class RunPostCommit implements RunWorkQueueOperation {
-
-        public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) throws SVNException {
-
-            File localAbspath = SVNFileUtil.createFilePath(wcRootAbspath, workItem.getChild(1).getValue());
-            long newRevision = SVNWCUtils.parseLong(workItem.getChild(2).getValue());
-            SVNDate changedDate = SVNWCUtils.readDate(SVNWCUtils.parseLong(workItem.getChild(3).getValue()));
-            String changedAuthor = null;
-            if (workItem.getListSize() > 4) {
-                changedAuthor = workItem.getChild(4).getValue();
-            }
-            SvnChecksum newChecksum = null;
-            if (workItem.getListSize() > 5) {
-                String value = workItem.getChild(5).getValue();
-                if (value != null && !"".equals(value)) {
-                    newChecksum = SvnChecksum.fromString(value);
-                }
-            }
-            SVNProperties newDavCache = null;
-            if (workItem.getListSize() > 6 && workItem.getChild(6).isValidPropList()) {
-                newDavCache = SVNProperties.wrap(workItem.getChild(6).parsePropList());
-            }
-            boolean keepChangelist = true;
-            if (workItem.getListSize() > 7) {
-                keepChangelist = "1".equals(workItem.getChild(7).getValue());
-            }
-            boolean noUnlock = true;
-            if (workItem.getListSize() > 8) {
-                noUnlock = "1".equals(workItem.getChild(8).getValue());
-            }
-            long changedRev = newRevision;
-            if (workItem.getListSize() > 9) {
-                changedRev = SVNWCUtils.parseLong(workItem.getChild(9).getValue());
-            }
-
-            try {
-                ctx.logDoCommitted(localAbspath, newRevision, changedRev, changedDate, changedAuthor, newChecksum, newDavCache, keepChangelist, noUnlock);
-            } catch (SVNException e) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_BAD_ADM_LOG, "Error processing post-commit work for ''{0}''", localAbspath);
-                err.setChildErrorMessage(e.getErrorMessage());
-                SVNErrorManager.error(err, SVNLogType.WC);
             }
         }
     }
@@ -3837,120 +3768,6 @@ public class SVNWCContext {
             }
         }
         db.removeBase(localAbspath);
-    }
-
-    public void logDoCommitted(File localAbspath, long newRevision, long changedRev, SVNDate changedDate, String changedAuthor, SvnChecksum newChecksum, SVNProperties newDavCache,
-            boolean keepChangelist, boolean noUnlock) throws SVNException {
-        boolean removeExecutable = false;
-        boolean setReadWrite = false;
-        WCDbInfo info = getDb().readInfo(localAbspath, InfoField.status, InfoField.kind);
-        SVNWCDbKind kind = info.kind;
-        SVNWCDbStatus status = info.status;
-        if (status == SVNWCDbStatus.NotPresent) {
-            return;
-        }
-        assert (status != SVNWCDbStatus.Deleted);
-        if (status == SVNWCDbStatus.Added && kind == SVNWCDbKind.Dir) {
-            Set<String> children = getDb().readChildren(localAbspath);
-            for (String childName : children) {
-                File childAbspath = SVNFileUtil.createFilePath(localAbspath, childName);
-                SVNWCDbStatus childStatus = getDb().readInfo(childAbspath, InfoField.status).status;
-                if (childStatus == SVNWCDbStatus.Deleted) {
-                    removeFromRevisionControl(childAbspath, false, false);
-                }
-            }
-        }
-        boolean propMods = isPropsModified(localAbspath);
-        if (propMods) {
-            if (kind == SVNWCDbKind.File) {
-                SVNProperties propChanges = getPropDiffs(localAbspath).propChanges;
-                for (Object i : propChanges.nameSet()) {
-                    String propName = (String) i;
-                    String propChange = propChanges.getStringValue(propName);
-                    if (SVNProperty.EXECUTABLE.equals(propName) && propChange == null) {
-                        removeExecutable = true;
-                    } else if (SVNProperty.NEEDS_LOCK.equals(propName) && propChange == null) {
-                        setReadWrite = true;
-                    }
-                }
-            }
-        }
-        if (kind == SVNWCDbKind.File || kind == SVNWCDbKind.Symlink) {
-            getDb().globalCommit(localAbspath, newRevision, changedRev, changedDate, changedAuthor, newChecksum, null, newDavCache, keepChangelist, noUnlock, null);
-            boolean overwroteWorking = installCommittedFile(localAbspath, removeExecutable, setReadWrite);
-            long translatedSize = localAbspath.length();
-            long lastModTime = localAbspath.lastModified();
-            if (!overwroteWorking) {
-                File textBasePath = getTextBasePathToRead(localAbspath);
-                boolean modified = localAbspath.length() != textBasePath.length();
-                if (localAbspath.lastModified() != textBasePath.lastModified() && !modified) {
-                    modified = isTextModified(localAbspath, false);
-                }
-                lastModTime = modified ? textBasePath.lastModified() : localAbspath.lastModified();
-            }
-            getDb().globalRecordFileinfo(localAbspath, translatedSize, new SVNDate(lastModTime, 0));
-            return;
-        }
-        getDb().globalCommit(localAbspath, newRevision, changedRev, changedDate, changedAuthor, null, null, newDavCache, keepChangelist, noUnlock, null);
-        {
-            CheckWCRootInfo checkWCRoot = checkWCRoot(localAbspath, true);
-            if (checkWCRoot.wcRoot || checkWCRoot.switched)
-                return;
-        }
-        return;
-    }
-
-    private File getTextBasePathToRead(File localAbspath) throws SVNException {
-        SvnChecksum checksum = getDb().readInfo(localAbspath, InfoField.checksum).checksum;
-        if (checksum == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS, "Node ''{0}'' has no pristine text", localAbspath);
-            SVNErrorManager.error(err, SVNLogType.WC);
-        }
-        return getDb().getPristinePath(localAbspath, checksum);
-    }
-
-    private boolean installCommittedFile(File fileAbspath, boolean removeExecutable, boolean removeReadOnly) throws SVNException {
-        boolean same, didSet;
-        File tmpWfile;
-        boolean special;
-        boolean overwroteWorking = false;
-        {
-            File tmp = fileAbspath;
-            tmpWfile = getTranslatedFile(tmp, fileAbspath, false, false, false, false);
-            special = getTranslateInfo(fileAbspath, false, false, true).special;
-            if (!special && !tmp.equals(tmpWfile)) {
-                same = isSameContents(tmpWfile, fileAbspath);
-            } else {
-                same = true;
-            }
-        }
-        if (!same) {
-            SVNFileUtil.rename(tmpWfile, fileAbspath);
-            overwroteWorking = true;
-        }
-        if (removeExecutable) {
-            if (same) {
-                SVNFileUtil.setExecutable(fileAbspath, false);
-            }
-            overwroteWorking = true;
-        } else {
-            didSet = maybeSetExecutable(fileAbspath);
-            if (didSet) {
-                overwroteWorking = true;
-            }
-        }
-        if (removeReadOnly) {
-            if (same) {
-                SVNFileUtil.setReadonly(fileAbspath, false);
-            }
-            overwroteWorking = true;
-        } else {
-            didSet = maybeSetReadOnly(fileAbspath);
-            if (didSet) {
-                overwroteWorking = true;
-            }
-        }
-        return overwroteWorking;
     }
 
     public void getAndRecordFileInfo(File localAbspath, boolean ignoreError) throws SVNException {
@@ -4554,7 +4371,7 @@ public class SVNWCContext {
         return reposRelPath;
     }
 
-    public boolean isChangelistMatch(File localAbsPath, Collection changelistsSet) {
+    public boolean isChangelistMatch(File localAbsPath, Collection<String> changelistsSet) {
         if (changelistsSet == null || changelistsSet.isEmpty()) {
             return true;
         }

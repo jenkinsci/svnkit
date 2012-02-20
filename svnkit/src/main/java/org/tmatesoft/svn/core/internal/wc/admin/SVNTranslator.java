@@ -567,9 +567,9 @@ public class SVNTranslator {
         return result;
     }
 
-    public static Map computeKeywords(String keywords, String u, String a, String d, String r, ISVNOptions options) {
+    public static Map<String, String> computeKeywords(String keywords, String u, String a, String d, String r, ISVNOptions options) {
         if (keywords == null) {
-            return Collections.EMPTY_MAP;
+            return Collections.emptyMap();
         }
         boolean expand = u != null;
         byte[] date = null;
