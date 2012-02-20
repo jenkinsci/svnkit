@@ -51,6 +51,20 @@ public class WorkingCopy {
     public void setRepositoryUrl(SVNURL repositoryUrl) {
         this.repositoryUrl = repositoryUrl;
     }
+    
+    public File deleteFile(String relativePath) {
+        getFile(relativePath).delete();
+        return getFile(relativePath);
+    }
+
+    public File changeFileContents(String relativePath, String contents) throws IOException {
+        TestUtil.writeFileContentsString(getFile(relativePath), contents);
+        return getFile(relativePath);
+    }
+
+    public File getFile(String relativePath) {
+        return new File(getWorkingCopyDirectory(), relativePath);
+    }
 
     public long checkoutLatestRevision(SVNURL repositoryUrl) throws SVNException {
         return checkoutRevision(repositoryUrl, SVNRepository.INVALID_REVISION);

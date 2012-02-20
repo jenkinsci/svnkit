@@ -100,11 +100,6 @@ public class SvnCopyContentsTest {
         return nodeKind == SVNNodeKind.DIR || nodeKind == SVNNodeKind.FILE;
     }
 
-    private boolean isDirectory(SVNURL url, String path) throws SVNException {
-        final SVNNodeKind nodeKind = getNodeKind(url, path);
-        return nodeKind == SVNNodeKind.DIR;
-    }
-
     private boolean isFile(SVNURL url, String path) throws SVNException {
         final SVNNodeKind nodeKind = getNodeKind(url, path);
         return nodeKind == SVNNodeKind.FILE;

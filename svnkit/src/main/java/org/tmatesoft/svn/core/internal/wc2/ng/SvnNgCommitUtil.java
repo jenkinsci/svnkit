@@ -344,6 +344,26 @@ public class SvnNgCommitUtil {
             stateFlags |= SvnCommitItem.LOCK;
         }
         
+        if ((stateFlags & ~(SvnCommitItem.LOCK | SvnCommitItem.PROPS_MODIFIED | SvnCommitItem.COPY)) == 0 && matchesChangelists) {
+            if (workingKind == SVNNodeKind.NONE) {
+                if (commitParameters != null) {
+                    ISVNCommitParameters.Action action = ISVNCommitParameters.SKIP;
+                    SVNNodeKind nodeKind = commitStatus.get(NodeCommitStatus.kind); 
+                    if (nodeKind == SVNNodeKind.DIR) {
+                        action = commitParameters.onMissingDirectory(localAbsPath);
+                    } else if (nodeKind == SVNNodeKind.FILE) {
+                        action = commitParameters.onMissingFile(localAbsPath);
+                    }
+                    if (action == ISVNCommitParameters.DELETE) {
+                        stateFlags |= SvnCommitItem.DELETE;
+                    } else if (action == ISVNCommitParameters.ERROR) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_LOCKED, "Working copy {1} ''{0}'' is missing", localAbsPath, nodeKind == SVNNodeKind.DIR ? "directory" : "file");
+                        SVNErrorManager.error(err, SVNLogType.WC);
+                    }
+                }
+            }
+        }
+        
         if (stateFlags != 0 && matchesChangelists) {
             SvnCommitItem item = committables.addItem(localAbsPath, 
                     commitStatus.<SVNNodeKind>get(NodeCommitStatus.kind), 
