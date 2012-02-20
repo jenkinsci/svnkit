@@ -32,6 +32,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb.Mode;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
@@ -50,7 +51,10 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo.RepositoryInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
+import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDbRoot;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
+import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbProperties;
+import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.DirParsedInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.ExternalNodeInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeOriginInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbExternals;
@@ -513,10 +517,9 @@ public class SVNStatusEditor17 {
         return true;
     }
 
-    private Collection<String> collectIgnorePatterns(File localAbsPath, Collection<String> ignores) throws SVNException {
-        /* ### assert we are passed a directory? */
-        /* Then add any svn:ignore globs to the PATTERNS array. */
-        final String localIgnores = myWCContext.getProperty(localAbsPath, SVNProperty.IGNORE);
+    private Collection<String> collectIgnorePatterns(SVNWCDbRoot root, File localRelPath, Collection<String> ignores) throws SVNException {
+        SVNProperties props = SvnWcDbProperties.readProperties(root, localRelPath);
+        final String localIgnores = props != null ? props.getStringValue(SVNProperty.IGNORE) : null;
         if (localIgnores != null) {
             final List<String> patterns = new ArrayList<String>();
             patterns.addAll(ignores);
@@ -598,6 +601,8 @@ public class SVNStatusEditor17 {
         
         getDirStatus(anchorAbsPath, targetName, skipRoot, null, dirInfo, fileType, ignorePatterns, depth, getAll, noIgnore, getDefaultHandler());        
     }
+    
+    private SVNWCDbRoot wcRoot;
    
     protected void getDirStatus(File localAbsPath, String selected, boolean skipThisDir, WCDbRepositoryInfo parentReposInfo, 
             SVNWCDbInfo dirInfo, SVNFileType fileType, Collection<String> ignorePatterns, SVNDepth depth, boolean getAll, boolean noIgnore, ISvnObjectReceiver<SvnStatus> handler) throws SVNException {
@@ -620,8 +625,13 @@ public class SVNStatusEditor17 {
         }
         
         WCDbRepositoryInfo dirReposInfo = getRepositoryRootUrlRelPath(myWCContext, parentReposInfo, dirInfo, localAbsPath);
+        if (wcRoot == null) {
+            DirParsedInfo pdh = ((SVNWCDb) myWCContext.getDb()).parseDir(localAbsPath, Mode.ReadOnly);
+            wcRoot = pdh.wcDbDir.getWCRoot();
+        }
         if (selected == null) {
-            myWCContext.getDb().readChildren(localAbsPath, nodes, conflicts);
+            File localRelPath = wcRoot.computeRelPath(localAbsPath);
+            ((SVNWCDb) myWCContext.getDb()).readChildren(wcRoot, localRelPath, nodes, conflicts);
             allChildren.addAll(nodes.keySet());
             allChildren.addAll(childrenFiles.keySet());
             allChildren.addAll(conflicts);
@@ -676,7 +686,7 @@ public class SVNStatusEditor17 {
             
             if (conflicts.contains(name)) {
                 if (ignorePatterns != null && patterns == null) {
-                    patterns = collectIgnorePatterns(localAbsPath, ignorePatterns);
+                    patterns = collectIgnorePatterns(wcRoot, wcRoot.computeRelPath(localAbsPath), ignorePatterns);
                 }
                 sendUnversionedItem(nodeAbsPath, SVNFileType.getNodeKind(nodeFileType), true, patterns, noIgnore, handler);                
                 continue;
@@ -691,7 +701,7 @@ public class SVNStatusEditor17 {
                 continue;
             }            
             if (ignorePatterns != null && patterns == null) {
-                patterns = collectIgnorePatterns(localAbsPath, ignorePatterns);
+                patterns = collectIgnorePatterns(wcRoot, wcRoot.computeRelPath(localAbsPath), ignorePatterns);
             }
             sendUnversionedItem(nodeAbsPath, SVNFileType.getNodeKind(nodeFileType), false, patterns, noIgnore || selected != null, handler);                
         }

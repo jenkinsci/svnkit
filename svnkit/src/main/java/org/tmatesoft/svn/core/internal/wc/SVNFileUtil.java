@@ -1370,7 +1370,7 @@ public class SVNFileUtil {
         return null;
     }
 
-    public static String detectMimeType(File file, Map mimeTypes) throws SVNException {
+    public static String detectMimeType(File file, Map<String,String> mimeTypes) throws SVNException {
         if (file == null || !file.exists()) {
             return null;
         }

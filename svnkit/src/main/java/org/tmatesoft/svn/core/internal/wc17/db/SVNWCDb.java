@@ -1377,7 +1377,6 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     public DirParsedInfo parseDir(File localAbsPath, Mode sMode, boolean isDetectWCGeneration) throws SVNException {
-
         DirParsedInfo info = new DirParsedInfo();
         String buildRelPath;
         boolean always_check = false;
@@ -1811,6 +1810,37 @@ public class SVNWCDb implements ISVNWCDb {
         return false;
     }
 
+    private boolean isWCLocked(SVNWCDbRoot root, File localRelpath, long recurseDepth) throws SVNException {
+        final SVNSqlJetStatement stmt = root.getSDb().getStatement(SVNWCDbStatements.SELECT_WC_LOCK);
+        stmt.bindf("is", root.getWcId(), localRelpath);
+        try {
+            boolean have_row = stmt.next();
+            if (have_row) {
+                long locked_levels = getColumnInt64(stmt, WC_LOCK__Fields.locked_levels);
+                /*
+                 * The directory in question is considered locked if we find a
+                 * lock with depth -1 or the depth of the lock is greater than
+                 * or equal to the depth we've recursed.
+                 */
+                return (locked_levels == -1 || locked_levels >= recurseDepth);
+            }
+        } finally {
+            stmt.reset();
+        }
+        final File parentFile = SVNFileUtil.getParentFile(localRelpath);
+        if (parentFile == null) {
+            return false;
+        }
+        try {
+            return isWCLocked(root, parentFile, recurseDepth + 1);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_WORKING_COPY) {
+                return false;
+            }
+        }
+        return false;
+    }
+
     public void opAddDirectory(File localAbsPath, SVNSkel workItems) throws SVNException {
         DirParsedInfo parseDir = parseDir(localAbsPath, Mode.ReadWrite);
         SVNWCDbDir pdh = parseDir.wcDbDir;
@@ -2232,15 +2262,19 @@ public class SVNWCDb implements ISVNWCDb {
         
         verifyDirUsable(pdh);
         
+        readChildren(pdh.getWCRoot(), localRelPath, children, conflicts);
+        
+    }
+
+    public void readChildren(SVNWCDbRoot root, File localRelPath, Map<String, SVNWCDbInfo> children, Set<String> conflicts) throws SVNException {
         GatherChildren gather = new GatherChildren();
         gather.dirRelPath = localRelPath;
-        gather.wcRoot = pdh.getWCRoot();
+        gather.wcRoot = root;
         
         gather.nodes = children;
         gather.conflicts = conflicts;
         
-        pdh.getWCRoot().getSDb().runTransaction(gather, SqlJetTransactionMode.READ_ONLY);
-        
+        root.getSDb().runTransaction(gather, SqlJetTransactionMode.READ_ONLY);
     }
     
     private class GatherChildren implements SVNSqlJetTransaction {
@@ -2302,7 +2336,7 @@ public class SVNWCDb implements ISVNWCDb {
                     } else {
                         childItem.depth = getColumnDepth(stmt, SVNWCDbSchema.NODES__Fields.depth);
                         if (newChild) {
-                            childItem.locked = isWCLocked(SVNFileUtil.createFilePath(wcRoot.getAbsPath(), childRelPath)); 
+                            childItem.locked = isWCLocked(wcRoot, childRelPath, 0); 
                         }
                     }
                     childItem.recordedModTime = getColumnInt64(stmt, SVNWCDbSchema.NODES__Fields.last_mod_time);
