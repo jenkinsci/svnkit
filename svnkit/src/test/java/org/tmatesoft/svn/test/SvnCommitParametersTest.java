@@ -15,6 +15,7 @@ import org.tmatesoft.svn.core.wc2.SvnCommitPacket;
 import org.tmatesoft.svn.core.wc2.SvnCopy;
 import org.tmatesoft.svn.core.wc2.SvnCopySource;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
+import org.tmatesoft.svn.core.wc2.SvnScheduleForRemoval;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 public class SvnCommitParametersTest {
@@ -105,6 +106,29 @@ public class SvnCommitParametersTest {
         Assert.assertNotNull(packet.getItem(changedCopyFile));
         
         packet.dispose();
+        
+        missingDir.mkdir();
+        wc.changeFileContents(missingFilePath, "contents1");
+       
+        SvnScheduleForRemoval rm = svnOperationFactory.createScheduleForRemoval();
+        rm.addTarget(SvnTarget.fromFile(missingDir));
+        rm.addTarget(SvnTarget.fromFile(missingFile));
+        rm.setDepth(SVNDepth.EMPTY);
+        rm.setDeleteFiles(false);
+        rm.run();
+        
+        Assert.assertTrue(missingDir.isDirectory());
+        Assert.assertTrue(missingFile.isFile());
+        
+        SvnCommit ci = svnOperationFactory.createCommit();
+        ci.setCommitMessage("message");
+        ci.addTarget(SvnTarget.fromFile(wc.getFile("directory")));
+        ci.setCommitParameters(createCommitParameters(ISVNCommitParameters.SKIP, true, ISVNCommitParameters.SKIP, false));
+        ci.setDepth(SVNDepth.INFINITY);
+        ci.run();
+
+        Assert.assertTrue(missingDir.isDirectory());
+        Assert.assertTrue(!missingFile.exists());
     }
     
     private SvnCommitPacket collectPacket(WorkingCopy wc, File[] targets, SvnOperationFactory of, ISVNCommitParameters params, SVNDepth depth) throws SVNException {

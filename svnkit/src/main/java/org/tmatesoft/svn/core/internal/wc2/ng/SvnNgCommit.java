@@ -142,7 +142,10 @@ public class SvnNgCommit extends SvnNgOperationRunner<SVNCommitInfo, SvnCommit> 
             ISVNEditor commitEditor = repository.getCommitEditor(commitMessage, lockTokens, keepLocks, revisionProperties, mediator);
             
             try {
-                info = SVNCommitter17.commit(getWcContext(), mediator.getTmpFiles(), committables, repositoryRootUrl, commitEditor, md5Checksums, sha1Checksums);
+                SVNCommitter17 committer = new SVNCommitter17(context, committables, repositoryRootUrl, mediator.getTmpFiles(), md5Checksums, sha1Checksums);
+                SVNCommitUtil.driveCommitEditor(committer, committables.keySet(), commitEditor, -1);
+                committer.sendTextDeltas(commitEditor);
+                info = commitEditor.closeEdit();
                 commitEditor = null;
                 if (info.getErrorMessage() == null || info.getErrorMessage().getErrorCode() == SVNErrorCode.REPOS_POST_COMMIT_HOOK_FAILED) {
                     // do some post processing, make sure not to unlock wc (to dipose packet) in case there
@@ -153,6 +156,7 @@ public class SvnNgCommit extends SvnNgOperationRunner<SVNCommitInfo, SvnCommit> 
                             postProcessCommitItem(queue, item, getOperation().isKeepChangelists(), getOperation().isKeepLocks(), sha1Checksums.get(item.getPath()));
                         }
                         processCommittedQueue(queue, info.getNewRevision(), info.getDate(), info.getAuthor());
+                        deleteDeleteFiles(committer, getOperation().getCommitParameters());
                     } catch (SVNException e) {
                         // this is bump error.
                         bumpError = e;
@@ -161,6 +165,7 @@ public class SvnNgCommit extends SvnNgOperationRunner<SVNCommitInfo, SvnCommit> 
                         sleepForTimestamp();
                     }
                 }
+                
                 handleEvent(SVNEventFactory.createSVNEvent(null, SVNNodeKind.NONE, null, info.getNewRevision(), SVNEventAction.COMMIT_COMPLETED, 
                         SVNEventAction.COMMIT_COMPLETED, null, null, -1, -1));
             } catch (SVNException e) {

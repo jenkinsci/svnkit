@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -64,8 +65,9 @@ public class SVNCommitter17 implements ISVNCommitPathHandler {
     private Map<File, SvnChecksum> mySha1Checksums;
     private Map<String, SvnCommitItem> myModifiedFiles;
     private SVNDeltaGenerator myDeltaGenerator;
+    private Collection<File> deletedPaths;
 
-    private SVNCommitter17(SVNWCContext context, Map<String, SvnCommitItem> committables, SVNURL repositoryRoot, Collection<File> tmpFiles, Map<File, SvnChecksum> md5Checksums,
+    public SVNCommitter17(SVNWCContext context, Map<String, SvnCommitItem> committables, SVNURL repositoryRoot, Collection<File> tmpFiles, Map<File, SvnChecksum> md5Checksums,
             Map<File, SvnChecksum> sha1Checksums) {
         myContext = context;
         myCommittables = committables;
@@ -73,6 +75,8 @@ public class SVNCommitter17 implements ISVNCommitPathHandler {
         myMd5Checksums = md5Checksums;
         mySha1Checksums = sha1Checksums;
         myModifiedFiles = new TreeMap<String, SvnCommitItem>();
+        
+        deletedPaths = new TreeSet<File>();
     }
 
     public static SVNCommitInfo commit(SVNWCContext context, Collection<File> tmpFiles, Map<String, SvnCommitItem> committables, SVNURL repositoryRoot, ISVNEditor commitEditor,
@@ -81,6 +85,10 @@ public class SVNCommitter17 implements ISVNCommitPathHandler {
         SVNCommitUtil.driveCommitEditor(committer, committables.keySet(), commitEditor, -1);
         committer.sendTextDeltas(commitEditor);
         return commitEditor.closeEdit();
+    }
+    
+    public Collection<File> getDeletedPaths() {
+        return deletedPaths;
     }
 
     public boolean handleCommitPath(String commitPath, ISVNEditor commitEditor) throws SVNException {
@@ -140,6 +148,7 @@ public class SVNCommitter17 implements ISVNCommitPathHandler {
             } catch (SVNException e) {
                 fixError(commitPath, e, SVNNodeKind.FILE);
             }
+            deletedPaths.add(localAbspath);
         }
         long cfRev = item.getCopyFromRevision();
         Map<String, SVNPropertyValue> outgoingProperties =  item.getOutgoingProperties();
@@ -258,7 +267,7 @@ public class SVNCommitter17 implements ISVNCommitPathHandler {
         }
     }
 
-    private void sendTextDeltas(ISVNEditor editor) throws SVNException {
+    public void sendTextDeltas(ISVNEditor editor) throws SVNException {
         for (String path : myModifiedFiles.keySet()) {
             SvnCommitItem item = myModifiedFiles.get(path);
             myContext.checkCancelled();

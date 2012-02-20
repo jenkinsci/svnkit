@@ -231,8 +231,6 @@ public class SVNWCContext {
 
         BASE_REMOVE("base-remove", new RunBaseRemove()),
 
-        DELETION_POSTCOMMIT("deletion-postcommit", new RunDeletionPostCommit()),
-
         FILE_INSTALL("file-install", new RunFileInstall()),
 
         FILE_COMMIT("file-commit", new RunFileCommit()),
@@ -3378,17 +3376,6 @@ public class SVNWCContext {
         result.appendChild(workItem);
         return result;
     }
-
-    public void wqAddDeletionPostCommit(File localAbspath, long newRevnum, boolean noUnlock) throws SVNException {
-        SVNSkel workItem = SVNSkel.createEmptyList();
-        workItem.prependString(noUnlock ? "1" : "0");
-        workItem.prependString(Long.toString(newRevnum));
-        workItem.prependPath(getRelativePath(localAbspath));
-        workItem.prependString(WorkQueueOperation.DELETION_POSTCOMMIT.getOpName());
-        SVNSkel result = SVNSkel.createEmptyList();
-        result.appendChild(workItem);
-        getDb().addWorkQueue(localAbspath, result);
-    }
     
     public SVNSkel wqBuildPostUpgrade() throws SVNException {
     	SVNSkel result = SVNSkel.createEmptyList();
@@ -3498,29 +3485,6 @@ public class SVNWCContext {
             ctx.removeBaseNode(localAbspath);
             if (revision >= 0) {
                 ctx.getDb().addBaseNotPresentNode(localAbspath, reposRelPath, reposRootUrl, reposUuid, revision, kind, null, null);
-            }
-        }
-    }
-
-    public static class RunDeletionPostCommit implements RunWorkQueueOperation {
-
-        public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) throws SVNException {
-            File localAbspath = SVNFileUtil.createFilePath(wcRootAbspath, workItem.getChild(1).getValue());
-            long newRevision = SVNWCUtils.parseLong(workItem.getChild(2).getValue());
-            SVNWCDbKind kind = ctx.getDb().readKind(localAbspath, false);
-            long parentRevision = ctx.getDb().getBaseInfo(SVNFileUtil.getParentFile(localAbspath), BaseInfoField.revision).revision;
-            File reposRelpath = null;
-            SVNURL reposRootUrl = null;
-            String reposUuid = null;
-            if (newRevision > parentRevision) {
-                WCDbRepositoryInfo reposInfo = ctx.getDb().scanBaseRepository(localAbspath, RepositoryInfoField.values());
-                reposRelpath = reposInfo.relPath;
-                reposRootUrl = reposInfo.rootUrl;
-                reposUuid = reposInfo.uuid;
-            }
-            ctx.removeFromRevisionControl(localAbspath, false, false);
-            if (newRevision > parentRevision) {
-                ctx.getDb().addBaseNotPresentNode(localAbspath, reposRelpath, reposRootUrl, reposUuid, newRevision, kind, null, null);
             }
         }
     }

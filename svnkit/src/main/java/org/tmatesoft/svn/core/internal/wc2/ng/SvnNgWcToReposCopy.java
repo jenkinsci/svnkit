@@ -22,6 +22,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNCommitUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNExternal;
 import org.tmatesoft.svn.core.internal.wc17.SVNCommitter17;
@@ -200,7 +201,12 @@ public class SvnNgWcToReposCopy extends SvnNgOperationRunner<SVNCommitInfo, SvnR
         SVNURL url = SvnNgCommitUtil.translateCommitables(packet.getItems(packet.getRepositoryRoots().iterator().next()), committables);
         repository.setLocation(url, false);
         ISVNEditor commitEditor = repository.getCommitEditor(commitMessage, null, false, revisionProperties, null);
-        return SVNCommitter17.commit(getWcContext(), null, committables, repositoryRoot, commitEditor, null, null);
+        SVNCommitter17 committer = new SVNCommitter17(getWcContext(), committables, repositoryRoot, null, null, null);
+        SVNCommitUtil.driveCommitEditor(committer, committables.keySet(), commitEditor, -1);
+        committer.sendTextDeltas(commitEditor);
+        SVNCommitInfo info = commitEditor.closeEdit();
+        deleteDeleteFiles(committer, getOperation().getCommitParameters());
+        return info;
     }
 
     private String buildErrorMessageWithDebugInformation(SvnCommitPacket oldPacket) {
