@@ -356,6 +356,8 @@ public class SvnNgCommitUtil {
                     }
                     if (action == ISVNCommitParameters.DELETE) {
                         stateFlags |= SvnCommitItem.DELETE;
+                        // schedule file or dir for deletion!
+                        SvnNgRemove.delete(context, localAbsPath, false, false, null);
                     } else if (action == ISVNCommitParameters.ERROR) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_LOCKED, "Working copy {1} ''{0}'' is missing", localAbsPath, nodeKind == SVNNodeKind.DIR ? "directory" : "file");
                         SVNErrorManager.error(err, SVNLogType.WC);
