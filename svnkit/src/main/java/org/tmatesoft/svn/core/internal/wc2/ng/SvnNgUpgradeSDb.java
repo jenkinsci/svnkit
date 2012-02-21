@@ -55,7 +55,7 @@ public class SvnNgUpgradeSDb {
         File bumpWcRootAbsPath = wcRootAbsPath;
         
         if (startFormat < SVNWCContext.WC_NG_VERSION /* 12 */) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Working copy ''{0}'' is too old (format {1}, created by Subversion {3})", 
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Working copy ''{0}'' is too old (format {1}, created by Subversion {2})", 
             		wcRootAbsPath, startFormat, versionStringFromFormat(startFormat));
             SVNErrorManager.error(err, SVNLogType.WC);
         }
@@ -363,14 +363,13 @@ public class SvnNgUpgradeSDb {
 	            stmt.reset();
 	        }
 	        
-	        /*!!!
 	        if (haveRow) {
 	            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
 	                    "The working copy at ''{0}'' is format 22 with WORKING nodes; use a format 22 client to diff/revert before using this client", 
 	                    wcRootAbsPath);
 	            SVNErrorManager.error(err, SVNLogType.WC);
 	        }
-	        */
+	        
 	 
 	        setVersion(sDb, (int)23);
     	}
@@ -504,15 +503,14 @@ public class SvnNgUpgradeSDb {
 	          } finally {
 	              stmt.reset();
 	          }
-	    	  /*!!!
+
 	    	  if (haveRow) {
 	              SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
 	                      "The working copy at ''{0}'' is format 26 with conflicts; use a format 26 client to resolve before using this client", 
 	                      wcRootAbsPath);
 	              SVNErrorManager.error(err, SVNLogType.WC);
 	          }
-	          */
-	    	  
+	         	    	  
 	    	  setVersion(sDb, (int)27);
 	    }
     }
