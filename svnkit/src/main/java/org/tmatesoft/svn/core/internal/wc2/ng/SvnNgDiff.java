@@ -17,6 +17,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNAmbientDepthFilterEditor17;
 import org.tmatesoft.svn.core.internal.wc17.SVNDiffEditor17;
 import org.tmatesoft.svn.core.internal.wc17.SVNReporter17;
+import org.tmatesoft.svn.core.internal.wc17.SVNStatusEditor17;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess;
@@ -274,13 +275,7 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
             SVNErrorManager.error(err, SVNLogType.WC);
         }
 
-        final ISVNDiffGenerator generator = getDiffGenerator();
-
-        boolean isRoot = getWcContext().getDb().isWCRoot(path2);
-        final String target = isRoot ? null : SVNFileUtil.getFileName(path2);
-        final File pathForUrl = isRoot ? path2 : SVNFileUtil.getParentFile(path2);
-
-        long revNumber = 0;
+        long revNumber;
         try {
             revNumber = getRepositoryAccess().getRevisionNumber(null, SvnTarget.fromFile(path1), revision1, null).lng(SvnRepositoryAccess.RevisionsPair.revNumber);
         } catch (SVNException e) {
@@ -291,17 +286,43 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
             }
         }
 
-        ISvnDiffCallback callback = new SvnDiffCallback(generator, revNumber, -1, getOperation().getOutput());
-        SVNDiffEditor17 editor = new SVNDiffEditor17(getWcContext(), pathForUrl, path2, getOperation().getDepth(), revision2 == SVNRevision.BASE || revision2 == SVNRevision.COMMITTED,
-                false, callback, !getOperation().isIgnoreAncestry(), getOperation().getApplicableChangelists(), false, getOperation().isShowCopiesAsAdds());
+        final ISVNDiffGenerator generator = getDiffGenerator();
 
-        try {
-            editor.closeEdit();
-        } finally {
-            editor.cleanup();
+        final SVNNodeKind kind = getWcContext().readKind(path1, false);
+
+        final File anchor;
+        if (kind != SVNNodeKind.DIR) {
+            anchor = SVNFileUtil.getFileDir(path1);
+        } else {
+            anchor = path1;
         }
-    }
+        //TODO: pass anchor to callback
 
+        ISvnDiffCallback callback = new SvnDiffCallback(generator, revNumber, -1, getOperation().getOutput());
+
+        boolean gitFormat = false;
+
+        final boolean reportAll;
+        //noinspection RedundantIfStatement
+        if (getOperation().isShowCopiesAsAdds() || gitFormat) {
+            reportAll = true;
+        } else {
+            reportAll = false;
+        }
+
+        final boolean diffIgnored = false;
+
+        final SvnDiffStatusReceiver statusHandler = new SvnDiffStatusReceiver(getWcContext(), path1, getWcContext().getDb(), callback, getOperation().isIgnoreAncestry(), getOperation().isShowCopiesAsAdds(), gitFormat);
+        final SVNStatusEditor17 statusEditor = new SVNStatusEditor17(
+                path1,
+                getWcContext(),
+                getOperation().getOptions(),
+                !diffIgnored,
+                reportAll,
+                getOperation().getDepth(),
+                statusHandler);
+        statusEditor.walkStatus(path2, getOperation().getDepth(), reportAll, !diffIgnored, false, getOperation().getApplicableChangelists());
+    }
 
     private void doDiffURLURL(SVNURL url1, File path1, SVNRevision revision1, SVNURL url2, File path2, SVNRevision revision2, SVNRevision pegRevision, ISVNDiffGenerator generator) throws SVNException {
         final SvnTarget target1 = url1 != null ? SvnTarget.fromURL(url1) : SvnTarget.fromFile(path1);

@@ -396,6 +396,7 @@ public class DiffTest {
         diff.setTargets(SvnTarget.fromFile(target, SVNRevision.BASE), SvnTarget.fromFile(target, SVNRevision.WORKING));
         diff.setOutput(byteArrayOutputStream);
         diff.setRelativeToDirectory(relativeToDirectory);
+        diff.setIgnoreAncestry(true);
         diff.run();
         return new String(byteArrayOutputStream.toByteArray());
     }

@@ -11,27 +11,6 @@
  */
 package org.tmatesoft.svn.core.internal.wc17.db;
 
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbShared.begingReadTransaction;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbShared.commitTransaction;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbShared.doesNodeExists;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnBlob;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnBoolean;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnChecksum;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnDepth;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnInt64;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnKind;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnPath;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnPresence;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnProperties;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnRevNum;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnText;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getKindText;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getPresenceText;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getTranslatedSize;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.hasColumnProperties;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.isColumnNull;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.parseDepth;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -110,6 +89,27 @@ import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnChecksum;
 import org.tmatesoft.svn.util.SVNLogType;
+
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbShared.begingReadTransaction;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbShared.commitTransaction;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbShared.doesNodeExists;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnBlob;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnBoolean;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnChecksum;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnDepth;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnInt64;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnKind;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnPath;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnPresence;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnProperties;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnRevNum;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnText;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getKindText;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getPresenceText;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getTranslatedSize;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.hasColumnProperties;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.isColumnNull;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.parseDepth;
 
 /**
  *
@@ -4839,4 +4839,135 @@ public class SVNWCDb implements ISVNWCDb {
         dirData.put(upgradeData.rootAbsPath, pdh);
     }
 
+    public class CheckReplace implements SVNSqlJetTransaction {
+
+        public long wcId;
+        public File localRelpath;
+
+        public boolean replaceRoot;
+        public boolean baseReplace;
+        public boolean replace;
+
+        public CheckReplace(long wcId, File localRelpath) {
+            this.wcId = wcId;
+            this.localRelpath = localRelpath;
+        }
+
+        @Override
+        public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
+            long replacedOpDepth;
+            SVNWCDbStatus replacedStatus;
+            boolean haveRow;
+            long parentOpDepth;
+
+            final SVNSqlJetStatement stmt = db.getStatement(SVNWCDbStatements.SELECT_NODE_INFO);
+            try {
+                stmt.bindf("is", wcId, localRelpath.getPath());
+                haveRow = stmt.next();
+                if (!haveRow) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND,
+                            "The node ''{0}'' was not found.", localRelpath);
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                }
+
+                {
+                    SVNWCDbStatus status = getColumnPresence(stmt);
+
+                    if (status != SVNWCDbStatus.Normal) {
+                        return;
+                    }
+                }
+                haveRow = stmt.next();
+                if (!haveRow) {
+                    return;
+                }
+
+                replacedStatus = getColumnPresence(stmt);
+                if (replacedStatus != SVNWCDbStatus.NotPresent
+                        && replacedStatus != SVNWCDbStatus.Excluded
+                        && replacedStatus != SVNWCDbStatus.ServerExcluded
+                        && replacedStatus != SVNWCDbStatus.Deleted) {
+                    replace = true;
+                }
+
+                replacedOpDepth = stmt.getColumnLong(NODES__Fields.op_depth);
+
+                //if we need base replace {
+
+                long opDepth = stmt.getColumnLong(NODES__Fields.op_depth);
+
+                while (opDepth != 0 && haveRow) {
+                    haveRow = stmt.next();
+                    if (haveRow) {
+                        opDepth = stmt.getColumnLong(NODES__Fields.op_depth);
+                    }
+                }
+
+                if (haveRow && opDepth == 0) {
+                    SVNWCDbStatus baseStatus = getColumnPresence(stmt);
+                    baseReplace = baseStatus != SVNWCDbStatus.NotPresent;
+                }
+
+                // }
+
+            } finally {
+                stmt.reset();
+            }
+
+            //TODO: if shouldn't get these values, return
+//            if (!shouldGetReplaceRoot || !shouldGetReplace) {
+//                return;
+//            }
+
+            if (replacedStatus != SVNWCDbStatus.BaseDeleted) {
+                try {
+                    stmt.bindf("is", wcId, SVNFileUtil.getFileDir(localRelpath));
+
+                    stmt.nextRow();
+
+                    parentOpDepth = stmt.getColumnLong(NODES__Fields.op_depth);
+
+                    if (parentOpDepth >= replacedOpDepth) {
+                        replaceRoot = parentOpDepth == replacedOpDepth;
+                        return;
+                    }
+
+                    haveRow = stmt.next();
+
+                    if (haveRow) {
+                        parentOpDepth = stmt.getColumnLong(NODES__Fields.op_depth);
+                    }
+                } finally {
+                    stmt.reset();
+                }
+
+                if (!haveRow) {
+                    replaceRoot = true;
+                } else if (parentOpDepth < replacedOpDepth) {
+                    replaceRoot = true;
+                }
+            }
+        }
+    }
+
+    @Override
+    public SVNWCDbNodeCheckReplaceData nodeCheckReplace(File localAbspath) throws SVNException {
+        assert SVNFileUtil.isAbsolute(localAbspath);
+        DirParsedInfo pdh = parseDir(localAbspath, Mode.ReadOnly);
+        verifyDirUsable(pdh.wcDbDir);
+
+        if (pdh.localRelPath == null || pdh.localRelPath.getPath() == null || pdh.localRelPath.getPath().length() == 0) {
+            return SVNWCDbNodeCheckReplaceData.NO_REPLACE;
+        }
+
+        final CheckReplace checkReplace = new CheckReplace(pdh.wcDbDir.getWCRoot().getWcId(), pdh.localRelPath);
+        checkReplace.replace = false;
+        checkReplace.replaceRoot = false;
+        checkReplace.baseReplace = false;
+
+        pdh.wcDbDir.getWCRoot().getSDb().runTransaction(checkReplace, SqlJetTransactionMode.READ_ONLY);
+
+        return new SVNWCDbNodeCheckReplaceData(checkReplace.replaceRoot, checkReplace.replace, checkReplace.baseReplace);
+//        pdh.wcDbDir.flushEntries(); TODO: ?
+    }
 }

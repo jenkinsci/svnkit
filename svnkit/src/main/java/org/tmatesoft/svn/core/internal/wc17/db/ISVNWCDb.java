@@ -1711,7 +1711,7 @@ public interface ISVNWCDb {
     Set<String> getChildrenOfWorkingNode(File dirAbsPath) throws SVNException;
 
     void opRemoveNode(File localAbspath, long revision, SVNWCDbKind kind) throws SVNException;
-    
+
     class SVNWCDbUpgradeData {
 		public File rootAbsPath;
 		public long repositoryId;
@@ -1720,4 +1720,20 @@ public interface ISVNWCDb {
 	}
     
     void upgradeBegin(File localAbspath, SVNWCDbUpgradeData upgradeData, SVNURL repositoryRootUrl, String repositoryUUID) throws SVNException;
+
+    class SVNWCDbNodeCheckReplaceData {
+        public static SVNWCDbNodeCheckReplaceData NO_REPLACE = new SVNWCDbNodeCheckReplaceData(false, false, false);
+
+        public final boolean replaceRoot;
+        public final boolean replace;
+        public final boolean baseReplace;
+
+        public SVNWCDbNodeCheckReplaceData(boolean replaceRoot, boolean replace, boolean baseReplace) {
+            this.replaceRoot = replaceRoot;
+            this.replace = replace;
+            this.baseReplace = baseReplace;
+        }
+    }
+
+    SVNWCDbNodeCheckReplaceData nodeCheckReplace(File localAbspath) throws SVNException;
 }
