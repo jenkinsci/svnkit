@@ -207,7 +207,7 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
         }
         SVNRepository repository = getRepositoryAccess().createRepository(anchorUrl, null, true);
         long revNumber = getRepositoryAccess().getRevisionNumber(repository, SvnTarget.fromURL(url1), revision1, null).lng(SvnRepositoryAccess.RevisionsPair.revNumber);
-        ISvnDiffCallback callback = new SvnDiffCallback(generator, reverse ? -1 : revNumber, reverse ? revNumber : -1, getOperation().getOutput());
+        ISvnDiffCallback callback = new SvnDiffCallback(new SvnOldDiffGenerator(generator), reverse ? -1 : revNumber, reverse ? revNumber : -1, getOperation().getOutput());
         SVNDiffEditor17 editor = new SVNDiffEditor17(getWcContext(), pathForUrl, null, getOperation().getDepth(), revision2 == SVNRevision.BASE || revision2 == SVNRevision.COMMITTED,
                 reverse, callback, !getOperation().isIgnoreAncestry(), getOperation().getApplicableChangelists(), false, getOperation().isShowCopiesAsAdds());
         boolean serverSupportsDepth = repository.hasCapability(SVNCapability.DEPTH);
@@ -252,7 +252,7 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
         SVNRepository repository = getRepositoryAccess().createRepository(anchorUrl, null, true);
         long revNumber = getRepositoryAccess().getRevisionNumber(repository, SvnTarget.fromFile(path1), revision1, null).lng(SvnRepositoryAccess.RevisionsPair.revNumber);
 
-        ISvnDiffCallback callback = new SvnDiffCallback(generator, reverse ? -1 : revNumber, reverse ? revNumber : -1, getOperation().getOutput());
+        ISvnDiffCallback callback = new SvnDiffCallback(new SvnOldDiffGenerator(generator), reverse ? -1 : revNumber, reverse ? revNumber : -1, getOperation().getOutput());
         SVNDiffEditor17 editor = new SVNDiffEditor17(getWcContext(), pathForUrl, null, getOperation().getDepth(), revision2 == SVNRevision.BASE || revision2 == SVNRevision.COMMITTED,
                 reverse, callback, !getOperation().isIgnoreAncestry(), getOperation().getApplicableChangelists(), false, getOperation().isShowCopiesAsAdds());
         boolean serverSupportsDepth = repository.hasCapability(SVNCapability.DEPTH);
@@ -298,7 +298,7 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
         }
         //TODO: pass anchor to callback
 
-        ISvnDiffCallback callback = new SvnDiffCallback(generator, revNumber, -1, getOperation().getOutput());
+        ISvnDiffCallback callback = new SvnDiffCallback(new SvnOldDiffGenerator(generator), revNumber, -1, getOperation().getOutput());
 
         boolean gitFormat = false;
 
@@ -322,6 +322,8 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
                 getOperation().getDepth(),
                 statusHandler);
         statusEditor.walkStatus(path2, getOperation().getDepth(), reportAll, !diffIgnored, false, getOperation().getApplicableChangelists());
+
+        //TODO: cleanup
     }
 
     private void doDiffURLURL(SVNURL url1, File path1, SVNRevision revision1, SVNURL url2, File path2, SVNRevision revision2, SVNRevision pegRevision, ISVNDiffGenerator generator) throws SVNException {
@@ -398,7 +400,7 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
         repository2 = getRepositoryAccess().createRepository(url1, null, false);
         SvnNgRemoteDiffEditor editor = null;
         try {
-            ISvnDiffCallback callback = new SvnDiffCallback(generator, rev1, rev2, getOperation().getOutput());
+            ISvnDiffCallback callback = new SvnDiffCallback(new SvnOldDiffGenerator(generator), rev1, rev2, getOperation().getOutput());
             editor = SvnNgRemoteDiffEditor.createEditor(getWcContext(), basePath, getOperation().getDepth(),
                     repository2, rev1, false, false, callback, getOperation().getEventHandler());
             ISVNReporterBaton reporter = new ISVNReporterBaton() {
@@ -470,7 +472,7 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
 
         SVNRepository repository = getRepositoryAccess().createRepository(anchorUrl, null, true);
         long revNumber = getRepositoryAccess().getRevisionNumber(repository, SvnTarget.fromURL(url1, pegRevision), revision1, null).lng(SvnRepositoryAccess.RevisionsPair.revNumber);
-        ISvnDiffCallback callback = new SvnDiffCallback(generator, reverse ? -1 : revNumber, reverse ? revNumber : -1, getOperation().getOutput());
+        ISvnDiffCallback callback = new SvnDiffCallback(new SvnOldDiffGenerator(generator), reverse ? -1 : revNumber, reverse ? revNumber : -1, getOperation().getOutput());
         SVNDiffEditor17 editor = new SVNDiffEditor17(getWcContext(), pathForUrl, null, getOperation().getDepth(), revision2 == SVNRevision.BASE || revision2 == SVNRevision.COMMITTED,
                 reverse, callback, !getOperation().isIgnoreAncestry(), getOperation().getApplicableChangelists(), false, getOperation().isShowCopiesAsAdds());
         boolean serverSupportsDepth = repository.hasCapability(SVNCapability.DEPTH);

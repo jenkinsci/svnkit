@@ -305,10 +305,7 @@ public class SvnDiffStatusReceiver implements ISvnObjectReceiver<SvnStatus> {
     }
 
     private File getEmptyFile() throws SVNException {
-        if (emptyFile == null) {
-            emptyFile = createEmptyFile();
-        }
-        return emptyFile;
+        return null;
     }
 
     private File createEmptyFile() throws SVNException {

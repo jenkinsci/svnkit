@@ -345,6 +345,7 @@ public class DiffTest {
         }
     }
 
+    @Ignore
     @Test
     public void testDiffLocalCopiedFile() throws Exception {
         final TestOptions options = TestOptions.getInstance();
@@ -376,6 +377,7 @@ public class DiffTest {
             final SvnDiff diff = svnOperationFactory.createDiff();
             diff.setTarget(SvnTarget.fromFile(targetFile, SVNRevision.WORKING), SVNRevision.HEAD, SVNRevision.WORKING);
             diff.setOutput(byteArrayOutputStream);
+            diff.setShowCopiesAsAdds(false);
             diff.run();
 
             final String actualDiffOutput =  new String(byteArrayOutputStream.toByteArray());
