@@ -6,6 +6,8 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CodingErrorAction;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -23,12 +25,14 @@ public class SvnDiffCallback implements ISvnDiffCallback {
     private OutputStream outputStream;
     private long revision2;
     private long revision1;
+    private Set<File> visitedPaths;
 
     public SvnDiffCallback(ISvnDiffGenerator generator, long rev1, long rev2, OutputStream outputStream) {
         this.generator = generator;
         this.outputStream = outputStream;
         this.revision1 = rev1;
         this.revision2 = rev2;
+        this.visitedPaths = new HashSet<File>();
     }
 
     public void fileOpened(SvnDiffCallbackResult result, File path, long revision) throws SVNException {
@@ -39,7 +43,7 @@ public class SvnDiffCallback implements ISvnDiffCallback {
             displayContentChanged(path, leftFile, rightFile, rev1, rev2, mimeType1, mimeType2, propChanges, originalProperties, OperationKind.Modified, null);
         }
         if (propChanges != null && !propChanges.isEmpty()) {
-            propertiesChanged(path, false, propChanges, originalProperties);
+            propertiesChanged(path, rev1, rev2, false, propChanges, originalProperties);
         }
     }
 
@@ -51,7 +55,7 @@ public class SvnDiffCallback implements ISvnDiffCallback {
         }
 
         if (propChanges != null && !propChanges.isEmpty()) {
-            propertiesChanged(path, false, propChanges, originalProperties);
+            propertiesChanged(path, rev1, rev2, false, propChanges, originalProperties);
         }
     }
 
@@ -77,7 +81,7 @@ public class SvnDiffCallback implements ISvnDiffCallback {
         if (regularDiff == null || regularDiff.isEmpty()) {
             return;
         }
-        generator.displayPropDiff(getDisplayPath(path), dirWasAdded, originalProperties, regularDiff, outputStream);
+        generator.displayPropDiff(getDisplayPath(path), getRevisionString(revision1), getRevisionString(revision2), dirWasAdded, originalProperties, regularDiff, false, outputStream);
     }
 
     public void dirClosed(SvnDiffCallbackResult result, File path, boolean dirWasAdded) throws SVNException {
@@ -103,14 +107,23 @@ public class SvnDiffCallback implements ISvnDiffCallback {
         return regularPropertiesChanges;
     }
 
-    public void propertiesChanged(File path, boolean dirWasAdded, SVNProperties diff, SVNProperties originalProperties) throws SVNException {
+    public void propertiesChanged(File path, long revision1, long revision2, boolean dirWasAdded, SVNProperties diff, SVNProperties originalProperties) throws SVNException {
         originalProperties = originalProperties == null ? new SVNProperties() : originalProperties;
         diff = diff == null ? new SVNProperties() : diff;
         SVNProperties regularDiff = getRegularProperties(diff);
-        if (diff == null || diff.isEmpty()) {
-            return;
+
+        boolean displayHeader = false;
+        if (!visitedPaths.contains(path)) {
+            displayHeader = true;
         }
-        generator.displayPropDiff(getDisplayPath(path), dirWasAdded, originalProperties, regularDiff, outputStream);
+
+        if (diff != null && !diff.isEmpty()) {
+            generator.displayPropDiff(getDisplayPath(path), getRevisionString(revision1), getRevisionString(revision2), dirWasAdded, originalProperties, regularDiff, displayHeader, outputStream);
+        }
+
+        if (displayHeader) {
+            visitedPaths.add(path);
+        }
     }
 
     private void displayContentChanged(File path, File leftFile, File rightFile, long rev1, long rev2, String mimeType1, String mimeType2, SVNProperties propChanges, SVNProperties originalProperties, OperationKind operation, File copyFromPath) throws SVNException {
@@ -220,7 +233,7 @@ public class SvnDiffCallback implements ISvnDiffCallback {
             generator.setEncoding(charset);
             encodingAdjusted = true;
         }
-        if (generator.geEOL() == null) {
+        if (generator.getEOL() == null) {
             byte[] eol;
             String eolString = System.getProperty("line.separator");
             try {

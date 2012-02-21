@@ -35,7 +35,7 @@ public class SvnOldDiffGenerator implements ISvnDiffGenerator {
         generator.setEOL(eol);
     }
 
-    public byte[] geEOL() {
+    public byte[] getEOL() {
         return generator.getEOL();
     }
 
@@ -47,7 +47,7 @@ public class SvnOldDiffGenerator implements ISvnDiffGenerator {
         generator.displayAddedDirectory(displayPath, revision1, revision2);
     }
 
-    public void displayPropDiff(String displayPath, boolean dirWasAdded, SVNProperties originalProps, SVNProperties propChanges, OutputStream outputStream) throws SVNException {
+    public void displayPropDiff(String displayPath, String revisionString, String string, boolean dirWasAdded, SVNProperties originalProps, SVNProperties propChanges, boolean showDiffHeader, OutputStream outputStream) throws SVNException {
         generator.displayPropDiff(displayPath, originalProps, propChanges, outputStream);
     }
 
