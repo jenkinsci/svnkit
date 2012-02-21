@@ -26,6 +26,12 @@ import org.tmatesoft.svn.core.wc.SVNCopySource;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.core.wc2.SvnCopy;
+import org.tmatesoft.svn.core.wc2.SvnCopySource;
+import org.tmatesoft.svn.core.wc2.SvnGetStatus;
+import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
+import org.tmatesoft.svn.core.wc2.SvnStatus;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 public class WorkingCopy {
 
@@ -52,12 +58,12 @@ public class WorkingCopy {
         this.repositoryUrl = repositoryUrl;
     }
     
-    public File deleteFile(String relativePath) {
-        getFile(relativePath).delete();
+    public File deleteFile(String relativePath) throws SVNException {
+        SVNFileUtil.deleteFile(getFile(relativePath));
         return getFile(relativePath);
     }
 
-    public File changeFileContents(String relativePath, String contents) throws IOException {
+    public File changeFileContents(String relativePath, String contents) throws SVNException {
         TestUtil.writeFileContentsString(getFile(relativePath), contents);
         return getFile(relativePath);
     }
@@ -438,7 +444,7 @@ public class WorkingCopy {
     private void beforeOperation() throws SVNException {
         log("");
 
-        backupWcDbFile();
+//        backupWcDbFile();
     }
 
     private void afterOperation() {
@@ -519,5 +525,19 @@ public class WorkingCopy {
     private void wrapThrowable(Throwable th) {
         th.printStackTrace(getLogger());
         throw new RuntimeException(th);
+    }
+
+    public SvnStatus getStatus(String path) throws SVNException {
+        SvnGetStatus st = new SvnOperationFactory().createGetStatus();
+        st.setDepth(SVNDepth.EMPTY);
+        st.setSingleTarget(SvnTarget.fromFile(getFile(path)));
+        return st.run();
+    }
+
+    public void copy(String srcPath, String dstPath) throws SVNException {
+        SvnCopy cp = new SvnOperationFactory().createCopy();
+        cp.addCopySource(SvnCopySource.create(SvnTarget.fromFile(getFile(srcPath)), SVNRevision.WORKING));
+        cp.setSingleTarget(SvnTarget.fromFile(getFile(dstPath)));
+        cp.run();
     }
 }

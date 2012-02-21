@@ -5,12 +5,14 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumInputStream;
@@ -44,10 +46,12 @@ public class TestUtil {
         System.out.println(message);
     }
 
-    public static void writeFileContentsString(File file, String contentsString) throws IOException {
-        final FileOutputStream fileOutputStream = new FileOutputStream(file);
+    public static void writeFileContentsString(File file, String contentsString) throws SVNException {
+        final OutputStream fileOutputStream = SVNFileUtil.openFileForWriting(file);
         try {
             fileOutputStream.write(contentsString.getBytes());
+        } catch (IOException e) {
+            throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e));
         } finally {
             SVNFileUtil.closeFile(fileOutputStream);
         }
@@ -73,6 +77,7 @@ public class TestUtil {
             return new String(byteArrayOutputStream.toByteArray());
         } finally {
             SVNFileUtil.closeFile(bufferedInputStream);
+            SVNFileUtil.closeFile(fileInputStream);
         }
     }
 

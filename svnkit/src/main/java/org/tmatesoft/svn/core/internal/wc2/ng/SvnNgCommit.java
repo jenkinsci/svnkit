@@ -256,6 +256,7 @@ public class SvnNgCommit extends SvnNgOperationRunner<SVNCommitInfo, SvnCommit> 
                 }
             }
         }
+        getWcContext().close();
     }
 
     private void queueCommitted(SvnCommittedQueue queue, File localAbsPath, boolean recurse, SVNProperties wcPropChanges, boolean removeLock, boolean removeChangelist, 
