@@ -4853,7 +4853,6 @@ public class SVNWCDb implements ISVNWCDb {
             this.localRelpath = localRelpath;
         }
 
-        @Override
         public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
             long replacedOpDepth;
             SVNWCDbStatus replacedStatus;
@@ -4950,7 +4949,6 @@ public class SVNWCDb implements ISVNWCDb {
         }
     }
 
-    @Override
     public SVNWCDbNodeCheckReplaceData nodeCheckReplace(File localAbspath) throws SVNException {
         assert SVNFileUtil.isAbsolute(localAbspath);
         DirParsedInfo pdh = parseDir(localAbspath, Mode.ReadOnly);

@@ -74,7 +74,6 @@ public class SvnDiffStatusReceiver implements ISvnObjectReceiver<SvnStatus> {
         return gitFormat;
     }
 
-    @Override
     public void receive(SvnTarget target, SvnStatus status) throws SVNException {
         final SVNStatusType nodeStatus = status.getNodeStatus();
         if (nodeStatus == SVNStatusType.STATUS_UNVERSIONED) {
