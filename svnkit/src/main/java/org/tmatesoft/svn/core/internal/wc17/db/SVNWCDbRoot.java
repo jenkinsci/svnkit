@@ -98,7 +98,7 @@ public class SVNWCDbRoot {
         /* Auto-upgrade the SDB if possible. */
         if (format < ISVNWCDb.WC_FORMAT_17 && autoUpgrade) {
             if (autoUpgrade) {
-                format = SvnNgUpgradeSDb.upgrade(absPath, sDb, format);
+                //format = SvnNgUpgradeSDb.upgrade(absPath, sDb, format);
             } else {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, "Working copy format of ''{0}'' is too old '{1}'", new Object[] {
                         absPath, format
