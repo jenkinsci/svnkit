@@ -868,7 +868,8 @@ public class SvnOperationFactory {
     }
     
     private boolean isPrimaryWcGenerationOnly() {
-        return "true".equalsIgnoreCase(System.getProperty("svnkit.wc.17only", null));
+        //return "true".equalsIgnoreCase(System.getProperty("svnkit.wc.17only", null));
+    	return true;
     }
 
     @SuppressWarnings("unchecked")
@@ -910,7 +911,7 @@ public class SvnOperationFactory {
             }
             SVNWCDb db = new SVNWCDb();
             try {
-                db.open(SVNWCDbOpenMode.ReadOnly, (ISVNOptions) null, false, false);
+                db.open(SVNWCDbOpenMode.ReadOnly, (ISVNOptions) null, true, false);
                 db.parseDir(path, Mode.ReadOnly, true);
                 return SvnWcGeneration.V17;
             } catch (SVNException e) {

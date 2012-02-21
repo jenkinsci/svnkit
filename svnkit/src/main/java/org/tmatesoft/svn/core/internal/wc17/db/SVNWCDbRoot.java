@@ -23,6 +23,7 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgUpgradeSDb;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -97,7 +98,7 @@ public class SVNWCDbRoot {
         /* Auto-upgrade the SDB if possible. */
         if (format < ISVNWCDb.WC_FORMAT_17 && autoUpgrade) {
             if (autoUpgrade) {
-                format = upgrade(absPath, format);
+                format = SvnNgUpgradeSDb.upgrade(absPath, sDb, format);
             } else {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, "Working copy format of ''{0}'' is too old '{1}'", new Object[] {
                         absPath, format
@@ -153,11 +154,6 @@ public class SVNWCDbRoot {
         } finally {
             sDb = null;
         }
-    }
-
-    public static int upgrade(File absPath, int format) {
-        // TODO
-        return 0;
     }
 
     public File getAbsPath(File localRelPath) {

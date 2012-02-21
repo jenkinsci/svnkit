@@ -63,17 +63,8 @@ import org.tmatesoft.svn.util.SVNLogType;
 public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 
 	/* WC-1.0 administrative area extensions */
-	private static final String SVN_WC__BASE_EXT = ".svn-base"; /*
-																 * for text and
-																 * prop bases
-																 */
-	private static final String SVN_WC__REVERT_EXT = ".svn-revert"; /*
-																	 * for
-																	 * reverting
-																	 * a
-																	 * replaced
-																	 * file
-																	 */
+	private static final String SVN_WC__BASE_EXT = ".svn-base"; /* for text and prop bases */
+	private static final String SVN_WC__REVERT_EXT = ".svn-revert"; /* for reverting a replaced file */
 
 	/* Old locations for storing "wcprops" (aka "dav cache"). */
 	private static final String WCPROPS_SUBDIR_FOR_FILES = "wcprops";
@@ -98,7 +89,7 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 
 	/* New pristine location */
 	private static final String PRISTINE_STORAGE_RELPATH = "pristine";
-	/* Number of characters in a pristine file basename, in WC format <= 28. */
+	
 	private static final String SDB_FILE = "wc.db";
 
 	private class RepositoryInfo {
@@ -160,7 +151,6 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
                     } else {
                         throw e;
                     }
-                    
                 }
             }
 		}
@@ -267,10 +257,8 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 		}
 
 		if (entry.getSVNURL() == null) {
-			SVNErrorMessage err = SVNErrorMessage
-					.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT,
-							"Working copy '{0}' can't be upgraded because it doesn't have a url",
-							localAbsPath);
+			SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT,
+							"Working copy '{0}' can't be upgraded because it doesn't have a url", localAbsPath);
 			SVNErrorManager.error(err, SVNLogType.WC);
 		}
 
@@ -506,7 +494,7 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 				if (verProps != null) {
 				    cachedProps.put("", verProps.asMap());
 				}
-				SVNHashSet children = getVesionedFiles(dirRelPath, data.root.getSDb(), data.workingCopyId);
+				SVNHashSet children = getVersionedFiles(dirRelPath, data.root.getSDb(), data.workingCopyId);
 				for (Iterator<File> files = children.iterator(); files.hasNext();) {
 					File file = files.next();
 					verProps = area.getWCProperties(SVNFileUtil.getFileName(file));
@@ -845,31 +833,24 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 	 * children must have been upgraded to wc-ng format.
 	 */
 
-	private SVNHashSet getVesionedFiles(File parentRelPath, SVNSqlJetDb sDb,
-			long wcId) throws SVNException {
+	private SVNHashSet getVersionedFiles(File parentRelPath, SVNSqlJetDb sDb, long wcId) throws SVNException {
 		SVNHashSet children = new SVNHashSet();
 
 		/* ### just select 'file' children. do we need 'symlink' in the future? */
-		SVNSqlJetStatement stmt = sDb
-				.getStatement(SVNWCDbStatements.SELECT_ALL_FILES);
+		SVNSqlJetStatement stmt = sDb.getStatement(SVNWCDbStatements.SELECT_ALL_FILES);
 		try {
 			stmt.bindLong(1, wcId);
 			stmt.bindString(2, SVNFileUtil.getFilePath(parentRelPath));
 
 			/*
-			 * ### 10 is based on Subversion's average of 8.5 files per
-			 * versioned directory in its repository. maybe use a different
-			 * value? or ### count rows first?
+			 * ### 10 is based on Subversion's average of 8.5 files per versioned directory in its repository. maybe use a different
+			 * value? or count rows first?
 			 */
 
-			boolean haveRow = stmt.next();
-			while (haveRow) {
-				File localRelPath = SVNFileUtil
-						.createFilePath(stmt
-								.getColumnString(SVNWCDbSchema.NODES__Fields.local_relpath));
+			while (stmt.next()) {
+				File localRelPath = SVNFileUtil.createFilePath(stmt.getColumnString(SVNWCDbSchema.NODES__Fields.local_relpath));
 				if (!children.contains(localRelPath))
 					children.add(localRelPath);
-				haveRow = stmt.next();
 			}
 		} finally {
 			stmt.reset();
@@ -904,7 +885,7 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 		/* Migrate the props for "this dir". */
 		migrateNodeProps(dirAbsPath, data, "", originalFormat, area);
 
-		SVNHashSet children = getVesionedFiles(dirRelPath, data.root.getSDb(),
+		SVNHashSet children = getVersionedFiles(dirRelPath, data.root.getSDb(),
 				data.workingCopyId);
 
 		/* Iterate over all the files in this SDB. */
@@ -939,5 +920,5 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 				originalFormat);
 
 	}
-
+	
 }

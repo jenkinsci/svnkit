@@ -45,6 +45,7 @@ public enum SVNWCDbStatements {
     INSERT_ACTUAL_EMPTIES(SVNWCDbInsertActualEmpties.class),
     INSERT_ACTUAL_TEXT_CONFLICTS(SVNWCDbInsertActualTextConflicts.class),
     INSERT_ACTUAL_TREE_CONFLICTS(SVNWCDbInsertActualTreeConflicts.class),
+    INSERT_EXTERNAL(SVNWCDbInsertExternal.class),
     INSERT_EXTERNAL_UPGRADE(SVNWCDbInsertExternalUpgrade.class),
     INSERT_LOCK(SVNWCDbInsertLock.class),
     INSERT_NODE(SVNWCDbInsertNode.class),

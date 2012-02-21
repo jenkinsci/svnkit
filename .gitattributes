@@ -34,6 +34,7 @@ svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/SvnWcDbChangelist.j
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbClearDavCacheRecursive.java -text svneol=native#unset
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbDeletePristineIfUnreferenced.java -text svneol=native#unset
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbInsertActualEmpties.java -text svneol=native#unset
+svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbInsertExternal.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbInsertExternalUpgrade.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbInsertOrIgnorePristine.java -text svneol=native#unset
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbInsertTarget2.java -text svneol=native#unset
@@ -89,6 +90,7 @@ svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/ng/SvnNgSetChangelist.j
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/ng/SvnNgSetLock.java -text svneol=native#unset
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/ng/SvnNgUnlock.java -text svneol=native#unset
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/ng/SvnNgUpgrade.java -text
+svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/ng/SvnNgUpgradeSDb.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/old/SvnOldAnnotate.java -text svneol=native#unset
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/old/SvnOldCat.java -text svneol=native#unset
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/old/SvnOldCleanup.java -text svneol=native#unset
