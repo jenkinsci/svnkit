@@ -868,8 +868,7 @@ public class SvnOperationFactory {
     }
     
     private boolean isPrimaryWcGenerationOnly() {
-        //return "true".equalsIgnoreCase(System.getProperty("svnkit.wc.17only", null));
-    	return true;
+        return "true".equalsIgnoreCase(System.getProperty("svnkit.wc.17only", null));
     }
 
     @SuppressWarnings("unchecked")
