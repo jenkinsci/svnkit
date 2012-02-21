@@ -333,7 +333,7 @@ public class DiffTest {
             final String actualDiffOutput = runLocalDiff(svnOperationFactory, fileToReplace, workingCopyDirectory);
             final String expectedDiffOutput = "Index: " + fileToReplace.getPath() + "\n" +
                     "===================================================================\n" +
-                    "--- " + fileToReplace.getPath() + "\t(working copy)\n" +
+                    "--- " + fileToReplace.getPath() + "\t" + (TestUtil.isNewWorkingCopyTest() ? "(working copy)" : "(revision 1)") + "\n" +
                     "+++ " + fileToReplace.getPath() + "\t(working copy)\n" +
                     "@@ -0,0 +1 @@\n" +
                     "+newContents\n" +
