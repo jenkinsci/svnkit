@@ -148,7 +148,9 @@ public class SVNCommitter17 implements ISVNCommitPathHandler {
             } catch (SVNException e) {
                 fixError(commitPath, e, SVNNodeKind.FILE);
             }
-            deletedPaths.add(localAbspath);
+            if (!item.hasFlag(SvnCommitItem.ADD)) {
+                deletedPaths.add(localAbspath);
+            }
         }
         long cfRev = item.getCopyFromRevision();
         Map<String, SVNPropertyValue> outgoingProperties =  item.getOutgoingProperties();

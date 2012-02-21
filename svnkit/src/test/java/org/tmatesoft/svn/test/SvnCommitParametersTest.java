@@ -16,6 +16,7 @@ import org.tmatesoft.svn.core.wc2.ISvnCommitParameters.Action;
 import org.tmatesoft.svn.core.wc2.SvnCommit;
 import org.tmatesoft.svn.core.wc2.SvnCommitPacket;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
+import org.tmatesoft.svn.core.wc2.SvnScheduleForAddition;
 import org.tmatesoft.svn.core.wc2.SvnScheduleForRemoval;
 import org.tmatesoft.svn.core.wc2.SvnStatus;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -200,6 +201,43 @@ public class SvnCommitParametersTest {
 
         Assert.assertTrue(missingDir.isDirectory());
         Assert.assertTrue(!missingFile.exists());
+    }
+
+    @Test
+    public void testPostCommitForReplacement() throws SVNException {
+        WorkingCopy wc = prepareMissingWc(getTestName());
+        
+        File missingFile = wc.getFile(MISSING_FILE_PATH);
+        File missingDir = wc.getFile(MISSING_DIR_PATH);
+        File dir = wc.getFile(DIR_PATH);
+
+        SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        SvnScheduleForRemoval rm = svnOperationFactory.createScheduleForRemoval();
+        rm.addTarget(SvnTarget.fromFile(missingFile));
+        rm.addTarget(SvnTarget.fromFile(missingDir));
+        rm.setDepth(SVNDepth.EMPTY);
+        rm.run();
+        
+        missingDir.mkdir();
+        wc.changeFileContents(MISSING_FILE_PATH, "changed contents");
+
+        SvnScheduleForAddition add = svnOperationFactory.createScheduleForAddition();
+        add.addTarget(SvnTarget.fromFile(missingFile));
+        add.addTarget(SvnTarget.fromFile(missingDir));
+        add.run();
+        
+        Assert.assertTrue(missingDir.isDirectory());
+        Assert.assertTrue(missingFile.isFile());
+        
+        SvnCommit ci = svnOperationFactory.createCommit();
+        ci.setCommitMessage("message");
+        ci.addTarget(SvnTarget.fromFile(dir));
+        ci.setCommitParameters(createCommitParameters(Action.SKIP, true, Action.SKIP, true));
+        ci.setDepth(SVNDepth.INFINITY);
+        ci.run();
+
+        Assert.assertTrue(missingDir.isDirectory());
+        Assert.assertTrue(missingFile.exists());
     }
 
     private WorkingCopy prepareMissingWc(String sandboxName) throws SVNException {

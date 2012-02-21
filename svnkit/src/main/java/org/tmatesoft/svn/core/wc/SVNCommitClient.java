@@ -201,9 +201,6 @@ public class SVNCommitClient extends SVNBasicClient {
      * @see #getCommitParameters()
      */
     public void setCommitParameters(ISVNCommitParameters parameters) {
-        if (parameters == null) {
-            parameters = new DefaultSVNCommitParameters();
-        }
         this.commitParameters = parameters;
     }
 

@@ -1,6 +1,5 @@
 package org.tmatesoft.svn.core.wc2;
 
-import org.tmatesoft.svn.core.wc.ISVNAddParameters;
 
 public class SvnScheduleForAddition extends SvnOperation<Void> {
     
