@@ -40,6 +40,7 @@ public class SvnOldRemoteCopy extends SvnOldRunner<SVNCommitInfo, SvnRemoteCopy>
         client.setCommitHandler(SvnCodec.commitHandler(getOperation().getCommitHandler()));
         client.setExternalsHandler(SvnCodec.externalsHandler(getOperation().getExternalsHandler()));
         client.setDisableLocalModificationCopying(getOperation().isDisableLocalModifications());
+        client.setCommitParameters(SvnCodec.commitParameters(getOperation().getCommitParameters()));
         
         SvnTarget target = getOperation().getFirstTarget();
         SVNCopySource[] sources = new SVNCopySource[getOperation().getSources().size()];

@@ -9,7 +9,7 @@ import org.tmatesoft.svn.core.internal.wc17.SVNCommitter17;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc2.SvnLocalOperationRunner;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
-import org.tmatesoft.svn.core.wc.ISVNCommitParameters;
+import org.tmatesoft.svn.core.wc2.ISvnCommitParameters;
 import org.tmatesoft.svn.core.wc2.SvnOperation;
 
 public abstract class SvnNgOperationRunner<V, T extends SvnOperation<V>> extends SvnLocalOperationRunner<V, T> {
@@ -47,7 +47,7 @@ public abstract class SvnNgOperationRunner<V, T extends SvnOperation<V>> extends
         return SvnWcGeneration.V17;
     }
 
-    protected void deleteDeleteFiles(SVNCommitter17 committer, ISVNCommitParameters parameters) {
+    protected void deleteDeleteFiles(SVNCommitter17 committer, ISvnCommitParameters parameters) {
         if (parameters == null) {
             return;
         }

@@ -30,6 +30,7 @@ import org.tmatesoft.svn.core.internal.wc2.ISvnCommitRunner;
 import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
 import org.tmatesoft.svn.core.wc.ISVNChangelistHandler;
 import org.tmatesoft.svn.core.wc.ISVNCommitHandler;
+import org.tmatesoft.svn.core.wc.ISVNCommitParameters;
 import org.tmatesoft.svn.core.wc.ISVNDiffStatusHandler;
 import org.tmatesoft.svn.core.wc.ISVNExternalsHandler;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
@@ -53,6 +54,7 @@ import org.tmatesoft.svn.core.wc.admin.ISVNHistoryHandler;
 import org.tmatesoft.svn.core.wc.admin.ISVNTreeHandler;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminPath;
 import org.tmatesoft.svn.core.wc.admin.SVNChangeEntry;
+import org.tmatesoft.svn.core.wc2.ISvnCommitParameters;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnAnnotateItem;
 import org.tmatesoft.svn.core.wc2.SvnChecksum;
@@ -851,4 +853,73 @@ public class SvnCodec {
         };
     }
     
+    public static ISvnCommitParameters commitParameters(final ISVNCommitParameters old) {
+        if (old == null) {
+            return null;
+        }
+        return new ISvnCommitParameters() {
+
+            public Action onMissingFile(File file) {
+                ISVNCommitParameters.Action a = old.onMissingFile(file);
+                return action(a);
+            }
+
+            public Action onMissingDirectory(File file) {
+                ISVNCommitParameters.Action a = old.onMissingDirectory(file);
+                return action(a);
+            }
+
+            private Action action(ISVNCommitParameters.Action a) {
+                if (a == ISVNCommitParameters.DELETE) {
+                    return Action.DELETE;
+                } else if (a == ISVNCommitParameters.ERROR) {
+                    return Action.ERROR;
+                }
+                return Action.SKIP;
+            }
+
+            public boolean onDirectoryDeletion(File directory) {
+                return old.onDirectoryDeletion(directory);
+            }
+
+            public boolean onFileDeletion(File file) {
+                return old.onFileDeletion(file);
+            }
+        };
+    }
+    
+    public static ISVNCommitParameters commitParameters(final ISvnCommitParameters old) {
+        if (old == null) {
+            return null;
+        }
+        return new ISVNCommitParameters() {
+
+            public ISVNCommitParameters.Action onMissingFile(File file) {
+                ISvnCommitParameters.Action a = old.onMissingFile(file);
+                return action(a);
+            }
+
+            public Action onMissingDirectory(File file) {
+                ISvnCommitParameters.Action a = old.onMissingDirectory(file);
+                return action(a);
+            }
+
+            private ISVNCommitParameters.Action action(ISvnCommitParameters.Action a) {
+                if (a == ISvnCommitParameters.Action.DELETE) {
+                    return ISVNCommitParameters.DELETE;
+                } else if (a == ISvnCommitParameters.Action.ERROR) {
+                    return ISVNCommitParameters.ERROR;
+                }
+                return ISVNCommitParameters.SKIP;
+            }
+
+            public boolean onDirectoryDeletion(File directory) {
+                return old.onDirectoryDeletion(directory);
+            }
+
+            public boolean onFileDeletion(File file) {
+                return old.onFileDeletion(file);
+            }
+        };
+    }
 }

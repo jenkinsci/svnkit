@@ -5,7 +5,6 @@ import java.util.Collection;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.wc.ISVNCommitParameters;
 import org.tmatesoft.svn.core.wc2.hooks.ISvnExternalsHandler;
 
 public class SvnRemoteCopy extends AbstractSvnCommit {
@@ -14,7 +13,7 @@ public class SvnRemoteCopy extends AbstractSvnCommit {
     private boolean makeParents;
     private boolean failWhenDstExists;
     private ISvnExternalsHandler externalsHandler;
-    private ISVNCommitParameters commitParameters;
+    private ISvnCommitParameters commitParameters;
     private boolean disableLocalModifications;
 
     private Collection<SvnCopySource> sources;
@@ -79,11 +78,11 @@ public class SvnRemoteCopy extends AbstractSvnCommit {
         this.externalsHandler = externalsHandler;
     }
 
-    public ISVNCommitParameters getCommitParameters() {
+    public ISvnCommitParameters getCommitParameters() {
         return commitParameters;
     }
 
-    public void setCommitParameters(ISVNCommitParameters commitParameters) {
+    public void setCommitParameters(ISvnCommitParameters commitParameters) {
         this.commitParameters = commitParameters;
     }
 }

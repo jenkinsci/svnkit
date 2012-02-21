@@ -472,6 +472,7 @@ public class SVNCopyClient extends SVNBasicClient {
         cp.setExternalsHandler(SvnCodec.externalsHandler(getExternalsHandler()));
         cp.setCommitHandler(SvnCodec.commitHandler(getCommitHandler()));
         cp.setDisableLocalModifications(disableLocalModifications);
+        cp.setCommitParameters(SvnCodec.commitParameters(getCommitParameters()));
         
         for (int i = 0; i < sources.length; i++) {
             cp.addCopySource(SvnCodec.copySource(sources[i]));

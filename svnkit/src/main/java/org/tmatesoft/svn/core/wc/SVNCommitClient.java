@@ -1073,6 +1073,7 @@ public class SVNCommitClient extends SVNBasicClient {
         commit.setKeepLocks(keepLocks);
         commit.setDepth(depth);
         commit.setForce(force);
+        commit.setCommitParameters(SvnCodec.commitParameters(getCommitParameters()));
         if (changelists != null && changelists.length > 0) {
             commit.setApplicalbeChangelists(Arrays.asList(changelists));
         }

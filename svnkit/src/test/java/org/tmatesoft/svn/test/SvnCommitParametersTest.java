@@ -9,9 +9,10 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.wc.ISVNCommitParameters;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.wc2.ISvnCommitParameters;
+import org.tmatesoft.svn.core.wc2.ISvnCommitParameters.Action;
 import org.tmatesoft.svn.core.wc2.SvnCommit;
 import org.tmatesoft.svn.core.wc2.SvnCommitPacket;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
@@ -55,7 +56,7 @@ public class SvnCommitParametersTest {
 
             final SvnCommit commit = svnOperationFactory.createCommit();
             commit.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
-            commit.setCommitParameters(createCommitParameters(ISVNCommitParameters.DELETE, true, ISVNCommitParameters.DELETE, true));
+            commit.setCommitParameters(createCommitParameters(ISvnCommitParameters.Action.DELETE, true, ISvnCommitParameters.Action.DELETE, true));
             commit.setCommitMessage("");
             final SVNCommitInfo commitInfo = commit.run();
 
@@ -79,7 +80,7 @@ public class SvnCommitParametersTest {
         File changedFile = wc.getFile(CHANGED_FILE_PATH);
 
         SvnCommitPacket packet = collectPacket(wc, new File[] {changedFile, missingFile, missingDir}, new SvnOperationFactory(), 
-                createCommitParameters(ISVNCommitParameters.DELETE, true, ISVNCommitParameters.DELETE, true), SVNDepth.EMPTY);
+                createCommitParameters(Action.DELETE, true, Action.DELETE, true), SVNDepth.EMPTY);
 
         Assert.assertNotNull(packet.getItem(changedFile));
         Assert.assertNotNull(packet.getItem(missingFile));
@@ -102,7 +103,7 @@ public class SvnCommitParametersTest {
         File changedFile = wc.getFile(CHANGED_FILE_PATH);
         
         SvnCommitPacket packet = collectPacket(wc, new File[] {changedFile, missingFile, missingDir}, new SvnOperationFactory(), 
-                createCommitParameters(ISVNCommitParameters.SKIP, true, ISVNCommitParameters.SKIP, true), SVNDepth.EMPTY);
+                createCommitParameters(Action.SKIP, true, Action.SKIP, true), SVNDepth.EMPTY);
 
         Assert.assertNotNull(packet.getItem(changedFile));
         Assert.assertNull(packet.getItem(missingFile));
@@ -126,7 +127,7 @@ public class SvnCommitParametersTest {
         
         try {
             collectPacket(wc, new File[] {changedFile, missingFile, missingDir}, new SvnOperationFactory(), 
-                createCommitParameters(ISVNCommitParameters.ERROR, true, ISVNCommitParameters.SKIP, true), SVNDepth.EMPTY);
+                createCommitParameters(Action.ERROR, true, Action.SKIP, true), SVNDepth.EMPTY);
             Assert.fail();
         } catch (SVNException e) {
             //
@@ -154,7 +155,7 @@ public class SvnCommitParametersTest {
         Assert.assertEquals(SVNStatusType.STATUS_MISSING, st.getNodeStatus());
 
         SvnCommitPacket packet = collectPacket(wc, new File[] {copyRoot, changedFile, missingFile, missingDir}, new SvnOperationFactory(), 
-                createCommitParameters(ISVNCommitParameters.DELETE, true, ISVNCommitParameters.DELETE, true), SVNDepth.EMPTY);
+                createCommitParameters(Action.DELETE, true, Action.DELETE, true), SVNDepth.EMPTY);
 
         Assert.assertNotNull(packet.getItem(changedFile));
         Assert.assertNotNull(packet.getItem(missingFile));
@@ -193,7 +194,7 @@ public class SvnCommitParametersTest {
         SvnCommit ci = svnOperationFactory.createCommit();
         ci.setCommitMessage("message");
         ci.addTarget(SvnTarget.fromFile(dir));
-        ci.setCommitParameters(createCommitParameters(ISVNCommitParameters.SKIP, true, ISVNCommitParameters.SKIP, false));
+        ci.setCommitParameters(createCommitParameters(Action.SKIP, true, Action.SKIP, false));
         ci.setDepth(SVNDepth.INFINITY);
         ci.run();
 
@@ -221,7 +222,7 @@ public class SvnCommitParametersTest {
         return wc;
     }
     
-    private SvnCommitPacket collectPacket(WorkingCopy wc, File[] targets, SvnOperationFactory of, ISVNCommitParameters params, SVNDepth depth) throws SVNException {
+    private SvnCommitPacket collectPacket(WorkingCopy wc, File[] targets, SvnOperationFactory of, ISvnCommitParameters params, SVNDepth depth) throws SVNException {
         SvnCommit ci = of.createCommit();
         ci.setCommitParameters(params);
         for (int i = 0; i < targets.length; i++) {
@@ -232,13 +233,13 @@ public class SvnCommitParametersTest {
         return ci.collectCommitItems();
     }
 
-    private ISVNCommitParameters createCommitParameters(final ISVNCommitParameters.Action onMissingFile, final boolean deleteFile,
-            final ISVNCommitParameters.Action onMissingDir, final boolean deleteDir) {
-        return new ISVNCommitParameters() {
-            public Action onMissingFile(File file) {
+    private ISvnCommitParameters createCommitParameters(final ISvnCommitParameters.Action onMissingFile, final boolean deleteFile,
+            final ISvnCommitParameters.Action onMissingDir, final boolean deleteDir) {
+        return new ISvnCommitParameters() {
+            public ISvnCommitParameters.Action onMissingFile(File file) {
                 return onMissingFile;
             }
-            public Action onMissingDirectory(File file) {
+            public ISvnCommitParameters.Action onMissingDirectory(File file) {
                 return onMissingDir;
             }
             public boolean onDirectoryDeletion(File directory) {

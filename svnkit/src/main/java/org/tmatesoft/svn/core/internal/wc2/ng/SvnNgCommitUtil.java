@@ -38,9 +38,10 @@ import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeOriginInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbReader;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbReader.ReplaceInfo;
-import org.tmatesoft.svn.core.wc.ISVNCommitParameters;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
+import org.tmatesoft.svn.core.wc2.ISvnCommitParameters;
+import org.tmatesoft.svn.core.wc2.ISvnCommitParameters.Action;
 import org.tmatesoft.svn.core.wc2.SvnCommitItem;
 import org.tmatesoft.svn.core.wc2.SvnCommitPacket;
 import org.tmatesoft.svn.util.SVNLogType;
@@ -70,7 +71,7 @@ public class SvnNgCommitUtil {
         public SVNNodeKind getUrlKind(SVNURL url, long revision) throws SVNException;
     }
     
-    public static SvnCommitPacket harvestCopyCommitables(SVNWCContext context, File path, SVNURL dst, SvnCommitPacket packet, ISvnUrlKindCallback urlKindCallback, ISVNCommitParameters commitParameters, Map<File, String> externalsStorage) throws SVNException {
+    public static SvnCommitPacket harvestCopyCommitables(SVNWCContext context, File path, SVNURL dst, SvnCommitPacket packet, ISvnUrlKindCallback urlKindCallback, ISvnCommitParameters commitParameters, Map<File, String> externalsStorage) throws SVNException {
         SVNWCNodeReposInfo reposInfo = context.getNodeReposInfo(path);
         File commitRelPath = new File(SVNURLUtil.getRelativeURL(reposInfo.reposRootUrl, dst, false));
         
@@ -91,7 +92,7 @@ public class SvnNgCommitUtil {
     public static SvnCommitPacket harversCommittables(SVNWCContext context, SvnCommitPacket packet, Map<SVNURL, String> lockTokens,
             File baseDirPath,
             Collection<String> targets,
-            SVNDepth depth, boolean justLocked, Collection<String> changelists, ISvnUrlKindCallback urlKindCallback, ISVNCommitParameters commitParameters, Map<File, String> externalsStorage) throws SVNException {
+            SVNDepth depth, boolean justLocked, Collection<String> changelists, ISvnUrlKindCallback urlKindCallback, ISvnCommitParameters commitParameters, Map<File, String> externalsStorage) throws SVNException {
         
         Map<File, File> danglers = new HashMap<File, File>();
         
@@ -193,7 +194,7 @@ public class SvnNgCommitUtil {
     public static void harvestCommittables(SVNWCContext context, File localAbsPath, SvnCommitPacket committables, 
             Map<SVNURL, String> lockTokens, SVNURL repositoryRootUrl, File commitRelPath, boolean copyModeRoot, 
             SVNDepth depth, boolean justLocked, Collection<String> changelists, boolean skipFiles, boolean skipDirs, 
-            ISvnUrlKindCallback urlKindCallback, ISVNCommitParameters commitParameters, Map<File, String> externalsStorage, ISVNEventHandler eventHandler) throws SVNException {
+            ISvnUrlKindCallback urlKindCallback, ISvnCommitParameters commitParameters, Map<File, String> externalsStorage, ISVNEventHandler eventHandler) throws SVNException {
         
         if (committables.hasItem(localAbsPath)) {
             return;
@@ -347,18 +348,18 @@ public class SvnNgCommitUtil {
         if ((stateFlags & ~(SvnCommitItem.LOCK | SvnCommitItem.PROPS_MODIFIED | SvnCommitItem.COPY)) == 0 && matchesChangelists) {
             if (workingKind == SVNNodeKind.NONE) {
                 if (commitParameters != null) {
-                    ISVNCommitParameters.Action action = ISVNCommitParameters.SKIP;
+                    ISvnCommitParameters.Action action = ISvnCommitParameters.Action.SKIP;
                     SVNNodeKind nodeKind = commitStatus.get(NodeCommitStatus.kind); 
                     if (nodeKind == SVNNodeKind.DIR) {
                         action = commitParameters.onMissingDirectory(localAbsPath);
                     } else if (nodeKind == SVNNodeKind.FILE) {
                         action = commitParameters.onMissingFile(localAbsPath);
                     }
-                    if (action == ISVNCommitParameters.DELETE) {
+                    if (action == Action.DELETE) {
                         stateFlags |= SvnCommitItem.DELETE;
                         // schedule file or dir for deletion!
                         SvnNgRemove.delete(context, localAbsPath, false, false, null);
-                    } else if (action == ISVNCommitParameters.ERROR) {
+                    } else if (action == Action.ERROR) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_LOCKED, "Working copy {1} ''{0}'' is missing", localAbsPath, nodeKind == SVNNodeKind.DIR ? "directory" : "file");
                         SVNErrorManager.error(err, SVNLogType.WC);
                     }
