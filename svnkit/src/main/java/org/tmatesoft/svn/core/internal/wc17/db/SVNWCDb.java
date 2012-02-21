@@ -56,6 +56,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNTreeConflictUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNExternalsStore;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbAdditionInfo.AdditionInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbBaseInfo.BaseInfoField;
@@ -1811,32 +1812,20 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     private boolean isWCLocked(SVNWCDbRoot root, File localRelpath, long recurseDepth) throws SVNException {
-        final SVNSqlJetStatement stmt = root.getSDb().getStatement(SVNWCDbStatements.SELECT_WC_LOCK);
+        final SVNSqlJetStatement stmt = root.getSDb().getStatement(SVNWCDbStatements.SELECT_ANCESTORS_WC_LOCKS);
+        final int pathDepth = SVNWCUtils.relpathDepth(localRelpath);
         stmt.bindf("is", root.getWcId(), localRelpath);
         try {
-            boolean have_row = stmt.next();
-            if (have_row) {
-                long locked_levels = getColumnInt64(stmt, WC_LOCK__Fields.locked_levels);
-                /*
-                 * The directory in question is considered locked if we find a
-                 * lock with depth -1 or the depth of the lock is greater than
-                 * or equal to the depth we've recursed.
-                 */
-                return (locked_levels == -1 || locked_levels >= recurseDepth);
+            while(stmt.next()) {
+                File lockedPath = getColumnPath(stmt, WC_LOCK__Fields.local_dir_relpath);
+                if (SVNWCUtils.isAncestor(lockedPath, localRelpath)) {
+                    long locked_levels = getColumnInt64(stmt, WC_LOCK__Fields.locked_levels);
+                    int lockedPathDepth = SVNWCUtils.relpathDepth(lockedPath); 
+                    return (locked_levels == -1 || locked_levels + lockedPathDepth >= pathDepth);
+                }
             }
         } finally {
             stmt.reset();
-        }
-        final File parentFile = SVNFileUtil.getParentFile(localRelpath);
-        if (parentFile == null) {
-            return false;
-        }
-        try {
-            return isWCLocked(root, parentFile, recurseDepth + 1);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_WORKING_COPY) {
-                return false;
-            }
         }
         return false;
     }

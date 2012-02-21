@@ -98,6 +98,7 @@ public enum SVNWCDbStatements {
     SELECT_REPOSITORY(SVNWCDbSelectRepository.class),
     SELECT_REPOSITORY_BY_ID(SVNWCDbSelectRepositoryById.class),
     SELECT_WC_LOCK(SVNWCDbSelectWCLock.class),
+    SELECT_ANCESTORS_WC_LOCKS(SVNWCDbSelectAncestorWCLocks.class),
     SELECT_WCROOT_NULL(SVNWCDbSelectWCRootNull.class),
     SELECT_WORK_ITEM(SVNWCDbSelectWorkItem.class),
     SELECT_NODE_INFO(SVNWCDbSelectNodeInfo.class),

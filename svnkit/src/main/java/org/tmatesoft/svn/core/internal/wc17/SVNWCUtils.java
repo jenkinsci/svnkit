@@ -172,13 +172,19 @@ public class SVNWCUtils {
     }
 
     public static boolean isAncestor(File parent, File child) {
-        if (parent == null || child == null)
+        if (parent == null || child == null) {
             return false;
-        if (parent.equals(child))
+        }
+        if (parent.equals(child)) {
             return true;
-        final String parentPath = parent.toString();
-        final String childPath = child.toString();
-        return childPath.startsWith(parentPath);
+        }
+        final String parentPath = parent.getPath().replace(File.separatorChar, '/');
+        final String childPath = child.getPath().replace(File.separatorChar, '/');
+
+        if ("".equals(parentPath)) {
+            return !childPath.startsWith("/");
+        }
+        return childPath.startsWith(parentPath + "/");
     }
 
     public static File skipAncestor(File parent, File child) {
