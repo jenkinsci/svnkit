@@ -238,7 +238,7 @@ public class SvnNgRevert extends SvnNgOperationRunner<Void, SvnRevert> {
                         notifyRequired = true;
                     }
                 }
-                if (!SVNFileUtil.symlinksSupported() || !special) {
+                if (!(SVNFileUtil.isWindows || SVNFileUtil.isOpenVMS) && (!SVNFileUtil.symlinksSupported() || !special)) {
                     boolean executable = SVNFileUtil.isExecutable(localAbsPath);
                     boolean executableProperty = pristineProperties.getStringValue(SVNProperty.EXECUTABLE) != null;
                     if (executableProperty && !executable) {
