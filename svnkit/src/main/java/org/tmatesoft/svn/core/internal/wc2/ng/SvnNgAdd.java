@@ -14,7 +14,6 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNDiffEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
@@ -24,17 +23,13 @@ import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.ConflictInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
-import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbRevert;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
-import org.tmatesoft.svn.core.wc.ISVNAddParameters;
-import org.tmatesoft.svn.core.wc.ISVNEventHandler;
+import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbRevert;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
-import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
-import org.tmatesoft.svn.core.wc2.SvnRevert;
+import org.tmatesoft.svn.core.wc2.ISvnAddParameters;
 import org.tmatesoft.svn.core.wc2.SvnScheduleForAddition;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
@@ -168,15 +163,16 @@ public class SvnNgAdd extends SvnNgOperationRunner<Void, SvnScheduleForAddition>
                         if (SVNProperty.EOL_STYLE.equals(propertyName) &&
                                 e.getErrorMessage().getErrorCode() == SVNErrorCode.ILLEGAL_TARGET &&
                                 e.getErrorMessage().getMessage().indexOf("newlines") >= 0) {
-                            final ISVNAddParameters addParameters = getOperation().getAddParameters() == null ? SVNWCClient.DEFAULT_ADD_PARAMETERS :
+                            final ISvnAddParameters addParameters = getOperation().getAddParameters() == null ? 
+                                    ISvnAddParameters.DEFAULT :
                                     getOperation().getAddParameters();
-                            ISVNAddParameters.Action action = addParameters.onInconsistentEOLs(path);
-                            if (action == ISVNAddParameters.REPORT_ERROR) {
+                            ISvnAddParameters.Action action = addParameters.onInconsistentEOLs(path);
+                            if (action == ISvnAddParameters.Action.REPORT_ERROR) {
                                 doRevert(path);
                                 throw e;
-                            } else if (action == ISVNAddParameters.ADD_AS_IS) {
+                            } else if (action == ISvnAddParameters.Action.ADD_AS_IS) {
                                 SvnNgPropertiesManager.setProperty(getWcContext(), path, propertyName, null, SVNDepth.EMPTY, false, null, null);
-                            } else if (action == ISVNAddParameters.ADD_AS_BINARY) {
+                            } else if (action == ISvnAddParameters.Action.ADD_AS_BINARY) {
                                 SvnNgPropertiesManager.setProperty(getWcContext(), path, propertyName, null, SVNDepth.EMPTY, false, null, null);
                                 mimeType = SVNFileUtil.BINARY_MIME_TYPE;
                             }

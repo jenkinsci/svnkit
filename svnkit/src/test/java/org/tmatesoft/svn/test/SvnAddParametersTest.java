@@ -18,6 +18,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.ISVNAddParameters;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc2.ISvnAddParameters;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnGetProperties;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
@@ -36,7 +37,7 @@ public class SvnAddParametersTest {
             final File someFile = prepareMixedEolsFileInWorkingCopy(svnOperationFactory, sandbox, SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_CR);
 
             try {
-                add(svnOperationFactory, someFile, ISVNAddParameters.REPORT_ERROR);
+                add(svnOperationFactory, someFile, ISvnAddParameters.Action.REPORT_ERROR);
                 Assert.fail("An exception should be thrown");
             } catch (SVNException e) {
                 Assert.assertEquals(e.getErrorMessage().getErrorCode(), SVNErrorCode.ILLEGAL_TARGET);
@@ -57,7 +58,7 @@ public class SvnAddParametersTest {
         try {
             final File someFile = prepareMixedEolsFileInWorkingCopy(svnOperationFactory, sandbox, SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_CR);
 
-            add(svnOperationFactory, someFile, ISVNAddParameters.ADD_AS_IS);
+            add(svnOperationFactory, someFile, ISvnAddParameters.Action.ADD_AS_IS);
 
             final SVNProperties properties = getProperties(svnOperationFactory, someFile);
             Assert.assertEquals(null, properties.getSVNPropertyValue(SVNProperty.EOL_STYLE));
@@ -77,7 +78,7 @@ public class SvnAddParametersTest {
         try {
             final File someFile = prepareMixedEolsFileInWorkingCopy(svnOperationFactory, sandbox, SVNProperty.EOL_STYLE, SVNProperty.EOL_STYLE_CR);
 
-            add(svnOperationFactory, someFile, ISVNAddParameters.ADD_AS_BINARY);
+            add(svnOperationFactory, someFile, ISvnAddParameters.Action.ADD_AS_BINARY);
 
             final SVNProperties properties = getProperties(svnOperationFactory, someFile);
             Assert.assertEquals(null, properties.getSVNPropertyValue(SVNProperty.EOL_STYLE));
@@ -120,7 +121,7 @@ public class SvnAddParametersTest {
         return someFile;
     }
 
-    private void add(SvnOperationFactory svnOperationFactory, File someFile, ISVNAddParameters.Action action) throws SVNException {
+    private void add(SvnOperationFactory svnOperationFactory, File someFile, ISvnAddParameters.Action action) throws SVNException {
         final SvnScheduleForAddition scheduleForAddition = svnOperationFactory.createScheduleForAddition();
         scheduleForAddition.setSingleTarget(SvnTarget.fromFile(someFile));
         scheduleForAddition.setAddParents(false);
@@ -137,9 +138,9 @@ public class SvnAddParametersTest {
         return createOptionsForAutoProperties(optionsDirectory, autoProperties);
     }
 
-    private ISVNAddParameters createSvnAddParameters(final ISVNAddParameters.Action action) {
-        return new ISVNAddParameters() {
-            public Action onInconsistentEOLs(File file) {
+    private ISvnAddParameters createSvnAddParameters(final ISvnAddParameters.Action action) {
+        return new ISvnAddParameters() {
+            public ISvnAddParameters.Action onInconsistentEOLs(File file) {
                 return action;
             }
         };

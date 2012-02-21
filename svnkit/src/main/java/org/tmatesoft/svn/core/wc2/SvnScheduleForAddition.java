@@ -9,7 +9,7 @@ public class SvnScheduleForAddition extends SvnOperation<Void> {
     private boolean applyAutoProperties;
     private boolean addParents;
     private boolean mkDir;
-    private ISVNAddParameters addParameters;
+    private ISvnAddParameters addParameters;
 
     protected SvnScheduleForAddition(SvnOperationFactory factory) {
         super(factory);
@@ -71,11 +71,11 @@ public class SvnScheduleForAddition extends SvnOperation<Void> {
         return true;
     }
 
-    public ISVNAddParameters getAddParameters() {
+    public ISvnAddParameters getAddParameters() {
         return addParameters;
     }
 
-    public void setAddParameters(ISVNAddParameters addParameters) {
+    public void setAddParameters(ISvnAddParameters addParameters) {
         this.addParameters = addParameters;
     }
 }

@@ -27,6 +27,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbBaseInfo.BaseInfoFie
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
 import org.tmatesoft.svn.core.internal.wc2.ISvnCommitRunner;
+import org.tmatesoft.svn.core.wc.ISVNAddParameters;
 import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
 import org.tmatesoft.svn.core.wc.ISVNChangelistHandler;
 import org.tmatesoft.svn.core.wc.ISVNCommitHandler;
@@ -54,6 +55,7 @@ import org.tmatesoft.svn.core.wc.admin.ISVNHistoryHandler;
 import org.tmatesoft.svn.core.wc.admin.ISVNTreeHandler;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminPath;
 import org.tmatesoft.svn.core.wc.admin.SVNChangeEntry;
+import org.tmatesoft.svn.core.wc2.ISvnAddParameters;
 import org.tmatesoft.svn.core.wc2.ISvnCommitParameters;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnAnnotateItem;
@@ -919,6 +921,41 @@ public class SvnCodec {
 
             public boolean onFileDeletion(File file) {
                 return old.onFileDeletion(file);
+            }
+        };
+    }
+    
+    public static ISvnAddParameters addParameters(final ISVNAddParameters old) {
+        if (old == null) {
+            return null;
+        }
+        return new ISvnAddParameters() {
+
+            public Action onInconsistentEOLs(File file) {
+                ISVNAddParameters.Action a = old.onInconsistentEOLs(file);
+                if (a == ISVNAddParameters.ADD_AS_BINARY) {
+                    return Action.ADD_AS_BINARY;
+                } else if (a == ISVNAddParameters.ADD_AS_IS) {
+                    return Action.ADD_AS_IS;
+                }
+                return Action.REPORT_ERROR;
+            }
+        };
+    }
+    
+    public static ISVNAddParameters addParameters(final ISvnAddParameters old) {
+        if (old == null) {
+            return null;
+        }
+        return new ISVNAddParameters() {
+            public Action onInconsistentEOLs(File file) {
+                ISvnAddParameters.Action a = old.onInconsistentEOLs(file);
+                if (a == ISvnAddParameters.Action.ADD_AS_BINARY) {
+                    return ISVNAddParameters.ADD_AS_BINARY;
+                } else if (a == ISvnAddParameters.Action.ADD_AS_IS) {
+                    return ISVNAddParameters.ADD_AS_IS;
+                }
+                return ISVNAddParameters.REPORT_ERROR;
             }
         };
     }

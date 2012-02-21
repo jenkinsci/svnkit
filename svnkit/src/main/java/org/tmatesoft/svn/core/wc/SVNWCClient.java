@@ -1530,7 +1530,7 @@ public class SVNWCClient extends SVNBasicClient {
         add.setDepth(depth);
         add.setIncludeIgnored(includeIgnored);
         add.setAddParents(makeParents);
-        add.setAddParameters(addParameters);
+        add.setAddParameters(SvnCodec.addParameters(addParameters));
         
         add.run();
     }
