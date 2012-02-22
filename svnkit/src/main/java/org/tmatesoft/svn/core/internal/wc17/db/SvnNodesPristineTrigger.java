@@ -75,11 +75,11 @@ public class SvnNodesPristineTrigger implements ISVNSqlJetTrigger {
                 Map<String, Object> values = new HashMap<String, Object>();
                 ISqlJetTable pristineTable = db.getTable(SVNWCDbSchema.PRISTINE.toString());
                 for (String checksum : getTriggerValues().keySet()) {
-                    ISqlJetCursor cursor = pristineTable.lookup(null, checksum);
                     long delta = getTriggerValues().get(checksum); 
                     if (delta == 0) {
                         continue;
                     }
+                    ISqlJetCursor cursor = pristineTable.lookup(null, checksum);
                     if (cursor != null && !cursor.eof()) {                        
                         long refcount = cursor.getInteger(SVNWCDbSchema.PRISTINE__Fields.refcount.toString());
                         refcount += delta;

@@ -201,8 +201,7 @@ public class SvnWcDbPristines {
 	
 	public static void installPristine(SVNWCDbRoot root, File tempfileAbspath, SvnChecksum sha1Checksum, SvnChecksum md5Checksum) throws SVNException {
         File pristineAbspath = getPristineFileName(root, sha1Checksum, true);
-        SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(pristineAbspath));
-        if (kind == SVNNodeKind.FILE) {
+        if (pristineAbspath.isFile()) {
             SVNFileUtil.deleteFile(tempfileAbspath);
             return;
         }
