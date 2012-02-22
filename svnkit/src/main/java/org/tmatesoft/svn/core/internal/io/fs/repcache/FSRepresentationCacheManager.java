@@ -58,7 +58,6 @@ public class FSRepresentationCacheManager implements IFSRepresentationCacheManag
         try {
             cacheObj.myRepCacheDB = SqlJetDb.open(fsfs.getRepositoryCacheFile(), true);
             cacheObj.myRepCacheDB.setSafetyLevel(SqlJetSafetyLevel.OFF);
-            cacheObj.myRepCacheDB.setJournalMode(SqlJetPagerJournalMode.TRUNCATE);
             
             checkFormat(cacheObj.myRepCacheDB);
             cacheObj.myTable = cacheObj.myRepCacheDB.getTable(REP_CACHE_TABLE);
