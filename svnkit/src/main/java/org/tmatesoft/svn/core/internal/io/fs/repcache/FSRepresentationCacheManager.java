@@ -15,6 +15,8 @@ import java.io.File;
 
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
+import org.tmatesoft.sqljet.core.internal.SqlJetPagerJournalMode;
+import org.tmatesoft.sqljet.core.internal.SqlJetSafetyLevel;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
 import org.tmatesoft.sqljet.core.table.ISqlJetRunnableWithLock;
 import org.tmatesoft.sqljet.core.table.ISqlJetTable;
@@ -28,6 +30,7 @@ import org.tmatesoft.svn.core.internal.io.fs.FSRepresentation;
 import org.tmatesoft.svn.core.internal.io.fs.IFSRepresentationCacheManager;
 import org.tmatesoft.svn.core.internal.io.fs.IFSSqlJetTransaction;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -54,6 +57,9 @@ public class FSRepresentationCacheManager implements IFSRepresentationCacheManag
         final FSRepresentationCacheManager cacheObj = new FSRepresentationCacheManager();
         try {
             cacheObj.myRepCacheDB = SqlJetDb.open(fsfs.getRepositoryCacheFile(), true);
+            cacheObj.myRepCacheDB.setSafetyLevel(SqlJetSafetyLevel.OFF);
+            cacheObj.myRepCacheDB.setJournalMode(SqlJetPagerJournalMode.TRUNCATE);
+            
             checkFormat(cacheObj.myRepCacheDB);
             cacheObj.myTable = cacheObj.myRepCacheDB.getTable(REP_CACHE_TABLE);
         } catch (SqlJetException e) {
@@ -135,6 +141,10 @@ public class FSRepresentationCacheManager implements IFSRepresentationCacheManag
         if (myRepCacheDB != null) {
             try {
                 myRepCacheDB.close();
+                File journalFile = new File(myRepCacheDB.getFile().getParentFile(), myRepCacheDB.getFile().getName() + "-journal");
+                if (journalFile.isFile() && journalFile.length() == 0) {
+                    SVNFileUtil.deleteFile(journalFile);
+                }
             } catch (SqlJetException e) {
                 SVNErrorManager.error(convertError(e), SVNLogType.FSFS);
             } finally {

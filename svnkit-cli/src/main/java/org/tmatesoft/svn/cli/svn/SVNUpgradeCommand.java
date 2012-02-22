@@ -11,34 +11,17 @@
  */
 package org.tmatesoft.svn.cli.svn;
 
-import java.io.File;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
-import org.tmatesoft.sqljet.core.internal.lang.SqlParser.neq_subexpr_return;
-import org.tmatesoft.svn.cli.SVNCommandUtil;
-import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
-import org.tmatesoft.svn.core.wc.ISVNChangelistHandler;
-import org.tmatesoft.svn.core.wc.SVNChangelistClient;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNStatus;
-import org.tmatesoft.svn.core.wc.SVNStatusClient;
-import org.tmatesoft.svn.core.wc.SVNUpdateClient;
-import org.tmatesoft.svn.core.wc2.SvnCat;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.core.wc2.SvnUpgrade;
-import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
