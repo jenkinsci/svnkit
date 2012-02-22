@@ -101,7 +101,7 @@ public class SVNSqlJetDb {
             SqlJetDb db = SqlJetDb.open(sdbAbsPath, mode != Mode.ReadOnly);
             db.setBusyHandler(DEFAULT_BUSY_HANDLER);
             db.setSafetyLevel(SqlJetSafetyLevel.OFF);
-            db.setJournalMode(SqlJetPagerJournalMode.TRUNCATE);
+//            db.setJournalMode(SqlJetPagerJournalMode.TRUNCATE);
             
             SVNSqlJetDb sDb = new SVNSqlJetDb(db);
             return sDb;
