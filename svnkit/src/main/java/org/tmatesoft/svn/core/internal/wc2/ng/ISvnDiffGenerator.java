@@ -22,7 +22,7 @@ public interface ISvnDiffGenerator {
 
     void displayAddedDirectory(String displayPath, String revision1, String revision2, OutputStream outputStream) throws SVNException;
 
-    void displayPropDiff(String displayPath, String revisionString, String string, boolean dirWasAdded, SVNProperties originalProps, SVNProperties propChanges, boolean showDiffHeader, OutputStream outputStream) throws SVNException;
+    void displayPropsChanged(String displayPath, String revisionString, String string, boolean dirWasAdded, SVNProperties originalProps, SVNProperties propChanges, boolean showDiffHeader, OutputStream outputStream) throws SVNException;
 
     void displayContentChanged(String displayPath, File leftFile, File rightFile, String revision1, String revision2, String mimeType1, String mimeType2, SvnDiffCallback.OperationKind operation, File copyFromPath, OutputStream outputStream) throws SVNException;
 }

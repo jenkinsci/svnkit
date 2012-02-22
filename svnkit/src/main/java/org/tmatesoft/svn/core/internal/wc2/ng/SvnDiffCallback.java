@@ -81,7 +81,7 @@ public class SvnDiffCallback implements ISvnDiffCallback {
         if (regularDiff == null || regularDiff.isEmpty()) {
             return;
         }
-        generator.displayPropDiff(getDisplayPath(path), getRevisionString(revision1), getRevisionString(revision2), dirWasAdded, originalProperties, regularDiff, false, outputStream);
+        generator.displayPropsChanged(getDisplayPath(path), getRevisionString(revision1), getRevisionString(revision2), dirWasAdded, originalProperties, regularDiff, false, outputStream);
     }
 
     public void dirClosed(SvnDiffCallbackResult result, File path, boolean dirWasAdded) throws SVNException {
@@ -118,7 +118,7 @@ public class SvnDiffCallback implements ISvnDiffCallback {
         }
 
         if (diff != null && !diff.isEmpty()) {
-            generator.displayPropDiff(getDisplayPath(path), getRevisionString(revision1), getRevisionString(revision2), dirWasAdded, originalProperties, regularDiff, displayHeader, outputStream);
+            generator.displayPropsChanged(getDisplayPath(path), getRevisionString(revision1), getRevisionString(revision2), dirWasAdded, originalProperties, regularDiff, displayHeader, outputStream);
         }
 
         if (displayHeader) {

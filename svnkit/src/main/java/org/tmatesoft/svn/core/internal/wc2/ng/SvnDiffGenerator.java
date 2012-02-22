@@ -68,7 +68,7 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
     public void displayAddedDirectory(String displayPath, String revision1, String revision2, OutputStream outputStream) throws SVNException {
     }
 
-    public void displayPropDiff(String displayPath, String revision1, String revision2, boolean dirWasAdded, SVNProperties originalProps, SVNProperties propChanges, boolean showDiffHeader, OutputStream outputStream) throws SVNException {
+    public void displayPropsChanged(String displayPath, String revision1, String revision2, boolean dirWasAdded, SVNProperties originalProps, SVNProperties propChanges, boolean showDiffHeader, OutputStream outputStream) throws SVNException {
         ensureEncodingAndEOLSet();
 
         if (useGitFormat) {
@@ -166,16 +166,16 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
     }
 
     private String getAdjustedPath(String displayPath, String path1, String commonAncestor) {
-        String adjustedPath1 = SVNPathUtil.getRelativePath(commonAncestor, path1);
+        String adjustedPath = SVNPathUtil.getRelativePath(commonAncestor, path1);
 
-        if (adjustedPath1 == null || adjustedPath1.length() == 0) {
-            adjustedPath1 = displayPath;
-        } else if (adjustedPath1.charAt(0) == '/') {
-            adjustedPath1 = displayPath + "\t(..." + adjustedPath1 + ")";
+        if (adjustedPath == null || adjustedPath.length() == 0) {
+            adjustedPath = displayPath;
+        } else if (adjustedPath.charAt(0) == '/') {
+            adjustedPath = displayPath + "\t(..." + adjustedPath + ")";
         } else {
-            adjustedPath1 = displayPath + "\t(.../" + adjustedPath1 + ")";
+            adjustedPath = displayPath + "\t(.../" + adjustedPath + ")";
         }
-        return adjustedPath1;
+        return adjustedPath;
         //TODO: respect relativeToDir
     }
 

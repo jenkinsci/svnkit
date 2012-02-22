@@ -47,7 +47,7 @@ public class SvnOldDiffGenerator implements ISvnDiffGenerator {
         generator.displayAddedDirectory(displayPath, revision1, revision2);
     }
 
-    public void displayPropDiff(String displayPath, String revisionString, String string, boolean dirWasAdded, SVNProperties originalProps, SVNProperties propChanges, boolean showDiffHeader, OutputStream outputStream) throws SVNException {
+    public void displayPropsChanged(String displayPath, String revisionString, String string, boolean dirWasAdded, SVNProperties originalProps, SVNProperties propChanges, boolean showDiffHeader, OutputStream outputStream) throws SVNException {
         generator.displayPropDiff(displayPath, originalProps, propChanges, outputStream);
     }
 
