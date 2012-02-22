@@ -230,29 +230,16 @@ public class SVNWCContext {
     public static enum WorkQueueOperation {
 
         BASE_REMOVE("base-remove", new RunBaseRemove()),
-
         FILE_INSTALL("file-install", new RunFileInstall()),
-
-        FILE_COMMIT("file-commit", new RunFileCommit()),
-        
+        FILE_COMMIT("file-commit", new RunFileCommit()),        
         FILE_REMOVE("file-remove", new RunFileRemove()),
-
         FILE_MOVE("file-move", new RunFileMove()),
-
         FILE_COPY_TRANSLATED("file-translate", new RunFileTranslate()),
-
         SYNC_FILE_FLAGS("sync-file-flags", new RunSyncFileFlags()),
-
         PREJ_INSTALL("prej-install", new RunPrejInstall()),
-
         RECORD_FILEINFO("record-fileinfo", new RunRecordFileInfo()),
-
         TMP_SET_TEXT_CONFLICT_MARKERS("tmp-set-text-conflict-markers", new RunSetTextConflictMarkersTemp()),
-
         TMP_SET_PROPERTY_CONFLICT_MARKER("tmp-set-property-conflict-marker", new RunSetPropertyConflictMarkerTemp()),
-
-        PRISTINE_GET_TRANSLATED("pristine-get-translated", new RunPristineGetTranslated()),
-
         POSTUPGRADE("postupgrade", new RunPostUpgrade());
 
         private final String opName;
@@ -3645,14 +3632,6 @@ public class SVNWCContext {
             File localAbspath = SVNFileUtil.createFilePath(wcRootAbspath, workItem.getChild(1).getValue());
             String prejBasename = workItem.getListSize() > 2 ? workItem.getChild(2).getValue() : null;
             ctx.getDb().opSetPropertyConflictMarkerFileTemp(localAbspath, prejBasename);
-        }
-    }
-
-    public static class RunPristineGetTranslated implements RunWorkQueueOperation {
-
-        public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) {
-            // TODO
-            throw new UnsupportedOperationException();
         }
     }
 
