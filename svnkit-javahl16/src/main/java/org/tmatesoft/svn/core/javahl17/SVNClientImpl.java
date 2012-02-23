@@ -1595,6 +1595,7 @@ public class SVNClientImpl implements ISVNClient {
         return getTarget(path, null);
     }
 
+    @SuppressWarnings("deprecation")
     private Status.Kind getStatusKind(SVNStatusType statusType) {
         if (statusType == SVNStatusType.STATUS_ADDED) {
             return Status.Kind.added;
@@ -2175,11 +2176,11 @@ public class SVNClientImpl implements ISVNClient {
                 hasWcInfo,
                 hasWcInfo ? getScheduleKind(info.getWcInfo().getSchedule()) : null,
                 hasWcInfo ? getUrlString(info.getWcInfo().getCopyFromUrl()) : null,
-                hasWcInfo ? info.getWcInfo().getCopyFromRevision() : null,
-                hasWcInfo ? info.getWcInfo().getRecordedTime() : null,
+                hasWcInfo ? info.getWcInfo().getCopyFromRevision() : -1,
+                hasWcInfo ? info.getWcInfo().getRecordedTime() : 0,
                 hasWcInfo ? getChecksum(info.getWcInfo().getChecksum()) : null,
                 hasWcInfo ? info.getWcInfo().getChangelist() : null,
-                hasWcInfo ? info.getWcInfo().getRecordedSize() : null,
+                hasWcInfo ? info.getWcInfo().getRecordedSize() : -1,
                 info.getSize(),
                 hasWcInfo ? getDepth(info.getWcInfo().getDepth()) : null,
                 hasWcInfo ? getConflictDescriptors(info.getWcInfo().getConflicts()) : null
@@ -2713,7 +2714,7 @@ public class SVNClientImpl implements ISVNClient {
         return getFilePath(file.getAbsoluteFile());
     }
 
-    private String getPathPrefix(Collection pathsOrUrls) {
+    private String getPathPrefix(Collection<?> pathsOrUrls) {
         if (pathsOrUrls == null || pathsOrUrls.size() == 0) {
             return null;
         }
@@ -2735,7 +2736,7 @@ public class SVNClientImpl implements ISVNClient {
         return getPathPrefix(commonAncestor);
     }
 
-    private String getPathPrefix(Collection pathsOrUrls, String destPath) {
+    private String getPathPrefix(Collection<?> pathsOrUrls, String destPath) {
         String pathPrefix1 = getPathPrefix(pathsOrUrls);
         String pathPrefix2 = getPathPrefix(destPath);
         return combinePathPrefixes(pathPrefix1, pathPrefix2);
@@ -2791,6 +2792,7 @@ public class SVNClientImpl implements ISVNClient {
         return org.tmatesoft.svn.util.Version.getMicroVersion();
     }
 
+    @SuppressWarnings("deprecation")
     static long versionRevisionNumber() {
         return org.tmatesoft.svn.util.Version.getRevisionNumber();
     }
