@@ -47,6 +47,7 @@ import org.tmatesoft.svn.core.wc2.SvnSetProperty;
 import org.tmatesoft.svn.core.wc2.SvnStatusSummary;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.core.wc2.SvnUnlock;
+import org.tmatesoft.svn.core.wc2.SvnUpgrade;
 
 /**
  * The <b>SVNWCClient</b> class combines a number of version control operations
@@ -2482,14 +2483,21 @@ public class SVNWCClient extends SVNBasicClient {
      * @param directory
      *            working copy directory
      * @param format
-     *            format to set, supported formats are: 9 (SVN 1.5), 8 (SVN 1.4)
+     *            format to set, supported formats are: 12 (SVN 1.6), 9 (SVN 1.5), 8 (SVN 1.4)
      *            and 4 (SVN 1.2)
      * @throws SVNException
      * @since 1.2
      */
     public void doSetWCFormat(File directory, int format) throws SVNException {
-        SVNWCClient16 oldClient = new SVNWCClient16(getOperationsFactory().getAuthenticationManager(), getOptions());
-        oldClient.doSetWCFormat(directory, format);
+        if (format == 12) {
+            SvnUpgrade upgrade = getOperationsFactory().createUpgrade();
+            upgrade.setSingleTarget(SvnTarget.fromFile(directory));
+            upgrade.setDepth(SVNDepth.INFINITY);
+            upgrade.run();
+        } else {
+            SVNWCClient16 oldClient = new SVNWCClient16(getOperationsFactory().getAuthenticationManager(), getOptions());
+            oldClient.doSetWCFormat(directory, format);
+        }
     }
 
     /**
