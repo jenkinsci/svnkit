@@ -17,7 +17,6 @@ import java.util.EnumMap;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
-import org.tmatesoft.sqljet.core.internal.SqlJetPagerJournalMode;
 import org.tmatesoft.sqljet.core.internal.SqlJetSafetyLevel;
 import org.tmatesoft.sqljet.core.table.ISqlJetBusyHandler;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
@@ -26,7 +25,6 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnNodesPristineTrigger;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
@@ -79,10 +77,6 @@ public class SVNSqlJetDb {
         if (db != null) {
             try {
                 db.close();
-                File journalFile = new File(db.getFile().getParentFile(), db.getFile().getName() + "-journal");
-                if (journalFile.isFile() && journalFile.length() == 0) {
-                    SVNFileUtil.deleteFile(journalFile);
-                }
             } catch (SqlJetException e) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SQLITE_ERROR, e);
                 SVNErrorManager.error(err, SVNLogType.WC);
@@ -101,7 +95,6 @@ public class SVNSqlJetDb {
             SqlJetDb db = SqlJetDb.open(sdbAbsPath, mode != Mode.ReadOnly);
             db.setBusyHandler(DEFAULT_BUSY_HANDLER);
             db.setSafetyLevel(SqlJetSafetyLevel.OFF);
-//            db.setJournalMode(SqlJetPagerJournalMode.TRUNCATE);
             
             SVNSqlJetDb sDb = new SVNSqlJetDb(db);
             return sDb;
