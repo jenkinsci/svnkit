@@ -28,6 +28,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
+import org.tmatesoft.svn.core.internal.wc17.SVNExternalsStore;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbOpenMode;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
@@ -36,6 +37,8 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.DirParsedInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDbDir;
+import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
+import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 
 /**
  * The <b>SVNWCUtil</b> is a utility class providing some common methods used
@@ -331,15 +334,25 @@ public class SVNWCUtil {
      * @since 1.1
      */
     public static boolean isWorkingCopyRoot(final File versionedDir) throws SVNException {
+        SVNWCDb db = new SVNWCDb();
+        try {
+            db.open(SVNWCDbOpenMode.ReadOnly, null, false, false);
+            if (db.isWCRoot(versionedDir.getAbsoluteFile())) {
+                return true;
+            }
+        } catch(SVNException e) {
+        } finally {
+            db.close();
+        }
         SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
         try {
 	        wcAccess.open(versionedDir, false, false, false, 0, Level.FINEST);
 	        return wcAccess.isWCRoot(versionedDir);
         } catch (SVNException e) {
-            return false;
         } finally {
             wcAccess.close();
         }
+        return false;
     }
 
     /**
@@ -385,13 +398,27 @@ public class SVNWCUtil {
      *         class="javakeyword">null</span>.
      * @throws SVNException
      */
-    public static File getWorkingCopyRoot(File versionedDir, boolean stopOnExtenrals) throws SVNException {
+    public static File getWorkingCopyRoot(File versionedDir, boolean stopOnExternals) throws SVNException {
+        if (versionedDir == null || (!isVersionedDirectory(versionedDir) && !isVersionedDirectory(versionedDir.getParentFile()))) {
+            return null;
+        }
         versionedDir = versionedDir.getAbsoluteFile();
+        SvnWcGeneration wcGeneration = SvnOperationFactory.detectWcGeneration(versionedDir, false);
+        if (wcGeneration == SvnWcGeneration.NOT_DETECTED) {
+            return null;
+        } else if (wcGeneration == SvnWcGeneration.V17) {
+            return getWorkingCopyRootNg(versionedDir, stopOnExternals);
+        } else if (wcGeneration == SvnWcGeneration.V16) {
+            return getWorkingCopyRootOld(versionedDir, stopOnExternals);
+        }
+        return null;
+    }
+    
+    private static File getWorkingCopyRootOld(File versionedDir, boolean stopOnExternals) throws SVNException {
         if (versionedDir == null || (!isVersionedDirectory(versionedDir) && !isVersionedDirectory(versionedDir.getParentFile()))) {
             // both this dir and its parent are not versioned.
             return null;
         }
-
         File parent = versionedDir.getParentFile();
         if (parent == null) {
             return versionedDir;
@@ -399,10 +426,10 @@ public class SVNWCUtil {
 
         if (isWorkingCopyRoot(versionedDir)) {
             // this is root.
-            if (stopOnExtenrals) {
+            if (stopOnExternals) {
                 return versionedDir;
             }
-            File parentRoot = getWorkingCopyRoot(parent, stopOnExtenrals);
+            File parentRoot = getWorkingCopyRoot(parent, stopOnExternals);
             if (parentRoot == null) {
                 // if parent is not versioned return this dir.
                 return versionedDir;
@@ -415,8 +442,8 @@ public class SVNWCUtil {
                 try {
                     SVNAdminArea dir = parentAccess.open(parent, false, 0);
                     SVNVersionedProperties props = dir.getProperties(dir.getThisDirName());
-	                final String externalsProperty = props.getStringPropertyValue(SVNProperty.EXTERNALS);
-	                SVNExternal[] externals = externalsProperty != null ? SVNExternal.parseExternals(dir.getRoot().getAbsolutePath(), externalsProperty) : new SVNExternal[0];
+                    final String externalsProperty = props.getStringPropertyValue(SVNProperty.EXTERNALS);
+                    SVNExternal[] externals = externalsProperty != null ? SVNExternal.parseExternals(dir.getRoot().getAbsolutePath(), externalsProperty) : new SVNExternal[0];
                     // now externals could point to our dir.
                     for (int i = 0; i < externals.length; i++) {
                         SVNExternal external = externals[i];
@@ -440,7 +467,42 @@ public class SVNWCUtil {
             return versionedDir;
         }
 
-        return getWorkingCopyRoot(parent, stopOnExtenrals);
+        return getWorkingCopyRootOld(parent, stopOnExternals);
+    }
+
+    private static File getWorkingCopyRootNg(File versionedDir, boolean stopOnExternals) throws SVNException {
+        SVNWCDb db = new SVNWCDb();
+        try {
+            db.open(SVNWCDbOpenMode.ReadOnly, null, false, false);
+            File wcRoot = db.getWCRoot(versionedDir);
+            if (wcRoot == null) {
+                return null;
+            }
+            if (stopOnExternals || wcRoot.getParentFile() == null) {
+                return null;
+            }
+            // check if our root is external in the parent wc.
+            try {
+                File parentWcRoot = db.getWCRoot(wcRoot.getParentFile());
+                SVNExternalsStore storage = new SVNExternalsStore();
+                db.gatherExternalDefinitions(parentWcRoot, storage);
+                for(File defPath : storage.getNewExternals().keySet()) {
+                    String externalDefinition = storage.getNewExternals().get(defPath); 
+                    SVNExternal[] externals = SVNExternal.parseExternals(defPath, externalDefinition);
+                    for (int i = 0; i < externals.length; i++) {
+                        File targetAbsPath = SVNFileUtil.createFilePath(defPath, externals[i].getPath());
+                        if (targetAbsPath.equals(wcRoot)) {
+                            return getWorkingCopyRootNg(parentWcRoot, stopOnExternals);
+                        }
+                    }
+                }
+            } catch (SVNException e) {
+                return wcRoot;
+            }
+        } finally {
+            db.close();
+        }
+        return null;
     }
 
     private static boolean isEclipse() {

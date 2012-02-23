@@ -26,7 +26,9 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbOpenMode;
+import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.DirParsedInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
+import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDbDir;
 import org.tmatesoft.svn.core.internal.wc2.ISvnCommitRunner;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.internal.wc2.admin.SvnRepositoryCatImpl;
@@ -911,14 +913,28 @@ public class SvnOperationFactory {
             SVNWCDb db = new SVNWCDb();
             try {
                 db.open(SVNWCDbOpenMode.ReadOnly, (ISVNOptions) null, true, false);
-                db.parseDir(path, Mode.ReadOnly, true);
-                return SvnWcGeneration.V17;
+                DirParsedInfo info = db.parseDir(path, Mode.ReadOnly, true);
+                if (info != null && SVNWCDbDir.isUsable(info.wcDbDir)) {
+                    return SvnWcGeneration.V17;
+                }
+                return SvnWcGeneration.NOT_DETECTED;
             } catch (SVNException e) {
                 if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_WORKING_COPY) {
+                    path = SVNFileUtil.getParentFile(path);
                     if (!climbUp) {
+                        SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
+                        try {
+                            SVNAdminArea area = wcAccess.open(path, false, 0);
+                            if (area != null) {
+                                return SvnWcGeneration.V16;
+                            }
+                        } catch (SVNException inner) {
+                            //
+                        } finally {
+                            wcAccess.close();
+                        }
                         return SvnWcGeneration.NOT_DETECTED;
                     }
-                    path = SVNFileUtil.getParentFile(path);
                     continue;
                 } else if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {                
                     // there should be an exception for an 'add' and 'checkout' operations.

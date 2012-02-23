@@ -55,6 +55,7 @@ public class SvnWcUtilTest {
         File innerWc17In17 = new File(wc17copy, "innerWc17");        
         File innerWc16In16 = new File(wc16copy, "innerWc16");
         File innerWc17In16 = new File(wc16copy, "innerWc17");
+        
         File innerWc16InUnversionedIn16 = new File(new File(wc16copy, UNVERSIONED_DIR1_PATH), "innerWc16");
         File innerWc17InUnversionedIn16 = new File(new File(wc16copy, UNVERSIONED_DIR1_PATH), "innerWc17");
         File innerWc16InUnversionedIn17 = new File(new File(wc17copy, UNVERSIONED_DIR1_PATH), "innerWc16");
@@ -78,7 +79,111 @@ public class SvnWcUtilTest {
         testIsVersioned(innerWc16InUnversionedIn17);
         testIsVersioned(innerWc17InUnversionedIn16);
         testIsVersioned(innerWc17InUnversionedIn17);
-}
+    }
+    
+    @Test
+    public void testIsWcRoot() throws SVNException {
+        final Sandbox sandbox = Sandbox.createWithCleanup(getClass().getSimpleName(), TestOptions.getInstance());
+        final SVNURL url = prepareRepository(sandbox);
+        final File wc17 = prepareWc(sandbox, url, SvnWcGeneration.V17);
+        final File wc16 = prepareWc(sandbox, url, SvnWcGeneration.V16);
+
+        final File unversioned = sandbox.createDirectory("unversioned");
+        Assert.assertFalse(SVNWCUtil.isWorkingCopyRoot(unversioned));
+        
+        testIsWcRoot(wc16);
+        testIsWcRoot(wc17);
+
+        File wc16copy = sandbox.createDirectory("wc16-copy");
+        wc16copy.delete();
+        File wc17copy = sandbox.createDirectory("wc17-copy");
+        wc16copy.delete();
+        SVNFileUtil.copyDirectory(wc16, wc16copy, true, null);
+        SVNFileUtil.copyDirectory(wc17, wc17copy, true, null);
+        
+        
+        File innerWc16In17 = new File(wc17copy, "innerWc16");
+        File innerWc17In17 = new File(wc17copy, "innerWc17");        
+        File innerWc16In16 = new File(wc16copy, "innerWc16");
+        File innerWc17In16 = new File(wc16copy, "innerWc17");
+        
+        File innerWc16InUnversionedIn16 = new File(new File(wc16copy, UNVERSIONED_DIR1_PATH), "innerWc16");
+        File innerWc17InUnversionedIn16 = new File(new File(wc16copy, UNVERSIONED_DIR1_PATH), "innerWc17");
+        File innerWc16InUnversionedIn17 = new File(new File(wc17copy, UNVERSIONED_DIR1_PATH), "innerWc16");
+        File innerWc17InUnversionedIn17 = new File(new File(wc17copy, UNVERSIONED_DIR1_PATH), "innerWc17");
+        
+        SVNFileUtil.copyDirectory(wc16, innerWc16In16, true, null);
+        SVNFileUtil.copyDirectory(wc16, innerWc16In17, true, null);
+        SVNFileUtil.copyDirectory(wc17, innerWc17In16, true, null);
+        SVNFileUtil.copyDirectory(wc17, innerWc17In17, true, null);
+        SVNFileUtil.copyDirectory(wc16, innerWc16InUnversionedIn16, true, null);
+        SVNFileUtil.copyDirectory(wc16, innerWc16InUnversionedIn17, true, null);
+        SVNFileUtil.copyDirectory(wc17, innerWc17InUnversionedIn16, true, null);
+        SVNFileUtil.copyDirectory(wc17, innerWc17InUnversionedIn17, true, null);
+
+        testIsWcRoot(innerWc16In16);
+        testIsWcRoot(innerWc16In17);
+        testIsWcRoot(innerWc17In16);
+        testIsWcRoot(innerWc17In17);
+        
+        testIsWcRoot(innerWc16InUnversionedIn16);
+        testIsWcRoot(innerWc16InUnversionedIn17);
+        testIsWcRoot(innerWc17InUnversionedIn16);
+        testIsWcRoot(innerWc17InUnversionedIn17);
+        
+    }
+
+    @Test
+    public void testGetWcRoot() throws SVNException {
+        final Sandbox sandbox = Sandbox.createWithCleanup(getClass().getSimpleName(), TestOptions.getInstance());
+        final SVNURL url = prepareRepository(sandbox);
+        final File wc17 = prepareWc(sandbox, url, SvnWcGeneration.V17);
+        final File wc16 = prepareWc(sandbox, url, SvnWcGeneration.V16);
+
+        final File unversioned = sandbox.createDirectory("unversioned");
+        Assert.assertEquals(null, SVNWCUtil.getWorkingCopyRoot(unversioned, false));
+        
+        testGetWcRoot(wc17);
+        testGetWcRoot(wc16);
+
+        File wc16copy = sandbox.createDirectory("wc16-copy");
+        wc16copy.delete();
+        File wc17copy = sandbox.createDirectory("wc17-copy");
+        wc16copy.delete();
+        SVNFileUtil.copyDirectory(wc16, wc16copy, true, null);
+        SVNFileUtil.copyDirectory(wc17, wc17copy, true, null);
+        
+        
+        File innerWc16In17 = new File(wc17copy, "innerWc16");
+        File innerWc17In17 = new File(wc17copy, "innerWc17");        
+        File innerWc16In16 = new File(wc16copy, "innerWc16");
+        File innerWc17In16 = new File(wc16copy, "innerWc17");
+        
+        File innerWc16InUnversionedIn16 = new File(new File(wc16copy, UNVERSIONED_DIR1_PATH), "innerWc16");
+        File innerWc17InUnversionedIn16 = new File(new File(wc16copy, UNVERSIONED_DIR1_PATH), "innerWc17");
+        File innerWc16InUnversionedIn17 = new File(new File(wc17copy, UNVERSIONED_DIR1_PATH), "innerWc16");
+        File innerWc17InUnversionedIn17 = new File(new File(wc17copy, UNVERSIONED_DIR1_PATH), "innerWc17");
+        
+        SVNFileUtil.copyDirectory(wc16, innerWc16In16, true, null);
+        SVNFileUtil.copyDirectory(wc16, innerWc16In17, true, null);
+        SVNFileUtil.copyDirectory(wc17, innerWc17In16, true, null);
+        SVNFileUtil.copyDirectory(wc17, innerWc17In17, true, null);
+        SVNFileUtil.copyDirectory(wc16, innerWc16InUnversionedIn16, true, null);
+        SVNFileUtil.copyDirectory(wc16, innerWc16InUnversionedIn17, true, null);
+        SVNFileUtil.copyDirectory(wc17, innerWc17InUnversionedIn16, true, null);
+        SVNFileUtil.copyDirectory(wc17, innerWc17InUnversionedIn17, true, null);
+
+        testGetWcRoot(innerWc16In16);
+        testGetWcRoot(innerWc16In17);
+        testGetWcRoot(innerWc17In16);
+        testGetWcRoot(innerWc17In17);
+        
+        testGetWcRoot(innerWc16InUnversionedIn16);
+        testGetWcRoot(innerWc16InUnversionedIn17);
+        testGetWcRoot(innerWc17InUnversionedIn16);
+        testGetWcRoot(innerWc17InUnversionedIn17);
+        
+    }
 
     private void testIsVersioned(final File wcRoot) {
         Assert.assertTrue(SVNWCUtil.isVersionedDirectory(wcRoot));
@@ -93,7 +198,39 @@ public class SvnWcUtilTest {
 
         Assert.assertTrue(SVNWCUtil.isVersionedDirectory(new File(wcRoot, DIRB_PATH)));
         Assert.assertTrue(SVNWCUtil.isVersionedDirectory(new File(wcRoot, DIRG_PATH)));
-}
+    }
+
+    private void testIsWcRoot(final File wcRoot) throws SVNException {
+        Assert.assertTrue(SVNWCUtil.isWorkingCopyRoot(wcRoot));
+
+        Assert.assertFalse(SVNWCUtil.isWorkingCopyRoot(new File(wcRoot, DIR_PATH)));
+        Assert.assertFalse(SVNWCUtil.isWorkingCopyRoot(new File(wcRoot, MISSING_DIR_PATH)));
+        Assert.assertFalse(SVNWCUtil.isWorkingCopyRoot(new File(wcRoot, FILE1_PATH)));
+        Assert.assertFalse(SVNWCUtil.isWorkingCopyRoot(new File(wcRoot, FILE2_PATH)));
+
+        Assert.assertFalse(SVNWCUtil.isWorkingCopyRoot(new File(wcRoot, UNVERSIONED_FILE_PATH)));
+        Assert.assertFalse(SVNWCUtil.isWorkingCopyRoot(new File(wcRoot, UNVERSIONED_DIR1_PATH)));
+        Assert.assertFalse(SVNWCUtil.isWorkingCopyRoot(new File(wcRoot, UNVERSIONED_DIR2_PATH)));
+
+        Assert.assertFalse(SVNWCUtil.isWorkingCopyRoot(new File(wcRoot, DIRB_PATH)));
+        Assert.assertFalse(SVNWCUtil.isWorkingCopyRoot(new File(wcRoot, DIRG_PATH)));
+    }
+
+    private void testGetWcRoot(final File wcRoot) throws SVNException {
+        Assert.assertEquals(wcRoot, SVNWCUtil.getWorkingCopyRoot(wcRoot, false));
+
+        Assert.assertEquals(wcRoot, SVNWCUtil.getWorkingCopyRoot(new File(wcRoot, DIR_PATH), false));
+        Assert.assertEquals(wcRoot, SVNWCUtil.getWorkingCopyRoot(new File(wcRoot, MISSING_DIR_PATH), false));
+        Assert.assertEquals(wcRoot, SVNWCUtil.getWorkingCopyRoot(new File(wcRoot, FILE1_PATH), false));
+        Assert.assertEquals(wcRoot, SVNWCUtil.getWorkingCopyRoot(new File(wcRoot, FILE2_PATH), false));
+
+        Assert.assertEquals(wcRoot, SVNWCUtil.getWorkingCopyRoot(new File(wcRoot, UNVERSIONED_FILE_PATH), false));
+        Assert.assertEquals(wcRoot, SVNWCUtil.getWorkingCopyRoot(new File(wcRoot, UNVERSIONED_DIR1_PATH), false));
+        Assert.assertEquals(wcRoot, SVNWCUtil.getWorkingCopyRoot(new File(wcRoot, UNVERSIONED_DIR2_PATH), false));
+
+        Assert.assertEquals(wcRoot, SVNWCUtil.getWorkingCopyRoot(new File(wcRoot, DIRB_PATH), false));
+        Assert.assertEquals(wcRoot, SVNWCUtil.getWorkingCopyRoot(new File(wcRoot, DIRG_PATH), false));
+    }
     
     private SVNURL prepareRepository(Sandbox sandbox) throws SVNException {
         final SVNURL url = sandbox.createSvnRepository();
