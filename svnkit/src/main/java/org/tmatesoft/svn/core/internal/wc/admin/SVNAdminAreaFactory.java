@@ -45,7 +45,7 @@ public abstract class SVNAdminAreaFactory implements Comparable {
     public static final int WC_FORMAT_15 = 9;
     public static final int WC_FORMAT_16 = 10;
     
-    private static final Collection ourFactories = new TreeSet();
+    private static final Collection<SVNAdminAreaFactory> ourFactories = new TreeSet<SVNAdminAreaFactory>();
     private static boolean ourIsUpgradeEnabled = Boolean.valueOf(System.getProperty("svnkit.upgradeWC", System.getProperty("javasvn.upgradeWC", "true"))).booleanValue();
     private static ISVNAdminAreaFactorySelector ourSelector;
     private static ISVNAdminAreaFactorySelector ourDefaultSelector = new DefaultSelector();
@@ -199,8 +199,8 @@ public abstract class SVNAdminAreaFactory implements Comparable {
     }
 
     private static SVNAdminAreaFactory getAdminAreaFactory(int wcFormat) throws SVNException {
-        for (Iterator ourFactoriesIter = ourFactories.iterator(); ourFactoriesIter.hasNext();) {
-            SVNAdminAreaFactory nextFactory = (SVNAdminAreaFactory) ourFactoriesIter;
+        for (Iterator<SVNAdminAreaFactory> ourFactoriesIter = ourFactories.iterator(); ourFactoriesIter.hasNext();) {
+            SVNAdminAreaFactory nextFactory = ourFactoriesIter.next();
             if (nextFactory.getSupportedVersion() == wcFormat) {
                 return nextFactory; 
             }
