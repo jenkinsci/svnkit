@@ -10,9 +10,11 @@ import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 import de.regnis.q.sequence.line.diff.QDiffGenerator;
@@ -53,9 +55,12 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
     private SVNDiffOptions svnDiffOptions;
     private boolean forceEmpty;
 
+    private Set<String> visitedPaths;
+
     public SvnDiffGenerator() {
         this.path1 = "";
         this.path2 = "";
+        this.visitedPaths = new HashSet<String>();
     }
 
     public void init(String path1, String path2) {
@@ -101,7 +106,7 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
     public void displayAddedDirectory(String displayPath, String revision1, String revision2, OutputStream outputStream) throws SVNException {
     }
 
-    public void displayPropsChanged(String displayPath, String revision1, String revision2, boolean dirWasAdded, SVNProperties originalProps, SVNProperties propChanges, boolean showDiffHeader, OutputStream outputStream) throws SVNException {
+    public void displayPropsChanged(String displayPath, String revision1, String revision2, boolean dirWasAdded, SVNProperties originalProps, SVNProperties propChanges, OutputStream outputStream) throws SVNException {
         ensureEncodingAndEOLSet();
 
         if (useGitFormat) {
@@ -112,6 +117,7 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
             displayPath = ".";
         }
 
+        boolean showDiffHeader = !visitedPaths.contains(displayPath);
         if (showDiffHeader) {
             String commonAncestor = SVNPathUtil.getCommonPathAncestor(path1, path2);
             if (commonAncestor == null) {
@@ -121,7 +127,9 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
             String adjustedPathWithLabel1 = getAdjustedPathWithLabel(displayPath, path1, revision1, commonAncestor);
             String adjustedPathWithLabel2 = getAdjustedPathWithLabel(displayPath, path2, revision2, commonAncestor);
 
-            if (displayHeader(outputStream, displayPath, false)) {
+            boolean shouldStopDisplaying = displayHeader(outputStream, displayPath, false);
+            visitedPaths.add(displayPath);
+            if (shouldStopDisplaying) {
                 return;
             }
 
@@ -173,7 +181,9 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
 
         final String diffCommand = getExternalDiffCommand();
         if (diffCommand != null) {
-            if (displayHeader(outputStream, displayPath, rightFile == null)) {
+            boolean shouldStopDisplaying = displayHeader(outputStream, displayPath, rightFile == null);
+            visitedPaths.add(displayPath);
+            if (shouldStopDisplaying) {
                 return;
             }
 
@@ -223,12 +233,17 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
             if (forceEmpty) {
                 displayString(outputStream, header);
                 diffHeader = headerFields;
+
+                visitedPaths.add(displayPath);
             } else {
                 diffHeader = header + headerFields;
             }
             QDiffGenerator generator = new QDiffUniGenerator(properties, diffHeader);
-            Writer writer = new OutputStreamWriter(outputStream, getEncoding());
+            EmptyDetectionWriter writer = new EmptyDetectionWriter(new OutputStreamWriter(outputStream, getEncoding()));
             QDiffManager.generateTextDiff(is1, is2, getEncoding(), writer, generator);
+            if (writer.isSomethingWritten()) {
+                visitedPaths.add(displayPath);
+            }
             writer.flush();
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
@@ -623,5 +638,78 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
             svnDiffOptions = new SVNDiffOptions();
         }
         return svnDiffOptions;
+    }
+
+    private class EmptyDetectionWriter extends Writer {
+
+        private final Writer writer;
+        private boolean somethingWritten;
+
+        public EmptyDetectionWriter(Writer writer) {
+            this.writer = writer;
+            this.somethingWritten = false;
+        }
+
+        public boolean isSomethingWritten() {
+            return somethingWritten;
+        }
+
+        @Override
+        public void write(int c) throws IOException {
+            somethingWritten = true;
+            writer.write(c);
+        }
+
+        @Override
+        public void write(char[] cbuf) throws IOException {
+            somethingWritten = cbuf.length > 0;
+            writer.write(cbuf);
+        }
+
+        @Override
+        public void write(char[] cbuf, int off, int len) throws IOException {
+            somethingWritten = len > 0 && cbuf.length > 0;
+            writer.write(cbuf, off, len);
+        }
+
+        @Override
+        public void write(String str) throws IOException {
+            somethingWritten = str.length() > 0;
+            writer.write(str);
+        }
+
+        @Override
+        public void write(String str, int off, int len) throws IOException {
+            somethingWritten = len > 0 && str.length() > 0;
+            writer.write(str, off, len);
+        }
+
+        @Override
+        public Writer append(CharSequence csq) throws IOException {
+            somethingWritten = csq.length() > 0;
+            return writer.append(csq);
+        }
+
+        @Override
+        public Writer append(CharSequence csq, int start, int end) throws IOException {
+            somethingWritten = csq.length() > 0 && (start >= end);
+            return writer.append(csq, start, end);
+        }
+
+        @Override
+        public Writer append(char c) throws IOException {
+            somethingWritten = true;
+            return writer.append(c);
+        }
+
+        @Override
+        public void flush() throws IOException {
+            writer.flush();
+        }
+
+        @Override
+        public void close() throws IOException {
+            writer.close();
+        }
     }
 }

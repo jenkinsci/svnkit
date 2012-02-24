@@ -21,6 +21,7 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.ISVNUpdateEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
@@ -35,7 +36,7 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.wc2.SvnChecksum;
 import org.tmatesoft.svn.util.SVNLogType;
 
-public class SvnDiffEditor implements ISVNEditor {
+public class SvnDiffEditor implements ISVNEditor, ISVNUpdateEditor {
 
     //immutable
 
@@ -63,7 +64,7 @@ public class SvnDiffEditor implements ISVNEditor {
     //once initialized
     private final SVNDeltaProcessor deltaProcessor;
 
-    public SvnDiffEditor(SVNDepth depth, SVNWCContext context, File anchorAbspath, String target, boolean useTextBase, boolean showCopiesAsAdds, ISvnDiffCallback callback, Collection<String> changelists, boolean ignoreAncestry, boolean useGitDiffFormat, ISVNCanceller canceller, boolean reverseOrder) {
+    public SvnDiffEditor(File anchorAbspath, String target, ISvnDiffCallback callback, SVNDepth depth, SVNWCContext context, boolean reverseOrder, boolean useTextBase, boolean showCopiesAsAdds, boolean ignoreAncestry, Collection<String> changelists, boolean useGitDiffFormat, ISVNCanceller canceller) {
         this.depth = depth;
         this.context = context;
         this.db = context.getDb();
@@ -162,7 +163,7 @@ public class SvnDiffEditor implements ISVNEditor {
                     originalProps = context.getActualProps(currentEntry.localAbspath);
                     SVNProperties baseProps = context.getPristineProps(currentEntry.localAbspath);
                     SVNProperties reposProps = applyPropsChanges(baseProps, currentEntry.propChanges);
-                    currentEntry.propChanges = reposProps.compareTo(originalProps);
+                    currentEntry.propChanges = computePropDiff(originalProps, reposProps);
                 }
             }
 
@@ -329,7 +330,7 @@ public class SvnDiffEditor implements ISVNEditor {
             originalProps = pristineProps;
         } else {
             originalProps = context.getActualProps(currentEntry.localAbspath);
-            currentEntry.propChanges = reposProps.compareTo(originalProps);
+            currentEntry.propChanges = computePropDiff(originalProps, reposProps);
         }
 
         if (localFile != null || !currentEntry.propChanges.isEmpty()) {
@@ -381,7 +382,8 @@ public class SvnDiffEditor implements ISVNEditor {
     }
 
     public void textDeltaEnd(String path) throws SVNException {
-        deltaProcessor.textDeltaEnd();
+        final String checksum = deltaProcessor.textDeltaEnd();
+        currentEntry.resultChecksum = new SvnChecksum(SvnChecksum.Kind.md5, checksum);
     }
 
     private File getPristineFile(File localAbspath, boolean useTextBase) throws SVNException {
@@ -443,7 +445,7 @@ public class SvnDiffEditor implements ISVNEditor {
         }
 
         String mimeType = getPropMimeType(wcProps);
-        SVNProperties propchanges = wcProps.compareTo(emptyProps);
+        SVNProperties propchanges = computePropDiff(emptyProps, wcProps);
 
         File sourceFile;
         if (useTextBase) {
@@ -473,7 +475,7 @@ public class SvnDiffEditor implements ISVNEditor {
                 wcProps = context.getActualProps(localAbspath);
             }
 
-            SVNProperties propChanges = wcProps.compareTo(emptyProps);
+            SVNProperties propChanges = computePropDiff(emptyProps, wcProps);
             if (!propChanges.isEmpty()) {
                 callback.dirPropsChanged(null, localAbspath, true, propChanges, emptyProps);
             }
@@ -553,7 +555,7 @@ public class SvnDiffEditor implements ISVNEditor {
         File originalReposRelpath = null;
 
         if (status == ISVNWCDb.SVNWCDbStatus.Added) {
-            ISVNWCDb.WCDbAdditionInfo wcDbAdditionInfo = db.scanAddition(localAbspath);
+            ISVNWCDb.WCDbAdditionInfo wcDbAdditionInfo = db.scanAddition(localAbspath, ISVNWCDb.WCDbAdditionInfo.AdditionInfoField.status, ISVNWCDb.WCDbAdditionInfo.AdditionInfoField.originalReposRelPath);
             status = wcDbAdditionInfo.status;
             originalReposRelpath =  wcDbAdditionInfo.originalReposRelPath;
         }
@@ -590,7 +592,7 @@ public class SvnDiffEditor implements ISVNEditor {
             String workingMimeType = getPropMimeType(workingProps);
 
             SVNProperties baseProps = new SVNProperties();
-            SVNProperties propChanges = workingProps.compareTo(baseProps);
+            SVNProperties propChanges = computePropDiff(baseProps, workingProps);
 
             translatedFile = context.getTranslatedFile(localAbspath, localAbspath, true, false, true, false);
 
@@ -629,7 +631,7 @@ public class SvnDiffEditor implements ISVNEditor {
 
             SVNProperties workingProps = context.getActualProps(localAbspath);
             String workingMimeType = getPropMimeType(workingProps);
-            SVNProperties propChanges = workingProps.compareTo(baseProps);
+            SVNProperties propChanges = computePropDiff(baseProps, workingProps);
 
             if (modified || !propChanges.isEmpty()) {
                 callback.fileChanged(null, localAbspath,
@@ -785,6 +787,38 @@ public class SvnDiffEditor implements ISVNEditor {
 
     public void cleanup() {
         //TODO
+    }
+
+    public long getTargetRevision() {
+        return revision;
+    }
+
+    private static SVNProperties computePropDiff(SVNProperties props1, SVNProperties props2) {
+        SVNProperties propsDiff = new SVNProperties();
+        for (Iterator names = props2.nameSet().iterator(); names.hasNext();) {
+            String newPropName = (String) names.next();
+            if (props1.containsName(newPropName)) {
+                // changed.
+                SVNPropertyValue oldValue = props2.getSVNPropertyValue(newPropName);
+                SVNPropertyValue value = props1.getSVNPropertyValue(newPropName);
+                if (oldValue != null && !oldValue.equals(value)) {
+                    propsDiff.put(newPropName, oldValue);
+                } else if (oldValue == null && value != null) {
+                    propsDiff.put(newPropName, oldValue);
+                }
+            } else {
+                // added.
+                propsDiff.put(newPropName, props2.getSVNPropertyValue(newPropName));
+            }
+        }
+        for (Iterator names = props1.nameSet().iterator(); names.hasNext();) {
+            String oldPropName = (String) names.next();
+            if (!props2.containsName(oldPropName)) {
+                // deleted
+                propsDiff.put(oldPropName, (String) null);
+            }
+        }
+        return propsDiff;
     }
 
     private static class Entry {

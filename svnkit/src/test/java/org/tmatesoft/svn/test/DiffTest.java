@@ -255,8 +255,7 @@ public class DiffTest {
             diff.run();
 
             String actualDiffOutput = new String(byteArrayOutputStream.toByteArray());
-            final String expectedDiffOutput = "Index: " + fileToReplace.getPath() + "\n" +
-                             "===================================================================\n";
+            final String expectedDiffOutput = "";
             Assert.assertEquals(expectedDiffOutput, actualDiffOutput);
 
         } finally {

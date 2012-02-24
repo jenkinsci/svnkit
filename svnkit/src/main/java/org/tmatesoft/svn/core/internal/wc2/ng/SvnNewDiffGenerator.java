@@ -15,6 +15,7 @@ public class SvnNewDiffGenerator implements ISVNDiffGenerator {
     private boolean diffAdded;
     private boolean diffCopied;
     private boolean diffUnversioned;
+    private File basePath;
 
     public SvnNewDiffGenerator(ISvnDiffGenerator generator) {
         this.generator = generator;
@@ -25,6 +26,11 @@ public class SvnNewDiffGenerator implements ISVNDiffGenerator {
     }
 
     public void setBasePath(File basePath) {
+        this.basePath = basePath;
+    }
+
+    public File getBasePath() {
+        return basePath;
     }
 
     public void setForcedBinaryDiff(boolean forced) {
@@ -84,7 +90,7 @@ public class SvnNewDiffGenerator implements ISVNDiffGenerator {
     }
 
     public void displayPropDiff(String path, SVNProperties baseProps, SVNProperties diff, OutputStream result) throws SVNException {
-        generator.displayPropsChanged(path, "", "", false, baseProps, diff, false, result);
+        generator.displayPropsChanged(path, "", "", false, baseProps, diff, result);
     }
 
     public void displayFileDiff(String path, File file1, File file2, String rev1, String rev2, String mimeType1, String mimeType2, OutputStream result) throws SVNException {

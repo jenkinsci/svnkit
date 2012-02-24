@@ -43,6 +43,9 @@ public class SvnOldDiffGenerator implements ISvnDiffGenerator {
         return generator.getEOL();
     }
 
+    public void setForceEmpty(boolean forceEmpty) {
+    }
+
     public void setForcedBinaryDiff(boolean forced) {
         generator.setForcedBinaryDiff(forced);
     }
@@ -55,7 +58,7 @@ public class SvnOldDiffGenerator implements ISvnDiffGenerator {
         generator.displayAddedDirectory(displayPath, revision1, revision2);
     }
 
-    public void displayPropsChanged(String displayPath, String revision1, String revision2, boolean dirWasAdded, SVNProperties originalProps, SVNProperties propChanges, boolean showDiffHeader, OutputStream outputStream) throws SVNException {
+    public void displayPropsChanged(String displayPath, String revision1, String revision2, boolean dirWasAdded, SVNProperties originalProps, SVNProperties propChanges, OutputStream outputStream) throws SVNException {
         generator.displayPropDiff(displayPath, originalProps, propChanges, outputStream);
     }
 

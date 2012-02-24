@@ -54,6 +54,7 @@ public class SvnDiffCallback implements ISvnDiffCallback {
     }
 
     public void fileAdded(SvnDiffCallbackResult result, File path, File leftFile, File rightFile, long rev1, long rev2, String mimeType1, String mimeType2, File copyFromPath, long copyFromRevision, SVNProperties propChanges, SVNProperties originalProperties) throws SVNException {
+        generator.setForceEmpty(true);
         if (rightFile != null && copyFromPath != null) {
             displayContentChanged(path, leftFile, rightFile, rev1, rev2, mimeType1, mimeType2, propChanges, originalProperties, OperationKind.Copied, copyFromPath);
         } else if (rightFile != null) {
@@ -63,6 +64,7 @@ public class SvnDiffCallback implements ISvnDiffCallback {
         if (propChanges != null && !propChanges.isEmpty()) {
             propertiesChanged(path, rev1, rev2, false, propChanges, originalProperties);
         }
+        generator.setForceEmpty(false);
     }
 
     public void fileDeleted(SvnDiffCallbackResult result, File path, File leftFile, File rightFile, String mimeType1, String mimeType2, SVNProperties originalProperties) throws SVNException {
@@ -87,7 +89,7 @@ public class SvnDiffCallback implements ISvnDiffCallback {
         if (regularDiff == null || regularDiff.isEmpty()) {
             return;
         }
-        generator.displayPropsChanged(getDisplayPath(path), getRevisionString(revision1), getRevisionString(revision2), dirWasAdded, originalProperties, regularDiff, false, outputStream);
+        generator.displayPropsChanged(getDisplayPath(path), getRevisionString(revision1), getRevisionString(revision2), dirWasAdded, originalProperties, regularDiff, outputStream);
     }
 
     public void dirClosed(SvnDiffCallbackResult result, File path, boolean dirWasAdded) throws SVNException {
@@ -123,17 +125,8 @@ public class SvnDiffCallback implements ISvnDiffCallback {
         diff = diff == null ? new SVNProperties() : diff;
         SVNProperties regularDiff = getRegularProperties(diff);
 
-        boolean displayHeader = false;
-        if (!visitedPaths.contains(path)) {
-            displayHeader = true;
-        }
-
-        if (diff != null && !diff.isEmpty()) {
-            generator.displayPropsChanged(getDisplayPath(path), getRevisionString(revision1), getRevisionString(revision2), dirWasAdded, originalProperties, regularDiff, displayHeader, outputStream);
-        }
-
-        if (displayHeader) {
-            visitedPaths.add(path);
+        if (regularDiff != null && !regularDiff.isEmpty()) {
+            generator.displayPropsChanged(getDisplayPath(path), getRevisionString(revision1), getRevisionString(revision2), dirWasAdded, originalProperties, regularDiff, outputStream);
         }
     }
 

@@ -86,6 +86,16 @@ public class SvnTarget {
         }
         this.pegRevision = revision;
     }
+
+    public String getPathOrUrlString() {
+        if (isFile()) {
+            return getFile().getPath();
+        } else if (isURL()) {
+            return getURL().toString();
+        }
+
+        throw new IllegalStateException("A target can be either an URL or a path");
+    }
     
     public String toString() {
         if (isFile()) {
