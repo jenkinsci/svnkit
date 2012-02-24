@@ -35,6 +35,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.ExternalNodeInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnExternalFileReporter;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnExternalUpdateEditor;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbExternals;
@@ -733,7 +734,7 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
             getWcContext().initializeWC(localAbspath, url, rootUrl, uuid, revnum, depth == SVNDepth.UNKNOWN ? SVNDepth.INFINITY : depth);
         } else if (fileKind == SVNFileType.DIRECTORY) {
             int formatVersion = getWcContext().checkWC(localAbspath);
-            if (formatVersion == SVNWCContext.WC_NG_VERSION && SvnOperationFactory.isVersionedDirectory(localAbspath)) {
+            if (formatVersion == SVNWCDb.WC_FORMAT_17 && SvnOperationFactory.isVersionedDirectory(localAbspath)) {
                 SVNURL entryUrl = getWcContext().getNodeUrl(localAbspath);
                 if (entryUrl != null && !url.equals(entryUrl)) {                
                     String message = "''{0}'' is already a working copy for a different URL";
