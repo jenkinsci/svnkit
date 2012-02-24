@@ -14,7 +14,6 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNCancellableEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc17.SVNAmbientDepthFilterEditor17;
 import org.tmatesoft.svn.core.internal.wc17.SVNDiffEditor17;
 import org.tmatesoft.svn.core.internal.wc17.SVNReporter17;
 import org.tmatesoft.svn.core.internal.wc17.SVNStatusEditor17;
@@ -213,54 +212,6 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
         long pegRevisionNumber = getRepositoryAccess().getRevisionNumber(repository, SvnTarget.fromFile(path2), revision2, null).lng(SvnRepositoryAccess.RevisionsPair.revNumber);
         try {
             repository.diff(url1, revNumber, pegRevisionNumber, target, getOperation().isIgnoreAncestry(), getOperation().getDepth(), true, reporter17, SVNCancellableEditor.newInstance(editor, this, SVNDebugLog.getDefaultLog()));
-        } finally {
-            editor.cleanup();
-        }
-    }
-
-
-    private void doDiffURLWC(File path1, SVNRevision revision1, SVNRevision pegRevision, File path2, SVNRevision revision2, boolean reverse, SVNDepth depth, boolean useAncestry, OutputStream result,
-                             Collection changeLists) throws SVNException {
-
-        final ISvnDiffGenerator generator = getDiffGenerator();
-
-        boolean isRoot = getWcContext().getDb().isWCRoot(path2);
-        final String target = isRoot ? null : SVNFileUtil.getFileName(path2);
-        final File pathForUrl = isRoot ? path2 : SVNFileUtil.getParentFile(path2);
-
-        final SVNURL anchorUrl = getRepositoryAccess().getTargetURL(SvnTarget.fromFile(pathForUrl));
-
-        if (anchorUrl == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", pathForUrl);
-            SVNErrorManager.error(err, SVNLogType.WC);
-        }
-
-        final SVNURL url1;
-        if (pegRevision.isValid()) {
-            final Structure<SvnRepositoryAccess.LocationsInfo> locations = getRepositoryAccess().getLocations(null, SvnTarget.fromFile(path1), pegRevision, revision1, revision2);
-            final SVNURL startUrl = locations.get(SvnRepositoryAccess.LocationsInfo.startUrl);
-
-            url1 = startUrl;
-            String anchorPath2 = SVNPathUtil.append(anchorUrl.toString(), target == null ? "" : target);
-            generator.init(url1.toString(), anchorPath2);
-        } else {
-            url1 = getRepositoryAccess().getTargetURL(SvnTarget.fromFile(path1));
-        }
-
-        SVNRepository repository = getRepositoryAccess().createRepository(anchorUrl, null, true);
-        long revNumber = getRepositoryAccess().getRevisionNumber(repository, SvnTarget.fromFile(path1), revision1, null).lng(SvnRepositoryAccess.RevisionsPair.revNumber);
-
-        ISvnDiffCallback callback = new SvnDiffCallback(generator, reverse ? -1 : revNumber, reverse ? revNumber : -1, getOperation().getOutput());
-        SVNDiffEditor17 editor = new SVNDiffEditor17(getWcContext(), pathForUrl, null, getOperation().getDepth(), revision2 == SVNRevision.BASE || revision2 == SVNRevision.COMMITTED,
-                reverse, callback, !getOperation().isIgnoreAncestry(), getOperation().getApplicableChangelists(), false, getOperation().isShowCopiesAsAdds());
-        boolean serverSupportsDepth = repository.hasCapability(SVNCapability.DEPTH);
-        final SVNReporter17 reporter17 = new SVNReporter17(path2, getWcContext(), false, !serverSupportsDepth, getOperation().getDepth(), false, false, true, false, SVNDebugLog.getDefaultLog());
-        long pegRevisionNumber = getRepositoryAccess().getRevisionNumber(repository, SvnTarget.fromFile(path2), revision2, null).lng(SvnRepositoryAccess.RevisionsPair.revNumber);
-
-        SVNAmbientDepthFilterEditor17.wrap(getWcContext(), pathForUrl, target, editor, false);
-
-        try {
-            repository.diff(url1, revNumber, pegRevisionNumber, target, !useAncestry, depth, true, reporter17, SVNCancellableEditor.newInstance(editor, this, SVNDebugLog.getDefaultLog()));
         } finally {
             editor.cleanup();
         }
