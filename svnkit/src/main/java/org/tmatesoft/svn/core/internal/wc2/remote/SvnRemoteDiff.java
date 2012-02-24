@@ -55,6 +55,8 @@ public class SvnRemoteDiff extends SvnRemoteOperationRunner<Void, SvnDiff> {
     }
 
     private ISVNDiffGenerator getDiffGenerator() {
-        return getOperation().getDiffGenerator() != null ? new SvnNewDiffGenerator(getOperation().getDiffGenerator()) : new DefaultSVNDiffGenerator();
+        ISVNDiffGenerator generator = getOperation().getDiffGenerator() != null ? new SvnNewDiffGenerator(getOperation().getDiffGenerator()) : new DefaultSVNDiffGenerator();
+        generator.setDiffAdded(true);
+        return generator;
     }
 }
