@@ -42,6 +42,7 @@ svnkit-test/test.properties
 svnkit/.classpath
 svnkit/.project
 svnkit/.settings/org.eclipse.jdt.core.prefs
+svnkit/.tests
 svnkit/bin
 svnkit/build
 svnkit/src/main/java/org/tmatesoft/svn/examples
