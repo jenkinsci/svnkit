@@ -54,89 +54,191 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
     @Override
     protected Void run(SVNWCContext context) throws SVNException {
         if (isPeggedDiff()) {
-            doPeggedDiff();
+            SvnTarget target = getOperation().getFirstTarget();
+            SVNRevision revision1 = getOperation().getStartRevision();
+            SVNRevision revision2 = getOperation().getEndRevision();
+            SVNRevision pegRevision = target.getPegRevision();
+
+            doDiff(target, revision1, pegRevision, target, revision2);
         } else {
-            doTwoSourcesDiff();
+            SvnTarget target1 = getOperation().getFirstTarget();
+            SvnTarget target2 = getOperation().getSecondTarget();
+            SVNRevision revision1 = getOperation().getStartRevision();
+            SVNRevision revision2 = getOperation().getEndRevision();
+            SVNRevision pegRevision = SVNRevision.UNDEFINED;
+
+            doDiff(target1, revision1, pegRevision, target2, revision2);
         }
 
         return null;
     }
 
-    private void doPeggedDiff() throws SVNException {
-        final SvnTarget target = getOperation().getFirstTarget();
-        final SVNRevision pegRevision = target.getPegRevision();
-        if (!pegRevision.isValid()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Peg revision is not specified");
-            SVNErrorManager.error(err, SVNLogType.DEFAULT);
-        }
-        final SVNRevision startRevision = getOperation().getStartRevision();
-        final SVNRevision endRevision = getOperation().getEndRevision();
-
-        if (startRevision == null || endRevision == null || !startRevision.isValid() || !endRevision.isValid()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Both rN and rM revisions should be specified");
+    private void doDiff(SvnTarget target1, SVNRevision revision1, SVNRevision pegRevision, SvnTarget target2, SVNRevision revision2) throws SVNException {
+        if (revision1 == SVNRevision.UNDEFINED || revision2 == SVNRevision.UNDEFINED) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Not all required revisions are specified");
             SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
 
-        final boolean startRevisionIsLocal = startRevision == SVNRevision.BASE || startRevision == SVNRevision.WORKING;
-        final boolean endRevisionIsLocal = endRevision == SVNRevision.BASE || endRevision == SVNRevision.WORKING;
+        final boolean isLocalRev1 = revision1 == SVNRevision.BASE || revision1 == SVNRevision.WORKING;
+        final boolean isLocalRev2 = revision2 == SVNRevision.BASE || revision2 == SVNRevision.WORKING;
 
-        if (startRevisionIsLocal && endRevisionIsLocal) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "At least one revision must be non-local for a pegged diff");
-            SVNErrorManager.error(err, SVNLogType.DEFAULT);
+        boolean isRepos1;
+        boolean isRepos2;
+
+        if (pegRevision != SVNRevision.UNDEFINED) {
+            if (isLocalRev1 && isLocalRev2) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "At least one revision must be non-local for a pegged diff");
+                SVNErrorManager.error(err, SVNLogType.DEFAULT);
+            }
+
+            isRepos1 = !isLocalRev1;
+            isRepos2 = !isLocalRev2;
+        } else {
+            isRepos1 = !isLocalRev1 || target1.isURL();
+            isRepos2 = !isLocalRev2 || target2.isURL();
         }
 
-        final File targetFile = target.getFile().getAbsoluteFile();
-        final ISvnDiffGenerator generator = getDiffGenerator();
-        generator.init(targetFile.getAbsolutePath(), targetFile.getAbsolutePath());
-
-        if (!(endRevision == SVNRevision.BASE || endRevision == SVNRevision.WORKING || endRevision == SVNRevision.COMMITTED)) {
-            if ((startRevision == SVNRevision.BASE || startRevision == SVNRevision.WORKING || startRevision == SVNRevision.COMMITTED)) {
-                doDiffReposWC(target, endRevision, target.getPegRevision(), target, startRevision, true);
+        if (isRepos1) {
+            if (isRepos2) {
+                doDiffReposRepos(target1, revision1, pegRevision, target2, revision2);
             } else {
-                doDiffURLURL(null, targetFile, startRevision, null, targetFile, endRevision, pegRevision, generator);
+                doDiffReposWC(target1, revision1, pegRevision, target2, revision2, false);
             }
         } else {
-            doDiffReposWC(target, startRevision, target.getPegRevision(), target, endRevision, false);
+            if (isRepos2) {
+                doDiffReposWC(target2, revision2, pegRevision, target1, revision1, true);
+            } else {
+                doDiffWCWC(target1, revision1, target2, revision2);
+            }
         }
     }
 
-    private ISvnDiffGenerator getDiffGenerator() {
-        ISvnDiffGenerator diffGenerator = getOperation().getDiffGenerator();
-        return diffGenerator != null ? diffGenerator : new SvnDiffGenerator();
-    }
+    private void doDiffReposRepos(SvnTarget target1, SVNRevision revision1, SVNRevision pegRevision, SvnTarget target2, SVNRevision revision2) throws SVNException {
+        SVNURL url1 = getRepositoryAccess().getTargetURL(target1);
+        SVNURL url2 = getRepositoryAccess().getTargetURL(target2);
 
-    private void doTwoSourcesDiff() throws SVNException {
-        final SvnTarget firstTarget = getOperation().getFirstTarget();
-        final SvnTarget secondTarget = getOperation().getSecondTarget();
-
-        if (firstTarget.isURL() && secondTarget.isFile()) {
-            doDiffReposWC(firstTarget, getOperation().getStartRevision(), SVNRevision.UNDEFINED, secondTarget, getOperation().getEndRevision(), false);
-        } else if (firstTarget.isFile() && secondTarget.isURL()) {
-            doDiffReposWC(secondTarget, getOperation().getEndRevision(), SVNRevision.UNDEFINED, firstTarget, getOperation().getStartRevision(), true);
-        } else if (firstTarget.isFile() && secondTarget.isFile()) {
-            doDiffWCWC(firstTarget, getOperation().getStartRevision(), secondTarget, getOperation().getEndRevision());
-        } else {
-            throw new UnsupportedOperationException("URL-URL diff is not supported");
-        }
-    }
-
-    private void doDiffWCURL(SvnTarget firstTarget, SvnTarget secondTarget) throws SVNException {
-        final SVNRevision startRevision = getOperation().getStartRevision();
-        final SVNRevision endRevision = getOperation().getEndRevision();
-
-        if (startRevision == null || endRevision == null || !startRevision.isValid() || !endRevision.isValid()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Both rN and rM revisions should be specified");
-            SVNErrorManager.error(err, SVNLogType.DEFAULT);
+        File basePath = null;
+        if (target1.isFile()) {
+            basePath = target1.getFile();
+        } else if (target2.isFile()) {
+            basePath = target2.getFile();
         }
 
-        final ISvnDiffGenerator generator = getDiffGenerator();
-        generator.init(firstTarget.getFile().getAbsolutePath(), secondTarget.getURL().toString());
-        if (startRevision == SVNRevision.BASE || endRevision == SVNRevision.WORKING) {
-            doDiffURLWC(secondTarget.getURL(), endRevision, SVNRevision.UNDEFINED, firstTarget.getFile(), startRevision, true, generator);
-        } else {
-            doDiffURLURL(null, firstTarget.getFile(), startRevision, secondTarget.getURL(), null, endRevision, SVNRevision.UNDEFINED, generator);
+        SVNRepository repository = getRepositoryAccess().createRepository(url2, null, true);
+        if (pegRevision != SVNRevision.UNDEFINED) {
+            try {
+            Structure<SvnRepositoryAccess.LocationsInfo> locations = getRepositoryAccess().getLocations(repository, target2, pegRevision, revision1, revision2);
+                url1 = locations.get(SvnRepositoryAccess.LocationsInfo.startUrl);
+                url2 = locations.get(SvnRepositoryAccess.LocationsInfo.endUrl);
+            } catch (SVNException e) {
+                if (e.getErrorMessage().getErrorCode() != SVNErrorCode.CLIENT_UNRELATED_RESOURCES) {
+                    throw e;
+                }
+
+                //otherwise we ignore the exception
+            }
+
+            repository.setLocation(url2, true);
         }
 
+        long revisionNumber2 = getRepositoryAccess().getRevisionNumber(repository, target2, revision2, null).lng(SvnRepositoryAccess.RevisionsPair.revNumber);
+        SVNNodeKind kind2 = repository.checkPath("", revisionNumber2);
+
+        repository.setLocation(url1, true);
+        final long revisionNumber1 = getRepositoryAccess().getRevisionNumber(repository, target1, revision1, null).lng(SvnRepositoryAccess.RevisionsPair.revNumber);
+        SVNNodeKind kind1 = repository.checkPath("", revisionNumber1);
+
+        if (kind1 == SVNNodeKind.NONE && kind2 == SVNNodeKind.NONE) {
+            if (url1.equals(url2)) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND,
+                        "Diff target ''{0}'' was not found in the " +
+                                "repository at revisions ''{1}'' and ''{2}''", new Object[]{
+                        url1, new Long(revisionNumber1), new Long(revisionNumber2)
+                });
+                SVNErrorManager.error(err, SVNLogType.WC);
+            } else {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND,
+                        "Diff targets ''{0}'' and ''{1}'' were not found " +
+                                "in the repository at revisions ''{2}'' and " +
+                                "''{3}''", new Object[]{
+                        url1, url2, new Long(revisionNumber1), new Long(revisionNumber2)
+                });
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+        } else if (kind1 == SVNNodeKind.NONE) {
+            checkDiffTargetExists(url1, revisionNumber2, revisionNumber1, repository);
+        } else if (kind2 == SVNNodeKind.NONE) {
+            checkDiffTargetExists(url2, revisionNumber1, revisionNumber2, repository);
+        }
+
+        SVNNodeKind kind;
+        SVNURL anchor1 = url1;
+        SVNURL anchor2 = url2;
+        String targetString1 = "";
+        String targetString2 = "";
+
+        if (kind1 == SVNNodeKind.NONE && kind2 == SVNNodeKind.NONE) {
+            SVNURL repositoryRoot = repository.getRepositoryRoot(true);
+            SVNURL newAnchor = kind1 == SVNNodeKind.NONE ? anchor1 : anchor2;
+            SVNRevision revision = kind1 == SVNNodeKind.NONE ? revision1 : revision2;
+            do  {
+                if (!newAnchor.equals(repositoryRoot)) {
+                    newAnchor = SVNURL.parseURIEncoded(SVNPathUtil.removeTail(newAnchor.toString()));
+                    if (basePath != null) {
+                        basePath = SVNFileUtil.getParentFile(basePath);
+                    }
+                }
+                repository.setLocation(newAnchor, false);
+                kind = repository.checkPath("", revision.getNumber()); //TODO: no such method: SVNRepository#checkPath(String, SVNRevision)
+            } while (kind1 != SVNNodeKind.DIR);
+
+            anchor1 = anchor2 = newAnchor;
+
+            targetString1 = SVNPathUtil.getRelativePath(newAnchor.toDecodedString(), url1.toDecodedString());
+            targetString2 = SVNPathUtil.getRelativePath(newAnchor.toDecodedString(), url2.toDecodedString());
+
+            assert target1 != null && target2 != null;
+
+            if (kind1 == SVNNodeKind.NONE) {
+                kind1 = SVNNodeKind.DIR;
+            } else {
+                kind2 = SVNNodeKind.DIR;
+            }
+        } else if (kind1 == SVNNodeKind.FILE || kind2 == SVNNodeKind.FILE) {
+            targetString1 = SVNPathUtil.tail(url1.toDecodedString());
+            targetString2 = SVNPathUtil.tail(url2.toDecodedString());
+
+            anchor1 = SVNURL.parseURIEncoded(SVNPathUtil.removeTail(url1.toString()));
+            anchor2 = SVNURL.parseURIEncoded(SVNPathUtil.removeTail(url2.toString()));
+
+            if (basePath != null) {
+                basePath = SVNFileUtil.getParentFile(basePath);
+            }
+            repository.setLocation(anchor1, false);
+        }
+
+        ISvnDiffGenerator generator = getDiffGenerator();
+        generator.init(url1.toString(), url2.toString());
+
+        SvnDiffCallback callback = createDiffCallback(generator, false, revisionNumber1, revisionNumber2);
+        SVNRepository extraRepository = getRepositoryAccess().createRepository(anchor1, null, false);
+
+        ISVNEditor editor;
+        editor = SvnNgRemoteDiffEditor.createEditor(getWcContext(), basePath, getOperation().getDepth(), extraRepository, revisionNumber1, true, false, callback, this);
+        editor = SVNCancellableEditor.newInstance(editor, this, SVNDebugLog.getDefaultLog());
+
+        ISVNReporterBaton reporter = new ISVNReporterBaton() {
+
+            public void report(ISVNReporter reporter) throws SVNException {
+                reporter.setPath("", null, revisionNumber1, SVNDepth.INFINITY, false);
+                reporter.finishReport();
+            }
+        };
+
+        repository.diff(url2, revisionNumber2, revisionNumber1, targetString1,
+                getOperation().isIgnoreAncestry(), getOperation().getDepth(), true, reporter, editor);
+
+        //TODO: is cleanup required? editor could cleanup itself by putting cleanup function to closeEdit and abortEdit
     }
 
     private void doDiffReposWC(SvnTarget target1, SVNRevision revision1, SVNRevision pegRevision, SvnTarget target2, SVNRevision revision2, boolean reverse) throws SVNException {
@@ -186,15 +288,15 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
 
         long revisionNumber1 = getRepositoryAccess().getRevisionNumber(repository2, url1.equals(target1.getURL()) ? null : target1, revision1, null).lng(SvnRepositoryAccess.RevisionsPair.revNumber);
 
-        SvnDiffCallback callback = createDiffCallback(generator, reverse, revisionNumber1);
+        SvnDiffCallback callback = createDiffCallback(generator, reverse, revisionNumber1, -1);
 
         SVNReporter17 reporter = new SVNReporter17(target2.getFile(), getWcContext(), false, !serverSupportsDepth, getOperation().getDepth(), false, false, true, false, SVNDebugLog.getDefaultLog());
         ISVNEditor editor = createDiffEditor(anchor, target, reverse, isRevisionBase(revision2), callback, serverSupportsDepth);
         repository2.diff(url1, revisionNumber1, revisionNumber1, target, getOperation().isIgnoreAncestry(), getDiffDepth(getOperation().getDepth()), true, reporter, editor);
     }
 
-    private SvnDiffCallback createDiffCallback(ISvnDiffGenerator generator, boolean reverse, long revisionNumber1) {
-        SvnDiffCallback callback = new SvnDiffCallback(generator, reverse ? -1 : revisionNumber1, reverse ? revisionNumber1 : -1, getOperation().getOutput());
+    private SvnDiffCallback createDiffCallback(ISvnDiffGenerator generator, boolean reverse, long revisionNumber1, long revisionNumber2) {
+        SvnDiffCallback callback = new SvnDiffCallback(generator, reverse ? revisionNumber2 : revisionNumber1, reverse ? revisionNumber1 : revisionNumber2, getOperation().getOutput());
         callback.setBasePath(new File("").getAbsoluteFile());
         return callback;
     }
@@ -233,27 +335,9 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
 
         final ISvnDiffGenerator generator = getDiffGenerator();
         generator.init(target1.getFile().getPath(), target2.getFile().getPath());
-        final SvnDiffCallback callback = createDiffCallback(generator, false, revisionNumber1);
+        final SvnDiffCallback callback = createDiffCallback(generator, false, revisionNumber1, -1);
 
         doDiffWC(target1.getFile(), callback);
-
-//        if (startRevision == null || endRevision == null || !startRevision.isValid() || !endRevision.isValid()) {
-//            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Both rN and rM revisions should be specified");
-//            SVNErrorManager.error(err, SVNLogType.DEFAULT);
-//        }
-//        boolean startRevisionIsLocal = startRevision == SVNRevision.WORKING || startRevision == SVNRevision.BASE;
-//        boolean endRevisionIsLocal = endRevision == SVNRevision.WORKING || endRevision == SVNRevision.BASE;
-//        final ISvnDiffGenerator generator = getDiffGenerator();
-//        generator.init(firstTarget.getFile().getAbsolutePath(), secondTarget.getFile().toString());
-//        if (startRevisionIsLocal && endRevisionIsLocal) {
-//            doDiffWCWC(firstTarget.getFile(), startRevision, secondTarget.getFile(), endRevision);
-//        } else if (startRevisionIsLocal) {
-//            doDiffURLWC(secondTarget.getFile(), endRevision, SVNRevision.UNDEFINED, firstTarget.getFile(), startRevision, true, getOperation().getDepth(), !getOperation().isIgnoreAncestry(), getOperation().getOutput(), getOperation().getApplicableChangelists(), generator);
-//        } else if (endRevisionIsLocal) {
-//            doDiffURLWC(firstTarget.getFile(), startRevision, SVNRevision.UNDEFINED, secondTarget.getFile(), endRevision, false, getOperation().getDepth(), !getOperation().isIgnoreAncestry(), getOperation().getOutput(), getOperation().getApplicableChangelists(), generator);
-//        } else {
-//            doDiffURLURL(null, firstTarget.getFile(), startRevision, null, secondTarget.getFile(), endRevision, SVNRevision.UNDEFINED, generator);
-//        }
     }
 
     private void doDiffWC(File localAbspath, ISvnDiffCallback callback) throws SVNException {
@@ -318,7 +402,7 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
         }
         SVNRepository repository = getRepositoryAccess().createRepository(anchorUrl, null, true);
         long revNumber = getRepositoryAccess().getRevisionNumber(repository, SvnTarget.fromURL(url1), revision1, null).lng(SvnRepositoryAccess.RevisionsPair.revNumber);
-        ISvnDiffCallback callback = createDiffCallback(generator, reverse, revNumber);
+        ISvnDiffCallback callback = createDiffCallback(generator, reverse, revNumber, -1);
         SVNDiffEditor17 editor = new SVNDiffEditor17(getWcContext(), pathForUrl, null, getOperation().getDepth(), revision2 == SVNRevision.BASE || revision2 == SVNRevision.COMMITTED,
                 reverse, callback, !getOperation().isIgnoreAncestry(), getOperation().getApplicableChangelists(), false, getOperation().isShowCopiesAsAdds());
         boolean serverSupportsDepth = repository.hasCapability(SVNCapability.DEPTH);
@@ -360,7 +444,7 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
         }
         //TODO: pass anchor to callback
 
-        final SvnDiffCallback callback = createDiffCallback(generator, false, revNumber);
+        final SvnDiffCallback callback = createDiffCallback(generator, false, revNumber, -1);
 
         final boolean reportAll;
         //noinspection RedundantIfStatement
@@ -460,7 +544,7 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
         repository2 = getRepositoryAccess().createRepository(url1, null, false);
         SvnNgRemoteDiffEditor editor = null;
         try {
-            ISvnDiffCallback callback = new SvnDiffCallback(generator, rev1, rev2, getOperation().getOutput());
+            ISvnDiffCallback callback = createDiffCallback(generator, false, rev1, rev2);
             editor = SvnNgRemoteDiffEditor.createEditor(getWcContext(), basePath, getOperation().getDepth(),
                     repository2, rev1, false, false, callback, getOperation().getEventHandler());
             ISVNReporterBaton reporter = new ISVNReporterBaton() {
@@ -479,21 +563,22 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
         }
     }
 
-    private void checkDiffTargetExists(SVNURL url1, long revision, long otherRevision, SVNRepository repository) throws SVNException {
+    private void checkDiffTargetExists(SVNURL url, long revision, long otherRevision, SVNRepository repository) throws SVNException {
+        repository.setLocation(url, true);
         SVNNodeKind kind = repository.checkPath("", revision);
         if (kind == SVNNodeKind.NONE) {
             if (revision == otherRevision) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND,
                         "Diff target ''{0}'' was not found in the " +
                                 "repository at revision ''{1}''", new Object[]{
-                        url1, new Long(revision)
+                        url, new Long(revision)
                 });
                 SVNErrorManager.error(err, SVNLogType.WC);
             } else {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND,
                         "Diff target ''{0}'' was not found in the " +
                                 "repository at revisions ''{1}'' and ''{2}''", new Object[]{
-                        url1, new Long(revision), new Long(otherRevision)
+                        url, new Long(revision), new Long(otherRevision)
                 });
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
@@ -532,7 +617,7 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
 
         SVNRepository repository = getRepositoryAccess().createRepository(anchorUrl, null, true);
         long revNumber = getRepositoryAccess().getRevisionNumber(repository, SvnTarget.fromURL(url1, pegRevision), revision1, null).lng(SvnRepositoryAccess.RevisionsPair.revNumber);
-        ISvnDiffCallback callback = createDiffCallback(generator, reverse, revNumber);
+        ISvnDiffCallback callback = createDiffCallback(generator, reverse, revNumber, -1);
         SVNDiffEditor17 editor = new SVNDiffEditor17(getWcContext(), pathForUrl, null, getOperation().getDepth(), revision2 == SVNRevision.BASE || revision2 == SVNRevision.COMMITTED,
                 reverse, callback, !getOperation().isIgnoreAncestry(), getOperation().getApplicableChangelists(), false, getOperation().isShowCopiesAsAdds());
         boolean serverSupportsDepth = repository.hasCapability(SVNCapability.DEPTH);
@@ -591,7 +676,7 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
 
         long revNumber = getRepositoryAccess().getRevisionNumber(repository, SvnTarget.fromURL(url1, pegRevision), revision1, null).lng(SvnRepositoryAccess.RevisionsPair.revNumber);
 
-        ISvnDiffCallback callback = createDiffCallback(generator, reverse, revNumber);
+        ISvnDiffCallback callback = createDiffCallback(generator, reverse, revNumber, -1);
 
         boolean useTextBase = revision2 == SVNRevision.BASE || revision2 == SVNRevision.COMMITTED;
         SvnDiffEditor diffEditor = new SvnDiffEditor(anchorDirectory, target, callback, getOperation().getDepth(), getWcContext(), reverse, useTextBase,
@@ -620,5 +705,10 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
 
     private boolean isRevisionBase(SVNRevision revision2) {
         return revision2 == SVNRevision.BASE;
+    }
+
+    private ISvnDiffGenerator getDiffGenerator() {
+        ISvnDiffGenerator diffGenerator = getOperation().getDiffGenerator();
+        return diffGenerator != null ? diffGenerator : new SvnDiffGenerator();
     }
 }
