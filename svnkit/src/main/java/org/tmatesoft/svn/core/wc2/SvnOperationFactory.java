@@ -11,21 +11,31 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
 
 import org.tmatesoft.svn.core.ISVNCanceller;
+import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb.Mode;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNExternal;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
+import org.tmatesoft.svn.core.internal.wc17.SVNExternalsStore;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbOpenMode;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.DirParsedInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDbDir;
@@ -914,6 +924,188 @@ public class SvnOperationFactory {
         }
     }
     
+    public static boolean isWorkingCopyRoot(File versionedDir) {
+        SVNWCDb db = new SVNWCDb();
+        try {
+            db.open(SVNWCDbOpenMode.ReadOnly, null, false, false);
+            if (db.isWCRoot(versionedDir.getAbsoluteFile())) {
+                return true;
+            }
+        } catch(SVNException e) {
+        } finally {
+            db.close();
+        }
+        SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
+        try {
+            wcAccess.open(versionedDir, false, false, false, 0, Level.FINEST);
+            return wcAccess.isWCRoot(versionedDir);
+        } catch (SVNException e) {
+        } finally {
+            try {
+                wcAccess.close();
+            } catch (SVNException e) {}
+        }
+        return false;
+    }
+    
+    public static boolean isVersionedDirectory(File directory) {
+        if (directory == null) {
+            return false;
+        }
+        final File localAbsPath = directory.getAbsoluteFile();
+        if (localAbsPath.isFile()) {
+            // obstruction.
+            return false;
+        }
+        SVNWCDb db = new SVNWCDb();
+        db.open(SVNWCDbOpenMode.ReadOnly, null, false, false);
+        try {
+            DirParsedInfo info = db.parseDir(localAbsPath, Mode.ReadOnly, true);
+            if (info != null 
+                    && info.wcDbDir != null 
+                    && SVNWCDbDir.isUsable(info.wcDbDir)) {
+                WCDbInfo nodeInfo = db.readInfo(localAbsPath, InfoField.status, InfoField.kind);
+                if (nodeInfo != null) {
+                    if (nodeInfo.kind != SVNWCDbKind.Dir) {
+                        // obstruction
+                        return false;
+                    } else if (!(nodeInfo.status == SVNWCDbStatus.Excluded || nodeInfo.status == SVNWCDbStatus.ServerExcluded || nodeInfo.status == SVNWCDbStatus.NotPresent)) {
+                        return true;
+                    }
+                }
+            }
+        } catch (SVNException e1) {
+        } finally {
+            db.close();
+        }
+        
+        File adminDirectory = new File(directory, SVNFileUtil.getAdminDirectoryName());
+        if (adminDirectory.isDirectory()) {
+            SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
+            try {
+                wcAccess.open(directory, false, false, false, 0, Level.FINEST);
+                return true;
+            } catch (SVNException e) {
+            } finally {
+                try {
+                    wcAccess.close();
+                } catch (SVNException e) {
+                    //
+                }
+            }
+            
+        }
+        return false;
+    }
+
+    public static File getWorkingCopyRoot(File versionedDir, boolean stopOnExternals) throws SVNException {
+        if (versionedDir == null || (!isVersionedDirectory(versionedDir) && !isVersionedDirectory(versionedDir.getParentFile()))) {
+            return null;
+        }
+        versionedDir = versionedDir.getAbsoluteFile();
+        SvnWcGeneration wcGeneration = SvnOperationFactory.detectWcGeneration(versionedDir, false);
+        if (wcGeneration == SvnWcGeneration.NOT_DETECTED) {
+            return null;
+        } else if (wcGeneration == SvnWcGeneration.V17) {
+            return getWorkingCopyRootNg(versionedDir, stopOnExternals);
+        } else if (wcGeneration == SvnWcGeneration.V16) {
+            return getWorkingCopyRootOld(versionedDir, stopOnExternals);
+        }
+        return null;
+    }
+    
+    private static File getWorkingCopyRootOld(File versionedDir, boolean stopOnExternals) throws SVNException {
+        if (versionedDir == null || (!isVersionedDirectory(versionedDir) && !isVersionedDirectory(versionedDir.getParentFile()))) {
+            // both this dir and its parent are not versioned.
+            return null;
+        }
+        File parent = versionedDir.getParentFile();
+        if (parent == null) {
+            return versionedDir;
+        }
+
+        if (isWorkingCopyRoot(versionedDir)) {
+            // this is root.
+            if (stopOnExternals) {
+                return versionedDir;
+            }
+            File parentRoot = getWorkingCopyRoot(parent, stopOnExternals);
+            if (parentRoot == null) {
+                // if parent is not versioned return this dir.
+                return versionedDir;
+            }
+            // parent is versioned. we have to check if it contains externals
+            // definition for this dir.
+
+            while (parent != null) {
+                SVNWCAccess parentAccess = SVNWCAccess.newInstance(null);
+                try {
+                    SVNAdminArea dir = parentAccess.open(parent, false, 0);
+                    SVNVersionedProperties props = dir.getProperties(dir.getThisDirName());
+                    final String externalsProperty = props.getStringPropertyValue(SVNProperty.EXTERNALS);
+                    SVNExternal[] externals = externalsProperty != null ? SVNExternal.parseExternals(dir.getRoot().getAbsolutePath(), externalsProperty) : new SVNExternal[0];
+                    // now externals could point to our dir.
+                    for (int i = 0; i < externals.length; i++) {
+                        SVNExternal external = externals[i];
+                        File externalFile = new File(parent, external.getPath());
+                        if (externalFile.equals(versionedDir)) {
+                            return parentRoot;
+                        }
+                    }
+                } catch (SVNException e) {
+                    if (e instanceof SVNCancelException) {
+                        throw e;
+                    }
+                } finally {
+                    parentAccess.close();
+                }
+                if (parent.equals(parentRoot)) {
+                    break;
+                }
+                parent = parent.getParentFile();
+            }
+            return versionedDir;
+        }
+
+        return getWorkingCopyRootOld(parent, stopOnExternals);
+    }
+
+    private static File getWorkingCopyRootNg(File versionedDir, boolean stopOnExternals) throws SVNException {
+        SVNWCDb db = new SVNWCDb();
+        try {
+            db.open(SVNWCDbOpenMode.ReadOnly, null, false, false);
+            File wcRoot = db.getWCRoot(versionedDir);
+            if (wcRoot == null) {
+                return null;
+            }
+            if (stopOnExternals || wcRoot.getParentFile() == null) {
+                return null;
+            }
+            // check if our root is external in the parent wc.
+            try {
+                File parentWcRoot = db.getWCRoot(wcRoot.getParentFile());
+                SVNExternalsStore storage = new SVNExternalsStore();
+                db.gatherExternalDefinitions(parentWcRoot, storage);
+                for(File defPath : storage.getNewExternals().keySet()) {
+                    String externalDefinition = storage.getNewExternals().get(defPath); 
+                    SVNExternal[] externals = SVNExternal.parseExternals(defPath, externalDefinition);
+                    for (int i = 0; i < externals.length; i++) {
+                        File targetAbsPath = SVNFileUtil.createFilePath(defPath, externals[i].getPath());
+                        if (targetAbsPath.equals(wcRoot)) {
+                            return getWorkingCopyRootNg(parentWcRoot, stopOnExternals);
+                        }
+                    }
+                }
+                return wcRoot;
+            } catch (SVNException e) {
+                return wcRoot;
+            }
+        } finally {
+            db.close();
+        }
+    }
+
+
     public static SvnWcGeneration detectWcGeneration(File path, boolean climbUp) throws SVNException {
         while(true) {
             if (path == null) {

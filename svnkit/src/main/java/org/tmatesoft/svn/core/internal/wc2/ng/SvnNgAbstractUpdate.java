@@ -45,6 +45,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.AbstractSvnUpdate;
+import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 import org.tmatesoft.svn.core.wc2.SvnRelocate;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
@@ -732,7 +733,7 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
             getWcContext().initializeWC(localAbspath, url, rootUrl, uuid, revnum, depth == SVNDepth.UNKNOWN ? SVNDepth.INFINITY : depth);
         } else if (fileKind == SVNFileType.DIRECTORY) {
             int formatVersion = getWcContext().checkWC(localAbspath);
-            if (formatVersion != 0) {
+            if (formatVersion == SVNWCContext.WC_NG_VERSION && SvnOperationFactory.isVersionedDirectory(localAbspath)) {
                 SVNURL entryUrl = getWcContext().getNodeUrl(localAbspath);
                 if (entryUrl != null && !url.equals(entryUrl)) {                
                     String message = "''{0}'' is already a working copy for a different URL";
