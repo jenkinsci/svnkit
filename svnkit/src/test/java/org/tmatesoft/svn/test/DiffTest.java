@@ -10,6 +10,7 @@ import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnCopy;
 import org.tmatesoft.svn.core.wc2.SvnCopySource;
@@ -250,6 +251,7 @@ public class DiffTest {
             final SvnDiff diff = svnOperationFactory.createDiff();
             diff.setTargets(SvnTarget.fromFile(workingCopyDirectory, SVNRevision.BASE), SvnTarget.fromFile(workingCopyDirectory, SVNRevision.WORKING));
             diff.setOutput(byteArrayOutputStream);
+            diff.setIgnoreAncestry(true);
             diff.run();
 
             String actualDiffOutput = new String(byteArrayOutputStream.toByteArray());
@@ -384,6 +386,52 @@ public class DiffTest {
             final String expectedDiffOutput = "";
 
             Assert.assertEquals(expectedDiffOutput, actualDiffOutput);
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testDiffLocalRelativeTarget() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testDiffLocalRelativeTarget", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("directory/file");
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, SVNRevision.HEAD.getNumber());
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+
+            final File absoluteFile = new File(workingCopyDirectory, "directory/file");
+            final File relativeFile = new File(SVNPathUtil.getRelativePath(
+                    new File("").getAbsolutePath().replace(File.separatorChar, '/'),
+                    absoluteFile.getAbsolutePath().replace(File.separatorChar, '/')
+            ));
+
+            TestUtil.writeFileContentsString(absoluteFile, "new contents");
+
+            final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+
+            SvnDiff diff = svnOperationFactory.createDiff();
+            diff.setTargets(SvnTarget.fromFile(relativeFile, SVNRevision.BASE), SvnTarget.fromFile(relativeFile, SVNRevision.WORKING));
+            diff.setIgnoreAncestry(true);
+            diff.setOutput(byteArrayOutputStream);
+            diff.run();
+
+            final String actualDiffOutput =  new String(byteArrayOutputStream.toByteArray());
+            final String expectedDiffOutput = "";
+
+            System.out.println("actualDiffOutput = " + actualDiffOutput);
+
+            Assert.assertEquals(expectedDiffOutput, actualDiffOutput);
+
 
         } finally {
             svnOperationFactory.dispose();

@@ -15,6 +15,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNCharsetOutputStream;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
 import org.tmatesoft.svn.util.SVNLogType;
@@ -26,6 +27,7 @@ public class SvnDiffCallback implements ISvnDiffCallback {
     private long revision2;
     private long revision1;
     private Set<File> visitedPaths;
+    private File basePath;
 
     public SvnDiffCallback(ISvnDiffGenerator generator, long rev1, long rev2, OutputStream outputStream) {
         this.generator = generator;
@@ -33,6 +35,10 @@ public class SvnDiffCallback implements ISvnDiffCallback {
         this.revision1 = rev1;
         this.revision2 = rev2;
         this.visitedPaths = new HashSet<File>();
+    }
+
+    public void setBasePath(File basePath) {
+        this.basePath = basePath;
     }
 
     public void fileOpened(SvnDiffCallbackResult result, File path, long revision) throws SVNException {
@@ -88,7 +94,12 @@ public class SvnDiffCallback implements ISvnDiffCallback {
     }
 
     protected String getDisplayPath(File path) {
-       return path.getPath().replace(File.separatorChar, '/');
+        if (basePath != null) {
+            final String relativePath = SVNPathUtil.getRelativePath(basePath.getAbsolutePath().replace(File.separatorChar, '/'),
+                    path.getAbsolutePath().replace(File.separatorChar, '/'));
+            return relativePath == null ? path.getPath().replace(File.separatorChar, '/') : relativePath;
+        }
+        return path.getPath().replace(File.separatorChar, '/');
     }
 
     private String getRevisionString(long revision) {

@@ -268,7 +268,6 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
         }
     }
 
-
     private void doDiffWCWC(File path1, SVNRevision revision1, File path2, SVNRevision revision2) throws SVNException {
         if (!path1.equals(path2) || !(revision1 == SVNRevision.BASE && revision2 == SVNRevision.WORKING)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Only diffs between a path's text-base and its working files are supported at this time (-rBASE:WORKING)");
@@ -298,7 +297,7 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
         }
         //TODO: pass anchor to callback
 
-        ISvnDiffCallback callback = new SvnDiffCallback(new SvnOldDiffGenerator(generator), revNumber, -1, getOperation().getOutput());
+        final SvnDiffCallback callback = new SvnDiffCallback(new SvnOldDiffGenerator(generator), revNumber, -1, getOperation().getOutput());
 
         boolean gitFormat = false;
 
