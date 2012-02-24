@@ -282,7 +282,7 @@ public class SVNWCUtil {
         SVNWCDb db = new SVNWCDb();
         db.open(SVNWCDbOpenMode.ReadOnly, null, false, false);
         try {
-            DirParsedInfo info = db.parseDir(localAbsPath, Mode.ReadOnly);
+            DirParsedInfo info = db.parseDir(localAbsPath, Mode.ReadOnly, true);
             if (info != null 
                     && info.wcDbDir != null 
                     && SVNWCDbDir.isUsable(info.wcDbDir)) {
@@ -496,13 +496,13 @@ public class SVNWCUtil {
                         }
                     }
                 }
+                return wcRoot;
             } catch (SVNException e) {
                 return wcRoot;
             }
         } finally {
             db.close();
         }
-        return null;
     }
 
     private static boolean isEclipse() {

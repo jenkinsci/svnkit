@@ -281,13 +281,14 @@ public class SvnWcDbShared {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS, "Expected node ''{0}'' to be deleted.", root.getAbsPath(localRelpath));
                         SVNErrorManager.error(err, SVNLogType.WC);
                     }
-                    assert (workPresence == SVNWCDbStatus.Normal || workPresence == SVNWCDbStatus.NotPresent || workPresence == SVNWCDbStatus.BaseDeleted);
+                    assert (workPresence == SVNWCDbStatus.Normal || workPresence == SVNWCDbStatus.NotPresent || workPresence == SVNWCDbStatus.BaseDeleted || workPresence == SVNWCDbStatus.Incomplete);
                     
                     baseStmt = stmt.getJoinedStatement(SVNWCDbSelectDeletionInfo.NODES_BASE);
                     boolean haveBase = false;
                     haveBase = baseStmt != null && baseStmt.next() && !isColumnNull(baseStmt, SVNWCDbSchema.NODES__Fields.presence);
                     if (haveBase) {
                         SVNWCDbStatus basePresence = getColumnPresence(baseStmt);
+                        assert (basePresence == SVNWCDbStatus.Normal || basePresence == SVNWCDbStatus.NotPresent || basePresence == SVNWCDbStatus.Incomplete);
                         if (basePresence == SVNWCDbStatus.Incomplete) {
                             basePresence = SVNWCDbStatus.Normal;
                         }

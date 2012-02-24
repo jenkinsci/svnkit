@@ -4214,7 +4214,7 @@ public class SVNWCContext {
         if (reposRelpath == null) {
             reposRelpath = SVNFileUtil.createFilePath("");
         }
-        if (format == 0) {
+        if (format != SVNWCDb.WC_FORMAT_17) {
             initWC(localAbspath, reposRelpath, repositoryRoot, uuid, revision, depth);
             return;
         }

@@ -827,8 +827,17 @@ public class SvnOperationFactory {
         }
         SvnWcGeneration wcGeneration = SvnWcGeneration.NOT_DETECTED;
         if (operation.getOperationalWorkingCopy() != null) {
-            wcGeneration = detectWcGeneration(operation.getOperationalWorkingCopy(), operation.isUseParentWcFormat());
+            if (operation.getClass() == SvnCheckout.class) {
+                if (SVNWCUtil.isVersionedDirectory(operation.getOperationalWorkingCopy())) {
+                    wcGeneration = detectWcGeneration(operation.getOperationalWorkingCopy(), false);
+                } else {
+                    wcGeneration = getPrimaryWcGeneration();
+                }
+            } else {
+                wcGeneration = detectWcGeneration(operation.getOperationalWorkingCopy(), false);
+            }
         }
+        
         if (wcGeneration == SvnWcGeneration.V16 && isPrimaryWcGenerationOnly() && operation.getClass() != SvnUpgrade.class) {
             File wcPath = operation.getOperationalWorkingCopy();
             int format = SVNAdminAreaFactory.checkWC(wcPath, true);
@@ -913,9 +922,14 @@ public class SvnOperationFactory {
             SVNWCDb db = new SVNWCDb();
             try {
                 db.open(SVNWCDbOpenMode.ReadOnly, (ISVNOptions) null, true, false);
-                DirParsedInfo info = db.parseDir(path, Mode.ReadOnly, true);
+                DirParsedInfo info = db.parseDir(path, Mode.ReadOnly, false);
                 if (info != null && SVNWCDbDir.isUsable(info.wcDbDir)) {
                     return SvnWcGeneration.V17;
+                } else if (info != null 
+                        && info.wcDbDir != null 
+                        && info.wcDbDir.getWCRoot() != null
+                        && info.wcDbDir.getWCRoot().getSDb() == null) {
+                    return SvnWcGeneration.V16;
                 }
                 return SvnWcGeneration.NOT_DETECTED;
             } catch (SVNException e) {

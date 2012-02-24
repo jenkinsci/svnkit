@@ -1460,6 +1460,7 @@ public class SVNWCDb implements ISVNWCDb {
              */
             obstruction_possible = true;
         }
+        always_check = true;
 
         /*
          * LOCAL_ABSPATH refers to a directory at this point. The PDH
@@ -1509,10 +1510,11 @@ public class SVNWCDb implements ISVNWCDb {
              * presence (just for the presence of subdirs/files), so we don't
              * know when we can stop checking ... so just check always.
              */
-            if (!moved_upwards || always_check) {
+            if (!moved_upwards || always_check || isDetectWCGeneration) {
                 wc_format = getOldVersion(localAbsPath);
-                if (wc_format != 0)
+                if (wc_format != 0) { 
                     break;
+                }
             }
 
             /*
@@ -3378,7 +3380,10 @@ public class SVNWCDb implements ISVNWCDb {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS, "Expected node ''{0}'' to be deleted.", localAbsPath);
                     SVNErrorManager.error(err, SVNLogType.WC);
                 }
-                assert (work_presence == SVNWCDbStatus.Normal || work_presence == SVNWCDbStatus.NotPresent || work_presence == SVNWCDbStatus.BaseDeleted);
+                assert (work_presence == SVNWCDbStatus.Normal ||
+                        work_presence == SVNWCDbStatus.Incomplete ||
+                        work_presence == SVNWCDbStatus.NotPresent || 
+                        work_presence == SVNWCDbStatus.BaseDeleted);
 
                 SVNSqlJetStatement baseStmt = stmt.getJoinedStatement(SVNWCDbSelectDeletionInfo.NODES_BASE);
                 try {
