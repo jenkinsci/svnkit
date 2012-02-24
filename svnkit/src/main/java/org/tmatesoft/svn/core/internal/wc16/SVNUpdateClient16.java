@@ -171,6 +171,9 @@ public class SVNUpdateClient16 extends SVNBasicDelegate {
      * @since 1.2
      */
     public void setExternalsHandler(ISVNExternalsHandler externalsHandler) {
+        if (externalsHandler == null) {
+            externalsHandler = ISVNExternalsHandler.DEFAULT;
+        }
         this.myExternalsHandler = externalsHandler;
     }
 
