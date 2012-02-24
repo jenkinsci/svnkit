@@ -5,10 +5,13 @@ import java.io.OutputStream;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 public interface ISvnDiffGenerator {
 
-    void init(String anchorPath1, String anchorPath2);
+    void init(SvnTarget originalTarget1, SvnTarget originalTarget2);
+
+    void setRepositoryRoot(SvnTarget repositoryRoot);
 
     void setEncoding(String encoding);
 
@@ -24,13 +27,13 @@ public interface ISvnDiffGenerator {
 
     void setForcedBinaryDiff(boolean forced);
 
-    void displayDeletedDirectory(String displayPath, String revision1, String revision2, OutputStream outputStream) throws SVNException;
+    void displayDeletedDirectory(SvnTarget target, String revision1, String revision2, OutputStream outputStream) throws SVNException;
 
-    void displayAddedDirectory(String displayPath, String revision1, String revision2, OutputStream outputStream) throws SVNException;
+    void displayAddedDirectory(SvnTarget target, String revision1, String revision2, OutputStream outputStream) throws SVNException;
 
-    void displayPropsChanged(String displayPath, String revision1, String revision2, boolean dirWasAdded, SVNProperties originalProps, SVNProperties propChanges, OutputStream outputStream) throws SVNException;
+    void displayPropsChanged(SvnTarget target, String revision1, String revision2, boolean dirWasAdded, SVNProperties originalProps, SVNProperties propChanges, OutputStream outputStream) throws SVNException;
 
-    void displayContentChanged(String displayPath, File leftFile, File rightFile, String revision1, String revision2, String mimeType1, String mimeType2, SvnDiffCallback.OperationKind operation, File copyFromPath, OutputStream outputStream) throws SVNException;
+    void displayContentChanged(SvnTarget target, File leftFile, File rightFile, String revision1, String revision2, String mimeType1, String mimeType2, SvnDiffCallback.OperationKind operation, File copyFromPath, OutputStream outputStream) throws SVNException;
 
     boolean isForcedBinaryDiff();
 }

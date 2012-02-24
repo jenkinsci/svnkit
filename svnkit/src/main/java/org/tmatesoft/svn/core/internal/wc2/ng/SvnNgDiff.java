@@ -175,8 +175,10 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
         String targetString1 = "";
         String targetString2 = "";
 
+        SVNURL repositoryRoot = null;
+
         if (kind1 == SVNNodeKind.NONE && kind2 == SVNNodeKind.NONE) {
-            SVNURL repositoryRoot = repository.getRepositoryRoot(true);
+            repositoryRoot = repository.getRepositoryRoot(true);
             SVNURL newAnchor = kind1 == SVNNodeKind.NONE ? anchor1 : anchor2;
             SVNRevision revision = kind1 == SVNNodeKind.NONE ? revision1 : revision2;
             do  {
@@ -216,7 +218,10 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
         }
 
         ISvnDiffGenerator generator = getDiffGenerator();
-        generator.init(url1.toString(), url2.toString());
+        generator.init(SvnTarget.fromURL(url1), SvnTarget.fromURL(url2));
+        if (getOperation().isUseGitDiffFormat() && repositoryRoot == null) {
+            repositoryRoot = repository.getRepositoryRoot(true);
+        }
 
         SvnDiffCallback callback = createDiffCallback(generator, false, revisionNumber1, revisionNumber2);
         SVNRepository extraRepository = getRepositoryAccess().createRepository(anchor1, null, false);
@@ -263,15 +268,15 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
             url1 = getRepositoryAccess().getLocations(null, target1, pegRevision, revision1, SVNRevision.UNDEFINED).get(SvnRepositoryAccess.LocationsInfo.startUrl);
 
             if (!reverse) {
-                generator.init(url1.toString(), anchorUrl.toString());
+                generator.init(SvnTarget.fromURL(url1), SvnTarget.fromURL(anchorUrl));
             } else {
-                generator.init(anchorUrl.toString(), url1.toString());
+                generator.init(SvnTarget.fromURL(anchorUrl), SvnTarget.fromURL(url1));
             }
         } else {
             if (!reverse) {
-                generator.init(target1.getPathOrUrlString(), target2.getPathOrUrlString());
+                generator.init(target1, target2);
             } else {
-                generator.init(target2.getPathOrUrlString(), target1.getPathOrUrlString());
+                generator.init(target2, target1);
             }
         }
 
@@ -279,7 +284,7 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
 
         if (getOperation().isUseGitDiffFormat()) {
             File wcRoot = getWcContext().getDb().getWCRoot(anchor);
-            //TODO: use wcRoot
+            generator.setRepositoryRoot(SvnTarget.fromFile(wcRoot));
         }
 
         boolean serverSupportsDepth = repository2.hasCapability(SVNCapability.DEPTH);
@@ -322,7 +327,12 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
         }
 
         final ISvnDiffGenerator generator = getDiffGenerator();
-        generator.init(target1.getFile().getPath(), target2.getFile().getPath());
+        generator.init(target1, target2);
+
+        if (getOperation().isUseGitDiffFormat()) {
+            generator.setRepositoryRoot(SvnTarget.fromFile(getWcContext().getDb().getWCRoot(target1.getFile())));
+        }
+
         final SvnDiffCallback callback = createDiffCallback(generator, false, revisionNumber1, -1);
 
         doDiffWC(target1.getFile(), callback);
@@ -403,9 +413,7 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
     }
 
     private SvnDiffCallback createDiffCallback(ISvnDiffGenerator generator, boolean reverse, long revisionNumber1, long revisionNumber2) {
-        SvnDiffCallback callback = new SvnDiffCallback(generator, reverse ? revisionNumber2 : revisionNumber1, reverse ? revisionNumber1 : revisionNumber2, getOperation().getOutput());
-        callback.setBasePath(new File("").getAbsoluteFile());
-        return callback;
+        return new SvnDiffCallback(generator, reverse ? revisionNumber2 : revisionNumber1, reverse ? revisionNumber1 : revisionNumber2, getOperation().getOutput());
     }
 
     private ISvnDiffGenerator getDiffGenerator() {

@@ -35,6 +35,7 @@ import org.tmatesoft.svn.core.internal.wc.ISVNReturnValueCallback;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
 
 public class SvnDiffGenerator implements ISvnDiffGenerator {
@@ -43,8 +44,11 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
     protected static final String PROPERTIES_SEPARATOR = "___________________________________________________________________";
     protected static final String HEADER_SEPARATOR = "===================================================================";
 
-    private String path1;
-    private String path2;
+    private SvnTarget originalTarget1;
+    private SvnTarget originalTarget2;
+    private SvnTarget baseTarget;
+    private SvnTarget relativeToTarget;
+    private SvnTarget repositoryRoot;
     private String encoding;
     private byte[] eol;
     private boolean useGitFormat;
@@ -57,9 +61,13 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
 
     private Set<String> visitedPaths;
 
+    private String getDisplayPath(SvnTarget target) {
+        return target.getPathOrUrlDecodedString();
+    }
+
     public SvnDiffGenerator() {
-        this.path1 = "";
-        this.path2 = "";
+        this.originalTarget1 = null;
+        this.originalTarget2 = null;
         this.visitedPaths = new HashSet<String>();
     }
 
@@ -67,9 +75,13 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
         this.useGitFormat = useGitFormat;
     }
 
-    public void init(String path1, String path2) {
-        this.path1 = path1;
-        this.path2 = path2;
+    public void init(SvnTarget originalTarget1, SvnTarget originalTarget2) {
+        this.originalTarget1 = originalTarget1;
+        this.originalTarget2 = originalTarget2;
+    }
+
+    public void setRepositoryRoot(SvnTarget repositoryRoot) {
+        this.repositoryRoot = repositoryRoot;
     }
 
     public void setForceEmpty(boolean forceEmpty) {
@@ -104,17 +116,22 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
         this.forcedBinaryDiff = forcedBinaryDiff;
     }
 
-    public void displayDeletedDirectory(String displayPath, String revision1, String revision2, OutputStream outputStream) throws SVNException {
+    public void displayDeletedDirectory(SvnTarget target, String revision1, String revision2, OutputStream outputStream) throws SVNException {
     }
 
-    public void displayAddedDirectory(String displayPath, String revision1, String revision2, OutputStream outputStream) throws SVNException {
+    public void displayAddedDirectory(SvnTarget target, String revision1, String revision2, OutputStream outputStream) throws SVNException {
     }
 
-    public void displayPropsChanged(String displayPath, String revision1, String revision2, boolean dirWasAdded, SVNProperties originalProps, SVNProperties propChanges, OutputStream outputStream) throws SVNException {
+    public void displayPropsChanged(SvnTarget target, String revision1, String revision2, boolean dirWasAdded, SVNProperties originalProps, SVNProperties propChanges, OutputStream outputStream) throws SVNException {
         ensureEncodingAndEOLSet();
+        String displayPath = getDisplayPath(target);
+
+        String targetString1 = originalTarget1.getPathOrUrlDecodedString();
+        String targetString2 = originalTarget2.getPathOrUrlDecodedString();
 
         if (useGitFormat) {
-            //TODO adjust paths to point to repository root
+            targetString1 = adjustRelativeToReposRoot(target.getPathOrUrlDecodedString());
+            targetString2 = adjustRelativeToReposRoot(target.getPathOrUrlDecodedString());
         }
 
         if (displayPath == null || displayPath.length() == 0) {
@@ -123,16 +140,25 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
 
         boolean showDiffHeader = !visitedPaths.contains(displayPath);
         if (showDiffHeader) {
-            String commonAncestor = SVNPathUtil.getCommonPathAncestor(path1, path2);
-            if (commonAncestor == null) {
-                commonAncestor = "";
+            String newTargetString = target.getPathOrUrlDecodedString();
+            String newTargetString1 = targetString1;
+            String newTargetString2 = targetString2;
+
+            String commonAncestor = SVNPathUtil.getCommonPathAncestor(newTargetString1, newTargetString2);
+            int commonLength = commonAncestor == null ? 0 : commonAncestor.length();
+
+            newTargetString1 = newTargetString1.substring(commonLength);
+            newTargetString2 = newTargetString2.substring(commonLength);
+
+            newTargetString1 = computeLabel(newTargetString, newTargetString1);
+            newTargetString2 = computeLabel(newTargetString, newTargetString2);
+
+            if (relativeToTarget != null) {
+                //TODO
             }
 
-            String adjustedPathWithLabel1 = getAdjustedPathWithLabel(displayPath, path1, revision1, commonAncestor);
-            String adjustedPathWithLabel2 = getAdjustedPathWithLabel(displayPath, path2, revision2, commonAncestor);
-
-            String label1 = adjustedPathWithLabel1;
-            String label2 = adjustedPathWithLabel2;
+            String label1 = getLabel(newTargetString1, revision1);
+            String label2 = getLabel(newTargetString2, revision2);
 
             boolean shouldStopDisplaying = displayHeader(outputStream, displayPath, false, SvnDiffCallback.OperationKind.Modified);
             visitedPaths.add(displayPath);
@@ -146,32 +172,69 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
             if (useGitFormat) {
                 String copyFromPath = null;
                 SvnDiffCallback.OperationKind operationKind = SvnDiffCallback.OperationKind.Modified;
-                label1 = getGitDiffLabel1(operationKind, path1, path2, copyFromPath, revision1);
-                label2 = getGitDiffLabel2(operationKind, path1, path2, copyFromPath, revision2);
-                displayGitDiffHeader(outputStream, operationKind, path1, path2, copyFromPath);
+                label1 = getGitDiffLabel1(operationKind, targetString1, targetString2, copyFromPath, revision1);
+                label2 = getGitDiffLabel2(operationKind, targetString1, targetString2, copyFromPath, revision2);
+                displayGitDiffHeader(outputStream, operationKind, targetString1, targetString2, copyFromPath);
             }
 
             displayHeaderFields(outputStream, label1, label2);
         }
 
-        displayPropertyChangesOn(useGitFormat ? path1 : displayPath, outputStream);
+        displayPropertyChangesOn(useGitFormat ? targetString1 : displayPath, outputStream);
 
         displayPropDiffValues(outputStream, propChanges, originalProps);
     }
 
-    public void displayContentChanged(String displayPath, File leftFile, File rightFile, String revision1, String revision2, String mimeType1, String mimeType2, SvnDiffCallback.OperationKind operation, File copyFromPath, OutputStream outputStream) throws SVNException {
-        ensureEncodingAndEOLSet();
+    private String adjustRelativeToReposRoot(String targetString) {
+        if (repositoryRoot != null) {
+            String repositoryRootString = repositoryRoot.getPathOrUrlDecodedString();
+            String relativePath = SVNPathUtil.getRelativePath(repositoryRootString, targetString);
+            return relativePath == null ? "" : relativePath;
+        }
+        return targetString;
+    }
 
-        String commonAncestor = SVNPathUtil.getCommonPathAncestor(path1, path2);
-        if (commonAncestor == null) {
-            commonAncestor = "";
+    private String computeLabel(String targetString, String originalTargetString) {
+        if (originalTargetString.length() == 0) {
+            return targetString;
+        } else if (originalTargetString.charAt(0) == '/') {
+            return targetString + "\t(..." + originalTargetString + ")";
+        } else {
+            return targetString + "\t(..." + originalTargetString + ")";
+        }
+    }
+
+    public void displayContentChanged(SvnTarget target, File leftFile, File rightFile, String revision1, String revision2, String mimeType1, String mimeType2, SvnDiffCallback.OperationKind operation, File copyFromPath, OutputStream outputStream) throws SVNException {
+        ensureEncodingAndEOLSet();
+        String displayPath = getDisplayPath(target);
+
+        String targetString1 = originalTarget1.getPathOrUrlDecodedString();
+        String targetString2 = originalTarget2.getPathOrUrlDecodedString();
+
+        if (useGitFormat) {
+            targetString1 = adjustRelativeToReposRoot(targetString1);
+            targetString2 = adjustRelativeToReposRoot(targetString2);
         }
 
-        String adjustedPathWithLabel1 = getAdjustedPathWithLabel(displayPath, path1, revision1, commonAncestor);
-        String adjustedPathWithLabel2 = getAdjustedPathWithLabel(displayPath, path2, revision2, commonAncestor);
+        String newTargetString = displayPath;
+        String newTargetString1 = targetString1;
+        String newTargetString2 = targetString2;
 
-        String label1 = adjustedPathWithLabel1;
-        String label2 = adjustedPathWithLabel2;
+        String commonAncestor = SVNPathUtil.getCommonPathAncestor(newTargetString1, newTargetString2);
+        int commonLength = commonAncestor == null ? 0 : commonAncestor.length();
+
+        newTargetString1 = newTargetString1.substring(commonLength);
+        newTargetString2 = newTargetString2.substring(commonLength);
+
+        newTargetString1 = computeLabel(newTargetString, newTargetString1);
+        newTargetString2 = computeLabel(newTargetString, newTargetString2);
+
+        if (relativeToTarget != null) {
+            //TDODO
+        }
+
+        String label1 = getLabel(newTargetString1, revision1);
+        String label2 = getLabel(newTargetString2, revision2);
 
         boolean leftIsBinary = false;
         boolean rightIsBinary = false;

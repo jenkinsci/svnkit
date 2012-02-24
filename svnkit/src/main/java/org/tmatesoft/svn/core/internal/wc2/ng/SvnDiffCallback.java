@@ -6,8 +6,6 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CodingErrorAction;
-import java.util.HashSet;
-import java.util.Set;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -15,9 +13,9 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNCharsetOutputStream;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
 
 public class SvnDiffCallback implements ISvnDiffCallback {
@@ -26,19 +24,12 @@ public class SvnDiffCallback implements ISvnDiffCallback {
     private OutputStream outputStream;
     private long revision2;
     private long revision1;
-    private Set<File> visitedPaths;
-    private File basePath;
 
     public SvnDiffCallback(ISvnDiffGenerator generator, long rev1, long rev2, OutputStream outputStream) {
         this.generator = generator;
         this.outputStream = outputStream;
         this.revision1 = rev1;
         this.revision2 = rev2;
-        this.visitedPaths = new HashSet<File>();
-    }
-
-    public void setBasePath(File basePath) {
-        this.basePath = basePath;
     }
 
     public void fileOpened(SvnDiffCallbackResult result, File path, long revision) throws SVNException {
@@ -72,14 +63,14 @@ public class SvnDiffCallback implements ISvnDiffCallback {
     }
 
     public void dirDeleted(SvnDiffCallbackResult result, File path) throws SVNException {
-        generator.displayDeletedDirectory(getDisplayPath(path), getRevisionString(revision1), getRevisionString(revision2), outputStream);
+        generator.displayDeletedDirectory(getTarget(path), getRevisionString(revision1), getRevisionString(revision2), outputStream);
     }
 
     public void dirOpened(SvnDiffCallbackResult result, File path, long revision) throws SVNException {
     }
 
     public void dirAdded(SvnDiffCallbackResult result, File path, long revision, String copyFromPath, long copyFromRevision) throws SVNException {
-        generator.displayAddedDirectory(getDisplayPath(path), getRevisionString(revision1), getRevisionString(revision), outputStream);
+        generator.displayAddedDirectory(getTarget(path), getRevisionString(revision1), getRevisionString(revision), outputStream);
     }
 
     public void dirPropsChanged(SvnDiffCallbackResult result, File path, boolean dirWasAdded, SVNProperties propChanges, SVNProperties originalProperties) throws SVNException {
@@ -89,19 +80,10 @@ public class SvnDiffCallback implements ISvnDiffCallback {
         if (regularDiff == null || regularDiff.isEmpty()) {
             return;
         }
-        generator.displayPropsChanged(getDisplayPath(path), getRevisionString(revision1), getRevisionString(revision2), dirWasAdded, originalProperties, regularDiff, outputStream);
+        generator.displayPropsChanged(getTarget(path), getRevisionString(revision1), getRevisionString(revision2), dirWasAdded, originalProperties, regularDiff, outputStream);
     }
 
     public void dirClosed(SvnDiffCallbackResult result, File path, boolean dirWasAdded) throws SVNException {
-    }
-
-    protected String getDisplayPath(File path) {
-        if (basePath != null) {
-            final String relativePath = SVNPathUtil.getRelativePath(basePath.getAbsolutePath().replace(File.separatorChar, '/'),
-                    path.getAbsolutePath().replace(File.separatorChar, '/'));
-            return relativePath == null ? path.getPath().replace(File.separatorChar, '/') : relativePath;
-        }
-        return path.getPath().replace(File.separatorChar, '/');
     }
 
     private String getRevisionString(long revision) {
@@ -126,7 +108,7 @@ public class SvnDiffCallback implements ISvnDiffCallback {
         SVNProperties regularDiff = getRegularProperties(diff);
 
         if (regularDiff != null && !regularDiff.isEmpty()) {
-            generator.displayPropsChanged(getDisplayPath(path), getRevisionString(revision1), getRevisionString(revision2), dirWasAdded, originalProperties, regularDiff, outputStream);
+            generator.displayPropsChanged(getTarget(path), getRevisionString(revision1), getRevisionString(revision2), dirWasAdded, originalProperties, regularDiff, outputStream);
         }
     }
 
@@ -145,7 +127,7 @@ public class SvnDiffCallback implements ISvnDiffCallback {
             }
         }
         try {
-            generator.displayContentChanged(getDisplayPath(path), leftFile, rightFile, getRevisionString(rev1), getRevisionString(rev2), mimeType1, mimeType2, operation, copyFromPath, result);
+            generator.displayContentChanged(getTarget(path), leftFile, rightFile, getRevisionString(rev1), getRevisionString(rev2), mimeType1, mimeType2, operation, copyFromPath, result);
         } finally {
             if (resetEncoding) {
                 generator.setEncoding(null);
@@ -250,7 +232,11 @@ public class SvnDiffCallback implements ISvnDiffCallback {
         return encodingAdjusted;
     }
 
+    private SvnTarget getTarget(File path) {
+        return SvnTarget.fromFile(path);
+    }
+
     public enum OperationKind {
-        Unchanged, Added, Deleted, Copied, Moved, Modified
+        Unchanged, Added, Deleted, Copied, Moved, Modified;
     }
 }

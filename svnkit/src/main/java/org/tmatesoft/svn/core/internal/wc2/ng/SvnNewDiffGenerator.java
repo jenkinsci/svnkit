@@ -7,6 +7,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.ISVNDiffGenerator;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 public class SvnNewDiffGenerator implements ISVNDiffGenerator {
 
@@ -22,7 +23,7 @@ public class SvnNewDiffGenerator implements ISVNDiffGenerator {
     }
 
     public void init(String anchorPath1, String anchorPath2) {
-        generator.init(anchorPath1, anchorPath2);
+        generator.init(getTarget(anchorPath1), getTarget(anchorPath2));
     }
 
     public void setBasePath(File basePath) {
@@ -90,22 +91,27 @@ public class SvnNewDiffGenerator implements ISVNDiffGenerator {
     }
 
     public void displayPropDiff(String path, SVNProperties baseProps, SVNProperties diff, OutputStream result) throws SVNException {
-        generator.displayPropsChanged(path, "", "", false, baseProps, diff, result);
+        generator.displayPropsChanged(getTarget(path), "", "", false, baseProps, diff, result);
     }
 
     public void displayFileDiff(String path, File file1, File file2, String rev1, String rev2, String mimeType1, String mimeType2, OutputStream result) throws SVNException {
-        generator.displayContentChanged(path, file1, file2, rev1, rev2, mimeType1, mimeType2, SvnDiffCallback.OperationKind.Modified, null, result);
+        generator.displayContentChanged(getTarget(path), file1, file2, rev1, rev2, mimeType1, mimeType2, SvnDiffCallback.OperationKind.Modified, null, result);
     }
 
     public void displayDeletedDirectory(String path, String rev1, String rev2) throws SVNException {
-        generator.displayDeletedDirectory(path, rev1, rev2, null);
+        generator.displayDeletedDirectory(getTarget(path), rev1, rev2, null);
     }
 
     public void displayAddedDirectory(String path, String rev1, String rev2) throws SVNException {
-        generator.displayAddedDirectory(path, rev1, rev2, null);
+        generator.displayAddedDirectory(getTarget(path), rev1, rev2, null);
     }
 
     public boolean isForcedBinaryDiff() {
         return generator.isForcedBinaryDiff();
+    }
+
+    private SvnTarget getTarget(String path) {
+        //TODO:
+        return SvnTarget.fromFile(new File(path));
     }
 }

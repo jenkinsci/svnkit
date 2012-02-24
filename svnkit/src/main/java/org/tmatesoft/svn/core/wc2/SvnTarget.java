@@ -97,6 +97,16 @@ public class SvnTarget {
         throw new IllegalStateException("A target can be either an URL or a path");
     }
     
+    public String getPathOrUrlDecodedString() {
+        if (isFile()) {
+            return getFile().getPath();
+        } else if (isURL()) {
+            return getURL().toString();
+        }
+
+        throw new IllegalStateException("A target can be either an URL or a path");
+    }
+
     public String toString() {
         if (isFile()) {
             return getFile().getAbsolutePath() + '@' + getPegRevision();
