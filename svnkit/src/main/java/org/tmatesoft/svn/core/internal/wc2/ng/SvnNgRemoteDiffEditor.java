@@ -256,7 +256,7 @@ public class SvnNgRemoteDiffEditor implements ISVNEditor {
 
     private void diffDeletedDir(String path, long revision, SVNRepository repository) throws SVNException {
         context.checkCancelled();
-        Collection<SVNDirEntry> entries = repository.getDir(path, revision, null, 0, (Collection<SVNDirEntry>) null);
+        Collection<SVNDirEntry> entries = repository.getDir(path, revision, null, SVNDirEntry.DIRENT_KIND, (Collection<SVNDirEntry>) null);
         for (SVNDirEntry entry : entries) {
             if (entry.getName() == null || "".equals(entry.getName())) {
                 continue;
