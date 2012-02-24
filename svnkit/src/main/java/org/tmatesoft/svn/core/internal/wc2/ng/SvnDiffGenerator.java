@@ -63,6 +63,10 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
         this.visitedPaths = new HashSet<String>();
     }
 
+    public void setUseGitFormat(boolean useGitFormat) {
+        this.useGitFormat = useGitFormat;
+    }
+
     public void init(String path1, String path2) {
         this.path1 = path1;
         this.path2 = path2;
@@ -127,17 +131,27 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
             String adjustedPathWithLabel1 = getAdjustedPathWithLabel(displayPath, path1, revision1, commonAncestor);
             String adjustedPathWithLabel2 = getAdjustedPathWithLabel(displayPath, path2, revision2, commonAncestor);
 
-            boolean shouldStopDisplaying = displayHeader(outputStream, displayPath, false);
+            String label1 = adjustedPathWithLabel1;
+            String label2 = adjustedPathWithLabel2;
+
+            boolean shouldStopDisplaying = displayHeader(outputStream, displayPath, false, SvnDiffCallback.OperationKind.Modified);
             visitedPaths.add(displayPath);
+            if (useGitFormat) {
+                displayGitDiffHeader(outputStream, SvnDiffCallback.OperationKind.Modified, displayPath, displayPath, null);
+            }
             if (shouldStopDisplaying) {
                 return;
             }
 
             if (useGitFormat) {
-                displayGitDiffHeader(adjustedPathWithLabel1, adjustedPathWithLabel2, SvnDiffCallback.OperationKind.Modified, path1, path2, revision1, revision2, null);
+                String copyFromPath = null;
+                SvnDiffCallback.OperationKind operationKind = SvnDiffCallback.OperationKind.Modified;
+                label1 = getGitDiffLabel1(operationKind, path1, path2, copyFromPath, revision1);
+                label2 = getGitDiffLabel2(operationKind, path1, path2, copyFromPath, revision2);
+                displayGitDiffHeader(outputStream, operationKind, path1, path2, copyFromPath);
             }
 
-            displayHeaderFields(outputStream, adjustedPathWithLabel1, adjustedPathWithLabel2);
+            displayHeaderFields(outputStream, label1, label2);
         }
 
         displayPropertyChangesOn(useGitFormat ? path1 : displayPath, outputStream);
@@ -170,9 +184,16 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
         }
 
         if (!forcedBinaryDiff && (leftIsBinary || rightIsBinary)) {
-            if (displayHeader(outputStream, displayPath, rightFile == null)) {
+            boolean shouldStopDisplaying = displayHeader(outputStream, displayPath, rightFile == null, operation);
+            if (useGitFormat) {
+                displayGitDiffHeader(outputStream, operation, displayPath, displayPath, null);
+            }
+            visitedPaths.add(displayPath);
+            if (shouldStopDisplaying) {
                 return;
             }
+
+
 
             displayBinary(mimeType1, mimeType2, outputStream, leftIsBinary, rightIsBinary);
 
@@ -181,7 +202,10 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
 
         final String diffCommand = getExternalDiffCommand();
         if (diffCommand != null) {
-            boolean shouldStopDisplaying = displayHeader(outputStream, displayPath, rightFile == null);
+            boolean shouldStopDisplaying = displayHeader(outputStream, displayPath, rightFile == null, operation);
+            if (useGitFormat) {
+                displayGitDiffHeader(outputStream, operation, displayPath, displayPath, null);
+            }
             visitedPaths.add(displayPath);
             if (shouldStopDisplaying) {
                 return;
@@ -189,7 +213,7 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
 
             runExternalDiffCommand(outputStream, diffCommand, leftFile, rightFile, label1, label2);
         } else {
-            internalDiff(outputStream, displayPath, leftFile, rightFile, label1, label2);
+            internalDiff(outputStream, displayPath, leftFile, rightFile, label1, label2, operation);
         }
     }
 
@@ -209,8 +233,8 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
         }
     }
 
-    private void internalDiff(OutputStream outputStream, String displayPath, File file1, File file2, String label1, String label2) throws SVNException {
-        String header = getHeaderString(displayPath, label1, label2);
+    private void internalDiff(OutputStream outputStream, String displayPath, File file1, File file2, String label1, String label2, SvnDiffCallback.OperationKind operation) throws SVNException {
+        String header = getHeaderString(displayPath, label1, label2, operation);
         String headerFields = getHeaderFieldsString(displayPath, label1, label2);
 
         RandomAccessFile is1 = null;
@@ -258,6 +282,7 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         try {
             if (useGitFormat) {
+
                 //
             }
             displayHeaderFields(byteArrayOutputStream, label1, label2);
@@ -280,15 +305,16 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
         }
     }
 
-    private String getHeaderString(String displayPath, String label1, String label2) throws SVNException {
+    private String getHeaderString(String displayPath, String label1, String label2, SvnDiffCallback.OperationKind operation) throws SVNException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         try {
-            if (displayHeader(byteArrayOutputStream, displayPath, false)) {
+            boolean stopDisplaying = displayHeader(byteArrayOutputStream, displayPath, false, operation);
+            if (useGitFormat) {
+                displayGitDiffHeader(byteArrayOutputStream, operation, displayPath, displayPath, null);
+            }
+            if (stopDisplaying) {
                 SVNFileUtil.closeFile(byteArrayOutputStream);
                 return null;
-            }
-            if (useGitFormat) {
-                //
             }
 //            displayHeaderFields(byteArrayOutputStream, label1, label2);
         } catch (SVNException e) {
@@ -491,8 +517,124 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
 
     }
 
-    private void displayGitDiffHeader(String label1, String label2, SvnDiffCallback.OperationKind operationKind, String path1, String path2, String revision1, String revision2, String copyFromPath) {
-        throw new UnsupportedOperationException();//TODO
+    private String getGitDiffLabel1(SvnDiffCallback.OperationKind operationKind, String path1, String path2, String copyFromPath, String revision) {
+        if (operationKind == SvnDiffCallback.OperationKind.Deleted) {
+            return getLabel("a/" + path1, revision);
+        } else if (operationKind == SvnDiffCallback.OperationKind.Copied) {
+            return getLabel("a/" + copyFromPath, revision);
+        } else if (operationKind == SvnDiffCallback.OperationKind.Added) {
+            return getLabel("/dev/null", revision);
+        } else if (operationKind == SvnDiffCallback.OperationKind.Modified) {
+            return getLabel("a/" + path1, revision);
+        } else if (operationKind == SvnDiffCallback.OperationKind.Moved) {
+            return getLabel("a/" + copyFromPath, revision);
+        }
+        throw new IllegalArgumentException("Unsupported operation: " + operationKind);
+    }
+
+    private String getGitDiffLabel2(SvnDiffCallback.OperationKind operationKind, String path1, String path2, String copyFromPath, String revision) {
+        if (operationKind == SvnDiffCallback.OperationKind.Deleted) {
+            return getLabel("/dev/null", revision);
+        } else if (operationKind == SvnDiffCallback.OperationKind.Copied) {
+            return getLabel("b/" + path2, revision);
+        } else if (operationKind == SvnDiffCallback.OperationKind.Added) {
+            return getLabel("b/" + path2, revision);
+        } else if (operationKind == SvnDiffCallback.OperationKind.Modified) {
+            return getLabel("b/" + path2, revision);
+        } else if (operationKind == SvnDiffCallback.OperationKind.Moved) {
+            return getLabel("b/" + path2, revision);
+        }
+        throw new IllegalArgumentException("Unsupported operation: " + operationKind);
+    }
+
+    private void displayGitDiffHeader(OutputStream outputStream, SvnDiffCallback.OperationKind operationKind, String path1, String path2, String copyFromPath) throws SVNException {
+        if (operationKind == SvnDiffCallback.OperationKind.Deleted) {
+            displayGitDiffHeaderDeleted(outputStream, path1, path2, copyFromPath);
+        } else if (operationKind == SvnDiffCallback.OperationKind.Copied) {
+            displayGitDiffHeaderCopied(outputStream, path1, path2, copyFromPath);
+        } else if (operationKind == SvnDiffCallback.OperationKind.Added) {
+            displayGitDiffHeaderAdded(outputStream, path1, path2, copyFromPath);
+        } else if (operationKind == SvnDiffCallback.OperationKind.Modified) {
+            displayGitDiffHeaderModified(outputStream, path1, path2, copyFromPath);
+        } else if (operationKind == SvnDiffCallback.OperationKind.Moved) {
+            displayGitDiffHeaderRenamed(outputStream, path1, path2, copyFromPath);
+        }
+    }
+
+    private void displayGitDiffHeaderAdded(OutputStream outputStream, String path1, String path2, String copyFromPath) throws SVNException {
+        try {
+            displayString(outputStream, "diff --git a/");
+            displayString(outputStream, path1);
+            displayString(outputStream, " b/");
+            displayString(outputStream, path2);
+            displayEOL(outputStream);
+            displayString(outputStream, "new file mode 10644");
+            displayEOL(outputStream);
+        } catch (IOException e) {
+            wrapException(e);
+        }
+    }
+
+    private void displayGitDiffHeaderDeleted(OutputStream outputStream, String path1, String path2, String copyFromPath) throws SVNException {
+        try {
+            displayString(outputStream, "diff --git a/");
+            displayString(outputStream, path1);
+            displayString(outputStream, " b/");
+            displayString(outputStream, path2);
+            displayEOL(outputStream);
+            displayString(outputStream, "deleted file mode 10644");
+            displayEOL(outputStream);
+        } catch (IOException e) {
+            wrapException(e);
+        }
+    }
+
+    private void displayGitDiffHeaderCopied(OutputStream outputStream, String path1, String path2, String copyFromPath) throws SVNException {
+        try {
+            displayString(outputStream, "diff --git a/");
+            displayString(outputStream, copyFromPath);
+            displayString(outputStream, " b/");
+            displayString(outputStream, path2);
+            displayEOL(outputStream);
+            displayString(outputStream, "copy from ");
+            displayString(outputStream, copyFromPath);
+            displayEOL(outputStream);
+            displayString(outputStream, "copy to ");
+            displayString(outputStream, path2);
+            displayEOL(outputStream);
+        } catch (IOException e) {
+            wrapException(e);
+        }
+    }
+
+    private void displayGitDiffHeaderRenamed(OutputStream outputStream, String path1, String path2, String copyFromPath) throws SVNException {
+        try {
+            displayString(outputStream, "diff --git a/");
+            displayString(outputStream, copyFromPath);
+            displayString(outputStream, " b/");
+            displayString(outputStream, path2);
+            displayEOL(outputStream);
+            displayString(outputStream, "rename from ");
+            displayString(outputStream, copyFromPath);
+            displayEOL(outputStream);
+            displayString(outputStream, "rename to ");
+            displayString(outputStream, path2);
+            displayEOL(outputStream);
+        } catch (IOException e) {
+            wrapException(e);
+        }
+    }
+
+    private void displayGitDiffHeaderModified(OutputStream outputStream, String path1, String path2, String copyFromPath) throws SVNException {
+        try {
+            displayString(outputStream, "diff --git a/");
+            displayString(outputStream, path1);
+            displayString(outputStream, " b/");
+            displayString(outputStream, path2);
+            displayEOL(outputStream);
+        } catch (IOException e) {
+            wrapException(e);
+        }
     }
 
     private String getAdjustedPathWithLabel(String displayPath, String path, String revision, String commonAncestor) {
@@ -519,7 +661,7 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
         return path + "\t" + revToken;
     }
 
-    protected boolean displayHeader(OutputStream os, String path, boolean deleted) throws SVNException {
+    protected boolean displayHeader(OutputStream os, String path, boolean deleted, SvnDiffCallback.OperationKind operation) throws SVNException {
         try {
             if (deleted && !isDiffDeleted()) {
                 displayString(os, "Index: ");

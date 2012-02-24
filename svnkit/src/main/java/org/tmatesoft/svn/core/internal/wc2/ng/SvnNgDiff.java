@@ -410,6 +410,12 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
 
     private ISvnDiffGenerator getDiffGenerator() {
         ISvnDiffGenerator diffGenerator = getOperation().getDiffGenerator();
-        return diffGenerator != null ? diffGenerator : new SvnDiffGenerator();
+        if (diffGenerator != null) {
+            return diffGenerator;
+        } else {
+            SvnDiffGenerator svnDiffGenerator = new SvnDiffGenerator();
+            svnDiffGenerator.setUseGitFormat(getOperation().isUseGitDiffFormat());
+            return svnDiffGenerator;
+        }
     }
 }
