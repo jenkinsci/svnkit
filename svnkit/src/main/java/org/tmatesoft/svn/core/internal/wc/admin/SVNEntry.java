@@ -690,10 +690,10 @@ public class SVNEntry {
             map.put(SVNProperty.FILE_EXTERNAL_PATH, getExternalFilePath());            
         }
         if (getExternalFileRevision() != null) {
-            map.put(SVNProperty.FILE_EXTERNAL_PATH, getExternalFileRevision());            
+            map.put(SVNProperty.FILE_EXTERNAL_REVISION, getExternalFileRevision());            
         }
         if (getExternalFilePegRevision() != null) {
-            map.put(SVNProperty.FILE_EXTERNAL_PATH, getExternalFilePegRevision());            
+            map.put(SVNProperty.FILE_EXTERNAL_PEG_REVISION, getExternalFilePegRevision());            
         }
         if (hasProperties()) {
             map.put(SVNProperty.HAS_PROPS, Boolean.TRUE.toString());
