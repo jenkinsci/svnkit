@@ -1079,7 +1079,7 @@ public class SvnOperationFactory {
                 return null;
             }
             if (stopOnExternals || wcRoot.getParentFile() == null) {
-                return null;
+                return wcRoot;
             }
             // check if our root is external in the parent wc.
             try {

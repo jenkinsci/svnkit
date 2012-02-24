@@ -7,6 +7,8 @@ import junit.framework.Assert;
 import org.junit.Test;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
@@ -15,7 +17,9 @@ import org.tmatesoft.svn.core.wc2.SvnCheckout;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 import org.tmatesoft.svn.core.wc2.SvnScheduleForAddition;
 import org.tmatesoft.svn.core.wc2.SvnScheduleForRemoval;
+import org.tmatesoft.svn.core.wc2.SvnSetProperty;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
+import org.tmatesoft.svn.core.wc2.SvnUpdate;
 
 public class SvnWcUtilTest {
 
@@ -25,6 +29,13 @@ public class SvnWcUtilTest {
     private static final String DIRG_PATH = "A/G";
     private static final String MISSING_DIR_PATH = "C/missing";
     private static final String FILE1_PATH = "A/alpha";
+
+    private static final String EXT_PATH = "ext";
+    private static final String EXT_DEEP_PATH = "ext-deep/ext";
+    private static final String FILE_PATH_IN_EXT = "ext/alpha";
+    private static final String DIR_PATH_IN_EXT = "ext/B";
+    private static final String FILE_PATH_IN_DEEP_EXT = "ext-deep/ext/alpha";
+    private static final String DIR_PATH_IN_DEEP_EXT = "ext-deep/ext/B";
 
     private static final String UNVERSIONED_DIR1_PATH = "unversioned";
     private static final String UNVERSIONED_DIR2_PATH = "C/unversioned";
@@ -198,6 +209,15 @@ public class SvnWcUtilTest {
 
         Assert.assertTrue(SVNWCUtil.isVersionedDirectory(new File(wcRoot, DIRB_PATH)));
         Assert.assertTrue(SVNWCUtil.isVersionedDirectory(new File(wcRoot, DIRG_PATH)));
+
+        Assert.assertTrue(SVNWCUtil.isVersionedDirectory(new File(wcRoot, EXT_PATH)));
+        Assert.assertTrue(SVNWCUtil.isVersionedDirectory(new File(wcRoot, EXT_DEEP_PATH)));
+        Assert.assertTrue(SVNWCUtil.isVersionedDirectory(new File(wcRoot, DIR_PATH_IN_EXT)));
+        Assert.assertTrue(SVNWCUtil.isVersionedDirectory(new File(wcRoot, DIR_PATH_IN_DEEP_EXT)));
+        Assert.assertFalse(SVNWCUtil.isVersionedDirectory(new File(wcRoot, FILE_PATH_IN_EXT)));
+        Assert.assertFalse(SVNWCUtil.isVersionedDirectory(new File(wcRoot, FILE_PATH_IN_DEEP_EXT)));
+
+        Assert.assertFalse(SVNWCUtil.isVersionedDirectory(new File(wcRoot, EXT_DEEP_PATH).getParentFile()));
     }
 
     private void testIsWcRoot(final File wcRoot) throws SVNException {
@@ -214,6 +234,16 @@ public class SvnWcUtilTest {
 
         Assert.assertFalse(SVNWCUtil.isWorkingCopyRoot(new File(wcRoot, DIRB_PATH)));
         Assert.assertFalse(SVNWCUtil.isWorkingCopyRoot(new File(wcRoot, DIRG_PATH)));
+
+        Assert.assertFalse(SVNWCUtil.isWorkingCopyRoot(new File(wcRoot, DIR_PATH_IN_DEEP_EXT)));
+        Assert.assertFalse(SVNWCUtil.isWorkingCopyRoot(new File(wcRoot, DIR_PATH_IN_EXT)));
+        Assert.assertFalse(SVNWCUtil.isWorkingCopyRoot(new File(wcRoot, FILE_PATH_IN_DEEP_EXT)));
+        Assert.assertFalse(SVNWCUtil.isWorkingCopyRoot(new File(wcRoot, FILE_PATH_IN_EXT)));
+        
+        Assert.assertTrue(SVNWCUtil.isWorkingCopyRoot(new File(wcRoot, EXT_PATH)));
+        Assert.assertTrue(SVNWCUtil.isWorkingCopyRoot(new File(wcRoot, EXT_DEEP_PATH)));
+        Assert.assertFalse(SVNWCUtil.isWorkingCopyRoot(new File(wcRoot, EXT_DEEP_PATH).getParentFile()));
+
     }
 
     private void testGetWcRoot(final File wcRoot) throws SVNException {
@@ -230,6 +260,27 @@ public class SvnWcUtilTest {
 
         Assert.assertEquals(wcRoot, SVNWCUtil.getWorkingCopyRoot(new File(wcRoot, DIRB_PATH), false));
         Assert.assertEquals(wcRoot, SVNWCUtil.getWorkingCopyRoot(new File(wcRoot, DIRG_PATH), false));
+
+        Assert.assertEquals(wcRoot, SVNWCUtil.getWorkingCopyRoot(new File(wcRoot, DIR_PATH_IN_DEEP_EXT), false));
+        Assert.assertEquals(wcRoot, SVNWCUtil.getWorkingCopyRoot(new File(wcRoot, DIR_PATH_IN_EXT), false));
+        Assert.assertEquals(wcRoot, SVNWCUtil.getWorkingCopyRoot(new File(wcRoot, FILE_PATH_IN_DEEP_EXT), false));
+        Assert.assertEquals(wcRoot, SVNWCUtil.getWorkingCopyRoot(new File(wcRoot, FILE_PATH_IN_EXT), false));
+        
+        Assert.assertEquals(wcRoot, SVNWCUtil.getWorkingCopyRoot(new File(wcRoot, EXT_PATH), false));
+        Assert.assertEquals(wcRoot, SVNWCUtil.getWorkingCopyRoot(new File(wcRoot, EXT_DEEP_PATH), false));
+        Assert.assertEquals(wcRoot, SVNWCUtil.getWorkingCopyRoot(new File(wcRoot, EXT_DEEP_PATH).getParentFile(), false));
+        
+        File extRoot = new File(wcRoot, EXT_PATH);
+        File deepExtRoot = new File(wcRoot, EXT_DEEP_PATH);
+
+        Assert.assertEquals(deepExtRoot, SVNWCUtil.getWorkingCopyRoot(new File(wcRoot, DIR_PATH_IN_DEEP_EXT), true));
+        Assert.assertEquals(extRoot, SVNWCUtil.getWorkingCopyRoot(new File(wcRoot, DIR_PATH_IN_EXT), true));
+        Assert.assertEquals(deepExtRoot, SVNWCUtil.getWorkingCopyRoot(new File(wcRoot, FILE_PATH_IN_DEEP_EXT), true));
+        Assert.assertEquals(extRoot, SVNWCUtil.getWorkingCopyRoot(new File(wcRoot, FILE_PATH_IN_EXT), true));
+        
+        Assert.assertEquals(extRoot, SVNWCUtil.getWorkingCopyRoot(new File(wcRoot, EXT_PATH), true));
+        Assert.assertEquals(deepExtRoot, SVNWCUtil.getWorkingCopyRoot(new File(wcRoot, EXT_DEEP_PATH), true));
+        Assert.assertEquals(wcRoot, SVNWCUtil.getWorkingCopyRoot(new File(wcRoot, EXT_DEEP_PATH).getParentFile(), true));
     }
     
     private SVNURL prepareRepository(Sandbox sandbox) throws SVNException {
@@ -266,7 +317,24 @@ public class SvnWcUtilTest {
         add.addTarget(SvnTarget.fromFile(new File(directory, DIRG_PATH)));
         add.setMkDir(true);
         add.run();
-
+        
+        SvnSetProperty ps = of.createSetProperty();
+        ps.setSingleTarget(SvnTarget.fromFile(directory));
+        ps.setPropertyName(SVNProperty.EXTERNALS);
+        ps.setPropertyValue(SVNPropertyValue.create("^/A " + EXT_PATH + "\n^/A " + EXT_DEEP_PATH));
+        ps.run();
+        
+        SvnUpdate up = of.createUpdate();
+        up.setSingleTarget(SvnTarget.fromFile(directory));
+        up.setIgnoreExternals(false);
+        up.setDepth(SVNDepth.INFINITY);
+        up.run();
+        
+        Assert.assertTrue(new File(directory, DIR_PATH_IN_DEEP_EXT).isDirectory());
+        Assert.assertTrue(new File(directory, FILE_PATH_IN_DEEP_EXT).isFile());
+        Assert.assertTrue(new File(directory, DIR_PATH_IN_EXT).isDirectory());
+        Assert.assertTrue(new File(directory, FILE_PATH_IN_EXT).isFile());
+        
         return directory;
     }
 
