@@ -5,6 +5,7 @@ import java.util.Collection;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc16.SVNDiffClient16;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
+import org.tmatesoft.svn.core.internal.wc2.ng.SvnNewDiffGenerator;
 import org.tmatesoft.svn.core.wc.DefaultSVNDiffGenerator;
 import org.tmatesoft.svn.core.wc.ISVNDiffGenerator;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -60,6 +61,6 @@ public class SvnOldDiff extends SvnOldRunner<Void, SvnDiff> {
     }
 
     private ISVNDiffGenerator getDiffGenerator() {
-        return getOperation().getDiffGenerator() != null ? getOperation().getDiffGenerator() : new DefaultSVNDiffGenerator();
+        return getOperation().getDiffGenerator() != null ? new SvnNewDiffGenerator(getOperation().getDiffGenerator()) : new DefaultSVNDiffGenerator();
     }
 }

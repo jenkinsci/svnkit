@@ -46,7 +46,7 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
     private String encoding;
     private byte[] eol;
     private boolean useGitFormat;
-    private boolean forceBinary;
+    private boolean forcedBinaryDiff;
 
     private boolean diffDeleted;
     private List<String> rawDiffOptions;
@@ -85,6 +85,14 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
 
     public byte[] getEOL() {
         return eol;
+    }
+
+    public boolean isForcedBinaryDiff() {
+        return forcedBinaryDiff;
+    }
+
+    public void setForcedBinaryDiff(boolean forcedBinaryDiff) {
+        this.forcedBinaryDiff = forcedBinaryDiff;
     }
 
     public void displayDeletedDirectory(String displayPath, String revision1, String revision2, OutputStream outputStream) throws SVNException {
@@ -153,7 +161,7 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
             rightIsBinary = SVNProperty.isBinaryMimeType(mimeType2);
         }
 
-        if (!forceBinary && (leftIsBinary || rightIsBinary)) {
+        if (!forcedBinaryDiff && (leftIsBinary || rightIsBinary)) {
             if (displayHeader(outputStream, displayPath, rightFile == null)) {
                 return;
             }

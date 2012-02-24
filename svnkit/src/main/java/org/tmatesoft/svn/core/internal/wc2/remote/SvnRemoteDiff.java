@@ -6,6 +6,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc16.SVNDiffClient16;
 import org.tmatesoft.svn.core.internal.wc2.SvnRemoteOperationRunner;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
+import org.tmatesoft.svn.core.internal.wc2.ng.SvnNewDiffGenerator;
 import org.tmatesoft.svn.core.wc.DefaultSVNDiffGenerator;
 import org.tmatesoft.svn.core.wc.ISVNDiffGenerator;
 import org.tmatesoft.svn.core.wc2.SvnDiff;
@@ -54,6 +55,6 @@ public class SvnRemoteDiff extends SvnRemoteOperationRunner<Void, SvnDiff> {
     }
 
     private ISVNDiffGenerator getDiffGenerator() {
-        return getOperation().getDiffGenerator() != null ? getOperation().getDiffGenerator() : new DefaultSVNDiffGenerator();
+        return getOperation().getDiffGenerator() != null ? new SvnNewDiffGenerator(getOperation().getDiffGenerator()) : new DefaultSVNDiffGenerator();
     }
 }

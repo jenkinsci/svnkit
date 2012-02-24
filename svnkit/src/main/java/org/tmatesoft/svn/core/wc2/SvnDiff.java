@@ -8,6 +8,8 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc2.ng.ISvnDiffGenerator;
+import org.tmatesoft.svn.core.internal.wc2.ng.SvnOldDiffGenerator;
 import org.tmatesoft.svn.core.wc.ISVNDiffGenerator;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -15,7 +17,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 public class SvnDiff extends SvnOperation<Void> {
     
-    private ISVNDiffGenerator diffGenerator;
+    private ISvnDiffGenerator diffGenerator;
     private SVNDiffOptions diffOptions;
     private OutputStream output;
     
@@ -30,6 +32,8 @@ public class SvnDiff extends SvnOperation<Void> {
 
     protected SvnDiff(SvnOperationFactory factory) {
         super(factory);
+
+        setIgnoreAncestry(true);
     }
 
     public void setTarget(SvnTarget source, SVNRevision start, SVNRevision end) {
@@ -68,11 +72,15 @@ public class SvnDiff extends SvnOperation<Void> {
         return relativeToDirectory;
     }
 
-    public ISVNDiffGenerator getDiffGenerator() {
+    public ISvnDiffGenerator getDiffGenerator() {
         return diffGenerator;
     }
 
     public void setDiffGenerator(ISVNDiffGenerator diffGenerator) {
+        setDiffGenerator(new SvnOldDiffGenerator(diffGenerator));
+    }
+
+    public void setDiffGenerator(ISvnDiffGenerator diffGenerator) {
         this.diffGenerator = diffGenerator;
     }
 

@@ -16,6 +16,10 @@ public class SvnOldDiffGenerator implements ISvnDiffGenerator {
         this.generator = generator;
     }
 
+    public void init(String anchorPath1, String anchorPath2) {
+        generator.init(anchorPath1, anchorPath2);
+    }
+
     public void setEncoding(String encoding) {
         generator.setEncoding(encoding);
     }
@@ -39,6 +43,10 @@ public class SvnOldDiffGenerator implements ISvnDiffGenerator {
         return generator.getEOL();
     }
 
+    public void setForcedBinaryDiff(boolean forced) {
+        generator.setForcedBinaryDiff(forced);
+    }
+
     public void displayDeletedDirectory(String displayPath, String revision1, String revision2, OutputStream outputStream) throws SVNException {
         generator.displayDeletedDirectory(displayPath, revision1, revision2);
     }
@@ -47,7 +55,7 @@ public class SvnOldDiffGenerator implements ISvnDiffGenerator {
         generator.displayAddedDirectory(displayPath, revision1, revision2);
     }
 
-    public void displayPropsChanged(String displayPath, String revisionString, String string, boolean dirWasAdded, SVNProperties originalProps, SVNProperties propChanges, boolean showDiffHeader, OutputStream outputStream) throws SVNException {
+    public void displayPropsChanged(String displayPath, String revision1, String revision2, boolean dirWasAdded, SVNProperties originalProps, SVNProperties propChanges, boolean showDiffHeader, OutputStream outputStream) throws SVNException {
         generator.displayPropDiff(displayPath, originalProps, propChanges, outputStream);
     }
 
@@ -60,4 +68,7 @@ public class SvnOldDiffGenerator implements ISvnDiffGenerator {
         generator.displayFileDiff(displayPath, leftFile, rightFile, revision1, revision2, mimeType1, mimeType2, outputStream);
     }
 
+    public boolean isForcedBinaryDiff() {
+        return generator.isForcedBinaryDiff();
+    }
 }
