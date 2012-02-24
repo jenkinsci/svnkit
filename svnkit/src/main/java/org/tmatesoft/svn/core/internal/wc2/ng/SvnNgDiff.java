@@ -432,4 +432,71 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
             editor.cleanup();
         }
     }
+
+    private void doDiffURLWC(SvnTarget target1, SVNRevision revision1, SVNRevision pegRevision, SvnTarget target2, SVNRevision revision2, boolean reverse, SVNDepth depth, boolean ignoreAncestry, OutputStream outputStream, Collection<String> applicatbleChangelists, ISvnDiffGenerator generator) throws SVNException {
+
+        boolean revision2IsBase = revision2 == SVNRevision.BASE;
+        assert !target2.isURL();
+
+        //all paths are already absolute
+
+        SVNURL url1 = getRepositoryAccess().getTargetURL(target1);
+
+        String target = getWcContext().getActualTarget(target2.getFile());
+        if (target == null) {
+            target = "";
+        }
+        File anchorDirectory = target.length() == 0 ? target2.getFile() : SVNFileUtil.getParentFile(target2.getFile());
+        SVNURL anchorUrl = getWcContext().getNodeUrl(anchorDirectory);
+
+        if (anchorUrl == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "Directory ''{0}'' has no URL", anchorDirectory);
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+
+        if (pegRevision.isValid()) {
+            final Structure<SvnRepositoryAccess.LocationsInfo> locations = getRepositoryAccess().getLocations(null, SvnTarget.fromURL(url1), pegRevision, revision1, revision2);
+            final SVNURL startUrl = locations.get(SvnRepositoryAccess.LocationsInfo.startUrl);
+
+            url1 = startUrl;
+            String anchorPath2 = SVNPathUtil.append(anchorUrl.toString(), target == null ? "" : target);
+            if (!reverse) {
+                generator.init(url1.toString(), anchorPath2);
+            } else {
+                generator.init(anchorPath2, url1.toString());
+            }
+        }
+
+        boolean useGitDiffFormat = false;
+
+        SVNRepository repository = getRepositoryAccess().createRepository(anchorUrl, null, true);
+        if (useGitDiffFormat) {
+            final File wcRoot = getWcContext().getDb().getWCRoot(anchorDirectory);
+            //TODO: pass wcRoot to callback?
+        }
+
+        //TODO: pass anchorDirectory to callback
+
+        boolean serverSupportsDepth = repository.hasCapability(SVNCapability.DEPTH);
+
+        long revNumber = getRepositoryAccess().getRevisionNumber(repository, SvnTarget.fromURL(url1, pegRevision), revision1, null).lng(SvnRepositoryAccess.RevisionsPair.revNumber);
+
+        ISvnDiffCallback callback = new SvnDiffCallback(generator, reverse ? -1 : revNumber, reverse ? revNumber : -1, getOperation().getOutput());
+
+        boolean useTextBase = revision2 == SVNRevision.BASE || revision2 == SVNRevision.COMMITTED;
+        SvnDiffEditor diffEditor = new SvnDiffEditor(getOperation().getDepth(), getWcContext(), anchorDirectory, target, useTextBase,
+                getOperation().isShowCopiesAsAdds(), callback, getOperation().getApplicableChangelists(), getOperation().isIgnoreAncestry(),
+                useGitDiffFormat, this, reverse);
+
+
+        SVNDepth diffDepth = getOperation().getDepth() != SVNDepth.INFINITY ? getOperation().getDepth() : SVNDepth.UNKNOWN;
+
+        final SVNReporter17 reporter17 = new SVNReporter17(target2.getFile(), getWcContext(), false, !serverSupportsDepth, getOperation().getDepth(), false, false, true, false, SVNDebugLog.getDefaultLog());
+        long pegRevisionNumber = getRepositoryAccess().getRevisionNumber(repository, target2, revision2, null).lng(SvnRepositoryAccess.RevisionsPair.revNumber);
+        try {
+            repository.diff(url1, revNumber, pegRevisionNumber, target, getOperation().isIgnoreAncestry(), diffDepth, true, reporter17, SVNCancellableEditor.newInstance(diffEditor, this, SVNDebugLog.getDefaultLog()));
+        } finally {
+            diffEditor.cleanup();
+        }
+    }
 }
