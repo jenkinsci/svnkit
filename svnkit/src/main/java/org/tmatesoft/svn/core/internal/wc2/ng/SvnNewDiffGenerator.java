@@ -94,7 +94,7 @@ public class SvnNewDiffGenerator implements ISVNDiffGenerator {
     }
 
     public void displayFileDiff(String path, File file1, File file2, String rev1, String rev2, String mimeType1, String mimeType2, OutputStream result) throws SVNException {
-        generator.displayContentChanged(path, file1, file1, rev1, rev2, mimeType1, mimeType2, SvnDiffCallback.OperationKind.Modified, null, result);
+        generator.displayContentChanged(path, file1, file2, rev1, rev2, mimeType1, mimeType2, SvnDiffCallback.OperationKind.Modified, null, result);
     }
 
     public void displayDeletedDirectory(String path, String rev1, String rev2) throws SVNException {
