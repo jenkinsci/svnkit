@@ -29,6 +29,7 @@ public class SvnDiff extends SvnOperation<Void> {
     private boolean showCopiesAsAdds;
     private boolean ignoreContentType;
     private File relativeToDirectory;
+    private boolean useGitDiffFormat;
 
     protected SvnDiff(SvnOperationFactory factory) {
         super(factory);
@@ -130,6 +131,14 @@ public class SvnDiff extends SvnOperation<Void> {
 
     public void setIgnoreContentType(boolean ignoreContentType) {
         this.ignoreContentType = ignoreContentType;
+    }
+
+    public boolean isUseGitDiffFormat() {
+        return useGitDiffFormat;
+    }
+
+    public void setUseGitDiffFormat(boolean useGitDiffFormat) {
+        this.useGitDiffFormat = useGitDiffFormat;
     }
 
     public SvnTarget getSecondTarget() {

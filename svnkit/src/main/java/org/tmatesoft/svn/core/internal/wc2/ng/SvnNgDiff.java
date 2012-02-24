@@ -248,11 +248,9 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
 
         final SvnDiffCallback callback = new SvnDiffCallback(generator, revNumber, -1, getOperation().getOutput());
 
-        boolean gitFormat = false;
-
         final boolean reportAll;
         //noinspection RedundantIfStatement
-        if (getOperation().isShowCopiesAsAdds() || gitFormat) {
+        if (getOperation().isShowCopiesAsAdds() || getOperation().isUseGitDiffFormat()) {
             reportAll = true;
         } else {
             reportAll = false;
@@ -260,7 +258,7 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
 
         final boolean diffIgnored = false;
 
-        final SvnDiffStatusReceiver statusHandler = new SvnDiffStatusReceiver(getWcContext(), path1, getWcContext().getDb(), callback, getOperation().isIgnoreAncestry(), getOperation().isShowCopiesAsAdds(), gitFormat);
+        final SvnDiffStatusReceiver statusHandler = new SvnDiffStatusReceiver(getWcContext(), path1, getWcContext().getDb(), callback, getOperation().isIgnoreAncestry(), getOperation().isShowCopiesAsAdds(), getOperation().isUseGitDiffFormat());
         final SVNStatusEditor17 statusEditor = new SVNStatusEditor17(
                 path1,
                 getWcContext(),
@@ -467,10 +465,8 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
             }
         }
 
-        boolean useGitDiffFormat = false;
-
         SVNRepository repository = getRepositoryAccess().createRepository(anchorUrl, null, true);
-        if (useGitDiffFormat) {
+        if (getOperation().isUseGitDiffFormat()) {
             final File wcRoot = getWcContext().getDb().getWCRoot(anchorDirectory);
             //TODO: pass wcRoot to callback?
         }
@@ -486,7 +482,7 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
         boolean useTextBase = revision2 == SVNRevision.BASE || revision2 == SVNRevision.COMMITTED;
         SvnDiffEditor diffEditor = new SvnDiffEditor(getOperation().getDepth(), getWcContext(), anchorDirectory, target, useTextBase,
                 getOperation().isShowCopiesAsAdds(), callback, getOperation().getApplicableChangelists(), getOperation().isIgnoreAncestry(),
-                useGitDiffFormat, this, reverse);
+                getOperation().isUseGitDiffFormat(), this, reverse);
 
 
         SVNDepth diffDepth = getOperation().getDepth() != SVNDepth.INFINITY ? getOperation().getDepth() : SVNDepth.UNKNOWN;
