@@ -119,6 +119,14 @@ public class SvnNgCommit extends SvnNgOperationRunner<SVNCommitInfo, SvnCommit> 
         SVNProperties revisionProperties = getOperation().getRevisionProperties();
         SVNPropertiesManager.validateRevisionProperties(revisionProperties);
         String commitMessage = getOperation().getCommitMessage();
+        if (getOperation().getCommitMessage() != null) {
+            Collection<SvnCommitItem> items = new ArrayList<SvnCommitItem>();
+            for (SVNURL rootUrl : packet.getRepositoryRoots()) {
+                items.addAll(packet.getItems(rootUrl));
+            }
+            commitMessage = getOperation().getCommitHandler().getCommitMessage(commitMessage, 
+                    items.toArray(new SvnCommitItem[items.size()]));
+        }
         boolean keepLocks = getOperation().isKeepLocks();
         
         SVNException bumpError = null;

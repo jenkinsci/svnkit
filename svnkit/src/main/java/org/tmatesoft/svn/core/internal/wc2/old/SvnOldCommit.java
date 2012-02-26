@@ -4,24 +4,21 @@ import java.io.File;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.internal.wc16.SVNCommitClient16;
 import org.tmatesoft.svn.core.internal.wc2.ISvnCommitRunner;
 import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
-import org.tmatesoft.svn.core.wc.ISVNCommitHandler;
-import org.tmatesoft.svn.core.wc.SVNCommitItem;
 import org.tmatesoft.svn.core.wc.SVNCommitPacket;
 import org.tmatesoft.svn.core.wc2.SvnCommit;
 import org.tmatesoft.svn.core.wc2.SvnCommitPacket;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
-public class SvnOldCommit extends SvnOldRunner<SVNCommitInfo, SvnCommit> implements ISvnCommitRunner, ISVNCommitHandler {
+public class SvnOldCommit extends SvnOldRunner<SVNCommitInfo, SvnCommit> implements ISvnCommitRunner {
 
     public SvnCommitPacket collectCommitItems(SvnCommit operation) throws SVNException {
         setOperation(operation);
         SVNCommitClient16 client = new SVNCommitClient16(getOperation().getRepositoryPool(), getOperation().getOptions());
         client.setEventHandler(getOperation().getEventHandler());
-        client.setCommitHandler(this);
+        client.setCommitHandler(SvnCodec.commitHandler(getOperation().getCommitHandler()));
         client.setCommitParameters(SvnCodec.commitParameters(getOperation().getCommitParameters()));
 
         File[] paths = new File[getOperation().getTargets().size()];
@@ -45,7 +42,7 @@ public class SvnOldCommit extends SvnOldRunner<SVNCommitInfo, SvnCommit> impleme
         
         SVNCommitClient16 client = new SVNCommitClient16(getOperation().getRepositoryPool(), getOperation().getOptions());
         client.setEventHandler(getOperation().getEventHandler());
-        client.setCommitHandler(this);
+        client.setCommitHandler(SvnCodec.commitHandler(getOperation().getCommitHandler()));
         client.setCommitParameters(SvnCodec.commitParameters(getOperation().getCommitParameters()));
         
         SVNCommitInfo info = client.doCommit(oldPacket, getOperation().isKeepLocks(), getOperation().isKeepChangelists(), getOperation().getCommitMessage(), getOperation().getRevisionProperties());
@@ -67,13 +64,4 @@ public class SvnOldCommit extends SvnOldRunner<SVNCommitInfo, SvnCommit> impleme
             }
         }
     }
-
-    public String getCommitMessage(String message, SVNCommitItem[] commitables) throws SVNException {
-        return message;
-    }
-
-    public SVNProperties getRevisionProperties(String message, SVNCommitItem[] commitables, SVNProperties revisionProperties) throws SVNException {
-        return revisionProperties;
-    }
-
 }
