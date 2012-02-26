@@ -151,7 +151,7 @@ public class SvnNgGetStatus extends SvnNgOperationRunner<SvnStatus, SvnGetStatus
             }
         }
         
-        if (getOperation().isReportExternals()) {
+        if (getOperation().getDepth().isRecursive() && getOperation().isReportExternals()) {
             SVNExternalsStore externalsStore = new SVNExternalsStore();
             context.getDb().gatherExternalDefinitions(getFirstTarget(), externalsStore);
             
