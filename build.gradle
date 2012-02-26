@@ -1,8 +1,8 @@
 group = 'org.tmatesoft.svnkit'
-version = '1.7.0'
-release = false
+version = '1.7.0-beta2'
+release = release
 target = '1.5'
-compatibleSvnVersion = '1.7.2'
+compatibleSvnVersion = '1.7.3'
 
 buildscript {
     apply from: 'build.defaults.gradle'
@@ -40,7 +40,6 @@ configure(javaProjects() + rootProject) {
         }
     }
 }
-
 
 configure(javaProjects()) {
     apply plugin : 'java'
