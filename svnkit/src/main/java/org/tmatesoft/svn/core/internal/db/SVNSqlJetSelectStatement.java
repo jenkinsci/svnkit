@@ -105,6 +105,8 @@ public class SVNSqlJetSelectStatement extends SVNSqlJetTableStatement {
             rowValues.clear();
         }
     }
+    
+    
 
     public Map<String, Object> getRowValues2(Map<String, Object> v) throws SVNException {
         v = v == null ? new HashMap<String, Object>() : v;
@@ -175,7 +177,7 @@ public class SVNSqlJetSelectStatement extends SVNSqlJetTableStatement {
         if (v == null) {
             return null;
         }
-        return v instanceof String ? (String) rowValues.get(f) : v.toString();
+        return v instanceof String ? (String) v : v.toString();
     }
 
     @Override
@@ -205,5 +207,13 @@ public class SVNSqlJetSelectStatement extends SVNSqlJetTableStatement {
             return (byte[]) v;
         }
         return null;
+    }
+
+    @Override
+    public void reset() throws SVNException {
+        if (rowValues != null) {
+            rowValues.clear();
+        }
+        super.reset();
     }
 }
