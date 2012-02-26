@@ -1,3 +1,8 @@
+== version 1.7.0-beta2 ==
+
++ Performance and stability improvements
+* This is a beta version and it may not be stable enough for production environment
+
 == version 1.7.0-beta1 ==
 
 * First beta version with new Subversion 1.7 working copy format support
