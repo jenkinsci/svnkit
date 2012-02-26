@@ -124,8 +124,9 @@ public class SvnNgCommit extends SvnNgOperationRunner<SVNCommitInfo, SvnCommit> 
             for (SVNURL rootUrl : packet.getRepositoryRoots()) {
                 items.addAll(packet.getItems(rootUrl));
             }
-            commitMessage = getOperation().getCommitHandler().getCommitMessage(commitMessage, 
-                    items.toArray(new SvnCommitItem[items.size()]));
+            SvnCommitItem[] itemsArray = items.toArray(new SvnCommitItem[items.size()]);
+            commitMessage = getOperation().getCommitHandler().getCommitMessage(commitMessage, itemsArray);
+            revisionProperties = getOperation().getCommitHandler().getRevisionProperties(commitMessage, itemsArray, revisionProperties);
         }
         boolean keepLocks = getOperation().isKeepLocks();
         
