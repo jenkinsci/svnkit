@@ -78,6 +78,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  */
 public class SVNDiffClient extends SVNBasicClient {
 
+    private boolean showCopiesAsAdds;
     private boolean myIsAllowMixedRevisions;
     private ISVNDiffGenerator diffGenerator;
     private SVNDiffOptions diffOptions;
@@ -243,6 +244,7 @@ public class SVNDiffClient extends SVNBasicClient {
         diff.setDepth(SVNDepth.getInfinityOrEmptyDepth(recursive));
         diff.setIgnoreAncestry(!useAncestry);
         diff.setOutput(result);
+        diff.setShowCopiesAsAdds(isShowCopiesAsAdds());
         diff.run();
     }
 
@@ -301,6 +303,7 @@ public class SVNDiffClient extends SVNBasicClient {
         diff.setDepth(depth);
         diff.setIgnoreAncestry(!useAncestry);
         diff.setOutput(result);
+        diff.setShowCopiesAsAdds(isShowCopiesAsAdds());
         diff.run();
     }
 
@@ -359,6 +362,7 @@ public class SVNDiffClient extends SVNBasicClient {
         diff.setDepth(SVNDepth.getInfinityOrEmptyDepth(recursive));
         diff.setIgnoreAncestry(!useAncestry);
         diff.setOutput(result);
+        diff.setShowCopiesAsAdds(isShowCopiesAsAdds());
         diff.run();
     }
 
@@ -401,6 +405,7 @@ public class SVNDiffClient extends SVNBasicClient {
             diff.setIgnoreAncestry(!useAncestry);
             diff.setOutput(result);
             diff.setApplicalbeChangelists(changeLists);
+            diff.setShowCopiesAsAdds(isShowCopiesAsAdds());
             diff.run();
         }
     }
@@ -473,6 +478,7 @@ public class SVNDiffClient extends SVNBasicClient {
         diff.setIgnoreAncestry(!useAncestry);
         diff.setOutput(result);
         diff.setApplicalbeChangelists(changeLists);
+        diff.setShowCopiesAsAdds(isShowCopiesAsAdds());
         diff.run();
     }
 
@@ -519,6 +525,7 @@ public class SVNDiffClient extends SVNBasicClient {
         diff.setDepth(SVNDepth.getInfinityOrEmptyDepth(recursive));
         diff.setIgnoreAncestry(!useAncestry);
         diff.setOutput(result);
+        diff.setShowCopiesAsAdds(isShowCopiesAsAdds());
         diff.run();
     }
 
@@ -613,6 +620,7 @@ public class SVNDiffClient extends SVNBasicClient {
         diff.setDepth(depth);
         diff.setIgnoreAncestry(!useAncestry);
         diff.setOutput(result);
+        diff.setShowCopiesAsAdds(isShowCopiesAsAdds());
         diff.run();
     }
 
@@ -669,6 +677,7 @@ public class SVNDiffClient extends SVNBasicClient {
         diff.setDepth(SVNDepth.getInfinityOrEmptyDepth(recursive));
         diff.setIgnoreAncestry(!useAncestry);
         diff.setOutput(result);
+        diff.setShowCopiesAsAdds(isShowCopiesAsAdds());
         diff.run();
     }
 
@@ -784,6 +793,7 @@ public class SVNDiffClient extends SVNBasicClient {
         diff.setIgnoreAncestry(!useAncestry);
         diff.setOutput(result);
         diff.setApplicalbeChangelists(changeLists);
+        diff.setShowCopiesAsAdds(isShowCopiesAsAdds());
         diff.run();
     }
 
@@ -840,6 +850,7 @@ public class SVNDiffClient extends SVNBasicClient {
         diff.setDepth(SVNDepth.getInfinityOrEmptyDepth(recursive));
         diff.setIgnoreAncestry(!useAncestry);
         diff.setOutput(result);
+        diff.setShowCopiesAsAdds(isShowCopiesAsAdds());
         diff.run();
     }
 
@@ -954,6 +965,7 @@ public class SVNDiffClient extends SVNBasicClient {
         diff.setIgnoreAncestry(!useAncestry);
         diff.setOutput(result);
         diff.setApplicalbeChangelists(changeLists);
+        diff.setShowCopiesAsAdds(isShowCopiesAsAdds());
         diff.run();
     }
 
@@ -1029,6 +1041,7 @@ public class SVNDiffClient extends SVNBasicClient {
         diff.setDepth(SVNDepth.getInfinityOrEmptyDepth(recursive));
         diff.setIgnoreAncestry(!useAncestry);
         diff.setOutput(result);
+        diff.setShowCopiesAsAdds(isShowCopiesAsAdds());
         diff.run();
     }
 
@@ -1146,6 +1159,7 @@ public class SVNDiffClient extends SVNBasicClient {
         diff.setIgnoreAncestry(!useAncestry);
         diff.setOutput(result);
         diff.setApplicalbeChangelists(changeLists);
+        diff.setShowCopiesAsAdds(isShowCopiesAsAdds());
         diff.run();
     }
 
@@ -3209,4 +3223,11 @@ public class SVNDiffClient extends SVNBasicClient {
         myIsAllowMixedRevisions = allowMixedRevisions;
     }
 
+    public boolean isShowCopiesAsAdds() {
+        return showCopiesAsAdds;
+    }
+
+    public void setShowCopiesAsAdds(boolean showCopiesAsAdds) {
+        this.showCopiesAsAdds = showCopiesAsAdds;
+    }
 }
