@@ -370,6 +370,7 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
             if (copyPairs.size() > 1 && dstAncestor != null) {
                 dstAncestor = SVNFileUtil.getParentFile(dstAncestor);
             }
+            dstAncestor = dstAncestor.getAbsoluteFile();
             dstAncestor = context.acquireWriteLock(dstAncestor, false, true);
             try {
                 for (SvnCopyPair copyPair : copyPairs) {
