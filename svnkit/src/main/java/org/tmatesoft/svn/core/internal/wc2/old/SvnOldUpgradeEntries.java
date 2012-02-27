@@ -62,8 +62,9 @@ public class SvnOldUpgradeEntries {
             String name = (String) names.next();
             SVNEntry entry = (SVNEntry) entries.get(name);
             TextBaseInfo info = (TextBaseInfo)textBases.get(name);
-            if ("".equals(name)) 
+            if ("".equals(name)) { 
             	continue;
+            }
             
             /* Write the entry. Pass TRUE for create locks, because we still use this function for upgrading old working copies. */
             File childAbsPath =  SVNFileUtil.createFilePath(dirAbsPath, name);
@@ -351,7 +352,7 @@ public class SvnOldUpgradeEntries {
 			baseNode.opDepth = 0;
 			baseNode.parentRelPath = parentRelPath;
 			baseNode.revision = entry.getRevision();
-			baseNode.lastModTime = SVNDate.parseDate(entry.getTextTime());
+			baseNode.lastModTime = entry.isFile() ? SVNDate.parseDate(entry.getTextTime()) : null;
 			baseNode.translatedSize = entry.getWorkingSize();
 			if (entry.getDepth() != SVNDepth.EXCLUDE) {
 				baseNode.depth = entry.getDepth();
@@ -621,7 +622,7 @@ public class SvnOldUpgradeEntries {
 				/* Setting depth for files? */
 				(node.kind == SVNNodeKind.DIR) ? SVNDepth.asString(node.depth) : null,
 				node.changedRev,
-				node.changedDate != null ? node.changedDate : 0,
+				node.changedDate != null ? node.changedDate : null,
 				node.changedAuthor,
 				node.lastModTime
 				);

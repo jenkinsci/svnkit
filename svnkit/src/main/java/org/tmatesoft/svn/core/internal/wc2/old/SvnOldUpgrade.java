@@ -247,10 +247,12 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 			for (Iterator<SVNURL> items = reposCache.keySet().iterator(); items.hasNext();) {
 				SVNURL reposRootUrl = items.next();
 				if (SVNURLUtil.isAncestor(reposRootUrl, entry.getSVNURL())) {
-					if (entry.getRepositoryRootURL() == null)
+					if (entry.getRepositoryRootURL() == null) {
 						entry.setRepositoryRootURL(reposRootUrl);
-					if (entry.getUUID() == null)
+					}
+					if (entry.getUUID() == null) {
 						entry.setUUID((String) reposCache.get(reposRootUrl));
+					}
 					return;
 				}
 			}
