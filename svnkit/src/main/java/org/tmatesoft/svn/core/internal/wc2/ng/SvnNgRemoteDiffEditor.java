@@ -44,6 +44,7 @@ public class SvnNgRemoteDiffEditor implements ISVNEditor {
     private SVNRepository repository;
     private long revision;
     private boolean walkDeletedDirs;
+    private boolean pureRemoteDiff;
     private ISvnDiffCallback diffCallback;
     
     private long targetRevision;
@@ -54,11 +55,12 @@ public class SvnNgRemoteDiffEditor implements ISVNEditor {
     private SvnDiffCallbackResult currentResult;
     private FileBaton currentFile;
     private ISVNEventHandler eventHandler;
-    
+
+    private File globalTmpDir;
     private Collection<File> tmpFiles;
 
     public static SvnNgRemoteDiffEditor createEditor(SVNWCContext context, File target, SVNDepth depth, SVNRepository repository, long revision, 
-            boolean walkDeletedDirs, boolean dryRun, ISvnDiffCallback diffCallback, ISVNEventHandler handler) {
+            boolean walkDeletedDirs, boolean dryRun, boolean pureRemoteDiff, ISvnDiffCallback diffCallback, ISVNEventHandler handler) {
         SvnNgRemoteDiffEditor editor = new SvnNgRemoteDiffEditor();
         
         editor.context = context;
@@ -69,11 +71,19 @@ public class SvnNgRemoteDiffEditor implements ISVNEditor {
         editor.diffCallback = diffCallback;
         
         editor.deletedPaths = new HashMap<File, DeletedPath>();
+        editor.pureRemoteDiff = pureRemoteDiff;
         editor.tmpFiles = new ArrayList<File>();
         editor.currentResult = new SvnDiffCallbackResult();
         editor.eventHandler = handler;
         
         return editor;
+    }
+
+    public File getGlobalTmpDir() throws SVNException {
+        if (globalTmpDir == null) {
+            globalTmpDir = SVNFileUtil.createTempDirectory("svndiff");
+        }
+        return globalTmpDir;
     }
     
     private static class DeletedPath {
@@ -98,7 +108,7 @@ public class SvnNgRemoteDiffEditor implements ISVNEditor {
         }
     }
 
-    private static class FileBaton {
+    private class FileBaton {
         boolean added;
         boolean treeConflicted;
         boolean skip;
@@ -118,7 +128,7 @@ public class SvnNgRemoteDiffEditor implements ISVNEditor {
         
         public void loadFile(SVNWCContext context, SVNRepository repos, boolean propsOnly, Collection<File> tmpFiles) throws SVNException {
             if (!propsOnly) {
-                File tmpDir = context.getDb().getWCRootTempDir(wcPath);
+                File tmpDir = pureRemoteDiff ? getGlobalTmpDir() : context.getDb().getWCRootTempDir(wcPath);
                 startRevisionFile = SVNFileUtil.createUniqueFile(tmpDir, "diff", ".tmp", false);
                 tmpFiles.add(startRevisionFile);
                 OutputStream os = null;
@@ -186,7 +196,7 @@ public class SvnNgRemoteDiffEditor implements ISVNEditor {
         } else {
             currentFile.startRevisionFile = getEmptyFile();
         }
-        File tmpDir = context.getDb().getWCRootTempDir(target);
+        File tmpDir = pureRemoteDiff ? getGlobalTmpDir() : context.getDb().getWCRootTempDir(target);
         currentFile.endRevisionFile = SVNFileUtil.createUniqueFile(tmpDir, SVNPathUtil.tail(path), ".tmp", false);
         tmpFiles.add(currentFile.endRevisionFile);
         currentFile.deltaProcessor.applyTextDelta(currentFile.startRevisionFile, currentFile.endRevisionFile, true);
@@ -279,8 +289,8 @@ public class SvnNgRemoteDiffEditor implements ISVNEditor {
 
     private File getEmptyFile() throws SVNException {
         if (emptyFile == null) {
-            emptyFile = context.getDb().getWCRootTempDir(target);
-            emptyFile = SVNFileUtil.createUniqueFile(emptyFile, "empty", ".tmp", false);
+            File tmpDir = pureRemoteDiff ? getGlobalTmpDir() : context.getDb().getWCRootTempDir(target);
+            emptyFile = SVNFileUtil.createUniqueFile(tmpDir, "empty", ".tmp", false);
             tmpFiles.add(emptyFile);
         }
         return emptyFile;
@@ -572,6 +582,9 @@ public class SvnNgRemoteDiffEditor implements ISVNEditor {
     public void cleanup() throws SVNException {
         for (File tmpFile : tmpFiles) {
             SVNFileUtil.deleteFile(tmpFile);
+        }
+        if (globalTmpDir != null) {
+            SVNFileUtil.deleteAll(globalTmpDir, true);
         }
     }
 

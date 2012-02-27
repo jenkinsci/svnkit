@@ -36,17 +36,22 @@ import org.tmatesoft.svn.util.SVNLogType;
 public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
 
     @Override
+    public SvnWcGeneration getWcGeneration() {
+        return SvnWcGeneration.NOT_DETECTED;
+    }
+
+    @Override
     public boolean isApplicable(SvnDiff operation, SvnWcGeneration wcGeneration) throws SVNException {
-        if (wcGeneration != SvnWcGeneration.V17) {
-            return false;
-        }
+//        if (wcGeneration != SvnWcGeneration.V17) {
+//            return false;
+//        }
         Collection<SvnTarget> targets = operation.getTargets();
         for (SvnTarget target : targets) {
-            if (target.isFile()) {
-                return true;
+            if (target.isFile() && wcGeneration != SvnWcGeneration.V17) {
+                return false;
             }
         }
-        return false;
+        return true;
     }
 
     @Override
@@ -227,7 +232,8 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
         SVNRepository extraRepository = getRepositoryAccess().createRepository(anchor1, null, false);
 
         ISVNEditor editor;
-        editor = SvnNgRemoteDiffEditor.createEditor(getWcContext(), basePath, getOperation().getDepth(), extraRepository, revisionNumber1, true, false, callback, this);
+        boolean pureRemoteDiff = (basePath == null);
+        editor = SvnNgRemoteDiffEditor.createEditor(getWcContext(), pureRemoteDiff ? new File("") : basePath, getOperation().getDepth(), extraRepository, revisionNumber1, true, false, pureRemoteDiff, callback, this);
         editor = SVNCancellableEditor.newInstance(editor, this, SVNDebugLog.getDefaultLog());
 
         ISVNReporterBaton reporter = new ISVNReporterBaton() {

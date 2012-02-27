@@ -934,7 +934,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
             }
         }
 
-        SvnNgRemoteDiffEditor editor = SvnNgRemoteDiffEditor.createEditor(context, targetAbsPath, depth, repos2, revision1, false, dryRun, mergeCallback, this);
+        SvnNgRemoteDiffEditor editor = SvnNgRemoteDiffEditor.createEditor(context, targetAbsPath, depth, repos2, revision1, false, dryRun, false, mergeCallback, this);
 
         SVNURL oldURL = ensureSessionURL(repos2, url1);
         try {

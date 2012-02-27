@@ -59,7 +59,7 @@ public class SvnDiffCallback implements ISvnDiffCallback {
     }
 
     public void fileDeleted(SvnDiffCallbackResult result, File path, File leftFile, File rightFile, String mimeType1, String mimeType2, SVNProperties originalProperties) throws SVNException {
-        displayContentChanged(path, leftFile, rightFile, revision1, revision2, mimeType1, mimeType2, null, originalProperties, OperationKind.Deleted, null);
+        displayContentChanged(path, leftFile, null, revision1, revision2, mimeType1, mimeType2, null, originalProperties, OperationKind.Deleted, null);
     }
 
     public void dirDeleted(SvnDiffCallbackResult result, File path) throws SVNException {
