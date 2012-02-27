@@ -111,6 +111,7 @@ public class SVN extends AbstractSVNLauncher {
         SVNCommandLine.registerOption(SVNOption.USE_MERGE_HISTORY);
         SVNCommandLine.registerOption(SVNOption.EXTENSIONS);
         SVNCommandLine.registerOption(SVNOption.IGNORE_ANCESTRY);
+        SVNCommandLine.registerOption(SVNOption.SHOW_COPIES_AS_ADDS);
         SVNCommandLine.registerOption(SVNOption.NATIVE_EOL);
         SVNCommandLine.registerOption(SVNOption.RELOCATE);
         SVNCommandLine.registerOption(SVNOption.AUTOPROPS);

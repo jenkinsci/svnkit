@@ -112,6 +112,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
     private boolean myIsUseMergeHistory;
     private Collection myExtensions;
     private boolean myIsIgnoreAncestry;
+    private boolean myIsShowCopiesAsAdds;
     private String myNativeEOL;
     private boolean myIsRelocate;
     private boolean myIsNoAutoProps;
@@ -523,6 +524,8 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
             myIsNoticeAncestry = true;
         } else if (option == SVNOption.IGNORE_ANCESTRY) {
             myIsIgnoreAncestry = true;
+        } else if (option == SVNOption.SHOW_COPIES_AS_ADDS) {
+            myIsShowCopiesAsAdds = true;
         } else if (option == SVNOption.IGNORE_EXTERNALS) {
             myIsIgnoreExternals = true;
         } else if (option == SVNOption.IGNORE_KEYWORDS) {
@@ -823,7 +826,11 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
     public boolean isIgnoreAncestry() {
         return myIsIgnoreAncestry;
     }
-    
+
+    public boolean isShowCopiesAsAdds() {
+        return myIsShowCopiesAsAdds;
+    }
+
     public boolean isUseMergeHistory() {
         return myIsUseMergeHistory;
     }

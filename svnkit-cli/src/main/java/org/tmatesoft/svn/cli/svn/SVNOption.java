@@ -63,6 +63,7 @@ public class SVNOption extends AbstractSVNOption {
     public static final SVNOption USE_MERGE_HISTORY = new SVNOption("use-merge-history", "g");
     public static final SVNOption EXTENSIONS = new SVNOption("extensions", "x", false);
     public static final SVNOption IGNORE_ANCESTRY = new SVNOption("ignore-ancestry");
+    public static final SVNOption SHOW_COPIES_AS_ADDS = new SVNOption("show-copies-as-adds");
     public static final SVNOption NATIVE_EOL = new SVNOption("native-eol", false);
     public static final SVNOption RELOCATE = new SVNOption("relocate");
     public static final SVNOption AUTOPROPS = new SVNOption("auto-props");
@@ -108,7 +109,7 @@ public class SVNOption extends AbstractSVNOption {
         }
         return target;
     }
-    
+
     private SVNOption(String name) {
         this(name, null, true);
     }

@@ -19,6 +19,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.tmatesoft.svn.cli.AbstractSVNCommandEnvironment;
 import org.tmatesoft.svn.cli.SVNCommandUtil;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -65,6 +66,7 @@ public class SVNDiffCommand extends SVNXMLCommand implements ISVNDiffStatusHandl
         options.add(SVNOption.EXTENSIONS);
         options.add(SVNOption.NO_DIFF_DELETED);
         options.add(SVNOption.NOTICE_ANCESTRY);
+        options.add(SVNOption.SHOW_COPIES_AS_ADDS);
         options.add(SVNOption.SUMMARIZE);
         options.add(SVNOption.CHANGELIST);
         options.add(SVNOption.FORCE);
@@ -173,6 +175,8 @@ public class SVNDiffCommand extends SVNXMLCommand implements ISVNDiffStatusHandl
         }
 
         SVNDiffClient client = getSVNEnvironment().getClientManager().getDiffClient();
+        SVNCommandEnvironment environment = (SVNCommandEnvironment) getEnvironment();
+        client.setShowCopiesAsAdds(environment.isShowCopiesAsAdds());
         SvnDiffGenerator diffGenerator = new SvnDiffGenerator();
 //        DefaultSVNDiffGenerator diffGenerator = new DefaultSVNDiffGenerator();
         if (getSVNEnvironment().getDiffCommand() != null) {
