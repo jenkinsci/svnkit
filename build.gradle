@@ -70,7 +70,7 @@ configure(javaProjects()) {
 
 project(':svnkit') {
     dependencies {
-        compile 'de.regnis.q.sequence:sequence-library:1.0.0'
+        compile 'de.regnis.q.sequence:sequence-library:1.0.1-SNAPSHOT'
         compile 'org.tmatesoft.sqljet:sqljet:1.1.0-SNAPSHOT'
         compile 'net.java.dev.jna:jna:3.4.0'
         compile 'com.trilead:trilead-ssh2:1.0.0-build214'
