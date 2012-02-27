@@ -945,7 +945,7 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
         } else if (!special) {
             SVNFileUtil.copyFile(source, dstPath, false, false);
         } else {
-            SVNFileUtil.copy(source, dstPath, false, true);
+            SVNFileUtil.createSymlink(dstPath, SVNFileUtil.getSymlinkName(source));
         }
         return dstPath;
     }
