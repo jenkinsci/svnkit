@@ -22,6 +22,12 @@ public class SvnOldDiffGenerator implements ISvnDiffGenerator {
         generator.init(getDisplayPath(originalTarget2), getDisplayPath(originalTarget2));
     }
 
+    public void setBaseTarget(SvnTarget baseTarget) {
+        if (baseTarget.isFile()) {
+            generator.setBasePath(baseTarget.getFile());
+        }
+    }
+
     public void setRepositoryRoot(SvnTarget repositoryRoot) {
         this.repositoryRoot = repositoryRoot;
     }

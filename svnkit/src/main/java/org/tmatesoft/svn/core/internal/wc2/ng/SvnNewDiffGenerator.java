@@ -16,7 +16,6 @@ public class SvnNewDiffGenerator implements ISVNDiffGenerator {
     private boolean diffAdded;
     private boolean diffCopied;
     private boolean diffUnversioned;
-    private File basePath;
 
     public SvnNewDiffGenerator(ISvnDiffGenerator generator) {
         this.generator = generator;
@@ -27,11 +26,7 @@ public class SvnNewDiffGenerator implements ISVNDiffGenerator {
     }
 
     public void setBasePath(File basePath) {
-        this.basePath = basePath;
-    }
-
-    public File getBasePath() {
-        return basePath;
+        generator.setBaseTarget(SvnTarget.fromFile(basePath));
     }
 
     public void setForcedBinaryDiff(boolean forced) {

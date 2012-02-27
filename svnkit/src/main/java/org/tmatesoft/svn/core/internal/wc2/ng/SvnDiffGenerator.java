@@ -62,13 +62,21 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
     private Set<String> visitedPaths;
 
     private String getDisplayPath(SvnTarget target) {
-        return target.getPathOrUrlDecodedString();
+        String targetString = target.getPathOrUrlDecodedString();
+        String baseTargetString = baseTarget.getPathOrUrlDecodedString();
+        String relativePath = SVNPathUtil.getRelativePath(baseTargetString, targetString);
+
+        return relativePath != null ? relativePath : target.getPathOrUrlString();
     }
 
     public SvnDiffGenerator() {
         this.originalTarget1 = null;
         this.originalTarget2 = null;
         this.visitedPaths = new HashSet<String>();
+    }
+
+    public void setBaseTarget(SvnTarget baseTarget) {
+        this.baseTarget = baseTarget;
     }
 
     public void setUseGitFormat(boolean useGitFormat) {
@@ -200,7 +208,7 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
         } else if (originalTargetString.charAt(0) == '/') {
             return targetString + "\t(..." + originalTargetString + ")";
         } else {
-            return targetString + "\t(..." + originalTargetString + ")";
+            return targetString + "\t(.../" + originalTargetString + ")";
         }
     }
 
@@ -230,7 +238,7 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
         newTargetString2 = computeLabel(newTargetString, newTargetString2);
 
         if (relativeToTarget != null) {
-            //TDODO
+            //TODO
         }
 
         String label1 = getLabel(newTargetString1, revision1);

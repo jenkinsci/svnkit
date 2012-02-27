@@ -11,6 +11,8 @@ public interface ISvnDiffGenerator {
 
     void init(SvnTarget originalTarget1, SvnTarget originalTarget2);
 
+    public void setBaseTarget(SvnTarget baseTarget);
+
     void setRepositoryRoot(SvnTarget repositoryRoot);
 
     void setEncoding(String encoding);
