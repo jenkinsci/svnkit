@@ -2537,7 +2537,8 @@ public class SVNClientImpl implements ISVNClient {
         } else if (action == SVNEventAction.UPDATE_UPDATE) {
             return ClientNotifyInformation.Action.update_update;
         } else if (action == SVNEventAction.UPGRADE) {
-            //TODO: check
+            return ClientNotifyInformation.Action.upgraded_path;
+        } else if (action == SVNEventAction.UPGRADED_PATH) {
             return ClientNotifyInformation.Action.upgraded_path;
         } else if (action == SVNEventAction.WC_PATH_NONEXISTENT) {
             return ClientNotifyInformation.Action.path_nonexistent;
@@ -2547,9 +2548,10 @@ public class SVNClientImpl implements ISVNClient {
             return ClientNotifyInformation.Action.merge_record_info;
         } else if (action == SVNEventAction.MERGE_RECORD_BEGIN) {
             return ClientNotifyInformation.Action.merge_record_info_begin;
-        } else {
-            throw new IllegalArgumentException("Unknown action: " + action);
-        }
+        } else if (action == SVNEventAction.MERGE_RECORD_BEGIN) {
+            return ClientNotifyInformation.Action.merge_record_info_begin;
+        } 
+        return null;
     }
 
     private ConflictDescriptor.Kind getConflictDescriptorKind(SVNConflictDescription conflictDescription) {
