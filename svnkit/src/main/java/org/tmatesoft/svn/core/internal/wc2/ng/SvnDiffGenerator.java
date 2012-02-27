@@ -1,5 +1,6 @@
 package org.tmatesoft.svn.core.internal.wc2.ng;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -34,6 +35,7 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.ISVNReturnValueCallback;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
@@ -56,15 +58,23 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
 
     private boolean diffDeleted;
     private List<String> rawDiffOptions;
-    private SVNDiffOptions svnDiffOptions;
     private boolean forceEmpty;
 
     private Set<String> visitedPaths;
+    private String externalDiffCommand;
+    private SVNDiffOptions diffOptions;
+    private boolean fallbackToAbsolutePath;
+    private ISVNOptions options;
 
     private String getDisplayPath(SvnTarget target) {
-        String targetString = target.getPathOrUrlDecodedString();
-        String baseTargetString = baseTarget.getPathOrUrlDecodedString();
-        String relativePath = SVNPathUtil.getRelativePath(baseTargetString, targetString);
+        String relativePath;
+        if (baseTarget == null) {
+            relativePath = null;
+        } else {
+            String targetString = target.getPathOrUrlDecodedString();
+            String baseTargetString = baseTarget.getPathOrUrlDecodedString();
+            relativePath = SVNPathUtil.getRelativePath(baseTargetString, targetString);
+        }
 
         return relativePath != null ? relativePath : target.getPathOrUrlString();
     }
@@ -137,18 +147,20 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
         String targetString1 = originalTarget1.getPathOrUrlDecodedString();
         String targetString2 = originalTarget2.getPathOrUrlDecodedString();
 
-        if (useGitFormat) {
-            targetString1 = adjustRelativeToReposRoot(target.getPathOrUrlDecodedString());
-            targetString2 = adjustRelativeToReposRoot(target.getPathOrUrlDecodedString());
-        }
-
         if (displayPath == null || displayPath.length() == 0) {
             displayPath = ".";
         }
 
         boolean showDiffHeader = !visitedPaths.contains(displayPath);
         if (showDiffHeader) {
-            String newTargetString = target.getPathOrUrlDecodedString();
+
+
+            if (useGitFormat) {
+                targetString1 = adjustRelativeToReposRoot(targetString1);
+                targetString2 = adjustRelativeToReposRoot(targetString2);
+            }
+
+            String newTargetString = displayPath;
             String newTargetString1 = targetString1;
             String newTargetString2 = targetString2;
 
@@ -317,10 +329,10 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
             QDiffUniGenerator.setup();
             Map properties = new SVNHashMap();
 
-            properties.put(QDiffGeneratorFactory.IGNORE_EOL_PROPERTY, Boolean.valueOf(getSvnDiffOptions().isIgnoreEOLStyle()));
-            if (getSvnDiffOptions().isIgnoreAllWhitespace()) {
+            properties.put(QDiffGeneratorFactory.IGNORE_EOL_PROPERTY, Boolean.valueOf(getDiffOptions().isIgnoreEOLStyle()));
+            if (getDiffOptions().isIgnoreAllWhitespace()) {
                 properties.put(QDiffGeneratorFactory.IGNORE_SPACE_PROPERTY, QDiffGeneratorFactory.IGNORE_ALL_SPACE);
-            } else if (getSvnDiffOptions().isIgnoreAmountOfWhitespace()) {
+            } else if (getDiffOptions().isIgnoreAmountOfWhitespace()) {
                 properties.put(QDiffGeneratorFactory.IGNORE_SPACE_PROPERTY, QDiffGeneratorFactory.IGNORE_SPACE_CHANGE);
             }
 
@@ -413,7 +425,7 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
         if (rawDiffOptions != null) {
             args.addAll(rawDiffOptions);
         } else {
-            Collection svnDiffOptionsCollection = getSvnDiffOptions().toOptionsCollection();
+            Collection svnDiffOptionsCollection = getDiffOptions().toOptionsCollection();
             args.addAll(svnDiffOptionsCollection);
             args.add("-u");
         }
@@ -502,7 +514,7 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
     }
 
     private String getExternalDiffCommand() {
-        return null;
+        return externalDiffCommand;
     }
 
     private void displayMimeType(OutputStream outputStream, String mimeType) throws SVNException {
@@ -570,22 +582,59 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
                     displayMergeInfoDiff(outputStream, originalValue == null ? null : originalValue.getString(), newValue == null ? null : newValue.getString());
                     continue;
                 }
-                if (originalValue != null) {
-                    displayString(outputStream, "   - ");
-                    outputStream.write(getPropertyAsBytes(originalValue, getEncoding()));
-                    displayEOL(outputStream);
+
+                byte[] originalValueBytes = getPropertyAsBytes(originalValue, getEncoding());
+                byte[] newValueBytes = getPropertyAsBytes(newValue, getEncoding());
+
+                if (originalValueBytes == null) {
+                    originalValueBytes = new byte[0];
+                } else {
+                    originalValueBytes = maybeAppendEOL(originalValueBytes);
                 }
-                if (newValue != null) {
-                    displayString(outputStream, "   + ");
-                    outputStream.write(getPropertyAsBytes(newValue, getEncoding()));
-                    displayEOL(outputStream);
+                if (newValueBytes == null) {
+                    newValueBytes = new byte[0];
+                } else {
+                    newValueBytes = maybeAppendEOL(newValueBytes);
                 }
-                displayEOL(outputStream);
+
+                QDiffUniGenerator.setup();
+                Map properties = new SVNHashMap();
+
+                properties.put(QDiffGeneratorFactory.IGNORE_EOL_PROPERTY, Boolean.valueOf(getDiffOptions().isIgnoreEOLStyle()));
+                if (getDiffOptions().isIgnoreAllWhitespace()) {
+                    properties.put(QDiffGeneratorFactory.IGNORE_SPACE_PROPERTY, QDiffGeneratorFactory.IGNORE_ALL_SPACE);
+                } else if (getDiffOptions().isIgnoreAmountOfWhitespace()) {
+                    properties.put(QDiffGeneratorFactory.IGNORE_SPACE_PROPERTY, QDiffGeneratorFactory.IGNORE_SPACE_CHANGE);
+                }
+
+                QDiffGenerator generator = new QDiffUniGenerator(properties, "");
+                EmptyDetectionWriter writer = new EmptyDetectionWriter(new OutputStreamWriter(outputStream, getEncoding()));
+                QDiffManager.generateTextDiff(new ByteArrayInputStream(originalValueBytes), new ByteArrayInputStream(newValueBytes),
+                        getEncoding(), writer, generator);
+                writer.flush();
             } catch (IOException e) {
                 wrapException(e);
             }
         }
 
+    }
+
+    private byte[] maybeAppendEOL(byte[] buffer) {
+        if (buffer.length == 0) {
+            return buffer;
+        }
+
+        byte lastByte = buffer[buffer.length - 1];
+        if (lastByte == SVNProperty.EOL_CR_BYTES[0]) {
+            return buffer;
+        } else if (lastByte != SVNProperty.EOL_LF_BYTES[0]) {
+            final byte[] newBuffer = new byte[buffer.length + getEOL().length];
+            System.arraycopy(buffer, 0, newBuffer, 0, buffer.length);
+            System.arraycopy(getEOL(), 0, newBuffer, buffer.length, getEOL().length);
+            return newBuffer;
+        } else {
+            return buffer;
+        }
     }
 
     private String getGitDiffLabel1(SvnDiffCallback.OperationKind operationKind, String path1, String path2, String copyFromPath, String revision) {
@@ -846,11 +895,39 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
         os.write(getEOL());
     }
 
-    public SVNDiffOptions getSvnDiffOptions() {
-        if (svnDiffOptions == null) {
-            svnDiffOptions = new SVNDiffOptions();
+    public SVNDiffOptions getDiffOptions() {
+        if (diffOptions == null) {
+            diffOptions = new SVNDiffOptions();
         }
-        return svnDiffOptions;
+        return diffOptions;
+    }
+
+    public void setExternalDiffCommand(String externalDiffCommand) {
+        this.externalDiffCommand = externalDiffCommand;
+    }
+
+    public void setRawDiffOptions(List<String> rawDiffOptions) {
+        this.rawDiffOptions = rawDiffOptions;
+    }
+
+    public void setDiffOptions(SVNDiffOptions diffOptions) {
+        this.diffOptions = diffOptions;
+    }
+
+    public void setDiffDeleted(boolean diffDeleted) {
+        this.diffDeleted = diffDeleted;
+    }
+
+    public void setBasePath(File absoluteFile) {
+        setBaseTarget(SvnTarget.fromFile(absoluteFile));
+    }
+
+    public void setFallbackToAbsolutePath(boolean fallbackToAbsolutePath) {
+        this.fallbackToAbsolutePath = fallbackToAbsolutePath;
+    }
+
+    public void setOptions(ISVNOptions options) {
+        this.options = options;
     }
 
     private class EmptyDetectionWriter extends Writer {

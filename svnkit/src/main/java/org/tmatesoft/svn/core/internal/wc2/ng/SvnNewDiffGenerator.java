@@ -6,6 +6,7 @@ import java.io.OutputStream;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.wc.DefaultSVNDiffGenerator;
 import org.tmatesoft.svn.core.wc.ISVNDiffGenerator;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -19,6 +20,19 @@ public class SvnNewDiffGenerator implements ISVNDiffGenerator {
 
     public SvnNewDiffGenerator(ISvnDiffGenerator generator) {
         this.generator = generator;
+
+        if (generator instanceof DefaultSVNDiffGenerator) {
+            DefaultSVNDiffGenerator defaultGenerator = (DefaultSVNDiffGenerator) generator;
+            this.diffAdded = defaultGenerator.isDiffAdded();
+            this.diffDeleted = defaultGenerator.isDiffDeleted();
+            this.diffCopied = defaultGenerator.isDiffCopied();
+            this.diffUnversioned = defaultGenerator.isDiffUnversioned();
+        } else {
+            this.diffAdded = true;
+            this.diffDeleted = true;
+            this.diffCopied = false;
+            this.diffUnversioned = false;
+        }
     }
 
     public void init(String anchorPath1, String anchorPath2) {

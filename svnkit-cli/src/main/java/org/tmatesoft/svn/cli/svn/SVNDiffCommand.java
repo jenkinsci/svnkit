@@ -29,7 +29,8 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
-import org.tmatesoft.svn.core.wc.DefaultSVNDiffGenerator;
+import org.tmatesoft.svn.core.internal.wc2.ng.SvnDiffGenerator;
+import org.tmatesoft.svn.core.internal.wc2.ng.SvnNewDiffGenerator;
 import org.tmatesoft.svn.core.wc.ISVNDiffStatusHandler;
 import org.tmatesoft.svn.core.wc.SVNDiffClient;
 import org.tmatesoft.svn.core.wc.SVNDiffStatus;
@@ -172,10 +173,11 @@ public class SVNDiffCommand extends SVNXMLCommand implements ISVNDiffStatusHandl
         }
 
         SVNDiffClient client = getSVNEnvironment().getClientManager().getDiffClient();
-        DefaultSVNDiffGenerator diffGenerator = new DefaultSVNDiffGenerator();
+        SvnDiffGenerator diffGenerator = new SvnDiffGenerator();
+//        DefaultSVNDiffGenerator diffGenerator = new DefaultSVNDiffGenerator();
         if (getSVNEnvironment().getDiffCommand() != null) {
             diffGenerator.setExternalDiffCommand(getSVNEnvironment().getDiffCommand());
-            diffGenerator.setRawDiffOptions(getSVNEnvironment().getExtensions());
+            diffGenerator.setRawDiffOptions((List<String>) getSVNEnvironment().getExtensions());
         } else {
             diffGenerator.setDiffOptions(getSVNEnvironment().getDiffOptions());
         }
@@ -185,7 +187,7 @@ public class SVNDiffCommand extends SVNXMLCommand implements ISVNDiffStatusHandl
         diffGenerator.setBasePath(new File("").getAbsoluteFile());
         diffGenerator.setFallbackToAbsolutePath(true);
         diffGenerator.setOptions(client.getOptions());
-        client.setDiffGenerator(diffGenerator);
+        client.setDiffGenerator(new SvnNewDiffGenerator(diffGenerator));
         
         PrintStream ps = getSVNEnvironment().getOut();
         Collection changeLists = getSVNEnvironment().getChangelistsCollection();
