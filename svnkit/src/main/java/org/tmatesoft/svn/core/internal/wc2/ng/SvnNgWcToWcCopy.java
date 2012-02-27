@@ -347,7 +347,6 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
                 try {
                     Structure<ExternalNodeInfo> externalInfo = SvnWcDbExternals.readExternal(context, src, src, ExternalNodeInfo.kind);
                     if (externalInfo.hasValue(ExternalNodeInfo.kind) && externalInfo.get(ExternalNodeInfo.kind) != SVNNodeKind.NONE) {
-                        // TODO read declaring path
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CANNOT_MOVE_FILE_EXTERNAL, 
                                 "Cannot move the external at ''{0}''; please edit the svn:externals property on ''{1}''.", src);
                         SVNErrorManager.error(err, SVNLogType.WC);
@@ -364,7 +363,7 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
             move(copyPairs);
         } else {
             File dstAncestor = null;
-            if (copyPairs.size() == 1) {
+            if (copyPairs.size() >= 1) {
                 dstAncestor = copyPairs.iterator().next().dst;
             } 
             if (copyPairs.size() > 1 && dstAncestor != null) {
