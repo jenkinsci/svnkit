@@ -35,6 +35,10 @@ public class SvnNewDiffGenerator implements ISVNDiffGenerator {
         }
     }
 
+    public ISvnDiffGenerator getDelegate() {
+        return generator;
+    }
+
     public void init(String anchorPath1, String anchorPath2) {
         generator.init(getTarget(anchorPath1), getTarget(anchorPath2));
     }

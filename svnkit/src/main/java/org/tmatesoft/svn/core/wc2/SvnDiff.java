@@ -9,6 +9,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc2.ng.ISvnDiffGenerator;
+import org.tmatesoft.svn.core.internal.wc2.ng.SvnNewDiffGenerator;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnOldDiffGenerator;
 import org.tmatesoft.svn.core.wc.ISVNDiffGenerator;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
@@ -78,7 +79,13 @@ public class SvnDiff extends SvnOperation<Void> {
     }
 
     public void setDiffGenerator(ISVNDiffGenerator diffGenerator) {
-        setDiffGenerator(new SvnOldDiffGenerator(diffGenerator));
+        if (diffGenerator == null) {
+            setDiffGenerator((ISvnDiffGenerator) null);
+        } else if (diffGenerator instanceof SvnNewDiffGenerator) {
+            setDiffGenerator(((SvnNewDiffGenerator) diffGenerator).getDelegate());
+        } else {
+            setDiffGenerator(new SvnOldDiffGenerator(diffGenerator));
+        }
     }
 
     public void setDiffGenerator(ISvnDiffGenerator diffGenerator) {
