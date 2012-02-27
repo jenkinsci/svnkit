@@ -363,11 +363,14 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
         if (getOperation().isMove()) {
             move(copyPairs);
         } else {
-            File ancestor = getCommonCopyAncestor(copyPairs);
+            File dstAncestor = null;
             if (copyPairs.size() == 1) {
-                ancestor = SVNFileUtil.getParentFile(ancestor);
+                dstAncestor = copyPairs.iterator().next().dst;
+            } 
+            if (copyPairs.size() > 1 && dstAncestor != null) {
+                dstAncestor = SVNFileUtil.getParentFile(dstAncestor);
             }
-            ancestor = context.acquireWriteLock(ancestor, false, true);
+            dstAncestor = context.acquireWriteLock(dstAncestor, false, true);
             try {
                 for (SvnCopyPair copyPair : copyPairs) {
                     checkCancelled();
@@ -375,7 +378,7 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
                     copy(context, copyPair.source, dstPath, getOperation().isVirtual());
                 }
             } finally {
-                context.releaseWriteLock(ancestor);
+                context.releaseWriteLock(dstAncestor);
             }
         }
         
@@ -410,21 +413,6 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
                 }
             }
         }
-    }
-    
-    private File getCommonCopyAncestor(Collection<SvnCopyPair> copyPairs) {
-        File ancestor = null;
-        for (SvnCopyPair svnCopyPair : copyPairs) {
-            if (ancestor == null) {
-                ancestor = svnCopyPair.source;
-                continue;
-            }
-            String ancestorPath = ancestor.getAbsolutePath().replace(File.separatorChar, '/');
-            String sourcePath = svnCopyPair.source.getAbsolutePath().replace(File.separatorChar, '/');
-            ancestorPath = SVNPathUtil.getCommonPathAncestor(ancestorPath, sourcePath);
-            ancestor = new File(ancestorPath);
-        }
-        return ancestor;
     }
 
     private void verifyPaths(Collection<SvnCopyPair> copyPairs, boolean makeParents, boolean move) throws SVNException {
