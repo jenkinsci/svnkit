@@ -374,8 +374,11 @@ public class SVNTranslator {
             if (!SVNFileUtil.symlinksSupported()) {
                 SVNFileUtil.copyFile(source, destination, true);
             } else if (expand) {
-                // create symlink to target, and create it at dst
-                SVNFileUtil.createSymlink(destination, source);
+                if (isSpecialPath) {
+                    SVNFileUtil.createSymlink(destination, SVNFileUtil.getSymlinkName(source));
+                } else {
+                    SVNFileUtil.createSymlink(destination, source);
+                }
             } else {
                 SVNFileUtil.detranslateSymlink(source, destination);
             }

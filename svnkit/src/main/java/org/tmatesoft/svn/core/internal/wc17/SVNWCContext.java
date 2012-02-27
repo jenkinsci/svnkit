@@ -3522,6 +3522,8 @@ public class SVNWCContext {
             if (!sameContents) {
                 SVNFileUtil.rename(tmpFile, localAbspath);
                 overwroteWorkFile = true;
+            } else {
+                SVNFileUtil.deleteFile(tmpFile);
             }
             ctx.syncFileFlags(localAbspath);
             if (overwroteWorkFile) {
