@@ -304,7 +304,7 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
         displayCannotDisplayFileMarkedBinary(outputStream);
 
         if (leftIsBinary && !rightIsBinary) {
-            displayMimeType(outputStream, mimeType2);
+            displayMimeType(outputStream, mimeType1);
         } else if (!leftIsBinary && rightIsBinary) {
             displayMimeType(outputStream, mimeType2);
         } else if (leftIsBinary && rightIsBinary) {
