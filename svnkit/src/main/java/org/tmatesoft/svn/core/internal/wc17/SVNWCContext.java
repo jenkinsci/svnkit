@@ -629,7 +629,7 @@ public class SVNWCContext {
         if (fileType != SVNFileType.FILE && fileType != SVNFileType.SYMLINK) {
             return false;
         }
-        if (!exactComparison) {
+        if (!exactComparison && fileType != SVNFileType.SYMLINK) {
             boolean compare = false;
             long recordedSize = nodeInfo.lng(NodeInfo.recordedSize); 
             if (recordedSize != -1 && localAbsPath.length() != recordedSize) {

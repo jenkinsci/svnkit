@@ -212,7 +212,7 @@ public class SvnNgRevert extends SvnNgOperationRunner<Void, SvnRevert> {
                     SVNFileUtil.deleteFile(localAbsPath);
                     onDisk = SVNNodeKind.NONE;                    
                 } else {
-                    long lastModified = SVNFileUtil.roundTimeStamp(localAbsPath.lastModified());
+                    long lastModified = localAbsPath.lastModified();
                     long size = localAbsPath.length();
                     if (recordedSize != -1
                             && recordedTime != 0
@@ -228,7 +228,7 @@ public class SvnNgRevert extends SvnNgOperationRunner<Void, SvnRevert> {
                     SVNFileUtil.deleteFile(localAbsPath);
                     onDisk = SVNNodeKind.NONE;
                 } else {
-                    boolean isReadOnly = !localAbsPath.canWrite();
+                    boolean isReadOnly = filetype != SVNFileType.SYMLINK && !localAbsPath.canWrite();
                     boolean needsLock = pristineProperties.getStringValue(SVNProperty.NEEDS_LOCK) != null;
                     if (needsLock && !isReadOnly) {
                         SVNFileUtil.setReadonly(localAbsPath, true);
