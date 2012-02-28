@@ -52,7 +52,7 @@ public class SvnDiffEditor implements ISVNEditor, ISVNUpdateEditor {
     private boolean ignoreAncestry;
     private boolean useGitDiffFormat;
     private ISVNCanceller canceller;
-    private boolean reverseOrder;
+    private boolean reverseOrder; //actually, has the opposite meaning
 
     //mutable
     private long revision;
@@ -167,7 +167,7 @@ public class SvnDiffEditor implements ISVNEditor, ISVNUpdateEditor {
                 }
             }
 
-            if (reverseOrder) {
+            if (!reverseOrder) {
                 reversePropChanges(originalProps, currentEntry.propChanges);
             }
 
