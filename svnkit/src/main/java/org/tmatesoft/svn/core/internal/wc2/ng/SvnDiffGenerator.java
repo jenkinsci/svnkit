@@ -84,9 +84,15 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
         if (repositoryRoot == null) {
             relativePath = null;
         } else {
-            String targetString = target.getPathOrUrlDecodedString();
-            String baseTargetString = repositoryRoot.getPathOrUrlDecodedString();
-            relativePath = SVNPathUtil.getRelativePath(baseTargetString, targetString);
+            if (repositoryRoot.isFile() == target.isFile()) {
+                String targetString = target.getPathOrUrlDecodedString();
+                String baseTargetString = repositoryRoot.getPathOrUrlDecodedString();
+                relativePath = SVNPathUtil.getRelativePath(baseTargetString, targetString);
+            } else {
+                String targetString = target.getPathOrUrlDecodedString();
+                String baseTargetString = new File("").getAbsolutePath();
+                relativePath = SVNPathUtil.getRelativePath(baseTargetString, targetString);
+            }
         }
 
         return relativePath != null ? relativePath : target.getPathOrUrlString();
