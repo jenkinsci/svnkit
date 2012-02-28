@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.internal.wc;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -25,6 +26,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.io.Reader;
+import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -2122,6 +2124,23 @@ public class SVNFileUtil {
             return false;
         }
         return true;
+    }
+
+    public static InputStream readSymlink(File link) throws SVNException {
+        if (symlinksSupported()) {
+            SVNFileType type = SVNFileType.getType(link);
+            if (type == SVNFileType.SYMLINK) {
+                StringBuffer sb = new StringBuffer();
+                sb.append("link ");
+                sb.append(getSymlinkName(link));
+                try {
+                    return new ByteArrayInputStream(sb.toString().getBytes("UTF-8"));
+                } catch (UnsupportedEncodingException e) {
+                    return new ByteArrayInputStream(sb.toString().getBytes());
+                }
+            }
+        } 
+        return openFileForReading(link);
     }
 
 }

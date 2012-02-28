@@ -858,12 +858,17 @@ public class SvnNgMergeCallback implements ISvnDiffCallback {
     }
     
     private boolean compareFiles(File oldPath, SVNProperties oldProps, File minePath) throws SVNException {
-        boolean same = compareProps(oldProps, getContext().getActualProps(minePath));
+        SVNProperties workingProperties = getContext().getActualProps(minePath);
+        boolean same = compareProps(oldProps, workingProperties);
         if (same) {
             InputStream is = null;
             InputStream old = null;
             try {
-                is = getContext().getTranslatedStream(minePath, minePath, true, false);
+                if (workingProperties != null && workingProperties.getStringValue(SVNProperty.SPECIAL) != null) {
+                    is = SVNFileUtil.readSymlink(minePath);
+                } else {
+                    is = getContext().getTranslatedStream(minePath, minePath, true, false);
+                }
                 old = SVNFileUtil.openFileForReading(oldPath);
                 same = SVNFileUtil.compare(is, old);
             } finally {
