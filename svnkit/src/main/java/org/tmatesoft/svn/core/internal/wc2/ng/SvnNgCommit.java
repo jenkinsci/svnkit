@@ -98,8 +98,10 @@ public class SvnNgCommit extends SvnNgOperationRunner<SVNCommitInfo, SvnCommit> 
             }
         } catch (SVNException e) {
             packet.dispose();
-            throw e;
+            SVNErrorMessage err = e.getErrorMessage().wrap("Commit failed (details follow):");
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
+        return null;
     }
 
     @Override
