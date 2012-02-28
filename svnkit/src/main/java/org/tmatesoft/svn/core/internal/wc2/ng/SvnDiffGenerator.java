@@ -296,7 +296,7 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
 
             runExternalDiffCommand(outputStream, diffCommand, leftFile, rightFile, label1, label2);
         } else {
-            internalDiff(outputStream, displayPath, leftFile, rightFile, label1, label2, operation);
+            internalDiff(outputStream, displayPath, leftFile, rightFile, label1, label2, operation, copyFromPath == null ? null : getDisplayPath(SvnTarget.fromFile(copyFromPath)));
         }
     }
 
@@ -316,8 +316,8 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
         }
     }
 
-    private void internalDiff(OutputStream outputStream, String displayPath, File file1, File file2, String label1, String label2, SvnDiffCallback.OperationKind operation) throws SVNException {
-        String header = getHeaderString(displayPath, label1, label2, operation);
+    private void internalDiff(OutputStream outputStream, String displayPath, File file1, File file2, String label1, String label2, SvnDiffCallback.OperationKind operation, String copyFromPath) throws SVNException {
+        String header = getHeaderString(displayPath, label1, label2, operation, copyFromPath);
         String headerFields = getHeaderFieldsString(displayPath, label1, label2);
 
         RandomAccessFile is1 = null;
@@ -388,12 +388,12 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
         }
     }
 
-    private String getHeaderString(String displayPath, String label1, String label2, SvnDiffCallback.OperationKind operation) throws SVNException {
+    private String getHeaderString(String displayPath, String label1, String label2, SvnDiffCallback.OperationKind operation, String copyFromPath) throws SVNException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         try {
             boolean stopDisplaying = displayHeader(byteArrayOutputStream, displayPath, false, operation);
             if (useGitFormat) {
-                displayGitDiffHeader(byteArrayOutputStream, operation, displayPath, displayPath, null);
+                displayGitDiffHeader(byteArrayOutputStream, operation, displayPath, displayPath, copyFromPath);
             }
             if (stopDisplaying) {
                 SVNFileUtil.closeFile(byteArrayOutputStream);

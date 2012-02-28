@@ -131,7 +131,8 @@ public class SVN extends AbstractSVNLauncher {
         SVNCommandLine.registerOption(SVNOption.LIMIT);
         SVNCommandLine.registerOption(SVNOption.AUTHOR_OF_INTEREST);
         SVNCommandLine.registerOption(SVNOption.REGULAR_EXPRESSION);
-        
+        SVNCommandLine.registerOption(SVNOption.GIT_DIFF_FORMAT);
+
         SVNCommandLine.registerOption(SVNOption.USERNAME);
         SVNCommandLine.registerOption(SVNOption.PASSWORD);
         SVNCommandLine.registerOption(SVNOption.NO_AUTH_CACHE);

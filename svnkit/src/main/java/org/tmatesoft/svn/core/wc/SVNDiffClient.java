@@ -78,6 +78,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  */
 public class SVNDiffClient extends SVNBasicClient {
 
+    private boolean gitDiffFormat;
     private boolean showCopiesAsAdds;
     private boolean myIsAllowMixedRevisions;
     private ISVNDiffGenerator diffGenerator;
@@ -245,6 +246,7 @@ public class SVNDiffClient extends SVNBasicClient {
         diff.setIgnoreAncestry(!useAncestry);
         diff.setOutput(result);
         diff.setShowCopiesAsAdds(isShowCopiesAsAdds());
+        diff.setUseGitDiffFormat(isGitDiffFormat());
         diff.run();
     }
 
@@ -304,6 +306,7 @@ public class SVNDiffClient extends SVNBasicClient {
         diff.setIgnoreAncestry(!useAncestry);
         diff.setOutput(result);
         diff.setShowCopiesAsAdds(isShowCopiesAsAdds());
+        diff.setUseGitDiffFormat(isGitDiffFormat());
         diff.run();
     }
 
@@ -363,6 +366,7 @@ public class SVNDiffClient extends SVNBasicClient {
         diff.setIgnoreAncestry(!useAncestry);
         diff.setOutput(result);
         diff.setShowCopiesAsAdds(isShowCopiesAsAdds());
+        diff.setUseGitDiffFormat(isGitDiffFormat());
         diff.run();
     }
 
@@ -406,6 +410,7 @@ public class SVNDiffClient extends SVNBasicClient {
             diff.setOutput(result);
             diff.setApplicalbeChangelists(changeLists);
             diff.setShowCopiesAsAdds(isShowCopiesAsAdds());
+            diff.setUseGitDiffFormat(isGitDiffFormat());
             diff.run();
         }
     }
@@ -479,6 +484,7 @@ public class SVNDiffClient extends SVNBasicClient {
         diff.setOutput(result);
         diff.setApplicalbeChangelists(changeLists);
         diff.setShowCopiesAsAdds(isShowCopiesAsAdds());
+        diff.setUseGitDiffFormat(isGitDiffFormat());
         diff.run();
     }
 
@@ -526,6 +532,7 @@ public class SVNDiffClient extends SVNBasicClient {
         diff.setIgnoreAncestry(!useAncestry);
         diff.setOutput(result);
         diff.setShowCopiesAsAdds(isShowCopiesAsAdds());
+        diff.setUseGitDiffFormat(isGitDiffFormat());
         diff.run();
     }
 
@@ -621,6 +628,7 @@ public class SVNDiffClient extends SVNBasicClient {
         diff.setIgnoreAncestry(!useAncestry);
         diff.setOutput(result);
         diff.setShowCopiesAsAdds(isShowCopiesAsAdds());
+        diff.setUseGitDiffFormat(isGitDiffFormat());
         diff.run();
     }
 
@@ -678,6 +686,7 @@ public class SVNDiffClient extends SVNBasicClient {
         diff.setIgnoreAncestry(!useAncestry);
         diff.setOutput(result);
         diff.setShowCopiesAsAdds(isShowCopiesAsAdds());
+        diff.setUseGitDiffFormat(isGitDiffFormat());
         diff.run();
     }
 
@@ -794,6 +803,7 @@ public class SVNDiffClient extends SVNBasicClient {
         diff.setOutput(result);
         diff.setApplicalbeChangelists(changeLists);
         diff.setShowCopiesAsAdds(isShowCopiesAsAdds());
+        diff.setUseGitDiffFormat(isGitDiffFormat());
         diff.run();
     }
 
@@ -851,6 +861,7 @@ public class SVNDiffClient extends SVNBasicClient {
         diff.setIgnoreAncestry(!useAncestry);
         diff.setOutput(result);
         diff.setShowCopiesAsAdds(isShowCopiesAsAdds());
+        diff.setUseGitDiffFormat(isGitDiffFormat());
         diff.run();
     }
 
@@ -966,6 +977,7 @@ public class SVNDiffClient extends SVNBasicClient {
         diff.setOutput(result);
         diff.setApplicalbeChangelists(changeLists);
         diff.setShowCopiesAsAdds(isShowCopiesAsAdds());
+        diff.setUseGitDiffFormat(isGitDiffFormat());
         diff.run();
     }
 
@@ -1042,6 +1054,7 @@ public class SVNDiffClient extends SVNBasicClient {
         diff.setIgnoreAncestry(!useAncestry);
         diff.setOutput(result);
         diff.setShowCopiesAsAdds(isShowCopiesAsAdds());
+        diff.setUseGitDiffFormat(isGitDiffFormat());
         diff.run();
     }
 
@@ -1160,6 +1173,7 @@ public class SVNDiffClient extends SVNBasicClient {
         diff.setOutput(result);
         diff.setApplicalbeChangelists(changeLists);
         diff.setShowCopiesAsAdds(isShowCopiesAsAdds());
+        diff.setUseGitDiffFormat(isGitDiffFormat());
         diff.run();
     }
 
@@ -3229,5 +3243,13 @@ public class SVNDiffClient extends SVNBasicClient {
 
     public void setShowCopiesAsAdds(boolean showCopiesAsAdds) {
         this.showCopiesAsAdds = showCopiesAsAdds;
+    }
+
+    public boolean isGitDiffFormat() {
+        return gitDiffFormat;
+    }
+
+    public void setGitDiffFormat(boolean gitDiffFormat) {
+        this.gitDiffFormat = gitDiffFormat;
     }
 }

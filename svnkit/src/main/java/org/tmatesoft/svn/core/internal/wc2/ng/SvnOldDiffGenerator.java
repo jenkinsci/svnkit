@@ -62,6 +62,12 @@ public class SvnOldDiffGenerator implements ISvnDiffGenerator {
         generator.setForcedBinaryDiff(forced);
     }
 
+    public void setUseGitFormat(boolean useGitFormat) {
+        if (generator instanceof SvnNewDiffGenerator) {
+            ((SvnNewDiffGenerator) generator).getDelegate().setUseGitFormat(useGitFormat);
+        }
+    }
+
     public void displayDeletedDirectory(SvnTarget displayPath, String revision1, String revision2, OutputStream outputStream) throws SVNException {
         generator.displayDeletedDirectory(getDisplayPath(displayPath), revision1, revision2);
     }

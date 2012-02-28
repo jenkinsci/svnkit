@@ -29,6 +29,8 @@ public interface ISvnDiffGenerator {
 
     void setForcedBinaryDiff(boolean forced);
 
+    void setUseGitFormat(boolean useGitFormat);
+
     void displayDeletedDirectory(SvnTarget target, String revision1, String revision2, OutputStream outputStream) throws SVNException;
 
     void displayAddedDirectory(SvnTarget target, String revision1, String revision2, OutputStream outputStream) throws SVNException;
