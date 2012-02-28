@@ -274,9 +274,9 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
             url1 = getRepositoryAccess().getLocations(null, target1, pegRevision, revision1, SVNRevision.UNDEFINED).get(SvnRepositoryAccess.LocationsInfo.startUrl);
 
             if (!reverse) {
-                generator.init(SvnTarget.fromURL(url1), SvnTarget.fromURL(anchorUrl));
+                generator.init(SvnTarget.fromURL(url1), SvnTarget.fromURL(anchorUrl.appendPath(target, false)));
             } else {
-                generator.init(SvnTarget.fromURL(anchorUrl), SvnTarget.fromURL(url1));
+                generator.init(SvnTarget.fromURL(anchorUrl.appendPath(target, false)), SvnTarget.fromURL(url1));
             }
         } else {
             if (!reverse) {
