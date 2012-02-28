@@ -1,7 +1,6 @@
 package org.tmatesoft.svn.core.internal.wc2.ng;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -212,7 +211,7 @@ public class SvnDiffEditor implements ISVNEditor, ISVNUpdateEditor {
             sourceStream = SVNFileUtil.DUMMY_IN;
         }
 
-        currentEntry.file = createTempFile();
+        currentEntry.file = createTempFile(db.getWCRootTempDir(currentEntry.localAbspath));
         deltaProcessor.applyTextDelta(sourceStream, currentEntry.file, true);
     }
 
@@ -755,27 +754,8 @@ public class SvnDiffEditor implements ISVNEditor, ISVNUpdateEditor {
         }
     }
 
-    private File createTempFile() throws SVNException {
-        File tmpFile = null;
-        try {
-            return File.createTempFile("diff.", ".tmp", getTempDirectory());
-        } catch (IOException e) {
-            SVNFileUtil.deleteFile(tmpFile);
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
-            SVNErrorManager.error(err, SVNLogType.DEFAULT);
-        }
-        return null;
-    }
-
-    private File getTempDirectory() throws SVNException {
-        if (tempDirectory == null) {
-            tempDirectory = createTempDirectory();
-        }
-        return tempDirectory;
-    }
-
-    private File createTempDirectory() throws SVNException {
-        return SVNFileUtil.createTempDirectory("diff");
+    private File createTempFile(File tempDir) throws SVNException {
+        return SVNFileUtil.createUniqueFile(tempDir, "diff.", ".tmp", true);
     }
 
     private void addToCompared(Entry entry, String path) {

@@ -7,7 +7,6 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
@@ -27,9 +26,6 @@ public class SvnDiffStatusReceiver implements ISvnObjectReceiver<SvnStatus> {
     private final boolean showCopiesAsAdds;
     private final boolean gitFormat;
     private final boolean ignoreAncestry;
-
-    //lazy
-    private File emptyFile;
 
     public SvnDiffStatusReceiver(SVNWCContext context, File anchor,
                                  ISVNWCDb db,
@@ -306,9 +302,5 @@ public class SvnDiffStatusReceiver implements ISvnObjectReceiver<SvnStatus> {
 
     private File getEmptyFile() throws SVNException {
         return null;
-    }
-
-    private File createEmptyFile() throws SVNException {
-        return SVNFileUtil.createTempFile("svnkit", "diff");
     }
 }
