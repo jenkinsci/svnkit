@@ -43,7 +43,11 @@ public enum SVNWCDbSchema {
 
     REVERT_LIST( REVERT_LIST__Fields.class),
     
-    CHANGELIST_LIST(CHANGELIST_LIST__Fields.class)
+    CHANGELIST_LIST(CHANGELIST_LIST__Fields.class),
+    //19 version of sDb
+    BASE_NODE(BASE_NODE__Fields.class),
+    //19 version of sDb
+    WORKING_NODE(WORKING_NODE__Fields.class)
     ;
 
     final public Class<? extends Enum<?>> fields;
@@ -138,6 +142,14 @@ public enum SVNWCDbSchema {
     
     public enum CHANGELIST_LIST__Fields {
     	wc_id, local_relpath, notify, changelist;
+    }
+    
+    public enum BASE_NODE__Fields {
+        wc_id, local_relpath, parent_relpath, repos_id, repos_path, revnum, presence, kind, properties, depth, checksum, symlink_target, changed_rev, changed_date, changed_author, translated_size, last_mod_time, dav_cache, file_external;
+    }
+    
+    public enum WORKING_NODE__Fields {
+        wc_id, local_relpath, parent_relpath, copyfrom_repos_id, copyfrom_repos_path, copyfrom_revnum, presence, kind, properties, depth, checksum, symlink_target, changed_rev, changed_date, changed_author, translated_size, last_mod_time;
     }
     
     

@@ -495,7 +495,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             case Deleted:
                 reason = SVNConflictReason.DELETED;
                 break;
-
+            
             case Incomplete:
             case Normal:
                 if (action == SVNConflictAction.EDIT) {
@@ -541,6 +541,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             public void receive(SvnTarget target, SvnStatus status) throws SVNException {
                 SVNStatusType nodeStatus = status.getNodeStatus();
                 if (nodeStatus == SVNStatusType.STATUS_NORMAL 
+                	|| nodeStatus == SVNStatusType.STATUS_INCOMPLETE
                     || nodeStatus == SVNStatusType.STATUS_IGNORED
                     || nodeStatus == SVNStatusType.STATUS_NONE
                     || nodeStatus == SVNStatusType.STATUS_UNVERSIONED
@@ -1322,6 +1323,9 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             boolean incomingIsLink = false;
             
             localIsLink = localActualProps.getStringValue(SVNProperty.SPECIAL) != null;
+            incomingIsLink = localIsLink;
+            
+            /* Does an incoming propchange affect symlink-ness? */
             if (regularProps != null) {
                 for(Iterator<?> names = regularProps.nameSet().iterator(); names.hasNext();) {
                     String name = (String) names.next();

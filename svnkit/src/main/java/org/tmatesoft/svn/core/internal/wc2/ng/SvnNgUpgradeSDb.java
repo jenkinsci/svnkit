@@ -1,18 +1,22 @@
 package org.tmatesoft.svn.core.internal.wc2.ng;
  
 import java.io.File;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
  
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
+import org.tmatesoft.sqljet.core.schema.SqlJetConflictAction;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetInsertStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectFieldsStatement;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetUpdateStatement;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -240,6 +244,76 @@ public class SvnNgUpgradeSDb {
         }
     }
     
+    /* UPDATE tableName SET checksum=(SELECT checksum FROM pristine WHERE md5_checksum=tableName.checksum)
+	   WHERE EXISTS(SELECT 1 FROM pristine WHERE md5_checksum=WORKING_NODE.checksum); */
+    private static class UpdateChecksum {
+    	private SVNSqlJetDb sDb;
+    	private Enum<?> tableName;
+    	
+    	public UpdateChecksum(SVNSqlJetDb sDb, Enum<?> tableName) {
+            this.sDb = sDb;
+            this.tableName = tableName;
+        }
+    	
+    	public void run() throws SVNException {
+	    	SVNSqlJetUpdateStatement stmt = new SVNSqlJetUpdateStatement(sDb, tableName) {
+	    		private SVNSqlJetSelectFieldsStatement<SVNWCDbSchema.PRISTINE__Fields> select = 
+	    				new SVNSqlJetSelectFieldsStatement<SVNWCDbSchema.PRISTINE__Fields>(sDb, SVNWCDbSchema.PRISTINE) {
+	    					protected boolean isFilterPassed() throws SVNException {
+	    						return ((String)getBind(1)).equals(getColumnString(SVNWCDbSchema.PRISTINE__Fields.md5_checksum));
+	    					}
+	    					protected void defineFields() {
+	    		                fields.add(SVNWCDbSchema.PRISTINE__Fields.checksum);
+	    		            }
+	    					protected Object[] getWhere() throws SVNException {
+	    				        return new Object[] {};
+	    				    }
+	    				};
+	    		
+	    		public Map<String, Object> getUpdateValues() throws SVNException {
+	    			return null;
+	    		}
+	    				
+	    		public long exec() throws SVNException {
+	    	        long n = 0;
+	    	        try {
+	    	            statementStarted();
+	    	            while (next()) {
+	    	            	Map<String, Object> rowValues = getRowValues();
+	    	            	String checksum = (String)rowValues.get("checksum");
+	    	            	if (checksum == null)
+	    	            		continue;
+	    	            	select.bindString(1, checksum);
+	    	            	try {
+	    	            		if (select.next()) {
+	    	            			rowValues.put("checksum", select.getColumnString(SVNWCDbSchema.PRISTINE__Fields.checksum));
+	    	            		} else {
+	    	            			continue;
+	    	            		}
+	    	            	} finally {
+	    	            		select.reset();
+	    	            	}
+	    	            	
+	    	                update(rowValues);
+	    	                n++;
+	    	            }
+	    	            statementCompleted(null);
+	    	        } catch (SqlJetException e) {
+	    	            statementCompleted(e);
+	    	            SVNSqlJetDb.createSqlJetError(e);
+	    	        }
+	    	        return n;
+	    	    }
+	    	};
+	    	
+	    	try {
+				stmt.exec();
+			} finally {
+				stmt.reset();
+			}
+    	}
+    }
+    
     private static class bumpTo20 implements Bumpable {
     	public void bumpTo(SVNSqlJetDb sDb, File wcRootAbsPath) throws SVNException {
 	    	try {
@@ -249,47 +323,168 @@ public class SvnNgUpgradeSDb {
 	                + "  changed_revision  INTEGER, changed_date INTEGER, changed_author TEXT, translated_size  INTEGER, last_mod_time  INTEGER, "
 	                + "  dav_cache  BLOB, file_external  TEXT, PRIMARY KEY (wc_id, local_relpath, op_depth) ); ");
 	    		sDb.getDb().createIndex("CREATE INDEX I_NODES_PARENT ON NODES (wc_id, parent_relpath, op_depth); ");
-	    	/*
-	    	
-	    	UPDATE BASE_NODE SET checksum=(SELECT checksum FROM pristine
-	                WHERE md5_checksum=BASE_NODE.checksum)
-			WHERE EXISTS(SELECT 1 FROM pristine WHERE md5_checksum=BASE_NODE.checksum);
-	
-			UPDATE WORKING_NODE SET checksum=(SELECT checksum FROM pristine
-	                WHERE md5_checksum=WORKING_NODE.checksum)
-			WHERE EXISTS(SELECT 1 FROM pristine WHERE md5_checksum=WORKING_NODE.checksum);
-	
-		INSERT INTO NODES (
-			wc_id, local_relpath, op_depth, parent_relpath,
-			repos_id, repos_path, revision,
-			presence, depth, moved_here, moved_to, kind,
-			changed_revision, changed_date, changed_author,
-			checksum, properties, translated_size, last_mod_time,
-			dav_cache, symlink_target, file_external )
-			SELECT wc_id, local_relpath, 0 /*op_depth/, parent_relpath,
-			repos_id, repos_relpath, revnum,
-			presence, depth, NULL /*moved_here/, NULL /*moved_to/, kind,
-			changed_rev, changed_date, changed_author,
-			checksum, properties, translated_size, last_mod_time,
-			dav_cache, symlink_target, file_external
-		FROM BASE_NODE;
-		INSERT INTO NODES (
-			wc_id, local_relpath, op_depth, parent_relpath,
-			repos_id, repos_path, revision,
-			presence, depth, moved_here, moved_to, kind,
-			changed_revision, changed_date, changed_author,
-			checksum, properties, translated_size, last_mod_time,
-			dav_cache, symlink_target, file_external )
-		SELECT wc_id, local_relpath, 2 /*op_depth/, parent_relpath,
-			copyfrom_repos_id, copyfrom_repos_path, copyfrom_revnum,
-			presence, depth, NULL /*moved_here/, NULL /*moved_to/, kind,
-			changed_rev, changed_date, changed_author,
-			checksum, properties, translated_size, last_mod_time,
-			NULL /*dav_cache/, symlink_target, NULL /*file_external/
-		FROM WORKING_NODE;
-	*/
-				sDb.getDb().dropTable("BASE_NODE");
+	    		
+	    		/*
+	    		UPDATE BASE_NODE SET checksum=(SELECT checksum FROM pristine WHERE md5_checksum=BASE_NODE.checksum)
+				WHERE EXISTS(SELECT 1 FROM pristine WHERE md5_checksum=BASE_NODE.checksum);
+	    		 */
+	    		UpdateChecksum uc = new UpdateChecksum(sDb, SVNWCDbSchema.BASE_NODE);
+	    		uc.run();
+	    
+		    	/*
+	    		UPDATE WORKING_NODE SET checksum=(SELECT checksum FROM pristine WHERE md5_checksum=WORKING_NODE.checksum)
+				WHERE EXISTS(SELECT 1 FROM pristine WHERE md5_checksum=WORKING_NODE.checksum);
+		    	 */
+	    		uc = new UpdateChecksum(sDb, SVNWCDbSchema.WORKING_NODE);
+	    		uc.run();
+	    		
+	    		/*
+				INSERT INTO NODES (
+					wc_id, local_relpath, op_depth, parent_relpath,
+					repos_id, repos_path, revision,
+					presence, depth, moved_here, moved_to, kind,
+					changed_revision, changed_date, changed_author,
+					checksum, properties, translated_size, last_mod_time,
+					dav_cache, symlink_target, file_external )
+					SELECT wc_id, local_relpath, 0 /*op_depth/, parent_relpath,
+					repos_id, repos_relpath, revnum,
+					presence, depth, NULL /*moved_here/, NULL /*moved_to/, kind,
+					changed_rev, changed_date, changed_author,
+					checksum, properties, translated_size, last_mod_time,
+					dav_cache, symlink_target, file_external
+				FROM BASE_NODE;
+				*/
+	    		SVNSqlJetInsertStatement stmt = new SVNSqlJetInsertStatement(sDb, SVNWCDbSchema.NODES) {
+	    			private SVNSqlJetSelectStatement select = new SVNSqlJetSelectStatement(sDb.getTemporaryDb(), SVNWCDbSchema.BASE_NODE) {};
+
+	    		    public long exec() throws SVNException {
+	    		        try {
+	    		            int n = 0;
+	    		            while (select.next()) {
+	    		                try {
+	    		                    table.insertByFieldNamesOr(null, getInsertValues());
+	    		                    n++;
+	    		                } catch (SqlJetException e) {
+	    		                    SVNSqlJetDb.createSqlJetError(e);
+	    		                    return -1;
+	    		                }
+	    		            }
+	    		            return n;
+	    		        } finally {
+	    		            select.reset();
+	    		        }
+	    		    }
+	    		    
+	    		    protected Map<String, Object> getInsertValues() throws SVNException {
+	    		    	Map<String,Object> selectedRow = select.getRowValues();
+	    		    	Map<String, Object> insertValues = new HashMap<String, Object>();
+	    		    	insertValues.put(SVNWCDbSchema.NODES__Fields.wc_id.toString(), selectedRow.get(SVNWCDbSchema.BASE_NODE__Fields.wc_id.toString()));
+	    		    	insertValues.put(SVNWCDbSchema.NODES__Fields.local_relpath.toString(), selectedRow.get(SVNWCDbSchema.BASE_NODE__Fields.local_relpath.toString()));
+	    		    	insertValues.put(SVNWCDbSchema.NODES__Fields.op_depth.toString(), 0);
+	    		    	insertValues.put(SVNWCDbSchema.NODES__Fields.parent_relpath.toString(), selectedRow.get(SVNWCDbSchema.BASE_NODE__Fields.parent_relpath.toString()));
+	    		    	insertValues.put(SVNWCDbSchema.NODES__Fields.repos_id.toString(), selectedRow.get(SVNWCDbSchema.BASE_NODE__Fields.repos_id.toString()));
+	    		    	insertValues.put(SVNWCDbSchema.NODES__Fields.repos_path.toString(), selectedRow.get(SVNWCDbSchema.BASE_NODE__Fields.repos_path.toString()));
+	    		    	insertValues.put(SVNWCDbSchema.NODES__Fields.revision.toString(), selectedRow.get(SVNWCDbSchema.BASE_NODE__Fields.revnum.toString()));
+	    		    	insertValues.put(SVNWCDbSchema.NODES__Fields.presence.toString(), selectedRow.get(SVNWCDbSchema.BASE_NODE__Fields.presence.toString()));
+	    		    	insertValues.put(SVNWCDbSchema.NODES__Fields.depth.toString(), selectedRow.get(SVNWCDbSchema.BASE_NODE__Fields.depth.toString()));
+	    		    	insertValues.put(SVNWCDbSchema.NODES__Fields.moved_here.toString(), null);
+	    		    	insertValues.put(SVNWCDbSchema.NODES__Fields.moved_to.toString(), null);
+	    		    	insertValues.put(SVNWCDbSchema.NODES__Fields.kind.toString(), selectedRow.get(SVNWCDbSchema.BASE_NODE__Fields.kind.toString()));
+	    		    	insertValues.put(SVNWCDbSchema.NODES__Fields.changed_revision.toString(), selectedRow.get(SVNWCDbSchema.BASE_NODE__Fields.changed_rev.toString()));	    		    	
+	    		    	insertValues.put(SVNWCDbSchema.NODES__Fields.changed_date.toString(), selectedRow.get(SVNWCDbSchema.BASE_NODE__Fields.changed_date.toString()));
+	    		    	insertValues.put(SVNWCDbSchema.NODES__Fields.changed_author.toString(), selectedRow.get(SVNWCDbSchema.BASE_NODE__Fields.changed_author.toString()));
+	    		    	insertValues.put(SVNWCDbSchema.NODES__Fields.checksum.toString(), selectedRow.get(SVNWCDbSchema.BASE_NODE__Fields.checksum.toString()));
+	    		    	insertValues.put(SVNWCDbSchema.NODES__Fields.properties.toString(), selectedRow.get(SVNWCDbSchema.BASE_NODE__Fields.properties.toString()));
+	    		    	insertValues.put(SVNWCDbSchema.NODES__Fields.translated_size.toString(), selectedRow.get(SVNWCDbSchema.BASE_NODE__Fields.translated_size.toString()));
+	    		    	insertValues.put(SVNWCDbSchema.NODES__Fields.last_mod_time.toString(), selectedRow.get(SVNWCDbSchema.BASE_NODE__Fields.last_mod_time.toString()));
+	    		    	insertValues.put(SVNWCDbSchema.NODES__Fields.dav_cache.toString(), selectedRow.get(SVNWCDbSchema.BASE_NODE__Fields.dav_cache.toString()));
+	    		    	insertValues.put(SVNWCDbSchema.NODES__Fields.symlink_target.toString(), selectedRow.get(SVNWCDbSchema.BASE_NODE__Fields.symlink_target.toString()));
+	    		    	insertValues.put(SVNWCDbSchema.NODES__Fields.file_external.toString(), selectedRow.get(SVNWCDbSchema.BASE_NODE__Fields.file_external.toString()));
+	    		    	return insertValues;
+	    		    }
+
+	    		};
+	    		
+	    		try {
+	    			stmt.exec();
+	    		} finally {
+	    			stmt.reset();
+	    		}
+	    		/*INSERT INTO NODES (
+					wc_id, local_relpath, op_depth, parent_relpath,
+					repos_id, repos_path, revision,
+					presence, depth, moved_here, moved_to, kind,
+					changed_revision, changed_date, changed_author,
+					checksum, properties, translated_size, last_mod_time,
+					dav_cache, symlink_target, file_external )
+				SELECT wc_id, local_relpath, 2 /*op_depth/, parent_relpath,
+					copyfrom_repos_id, copyfrom_repos_path, copyfrom_revnum,
+					presence, depth, NULL /*moved_here/, NULL /*moved_to/, kind,
+					changed_rev, changed_date, changed_author,
+					checksum, properties, translated_size, last_mod_time,
+					NULL /*dav_cache/, symlink_target, NULL /*file_external/
+				FROM WORKING_NODE;
+				 */
+	    		stmt = new SVNSqlJetInsertStatement(sDb, SVNWCDbSchema.NODES) {
+	    			private SVNSqlJetSelectStatement select = new SVNSqlJetSelectStatement(sDb.getTemporaryDb(), SVNWCDbSchema.BASE_NODE) {};
+
+	    		    public long exec() throws SVNException {
+	    		        try {
+	    		            int n = 0;
+	    		            while (select.next()) {
+	    		                try {
+	    		                    table.insertByFieldNamesOr(null, getInsertValues());
+	    		                    n++;
+	    		                } catch (SqlJetException e) {
+	    		                    SVNSqlJetDb.createSqlJetError(e);
+	    		                    return -1;
+	    		                }
+	    		            }
+	    		            return n;
+	    		        } finally {
+	    		            select.reset();
+	    		        }
+	    		    }
+	    		    
+	    		    protected Map<String, Object> getInsertValues() throws SVNException {
+	    		    	Map<String,Object> selectedRow = select.getRowValues();
+	    		    	Map<String, Object> insertValues = new HashMap<String, Object>();
+	    		    	insertValues.put(SVNWCDbSchema.NODES__Fields.wc_id.toString(), selectedRow.get(SVNWCDbSchema.WORKING_NODE__Fields.wc_id.toString()));
+	    		    	insertValues.put(SVNWCDbSchema.NODES__Fields.local_relpath.toString(), selectedRow.get(SVNWCDbSchema.WORKING_NODE__Fields.local_relpath.toString()));
+	    		    	insertValues.put(SVNWCDbSchema.NODES__Fields.op_depth.toString(), 2);
+	    		    	insertValues.put(SVNWCDbSchema.NODES__Fields.parent_relpath.toString(), selectedRow.get(SVNWCDbSchema.WORKING_NODE__Fields.parent_relpath.toString()));
+	    		    	insertValues.put(SVNWCDbSchema.NODES__Fields.repos_id.toString(), selectedRow.get(SVNWCDbSchema.WORKING_NODE__Fields.copyfrom_repos_id.toString()));
+	    		    	insertValues.put(SVNWCDbSchema.NODES__Fields.repos_path.toString(), selectedRow.get(SVNWCDbSchema.WORKING_NODE__Fields.copyfrom_repos_path.toString()));
+	    		    	insertValues.put(SVNWCDbSchema.NODES__Fields.revision.toString(), selectedRow.get(SVNWCDbSchema.WORKING_NODE__Fields.copyfrom_revnum.toString()));
+	    		    	insertValues.put(SVNWCDbSchema.NODES__Fields.presence.toString(), selectedRow.get(SVNWCDbSchema.WORKING_NODE__Fields.presence.toString()));
+	    		    	insertValues.put(SVNWCDbSchema.NODES__Fields.depth.toString(), selectedRow.get(SVNWCDbSchema.WORKING_NODE__Fields.depth.toString()));
+	    		    	insertValues.put(SVNWCDbSchema.NODES__Fields.moved_here.toString(), null);
+	    		    	insertValues.put(SVNWCDbSchema.NODES__Fields.moved_to.toString(), null);
+	    		    	insertValues.put(SVNWCDbSchema.NODES__Fields.kind.toString(), selectedRow.get(SVNWCDbSchema.WORKING_NODE__Fields.kind.toString()));
+	    		    	insertValues.put(SVNWCDbSchema.NODES__Fields.changed_revision.toString(), selectedRow.get(SVNWCDbSchema.WORKING_NODE__Fields.changed_rev.toString()));	    		    	
+	    		    	insertValues.put(SVNWCDbSchema.NODES__Fields.changed_date.toString(), selectedRow.get(SVNWCDbSchema.WORKING_NODE__Fields.changed_date.toString()));
+	    		    	insertValues.put(SVNWCDbSchema.NODES__Fields.changed_author.toString(), selectedRow.get(SVNWCDbSchema.WORKING_NODE__Fields.changed_author.toString()));
+	    		    	insertValues.put(SVNWCDbSchema.NODES__Fields.checksum.toString(), selectedRow.get(SVNWCDbSchema.WORKING_NODE__Fields.checksum.toString()));
+	    		    	insertValues.put(SVNWCDbSchema.NODES__Fields.properties.toString(), selectedRow.get(SVNWCDbSchema.WORKING_NODE__Fields.properties.toString()));
+	    		    	insertValues.put(SVNWCDbSchema.NODES__Fields.translated_size.toString(), selectedRow.get(SVNWCDbSchema.WORKING_NODE__Fields.translated_size.toString()));
+	    		    	insertValues.put(SVNWCDbSchema.NODES__Fields.last_mod_time.toString(), selectedRow.get(SVNWCDbSchema.WORKING_NODE__Fields.last_mod_time.toString()));
+	    		    	insertValues.put(SVNWCDbSchema.NODES__Fields.dav_cache.toString(), null);
+	    		    	insertValues.put(SVNWCDbSchema.NODES__Fields.symlink_target.toString(), selectedRow.get(SVNWCDbSchema.WORKING_NODE__Fields.symlink_target.toString()));
+	    		    	insertValues.put(SVNWCDbSchema.NODES__Fields.file_external.toString(), null);
+	    		    	return insertValues;
+	    		    }
+
+	    		};
+	    		
+	    		try {
+	    			stmt.exec();
+	    		} finally {
+	    			stmt.reset();
+	    		}
+	    		
+	    		sDb.getDb().dropTable("BASE_NODE");
 				sDb.getDb().dropTable("WORKING_NODE");
+				
 	    	} catch (SqlJetException e) {
 	            SVNSqlJetDb.createSqlJetError(e);
 	        }
@@ -521,63 +716,8 @@ public class SvnNgUpgradeSDb {
 	    	 * UPDATE NODES SET checksum=(SELECT checksum FROM pristine WHERE md5_checksum=nodes.checksum)
 			 * WHERE EXISTS(SELECT 1 FROM pristine WHERE md5_checksum=nodes.checksum);
 	    	 */
-	    	
-	    	SVNSqlJetUpdateStatement stmt = new SVNSqlJetUpdateStatement(sDb, SVNWCDbSchema.NODES) {
-	    		private SVNSqlJetSelectFieldsStatement<SVNWCDbSchema.PRISTINE__Fields> select = 
-	    				new SVNSqlJetSelectFieldsStatement<SVNWCDbSchema.PRISTINE__Fields>(sDb, SVNWCDbSchema.PRISTINE) {
-	    					protected boolean isFilterPassed() throws SVNException {
-	    						return ((String)getBind(1)).equals(getColumnString(SVNWCDbSchema.PRISTINE__Fields.md5_checksum));
-	    					}
-	    					protected void defineFields() {
-	    		                fields.add(SVNWCDbSchema.PRISTINE__Fields.checksum);
-	    		            }
-	    					protected Object[] getWhere() throws SVNException {
-	    				        return new Object[] {};
-	    				    }
-	    				};
-	    		
-	    		public Map<String, Object> getUpdateValues() throws SVNException {
-	    			return null;
-	    		}
-	    				
-	    		public long exec() throws SVNException {
-	    	        long n = 0;
-	    	        try {
-	    	            statementStarted();
-	    	            while (next()) {
-	    	            	Map<String, Object> rowValues = getRowValues();
-	    	            	String checksum = (String)rowValues.get(SVNWCDbSchema.NODES__Fields.checksum.toString());
-	    	            	if (checksum == null)
-	    	            		continue;
-	    	            	select.bindString(1, checksum);
-	    	            	try {
-	    	            		if (select.next()) {
-	    	            			rowValues.put(SVNWCDbSchema.NODES__Fields.checksum.toString(), 
-	    	            					select.getColumnString(SVNWCDbSchema.PRISTINE__Fields.checksum));
-	    	            		} else {
-	    	            			continue;
-	    	            		}
-	    	            	} finally {
-	    	            		select.reset();
-	    	            	}
-	    	            	
-	    	                update(rowValues);
-	    	                n++;
-	    	            }
-	    	            statementCompleted(null);
-	    	        } catch (SqlJetException e) {
-	    	            statementCompleted(e);
-	    	            SVNSqlJetDb.createSqlJetError(e);
-	    	        }
-	    	        return n;
-	    	    }
-	    	};
-	    	
-	    	try {
-				stmt.exec();
-			} finally {
-				stmt.reset();
-			}
+	    	UpdateChecksum uc = new UpdateChecksum(sDb, SVNWCDbSchema.NODES);
+	    	uc.run();
 	    	
 	    	setVersion(sDb, (int)28);
 	    }

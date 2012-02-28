@@ -3698,7 +3698,7 @@ public class SVNWCContext {
             baseStatus = baseInfo.status;
             baseKind = baseInfo.kind;
         }
-        if (baseKind == SVNWCDbKind.Dir && baseStatus == SVNWCDbStatus.Normal) {
+        if (baseKind == SVNWCDbKind.Dir && (baseStatus == SVNWCDbStatus.Normal || baseStatus == SVNWCDbStatus.Incomplete)) {
             Set<String> children = db.getBaseChildren(localAbspath);
 
             for (String childName : children) {
