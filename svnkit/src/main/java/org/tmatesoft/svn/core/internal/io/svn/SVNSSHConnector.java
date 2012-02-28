@@ -25,6 +25,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManagerExt;
 import org.tmatesoft.svn.core.auth.ISVNSSHHostVerifier;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
@@ -186,6 +187,9 @@ public class SVNSSHConnector implements ISVNConnector {
                     myInputStream = mySession.getOut();
                     myInputStream = new BufferedInputStream(myInputStream, 16*1024);
                     new StreamGobbler(mySession.getErr());
+                    if (authManager instanceof ISVNAuthenticationManagerExt) {
+                        ((ISVNAuthenticationManagerExt)authManager).acknowledgeConnectionSuccessful(repository.getLocation());
+                    }
                     return;
                 } catch (SocketTimeoutException e) {
 	                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, "timed out waiting for server", null, SVNErrorMessage.TYPE_ERROR, e);

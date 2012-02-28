@@ -17,6 +17,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManagerExt;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -51,8 +52,9 @@ public class SVNTunnelConnector extends SVNAbstractTunnelConnector {
         }
         expandedTunnel = MessageFormat.format(TUNNEL_COMMAND, new Object[] {expandedTunnel, host});
         // 3. get and append --tunnel-user if needed.
-        if (repository.getAuthenticationManager() != null) {
-            SVNAuthentication auth = repository.getAuthenticationManager().getFirstAuthentication(ISVNAuthenticationManager.USERNAME, host, repository.getLocation());
+        final ISVNAuthenticationManager authManager = repository.getAuthenticationManager();
+        if (authManager != null) {
+            SVNAuthentication auth = authManager.getFirstAuthentication(ISVNAuthenticationManager.USERNAME, host, repository.getLocation());
             if (auth == null) {
                 SVNErrorManager.cancel("Authentication cancelled", SVNLogType.NETWORK);
             }
@@ -61,13 +63,16 @@ public class SVNTunnelConnector extends SVNAbstractTunnelConnector {
                 userName = System.getProperty("user.name");
             }
             auth = new SVNUserNameAuthentication(userName, auth.isStorageAllowed(), repository.getLocation(), false);
-            repository.getAuthenticationManager().acknowledgeAuthentication(true, ISVNAuthenticationManager.USERNAME, host, null, auth);
+            authManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.USERNAME, host, null, auth);
             expandedTunnel += " --tunnel-user " + userName;
             
             repository.setExternalUserName(userName);
         } 
         SVNDebugLog.getDefaultLog().logFinest(SVNLogType.NETWORK, "tunnel command: " + expandedTunnel);
-	    open(repository, expandedTunnel);
+        open(repository, expandedTunnel);
+        if (authManager instanceof ISVNAuthenticationManagerExt) {
+            ((ISVNAuthenticationManagerExt)authManager).acknowledgeConnectionSuccessful(repository.getLocation());
+        }
     }
 
     private static String expandTunnelSpec(String name, String tunnelSpec) throws SVNException {

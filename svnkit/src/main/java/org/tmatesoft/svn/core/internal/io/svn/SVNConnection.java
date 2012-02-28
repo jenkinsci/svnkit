@@ -26,6 +26,8 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManagerExt;
+import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.wc.SVNClassLoader;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -51,6 +53,7 @@ public class SVNConnection {
     private Set myCapabilities;
     private byte[] myHandshakeBuffer = new byte[8192];
     private SVNAuthenticator myEncryptor;
+    private SVNAuthentication myAuthentication;
     
     private static final String EDIT_PIPELINE = "edit-pipeline";
     private static final String SVNDIFF1 = "svndiff1";
@@ -156,21 +159,38 @@ public class SVNConnection {
     }
     
     public void authenticate(SVNRepositoryImpl repository) throws SVNException {
-        List items = read("ls", null, true);
+        ISVNAuthenticationManager authManager = myRepository.getAuthenticationManager();
+        List items;
+        try {
+            items = read("ls", null, true);
+        }
+        catch (SVNException ex) {
+            final SVNErrorMessage errorMessage = ex.getErrorMessage();
+            if (errorMessage != null && errorMessage.getErrorCode() == SVNErrorCode.RA_NOT_AUTHORIZED && authManager != null && myAuthentication != null) {
+                authManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.PASSWORD, myRealm, errorMessage, myAuthentication);
+            }
+            throw ex;
+        }
+
         List mechs = SVNReader.getList(items, 0);
         if (mechs == null || mechs.size() == 0) {
+            if (authManager instanceof ISVNAuthenticationManagerExt) {
+                ((ISVNAuthenticationManagerExt)authManager).acknowledgeConnectionSuccessful(myRepository.getLocation());
+            }
             return;
         }
         myRealm = SVNReader.getString(items, 1);
-        
-        ISVNAuthenticationManager authManager = myRepository.getAuthenticationManager();
-        if (authManager != null && authManager.isAuthenticationForced() && mechs.contains("ANONYMOUS") && 
+
+        if (authManager != null && authManager.isAuthenticationForced() && mechs.contains("ANONYMOUS") &&
                 (mechs.contains("CRAM-MD5") || mechs.contains("DIGEST-MD5"))) {
             mechs.remove("ANONYMOUS");
         }
         SVNAuthenticator authenticator = createSASLAuthenticator();
-        authenticator.authenticate(mechs, myRealm, repository);
+        myAuthentication = authenticator.authenticate(mechs, myRealm, repository);
         receiveRepositoryCredentials(repository);
+        if (authManager instanceof ISVNAuthenticationManagerExt) {
+            ((ISVNAuthenticationManagerExt)authManager).acknowledgeConnectionSuccessful(myRepository.getLocation());
+        }
     }
     
     private SVNAuthenticator createSASLAuthenticator() throws SVNException {

@@ -45,6 +45,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManagerExt;
 import org.tmatesoft.svn.core.auth.ISVNProxyManager;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
@@ -431,6 +432,9 @@ class HTTPConnection implements IHTTPConnection {
             }
 
             if (status.getCode() == HttpURLConnection.HTTP_FORBIDDEN) {
+                if (httpAuth != null && authManager != null) {
+                    authManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.PASSWORD, realm, request.getErrorMessage(), httpAuth);
+                }
                 myLastValidAuth = null;
                 close();
                 err = request.getErrorMessage();
@@ -626,6 +630,10 @@ class HTTPConnection implements IHTTPConnection {
             
             if (httpAuth != null) {
                 myLastValidAuth = httpAuth;
+            }
+
+            if (authManager instanceof ISVNAuthenticationManagerExt) {
+                ((ISVNAuthenticationManagerExt)authManager).acknowledgeConnectionSuccessful(myRepository.getLocation());
             }
 
             status.setHeader(request.getResponseHeader());

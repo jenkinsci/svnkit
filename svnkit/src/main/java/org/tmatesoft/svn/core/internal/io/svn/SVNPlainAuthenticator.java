@@ -19,6 +19,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.util.SVNLogType;
@@ -34,10 +35,10 @@ public class SVNPlainAuthenticator extends SVNAuthenticator {
         super(connection);
     }
 
-    public void authenticate(List mechs, String realm, SVNRepositoryImpl repos) throws SVNException {
+    public SVNAuthentication authenticate(List mechs, String realm, SVNRepositoryImpl repos) throws SVNException {
         SVNErrorMessage failureReason = null;
         if (mechs == null || mechs.size() == 0) {
-            return;
+            return null;
         }
         ISVNAuthenticationManager authManager = repos.getAuthenticationManager();
         if (authManager != null && authManager.isAuthenticationForced() && mechs.contains("ANONYMOUS") && mechs.contains("CRAM-MD5")) {
@@ -91,7 +92,7 @@ public class SVNPlainAuthenticator extends SVNAuthenticator {
                     String status = SVNReader.getString(items, 0);
                     if (SVNAuthenticator.SUCCESS.equals(status)) {
                         authManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.PASSWORD, realm, null, auth);
-                        return;
+                        return auth;
                     } else if (SVNAuthenticator.FAILURE.equals(status)) {                        
                         failureReason = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Authentication error from server: {0}", SVNReader.getString(items, 1));
                         String message = SVNReader.getString(items, 1);
@@ -119,6 +120,8 @@ public class SVNPlainAuthenticator extends SVNAuthenticator {
             }
             SVNErrorManager.error(failureReason, SVNLogType.NETWORK);
         }
+
+        return auth;
     }
     
     protected SVNErrorMessage readAuthResponse() throws SVNException {

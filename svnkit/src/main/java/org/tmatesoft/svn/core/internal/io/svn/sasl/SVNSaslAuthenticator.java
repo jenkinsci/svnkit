@@ -65,7 +65,7 @@ public class SVNSaslAuthenticator extends SVNAuthenticator {
         super(connection);
     }
 
-    public void authenticate(List mechs, String realm, SVNRepositoryImpl repository) throws SVNException {
+    public SVNAuthentication authenticate(List mechs, String realm, SVNRepositoryImpl repository) throws SVNException {
         boolean failed = true;
         setLastError(null);
         myAuthenticationManager = repository.getAuthenticationManager();
@@ -91,8 +91,7 @@ public class SVNSaslAuthenticator extends SVNAuthenticator {
             myClient = createSaslClient(mechs, realm, repository, repository.getLocation());
             while(true) {
                 if (myClient == null) {
-                    new SVNPlainAuthenticator(getConnection()).authenticate(mechs, realm, repository);
-                    return;
+                    return new SVNPlainAuthenticator(getConnection()).authenticate(mechs, realm, repository);
                 }
                 try {
                     if (tryAuthentication(repository, getMechanismName(myClient, isAnonymous))) {
@@ -141,6 +140,8 @@ public class SVNSaslAuthenticator extends SVNAuthenticator {
         if (getLastError() != null) {
             SVNErrorManager.error(getLastError(), SVNLogType.NETWORK);
         }
+
+        return myAuthentication;
     }
     
     public void dispose() {
