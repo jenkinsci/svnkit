@@ -53,7 +53,8 @@ public class SvnDiffCallback implements ISvnDiffCallback {
         }
 
         if (propChanges != null && !propChanges.isEmpty()) {
-            propertiesChanged(path, rev1, rev2, false, propChanges, originalProperties);
+            //we do not rev1 and rev2 here because SVN doesn't
+            propertiesChanged(path, revision1, revision2, false, propChanges, originalProperties);
         }
         generator.setForceEmpty(false);
     }

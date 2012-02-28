@@ -217,27 +217,27 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
 //            }
 
             if (useGitFormat) {
-                displayGitHeaderFields(outputStream, target, revision1, revision2);
+                displayGitHeaderFields(outputStream, target, revision1, revision2, SvnDiffCallback.OperationKind.Modified);
             } else {
                 displayHeaderFields(outputStream, label1, label2);
             }
         }
 
-        displayPropertyChangesOn(useGitFormat ? targetString1 : displayPath, outputStream);
+        displayPropertyChangesOn(useGitFormat ? getRelativeToRootPath(target, originalTarget1) : displayPath, outputStream);
 
         displayPropDiffValues(outputStream, propChanges, originalProps);
     }
 
-    private void displayGitHeaderFields(OutputStream outputStream, SvnTarget target, String revision1, String revision2) throws SVNException {
+    private void displayGitHeaderFields(OutputStream outputStream, SvnTarget target, String revision1, String revision2, SvnDiffCallback.OperationKind operation) throws SVNException {
         String path1 = getRelativeToRootPath(target, originalTarget1);
         String path2 = getRelativeToRootPath(target, originalTarget2);
 
         try {
             displayString(outputStream, "--- ");
-            displayFirstGitLabelPath(outputStream, path1, revision1);
+            displayFirstGitLabelPath(outputStream, path1, revision1, operation);
             displayEOL(outputStream);
             displayString(outputStream, "+++ ");
-            displaySecondGitLabelPath(outputStream, path2, revision2);
+            displaySecondGitLabelPath(outputStream, path2, revision2, operation);
             displayEOL(outputStream);
         } catch (IOException e) {
             wrapException(e);
@@ -363,7 +363,7 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
 
     private void internalDiff(SvnTarget target, OutputStream outputStream, String displayPath, File file1, File file2, String label1, String label2, SvnDiffCallback.OperationKind operation, String copyFromPath, String revision1, String revision2) throws SVNException {
         String header = getHeaderString(target, displayPath, operation, copyFromPath);
-        String headerFields = getHeaderFieldsString(target, displayPath, label1, label2, revision1, revision2);
+        String headerFields = getHeaderFieldsString(target, displayPath, label1, label2, revision1, revision2, operation);
 
         RandomAccessFile is1 = null;
         RandomAccessFile is2 = null;
@@ -406,11 +406,11 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
         }
     }
 
-    private String getHeaderFieldsString(SvnTarget target, String displayPath, String label1, String label2, String revision1, String revision2) throws SVNException {
+    private String getHeaderFieldsString(SvnTarget target, String displayPath, String label1, String label2, String revision1, String revision2, SvnDiffCallback.OperationKind operation) throws SVNException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         try {
             if (useGitFormat) {
-                displayGitHeaderFields(byteArrayOutputStream, target, revision1, revision2);
+                displayGitHeaderFields(byteArrayOutputStream, target, revision1, revision2, operation);
             } else {
                 displayHeaderFields(byteArrayOutputStream, label1, label2);
             }
@@ -823,12 +823,22 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
         displayGitPath(outputStream, path2, "b/", false);
     }
 
-    private void displayFirstGitLabelPath(OutputStream outputStream, String path1, String revision1) throws IOException {
-        displayGitPath(outputStream, getLabel(path1, revision1), "a/", true);
+    private void displayFirstGitLabelPath(OutputStream outputStream, String path1, String revision1, SvnDiffCallback.OperationKind operation) throws IOException {
+        String pathPrefix = "a/";
+        if (operation == SvnDiffCallback.OperationKind.Added) {
+            path1 = "/dev/null";
+            pathPrefix = "";
+        }
+        displayGitPath(outputStream, getLabel(path1, revision1), pathPrefix, true);
     }
 
-    private void displaySecondGitLabelPath(OutputStream outputStream, String path2, String revision2) throws IOException {
-        displayGitPath(outputStream, getLabel(path2, revision2), "b/", true);
+    private void displaySecondGitLabelPath(OutputStream outputStream, String path2, String revision2, SvnDiffCallback.OperationKind operation) throws IOException {
+        String pathPrefix = "b/";
+        if (operation == SvnDiffCallback.OperationKind.Deleted) {
+            path2 = "/dev/null";
+            pathPrefix = "";
+        }
+        displayGitPath(outputStream, getLabel(path2, revision2), pathPrefix, true);
     }
 
     private void displayGitPath(OutputStream outputStream, String path1, String pathPrefix, boolean label) throws IOException {
