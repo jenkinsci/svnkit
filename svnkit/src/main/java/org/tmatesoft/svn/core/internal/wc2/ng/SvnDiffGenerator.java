@@ -591,6 +591,11 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
                 } else {
                     originalValueBytes = maybeAppendEOL(originalValueBytes);
                 }
+
+                boolean newValueHadEol = newValueBytes != null && newValueBytes.length > 0 &&
+                        (newValueBytes[newValueBytes.length - 1] == SVNProperty.EOL_CR_BYTES[0] ||
+                        newValueBytes[newValueBytes.length - 1] == SVNProperty.EOL_LF_BYTES[0]);
+
                 if (newValueBytes == null) {
                     newValueBytes = new byte[0];
                 } else {
@@ -613,6 +618,10 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
                 QDiffManager.generateTextDiff(new ByteArrayInputStream(originalValueBytes), new ByteArrayInputStream(newValueBytes),
                         getEncoding(), writer, generator);
                 writer.flush();
+                if (!newValueHadEol) {
+                    displayString(outputStream, "\\ No newline at end of property");
+                    displayEOL(outputStream);
+                }
             } catch (IOException e) {
                 wrapException(e);
             }
