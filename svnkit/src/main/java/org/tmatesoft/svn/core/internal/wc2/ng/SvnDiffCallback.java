@@ -40,7 +40,7 @@ public class SvnDiffCallback implements ISvnDiffCallback {
             displayContentChanged(path, leftFile, rightFile, rev1, rev2, mimeType1, mimeType2, propChanges, originalProperties, OperationKind.Modified, null);
         }
         if (propChanges != null && !propChanges.isEmpty()) {
-            propertiesChanged(path, rev1, rev2, false, propChanges, originalProperties);
+            propertiesChanged(path, revision1, revision2, false, propChanges, originalProperties);
         }
     }
 
