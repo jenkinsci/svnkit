@@ -265,7 +265,7 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
                     String name = SVNPathUtil.tail(path);
                     if (SVNFileUtil.getAdminDirectoryName().equals(name) || ".svn".equals(name) || "_svn".equals(name)) {
                         if (warnReserved) {
-                            getErr().printf("Skipping argument: E:%d: %s ends in a reserved name\n",
+                            getErr().printf("Skipping argument: E:%d: '%s' ends in a reserved name\n",
                                     SVNErrorCode.RESERVED_FILENAME_SPECIFIED.getCode(), path);
                         }
                         continue;
