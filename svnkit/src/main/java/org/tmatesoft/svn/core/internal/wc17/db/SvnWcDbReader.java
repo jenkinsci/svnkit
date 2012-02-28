@@ -407,10 +407,9 @@ public class SvnWcDbReader extends SvnWcDbShared {
                     if ("file".equals(kind)) {
                         String presence = cursor.getString(SVNWCDbSchema.NODES__Fields.presence.toString());
                         if ("normal".equals(presence) && !cursor.getBoolean(SVNWCDbSchema.NODES__Fields.file_external.toString())) {
-                            // check for mods.
                             File localFile = dirInfo.wcDbDir.getWCRoot().getAbsPath(new File(rowRelPath));
                             SVNFileType ft = SVNFileType.getType(localFile);
-                            if (ft != SVNFileType.FILE) {
+                            if (!(ft == SVNFileType.FILE || ft == SVNFileType.SYMLINK)) {
                                 return true;
                             }
                             long size = cursor.getInteger(SVNWCDbSchema.NODES__Fields.translated_size.toString());
