@@ -793,7 +793,7 @@ public class SvnDiffEditor implements ISVNEditor, ISVNUpdateEditor {
         return revision;
     }
 
-    private static SVNProperties computePropDiff(SVNProperties props1, SVNProperties props2) {
+    public static SVNProperties computePropDiff(SVNProperties props1, SVNProperties props2) {
         SVNProperties propsDiff = new SVNProperties();
         for (Iterator names = props2.nameSet().iterator(); names.hasNext();) {
             String newPropName = (String) names.next();

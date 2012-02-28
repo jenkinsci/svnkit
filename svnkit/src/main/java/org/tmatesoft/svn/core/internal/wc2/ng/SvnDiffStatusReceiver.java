@@ -109,7 +109,7 @@ public class SvnDiffStatusReceiver implements ISvnObjectReceiver<SvnStatus> {
                 }
 
                 SVNProperties actualProps = getDb().readProperties(localAbspath);
-                SVNProperties propChanges = actualProps.compareTo(baseProps);
+                SVNProperties propChanges = SvnDiffEditor.computePropDiff(baseProps, actualProps);
 
                 getCallback().dirPropsChanged(null, localAbspath, false, propChanges, baseProps);
             }
@@ -250,7 +250,7 @@ public class SvnDiffStatusReceiver implements ISvnObjectReceiver<SvnStatus> {
                 actualProps = new SVNProperties();
             }
             actualMimeType = actualProps.getStringValue(SVNProperty.MIME_TYPE);
-            propChanges = actualProps.compareTo(pristineProps);
+            propChanges = SvnDiffEditor.computePropDiff(pristineProps, actualProps);
 
             translatedFile = getContext().getTranslatedFile(localAbspath, localAbspath,
                     true, false, true, false);
@@ -289,7 +289,7 @@ public class SvnDiffStatusReceiver implements ISvnObjectReceiver<SvnStatus> {
             SVNProperties actualProps = getDb().readProperties(localAbspath);
             String actualMimeType = actualProps.getStringValue(SVNProperty.MIME_TYPE);
 
-            SVNProperties propChanges = actualProps.compareTo(pristineProps);
+            SVNProperties propChanges = SvnDiffEditor.computePropDiff(pristineProps, actualProps);
 
             if (modified || !propChanges.isEmpty()) {
                 getCallback().fileChanged(null, localAbspath, modified ? pristineAbspath : null,
