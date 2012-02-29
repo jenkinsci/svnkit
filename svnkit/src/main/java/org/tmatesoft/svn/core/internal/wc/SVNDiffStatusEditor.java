@@ -13,8 +13,10 @@ package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.File;
 import java.io.OutputStream;
+import java.util.Collection;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
+import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
@@ -67,6 +69,32 @@ public class SVNDiffStatusEditor implements ISVNEditor {
         String statusPath = getStatusPath(path);
         SVNDiffStatus status = new SVNDiffStatus(myAnchor != null ? new File(myAnchor, path) : null, myRootURL.appendPath(path, false), statusPath, SVNStatusType.STATUS_DELETED, false, kind);
         myHandler.handleDiffStatus(status);
+        if (kind == SVNNodeKind.DIR) {
+            diffDeletedDir(path);
+        }
+    }
+
+    private void diffDeletedDir(String path) throws SVNException {
+        Collection<SVNDirEntry> entries = myRepository.getDir(path, myRevision, null, 0, (Collection<SVNDirEntry>) null);
+        for (SVNDirEntry entry : entries) {
+            String name = entry.getName();
+            if ("".equals(name)) {
+                continue;
+            }
+            String entryPath = SVNPathUtil.append(path, name);
+            String statusPath = getStatusPath(entryPath);
+            SVNDiffStatus status = new SVNDiffStatus(
+                    myAnchor != null ? new File(myAnchor, entryPath) : null, 
+                    myRootURL.appendPath(entryPath, false), 
+                    statusPath, 
+                    SVNStatusType.STATUS_DELETED, 
+                    false, 
+                    entry.getKind());
+            myHandler.handleDiffStatus(status);
+            if (entry.getKind() == SVNNodeKind.DIR) {
+                diffDeletedDir(entryPath);
+            }
+        }
     }
 
     private String getStatusPath(String path) {
