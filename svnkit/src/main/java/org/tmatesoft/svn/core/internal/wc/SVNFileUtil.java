@@ -108,6 +108,7 @@ public class SVNFileUtil {
     private static File ourSystemAppDataPath;
 
     private static Method ourSetWritableMethod;
+    private static Method ourSetExecutableMethod;
 
     private static volatile boolean ourIsSleepForTimeStamp = true;
 
@@ -178,6 +179,14 @@ public class SVNFileUtil {
         try {
             ourSetWritableMethod = File.class.getMethod("setWritable", new Class[] {
                 Boolean.TYPE
+            });
+        } catch (SecurityException e) {
+        } catch (NoSuchMethodException e) {
+        }
+
+        try {
+            ourSetExecutableMethod = File.class.getMethod("setExecutable", new Class[] {
+                Boolean.TYPE, Boolean.TYPE,
             });
         } catch (SecurityException e) {
         } catch (NoSuchMethodException e) {
@@ -771,6 +780,20 @@ public class SVNFileUtil {
         if (isWindows || isOpenVMS || file == null || !file.exists() || SVNFileType.getType(file) == SVNFileType.SYMLINK) {
             return;
         }
+        
+        if (ourSetExecutableMethod != null) {
+            try {
+                ourSetExecutableMethod.invoke(file, new Object[] {
+                    Boolean.valueOf(executable),
+                    Boolean.FALSE,
+                });
+                return;
+            } catch (IllegalArgumentException e) {
+            } catch (IllegalAccessException e) {
+            } catch (InvocationTargetException e) {
+            }
+        }
+        
         if (SVNJNAUtil.setExecutable(file, executable)) {
             return;
         }
