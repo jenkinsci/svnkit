@@ -1401,7 +1401,10 @@ public class SVNWCDb implements ISVNWCDb {
          * get an early-exit in the hash lookup just above.
          */
         File original_abspath = localAbsPath;
-        SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(localAbsPath));
+        
+        SVNFileType fileType = SVNFileType.getType(localAbsPath);
+        SVNNodeKind kind = fileType == SVNFileType.DIRECTORY || (fileType == SVNFileType.SYMLINK && localAbsPath.isDirectory()) ? 
+                SVNNodeKind.DIR : SVNFileType.getNodeKind(fileType);
         if (kind != SVNNodeKind.DIR) {
             /*
              * If the node specified by the path is NOT present, then it cannot
