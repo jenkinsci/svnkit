@@ -274,7 +274,7 @@ public class SVNReporter17 implements ISVNReporterBaton {
                 }
                 continue;
             }
-            if (ths.status == SVNWCDbStatus.Excluded || ths.status == SVNWCDbStatus.NotPresent) {
+            if (ths.status == SVNWCDbStatus.ServerExcluded || ths.status == SVNWCDbStatus.NotPresent) {
                 if (!reportEverything) {
                     reporter.deletePath(thisReportRelpath);
                 }
