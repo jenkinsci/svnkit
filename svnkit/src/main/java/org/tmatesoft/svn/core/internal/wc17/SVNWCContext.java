@@ -2568,7 +2568,7 @@ public class SVNWCContext {
         boolean special = translateInfo.special;
         SVNEolStyle eolStyle = translateInfo.eolStyleInfo.eolStyle;
         byte[] eolStr = translateInfo.eolStyleInfo.eolStr;
-        Map<?,?> keywords = translateInfo.keywords;
+        Map<String, byte[]> keywords = translateInfo.keywords;
         if (special) {
             return readSpecialFile(localAbspath);
         }

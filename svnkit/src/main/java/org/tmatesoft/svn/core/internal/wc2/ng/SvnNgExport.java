@@ -200,7 +200,7 @@ public class SvnNgExport extends SvnNgOperationRunner<Long, SvnExport> {
             nodeInfo.release();
         }
 
-        Map<?,?> keywordsMap = null;
+        Map<String, byte[]> keywordsMap = null;
         if (keywords != null) {
             Structure<NodeInfo> nodeInfo = getWcContext().getDb().readInfo(from, NodeInfo.changedAuthor, NodeInfo.changedRev);
             String rev = Long.toString(nodeInfo.lng(NodeInfo.changedRev));

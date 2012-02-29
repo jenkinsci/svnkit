@@ -117,7 +117,7 @@ public class SvnRemoteExport extends SvnRemoteOperationRunner<Long, SvnExport> {
                 String mimeType = properties.getStringValue(SVNProperty.MIME_TYPE);
                 boolean binary = SVNProperty.isBinaryMimeType(mimeType);
                 String charset = SVNTranslator.getCharset(properties.getStringValue(SVNProperty.CHARSET), mimeType, url, options);
-                Map<?,?> keywords = SVNTranslator.computeKeywords(properties.getStringValue(SVNProperty.KEYWORDS), url, properties.getStringValue(SVNProperty.LAST_AUTHOR), properties
+                Map<String, byte[]> keywords = SVNTranslator.computeKeywords(properties.getStringValue(SVNProperty.KEYWORDS), url, properties.getStringValue(SVNProperty.LAST_AUTHOR), properties
                         .getStringValue(SVNProperty.COMMITTED_DATE), properties.getStringValue(SVNProperty.COMMITTED_REVISION), options);
                 byte[] eols = null;
                 if (SVNProperty.EOL_STYLE_NATIVE.equals(properties.getStringValue(SVNProperty.EOL_STYLE))) {
