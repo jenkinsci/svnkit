@@ -75,7 +75,7 @@ public class SVNDiffStatusEditor implements ISVNEditor {
     }
 
     private void diffDeletedDir(String path) throws SVNException {
-        Collection<SVNDirEntry> entries = myRepository.getDir(path, myRevision, null, 0, (Collection<SVNDirEntry>) null);
+        Collection<SVNDirEntry> entries = myRepository.getDir(path, myRevision, null, SVNDirEntry.DIRENT_KIND, (Collection<SVNDirEntry>) null);
         for (SVNDirEntry entry : entries) {
             String name = entry.getName();
             if ("".equals(name)) {
