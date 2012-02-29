@@ -5,6 +5,7 @@ import java.io.OutputStream;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.DefaultSVNDiffGenerator;
 import org.tmatesoft.svn.core.wc.ISVNDiffGenerator;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -89,8 +90,20 @@ public class SvnOldDiffGenerator implements ISvnDiffGenerator {
         generator.displayFileDiff(getDisplayPath(displayPath), leftFile, rightFile, revision1, revision2, mimeType1, mimeType2, outputStream);
     }
 
-    private String getDisplayPath(SvnTarget displayPath) {
-        return displayPath.getPathOrUrlString();
+    private String getDisplayPath(SvnTarget path) {
+        if (path.isFile()) {
+            final String absolutePath = path.getFile().getAbsolutePath().replace(File.separatorChar, '/');
+            final String currentPath = new File("").getAbsolutePath();
+
+            String relativePath = SVNPathUtil.getRelativePath(currentPath, absolutePath);
+            if (relativePath != null) {
+                return relativePath;
+            } else {
+                return absolutePath;
+            }
+        }
+
+        return path.getPathOrUrlString();
     }
 
     public boolean isForcedBinaryDiff() {

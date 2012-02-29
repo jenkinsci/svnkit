@@ -2,15 +2,26 @@ package org.tmatesoft.svn.test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.tmatesoft.svn.core.SVNCommitInfo;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.wc.ISVNDiffGenerator;
+import org.tmatesoft.svn.core.wc.SVNClientManager;
+import org.tmatesoft.svn.core.wc.SVNDiffClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnCopy;
 import org.tmatesoft.svn.core.wc2.SvnCopySource;
@@ -438,6 +449,40 @@ public class DiffTest {
         }
     }
 
+    @Test
+    public void testOldDiffGeneratorIsCalledOnCorrectPaths() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testOldDiffGeneratorIsCalledOnCorrectPaths", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder1 = new CommitBuilder(url);
+            commitBuilder1.addFile("directory/file");
+            commitBuilder1.commit();
+
+            final CommitBuilder commitBuilder2 = new CommitBuilder(url);
+            commitBuilder2.changeFile("directory/file", "newContents".getBytes());
+            commitBuilder2.commit();
+
+            final OldGenerator generator = new OldGenerator();
+
+            final SVNClientManager svnClientManager = SVNClientManager.newInstance();
+            SVNDiffClient client = new SVNDiffClient(svnClientManager, new DefaultSVNOptions());
+            client.setDiffGenerator(generator);
+            client.doDiff(url, SVNRevision.create(1), SVNRevision.create(1), SVNRevision.create(2), SVNDepth.INFINITY, true, SVNFileUtil.DUMMY_OUT);
+
+            final List<GeneratorCall> expectedCalls = new ArrayList<GeneratorCall>();
+            expectedCalls.add(new GeneratorCall(GeneratorCallKind.DISPLAY_FILE_DIFF, "directory/file"));
+
+            Assert.assertEquals(expectedCalls, generator.calls);
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
     private String runLocalDiff(SvnOperationFactory svnOperationFactory, File target, File relativeToDirectory) throws SVNException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
@@ -471,6 +516,7 @@ public class DiffTest {
 
         return new String(byteArrayOutputStream.toByteArray());
     }
+
     private String runDiff(SvnOperationFactory svnOperationFactory, File file, SVNRevision startRevision, SVNRevision endRevision) throws SVNException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
@@ -484,5 +530,139 @@ public class DiffTest {
 
     public String getTestName() {
         return "DiffTest";
+    }
+
+    private static enum GeneratorCallKind {
+        DISPLAY_PROP_DIFF, DISPLAY_FILE_DIFF, DISPLAY_DELETED_DIRECTORY, DISPLAY_ADDED_DIRECTORY
+    }
+
+    private static class GeneratorCall {
+        private final GeneratorCallKind callKind;
+        private final String path;
+
+        public GeneratorCall(GeneratorCallKind callKind, String path) {
+            this.callKind = callKind;
+            this.path = path;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            GeneratorCall that = (GeneratorCall) o;
+
+            if (callKind != that.callKind) {
+                return false;
+            }
+            if (!path.equals(that.path)) {
+                return false;
+            }
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = callKind.hashCode();
+            result = 31 * result + path.hashCode();
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "GeneratorCall{" +
+                    "callKind=" + callKind +
+                    ", path='" + path + '\'' +
+                    '}';
+        }
+    }
+
+    private static class OldGenerator implements ISVNDiffGenerator {
+
+        private final List<GeneratorCall> calls;
+
+        private OldGenerator() {
+            calls = new ArrayList<GeneratorCall>();
+        }
+
+        public void init(String anchorPath1, String anchorPath2) {
+        }
+
+        public void setBasePath(File basePath) {
+        }
+
+        public void setForcedBinaryDiff(boolean forced) {
+        }
+
+        public void setEncoding(String encoding) {
+        }
+
+        public String getEncoding() {
+            return null;
+        }
+
+        public void setEOL(byte[] eol) {
+        }
+
+        public byte[] getEOL() {
+            return SVNProperty.EOL_LF_BYTES;
+        }
+
+        public void setDiffDeleted(boolean isDiffDeleted) {
+        }
+
+        public boolean isDiffDeleted() {
+            return false;
+        }
+
+        public void setDiffAdded(boolean isDiffAdded) {
+        }
+
+        public boolean isDiffAdded() {
+            return true;
+        }
+
+        public void setDiffCopied(boolean isDiffCopied) {
+        }
+
+        public boolean isDiffCopied() {
+            return false;
+        }
+
+        public void setDiffUnversioned(boolean diffUnversioned) {
+        }
+
+        public boolean isDiffUnversioned() {
+            return false;
+        }
+
+        public File createTempDirectory() throws SVNException {
+            return SVNFileUtil.createTempDirectory("svnkitdiff");
+        }
+
+        public void displayPropDiff(String path, SVNProperties baseProps, SVNProperties diff, OutputStream result) throws SVNException {
+            calls.add(new GeneratorCall(GeneratorCallKind.DISPLAY_PROP_DIFF, path));
+        }
+
+        public void displayFileDiff(String path, File file1, File file2, String rev1, String rev2, String mimeType1, String mimeType2, OutputStream result) throws SVNException {
+            calls.add(new GeneratorCall(GeneratorCallKind.DISPLAY_FILE_DIFF, path));
+        }
+
+        public void displayDeletedDirectory(String path, String rev1, String rev2) throws SVNException {
+            calls.add(new GeneratorCall(GeneratorCallKind.DISPLAY_DELETED_DIRECTORY, path));
+        }
+
+        public void displayAddedDirectory(String path, String rev1, String rev2) throws SVNException {
+            calls.add(new GeneratorCall(GeneratorCallKind.DISPLAY_ADDED_DIRECTORY, path));
+        }
+
+        public boolean isForcedBinaryDiff() {
+            return false;
+        }
     }
 }
