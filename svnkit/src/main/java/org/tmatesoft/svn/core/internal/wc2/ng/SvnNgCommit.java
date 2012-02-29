@@ -150,9 +150,10 @@ public class SvnNgCommit extends SvnNgOperationRunner<SVNCommitInfo, SvnCommit> 
             SVNRepository repository = getRepositoryAccess().createRepository(baseURL, firstItem.getPath());
             SVNCommitMediator17 mediator = new SVNCommitMediator17(context, committables);
             
-            ISVNEditor commitEditor = repository.getCommitEditor(commitMessage, lockTokens, keepLocks, revisionProperties, mediator);
+            ISVNEditor commitEditor = null;
             
             try {
+                commitEditor = repository.getCommitEditor(commitMessage, lockTokens, keepLocks, revisionProperties, mediator);
                 SVNCommitter17 committer = new SVNCommitter17(context, committables, repositoryRootUrl, mediator.getTmpFiles(), md5Checksums, sha1Checksums);
                 SVNCommitUtil.driveCommitEditor(committer, committables.keySet(), commitEditor, -1);
                 committer.sendTextDeltas(commitEditor);
