@@ -20,6 +20,7 @@ svnkit-test/configurations/shared/daemon/template eol=lf
 svnkit-test/configurations/shared/daemon/template.bat -text
 svnkit-test/configurations/shared/daemon/template.py -text
 svnkit-test/configurations/shared/fsfs.conf -text
+svnkit-test/configurations/svn17/cmdline/svntest/main.py -text
 svnkit-test/nailgun/nailgun-0.7.1.jar -text
 svnkit-test/nailgun/ng.exe -text
 svnkit-test/src/main/java/org/tmatesoft/svn/core/test/ConsoleLogger.java -text svneol=native#unset

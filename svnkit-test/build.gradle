@@ -69,6 +69,13 @@ def runPythonTests() {
     File svnBinariesTar = configurations."svnBinaries${project.svnVersion}".files.find {return true}
 
     untar(pythonTestsTar, sandboxDir)
+    copy {
+        into sandboxDir
+        into('svn-python-tests') {
+            from 'configurations/svn' + project.svnVersion + '/cmdline'
+        }
+        
+    }
     if (!project.hasProperty('svn.binaries.local')) { untar(svnBinariesTar, sandboxDir) }
 
     if (getOSName() != 'windows' && project.svnVersion == '17') {

@@ -592,17 +592,13 @@ public class PythonTests {
 
         generateClientScript(template, new File("daemon/jsvn"), NailgunProcessor.class.getName(), "svn", portNumber, svnHome, pattern);
         generateClientScript(template, new File("daemon/jsvnadmin"), NailgunProcessor.class.getName(), "svnadmin", portNumber, svnHome, pattern);
-        generateClientScript(template, new File("daemon/jsvnversion"), NailgunProcessor.class.getName(), "svnversion", portNumber, svnHome, pattern);
+//        generateClientScript(template, new File("daemon/jsvnversion"), NailgunProcessor.class.getName(), "svnversion", portNumber, svnHome, pattern);
         generateClientScript(template, new File("daemon/jsvnlook"), NailgunProcessor.class.getName(), "svnlook", portNumber, svnHome, pattern);
         generateClientScript(template, new File("daemon/jsvnsync"), NailgunProcessor.class.getName(), "svnsync", portNumber, svnHome, pattern);
         generateClientScript(template, new File("daemon/jsvndumpfilter"), NailgunProcessor.class.getName(), "svndumpfilter", portNumber, svnHome, pattern);
-        // generate dumb jsvnmucc.
-        File svnMuccScriptFile = new File("daemon/jsvnmucc");
-        try {
-            SVNFileUtil.writeToFile(svnMuccScriptFile, "#!/bin/bash\n" + svnHome + "/bin/svnmucc \"$@\" < /dev/stdin\nexit $?", "UTF-8");
-            SVNFileUtil.setExecutable(svnMuccScriptFile, true);
-        } catch (SVNException e) {
-        }
+
+        generateProxyScript("jsvnmucc", "svnmucc", svnHome);
+        generateProxyScript("jsvnversion", "svnversion", svnHome);
         
         if (SVNFileUtil.isWindows) {
             generateClientScript(templatePy, new File("daemon/jsvn.py"), NailgunProcessor.class.getName(), "svn", portNumber, svnHome, pattern);
@@ -622,6 +618,15 @@ public class PythonTests {
         }
         SVNFileUtil.setExecutable(new File("daemon/snapshot"), Boolean.TRUE.toString().equalsIgnoreCase(properties.getProperty("snapshot", "false")));
         return new File("daemon").getAbsolutePath();
+    }
+
+    private static void generateProxyScript(String jsvnName, String svnName, String svnHome) {
+        File svnMuccScriptFile = new File("daemon/" + jsvnName);
+        try {
+            SVNFileUtil.writeToFile(svnMuccScriptFile, "#!/bin/bash\n" + svnHome + "/bin/" + svnName + " \"$@\" < /dev/stdin\nexit $?", "UTF-8");
+            SVNFileUtil.setExecutable(svnMuccScriptFile, true);
+        } catch (SVNException e) {
+        }
     }
     
     public static int startSVNServe(Properties props) throws Throwable {
