@@ -15,6 +15,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.ISVNRepositoryPool;
+import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -34,10 +35,19 @@ public class SvnOperation<V> {
         initDefaults();
     }
 
+    /**
+     * Get an event handler for the operation. This event handler will be
+     * dispatched {@link SVNEvent} objects to provide detailed information about
+     * actions and progress state of version control operations performed by
+     * <b>do</b>*<b>()</b> methods of <b>SVN</b>*<b>Client</b> classes.
+     */
     public ISVNEventHandler getEventHandler() {
         return getOperationFactory().getEventHandler();
     }
 
+    /**
+     * Get operation options.
+     */
     public ISVNOptions getOptions() {
         return getOperationFactory().getOptions();
     }
@@ -49,6 +59,11 @@ public class SvnOperation<V> {
         this.targets = new ArrayList<SvnTarget>();
     }
 
+    
+    /**
+     * Set limit operation by depth.
+     * @param depth
+     */
     public void setDepth(SVNDepth depth) {
         this.depth = depth;
     }
@@ -78,22 +93,39 @@ public class SvnOperation<V> {
         return targets != null && !targets.isEmpty() ? targets.iterator().next() : null;
     }
     
+    /**
+     * Get limit operation by depth.
+     */
     public SVNDepth getDepth() {
         return depth;
     }
     
+    /**
+     * Set revision.
+     * @param revision
+     */
     public void setRevision(SVNRevision revision) {
         this.revision = revision;
     }
 
+    /**
+     * Get revision.
+     */
     public SVNRevision getRevision() {
         return revision;
     }
     
+    /**
+     * Set changelist to operate only on members of.
+     * @param changelists
+     */
     public void setApplicalbeChangelists(Collection<String> changelists) {
         this.changelists = changelists;
     }
     
+    /**
+     * Get changelist to operate only on members of.
+     */
     public Collection<String> getApplicableChangelists() {
         if (this.changelists == null || this.changelists.isEmpty()) {
             return null;

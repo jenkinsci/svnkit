@@ -246,7 +246,7 @@ public class SVNUpdateClient extends SVNBasicClient {
      * <p/>
      * If <code>depthIsSticky</code> is set and <code>depth</code> is not
      * {@link SVNDepth#UNKNOWN}, then in addition to updating <code>paths</code>
-     * , also sets their sticky ambient depth value to <code>depth</codes>.
+     * , also sets their sticky ambient depth value to <code>depth</code>.
      * 
      * <p/>
      * If <code>allowUnversionedObstructions</code> is <span
