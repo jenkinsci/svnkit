@@ -65,14 +65,31 @@ public class SvnNgWcToReposCopy extends SvnNgOperationRunner<SVNCommitInfo, SvnR
     
     @Override
     protected SVNCommitInfo run(SVNWCContext context) throws SVNException {
-        SVNCommitInfo info = doRun(context);
+        SVNCommitInfo info = null;
+        try {
+            info = doRun(context, getOperation().getFirstTarget().getURL());
+        } catch (SVNException e) {
+            SVNErrorCode code = e.getErrorMessage().getErrorCode();
+            if (!getOperation().isFailWhenDstExists()
+                    && getOperation().getSources().size() == 1 
+                    && (code == SVNErrorCode.ENTRY_EXISTS || code == SVNErrorCode.FS_ALREADY_EXISTS)) {
+                
+                SvnCopySource source = getOperation().getSources().iterator().next();
+                SVNURL target = getOperation().getFirstTarget().getURL();
+                target = target.appendPath(source.getSource().getFile().getName(), false);
+
+                info = doRun(context, target);
+            } else {
+                throw e;
+            }
+        }
         if (info != null) {
             getOperation().receive(getOperation().getFirstTarget(), info);
         }
         return info;
     }
     
-    protected SVNCommitInfo doRun(SVNWCContext context) throws SVNException {
+    protected SVNCommitInfo doRun(SVNWCContext context, SVNURL target) throws SVNException {
         if (getOperation().isMove()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
                     "Moves between the working copy and the repository are not supported");
@@ -88,7 +105,7 @@ public class SvnNgWcToReposCopy extends SvnNgOperationRunner<SVNCommitInfo, SvnR
                 String baseName;
                 copyPair.source = copySource.getSource().getFile();
                 baseName = copyPair.source.getName();
-                copyPair.dst = getOperation().getFirstTarget().getURL();
+                copyPair.dst = target;
                 copyPair.dst = copyPair.dst.appendPath(baseName, false);
                 copyPairs.add(copyPair);
             }
@@ -96,7 +113,7 @@ public class SvnNgWcToReposCopy extends SvnNgOperationRunner<SVNCommitInfo, SvnR
             SvnCopyPair copyPair = new SvnCopyPair();
             SvnCopySource source = sources.iterator().next(); 
             copyPair.source= source.getSource().getFile();
-            copyPair.dst = getOperation().getFirstTarget().getURL();            
+            copyPair.dst = target;            
             copyPairs.add(copyPair);
         }
 
