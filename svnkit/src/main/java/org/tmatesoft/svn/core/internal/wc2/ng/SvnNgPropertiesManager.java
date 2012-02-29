@@ -185,8 +185,8 @@ public class SvnNgPropertiesManager {
         boolean clearRecordedInfo = false;
         if (kind == SVNNodeKind.FILE && SVNProperty.KEYWORDS.equals(propertyName)) {
             String oldValue = properties.getStringValue(SVNProperty.KEYWORDS);
-            Map<String, String> keywords = oldValue != null ? context.getKeyWords(path, oldValue) : new HashMap<String, String>();
-            Map<String, String> newKeywords = value != null ? context.getKeyWords(path, value.getString()) : new HashMap<String, String>();
+            Map<String, byte[]> keywords = oldValue != null ? context.getKeyWords(path, oldValue) : new HashMap<String, byte[]>();
+            Map<String, byte[]> newKeywords = value != null ? context.getKeyWords(path, value.getString()) : new HashMap<String, byte[]>();
             if (!keywords.equals(newKeywords)) {
                 clearRecordedInfo = true;
             }

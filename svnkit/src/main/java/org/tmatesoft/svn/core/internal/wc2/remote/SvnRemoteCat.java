@@ -70,8 +70,7 @@ public class SvnRemoteCat extends SvnRemoteOperationRunner<Void, SvnCat> {
                 String cmtRev = properties.getStringValue(SVNProperty.COMMITTED_REVISION);
                 String cmtDate = properties.getStringValue(SVNProperty.COMMITTED_DATE);
                 String author = properties.getStringValue(SVNProperty.LAST_AUTHOR);
-                @SuppressWarnings("unchecked")
-                Map<String, String> keywordsMap = SVNTranslator.computeKeywords(
+                Map<String, byte[]> keywordsMap = SVNTranslator.computeKeywords(
                 		keywords, 
                 		getOperation().isExpandKeywords() ? repos.getLocation().toString() : null, 
                 		author, 

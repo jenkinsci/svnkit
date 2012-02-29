@@ -45,6 +45,7 @@ import java.nio.charset.IllegalCharsetNameException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
 
@@ -570,7 +571,7 @@ public class SVNTranslator {
         return result;
     }
 
-    public static Map<String, String> computeKeywords(String keywords, String u, String a, String d, String r, ISVNOptions options) {
+    public static Map<String, byte[]> computeKeywords(String keywords, String u, String a, String d, String r, ISVNOptions options) {
         if (keywords == null) {
             return Collections.emptyMap();
         }
@@ -586,7 +587,7 @@ public class SVNTranslator {
 
         Date jDate = d == null ? null : SVNDate.parseDate(d);
 
-        Map map = new SVNHashMap();
+        Map map = new HashMap<String, byte[]>();
         try {
             for (StringTokenizer tokens = new StringTokenizer(keywords, " \t\n\b\r\f"); tokens.hasMoreTokens();) {
                 String token = tokens.nextToken();

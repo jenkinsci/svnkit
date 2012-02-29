@@ -101,7 +101,6 @@ svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/old/SvnOldSetLock.java 
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/old/SvnOldUnlock.java -text svneol=native#unset
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/old/SvnOldUpgradeEntries.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/remote/SvnRemoteAnnotate.java -text svneol=native#unset
-svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/remote/SvnRemoteCat.java -text svneol=native#unset
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/remote/SvnRemoteLog.java -text svneol=native#unset
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/remote/SvnRemoteRemoteDelete.java -text svneol=native#unset
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/remote/SvnRemoteRemoteMkDir.java -text svneol=native#unset

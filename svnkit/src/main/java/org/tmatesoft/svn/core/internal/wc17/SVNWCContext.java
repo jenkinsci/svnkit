@@ -841,7 +841,7 @@ public class SVNWCContext {
         return null;
     }
 
-    private boolean isTranslationRequired(SVNEolStyle style, byte[] eol, Map<String, String> keywords, boolean special, boolean force_eol_check) {
+    private boolean isTranslationRequired(SVNEolStyle style, byte[] eol, Map<String, byte[]> keywords, boolean special, boolean force_eol_check) {
         return (special 
                 || (keywords != null && !keywords.isEmpty()) 
                 || (style != SVNEolStyle.None && force_eol_check)
@@ -879,7 +879,7 @@ public class SVNWCContext {
 
     // TODO merget isSpecial()/getEOLStyle()/getKeyWords() into
     // getTranslateInfo()
-    public Map<String, String> getKeyWords(File localAbsPath, String forceList) throws SVNException {
+    public Map<String, byte[]> getKeyWords(File localAbsPath, String forceList) throws SVNException {
         assert (isAbsolute(localAbsPath));
 
         String list;
@@ -900,13 +900,13 @@ public class SVNWCContext {
 
         final SVNURL url = getNodeUrl(localAbsPath);
         final WCDbInfo readInfo = db.readInfo(localAbsPath, InfoField.changedRev, InfoField.changedDate, InfoField.changedAuthor);
-        return SVNTranslator.computeKeywords(list, url.toString(), readInfo.changedAuthor, readInfo.changedDate.toString(), Long.toString(readInfo.changedRev), getOptions());
+        return SVNTranslator.computeKeywords(list, url.toString(), readInfo.changedAuthor, readInfo.changedDate.format(), Long.toString(readInfo.changedRev), getOptions());
     }
 
     public static class TranslateInfo {
 
         public SVNEolStyleInfo eolStyleInfo;
-        public Map<String,String> keywords;
+        public Map<String, byte[]> keywords;
         public boolean special;
     }
     public TranslateInfo getTranslateInfo(File localAbspath, boolean fetchEolStyle, boolean fetchKeywords, boolean fetchSpecial) throws SVNException {
@@ -935,7 +935,7 @@ public class SVNWCContext {
         return info;
     }
     
-    private Map<String, String> expandKeywords(File localAbsPath, File wriAbspath, String keywordsList, boolean forNormalization) throws SVNException {
+    private Map<String, byte[]> expandKeywords(File localAbsPath, File wriAbspath, String keywordsList, boolean forNormalization) throws SVNException {
         String url = null;
         SVNDate changedDate = null;
         long changedRev;
@@ -961,7 +961,7 @@ public class SVNWCContext {
             changedDate = SVNDate.NULL;
             changedAuthor = "";            
         }
-        return SVNTranslator.computeKeywords(keywordsList, url, changedAuthor, changedDate.toString(), Long.toString(changedRev), getOptions());
+        return SVNTranslator.computeKeywords(keywordsList, url, changedAuthor, changedDate.format(), Long.toString(changedRev), getOptions());
     }
 
     public boolean isFileExternal(File path) throws SVNException {
@@ -2596,7 +2596,7 @@ public class SVNWCContext {
         TranslateInfo translateInfo = getTranslateInfo(versionedAbspath, true, true, true);
         SVNEolStyle style = translateInfo.eolStyleInfo.eolStyle;
         byte[] eol = translateInfo.eolStyleInfo.eolStr;
-        Map<String, String> keywords = translateInfo.keywords;
+        Map<String, byte[]> keywords = translateInfo.keywords;
         boolean special = translateInfo.special;
         File xlated_path;
         if (!isTranslationRequired(style, eol, keywords, special, true) && !forceCopy) {
@@ -2611,7 +2611,7 @@ public class SVNWCContext {
             } else {
                 tmpDir = db.getWCRootTempDir(versionedAbspath);
             }
-            tmpVFile = SVNFileUtil.createUniqueFile(tmpDir, "svn", ".tmp", true);
+            tmpVFile = SVNFileUtil.createUniqueFile(tmpDir, src.getName(), ".tmp", false);
             if (expand) {
                 repairForced = true;
             } else {
@@ -2766,7 +2766,7 @@ public class SVNWCContext {
         }
         SVNEolStyle style;
         byte[] eol;
-        Map<String, String> keywords;
+        Map<String, byte[]> keywords;
         boolean special;
         if (isBinary && (((prop = propDiff.getSVNPropertyValue(SVNProperty.MIME_TYPE)) != null && prop.isString() && mimeTypeIsBinary(prop.getString())) || prop == null)) {
             keywords = null;
