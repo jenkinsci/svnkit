@@ -234,9 +234,11 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
         SvnDiffCallback callback = createDiffCallback(generator, false, revisionNumber1, revisionNumber2);
         SVNRepository extraRepository = getRepositoryAccess().createRepository(anchor1, null, false);
 
-        ISVNEditor editor;
         boolean pureRemoteDiff = (basePath == null);
-        editor = SvnNgRemoteDiffEditor.createEditor(getWcContext(), pureRemoteDiff ? new File("") : basePath, getOperation().getDepth(), extraRepository, revisionNumber1, true, false, pureRemoteDiff, callback, this);
+        SvnNgRemoteDiffEditor remoteDiffEditor = SvnNgRemoteDiffEditor.createEditor(getWcContext(), pureRemoteDiff ? new File("") : basePath, getOperation().getDepth(), extraRepository, revisionNumber1, true, false, pureRemoteDiff, callback, this);
+
+        ISVNEditor editor;
+        editor = remoteDiffEditor;
         editor = SVNCancellableEditor.newInstance(editor, this, SVNDebugLog.getDefaultLog());
 
         ISVNReporterBaton reporter = new ISVNReporterBaton() {
@@ -247,10 +249,13 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
             }
         };
 
+        try {
         repository.diff(url2, revisionNumber2, revisionNumber1, targetString1,
                 getOperation().isIgnoreAncestry(), getOperation().getDepth(), true, reporter, editor);
+        } finally {
+            remoteDiffEditor.cleanup();
+        }
 
-        //TODO: is cleanup required? editor could cleanup itself by putting cleanup function to closeEdit and abortEdit
     }
 
     private void doDiffReposWC(SvnTarget target1, SVNRevision revision1, SVNRevision pegRevision, SvnTarget target2, SVNRevision revision2, boolean reverse) throws SVNException {
@@ -303,8 +308,19 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
         SvnDiffCallback callback = createDiffCallback(generator, reverse, revisionNumber1, -1);
 
         SVNReporter17 reporter = new SVNReporter17(target2.getFile(), getWcContext(), false, !serverSupportsDepth, getOperation().getDepth(), false, false, true, false, SVNDebugLog.getDefaultLog());
-        ISVNEditor editor = createDiffEditor(anchor, target, reverse, isRevisionBase(revision2), callback, serverSupportsDepth);
-        repository2.diff(url1, revisionNumber1, revisionNumber1, target, getOperation().isIgnoreAncestry(), getDiffDepth(getOperation().getDepth()), true, reporter, editor);
+        boolean revisionIsBase = isRevisionBase(revision2);
+        SvnDiffEditor svnDiffEditor = new SvnDiffEditor(anchor, target, callback, getOperation().getDepth(), getWcContext(), reverse, revisionIsBase, getOperation().isShowCopiesAsAdds(), getOperation().isIgnoreAncestry(), getOperation().getApplicableChangelists(), getOperation().isUseGitDiffFormat(), this);
+
+        ISVNUpdateEditor updateEditor = svnDiffEditor;
+        if (!serverSupportsDepth && getOperation().getDepth() == SVNDepth.UNKNOWN) {
+            updateEditor = new SVNAmbientDepthFilterEditor17(updateEditor, getWcContext(), anchor, target, revisionIsBase);
+        }
+        ISVNEditor editor = SVNCancellableEditor.newInstance(updateEditor, this, SVNDebugLog.getDefaultLog());
+        try{
+            repository2.diff(url1, revisionNumber1, revisionNumber1, target, getOperation().isIgnoreAncestry(), getDiffDepth(getOperation().getDepth()), true, reporter, editor);
+        } finally {
+            svnDiffEditor.cleanup();
+        }
     }
 
     private void doDiffWCWC(SvnTarget target1, SVNRevision revision1, SvnTarget target2, SVNRevision revision2) throws SVNException {
@@ -376,7 +392,6 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
                 getOperation().getDepth(),
                 statusHandler);
         statusEditor.walkStatus(localAbspath, getOperation().getDepth(), getAll, !diffIgnored, false, getOperation().getApplicableChangelists());
-
     }
 
     private void checkDiffTargetExists(SVNURL url, long revision, long otherRevision, SVNRepository repository) throws SVNException {
@@ -403,14 +418,6 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
 
     private boolean isPeggedDiff() {
         return getOperation().getTargets().size() == 1;
-    }
-
-    private ISVNEditor createDiffEditor(File anchorAbspath, String target, boolean reverse, boolean revisionIsBase, ISvnDiffCallback callback, boolean serverSupportsDepth) {
-        ISVNUpdateEditor editor = new SvnDiffEditor(anchorAbspath, target, callback, getOperation().getDepth(), getWcContext(), reverse, revisionIsBase, getOperation().isShowCopiesAsAdds(), getOperation().isIgnoreAncestry(), getOperation().getApplicableChangelists(), getOperation().isUseGitDiffFormat(), this);
-        if (!serverSupportsDepth && getOperation().getDepth() == SVNDepth.UNKNOWN) {
-            editor = new SVNAmbientDepthFilterEditor17(editor, getWcContext(), anchorAbspath, target, revisionIsBase);
-        }
-        return SVNCancellableEditor.newInstance(editor, this, SVNDebugLog.getDefaultLog());
     }
 
     private boolean isRevisionBase(SVNRevision revision2) {

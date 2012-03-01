@@ -58,7 +58,7 @@ public class SvnDiffEditor implements ISVNEditor, ISVNUpdateEditor {
     private boolean rootOpened;
     private Entry rootEntry;
     private Entry currentEntry;
-    private File tempDirectory;
+    private Collection<File> tempFiles;
 
     //once initialized
     private final SVNDeltaProcessor deltaProcessor;
@@ -78,6 +78,7 @@ public class SvnDiffEditor implements ISVNEditor, ISVNUpdateEditor {
         this.canceller = canceller;
         this.reverseOrder = reverseOrder;
         this.deltaProcessor = new SVNDeltaProcessor();
+        this.tempFiles = new ArrayList<File>();
     }
 
     public SvnDiffEditor() {
@@ -755,7 +756,9 @@ public class SvnDiffEditor implements ISVNEditor, ISVNUpdateEditor {
     }
 
     private File createTempFile(File tempDir) throws SVNException {
-        return SVNFileUtil.createUniqueFile(tempDir, "diff.", ".tmp", true);
+        final File tempFile = SVNFileUtil.createUniqueFile(tempDir, "diff.", ".tmp", true);
+        tempFiles.add(tempFile);
+        return tempFile;
     }
 
     private void addToCompared(Entry entry, String path) {
@@ -766,7 +769,12 @@ public class SvnDiffEditor implements ISVNEditor, ISVNUpdateEditor {
     }
 
     public void cleanup() {
-        //TODO
+        for (File tempFile : tempFiles) {
+            try {
+                SVNFileUtil.deleteFile(tempFile);
+            } catch (SVNException ignore) {
+            }
+        }
     }
 
     public long getTargetRevision() {

@@ -579,9 +579,12 @@ public class SvnNgRemoteDiffEditor implements ISVNEditor {
         return null;
     }
 
-    public void cleanup() throws SVNException {
+    public void cleanup() {
         for (File tmpFile : tmpFiles) {
-            SVNFileUtil.deleteFile(tmpFile);
+            try {
+                SVNFileUtil.deleteFile(tmpFile);
+            } catch (SVNException ignore) {
+            }
         }
         if (globalTmpDir != null) {
             SVNFileUtil.deleteAll(globalTmpDir, true);
