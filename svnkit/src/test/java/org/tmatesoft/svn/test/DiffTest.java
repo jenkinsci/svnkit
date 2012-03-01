@@ -19,6 +19,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc2.ng.SvnDiffGenerator;
 import org.tmatesoft.svn.core.wc.ISVNDiffGenerator;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNDiffClient;
@@ -481,6 +482,136 @@ public class DiffTest {
             svnOperationFactory.dispose();
             sandbox.dispose();
         }
+    }
+
+    @Test
+    public void testGitDiffFormatForCopiedFile() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testGitDiffFormatForCopiedFile", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("copySource");
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, SVNRevision.HEAD.getNumber());
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+
+            final File copySourceFile = new File(workingCopyDirectory, "copySource");
+            final File copyTargetFile = new File(workingCopyDirectory, "copyTarget");
+
+            final SvnCopy copy = svnOperationFactory.createCopy();
+            copy.addCopySource(SvnCopySource.create(SvnTarget.fromFile(copySourceFile), SVNRevision.WORKING));
+            copy.setSingleTarget(SvnTarget.fromFile(copyTargetFile, SVNRevision.WORKING));
+            copy.run();
+
+            TestUtil.writeFileContentsString(copyTargetFile, "New contents (copy)");
+
+            final File basePath = new File("");
+
+            final SvnDiffGenerator diffGenerator = new SvnDiffGenerator();
+            diffGenerator.setBasePath(basePath);
+
+            final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            final SvnDiff diff = svnOperationFactory.createDiff();
+            diff.setTargets(SvnTarget.fromFile(workingCopyDirectory, SVNRevision.BASE), SvnTarget.fromFile(workingCopyDirectory, SVNRevision.WORKING));
+            diff.setUseGitDiffFormat(true);
+            diff.setOutput(byteArrayOutputStream);
+            diff.setDiffGenerator(diffGenerator);
+            diff.run();
+
+            final String actualDiffOutput = byteArrayOutputStream.toString();
+            final String expectedDiffOutput = "Index: " +
+                    getRelativePath(copyTargetFile, basePath) +
+                    "\n" +
+                    "===================================================================\n" +
+                    "diff --git a/copySource b/copyTarget\n" +
+                    "copy from copySource\n" +
+                    "copy to copyTarget\n" +
+                    "--- a/copySource\t(revision 0)\n" +
+                    "+++ b/copyTarget\t(working copy)\n" +
+                    "@@ -0,0 +1 @@\n" +
+                    "+New contents (copy)\n" +
+                    "\\ No newline at end of file\n";
+            Assert.assertEquals(expectedDiffOutput, actualDiffOutput);
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testGitDiffFormatForMovedFile() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testGitDiffFormatForMovedFile", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("moveSource");
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, SVNRevision.HEAD.getNumber());
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+
+            final File moveSourceFile = new File(workingCopyDirectory, "moveSource");
+            final File moveTargetFile = new File(workingCopyDirectory, "moveTarget");
+
+            final SvnCopy move = svnOperationFactory.createCopy();
+            move.setMove(true);
+            move.addCopySource(SvnCopySource.create(SvnTarget.fromFile(moveSourceFile), SVNRevision.WORKING));
+            move.setSingleTarget(SvnTarget.fromFile(moveTargetFile, SVNRevision.WORKING));
+            move.run();
+
+            TestUtil.writeFileContentsString(moveTargetFile, "New contents (move)");
+
+            final File basePath = new File("");
+
+            final SvnDiffGenerator diffGenerator = new SvnDiffGenerator();
+            diffGenerator.setBasePath(basePath);
+
+            final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            final SvnDiff diff = svnOperationFactory.createDiff();
+            diff.setTargets(SvnTarget.fromFile(workingCopyDirectory, SVNRevision.BASE), SvnTarget.fromFile(workingCopyDirectory, SVNRevision.WORKING));
+            diff.setUseGitDiffFormat(true);
+            diff.setOutput(byteArrayOutputStream);
+            diff.setDiffGenerator(diffGenerator);
+            diff.run();
+
+            final String actualDiffOutput = byteArrayOutputStream.toString();
+            final String expectedDiffOutput = "Index: " +
+                    getRelativePath(moveSourceFile, basePath) +
+                    "\n" +
+                    "===================================================================\n" +
+                    "diff --git a/moveSource b/moveSource\n" +
+                    "deleted file mode 10644\n" +
+                    "Index: " +
+                    getRelativePath(moveTargetFile, basePath) +
+                    "\n" +
+                    "===================================================================\n" +
+                    "diff --git a/moveSource b/moveTarget\n" +
+                    "copy from moveSource\n" +
+                    "copy to moveTarget\n" +
+                    "--- a/moveSource\t(revision 0)\n" +
+                    "+++ b/moveTarget\t(working copy)\n" +
+                    "@@ -0,0 +1 @@\n" +
+                    "+New contents (move)\n" +
+                    "\\ No newline at end of file\n";
+            Assert.assertEquals(expectedDiffOutput, actualDiffOutput);
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    private String getRelativePath(File path, File basePath) {
+        return SVNPathUtil.getRelativePath(basePath.getAbsolutePath().replace(File.separatorChar, '/'),
+                path.getAbsolutePath().replace(File.separatorChar, '/'));
     }
 
     private String runLocalDiff(SvnOperationFactory svnOperationFactory, File target, File relativeToDirectory) throws SVNException {

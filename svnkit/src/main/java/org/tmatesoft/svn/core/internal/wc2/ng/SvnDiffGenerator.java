@@ -223,7 +223,7 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
 //            }
 
             if (useGitFormat) {
-                displayGitHeaderFields(outputStream, target, revision1, revision2, SvnDiffCallback.OperationKind.Modified);
+                displayGitHeaderFields(outputStream, target, revision1, revision2, SvnDiffCallback.OperationKind.Modified, null);
             } else {
                 displayHeaderFields(outputStream, label1, label2);
             }
@@ -234,8 +234,8 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
         displayPropDiffValues(outputStream, propChanges, originalProps);
     }
 
-    private void displayGitHeaderFields(OutputStream outputStream, SvnTarget target, String revision1, String revision2, SvnDiffCallback.OperationKind operation) throws SVNException {
-        String path1 = getRelativeToRootPath(target, originalTarget1);
+    private void displayGitHeaderFields(OutputStream outputStream, SvnTarget target, String revision1, String revision2, SvnDiffCallback.OperationKind operation, String copyFromPath) throws SVNException {
+        String path1 = copyFromPath != null ? copyFromPath : getRelativeToRootPath(target, originalTarget1);
         String path2 = getRelativeToRootPath(target, originalTarget2);
 
         try {
@@ -347,7 +347,7 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
 
             runExternalDiffCommand(outputStream, diffCommand, leftFile, rightFile, label1, label2);
         } else {
-            internalDiff(target, outputStream, displayPath, leftFile, rightFile, label1, label2, operation, copyFromPath == null ? null : getDisplayPath(SvnTarget.fromFile(copyFromPath)), revision1, revision2);
+            internalDiff(target, outputStream, displayPath, leftFile, rightFile, label1, label2, operation, copyFromPath == null ? null : copyFromPath.getPath(), revision1, revision2);
         }
     }
 
@@ -369,7 +369,7 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
 
     private void internalDiff(SvnTarget target, OutputStream outputStream, String displayPath, File file1, File file2, String label1, String label2, SvnDiffCallback.OperationKind operation, String copyFromPath, String revision1, String revision2) throws SVNException {
         String header = getHeaderString(target, displayPath, operation, copyFromPath);
-        String headerFields = getHeaderFieldsString(target, displayPath, label1, label2, revision1, revision2, operation);
+        String headerFields = getHeaderFieldsString(target, displayPath, label1, label2, revision1, revision2, operation, copyFromPath);
 
         RandomAccessFile is1 = null;
         RandomAccessFile is2 = null;
@@ -412,11 +412,11 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
         }
     }
 
-    private String getHeaderFieldsString(SvnTarget target, String displayPath, String label1, String label2, String revision1, String revision2, SvnDiffCallback.OperationKind operation) throws SVNException {
+    private String getHeaderFieldsString(SvnTarget target, String displayPath, String label1, String label2, String revision1, String revision2, SvnDiffCallback.OperationKind operation, String copyFromPath) throws SVNException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         try {
             if (useGitFormat) {
-                displayGitHeaderFields(byteArrayOutputStream, target, revision1, revision2, operation);
+                displayGitHeaderFields(byteArrayOutputStream, target, revision1, revision2, operation, copyFromPath);
             } else {
                 displayHeaderFields(byteArrayOutputStream, label1, label2);
             }
