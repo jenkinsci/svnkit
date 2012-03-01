@@ -44,13 +44,15 @@ import org.tmatesoft.svn.util.SVNLogType;
  * , also sets their sticky ambient depth value to <code>depth</code>.
  * 
  * <p/>
- * If <code>allowUnversionedObstructions</code> is <span class="javakeyword">true</span> then the update tolerates existing
+ * If <code>allowUnversionedObstructions</code> is <span class="javakeyword">
+ * true</span> then the update tolerates existing
  * unversioned items that obstruct added paths. Only obstructions of the
  * same type (file or dir) as the added item are tolerated. The text of
  * obstructing files is left as-is, effectively treating it as a user
  * modification after the update. Working properties of obstructing items
  * are set equal to the base properties. If
- * <code>allowUnversionedObstructions</code> is <span class="javakeyword">false</span> then the update will abort if there are
+ * <code>allowUnversionedObstructions</code> is <span class="javakeyword">false
+ * </span> then the update will abort if there are
  * any unversioned obstructing items.
  * 
  * <p/>
@@ -96,47 +98,56 @@ public class SvnUpdate extends AbstractSvnUpdate<long[]> {
         }
         super.ensureArgumentsAreValid();
     }
-    
-    /**
-     * Get flag that controls whether the requested depth should be written to the working copy.
-     */
-    public boolean isDepthIsSticky() {
-        return depthIsSticky;
-    }
 
     /**
-     * Get flag that controls whether to make intermediate directories.
+     * Gets whether or not the requested depth should be written to the working copy.
+     * 
+     * @return <code>true</code> if the requested depth should be written to the working copy, otherwise false
+     */
+     public boolean isDepthIsSticky() {
+         return depthIsSticky;
+     }
+
+    /**
+    * Sets whether or not the requested depth should be written to the working copy.
+    *
+    * @param depthIsSticky <code>true</code> if the requested depth should be written to the working copy, otherwise false
+    */
+    public void setDepthIsSticky(boolean depthIsSticky) {
+        this.depthIsSticky = depthIsSticky;
+    }
+    
+    /**
+     * Gets whether or not intermediate directories should be made.
+     * 
+     * @return <code>true</code> if intermediate directories should be made, otherwise false
      */
     public boolean isMakeParents() {
         return makeParents;
     }
 
     /**
-     * Get flag that controls whether to treat adds as modifications.
-     */
-    public boolean isTreatAddsAsModifications() {
-        return treatAddsAsModifications;
-    }
-
-    /**
-     * Set flag that controls whether the requested depth should be written to the working copy.
-     * @param depthIsSticky
-     */
-    public void setDepthIsSticky(boolean depthIsSticky) {
-        this.depthIsSticky = depthIsSticky;
-    }
-
-    /**
-     * Set flag that controls whether to make intermediate directories.
-     * @param makeParents
+     * Sets whether or not intermediate directories should be made.
+     * 
+     * @param makeParents <code>true</code> if intermediate directories should be made, otherwise false
      */
     public void setMakeParents(boolean makeParents) {
         this.makeParents = makeParents;
     }
     
     /**
-     * Set flag that controls whether to treat adds as modifications.
-     * @param treatAddsAsModifications
+     * Gets whether or not adds should be treated as modifications.
+     * 
+     * @return <code>true</code> if adds should be treated as modifications, otherwise false
+     */
+    public boolean isTreatAddsAsModifications() {
+        return treatAddsAsModifications;
+    }
+    
+    /**
+     * Sets whether or not adds should be treated as modifications.
+     * 
+     * @param treatAddsAsModifications <code>true</code> if adds should be treated as modifications, otherwise false
      */
     public void setTreatAddsAsModifications(boolean treatAddsAsModifications) {
         this.treatAddsAsModifications = treatAddsAsModifications;

@@ -16,9 +16,14 @@ import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.ISVNRepositoryPool;
 import org.tmatesoft.svn.core.wc.SVNEvent;
+import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.SVNLogType;
 
+/**
+ * Base class for all SVN operations.
+ * @author TMate Software Ltd.
+ */
 public class SvnOperation<V> {
     
     private SVNDepth depth;
@@ -36,17 +41,21 @@ public class SvnOperation<V> {
     }
 
     /**
-     * Get an event handler for the operation. This event handler will be
+     * Gets the event handler for the operation. This event handler will be
      * dispatched {@link SVNEvent} objects to provide detailed information about
      * actions and progress state of version control operations performed by
-     * <b>do</b>*<b>()</b> methods of <b>SVN</b>*<b>Client</b> classes.
+     * <b>run()</b> method of <b>SVN*</b> operation classes.
+     * 
+     * @returns event handler
      */
     public ISVNEventHandler getEventHandler() {
         return getOperationFactory().getEventHandler();
     }
 
     /**
-     * Get operation options.
+     * Gets operation options.
+     * 
+     * @return operation options
      */
     public ISVNOptions getOptions() {
         return getOperationFactory().getOptions();
@@ -58,16 +67,12 @@ public class SvnOperation<V> {
         setRevision(SVNRevision.UNDEFINED);
         this.targets = new ArrayList<SvnTarget>();
     }
-
     
     /**
-     * Set limit operation by depth.
-     * @param depth
+     * Sets one target to the operation.
+     * 
+     * @param target target to the operation
      */
-    public void setDepth(SVNDepth depth) {
-        this.depth = depth;
-    }
-
     public void setSingleTarget(SvnTarget target) {
         this.targets = new ArrayList<SvnTarget>();
         if (target != null) {
@@ -75,56 +80,94 @@ public class SvnOperation<V> {
         }
     }
 
+    /**
+     * Sets two targets to the operation.
+     * 
+     * @param target1 first target to the operation
+     * @param target2 second target to the operation
+     */
     protected void setTwoTargets(SvnTarget target1, SvnTarget target2) {
         this.targets = new ArrayList<SvnTarget>();
         this.addTarget(target1);
         this.addTarget(target2);
     }
 
+    /**
+     * Adds the target to the operation.
+     * 
+     * @param target target to the operation
+     */
     public void addTarget(SvnTarget target) {
         this.targets.add(target);
     }
     
+    /**
+     * Returns all targets of the operation.
+     * 
+     * @return targets of the operation
+     */
     public Collection<SvnTarget> getTargets() {
         return Collections.unmodifiableCollection(targets);
     }
     
+    /**
+     * Returns first target of the operation.
+     * 
+     * @return first target of the operation
+     */
     public SvnTarget getFirstTarget() {
         return targets != null && !targets.isEmpty() ? targets.iterator().next() : null;
     }
     
     /**
-     * Get limit operation by depth.
+     * Sets the limit of the operation by depth.
+     * 
+     * @param depth the operation's limit by depth
+     */
+    public void setDepth(SVNDepth depth) {
+        this.depth = depth;
+    }
+    
+    /**
+     * Gets the limit of the operation by depth.
+     * 
+     * @return limit of the operation by depth
      */
     public SVNDepth getDepth() {
         return depth;
     }
     
     /**
-     * Set revision.
-     * @param revision
+     * Sets revision to operate on.
+     * 
+     * @param revision revision to operate on
      */
     public void setRevision(SVNRevision revision) {
         this.revision = revision;
     }
 
     /**
-     * Get revision.
+     * Gets revision to operate on.
+     * 
+     * @return revision to operate on
      */
     public SVNRevision getRevision() {
         return revision;
     }
     
     /**
-     * Set changelist to operate only on members of.
-     * @param changelists
+     * Sets changelists to operate only on members of.
+     * 
+     * @param changelists changelists to operate only on members of
      */
     public void setApplicalbeChangelists(Collection<String> changelists) {
         this.changelists = changelists;
     }
     
     /**
-     * Get changelist to operate only on members of.
+     * Gets changelists to operate only on members of.
+     * 
+     * @return changelists to operate only on members of
      */
     public Collection<String> getApplicableChangelists() {
         if (this.changelists == null || this.changelists.isEmpty()) {
@@ -133,10 +176,20 @@ public class SvnOperation<V> {
         return Collections.unmodifiableCollection(this.changelists);
     }
     
+    /**
+     * Gets the factory for creating the operations.
+     * 
+     * @return factory for creating the operations
+     */
     public SvnOperationFactory getOperationFactory() {
         return this.operationFactory;
     }
     
+    /**
+     * Gets whether or not the operation has local targets.
+     * 
+     * @return <code>true</code> if the operation has local targets, otherwise false
+     */
     public boolean hasLocalTargets() {
         for (SvnTarget target : getTargets()) {
             if (target.isLocal()) {
@@ -146,6 +199,11 @@ public class SvnOperation<V> {
         return false;
     }
     
+    /**
+     * Gets whether or not the operation has remote targets.
+     * 
+     * @return <code>true</code> if the operation has remote targets, otherwise false
+     */
     public boolean hasRemoteTargets() {
         for (SvnTarget target : getTargets()) {
             if (!target.isLocal()) {
@@ -184,14 +242,32 @@ public class SvnOperation<V> {
         return 1;
     }
     
+    /**
+     * Cancels the operation. Execution of operation will be stopped at the next point of checking <code>isCancelled</code> state
+     * 
+     * <p>
+     * If {@link #getCanceller()} is not <code>null</code>, {@link ISVNCanceller#checkCancelled()} is called, 
+     * otherwise {@link SVNCancelException} is raised.
+     */
     public void cancel() {
         isCancelled = true;
     }
     
+    /**
+     * Gets whether or not the operation is cancelled.
+     * 
+     * @return <code>true</code> if the operation is cancelled, otherwise false
+     */
     public boolean isCancelled() {
         return isCancelled;
     }
     
+    /**
+     * Runs the operation.
+     * 
+     * @return result depending on operation
+     * @throws SVNException
+     */
     @SuppressWarnings("unchecked")
     public V run() throws SVNException {
         ensureArgumentsAreValid();
@@ -219,26 +295,56 @@ public class SvnOperation<V> {
         }
     }
 
+    /**
+     * Gets the pool of repositories.
+     * 
+     * @return pool of repositories
+     */
     public ISVNRepositoryPool getRepositoryPool() {
         return getOperationFactory().getRepositoryPool();
     }
 
+    /**
+     * Gets the authentication manager of the operation.
+     * 
+     * @return authentication manager of the operation
+     */
     public ISVNAuthenticationManager getAuthenticationManager() {
         return getOperationFactory().getAuthenticationManager();
     }
 
+    /**
+     * Gets the canceller handler of the operation. See {@link #cancel()}.
+     * 
+     * @return authentication manager of the operation
+     */
     public ISVNCanceller getCanceller() {
         return getOperationFactory().getCanceller();
     }
 
+    /**
+     * Gets time for what thread should sleep after update operation fails.
+     * 
+     * @return sleep time (in milliseconds) or <code>0</code> if thread should not sleep
+     */
     public boolean isSleepForTimestamp() {
         return isSleepForTimestamp;
     }
 
+    /**
+     * Sets time for what program should sleep after update operation fails.
+     * 
+     * @param isSleepForTimestamp sleep time (in milliseconds) or <code>0</code> if thread should not sleep
+     */
     public void setSleepForTimestamp(boolean isSleepForTimestamp) {
         this.isSleepForTimestamp = isSleepForTimestamp;
     }
 
+    /**
+     * Gets whether or not operation has files as targets.
+     * 
+     * @return <code>true</code> if operation has files as targets
+     */
     public boolean hasFileTargets() {
         for (SvnTarget target : getTargets()) {
             if (target.isFile()) {
@@ -248,6 +354,11 @@ public class SvnOperation<V> {
         return false;
     }
 
+    /**
+     * Gets whether or not to use parent working copy format.
+     * 
+     * @return <code>true</code> if parent working copy format should be used, otherwise false
+     */
     public boolean isUseParentWcFormat() {
         return false;
     }

@@ -36,7 +36,7 @@ public interface ISVNCanceller {
     
     /**
      * Checks if the current operation is cancelled (somehow interrupted)
-     * and should throw an <b>SVNCancelException</b>.
+     * and should throw an <b>SVNCancelException</b> or notify the handler if exists.
      * 
      * <p/>
      * This method is often called during iterations when processing trees of versioned items.
