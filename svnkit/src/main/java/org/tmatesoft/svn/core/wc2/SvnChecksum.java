@@ -70,9 +70,9 @@ public class SvnChecksum {
     }
     
     /**
-     * Returns string representation of checksum.
+     * Returns <code>String</code> representation of checksum.
      * 
-     * @return string representation of checksum
+     * @return <code>String</code> representation of checksum
      */
     public String toString() {
         return '$' + (getKind() == Kind.md5 ? "md5 $" : "sha1$") + getDigest();
@@ -109,9 +109,9 @@ public class SvnChecksum {
     }
 
     /**
-     * Creates checksum object from string.
+     * Creates checksum object from <code>String</code>.
      * 
-     * @param checksum checksum represented in string
+     * @param checksum checksum represented in <code>String</code>
      */
     public static SvnChecksum fromString(String checksum) throws SVNException {
         if (checksum == null || checksum.length() < 7) {

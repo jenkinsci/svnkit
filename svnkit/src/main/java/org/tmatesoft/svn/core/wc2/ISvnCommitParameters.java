@@ -2,9 +2,14 @@ package org.tmatesoft.svn.core.wc2;
 
 import java.io.File;
 
+/**
+ * Commit parameters.
+ * 
+ * @author TMate Software Ltd.
+ */
 public interface ISvnCommitParameters {
     
-    public enum Action {
+	public enum Action {
         DELETE,
         ERROR,
         SKIP,

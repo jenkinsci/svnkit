@@ -6,6 +6,15 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.wc2.hooks.ISvnCommitHandler;
 
+/**
+ * Base class for operations changing repository. 
+ * The <b>AbstractSvnCommit</b> class provides methods to perform operations that
+ * relate to committing changes to an SVN repository. These operations are
+ * similar to respective commands of the native SVN command line client and
+ * include ones which operate on working copy items as well as ones that operate
+ * only on a repository: commit, 
+ * import, remote copy, remote delete, remote make dir, remote set property
+ */
 public abstract class AbstractSvnCommit extends SvnReceivingOperation<SVNCommitInfo> {
 
     private String commitMessage;
@@ -16,23 +25,58 @@ public abstract class AbstractSvnCommit extends SvnReceivingOperation<SVNCommitI
         super(factory);
         setRevisionProperties(new SVNProperties());
     }
-
+    
+    /**
+     * Gets custom revision properties for the operation.
+     * If non-<span class="javakeyword">null</span>, <code>revisionProperties</code> 
+     * holds additional, custom revision properties (<code>String</code> names
+     * mapped to {@link SVNPropertyValue} values) to be set on the new revision.
+     * This table cannot contain any standard Subversion properties.
+     * 
+     * @return custom revision properties
+     */
     public SVNProperties getRevisionProperties() {
         return revisionProperties;
     }
 
+    /**
+     * Sets custom revision properties for the operation.
+     * If non-<span class="javakeyword">null</span>, <code>revisionProperties</code> 
+     * holds additional, custom revision properties (<code>String</code> names
+     * mapped to {@link SVNPropertyValue} values) to be set on the new revision.
+     * This table cannot contain any standard Subversion properties.
+     * 
+     * @param revisionProperties custom revision properties
+     */
     public void setRevisionProperties(SVNProperties revisionProperties) {
         this.revisionProperties = revisionProperties;
     }
 
+    /**
+     * Gets commit log message.
+     * 
+     * @return commit log message
+     */
     public String getCommitMessage() {
         return commitMessage;
     }
 
+    /**
+     * Sets commit log message.
+     * 
+     * @param commitMessage commit log message
+     */
     public void setCommitMessage(String commitMessage) {
         this.commitMessage = commitMessage;
     }
 
+    /**
+     * Adds custom revision properties for the operation.
+     * See {@link #setRevisionProperties(SVNProperties)}
+     * 
+     * @param name name of custom revision property
+     * @param value value of custom revision property
+     */
     public void setRevisionProperty(String name, SVNPropertyValue value) {
         if (value != null) {
             getRevisionProperties().put(name, value);
@@ -41,6 +85,11 @@ public abstract class AbstractSvnCommit extends SvnReceivingOperation<SVNCommitI
         }
     }
 
+    /**
+     * Gets the commit handler for the operation.
+     * 
+     * @return commit handler 
+     */
     public ISvnCommitHandler getCommitHandler() {
         if (commitHandler == null) {
             commitHandler = new ISvnCommitHandler() {                
@@ -55,6 +104,11 @@ public abstract class AbstractSvnCommit extends SvnReceivingOperation<SVNCommitI
         return commitHandler;
     }
 
+    /**
+     * Sets the commit handler for the operation.
+     * 
+     * @param commitHandler commit handler
+     */
     public void setCommitHandler(ISvnCommitHandler commitHandler) {
         this.commitHandler = commitHandler;
     }
