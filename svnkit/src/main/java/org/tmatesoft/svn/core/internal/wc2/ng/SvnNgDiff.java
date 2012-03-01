@@ -141,13 +141,13 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
                 //otherwise we ignore the exception
             }
 
-            repository.setLocation(url2, true);
+            repository.setLocation(url2, false);
         }
 
         long revisionNumber2 = getRepositoryAccess().getRevisionNumber(repository, target2, revision2, null).lng(SvnRepositoryAccess.RevisionsPair.revNumber);
         SVNNodeKind kind2 = repository.checkPath("", revisionNumber2);
 
-        repository.setLocation(url1, true);
+        repository.setLocation(url1, false);
         final long revisionNumber1 = getRepositoryAccess().getRevisionNumber(repository, target1, revision1, null).lng(SvnRepositoryAccess.RevisionsPair.revNumber);
         SVNNodeKind kind1 = repository.checkPath("", revisionNumber1);
 
@@ -395,7 +395,7 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
     }
 
     private void checkDiffTargetExists(SVNURL url, long revision, long otherRevision, SVNRepository repository) throws SVNException {
-        repository.setLocation(url, true);
+        repository.setLocation(url, false);
         SVNNodeKind kind = repository.checkPath("", revision);
         if (kind == SVNNodeKind.NONE) {
             if (revision == otherRevision) {
