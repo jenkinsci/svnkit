@@ -3510,7 +3510,7 @@ public class SVNWCContext {
 
         public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) throws SVNException {
             File localAbspath = SVNFileUtil.createFilePath(wcRootAbspath, workItem.getChild(1).getValue());
-            File tmpFile = ctx.getTranslatedFile(localAbspath, localAbspath, true, false, false, false);
+            File tmpFile = ctx.getTranslatedFile(localAbspath, localAbspath, false, false, false, false);
             TranslateInfo info = ctx.getTranslateInfo(localAbspath, false, false, true);
             boolean sameContents = false;
             boolean overwroteWorkFile = false;
