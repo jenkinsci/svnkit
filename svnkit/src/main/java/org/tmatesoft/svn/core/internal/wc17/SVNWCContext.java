@@ -2605,7 +2605,7 @@ public class SVNWCContext {
             File tmpDir;
             File tmpVFile;
             boolean repairForced = forceEOLRepair;
-            boolean expand = toNormalFormat;
+            boolean expand = !toNormalFormat;
             if (useGlobalTmp) {
                 tmpDir = null;
             } else {
