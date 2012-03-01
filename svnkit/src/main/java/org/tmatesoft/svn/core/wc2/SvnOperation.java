@@ -22,6 +22,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * Base class for all SVN operations.
+ * 
  * @author TMate Software Ltd.
  */
 public class SvnOperation<V> {
@@ -188,7 +189,7 @@ public class SvnOperation<V> {
     /**
      * Gets whether or not the operation has local targets.
      * 
-     * @return <code>true</code> if the operation has local targets, otherwise false
+     * @return <code>true</code> if the operation has local targets, otherwise <code>false</code>
      */
     public boolean hasLocalTargets() {
         for (SvnTarget target : getTargets()) {
@@ -202,7 +203,7 @@ public class SvnOperation<V> {
     /**
      * Gets whether or not the operation has remote targets.
      * 
-     * @return <code>true</code> if the operation has remote targets, otherwise false
+     * @return <code>true</code> if the operation has remote targets, otherwise <code>false</code>
      */
     public boolean hasRemoteTargets() {
         for (SvnTarget target : getTargets()) {
@@ -256,7 +257,7 @@ public class SvnOperation<V> {
     /**
      * Gets whether or not the operation is cancelled.
      * 
-     * @return <code>true</code> if the operation is cancelled, otherwise false
+     * @return <code>true</code> if the operation is cancelled, otherwise <code>false</code>
      */
     public boolean isCancelled() {
         return isCancelled;
@@ -357,7 +358,7 @@ public class SvnOperation<V> {
     /**
      * Gets whether or not to use parent working copy format.
      * 
-     * @return <code>true</code> if parent working copy format should be used, otherwise false
+     * @return <code>true</code> if parent working copy format should be used, otherwise <code>false</code>
      */
     public boolean isUseParentWcFormat() {
         return false;

@@ -7,6 +7,11 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 
+/**
+ * Class for representation the annotate item.
+ * 
+ * @author TMate Software Ltd.
+ */
 public class SvnAnnotateItem {
 
     private long revision;
@@ -26,6 +31,20 @@ public class SvnAnnotateItem {
         this.isEof = true;
     }
 
+    /**
+    * Constructs and initializes an <b>SvnAnnotateItem</b> object with the
+    * specified parameters.
+    * 
+    * @param date modification date
+    * @param revision modification revision
+    * @param author author of modification
+    * @param line modified line
+    * @param mergedDate date of merge
+    * @param mergedRevision revision of merge
+    * @param mergedAuthor author of merge
+    * @param mergedPath path of merge
+    * @param lineNumber number of line
+    */
     public SvnAnnotateItem(Date date, long revision, String author, String line, Date mergedDate,
                            long mergedRevision, String mergedAuthor, String mergedPath, int lineNumber) {
         this.isLine = true;
@@ -38,6 +57,15 @@ public class SvnAnnotateItem {
         this.lineNumber = lineNumber;
     }
 
+    /**
+     * Constructs and initializes an <b>SvnAnnotateItem</b> object with the
+     * specified parameters.
+     * 
+     * @param date modification date
+     * @param revision revision of modification
+     * @param author author of modification
+     * @param contents contents represented in file
+     */
     public SvnAnnotateItem(Date date, long revision, String author, File contents) {
         this.isRevision = true;
         this.revisionProperties = createRevisionProperties(author, date);
@@ -45,70 +73,155 @@ public class SvnAnnotateItem {
         this.contents = contents;
     }
 
+    /**
+     * Gets date of modification.
+     * 
+     * @return date of modification
+     */
     public Date getDate() {
         return getDate(getRevisionProperties());
     }
 
+    /**
+     * Gets modification revision.
+     * 
+     * @return modification revision
+     */
     public long getRevision() {
         return revision;
     }
 
+    /**
+     * Gets the properties of modification revision.
+     * 
+     * @return revision properties
+     */
     public SVNProperties getRevisionProperties() {
         return revisionProperties;
     }
 
+    /**
+     * Gets author of modification.
+     * 
+     * @return modification author
+     */
     public String getAuthor() {
         return getAuthor(getRevisionProperties());
     }
 
+    /**
+     * Gets date of merge.
+     * 
+     * @return merge date
+     */
     public Date getMergedDate() {
         return getDate(getMergedRevisionProperties());
     }
 
+    /**
+     * Gets modified line.
+     * 
+     * @return modified line
+     */
     public String getLine() {
         return line;
     }
 
+    /**
+     * Gets revision of merge.
+     * 
+     * @return merge revision
+     */
     public long getMergedRevision() {
         return mergedRevision;
     }
 
+    /**
+     * Gets properties of merge revision.
+     * 
+     * @return merge revision properties
+     */
     public SVNProperties getMergedRevisionProperties() {
         return mergedRevisionProperties;
     }
 
+    /**
+     * Gets author of merge revision.
+     * 
+     * @return merge revision author
+     */
     public String getMergedAuthor() {
         return getAuthor(getMergedRevisionProperties());
     }
 
+    /**
+     * Gets path of merge revision.
+     * 
+     * @return merge revision path
+     */
     public String getMergedPath() {
         return mergedPath;
     }
 
+    /**
+     * Gets line number of modification
+     * 
+     * @return line number of modification
+     */
     public int getLineNumber() {
         return lineNumber;
     }
 
+    /**
+     * Gets contents of modification in <code>File</code>
+     * 
+     * @return modification contents
+     */
     public File getContents() {
         return contents;
     }
 
+    /**
+     * Gets whether or not end of file reached.
+     * 
+     * @return <code>true</code> if it is end of file, otherwise <code>false</code>
+     */
     public boolean isEof() {
         return isEof;
     }
 
+    /**
+     * Gets whether or not item is line.
+     * 
+     * @return <code>true</code> if item is line, otherwise <code>false</code>
+     */
     public boolean isLine() {
         return isLine;
     }
 
+    /**
+     * Gets whether or not item is revision.
+     * 
+     * @return <code>true</code> if item is revision, otherwise <code>false</code>
+     */
     public boolean isRevision() {
         return isRevision;
     }
 
+    /**
+     * Sets whether or not item was handled.
+     * 
+     * @param returnResult <code>true</code> if item was handled, otherwise <code>false</code>
+     */
     public void setReturnResult(boolean returnResult) {
         this.returnResult = returnResult;
     }
 
+    /**
+     * Gets whether or not item was handled.
+     * 
+     * @return <code>true</code> if item was handled, otherwise <code>false</code>
+     */
     public boolean getReturnResult() {
         return returnResult;
     }

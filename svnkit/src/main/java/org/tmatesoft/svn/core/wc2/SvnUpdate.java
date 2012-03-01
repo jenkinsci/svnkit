@@ -10,7 +10,7 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
- * This class encapsulates update operation. It's {@link #run()} method updates working copy to <code>revision</code>.
+ * Update operation. Updates working copy to <code>revision</code>.
  * If no revision is given, it brings working copy up-to-date with {@link SVNRevision#HEAD} revision.
    
  * Unversioned paths that are direct children of a versioned path will cause
@@ -102,7 +102,7 @@ public class SvnUpdate extends AbstractSvnUpdate<long[]> {
     /**
      * Gets whether or not the requested depth should be written to the working copy.
      * 
-     * @return <code>true</code> if the requested depth should be written to the working copy, otherwise false
+     * @return <code>true</code> if the requested depth should be written to the working copy, otherwise <code>false</code>
      */
      public boolean isDepthIsSticky() {
          return depthIsSticky;
@@ -111,7 +111,7 @@ public class SvnUpdate extends AbstractSvnUpdate<long[]> {
     /**
     * Sets whether or not the requested depth should be written to the working copy.
     *
-    * @param depthIsSticky <code>true</code> if the requested depth should be written to the working copy, otherwise false
+    * @param depthIsSticky <code>true</code> if the requested depth should be written to the working copy, otherwise <code>false</code>
     */
     public void setDepthIsSticky(boolean depthIsSticky) {
         this.depthIsSticky = depthIsSticky;
@@ -120,7 +120,7 @@ public class SvnUpdate extends AbstractSvnUpdate<long[]> {
     /**
      * Gets whether or not intermediate directories should be made.
      * 
-     * @return <code>true</code> if intermediate directories should be made, otherwise false
+     * @return <code>true</code> if intermediate directories should be made, otherwise <code>false</code>
      */
     public boolean isMakeParents() {
         return makeParents;
@@ -129,7 +129,7 @@ public class SvnUpdate extends AbstractSvnUpdate<long[]> {
     /**
      * Sets whether or not intermediate directories should be made.
      * 
-     * @param makeParents <code>true</code> if intermediate directories should be made, otherwise false
+     * @param makeParents <code>true</code> if intermediate directories should be made, otherwise <code>false</code>
      */
     public void setMakeParents(boolean makeParents) {
         this.makeParents = makeParents;
@@ -138,7 +138,7 @@ public class SvnUpdate extends AbstractSvnUpdate<long[]> {
     /**
      * Gets whether or not adds should be treated as modifications.
      * 
-     * @return <code>true</code> if adds should be treated as modifications, otherwise false
+     * @return <code>true</code> if adds should be treated as modifications, otherwise <code>false</code>
      */
     public boolean isTreatAddsAsModifications() {
         return treatAddsAsModifications;
@@ -147,7 +147,7 @@ public class SvnUpdate extends AbstractSvnUpdate<long[]> {
     /**
      * Sets whether or not adds should be treated as modifications.
      * 
-     * @param treatAddsAsModifications <code>true</code> if adds should be treated as modifications, otherwise false
+     * @param treatAddsAsModifications <code>true</code> if adds should be treated as modifications, otherwise <code>false</code>
      */
     public void setTreatAddsAsModifications(boolean treatAddsAsModifications) {
         this.treatAddsAsModifications = treatAddsAsModifications;

@@ -2,34 +2,78 @@ package org.tmatesoft.svn.core.wc2;
 
 import org.tmatesoft.svn.core.SVNException;
 
+/**
+ * Represebts  a checksum for SVN files.
+ * 
+ * @author TMate Software Ltd.
+ */
 public class SvnChecksum {
     
+	/* The <b>Kind</b> enum is used to describe the kind of used hash algorythm 
+	 * for computing the chechsum. This can be:
+	 * <ul>
+	 * <li>sha1 - sha1 algorythm
+	 * <li>md5  - md5 algorythm
+	 * </ul>
+	 */
     public enum Kind { sha1, md5 }
     
     private Kind kind;
     private String digest;
     
-    public SvnChecksum() {
-    }
-    
+    /**
+     * Constructs an <b>SvnChecksum</b> object with the
+     * specified parameters. 
+     * 
+     * @param kind kind of checksum
+     * @param digest computed checksum value
+     */
     public SvnChecksum(Kind kind, String digest) {
         setKind(kind);
         setDigest(digest);
     }
 
+    /**
+     * Gets king of checksum.
+     * 
+     * @return checksum kind
+     */
     public Kind getKind() {
         return kind;
     }
+    
+    /**
+     * Gets computed checksum value.
+     * 
+     * @return computed checksum value
+     */
     public String getDigest() {
         return digest;
     }
+    
+    /**
+     * Sets kind of checksum.
+     * 
+     * @param kind checksum kind
+     */
     public void setKind(Kind kind) {
         this.kind = kind;
     }
+    
+    /**
+     * Sets computed checksum value.
+     * 
+     * @param digest computed checksum value
+     */
     public void setDigest(String digest) {
         this.digest = digest;
     }
     
+    /**
+     * Returns string representation of checksum.
+     * 
+     * @return string representation of checksum
+     */
     public String toString() {
         return '$' + (getKind() == Kind.md5 ? "md5 $" : "sha1$") + getDigest();
     }
@@ -64,6 +108,11 @@ public class SvnChecksum {
         return equals;
     }
 
+    /**
+     * Creates checksum object from string.
+     * 
+     * @param checksum checksum represented in string
+     */
     public static SvnChecksum fromString(String checksum) throws SVNException {
         if (checksum == null || checksum.length() < 7) {
             return null;
