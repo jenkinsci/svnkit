@@ -21,6 +21,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.logging.Level;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -316,9 +317,10 @@ public class SVNCommitter17 implements ISVNCommitPathHandler {
             newPristineTmpAbspath = openWritableBase.tempBaseAbspath;
             localSha1ChecksumStream = openWritableBase.sha1ChecksumStream;
             localStream = new CopyingStream(newPristineStream, localStream);
+            File baseFile = null;
             if (!fulltext) {
                 PristineContentsInfo pristineContents = myContext.getPristineContents(localAbspath, true, true);
-                File baseFile = pristineContents.path;
+                baseFile = pristineContents.path;
                 baseStream = pristineContents.stream;
                 if (baseStream == null) {
                     baseStream = SVNFileUtil.DUMMY_IN;
@@ -339,7 +341,12 @@ public class SVNCommitter17 implements ISVNCommitPathHandler {
                 myDeltaGenerator = new SVNDeltaGenerator();
             }
             localMd5Checksum = new SvnChecksum(SvnChecksum.Kind.md5, myDeltaGenerator.sendDelta(path, baseStream, 0, localStream, editor, true));
+
             if (verifyChecksumStream != null) {
+                //SVNDeltaGenerator#sendDelta doesn't guarantee to read the whole stream (e.g. if baseStream has no data, it is not touched at all)
+                //so we read verifyChecksumStream to force MD5 calculation
+                readRemainingStream(verifyChecksumStream, baseFile);
+
                 verifyChecksum = new SvnChecksum(SvnChecksum.Kind.md5, verifyChecksumStream.getDigest());
             }
         } catch (SVNException svne) {
@@ -364,6 +371,30 @@ public class SVNCommitter17 implements ISVNCommitPathHandler {
         result.md5Checksum = localMd5Checksum;
         result.sha1Checksum = localSha1Checksum;
         return result;
+    }
+
+    private void readRemainingStream(SVNChecksumInputStream verifyChecksumStream, File sourceFile) throws SVNException {
+        final byte[] buffer = new byte[1024];
+
+        int bytesRead;
+        do {
+            try {
+                bytesRead = verifyChecksumStream.read(buffer);
+            } catch (IOException e) {
+                SVNErrorMessage err;
+                if (sourceFile != null) {
+                    err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot read from file ''{0}'': {1}", new Object[]{
+                            sourceFile, e.getMessage()
+                    });
+                } else {
+                    err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot read from stream: {0}", new Object[]{
+                            sourceFile, e.getMessage()
+                    });
+                }
+                SVNErrorManager.error(err, Level.FINE, SVNLogType.WC);
+                return;
+            }
+        } while (bytesRead >= 0);
     }
 
     private class CopyingStream extends FilterInputStream {
