@@ -604,7 +604,7 @@ public class SVNUpdateClient extends SVNBasicClient {
      * @since 1.2, SVN 1.5
      */
     public long doSwitch(File path, SVNURL url, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions, boolean depthIsSticky) throws SVNException {
-        return doSwitch(path, url, pegRevision, revision, depth, allowUnversionedObstructions, depthIsSticky, false);
+        return doSwitch(path, url, pegRevision, revision, depth, allowUnversionedObstructions, depthIsSticky, true);
     }
     
     public long doSwitch(File path, SVNURL url, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions, boolean depthIsSticky, boolean ignoreAncestry) throws SVNException {
