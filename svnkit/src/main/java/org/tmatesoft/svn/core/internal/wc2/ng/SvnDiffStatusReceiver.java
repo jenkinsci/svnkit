@@ -249,7 +249,7 @@ public class SvnDiffStatusReceiver implements ISvnObjectReceiver<SvnStatus> {
             propChanges = SvnDiffEditor.computePropDiff(pristineProps, actualProps);
 
             translatedFile = getContext().getTranslatedFile(localAbspath, localAbspath,
-                    true, false, true, false);
+                    true, false, false, false);
 
             getCallback().fileAdded(null, localAbspath,
                     (!isShowCopiesAsAdds() && isGitFormat() && status != ISVNWCDb.SVNWCDbStatus.Added) ?
@@ -268,7 +268,7 @@ public class SvnDiffStatusReceiver implements ISvnObjectReceiver<SvnStatus> {
             boolean modified = getContext().isTextModified(localAbspath, false);
             if (modified) {
                 translatedFile = getContext().getTranslatedFile(localAbspath, localAbspath,
-                        true, false, true, false);
+                        true, false, false, false);
             }
 
             if (baseReplace && isIgnoreAncestry()) {
