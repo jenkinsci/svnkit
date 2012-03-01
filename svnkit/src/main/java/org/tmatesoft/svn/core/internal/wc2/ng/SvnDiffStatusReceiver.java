@@ -1,6 +1,7 @@
 package org.tmatesoft.svn.core.internal.wc2.ng;
 
 import java.io.File;
+import java.util.Collection;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
@@ -26,13 +27,14 @@ public class SvnDiffStatusReceiver implements ISvnObjectReceiver<SvnStatus> {
     private final boolean showCopiesAsAdds;
     private final boolean gitFormat;
     private final boolean ignoreAncestry;
+    private final Collection<String> changelists;
 
     public SvnDiffStatusReceiver(SVNWCContext context, File anchor,
                                  ISVNWCDb db,
                                  ISvnDiffCallback callback,
                                  boolean ignoreAncestry,
                                  boolean showCopiesAsAdds,
-                                 boolean gitFormat) {
+                                 boolean gitFormat, Collection<String> changelists) {
         this.context = context;
         this.anchor = anchor;
         this.db = db;
@@ -40,6 +42,7 @@ public class SvnDiffStatusReceiver implements ISvnObjectReceiver<SvnStatus> {
         this.ignoreAncestry = ignoreAncestry;
         this.showCopiesAsAdds = showCopiesAsAdds;
         this.gitFormat = gitFormat;
+        this.changelists = changelists;
     }
 
     public SVNWCContext getContext() {
@@ -79,6 +82,10 @@ public class SvnDiffStatusReceiver implements ISvnObjectReceiver<SvnStatus> {
         }
 
         final File localAbspath = target.getFile();
+
+        if (changelists != null && !context.matchesChangelist(localAbspath, changelists)) {
+            return;
+        }
 
         if (status.getKind() == SVNNodeKind.FILE) {
 
