@@ -291,7 +291,7 @@ public class SVNStatusEditor17 {
         }
 
         if (info.kind == SVNWCDbKind.Dir) {
-            if (info.status == SVNWCDbStatus.Incomplete) {
+            if (info.status == SVNWCDbStatus.Incomplete || info.incomplete) {
                 node_status = SVNStatusType.STATUS_INCOMPLETE;
             } else if (info.status == SVNWCDbStatus.Deleted) {
                 node_status = SVNStatusType.STATUS_DELETED;

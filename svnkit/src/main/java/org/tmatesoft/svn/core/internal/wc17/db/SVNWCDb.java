@@ -2301,6 +2301,7 @@ public class SVNWCDb implements ISVNWCDb {
                     childItem.kind = getColumnKind(stmt, SVNWCDbSchema.NODES__Fields.kind);
                     childItem.status = getColumnPresence(stmt);
                     if (opDepth != 0) {
+                        childItem.incomplete = childItem.status == SVNWCDbStatus.Incomplete;
                         childItem.status = getWorkingStatus(childItem.status);
                     }
                     if (opDepth != 0) {
@@ -2405,9 +2406,6 @@ public class SVNWCDb implements ISVNWCDb {
         public long opDepth;
     }
     
-    
-
-
     private Set<String> gatherChildren(File localAbsPath, boolean baseOnly, boolean workOnly) throws SVNException {
         final DirParsedInfo wcInfo = obtainWcRoot(localAbsPath);
         final File localRelPath = wcInfo.localRelPath;

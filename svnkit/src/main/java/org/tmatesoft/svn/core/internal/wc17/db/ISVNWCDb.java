@@ -321,7 +321,8 @@ public interface ISVNWCDb {
 
         public boolean locked;
         public SVNWCDbLock lock;
-        
+        public boolean incomplete;
+
         public void load(WCDbInfo info) {
             if (info == null) {
                 return;
@@ -352,6 +353,7 @@ public interface ISVNWCDb {
             haveMoreWork = info.haveMoreWork;
             locked = info.lock != null;
             lock = info.lock;
+            incomplete = info.status == SVNWCDbStatus.Incomplete;
         }
     }
 
