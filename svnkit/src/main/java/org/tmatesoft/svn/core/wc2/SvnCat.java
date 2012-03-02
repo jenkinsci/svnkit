@@ -3,7 +3,6 @@ package org.tmatesoft.svn.core.wc2;
 import java.io.OutputStream;
 
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 /**
