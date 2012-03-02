@@ -172,14 +172,11 @@ public class DiffTest {
             final CommitBuilder commitBuilder1 = new CommitBuilder(url);
             commitBuilder1.addFile("directory/file", "contents1".getBytes());
             commitBuilder1.addFile("directory/anotherFile", "anotherContents".getBytes());
-            final SVNCommitInfo commitInfo1 = commitBuilder1.commit();
+            commitBuilder1.commit();
 
             final CommitBuilder commitBuilder2 = new CommitBuilder(url);
             commitBuilder2.changeFile("directory/file", "contents2".getBytes());
-            final SVNCommitInfo commitInfo2 = commitBuilder2.commit();
-
-            final SVNRevision svnRevision1 = SVNRevision.create(commitInfo1.getNewRevision());
-            final SVNRevision svnRevision2 = SVNRevision.create(commitInfo2.getNewRevision());
+            commitBuilder2.commit();
 
             final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, SVNRevision.HEAD.getNumber());
             final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
@@ -192,8 +189,6 @@ public class DiffTest {
             diff.setTargets(SvnTarget.fromFile(file, SVNRevision.WORKING), SvnTarget.fromURL(url.appendPath("directory/anotherFile", false), SVNRevision.create(1)));
             diff.setOutput(byteArrayOutputStream);
             diff.run();
-
-            final String diffOutput = new String(byteArrayOutputStream.toByteArray());
 
             //TODO finish the test
         } finally {

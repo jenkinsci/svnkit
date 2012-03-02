@@ -314,18 +314,6 @@ public class WorkingCopy {
         return repositoryUrl;
     }
 
-    private void backupWcDbFile() throws SVNException {
-        final File wcDbFile = getWCDbFile();
-        if (!wcDbFile.exists()) {
-            return;
-        }
-
-        final File wcDbBackupFile = new File(getWCDbFile().getAbsolutePath() + ".backup");
-        SVNFileUtil.copy(wcDbFile, wcDbBackupFile, false, false);
-
-        log("Backed up wc.db");
-    }
-
     private void checkWorkingCopyConsistency() {
         final File wcDbFile = getWCDbFile();
         if (!wcDbFile.exists()) {

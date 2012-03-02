@@ -237,7 +237,6 @@ public class DisjointCopyTest {
             commitBuilder.commit();
 
             final SVNURL sourceUrl = url.appendPath("source", false);
-            @SuppressWarnings({"UnnecessaryLocalVariable"})
             final SVNURL targetUrl = url;
 
             final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(sourceUrl, SVNRevision.HEAD.getNumber());
