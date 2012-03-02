@@ -505,19 +505,8 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
             tmpFile2 = true;
         }
 
-        String currentDir = new File("").getAbsolutePath().replace(File.separatorChar, '/');
         String file1Path = file1.getAbsolutePath().replace(File.separatorChar, '/');
         String file2Path = file2.getAbsolutePath().replace(File.separatorChar, '/');
-
-        if (file1Path.startsWith(currentDir)) {
-            file1Path = file1Path.substring(currentDir.length());
-            file1Path = file1Path.startsWith("/") ? file1Path.substring(1) : file1Path;
-        }
-
-        if (file2Path.startsWith(currentDir)) {
-            file2Path = file2Path.substring(currentDir.length());
-            file2Path = file2Path.startsWith("/") ? file2Path.substring(1) : file2Path;
-        }
 
         args.add(file1Path);
         args.add(file2Path);
