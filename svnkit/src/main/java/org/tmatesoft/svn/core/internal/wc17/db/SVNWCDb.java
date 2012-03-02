@@ -137,20 +137,20 @@ public class SVNWCDb implements ISVNWCDb {
     private ISVNOptions config;
     private boolean autoUpgrade;
     private boolean enforceEmptyWQ;
-    private HashMap<File, SVNWCDbDir> dirData;
+    private Map<String, SVNWCDbDir> dirData;
 
     public void open(final SVNWCDbOpenMode mode, final ISVNOptions config, final boolean autoUpgrade, final boolean enforceEmptyWQ) {
         this.config = config;
         this.autoUpgrade = autoUpgrade;
         this.enforceEmptyWQ = enforceEmptyWQ;
-        this.dirData = new HashMap<File, SVNWCDbDir>();
+        this.dirData = new HashMap<String, SVNWCDbDir>();
     }
 
     public void close() {
         final Set<SVNWCDbRoot> roots = new HashSet<SVNWCDbRoot>();
         /* Collect all the unique WCROOT structures, and empty out DIR_DATA. */
         if (dirData != null) {
-            for (Map.Entry<File, SVNWCDbDir> entry : dirData.entrySet()) {
+            for (Map.Entry<String, SVNWCDbDir> entry : dirData.entrySet()) {
                 final SVNWCDbDir pdh = entry.getValue();
                 if (pdh.getWCRoot() != null && pdh.getWCRoot().getSDb() != null) {
                     roots.add(pdh.getWCRoot());
@@ -166,7 +166,7 @@ public class SVNWCDb implements ISVNWCDb {
         final Set<SVNWCDbRoot> roots = new HashSet<SVNWCDbRoot>();
         /* Collect all the unique WCROOT structures, and empty out DIR_DATA. */
         if (dirData != null) {
-            for (Map.Entry<File, SVNWCDbDir> entry : dirData.entrySet()) {
+            for (Map.Entry<String, SVNWCDbDir> entry : dirData.entrySet()) {
                 final SVNWCDbDir pdh = entry.getValue();
                 if (pdh.getWCRoot() != null && pdh.getWCRoot().getSDb() != null) {
                     roots.add(pdh.getWCRoot());
@@ -210,7 +210,7 @@ public class SVNWCDb implements ISVNWCDb {
         pdh.setWCRoot(new SVNWCDbRoot(this, localAbsPath, createDb.sDb, createDb.wcId, FORMAT_FROM_SDB, false, false));
 
         /* The PDH is complete. Stash it into DB. */
-        dirData.put(localAbsPath, pdh);
+        dirData.put(localAbsPath.getAbsolutePath(), pdh);
 
         InsertBase ibb = new InsertBase();
 
@@ -1383,7 +1383,7 @@ public class SVNWCDb implements ISVNWCDb {
         boolean obstruction_possible = false;
         sMode = Mode.ReadWrite;
 
-        info.wcDbDir = dirData.get(localAbsPath);
+        info.wcDbDir = dirData.get(localAbsPath.getAbsolutePath());
         if (info.wcDbDir != null && info.wcDbDir.getWCRoot() != null) {
             /* We got lucky. Just return the thing BEFORE performing any I/O. */
             /*
@@ -1431,7 +1431,7 @@ public class SVNWCDb implements ISVNWCDb {
              */
 
             /* Is this directory in our hash? */
-            info.wcDbDir = dirData.get(localAbsPath);
+            info.wcDbDir = dirData.get(localAbsPath.getAbsolutePath());
             if (info.wcDbDir != null && info.wcDbDir.getWCRoot() != null) {
                 /* Stashed directory's local_relpath + basename. */
                 info.localRelPath = SVNFileUtil.createFilePath(info.wcDbDir.computeRelPath(), buildRelPath);
@@ -1545,7 +1545,7 @@ public class SVNWCDb implements ISVNWCDb {
             obstruction_possible = false;
 
             /* Is the parent directory recorded in our hash? */
-            found_pdh = dirData.get(localAbsPath);
+            found_pdh = dirData.get(localAbsPath.getAbsolutePath());
             if (found_pdh != null) {
                 if (found_pdh.getWCRoot() != null) {
                     break;
@@ -1626,7 +1626,7 @@ public class SVNWCDb implements ISVNWCDb {
             if (parent_dir == null) {
                 
             }
-            SVNWCDbDir parent_pdh = dirData.get(parent_dir);
+            SVNWCDbDir parent_pdh = dirData.get(parent_dir.getAbsolutePath());
             if (parent_pdh == null || parent_pdh.getWCRoot() == null) {
                 boolean err = false;
                 try {
@@ -1657,7 +1657,7 @@ public class SVNWCDb implements ISVNWCDb {
                      */
                     parent_pdh.setWCRoot(new SVNWCDbRoot(this, parent_pdh.getLocalAbsPath(), sDb, 1, FORMAT_FROM_SDB, autoUpgrade, enforceEmptyWQ));
 
-                    dirData.put(parent_pdh.getLocalAbsPath(), parent_pdh);
+                    dirData.put(parent_pdh.getLocalAbsPath().getAbsolutePath(), parent_pdh);
 
                     info.wcDbDir.setParent(parent_pdh);
                 }
@@ -1666,7 +1666,7 @@ public class SVNWCDb implements ISVNWCDb {
         }
 
         /* The PDH is complete. Stash it into DB. */
-        dirData.put(info.wcDbDir.getLocalAbsPath(), info.wcDbDir);
+        dirData.put(info.wcDbDir.getLocalAbsPath().getAbsolutePath(), info.wcDbDir);
 
         /* Did we traverse up to parent directories? */
         if (!moved_upwards) {
@@ -1691,7 +1691,7 @@ public class SVNWCDb implements ISVNWCDb {
             File parent_dir = SVNFileUtil.getParentFile(child_pdh.getLocalAbsPath());
             SVNWCDbDir parent_pdh;
 
-            parent_pdh = dirData.get(parent_dir);
+            parent_pdh = dirData.get(parent_dir.getAbsolutePath());
 
             if (parent_pdh == null) {
                 parent_pdh = new SVNWCDbDir(parent_dir);
@@ -1699,7 +1699,7 @@ public class SVNWCDb implements ISVNWCDb {
                 /* All the PDHs have the same wcroot. */
                 parent_pdh.setWCRoot(info.wcDbDir.getWCRoot());
 
-                dirData.put(parent_pdh.getLocalAbsPath(), parent_pdh);
+                dirData.put(parent_pdh.getLocalAbsPath().getAbsolutePath(), parent_pdh);
 
             } else if (parent_pdh.getWCRoot() == null) {
                 parent_pdh.setWCRoot(info.wcDbDir.getWCRoot());
@@ -4056,10 +4056,10 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     private SVNWCDbDir getOrCreateDir(File localDirAbspath, boolean createAllowed) {
-        SVNWCDbDir pdh = dirData.get(localDirAbspath);
+        SVNWCDbDir pdh = dirData.get(localDirAbspath.getAbsolutePath());
         if (pdh == null && createAllowed) {
             pdh = new SVNWCDbDir(localDirAbspath);
-            dirData.put(localDirAbspath, pdh);
+            dirData.put(localDirAbspath.getAbsolutePath(), pdh);
         }
         return pdh;
     }
@@ -4354,8 +4354,8 @@ public class SVNWCDb implements ISVNWCDb {
 
     public void forgetDirectoryTemp(File localDirAbspath) throws SVNException {
         Set<SVNWCDbRoot> roots = new HashSet<SVNWCDbRoot>();
-        for (Iterator<Entry<File, SVNWCDbDir>> i = dirData.entrySet().iterator(); i.hasNext();) {
-            Entry<File, SVNWCDbDir> entry = i.next();
+        for (Iterator<Entry<String, SVNWCDbDir>> i = dirData.entrySet().iterator(); i.hasNext();) {
+            Entry<String, SVNWCDbDir> entry = i.next();
             SVNWCDbDir pdh = entry.getValue();
             if (!SVNWCUtils.isAncestor(localDirAbspath, pdh.getLocalAbsPath())) {
                 continue;
@@ -4832,7 +4832,7 @@ public class SVNWCDb implements ISVNWCDb {
     	SVNWCDbRoot root = new SVNWCDbRoot(this, localAbspath, dbInfo.sDb, dbInfo.wcId, FORMAT_FROM_SDB, false, false);     	
         pdh.setWCRoot(root);
         upgradeData.root = root;
-        dirData.put(upgradeData.rootAbsPath, pdh);
+        dirData.put(upgradeData.rootAbsPath.getAbsolutePath(), pdh);
     }
 
     public class CheckReplace implements SVNSqlJetTransaction {

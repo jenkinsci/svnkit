@@ -330,7 +330,7 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
         for (SvnCopyPair pair : copyPairs) {
             File src = pair.source;
             File dst = pair.dst;
-            if (getOperation().isMove() && src.equals(dst)) {
+            if (getOperation().isMove() && src.getAbsolutePath().equals(dst.getAbsolutePath())) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
                         "Cannot move path ''{0}'' into itself", src);
                 SVNErrorManager.error(err, SVNLogType.WC);
@@ -811,7 +811,7 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
             }
             SVNWCDbStatus childStatus = childInfo.get(NodeInfo.status);
             SVNWCDbKind childKind = childInfo.get(NodeInfo.kind);
-            if (childStatus == SVNWCDbStatus.Normal || childStatus == SVNWCDbStatus.Added) {
+            if (childStatus == SVNWCDbStatus.Normal || childStatus == SVNWCDbStatus.Added || childStatus == SVNWCDbStatus.Incomplete) {
                 if (childKind == SVNWCDbKind.File) {
                     boolean skip = false;
                     if (childStatus == SVNWCDbStatus.Normal) {
@@ -835,6 +835,7 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
                     childStatus == SVNWCDbStatus.Excluded) {
                 wcContext.getDb().opCopy(childSrcPath, childDstPath, null);                
             } else {
+                System.out.println("child status: " + childStatus);
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS, 
                         "Cannot copy ''{0}'' excluded by server", childSrcPath);
                 SVNErrorManager.error(err, SVNLogType.WC);

@@ -15,19 +15,19 @@ import org.tmatesoft.svn.core.internal.wc2.ISvnCommitRunner;
 public class SvnCommitPacket {
     
     private Map<SVNURL, Collection<SvnCommitItem>> items;
-    private Map<File, SvnCommitItem> itemsByPath;
+    private Map<String, SvnCommitItem> itemsByPath;
     private Object lockingContext;
     private ISvnCommitRunner runner;
     private Map<SVNURL, String> lockTokens;
     
     public SvnCommitPacket() {
         items = new HashMap<SVNURL, Collection<SvnCommitItem>>();
-        itemsByPath = new HashMap<File, SvnCommitItem>();
+        itemsByPath = new HashMap<String, SvnCommitItem>();
         lockTokens = new HashMap<SVNURL, String>();
     }
     
     public boolean hasItem(File path) {
-        return itemsByPath.containsKey(path);
+        return itemsByPath.containsKey(path.getAbsolutePath());
     }
 
     public SvnCommitItem getItem(File path) {
@@ -48,7 +48,7 @@ public class SvnCommitPacket {
         }
 
         items.get(repositoryRoot).add(item);
-        itemsByPath.put(item.getPath(), item);
+        itemsByPath.put(item.getPath().getAbsolutePath(), item);
     }
     
     public SvnCommitItem addItem(File path, SVNNodeKind kind, SVNURL repositoryRoot, String repositoryPath, long revision,
@@ -91,7 +91,7 @@ public class SvnCommitPacket {
         }
         
         items.get(rootUrl).add(item);
-        itemsByPath.put(path, item);
+        itemsByPath.put(path.getAbsolutePath(), item);
         return item;
     }
 
