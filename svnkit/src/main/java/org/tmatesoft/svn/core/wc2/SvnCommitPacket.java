@@ -48,7 +48,7 @@ public class SvnCommitPacket {
         }
 
         items.get(repositoryRoot).add(item);
-        itemsByPath.put(item.getPath().getAbsolutePath(), item);
+        itemsByPath.put(item.getPath() != null ? item.getPath().getAbsolutePath() : null, item);
     }
     
     public SvnCommitItem addItem(File path, SVNNodeKind kind, SVNURL repositoryRoot, String repositoryPath, long revision,
