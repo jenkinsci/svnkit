@@ -15,6 +15,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNLog;
+import org.tmatesoft.svn.core.wc2.ISvnMerger;
 
 
 /**
@@ -24,6 +25,10 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNLog;
  * Merge drivers are created by a merger factory implementing the 
  * {@link ISVNMergerFactory} interface. Read more about that interface to
  * find out how to get a default implementation of <code>ISVNMerger</code>.  
+ * 
+ * Note: methods of this interface will only be called for Subversion 1.6 or older 
+ * working copies. To provide custom merge implementation for Subversion 1.7 
+ * working copies implement {@link ISvnMerger} interface.
  * 
  * @version 1.3
  * @since   1.2
