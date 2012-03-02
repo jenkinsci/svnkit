@@ -90,6 +90,7 @@ import org.tmatesoft.svn.core.internal.wc2.old.SvnOldUpgrade;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.ISVNConflictHandler;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
+import org.tmatesoft.svn.core.wc.ISVNMerger;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNConflictAction;
 import org.tmatesoft.svn.core.wc.SVNConflictChoice;
@@ -103,7 +104,9 @@ import org.tmatesoft.svn.core.wc.SVNMergeFileSet;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
+import org.tmatesoft.svn.core.wc2.ISvnMerger;
 import org.tmatesoft.svn.core.wc2.SvnChecksum;
+import org.tmatesoft.svn.core.wc2.SvnMergeResult;
 import org.tmatesoft.svn.util.SVNLogType;
 
 import de.regnis.q.sequence.line.QSequenceLineRAByteData;
@@ -2095,7 +2098,6 @@ public class SVNWCContext {
             workItems = SVNSkel.createEmptyList();
         }
         getDb().opSetProps(localAbsPath, result.newActualProperties, null, hasMagicProperty(propChanges), workItems);
-        getDb().addWorkQueue(localAbsPath, workItems);
         wqRun(localAbsPath);
         return result;
     }
@@ -2110,6 +2112,29 @@ public class SVNWCContext {
             mergeInfo = new MergePropertiesInfo();
         }
         mergeInfo.mergeOutcome = SVNStatusType.UNCHANGED;
+        ISvnMerger customMerger = createCustomMerger();
+        if (customMerger != null) {
+            SVNProperties newBaseProperties = new SVNProperties();
+            SVNProperties newActualProperties = new SVNProperties();
+            
+            SvnMergeResult result = customMerger.mergeProperties(localAbsPath, kind.toNodeKind(), 
+                    leftVersion, 
+                    rightVersion, 
+                    serverBaseProperties, 
+                    pristineProperties, 
+                    actualProperties, 
+                    propChanges, 
+                    baseMerge, 
+                    dryRun, 
+                    newBaseProperties, 
+                    newActualProperties);
+            
+            mergeInfo.mergeOutcome = result.getMergeOutcome();
+            mergeInfo.newActualProperties = newActualProperties;
+            mergeInfo.newBaseProperties = newBaseProperties;
+            
+            return mergeInfo;
+        }
         
         SVNSkel conflictSkel = null;
         boolean isDir = (kind == SVNWCDbKind.Dir);
@@ -2197,6 +2222,16 @@ public class SVNWCContext {
         }
         mergeInfo.workItems = workItems;
         return mergeInfo;
+    }
+    
+    private ISvnMerger createCustomMerger() {
+        if (getOptions() != null && getOptions().getMergerFactory() != null) {
+            ISVNMerger merger = getOptions().getMergerFactory().createMerger(CONFLICT_START, CONFLICT_END, CONFLICT_SEPARATOR);
+            if (merger instanceof ISvnMerger) {
+                return (ISvnMerger) merger;
+            }
+        }
+        return null;
     }
 
 
@@ -2902,8 +2937,15 @@ public class SVNWCContext {
         return info;
     }
 
-    private boolean doTextMerge(File resultFile, File detranslatedTargetAbspath, File leftAbspath, File rightAbspath, String targetLabel, String leftLabel, String rightLabel, SVNDiffOptions options)
-            throws SVNException {
+    private boolean doTextMerge(File resultFile, File detranslatedTargetAbspath, File leftAbspath, File rightAbspath, String targetLabel, String leftLabel, String rightLabel, SVNDiffOptions options) throws SVNException {
+        ISvnMerger customMerger = createCustomMerger();
+        if (customMerger != null) {
+            SvnMergeResult mergeResult = customMerger.mergeText(resultFile, detranslatedTargetAbspath, leftAbspath, rightAbspath, targetLabel, leftLabel, rightLabel, options);
+            if (mergeResult.getMergeOutcome() == SVNStatusType.CONFLICTED) {
+                return true;
+            }
+            return false;
+        }
         ConflictMarkersInfo markersInfo = initConflictMarkers(targetLabel, leftLabel, rightLabel);
         String targetMarker = markersInfo.targetMarker;
         String leftMarker = markersInfo.leftMarker;
