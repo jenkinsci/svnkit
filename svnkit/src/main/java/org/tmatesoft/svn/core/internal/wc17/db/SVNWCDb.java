@@ -2898,7 +2898,7 @@ public class SVNWCDb implements ISVNWCDb {
     }
     
     public static SVNWCDbStatus getWorkingStatus(SVNWCDbStatus status) {
-        if (status == SVNWCDbStatus.Incomplete || status == SVNWCDbStatus.Excluded) {
+        if (status == SVNWCDbStatus.Excluded) {
             return status;
         } else if (status == SVNWCDbStatus.NotPresent || status == SVNWCDbStatus.BaseDeleted) {
             return SVNWCDbStatus.Deleted;
