@@ -68,6 +68,35 @@ public class SvnRemoteDiffSummarize extends SvnRemoteOperationRunner<SvnDiffStat
                               SVNURL url2, File path2, SVNRevision revision2,
                               SVNRevision pegRevision, SVNDepth depth, boolean useAncestry,
             ISVNDiffStatusHandler handler) throws SVNException {
+
+        if (revision1 == SVNRevision.UNDEFINED || revision2 == SVNRevision.UNDEFINED) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Not all revisions are specified");
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+
+        boolean isLocalRev1 = revision1 == SVNRevision.BASE || revision1 == SVNRevision.WORKING;
+        boolean isLocalRev2 = revision2 == SVNRevision.BASE || revision2 == SVNRevision.WORKING;
+        boolean isRepos1;
+        boolean isRepos2;
+
+        if (pegRevision != SVNRevision.UNDEFINED) {
+            if (isLocalRev1 && isLocalRev2) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "At least one revision must be non-local for a pegged diff");
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+
+            isRepos1 = !isLocalRev1;
+            isRepos2 = !isLocalRev2;
+        } else {
+            isRepos1 = !isLocalRev1 || url1 != null;
+            isRepos2 = !isLocalRev2 || url2 != null;
+        }
+
+        if (!isRepos1 || !isRepos2) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Summarizing diff can only compare repository to repository");
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+
         File basePath = null;
         if (path1 != null) {
             basePath = path1;
@@ -140,7 +169,7 @@ public class SvnRemoteDiffSummarize extends SvnRemoteOperationRunner<SvnDiffStat
     }
 
     private long getRevisionNumber(SVNRevision revision1, SVNRepository repository1, SVNURL url1) throws SVNException {
-        final Structure<SvnRepositoryAccess.RevisionsPair> revisionNumber = getRepositoryAccess().getRevisionNumber(repository1, SvnTarget.fromURL(url1, revision1), revision1, null);
+            final Structure<SvnRepositoryAccess.RevisionsPair> revisionNumber = getRepositoryAccess().getRevisionNumber(repository1, SvnTarget.fromURL(url1, revision1), revision1, null);
         return revisionNumber.lng(SvnRepositoryAccess.RevisionsPair.revNumber);
     }
 
