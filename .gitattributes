@@ -110,7 +110,6 @@ svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/remote/SvnRemoteUnlock.
 svnkit/src/main/java/org/tmatesoft/svn/core/io/repository/template.jar -text
 svnkit/src/main/java/org/tmatesoft/svn/core/wc/ISVNFileFilter.java -text svneol=native#unset
 svnkit/src/main/java/org/tmatesoft/svn/core/wc2/SvnGetChangelistPaths.java -text svneol=native#unset
-svnkit/src/main/java/org/tmatesoft/svn/core/wc2/SvnRemoteDelete.java -text svneol=native#unset
 svnkit/src/main/resources/org/tmatesoft/svn/core/internal/wc/config eol=lf
 svnkit/src/main/resources/org/tmatesoft/svn/core/internal/wc/servers eol=lf
 svnkit/src/main/resources/org/tmatesoft/svn/core/io/repository/template.jar -text
