@@ -21,9 +21,32 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
- * Base class for all SVN operations.
+ * SvnOperation is the base class for all version control operations. 
+ * Encapsulates mostly used parameters, operation state, different methods used by implementations.
+ * 
+ * <p/>
+ * Those parameters includes:
+ * <ul>
+ * <li>operation's target(s)</li>
+ * <li>operation's revision</li>
+ * <li>operation's depth</li>
+ * <li>operation's changelists</li>
+ * <li>whether to sleep after operation fails</li>
+ * </ul>
+ * 
+ * <p/>
+ * Those methods are:
+ * <ul>
+ * <li>base implementation of <code>run</code> method, starts the operation execution</li>
+ * <li>methos for access to the factory that created the object and its options, event handler, canceller</li>
+ * <li>variety of methos for getting, setting, recognition operation's targets</li>
+ * <li>cancel the operation</li>
+ * <li>access to the authentication manager</li>
+ * </ul>
  * 
  * @author TMate Software Ltd.
+ * @version 1.7
+ * @see org.tmatesoft.svn.core.wc2
  */
 public class SvnOperation<V> {
     
@@ -42,21 +65,22 @@ public class SvnOperation<V> {
     }
 
     /**
-     * Gets the event handler for the operation. This event handler will be
+     * Gets the event handler for the operation, provided by {@link SvnOperationFactory}. This event handler will be
      * dispatched {@link SVNEvent} objects to provide detailed information about
      * actions and progress state of version control operations performed by
-     * <b>run()</b> method of <b>SVN*</b> operation classes.
+     * <code>run()</code> method of <code>SVN*</code> operation classes. 
      * 
-     * @returns event handler
+     * @return handler for events
+     * @see ISVNEventHandler
      */
     public ISVNEventHandler getEventHandler() {
         return getOperationFactory().getEventHandler();
     }
 
     /**
-     * Gets operation options.
+     * Gets operation's options, provided by {@link SvnOperationFactory}.
      * 
-     * @return operation options
+     * @return options of the operation
      */
     public ISVNOptions getOptions() {
         return getOperationFactory().getOptions();
@@ -70,9 +94,10 @@ public class SvnOperation<V> {
     }
     
     /**
-     * Sets one target to the operation.
-     * 
-     * @param target target to the operation
+     * Sets one target of the operation.
+     *  
+     * @param target target of the operationn
+     * @see SvnTarget
      */
     public void setSingleTarget(SvnTarget target) {
         this.targets = new ArrayList<SvnTarget>();
@@ -82,10 +107,11 @@ public class SvnOperation<V> {
     }
 
     /**
-     * Sets two targets to the operation.
+     * Sets two targets of the operation.
      * 
-     * @param target1 first target to the operation
-     * @param target2 second target to the operation
+     * @param target1 first target of the operation
+     * @param target2 second target of the operation
+     * @see SvnTarget
      */
     protected void setTwoTargets(SvnTarget target1, SvnTarget target2) {
         this.targets = new ArrayList<SvnTarget>();
@@ -94,9 +120,10 @@ public class SvnOperation<V> {
     }
 
     /**
-     * Adds the target to the operation.
+     * Adds one target to the operation's targets.
      * 
-     * @param target target to the operation
+     * @param target target of the operation
+     * @see SvnTarget
      */
     public void addTarget(SvnTarget target) {
         this.targets.add(target);
@@ -106,6 +133,7 @@ public class SvnOperation<V> {
      * Returns all targets of the operation.
      * 
      * @return targets of the operation
+     * @see SvnTarget
      */
     public Collection<SvnTarget> getTargets() {
         return Collections.unmodifiableCollection(targets);
@@ -115,6 +143,7 @@ public class SvnOperation<V> {
      * Returns first target of the operation.
      * 
      * @return first target of the operation
+     * @see SvnTarget
      */
     public SvnTarget getFirstTarget() {
         return targets != null && !targets.isEmpty() ? targets.iterator().next() : null;
@@ -123,7 +152,7 @@ public class SvnOperation<V> {
     /**
      * Sets the limit of the operation by depth.
      * 
-     * @param depth the operation's limit by depth
+     * @param depth depth of the operation
      */
     public void setDepth(SVNDepth depth) {
         this.depth = depth;
@@ -132,16 +161,18 @@ public class SvnOperation<V> {
     /**
      * Gets the limit of the operation by depth.
      * 
-     * @return limit of the operation by depth
+     * @return depth of the operation
      */
     public SVNDepth getDepth() {
         return depth;
     }
     
     /**
-     * Sets revision to operate on.
+     * Sets revision of the operation. 
+     * In most cases if revision equals {@link SVNRevision#UNDEFINED}, the operation's revision will be {@link SVNRevision#WORKING}
+     * if target(s) are local; it will be will be {@link SVNRevision#HEAD} it targets are remote.
      * 
-     * @param revision revision to operate on
+     * @param revision revision of the operation
      */
     public void setRevision(SVNRevision revision) {
         this.revision = revision;
@@ -150,7 +181,8 @@ public class SvnOperation<V> {
     /**
      * Gets revision to operate on.
      * 
-     * @return revision to operate on
+     * @return revision of the operation
+     * @see #setRevision(SVNRevision)
      */
     public SVNRevision getRevision() {
         return revision;
@@ -159,7 +191,7 @@ public class SvnOperation<V> {
     /**
      * Sets changelists to operate only on members of.
      * 
-     * @param changelists changelists to operate only on members of
+     * @param changelists changelists of the operation
      */
     public void setApplicalbeChangelists(Collection<String> changelists) {
         this.changelists = changelists;
@@ -168,7 +200,7 @@ public class SvnOperation<V> {
     /**
      * Gets changelists to operate only on members of.
      * 
-     * @return changelists to operate only on members of
+     * @return changelists of the operation
      */
     public Collection<String> getApplicableChangelists() {
         if (this.changelists == null || this.changelists.isEmpty()) {
@@ -178,9 +210,9 @@ public class SvnOperation<V> {
     }
     
     /**
-     * Gets the factory for creating the operations.
+     * Gets the factory that created the operation.
      * 
-     * @return factory for creating the operations
+     * @return creation factory of the operations
      */
     public SvnOperationFactory getOperationFactory() {
         return this.operationFactory;
@@ -244,11 +276,9 @@ public class SvnOperation<V> {
     }
     
     /**
-     * Cancels the operation. Execution of operation will be stopped at the next point of checking <code>isCancelled</code> state
-     * 
-     * <p>
-     * If {@link #getCanceller()} is not <code>null</code>, {@link ISVNCanceller#checkCancelled()} is called, 
-     * otherwise {@link SVNCancelException} is raised.
+     * Cancels the operation. Execution of operation will be stopped at the next point of checking <code>isCancelled</code> state.
+     * If canceller is set, {@link ISVNCanceller#checkCancelled()} is called, 
+     * otherwise {@link org.tmatesoft.svn.core.SVNCancelException} is raised at the point of checking <code>isCancelled</code> state.
      */
     public void cancel() {
         isCancelled = true;
@@ -264,9 +294,9 @@ public class SvnOperation<V> {
     }
     
     /**
-     * Runs the operation.
+     * Executes the operation.
      * 
-     * @return result depending on operation
+     * @return result depending on operation type
      * @throws SVNException
      */
     @SuppressWarnings("unchecked")
@@ -297,7 +327,7 @@ public class SvnOperation<V> {
     }
 
     /**
-     * Gets the pool of repositories.
+     * Gets the operation's pool of repositories, provided by {@link SvnOperationFactory}.
      * 
      * @return pool of repositories
      */
@@ -306,45 +336,50 @@ public class SvnOperation<V> {
     }
 
     /**
-     * Gets the authentication manager of the operation.
+     * Gets operation's authentication manager, provided by {@link SvnOperationFactory}.
      * 
-     * @return authentication manager of the operation
+     * @return authentication manager
      */
     public ISVNAuthenticationManager getAuthenticationManager() {
         return getOperationFactory().getAuthenticationManager();
     }
 
     /**
-     * Gets the canceller handler of the operation. See {@link #cancel()}.
+     * Gets the cancel handler of the operation, provided by {@link SvnOperationFactory}.
+     * See {@link #cancel()}.
      * 
-     * @return authentication manager of the operation
+     * @return cancel handler
      */
     public ISVNCanceller getCanceller() {
         return getOperationFactory().getCanceller();
     }
 
     /**
-     * Gets time for what thread should sleep after update operation fails.
+     * Gets whether or not the operation should sleep after if fails.
      * 
-     * @return sleep time (in milliseconds) or <code>0</code> if thread should not sleep
+     * @return <code>true</code> if the operation should sleep, otherwise <code>false</code>
+     * @see SvnUpdate
+     * @since 1.7
      */
     public boolean isSleepForTimestamp() {
         return isSleepForTimestamp;
     }
 
     /**
-     * Sets time for what program should sleep after update operation fails.
+     * Sets whether or not the operation should sleep after if fails.
      * 
-     * @param isSleepForTimestamp sleep time (in milliseconds) or <code>0</code> if thread should not sleep
+     * @param isSleepForTimestamp <code>true</code> if the operation should sleep, otherwise <code>false</code>
+     * @see SvnUpdate
+     * @since 1.7
      */
     public void setSleepForTimestamp(boolean isSleepForTimestamp) {
         this.isSleepForTimestamp = isSleepForTimestamp;
     }
 
     /**
-     * Gets whether or not operation has files as targets.
+     * Analyses the targets and returns whether or not operation has at least one file in targets.
      * 
-     * @return <code>true</code> if operation has files as targets
+     * @return <code>true</code> if operation has at least one file in targets, otherwise <code>false</code>
      */
     public boolean hasFileTargets() {
         for (SvnTarget target : getTargets()) {
