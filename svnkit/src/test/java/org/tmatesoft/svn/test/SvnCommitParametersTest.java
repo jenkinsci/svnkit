@@ -83,11 +83,13 @@ public class SvnCommitParametersTest {
         SvnCommitPacket packet = collectPacket(wc, new File[] {changedFile, missingFile, missingDir}, new SvnOperationFactory(), 
                 createCommitParameters(Action.DELETE, true, Action.DELETE, true), SVNDepth.EMPTY);
 
-        Assert.assertNotNull(packet.getItem(changedFile));
-        Assert.assertNotNull(packet.getItem(missingFile));
-        Assert.assertNotNull(packet.getItem(missingDir));
-        
-        packet.dispose();
+        try {
+            Assert.assertNotNull(packet.getItem(changedFile));
+            Assert.assertNotNull(packet.getItem(missingFile));
+            Assert.assertNotNull(packet.getItem(missingDir));
+        } finally {
+            packet.dispose();
+        }
         
         SvnStatus st = wc.getStatus(MISSING_FILE_PATH);
         Assert.assertEquals(SVNStatusType.STATUS_DELETED, st.getNodeStatus());

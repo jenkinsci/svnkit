@@ -10,6 +10,7 @@ import java.util.Map;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc2.ISvnCommitRunner;
 
 public class SvnCommitPacket {
@@ -27,11 +28,11 @@ public class SvnCommitPacket {
     }
     
     public boolean hasItem(File path) {
-        return itemsByPath.containsKey(path.getAbsolutePath());
+        return itemsByPath.containsKey(SVNFileUtil.getFilePath(path));
     }
 
     public SvnCommitItem getItem(File path) {
-        return itemsByPath.get(path);
+        return itemsByPath.get(SVNFileUtil.getFilePath(path));
     }
     
     public Collection<SVNURL> getRepositoryRoots() {
@@ -48,7 +49,7 @@ public class SvnCommitPacket {
         }
 
         items.get(repositoryRoot).add(item);
-        itemsByPath.put(item.getPath() != null ? item.getPath().getAbsolutePath() : null, item);
+        itemsByPath.put(item.getPath() != null ? SVNFileUtil.getFilePath(item.getPath()) : null, item);
     }
     
     public SvnCommitItem addItem(File path, SVNNodeKind kind, SVNURL repositoryRoot, String repositoryPath, long revision,
@@ -91,7 +92,7 @@ public class SvnCommitPacket {
         }
         
         items.get(rootUrl).add(item);
-        itemsByPath.put(path.getAbsolutePath(), item);
+        itemsByPath.put(SVNFileUtil.getFilePath(path), item);
         return item;
     }
 
