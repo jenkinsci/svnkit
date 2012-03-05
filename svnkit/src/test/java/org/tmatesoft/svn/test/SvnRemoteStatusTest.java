@@ -25,7 +25,6 @@ public class SvnRemoteStatusTest {
     private void testRemoteUrlPresence(SvnWcGeneration wcGeneration) throws SVNException {
         final TestOptions options = TestOptions.getInstance();
 
-        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
         final Sandbox sandbox = Sandbox.createWithCleanup(getClass().getSimpleName() + "." + wcGeneration, options);
         final SVNURL url = sandbox.createSvnRepository();
 
@@ -41,7 +40,7 @@ public class SvnRemoteStatusTest {
 
         // move
         WorkingCopy wc = sandbox.checkoutNewWorkingCopy(url, -1, wcGeneration);
-        
+        final SvnOperationFactory svnOperationFactory = wc.getOperationFactory();
         
         // make changes
         final CommitBuilder remoteChange = new CommitBuilder(url);
