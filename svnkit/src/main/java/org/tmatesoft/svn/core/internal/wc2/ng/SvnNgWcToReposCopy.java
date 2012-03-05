@@ -210,7 +210,8 @@ public class SvnNgWcToReposCopy extends SvnNgOperationRunner<SVNCommitInfo, SvnR
             SvnCommitPacket oldPacket = packet;
             packet = filterLocalModifications(packet);
             if (packet.isEmpty()) {
-                throw new IllegalStateException(buildErrorMessageWithDebugInformation(oldPacket));
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, buildErrorMessageWithDebugInformation(oldPacket));
+                SVNErrorManager.error(err, SVNLogType.DEFAULT);
             }
         }
 
