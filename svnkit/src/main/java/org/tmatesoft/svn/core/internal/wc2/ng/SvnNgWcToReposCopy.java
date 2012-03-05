@@ -25,6 +25,7 @@ import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNCommitUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNExternal;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNCommitter17;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
@@ -285,7 +286,7 @@ public class SvnNgWcToReposCopy extends SvnNgOperationRunner<SVNCommitInfo, SvnR
                             continue;
                         }
                     }
-                    final SVNURL url = baseInfo.reposRootUrl.appendPath(baseInfo.reposRelPath.getPath(), false);
+                    final SVNURL url = baseInfo.reposRootUrl.appendPath(SVNFileUtil.getFilePath(baseInfo.reposRelPath), false);
 
                     if (!copyFromUrl.equals(url)) {
                         continue;
