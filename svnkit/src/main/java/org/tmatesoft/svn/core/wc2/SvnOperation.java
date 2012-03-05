@@ -48,7 +48,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @version 1.7
  * @see org.tmatesoft.svn.core.wc2
  */
-public class SvnOperation<V> {
+public class SvnOperation<V> implements ISvnOperationOptionsProvider {
     
     private SVNDepth depth;
     private Collection<SvnTarget> targets;

@@ -143,6 +143,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
     private Map myConfigOptions;
     private Map myServersOptions;
     private boolean myIsGitDiffFormat;
+    private boolean myIsShowDiff;
 
     private int myStripCount;
     
@@ -529,6 +530,8 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
             myIsShowCopiesAsAdds = true;
         } else if (option == SVNOption.GIT_DIFF_FORMAT) {
             myIsGitDiffFormat = true;
+        } else if (option == SVNOption.DIFF) {
+            myIsShowDiff = true;
         } else if (option == SVNOption.IGNORE_EXTERNALS) {
             myIsIgnoreExternals = true;
         } else if (option == SVNOption.IGNORE_KEYWORDS) {
@@ -836,6 +839,10 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
 
     public boolean isGitDiffFormat() {
         return myIsGitDiffFormat;
+    }
+
+    public boolean isShowDiff() {
+        return myIsShowDiff;
     }
 
     public boolean isUseMergeHistory() {

@@ -16,14 +16,14 @@ import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeOriginInfo;
 import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnOperation;
+import org.tmatesoft.svn.core.wc2.ISvnOperationOptionsProvider;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
 
 public class SvnNgRepositoryAccess extends SvnRepositoryAccess {
 
-    public SvnNgRepositoryAccess(SvnOperation<?> operation, SVNWCContext context) throws SVNException {
-        super(operation, context);
+    public SvnNgRepositoryAccess(ISvnOperationOptionsProvider operationOptionsProvider, SVNWCContext context) throws SVNException {
+        super(operationOptionsProvider, context);
     }
 
     @Override

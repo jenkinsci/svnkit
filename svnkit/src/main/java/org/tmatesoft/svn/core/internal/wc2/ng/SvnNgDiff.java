@@ -182,7 +182,7 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
 
         SVNURL repositoryRoot = null;
 
-        if (kind1 == SVNNodeKind.NONE && kind2 == SVNNodeKind.NONE) {
+        if (kind1 == SVNNodeKind.NONE || kind2 == SVNNodeKind.NONE) {
             repositoryRoot = repository.getRepositoryRoot(true);
             SVNURL newAnchor = kind1 == SVNNodeKind.NONE ? anchor1 : anchor2;
             SVNRevision revision = kind1 == SVNNodeKind.NONE ? revision1 : revision2;
@@ -195,7 +195,7 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
                 }
                 repository.setLocation(newAnchor, false);
                 kind = repository.checkPath("", revision.getNumber()); //TODO: no such method: SVNRepository#checkPath(String, SVNRevision)
-            } while (kind1 != SVNNodeKind.DIR);
+            } while (kind != SVNNodeKind.DIR);
 
             anchor1 = anchor2 = newAnchor;
 

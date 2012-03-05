@@ -13,14 +13,14 @@ import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnOperation;
+import org.tmatesoft.svn.core.wc2.ISvnOperationOptionsProvider;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
 
 public class SvnOldRepositoryAccess extends SvnRepositoryAccess {
 
-    public SvnOldRepositoryAccess(SvnOperation<?> operation) throws SVNException {
-        super(operation, null);
+    public SvnOldRepositoryAccess(ISvnOperationOptionsProvider operationOptionsProvider) throws SVNException {
+        super(operationOptionsProvider, null);
     }
 
     @Override
@@ -107,8 +107,8 @@ public class SvnOldRepositoryAccess extends SvnRepositoryAccess {
     }
     
     protected SVNWCAccess createWCAccess() {
-        SVNWCAccess access = SVNWCAccess.newInstance(getOperation().getEventHandler());
-        access.setOptions(getOperation().getOptions());
+        SVNWCAccess access = SVNWCAccess.newInstance(getOperationOptionsProvider().getEventHandler());
+        access.setOptions(getOperationOptionsProvider().getOptions());
         return access;
     }
 

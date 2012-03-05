@@ -200,7 +200,7 @@ import org.tmatesoft.svn.core.wc2.admin.SvnRepositoryUpgrade;
 import org.tmatesoft.svn.core.wc2.admin.SvnRepositoryVerify;
 import org.tmatesoft.svn.util.SVNLogType;
 
-public class SvnOperationFactory {
+public class SvnOperationFactory implements ISvnOperationOptionsProvider {
     
     private Map<Class<?>, List<ISvnOperationRunner<?, SvnOperation<?>>>> anyFormatOperationRunners;
     private Map<Class<?>, List<ISvnOperationRunner<?, SvnOperation<?>>>> noneOperationRunners;

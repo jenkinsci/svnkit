@@ -122,6 +122,7 @@ public class SVN extends AbstractSVNLauncher {
         SVNCommandLine.registerOption(SVNOption.ACCEPT);
         SVNCommandLine.registerOption(SVNOption.REMOVE);
 
+        SVNCommandLine.registerOption(SVNOption.DIFF);
         SVNCommandLine.registerOption(SVNOption.OLD);
         SVNCommandLine.registerOption(SVNOption.NEW);
         SVNCommandLine.registerOption(SVNOption.SUMMARIZE);

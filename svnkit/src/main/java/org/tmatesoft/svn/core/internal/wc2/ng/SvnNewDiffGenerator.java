@@ -68,6 +68,12 @@ public class SvnNewDiffGenerator implements ISVNDiffGenerator {
     }
 
     public void setDiffDeleted(boolean isDiffDeleted) {
+        if (generator instanceof SvnDiffGenerator) {
+            ((SvnDiffGenerator) generator).setDiffDeleted(isDiffDeleted);
+        } else if (generator instanceof SvnOldDiffGenerator) {
+            ((SvnOldDiffGenerator) generator).getDelegate().setDiffDeleted(isDiffDeleted);
+        }
+
         diffDeleted = isDiffDeleted;
     }
 

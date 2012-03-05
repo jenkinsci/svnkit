@@ -88,6 +88,7 @@ public class SVNOption extends AbstractSVNOption {
     public static final SVNOption WITH_ALL_REVPROPS = new SVNOption("with-all-revprops");
     public static final SVNOption WITH_NO_REVPROPS = new SVNOption("with-no-revprops");
     public static final SVNOption GIT_DIFF_FORMAT = new SVNOption("git");
+    public static final SVNOption DIFF = new SVNOption("diff");
 
     // auth options.
     public static final SVNOption USERNAME = new SVNOption("username", false);

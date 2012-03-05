@@ -19,6 +19,10 @@ public class SvnOldDiffGenerator implements ISvnDiffGenerator {
         this.generator = generator;
     }
 
+    public ISVNDiffGenerator getDelegate() {
+        return generator;
+    }
+
     public void init(SvnTarget originalTarget1, SvnTarget originalTarget2) {
         generator.init(getDisplayPath(originalTarget2), getDisplayPath(originalTarget2));
     }

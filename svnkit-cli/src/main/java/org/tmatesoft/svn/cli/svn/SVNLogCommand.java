@@ -24,7 +24,9 @@ import java.util.TreeMap;
 import java.util.regex.PatternSyntaxException;
 
 import org.tmatesoft.svn.cli.SVNCommandUtil;
+import org.tmatesoft.svn.core.ISVNCanceller;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -32,14 +34,31 @@ import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
+import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess;
+import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
+import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgRepositoryAccess;
+import org.tmatesoft.svn.core.internal.wc2.old.SvnOldRepositoryAccess;
+import org.tmatesoft.svn.core.wc.ISVNDiffGenerator;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
+import org.tmatesoft.svn.core.wc.ISVNOptions;
+import org.tmatesoft.svn.core.wc.ISVNRepositoryPool;
+import org.tmatesoft.svn.core.wc.SVNClientManager;
+import org.tmatesoft.svn.core.wc.SVNDiffClient;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNRevisionRange;
+import org.tmatesoft.svn.core.wc2.ISvnOperationOptionsProvider;
+import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
 
 
@@ -54,6 +73,8 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
     private LinkedList myMergeStack;
     private String myAuthorOfInterest;
     private String myLogRegularExpression;
+    private SVNURL myTargetUrl;
+    private SVNDepth myDepth;
     
     public SVNLogCommand() {
         super("log", null);
@@ -66,6 +87,7 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
     protected Collection createSupportedOptions() {
         Collection options = new LinkedList();
         options.add(SVNOption.REVISION);
+        options.add(SVNOption.DIFF);
         options.add(SVNOption.QUIET);
         options.add(SVNOption.VERBOSE);
         options.add(SVNOption.USE_MERGE_HISTORY);
@@ -95,9 +117,39 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
                         "'with-revprop' option only valid in XML mode");
                 SVNErrorManager.error(err, SVNLogType.CLIENT);
             }
+        } else {
+            if (getSVNEnvironment().isShowDiff()) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR,
+                        "'diff' option is not supported in XML mode");
+                SVNErrorManager.error(err, SVNLogType.CLIENT);
+            }
         }
-        
-        List targets = new ArrayList(); 
+
+        if (getSVNEnvironment().isQuiet() && getSVNEnvironment().isShowDiff()) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR,
+                    "'quiet' and 'diff' options are mutually exclusive");
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
+        }
+
+        if (getSVNEnvironment().getDiffCommand() != null && !getSVNEnvironment().isShowDiff()) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR,
+                    "'diff-cmd' option requires 'diff' option");
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
+        }
+
+        if (getSVNEnvironment().getExtensions() != null && !getSVNEnvironment().isShowDiff()) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR,
+                    "'extensions' option requires 'diff' option");
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
+        }
+
+        if (getSVNEnvironment().getDepth() != SVNDepth.UNKNOWN && !getSVNEnvironment().isShowDiff()) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR,
+                    "'depth' option requires 'diff' option");
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
+        }
+
+        List targets = new ArrayList();
         if (getSVNEnvironment().getTargets() != null) {
             targets.addAll(getSVNEnvironment().getTargets());
         }
@@ -169,6 +221,8 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
 
         myAuthorOfInterest = getSVNEnvironment().getAuthorOfInterest();
         myLogRegularExpression = getSVNEnvironment().getRegularExpression();
+        myDepth = getSVNEnvironment().getDepth() == SVNDepth.UNKNOWN ? SVNDepth.INFINITY : getSVNEnvironment().getDepth();
+        myTargetUrl = getURLFromTarget(getSVNEnvironment().getClientManager(), target);
         
         SVNLogClient client = getSVNEnvironment().getClientManager().getLogClient();
         if (!getSVNEnvironment().isQuiet()) {
@@ -243,6 +297,52 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
         } else if (!getSVNEnvironment().isIncremental()) {
             getSVNEnvironment().getOut().print(SEPARATOR);
         }
+    }
+
+    private SVNURL getURLFromTarget(SVNClientManager clientManager, SVNPath target) throws SVNException {
+        if (target.isURL()) {
+            return target.getURL();
+        }
+
+        File file = target.getFile();
+        SvnWcGeneration wcGeneration = SvnOperationFactory.detectWcGeneration(file, true);
+        SvnRepositoryAccess repositoryAccess = null;
+
+        ISvnOperationOptionsProvider operationOptionsProvider = createLocalOperationOptionsProvider(clientManager);
+
+        if (wcGeneration == SvnWcGeneration.V17) {
+            repositoryAccess = new SvnNgRepositoryAccess(operationOptionsProvider, new SVNWCContext(operationOptionsProvider.getOptions(), operationOptionsProvider.getEventHandler()));
+        } else if (wcGeneration == SvnWcGeneration.V16) {
+            repositoryAccess = new SvnOldRepositoryAccess(operationOptionsProvider);
+        } else {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Unsupported wc generation");
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
+        }
+        return repositoryAccess.getURLFromPath(SvnTarget.fromFile(file), SVNRevision.WORKING, null).get(SvnRepositoryAccess.UrlInfo.url);
+    }
+
+    private ISvnOperationOptionsProvider createLocalOperationOptionsProvider(final SVNClientManager clientManager) {
+        return new ISvnOperationOptionsProvider() {
+            public ISVNEventHandler getEventHandler() {
+                return null;
+            }
+
+            public ISVNOptions getOptions() {
+                return clientManager.getOptions();
+            }
+
+            public ISVNRepositoryPool getRepositoryPool() {
+                return clientManager.getRepositoryPool();
+            }
+
+            public ISVNAuthenticationManager getAuthenticationManager() {
+                return null;
+            }
+
+            public ISVNCanceller getCanceller() {
+                return null;
+            }
+        };
     }
 
     public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
@@ -346,15 +446,74 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
         if (message != null) {
             buffer.append("\n" + message + "\n");
         }
-        
+
         if (logEntry.hasChildren()) {
             Long rev = new Long(logEntry.getRevision());
             if (myMergeStack == null) {
                 myMergeStack = new LinkedList();
             }
             myMergeStack.addLast(rev);
-        } 
+        }
         getSVNEnvironment().getOut().print(buffer.toString());
+
+        if (getSVNEnvironment().isShowDiff()) {
+
+            getSVNEnvironment().getOut().println();
+
+            SVNClientManager diffClientManager = getEnvironment().createClientManager();
+            try {
+                //TODO: parse diff options here
+                SVNDiffClient client = diffClientManager.getDiffClient();
+                client.setShowCopiesAsAdds(false);
+
+                final ISVNDiffGenerator diffGenerator = SVNDiffCommand.createDiffGenerator(getSVNEnvironment());
+                diffGenerator.setDiffDeleted(false);
+
+                client.setDiffGenerator(diffGenerator);
+
+                try {
+                    client.doDiff(myTargetUrl,
+                            SVNRevision.create(logEntry.getRevision() - 1),
+                            myTargetUrl,
+                            SVNRevision.create(logEntry.getRevision()),
+                            myDepth,
+                            true,
+                            getSVNEnvironment().getOut());
+                } catch (SVNException e) {
+                    if (e.getErrorMessage().getErrorCode() == SVNErrorCode.FS_NOT_FOUND) {
+                        SVNURL parent = SVNURL.parseURIEncoded(SVNPathUtil.removeTail(myTargetUrl.toString()));
+                        while (!myTargetUrl.equals(parent)) {
+                            try {
+                                client.doDiff(parent,
+                                        SVNRevision.create(logEntry.getRevision() - 1),
+                                        parent,
+                                        SVNRevision.create(logEntry.getRevision()),
+                                        myDepth,
+                                        true,
+                                        getSVNEnvironment().getOut());
+                            } catch (SVNException e1) {
+                                if (e1.getErrorMessage().getErrorCode() == SVNErrorCode.FS_NOT_FOUND) {
+                                    parent = SVNURL.parseURIEncoded(SVNPathUtil.removeTail(parent.toString()));
+                                } else if (e1.getErrorMessage().getErrorCode() == SVNErrorCode.RA_ILLEGAL_URL
+                                        || e1.getErrorMessage().getErrorCode() == SVNErrorCode.AUTHZ_UNREADABLE
+                                        || e1.getErrorMessage().getErrorCode() == SVNErrorCode.RA_LOCAL_REPOS_OPEN_FAILED) {
+                                    break;
+                                } else {
+                                    throw e1;
+                                }
+                            }
+                            break;
+                        }
+                    } else {
+                        throw e;
+                    }
+                }
+            } finally {
+                diffClientManager.dispose();
+            }
+
+            getSVNEnvironment().getOut().println();
+        }
     }
     
     protected void printLogEntryXML(SVNLogEntry logEntry) throws SVNException {

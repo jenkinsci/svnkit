@@ -368,7 +368,15 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
     }
 
     private void internalDiff(SvnTarget target, OutputStream outputStream, String displayPath, File file1, File file2, String label1, String label2, SvnDiffCallback.OperationKind operation, String copyFromPath, String revision1, String revision2) throws SVNException {
-        String header = getHeaderString(target, displayPath, operation, copyFromPath);
+        String header = getHeaderString(target, displayPath, file2 == null, operation, copyFromPath);
+        if (file2 == null && !isDiffDeleted()) {
+            try {
+                displayString(outputStream, header);
+            } catch (IOException e) {
+                wrapException(e);
+            }
+            return;
+        }
         String headerFields = getHeaderFieldsString(target, displayPath, label1, label2, revision1, revision2, operation, copyFromPath);
 
         RandomAccessFile is1 = null;
@@ -439,21 +447,16 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
         }
     }
 
-    private String getHeaderString(SvnTarget target, String displayPath, SvnDiffCallback.OperationKind operation, String copyFromPath) throws SVNException {
+    private String getHeaderString(SvnTarget target, String displayPath, boolean deleted, SvnDiffCallback.OperationKind operation, String copyFromPath) throws SVNException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         try {
-            boolean stopDisplaying = displayHeader(byteArrayOutputStream, displayPath, false, operation);
+            boolean stopDisplaying = displayHeader(byteArrayOutputStream, displayPath, deleted, operation);
             if (useGitFormat) {
                 displayGitDiffHeader(byteArrayOutputStream, operation,
                         getRelativeToRootPath(target, originalTarget1),
                         getRelativeToRootPath(target, originalTarget2),
                         copyFromPath);
             }
-            if (stopDisplaying) {
-                SVNFileUtil.closeFile(byteArrayOutputStream);
-                return null;
-            }
-//            displayHeaderFields(byteArrayOutputStream, label1, label2);
         } catch (SVNException e) {
             SVNFileUtil.closeFile(byteArrayOutputStream);
 

@@ -206,14 +206,7 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
 
     public void initClientManager() throws SVNException {
         myOptions = createClientOptions();
-        myClientManager = SVNClientManager.newInstance(myOptions, createClientAuthenticationManager());
-        myClientManager.setEventHandler(new ISVNEventHandler() {
-            public void handleEvent(SVNEvent event, double progress) throws SVNException {
-            }
-            public void checkCancelled() throws SVNCancelException {
-                AbstractSVNCommandEnvironment.this.checkCancelled();
-            }
-        });
+        myClientManager = createClientManager();
     }
 
     public void dispose() {
@@ -566,6 +559,19 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
         synchronized (AbstractSVNCommandEnvironment.class) {
             ourIsCancelled = true;
         }
+    }
+
+    public SVNClientManager createClientManager() {
+        SVNClientManager clientManager = SVNClientManager.newInstance(myOptions, createClientAuthenticationManager());
+        clientManager.setEventHandler(new ISVNEventHandler() {
+            public void handleEvent(SVNEvent event, double progress) throws SVNException {
+            }
+
+            public void checkCancelled() throws SVNCancelException {
+                AbstractSVNCommandEnvironment.this.checkCancelled();
+            }
+        });
+        return clientManager;
     }
 
 }

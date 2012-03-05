@@ -26,22 +26,22 @@ import org.tmatesoft.svn.core.io.SVNLocationSegment;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnOperation;
+import org.tmatesoft.svn.core.wc2.ISvnOperationOptionsProvider;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
 
 public abstract class SvnRepositoryAccess {
     
     private SVNWCContext context;
-    private SvnOperation<?> operation;
+    private ISvnOperationOptionsProvider operationOptionsProvider;
 
-    protected SvnRepositoryAccess(SvnOperation<?> operation, SVNWCContext context) throws SVNException {
-        this.operation = operation;
+    protected SvnRepositoryAccess(ISvnOperationOptionsProvider operationOptionsProvider, SVNWCContext context) throws SVNException {
+        this.operationOptionsProvider = operationOptionsProvider;
         this.context = context;
     }
     
-    protected SvnOperation<?> getOperation() {
-        return this.operation;
+    protected ISvnOperationOptionsProvider getOperationOptionsProvider() {
+        return this.operationOptionsProvider;
     }
     
     protected SVNWCContext getWCContext() {
@@ -94,11 +94,11 @@ public abstract class SvnRepositoryAccess {
 
     public SVNRepository createRepository(SVNURL url, String expectedUuid, boolean mayReuse) throws SVNException {
         SVNRepository repository = null;
-        if (getOperation().getRepositoryPool() == null) {
+        if (getOperationOptionsProvider().getRepositoryPool() == null) {
             repository = SVNRepositoryFactory.create(url, null);
-            repository.setAuthenticationManager(getOperation().getAuthenticationManager());
+            repository.setAuthenticationManager(getOperationOptionsProvider().getAuthenticationManager());
         } else {
-            repository = getOperation().getRepositoryPool().createRepository(url, mayReuse);
+            repository = getOperationOptionsProvider().getRepositoryPool().createRepository(url, mayReuse);
         }
         if (expectedUuid != null) {
             String reposUUID = repository.getRepositoryUUID(true);
@@ -109,7 +109,7 @@ public abstract class SvnRepositoryAccess {
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
         }
-        repository.setCanceller(operation.getCanceller());
+        repository.setCanceller(getOperationOptionsProvider().getCanceller());
         return repository;
     }
 
