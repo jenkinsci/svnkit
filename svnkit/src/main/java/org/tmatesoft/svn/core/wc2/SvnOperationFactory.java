@@ -1207,6 +1207,9 @@ public class SvnOperationFactory {
     }
 
     public void setPrimaryWcGeneration(SvnWcGeneration primaryWcGeneration) {
+        if (primaryWcGeneration == null) {
+            return;
+        }
         this.primaryWcGeneration = primaryWcGeneration;
         registerRunners();
     }

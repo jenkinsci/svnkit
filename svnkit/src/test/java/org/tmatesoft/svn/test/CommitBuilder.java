@@ -26,12 +26,15 @@ public class CommitBuilder {
     private final Map<String, byte[]> filesToAdd;
     private final Map<String, byte[]> filesToChange;
     private final Set<String> directoriesToAdd;
+    private final Set<String> entriesToDelete;
 
     public CommitBuilder(SVNURL url) {
         this.filesToAdd = new HashMap<String, byte[]>();
         this.filesToChange = new HashMap<String, byte[]>();
         this.directoriesToAdd = new HashSet<String>();
+        this.entriesToDelete = new HashSet<String>();
         this.url = url;
+        
         setCommitMessage("");
     }
 
@@ -70,6 +73,7 @@ public class CommitBuilder {
             openOrAddDir(commitEditor, directory);
             currentDirectory = directory;
 
+            deleteEntries(commitEditor, directory);
             addChildrensFiles(commitEditor, directory);
         }
 
@@ -79,6 +83,19 @@ public class CommitBuilder {
 
         commitEditor.closeDir();
         return commitEditor.closeEdit();
+    }
+
+    private void deleteEntries(ISVNEditor commitEditor, String directory) throws SVNException {
+        for (String path : entriesToDelete) {
+            String parent = getParent(path);
+            if (parent == null) {
+                parent = "";
+            }
+            if (directory.equals(parent)) {
+                commitEditor.deleteEntry(path, -1);
+            }
+        }
+
     }
 
     private void addChildrensFiles(ISVNEditor commitEditor, String directory) throws SVNException {
@@ -159,7 +176,7 @@ public class CommitBuilder {
     }
 
     private void openOrAddDir(ISVNEditor commitEditor, String directory) throws SVNException {
-        if (existsDirectory(directory)) {
+        if (existsDirectory(directory) && !directoriesToAdd.contains(directory)) {
             commitEditor.openDir(directory, -1);
         } else {
             commitEditor.addDir(directory, null, -1);
@@ -180,6 +197,9 @@ public class CommitBuilder {
         final SortedSet<String> directoriesToVisit = new TreeSet<String>();
         for (String directory : directoriesToAdd) {
             addDirectoryToVisit(directory, directoriesToVisit);
+        }
+        for (String path: entriesToDelete) {
+            addDirectoryToVisit(getParent(path), directoriesToVisit);
         }
         directoriesToVisit.addAll(directoriesToAdd);
         for (String file : filesToAdd.keySet()) {
@@ -217,5 +237,9 @@ public class CommitBuilder {
 
     private SVNRepository createSvnRepository() throws SVNException {
         return SVNRepositoryFactory.create(url);
+    }
+
+    public void delete(String path) {
+        entriesToDelete.add(path);
     }
 }

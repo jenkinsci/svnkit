@@ -18,40 +18,46 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
+import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.wc.SVNClientManager;
-import org.tmatesoft.svn.core.wc.SVNCommitClient;
-import org.tmatesoft.svn.core.wc.SVNCopyClient;
-import org.tmatesoft.svn.core.wc.SVNCopySource;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNUpdateClient;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.core.wc2.SvnCheckout;
+import org.tmatesoft.svn.core.wc2.SvnCommit;
 import org.tmatesoft.svn.core.wc2.SvnCopy;
 import org.tmatesoft.svn.core.wc2.SvnCopySource;
 import org.tmatesoft.svn.core.wc2.SvnGetStatus;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
+import org.tmatesoft.svn.core.wc2.SvnRevert;
+import org.tmatesoft.svn.core.wc2.SvnScheduleForAddition;
+import org.tmatesoft.svn.core.wc2.SvnScheduleForRemoval;
+import org.tmatesoft.svn.core.wc2.SvnSetProperty;
 import org.tmatesoft.svn.core.wc2.SvnStatus;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
+import org.tmatesoft.svn.core.wc2.SvnUpdate;
 
 public class WorkingCopy {
 
     private final TestOptions testOptions;
     private final File workingCopyDirectory;
 
-    private SVNClientManager clientManager;
+    private SvnOperationFactory clientManager;
     private long currentRevision;
 
     private PrintWriter logger;
     private SVNURL repositoryUrl;
-
-    public WorkingCopy(String testName, File workingCopyDirectory) {
-        this(TestOptions.getInstance(), workingCopyDirectory);
-    }
+    private SvnWcGeneration wcGeneration;
 
     public WorkingCopy(TestOptions testOptions, File workingCopyDirectory) {
         this.testOptions = testOptions;
         this.workingCopyDirectory = workingCopyDirectory;
         this.currentRevision = -1;
+    }
+    
+    public void setWcGeneration(SvnWcGeneration generation) {
+        this.wcGeneration = generation;
+        if (clientManager != null) {
+            clientManager.setPrimaryWcGeneration(wcGeneration);
+        }
     }
 
     public void setRepositoryUrl(SVNURL repositoryUrl) {
@@ -84,29 +90,23 @@ public class WorkingCopy {
 
         log("Checking out " + repositoryUrl);
 
-        final SVNUpdateClient updateClient = getClientManager().getUpdateClient();
-        updateClient.setIgnoreExternals(true);
+        final SvnCheckout checkout = getOperationFactory().createCheckout();
+        checkout.setIgnoreExternals(true);
 
         this.repositoryUrl = repositoryUrl;
 
         final boolean isWcExists = getWorkingCopyDirectory().isDirectory();
         try {
-            currentRevision = updateClient.doCheckout(repositoryUrl,
-                    getWorkingCopyDirectory(),
-                    SVNRevision.create(revision),
-                    SVNRevision.create(revision),
-                    SVNDepth.INFINITY,
-                    true);
+            checkout.setSingleTarget(SvnTarget.fromFile(getWorkingCopyDirectory()));
+            checkout.setSource(SvnTarget.fromURL(repositoryUrl, revision >= 0 ? SVNRevision.create(revision) : SVNRevision.HEAD));
+            checkout.setRevision(revision >= 0 ? SVNRevision.create(revision) : SVNRevision.HEAD);
+            checkout.setDepth(SVNDepth.INFINITY);
+            checkout.setAllowUnversionedObstructions(true);
+            currentRevision = checkout.run();
         } catch (Throwable th) {
             if (isWcExists) {
                 SVNFileUtil.deleteAll(getWorkingCopyDirectory(), true);
-
-                currentRevision = updateClient.doCheckout(repositoryUrl,
-                        getWorkingCopyDirectory(),
-                        SVNRevision.create(revision),
-                        SVNRevision.create(revision),
-                        SVNDepth.INFINITY,
-                        true);
+                checkout.run();
             } else {
                 wrapThrowable(th);
             }
@@ -124,16 +124,14 @@ public class WorkingCopy {
         beforeOperation();
 
         log("Updating to revision " + revision);
-
-        final SVNUpdateClient updateClient = getClientManager().getUpdateClient();
-        updateClient.setIgnoreExternals(true);
-
+        SvnUpdate up = getOperationFactory().createUpdate();
+        up.setIgnoreExternals(true);
+        up.setSingleTarget(SvnTarget.fromFile(getWorkingCopyDirectory()));
+        up.setRevision(revision >= 0 ? SVNRevision.create(revision) : SVNRevision.HEAD);
+        up.setDepth(SVNDepth.INFINITY);
+        up.setAllowUnversionedObstructions(true);
         try {
-            currentRevision = updateClient.doUpdate(getWorkingCopyDirectory(),
-                    SVNRevision.create(revision),
-                    SVNDepth.INFINITY,
-                    true,
-                    true);
+            currentRevision = up.run()[0];
         } catch (Throwable th) {
             wrapThrowable(th);
         }
@@ -178,13 +176,12 @@ public class WorkingCopy {
 
         log("Copying " + directory + " as a child of " + anotherDirectory);
 
-        final SVNCopyClient copyClient = getClientManager().getCopyClient();
-
+        final SvnCopy copyClient = getOperationFactory().createCopy();
+        copyClient.addCopySource(SvnCopySource.create(SvnTarget.fromFile(directory), SVNRevision.WORKING));
+        copyClient.setSingleTarget(SvnTarget.fromFile(anotherDirectory));
+        copyClient.setFailWhenDstExists(false);
         try {
-            copyClient.doCopy(new SVNCopySource[]{
-                    new SVNCopySource(SVNRevision.WORKING, SVNRevision.WORKING, directory)},
-                    anotherDirectory,
-                    false, false, false);
+            copyClient.run();
         } catch (Throwable th) {
             wrapThrowable(th);
         }
@@ -199,16 +196,15 @@ public class WorkingCopy {
 
         log("Committing ");
 
-        final SVNCommitClient commitClient = getClientManager().getCommitClient();
-
+        final SvnCommit commitClient = getOperationFactory().createCommit();
+        commitClient.setSingleTarget(SvnTarget.fromFile(getWorkingCopyDirectory()));
+        commitClient.setCommitMessage(commitMessage);
+        commitClient.setDepth(SVNDepth.INFINITY);
+        commitClient.setForce(true);
+        
         SVNCommitInfo commitInfo = null;
         try {
-            commitInfo = commitClient.doCommit(new File[]{getWorkingCopyDirectory()},
-                    false,
-                    commitMessage,
-                    null, null,
-                    false, true,
-                    SVNDepth.INFINITY);
+            commitInfo = commitClient.run();
         } catch (Throwable th) {
             wrapThrowable(th);
         }
@@ -225,10 +221,14 @@ public class WorkingCopy {
 
         log("Adding " + file);
 
-        final SVNWCClient wcClient = getClientManager().getWCClient();
-
+        SvnScheduleForAddition add = getOperationFactory().createScheduleForAddition();
+        add.setSingleTarget(SvnTarget.fromFile(file));
+        add.setDepth(SVNDepth.INFINITY);
+        add.setIncludeIgnored(true);
+        add.setAddParents(true);
+        
         try {
-            wcClient.doAdd(file, false, false, false, SVNDepth.INFINITY, true, true, true);
+            add.run();
         } catch (Throwable th) {
             wrapThrowable(th);
         }
@@ -243,10 +243,11 @@ public class WorkingCopy {
 
         log("Reverting working copy");
 
-        final SVNWCClient wcClient = getClientManager().getWCClient();
-
+        SvnRevert revert = getOperationFactory().createRevert();
+        revert.setSingleTarget(SvnTarget.fromFile(getWorkingCopyDirectory()));
+        revert.setDepth(SVNDepth.INFINITY);
         try {
-            wcClient.doRevert(new File[]{getWorkingCopyDirectory()}, SVNDepth.INFINITY, null);
+            revert.run();
         } catch (Throwable th) {
             wrapThrowable(th);
         }
@@ -275,10 +276,15 @@ public class WorkingCopy {
 
         log("Setting property " + propertyName + " on " + file);
 
-        final SVNWCClient wcClient = getClientManager().getWCClient();
+        SvnSetProperty ps = getOperationFactory().createSetProperty();
+        ps.setSingleTarget(SvnTarget.fromFile(file));
+        ps.setPropertyName(propertyName);
+        ps.setPropertyValue(propertyValue);
+        ps.setDepth(SVNDepth.INFINITY);
+        ps.setForce(true);
 
         try {
-            wcClient.doSetProperty(file, propertyName, propertyValue, true, SVNDepth.INFINITY, null, null);
+            ps.run();
         } catch (Throwable th) {
             wrapThrowable(th);
         }
@@ -293,10 +299,11 @@ public class WorkingCopy {
 
         log("Deleting " + file);
 
-        final SVNWCClient wcClient = getClientManager().getWCClient();
-
+        SvnScheduleForRemoval rm = getOperationFactory().createScheduleForRemoval();
+        rm.setSingleTarget(SvnTarget.fromFile(file));
+        rm.setForce(true);
         try {
-            wcClient.doDelete(file, true, false);
+            rm.run();
         } catch (Throwable th) {
             wrapThrowable(th);
         }
@@ -370,9 +377,10 @@ public class WorkingCopy {
         logger = null;
     }
 
-    private SVNClientManager getClientManager() {
+    public SvnOperationFactory getOperationFactory() {
         if (clientManager == null) {
-            clientManager = SVNClientManager.newInstance();
+            clientManager = new SvnOperationFactory();
+            clientManager.setPrimaryWcGeneration(wcGeneration);
         }
         return clientManager;
     }

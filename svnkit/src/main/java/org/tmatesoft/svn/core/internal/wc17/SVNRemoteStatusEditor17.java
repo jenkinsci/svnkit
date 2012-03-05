@@ -77,7 +77,8 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
     public void deleteEntry(String path, long revision) throws SVNException {
         final File local_abspath = SVNFileUtil.createFilePath(myAnchorAbsPath, path);
         final SVNWCDbKind kind = myWCContext.getDb().readKind(local_abspath, false);
-        tweakStatusHash(myDirectoryInfo, myDirectoryInfo, local_abspath, kind == SVNWCDbKind.Dir, SVNStatusType.STATUS_DELETED, SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE,
+        
+        tweakStatusHash(myDirectoryInfo, new DirectoryInfo(path, myDirectoryInfo), local_abspath, kind == SVNWCDbKind.Dir, SVNStatusType.STATUS_DELETED, SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE,
                 SVNRevision.create(revision), null);
         if (myDirectoryInfo.parent != null && myTargetBaseName == null)
             tweakStatusHash(myDirectoryInfo.parent, myDirectoryInfo, myDirectoryInfo.localAbsPath, kind == SVNWCDbKind.Dir, SVNStatusType.STATUS_MODIFIED, SVNStatusType.STATUS_MODIFIED,
@@ -128,7 +129,8 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
             statstruct.setRepositoryPropertiesStatus(reposPropStatus);
 
         /* Copy out-of-date info. */
-
+        statstruct.setRepositoryRootUrl(myRepositoryRoot);
+        statstruct.setRepositoryRelativePath(childDir.computeRepositoryRelativePath());
         /*
          * The last committed date, and author for deleted items isn't
          * available.
@@ -464,6 +466,9 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
         statstruct.setRepositoryChangedRevision(fileInfo.ood_changed_rev);
         statstruct.setRepositoryChangedDate(fileInfo.ood_changed_date);
         statstruct.setRepositoryKind(fileInfo.ood_kind);
+        statstruct.setRepositoryRootUrl(myRepositoryRoot);
+        statstruct.setRepositoryRelativePath(fileInfo.computeRepositoryRelativePath());
+        
         if (fileInfo.ood_changed_author != null)
             statstruct.setRepositoryChangedAuthor(fileInfo.ood_changed_author);
 
@@ -529,6 +534,7 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
         private boolean added;
         private boolean prop_changed;
         private boolean text_changed;
+        private String repositoryRelativePath;
 
         public DirectoryInfo(String path, DirectoryInfo parent) throws SVNException {
             File local_abspath;
@@ -591,7 +597,7 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
                     && (status_in_parent.getNodeStatus() != SVNStatusType.STATUS_IGNORED) && (status_in_parent.getKind() == SVNNodeKind.DIR) && (!this.excluded)
                     && (this.depth == SVNDepth.UNKNOWN || this.depth == SVNDepth.INFINITY || this.depth == SVNDepth.FILES || this.depth == SVNDepth.IMMEDIATES)) {
                 SvnStatus this_dir_status;
-                Collection ignores = myGlobalIgnores;
+                Collection<String> ignores = myGlobalIgnores;
 
                 WCDbRepositoryInfo parentReposInfo = new WCDbRepositoryInfo();
                 parentReposInfo.rootUrl = status_in_parent.getRepositoryRootUrl();
@@ -614,6 +620,27 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
                 statii.put(status.getPath(), status);
             }
         }
+        
+        private String computeRepositoryRelativePath() throws SVNException {
+            if (repositoryRelativePath != null) {
+                return repositoryRelativePath;
+            }
+            if (name == null) {
+                return myAnchorStatus.getRepositoryRelativePath();
+            }
+            SvnStatus status = (SvnStatus) parent.statii.get(localAbsPath);
+            if (status != null && status.getRepositoryRelativePath() != null) {
+                repositoryRelativePath = status.getRepositoryRelativePath();
+                return status.getRepositoryRelativePath();
+            }
+            String url = parent.computeRepositoryRelativePath();
+            if (url != null) {
+                 url = SVNPathUtil.append(url, name);
+                 repositoryRelativePath = url;
+            }
+            return repositoryRelativePath;
+        }
+
     }
 
     public class FileInfo {
@@ -637,6 +664,10 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
             this.ood_changed_date = null;
             this.ood_kind = SVNNodeKind.FILE;
             this.ood_changed_author = null;
+        }
+
+        private String computeRepositoryRelativePath() throws SVNException {
+            return SVNPathUtil.append(parent.computeRepositoryRelativePath(), name);
         }
 
     }

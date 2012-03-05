@@ -62,7 +62,7 @@ public class SVNStatusEditor {
     private Map myExternalsMap;
     private Collection myGlobalIgnores;
     
-    private SVNURL myRepositoryRoot;
+    protected SVNURL myRepositoryRoot;
     private Map myRepositoryLocks;
     private long myTargetRevision;
     private String myWCRootPath;
@@ -123,6 +123,7 @@ public class SVNStatusEditor {
     public void setRepositoryInfo(SVNURL root, Map repositoryLocks) {
         myRepositoryRoot = root;
         myRepositoryLocks = repositoryLocks;
+        
     }
     
     protected void getDirStatus(SVNEntry parentEntry, SVNAdminArea dir, String entryName,

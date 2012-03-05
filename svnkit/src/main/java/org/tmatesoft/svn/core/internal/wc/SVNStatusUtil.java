@@ -23,6 +23,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
@@ -177,6 +178,10 @@ public class SVNStatusUtil {
                 text = SVNStatusType.STATUS_MISSING;
             }
             status.setContentsStatus(text);
+            if (status.getURL() != null && status.getRepositoryRelativePath() == null) {
+                status.setRepositoryRelativePath(SVNURLUtil.getRelativeURL(reposRoot, status.getURL(), false));
+            }
+
             return status;
         }
         if (entry.getKind() == SVNNodeKind.DIR) {
@@ -281,6 +286,9 @@ public class SVNStatusUtil {
                 repositoryLock, localLock, entry.asMap(), entry.getChangelistName(), wcFormatNumber, treeConflict);
         status.setEntry(entry);
         status.setRepositoryRootURL(reposRoot);
+        if (reposRoot != null && status.getURL() != null && status.getRepositoryRelativePath() == null) {
+            status.setRepositoryRelativePath(SVNURLUtil.getRelativeURL(reposRoot, status.getURL(), false));
+        }
         return status;
     }
 
