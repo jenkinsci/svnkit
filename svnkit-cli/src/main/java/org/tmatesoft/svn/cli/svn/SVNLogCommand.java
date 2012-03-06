@@ -73,7 +73,7 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
     private LinkedList myMergeStack;
     private String myAuthorOfInterest;
     private String myLogRegularExpression;
-    private SVNURL myTargetUrl;
+    private SVNPath myTarget;
     private SVNDepth myDepth;
     
     public SVNLogCommand() {
@@ -222,8 +222,11 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
         myAuthorOfInterest = getSVNEnvironment().getAuthorOfInterest();
         myLogRegularExpression = getSVNEnvironment().getRegularExpression();
         myDepth = getSVNEnvironment().getDepth() == SVNDepth.UNKNOWN ? SVNDepth.INFINITY : getSVNEnvironment().getDepth();
-        myTargetUrl = getURLFromTarget(getSVNEnvironment().getClientManager(), target);
-        
+        myTarget = new SVNPath(target.getTarget(), target.getPegRevision() == SVNRevision.UNDEFINED ?
+                (target.isURL() ? SVNRevision.HEAD : SVNRevision.WORKING) :
+                target.getPegRevision());
+
+
         SVNLogClient client = getSVNEnvironment().getClientManager().getLogClient();
         if (!getSVNEnvironment().isQuiet()) {
             client.setEventHandler(new SVNNotifyPrinter(getSVNEnvironment()));
@@ -472,28 +475,16 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
                 client.setDiffGenerator(diffGenerator);
 
                 try {
-                    client.doDiff(myTargetUrl,
-                            SVNRevision.create(logEntry.getRevision() - 1),
-                            myTargetUrl,
-                            SVNRevision.create(logEntry.getRevision()),
-                            myDepth,
-                            true,
-                            getSVNEnvironment().getOut());
+                    doDiff(client, logEntry, myTarget, myDepth);
                 } catch (SVNException e) {
                     if (e.getErrorMessage().getErrorCode() == SVNErrorCode.FS_NOT_FOUND) {
-                        SVNURL parent = SVNURL.parseURIEncoded(SVNPathUtil.removeTail(myTargetUrl.toString()));
-                        while (!myTargetUrl.equals(parent)) {
+                        SVNPath parent = getParentPath(myTarget);
+                        while (!myTarget.equals(parent)) {
                             try {
-                                client.doDiff(parent,
-                                        SVNRevision.create(logEntry.getRevision() - 1),
-                                        parent,
-                                        SVNRevision.create(logEntry.getRevision()),
-                                        myDepth,
-                                        true,
-                                        getSVNEnvironment().getOut());
+                                doDiff(client, logEntry, parent, myDepth);
                             } catch (SVNException e1) {
                                 if (e1.getErrorMessage().getErrorCode() == SVNErrorCode.FS_NOT_FOUND) {
-                                    parent = SVNURL.parseURIEncoded(SVNPathUtil.removeTail(parent.toString()));
+                                    parent = getParentPath(parent);
                                 } else if (e1.getErrorMessage().getErrorCode() == SVNErrorCode.RA_ILLEGAL_URL
                                         || e1.getErrorMessage().getErrorCode() == SVNErrorCode.AUTHZ_UNREADABLE
                                         || e1.getErrorMessage().getErrorCode() == SVNErrorCode.RA_LOCAL_REPOS_OPEN_FAILED) {
@@ -515,7 +506,32 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
             getSVNEnvironment().getOut().println();
         }
     }
-    
+
+    private SVNPath getParentPath(SVNPath target) {
+        return new SVNPath(SVNPathUtil.removeTail(target.getTarget()), target.getPegRevision());
+    }
+
+    private void doDiff(SVNDiffClient client, SVNLogEntry logEntry, SVNPath target, SVNDepth depth) throws SVNException {
+        if (target.isFile()) {
+        client.doDiff(target.getFile(),
+                target.getPegRevision(),
+                SVNRevision.create(logEntry.getRevision() - 1),
+                SVNRevision.create(logEntry.getRevision()),
+                depth,
+                true,
+                getSVNEnvironment().getOut(),
+                getSVNEnvironment().getChangelistsCollection());
+        } else {
+            client.doDiff(target.getURL(),
+                    target.getPegRevision(),
+                    SVNRevision.create(logEntry.getRevision() - 1),
+                    SVNRevision.create(logEntry.getRevision()),
+                    depth,
+                    true,
+                    getSVNEnvironment().getOut());
+        }
+    }
+
     protected void printLogEntryXML(SVNLogEntry logEntry) throws SVNException {
         if (logEntry == null) {
             return;

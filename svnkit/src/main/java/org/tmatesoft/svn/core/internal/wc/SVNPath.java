@@ -33,6 +33,11 @@ public class SVNPath {
     private SVNRevision myPegRevision = SVNRevision.UNDEFINED;
     private File myFile;
 
+    public SVNPath(String target, SVNRevision pegRevision) {
+        this.myTarget = target;
+        this.myPegRevision = pegRevision;
+    }
+
     public SVNPath(String target) throws SVNException {
         this(target, false);
     }
