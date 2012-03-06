@@ -35,7 +35,7 @@ import org.tmatesoft.svn.core.wc.SVNEventAction;
 * named directory targets, commits property changes on a named directory
 * and all changes to files directly inside that directory. If
 * {@link SVNDepth#IMMEDIATES}, behaves as for {@link SVNDepth#FILES}, and
-* for subdirectories of any named directory target commits as though for
+* for subdirectories of any named directory <code>target</code> commits as though for
 * {@link SVNDepth#EMPTY}.
 * 
 * <p/>

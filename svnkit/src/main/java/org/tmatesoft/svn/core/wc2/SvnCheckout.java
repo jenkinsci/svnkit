@@ -10,7 +10,7 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
- * Checkout operation. Checks out a working copy of {@link #getSource()} target at revision,
+ * Checkout operation. Checks out a working copy of {@link #getSource()} <code>target</code> at revision,
  * looked up at {@link SvnTarget#getPegRevision()}, using operation targets as the
  * root directory of the newly checked out working copy.
  * <p/>
@@ -19,11 +19,11 @@ import org.tmatesoft.svn.util.SVNLogType;
  * <p/>
  * If {@link #getDepth()} is {@link SVNDepth#INFINITY}, checks out fully
  * recursively. Else if it is {@link SVNDepth#IMMEDIATES}, checks out
- * source target and its immediate entries (subdirectories will be
+ * source <code>target</code> and its immediate entries (subdirectories will be
  * present, but will be at depth {@link SVNDepth#EMPTY} themselves); else
- * {@link SVNDepth#FILES}, checks out source target and its file entries,
+ * {@link SVNDepth#FILES}, checks out source <code>target</code> and its file entries,
  * but no subdirectories; else if {@link SVNDepth#EMPTY}, checks out
- * source target as an empty directory at that depth, with no entries
+ * source <code>target</code> as an empty directory at that depth, with no entries
  * present.
  * <p/>
  * If {@link #getDepth()} is {@link SVNDepth#UNKNOWN}, then behave as if for

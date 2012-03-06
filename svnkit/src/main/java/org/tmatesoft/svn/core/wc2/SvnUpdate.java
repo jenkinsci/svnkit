@@ -30,7 +30,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * <p/>
  * If <code>depth</code> is {@link SVNDepth#INFINITY}, updates fully
  * recursively. Else if it is {@link SVNDepth#IMMEDIATES} or
- * {@link SVNDepth#FILES}, updates each target and its file entries, but not
+ * {@link SVNDepth#FILES}, updates each <code>target</code> and its file entries, but not
  * its subdirectories. Else if {@link SVNDepth#EMPTY}, updates exactly each
  * target, nonrecursively (essentially, updates the target's properties).
  * 

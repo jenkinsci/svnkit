@@ -8,7 +8,7 @@ import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 
 /**
  * Represents proplist operation.
- * Gets the target properties or revision properties.
+ * Gets the <code>target</code>'s properties or revision properties.
  * 
  * If single property has to be read, a caller should use
  * {@link ISvnObjectReceiver} to fetch the property value by name. 
@@ -18,7 +18,7 @@ import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
  *             <ul>
  *             <li><code>propertyName</code> starts with the
  *             {@link SVNProperty#SVN_WC_PREFIX svn:wc:} prefix
- *             <li>target is not under version control
+ *             <li><code>target</code> is not under version control
  *             </ul>
  * 
  * @author TMate Software Ltd.  
@@ -49,7 +49,7 @@ public class SvnGetProperties extends SvnReceivingOperation<SVNProperties> {
     /**
      * Gets whether it is revision properties.
      * 
-     * @return <code>true</code> if it is revision property, <code>true</code> if it is target property
+     * @return <code>true</code> if it is revision properties, <code>true</code> if it is <code>target</code>'s properties
      */
     public boolean isRevisionProperties() {
         return revisionProperties;
@@ -58,7 +58,7 @@ public class SvnGetProperties extends SvnReceivingOperation<SVNProperties> {
     /**
      * Sets whether it is revision properties.
      * 
-     * @param revisionProperties <code>true</code> if it is revision properties, <code>true</code> if it is target properties
+     * @param revisionProperties <code>true</code> if it is revision properties, <code>true</code> if it is <code>target</code>'s properties
      */
     public void setRevisionProperties(boolean revisionProperties) {
         this.revisionProperties = revisionProperties;

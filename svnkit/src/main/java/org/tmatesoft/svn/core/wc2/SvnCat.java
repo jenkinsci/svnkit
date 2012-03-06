@@ -6,15 +6,15 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 /**
- * Operation for cat command. Outputs the content of file identified by target and 
+ * Operation for cat command. Outputs the content of file identified by <code>target</code> and 
  * revision to the output streams. 
  * 
  * <p/>
  * The actual node 
- * revision selected is determined by the target as it exists in 
- * {@link SvnTarget#getPegRevision()}. If target is remote and {@link SvnTarget#getPegRevision()} is 
+ * revision selected is determined by the <code>target</code> as it exists in 
+ * {@link SvnTarget#getPegRevision()}. If <code>target</code> is remote and {@link SvnTarget#getPegRevision()} is 
  * {@link SVNRevision#UNDEFINED}, then it defaults to {@link SVNRevision#HEAD}. 
- * If target is local and {@link SvnTarget#getPegRevision()} is 
+ * If <code>target</code> is local and {@link SvnTarget#getPegRevision()} is 
  * {@link SVNRevision#UNDEFINED}, then it defaults to {@link SVNRevision#WORKING}.
  * 
  * @author TMate Software Ltd.

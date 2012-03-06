@@ -18,13 +18,13 @@ import org.tmatesoft.svn.core.wc2.hooks.ISvnExternalsHandler;
 
  /**
  * Represents copy to repository operation. 
- * Copies each source in <code>sources</code> to operation's target destination.
- * Target should represent repository URL.
+ * Copies each source in <code>sources</code> to operation's <code>target</code> destination.
+ * <code>Target</code> should represent repository URL.
  * 
  * <p/>
- * If multiple <code>sources</code> are given, target must be a
+ * If multiple <code>sources</code> are given, <code>target</code> must be a
  * directory, and <code>sources</code> will be copied as children of
- * target.
+ * <code>target</code>.
  * 
  * <p/>
  * Each <code>src</code> in <code>sources</code> must be files or
@@ -33,21 +33,21 @@ import org.tmatesoft.svn.core.wc2.hooks.ISvnExternalsHandler;
  * repository URLs or all working copy paths.
  * 
  * <p/>
- * The parent of target must already exist.
+ * The parent of <code>target</code> must already exist.
  * 
  * <p/>
  * If <code>sources</code> has only one item, attempts to copy it to
- * target. If <code>failWhenDstExists</code> is <code>false</code> and target already exists,
- * attempts to copy the item as a child of <target. If
+ * <code>target</code>. If <code>failWhenDstExists</code> is <code>false</code> and <code>target</code> already exists,
+ * attempts to copy the item as a child of <code>target</code> If
  * <code>failWhenDstExists</code> is <code>true</code>
- * and target already exists, throws an {@link SVNException} with
+ * and <code>target</code> already exists, throws an {@link SVNException} with
  * the {@link SVNErrorCode#FS_ALREADY_EXISTS} error code.
  * 
  * <p/>
  * If <code>sources</code> has multiple items, and
  * <code>failWhenDstExists</code> is <code>false</code>,
- * all <code>sources</code> are copied as children of target. If
- * any child of target already exists with the same name any item
+ * all <code>sources</code> are copied as children of <code>target</code>. If
+ * any child of <code>target</code> already exists with the same name any item
  * in <code>sources</code>, throws an {@link SVNException} with the
  * {@link SVNErrorCode#FS_ALREADY_EXISTS} error code.
  * 
@@ -121,7 +121,7 @@ public class SvnRemoteCopy extends AbstractSvnCommit {
     /**
      * Gets whether to do copy as move operation (delete, then add with history).
      * 
-     * @return <code>true</code> if do move operation, otherwise <code>false</code>
+     * @return <code>true</code> if move operation should be done, otherwise <code>false</code>
      */
     public boolean isMove() {
         return move;
@@ -130,7 +130,7 @@ public class SvnRemoteCopy extends AbstractSvnCommit {
     /**
      * Sets whether to do copy as move operation (delete, then add with history).
      * 
-     * @param move <code>true</code> if do move operation, otherwise <code>false</code>
+     * @param move <code>true</code> if move operation should be done, otherwise <code>false</code>
      */
     public void setMove(boolean move) {
         this.move = move;
@@ -198,9 +198,9 @@ public class SvnRemoteCopy extends AbstractSvnCommit {
     }
 
     /**
-     * Gets whether to fail if target already exists.
+     * Gets whether to fail if <code>target</code> already exists.
      * 
-     * @return <code>true</code> if fail when target already exists, otherwise <code>false</code>
+     * @return <code>true</code> if fail when <code>target</code> already exists, otherwise <code>false</code>
      * @see SvnRemoteCopy
      */
     public boolean isFailWhenDstExists() {
@@ -208,9 +208,9 @@ public class SvnRemoteCopy extends AbstractSvnCommit {
     }
 
     /**
-     * Sets whether to fail if target already exists.
+     * Sets whether to fail if <code>target</code> already exists.
      * 
-     * @param failWhenDstExists <code>true</code> if fail when target already exists, otherwise <code>false</code>
+     * @param failWhenDstExists <code>true</code> if fail when <code>target</code> already exists, otherwise <code>false</code>
      * @see SvnRemoteCopy
      */
     public void setFailWhenDstExists(boolean failWhenDstExists) {

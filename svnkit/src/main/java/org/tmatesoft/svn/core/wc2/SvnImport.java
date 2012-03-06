@@ -11,9 +11,9 @@ import org.tmatesoft.svn.core.wc.SVNEventAction;
 
 /**
  * Imports file or directory <code>source</code> into repository directory
- * defined in operation's target at HEAD revision. If some components of
- * operations' target does not exist, then creates parent directories as
- * necessary. The target of the operation should represent URL.
+ * defined in operation's <code>target</code> at HEAD revision. If some components of
+ * operations' <code>target</code> does not exist, then creates parent directories as
+ * necessary. The <code>target</code> of the operation should represent URL.
  * 
  * <p/>
  * If the caller's {@link ISVNEventHandler event handler} is not <span
@@ -49,7 +49,7 @@ import org.tmatesoft.svn.core.wc.SVNEventAction;
  *             <li>exception with {@link SVNErrorCode#ENTRY_NOT_FOUND}
  *             error code - if <code>source</code> does not exist</li> 
  *             <li>exception with {@link SVNErrorCode#ENTRY_EXISTS} error code -
- *             if operation's target already exists and  <code>source</code> is a file</li> 
+ *             if operation's <code>target</code> already exists and  <code>source</code> is a file</li> 
  *             <li>exception with {@link SVNErrorCode#CL_ADM_DIR_RESERVED} error code - if
  *             trying to import an item with a reserved SVN name (like
  *             <code>'.svn'</code> or <code>'_svn'</code>)</li>
@@ -104,7 +104,7 @@ public class SvnImport extends AbstractSvnCommit {
      * is, the base name of directory is not part of the import.
      * 
      * <p/>
-     * If <code>source</code> is a file, then the parent of operation's target is
+     * If <code>source</code> is a file, then the parent of operation's <code>target</code> is
      * the directory receiving the import. The base name of <code>source</code>
      * is the filename in the repository. In this case if this filename already exists, throws {@link SVNException}.
      * 
