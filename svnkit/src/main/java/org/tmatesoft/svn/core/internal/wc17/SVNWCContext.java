@@ -11,9 +11,8 @@
  */
 package org.tmatesoft.svn.core.internal.wc17;
 
-import static org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.isAbsolute;
-
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,6 +32,9 @@ import java.util.Set;
 import java.util.Stack;
 import java.util.logging.Level;
 
+import de.regnis.q.sequence.line.QSequenceLineRAByteData;
+import de.regnis.q.sequence.line.QSequenceLineRAData;
+import de.regnis.q.sequence.line.QSequenceLineRAFileData;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -109,9 +111,7 @@ import org.tmatesoft.svn.core.wc2.SvnChecksum;
 import org.tmatesoft.svn.core.wc2.SvnMergeResult;
 import org.tmatesoft.svn.util.SVNLogType;
 
-import de.regnis.q.sequence.line.QSequenceLineRAByteData;
-import de.regnis.q.sequence.line.QSequenceLineRAData;
-import de.regnis.q.sequence.line.QSequenceLineRAFileData;
+import static org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.isAbsolute;
 
 /**
  * @version 1.4
@@ -3864,6 +3864,7 @@ public class SVNWCContext {
             }
         }
         
+        byte[] originalBytes = SVNPropertyValue.getPropertyAsBytes(original);
         byte[] mineBytes = SVNPropertyValue.getPropertyAsBytes(mine);
         byte[] incomingBytes = SVNPropertyValue.getPropertyAsBytes(incoming);
         boolean mineIsBinary = false;
@@ -3875,9 +3876,53 @@ public class SVNWCContext {
         try {
             incomingIsBinary = incomingBytes != null && SVNFileUtil.detectMimeType(new ByteArrayInputStream(incomingBytes)) != null;
         } catch (IOException e) {
-        }  
+        }
+        boolean originalIsBinary = false;
+        try {
+            originalIsBinary = originalBytes != null && SVNFileUtil.detectMimeType(new ByteArrayInputStream(originalBytes)) != null;
+        } catch (IOException e) {
+        }
 
-        // TODO generate conflict for non-binary props.
+        if (!(originalIsBinary || mineIsBinary || incomingIsBinary)) {
+            ConflictMarkersInfo markersInfo = initConflictMarkers("(local property value)", "", "(incoming property value)");
+            String targetMarker = markersInfo.targetMarker;
+            String leftMarker = markersInfo.leftMarker;
+            String rightMarker = markersInfo.rightMarker;
+            FSMergerBySequence merger = new FSMergerBySequence(
+                    targetMarker.getBytes(),
+                    "=======".getBytes(),
+                    rightMarker.getBytes(),
+                    leftMarker.getBytes());
+            int mergeResult = 0;
+            RandomAccessFile localIS = null;
+            RandomAccessFile latestIS = null;
+            RandomAccessFile baseIS = null;
+            ByteArrayOutputStream result = new ByteArrayOutputStream();
+            try {
+                SVNDiffOptions diffOptions = new SVNDiffOptions();
+                diffOptions.setIgnoreAllWhitespace(false);
+                diffOptions.setIgnoreAmountOfWhitespace(false);
+                diffOptions.setIgnoreEOLStyle(false);
+
+                mergeResult = merger.merge(
+                        new QSequenceLineRAByteData(originalBytes),
+                        new QSequenceLineRAByteData(mineBytes),
+                        new QSequenceLineRAByteData(incomingBytes),
+                        diffOptions, result, SVNDiffConflictChoiceStyle.CHOOSE_MODIFIED_LATEST);
+            } catch (IOException e) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
+                SVNErrorManager.error(err, e, SVNLogType.WC);
+            } finally {
+                SVNFileUtil.closeFile(result);
+                SVNFileUtil.closeFile(localIS);
+                SVNFileUtil.closeFile(baseIS);
+                SVNFileUtil.closeFile(latestIS);
+            }
+//            if (mergeResult == FSMergerBySequence.CONFLICTED) {
+            conflictMessage += result.toString();
+            return conflictMessage;
+//            }
+        }
 
         if (mineBytes != null && mineBytes.length > 0) {
             conflictMessage += "Local property value:\n";

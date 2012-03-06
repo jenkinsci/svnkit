@@ -12,6 +12,8 @@ import java.util.TreeSet;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
@@ -25,6 +27,8 @@ public class CommitBuilder {
     private String commitMessage;
     private final Map<String, byte[]> filesToAdd;
     private final Map<String, byte[]> filesToChange;
+    private final Map<String, SVNProperties> filesToProperties;
+    private final Map<String, SVNProperties> directoriesToProperties;
     private final Set<String> directoriesToAdd;
     private final Set<String> entriesToDelete;
 
@@ -33,9 +37,35 @@ public class CommitBuilder {
         this.filesToChange = new HashMap<String, byte[]>();
         this.directoriesToAdd = new HashSet<String>();
         this.entriesToDelete = new HashSet<String>();
+        this.filesToProperties = new HashMap<String, SVNProperties>();
+        this.directoriesToProperties = new HashMap<String, SVNProperties>();
         this.url = url;
-        
+
         setCommitMessage("");
+    }
+
+    public void setFileProperty(String path, String propertyName, SVNPropertyValue propertyValue) {
+        SVNProperties properties;
+        if (!filesToProperties.containsKey(path)) {
+            properties = new SVNProperties();
+            filesToProperties.put(path, properties);
+        } else {
+            properties = filesToProperties.get(path);
+        }
+
+        properties.put(propertyName, propertyValue);
+    }
+
+    public void setDirectoryProperty(String path, String propertyName, SVNPropertyValue propertyValue) {
+        SVNProperties properties;
+        if (!directoriesToProperties.containsKey(path)) {
+            properties = new SVNProperties();
+            directoriesToProperties.put(path, properties);
+        } else {
+            properties = directoriesToProperties.get(path);
+        }
+
+        properties.put(propertyName, propertyValue);
     }
 
     public void setCommitMessage(String commitMessage) {
@@ -71,6 +101,7 @@ public class CommitBuilder {
         for (String directory : directoriesToVisit) {
             closeUntilCommonAncestor(commitEditor, currentDirectory, directory);
             openOrAddDir(commitEditor, directory);
+            setDirProperties(commitEditor, directory);
             currentDirectory = directory;
 
             deleteEntries(commitEditor, directory);
@@ -83,6 +114,28 @@ public class CommitBuilder {
 
         commitEditor.closeDir();
         return commitEditor.closeEdit();
+    }
+
+    private void setDirProperties(ISVNEditor commitEditor, String directory) throws SVNException {
+        SVNProperties properties = directoriesToProperties.get(directory);
+        if (properties == null) {
+            return;
+        }
+        for (String propertyName : properties.nameSet()) {
+            final SVNPropertyValue propertyValue = properties.getSVNPropertyValue(propertyName);
+            commitEditor.changeDirProperty(propertyName, propertyValue);
+        }
+    }
+
+    private void setFileProperties(ISVNEditor commitEditor, String file) throws SVNException {
+        SVNProperties properties = filesToProperties.get(file);
+        if (properties == null) {
+            return;
+        }
+        for (String propertyName : properties.nameSet()) {
+            final SVNPropertyValue propertyValue = properties.getSVNPropertyValue(propertyName);
+            commitEditor.changeFileProperty(file, propertyName, propertyValue);
+        }
     }
 
     private void deleteEntries(ISVNEditor commitEditor, String directory) throws SVNException {
@@ -118,12 +171,25 @@ public class CommitBuilder {
                 changeFile(commitEditor, file, filesToChange.get(file));
             }
         }
+
+        for (String file : filesToProperties.keySet()) {
+            String parent = getParent(file);
+            if (parent == null) {
+                parent = "";
+            }
+            if (directory.equals(parent)) {
+                commitEditor.openFile(file, -1);
+                setFileProperties(commitEditor, file);
+                commitEditor.closeFile(file, null);
+            }
+        }
     }
 
     private void addFile(ISVNEditor commitEditor, String file, byte[] contents) throws SVNException {
         final SVNDeltaGenerator deltaGenerator = new SVNDeltaGenerator();
 
         commitEditor.addFile(file, null, -1);
+        setFileProperties(commitEditor, file);
         commitEditor.applyTextDelta(file, null);
         final String checksum = deltaGenerator.sendDelta(file, new ByteArrayInputStream(contents), commitEditor, true);
         commitEditor.closeFile(file, checksum);
@@ -138,6 +204,7 @@ public class CommitBuilder {
         }
 
         commitEditor.openFile(file, -1);
+        setFileProperties(commitEditor, file);
         commitEditor.applyTextDelta(file, TestUtil.md5(originalContents));
         final String checksum = deltaGenerator.sendDelta(file,
                 new ByteArrayInputStream(originalContents), 0, new ByteArrayInputStream(newContents),
@@ -201,6 +268,9 @@ public class CommitBuilder {
         for (String path: entriesToDelete) {
             addDirectoryToVisit(getParent(path), directoriesToVisit);
         }
+        for (String directory : directoriesToProperties.keySet()) {
+            addDirectoryToVisit(directory, directoriesToVisit);
+        }
         directoriesToVisit.addAll(directoriesToAdd);
         for (String file : filesToAdd.keySet()) {
             final String directory = getParent(file);
@@ -209,6 +279,12 @@ public class CommitBuilder {
             }
         }
         for (String file : filesToChange.keySet()) {
+            final String directory = getParent(file);
+            if (directory != null) {
+                addDirectoryToVisit(directory, directoriesToVisit);
+            }
+        }
+        for (String file : filesToProperties.keySet()) {
             final String directory = getParent(file);
             if (directory != null) {
                 addDirectoryToVisit(directory, directoriesToVisit);
