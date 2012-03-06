@@ -12,16 +12,6 @@ import org.tmatesoft.svn.core.wc.SVNEventAction;
  * URLs can be from mupltiple repositories.
  * 
  * <p/>
- * <code>commitMessage</code> should be set.
- * 
- * <p/>
- * If non-<span class="javakeyword">null</span>,
- * <code>revisionProperties</code> holds additional, custom revision
- * properties (<code>String</code> names mapped to {@link SVNPropertyValue}
- * values) to be set on the new revision. This table cannot contain any
- * standard Subversion properties.
- * 
- * <p/>
  * {@link #getCommitHandler() Commit handler} will be asked for a commit log
  * message.
  * 

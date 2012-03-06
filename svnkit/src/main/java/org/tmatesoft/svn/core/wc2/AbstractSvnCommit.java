@@ -4,6 +4,7 @@ import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteSetPropertyImpl;
 import org.tmatesoft.svn.core.wc2.hooks.ISvnCommitHandler;
 
 /**
@@ -12,8 +13,13 @@ import org.tmatesoft.svn.core.wc2.hooks.ISvnCommitHandler;
  * relate to committing changes to an SVN repository. These operations are
  * similar to respective commands of the native SVN command line client and
  * include ones which operate on working copy items as well as ones that operate
- * only on a repository: commit, 
- * import, remote copy, remote delete, remote make dir, remote set property
+ * only on a repository: commit, import, remote copy, remote delete, remote make dir, remote set property.
+ * 
+ * <p/>
+ * {@link #run()} method returns {@link SVNCommitInfo} information on a new revision as the result of the commit.
+ * 
+ * @author TMate Software Ltd.
+ * @see {@link SvnCommit}, {@link SvnImport}, {@link SvnRemoteCopy}, {@link SvnRemoteDelete}, {@link SvnRemoteMkDir}, {@link SvnRemoteSetProperty}
  */
 public abstract class AbstractSvnCommit extends SvnReceivingOperation<SVNCommitInfo> {
 
@@ -41,7 +47,7 @@ public abstract class AbstractSvnCommit extends SvnReceivingOperation<SVNCommitI
 
     /**
      * Sets custom revision properties for the operation.
-     * If non-<span class="javakeyword">null</span>, <code>revisionProperties</code> 
+     * If non-<code>null</code>, <code>revisionProperties</code> 
      * holds additional, custom revision properties (<code>String</code> names
      * mapped to {@link SVNPropertyValue} values) to be set on the new revision.
      * This table cannot contain any standard Subversion properties.

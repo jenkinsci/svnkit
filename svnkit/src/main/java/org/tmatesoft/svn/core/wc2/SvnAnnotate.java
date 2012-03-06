@@ -10,7 +10,7 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
  * annotation handler if provided.
  * 
  * <p/>
- * {@link #run()} method returns first {@link SvnAnnotateItem} reported by the operation.
+ * {@link #run()} method returns {@link SvnAnnotateItem} information reported by the operation.
  * 
  * @author TMate Software Ltd.
  */

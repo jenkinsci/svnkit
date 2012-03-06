@@ -12,9 +12,6 @@ import org.tmatesoft.svn.core.wc.SVNEventAction;
  * URLs can be from mupltiple repositories.
  * 
  * <p/>
- * <code>commitMessage</code> should be set.
- * 
- * <p/>
  * If non-<code>null</code>, <code>revisionProperties</code> holds additional, custom revision
  * properties (<code>String</code> names mapped to {@link SVNPropertyValue}
  * values) to be set on the new revision. This table cannot contain any

@@ -15,14 +15,8 @@ import org.tmatesoft.svn.core.wc.SVNEventAction;
 * immediately without error.
 * 
 * <p/>
-* If non-<span class="javakeyword">null</span>, <code>revisionProperties</code>
-* holds additional, custom revision properties (<code>String</code> names
-* mapped to {@link SVNPropertyValue} values) to be set on the new revision.
-* This table cannot contain any standard Subversion properties.
-* 
-* <p/>
-* If the caller's {@link ISVNEventHandler event handler} is not <span
-* class="javakeyword">null</span> it will be called as the commit
+* If the caller's {@link ISVNEventHandler event handler} is not 
+* <code>null</code> it will be called as the commit
 * progresses with any of the following actions:
 * {@link SVNEventAction#COMMIT_MODIFIED},
 * {@link SVNEventAction#COMMIT_ADDED},
@@ -45,25 +39,21 @@ import org.tmatesoft.svn.core.wc.SVNEventAction;
 * {@link SVNDepth#EMPTY}.
 * 
 * <p/>
-* Unlocks paths in the repository, unless <code>keepLocks</code> is <span
-* class="javakeyword">true</span>.
+* Unlocks paths in the repository, unless <code>keepLocks</code> is <code>true</code>.
 * 
 * <p/>
 * {@link #getApplicableChangelists()} used as a restrictive filter on items that are committed; that is,
 * doesn't commit anything unless it's a member of one of those changelists.
 * After the commit completes successfully, removes changelist associations
 * from the targets, unless <code>keepChangelist</code> is set. If
-* <code>changelists</code> is empty (or altogether <span
-* class="javakeyword">null</span>), no changelist filtering occurs.
+* <code>changelists</code> is empty (or altogether <code>null</code>), no changelist filtering occurs.
 * 
 * <p/>
 * If no exception is thrown and {@link SVNCommitInfo#getNewRevision()} is
 * invalid (<code>&lt;0</code>), then the commit was a no-op; nothing needed
 * to be committed.
 *
-* @return information about the new committed revision
-* {@link #run()} returns first {@link SVNCommitInfo}, containing information 
-* about new commited revision.
+* {@link #run()} returns {@link SVNCommitInfo} information about new commited revision.
 * 
 * @author TMate Software Ltd.
 * */
@@ -117,27 +107,31 @@ public class SvnCommit extends AbstractSvnCommit {
     }
 
     /**
-     * Gets parameters of the commit. See {@link ISvnCommitParameters} 
+     * Gets operation's parameters of the commit.
      * 
-     * @return commit parameters
+     * @return commit parameters of the operation
+     * @see {@link ISvnCommitParameters} 
      */
     public ISvnCommitParameters getCommitParameters() {
         return commitParameters;
     }
 
     /**
-     * Sets parameters of the commit. See {@link ISvnCommitParameters} 
+     * Sets operation's parameters of the commit. 
      * 
-     * @param commitParameters commit parameters
+     * @param commitParameters commit parameters of the operation
+     * @see {@link ISvnCommitParameters} 
      */
     public void setCommitParameters(ISvnCommitParameters commitParameters) {
         this.commitParameters = commitParameters;
     }
     
     /**
-     * Gets whether or not the requested depth should be written to the working copy.
+     * Returns operation's commit packet.
+     * Checks arguments and calls {@link SvnOperationFactory#collectCommitItems(SvnCommit)} 
+     * if commit packet is <code>null</code>.
      * 
-     * @return <code>true</code> if the requested depth should be written to the working copy, otherwise <code>false</code>
+     * @return commit packet of the operation
      */
     public SvnCommitPacket collectCommitItems() throws SVNException {
         ensureArgumentsAreValid();        
@@ -148,6 +142,10 @@ public class SvnCommit extends AbstractSvnCommit {
         return packet;
     }
     
+    /**
+     * If commit packet is <code>null</code>, calls {@link #collectCommitItems(SvnCommit)}
+     * to create the commit packet, then executes the operation.  
+     */
     public SVNCommitInfo run() throws SVNException {
         if (packet == null) {
             packet = collectCommitItems();
