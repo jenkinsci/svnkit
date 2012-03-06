@@ -23,7 +23,7 @@ import java.util.Date;
  * <li>a datestamp when the revision was committed;
  * <li>the name of the revision author.
  * </ol>
- * In addition, this class provides anexception that, if a commit has failed,
+ * In addition, this class provides an exception that, if a commit has failed,
  * has got a description of a failure reason.
  * 
  * @version 1.3

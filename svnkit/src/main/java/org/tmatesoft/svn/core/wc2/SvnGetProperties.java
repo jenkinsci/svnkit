@@ -3,7 +3,26 @@ package org.tmatesoft.svn.core.wc2;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 
+
+/**
+ * Represents proplist operation.
+ * Gets the target properties or revision properties.
+ * 
+ * If single property has to be read, a caller should use
+ * {@link ISvnObjectReceiver} to fetch the property value by name. 
+ * 
+ * {@link #run()} returns {@link SvnWcGeneration} of resulting working copy.
+ * This method throws {@link SVNException} if one of the following is true:
+ *             <ul>
+ *             <li><code>propertyName</code> starts with the
+ *             {@link SVNProperty#SVN_WC_PREFIX svn:wc:} prefix
+ *             <li>target is not under version control
+ *             </ul>
+ * 
+ * @author TMate Software Ltd.     
+ */
 public class SvnGetProperties extends SvnReceivingOperation<SVNProperties> {
 
     private boolean revisionProperties;
@@ -26,18 +45,38 @@ public class SvnGetProperties extends SvnReceivingOperation<SVNProperties> {
         super.ensureArgumentsAreValid();
     }
 
+    /**
+     * Gets whether it is revision properties.
+     * 
+     * @return <code>true</code> if it is revision property, <code>true</code> if it is target property
+     */
     public boolean isRevisionProperties() {
         return revisionProperties;
     }
 
+    /**
+     * Sets whether it is revision properties.
+     * 
+     * @param revisionProperties <code>true</code> if it is revision properties, <code>true</code> if it is target properties
+     */
     public void setRevisionProperties(boolean revisionProperties) {
         this.revisionProperties = revisionProperties;
     }
 
+    /**
+     * Sets properties revision number, only for revision properties.
+     * 
+     * @return revision number of properties
+     */
     public long getRevisionNumber() {
         return revisionNumber;
     }
     
+    /**
+     * Sets properties revision number, only for revision properties.
+     * 
+     * @param  revisionNumber revision number of properties
+     */
     public void setRevisionNumber(long revisionNumber) {
         this.revisionNumber = revisionNumber;
     }
