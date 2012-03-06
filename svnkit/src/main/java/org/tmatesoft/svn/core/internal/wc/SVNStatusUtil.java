@@ -167,6 +167,7 @@ public class SVNStatusUtil {
                     SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, false,
                     false, false, false, null, null, null, null, null, SVNRevision.UNDEFINED, repositoryLock, null, 
                     null, null, -1, treeConflict);
+            status.setDepth(SVNDepth.UNKNOWN);
             status.setRemoteStatus(SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, repositoryLock, SVNNodeKind.NONE);
             status.setRepositoryRootURL(reposRoot);
             SVNStatusType text = SVNStatusType.STATUS_NONE;
@@ -285,6 +286,7 @@ public class SVNStatusUtil {
                 entry.getCopyFromURL(), SVNRevision.create(entry.getCopyFromRevision()),
                 repositoryLock, localLock, entry.asMap(), entry.getChangelistName(), wcFormatNumber, treeConflict);
         status.setEntry(entry);
+        status.setDepth(entry.isDirectory() ? entry.getDepth() : SVNDepth.UNKNOWN);
         status.setRepositoryRootURL(reposRoot);
         if (reposRoot != null && status.getURL() != null && status.getRepositoryRelativePath() == null) {
             status.setRepositoryRelativePath(SVNURLUtil.getRelativeURL(reposRoot, status.getURL(), false));

@@ -234,6 +234,7 @@ public class SVNStatus {
         myPropertiesStatus = propertiesStatus == null ? SVNStatusType.STATUS_NONE : propertiesStatus;
         myRemoteContentsStatus = remoteContentsStatus == null ? SVNStatusType.STATUS_NONE : remoteContentsStatus;
         myRemotePropertiesStatus = remotePropertiesStatus == null ? SVNStatusType.STATUS_NONE : remotePropertiesStatus;
+        myRemoteNodeStatus = SVNStatusType.STATUS_NONE;
         myIsLocked = isLocked;
         myIsCopied = isCopied;
         myIsSwitched = isSwitched;
@@ -250,11 +251,13 @@ public class SVNStatus {
         myChangelistName = changelistName;
         myWorkingCopyFormat = wcFormatVersion;
         myTreeConflict = treeConflict;
+        myRemoteRevision = SVNRevision.UNDEFINED;
     }
     
     public SVNStatus() {
         setCopyFromRevision(SVNRevision.UNDEFINED);
         setRevision(SVNRevision.UNDEFINED);
+        setRemoteRevision(SVNRevision.UNDEFINED);
     }
 
     /**

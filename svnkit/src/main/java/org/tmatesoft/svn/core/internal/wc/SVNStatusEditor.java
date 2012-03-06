@@ -11,6 +11,14 @@
  */
 package org.tmatesoft.svn.core.internal.wc;
 
+import java.io.File;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.StringTokenizer;
+import java.util.TreeMap;
+
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
@@ -34,14 +42,6 @@ import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
-
-import java.io.File;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.StringTokenizer;
-import java.util.TreeMap;
 
 
 /**
@@ -234,7 +234,8 @@ public class SVNStatusEditor {
                         SVNStatusType.STATUS_NAME_CONFLICT,  SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, 
                         false, entry.isCopied(), false, false, null, null, null, null, 
                         entry.getCopyFromURL(), SVNRevision.create(entry.getCopyFromRevision()),
-                        null, null, entry.asMap(), entry.getChangelistName(), dir.getFormatVersion(), null);                
+                        null, null, entry.asMap(), entry.getChangelistName(), dir.getFormatVersion(), null);
+                status.setDepth(entry.isDirectory() ? entry.getDepth() : SVNDepth.UNKNOWN);
                 status.setEntry(entry);
                 status.setRepositoryRootURL(myRepositoryRoot);
                 handler.handleStatus(status);                

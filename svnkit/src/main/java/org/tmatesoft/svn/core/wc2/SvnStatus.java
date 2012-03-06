@@ -51,8 +51,8 @@ public class SvnStatus extends SvnObject {
     
     private long repositoryChangedRevision;
     private SVNDate repositoryChangedDate;
-    private String repositoryChangedAuthor;    
-        
+    private String repositoryChangedAuthor;
+    
     public SVNNodeKind getKind() {
         return kind;
     }
