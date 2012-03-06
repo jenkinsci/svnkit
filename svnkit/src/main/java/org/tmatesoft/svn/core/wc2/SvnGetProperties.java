@@ -21,7 +21,8 @@ import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
  *             <li>target is not under version control
  *             </ul>
  * 
- * @author TMate Software Ltd.     
+ * @author TMate Software Ltd.  
+ * @version 1.7   
  */
 public class SvnGetProperties extends SvnReceivingOperation<SVNProperties> {
 

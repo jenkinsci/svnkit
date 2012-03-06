@@ -8,8 +8,9 @@ import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
  * <p/>
  * {@link #run()} returns {@link SvnWcGeneration} of resulting working copy.
  * 
- * @since 1.7 (SVN 1.7)
  * @author TMate Software Ltd.
+ * @version 1.7
+ * @since 1.7 (SVN 1.7)
  */
 public class SvnUpgrade extends SvnOperation<SvnWcGeneration> {
     

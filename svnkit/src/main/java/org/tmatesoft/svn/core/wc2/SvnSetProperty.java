@@ -84,7 +84,8 @@ import org.tmatesoft.svn.core.wc.SVNPropertyData;
  *             or <span class="javastring">"svn:wc"</span> prefix)
  *             </ul>
  *             
- * @author TMate Software Ltd.             
+ * @author TMate Software Ltd. 
+ * @version 1.7            
  */
 public class SvnSetProperty extends SvnReceivingOperation<SVNPropertyData> {
     

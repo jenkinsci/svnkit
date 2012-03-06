@@ -13,6 +13,7 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
  * {@link #run()} method returns {@link SvnAnnotateItem} information reported by the operation.
  * 
  * @author TMate Software Ltd.
+ * @version 1.7
  */
 public class SvnAnnotate extends SvnReceivingOperation<SvnAnnotateItem> {
     

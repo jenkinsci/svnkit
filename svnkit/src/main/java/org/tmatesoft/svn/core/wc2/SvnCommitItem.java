@@ -23,6 +23,7 @@ import org.tmatesoft.svn.core.SVNURL;
  * </ol>
  * 
  * @author TMate Software Ltd.
+ * @version 1.7
  */
 public class SvnCommitItem {
     

@@ -71,6 +71,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  *         the revision to which <code>revision</code> was resolved.
  * 
  * @author TMate Software Ltd.
+ * @version 1.7
  */
 public class SvnUpdate extends AbstractSvnUpdate<long[]> {
     

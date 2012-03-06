@@ -8,6 +8,7 @@ import org.tmatesoft.svn.core.wc2.hooks.ISvnExternalsHandler;
  * from a repository.
  * 
  * @author TMate Software Ltd.
+ * @version 1.7
  */
 public abstract class AbstractSvnUpdate<V> extends SvnOperation<V> {
     

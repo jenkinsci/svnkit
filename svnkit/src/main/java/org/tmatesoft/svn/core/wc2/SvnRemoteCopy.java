@@ -100,6 +100,7 @@ import org.tmatesoft.svn.core.wc2.hooks.ISvnExternalsHandler;
  * {@link #run()} returns {@link SVNCommitInfo} commit information information about the new committed revision.
  * 
  * @author TMate Software Ltd.
+ * @version 1.7
  */
 public class SvnRemoteCopy extends AbstractSvnCommit {
     

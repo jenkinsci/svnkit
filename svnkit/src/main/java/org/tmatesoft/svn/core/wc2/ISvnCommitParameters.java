@@ -6,6 +6,7 @@ import java.io.File;
  * Commit parameters.
  * 
  * @author TMate Software Ltd.
+ * @version 1.7
  */
 public interface ISvnCommitParameters {
     

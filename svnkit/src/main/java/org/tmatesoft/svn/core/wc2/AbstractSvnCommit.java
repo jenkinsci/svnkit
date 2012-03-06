@@ -19,6 +19,7 @@ import org.tmatesoft.svn.core.wc2.hooks.ISvnCommitHandler;
  * {@link #run()} method returns {@link SVNCommitInfo} information on a new revision as the result of the commit.
  * 
  * @author TMate Software Ltd.
+ * @version 1.7
  * @see {@link SvnCommit}, {@link SvnImport}, {@link SvnRemoteCopy}, {@link SvnRemoteDelete}, {@link SvnRemoteMkDir}, {@link SvnRemoteSetProperty}
  */
 public abstract class AbstractSvnCommit extends SvnReceivingOperation<SVNCommitInfo> {

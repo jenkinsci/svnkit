@@ -6,6 +6,7 @@ import org.tmatesoft.svn.core.SVNException;
  * Represebts  a checksum for SVN files.
  * 
  * @author TMate Software Ltd.
+ * @version 1.7
  */
 public class SvnChecksum {
     

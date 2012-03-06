@@ -10,6 +10,7 @@ import org.tmatesoft.svn.core.SVNLock;
  * {@link #run()} method returns {@link SVNLock} object that represents information of lock.
  * 
  * @author TMate Software Ltd.
+ * @version 1.7
  */
 public class SvnSetLock extends SvnReceivingOperation<SVNLock> {
 

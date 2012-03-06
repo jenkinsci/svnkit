@@ -25,6 +25,7 @@ import org.tmatesoft.svn.core.wc.SVNEventAction;
  * This method throws SVNException if URL does not exist.
  * 
  * @author TMate Software Ltd.
+ * @version 1.7
  */
 public class SvnRemoteDelete extends AbstractSvnCommit {
 

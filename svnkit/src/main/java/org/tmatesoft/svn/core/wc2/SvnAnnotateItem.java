@@ -11,6 +11,7 @@ import org.tmatesoft.svn.core.internal.util.SVNDate;
  * Class for representation the annotate item.
  * 
  * @author TMate Software Ltd.
+ * @version 1.7
  */
 public class SvnAnnotateItem {
 

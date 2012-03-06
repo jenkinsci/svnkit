@@ -11,6 +11,7 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
  * Can specify working copy path or repository URL.
  * 
  * @author TMate Software Ltd.
+ * @version 1.7
  */
 public class SvnTarget {
     

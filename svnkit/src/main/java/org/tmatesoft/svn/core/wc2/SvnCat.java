@@ -18,6 +18,7 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
  * {@link SVNRevision#UNDEFINED}, then it defaults to {@link SVNRevision#WORKING}.
  * 
  * @author TMate Software Ltd.
+ * @version 1.7
  */
 public class SvnCat extends SvnOperation<Void> {
 

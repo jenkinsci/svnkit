@@ -56,7 +56,8 @@ import org.tmatesoft.svn.core.wc.SVNEventAction;
 * {@link #run()} returns {@link SVNCommitInfo} information about new commited revision.
 * 
 * @author TMate Software Ltd.
-* */
+* @version 1.7
+*/
 public class SvnCommit extends AbstractSvnCommit {
     
     private boolean keepChangelists;

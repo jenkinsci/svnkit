@@ -58,6 +58,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * {@link #run()} method returns value of the revision actually checked out from the repository.
  * 
  * @author TMate Software Ltd.
+ * @version 1.7
  */
 public class SvnCheckout extends AbstractSvnUpdate<Long> {
     

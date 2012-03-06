@@ -22,6 +22,7 @@ import org.tmatesoft.svn.core.wc2.SvnOperation;
  * </ul>
  *             
  * @author TMate Software Ltd.
+ * @version 1.7
  */
 public class SvnCleanup extends SvnOperation<Void> {
 	

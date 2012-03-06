@@ -42,6 +42,7 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
  *             </ul>
  * 
  * @author TMate Software Ltd.
+ * @version 1.7
  */
 public class SvnRemoteSetProperty extends AbstractSvnCommit {
 

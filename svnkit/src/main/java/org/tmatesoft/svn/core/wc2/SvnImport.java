@@ -56,6 +56,7 @@ import org.tmatesoft.svn.core.wc.SVNEventAction;
  *             </ul>           
  *            
  * @author TMate Software Ltd.
+ * @version 1.7
  */
 public class SvnImport extends AbstractSvnCommit {
 
