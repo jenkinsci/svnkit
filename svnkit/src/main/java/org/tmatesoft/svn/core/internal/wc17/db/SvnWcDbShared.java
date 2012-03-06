@@ -158,15 +158,15 @@ public class SvnWcDbShared {
             }
 
             presence = getColumnPresence(stmt);
+            long opDepth = getColumnInt64(stmt, SVNWCDbSchema.NODES__Fields.op_depth);
 
-            if (presence != SVNWCDbStatus.Normal) {
+            if (opDepth == 0 || (presence != SVNWCDbStatus.Normal && presence != SVNWCDbStatus.Incomplete)) {
                 reset(stmt);
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS, "Expected node ''{0}'' to be added.", root.getAbsPath(localRelpath));
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
             info.set(AdditionInfo.originalRevision, getColumnRevNum(stmt, NODES__Fields.revision));
             info.set(AdditionInfo.status, SVNWCDbStatus.Added);
-            long opDepth = getColumnInt64(stmt, SVNWCDbSchema.NODES__Fields.op_depth);
             currentRelpath = localRelpath;
             for (i = SVNWCUtils.relpathDepth(localRelpath); i > opDepth; --i) {
                 reposPrefixPath = SVNFileUtil.createFilePath(SVNFileUtil.createFilePath(SVNFileUtil.getFileName(currentRelpath)), reposPrefixPath);
