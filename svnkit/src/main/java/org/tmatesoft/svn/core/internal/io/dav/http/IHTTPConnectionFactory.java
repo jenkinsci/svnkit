@@ -23,7 +23,7 @@ public interface IHTTPConnectionFactory {
     public IHTTPConnectionFactory DEFAULT = new IHTTPConnectionFactory() {
 
         public IHTTPConnection createHTTPConnection(SVNRepository repository) throws SVNException {
-            String charset = System.getProperty("svnkit.http.encoding", "US-ASCII");
+            String charset = System.getProperty("svnkit.http.encoding", "UTF-8");
             return new HTTPConnection(repository, charset, null, false);
 //            return new HttpConnection(repository, charset, null, false);
         }

@@ -40,7 +40,7 @@ public class DefaultHTTPConnectionFactory implements IHTTPConnectionFactory {
     }
 
     public IHTTPConnection createHTTPConnection(SVNRepository repository) throws SVNException {
-        String charset = myHTTPCharset != null ? myHTTPCharset : System.getProperty("svnkit.http.encoding", "US-ASCII");
+        String charset = myHTTPCharset != null ? myHTTPCharset : System.getProperty("svnkit.http.encoding", "UTF-8");
         File spoolLocation = mySpoolDirectory;
         if (mySpoolDirectory != null && !mySpoolDirectory.isDirectory()) {
             spoolLocation = null;
