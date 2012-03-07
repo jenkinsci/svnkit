@@ -2950,7 +2950,7 @@ public class SVNWCContext {
         String targetMarker = markersInfo.targetMarker;
         String leftMarker = markersInfo.leftMarker;
         String rightMarker = markersInfo.rightMarker;
-        FSMergerBySequence merger = new FSMergerBySequence(targetMarker.getBytes(), "=======".getBytes(), rightMarker.getBytes(), leftMarker.getBytes());
+        FSMergerBySequence merger = new FSMergerBySequence(targetMarker.getBytes(), CONFLICT_SEPARATOR, rightMarker.getBytes(), leftMarker.getBytes());
         int mergeResult = 0;
         RandomAccessFile localIS = null;
         RandomAccessFile latestIS = null;
@@ -3892,7 +3892,7 @@ public class SVNWCContext {
             String rightMarker = markersInfo.rightMarker;
             FSMergerBySequence merger = new FSMergerBySequence(
                     targetMarker.getBytes(),
-                    "=======".getBytes(),
+                    CONFLICT_SEPARATOR,
                     rightMarker.getBytes(),
                     leftMarker.getBytes());
             int mergeResult = 0;
