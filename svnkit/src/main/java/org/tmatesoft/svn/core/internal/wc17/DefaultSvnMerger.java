@@ -107,7 +107,7 @@ public class DefaultSvnMerger implements ISvnMerger {
         boolean isDir = (kind == SVNNodeKind.DIR);
         ISVNConflictHandler conflictResolver = context.getOptions().getConflictResolver();
         
-        SVNStatusType mergeOutcome = null;
+        SVNStatusType mergeOutcome = SVNStatusType.UNCHANGED;
         
         if (propChanges != null) {
             for (Iterator<?> i = propChanges.nameSet().iterator(); i.hasNext();) {
