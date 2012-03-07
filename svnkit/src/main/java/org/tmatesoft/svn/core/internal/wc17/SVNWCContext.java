@@ -2836,7 +2836,7 @@ public class SVNWCContext {
         String baseName = SVNFileUtil.getFileName(targetAbspath);
         File tempDir = db.getWCRootTempDir(targetAbspath);
         File resultTarget = SVNFileUtil.createUniqueFile(tempDir, baseName, ".tmp", false);
-        boolean containsConflicts = doTextMerge(resultTarget, detranslatedTargetAbspath, leftAbspath, rightAbspath, targetLabel, leftLabel, rightLabel, options);
+        boolean containsConflicts = doTextMerge(resultTarget, targetAbspath, detranslatedTargetAbspath, leftAbspath, rightAbspath, targetLabel, leftLabel, rightLabel, options);
         if (containsConflicts && !dryRun) {
             info = maybeResolveConflicts(leftAbspath, rightAbspath, targetAbspath, copyfromText, leftLabel, rightLabel, targetLabel, leftVersion, rightVersion, resultTarget,
                     detranslatedTargetAbspath, mimeprop, options, conflictResolver);
@@ -2869,14 +2869,14 @@ public class SVNWCContext {
         return info;
     }
 
-    private boolean doTextMerge(File resultFile, File detranslatedTargetAbspath, File leftAbspath, File rightAbspath, String targetLabel, String leftLabel, String rightLabel, SVNDiffOptions options) throws SVNException {
+    private boolean doTextMerge(File resultFile, File targetAbsPath, File detranslatedTargetAbspath, File leftAbspath, File rightAbspath, String targetLabel, String leftLabel, String rightLabel, SVNDiffOptions options) throws SVNException {
         ISvnMerger defaultMerger = createDefaultMerger();
         ISvnMerger customMerger = createCustomMerger();
         SvnMergeResult mergeResult;
         if (customMerger != null) {
-            mergeResult = customMerger.mergeText(defaultMerger, resultFile, detranslatedTargetAbspath, leftAbspath, rightAbspath, targetLabel, leftLabel, rightLabel, options);
+            mergeResult = customMerger.mergeText(defaultMerger, resultFile, targetAbsPath, detranslatedTargetAbspath, leftAbspath, rightAbspath, targetLabel, leftLabel, rightLabel, options);
         } else {
-            mergeResult = defaultMerger.mergeText(null, resultFile, detranslatedTargetAbspath, leftAbspath, rightAbspath, targetLabel, leftLabel, rightLabel, options);
+            mergeResult = defaultMerger.mergeText(null, resultFile, targetAbsPath, detranslatedTargetAbspath, leftAbspath, rightAbspath, targetLabel, leftLabel, rightLabel, options);
         }
         if (mergeResult.getMergeOutcome() == SVNStatusType.CONFLICTED) {
             return true;

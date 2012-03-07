@@ -53,9 +53,9 @@ public class DefaultSvnMerger implements ISvnMerger {
     public SVNMergeResult mergeProperties(String localPath, SVNProperties workingProperties, SVNProperties baseProperties, SVNProperties serverBaseProps, SVNProperties propDiff, SVNAdminArea adminArea, SVNLog log, boolean baseMerge, boolean dryRun) throws SVNException {
         return null;
     }
-
+    
     public SvnMergeResult mergeText(ISvnMerger baseMerger, File resultFile,
-            File detranslatedTargetAbspath, File leftAbspath,
+            File detranslatedTargetAbspath, File leftAbspath, File targetAbspath,
             File rightAbspath, String targetLabel, String leftLabel,
             String rightLabel, SVNDiffOptions options) throws SVNException {
         

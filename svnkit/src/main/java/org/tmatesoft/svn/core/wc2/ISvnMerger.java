@@ -18,6 +18,7 @@ public interface ISvnMerger extends ISVNMerger {
     public SvnMergeResult mergeText(
             ISvnMerger baseMerger,
             File resultFile, 
+            File targetAbspath, 
             File detranslatedTargetAbspath, 
             File leftAbspath, 
             File rightAbspath, 
