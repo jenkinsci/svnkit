@@ -4,7 +4,6 @@ import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
-import org.tmatesoft.svn.core.internal.wc2.remote.SvnRemoteSetPropertyImpl;
 import org.tmatesoft.svn.core.wc2.hooks.ISvnCommitHandler;
 
 /**

@@ -6,7 +6,6 @@ import java.util.Collection;
 import java.util.Collections;
 
 import org.tmatesoft.svn.core.ISVNCanceller;
-import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
