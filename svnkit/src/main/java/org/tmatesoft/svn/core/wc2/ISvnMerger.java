@@ -16,6 +16,7 @@ import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 public interface ISvnMerger extends ISVNMerger {
     
     public SvnMergeResult mergeText(
+            ISvnMerger baseMerger,
             File resultFile, 
             File detranslatedTargetAbspath, 
             File leftAbspath, 
@@ -26,6 +27,7 @@ public interface ISvnMerger extends ISVNMerger {
             SVNDiffOptions options) throws SVNException;
     
     public SvnMergeResult mergeProperties(
+            ISvnMerger baseMerger,
             File localAbsPath, 
             SVNNodeKind kind, 
             SVNConflictVersion leftVersion, 
@@ -35,9 +37,5 @@ public interface ISvnMerger extends ISVNMerger {
             SVNProperties actualProperties, 
             SVNProperties propChanges,
             boolean baseMerge, 
-            boolean dryRun,
-            /* out parameters */
-            SVNProperties newBaseProperties,
-            SVNProperties newActualProperties
-            ) throws SVNException;
+            boolean dryRun) throws SVNException;
 }
