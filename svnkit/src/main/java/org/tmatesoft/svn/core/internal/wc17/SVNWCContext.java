@@ -3862,6 +3862,8 @@ public class SVNWCContext {
             } else {
                 original = SVNPropertyValue.create("");
             }
+        } else if (incomingBase != null && mine.equals(original)) {
+            original =  incomingBase;
         }
         
         byte[] originalBytes = SVNPropertyValue.getPropertyAsBytes(original);
@@ -3909,6 +3911,7 @@ public class SVNWCContext {
                         new QSequenceLineRAByteData(mineBytes),
                         new QSequenceLineRAByteData(incomingBytes),
                         diffOptions, result, SVNDiffConflictChoiceStyle.CHOOSE_MODIFIED_LATEST);
+                result.flush();
             } catch (IOException e) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
                 SVNErrorManager.error(err, e, SVNLogType.WC);
@@ -3918,10 +3921,10 @@ public class SVNWCContext {
                 SVNFileUtil.closeFile(baseIS);
                 SVNFileUtil.closeFile(latestIS);
             }
-//            if (mergeResult == FSMergerBySequence.CONFLICTED) {
-            conflictMessage += result.toString();
-            return conflictMessage;
-//            }
+            if (mergeResult == FSMergerBySequence.CONFLICTED) {
+                conflictMessage += result.toString();
+                return conflictMessage;
+            }
         }
 
         if (mineBytes != null && mineBytes.length > 0) {
