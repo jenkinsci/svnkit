@@ -55,7 +55,8 @@ public class DefaultSvnMerger implements ISvnMerger {
     }
     
     public SvnMergeResult mergeText(ISvnMerger baseMerger, File resultFile,
-            File detranslatedTargetAbspath, File leftAbspath, File targetAbspath,
+            File targetAbspath,
+            File detranslatedTargetAbspath, File leftAbspath,
             File rightAbspath, String targetLabel, String leftLabel,
             String rightLabel, SVNDiffOptions options) throws SVNException {
         
