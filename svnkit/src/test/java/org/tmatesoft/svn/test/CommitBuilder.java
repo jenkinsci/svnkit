@@ -108,6 +108,7 @@ public class CommitBuilder {
             addChildrensFiles(commitEditor, directory);
         }
 
+        deleteEntries(commitEditor, "");
         addChildrensFiles(commitEditor, "");
 
         closeUntilCommonAncestor(commitEditor, currentDirectory, "");
@@ -266,7 +267,10 @@ public class CommitBuilder {
             addDirectoryToVisit(directory, directoriesToVisit);
         }
         for (String path: entriesToDelete) {
-            addDirectoryToVisit(getParent(path), directoriesToVisit);
+            String directory = getParent(path);
+            if (directory != null) {
+                addDirectoryToVisit(directory, directoriesToVisit);
+            }
         }
         for (String directory : directoriesToProperties.keySet()) {
             addDirectoryToVisit(directory, directoriesToVisit);
