@@ -604,6 +604,52 @@ public class DiffTest {
         }
     }
 
+    @Test
+    public void testDiffOnNonExistentUrlCalledWithCorrectAnchors() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testDiffOnNonExistentUrlCalledWithCorrectAnchors", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder1 = new CommitBuilder(url);
+            commitBuilder1.addFile("directory/file");
+            commitBuilder1.commit();
+            final CommitBuilder commitBuilder2 = new CommitBuilder(url);
+            commitBuilder2.changeFile("directory/file", "new contents".getBytes());
+            commitBuilder2.commit();
+            final CommitBuilder commitBuilder3 = new CommitBuilder(url);
+            commitBuilder3.delete("directory");
+            commitBuilder3.commit();
+
+            final File basePath = new File("");
+
+            final SvnDiffGenerator diffGenerator = new SvnDiffGenerator();
+            diffGenerator.setBasePath(basePath);
+
+            SVNURL urlForDiff = url.appendPath("directory", false);
+
+            final OldGenerator testGenerator = new OldGenerator();
+
+            final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            final SvnDiff diff = svnOperationFactory.createDiff();
+            diff.setTargets(SvnTarget.fromURL(urlForDiff, SVNRevision.create(3)), SvnTarget.fromURL(urlForDiff, SVNRevision.create(2)));
+            diff.setUseGitDiffFormat(false);
+            diff.setOutput(byteArrayOutputStream);
+            diff.setDiffGenerator(testGenerator);
+            diff.run();
+
+            Assert.assertEquals(testGenerator.anchorPath1, url.toString());
+            Assert.assertEquals(testGenerator.anchorPath2, url.toString());
+
+            //TODO: compare output
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
     private String getRelativePath(File path, File basePath) {
         return SVNPathUtil.getRelativePath(basePath.getAbsolutePath().replace(File.separatorChar, '/'),
                 path.getAbsolutePath().replace(File.separatorChar, '/'));
@@ -711,12 +757,16 @@ public class DiffTest {
     private static class OldGenerator implements ISVNDiffGenerator {
 
         private final List<GeneratorCall> calls;
+        private String anchorPath1;
+        private String anchorPath2;
 
         private OldGenerator() {
             calls = new ArrayList<GeneratorCall>();
         }
 
         public void init(String anchorPath1, String anchorPath2) {
+            this.anchorPath1 = anchorPath1;
+            this.anchorPath2 = anchorPath2;
         }
 
         public void setBasePath(File basePath) {
