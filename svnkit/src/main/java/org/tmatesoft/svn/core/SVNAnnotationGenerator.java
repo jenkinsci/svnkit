@@ -206,7 +206,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
         myBlameChunks = new ArrayList();
         myDeltaProcessor = new SVNDeltaProcessor();
         myStartRevision = startRevision;
-        myDiffOptions = diffOptions;
+        myDiffOptions = diffOptions == null ? new SVNDiffOptions() : diffOptions;
         myIncludeMergedRevisions = includeMergedRevisions;
         myFileHandler = handler;
         myEncoding = encoding;
