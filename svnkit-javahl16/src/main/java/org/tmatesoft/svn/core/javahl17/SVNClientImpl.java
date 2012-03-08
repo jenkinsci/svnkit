@@ -22,6 +22,7 @@ import org.apache.subversion.javahl.CommitInfo;
 import org.apache.subversion.javahl.CommitItem;
 import org.apache.subversion.javahl.ConflictDescriptor;
 import org.apache.subversion.javahl.ConflictResult;
+import org.apache.subversion.javahl.ConflictDescriptor.Operation;
 import org.apache.subversion.javahl.ConflictResult.Choice;
 import org.apache.subversion.javahl.DiffSummary;
 import org.apache.subversion.javahl.ISVNClient;
@@ -2314,7 +2315,7 @@ public class SVNClientImpl implements ISVNClient {
     private ConflictDescriptor getConflictDescription(SVNConflictDescription conflictDescription) throws ClientException {
         ConflictVersion srcLeft = null;
         ConflictVersion srcRight = null;
-        ConflictDescriptor.Operation operation = null;
+        ConflictDescriptor.Operation operation = Operation.none;
 
         if (conflictDescription instanceof SVNTreeConflictDescription) {
             SVNTreeConflictDescription treeConflictDescription = (SVNTreeConflictDescription) conflictDescription;
