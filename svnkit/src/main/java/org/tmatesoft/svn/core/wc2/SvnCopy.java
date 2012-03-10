@@ -248,10 +248,20 @@ public class SvnCopy extends SvnOperation<Void> {
         this.failWhenDstExist = isFailWhenDstExist;
     }
 
+    /**
+     * Returns whether to ignore externals definitions.
+     * 
+     * @return <code>true</code> if externals definitions should be ignored, otherwise <code>false</code>
+     */
     public boolean isIgnoreExternals() {
         return ignoreExternals;
     }
 
+    /**
+     * Sets whether to ignore externals definitions.
+     * 
+     * @param ignoreExternals <code>true</code> if externals definitions should be ignored, otherwise <code>false</code>
+     */
     public void setIgnoreExternals(boolean ignoreExternals) {
         this.ignoreExternals = ignoreExternals;
     }
