@@ -9,6 +9,10 @@ import org.tmatesoft.svn.core.wc2.hooks.ISvnExternalsHandler;
  * 
  * @author TMate Software Ltd.
  * @version 1.7
+ * @see SvnCheckout
+ * @see SvnExport
+ * @see SvnUpdate
+ * @see SvnSwitch
  */
 public abstract class AbstractSvnUpdate<V> extends SvnOperation<V> {
     

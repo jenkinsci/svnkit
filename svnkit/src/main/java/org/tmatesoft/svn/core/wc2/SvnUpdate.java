@@ -66,9 +66,9 @@ import org.tmatesoft.svn.util.SVNLogType;
  * This operation requires repository access (in case the repository is not
  * on the same machine, network connection is established).
  * 
-* <p/>
+ * <p/>
  * {@link #run()} method returns an array of <code>long</code> revisions with each element set to
- *         the revision to which <code>revision</code> was resolved.
+ * the revision to which <code>revision</code> was resolved.
  * 
  * @author TMate Software Ltd.
  * @version 1.7

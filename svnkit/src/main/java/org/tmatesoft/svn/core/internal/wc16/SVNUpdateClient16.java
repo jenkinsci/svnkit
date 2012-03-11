@@ -1004,7 +1004,7 @@ public class SVNUpdateClient16 extends SVNBasicDelegate {
      * @param revision
      *            the desired revision of the directory/file to be exported
      * @param eolStyle
-     *            a string that denotes a specific End-Of-Line charecter;
+     *            a string that denotes a specific End-Of-Line character;
      * @param force
      *            <span class="javakeyword">true</span> to fore the operation
      *            even if there are local files with the same names as those in
@@ -1059,7 +1059,7 @@ public class SVNUpdateClient16 extends SVNBasicDelegate {
      * @param revision
      *            the desired revision of the directory/file to be exported
      * @param eolStyle
-     *            a string that denotes a specific End-Of-Line charecter
+     *            a string that denotes a specific End-Of-Line character
      * @param overwrite
      *            if <span class="javakeyword">true</span>, will cause the
      *            export to overwrite files or directories
@@ -1125,7 +1125,7 @@ public class SVNUpdateClient16 extends SVNBasicDelegate {
      * @param revision
      *            the desired revision of the directory/file to be exported
      * @param eolStyle
-     *            a string that denotes a specific End-Of-Line charecter;
+     *            a string that denotes a specific End-Of-Line character;
      * @param force
      *            <span class="javakeyword">true</span> to fore the operation
      *            even if there are local files with the same names as those in
@@ -1193,7 +1193,7 @@ public class SVNUpdateClient16 extends SVNBasicDelegate {
      *            the desired revision of the directory/file to be exported;
      *            used only when exporting from a repository
      * @param eolStyle
-     *            a string that denotes a specific End-Of-Line charecter
+     *            a string that denotes a specific End-Of-Line character
      * @param overwrite
      *            if <span class="javakeyword">true</span>, will cause the
      *            export to overwrite files or directories
