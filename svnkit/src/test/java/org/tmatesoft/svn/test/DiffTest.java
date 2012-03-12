@@ -20,10 +20,12 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnDiffGenerator;
+import org.tmatesoft.svn.core.wc.DefaultSVNRepositoryPool;
 import org.tmatesoft.svn.core.wc.ISVNDiffGenerator;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNDiffClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.core.wc2.SvnCopy;
 import org.tmatesoft.svn.core.wc2.SvnCopySource;
 import org.tmatesoft.svn.core.wc2.SvnDiff;
@@ -647,6 +649,58 @@ public class DiffTest {
         } finally {
             svnOperationFactory.dispose();
             sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testAnchorIsRootIfOneRevisionIsZero() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testAnchorIsRootIfOneRevisionIsZero", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder1 = new CommitBuilder(url);
+            commitBuilder1.addFile("directory/subdirectory/file");
+            commitBuilder1.commit();
+            final CommitBuilder commitBuilder2 = new CommitBuilder(url);
+            commitBuilder2.changeFile("directory/subdirectory/file", "new contents".getBytes());
+            commitBuilder2.commit();
+            final CommitBuilder commitBuilder3 = new CommitBuilder(url);
+            commitBuilder3.delete("directory/subdirectory");
+            commitBuilder3.commit();
+
+            final SVNURL urlToDiff = url.appendPath("directory/subdirectory", false);
+
+            final OldGenerator generator = new OldGenerator();
+            diffFiles(urlToDiff, SVNRevision.create(0), SVNRevision.create(2), generator);
+
+            final List<GeneratorCall> calls = generator.calls;
+            Assert.assertEquals(2, calls.size());
+            Assert.assertEquals(new GeneratorCall(GeneratorCallKind.DISPLAY_ADDED_DIRECTORY, "directory/subdirectory"), calls.get(0));
+            Assert.assertEquals(new GeneratorCall(GeneratorCallKind.DISPLAY_FILE_DIFF, "directory/subdirectory/file"), calls.get(1));
+
+            Assert.assertEquals(url.toString(), generator.anchorPath1);
+            Assert.assertEquals(url.toString(), generator.anchorPath2);
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    private void diffFiles(SVNURL url, final SVNRevision fromVersion, final SVNRevision toVersion, final ISVNDiffGenerator diffGenerator) throws SVNException {
+        DefaultSVNOptions options = SVNWCUtil.createDefaultOptions(true);
+        final DefaultSVNRepositoryPool pool = new DefaultSVNRepositoryPool(SVNWCUtil.createDefaultAuthenticationManager(), options);
+        try {
+          final SVNDiffClient diffClient = new SVNDiffClient(pool, options);
+
+          diffClient.setDiffGenerator(diffGenerator);
+
+          diffClient.doDiff(url, fromVersion, url, toVersion, SVNDepth.INFINITY, true, new ByteArrayOutputStream());
+        }
+        finally {
+          pool.dispose();
         }
     }
 
