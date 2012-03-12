@@ -1466,7 +1466,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             
             String mimeType = myWCContext.getProperty(fb.localAbsolutePath, SVNProperty.MIME_TYPE);
             SVNEvent event = SVNEventFactory.createSVNEvent(fb.localAbsolutePath, SVNNodeKind.FILE, mimeType, myTargetRevision, contentState, propState[0], lockState, action, null, null, null);
-            SVNURL url = myReposRootURL.appendPath(path, false);
+            SVNURL url = fb.getURL();
             event.setPreviousRevision(fb.oldRevision);
             event.setURL(url);
             myWCContext.getEventHandler().handleEvent(event, 0);
