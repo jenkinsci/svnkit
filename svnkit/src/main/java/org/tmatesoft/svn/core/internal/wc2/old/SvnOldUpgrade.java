@@ -4,8 +4,10 @@ import java.io.File;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.svn.core.SVNDepth;
@@ -19,7 +21,6 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
-import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
@@ -147,7 +148,9 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
                     getWcContext().readKind(externalPath.getAbsoluteFile(), false);
                 } catch (SVNException e) {
                     if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                        wcUpgrade(externalPath, reposInfo);
+                        SvnUpgrade upgradeExternal = getOperation().getOperationFactory().createUpgrade();
+                        upgradeExternal.setSingleTarget(SvnTarget.fromFile(externalPath));
+                        upgradeExternal.run();
                     } else {
                         throw e;
                     }
@@ -235,7 +238,7 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 		lastRepositoryInfo.UUID = entry.getUUID();
 	}
 
-	private void ensureReposInfo(SVNEntry entry, File localAbsPath, RepositoryInfo lastRepositoryInfo, SVNHashMap reposCache)
+	private void ensureReposInfo(SVNEntry entry, File localAbsPath, RepositoryInfo lastRepositoryInfo, Map<SVNURL, String> reposCache)
 			throws SVNException {
 		if (entry.getRepositoryRootURL() != null && entry.getUUID() != null) {
 			return;
@@ -292,7 +295,7 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 			wcAccess.close();
 		}
 
-		SVNHashMap reposCache = new SVNHashMap();
+		Map<SVNURL, String> reposCache = new HashMap<SVNURL, String>();
 		ensureReposInfo(thisDir, localAbsPath, reposInfo, reposCache);
 
 		/*
@@ -367,7 +370,7 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 
 	}
 
-	private void upgradeWorkingCopy(WriteBaton parentDirBaton, SVNWCDb db, File dirAbsPath, SVNWCDbUpgradeData data, SVNHashMap reposCache,
+	private void upgradeWorkingCopy(WriteBaton parentDirBaton, SVNWCDb db, File dirAbsPath, SVNWCDbUpgradeData data, Map<SVNURL, String> reposCache,
 			RepositoryInfo reposInfo) throws SVNException {
 
 		WriteBaton dirBaton = null;
@@ -409,8 +412,9 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 		}
 	}
 
-	private WriteBaton upgradeToWcng(WriteBaton parentDirBaton, SVNWCDb db, File dirAbsPath, int oldFormat, SVNWCDbUpgradeData data, 
-			SVNHashMap reposCache, RepositoryInfo reposInfo) throws SVNException {
+	@SuppressWarnings("unchecked")
+    private WriteBaton upgradeToWcng(WriteBaton parentDirBaton, SVNWCDb db, File dirAbsPath, int oldFormat, SVNWCDbUpgradeData data, 
+			Map<SVNURL, String> reposCache, RepositoryInfo reposInfo) throws SVNException {
 		WriteBaton dirBaton = null;
 		File logFilePath = SVNWCUtils.admChild(dirAbsPath, ADM_LOG);
 
@@ -496,7 +500,7 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 				if (verProps != null) {
 				    cachedProps.put("", verProps.asMap());
 				}
-				SVNHashSet children = getVersionedFiles(dirRelPath, data.root.getSDb(), data.workingCopyId);
+				Set<File> children = getVersionedFiles(dirRelPath, data.root.getSDb(), data.workingCopyId);
 				for (Iterator<File> files = children.iterator(); files.hasNext();) {
 					File file = files.next();
 					verProps = area.getWCProperties(SVNFileUtil.getFileName(file));
@@ -769,7 +773,8 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 		return SVNWCUtils.admChild(dirAbsPath, ADM_LOCK);
 	}
 	
-	private static Map<String, SVNEntry> readEntries(SVNWCAccess access, File localAbsPath) throws SVNException {
+	@SuppressWarnings("unchecked")
+    private static Map<String, SVNEntry> readEntries(SVNWCAccess access, File localAbsPath) throws SVNException {
 		Map<String, SVNEntry> entries = null;
 		try {
 			SVNAdminArea area = access.probeOpen(localAbsPath, false, 0);
@@ -835,8 +840,8 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 	 * children must have been upgraded to wc-ng format.
 	 */
 
-	private SVNHashSet getVersionedFiles(File parentRelPath, SVNSqlJetDb sDb, long wcId) throws SVNException {
-		SVNHashSet children = new SVNHashSet();
+	private Set<File> getVersionedFiles(File parentRelPath, SVNSqlJetDb sDb, long wcId) throws SVNException {
+		Set<File> children = new HashSet<File>();
 
 		/* ### just select 'file' children. do we need 'symlink' in the future? */
 		SVNSqlJetStatement stmt = sDb.getStatement(SVNWCDbStatements.SELECT_ALL_FILES);
@@ -887,7 +892,7 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 		/* Migrate the props for "this dir". */
 		migrateNodeProps(dirAbsPath, data, "", originalFormat, area);
 
-		SVNHashSet children = getVersionedFiles(dirRelPath, data.root.getSDb(),
+		Set<File> children = getVersionedFiles(dirRelPath, data.root.getSDb(),
 				data.workingCopyId);
 
 		/* Iterate over all the files in this SDB. */
