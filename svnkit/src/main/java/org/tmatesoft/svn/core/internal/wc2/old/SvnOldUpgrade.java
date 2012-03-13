@@ -139,7 +139,7 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 			}
 		});
 		getProperties.run();
-
+		
 		for (SvnTarget target : externals.keySet()) {
 		    SVNExternal[] externalDefs = SVNExternal.parseExternals(target.getFile(), externals.get(target));
 		    for (int i = 0; i < externalDefs.length; i++) {
@@ -148,6 +148,8 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
                     getWcContext().readKind(externalPath.getAbsoluteFile(), false);
                 } catch (SVNException e) {
                     if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                        getProperties.getOperationFactory().getWcContext().getDb().close();
+
                         SvnUpgrade upgradeExternal = getOperation().getOperationFactory().createUpgrade();
                         upgradeExternal.setSingleTarget(SvnTarget.fromFile(externalPath));
                         upgradeExternal.run();
