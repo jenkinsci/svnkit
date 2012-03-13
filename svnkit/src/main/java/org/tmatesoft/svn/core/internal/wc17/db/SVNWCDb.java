@@ -11,27 +11,6 @@
  */
 package org.tmatesoft.svn.core.internal.wc17.db;
 
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbShared.begingReadTransaction;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbShared.commitTransaction;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbShared.doesNodeExists;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnBlob;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnBoolean;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnChecksum;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnDepth;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnInt64;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnKind;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnPath;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnPresence;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnProperties;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnRevNum;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnText;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getKindText;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getPresenceText;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getTranslatedSize;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.hasColumnProperties;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.isColumnNull;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.parseDepth;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -110,6 +89,27 @@ import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnChecksum;
 import org.tmatesoft.svn.util.SVNLogType;
+
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbShared.begingReadTransaction;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbShared.commitTransaction;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbShared.doesNodeExists;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnBlob;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnBoolean;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnChecksum;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnDepth;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnInt64;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnKind;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnPath;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnPresence;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnProperties;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnRevNum;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnText;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getKindText;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getPresenceText;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getTranslatedSize;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.hasColumnProperties;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.isColumnNull;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.parseDepth;
 
 /**
  *
@@ -1371,354 +1371,213 @@ public class SVNWCDb implements ISVNWCDb {
         public SVNWCDbDir wcDbDir;
         public File localRelPath;
     }
-    
+
     public DirParsedInfo parseDir(File localAbsPath, Mode sMode) throws SVNException {
-    	return parseDir(localAbsPath, sMode, false);
+        return parseDir(localAbsPath, sMode, false);
     }
 
-    public DirParsedInfo parseDir(File localAbsPath, Mode sMode, boolean isDetectWCGeneration) throws SVNException {
+    public DirParsedInfo parseDir(File localAbspath, Mode sMode, boolean isDetectWCGeneration) throws SVNException {
         DirParsedInfo info = new DirParsedInfo();
         String buildRelPath;
-        boolean always_check = false;
-        boolean obstruction_possible = false;
+        File localDirAbspath;
+        File originalAbspath = localAbspath;
+        SVNNodeKind kind;
+        SVNWCDbDir probeRoot;
+        SVNWCDbDir foundRoot = null;
+        boolean movedUpwards = false;
+        boolean alwaysCheck = false;
+        boolean isSymlink;
         sMode = Mode.ReadWrite;
+        SVNSqlJetDb sDb = null;
+        int wc_format = 0;
 
-        info.wcDbDir = dirData.get(localAbsPath.getAbsolutePath());
-        if (info.wcDbDir != null && info.wcDbDir.getWCRoot() != null) {
-            /* We got lucky. Just return the thing BEFORE performing any I/O. */
-            /*
-             * ### validate SMODE against how we opened wcroot->sdb? and against
-             * ### DB->mode? (will we record per-dir mode?)
-             */
-            info.localRelPath = info.wcDbDir.computeRelPath();
+        probeRoot = dirData.get(localAbspath.getAbsolutePath());
+        if (probeRoot != null) {
+            info.wcDbDir = probeRoot;
+            info.localRelPath = probeRoot.computeRelPath();
             return info;
         }
 
-        /*
-         * ### at some point in the future, we may need to find a way to get ###
-         * rid of this stat() call. it is going to happen for EVERY call ###
-         * into wc_db which references a file. calls for directories could ###
-         * get an early-exit in the hash lookup just above.
-         */
-        File original_abspath = localAbsPath;
-        
-        SVNFileType fileType = SVNFileType.getType(localAbsPath);
-        SVNNodeKind kind = fileType == SVNFileType.DIRECTORY || (fileType == SVNFileType.SYMLINK && localAbsPath.isDirectory()) ? 
+        SVNFileType fileType = SVNFileType.getType(localAbspath);
+        isSymlink = fileType == SVNFileType.SYMLINK;
+        kind = fileType == SVNFileType.DIRECTORY || (isSymlink && localAbspath.isDirectory()) ?
                 SVNNodeKind.DIR : SVNFileType.getNodeKind(fileType);
-        if (kind != SVNNodeKind.DIR) {
-            /*
-             * If the node specified by the path is NOT present, then it cannot
-             * possibly be a directory containing ".svn/wc.db".
-             *
-             * If it is a file, then it cannot contain ".svn/wc.db".
-             *
-             * For both of these cases, strip the basename off of the path and
-             * move up one level. Keep record of what we strip, though, since
-             * we'll need it later to construct local_relpath.
-             */
-            buildRelPath = SVNFileUtil.getFileName(localAbsPath);
-            localAbsPath = SVNFileUtil.getParentFile(localAbsPath);
+        if (kind != SVNNodeKind.DIR || isSymlink) {
+            buildRelPath = SVNFileUtil.getFileName(localAbspath);
+            localDirAbspath = SVNFileUtil.getParentFile(localAbspath);
 
-            if (localAbsPath == null) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_WORKING_COPY, "''{0}'' is not a working copy", original_abspath);
-                SVNErrorManager.error(err, SVNLogType.WC);
-            }
+//            if (localDirAbspath == null) {
+//                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_WORKING_COPY, "''{0}'' is not a working copy", originalAbspath);
+//                SVNErrorManager.error(err, SVNLogType.WC);
+//            }
 
-            /*
-             * ### if *pdh != NULL (from further above), then there is (quite
-             * ### probably) a bogus value in the DIR_DATA hash table. maybe ###
-             * clear it out? but what if there is an access baton?
-             */
-
-            /* Is this directory in our hash? */
-            info.wcDbDir = dirData.get(localAbsPath.getAbsolutePath());
-            if (info.wcDbDir != null && info.wcDbDir.getWCRoot() != null) {
-                /* Stashed directory's local_relpath + basename. */
+            probeRoot = dirData.get(localDirAbspath.getAbsolutePath());
+            if (probeRoot != null) {
+                info.wcDbDir = probeRoot;
                 info.localRelPath = SVNFileUtil.createFilePath(info.wcDbDir.computeRelPath(), buildRelPath);
                 return info;
             }
 
-            /*
-             * If the requested path is not on the disk, then we don't know how
-             * many ancestors need to be scanned until we start hitting content
-             * on the disk. Set ALWAYS_CHECK to keep looking for .svn/entries
-             * rather than bailing out after the first check.
-             */
-            if (kind == SVNNodeKind.NONE)
-                always_check = true;
+            if (kind == SVNNodeKind.NONE) {
+                alwaysCheck = true;
+            }
+
+            localAbspath = localDirAbspath;
         } else {
-            /*
-             * Start the local_relpath empty. If *this* directory contains the
-             * wc.db, then relpath will be the empty string.
-             */
             buildRelPath = "";
-
-            /*
-             * It is possible that LOCAL_ABSPATH was *intended* to be a file,
-             * but we just found a directory in its place. After we build the
-             * PDH, then we'll examine the parent to see how it describes this
-             * particular path.
-             *
-             * ### this is only possible with per-dir wc.db databases.
-             */
-            obstruction_possible = true;
-        }
-        always_check = true;
-
-        /*
-         * LOCAL_ABSPATH refers to a directory at this point. The PDH
-         * corresponding to that directory is what we need to return. At this
-         * point, we've determined that a PDH with a discovered WCROOT is NOT in
-         * the DB's hash table of wcdirs. Let's fill in an existing one, or
-         * create one. Then go figure out where the WCROOT is.
-         */
-
-        if (info.wcDbDir == null) {
-            info.wcDbDir = new SVNWCDbDir(localAbsPath);
-        } else {
-            /* The PDH should have been built correctly (so far). */
-            assert (localAbsPath.equals(info.wcDbDir.getLocalAbsPath()));
+            localDirAbspath = localAbspath;
         }
 
-        /*
-         * Assume that LOCAL_ABSPATH is a directory, and look for the SQLite
-         * database in the right place. If we find it... great! If not, then
-         * peel off some components, and try again.
-         */
-
-        SVNWCDbDir found_pdh = null;
-        SVNWCDbDir child_pdh;
-        SVNSqlJetDb sDb = null;
-        boolean moved_upwards = false;
-        int wc_format = 0;
+        do { //workaround to emulate "goto"
 
         while (true) {
 
             try {
-                sDb = openDb(localAbsPath, SDB_FILE, sMode);
+                sDb = openDb(localAbspath, SDB_FILE, sMode);
                 break;
             } catch (SVNException e) {
-                if (e.getErrorMessage().getErrorCode() != SVNErrorCode.SQLITE_ERROR && !e.isEnoent())
+                if (e.getErrorMessage().getErrorCode() != SVNErrorCode.SQLITE_ERROR && !e.isEnoent()) {
                     throw e;
+                }
             }
 
-            /*
-             * If we have not moved upwards, then check for a wc-1 working copy.
-             * Since wc-1 has a .svn in every directory, and we didn't find one
-             * in the original directory, then we aren't looking at a wc-1.
-             *
-             * If the original path is not present, then we have to check on
-             * every iteration. The content may be the immediate parent, or
-             * possibly five ancetors higher. We don't test for directory
-             * presence (just for the presence of subdirs/files), so we don't
-             * know when we can stop checking ... so just check always.
-             */
-            if (!moved_upwards || always_check || isDetectWCGeneration) {
-                wc_format = getOldVersion(localAbsPath);
+            if (!movedUpwards || alwaysCheck || isDetectWCGeneration) {
+                wc_format = getOldVersion(localAbspath);
                 if (wc_format != 0) { 
                     break;
                 }
             }
 
-            /*
-             * We couldn't open the SDB within the specified directory, so move
-             * up one more directory.
-             */
-            localAbsPath = SVNFileUtil.getParentFile(localAbsPath);
-            if (localAbsPath == null) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_WORKING_COPY, "''{0}'' is not a working copy", original_abspath);
+            if (SVNFileUtil.getParentFile(localAbspath) == null) { //if is root
+                if (isSymlink) {
+                    localAbspath = originalAbspath;
+                    SVNNodeKind resolvedKind = SVNFileType.getNodeKind(SVNFileType.getType(SVNFileUtil.resolveSymlink(localAbspath)));
+
+                    if (resolvedKind == SVNNodeKind.DIR) {
+                        foundRoot = dirData.get(localAbspath.getAbsolutePath());
+                        if (foundRoot != null) {
+                            break;
+                        }
+
+                        kind = SVNNodeKind.DIR;
+                        isSymlink = false;
+                        movedUpwards = false;
+                        localDirAbspath = localAbspath;
+                        buildRelPath = "";
+
+                        continue;
+                    }
+                }
+
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_WORKING_COPY, "''{0}'' is not a working copy", originalAbspath);
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
 
-            moved_upwards = true;
+            localAbspath = SVNFileUtil.getParentFile(localAbspath);
+            movedUpwards = true;
 
-            /*
-             * An obstruction is no longer possible.
-             *
-             * Example: we were given "/some/file" and "file" turned out to be a
-             * directory. We did not find an SDB at "/some/file/.svn/wc.db", so
-             * we are now going to look at "/some/.svn/wc.db". That SDB will
-             * contain the correct information for "file".
-             *
-             * ### obstruction is only possible with per-dir wc.db databases.
-             */
-            obstruction_possible = false;
-
-            /* Is the parent directory recorded in our hash? */
-            found_pdh = dirData.get(localAbsPath.getAbsolutePath());
-            if (found_pdh != null) {
-                if (found_pdh.getWCRoot() != null) {
-                    break;
-                }
-                found_pdh = null;
+            foundRoot = dirData.get(localAbspath.getAbsolutePath());
+            if (foundRoot != null) {
+                break;
             }
         }
 
-        if (found_pdh != null) {
-            /*
-             * We found a PDH with data in it. We can now construct the child
-             * from this, rather than continuing to scan upwards.
-             */
-
-            /* The subdirectory uses the same WCROOT as the parent dir. */
-            info.wcDbDir.setWCRoot(found_pdh.getWCRoot());
+        if (foundRoot != null) {
+            info.wcDbDir = foundRoot;
         } else if (wc_format == 0) {
-            /* We finally found the database. Construct the PDH record. */
-
             long wcId = UNKNOWN_WC_ID;
 
             try {
                 wcId = fetchWCId(sDb);
             } catch (SVNException e) {
                 if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_CORRUPT) {
-                    SVNErrorMessage err = e.getErrorMessage().wrap("Missing a row in WCROOT for '{0}'.", original_abspath);
+                    SVNErrorMessage err = e.getErrorMessage().wrap("Missing a row in WCROOT for '{0}'.", originalAbspath);
                     SVNErrorManager.error(err, SVNLogType.WC);
                 }
             }
 
-            /*
-             * WCROOT.local_abspath may be NULL when the database is stored
-             * inside the wcroot, but we know the abspath is this directory (ie.
-             * where we found it).
-             */
-            info.wcDbDir.setWCRoot(new SVNWCDbRoot(this, localAbsPath, sDb, wcId, FORMAT_FROM_SDB, autoUpgrade, enforceEmptyWQ));
+            info.wcDbDir = new SVNWCDbDir(localAbspath);
+            info.wcDbDir.setWCRoot(new SVNWCDbRoot(this, localAbspath, sDb, wcId, FORMAT_FROM_SDB, autoUpgrade, enforceEmptyWQ));
 
         } else {
-            /* We found a wc-1 working copy directory. */
-            info.wcDbDir.setWCRoot(new SVNWCDbRoot(this, localAbsPath, null, UNKNOWN_WC_ID, wc_format, autoUpgrade, enforceEmptyWQ));
+            info.wcDbDir = new SVNWCDbDir(localAbspath);
+            info.wcDbDir.setWCRoot(new SVNWCDbRoot(this, localAbspath, null, UNKNOWN_WC_ID, wc_format, autoUpgrade, enforceEmptyWQ));
 
-            /*
-             * Don't test for a directory obstructing a versioned file. The wc-1
-             * code can manage that itself.
-             */
-            obstruction_possible = false;
-
-            if (isDetectWCGeneration) {
-            	SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT);
-            	SVNErrorManager.error(err, SVNLogType.WC);
-            }
-
+//            if (isDetectWCGeneration) {
+//            	SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT);
+//            	SVNErrorManager.error(err, SVNLogType.WC);
+//            }
         }
 
         {
-            /*
-             * The subdirectory's relpath is easily computed relative to the
-             * wcroot that we just found.
-             */
-            File dirRelPath = info.wcDbDir.computeRelPath();
+            String dirRelPath = SVNPathUtil.getRelativePath(info.wcDbDir.getWCRoot().getAbsPath().getAbsolutePath(), localDirAbspath.getAbsolutePath());
 
-            /* And the result local_relpath may include a filename. */
             info.localRelPath = SVNFileUtil.createFilePath(dirRelPath, buildRelPath);
         }
 
-        /*
-         * Check to see if this (versioned) directory is obstructing what should
-         * be a file in the parent directory.
-         *
-         * ### obstruction is only possible with per-dir wc.db databases.
-         */
-        if (obstruction_possible) {
-            /* We should NOT have moved up a directory. */
-            assert (!moved_upwards);
+        if (isSymlink) {
 
-            /* Get/make a PDH for the parent. */
-            File parent_dir = SVNFileUtil.getParentFile(localAbsPath);
-            if (parent_dir == null) {
-                
-            }
-            SVNWCDbDir parent_pdh = dirData.get(parent_dir.getAbsolutePath());
-            if (parent_pdh == null || parent_pdh.getWCRoot() == null) {
-                boolean err = false;
-                try {
-                    sDb = openDb(parent_dir, SDB_FILE, sMode);
-                } catch (SVNException e) {
-                    err = true;
-                    if (!e.isEnoent()) {
-                        throw e;
-                    }
+            SVNWCDbStatus status;
+            boolean conflicted;
+            boolean retryIfDir = false;
+
+            try {
+                WCDbInfo wcDbInfo = readInfo(info.wcDbDir.getWCRoot(), info.localRelPath, InfoField.status, InfoField.conflicted);
+                status = wcDbInfo.status;
+                conflicted = wcDbInfo.conflicted;
+                retryIfDir = (status == SVNWCDbStatus.NotPresent || status == SVNWCDbStatus.ServerExcluded || status == SVNWCDbStatus.Excluded) && !conflicted;
+            } catch (SVNException e) {
+                if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND &&
+                        e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_UPGRADE_REQUIRED &&
+                        e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_WORKING_COPY) {
+                    throw e;
                 }
 
-                if (err) {
-                    /*
-                     * No parent, so we're at a wcroot apparently. An
-                     * obstruction is (therefore) not possible.
-                     */
-                    parent_pdh = null;
-                } else {
-                    /* ### construct this according to per-dir semantics. */
-                    if (parent_pdh == null) {
-                        parent_pdh = new SVNWCDbDir(parent_dir);
-                    } else {
-                        /* The PDH should have been built correctly (so far). */
-                        assert (parent_dir.equals(parent_pdh.getLocalAbsPath()));
-                    }
-                    /*
-                     * wcID = 1 ## # it is hack .
-                     */
-                    parent_pdh.setWCRoot(new SVNWCDbRoot(this, parent_pdh.getLocalAbsPath(), sDb, 1, FORMAT_FROM_SDB, autoUpgrade, enforceEmptyWQ));
+                retryIfDir = true;
+            }
 
-                    dirData.put(parent_pdh.getLocalAbsPath().getAbsolutePath(), parent_pdh);
+            if (retryIfDir) {
+                SVNNodeKind resolvedKind = SVNFileType.getNodeKind(SVNFileType.getType(SVNFileUtil.resolveSymlink(localAbspath)));
+                if (resolvedKind == SVNNodeKind.DIR) {
+                    localAbspath = originalAbspath;
 
-                    info.wcDbDir.setParent(parent_pdh);
+                    //goto emulation using do{}while() + continue
+                    kind = SVNNodeKind.DIR;
+                    isSymlink = false;
+                    movedUpwards = false;
+                    localDirAbspath = localAbspath;
+                    buildRelPath = "";
+
+                    continue;
                 }
             }
 
         }
+    } while (false);
+        SVNWCDbDir wcDbDir = new SVNWCDbDir(localDirAbspath);
+        wcDbDir.setWCRoot(info.wcDbDir.getWCRoot());
+        dirData.put(wcDbDir.getLocalAbsPath().getAbsolutePath(), wcDbDir);
 
-        /* The PDH is complete. Stash it into DB. */
-        dirData.put(info.wcDbDir.getLocalAbsPath().getAbsolutePath(), info.wcDbDir);
-
-        /* Did we traverse up to parent directories? */
-        if (!moved_upwards) {
-            /*
-             * We did NOT move to a parent of the original requested directory.
-             * We've constructed and filled in a PDH for the request, so we are
-             * done.
-             */
+        if (!movedUpwards) {
             return info;
         }
 
-        /*
-         * The PDH that we just built was for the LOCAL_ABSPATH originally
-         * passed into this function. We stepped *at least* one directory above
-         * that. We should now create PDH records for each parent directory that
-         * does not (yet) have one.
-         */
-
-        child_pdh = info.wcDbDir;
+        File scanAbspath = localDirAbspath;
 
         do {
-            File parent_dir = SVNFileUtil.getParentFile(child_pdh.getLocalAbsPath());
-            SVNWCDbDir parent_pdh;
+            File parentDir = SVNFileUtil.getParentFile(scanAbspath);
+            SVNWCDbDir parentRoot;
 
-            parent_pdh = dirData.get(parent_dir.getAbsolutePath());
+            parentRoot = dirData.get(parentDir.getAbsolutePath());
 
-            if (parent_pdh == null) {
-                parent_pdh = new SVNWCDbDir(parent_dir);
-
-                /* All the PDHs have the same wcroot. */
-                parent_pdh.setWCRoot(info.wcDbDir.getWCRoot());
-
-                dirData.put(parent_pdh.getLocalAbsPath().getAbsolutePath(), parent_pdh);
-
-            } else if (parent_pdh.getWCRoot() == null) {
-                parent_pdh.setWCRoot(info.wcDbDir.getWCRoot());
+            if (parentRoot == null) {
+                SVNWCDbDir parentWcDbDir = new SVNWCDbDir(parentDir);
+                parentWcDbDir.setWCRoot(info.wcDbDir.getWCRoot());
+                dirData.put(parentWcDbDir.getLocalAbsPath().getAbsolutePath(), parentWcDbDir);
             }
 
-            /*
-             * Point the child PDH at this (new) parent PDH. This will allow for
-             * easy traversals without path munging.
-             */
-            child_pdh.setParent(parent_pdh);
-            child_pdh = parent_pdh;
-
-            /*
-             * Loop if we haven't reached the PDH we found, or the abspath where
-             * we terminated the search (when we found wc.db). Note that if we
-             * never located a PDH in our ancestry, then FOUND_PDH will be NULL
-             * and that portion of the test will always be TRUE.
-             */
-        } while (child_pdh != found_pdh && !localAbsPath.equals(child_pdh.getLocalAbsPath()));
+            scanAbspath = parentDir;
+        } while (!localAbspath.equals(scanAbspath));
 
         return info;
     }
