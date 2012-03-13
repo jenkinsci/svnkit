@@ -155,6 +155,7 @@ import org.tmatesoft.svn.core.SVNException;
  *             
  * @author TMate Software Ltd.
  * @version 1.7
+ * @see SvnCopySource
  */
 
 public class SvnCopy extends SvnOperation<Void> {

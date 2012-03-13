@@ -38,11 +38,6 @@ import org.tmatesoft.svn.util.SVNLogType;
  * nothing underneath it.
  * 
  * <p/>
- * If <code>depthIsSticky</code> is set and <code>depth</code> is not
- * {@link SVNDepth#UNKNOWN}, then in addition to switching <code>path</code>
- * , also sets its sticky ambient depth value to <code>depth</code>.
- * 
- * <p/>
  * If externals are {@link #isIgnoreExternals() ignored}, doesn't process
  * externals definitions as part of this operation.
  * 
@@ -87,9 +82,11 @@ public class SvnSwitch extends AbstractSvnUpdate<Long> {
     }
 
     /**
-     * Gets whether or not the requested depth should be written to the working copy.
-     * 
-     * @return <code>true</code> if the requested depth should be written to the working copy, otherwise <code>false</code>
+     * Returns whether depth is sticky.
+     * If <code>depthIsSticky</code> is set the operation will use <code>depth</code> as status scope, otherwise 
+     * {@link SVNDepth#UNKNOWN} will be used.
+	 * 
+     * @return <code>true</code> if the depth is sticky, otherwise <code>false</code>
      */
     public boolean isDepthIsSticky() {
         return depthIsSticky;
@@ -115,9 +112,11 @@ public class SvnSwitch extends AbstractSvnUpdate<Long> {
     }
 
     /**
-     * Sets whether or not the requested depth should be written to the working copy.
-     *
-     * @param depthIsSticky <code>true</code> if the requested depth should be written to the working copy, otherwise <code>false</code>
+     * Sets whether depth is sticky.
+     * If <code>depthIsSticky</code> is set the operation will use <code>depth</code> as status scope, otherwise 
+     * {@link SVNDepth#UNKNOWN} will be used.
+	 * 
+     * @param depthIsSticky <code>true</code> if the depth is sticky, otherwise <code>false</code>
      */
     public void setDepthIsSticky(boolean depthIsSticky) {
         this.depthIsSticky = depthIsSticky;

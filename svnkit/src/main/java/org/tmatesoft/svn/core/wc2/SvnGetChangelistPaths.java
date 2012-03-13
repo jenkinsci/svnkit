@@ -7,9 +7,7 @@ package org.tmatesoft.svn.core.wc2;
  * <p/>
  * Note: this method does not require repository access.
  * 
- * {@link #run()} method returns first path belonging to changelist.
- * Use <code>receivedObjects</code> or {@link ISvnObjectReceiver} to access
- * all paths. 
+ * {@link #run()} method returns a list of <code>String</code> representing all paths belonging to changelist.
  * 
  * @author TMate Software Ltd.
  * @version 1.7
