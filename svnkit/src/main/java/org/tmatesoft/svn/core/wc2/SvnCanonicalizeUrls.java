@@ -25,4 +25,11 @@ public class SvnCanonicalizeUrls extends SvnOperation<Void> {
         this.ignoreExternals = ignoreExternals;
     }
 
+
+    @Override
+    protected void initDefaults() {
+        super.initDefaults();
+        setOmitDefaultPort(true);
+    }
+
 }

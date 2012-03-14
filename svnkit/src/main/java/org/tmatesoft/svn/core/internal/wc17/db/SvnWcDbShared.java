@@ -658,7 +658,7 @@ public class SvnWcDbShared {
             while(!cursor.eof()) {
                 final String oldUrl = cursor.getString(SVNWCDbSchema.REPOSITORY__Fields.root.toString());
                 final String newUrl = SVNUpdateClient16.canonicalizeURL(SVNURL.parseURIEncoded(oldUrl), omitDefaultPort).toString();
-                if (!oldUrl.equals(newUrl)) {
+                if (newUrl != null && !oldUrl.equals(newUrl)) {
                     values.put(SVNWCDbSchema.REPOSITORY__Fields.root.toString(), newUrl);                
                     cursor.updateByFieldNames(values);
                 }
