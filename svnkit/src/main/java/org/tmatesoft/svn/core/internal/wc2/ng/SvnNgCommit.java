@@ -213,17 +213,20 @@ public class SvnNgCommit extends SvnNgOperationRunner<SVNCommitInfo, SvnCommit> 
         Map<String, SVNPropertyValue> wcPropChanges = item.getIncomingProperties();
         SVNProperties wcProps = null;
         if (wcPropChanges != null) {
-            wcProps = getWcContext().getDb().getBaseDavCache(item.getPath());
+            try {
+                wcProps = getWcContext().getDb().getBaseDavCache(item.getPath());
+            } catch (SVNException e) {
+                // missing properties.
+            }
             if (wcProps == null) {
-                wcProps = SVNProperties.wrap(wcPropChanges);
-            } else {
-                for (String name : wcPropChanges.keySet()) {
-                    SVNPropertyValue pv = wcPropChanges.get(name);
-                    if (pv == null) {
-                        wcProps.remove(name);
-                    } else {
-                        wcProps.put(name, pv);
-                    }
+                wcProps = new SVNProperties();
+            } 
+            for (String name : wcPropChanges.keySet()) {
+                SVNPropertyValue pv = wcPropChanges.get(name);
+                if (pv == null) {
+                    wcProps.remove(name);
+                } else {
+                    wcProps.put(name, pv);
                 }
             }
         }
