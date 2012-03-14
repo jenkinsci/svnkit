@@ -18,9 +18,9 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
-import org.tmatesoft.svn.core.internal.wc16.SVNUpdateClient16;
 import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.wc2.SvnCanonicalizeUrls;
 import org.tmatesoft.svn.core.wc2.SvnCheckout;
 import org.tmatesoft.svn.core.wc2.SvnExport;
 import org.tmatesoft.svn.core.wc2.SvnRelocate;
@@ -1096,8 +1096,12 @@ public class SVNUpdateClient extends SVNBasicClient {
      * @throws SVNException
      */
     public void doCanonicalizeURLs(File dst, boolean omitDefaultPort, boolean recursive) throws SVNException {
-        SVNUpdateClient16 oldClient = new SVNUpdateClient16(getOperationsFactory().getAuthenticationManager(), getOptions());
-        oldClient.doCanonicalizeURLs(dst, omitDefaultPort, recursive);
+        SvnCanonicalizeUrls cu = getOperationsFactory().createCanonicalizeUrls();
+        cu.setSingleTarget(SvnTarget.fromFile(dst));
+        cu.setDepth(recursive ? SVNDepth.INFINITY : SVNDepth.IMMEDIATES);
+        cu.setOmitDefaultPort(omitDefaultPort);
+        cu.setIgnoreExternals(isIgnoreExternals());
+        cu.run();
     }
 
     /**

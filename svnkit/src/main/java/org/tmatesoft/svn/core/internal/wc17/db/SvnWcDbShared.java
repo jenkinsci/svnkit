@@ -19,19 +19,27 @@ import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.reset
 
 import java.io.File;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
+import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
+import org.tmatesoft.sqljet.core.table.ISqlJetTable;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb.Mode;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc16.SVNUpdateClient16;
+import org.tmatesoft.svn.core.internal.wc17.SVNExternalsStore;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbLock;
@@ -50,6 +58,8 @@ import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.LOCK__Fie
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODES__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSelectDeletionInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
+import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
 
 public class SvnWcDbShared {
@@ -636,5 +646,52 @@ public class SvnWcDbShared {
         }
     
         return info;
+    }
+    
+    public static void canonicalizeURLs(SVNWCDbRoot wcRoot, boolean updateExternalProperties, final SVNExternalsStore store, final boolean omitDefaultPort) throws SVNException {        
+        final Map<String, Object> values = new HashMap<String, Object>();
+        
+        try {
+            begingWriteTransaction(wcRoot);
+            final ISqlJetTable repositoryTable = wcRoot.getSDb().getDb().getTable(SVNWCDbSchema.REPOSITORY.toString());
+            ISqlJetCursor cursor = repositoryTable.open();
+            while(!cursor.eof()) {
+                final String oldUrl = cursor.getString(SVNWCDbSchema.REPOSITORY__Fields.root.toString());
+                final String newUrl = SVNUpdateClient16.canonicalizeURL(SVNURL.parseURIEncoded(oldUrl), omitDefaultPort).toString();
+                if (!oldUrl.equals(newUrl)) {
+                    values.put(SVNWCDbSchema.REPOSITORY__Fields.root.toString(), newUrl);                
+                    cursor.updateByFieldNames(values);
+                }
+                cursor.next();
+            }
+            cursor.close();
+        } catch (SqlJetException e) {
+            rollbackTransaction(wcRoot);
+        } finally {
+            commitTransaction(wcRoot);
+        }
+        
+        if (updateExternalProperties) {
+            final Map<File, SVNProperties> newPropertyValues = new HashMap<File, SVNProperties>(); 
+    
+            SvnWcDbProperties.readPropertiesRecursively(wcRoot, new File(""), SVNDepth.INFINITY, false, false, null, new ISvnObjectReceiver<SVNProperties>() {
+                public void receive(SvnTarget target, SVNProperties object) throws SVNException {
+                    String externalsPropertyValue = object.getStringValue(SVNProperty.EXTERNALS);
+                    if (externalsPropertyValue != null) {
+                        String newValue = SVNUpdateClient16.canonicalizeExtenrals(externalsPropertyValue, omitDefaultPort);
+                        if (!externalsPropertyValue.equals(newValue)) {
+                            object.put(SVNProperty.EXTERNALS, newValue);
+                            newPropertyValues.put(target.getFile(), object);
+                        }
+                        if (store != null) {
+                            store.addExternal(target.getFile(), externalsPropertyValue, newValue);
+                        }
+                    }
+                }
+            });
+            for (File path : newPropertyValues.keySet()) {
+                wcRoot.getDb().opSetProps(path, newPropertyValues.get(path), null, false, null);
+            }
+        }
     }
 }

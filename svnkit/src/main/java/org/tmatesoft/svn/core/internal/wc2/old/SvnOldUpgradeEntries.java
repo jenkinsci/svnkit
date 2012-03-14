@@ -132,8 +132,9 @@ public class SvnOldUpgradeEntries {
 		DbActualNode actualNode = null;
 		
 		String parentRelPath = null;
-		if (localRelPath != null)
-			parentRelPath = SVNFileUtil.getFilePath(SVNFileUtil.getFileDir(localRelPath)); 
+		if (localRelPath != null) {
+			parentRelPath = SVNFileUtil.getFilePath(SVNFileUtil.getFileDir(localRelPath));
+		}
 		
 		/* This is how it should work, it doesn't work like this yet because we need proper op_depth to layer the working nodes.
 

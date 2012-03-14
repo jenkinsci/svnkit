@@ -77,6 +77,7 @@ import org.tmatesoft.svn.core.internal.wc2.admin.SvnRepositorySynchronizeImpl;
 import org.tmatesoft.svn.core.internal.wc2.admin.SvnRepositoryUpgradeImpl;
 import org.tmatesoft.svn.core.internal.wc2.admin.SvnRepositoryVerifyImpl;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgAdd;
+import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgCanonicalizeUrls;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgCat;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgCheckout;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgCleanup;
@@ -111,6 +112,7 @@ import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgWcToReposCopy;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgWcToWcCopy;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldAdd;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldAnnotate;
+import org.tmatesoft.svn.core.internal.wc2.old.SvnOldCanonicalizeUrls;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldCat;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldCheckout;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldCleanup;
@@ -354,6 +356,9 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
 
         registerOperationRunner(SvnSuggestMergeSources.class, new SvnNgSuggestMergeSources());
         registerOperationRunner(SvnSuggestMergeSources.class, new SvnOldSuggestMergeSources());
+
+        registerOperationRunner(SvnCanonicalizeUrls.class, new SvnNgCanonicalizeUrls());
+        registerOperationRunner(SvnCanonicalizeUrls.class, new SvnOldCanonicalizeUrls());
         
         registerOperationRunner(SvnRepositoryDump.class, new SvnRepositoryDumpImpl());
         registerOperationRunner(SvnRepositoryCreate.class, new SvnRepositoryCreateImpl());
@@ -630,6 +635,10 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
     
     public SvnList createList() {
         return new SvnList(this);
+    }
+    
+    public SvnCanonicalizeUrls createCanonicalizeUrls() {
+        return new SvnCanonicalizeUrls(this);
     }
     
     public SvnRepositoryDump createRepositoryDump() {

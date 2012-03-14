@@ -4284,7 +4284,7 @@ public class SVNWCContext {
         }
         return "";
     }
-
+    
     public File getNodeReposRelPath(File localAbsPath) throws SVNException {
         WCDbInfo readInfo = getDb().readInfo(localAbsPath, InfoField.status, InfoField.reposRelPath, InfoField.haveBase);
         SVNWCDbStatus status = readInfo.status;
@@ -4425,5 +4425,11 @@ public class SVNWCContext {
 
     public void ensureNoUnfinishedTransactions() throws SVNException {
         ((SVNWCDb) getDb()).ensureNoUnfinishedTransactions();
+    }
+    
+    public void canonicalizeURLs(File path, SVNExternalsStore externalsStore, boolean omitDefaultPort) throws SVNException {
+        DirParsedInfo parseDir = ((SVNWCDb) getDb()).parseDir(path, Mode.ReadWrite);
+        SvnWcDbShared.canonicalizeURLs(parseDir.wcDbDir.getWCRoot(), true, externalsStore, omitDefaultPort);
+        wqRun(path);
     }
 }

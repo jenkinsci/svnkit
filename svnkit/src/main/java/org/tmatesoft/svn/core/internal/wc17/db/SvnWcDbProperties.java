@@ -29,7 +29,6 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetInsertStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryUtil;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNExternal;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -274,7 +273,7 @@ public class SvnWcDbProperties extends SvnWcDbShared {
     	}
     }
     
-    public static void upgradeApplyDavCache(SVNWCDbRoot root, File dirRelPath, SVNHashMap cacheValues) throws SVNException {
+    public static void upgradeApplyDavCache(SVNWCDbRoot root, File dirRelPath, Map<String, SVNProperties> cacheValues) throws SVNException {
     	SVNSqlJetStatement selectRoot = root.getSDb().getStatement(SVNWCDbStatements.SELECT_WCROOT_NULL);
     	long wcId = 0;
     	try {

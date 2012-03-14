@@ -1593,7 +1593,7 @@ public class SVNUpdateClient16 extends SVNBasicDelegate {
         }
     }
 
-    private static String canonicalizeExtenrals(String externals, boolean omitDefaultPort) throws SVNException {
+    public static String canonicalizeExtenrals(String externals, boolean omitDefaultPort) throws SVNException {
         if (externals == null) {
             return null;
         }
@@ -1647,7 +1647,7 @@ public class SVNUpdateClient16 extends SVNBasicDelegate {
         return updated;
     }
 
-    private static SVNURL canonicalizeURL(SVNURL url, boolean omitDefaultPort) throws SVNException {
+    public static SVNURL canonicalizeURL(SVNURL url, boolean omitDefaultPort) throws SVNException {
         if (url == null || url.getPort() <= 0) {
             return null;
         }
