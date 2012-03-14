@@ -572,7 +572,7 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * @param resultthe
      *            target {@link java.io.OutputStream} where the differences will
      *            be written to
-     * @throws SVNExceptionin
+     * @throws SVNException in
      *             the following cases:
      *             <ul>
      *             <li/>exception with {@link SVNErrorCode#CLIENT_BAD_REVISION}
@@ -720,7 +720,7 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      *            be written to
      * @param changeListscollection
      *            with changelist names
-     * @throws SVNExceptionin
+     * @throws SVNException in
      *             the following cases:
      *             <ul>
      *             <li/>exception with {@link SVNErrorCode#CLIENT_BAD_REVISION}
@@ -870,7 +870,7 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      *            be written to
      * @param changeListscollection
      *            with changelist names
-     * @throws SVNExceptionin
+     * @throws SVNException in
      *             the following cases:
      *             <ul>
      *             <li/>exception with {@link SVNErrorCode#CLIENT_BAD_REVISION}
@@ -1041,7 +1041,7 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      *            be written to
      * @param changeListscollection
      *            with changelist names
-     * @throws SVNExceptionin
+     * @throws SVNException in
      *             the following cases:
      *             <ul>
      *             <li/>exception with {@link SVNErrorCode#CLIENT_BAD_REVISION}
@@ -1192,7 +1192,7 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      *            will be noticed while calculating differences, otherwise not
      * @param handlera
      *            diff status handler
-     * @throws SVNExceptionin
+     * @throws SVNException in
      *             the following cases:
      *             <ul>
      *             <li/>exception with {@link SVNErrorCode#CLIENT_BAD_REVISION}
@@ -1282,7 +1282,7 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      *            will be noticed while calculating differences, otherwise not
      * @param handlera
      *            diff status handler
-     * @throws SVNExceptionin
+     * @throws SVNException in
      *             the following cases:
      *             <ul>
      *             <li/>exception with {@link SVNErrorCode#CLIENT_BAD_REVISION}
@@ -1371,7 +1371,7 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      *            will be noticed while calculating differences, otherwise not
      * @param handlera
      *            diff status handler
-     * @throws SVNExceptionin
+     * @throws SVNException in
      *             the following cases:
      *             <ul>
      *             <li/>exception with {@link SVNErrorCode#CLIENT_BAD_REVISION}
@@ -1660,7 +1660,7 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * @param recordOnlyif
      *            <span class="javakeyword">true</span>, records only the rusult
      *            of merge - mergeinfo data
-     * @throws SVNExceptionin
+     * @throws SVNException in
      *             the following cases:
      *             <ul>
      *             <li/>exception with {@link SVNErrorCode#CLIENT_BAD_REVISION}
@@ -1818,7 +1818,7 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * @param recordOnlyif
      *            <span class="javakeyword">true</span>, records only the rusult
      *            of merge - mergeinfo data
-     * @throws SVNExceptionin
+     * @throws SVNException in
      *             the following cases:
      *             <ul>
      *             <li/>exception with {@link SVNErrorCode#CLIENT_BAD_REVISION}
@@ -1969,7 +1969,7 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * @param recordOnlyif
      *            <span class="javakeyword">true</span>, records only the rusult
      *            of merge - mergeinfo data
-     * @throws SVNExceptionin
+     * @throws SVNException in
      *             the following cases:
      *             <ul>
      *             <li/>exception with {@link SVNErrorCode#CLIENT_BAD_REVISION}
@@ -2122,7 +2122,7 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * @param recordOnlyif
      *            <span class="javakeyword">true</span>, records only the rusult
      *            of merge - mergeinfo data
-     * @throws SVNExceptionin
+     * @throws SVNException in
      *             the following cases:
      *             <ul>
      *             <li/>exception with {@link SVNErrorCode#CLIENT_BAD_REVISION}
@@ -2228,7 +2228,7 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      *            operation to run (to find out if a file can be merged
      *            successfully)
      * @param recordOnly
-     * @throws SVNExceptionin
+     * @throws SVNException in
      *             the following cases:
      *             <ul>
      *             <li/>exception with {@link SVNErrorCode#CLIENT_BAD_REVISION}-
@@ -2341,7 +2341,7 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      *            operation to run (to find out if a file can be merged
      *            successfully)
      * @param recordOnly
-     * @throws SVNExceptionin
+     * @throws SVNException in
      *             the following cases:
      *             <ul>
      *             <li/>exception with {@link SVNErrorCode#CLIENT_BAD_REVISION}-
@@ -2474,7 +2474,7 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      *            of revision properties to retrieve
      * @param handlerthe
      *            caller's log entry handler
-     * @throws SVNExceptionin
+     * @throws SVNException in
      *             the following cases:
      *             <ul>
      *             <li/>exception with {@link SVNErrorCode#UNSUPPORTED_FEATURE}
@@ -2516,7 +2516,7 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      *            of revision properties to retrieve
      * @param handlerthe
      *            caller's log entry handler
-     * @throws SVNExceptionin
+     * @throws SVNException in
      *             the following cases:
      *             <ul>
      *             <li/>exception with {@link SVNErrorCode#UNSUPPORTED_FEATURE}
@@ -2558,7 +2558,7 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      *            of revision properties to retrieve
      * @param handlerthe
      *            caller's log entry handler
-     * @throws SVNExceptionin
+     * @throws SVNException in
      *             the following cases:
      *             <ul>
      *             <li/>exception with {@link SVNErrorCode#UNSUPPORTED_FEATURE}
@@ -2600,7 +2600,7 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      *            of revision properties to retrieve
      * @param handlerthe
      *            caller's log entry handler
-     * @throws SVNExceptionin
+     * @throws SVNException in
      *             the following cases:
      *             <ul>
      *             <li/>exception with {@link SVNErrorCode#UNSUPPORTED_FEATURE}
@@ -2642,7 +2642,7 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      *            of revision properties to retrieve
      * @param handlerthe
      *            caller's log entry handler
-     * @throws SVNExceptionin
+     * @throws SVNException in
      *             the following cases:
      *             <ul>
      *             <li/>exception with {@link SVNErrorCode#UNSUPPORTED_FEATURE}
@@ -2684,7 +2684,7 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      *            of revision properties to retrieve
      * @param handlerthe
      *            caller's log entry handler
-     * @throws SVNExceptionin
+     * @throws SVNException in
      *             the following cases:
      *             <ul>
      *             <li/>exception with {@link SVNErrorCode#UNSUPPORTED_FEATURE}
@@ -2726,7 +2726,7 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      *            of revision properties to retrieve
      * @param handlerthe
      *            caller's log entry handler
-     * @throws SVNExceptionin
+     * @throws SVNException in
      *             the following cases:
      *             <ul>
      *             <li/>exception with {@link SVNErrorCode#UNSUPPORTED_FEATURE}
@@ -2768,7 +2768,7 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      *            of revision properties to retrieve
      * @param handlerthe
      *            caller's log entry handler
-     * @throws SVNExceptionin
+     * @throws SVNException in
      *             the following cases:
      *             <ul>
      *             <li/>exception with {@link SVNErrorCode#UNSUPPORTED_FEATURE}
@@ -2801,7 +2801,7 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * @param pegRevisiona
      *            revision in which <code>path</code> is first looked up
      * @return mergeinfo for <code>path</code>
-     * @throws SVNExceptionin
+     * @throws SVNException in
      *             the following cases:
      *             <ul>
      *             <li/>exception with {@link SVNErrorCode#UNSUPPORTED_FEATURE}
@@ -2854,7 +2854,7 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * @param pegRevisiona
      *            revision in which <code>url</code> is first looked up
      * @return mergeinfo for <code>url</code>
-     * @throws SVNExceptionin
+     * @throws SVNException in
      *             the following cases:
      *             <ul>
      *             <li/>exception with {@link SVNErrorCode#UNSUPPORTED_FEATURE}

@@ -6,8 +6,55 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.wc.SVNRevisionRange;
 import org.tmatesoft.svn.util.SVNLogType;
 
+/**
+ * Creates a <code>SVNLogEntry</code> object with the revisions merged from
+ * <code>mergeSource</code> (as of <code>mergeSource</code>'s <code>pegRevision</code>) into
+ * <code>target</code> (as of <code>target</code>'s <code>pegRevision</code>).
+ * <code>Target</code> can be either URL or working copy path.
+ * 
+ * <p/>
+ * If <code>discoverChangedPaths</code> is set, then the changed paths
+ * <code>Map</code> argument will be passed to a constructor of
+ * {@link SVNLogEntry} on each invocation of <code>handler</code>.
+ * 
+ * <p/>
+ * If
+ * <code>revisionProperties</code> is <code>null</code>, retrieves all revision properties; 
+ * else, retrieves only the revprops named in the array (i.e. retrieves none if the array is empty).
+ * 
+ * Note: this routine requires repository access.
+ * 
+ * @param urlrepository
+ *            url (merge target)
+ * @param pegRevisiona
+ *            revision in which <code>url</code> is first looked up
+ * @param mergeSrcURLmerge
+ *            source repository url
+ * @param srcPegRevisiona
+ *            revision in which <code>mergeSrcURL</code> is first looked up
+ * @param discoverChangedPaths
+ *            <span class="javakeyword">true</span> to report of all changed
+ *            paths for every revision being processed (those paths will be
+ *            available by calling
+ *            {@link org.tmatesoft.svn.core.SVNLogEntry#getChangedPaths()})
+ * @param revisionPropertiesnames
+ *            of revision properties to retrieve
+ * @param handlerthe
+ *            caller's log entry handler
+ * {@link #run()} throws {@link SVNException} in the following cases:
+ *             <ul>
+ *             <li/>exception with {@link SVNErrorCode#UNSUPPORTED_FEATURE}
+ *             error code - if the server doesn't support retrieval of
+ *             mergeinfo
+ *             </ul>
+ *             
+ * @author TMate Software Ltd.
+ * @version 1.7
+ * @see SVNLogEntry
+ */
 public class SvnLogMergeInfo extends SvnReceivingOperation<SVNLogEntry> {
     
     private boolean findMerged;
@@ -20,34 +67,78 @@ public class SvnLogMergeInfo extends SvnReceivingOperation<SVNLogEntry> {
         super(factory);
     }
 
+    /**
+     * Returns whether to report merged revisions or eligible for merge revisions
+     * 
+     * @return <code>true</code> if should report merged revisions, <code>false</code> if should report eligible for merge
+     */
     public boolean isFindMerged() {
         return findMerged;
     }
 
+    /**
+     * Sets whether to report merged revisions or eligible for merge revisions
+     * 
+     * @param findMerged <code>true</code> if should report merged revisions, <code>false</code> if should report eligible for merge
+     */
     public void setFindMerged(boolean findMerged) {
         this.findMerged = findMerged;
     }
 
+    /**
+     * Returns merge source, can represent URL or working copy path.
+     * 
+     * @return merge source
+     */
     public SvnTarget getSource() {
         return source;
     }
 
+    /**
+     * Returns merge source, can represent URL or working copy path.
+     * 
+     * @return merge source
+     */
     public void setSource(SvnTarget source) {
         this.source = source;
     }
 
+    /**
+     * Returns whether to report of all changed paths for every revision being processed
+     * If <code>true</code> then the changed paths <code>Map</code> argument will be passed to a constructor of
+     * {@link SVNLogEntry}.
+     * 
+     * @return <code>true</code> if all changed paths for every revision being processed should be reported, otherwise <code>false</code>
+     */
     public boolean isDiscoverChangedPaths() {
         return discoverChangedPaths;
     }
 
+    /**
+     * Sets whether to report of all changed paths for every revision being processed
+     * If <code>true</code> then the changed paths <code>Map</code> argument will be passed to a constructor of
+     * {@link SVNLogEntry}.
+     * 
+     * @param discoverChangedPaths <code>true</code> if all changed paths for every revision being processed should be reported, otherwise <code>false</code>
+     */
     public void setDiscoverChangedPaths(boolean discoverChangedPaths) {
         this.discoverChangedPaths = discoverChangedPaths;
     }
 
+    /**
+     * Returns all revision ranges for those log should be reported.
+     * 
+     * @return collection of {@link SVNRevisionRange} objects
+     */
     public String[] getRevisionProperties() {
         return revisionProperties;
     }
 
+    /**
+     * Sets all revision ranges for those log should be reported.
+     * 
+     * @param revisionProperties collection of {@link SVNRevisionRange} objects
+     */
     public void setRevisionProperties(String[] revisionProperties) {
         this.revisionProperties = revisionProperties;
     }
