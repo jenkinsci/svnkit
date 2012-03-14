@@ -1,8 +1,8 @@
 group = 'org.tmatesoft.svnkit'
-version = '1.7.0'
+version = '1.7.0-beta4'
 release = false
 target = '1.5'
-compatibleSvnVersion = '1.7.2'
+compatibleSvnVersion = '1.7.4'
 
 buildscript {
     apply from: 'build.defaults.gradle'
