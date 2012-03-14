@@ -2,6 +2,7 @@ package org.tmatesoft.svn.core.internal.wc2.ng;
 
 import java.io.File;
 import java.util.Set;
+import java.util.logging.Level;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -17,6 +18,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc2.SvnCleanup;
+import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 public class SvnNgCleanup extends SvnNgOperationRunner<Void, SvnCleanup> {
@@ -90,10 +92,12 @@ public class SvnNgCleanup extends SvnNgOperationRunner<Void, SvnCleanup> {
     			) {
     		return;
     	}
-    	if (info.kind == ISVNWCDb.SVNWCDbKind.File
-    			|| info.kind == ISVNWCDb.SVNWCDbKind.Symlink) {
-    		//boolean modified = 
-    		wcContext.isTextModified(localAbsPath, false);
+    	if (info.kind == ISVNWCDb.SVNWCDbKind.File || info.kind == ISVNWCDb.SVNWCDbKind.Symlink) {
+    	    try {
+    	        wcContext.isTextModified(localAbsPath, false);
+    	    } catch (SVNException e) {
+    	        SVNDebugLog.getDefaultLog().log(SVNLogType.WC, e, Level.WARNING);
+    	    }
     	}
     	else if (info.kind == ISVNWCDb.SVNWCDbKind.Dir) {
     		Set<String> children = wcContext.getDb().readChildren(localAbsPath);
