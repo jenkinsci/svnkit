@@ -16,6 +16,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -207,9 +208,26 @@ public class SvnNgCommit extends SvnNgOperationRunner<SVNCommitInfo, SvnCommit> 
         return info;
     }
 
-    private void postProcessCommitItem(SvnCommittedQueue queue, SvnCommitItem item, boolean keepChangelists, boolean keepLocks, SvnChecksum sha1Checksum) {
+    private void postProcessCommitItem(SvnCommittedQueue queue, SvnCommitItem item, boolean keepChangelists, boolean keepLocks, SvnChecksum sha1Checksum) throws SVNException {
         boolean removeLock = !keepLocks && item.hasFlag(SvnCommitItem.LOCK);
-        queueCommitted(queue, item.getPath(), false, null /*item.getIncomingProperties()*/, removeLock, !keepChangelists, sha1Checksum);
+        Map<String, SVNPropertyValue> wcPropChanges = item.getIncomingProperties();
+        SVNProperties wcProps = null;
+        if (wcPropChanges != null) {
+            wcProps = getWcContext().getDb().getBaseDavCache(item.getPath());
+            if (wcProps == null) {
+                wcProps = SVNProperties.wrap(wcPropChanges);
+            } else {
+                for (String name : wcPropChanges.keySet()) {
+                    SVNPropertyValue pv = wcPropChanges.get(name);
+                    if (pv == null) {
+                        wcProps.remove(name);
+                    } else {
+                        wcProps.put(name, pv);
+                    }
+                }
+            }
+        }
+        queueCommitted(queue, item.getPath(), false, wcProps, removeLock, !keepChangelists, sha1Checksum);
     }
 
     public SVNNodeKind getUrlKind(SVNURL url, long revision) throws SVNException {
@@ -271,7 +289,8 @@ public class SvnNgCommit extends SvnNgOperationRunner<SVNCommitInfo, SvnCommit> 
         getWcContext().close();
     }
 
-    private void queueCommitted(SvnCommittedQueue queue, File localAbsPath, boolean recurse, SVNProperties wcPropChanges, boolean removeLock, boolean removeChangelist, 
+    private void queueCommitted(SvnCommittedQueue queue, File localAbsPath, boolean recurse, 
+            SVNProperties wcPropChanges, boolean removeLock, boolean removeChangelist, 
             SvnChecksum sha1Checksum) {
         
         SvnCommittedQueueItem cqi = new SvnCommittedQueueItem();

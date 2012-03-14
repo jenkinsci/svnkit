@@ -44,6 +44,7 @@ public class SvnCommitItem {
     
     private int flags;
     private Map<String, SVNPropertyValue> outgoingProperties;
+    private Map<String, SVNPropertyValue> incomingProperties;
     
     /**
      * Returns commit item's working copy path.
@@ -215,6 +216,19 @@ public class SvnCommitItem {
             } else {
                 outgoingProperties.remove(name);
             }
+        }
+    }
+
+    public Map<String, SVNPropertyValue> getIncomingProperties() {
+        return incomingProperties;
+    }
+
+    public void addIncomingProperty(String name, SVNPropertyValue value) {
+        if (incomingProperties == null) {
+            incomingProperties = new HashMap<String, SVNPropertyValue>();
+        }
+        if (name != null) {
+            incomingProperties.put(name, value);
         }
     }
 }
