@@ -1,8 +1,5 @@
 package org.tmatesoft.svn.core.wc2;
 
-import java.io.File;
-import java.util.Collection;
-
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
