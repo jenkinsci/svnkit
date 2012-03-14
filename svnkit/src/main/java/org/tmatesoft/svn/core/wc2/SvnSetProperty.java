@@ -6,6 +6,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
+import org.tmatesoft.svn.core.wc2.hooks.ISvnPropertyValueProvider;
 
 /**
  * Represents set property operation. 
@@ -106,6 +107,7 @@ public class SvnSetProperty extends SvnReceivingOperation<SVNPropertyData> {
     private boolean revisionProperty;
     private String propertyName;
     private SVNPropertyValue propertyValue;
+    private ISvnPropertyValueProvider propertyValueProvider;
 
     protected SvnSetProperty(SvnOperationFactory factory) {
         super(factory);
@@ -164,6 +166,24 @@ public class SvnSetProperty extends SvnReceivingOperation<SVNPropertyData> {
      */
     public void setPropertyValue(SVNPropertyValue propertyValue) {
         this.propertyValue = propertyValue;
+    }
+
+    /**
+     * Sets property value provider callback
+     * 
+     * @param propertyValueProvider callback that will be called to get property values to set
+     */
+    public void setPropertyValueProvider(ISvnPropertyValueProvider propertyValueProvider) {
+        this.propertyValueProvider = propertyValueProvider;
+    }
+    
+    /**
+     * Returns property value provider callback 
+     * 
+     * @return property value provider callback set on this operation
+     */
+    public ISvnPropertyValueProvider getPropertyValueProvider() {
+        return this.propertyValueProvider;
     }
 
     /**

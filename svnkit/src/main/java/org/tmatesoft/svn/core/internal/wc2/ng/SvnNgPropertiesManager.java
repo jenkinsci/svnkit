@@ -39,6 +39,7 @@ import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
+import org.tmatesoft.svn.core.wc2.hooks.ISvnPropertyValueProvider;
 import org.tmatesoft.svn.util.SVNLogType;
 
 public class SvnNgPropertiesManager {
@@ -93,13 +94,31 @@ public class SvnNgPropertiesManager {
 
     public static void setProperty(final SVNWCContext context, File path, final String propertyName, final SVNPropertyValue propertyValue, SVNDepth depth, final boolean skipChecks, 
             final ISVNEventHandler eventHandler, Collection<String> changelists) throws SVNException {
-        if (SVNProperty.isEntryProperty(propertyName)) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_PROP_KIND, "Property ''{0}'' is an entry property", propertyName);
-            SVNErrorManager.error(err, SVNLogType.WC);
-        } else if (SVNProperty.isWorkingCopyProperty(propertyName)) {
-            // TODO set DAV property
-            return;
-        } 
+        setProperty(context, path, propertyName, propertyValue, null, depth, skipChecks, eventHandler, changelists);
+    }
+
+    public static void setProperty(final SVNWCContext context, File path, final String propertyName, final SVNPropertyValue propertyValue, final ISvnPropertyValueProvider pvProvider, SVNDepth depth, final boolean skipChecks, 
+            final ISVNEventHandler eventHandler, Collection<String> changelists) throws SVNException {
+        if (propertyName != null) {
+            if (SVNProperty.isEntryProperty(propertyName)) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_PROP_KIND, "Property ''{0}'' is an entry property", propertyName);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            } else if (SVNProperty.isWorkingCopyProperty(propertyName)) {
+                SVNProperties wcProps = context.getDb().getBaseDavCache(path);
+                if (wcProps == null && propertyValue != null) {
+                    wcProps = new SVNProperties();
+                }
+                if (wcProps != null) {
+                    if (propertyValue != null) {
+                        wcProps.put(propertyName, propertyValue);
+                    } else {
+                        wcProps.remove(propertyName);
+                    }
+                }
+                context.getDb().setBaseDavCache(path, wcProps);
+                return;
+            }
+        }
         SVNNodeKind kind = context.readKind(path, true);
         File dirPath;
         if (kind == SVNNodeKind.DIR) {
@@ -112,12 +131,12 @@ public class SvnNgPropertiesManager {
             if (!context.matchesChangelist(path, changelists)) {
                 return;
             }
-            setProperty(context, path, kind, propertyName, propertyValue, skipChecks, eventHandler);
+            setProperty(context, path, kind, propertyName, propertyValue, pvProvider, skipChecks, eventHandler);
         } else {
             context.nodeWalkChildren(path, new SVNWCContext.ISVNWCNodeHandler() {
                 public void nodeFound(File localAbspath, SVNWCDbKind kind) throws SVNException {
                     try {
-                        setProperty(context, localAbspath, kind.toNodeKind(), propertyName, propertyValue, skipChecks, eventHandler);
+                        setProperty(context, localAbspath, kind.toNodeKind(), propertyName, propertyValue, pvProvider, skipChecks, eventHandler);
                     } catch (SVNException e) {
                         if (e.getErrorMessage().getErrorCode() == SVNErrorCode.ILLEGAL_TARGET ||
                                 e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_INVALID_SCHEDULE) {
@@ -130,8 +149,8 @@ public class SvnNgPropertiesManager {
         }
     }
 
-    private static void setProperty(final SVNWCContext context, final File path, SVNNodeKind kind, String propertyName, SVNPropertyValue value, boolean skipChecks,
-            ISVNEventHandler eventHandler) throws SVNException {
+    private static void setProperty(final SVNWCContext context, final File path, SVNNodeKind kind, String propertyName, SVNPropertyValue value, 
+            ISvnPropertyValueProvider pvProvider, boolean skipChecks, ISVNEventHandler eventHandler) throws SVNException {
         Structure<NodeInfo> nodeInfo = context.getDb().readInfo(path, NodeInfo.status);
         ISVNWCDb.SVNWCDbStatus status = nodeInfo.get(NodeInfo.status);
         if (status != SVNWCDbStatus.Normal && status != SVNWCDbStatus.Added && status != SVNWCDbStatus.Incomplete) {
@@ -141,7 +160,7 @@ public class SvnNgPropertiesManager {
             SVNErrorManager.error(err, SVNLogType.WC);
         }
         
-        if (value != null && SVNProperty.isSVNProperty(propertyName)) {
+        if (pvProvider == null && value != null && SVNProperty.isSVNProperty(propertyName)) {
             ISVNFileContentFetcher fetcher = new ISVNFileContentFetcher() {                
                 public SVNPropertyValue getProperty(String propertyName) throws SVNException {
                     return context.getPropertyValue(path, propertyName);
@@ -169,10 +188,9 @@ public class SvnNgPropertiesManager {
             value = pv;
         }
         SVNSkel workItems = null;
-        if (kind == SVNNodeKind.FILE && (SVNProperty.EXECUTABLE.equals(propertyName) || SVNProperty.NEEDS_LOCK.equals(propertyName))) {
+        if (pvProvider == null && kind == SVNNodeKind.FILE && (SVNProperty.EXECUTABLE.equals(propertyName) || SVNProperty.NEEDS_LOCK.equals(propertyName))) {
             workItems = context.wqBuildSyncFileFlags(path);
-        }
-        
+        }        
         
         SVNProperties properties = new SVNProperties(); 
         try {
@@ -180,6 +198,36 @@ public class SvnNgPropertiesManager {
         } catch (SVNException e) {
             SVNErrorMessage err = e.getErrorMessage().wrap("Failed to load current properties");
             SVNErrorManager.error(err, e, SVNLogType.WC);
+        }
+        if (pvProvider != null) {
+            
+            SVNPropertyValue oldKeywords = properties.getSVNPropertyValue(SVNProperty.KEYWORDS);
+            SVNPropertyValue oldEolStyle = properties.getSVNPropertyValue(SVNProperty.EOL_STYLE);
+            boolean wasExecutable = properties.containsName(SVNProperty.EXECUTABLE);
+            boolean wasNeedsLock = properties.containsName(SVNProperty.NEEDS_LOCK);
+            
+            properties = pvProvider.providePropertyValues(path, properties);
+            
+            if (properties == null) {
+                properties = new SVNProperties();
+            }
+            
+            SVNPropertyValue newKeywords = properties.getSVNPropertyValue(SVNProperty.KEYWORDS);
+            SVNPropertyValue newEolStyle = properties.getSVNPropertyValue(SVNProperty.EOL_STYLE);
+            boolean isExecutable = properties.containsName(SVNProperty.EXECUTABLE);
+            boolean isNeedsLock = properties.containsName(SVNProperty.NEEDS_LOCK);
+
+            if (isExecutable != wasExecutable || isNeedsLock != wasNeedsLock) {
+                workItems = context.wqBuildSyncFileFlags(path);
+            }
+            
+            boolean clearRecordedInfo = !equals(oldKeywords, newKeywords) || !equals(oldEolStyle, newEolStyle);
+            
+            context.getDb().opSetProps(path, properties, null, clearRecordedInfo, workItems);
+            if (workItems != null) {
+                context.wqRun(path);
+            }
+            return;
         }
 
         boolean clearRecordedInfo = false;
@@ -219,6 +267,13 @@ public class SvnNgPropertiesManager {
                     null, -1, action, action, null, null, 1, 1, null, propertyName);
             eventHandler.handleEvent(event, -1);
         }
+    }
+
+    private static boolean equals(SVNPropertyValue oldValue, SVNPropertyValue newValue) {
+        if (oldValue == null || newValue == null) {
+            return oldValue == newValue;
+        }
+        return oldValue.equals(newValue);
     }
 
     public static void checkPropertyName(String propertyName, SVNPropertyValue propertyValue) throws SVNException {

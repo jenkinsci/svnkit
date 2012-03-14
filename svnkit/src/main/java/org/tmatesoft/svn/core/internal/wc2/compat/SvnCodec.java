@@ -35,6 +35,7 @@ import org.tmatesoft.svn.core.wc.ISVNCommitParameters;
 import org.tmatesoft.svn.core.wc.ISVNDiffStatusHandler;
 import org.tmatesoft.svn.core.wc.ISVNExternalsHandler;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
+import org.tmatesoft.svn.core.wc.ISVNPropertyValueProvider;
 import org.tmatesoft.svn.core.wc.ISVNStatusFileProvider;
 import org.tmatesoft.svn.core.wc.SVNCommitItem;
 import org.tmatesoft.svn.core.wc.SVNCommitPacket;
@@ -74,6 +75,7 @@ import org.tmatesoft.svn.core.wc2.SvnWorkingCopyInfo;
 import org.tmatesoft.svn.core.wc2.hooks.ISvnCommitHandler;
 import org.tmatesoft.svn.core.wc2.hooks.ISvnExternalsHandler;
 import org.tmatesoft.svn.core.wc2.hooks.ISvnFileListHook;
+import org.tmatesoft.svn.core.wc2.hooks.ISvnPropertyValueProvider;
 
 public class SvnCodec {
     
@@ -956,6 +958,28 @@ public class SvnCodec {
                     return ISVNAddParameters.ADD_AS_IS;
                 }
                 return ISVNAddParameters.REPORT_ERROR;
+            }
+        };
+    }
+
+    public static ISvnPropertyValueProvider propertyValueProvider(final ISVNPropertyValueProvider propertyValueProvider) {
+        if (propertyValueProvider == null) {
+            return null;
+        }
+        return new ISvnPropertyValueProvider() {
+            public SVNProperties providePropertyValues(File path, SVNProperties properties) throws SVNException {
+                return propertyValueProvider.providePropertyValues(path, properties);
+            }
+        };
+    }
+
+    public static ISVNPropertyValueProvider propertyValueProvider(final ISvnPropertyValueProvider propertyValueProvider) {
+        if (propertyValueProvider == null) {
+            return null;
+        }
+        return new ISVNPropertyValueProvider() {
+            public SVNProperties providePropertyValues(File path, SVNProperties properties) throws SVNException {
+                return propertyValueProvider.providePropertyValues(path, properties);
             }
         };
     }

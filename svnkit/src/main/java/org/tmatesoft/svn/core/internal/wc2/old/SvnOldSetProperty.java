@@ -7,6 +7,7 @@ import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc16.SVNWCClient16;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
+import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc2.SvnSetProperty;
@@ -20,10 +21,15 @@ public class SvnOldSetProperty extends SvnOldRunner<SVNPropertyData, SvnSetPrope
         client.setEventHandler(getOperation().getEventHandler());
         
         File path = getOperation().getFirstTarget().getFile();
-        String propName = getOperation().getPropertyName();
-        SVNPropertyValue propertyValue = getOperation().getPropertyValue();
-        client.doSetProperty(path, propName, propertyValue, getOperation().isForce(), 
-                getOperation().getDepth(), this, getOperation().getApplicableChangelists());
+        if (getOperation().getPropertyValueProvider() != null) {
+            client.doSetProperty(path, SvnCodec.propertyValueProvider(getOperation().getPropertyValueProvider()), getOperation().isForce(), 
+                    getOperation().getDepth(), this, getOperation().getApplicableChangelists());
+        } else {
+            String propName = getOperation().getPropertyName();
+            SVNPropertyValue propertyValue = getOperation().getPropertyValue();
+            client.doSetProperty(path, propName, propertyValue, getOperation().isForce(), 
+                    getOperation().getDepth(), this, getOperation().getApplicableChangelists());
+        }
         
         return getOperation().first();
     }

@@ -579,7 +579,15 @@ public class SVNWCClient extends SVNBasicClient {
      * @since 1.2, SVN 1.5
      */
     public void doSetProperty(File path, ISVNPropertyValueProvider propertyValueProvider, boolean skipChecks, SVNDepth depth, ISVNPropertyHandler handler, Collection<String> changeLists) throws SVNException {
-        // TODO
+        SvnSetProperty ps = getOperationsFactory().createSetProperty();
+        ps.setPropertyValueProvider(SvnCodec.propertyValueProvider(propertyValueProvider));
+        ps.setForce(skipChecks);
+        ps.setDepth(depth);
+        ps.setSingleTarget(SvnTarget.fromFile(path));
+        ps.setApplicalbeChangelists(changeLists);
+        ps.setReceiver(SvnCodec.propertyReceiver(handler));
+        
+        ps.run();
     }
 
     /**
