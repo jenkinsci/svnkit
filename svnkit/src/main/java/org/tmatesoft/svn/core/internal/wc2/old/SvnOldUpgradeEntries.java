@@ -259,9 +259,9 @@ public class SvnOldUpgradeEntries {
 		}
 		
 		if (entry.isCopied()) {
-			if (entry.getCopyFromSVNURL() != null) {
+			if (SvnOldUpgrade.getEntryCopyFromURL(entry) != null) {
 				workingNode.reposId = upgradeData.repositoryId;
-				String relPath = SVNURLUtil.getRelativeURL(thisDir.getRepositoryRootURL(), entry.getCopyFromSVNURL(), false);
+				String relPath = SVNURLUtil.getRelativeURL(SvnOldUpgrade.getEntryRepositoryRootURL(thisDir), SvnOldUpgrade.getEntryCopyFromURL(entry), false);
 				if (relPath == null)
 					workingNode.reposRelPath = null;
 				else 
@@ -426,13 +426,13 @@ public class SvnOldUpgradeEntries {
 				}
 			}
 			
-			if (thisDir.getRepositoryRootURL() != null) {
+			if (SvnOldUpgrade.getEntryRepositoryRootURL(thisDir) != null) {
 				baseNode.reposId = upgradeData.repositoryId;
-				if (entry.getSVNURL() != null) {
-					String relPath = SVNURLUtil.getRelativeURL(thisDir.getRepositoryRootURL(), entry.getSVNURL(), false);
+				if (SvnOldUpgrade.getEntryURL(entry) != null) {
+					String relPath = SVNURLUtil.getRelativeURL(SvnOldUpgrade.getEntryRepositoryRootURL(thisDir), SvnOldUpgrade.getEntryURL(entry), false);
 					baseNode.reposRelPath = relPath != null ? relPath : "";
 				} else {
-					String relPath = SVNURLUtil.getRelativeURL(thisDir.getRepositoryRootURL(), thisDir.getSVNURL(), false);
+					String relPath = SVNURLUtil.getRelativeURL(SvnOldUpgrade.getEntryRepositoryRootURL(thisDir), SvnOldUpgrade.getEntryURL(thisDir), false);
 					if (relPath == null) {
 						baseNode.reposRelPath = entry.getName();
 					} else {

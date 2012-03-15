@@ -36,6 +36,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumInputStream;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
+import org.tmatesoft.svn.core.internal.wc16.SVNUpdateClient16;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbOpenMode;
@@ -92,6 +93,27 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 	private static final String PRISTINE_STORAGE_RELPATH = "pristine";
 	
 	private static final String SDB_FILE = "wc.db";
+
+    public static SVNURL getEntryRepositoryRootURL(SVNEntry entry) throws SVNException {
+        return getCanonicalURL(entry.getRepositoryRootURL());
+    }
+
+    public static SVNURL getEntryURL(SVNEntry entry) throws SVNException {
+        return getCanonicalURL(entry.getSVNURL());
+    }
+
+    public static SVNURL getEntryCopyFromURL(SVNEntry entry) throws SVNException {
+        return getCanonicalURL(entry.getCopyFromSVNURL());
+    }
+    
+    private static SVNURL getCanonicalURL(SVNURL original) throws SVNException {
+        if (original == null) {
+            return null;
+        }
+        SVNURL canonical = SVNUpdateClient16.canonicalizeURL(original, true);
+        return canonical != null ? canonical : original;
+    }
+    
 
 	private class RepositoryInfo {
 		public SVNURL repositoryRootUrl = null;
@@ -218,41 +240,34 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 		SVNErrorManager.error(err, SVNLogType.WC);
 	}
 
-	private void fetchReposInfo(SVNEntry entry,
-			RepositoryInfo lastRepositoryInfo) throws SVNException {
+	private void fetchReposInfo(SVNEntry entry, RepositoryInfo lastRepositoryInfo) throws SVNException {
 		/* The same info is likely to retrieved multiple times (e.g. externals) */
-		if (lastRepositoryInfo.repositoryRootUrl != null
-				&& SVNURLUtil.isAncestor(lastRepositoryInfo.repositoryRootUrl,
-						entry.getSVNURL())) {
+		if (lastRepositoryInfo.repositoryRootUrl != null && SVNURLUtil.isAncestor(lastRepositoryInfo.repositoryRootUrl, getEntryURL(entry))) {
 			entry.setRepositoryRootURL(lastRepositoryInfo.repositoryRootUrl);
 			entry.setUUID(lastRepositoryInfo.UUID);
 			return;
 		}
 
-		SvnRepositoryAccess repAccess = new SvnOldRepositoryAccess(
-				getOperation());
-		SVNRepository repository = repAccess.createRepository(
-				entry.getSVNURL(), null, true);
-		entry.setRepositoryRootURL(repository.getRepositoryRoot(false));
-		entry.setUUID(repository.getRepositoryUUID(false));
+		SvnRepositoryAccess repAccess = new SvnOldRepositoryAccess(getOperation());
+		SVNRepository repository = repAccess.createRepository(getEntryURL(entry), null, true);
+		entry.setRepositoryRootURL(repository.getRepositoryRoot(true));
+		entry.setUUID(repository.getRepositoryUUID(true));
 
-		lastRepositoryInfo.repositoryRootUrl = entry.getRepositoryRootURL();
+		lastRepositoryInfo.repositoryRootUrl = getEntryRepositoryRootURL(entry);
 		lastRepositoryInfo.UUID = entry.getUUID();
 	}
 
-	private void ensureReposInfo(SVNEntry entry, File localAbsPath, RepositoryInfo lastRepositoryInfo, Map<SVNURL, String> reposCache)
-			throws SVNException {
-		if (entry.getRepositoryRootURL() != null && entry.getUUID() != null) {
+	private void ensureReposInfo(SVNEntry entry, File localAbsPath, RepositoryInfo lastRepositoryInfo, Map<SVNURL, String> reposCache) throws SVNException {
+		if (getEntryRepositoryRootURL(entry) != null && entry.getUUID() != null) {
 			return;
 		}
 
-		if ((entry.getRepositoryRootURL() == null || entry.getUUID() == null)
-				&& entry.getSVNURL() != null) {
+		if ((getEntryRepositoryRootURL(entry) == null || entry.getUUID() == null) && getEntryURL(entry) != null) {
 		    
 			for (Iterator<SVNURL> items = reposCache.keySet().iterator(); items.hasNext();) {
 				SVNURL reposRootUrl = items.next();
-				if (SVNURLUtil.isAncestor(reposRootUrl, entry.getSVNURL())) {
-					if (entry.getRepositoryRootURL() == null) {
+				if (SVNURLUtil.isAncestor(reposRootUrl, getEntryURL(entry))) {
+					if (getEntryRepositoryRootURL(entry) == null) {
 						entry.setRepositoryRootURL(reposRootUrl);
 					}
 					if (entry.getUUID() == null) {
@@ -263,7 +278,7 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 			}
 		}
 
-		if (entry.getSVNURL() == null) {
+		if (getEntryURL(entry) == null) {
 			SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT,
 							"Working copy '{0}' can't be upgraded because it doesn't have a url", localAbsPath);
 			SVNErrorManager.error(err, SVNLogType.WC);
@@ -303,8 +318,8 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 		/*
 		 * Cache repos UUID pairs for when a subdir doesn't have this information
 		 */
-		if (!reposCache.containsKey(thisDir.getRepositoryRootURL()))
-			reposCache.put(thisDir.getRepositoryRootURL(), thisDir.getUUID());
+		if (!reposCache.containsKey(getEntryRepositoryRootURL(thisDir)))
+			reposCache.put(getEntryRepositoryRootURL(thisDir), thisDir.getUUID());
 		/* Create the new DB in the temporary root wc/.svn/tmp/wcng/.svn */
 
 		upgradeData.rootAbsPath = SVNFileUtil.createFilePath(SVNWCUtils.admChild(localAbsPath, "tmp"), "wcng");
@@ -318,7 +333,7 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 			/*
 			 * Create an empty sqlite database for this directory and store it in DB.
 			 */
-			db.upgradeBegin(upgradeData.rootAbsPath, upgradeData, thisDir.getRepositoryRootURL(), thisDir.getUUID());
+			db.upgradeBegin(upgradeData.rootAbsPath, upgradeData, getEntryRepositoryRootURL(thisDir), thisDir.getUUID());
 
 			/*
 			 * Migrate the entries over to the new database. ### We need to think about atomicity here.
@@ -372,8 +387,7 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 
 	}
 
-	private void upgradeWorkingCopy(WriteBaton parentDirBaton, SVNWCDb db, File dirAbsPath, SVNWCDbUpgradeData data, Map<SVNURL, String> reposCache,
-			RepositoryInfo reposInfo) throws SVNException {
+	private void upgradeWorkingCopy(WriteBaton parentDirBaton, SVNWCDb db, File dirAbsPath, SVNWCDbUpgradeData data, Map<SVNURL, String> reposCache, RepositoryInfo reposInfo) throws SVNException {
 
 		WriteBaton dirBaton = null;
 
@@ -415,8 +429,7 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 	}
 
 	@SuppressWarnings("unchecked")
-    private WriteBaton upgradeToWcng(WriteBaton parentDirBaton, SVNWCDb db, File dirAbsPath, int oldFormat, SVNWCDbUpgradeData data, 
-			Map<SVNURL, String> reposCache, RepositoryInfo reposInfo) throws SVNException {
+    private WriteBaton upgradeToWcng(WriteBaton parentDirBaton, SVNWCDb db, File dirAbsPath, int oldFormat, SVNWCDbUpgradeData data, Map<SVNURL, String> reposCache, RepositoryInfo reposInfo) throws SVNException {
 		WriteBaton dirBaton = null;
 		File logFilePath = SVNWCUtils.admChild(dirAbsPath, ADM_LOG);
 
@@ -468,8 +481,8 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 			/*
 			 * Cache repos UUID pairs for when a subdir doesn't have this information
 			 */
-			if (!reposCache.containsKey(thisDir.getRepositoryRootURL())) {
-				reposCache.put(thisDir.getRepositoryRootURL(), thisDir.getUUID());
+			if (!reposCache.containsKey(getEntryRepositoryRootURL(thisDir))) {
+				reposCache.put(getEntryRepositoryRootURL(thisDir), thisDir.getUUID());
 			}
 
 			String dirAbsPathString = SVNFileUtil.getFilePath(dirAbsPath);
@@ -929,5 +942,4 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 				originalFormat);
 
 	}
-	
 }
