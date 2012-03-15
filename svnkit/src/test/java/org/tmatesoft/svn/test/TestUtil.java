@@ -86,6 +86,11 @@ public class TestUtil {
         return "true".equals(propertyValue);
     }
 
+    static boolean isNewWorkingCopyOnly() {
+        final String propertyValue = System.getProperty("svnkit.wc.17only", "true");
+        return "true".equals(propertyValue);
+    }
+
     public static Map<File, SvnStatus> getStatuses(SvnOperationFactory svnOperationFactory, File workingCopyDirectory) throws SVNException {
         final Map<File, SvnStatus> pathToStatus = new HashMap<File, SvnStatus>();
         final SvnGetStatus status = svnOperationFactory.createGetStatus();

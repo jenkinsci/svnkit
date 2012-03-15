@@ -1149,6 +1149,7 @@ public interface ISVNWCDb {
      */
     WCDbInfo readInfo(File localAbsPath, InfoField... fields) throws SVNException;
     Structure<NodeInfo> readInfo(File localAbsPath, NodeInfo... fields) throws SVNException;
+    Structure<NodeInfo> readInfo(File localAbsPath, boolean isAdditionMode, NodeInfo... fields) throws SVNException;
 
     class WCDbInfo {
 
@@ -1645,6 +1646,7 @@ public interface ISVNWCDb {
     void removeWCLock(File localAbspath) throws SVNException;
 
     boolean isWCRoot(File localAbspath) throws SVNException;
+    boolean isWCRoot(File localAbspath, boolean isAdditionMode) throws SVNException;
 
     /** temp function. return the FORMAT for the directory LOCAL_ABSPATH. */
     int getFormatTemp(File localDirAbsPath) throws SVNException;

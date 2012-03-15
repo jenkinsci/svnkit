@@ -52,7 +52,7 @@ public class SvnNgAdd extends SvnNgOperationRunner<Void, SvnScheduleForAddition>
         File path = target.getFile();
         File existingParent = path;
         File parentPath = path;
-        if (!getWcContext().getDb().isWCRoot(path)) {
+        if (!getWcContext().getDb().isWCRoot(path, true)) {
             parentPath = SVNFileUtil.getParentFile(path);
             existingParent = parentPath;
             if (getOperation().isAddParents()) {
@@ -316,7 +316,7 @@ public class SvnNgAdd extends SvnNgOperationRunner<Void, SvnScheduleForAddition>
         }
         
         try {
-            Structure<NodeInfo> nodeInfo = getWcContext().getDb().readInfo(path, NodeInfo.status, NodeInfo.conflicted);
+            Structure<NodeInfo> nodeInfo = getWcContext().getDb().readInfo(path, true, NodeInfo.status, NodeInfo.conflicted);
             if (nodeInfo.is(NodeInfo.conflicted)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_FOUND_CONFLICT, 
                         "''{0}'' is an existing item in conflict; please mark the conflict as resolved before adding a new item here", 

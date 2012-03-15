@@ -4,16 +4,24 @@ import java.io.File;
 import java.util.Map;
 
 import org.junit.Assert;
+import org.junit.Assume;
+import org.junit.Before;
 import org.junit.Test;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc16.SVNUpdateClient16;
+import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.wc2.SvnCheckout;
 import org.tmatesoft.svn.core.wc2.SvnGetInfo;
+import org.tmatesoft.svn.core.wc2.SvnInfo;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 import org.tmatesoft.svn.core.wc2.SvnScheduleForAddition;
 import org.tmatesoft.svn.core.wc2.SvnStatus;
@@ -21,6 +29,12 @@ import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.core.wc2.SvnUpdate;
 
 public class SpecialTest {
+
+    @Before
+    public void setup() {
+        Assume.assumeTrue(SVNFileUtil.symlinksSupported());
+    }
+
     @Test
     public void testExternalsAsSymlinksTargets() throws Exception {
         final TestOptions options = TestOptions.getInstance();
@@ -64,6 +78,7 @@ public class SpecialTest {
             sandbox.dispose();
         }
     }
+
     @Test
     public void testSymlinkPointsToWorkingCopy() throws Exception {
         final TestOptions options = TestOptions.getInstance();
@@ -86,6 +101,85 @@ public class SpecialTest {
         } finally {
             svnOperationFactory.dispose();
             sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testUnversionedSymlinkWithinOldWorkingCopyPointsToNewWorkingCopy() throws Exception {
+        Assume.assumeTrue(!TestUtil.isNewWorkingCopyOnly());
+        Assume.assumeTrue(TestUtil.isNewWorkingCopyTest());
+
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testUnversionedSymlinkWithinOldWorkingCopyPointsToNewWorkingCopy", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final File oldWorkingCopy = checkoutOldWorkingCopy(sandbox.createDirectory("wc.old"), url);
+            final File newWorkingCopy = checkoutNewWorkingCopy(new File(oldWorkingCopy, "wc.new"), url, svnOperationFactory);
+            final File symlink = new File(oldWorkingCopy, "symlink");
+            SVNFileUtil.createSymlink(symlink, newWorkingCopy.getAbsolutePath());
+
+            final SvnGetInfo getInfo = svnOperationFactory.createGetInfo();
+            getInfo.setSingleTarget(SvnTarget.fromFile(symlink));
+            final SvnInfo info = getInfo.run();
+
+            Assert.assertEquals(oldWorkingCopy, info.getWcInfo().getWcRoot());
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testUnversionedSymlinkWithinOldWorkingCopyPointsToNewWorkingCopy17Only() throws Exception {
+        Assume.assumeTrue(TestUtil.isNewWorkingCopyOnly());
+        Assume.assumeTrue(TestUtil.isNewWorkingCopyTest());
+
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testUnversionedSymlinkWithinOldWorkingCopyPointsToNewWorkingCopy17Only", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final File oldWorkingCopy = checkoutOldWorkingCopy(sandbox.createDirectory("wc.old"), url);
+            final File newWorkingCopy = checkoutNewWorkingCopy(new File(oldWorkingCopy, "wc.new"), url, svnOperationFactory);
+            final File symlink = new File(oldWorkingCopy, "symlink");
+            SVNFileUtil.createSymlink(symlink, newWorkingCopy.getAbsolutePath());
+
+            final SvnGetInfo getInfo = svnOperationFactory.createGetInfo();
+            getInfo.setSingleTarget(SvnTarget.fromFile(symlink));
+            try {
+                getInfo.run();
+                Assert.fail("An exception should be thrown");
+            } catch (SVNException e) {
+                //expected
+                Assert.assertEquals(SVNErrorCode.WC_UPGRADE_REQUIRED, e.getErrorMessage().getErrorCode());
+            }
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    private File checkoutNewWorkingCopy(File directory, SVNURL url, SvnOperationFactory svnOperationFactory) throws SVNException {
+        final SvnCheckout checkout = svnOperationFactory.createCheckout();
+        checkout.setSource(SvnTarget.fromURL(url));
+        checkout.setSingleTarget(SvnTarget.fromFile(directory));
+        checkout.run();
+        return directory;
+    }
+
+    private File checkoutOldWorkingCopy(File directory, SVNURL url) throws SVNException {
+        final SVNClientManager clientManager = SVNClientManager.newInstance();
+        try {
+            final SVNUpdateClient16 updateClient16 = new SVNUpdateClient16(clientManager, clientManager.getOptions());
+            updateClient16.doCheckout(url, directory, SVNRevision.HEAD, SVNRevision.HEAD, SVNDepth.INFINITY, true);
+            return directory;
+        } finally {
+            clientManager.dispose();
         }
     }
 

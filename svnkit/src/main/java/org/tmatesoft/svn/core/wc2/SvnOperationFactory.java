@@ -844,16 +844,19 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
         if (operation == null) {
             return null;
         }
+
+        final boolean isAdditionMode = operation.getClass() == SvnScheduleForAddition.class;
+
         SvnWcGeneration wcGeneration = SvnWcGeneration.NOT_DETECTED;
         if (operation.getOperationalWorkingCopy() != null) {
             if (operation.getClass() == SvnCheckout.class) {
                 if (SVNWCUtil.isVersionedDirectory(operation.getOperationalWorkingCopy())) {
-                    wcGeneration = detectWcGeneration(operation.getOperationalWorkingCopy(), false);
+                    wcGeneration = detectWcGeneration(operation.getOperationalWorkingCopy(), false, isAdditionMode);
                 } else {
                     wcGeneration = getPrimaryWcGeneration();
                 }
             } else {
-                wcGeneration = detectWcGeneration(operation.getOperationalWorkingCopy(), false);
+                wcGeneration = detectWcGeneration(operation.getOperationalWorkingCopy(), false, isAdditionMode);
             }
         }
         
@@ -958,6 +961,10 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
     }
     
     public static boolean isVersionedDirectory(File directory) {
+        return isVersionedDirectory(directory, false);
+    }
+
+    public static boolean isVersionedDirectory(File directory, boolean isAdditionMode) {
         if (directory == null) {
             return false;
         }
@@ -969,7 +976,7 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
         SVNWCDb db = new SVNWCDb();
         db.open(SVNWCDbOpenMode.ReadOnly, null, false, false);
         try {
-            DirParsedInfo info = db.parseDir(localAbsPath, Mode.ReadOnly, true);
+            DirParsedInfo info = db.parseDir(localAbsPath, Mode.ReadOnly, true, isAdditionMode);
             if (info != null 
                     && info.wcDbDir != null 
                     && SVNWCDbDir.isUsable(info.wcDbDir)) {
@@ -1116,6 +1123,10 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
 
 
     public static SvnWcGeneration detectWcGeneration(File path, boolean climbUp) throws SVNException {
+        return detectWcGeneration(path, climbUp, false);
+    }
+
+    public static SvnWcGeneration detectWcGeneration(File path, boolean climbUp, boolean isAdditionMode) throws SVNException {
         while(true) {
             if (path == null) {
                 return SvnWcGeneration.NOT_DETECTED;
@@ -1123,7 +1134,7 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
             SVNWCDb db = new SVNWCDb();
             try {
                 db.open(SVNWCDbOpenMode.ReadOnly, (ISVNOptions) null, true, false);
-                DirParsedInfo info = db.parseDir(path, Mode.ReadOnly, true);
+                DirParsedInfo info = db.parseDir(path, Mode.ReadOnly, true, isAdditionMode);
                 if (info != null && SVNWCDbDir.isUsable(info.wcDbDir)) {
                     return SvnWcGeneration.V17;
                 } else if (info != null 
