@@ -124,7 +124,7 @@ public class SpecialTest {
             getInfo.setSingleTarget(SvnTarget.fromFile(symlink));
             final SvnInfo info = getInfo.run();
 
-            Assert.assertEquals(oldWorkingCopy, info.getWcInfo().getWcRoot());
+            Assert.assertEquals(symlink, info.getWcInfo().getWcRoot());
         } finally {
             svnOperationFactory.dispose();
             sandbox.dispose();
