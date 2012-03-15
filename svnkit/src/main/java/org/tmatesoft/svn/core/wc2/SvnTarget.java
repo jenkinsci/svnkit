@@ -2,8 +2,10 @@ package org.tmatesoft.svn.core.wc2;
 
 import java.io.File;
 
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc16.SVNUpdateClient16;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 /**
@@ -63,10 +65,22 @@ public class SvnTarget {
     }
     
     private SvnTarget(SVNURL url, SVNRevision pegRevision) {
-        this.url = url;
+        this.url = getCanonicalUrl(url);
         setPegRevision(pegRevision);
     }
     
+    private SVNURL getCanonicalUrl(SVNURL url) {
+        if (url == null) {
+            return null;
+        }
+        SVNURL canonicalUrl = null;
+        try {
+            canonicalUrl = SVNUpdateClient16.canonicalizeURL(url, true);
+        } catch (SVNException e) {
+        }        
+        return canonicalUrl != null ? canonicalUrl : url;
+    }
+
     /**
      * Determines whether target is located in the local working copy and its peg revision is working copy specific.
      * @return <code>true</code> if the target and its peg revision refers to local working copy, otherwise <code>false</code>

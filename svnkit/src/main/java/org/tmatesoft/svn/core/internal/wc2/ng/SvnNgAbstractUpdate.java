@@ -32,10 +32,10 @@ import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.SVNWCNodeReposInfo;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
+import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.ExternalNodeInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
-import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnExternalFileReporter;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnExternalUpdateEditor;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbExternals;
@@ -330,6 +330,8 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
 
     private void handleExternalItemChange(SVNURL rootUrl, File parentPath, SVNURL parentUrl, File localAbsPath, File oldDefiningPath, SVNExternal newItem) throws SVNException {
         SVNURL newUrl = newItem.resolveURL(rootUrl, parentUrl);
+        newUrl = SvnTarget.fromURL(newUrl).getURL();
+        
         SVNRevision externalRevision  = newItem.getRevision();
         SVNRevision externalPegRevision = newItem.getPegRevision();
         
