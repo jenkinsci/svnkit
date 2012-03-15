@@ -1,6 +1,7 @@
 package org.tmatesoft.svn.core.internal.wc17.db;
 
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnBlob;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnKind;
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnInt64;
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnPath;
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnPresence;
@@ -177,6 +178,7 @@ public class SvnWcDbProperties extends SvnWcDbShared {
 	        if (haveRow) {
 	        	topOpDepth = getColumnInt64(stmt, SVNWCDbSchema.NODES__Fields.op_depth);
 	        	topPresence = getColumnPresence(stmt, SVNWCDbSchema.NODES__Fields.presence);
+	        	kind = getColumnKind(stmt, SVNWCDbSchema.NODES__Fields.kind);
 	            haveRow = stmt.next();
 	            if (haveRow) {
 	            	belowOpDepth = getColumnInt64(stmt, SVNWCDbSchema.NODES__Fields.op_depth);
@@ -251,7 +253,7 @@ public class SvnWcDbProperties extends SvnWcDbShared {
     		if (props == null) {
     			props = baseProps;
     		}
-    		String externals = props.getStringValue(SVNProperty.EXTERNALS);
+    		String externals = props != null ? props.getStringValue(SVNProperty.EXTERNALS) : null;
     		if (externals != null && !"".equals(externals)) {
     			stmt = root.getSDb().getStatement(SVNWCDbStatements.INSERT_EXTERNAL_UPGRADE);
     			SVNExternal[] externalsList = SVNExternal.parseExternals(

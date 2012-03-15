@@ -20,7 +20,6 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetInsertStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectFieldsStatement;
-import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectStatement;
 
 /**
  * -- STMT_INSERT_EXTERNAL_UPGRADE
@@ -42,30 +41,27 @@ public class SVNWCDbInsertExternalUpgrade extends SVNSqlJetInsertStatement {
 
     public SVNWCDbInsertExternalUpgrade(SVNSqlJetDb sDb) throws SVNException {
         super(sDb, SVNWCDbSchema.EXTERNALS, SqlJetConflictAction.REPLACE);
-        select = new SVNSqlJetSelectFieldsStatement<SVNWCDbSchema.NODES__Fields>(sDb.getTemporaryDb(), SVNWCDbSchema.NODES) {
-        	 protected Object[] getWhere() throws SVNException {
-        	        return new Object[] { getBind(1), getBind(2), 0};
-        	    }
-        	 
-        	 protected void defineFields() {
-        	        fields.add(SVNWCDbSchema.NODES__Fields.file_external);
-        	    }
+        select = new SVNSqlJetSelectFieldsStatement<SVNWCDbSchema.NODES__Fields>(sDb, SVNWCDbSchema.NODES) {
+            protected Object[] getWhere() throws SVNException {
+                return new Object[] { getBind(1), getBind(2), 0 };
+            }
+            protected void defineFields() {
+                fields.add(SVNWCDbSchema.NODES__Fields.file_external);
+            }
         };
     }
     
     public long exec() throws SVNException {
         try {
-            int n = 0;
-            while (select.next()) {
-                try {
-                    table.insertByFieldNamesOr(SqlJetConflictAction.REPLACE, getInsertValues());
-                    n++;
-                } catch (SqlJetException e) {
-                    SVNSqlJetDb.createSqlJetError(e);
-                    return -1;
-                }
+            select.bindf("is", getBind(1), getBind(2));
+            select.next();
+            try {
+                table.insertByFieldNamesOr(SqlJetConflictAction.REPLACE, getInsertValues());
+            } catch (SqlJetException e) {
+                SVNSqlJetDb.createSqlJetError(e);
+                return -1;
             }
-            return n;
+            return 1;
         } finally {
             select.reset();
         }
@@ -77,7 +73,7 @@ public class SVNWCDbInsertExternalUpgrade extends SVNSqlJetInsertStatement {
         values.put(SVNWCDbSchema.EXTERNALS__Fields.local_relpath.toString(), getBind(2));
         values.put(SVNWCDbSchema.EXTERNALS__Fields.parent_relpath.toString(), getBind(3));
         values.put(SVNWCDbSchema.EXTERNALS__Fields.presence.toString(), getBind(4));
-        values.put(SVNWCDbSchema.EXTERNALS__Fields.presence.toString(), 
+        values.put(SVNWCDbSchema.EXTERNALS__Fields.kind.toString(), 
         		select.isColumnNull(SVNWCDbSchema.NODES__Fields.file_external) ? "unknown" : "file");
         values.put(SVNWCDbSchema.EXTERNALS__Fields.def_local_relpath.toString(), getBind(5));
         values.put(SVNWCDbSchema.EXTERNALS__Fields.repos_id.toString(), getBind(6));
