@@ -657,10 +657,13 @@ public class SvnWcDbShared {
             ISqlJetCursor cursor = repositoryTable.open();
             while(!cursor.eof()) {
                 final String oldUrl = cursor.getString(SVNWCDbSchema.REPOSITORY__Fields.root.toString());
-                final String newUrl = SVNUpdateClient16.canonicalizeURL(SVNURL.parseURIEncoded(oldUrl), omitDefaultPort).toString();
-                if (newUrl != null && !oldUrl.equals(newUrl)) {
-                    values.put(SVNWCDbSchema.REPOSITORY__Fields.root.toString(), newUrl);                
-                    cursor.updateByFieldNames(values);
+                final SVNURL canonicalUrl = SVNUpdateClient16.canonicalizeURL(SVNURL.parseURIEncoded(oldUrl), omitDefaultPort);
+                if (canonicalUrl != null) {
+                    String newUrl = canonicalUrl.toString();
+                    if (!oldUrl.equals(newUrl)) {
+                        values.put(SVNWCDbSchema.REPOSITORY__Fields.root.toString(), newUrl);                
+                        cursor.updateByFieldNames(values);
+                    }
                 }
                 cursor.next();
             }

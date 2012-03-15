@@ -34,7 +34,7 @@ public class SvnNgCanonicalizeUrls extends SvnNgOperationRunner<Void, SvnCanonic
                     File externalPath = SVNFileUtil.createFilePath(path, externals[i].getPath());
                     if (externalPath.isDirectory()) {
                         SvnCanonicalizeUrls canonicalize = getOperation().getOperationFactory().createCanonicalizeUrls();
-                        canonicalize.setSingleTarget(SvnTarget.fromFile(path));
+                        canonicalize.setSingleTarget(SvnTarget.fromFile(externalPath));
                         canonicalize.setOmitDefaultPort(getOperation().isOmitDefaultPort());
                         canonicalize.run();
                     }
