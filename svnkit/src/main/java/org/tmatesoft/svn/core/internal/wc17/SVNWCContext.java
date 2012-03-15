@@ -1945,7 +1945,7 @@ public class SVNWCContext {
                 SVNErrorManager.error(err, SVNLogType.WC);
                 return;
             }
-            if (eventHandler != null) {
+            if (getEventHandler() != null) {
                 SVNEvent event = new SVNEvent(childAbspath, null, null, -1, null, null, null, null, SVNEventAction.DELETE, null, null, null, null, null, null);
                 getEventHandler().handleEvent(event, 0);
             }
