@@ -9,7 +9,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
@@ -151,13 +150,9 @@ public class SpecialTest {
 
             final SvnGetInfo getInfo = svnOperationFactory.createGetInfo();
             getInfo.setSingleTarget(SvnTarget.fromFile(symlink));
-            try {
-                getInfo.run();
-                Assert.fail("An exception should be thrown");
-            } catch (SVNException e) {
-                //expected
-                Assert.assertEquals(SVNErrorCode.WC_UPGRADE_REQUIRED, e.getErrorMessage().getErrorCode());
-            }
+            final SvnInfo info = getInfo.run();
+
+            Assert.assertEquals(symlink, info.getWcInfo().getWcRoot());
         } finally {
             svnOperationFactory.dispose();
             sandbox.dispose();
