@@ -4,6 +4,8 @@ import java.io.File;
 
 import junit.framework.Assert;
 
+import org.junit.Assume;
+import org.junit.Before;
 import org.junit.Test;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
@@ -40,6 +42,11 @@ public class SvnWcUtilTest {
     private static final String UNVERSIONED_DIR1_PATH = "unversioned";
     private static final String UNVERSIONED_DIR2_PATH = "C/unversioned";
     private static final String UNVERSIONED_FILE_PATH = "unversioned.txt";
+
+    @Before
+    public void setup() {
+        Assume.assumeTrue(!TestUtil.isNewWorkingCopyOnly());
+    }
 
     @Test
     public void testIsVersionedDirectory() throws SVNException {

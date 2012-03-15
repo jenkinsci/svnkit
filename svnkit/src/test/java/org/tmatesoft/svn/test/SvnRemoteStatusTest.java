@@ -7,7 +7,8 @@ import java.util.Iterator;
 import java.util.Map;
 
 import junit.framework.Assert;
-
+import org.junit.Assume;
+import org.junit.Before;
 import org.junit.Test;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
@@ -24,6 +25,11 @@ import org.tmatesoft.svn.core.wc2.SvnStatus;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 public class SvnRemoteStatusTest {
+
+    @Before
+    public void setup() {
+        Assume.assumeTrue(!TestUtil.isNewWorkingCopyOnly());
+    }
     
     @Test
     public void testRemoteUrlIsNotNull() throws SVNException {
