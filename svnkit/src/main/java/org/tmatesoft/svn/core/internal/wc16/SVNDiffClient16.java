@@ -23,7 +23,6 @@ import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.AbstractDiffCallback;
@@ -214,7 +213,7 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * 
      * @param urla
      *            repository location
-     * @param pegRevisiona
+     * @param pegRevision a
      *            revision in which <code>url</code> is first looked up
      * @param rNan
      *            old revision
@@ -222,13 +221,13 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      *            new revision
      * @param recursive
      *            <span class="javakeyword">true</span> to descend recursively
-     * @param useAncestryif
+     * @param useAncestry if
      *            <span class="javakeyword">true</span> then the paths ancestry
      *            will be noticed while calculating differences, otherwise not
-     * @param resultthe
+     * @param result the
      *            target {@link java.io.OutputStream} where the differences will
      *            be written to
-     * @throws SVNExceptionif
+     * @throws SVNException if
      *             one of the following is true:
      *             <ul>
      *             <li>at least one of <code>rN</code>, <code>rM</code> and
@@ -262,21 +261,21 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * 
      * @param urla
      *            repository location
-     * @param pegRevisiona
+     * @param pegRevision a
      *            revision in which <code>url</code> is first looked up
      * @param rNan
      *            old revision
      * @param rMa
      *            new revision
-     * @param depthtree
+     * @param depth tree
      *            depth to process
-     * @param useAncestryif
+     * @param useAncestry if
      *            <span class="javakeyword">true</span> then the paths ancestry
      *            will be noticed while calculating differences, otherwise not
-     * @param resultthe
+     * @param result the
      *            target {@link java.io.OutputStream} where the differences will
      *            be written to
-     * @throws SVNExceptionif
+     * @throws SVNException if
      *             one of the following is true:
      *             <ul>
      *             <li>exception with {@link SVNErrorCode#CLIENT_BAD_REVISION}
@@ -317,7 +316,7 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * 
      * @param patha
      *            Working Copy path
-     * @param pegRevisiona
+     * @param pegRevision a
      *            revision in which the repository location of <code>path</code>
      *            is first looked up
      * @param rNan
@@ -326,13 +325,13 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      *            new revision (or a local one)
      * @param recursive
      *            <span class="javakeyword">true</span> to descend recursively
-     * @param useAncestryif
+     * @param useAncestry if
      *            <span class="javakeyword">true</span> then the paths ancestry
      *            will be noticed while calculating differences, otherwise not
-     * @param resultthe
+     * @param result the
      *            target {@link java.io.OutputStream} where the differences will
      *            be written to
-     * @throws SVNExceptionif
+     * @throws SVNException if
      *             one of the following is true:
      *             <ul>
      *             <li>at least one of <code>rN</code>, <code>rM</code> and
@@ -360,18 +359,18 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      *            old revision
      * @param rMa
      *            new revision
-     * @param pegRevisiona
+     * @param pegRevision a
      *            revision in which the repository location of
      *            <code>paths</code> is first looked up
-     * @param depthtree
+     * @param depth tree
      *            depth to process
-     * @param useAncestryif
+     * @param useAncestry if
      *            <span class="javakeyword">true</span> then the paths ancestry
      *            will be noticed while calculating differences, otherwise not
-     * @param resultthe
+     * @param result the
      *            target {@link java.io.OutputStream} where the differences will
      *            be written to
-     * @param changeListscollection
+     * @param changeLists collection
      *            with changelist names
      * @throws SVNException
      * @since 1.2, SVN 1.5
@@ -413,24 +412,24 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * 
      * @param patha
      *            Working Copy path
-     * @param pegRevisiona
+     * @param pegRevision a
      *            revision in which the repository location of <code>path</code>
      *            is first looked up
      * @param rNan
      *            old revision
      * @param rMa
      *            new revision
-     * @param depthtree
+     * @param depth tree
      *            depth to process
-     * @param useAncestryif
+     * @param useAncestry if
      *            <span class="javakeyword">true</span> then the paths ancestry
      *            will be noticed while calculating differences, otherwise not
-     * @param resultthe
+     * @param result the
      *            target {@link java.io.OutputStream} where the differences will
      *            be written to
-     * @param changeListscollection
+     * @param changeLists collection
      *            with changelist names
-     * @throws SVNExceptionif
+     * @throws SVNException if
      *             one of the following is true:
      *             <ul>
      *             <li>exception with {@link SVNErrorCode#CLIENT_BAD_REVISION}
@@ -474,23 +473,23 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * <p>
      * Corresponds to the SVN command line client's <code>'svn diff -r N:M URL1 URL2'</code> command.
      * 
-     * @param url1the
+     * @param url1 the
      *            first URL to be compared
      * @param rNa
      *            revision of <code>url1</code>
-     * @param url2the
+     * @param url2 the
      *            second URL to be compared
      * @param rMa
      *            revision of <code>url2</code>
      * @param recursive
      *            <span class="javakeyword">true</span> to descend recursively
-     * @param useAncestryif
+     * @param useAncestry if
      *            <span class="javakeyword">true</span> then the paths ancestry
      *            will be noticed while calculating differences, otherwise not
-     * @param resultthe
+     * @param result the
      *            target {@link java.io.OutputStream} where the differences will
      *            be written to
-     * @throws SVNExceptionif
+     * @throws SVNException if
      *             one of the following is true:
      *             <ul>
      *             <li>at least one of <code>rN</code> and <code>rM</code> is
@@ -556,20 +555,20 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * can set {@link SVNDiffOptions} to it which will be used to pass
      * additional options to the diff processes invoked to compare files.
      * 
-     * @param url1the
+     * @param url1 the
      *            first URL to be compared
      * @param rNa
      *            revision of <code>url1</code>
-     * @param url2the
+     * @param url2 the
      *            second URL to be compared against <code>path1</code>
      * @param rMa
      *            revision of <code>url2</code>
-     * @param depthtree
+     * @param depth tree
      *            depth to process
-     * @param useAncestryif
+     * @param useAncestry if
      *            <span class="javakeyword">true</span> then the paths ancestry
      *            will be noticed while calculating differences, otherwise not
-     * @param resultthe
+     * @param result the
      *            target {@link java.io.OutputStream} where the differences will
      *            be written to
      * @throws SVNException in
@@ -603,7 +602,7 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * <p>
      * Corresponds to the SVN command line client's <code>'svn diff -r N:M PATH URL'</code> command.
      * 
-     * @param path1a
+     * @param path1 a
      *            WC path
      * @param rNa
      *            revision of <code>path1</code>
@@ -614,13 +613,13 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      *            revision of <code>url2</code>
      * @param recursive
      *            <span class="javakeyword">true</span> to descend recursively
-     * @param useAncestryif
+     * @param useAncestry if
      *            <span class="javakeyword">true</span> then the paths ancestry
      *            will be noticed while calculating differences, otherwise not
-     * @param resultthe
+     * @param result the
      *            target {@link java.io.OutputStream} where the differences will
      *            be written to
-     * @throws SVNExceptionif
+     * @throws SVNException if
      *             one of the following is true:
      *             <ul>
      *             <li>at least one of <code>rN</code> and <code>rM</code> is
@@ -701,7 +700,7 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * {@link SVNRevision#BASE}, then it will be a wc-against-url; otherwise, a
      * url-against-url diff.
      * 
-     * @param path1a
+     * @param path1 a
      *            WC path
      * @param rNa
      *            revision of <code>path1</code>
@@ -710,15 +709,15 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      *            <code>path1</code> (or its repository location)
      * @param rMa
      *            revision of <code>url2</code>
-     * @param depthtree
+     * @param depth tree
      *            depth to process
-     * @param useAncestryif
+     * @param useAncestry if
      *            <span class="javakeyword">true</span> then the paths ancestry
      *            will be noticed while calculating differences, otherwise not
-     * @param resultthe
+     * @param result the
      *            target {@link java.io.OutputStream} where the differences will
      *            be written to
-     * @param changeListscollection
+     * @param changeLists collection
      *            with changelist names
      * @throws SVNException in
      *             the following cases:
@@ -755,23 +754,23 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * <p>
      * Corresponds to the SVN command line client's <code>'svn diff -r N:M URL PATH'</code> command.
      * 
-     * @param url1a
+     * @param url1 a
      *            repository location URL
      * @param rNa
      *            revision of <code>url1</code>
-     * @param path2a
+     * @param path2 a
      *            WC path that is to be compared against <code>url1</code>
      * @param rMa
      *            revision of <code>path2</code>
      * @param recursive
      *            <span class="javakeyword">true</span> to descend recursively
-     * @param useAncestryif
+     * @param useAncestry if
      *            <span class="javakeyword">true</span> then the paths ancestry
      *            will be noticed while calculating differences, otherwise not
-     * @param resultthe
+     * @param result the
      *            target {@link java.io.OutputStream} where the differences will
      *            be written to
-     * @throws SVNExceptionif
+     * @throws SVNException if
      *             one of the following is true:
      *             <ul>
      *             <li>at least one of <code>rN</code> and <code>rM</code> is
@@ -852,23 +851,23 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * {@link SVNRevision#BASE}, then it will be a url-against-wc; otherwise, a
      * url-against-url diff.
      * 
-     * @param url1a
+     * @param url1 a
      *            repository location URL
      * @param rNa
      *            revision of <code>url1</code>
-     * @param path2a
+     * @param path2 a
      *            WC path that is to be compared against <code>url1</code>
      * @param rMa
      *            revision of <code>path2</code>
-     * @param depthtree
+     * @param depth tree
      *            depth to process
-     * @param useAncestryif
+     * @param useAncestry if
      *            <span class="javakeyword">true</span> then the paths ancestry
      *            will be noticed while calculating differences, otherwise not
-     * @param resultthe
+     * @param result the
      *            target {@link java.io.OutputStream} where the differences will
      *            be written to
-     * @param changeListscollection
+     * @param changeLists collection
      *            with changelist names
      * @throws SVNException in
      *             the following cases:
@@ -917,23 +916,23 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * <code>rM</code> is compared against the repository location URL of
      * <code>path1</code> in revision <code>rN</code>.
      * 
-     * @param path1a
+     * @param path1 a
      *            WC path
      * @param rNa
      *            revision of <code>path1</code>
-     * @param path2a
+     * @param path2 a
      *            WC path that is to be compared against <code>path1</code>
      * @param rMa
      *            revision of <code>path2</code>
      * @param recursive
      *            <span class="javakeyword">true</span> to descend recursively
-     * @param useAncestryif
+     * @param useAncestry if
      *            <span class="javakeyword">true</span> then the paths ancestry
      *            will be noticed while calculating differences, otherwise not
-     * @param resultthe
+     * @param result the
      *            target {@link java.io.OutputStream} where the differences will
      *            be written to
-     * @throws SVNExceptionif
+     * @throws SVNException if
      *             one of the following is true:
      *             <ul>
      *             <li>at least one of <code>rN</code> and <code>rM</code> is
@@ -1023,23 +1022,23 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * wc-against-url or url-against-wc diff correspondingly; if neither - a
      * url-against-url diff.
      * 
-     * @param path1a
+     * @param path1 a
      *            WC path
      * @param rNa
      *            revision of <code>path1</code>
-     * @param path2a
+     * @param path2 a
      *            WC path that is to be compared against <code>path1</code>
      * @param rMa
      *            revision of <code>path2</code>
-     * @param depthtree
+     * @param depth tree
      *            depth to process
-     * @param useAncestryif
+     * @param useAncestry if
      *            <span class="javakeyword">true</span> then the paths ancestry
      *            will be noticed while calculating differences, otherwise not
-     * @param resultthe
+     * @param result the
      *            target {@link java.io.OutputStream} where the differences will
      *            be written to
-     * @param changeListscollection
+     * @param changeLists collection
      *            with changelist names
      * @throws SVNException in
      *             the following cases:
@@ -1074,17 +1073,17 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * information to the provided handler. This method functionality is
      * equivalent to the 'svn diff --summarize' command.
      * 
-     * @param path1the
+     * @param path1 the
      *            path of a left-hand item to diff
      * @param rNa
      *            revision of <code>path1</code>
-     * @param path2the
+     * @param path2 the
      *            path of a right-hand item to diff
      * @param rMa
      *            revision of <code>path2</code>
      * @param recursivecontrols
      *            whether operation must recurse or not
-     * @param useAncestryif
+     * @param useAncestry if
      *            <span class="javakeyword">true</span> then the paths ancestry
      *            will be noticed while calculating differences, otherwise not
      * @param handlera
@@ -1128,12 +1127,12 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      *            -hand revision
      * @param rMright
      *            -hand revision
-     * @param pegRevisiona
+     * @param pegRevision a
      *            revision in which the repository location of <code>path</code>
      *            is first looked up
-     * @param depthtree
+     * @param depth tree
      *            depth to process
-     * @param useAncestryif
+     * @param useAncestry if
      *            <span class="javakeyword">true</span> then the paths ancestry
      *            will be noticed while calculating differences, otherwise not
      * @param handlera
@@ -1177,17 +1176,17 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * {@link #doDiff(File,SVNRevision,File,SVNRevision,SVNDepth,boolean,OutputStream,Collection)}
      * for a description of the other parameters.
      * 
-     * @param path1the
+     * @param path1 the
      *            path of a left-hand item to diff
      * @param rNa
      *            revision of <code>path1</code>
-     * @param path2the
+     * @param path2 the
      *            path of a right-hand item to diff
      * @param rMa
      *            revision of <code>path2</code>
-     * @param depthtree
+     * @param depth tree
      *            depth to process
-     * @param useAncestryif
+     * @param useAncestry if
      *            <span class="javakeyword">true</span> then the paths ancestry
      *            will be noticed while calculating differences, otherwise not
      * @param handlera
@@ -1226,17 +1225,17 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * to the provided handler. This method functionality is equivalent to the
      * 'svn diff --summarize' command.
      * 
-     * @param path1the
+     * @param path1 the
      *            path of a left-hand item to diff
      * @param rNa
      *            revision of <code>path1</code>
-     * @param url2the
+     * @param url2 the
      *            url of a right-hand item to diff
      * @param rMa
      *            revision of <code>url2</code>
      * @param recursivecontrols
      *            whether operation must recurse or not
-     * @param useAncestryif
+     * @param useAncestry if
      *            <span class="javakeyword">true</span> then the paths ancestry
      *            will be noticed while calculating differences, otherwise not
      * @param handlera
@@ -1267,7 +1266,7 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * {@link #doDiff(File,SVNRevision,SVNURL,SVNRevision,SVNDepth,boolean,OutputStream,Collection)}
      * for a description of the other parameters.
      * 
-     * @param path1the
+     * @param path1 the
      *            path of a left-hand item to diff
      * @param rNa
      *            revision of <code>path1</code>
@@ -1275,9 +1274,9 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      *            url as a right-hand item
      * @param rMa
      *            revision of <code>url2</code>
-     * @param depthtree
+     * @param depth tree
      *            depth to process
-     * @param useAncestryif
+     * @param useAncestry if
      *            <span class="javakeyword">true</span> then the paths ancestry
      *            will be noticed while calculating differences, otherwise not
      * @param handlera
@@ -1315,17 +1314,17 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * to the provided handler. This method functionality is equivalent to the
      * 'svn diff --summarize' command.
      * 
-     * @param url1the
+     * @param url1 the
      *            url of a left-hand item to diff
      * @param rNa
      *            revision of <code>url1</code>
-     * @param path2the
+     * @param path2 the
      *            path of a right-hand item to diff
      * @param rMa
      *            revision of <code>path2</code>
      * @param recursivecontrols
      *            whether operation must recurse or not
-     * @param useAncestryif
+     * @param useAncestry if
      *            <span class="javakeyword">true</span> then the paths ancestry
      *            will be noticed while calculating differences, otherwise not
      * @param handlera
@@ -1360,13 +1359,13 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      *            url as a left-hand item
      * @param rNa
      *            revision of <code>url1</code>
-     * @param path2the
+     * @param path2 the
      *            path of a right-hand item to diff
      * @param rMa
      *            revision of <code>path2</code>
-     * @param depthtree
+     * @param depth tree
      *            depth to process
-     * @param useAncestryif
+     * @param useAncestry if
      *            <span class="javakeyword">true</span> then the paths ancestry
      *            will be noticed while calculating differences, otherwise not
      * @param handlera
@@ -1404,17 +1403,17 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * information to the provided handler. This method functionality is
      * equivalent to the 'svn diff --summarize' command.
      * 
-     * @param url1the
+     * @param url1 the
      *            url of a left-hand item to diff
      * @param rNa
      *            revision of <code>url1</code>
-     * @param url2the
+     * @param url2 the
      *            url of a right-hand item to diff
      * @param rMa
      *            revision of <code>url2</code>
      * @param recursivecontrols
      *            whether operation must recurse or not
-     * @param useAncestryif
+     * @param useAncestry if
      *            <span class="javakeyword">true</span> then the paths ancestry
      *            will be noticed while calculating differences, otherwise not
      * @param handlera
@@ -1458,12 +1457,12 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      *            -hand revision
      * @param rMright
      *            -hand revision
-     * @param pegRevisiona
+     * @param pegRevision a
      *            revision in which the repository location of <code>path</code>
      *            is first looked up
-     * @param depthtree
+     * @param depth tree
      *            depth to process
-     * @param useAncestryif
+     * @param useAncestry if
      *            <span class="javakeyword">true</span> then the paths ancestry
      *            will be noticed while calculating differences, otherwise not
      * @param handlera
@@ -1501,17 +1500,17 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * {@link #doDiff(SVNURL,SVNRevision,SVNURL,SVNRevision,SVNDepth,boolean,OutputStream)}
      * for a description of the other parameters.
      * 
-     * @param url1the
+     * @param url1 the
      *            url of a left-hand item to diff
      * @param rNa
      *            revision of <code>url1</code>
-     * @param url2the
+     * @param url2 the
      *            url of a right-hand item to diff
      * @param rMa
      *            revision of <code>url2</code>
-     * @param depthtree
+     * @param depth tree
      *            depth to process
-     * @param useAncestryif
+     * @param useAncestry if
      *            <span class="javakeyword">true</span> then the paths ancestry
      *            will be noticed while calculating differences, otherwise not
      * @param handlera
@@ -1542,30 +1541,30 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * target path(s). If a path can be successfully merged, the status type
      * will be {@link SVNStatusType#MERGED} for that path.
      * 
-     * @param path1the
+     * @param path1 the
      *            first source path
-     * @param revision1a
+     * @param revision1 a
      *            revision of <code>path1</code>
-     * @param path2the
+     * @param path2 the
      *            second source path which URL is to be compared against the URL
      *            of <code>path1</code>
-     * @param revision2a
+     * @param revision2 a
      *            revision of <code>path2</code>
-     * @param dstPaththe
+     * @param dstPath the
      *            target path to which the result should be applied
      * @param recursive
      *            <span class="javakeyword">true</span> to descend recursively
-     * @param useAncestryif
+     * @param useAncestry if
      *            <span class="javakeyword">true</span> then the paths ancestry
      *            will be noticed while calculating differences, otherwise not
      * @param force
      *            <span class="javakeyword">true</span> to force the operation
      *            to run
-     * @param dryRunif
+     * @param dryRun if
      *            <span class="javakeyword">true</span> then only tries the
      *            operation to run (to find out if a file can be merged
      *            successfully)
-     * @throws SVNExceptionif
+     * @throws SVNException if
      *             one of the following is true:
      *             <ul>
      *             <li>at least one of <code>revision1</code> and <code>
@@ -1636,25 +1635,25 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * <p/>
      * Note: this method requires repository access.
      * 
-     * @param path1left
+     * @param path1 left
      *            -hand working copy path
-     * @param revision1revision
+     * @param revision1 revision
      *            of <code>path1</code>
-     * @param path2right
+     * @param path2 right
      *            -hand working copy path
-     * @param revision2revision
+     * @param revision2 revision
      *            of <code>path2</code>
-     * @param dstPathtarget
+     * @param dstPath target
      *            working copy path
-     * @param depthtree
+     * @param depth tree
      *            depth to process
-     * @param useAncestryif
+     * @param useAncestry if
      *            <span class="javakeyword">true</span> then the paths ancestry
      *            will be noticed while calculating differences, otherwise not
      * @param force
      *            <span class="javakeyword">true</span> to force the operation
      *            to run
-     * @param dryRunif
+     * @param dryRun if
      *            <span class="javakeyword">true</span> then runs merge without
      *            any file changes
      * @param recordOnlyif
@@ -1701,30 +1700,30 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * target path(s). If a path can be successfully merged, the status type
      * will be {@link SVNStatusType#MERGED} for that path.
      * 
-     * @param path1the
+     * @param path1 the
      *            first source - a WC path
-     * @param revision1a
+     * @param revision1 a
      *            revision of <code>path1</code>
-     * @param url2the
+     * @param url2 the
      *            second source - a URL that is to be compared against the URL
      *            of <code>path1</code>
-     * @param revision2a
+     * @param revision2 a
      *            revision of <code>url2</code>
-     * @param dstPaththe
+     * @param dstPath the
      *            target path to which the result should be applied
      * @param recursive
      *            <span class="javakeyword">true</span> to descend recursively
-     * @param useAncestryif
+     * @param useAncestry if
      *            <span class="javakeyword">true</span> then the paths ancestry
      *            will be noticed while calculating differences, otherwise not
      * @param force
      *            <span class="javakeyword">true</span> to force the operation
      *            to run
-     * @param dryRunif
+     * @param dryRun if
      *            <span class="javakeyword">true</span> then only tries the
      *            operation to run (to find out if a file can be merged
      *            successfully)
-     * @throws SVNExceptionif
+     * @throws SVNException if
      *             one of the following is true:
      *             <ul>
      *             <li>at least one of <code>revision1</code> and <code>
@@ -1794,25 +1793,25 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * <p/>
      * Note: this method requires repository access.
      * 
-     * @param path1left
+     * @param path1 left
      *            -hand item - working copy path
-     * @param revision1revision
+     * @param revision1 revision
      *            of <code>path1</code>
-     * @param url2right
+     * @param url2 right
      *            -hand item - repository url
-     * @param revision2revision
+     * @param revision2 revision
      *            of <code>url2</code>
-     * @param dstPathtarget
+     * @param dstPath target
      *            working copy path
-     * @param depthtree
+     * @param depth tree
      *            depth to process
-     * @param useAncestryif
+     * @param useAncestry if
      *            <span class="javakeyword">true</span> then the paths ancestry
      *            will be noticed while calculating differences, otherwise not
      * @param force
      *            <span class="javakeyword">true</span> to force the operation
      *            to run
-     * @param dryRunif
+     * @param dryRun if
      *            <span class="javakeyword">true</span> then runs merge without
      *            any file changes
      * @param recordOnlyif
@@ -1852,30 +1851,30 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * target path(s). If a path can be successfully merged, the status type
      * will be {@link SVNStatusType#MERGED} for that path.
      * 
-     * @param url1the
+     * @param url1 the
      *            first source - a URL
-     * @param revision1a
+     * @param revision1 a
      *            revision of <code>url1</code>
-     * @param path2the
+     * @param path2 the
      *            second source - a WC path that is to be compared against
      *            <code>url1</code>
-     * @param revision2a
+     * @param revision2 a
      *            revision of <code>path2</code>
-     * @param dstPaththe
+     * @param dstPath the
      *            target path to which the result should be applied
      * @param recursive
      *            <span class="javakeyword">true</span> to descend recursively
-     * @param useAncestryif
+     * @param useAncestry if
      *            <span class="javakeyword">true</span> then the paths ancestry
      *            will be noticed while calculating differences, otherwise not
      * @param force
      *            <span class="javakeyword">true</span> to force the operation
      *            to run
-     * @param dryRunif
+     * @param dryRun if
      *            <span class="javakeyword">true</span> then only tries the
      *            operation to run (to find out if a file can be merged
      *            successfully)
-     * @throws SVNExceptionif
+     * @throws SVNException if
      *             one of the following is true:
      *             <ul>
      *             <li>at least one of <code>revision1</code> and <code>
@@ -1945,25 +1944,25 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * <p/>
      * Note: this method requires repository access.
      * 
-     * @param url1left
+     * @param url1 left
      *            -hand item - repository url
-     * @param revision1revision
+     * @param revision1 revision
      *            of <code>url1</code>
-     * @param path2right
+     * @param path2 right
      *            -hand item - working copy path
-     * @param revision2revision
+     * @param revision2 revision
      *            of <code>path2</code>
-     * @param dstPathtarget
+     * @param dstPath target
      *            working copy path
-     * @param depthtree
+     * @param depth tree
      *            depth to process
-     * @param useAncestryif
+     * @param useAncestry if
      *            <span class="javakeyword">true</span> then the paths ancestry
      *            will be noticed while calculating differences, otherwise not
      * @param force
      *            <span class="javakeyword">true</span> to force the operation
      *            to run
-     * @param dryRunif
+     * @param dryRun if
      *            <span class="javakeyword">true</span> then runs merge without
      *            any file changes
      * @param recordOnlyif
@@ -2005,30 +2004,30 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * target path(s). If a path can be successfully merged, the status type
      * will be {@link SVNStatusType#MERGED} for that path.
      * 
-     * @param url1the
+     * @param url1 the
      *            first source URL
-     * @param revision1a
+     * @param revision1 a
      *            revision of <code>url1</code>
-     * @param url2the
+     * @param url2 the
      *            second source URL that is to be compared against
      *            <code>url1</code>
-     * @param revision2a
+     * @param revision2 a
      *            revision of <code>url2</code>
-     * @param dstPaththe
+     * @param dstPath the
      *            target path to which the result should be applied
      * @param recursive
      *            <span class="javakeyword">true</span> to descend recursively
-     * @param useAncestryif
+     * @param useAncestry if
      *            <span class="javakeyword">true</span> then the paths ancestry
      *            will be noticed while calculating differences, otherwise not
      * @param force
      *            <span class="javakeyword">true</span> to force the operation
      *            to run
-     * @param dryRunif
+     * @param dryRun if
      *            <span class="javakeyword">true</span> then only tries the
      *            operation to run (to find out if a file can be merged
      *            successfully)
-     * @throws SVNExceptionif
+     * @throws SVNException if
      *             one of the following is true:
      *             <ul>
      *             <li>at least one of <code>revision1</code> and <code>
@@ -2098,25 +2097,25 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * <p/>
      * Note: this method requires repository access.
      * 
-     * @param url1left
+     * @param url1 left
      *            -hand repository url
-     * @param revision1revision
+     * @param revision1 revision
      *            of <code>url1</code>
-     * @param url2right
+     * @param url2 right
      *            -hand repository url
-     * @param revision2revision
+     * @param revision2 revision
      *            of <code>url2</code>
-     * @param dstPathtarget
+     * @param dstPath target
      *            working copy path
-     * @param depthtree
+     * @param depth tree
      *            depth to process
-     * @param useAncestryif
+     * @param useAncestry if
      *            <span class="javakeyword">true</span> then the paths ancestry
      *            will be noticed while calculating differences, otherwise not
      * @param force
      *            <span class="javakeyword">true</span> to force the operation
      *            to run
-     * @param dryRunif
+     * @param dryRun if
      *            <span class="javakeyword">true</span> then runs merge without
      *            any file changes
      * @param recordOnlyif
@@ -2149,29 +2148,29 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * target path(s). If a path can be successfully merged, the status type
      * will be {@link SVNStatusType#MERGED} for that path.
      * 
-     * @param url1a
+     * @param url1 a
      *            source URL
-     * @param pegRevisiona
+     * @param pegRevision a
      *            revision in which code>url1</code> is first looked up
-     * @param revision1a
+     * @param revision1 a
      *            left-hand revision of <code>url1</code>
-     * @param revision2a
+     * @param revision2 a
      *            right-hand revision of <code>url1</code>
-     * @param dstPaththe
+     * @param dstPath the
      *            target path to which the result should be applied
      * @param recursive
      *            <span class="javakeyword">true</span> to descend recursively
-     * @param useAncestryif
+     * @param useAncestry if
      *            <span class="javakeyword">true</span> then the paths ancestry
      *            will be noticed while calculating differences, otherwise not
      * @param force
      *            <span class="javakeyword">true</span> to force the operation
      *            to run
-     * @param dryRunif
+     * @param dryRun if
      *            <span class="javakeyword">true</span> then only tries the
      *            operation to run (to find out if a file can be merged
      *            successfully)
-     * @throws SVNExceptionif
+     * @throws SVNException if
      *             one of the following is true:
      *             <ul>
      *             <li>at least one of <code>revision1</code>, <code>revision2
@@ -2207,23 +2206,23 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * <p/>
      * Note: this method requires repository access.
      * 
-     * @param url1a
+     * @param url1 a
      *            source URL
-     * @param pegRevisiona
+     * @param pegRevision a
      *            revision in which <code>url1</code> is first looked up
      * @param rangesToMergecollection
      *            of revision ranges to merge
-     * @param dstPathtarget
+     * @param dstPath target
      *            working copy path
-     * @param depthtree
+     * @param depth tree
      *            depth to process
-     * @param useAncestryif
+     * @param useAncestry if
      *            <span class="javakeyword">true</span> then the paths ancestry
      *            will be noticed while calculating differences, otherwise not
      * @param force
      *            <span class="javakeyword">true</span> to force the operation
      *            to run
-     * @param dryRunif
+     * @param dryRun if
      *            <span class="javakeyword">true</span> then only tries the
      *            operation to run (to find out if a file can be merged
      *            successfully)
@@ -2259,30 +2258,30 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * target path(s). If a path can be successfully merged, the status type
      * will be {@link SVNStatusType#MERGED} for that path.
      * 
-     * @param path1a
+     * @param path1 a
      *            source WC path
-     * @param pegRevisiona
+     * @param pegRevision a
      *            revision in which the repository location of
      *            <code>path1</code> is first looked up
-     * @param revision1a
+     * @param revision1 a
      *            left-hand revision of <code>path1</code>
-     * @param revision2a
+     * @param revision2 a
      *            right-hand revision of <code>path1</code>
-     * @param dstPaththe
+     * @param dstPath the
      *            target path to which the result should be applied
      * @param recursive
      *            <span class="javakeyword">true</span> to descend recursively
-     * @param useAncestryif
+     * @param useAncestry if
      *            <span class="javakeyword">true</span> then the paths ancestry
      *            will be noticed while calculating differences, otherwise not
      * @param force
      *            <span class="javakeyword">true</span> to force the operation
      *            to run
-     * @param dryRunif
+     * @param dryRun if
      *            <span class="javakeyword">true</span> then only tries the
      *            operation to run (to find out if a file can be merged
      *            successfully)
-     * @throws SVNExceptionif
+     * @throws SVNException if
      *             one of the following is true:
      *             <ul>
      *             <li>at least one of <code>revision1</code>, <code>revision2
@@ -2320,23 +2319,23 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * <p/>
      * Note: this method requires repository access.
      * 
-     * @param path1working
+     * @param path1 working
      *            copy path
-     * @param pegRevisiona
+     * @param pegRevision a
      *            revision in which <code>path1</code> is first looked up
      * @param rangesToMergecollection
      *            of revision ranges to merge
-     * @param dstPathtarget
+     * @param dstPath target
      *            working copy path
-     * @param depthtree
+     * @param depth tree
      *            depth to process
-     * @param useAncestryif
+     * @param useAncestry if
      *            <span class="javakeyword">true</span> then the paths ancestry
      *            will be noticed while calculating differences, otherwise not
      * @param force
      *            <span class="javakeyword">true</span> to force the operation
      *            to run
-     * @param dryRunif
+     * @param dryRun if
      *            <span class="javakeyword">true</span> then only tries the
      *            operation to run (to find out if a file can be merged
      *            successfully)
@@ -2382,13 +2381,13 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * <p/>
      * Note: this method requires repository access.
      * 
-     * @param srcPathworking
+     * @param srcPath working
      *            copy path
-     * @param pegRevisiona
+     * @param pegRevision a
      *            revision in which <code>srcPath</code> is first looked up
-     * @param dstPathtarget
+     * @param dstPath target
      *            working copy path
-     * @param dryRunif
+     * @param dryRun if
      *            <span class="javakeyword">true</span> then only tries the
      *            operation to run (to find out if a file can be merged
      *            successfully)
@@ -2426,13 +2425,13 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * <p/>
      * Note: this method requires repository access.
      * 
-     * @param srcURLrepository
+     * @param srcURL repository
      *            url
-     * @param pegRevisiona
+     * @param pegRevision a
      *            revision in which <code>srcURL</code> is first looked up
-     * @param dstPathtarget
+     * @param dstPath target
      *            working copy path
-     * @param dryRunif
+     * @param dryRun if
      *            <span class="javakeyword">true</span> then only tries the
      *            operation to run (to find out if a file can be merged
      *            successfully)
@@ -2459,11 +2458,11 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * 
      * @param pathworking
      *            copy path (merge target)
-     * @param pegRevisiona
+     * @param pegRevision a
      *            revision in which <code>path</code> is first looked up
      * @param mergeSrcURLmerge
      *            source repository url
-     * @param srcPegRevisiona
+     * @param srcpegRevision a
      *            revision in which <code>mergeSrcURL</code> is first looked up
      * @param discoverChangedPaths
      *            <span class="javakeyword">true</span> to report of all changed
@@ -2501,11 +2500,11 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * 
      * @param urlrepository
      *            url (merge target)
-     * @param pegRevisiona
+     * @param pegRevision a
      *            revision in which <code>url</code> is first looked up
      * @param mergeSrcURLmerge
      *            source repository url
-     * @param srcPegRevisiona
+     * @param srcpegRevision a
      *            revision in which <code>mergeSrcURL</code> is first looked up
      * @param discoverChangedPaths
      *            <span class="javakeyword">true</span> to report of all changed
@@ -2543,11 +2542,11 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * 
      * @param pathworking
      *            copy path (merge target)
-     * @param pegRevisiona
+     * @param pegRevision a
      *            revision in which <code>path</code> is first looked up
      * @param mergeSrcPathmerge
      *            source working copy path
-     * @param srcPegRevisiona
+     * @param srcpegRevision a
      *            revision in which <code>mergeSrcPath</code> is first looked up
      * @param discoverChangedPaths
      *            <span class="javakeyword">true</span> to report of all changed
@@ -2585,11 +2584,11 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * 
      * @param urlrepository
      *            url (merge target)
-     * @param pegRevisiona
+     * @param pegRevision a
      *            revision in which <code>url</code> is first looked up
      * @param mergeSrcPathmerge
      *            source working copy path
-     * @param srcPegRevisiona
+     * @param srcpegRevision a
      *            revision in which <code>mergeSrcPath</code> is first looked up
      * @param discoverChangedPaths
      *            <span class="javakeyword">true</span> to report of all changed
@@ -2627,11 +2626,11 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * 
      * @param pathworking
      *            copy path (merge target)
-     * @param pegRevisiona
+     * @param pegRevision a
      *            revision in which <code>path</code> is first looked up
      * @param mergeSrcURLmerge
      *            source repository url
-     * @param srcPegRevisiona
+     * @param srcpegRevision a
      *            revision in which <code>mergeSrcURL</code> is first looked up
      * @param discoverChangedPaths
      *            <span class="javakeyword">true</span> to report of all changed
@@ -2669,11 +2668,11 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * 
      * @param urlrepository
      *            url (merge target)
-     * @param pegRevisiona
+     * @param pegRevision a
      *            revision in which <code>url</code> is first looked up
      * @param mergeSrcURLmerge
      *            source repository url
-     * @param srcPegRevisiona
+     * @param srcpegRevision a
      *            revision in which <code>mergeSrcURL</code> is first looked up
      * @param discoverChangedPaths
      *            <span class="javakeyword">true</span> to report of all changed
@@ -2711,11 +2710,11 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * 
      * @param pathworking
      *            copy path (merge target)
-     * @param pegRevisiona
+     * @param pegRevision a
      *            revision in which <code>path</code> is first looked up
      * @param mergeSrcPathmerge
      *            source working copy path
-     * @param srcPegRevisiona
+     * @param srcpegRevision a
      *            revision in which <code>mergeSrcPath</code> is first looked up
      * @param discoverChangedPaths
      *            <span class="javakeyword">true</span> to report of all changed
@@ -2753,11 +2752,11 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * 
      * @param urlrepository
      *            url (merge target)
-     * @param pegRevisiona
+     * @param pegRevision a
      *            revision in which <code>url</code> is first looked up
      * @param mergeSrcPathmerge
      *            source working copy path
-     * @param srcPegRevisiona
+     * @param srcpegRevision a
      *            revision in which <code>mergeSrcPath</code> is first looked up
      * @param discoverChangedPaths
      *            <span class="javakeyword">true</span> to report of all changed
@@ -2798,7 +2797,7 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * 
      * @param pathworking
      *            copy path
-     * @param pegRevisiona
+     * @param pegRevision a
      *            revision in which <code>path</code> is first looked up
      * @return mergeinfo for <code>path</code>
      * @throws SVNException in
@@ -2851,7 +2850,7 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * 
      * @param urlrepository
      *            url
-     * @param pegRevisiona
+     * @param pegRevision a
      *            revision in which <code>url</code> is first looked up
      * @return mergeinfo for <code>url</code>
      * @throws SVNException in
@@ -2894,7 +2893,7 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * 
      * @param pathworking
      *            copy path
-     * @param pegRevisiona
+     * @param pegRevision a
      *            revision in which <code>path</code> is first looked up
      * @throws SVNException
      * @return potential merge sources for <code>path</code>
@@ -2930,7 +2929,7 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      * 
      * @param urlrepository
      *            url
-     * @param pegRevisiona
+     * @param pegRevision a
      *            revision in which <code>url</code> is first looked up
      * @throws SVNException
      * @return potential merge sources for <code>url</code>

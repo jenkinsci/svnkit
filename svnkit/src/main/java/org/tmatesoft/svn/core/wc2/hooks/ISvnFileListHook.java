@@ -6,7 +6,7 @@ import java.util.Map;
 import org.tmatesoft.svn.core.wc2.SvnList;
 
 /**
- * Interface for providing file list for directory.
+ * Implementing this interface allows to providing file list for directory.
  * 
  * @author TMate Software Ltd.
  * @version 1.7

@@ -2,6 +2,7 @@ package org.tmatesoft.svn.core.wc2;
 
 import java.io.File;
 
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -10,6 +11,69 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.SVNLogType;
 
+/**
+ * Produces a diff summary which lists the changed items between
+ * <code>source</code> in its <code>pegRevision</code>, as it changed
+ * between <code>startRevision</code> and <code>endRevision</code>,
+ * or diff summary between <code>firstSource</code> at its <code>pegRevision</code> 
+ * and <code>secondSource</code> at its <code>pegRevision</code>.
+ * Changes are produced without creating text deltas.
+ * 
+ * <ul>
+ * <li>
+ * If it is diff between <code>startRevision</code> and <code>endRevision</code> of one <code>source</code>:
+ * 
+ * <p/>
+ * <code>Source</code> can be either working copy path or URL.
+ * 
+ * <p/>
+ * If <code>pegRevision</code> is {@link SVNRevision#isValid() invalid}, behaves identically to 
+ * diff between two sources, using <code>source</code>'s path for both sources.
+ * </li>
+ * 
+ * <li>
+ * If it is diff between first <code>source</code> and second <code>source</code>:
+ * 
+ * <p/>
+ * First and second <code>sources</code> can be either working copy path or URL.
+ * 
+ * <p/>
+ * Both <code>sources</code> must represent the same node kind -- that is, if first <code>source</code> is a directory,
+ * second <code>sources</code> must also be, and if first <code>sources</code> is a file,
+ * second <code>sources</code> must also be.
+ * 
+ * </li>
+ * </ul>
+ * 
+ * The operation may report false positives if <code>ignoreAncestry</code> is
+ * <code>false</code>, since a file might have been
+ * modified between two revisions, but still have the same contents.
+ * 
+ * <p/>
+ * If <code>depth</code> is {@link SVNDepth#INFINITY}, diffs fully
+ * recursively. Else if it is {@link SVNDepth#IMMEDIATES}, diffs the named
+ * paths and their file children (if any), and diffs properties of
+ * subdirectories, but does not descend further into the subdirectories.
+ * Else if {@link SVNDepth#FILES}, behaves as if for
+ * {@link SVNDepth#IMMEDIATES} except doesn't diff properties of
+ * subdirectories. If {@link SVNDepth#EMPTY}, diffs exactly the named paths
+ * but nothing underneath them.
+ * 
+ * <p/>
+ * {@link #run()} method throws {@link SVNException} in the following cases:
+ *             <ul>
+ *             <li/>exception with {@link SVNErrorCode#CLIENT_BAD_REVISION}
+ *             error code - if either <code>startRevision</code> or <code>endRevision</code> is
+ *             {@link SVNRevision#isValid() invalid} 
+ *             <li/>exception with
+ *             {@link SVNErrorCode#UNSUPPORTED_FEATURE} error code - if
+ *             either of <code>startRevision</code> or </code>endRevision</code> is either
+ *             {@link SVNRevision#WORKING} or {@link SVNRevision#BASE}
+ *             </ul>
+ * 
+ * @author TMate Software Ltd.
+ * @version 1.7
+ */
 public class SvnDiffSummarize extends SvnReceivingOperation<SvnDiffStatus> {
 
     private SvnTarget firstSource;
@@ -24,6 +88,14 @@ public class SvnDiffSummarize extends SvnReceivingOperation<SvnDiffStatus> {
     protected SvnDiffSummarize(SvnOperationFactory factory) {
         super(factory);
     }
+    
+    /**
+     * Sets the diff's <code>source</code> with start and end revisions for one-source type of operation.
+     * 
+     * @param source source of the diff 
+     * @param start start revision of the diff
+     * @param end end revision of the diff
+     */
     public void setSource(SvnTarget source, SVNRevision start, SVNRevision end) {
         this.source = source;
         this.startRevision = start;
@@ -33,6 +105,12 @@ public class SvnDiffSummarize extends SvnReceivingOperation<SvnDiffStatus> {
         }
     }
     
+    /**
+     * Sets both diff's <code>sources</code>. 
+     * 
+     * @param source1 first source of the diff 
+     * @param source2 second source of the diff
+     */
     public void setSources(SvnTarget source1, SvnTarget source2) {
         this.firstSource = source1;
         this.secondSource = source2;
@@ -41,6 +119,11 @@ public class SvnDiffSummarize extends SvnReceivingOperation<SvnDiffStatus> {
         }
     }
     
+    /**
+     * Gets the diff's <code>source</code> with start and end revisions for one-target type of operation.
+     * 
+     * @return source of the diff 
+     */
     public SvnTarget getSource() {
         return source;
     }
