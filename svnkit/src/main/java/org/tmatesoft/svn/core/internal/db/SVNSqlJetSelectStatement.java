@@ -101,7 +101,7 @@ public class SVNSqlJetSelectStatement extends SVNSqlJetTableStatement {
             if (next && !pathScopeMatches()) {
                 return false;
             }
-        } while(!pathIsDecendant());
+        } while(next && !pathIsDecendant());
         
         while (next && !isFilterPassed()) {
             do {
@@ -110,7 +110,7 @@ public class SVNSqlJetSelectStatement extends SVNSqlJetTableStatement {
                 if (next && !pathScopeMatches()) {
                     return false;
                 }
-            } while(!pathIsDecendant());
+            } while(next && !pathIsDecendant());
         }
         return next;
     }
@@ -162,7 +162,7 @@ public class SVNSqlJetSelectStatement extends SVNSqlJetTableStatement {
             if (!eof && !pathScopeMatches()) {
                 return true;
             }
-        } while(!pathIsDecendant());
+        } while(!eof && !pathIsDecendant());
             
         while (!eof && !isFilterPassed()) {
             do {
@@ -172,7 +172,7 @@ public class SVNSqlJetSelectStatement extends SVNSqlJetTableStatement {
                     return true;
                 }
                 
-            } while(!pathIsDecendant());
+            } while(!eof && !pathIsDecendant());
         }
         return eof;
     }
