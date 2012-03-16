@@ -549,6 +549,7 @@ public class SVNCommitClient extends SVNBasicClient {
         svnImport.setRevisionProperties(revisionProperties);
         svnImport.addTarget(SvnTarget.fromURL(dstURL));
         svnImport.setSource(path);
+        svnImport.setDepth(depth);
         svnImport.setUseGlobalIgnores(useGlobalIgnores);
         
         return svnImport.run();
