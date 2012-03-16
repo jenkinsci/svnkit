@@ -31,12 +31,7 @@ public class SVNWCDbUpdateNodeFileinfo extends SVNSqlJetUpdateStatement {
 
     public SVNWCDbUpdateNodeFileinfo(SVNSqlJetDb sDb) throws SVNException {
         super(sDb, SVNWCDbSchema.NODES);
-        maxOpDepth = new SVNWCDbNodesMaxOpDepth(sDb) {
-
-            protected boolean isFilterPassed() throws SVNException {
-                return true;
-            };
-        };
+        maxOpDepth = new SVNWCDbNodesMaxOpDepth(sDb, 0);
     }
 
     protected Object[] getWhere() throws SVNException {

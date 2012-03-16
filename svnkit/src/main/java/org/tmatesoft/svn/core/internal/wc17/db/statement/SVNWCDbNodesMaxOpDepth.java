@@ -43,9 +43,11 @@ public class SVNWCDbNodesMaxOpDepth extends SVNSqlJetSelectStatement {
         try {
             c = getTable().lookup(null, wcId, localRelpath);
             c = c.reverse();
-            long rowDepth = c.getInteger(SVNWCDbSchema.NODES__Fields.op_depth.toString());
-            if (rowDepth >= minDepth) {
-                return rowDepth;
+            if (!c.eof()) {
+                long rowDepth = c.getInteger(SVNWCDbSchema.NODES__Fields.op_depth.toString());
+                if (rowDepth >= minDepth) {
+                    return rowDepth;
+                }
             }
         } catch (SqlJetException e) {
             SVNSqlJetDb.createSqlJetError(e);
