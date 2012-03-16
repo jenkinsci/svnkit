@@ -11,6 +11,8 @@
  */
 package org.tmatesoft.svn.core.internal.wc17.db.statement;
 
+import org.tmatesoft.sqljet.core.SqlJetException;
+import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectStatement;
@@ -37,28 +39,23 @@ public class SVNWCDbNodesMaxOpDepth extends SVNSqlJetSelectStatement {
     }
 
     public Long getMaxOpDepth(Long wcId, String localRelpath) throws SVNException {
-        // TODO use just reverse cursor.
+        ISqlJetCursor c = null;
         try {
-            bindLong(1, wcId);
-            bindString(2, localRelpath);
-            long maxOpDepth = Long.MIN_VALUE;
-            boolean empty = true;
-            while (next()) {
-                if (empty) {
-                    empty = false;
-                }
-                long opDepth = getColumnLong(SVNWCDbSchema.NODES__Fields.op_depth);
-                if (maxOpDepth < opDepth) {
-                    maxOpDepth = opDepth;
-                }
+            c = getTable().lookup(null, wcId, localRelpath);
+            c = c.reverse();
+            long rowDepth = c.getInteger(SVNWCDbSchema.NODES__Fields.op_depth.toString());
+            if (rowDepth >= minDepth) {
+                return rowDepth;
             }
-            if (empty) {
-                return null;
-            }
-            return maxOpDepth;
+        } catch (SqlJetException e) {
+            SVNSqlJetDb.createSqlJetError(e);
         } finally {
-            reset();
+            try {
+                c.close();
+            } catch (SqlJetException e) {
+            }
         }
+        return null;
     }
 
 }
