@@ -157,7 +157,7 @@ public class SVNSqlJetSelectStatement extends SVNSqlJetTableStatement {
     public boolean eof() throws SVNException {
         boolean eof = true;
         do {
-            eof = super.eof();
+            eof = eof ? super.eof() : !super.next();
             loadRowValues(!eof);
             if (!eof && !pathScopeMatches()) {
                 return true;
