@@ -835,7 +835,6 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
                     childStatus == SVNWCDbStatus.Excluded) {
                 wcContext.getDb().opCopy(childSrcPath, childDstPath, null);                
             } else {
-                System.out.println("child status: " + childStatus);
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS, 
                         "Cannot copy ''{0}'' excluded by server", childSrcPath);
                 SVNErrorManager.error(err, SVNLogType.WC);
