@@ -41,7 +41,6 @@ import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.PristineInfo;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNConflictDescription;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.core.wc2.SvnChecksum;
 import org.tmatesoft.svn.util.SVNLogType;
@@ -835,9 +834,6 @@ public interface ISVNWCDb {
     void opCopyFile(File localAbsPath, SVNProperties props, long changedRev, SVNDate changedDate, String changedAuthor, File originalReposRelPath, SVNURL originalRootUrl, String originalUuid,
             long originalRevision, SvnChecksum checksum, SVNSkel conflict, SVNSkel workItems) throws SVNException;
 
-    void opCopySymlink(File localAbsPath, SVNProperties props, long changedRev, SVNDate changedDate, String changedAuthor, File originalReposRelPath, SVNURL originalRootUrl, String originalUuid,
-            long originalRevision, File target, SVNSkel conflict, SVNSkel workItems) throws SVNException;
-
     /**
      * Add a new versioned directory. A list of children is NOT passed since
      * they are added in future, distinct calls to opAddDirectory(). Tthis is
@@ -908,9 +904,6 @@ public interface ISVNWCDb {
 
     /** use NULL to remove from a changelist. */
     void opSetChangelist(File localAbsPath, String changelistName, String[] changeLists, SVNDepth depth,  ISVNEventHandler handler) throws SVNException;
-
-    /** caller maintains ACTUAL. we're just recording state. */
-    void opMarkConflict(File localAbsPath) throws SVNException;
 
     /**
      * caller maintains ACTUAL, and how the resolution occurred. we're just
@@ -1670,8 +1663,6 @@ public interface ISVNWCDb {
     void opDeleteTemp(File localAbspath) throws SVNException;
 
     File getWCRootTempDir(File localAbspath) throws SVNException;
-
-    void opSetFileExternal(File localAbspath, File fileExternalReposRelpath, SVNRevision fileExternalPegRev, SVNRevision fileExternalRev) throws SVNException;
 
     void opRemoveWorkingTemp(File localAbspath) throws SVNException;
 

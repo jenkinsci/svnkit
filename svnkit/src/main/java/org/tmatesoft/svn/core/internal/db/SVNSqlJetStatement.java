@@ -199,6 +199,7 @@ public abstract class SVNSqlJetStatement {
         binds.set(i - 1, string);
     }
 
+    @SuppressWarnings("unchecked")
     public void bindProperties(int i, SVNProperties props) throws SVNException {
         adjustBinds(i);
         binds.set(i - 1, props != null ? SVNSkel.createPropList(props.asMap()).unparse() : null);
