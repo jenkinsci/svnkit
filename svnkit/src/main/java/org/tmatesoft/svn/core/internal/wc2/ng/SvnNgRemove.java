@@ -32,27 +32,24 @@ public class SvnNgRemove extends SvnNgOperationRunner<Void, SvnScheduleForRemova
 
     @Override
     protected Void run(SVNWCContext context) throws SVNException {
-        
         for(SvnTarget target : getOperation().getTargets()) {
-            File path = target.getFile();
-            checkCancelled();
-            
-            File lockRoot = getWcContext().acquireWriteLock(path, true, true);
+            final File path = target.getFile();
+            checkCancelled();            
+            final File lockRoot = getWcContext().acquireWriteLock(path, true, true);
             try {
                 if (!getOperation().isForce() && getOperation().isDeleteFiles()) {
                     checkCanDelete(getOperation().getOperationFactory(), context, path);
                 }
                 if (!getOperation().isDryRun()) {
-                    delete(context, path, !getOperation().isDeleteFiles(), true, this);
+                    delete(context, path, !getOperation().isDeleteFiles(), true, getOperation().getEventHandler());
                 }
             } finally {
                 getWcContext().releaseWriteLock(lockRoot);
             }
         }
-        
         return null;
     }
-    
+
     public static void checkCanDelete(SvnOperationFactory opFactory, SVNWCContext context, File path) throws SVNException {
         Structure<ExternalNodeInfo> info = null;
         try {

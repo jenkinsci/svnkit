@@ -53,14 +53,9 @@ public class SVNWCDBSelectExternalProperties extends SVNSqlJetSelectStatement {
         if (!"normal".equals(getColumnString(SVNWCDbSchema.NODES__Fields.presence))) {
             return false;
         }
-        String selectPath = (String) getBind(2);
-        if ("".equals(selectPath)) {
-            return hasMaxOpDepth();
-        }
-        String rowPath = getColumnString(NODES__Fields.local_relpath);
-        return (selectPath.equals(rowPath) || rowPath.startsWith(selectPath + "/")) && hasMaxOpDepth();
+        return hasMaxOpDepth();
     }
-
+    
     private boolean hasMaxOpDepth() throws SVNException {
         long rowOpDepth = getColumnLong(SVNWCDbSchema.NODES__Fields.op_depth);
         Long maxOpDepth = maxOpDepthSelect.getMaxOpDepth(getColumnLong(NODES__Fields.wc_id), 
@@ -90,6 +85,11 @@ public class SVNWCDBSelectExternalProperties extends SVNSqlJetSelectStatement {
 
     protected Object[] getWhere() throws SVNException {        
         return new Object[] {getBind(1)};
+    }
+
+    @Override
+    protected String getPathScope() {
+        return (String) getBind(2);
     }
 
 }

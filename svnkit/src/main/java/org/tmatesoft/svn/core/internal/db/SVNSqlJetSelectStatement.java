@@ -23,6 +23,7 @@ import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 import org.tmatesoft.sqljet.core.schema.ISqlJetColumnDef;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 
 /**
  * @version 1.4
@@ -52,11 +53,29 @@ public class SVNSqlJetSelectStatement extends SVNSqlJetTableStatement {
 
     protected ISqlJetCursor openCursor() throws SVNException {
         try {
-            return getTable().lookup(getIndexName(), getWhere());
+            Object[] where = getWhere();
+            if (isPathScoped()) {
+                where = new Object[] {where[0], getPathScope()};
+                return getTable().scope(getIndexName(), where, null);
+            }
+            return getTable().lookup(getIndexName(), where);
         } catch (SqlJetException e) {
             SVNSqlJetDb.createSqlJetError(e);
             return null;
         }
+    }
+
+    private boolean isPathScoped() throws SVNException {
+        Object[] where = getWhere();
+        return getPathScope() != null && SVNWCDbSchema.NODES.toString().equals(getTableName()) && where.length == 1;
+    }
+    
+    protected String getPathScope() {
+        return null;
+    }
+
+    protected boolean isStrictiDescendant() {
+        return false;
     }
 
     protected String getIndexName() {
@@ -75,13 +94,60 @@ public class SVNSqlJetSelectStatement extends SVNSqlJetTableStatement {
     }
 
     public boolean next() throws SVNException {
-        boolean next = super.next();
-        loadRowValues(next);
-        while (next && !isFilterPassed()) {
+        boolean next = false;
+        do {
             next = super.next();
             loadRowValues(next);
+            if (next && !pathScopeMatches()) {
+                return false;
+            }
+        } while(!pathIsDecendant());
+        
+        while (next && !isFilterPassed()) {
+            do {
+                next = super.next();
+                loadRowValues(next);
+                if (next && !pathScopeMatches()) {
+                    return false;
+                }
+            } while(!pathIsDecendant());
         }
         return next;
+    }
+
+    private boolean pathScopeMatches() throws SVNException {
+        if (isPathScoped()) {
+            final String rowPath = getRowPath();
+            if ("".equals(getPathScope()) && !(isStrictiDescendant() && "".equals(rowPath))) {
+                return true;
+            }
+            if (rowPath != null) {
+                return (!isStrictiDescendant() && getPathScope().equals(rowPath)) || rowPath.startsWith(getPathScope());
+            }
+            return false;
+        }
+        return true;
+    }
+
+    private boolean pathIsDecendant() throws SVNException {
+        if (isPathScoped()) {
+            final String rowPath = getRowPath();
+            if (rowPath != null) {
+                if ("".equals(getPathScope()) && !(isStrictiDescendant() && "".equals(rowPath))) {
+                    return true;
+                }
+                return (!isStrictiDescendant() && getPathScope().equals(rowPath)) || rowPath.startsWith(getPathScope() + "/");
+            }
+            return false;
+        }
+        return true;
+    }
+
+    private String getRowPath() {
+        if (SVNWCDbSchema.NODES__Indices.I_NODES_PARENT.toString().equals(getIndexName())) {
+            return (String) rowValues.get(SVNWCDbSchema.NODES__Fields.parent_relpath.toString());
+        }
+        return (String) rowValues.get(SVNWCDbSchema.NODES__Fields.local_relpath.toString());
     }
 
     protected boolean isFilterPassed() throws SVNException {
@@ -89,11 +155,24 @@ public class SVNSqlJetSelectStatement extends SVNSqlJetTableStatement {
     }
 
     public boolean eof() throws SVNException {
-        boolean eof = super.eof();
-        loadRowValues(!eof);
-        while (!eof && !isFilterPassed()) {
-            eof = !super.next();
+        boolean eof = true;
+        do {
+            eof = super.eof();
             loadRowValues(!eof);
+            if (!eof && !pathScopeMatches()) {
+                return true;
+            }
+        } while(!pathIsDecendant());
+            
+        while (!eof && !isFilterPassed()) {
+            do {
+                eof = !super.next();
+                loadRowValues(!eof);
+                if (!eof && !pathScopeMatches()) {
+                    return true;
+                }
+                
+            } while(!pathIsDecendant());
         }
         return eof;
     }
@@ -105,8 +184,6 @@ public class SVNSqlJetSelectStatement extends SVNSqlJetTableStatement {
             rowValues.clear();
         }
     }
-    
-    
 
     public Map<String, Object> getRowValues2(Map<String, Object> v) throws SVNException {
         v = v == null ? new HashMap<String, Object>() : v;

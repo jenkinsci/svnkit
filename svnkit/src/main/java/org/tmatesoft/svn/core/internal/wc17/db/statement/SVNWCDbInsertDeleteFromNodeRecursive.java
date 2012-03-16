@@ -44,30 +44,22 @@ public class SVNWCDbInsertDeleteFromNodeRecursive extends SVNSqlJetInsertStateme
             };
 
             protected boolean isFilterPassed() throws SVNException {
-                if (isColumnNull(SVNWCDbSchema.NODES__Fields.wc_id)) {
-                    return false;
-                }
-                if (isColumnNull(SVNWCDbSchema.NODES__Fields.local_relpath)) {
-                    return false;
-                }
-                long selectDepth = (Long) SVNWCDbInsertDeleteFromNodeRecursive.this.getBind(3);
-                long rowDepth = getColumnLong(SVNWCDbSchema.NODES__Fields.op_depth);
+                final long selectDepth = (Long) SVNWCDbInsertDeleteFromNodeRecursive.this.getBind(3);
+                final long rowDepth = getColumnLong(SVNWCDbSchema.NODES__Fields.op_depth);
                 if (rowDepth != selectDepth) {
                     return false;
                 }
-                
-                String selectPath = SVNWCDbInsertDeleteFromNodeRecursive.this.getBind(2).toString();
-                String rowPath = getColumnString(SVNWCDbSchema.NODES__Fields.local_relpath);
-                if (!(selectPath.equals(rowPath) || rowPath.startsWith(selectPath + '/'))) {
-                    return false;
-                }
-                
-                String rowPresence = getColumnString(SVNWCDbSchema.NODES__Fields.presence);
+                final String rowPresence = getColumnString(SVNWCDbSchema.NODES__Fields.presence);
                 if (!"base-deleted".equals(rowPresence) && !"not-present".equals(rowPresence) && !"exclude".equals(rowPresence) && !"absent".equals(rowPresence)) {
                     return true;
                 }
                 return false;
             };
+
+            @Override
+            protected String getPathScope() {
+                return (String) getBind(2);
+            }
             
             protected void defineFields() {
                 fields.add(SVNWCDbSchema.NODES__Fields.wc_id);
@@ -77,7 +69,6 @@ public class SVNWCDbInsertDeleteFromNodeRecursive extends SVNSqlJetInsertStateme
                 fields.add(SVNWCDbSchema.NODES__Fields.presence);
                 fields.add(SVNWCDbSchema.NODES__Fields.kind);
             }
-
         };
     }
 
@@ -87,6 +78,7 @@ public class SVNWCDbInsertDeleteFromNodeRecursive extends SVNSqlJetInsertStateme
         try {
             while (select.next()) {
                 super.exec();
+                n++;
             }
         } finally {
             select.reset();
@@ -107,7 +99,4 @@ public class SVNWCDbInsertDeleteFromNodeRecursive extends SVNSqlJetInsertStateme
         insertValues.put(SVNWCDbSchema.NODES__Fields.parent_relpath.toString(), rowValues.get(SVNWCDbSchema.NODES__Fields.parent_relpath.toString()));
         insertValues.put(SVNWCDbSchema.NODES__Fields.kind.toString(), rowValues.get(SVNWCDbSchema.NODES__Fields.kind.toString()));
         return insertValues;
-    }
-
-
-}
+    }}

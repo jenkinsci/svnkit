@@ -3,8 +3,6 @@ package org.tmatesoft.svn.core.internal.wc17.db.statement;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.tmatesoft.sqljet.core.SqlJetException;
-import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetInsertStatement;
@@ -21,51 +19,39 @@ public class SVNWCDbInsertDeleteList extends SVNSqlJetInsertStatement {
         super(sDb.getTemporaryDb(), SVNWCDbSchema.DELETE_LIST);
 
         this.select = new SVNSqlJetSelectStatement(sDb, SVNWCDbSchema.NODES) {
-            long previousDepth = -1;
-            
             @Override
             protected Object[] getWhere() throws SVNException {
                 return new Object[] {getBind(1)};
             }
 
-            @Override
-            protected ISqlJetCursor openCursor() throws SVNException {
-                try {
-                    return super.openCursor().reverse();
-                } catch (SqlJetException e) {
-                    SVNSqlJetDb.createSqlJetError(e);
-                    return null;
-                }
+            private boolean isMaxOpDepth(long opDepth) throws SVNException {
+                SVNWCDbNodesMaxOpDepth stmt = new SVNWCDbNodesMaxOpDepth(sDb, 0);
+                Long maxOpDepth = stmt.getMaxOpDepth((Long) getBind(1), getColumnString(SVNWCDbSchema.NODES__Fields.local_relpath)); 
+                return maxOpDepth != null && maxOpDepth == opDepth;
             }
-            
             @Override
             protected boolean isFilterPassed() throws SVNException {
-                long selectOpDepth = (Long) getBind(3);
-                if (previousDepth > selectOpDepth) {
-                    return false;
-                }
-                previousDepth = selectOpDepth;
-                String presence = getColumnString(NODES__Fields.presence);
+                final String presence = getColumnString(NODES__Fields.presence);
                 if ("base-deleted".equals(presence) ||
                     "not-present".equals(presence) ||
                     "excluded".equals(presence) ||
                     "absent".equals(presence)) {
                     return false;
                 }
-                String selectPath = (String) getBind(2);
-                if (!"".equals(selectPath)) {
-                    String rowPath = getColumnString(NODES__Fields.local_relpath);
-                    if (!(selectPath.equals(rowPath) || rowPath.startsWith(selectPath + "/"))) {
-                        return false;
-                    }
-                }
-                    
+                long selectOpDepth = (Long) getBind(3);
                 long rowOpDepth = getColumnLong(NODES__Fields.op_depth);
                 if (rowOpDepth < selectOpDepth) {
                     return false;
                 }
-                return super.isFilterPassed();
+                return isMaxOpDepth(rowOpDepth);
             }
+            
+            @Override
+            protected String getPathScope() {
+                return (String) getBind(2);
+            }
+            
+            
         };
     }
 

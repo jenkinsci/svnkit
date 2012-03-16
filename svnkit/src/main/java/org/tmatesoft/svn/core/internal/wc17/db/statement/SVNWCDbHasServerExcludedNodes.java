@@ -20,16 +20,11 @@ public class SVNWCDbHasServerExcludedNodes extends SVNSqlJetSelectStatement {
         if (getColumnLong(SVNWCDbSchema.NODES__Fields.op_depth) != 0) {
             return false;
         }
-        String selectPath = (String) getBind(2);
-        if (!"".equals(getBind(2))) {
-            String rowPath = getColumnString(SVNWCDbSchema.NODES__Fields.local_relpath);
-            if (!(selectPath.equals(rowPath) || rowPath.startsWith(selectPath + "/"))) {
-                return false;
-            }
-        }
         return "absent".equals(getColumnString(SVNWCDbSchema.NODES__Fields.presence));
     }
-    
-    
 
+    @Override
+    protected String getPathScope() {
+        return (String) getBind(2);
+    }
 }
