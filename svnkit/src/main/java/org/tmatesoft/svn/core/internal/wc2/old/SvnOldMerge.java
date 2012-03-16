@@ -18,6 +18,8 @@ public class SvnOldMerge extends SvnOldRunner<Void, SvnMerge> {
         
         SVNDiffClient16 diffClient = new SVNDiffClient16(getOperation().getRepositoryPool(), getOperation().getOptions());
         diffClient.setMergeOptions(getOperation().getMergeOptions());
+        diffClient.setEventHandler(getOperation().getEventHandler());
+        
         if (getOperation().isReintegrate()) {
             if (getOperation().getSource().isURL()) {
                 diffClient.doMergeReIntegrate(
