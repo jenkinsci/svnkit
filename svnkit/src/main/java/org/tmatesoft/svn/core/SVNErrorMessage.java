@@ -13,6 +13,8 @@ package org.tmatesoft.svn.core;
 
 import java.io.Serializable;
 import java.text.MessageFormat;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.tmatesoft.svn.core.wc.SVNBasicClient;
 
@@ -488,4 +490,22 @@ public class SVNErrorMessage implements Serializable {
         this.dontShowErrorCode = dontShowErrorCode;
     }
 
+    public SVNErrorMessage findChildWithErrorCode(SVNErrorCode errorCode) {
+        final Set<SVNErrorMessage> seen = new HashSet<SVNErrorMessage>();
+
+        for (SVNErrorMessage errorMessage = this; errorMessage != null; errorMessage = errorMessage.getChildErrorMessage()) {
+            if (seen.contains(errorMessage)) {
+                return null;
+            }
+            if (errorMessage.getErrorCode() == errorCode) {
+                return errorMessage;
+            }
+            seen.add(errorMessage);
+        }
+        return null;
+    }
+
+    public boolean hasChildWithErrorCode(SVNErrorCode errorCode) {
+        return findChildWithErrorCode(errorCode) != null;
+    }
 }

@@ -244,7 +244,7 @@ public class SVNCommitter17 implements ISVNCommitPathHandler {
                 err.getErrorCode() == SVNErrorCode.FS_TXN_OUT_OF_DATE ||
                 err.getErrorCode() == SVNErrorCode.RA_DAV_PATH_NOT_FOUND ||
                 err.getErrorCode() == SVNErrorCode.RA_DAV_ALREADY_EXISTS ||
-                e.containsCauseWithErrorCode(SVNErrorCode.RA_OUT_OF_DATE)) {
+                err.hasChildWithErrorCode(SVNErrorCode.RA_OUT_OF_DATE)) {
             if (myContext.getEventHandler() != null) {
                 SVNEvent event;
                 if (localAbspath != null) {
@@ -268,7 +268,7 @@ public class SVNCommitter17 implements ISVNCommitPathHandler {
                     localAbspath);
 
             throw new SVNException(err);
-        } else if (e.containsCauseWithErrorCode(SVNErrorCode.FS_NO_LOCK_TOKEN) ||
+        } else if (err.hasChildWithErrorCode(SVNErrorCode.FS_NO_LOCK_TOKEN) ||
                 err.getErrorCode() == SVNErrorCode.FS_LOCK_OWNER_MISMATCH ||
                 err.getErrorCode() == SVNErrorCode.RA_NOT_LOCKED) {
             if (myContext.getEventHandler() != null) {
@@ -291,7 +291,7 @@ public class SVNCommitter17 implements ISVNCommitPathHandler {
                             "File ''{0}'' is locked in another working copy",
                     localAbspath);
             throw new SVNException(err);
-        } else if (e.containsCauseWithErrorCode(SVNErrorCode.RA_DAV_FORBIDDEN) ||
+        } else if (err.hasChildWithErrorCode(SVNErrorCode.RA_DAV_FORBIDDEN) ||
                 err.getErrorCode() == SVNErrorCode.AUTHZ_UNWRITABLE) {
             if (myContext.getEventHandler() != null) {
                 SVNEvent event;
