@@ -11,6 +11,14 @@
  */
 package org.tmatesoft.svn.core.internal.io.dav.http;
 
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLHandshakeException;
+import javax.net.ssl.TrustManager;
+import javax.xml.parsers.FactoryConfigurationError;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
@@ -30,15 +38,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
-
-import javax.net.ssl.KeyManager;
-import javax.net.ssl.SSLException;
-import javax.net.ssl.SSLHandshakeException;
-import javax.net.ssl.TrustManager;
-import javax.xml.parsers.FactoryConfigurationError;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -124,6 +123,7 @@ class HTTPConnection implements IHTTPConnection {
     private long myNextRequestTimeout;
     private Collection myCookies;
     private int myRequestCount;
+    private HTTPStatus myLastStatus;
 
     public HTTPConnection(SVNRepository repository, String charset, File spoolDirectory, boolean spoolAll) throws SVNException {
         myRepository = repository;
@@ -133,6 +133,10 @@ class HTTPConnection implements IHTTPConnection {
         myIsSpoolAll = spoolAll;
         mySpoolDirectory = spoolDirectory;
         myNextRequestTimeout = Long.MAX_VALUE;
+    }
+
+    public HTTPStatus getLastStatus() {
+        return myLastStatus;
     }
     
     public SVNURL getHost() {
@@ -286,6 +290,7 @@ class HTTPConnection implements IHTTPConnection {
     }
     
     public HTTPStatus request(String method, String path, HTTPHeader header, InputStream body, int ok1, int ok2, OutputStream dst, DefaultHandler handler, SVNErrorMessage context) throws SVNException {
+        myLastStatus = null;
         myRequestCount++;
         
         if ("".equals(path) || path == null) {
@@ -320,7 +325,6 @@ class HTTPConnection implements IHTTPConnection {
         boolean negoAuthIsRequired = false;
         int authAttempts = 0;
         while (true) {
-            HTTPStatus status = null;
             if (myNextRequestTimeout < 0 || System.currentTimeMillis() >= myNextRequestTimeout) {
                 SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "Keep-Alive timeout detected");
                 close();
@@ -376,7 +380,7 @@ class HTTPConnection implements IHTTPConnection {
                     myCookies = request.getResponseHeader().getHeaderValues(HTTPHeader.COOKIE);
                 }
                 myNextRequestTimeout = request.getNextRequestTimeout();
-                status = request.getStatus();
+                myLastStatus = request.getStatus();
             } catch (SSLHandshakeException ssl) {
                 myRepository.getDebugLog().logFine(SVNLogType.NETWORK, ssl);
                 close();
@@ -431,14 +435,14 @@ class HTTPConnection implements IHTTPConnection {
 	            keyManager.acknowledgeAndClearAuthentication(null);
             }
 
-            if (status.getCode() == HttpURLConnection.HTTP_FORBIDDEN) {
+            if (myLastStatus.getCode() == HttpURLConnection.HTTP_FORBIDDEN) {
                 if (httpAuth != null && authManager != null) {
                     authManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.PASSWORD, realm, request.getErrorMessage(), httpAuth);
                 }
                 myLastValidAuth = null;
                 close();
                 err = request.getErrorMessage();
-            } else if (myIsProxied && status.getCode() == HttpURLConnection.HTTP_PROXY_AUTH) {
+            } else if (myIsProxied && myLastStatus.getCode() == HttpURLConnection.HTTP_PROXY_AUTH) {
                 Collection proxyAuthHeaders = request.getResponseHeader().getHeaderValues(HTTPHeader.PROXY_AUTHENTICATE_HEADER);
                 Collection authTypes = null;
                 if (authManager != null && authManager instanceof DefaultSVNAuthenticationManager) {
@@ -470,19 +474,19 @@ class HTTPConnection implements IHTTPConnection {
                 close();
 
                 break;
-            } else if (status.getCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
+            } else if (myLastStatus.getCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
                 authAttempts++;//how many times did we try?
                 
                 Collection authHeaderValues = request.getResponseHeader().getHeaderValues(HTTPHeader.AUTHENTICATE_HEADER);
                 if (authHeaderValues == null || authHeaderValues.size() == 0) {
                     err = request.getErrorMessage();
-                    status.setError(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, err.getMessageTemplate(), err.getRelatedObjects()));
+                    myLastStatus.setError(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, err.getMessageTemplate(), err.getRelatedObjects()));
                     if ("LOCK".equalsIgnoreCase(method)) {
-                        status.getError().setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
+                        myLastStatus.getError().setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
                                 "Probably you are trying to lock file in repository that only allows anonymous access"));
                     }
-                    SVNErrorManager.error(status.getError(), SVNLogType.NETWORK);
-                    return status;  
+                    SVNErrorManager.error(myLastStatus.getError(), SVNLogType.NETWORK);
+                    return myLastStatus;
                 }
 
                 //we should work around a situation when a server
@@ -579,7 +583,7 @@ class HTTPConnection implements IHTTPConnection {
                     myChallengeCredentials.setCredentials((SVNPasswordAuthentication) httpAuth);
                 }
                 continue;
-            } else if (status.getCode() == HttpURLConnection.HTTP_MOVED_PERM || status.getCode() == HttpURLConnection.HTTP_MOVED_TEMP) {
+            } else if (myLastStatus.getCode() == HttpURLConnection.HTTP_MOVED_PERM || myLastStatus.getCode() == HttpURLConnection.HTTP_MOVED_TEMP) {
                 String newLocation = request.getResponseHeader().getFirstHeaderValue(HTTPHeader.LOCATION_HEADER);
                 if (newLocation == null) {
                     err = request.getErrorMessage();
@@ -636,8 +640,8 @@ class HTTPConnection implements IHTTPConnection {
                 ((ISVNAuthenticationManagerExt)authManager).acknowledgeConnectionSuccessful(myRepository.getLocation());
             }
 
-            status.setHeader(request.getResponseHeader());
-            return status;
+            myLastStatus.setHeader(request.getResponseHeader());
+            return myLastStatus;
         }
         // force close on error that was not processed before.
         // these are errors that has no relation to http status (processing error or cancellation).

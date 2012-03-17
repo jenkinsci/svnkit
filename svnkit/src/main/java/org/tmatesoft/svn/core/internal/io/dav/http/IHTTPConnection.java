@@ -36,6 +36,8 @@ public interface IHTTPConnection {
 
     public HTTPStatus request(String method, String path, HTTPHeader header, InputStream body, int ok1, int ok2, OutputStream dst, DefaultHandler handler, SVNErrorMessage context) throws SVNException;
 
+    public HTTPStatus getLastStatus();
+
     public SVNAuthentication getLastValidCredentials();
 
     public void clearAuthenticationCache();

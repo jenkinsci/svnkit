@@ -70,6 +70,7 @@ public class DAVConnection {
     protected Map myLocks;
     protected Map myCapabilities;
     protected IHTTPConnectionFactory myConnectionFactory;
+    private HTTPStatus myLastStatus;
 
     public DAVConnection(IHTTPConnectionFactory connectionFactory, SVNRepository repository) {
         myRepository = repository;
@@ -86,6 +87,10 @@ public class DAVConnection {
     
     public SVNURL getLocation() {
         return myRepository.getLocation();
+    }
+
+    public HTTPStatus getLastStatus() {
+        return myLastStatus;
     }
     
     public void updateLocation() {
@@ -122,17 +127,19 @@ public class DAVConnection {
     }    
     
     public HTTPStatus doPropfind(String path, HTTPHeader header, StringBuffer body, DefaultHandler handler) throws SVNException {
+        beforeCall();
         IHTTPConnection httpConnection = getConnection();
-        return httpConnection.request("PROPFIND", path, header, body, -1, 0, null, handler);
+        return performHttpRequest(httpConnection, "PROPFIND", path, header, body, -1, 0, null, handler);
     }
     
     public SVNLock doGetLock(String path, DAVRepository repos) throws SVNException {
+        beforeCall();
         DAVBaselineInfo info = DAVUtil.getBaselineInfo(this, repos, path, -1, false, true, null);
         StringBuffer body = DAVLockHandler.generateGetLockRequest(null);
         DAVLockHandler handler = new DAVLockHandler();
         SVNErrorMessage context = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Failed to fetch lock information");
         IHTTPConnection httpConnection = getConnection();
-        HTTPStatus rc = httpConnection.request("PROPFIND", path, null, body, 200, 207, null, handler, context);
+        HTTPStatus rc = performHttpRequest(httpConnection, "PROPFIND", path, null, body, 200, 207, null, handler, context);
         
         String id = handler.getID();
         if (id == null) {
@@ -179,6 +186,7 @@ public class DAVConnection {
     }
 
     public SVNLock doLock(String path, DAVRepository repos, String comment, boolean force, long revision) throws SVNException {
+        beforeCall();
         DAVBaselineInfo info = DAVUtil.getBaselineInfo(this, repos, path, -1, false, true, null);
 
         StringBuffer body = DAVLockHandler.generateSetLockRequest(null, comment);
@@ -196,7 +204,7 @@ public class DAVConnection {
         DAVLockHandler handler = new DAVLockHandler();
         SVNErrorMessage context = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Lock request failed");
         IHTTPConnection httpConnection = getConnection();
-        HTTPStatus status = httpConnection.request("LOCK", path, header, body, -1, 0, null, handler, context);
+        HTTPStatus status = performHttpRequest(httpConnection, "LOCK", path, header, body, -1, 0, null, handler, context);
         if (status != null) {
             if (status.getError() != null) {
                 SVNErrorManager.error(status.getError(), SVNLogType.NETWORK);
@@ -217,6 +225,7 @@ public class DAVConnection {
     }
 
     public void doUnlock(String path, DAVRepository repos, String id, boolean force) throws SVNException {
+        beforeCall();
         if (id == null) {
             SVNLock lock = doGetLock(path, repos);
             if (lock != null) {
@@ -234,7 +243,7 @@ public class DAVConnection {
         }
         SVNErrorMessage context = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Unlock request failed");
         IHTTPConnection httpConnection = getConnection();
-        HTTPStatus status = httpConnection.request("UNLOCK", path, header, (StringBuffer) null, -1, 0, null, null, context);
+        HTTPStatus status = performHttpRequest(httpConnection, "UNLOCK", path, header, (StringBuffer) null, -1, 0, null, null, context);
         
         if (status != null) {
             if (status.getCode() == 400) {
@@ -255,12 +264,14 @@ public class DAVConnection {
     }
 
 	public void doGet(String path, OutputStream os) throws SVNException {
+	    beforeCall();
         SVNErrorMessage context = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "GET request failed for ''{0}''", path);
         IHTTPConnection httpConnection = getConnection();
-        httpConnection.request("GET", path, null, (StringBuffer) null, 200, 226, os, null, context);
+        performHttpRequest(httpConnection, "GET", path, null, (StringBuffer) null, 200, 226, os, null, context);
     }
 
 	public void doGet(String path, String deltaBaseVersionURL, OutputStream os) throws SVNException {
+	    beforeCall();
         HTTPHeader header = null;
         if (deltaBaseVersionURL != null) {
             header = new HTTPHeader();
@@ -270,7 +281,7 @@ public class DAVConnection {
 	    SVNErrorMessage context = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, 
 	            "GET request failed for ''{0}''", path);
 	    IHTTPConnection httpConnection = getConnection();
-	    httpConnection.request("GET", path, header, (StringBuffer) null, 200, 226, os, null, context);
+	    performHttpRequest(httpConnection, "GET", path, header, (StringBuffer) null, 200, 226, os, null, context);
     }
 	
     public HTTPStatus doReport(String path, StringBuffer requestBody, DefaultHandler handler) throws SVNException {
@@ -278,18 +289,20 @@ public class DAVConnection {
     }
 
     public HTTPStatus doReport(String path, StringBuffer requestBody, DefaultHandler handler, boolean spool) throws SVNException {
+        beforeCall();
         IHTTPConnection httpConnection = getConnection();
         httpConnection.setSpoolResponse(spool || isReportResponseSpooled());
         try {
             HTTPHeader header = new HTTPHeader();
             header.addHeaderValue(HTTPHeader.ACCEPT_ENCODING_HEADER, "svndiff1;q=0.9,svndiff;q=0.8");
-            return httpConnection.request("REPORT", path, header, requestBody, -1, 0, null, handler);
+            return performHttpRequest(httpConnection, "REPORT", path, header, requestBody, -1, 0, null, handler);
         } finally {
             httpConnection.setSpoolResponse(false);
         }
 	}
 
     public void doProppatch(String repositoryPath, String path, StringBuffer requestBody, DefaultHandler handler, SVNErrorMessage context) throws SVNException {
+        beforeCall();
         HTTPHeader header = null;
         if (myLocks != null && repositoryPath != null && myLocks.containsKey(repositoryPath)) {
             header = new HTTPHeader();
@@ -298,7 +311,7 @@ public class DAVConnection {
         
         IHTTPConnection httpConnection = getConnection();
         try {
-            httpConnection.request("PROPPATCH", path, header, requestBody, 200, 207, null, handler, context);
+            performHttpRequest(httpConnection, "PROPPATCH", path, header, requestBody, 200, 207, null, handler, context);
         } catch (SVNException e) {
             if (context == null && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_DAV_REQUEST_FAILED) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_PROPPATCH_FAILED, "At least one property change failed; repository is unchanged");
@@ -310,6 +323,7 @@ public class DAVConnection {
     }
     
     public String doMakeActivity(ISVNWorkspaceMediator mediator) throws SVNException {
+        beforeCall();
         String url = null;
         if (mediator != null) {
             SVNPropertyValue property = mediator.getWorkspaceProperty("", SVNProperty.ACTIVITY_URL);
@@ -324,12 +338,12 @@ public class DAVConnection {
         
         IHTTPConnection httpConnection = getConnection();
         String activityURL = SVNPathUtil.append(url, generateUUID());
-        HTTPStatus status = httpConnection.request("MKACTIVITY", activityURL, null, (StringBuffer) null, 201, 404, null, null);
+        HTTPStatus status = performHttpRequest(httpConnection, "MKACTIVITY", activityURL, null, (StringBuffer) null, 201, 404, null, null);
         
         if (status.getCode() == 404) {
             url = getActivityCollectionURL(locationPath, true);
             activityURL = SVNPathUtil.append(url, generateUUID());
-            status = httpConnection.request("MKACTIVITY", activityURL, null, (StringBuffer) null, 201, 0, null, null);
+            status = performHttpRequest(httpConnection, "MKACTIVITY", activityURL, null, (StringBuffer) null, 201, 0, null, null);
         }
         
         if (url != null && mediator != null) {
@@ -339,11 +353,13 @@ public class DAVConnection {
     }
     
     public HTTPStatus doDelete(String path) throws SVNException {
+        beforeCall();
         IHTTPConnection httpConnection = getConnection();
-        return httpConnection.request("DELETE", path, null, (StringBuffer) null, 404, 204, null, null);
+        return performHttpRequest(httpConnection, "DELETE", path, null, (StringBuffer) null, 404, 204, null, null);
     }
 
     public HTTPStatus doDelete(String repositoryPath, String path, long revision) throws SVNException {
+        beforeCall();
         HTTPHeader header = new HTTPHeader();
         if (revision >= 0) {
             header.setHeaderValue(HTTPHeader.SVN_VERSION_NAME_HEADER, Long.toString(revision));
@@ -365,7 +381,7 @@ public class DAVConnection {
         }
         
         IHTTPConnection httpConnection = getConnection();
-        HTTPStatus status = httpConnection.request("DELETE", path, header, request, 204, 0, null, null);
+        HTTPStatus status = performHttpRequest(httpConnection, "DELETE", path, header, request, 204, 0, null, null);
         if (status.getError() != null) {
             SVNErrorCode errCode = status.getError().getErrorCode();
             if (errCode == SVNErrorCode.FS_BAD_LOCK_TOKEN || errCode == SVNErrorCode.FS_NO_LOCK_TOKEN || 
@@ -397,7 +413,7 @@ public class DAVConnection {
                 locationPath = SVNEncodingUtil.uriEncode(locationPath);
                 
                 request = DAVMergeHandler.generateLockDataRequest(request, locationPath, repositoryPath, childTokens);
-                HTTPStatus status2 = httpConnection.request("DELETE", path, header, request, 204, 404, null, null);
+                HTTPStatus status2 = performHttpRequest(httpConnection, "DELETE", path, header, request, 204, 404, null, null);
                 if (status2.getError() != null) {
                     SVNErrorManager.error(status2.getError(), SVNLogType.NETWORK);
                 }
@@ -410,11 +426,13 @@ public class DAVConnection {
     }
 
     public HTTPStatus doMakeCollection(String path) throws SVNException {
+        beforeCall();
         IHTTPConnection httpConnection = getConnection();
-        return httpConnection.request("MKCOL", path, null, (StringBuffer) null, 201, 0, null, null);
+        return performHttpRequest(httpConnection, "MKCOL", path, null, (StringBuffer) null, 201, 0, null, null);
     }
     
-    public HTTPStatus doPutDiff(String repositoryPath, String path, InputStream data, long size, String baseChecksum, String textChecksum) throws SVNException {        
+    public HTTPStatus doPutDiff(String repositoryPath, String path, InputStream data, long size, String baseChecksum, String textChecksum) throws SVNException {
+        beforeCall();
         HTTPHeader headers = new HTTPHeader();
         headers.setHeaderValue(HTTPHeader.CONTENT_TYPE_HEADER, HTTPHeader.SVNDIFF_MIME_TYPE);
         headers.setHeaderValue(HTTPHeader.CONTENT_LENGTH_HEADER, size + "");
@@ -428,10 +446,11 @@ public class DAVConnection {
             headers.setHeaderValue(HTTPHeader.TEXT_MD5, textChecksum);
         }
         IHTTPConnection httpConnection = getConnection();
-        return httpConnection.request("PUT", path, headers, data, 201, 204, null, null);
+        return performHttpRequest(httpConnection, "PUT", path, headers, data, 201, 204, null, null);
     }
     
     public HTTPStatus doMerge(String activityURL, boolean response, DefaultHandler handler) throws SVNException {
+        beforeCall();
         String locationPath = SVNEncodingUtil.uriEncode(getLocation().getPath());
         StringBuffer request = DAVMergeHandler.generateMergeRequest(null, locationPath, activityURL, myLocks);
         HTTPHeader header = null;
@@ -447,10 +466,11 @@ public class DAVConnection {
             header.setHeaderValue(HTTPHeader.SVN_OPTIONS_HEADER, value);
         }
         IHTTPConnection httpConnection = getConnection();
-        return httpConnection.request("MERGE", getLocation().getURIEncodedPath(), header, request, -1, 0, null, handler);
+        return performHttpRequest(httpConnection, "MERGE", getLocation().getURIEncodedPath(), header, request, -1, 0, null, handler);
     }
     
     public HTTPStatus doCheckout(String activityPath, String repositoryPath, String path, boolean allow404) throws SVNException {
+        beforeCall();
         StringBuffer request = new StringBuffer();
         Collection namespaces = new LinkedList();
         namespaces.add(DAVElement.DAV_NAMESPACE);
@@ -469,8 +489,7 @@ public class DAVConnection {
         }
         
         IHTTPConnection httpConnection = getConnection(); 
-        HTTPStatus status = httpConnection.request("CHECKOUT", path, header, request, 201, allow404 ? 404 : 0, 
-                null, null);
+        HTTPStatus status = performHttpRequest(httpConnection, "CHECKOUT", path, header, request, 201, allow404 ? 404 : 0, null, null);
         if (allow404 && status.getCode() == 404 && status.getError() != null) {
             status.setError(null);
         }
@@ -483,12 +502,13 @@ public class DAVConnection {
     }
 
     public void doCopy(String src, String dst, int depth) throws SVNException {
+        beforeCall();
         HTTPHeader header = new HTTPHeader();
         header.setHeaderValue(HTTPHeader.DESTINATION_HEADER, dst);
         header.setHeaderValue(HTTPHeader.DEPTH_HEADER, depth > 0 ? "infinity" : "0");
         SVNErrorMessage context = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "COPY of {0}", src);
         IHTTPConnection httpConnection = getConnection();
-        HTTPStatus status = httpConnection.request("COPY", src, header, (StringBuffer) null, -1, 0, null, null, context);
+        HTTPStatus status = performHttpRequest(httpConnection, "COPY", src, header, (StringBuffer) null, -1, 0, null, null, context);
         if (status.getCode() >= 300 && status.getError() != null) {
             SVNErrorMessage err = status.getError();
             SVNErrorManager.error(err, SVNLogType.NETWORK);
@@ -533,7 +553,7 @@ public class DAVConnection {
     protected void exchangeCapabilities() throws SVNException {
         String path = SVNEncodingUtil.uriEncode(getLocation().getPath());
         IHTTPConnection httpConnection = getConnection();
-        HTTPStatus status = httpConnection.request("OPTIONS", path, null, (StringBuffer) null, 200, 0, null, null);
+        HTTPStatus status = performHttpRequest(httpConnection, "OPTIONS", path, null, (StringBuffer) null, 200, 0, null, null);
         if (status.getCode() == 200) {
         	parseCapabilities(status);
         } else {
@@ -579,7 +599,7 @@ public class DAVConnection {
         }
         DAVOptionsHandler handler = new DAVOptionsHandler();
         IHTTPConnection httpConnection = getConnection();
-        httpConnection.request("OPTIONS", path, null, DAVOptionsHandler.OPTIONS_REQUEST, -1, 0, null, handler);
+        performHttpRequest(httpConnection, "OPTIONS", path, null, DAVOptionsHandler.OPTIONS_REQUEST, -1, 0, null, handler);
         myActivityCollectionURL = handler.getActivityCollectionURL();
         if (myActivityCollectionURL == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_OPTIONS_REQ_FAILED, 
@@ -603,4 +623,34 @@ public class DAVConnection {
         }
     }
 
+    private void beforeCall() {
+        myLastStatus = null;
+    }
+
+    private HTTPStatus performHttpRequest(IHTTPConnection httpConnection, String method, String path, HTTPHeader header, StringBuffer body, int ok1, int ok2, OutputStream dst, DefaultHandler handler) throws SVNException {
+        myLastStatus = null;
+        try {
+            return httpConnection.request(method, path, header, body, ok1, ok2, dst, handler);
+        } finally {
+            myLastStatus = httpConnection.getLastStatus();
+        }
+    }
+
+    private HTTPStatus performHttpRequest(IHTTPConnection httpConnection, String method, String src, HTTPHeader header, StringBuffer body, int ok1, int ok2, OutputStream dst, DefaultHandler handler, SVNErrorMessage context) throws SVNException {
+        myLastStatus = null;
+        try {
+            return httpConnection.request(method, src, header, body, ok1, ok2, dst, handler, context);
+        } finally {
+            myLastStatus = httpConnection.getLastStatus();
+        }
+    }
+
+    private HTTPStatus performHttpRequest(IHTTPConnection httpConnection, String method, String path, HTTPHeader headers, InputStream data, int ok1, int ok2, OutputStream dst, DefaultHandler handler) throws SVNException {
+        myLastStatus = null;
+        try {
+            return httpConnection.request(method, path, headers, data, ok1, ok2, dst, handler);
+        } finally {
+            myLastStatus = httpConnection.getLastStatus();
+        }
+    }
 }

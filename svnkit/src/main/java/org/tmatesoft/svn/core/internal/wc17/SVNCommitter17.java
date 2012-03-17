@@ -147,7 +147,7 @@ public class SVNCommitter17 implements ISVNCommitPathHandler {
             try {
                 commitEditor.deleteEntry(commitPath, rev);
             } catch (SVNException e) {
-                fixError(commitPath, e, SVNNodeKind.FILE);
+                fixError(localAbspath, commitPath, e, SVNNodeKind.FILE);
             }
             if (!item.hasFlag(SvnCommitItem.ADD)) {
                 deletedPaths.add(localAbspath);
@@ -185,7 +185,7 @@ public class SVNCommitter17 implements ISVNCommitPathHandler {
                     try {
                         commitEditor.openFile(commitPath, rev);
                     } catch (SVNException e) {
-                        fixError(commitPath, e, SVNNodeKind.FILE);
+                        fixError(localAbspath, commitPath, e, SVNNodeKind.FILE);
                     }
                 }
                 fileOpen = true;
@@ -198,7 +198,7 @@ public class SVNCommitter17 implements ISVNCommitPathHandler {
                         commitEditor.openDir(commitPath, rev);
                     }
                 } catch (SVNException svne) {
-                    fixError(commitPath, svne, SVNNodeKind.DIR);
+                    fixError(localAbspath, commitPath, svne, SVNNodeKind.DIR);
                 }
                 closeDir = true;
             }
@@ -206,7 +206,7 @@ public class SVNCommitter17 implements ISVNCommitPathHandler {
                 try {
                     sendPropertiesDelta(localAbspath, commitPath, item, commitEditor);
                 } catch (SVNException e) {
-                    fixError(commitPath, e, item.getKind());
+                    fixError(localAbspath, commitPath, e, item.getKind());
                 }
             }
             if (outgoingProperties != null) {
@@ -226,7 +226,7 @@ public class SVNCommitter17 implements ISVNCommitPathHandler {
                 try {
                     commitEditor.openFile(commitPath, rev);
                 } catch (SVNException e) {
-                    fixError(commitPath, e, SVNNodeKind.FILE);
+                    fixError(localAbspath, commitPath, e, SVNNodeKind.FILE);
                 }
             }
             myModifiedFiles.put(commitPath, item);
@@ -236,7 +236,7 @@ public class SVNCommitter17 implements ISVNCommitPathHandler {
         return closeDir;
     }
 
-    private void fixError(String path, SVNException e, SVNNodeKind kind) throws SVNException {
+    private void fixError(File localAbspath, String path, SVNException e, SVNNodeKind kind) throws SVNException {
         SVNErrorMessage err = e.getErrorMessage();
 
         if (err.getErrorCode() == SVNErrorCode.FS_NOT_FOUND ||
@@ -247,8 +247,8 @@ public class SVNCommitter17 implements ISVNCommitPathHandler {
                 e.containsCauseWithErrorCode(SVNErrorCode.RA_OUT_OF_DATE)) {
             if (myContext.getEventHandler() != null) {
                 SVNEvent event;
-                if (path != null) {
-                    event = SVNEventFactory.createSVNEvent(new File(path).getAbsoluteFile(), kind, null, -1, SVNEventAction.FAILED_OUT_OF_DATE, null, err, null);
+                if (localAbspath != null) {
+                    event = SVNEventFactory.createSVNEvent(localAbspath, kind, null, -1, SVNEventAction.FAILED_OUT_OF_DATE, null, err, null);
                 } else {
                     //TODO: add baseUrl parameter
                     //TODO: add url-based events
@@ -265,7 +265,7 @@ public class SVNCommitter17 implements ISVNCommitPathHandler {
                     kind == SVNNodeKind.DIR ?
                             "Directory ''{0}'' is out of date" :
                             "File ''{0}'' is out of date",
-                    path);
+                    localAbspath);
 
             throw new SVNException(err);
         } else if (e.containsCauseWithErrorCode(SVNErrorCode.FS_NO_LOCK_TOKEN) ||
@@ -273,8 +273,8 @@ public class SVNCommitter17 implements ISVNCommitPathHandler {
                 err.getErrorCode() == SVNErrorCode.RA_NOT_LOCKED) {
             if (myContext.getEventHandler() != null) {
                 SVNEvent event;
-                if (path != null) {
-                    event = SVNEventFactory.createSVNEvent(new File(path).getAbsoluteFile(), kind, null, -1, SVNEventAction.FAILED_LOCKED, null, err, null);
+                if (localAbspath != null) {
+                    event = SVNEventFactory.createSVNEvent(localAbspath, kind, null, -1, SVNEventAction.FAILED_LOCKED, null, err, null);
                 } else {
                     //TODO
                     event = null;
@@ -289,14 +289,14 @@ public class SVNCommitter17 implements ISVNCommitPathHandler {
                     kind == SVNNodeKind.DIR ?
                             "Directory ''{0}'' is locked in another working copy" :
                             "File ''{0}'' is locked in another working copy",
-                    path);
+                    localAbspath);
             throw new SVNException(err);
         } else if (e.containsCauseWithErrorCode(SVNErrorCode.RA_DAV_FORBIDDEN) ||
                 err.getErrorCode() == SVNErrorCode.AUTHZ_UNWRITABLE) {
             if (myContext.getEventHandler() != null) {
                 SVNEvent event;
-                if (path != null) {
-                    event = SVNEventFactory.createSVNEvent(new File(path).getAbsoluteFile(), kind, null, -1, SVNEventAction.FAILED_FORBIDDEN_BY_SERVER, null, err, null);
+                if (localAbspath != null) {
+                    event = SVNEventFactory.createSVNEvent(localAbspath, kind, null, -1, SVNEventAction.FAILED_FORBIDDEN_BY_SERVER, null, err, null);
                 } else {
                     //TODO
                     event = null;
@@ -310,7 +310,7 @@ public class SVNCommitter17 implements ISVNCommitPathHandler {
                         kind == SVNNodeKind.DIR ?
                                 "Changing directory ''{0}'' is forbidden by the server" :
                                 "Changing file ''{0}'' is forbidden by the server",
-                        path);
+                        localAbspath);
                 throw new SVNException(err);
             }
         }
@@ -437,7 +437,11 @@ public class SVNCommitter17 implements ISVNCommitPathHandler {
         if (error != null) {
             SVNErrorManager.error(error, SVNLogType.WC);
         }
-        editor.closeFile(path, localMd5Checksum!=null ? localMd5Checksum.getDigest() : null);
+        try {
+            editor.closeFile(path, localMd5Checksum!=null ? localMd5Checksum.getDigest() : null);
+        } catch (SVNException e) {
+            fixError(localAbspath, path, e, SVNNodeKind.FILE);
+        }
         SvnChecksum localSha1Checksum = new SvnChecksum(SvnChecksum.Kind.sha1, localSha1ChecksumStream.getDigest());
         myContext.getDb().installPristine(newPristineTmpAbspath, localSha1Checksum, localMd5Checksum);
         TransmittedChecksums result = new TransmittedChecksums();
