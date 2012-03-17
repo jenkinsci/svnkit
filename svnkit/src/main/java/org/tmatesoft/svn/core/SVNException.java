@@ -13,6 +13,9 @@
 package org.tmatesoft.svn.core;
 
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * A main exception class that is used in the SVNKit library. All other
  * SVNKit exception classes extend this one. Detailed information 
@@ -85,5 +88,27 @@ public class SVNException extends Exception {
     public boolean isEnoent() {
     	SVNErrorCode errorCode = getErrorMessage().getErrorCode();
         return errorCode == SVNErrorCode.ENTRY_NOT_FOUND || errorCode == SVNErrorCode.FS_NOT_FOUND || errorCode == SVNErrorCode.FS_NOT_OPEN || errorCode == SVNErrorCode.FS_NOT_FILE;
+    }
+
+    public SVNException findCauseWithErrorCode(SVNErrorCode errorCode) {
+        final Set<Throwable> seen = new HashSet<Throwable>();
+
+        for (Throwable th = this; th != null; th = th.getCause()) {
+            if (seen.contains(th)) {
+                return null;
+            }
+            if (th instanceof SVNException) {
+                final SVNException e = (SVNException) th;
+                if (e.getErrorMessage().getErrorCode() == errorCode) {
+                    return e;
+                }
+            }
+            seen.add(th);
+        }
+        return null;
+    }
+
+    public boolean containsCauseWithErrorCode(SVNErrorCode errorCode) {
+        return findCauseWithErrorCode(errorCode) != null;
     }
 }

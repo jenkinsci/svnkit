@@ -438,7 +438,17 @@ public class SVNErrorCode implements Serializable {
      * @since 1.2.0, SVN 1.5
      */
     public static final SVNErrorCode RA_DAV_RELOCATED = new SVNErrorCode(RA_DAV_CATEGORY, 11, "Repository has been moved");
-    
+
+    /**
+     * @since 1.7, SVN 1.7
+     */
+    public static final SVNErrorCode RA_DAV_CONN_TIMEOUT = new SVNErrorCode(RA_DAV_CATEGORY, 12, "Connection timed out");
+
+    /**
+     * @since 1.7, SVN 1.6
+     */
+    public static final SVNErrorCode RA_DAV_FORBIDDEN = new SVNErrorCode(RA_DAV_CATEGORY, 13, "Connection timed out");
+
     public static final SVNErrorCode RA_LOCAL_REPOS_NOT_FOUND = new SVNErrorCode(RA_LOCAL_CATEGORY, 0, "Couldn't find a repository");
     public static final SVNErrorCode RA_LOCAL_REPOS_OPEN_FAILED = new SVNErrorCode(RA_LOCAL_CATEGORY, 1, "Couldn't open a repository");
     
