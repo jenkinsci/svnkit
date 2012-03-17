@@ -511,9 +511,42 @@ public class SVNErrorCode implements Serializable {
      */
     public static final SVNErrorCode CLIENT_FILE_EXTERNAL_OVERWRITE_VERSIONED = new SVNErrorCode(CLIENT_CATEGORY, 17, 
             "A file external cannot overwrite an existing versioned item");
-    
-    public static final SVNErrorCode CLIENT_INVALID_MERGEINFO_NO_MERGETRACKING = new SVNErrorCode(CLIENT_CATEGORY, 18, "");
-    public static final SVNErrorCode CLIENT_MERGE_UPDATE_REQUIRED = new SVNErrorCode(CLIENT_CATEGORY, 19, "");
+
+    /**
+     * @since 1.7, SVN 1.7
+     */
+    public static final SVNErrorCode CLIENT_BAD_STRIP_COUNT = new SVNErrorCode(CLIENT_CATEGORY, 18,
+            "Invalid path component strip count specified");
+
+    /**
+     * @since 1.7, SVN 1.7
+     */
+    public static final SVNErrorCode CLIENT_CYCLE_DETECTED = new SVNErrorCode(CLIENT_CATEGORY, 19,
+            "Detected a cycle while processing the operation");
+
+    /**
+     * @since 1.7, SVN 1.7
+     */
+    public static final SVNErrorCode CLIENT_MERGE_UPDATE_REQUIRED = new SVNErrorCode(CLIENT_CATEGORY, 20,
+            "Working copy and merge source not ready for reintegration");
+
+    /**
+     * @since 1.7, SVN 1.7
+     */
+    public static final SVNErrorCode CLIENT_INVALID_MERGEINFO_NO_MERGETRACKING = new SVNErrorCode(CLIENT_CATEGORY, 21,
+            "Invalid mergeinfo detected in merge target");
+
+    /**
+     * @since 1.7, SVN 1.7
+     */
+    public static final SVNErrorCode CLIENT_NO_LOCK_TOKEN = new SVNErrorCode(CLIENT_CATEGORY, 22,
+            "Can't perform this operation without a valid lock token");
+
+    /**
+     * @since 1.7, SVN 1.7
+     */
+    public static final SVNErrorCode CLIENT_FORBIDDEN_BY_SERVER = new SVNErrorCode(CLIENT_CATEGORY, 23,
+            "The operation is forbidden by the server");
 
     
     public static final SVNErrorCode BASE = new SVNErrorCode(MISC_CATEGORY, 0, "A problem occurred; see later errors for details");

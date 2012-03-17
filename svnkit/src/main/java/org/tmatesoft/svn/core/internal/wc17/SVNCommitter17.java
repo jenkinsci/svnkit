@@ -238,10 +238,83 @@ public class SVNCommitter17 implements ISVNCommitPathHandler {
 
     private void fixError(String path, SVNException e, SVNNodeKind kind) throws SVNException {
         SVNErrorMessage err = e.getErrorMessage();
-        if (err.getErrorCode() == SVNErrorCode.FS_NOT_FOUND || err.getErrorCode() == SVNErrorCode.RA_DAV_PATH_NOT_FOUND) {
-            err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_UP_TO_DATE, kind == SVNNodeKind.DIR ? "Directory ''{0}'' is out of date" : "File ''{0}'' is out of date", path);
+
+        if (err.getErrorCode() == SVNErrorCode.FS_NOT_FOUND ||
+                err.getErrorCode() == SVNErrorCode.FS_ALREADY_EXISTS ||
+                err.getErrorCode() == SVNErrorCode.FS_TXN_OUT_OF_DATE ||
+                err.getErrorCode() == SVNErrorCode.RA_DAV_PATH_NOT_FOUND ||
+                err.getErrorCode() == SVNErrorCode.RA_DAV_ALREADY_EXISTS ||
+                false/* TODO: findCause*/) {
+            if (myContext.getEventHandler() != null) {
+                SVNEvent event;
+                if (path != null) {
+                    event = SVNEventFactory.createSVNEvent(new File(path).getAbsoluteFile(), kind, null, -1, SVNEventAction.FAILED_OUT_OF_DATE, null, err, null);
+                } else {
+                    //TODO: add baseUrl parameter
+                    //TODO: add url-based events
+//                    event = SVNEventFactory.createSVNEvent(new File(path).getAbsoluteFile(), kind, null, -1, SVNEventAction.FAILED_OUT_OF_DATE, null, err, null);
+                    event = null;
+                }
+
+                if (event != null) {
+                    myContext.getEventHandler().handleEvent(event, ISVNEventHandler.UNKNOWN);
+                }
+            }
+
+            err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_UP_TO_DATE,
+                    kind == SVNNodeKind.DIR ?
+                            "Directory ''{0}'' is out of date" :
+                            "File ''{0}'' is out of date",
+                    path);
+
             throw new SVNException(err);
+        } else if (false /* TODO: findCause*/ ||
+                err.getErrorCode() == SVNErrorCode.FS_LOCK_OWNER_MISMATCH ||
+                err.getErrorCode() == SVNErrorCode.RA_NOT_LOCKED) {
+            if (myContext.getEventHandler() != null) {
+                SVNEvent event;
+                if (path != null) {
+                    event = SVNEventFactory.createSVNEvent(new File(path).getAbsoluteFile(), kind, null, -1, SVNEventAction.FAILED_LOCKED, null, err, null);
+                } else {
+                    //TODO
+                    event = null;
+                }
+
+                if (event != null) {
+                    myContext.getEventHandler().handleEvent(event, ISVNEventHandler.UNKNOWN);
+                }
+            }
+
+            err = SVNErrorMessage.create(SVNErrorCode.CLIENT_NO_LOCK_TOKEN,
+                    kind == SVNNodeKind.DIR ?
+                            "Directory ''{0}'' is locked in another working copy" :
+                            "File ''{0}'' is locked in another working copy",
+                    path);
+            throw new SVNException(err);
+        } else if (false /*TODO: findCause*/ ||
+                err.getErrorCode() == SVNErrorCode.AUTHZ_UNWRITABLE) {
+            if (myContext.getEventHandler() != null) {
+                SVNEvent event;
+                if (path != null) {
+                    event = SVNEventFactory.createSVNEvent(new File(path).getAbsoluteFile(), kind, null, -1, SVNEventAction.FAILED_FORBIDDEN_BY_SERVER, null, err, null);
+                } else {
+                    //TODO
+                    event = null;
+                }
+
+                if (event != null) {
+                    myContext.getEventHandler().handleEvent(event, ISVNEventHandler.UNKNOWN);
+                }
+
+                err = SVNErrorMessage.create(SVNErrorCode.CLIENT_FORBIDDEN_BY_SERVER,
+                        kind == SVNNodeKind.DIR ?
+                                "Changing directory ''{0}'' is forbidden by the server" :
+                                "Changing file ''{0}'' is forbidden by the server",
+                        path);
+                throw new SVNException(err);
+            }
         }
+
         throw e;
     }
 

@@ -412,9 +412,23 @@ public class SVNEventAction {
      */
     public static final SVNEventAction SKIP_CONFLICTED = new SVNEventAction(45, "skip_conflicted");
     
-    public static final SVNEventAction WC_PATH_NONEXISTENT = new SVNEventAction(51, "wc_path_nonexistent");
+    public static final SVNEventAction WC_PATH_NONEXISTENT = new SVNEventAction(51, "wc_path_nonexistent"); //TODO remove WC_ prefix
 
     public static final SVNEventAction MERGE_RECORD_BEGIN = new SVNEventAction(52, "record_merge_begin");
     public static final SVNEventAction MERGE_RECORD_INFO = new SVNEventAction(53, "merge_record_info");
     public static final SVNEventAction MERGE_ELIDE_INFO = new SVNEventAction(54, "merge_elide_info");
+
+    /**
+     * @since 1.7, SVN 1.7
+     */
+    public static final SVNEventAction FAILED_OUT_OF_DATE = new SVNEventAction(64, "failed_out_of_date");
+
+    /**
+     * @since 1.7, SVN 1.7
+     */
+    public static final SVNEventAction FAILED_LOCKED = new SVNEventAction(66, "failed_locked");
+    /**
+     * @since 1.7, SVN 1.7
+     */
+    public static final SVNEventAction FAILED_FORBIDDEN_BY_SERVER = new SVNEventAction(67, "failed_forbidden_by_server");
 }
