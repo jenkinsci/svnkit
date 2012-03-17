@@ -79,7 +79,7 @@ public class SvnNgCommit extends SvnNgOperationRunner<SVNCommitInfo, SvnCommit> 
             packet.setLockingContext(this, lockedRoots);
             
             Map<SVNURL, String> lockTokens = new HashMap<SVNURL, String>();
-            SvnNgCommitUtil.harversCommittables(getWcContext(), packet, lockTokens, 
+            SvnNgCommitUtil.harvestCommittables(getWcContext(), packet, lockTokens, 
                     baseDir, targets, getOperation().getDepth(), 
                     !getOperation().isKeepLocks(), getOperation().getApplicableChangelists(), 
                     this, getOperation().getCommitParameters(), null);
