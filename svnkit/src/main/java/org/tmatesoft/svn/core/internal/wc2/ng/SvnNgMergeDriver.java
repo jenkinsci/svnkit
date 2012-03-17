@@ -220,7 +220,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
             
             if (context.getEventHandler() != null) {
                 SVNEvent mergeStartedEvent = SVNEventFactory.createSVNEvent(targetAbsPath, SVNNodeKind.NONE, null, SVNRepository.INVALID_REVISION, 
-                        SVNStatusType.INAPPLICABLE, SVNStatusType.INAPPLICABLE, SVNStatusType.LOCK_INAPPLICABLE, SVNEventAction.MERGE_RECORD_BEGIN, 
+                        SVNStatusType.INAPPLICABLE, SVNStatusType.INAPPLICABLE, SVNStatusType.LOCK_INAPPLICABLE, SVNEventAction.MERGE_RECORD_INFO_BEGIN,
                         null, null, null); 
                 context.getEventHandler().handleEvent(mergeStartedEvent, ISVNEventHandler.UNKNOWN);
             }
@@ -706,7 +706,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
                     
                     SVNEvent mergeBeginEvent = SVNEventFactory.createSVNEvent(targetAbsPath, 
                             SVNNodeKind.FILE, 
-                            null, -1, SVNEventAction.MERGE_RECORD_BEGIN, 
+                            null, -1, SVNEventAction.MERGE_RECORD_INFO_BEGIN,
                                     null, null, r);
                     
                     if (context.getEventHandler() != null) {
@@ -1978,7 +1978,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
                 if (!squelchMergeinfoNotifications) {
                     SVNEvent mergeBeginEvent = SVNEventFactory.createSVNEvent(child.absPath, 
                             SVNNodeKind.NONE, 
-                            null, -1, SVNEventAction.MERGE_RECORD_BEGIN, 
+                            null, -1, SVNEventAction.MERGE_RECORD_INFO_BEGIN,
                                     null, null, mergeRange);
                     if (context.getEventHandler() != null) {
                         context.getEventHandler().handleEvent(mergeBeginEvent, -1);
@@ -2507,7 +2507,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
 
     public void handleEvent(SVNEvent event, double progress) throws SVNException {
         if (recordOnly &&
-                (event.getAction() != SVNEventAction.UPDATE_UPDATE && event.getAction() != SVNEventAction.MERGE_RECORD_BEGIN)) {
+                (event.getAction() != SVNEventAction.UPDATE_UPDATE && event.getAction() != SVNEventAction.MERGE_RECORD_INFO_BEGIN)) {
             return;
         }
         boolean operative = false;

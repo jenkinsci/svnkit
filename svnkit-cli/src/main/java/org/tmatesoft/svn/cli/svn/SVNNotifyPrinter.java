@@ -216,7 +216,7 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
                     buffer.append("--- Reverse-merging r" + start + " through r" + (end + 1) + " into '" + path + "':\n");
                 }
             }
-        } else if (event.getAction() == SVNEventAction.MERGE_RECORD_BEGIN) {
+        } else if (event.getAction() == SVNEventAction.MERGE_RECORD_INFO_BEGIN) {
             SVNMergeRange range = event.getMergeRange();
             if (range == null) {
                 buffer.append("--- Recording mergeinfo for merge between repository URLs into '" + path + "':\n");

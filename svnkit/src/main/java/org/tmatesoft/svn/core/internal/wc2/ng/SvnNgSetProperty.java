@@ -53,8 +53,8 @@ public class SvnNgSetProperty extends SvnNgOperationRunner<SVNPropertyData, SvnS
 
     private void notifyNonExistentPath(File localAbsPath) throws SVNException {
         SVNEvent event = SVNEventFactory.createSVNEvent(localAbsPath, SVNNodeKind.NONE, null, -1, 
-                SVNEventAction.WC_PATH_NONEXISTENT, 
-                SVNEventAction.WC_PATH_NONEXISTENT, 
+                SVNEventAction.PATH_NONEXISTENT,
+                SVNEventAction.PATH_NONEXISTENT,
                 null, null, -1, -1);
         if (getOperation().getEventHandler() != null) {
             getOperation().getEventHandler().handleEvent(event, -1);

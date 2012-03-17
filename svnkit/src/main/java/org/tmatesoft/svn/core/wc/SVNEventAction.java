@@ -411,11 +411,25 @@ public class SVNEventAction {
      * @since 1.4, SVN 1.7
      */
     public static final SVNEventAction SKIP_CONFLICTED = new SVNEventAction(45, "skip_conflicted");
-    
-    public static final SVNEventAction WC_PATH_NONEXISTENT = new SVNEventAction(51, "wc_path_nonexistent"); //TODO remove WC_ prefix
 
-    public static final SVNEventAction MERGE_RECORD_BEGIN = new SVNEventAction(52, "record_merge_begin");
+    /**
+     * @since 1.7, SVN 1.7
+     */
+    public static final SVNEventAction PATH_NONEXISTENT = new SVNEventAction(51, "wc_path_nonexistent");
+
+    /**
+     * @since 1.7, SVN 1.7
+     */
     public static final SVNEventAction MERGE_RECORD_INFO = new SVNEventAction(53, "merge_record_info");
+
+    /**
+     * @since 1.7, SVN 1.7
+     */
+    public static final SVNEventAction MERGE_RECORD_INFO_BEGIN = new SVNEventAction(52, "merge_record_info_begin");
+
+    /**
+     * @since 1.7, SVN 1.7
+     */
     public static final SVNEventAction MERGE_ELIDE_INFO = new SVNEventAction(54, "merge_elide_info");
 
     /**

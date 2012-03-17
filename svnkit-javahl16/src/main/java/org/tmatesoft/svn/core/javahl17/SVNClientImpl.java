@@ -2541,15 +2541,15 @@ public class SVNClientImpl implements ISVNClient {
             return ClientNotifyInformation.Action.upgraded_path;
         } else if (action == SVNEventAction.UPGRADED_PATH) {
             return ClientNotifyInformation.Action.upgraded_path;
-        } else if (action == SVNEventAction.WC_PATH_NONEXISTENT) {
+        } else if (action == SVNEventAction.PATH_NONEXISTENT) {
             return ClientNotifyInformation.Action.path_nonexistent;
         } else if (action == SVNEventAction.MERGE_ELIDE_INFO) {
             return ClientNotifyInformation.Action.merge_elide_info;
         } else if (action == SVNEventAction.MERGE_RECORD_INFO) {
             return ClientNotifyInformation.Action.merge_record_info;
-        } else if (action == SVNEventAction.MERGE_RECORD_BEGIN) {
+        } else if (action == SVNEventAction.MERGE_RECORD_INFO_BEGIN) {
             return ClientNotifyInformation.Action.merge_record_info_begin;
-        } else if (action == SVNEventAction.MERGE_RECORD_BEGIN) {
+        } else if (action == SVNEventAction.MERGE_RECORD_INFO_BEGIN) {
             return ClientNotifyInformation.Action.merge_record_info_begin;
         } 
         return null;
