@@ -2560,7 +2560,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
                 if (index != currentAncestorIndex) {
                     MergePath child = (MergePath) array[index];
                     currentAncestorIndex = index;
-                    if (!child.absent && !child.remainingRanges.isEmpty() && !(index == 0 && child.remainingRanges == null)) {
+                    if (context.getEventHandler() != null && !child.absent && !child.remainingRanges.isEmpty() && !(index == 0 && child.remainingRanges == null)) {
                         SVNEvent mergeBeginEvent = SVNEventFactory.createSVNEvent(child.absPath, 
                                 SVNNodeKind.NONE, 
                                 null, -1, sameRepos ? SVNEventAction.MERGE_BEGIN : SVNEventAction.FOREIGN_MERGE_BEGIN, 
@@ -2569,7 +2569,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
                     }
                 }
             }
-        } else if (!singleFileMerge && operativeNotifications == 1 && operative) {
+        } else if (context.getEventHandler() != null && !singleFileMerge && operativeNotifications == 1 && operative) {
             SVNEvent mergeBeginEvent = SVNEventFactory.createSVNEvent(targetAbsPath, 
                     SVNNodeKind.NONE, 
                     null, -1, sameRepos ? SVNEventAction.MERGE_BEGIN : SVNEventAction.FOREIGN_MERGE_BEGIN, 
@@ -2577,7 +2577,9 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
             context.getEventHandler().handleEvent(mergeBeginEvent, -1);
             
         }
-        context.getEventHandler().handleEvent(event, -1);
+        if (context.getEventHandler() != null) {
+            context.getEventHandler().handleEvent(event, -1);
+        }
     }
 
     protected SVNRepository ensureRepository(SVNRepository repository, SVNURL url) throws SVNException {
