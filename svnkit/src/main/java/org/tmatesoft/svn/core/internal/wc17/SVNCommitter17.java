@@ -231,7 +231,11 @@ public class SVNCommitter17 implements ISVNCommitPathHandler {
             }
             myModifiedFiles.put(commitPath, item);
         } else if (fileOpen) {
+            try {
             commitEditor.closeFile(commitPath, null);
+            } catch (SVNException e) {
+                fixError(localAbspath, commitPath, e, SVNNodeKind.FILE);
+            }
         }
         return closeDir;
     }

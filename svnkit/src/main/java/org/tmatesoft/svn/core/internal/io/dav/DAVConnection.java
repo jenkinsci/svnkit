@@ -313,12 +313,20 @@ public class DAVConnection {
         try {
             performHttpRequest(httpConnection, "PROPPATCH", path, header, requestBody, 200, 207, null, handler, context);
         } catch (SVNException e) {
-            if (context == null && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_DAV_REQUEST_FAILED) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_PROPPATCH_FAILED, "At least one property change failed; repository is unchanged");
-                SVNErrorManager.error(err, SVNLogType.NETWORK);
+            HTTPStatus status = httpConnection.getLastStatus();
+            if (status != null) {
+                switch (status.getCode()) {
+                    case 423:
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_LOCKED,
+                                "No lock on path ''{0}'';  repository is unchanged", new Object[]{path});
+                        SVNErrorManager.error(err, e, SVNLogType.NETWORK);
+                        break;
+                    default:
+                        break;
+                }
             }
-            // handler error.
-            throw e;
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_PROPPATCH_FAILED, "At least one property change failed; repository is unchanged");
+            SVNErrorManager.error(err, e, SVNLogType.NETWORK);
         }
     }
     
