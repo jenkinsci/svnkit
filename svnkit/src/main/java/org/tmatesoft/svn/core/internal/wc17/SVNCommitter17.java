@@ -147,7 +147,7 @@ public class SVNCommitter17 implements ISVNCommitPathHandler {
             try {
                 commitEditor.deleteEntry(commitPath, rev);
             } catch (SVNException e) {
-                fixError(localAbspath, commitPath, e, SVNNodeKind.FILE);
+                fixError(localAbspath, commitPath, e, item.getKind());
             }
             if (!item.hasFlag(SvnCommitItem.ADD)) {
                 deletedPaths.add(localAbspath);
