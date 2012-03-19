@@ -39,4 +39,8 @@ public class SVNWCDbUpdateOpDepthIncreaseRecursive extends SVNSqlJetUpdateStatem
         return false;
     }
 
+    @Override
+    protected String getPathScope() {
+        return (String) getBind(2);
+    }
 }
