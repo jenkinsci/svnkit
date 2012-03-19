@@ -673,13 +673,25 @@ public class DiffTest {
 
             final SVNURL urlToDiff = url.appendPath("directory/subdirectory", false);
 
-            final OldGenerator generator = new OldGenerator();
+            OldGenerator generator = new OldGenerator();
             diffFiles(urlToDiff, SVNRevision.create(0), SVNRevision.create(2), generator);
 
-            final List<GeneratorCall> calls = generator.calls;
-            Assert.assertEquals(2, calls.size());
-            Assert.assertEquals(new GeneratorCall(GeneratorCallKind.DISPLAY_ADDED_DIRECTORY, "directory/subdirectory"), calls.get(0));
-            Assert.assertEquals(new GeneratorCall(GeneratorCallKind.DISPLAY_FILE_DIFF, "directory/subdirectory/file"), calls.get(1));
+            List<GeneratorCall> calls = generator.calls;
+            Assert.assertEquals(3, calls.size());
+            Assert.assertEquals(new GeneratorCall(GeneratorCallKind.DISPLAY_ADDED_DIRECTORY, "directory"), calls.get(0));
+            Assert.assertEquals(new GeneratorCall(GeneratorCallKind.DISPLAY_ADDED_DIRECTORY, "directory/subdirectory"), calls.get(1));
+            Assert.assertEquals(new GeneratorCall(GeneratorCallKind.DISPLAY_FILE_DIFF, "directory/subdirectory/file"), calls.get(2));
+
+            Assert.assertEquals(url.toString(), generator.anchorPath1);
+            Assert.assertEquals(url.toString(), generator.anchorPath2);
+
+
+            generator = new OldGenerator();
+            diffFiles(urlToDiff, SVNRevision.create(2), SVNRevision.create(0), generator);
+
+            calls = generator.calls;
+            Assert.assertEquals(1, calls.size());
+            Assert.assertEquals(new GeneratorCall(GeneratorCallKind.DISPLAY_DELETED_DIRECTORY, "directory"), calls.get(0));
 
             Assert.assertEquals(url.toString(), generator.anchorPath1);
             Assert.assertEquals(url.toString(), generator.anchorPath2);

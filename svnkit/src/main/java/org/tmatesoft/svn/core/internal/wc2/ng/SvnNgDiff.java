@@ -144,7 +144,7 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
             repository.setLocation(url2, false);
         }
 
-        long revisionNumber2 = getRepositoryAccess().getRevisionNumber(repository, target2, revision2, null).lng(SvnRepositoryAccess.RevisionsPair.revNumber);
+        final long revisionNumber2 = getRepositoryAccess().getRevisionNumber(repository, target2, revision2, null).lng(SvnRepositoryAccess.RevisionsPair.revNumber);
         SVNNodeKind kind2 = repository.checkPath("", revisionNumber2);
 
         repository.setLocation(url1, false);
@@ -181,6 +181,9 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
         String targetString2 = "";
 
         SVNURL repositoryRoot = null;
+
+        SVNNodeKind oldKind1 = kind1;
+        SVNNodeKind oldKind2 = kind2;
 
         if (kind1 == SVNNodeKind.NONE || kind2 == SVNNodeKind.NONE) {
             repositoryRoot = repository.getRepositoryRoot(true);
@@ -241,19 +244,40 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
         editor = remoteDiffEditor;
         editor = SVNCancellableEditor.newInstance(editor, this, SVNDebugLog.getDefaultLog());
 
-        ISVNReporterBaton reporter = new ISVNReporterBaton() {
+        if (oldKind1 != SVNNodeKind.NONE && oldKind2 != SVNNodeKind.NONE)  {
+            ISVNReporterBaton reporter = new ISVNReporterBaton() {
 
-            public void report(ISVNReporter reporter) throws SVNException {
-                reporter.setPath("", null, revisionNumber1, SVNDepth.INFINITY, false);
-                reporter.finishReport();
+                public void report(ISVNReporter reporter) throws SVNException {
+                    reporter.setPath("", null, revisionNumber1, SVNDepth.INFINITY, false);
+                    reporter.finishReport();
+                }
+            };
+
+            try {
+                repository.diff(url2, revisionNumber2, revisionNumber1, targetString1,
+                        getOperation().isIgnoreAncestry(), getOperation().getDepth(), true, reporter, editor);
+            } finally {
+                remoteDiffEditor.cleanup();
             }
-        };
+        } else {
+            //oldKind1 == NONE or oldKind2 == NONE
 
-        try {
-        repository.diff(url2, revisionNumber2, revisionNumber1, targetString1,
-                getOperation().isIgnoreAncestry(), getOperation().getDepth(), true, reporter, editor);
-        } finally {
-            remoteDiffEditor.cleanup();
+            repository.setLocation(anchor1, false);
+
+            ISVNReporterBaton reporter = new ISVNReporterBaton() {
+
+                public void report(ISVNReporter reporter) throws SVNException {
+                    reporter.setPath("", null, revisionNumber1, SVNDepth.INFINITY, false);
+                    reporter.finishReport();
+                }
+            };
+
+            try {
+                repository.diff(anchor2.appendPath(SVNPathUtil.head(targetString2), false), revisionNumber2, revisionNumber1, SVNPathUtil.head(targetString2),
+                        getOperation().isIgnoreAncestry(), getOperation().getDepth(), true, reporter, editor);
+            } finally {
+                remoteDiffEditor.cleanup();
+            }
         }
 
     }
