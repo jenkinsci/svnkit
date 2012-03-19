@@ -1657,7 +1657,7 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      *            <span class="javakeyword">true</span> then runs merge without
      *            any file changes
      * @param recordOnlyif
-     *            <span class="javakeyword">true</span>, records only the rusult
+     *            <span class="javakeyword">true</span>, records only the result
      *            of merge - mergeinfo data
      * @throws SVNException in
      *             the following cases:
@@ -1815,7 +1815,7 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      *            <span class="javakeyword">true</span> then runs merge without
      *            any file changes
      * @param recordOnlyif
-     *            <span class="javakeyword">true</span>, records only the rusult
+     *            <span class="javakeyword">true</span>, records only the result
      *            of merge - mergeinfo data
      * @throws SVNException in
      *             the following cases:
@@ -1966,7 +1966,7 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      *            <span class="javakeyword">true</span> then runs merge without
      *            any file changes
      * @param recordOnlyif
-     *            <span class="javakeyword">true</span>, records only the rusult
+     *            <span class="javakeyword">true</span>, records only the result
      *            of merge - mergeinfo data
      * @throws SVNException in
      *             the following cases:
@@ -2119,7 +2119,7 @@ public class SVNDiffClient16 extends SVNMergeDriver {
      *            <span class="javakeyword">true</span> then runs merge without
      *            any file changes
      * @param recordOnlyif
-     *            <span class="javakeyword">true</span>, records only the rusult
+     *            <span class="javakeyword">true</span>, records only the result
      *            of merge - mergeinfo data
      * @throws SVNException in
      *             the following cases:
