@@ -4,8 +4,13 @@ import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getCo
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
+import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
+import org.tmatesoft.sqljet.core.table.ISqlJetTable;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -16,12 +21,14 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetTransaction;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODES__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.PRISTINE__Fields;
 import org.tmatesoft.svn.core.wc2.SvnChecksum;
 import org.tmatesoft.svn.util.SVNLogType;
 
-public class SvnWcDbPristines {
+public class SvnWcDbPristines extends SvnWcDbShared {
 	
 	private static final String PRISTINE_STORAGE_EXT = ".svn-base";
 	
@@ -215,13 +222,59 @@ public class SvnWcDbPristines {
     }
 	
 	public static InputStream readPristine(SVNWCDbRoot root, File wcRootAbsPath, SvnChecksum sha1Checksum) throws SVNException {
-        /* ### should we look in the PRISTINE table for anything? */
-
         File pristine_abspath = getPristineFileName(root, sha1Checksum, false);
         return SVNFileUtil.openFileForReading(pristine_abspath);
-
     }
+	
+	
+	public static void fixPristinesRefCount(SVNWCDbRoot root) throws SVNException {
+	    Map<String, Long> refcountTable = new HashMap<String, Long>();
+	    begingWriteTransaction(root);
+	    try {
+	        ISqlJetTable nodesTable = root.getSDb().getDb().getTable(SVNWCDbSchema.NODES.toString());
+	        ISqlJetCursor cursor = nodesTable.open();
+	        try {
+    	        while(!cursor.eof()) {
+    	            long opDepth = cursor.getInteger(NODES__Fields.op_depth.toString());
+    	            if (opDepth == 0) {
+        	            String checksum = cursor.getString(NODES__Fields.checksum.toString());
+        	            if (refcountTable.containsKey(checksum)) {
+        	                refcountTable.put(checksum, refcountTable.get(checksum) + 1);
+        	            } else {
+        	                refcountTable.put(checksum, 1l);
+        	            }
+    	            }
+    	            cursor.next();
+    	        }
+	        } finally {
+	            cursor.close();
+	        }
 
+	        ISqlJetTable pTable = root.getSDb().getDb().getTable(SVNWCDbSchema.PRISTINE.toString());
+	        
+	        for (Iterator<String> checksums = refcountTable.keySet().iterator(); checksums.hasNext();) {
+	            String checksum = checksums.next();
+                cursor = pTable.lookup(null, checksum);
+                try {
+                    if (!cursor.eof()) {
+                        long refCount = cursor.getInteger(PRISTINE__Fields.refcount.toString());
+                        if (refCount != refcountTable.get(checksum)) {
+                            Map<String, Object> value = new HashMap<String, Object>();
+                            cursor.updateByFieldNames(value);
+                        }
+                        checksums.remove();
+                    } 
+                } finally {
+                    cursor.close();
+                }
+            }
+	    } catch (SqlJetException e) {
+	        rollbackTransaction(root);
+	        SVNSqlJetDb.createSqlJetError(e);
+        } finally {
+	        commitTransaction(root);
+	    }
+	}
 	 
 }
 
