@@ -638,7 +638,8 @@ public class DAVConnection {
     private HTTPStatus performHttpRequest(IHTTPConnection httpConnection, String method, String path, HTTPHeader header, StringBuffer body, int ok1, int ok2, OutputStream dst, DefaultHandler handler) throws SVNException {
         myLastStatus = null;
         try {
-            return httpConnection.request(method, path, header, body, ok1, ok2, dst, handler);
+            myLastStatus = httpConnection.request(method, path, header, body, ok1, ok2, dst, handler);
+            return myLastStatus;
         } finally {
             myLastStatus = httpConnection.getLastStatus();
         }
@@ -647,7 +648,8 @@ public class DAVConnection {
     private HTTPStatus performHttpRequest(IHTTPConnection httpConnection, String method, String src, HTTPHeader header, StringBuffer body, int ok1, int ok2, OutputStream dst, DefaultHandler handler, SVNErrorMessage context) throws SVNException {
         myLastStatus = null;
         try {
-            return httpConnection.request(method, src, header, body, ok1, ok2, dst, handler, context);
+            myLastStatus = httpConnection.request(method, src, header, body, ok1, ok2, dst, handler, context);
+            return myLastStatus;
         } finally {
             myLastStatus = httpConnection.getLastStatus();
         }
@@ -656,7 +658,8 @@ public class DAVConnection {
     private HTTPStatus performHttpRequest(IHTTPConnection httpConnection, String method, String path, HTTPHeader headers, InputStream data, int ok1, int ok2, OutputStream dst, DefaultHandler handler) throws SVNException {
         myLastStatus = null;
         try {
-            return httpConnection.request(method, path, headers, data, ok1, ok2, dst, handler);
+            myLastStatus = httpConnection.request(method, path, headers, data, ok1, ok2, dst, handler);
+            return myLastStatus;
         } finally {
             myLastStatus = httpConnection.getLastStatus();
         }
