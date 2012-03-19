@@ -173,12 +173,7 @@ public abstract class SvnRepositoryAccess {
         long[] revisionsRange = startRevisionNumber == endRevisionNumber ? 
                 new long[] {startRevisionNumber} : new long[] {startRevisionNumber, endRevisionNumber};
                 
-        Map<?,?> locations = null;
-        try {
-            locations = repository.getLocations("", (Map<?,?>) null, pegRevisionNumber, revisionsRange);
-        } catch (SVNException e) {
-            throw e;
-        }
+        Map<?,?> locations = repository.getLocations("", (Map<?,?>) null, pegRevisionNumber, revisionsRange);
         
         SVNLocationEntry startPath = (SVNLocationEntry) locations.get(new Long(startRevisionNumber));
         SVNLocationEntry endPath = (SVNLocationEntry) locations.get(new Long(endRevisionNumber));
@@ -205,7 +200,6 @@ public abstract class SvnRepositoryAccess {
         return result;
     }
 
-    @SuppressWarnings("unchecked")
     public Map<String, SVNMergeRangeList> getReposMergeInfo(SVNRepository repository, String path, long revision, SVNMergeInfoInheritance inheritance, boolean squelchIncapable) throws SVNException {
         Map<String, SVNMergeInfo> reposMergeInfo = null;
         try {

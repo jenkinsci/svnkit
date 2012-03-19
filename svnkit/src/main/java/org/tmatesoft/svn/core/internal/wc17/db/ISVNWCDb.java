@@ -688,15 +688,6 @@ public interface ISVNWCDb {
     }
 
     /**
-     * Return the value of the property named PROPNAME of the node LOCAL_ABSPATH
-     * in the BASE tree.
-     * <p>
-     * If the node has no property named PROPNAME, return NULL. <br>
-     * If the node is not present in the BASE tree, throw an error.
-     */
-    String getBaseProp(File localAbsPath, String propName) throws SVNException;
-
-    /**
      * Return the properties of the node LOCAL_ABSPATH in the BASE tree.
      * <p>
      * If the node has no properties, return an empty hash. It will never return
@@ -800,23 +791,7 @@ public interface ISVNWCDb {
      * examine things)
      */
     boolean checkPristine(File wcRootAbsPath, SvnChecksum sha1Checksum) throws SVNException;
-
-    /**
-     * If {@link #checkPristine(File, SvnChecksum, SVNWCDbCheckMode)} returns
-     * "corrupted pristine file", then this function can be used to repair it.
-     * It will attempt to restore integrity between the SQLite database and the
-     * filesystem. Failing that, then it will attempt to clean out the record
-     * and/or file. Failing that, then it will throw error.
-     */
-    void repairPristine(File wcRootAbsPath, SvnChecksum sha1Checksum) throws SVNException;
-
-    /**
-     * Ensure an entry for the repository at REPOS_ROOT_URL with UUID exists in
-     * DB for LOCAL_ABSPATH, either by finding the correct row, or inserting a
-     * new row. In either case return the id.
-     */
-    long ensureRepository(File localAbsPath, SVNURL reposRootUrl, String reposUuid) throws SVNException;
-
+    
     /** svn cp WCPATH WCPATH ... can copy mixed base/working around */
     void opCopy(File srcAbsPath, File dstAbspath, SVNSkel workItems) throws SVNException;
     void opCopyShadowedLayer(File srcAbsPath, File dstAbsPath) throws SVNException;
@@ -868,39 +843,7 @@ public interface ISVNWCDb {
      */
     void opSetProps(File localAbsPath, SVNProperties props, SVNSkel conflict, boolean clearRecordedInfo, SVNSkel workItems) throws SVNException;
 
-    /**
-     * Set the properties of the node LOCAL_ABSPATH in the BASE tree to PROPS.
-     * <p>
-     * This function should not exist because properties should be stored onto
-     * the BASE node at construction time, in a single atomic operation.
-     * <p>
-     * To specify no properties, PROPS must be an empty hash, not NULL.
-     * <p>
-     * If the node is not present, {@link SVNErrorCode#WC_PATH_NOT_FOUND} is
-     * thrown.
-     */
-    void setBasePropsTemp(File localAbsPath, SVNProperties props) throws SVNException;
-
-    /**
-     * Set the properties of the node LOCAL_ABSPATH in the WORKING tree to
-     * PROPS.
-     * <p>
-     * This function should not exist because properties should be stored onto
-     * the WORKING node at construction time, in a single atomic operation.
-     * <p>
-     * To specify no properties, PROPS must be an empty hash, not NULL.
-     * <p>
-     * If the node is not present, {@link SVNErrorCode#WC_PATH_NOT_FOUND} is
-     * returned.
-     */
-    void setWorkingPropsTemp(File localAbsPath, SVNProperties props) throws SVNException;
-
     void opDelete(File localAbsPath, ISVNEventHandler handler) throws SVNException;
-
-    void opMove(File srcAbsPath, File dstAbsPath) throws SVNException;
-
-    /** mark PATH as (possibly) modified. "svn edit" */
-    void opModified(File localAbsPath) throws SVNException;
 
     /** use NULL to remove from a changelist. */
     void opSetChangelist(File localAbsPath, String changelistName, String[] changeLists, SVNDepth depth,  ISVNEventHandler handler) throws SVNException;
@@ -1192,17 +1135,6 @@ public interface ISVNWCDb {
     }
 
     /**
-     * Return value of the property named PROPNAME of the node LOCAL_ABSPATH in
-     * the ACTUAL tree (looking through to the WORKING or BASE tree as
-     * required).
-     * <p>
-     * If the node has no property named PROPNAME, return NULL.
-     * <p>
-     * If the node is not present, throw an error.
-     */
-    String readProperty(File localAbsPath, String propname) throws SVNException;
-
-    /**
      * Return the properties of the node LOCAL_ABSPATH in the ACTUAL tree
      * (looking through to the WORKING or BASE tree as required).
      * <p>
@@ -1267,26 +1199,6 @@ public interface ISVNWCDb {
     boolean isNodeHidden(File localAbsPath) throws SVNException;
 
     /**
-     * Associate LOCAL_DIR_ABSPATH, and all its children with the repository at
-     * at REPOS_ROOT_URL. The relative path to the repos root will not change,
-     * just the repository root. The repos uuid will also remain the same. This
-     * also updates any locks which may exist for the node, as well as any
-     * copyfrom repository information. Finally, the DAV cache (aka "wcprops")
-     * will be reset for affected entries.
-     *
-     * <p>
-     *
-     * localDirAbspath "should be" the wcroot or a switch root. all URLs under
-     * this directory (depth=infinity) will be rewritten.
-     *
-     * <p>
-     *
-     * SINGLE_DB is a temp argument, and should be TRUE if using compressed
-     * metadata. When all metadata gets compressed, it should disappear.
-     */
-    void globalRelocate(File localDirAbspath, SVNURL reposRootUrl, boolean singleDb) throws SVNException;
-
-    /**
      * Collapse the WORKING and ACTUAL tree changes down into BASE, called for
      * each committed node.
      * <p>
@@ -1314,29 +1226,6 @@ public interface ISVNWCDb {
      */
     void globalCommit(File localAbspath, long newRevision, long changedRevision, SVNDate changedDate, String changedAuthor, SvnChecksum newChecksum, List<File> newChildren, SVNProperties newDavCache, boolean keepChangelist,
             boolean noUnlock, SVNSkel workItems) throws SVNException;
-
-    /**
-     * Perform an "update" operation at this node. It will create/modify a BASE
-     * node, and possibly update the ACTUAL tree's node (e.g put the node into a
-     * conflicted state).
-     * <p>
-     * There may be cases where we need to tweak an existing WORKING node.
-     * <p>
-     * This operations on a single node, but may affect children.
-     * <p>
-     * The repository cannot be changed with this function, but a "switch" (aka
-     * changing repos_relpath) is possible.
-     * <p>
-     * One of NEW_CHILDREN, NEW_CHECKSUM, or NEW_TARGET must be provided. the
-     * other two values must be NULL.
-     * <p>
-     * This does not allow a change of depth.
-     * <p>
-     * We do not update a file's TRANSLATED_SIZE here. at some future point,
-     * when the file is installed, then a TRANSLATED_SIZE will be set.
-     */
-    void globalUpdate(File localAbsPath, SVNWCDbKind newKind, File newReposRelpath, long newRevision, SVNProperties newProps, long newChangedRev, SVNDate newChangedDate, String newChangedAuthor,
-            List<File> newChildren, SvnChecksum newChecksum, File newTarget, SVNProperties newDavCache, SVNSkel conflict, SVNSkel workItems) throws SVNException;
 
     /**
      * Record the TRANSLATED_SIZE and LAST_MOD_TIME for a versioned node.
@@ -1625,18 +1514,7 @@ public interface ISVNWCDb {
      */
     void completedWorkQueue(File wcRootAbsPath, long id) throws SVNException;
 
-    /**
-     * Note: LEVELS_TO_LOCK is here strictly for backward compat. The access
-     * batons still have the notion of 'levels to lock' and we need to ensure
-     * that they still function correctly, even in the new world. 'levels to
-     * lock' should not be exposed through the wc-ng APIs at all: users either
-     * get to lock the entire tree (rooted at some subdir, of course), or none.
-     */
-    void setWCLock(File localAbspath, int levelsToLock) throws SVNException;
-
     boolean isWCLocked(File localAbspath) throws SVNException;
-
-    void removeWCLock(File localAbspath) throws SVNException;
 
     boolean isWCRoot(File localAbspath) throws SVNException;
     boolean isWCRoot(File localAbspath, boolean isAdditionMode) throws SVNException;
@@ -1659,8 +1537,6 @@ public interface ISVNWCDb {
     void opMakeCopyTemp(File localAbspath, boolean removeBase) throws SVNException;
 
     void opSetNewDirToIncompleteTemp(File localAbspath, File reposRelpath, SVNURL reposRootURL, String reposUuid, long revision, SVNDepth depth) throws SVNException;
-
-    void opDeleteTemp(File localAbspath) throws SVNException;
 
     File getWCRootTempDir(File localAbspath) throws SVNException;
 

@@ -973,11 +973,6 @@ public class SVNWCDb implements ISVNWCDb {
         stmt.done();
     }
 
-    public long ensureRepository(File localAbsPath, SVNURL reposRootUrl, String reposUuid) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
-    }
-
     public WCDbWorkQueueInfo fetchWorkQueue(File wcRootAbsPath) throws SVNException {
         assert (SVNFileUtil.isAbsolute(wcRootAbsPath));
         WCDbWorkQueueInfo info = new WCDbWorkQueueInfo();
@@ -1167,11 +1162,6 @@ public class SVNWCDb implements ISVNWCDb {
 
     }
 
-    public String getBaseProp(File localAbsPath, String propName) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
-    }
-
     public SVNProperties getBaseProps(File localAbsPath) throws SVNException {
         SVNSqlJetStatement stmt = getStatementForPath(localAbsPath, SVNWCDbStatements.SELECT_BASE_PROPS);
         try {
@@ -1308,19 +1298,7 @@ public class SVNWCDb implements ISVNWCDb {
         }
     }
 
-    public void globalRelocate(File localDirAbspath, SVNURL reposRootUrl, boolean singleDb) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
-    }
-
-    public void globalUpdate(File localAbsPath, SVNWCDbKind newKind, File newReposRelpath, long newRevision, SVNProperties newProps, long newChangedRev, SVNDate newChangedDate,
-            String newChangedAuthor, List<File> newChildren, SvnChecksum newChecksum, File newTarget, SVNProperties newDavCache, SVNSkel conflict, SVNSkel workItems) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
-    }
-
     public void installPristine(File tempfileAbspath, SvnChecksum sha1Checksum, SvnChecksum md5Checksum) throws SVNException {
-
         assert (SVNFileUtil.isAbsolute(tempfileAbspath));
         File wriAbspath = SVNFileUtil.getParentFile(tempfileAbspath);
         final DirParsedInfo parsed = parseDir(wriAbspath, Mode.ReadWrite);
@@ -1882,16 +1860,6 @@ public class SVNWCDb implements ISVNWCDb {
         pdh.flushEntries(localAbspath);
 
         return;
-    }
-
-    public void opModified(File localAbsPath) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
-    }
-
-    public void opMove(File srcAbsPath, File dstAbsPath) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
     }
 
     public Map<String, SVNTreeConflictDescription> opReadAllTreeConflicts(File localAbsPath) throws SVNException {
@@ -2846,12 +2814,6 @@ public class SVNWCDb implements ISVNWCDb {
         SvnWcDbProperties.readPropertiesRecursively(pdh.getWCRoot(), localRelPath, depth, baseProperties, pristineProperties, changelists, receiver);        
     }
 
-
-    public String readProperty(File localAbsPath, String propname) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
-    }
-
     public SVNProperties readProperties(File localAbsPath) throws SVNException {
         assert (isAbsolute(localAbsPath));
         final DirParsedInfo parseDir = parseDir(localAbsPath, Mode.ReadWrite);
@@ -2948,16 +2910,6 @@ public class SVNWCDb implements ISVNWCDb {
         verifyDirUsable(pdh);
         
         SvnWcDbPristines.removePristine(pdh.getWCRoot(), sha1Checksum);
-    }
-
-    public void removeWCLock(File localAbspath) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
-    }
-
-    public void repairPristine(File wcRootAbsPath, SvnChecksum sha1Checksum) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
     }
 
     public WCDbAdditionInfo scanAddition(File localAbsPath, AdditionInfoField... fields) throws SVNException {
@@ -3380,23 +3332,24 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     public void setBaseDavCache(File localAbsPath, SVNProperties props) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
-    }
+        assert (isAbsolute(localAbsPath));
 
-    public void setBasePropsTemp(File localAbsPath, SVNProperties props) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
-    }
-
-    public void setWCLock(File localAbspath, int levelsToLock) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
-    }
-
-    public void setWorkingPropsTemp(File localAbsPath, SVNProperties props) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+        final DirParsedInfo parsed = parseDir(localAbsPath, Mode.ReadOnly);
+        SVNWCDbDir pdh = parsed.wcDbDir;
+        verifyDirUsable(pdh);
+        SvnWcDbShared.begingWriteTransaction(pdh.getWCRoot());
+        SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.UPDATE_BASE_NODE_DAV_CACHE);
+        try {
+            stmt.bindf("is", pdh.getWCRoot().getWcId(), parsed.localRelPath);
+            stmt.bindProperties(3, props);
+            stmt.exec();
+        } catch (SVNException e) {
+            SvnWcDbShared.rollbackTransaction(pdh.getWCRoot());
+            throw e;
+        } finally {
+            stmt.reset();
+            SvnWcDbShared.commitTransaction(pdh.getWCRoot());
+        }
     }
 
     public File toRelPath(File localAbsPath) throws SVNException {
@@ -3620,10 +3573,18 @@ public class SVNWCDb implements ISVNWCDb {
         pdh.flushEntries(localAbspath);
     }
 
-    private void catchCopyOfAbsent(SVNWCDbDir pdh, File localRelPath) {
-
-        // TODO
-
+    private void catchCopyOfAbsent(SVNWCDbDir pdh, File localRelPath) throws SVNException {
+        SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.HAS_SERVER_EXCLUDED_NODES);
+        try {
+            stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelPath);
+            if (stmt.next()) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.AUTHZ_UNREADABLE,
+                        "Cannot copy ''{0}'', excluded by server", getColumnPath(stmt, NODES__Fields.local_relpath));
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+        } finally {
+            stmt.reset();
+        }
     }
 
     private class MakeCopy implements SVNSqlJetTransaction {
@@ -3862,12 +3823,6 @@ public class SVNWCDb implements ISVNWCDb {
         }
     }
     
-
-    public void opDeleteTemp(File localAbspath) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
-    }
-
     public File getWCRootTempDir(File localAbspath) throws SVNException {
         assert (isAbsolute(localAbspath));
         DirParsedInfo parseDir = parseDir(localAbspath, Mode.ReadWrite);
@@ -4438,9 +4393,7 @@ public class SVNWCDb implements ISVNWCDb {
             try {
                 stmtInfo = sdb.getStatement(SVNWCDbStatements.SELECT_NODE_INFO);
                 stmtInfo.bindf("is", wcId, localRelpath);
-                if (!stmtInfo.next()) {
-                    // TODO expect row 
-                }
+                stmtInfo.next();
     
                 stmtAct = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_ACTUAL_NODE);
                 stmtAct.bindf("is", wcId, localRelpath);
@@ -4587,7 +4540,6 @@ public class SVNWCDb implements ISVNWCDb {
                 SvnChecksum checksum = getColumnChecksum(stmt, NODES__Fields.checksum);
                 result.set(PristineInfo.checksum, checksum);
             } else if (kind == SVNWCDbKind.Symlink) {
-                // TODO File?
                 result.set(PristineInfo.target, getColumnText(stmt, NODES__Fields.symlink_target));
             }
             result.set(PristineInfo.hadProps, hasColumnProperties(stmt, NODES__Fields.properties));
@@ -4752,11 +4704,6 @@ public class SVNWCDb implements ISVNWCDb {
                 stmt.reset();
             }
 
-            //TODO: if shouldn't get these values, return
-//            if (!shouldGetReplaceRoot || !shouldGetReplace) {
-//                return;
-//            }
-
             if (replacedStatus != SVNWCDbStatus.BaseDeleted) {
                 try {
                     stmt.bindf("is", wcId, SVNFileUtil.getFileDir(localRelpath));
@@ -4805,6 +4752,5 @@ public class SVNWCDb implements ISVNWCDb {
         pdh.wcDbDir.getWCRoot().getSDb().runTransaction(checkReplace, SqlJetTransactionMode.READ_ONLY);
 
         return new SVNWCDbNodeCheckReplaceData(checkReplace.replaceRoot, checkReplace.replace, checkReplace.baseReplace);
-//        pdh.wcDbDir.flushEntries(); TODO: ?
     }
 }
