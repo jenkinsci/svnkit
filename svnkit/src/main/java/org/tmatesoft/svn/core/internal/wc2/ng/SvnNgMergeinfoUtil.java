@@ -112,7 +112,7 @@ public class SvnNgMergeinfoUtil {
                         null, -1, 
                         SVNStatusType.INAPPLICABLE, 
                         SVNStatusType.INAPPLICABLE, 
-                        SVNStatusType.INAPPLICABLE, 
+                        SVNStatusType.LOCK_INAPPLICABLE, 
                         SVNEventAction.MERGE_ELIDE_INFO, 
                         null, 
                         null, null, null);
@@ -122,7 +122,7 @@ public class SvnNgMergeinfoUtil {
                         null, -1, 
                         SVNStatusType.INAPPLICABLE, 
                         SVNStatusType.CHANGED, 
-                        SVNStatusType.INAPPLICABLE, 
+                        SVNStatusType.LOCK_INAPPLICABLE, 
                         SVNEventAction.UPDATE_UPDATE, 
                         null, 
                         null, null, null);
@@ -260,17 +260,6 @@ public class SvnNgMergeinfoUtil {
                 }
                 result.catalog.put(reposRelativePath, mi.getMergeSourcesToMergeLists());
             }
-        }
-        return result;
-    }
-
-    private static SvnMergeInfoInfo getReposMergeInfo(SVNRepository repository, String relativePath, long revision, SVNMergeInfoInheritance inheritance, 
-            boolean squelchIncapable) throws SVNException {
-        SvnMergeInfoInfo result = new SvnMergeInfoInfo();
-        SvnMergeInfoCatalogInfo catalog = getReposMergeInfoCatalog(repository, relativePath, revision, inheritance, squelchIncapable, false);
-        if (catalog.catalog != null && !catalog.catalog.isEmpty()) {
-            Map<String, SVNMergeRangeList> mi = catalog.catalog.get(catalog.catalog.keySet().iterator().next());
-            result.mergeinfo = mi;
         }
         return result;
     }

@@ -21,8 +21,8 @@ import org.apache.subversion.javahl.ClientNotifyInformation;
 import org.apache.subversion.javahl.CommitInfo;
 import org.apache.subversion.javahl.CommitItem;
 import org.apache.subversion.javahl.ConflictDescriptor;
-import org.apache.subversion.javahl.ConflictResult;
 import org.apache.subversion.javahl.ConflictDescriptor.Operation;
+import org.apache.subversion.javahl.ConflictResult;
 import org.apache.subversion.javahl.ConflictResult.Choice;
 import org.apache.subversion.javahl.DiffSummary;
 import org.apache.subversion.javahl.ISVNClient;
@@ -1484,8 +1484,9 @@ public class SVNClientImpl implements ISVNClient {
             int stripCount, boolean reverse, boolean ignoreWhitespace,
             boolean removeTempfiles, PatchCallback callback)
             throws ClientException {
-        // TODO Auto-generated method stub
-
+        // TODO
+        throw ClientException.fromException(new SVNException(SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
+                "Patch operation is not implemented yet.")));
     }
 
     private SVNDepth getSVNDepth(Depth depth) {
@@ -2653,7 +2654,7 @@ public class SVNClientImpl implements ISVNClient {
         }
         if (lockStatus == SVNStatusType.LOCK_LOCKED) {
             return ClientNotifyInformation.LockStatus.locked;
-        } else if (lockStatus == SVNStatusType.LOCK_INAPPLICABLE) {
+        } else if (lockStatus == SVNStatusType.LOCK_INAPPLICABLE || lockStatus == SVNStatusType.INAPPLICABLE) {
             return ClientNotifyInformation.LockStatus.inapplicable;
         } else if (lockStatus == SVNStatusType.LOCK_UNCHANGED) {
             return ClientNotifyInformation.LockStatus.unchanged;
