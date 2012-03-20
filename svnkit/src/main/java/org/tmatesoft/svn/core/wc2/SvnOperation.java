@@ -107,19 +107,6 @@ public class SvnOperation<V> implements ISvnOperationOptionsProvider {
     }
 
     /**
-     * Sets two targets of the operation.
-     * 
-     * @param target1 first target of the operation
-     * @param target2 second target of the operation
-     * @see SvnTarget
-     */
-    protected void setTwoTargets(SvnTarget target1, SvnTarget target2) {
-        this.targets = new ArrayList<SvnTarget>();
-        this.addTarget(target1);
-        this.addTarget(target2);
-    }
-
-    /**
      * Adds one target to the operation's targets.
      * 
      * @param target target of the operation

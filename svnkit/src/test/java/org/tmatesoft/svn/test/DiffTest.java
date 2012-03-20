@@ -188,7 +188,7 @@ public class DiffTest {
             final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
             final SvnDiff diff = svnOperationFactory.createDiff();
-            diff.setTargets(SvnTarget.fromFile(file, SVNRevision.WORKING), SvnTarget.fromURL(url.appendPath("directory/anotherFile", false), SVNRevision.create(1)));
+            diff.setSources(SvnTarget.fromFile(file, SVNRevision.WORKING), SvnTarget.fromURL(url.appendPath("directory/anotherFile", false), SVNRevision.create(1)));
             diff.setOutput(byteArrayOutputStream);
             diff.run();
 
@@ -219,7 +219,7 @@ public class DiffTest {
 
             final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
             final SvnDiff diff = svnOperationFactory.createDiff();
-            diff.setTargets(SvnTarget.fromFile(workingCopyDirectory, SVNRevision.BASE), SvnTarget.fromFile(workingCopyDirectory, SVNRevision.WORKING));
+            diff.setSources(SvnTarget.fromFile(workingCopyDirectory, SVNRevision.BASE), SvnTarget.fromFile(workingCopyDirectory, SVNRevision.WORKING));
             diff.setOutput(byteArrayOutputStream);
             diff.run();
 
@@ -258,7 +258,7 @@ public class DiffTest {
 
             final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
             final SvnDiff diff = svnOperationFactory.createDiff();
-            diff.setTargets(SvnTarget.fromFile(workingCopyDirectory, SVNRevision.BASE), SvnTarget.fromFile(workingCopyDirectory, SVNRevision.WORKING));
+            diff.setSources(SvnTarget.fromFile(workingCopyDirectory, SVNRevision.BASE), SvnTarget.fromFile(workingCopyDirectory, SVNRevision.WORKING));
             diff.setOutput(byteArrayOutputStream);
             diff.setIgnoreAncestry(true);
             diff.run();
@@ -385,7 +385,7 @@ public class DiffTest {
             final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
             final SvnDiff diff = svnOperationFactory.createDiff();
-            diff.setTarget(SvnTarget.fromFile(targetFile, SVNRevision.WORKING), SVNRevision.HEAD, SVNRevision.WORKING);
+            diff.setSource(SvnTarget.fromFile(targetFile, SVNRevision.WORKING), SVNRevision.HEAD, SVNRevision.WORKING);
             diff.setOutput(byteArrayOutputStream);
             diff.setShowCopiesAsAdds(false);
             diff.run();
@@ -428,7 +428,7 @@ public class DiffTest {
             final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
             SvnDiff diff = svnOperationFactory.createDiff();
-            diff.setTargets(SvnTarget.fromFile(relativeFile, SVNRevision.BASE), SvnTarget.fromFile(relativeFile, SVNRevision.WORKING));
+            diff.setSources(SvnTarget.fromFile(relativeFile, SVNRevision.BASE), SvnTarget.fromFile(relativeFile, SVNRevision.WORKING));
             diff.setIgnoreAncestry(true);
             diff.setOutput(byteArrayOutputStream);
             diff.run();
@@ -512,7 +512,7 @@ public class DiffTest {
 
             final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
             final SvnDiff diff = svnOperationFactory.createDiff();
-            diff.setTargets(SvnTarget.fromFile(workingCopyDirectory, SVNRevision.BASE), SvnTarget.fromFile(workingCopyDirectory, SVNRevision.WORKING));
+            diff.setSources(SvnTarget.fromFile(workingCopyDirectory, SVNRevision.BASE), SvnTarget.fromFile(workingCopyDirectory, SVNRevision.WORKING));
             diff.setUseGitDiffFormat(true);
             diff.setOutput(byteArrayOutputStream);
             diff.setDiffGenerator(diffGenerator);
@@ -572,7 +572,7 @@ public class DiffTest {
 
             final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
             final SvnDiff diff = svnOperationFactory.createDiff();
-            diff.setTargets(SvnTarget.fromFile(workingCopyDirectory, SVNRevision.BASE), SvnTarget.fromFile(workingCopyDirectory, SVNRevision.WORKING));
+            diff.setSources(SvnTarget.fromFile(workingCopyDirectory, SVNRevision.BASE), SvnTarget.fromFile(workingCopyDirectory, SVNRevision.WORKING));
             diff.setUseGitDiffFormat(true);
             diff.setOutput(byteArrayOutputStream);
             diff.setDiffGenerator(diffGenerator);
@@ -634,7 +634,7 @@ public class DiffTest {
 
             final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
             final SvnDiff diff = svnOperationFactory.createDiff();
-            diff.setTargets(SvnTarget.fromURL(urlForDiff, SVNRevision.create(3)), SvnTarget.fromURL(urlForDiff, SVNRevision.create(2)));
+            diff.setSources(SvnTarget.fromURL(urlForDiff, SVNRevision.create(3)), SvnTarget.fromURL(urlForDiff, SVNRevision.create(2)));
             diff.setUseGitDiffFormat(false);
             diff.setOutput(byteArrayOutputStream);
             diff.setDiffGenerator(testGenerator);
@@ -723,7 +723,7 @@ public class DiffTest {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
         final SvnDiff diff = svnOperationFactory.createDiff();
-        diff.setTargets(SvnTarget.fromFile(target, SVNRevision.BASE), SvnTarget.fromFile(target, SVNRevision.WORKING));
+        diff.setSources(SvnTarget.fromFile(target, SVNRevision.BASE), SvnTarget.fromFile(target, SVNRevision.WORKING));
         diff.setOutput(byteArrayOutputStream);
         diff.setRelativeToDirectory(relativeToDirectory);
         diff.setIgnoreAncestry(true);
@@ -735,7 +735,7 @@ public class DiffTest {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
         final SvnDiff diff = svnOperationFactory.createDiff();
-        diff.setTarget(SvnTarget.fromURL(fileUrl, startRevision), startRevision, endRevision);
+        diff.setSource(SvnTarget.fromURL(fileUrl, startRevision), startRevision, endRevision);
         diff.setOutput(byteArrayOutputStream);
         diff.run();
 
@@ -746,7 +746,7 @@ public class DiffTest {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
         final SvnDiff diff = svnOperationFactory.createDiff();
-        diff.setTargets(SvnTarget.fromURL(url1, svnRevision1), SvnTarget.fromURL(url2, svnRevision2));
+        diff.setSources(SvnTarget.fromURL(url1, svnRevision1), SvnTarget.fromURL(url2, svnRevision2));
         diff.setOutput(byteArrayOutputStream);
         diff.run();
 
@@ -757,7 +757,7 @@ public class DiffTest {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
         final SvnDiff diff = svnOperationFactory.createDiff();
-        diff.setTarget(SvnTarget.fromFile(file, startRevision), startRevision, endRevision);
+        diff.setSource(SvnTarget.fromFile(file, startRevision), startRevision, endRevision);
         diff.setOutput(byteArrayOutputStream);
         diff.run();
 

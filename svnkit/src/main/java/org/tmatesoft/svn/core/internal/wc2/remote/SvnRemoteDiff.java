@@ -35,17 +35,17 @@ public class SvnRemoteDiff extends SvnRemoteOperationRunner<Void, SvnDiff> {
         diffClient.setMergeOptions(getOperation().getDiffOptions());
 
         final Collection<SvnTarget> targets = getOperation().getTargets();
-        if (targets.size() == 1) {
-            diffClient.doDiff(getOperation().getFirstTarget().getURL(),
-                    getOperation().getFirstTarget().getResolvedPegRevision(),
+        if (getOperation().getSource() != null) {
+            diffClient.doDiff(getOperation().getSource().getURL(),
+                    getOperation().getSource().getResolvedPegRevision(),
                     getOperation().getStartRevision(),
                     getOperation().getEndRevision(),
                     getOperation().getDepth(),
                     !getOperation().isIgnoreAncestry(),
                     getOperation().getOutput());
-        } else if (targets.size() == 2) {
-            diffClient.doDiff(getOperation().getFirstTarget().getURL(), getOperation().getFirstTarget().getPegRevision(),
-                    getOperation().getSecondTarget().getURL(), getOperation().getSecondTarget().getPegRevision(),
+        } else {
+            diffClient.doDiff(getOperation().getFirstSource().getURL(), getOperation().getFirstSource().getPegRevision(),
+                    getOperation().getSecondSource().getURL(), getOperation().getSecondSource().getPegRevision(),
                     getOperation().getDepth(),
                     !getOperation().isIgnoreAncestry(),
                     getOperation().getOutput());

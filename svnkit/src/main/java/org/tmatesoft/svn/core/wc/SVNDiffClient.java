@@ -239,9 +239,7 @@ public class SVNDiffClient extends SVNBasicClient {
     public void doDiff(SVNURL url, SVNRevision pegRevision, SVNRevision rN, SVNRevision rM, boolean recursive, boolean useAncestry, OutputStream result) throws SVNException {
         final SvnDiff diff = getOperationsFactory().createDiff();
         diff.setDiffGenerator(getDiffGenerator());
-        diff.setSingleTarget(SvnTarget.fromURL(url, pegRevision));
-        diff.setStartRevision(rN);
-        diff.setEndRevision(rM);
+        diff.setSource(SvnTarget.fromURL(url, pegRevision), rN, rM);
         diff.setDepth(SVNDepth.getInfinityOrEmptyDepth(recursive));
         diff.setIgnoreAncestry(!useAncestry);
         diff.setOutput(result);
@@ -299,9 +297,7 @@ public class SVNDiffClient extends SVNBasicClient {
     public void doDiff(SVNURL url, SVNRevision pegRevision, SVNRevision rN, SVNRevision rM, SVNDepth depth, boolean useAncestry, OutputStream result) throws SVNException {
         final SvnDiff diff = getOperationsFactory().createDiff();
         diff.setDiffGenerator(getDiffGenerator());
-        diff.setSingleTarget(SvnTarget.fromURL(url, pegRevision));
-        diff.setStartRevision(rN);
-        diff.setEndRevision(rM);
+        diff.setSource(SvnTarget.fromURL(url, pegRevision), rN, rM);
         diff.setDepth(depth);
         diff.setIgnoreAncestry(!useAncestry);
         diff.setOutput(result);
@@ -359,9 +355,7 @@ public class SVNDiffClient extends SVNBasicClient {
     public void doDiff(File path, SVNRevision pegRevision, SVNRevision rN, SVNRevision rM, boolean recursive, boolean useAncestry, OutputStream result) throws SVNException {
         final SvnDiff diff = getOperationsFactory().createDiff();
         diff.setDiffGenerator(getDiffGenerator());
-        diff.setSingleTarget(SvnTarget.fromFile(path, pegRevision));
-        diff.setStartRevision(rN);
-        diff.setEndRevision(rM);
+        diff.setSource(SvnTarget.fromFile(path, pegRevision), rN, rM);
         diff.setDepth(SVNDepth.getInfinityOrEmptyDepth(recursive));
         diff.setIgnoreAncestry(!useAncestry);
         diff.setOutput(result);
@@ -402,9 +396,7 @@ public class SVNDiffClient extends SVNBasicClient {
         for (File path : paths) {
             final SvnDiff diff = getOperationsFactory().createDiff();
             diff.setDiffGenerator(getDiffGenerator());
-            diff.setSingleTarget(SvnTarget.fromFile(path, pegRevision));
-            diff.setStartRevision(rN);
-            diff.setEndRevision(rM);
+            diff.setSource(SvnTarget.fromFile(path, pegRevision), rN, rM);
             diff.setDepth(depth);
             diff.setIgnoreAncestry(!useAncestry);
             diff.setOutput(result);
@@ -476,9 +468,7 @@ public class SVNDiffClient extends SVNBasicClient {
     public void doDiff(File path, SVNRevision pegRevision, SVNRevision rN, SVNRevision rM, SVNDepth depth, boolean useAncestry, OutputStream result, Collection<String> changeLists) throws SVNException {
         final SvnDiff diff = getOperationsFactory().createDiff();
         diff.setDiffGenerator(getDiffGenerator());
-        diff.setSingleTarget(SvnTarget.fromFile(path, pegRevision));
-        diff.setStartRevision(rN);
-        diff.setEndRevision(rM);
+        diff.setSource(SvnTarget.fromFile(path, pegRevision), rN, rM);
         diff.setDepth(depth);
         diff.setIgnoreAncestry(!useAncestry);
         diff.setOutput(result);
@@ -527,7 +517,7 @@ public class SVNDiffClient extends SVNBasicClient {
     public void doDiff(SVNURL url1, SVNRevision rN, SVNURL url2, SVNRevision rM, boolean recursive, boolean useAncestry, OutputStream result) throws SVNException {
         final SvnDiff diff = getOperationsFactory().createDiff();
         diff.setDiffGenerator(getDiffGenerator());
-        diff.setTargets(SvnTarget.fromURL(url1, rN), SvnTarget.fromURL(url2, rM));
+        diff.setSources(SvnTarget.fromURL(url1, rN), SvnTarget.fromURL(url2, rM));
         diff.setDepth(SVNDepth.getInfinityOrEmptyDepth(recursive));
         diff.setIgnoreAncestry(!useAncestry);
         diff.setOutput(result);
@@ -623,7 +613,7 @@ public class SVNDiffClient extends SVNBasicClient {
     public void doDiff(SVNURL url1, SVNRevision rN, SVNURL url2, SVNRevision rM, SVNDepth depth, boolean useAncestry, OutputStream result) throws SVNException {
         final SvnDiff diff = getOperationsFactory().createDiff();
         diff.setDiffGenerator(getDiffGenerator());
-        diff.setTargets(SvnTarget.fromURL(url1, rN), SvnTarget.fromURL(url2, rM));
+        diff.setSources(SvnTarget.fromURL(url1, rN), SvnTarget.fromURL(url2, rM));
         diff.setDepth(depth);
         diff.setIgnoreAncestry(!useAncestry);
         diff.setOutput(result);
@@ -681,7 +671,7 @@ public class SVNDiffClient extends SVNBasicClient {
     public void doDiff(File path1, SVNRevision rN, SVNURL url2, SVNRevision rM, boolean recursive, boolean useAncestry, OutputStream result) throws SVNException {
         final SvnDiff diff = getOperationsFactory().createDiff();
         diff.setDiffGenerator(getDiffGenerator());
-        diff.setTargets(SvnTarget.fromFile(path1, rN), SvnTarget.fromURL(url2, rM));
+        diff.setSources(SvnTarget.fromFile(path1, rN), SvnTarget.fromURL(url2, rM));
         diff.setDepth(SVNDepth.getInfinityOrEmptyDepth(recursive));
         diff.setIgnoreAncestry(!useAncestry);
         diff.setOutput(result);
@@ -797,7 +787,7 @@ public class SVNDiffClient extends SVNBasicClient {
     public void doDiff(File path1, SVNRevision rN, SVNURL url2, SVNRevision rM, SVNDepth depth, boolean useAncestry, OutputStream result, Collection<String> changeLists) throws SVNException {
         final SvnDiff diff = getOperationsFactory().createDiff();
         diff.setDiffGenerator(getDiffGenerator());
-        diff.setTargets(SvnTarget.fromFile(path1, rN), SvnTarget.fromURL(url2, rM));
+        diff.setSources(SvnTarget.fromFile(path1, rN), SvnTarget.fromURL(url2, rM));
         diff.setDepth(depth);
         diff.setIgnoreAncestry(!useAncestry);
         diff.setOutput(result);
@@ -856,7 +846,7 @@ public class SVNDiffClient extends SVNBasicClient {
     public void doDiff(SVNURL url1, SVNRevision rN, File path2, SVNRevision rM, boolean recursive, boolean useAncestry, OutputStream result) throws SVNException {
         final SvnDiff diff = getOperationsFactory().createDiff();
         diff.setDiffGenerator(getDiffGenerator());
-        diff.setTargets(SvnTarget.fromURL(url1, rN), SvnTarget.fromFile(path2, rM));
+        diff.setSources(SvnTarget.fromURL(url1, rN), SvnTarget.fromFile(path2, rM));
         diff.setDepth(SVNDepth.getInfinityOrEmptyDepth(recursive));
         diff.setIgnoreAncestry(!useAncestry);
         diff.setOutput(result);
@@ -971,7 +961,7 @@ public class SVNDiffClient extends SVNBasicClient {
     public void doDiff(SVNURL url1, SVNRevision rN, File path2, SVNRevision rM, SVNDepth depth, boolean useAncestry, OutputStream result, Collection<String> changeLists) throws SVNException {
         final SvnDiff diff = getOperationsFactory().createDiff();
         diff.setDiffGenerator(getDiffGenerator());
-        diff.setTargets(SvnTarget.fromURL(url1, rN), SvnTarget.fromFile(path2, rM));
+        diff.setSources(SvnTarget.fromURL(url1, rN), SvnTarget.fromFile(path2, rM));
         diff.setDepth(depth);
         diff.setIgnoreAncestry(!useAncestry);
         diff.setOutput(result);
@@ -1049,7 +1039,7 @@ public class SVNDiffClient extends SVNBasicClient {
     public void doDiff(File path1, SVNRevision rN, File path2, SVNRevision rM, boolean recursive, boolean useAncestry, OutputStream result) throws SVNException {
         final SvnDiff diff = getOperationsFactory().createDiff();
         diff.setDiffGenerator(getDiffGenerator());
-        diff.setTargets(SvnTarget.fromFile(path1, rN), SvnTarget.fromFile(path2, rM));
+        diff.setSources(SvnTarget.fromFile(path1, rN), SvnTarget.fromFile(path2, rM));
         diff.setDepth(SVNDepth.getInfinityOrEmptyDepth(recursive));
         diff.setIgnoreAncestry(!useAncestry);
         diff.setOutput(result);
@@ -1167,7 +1157,7 @@ public class SVNDiffClient extends SVNBasicClient {
     public void doDiff(File path1, SVNRevision rN, File path2, SVNRevision rM, SVNDepth depth, boolean useAncestry, OutputStream result, Collection<String> changeLists) throws SVNException {
         final SvnDiff diff = getOperationsFactory().createDiff();
         diff.setDiffGenerator(getDiffGenerator());
-        diff.setTargets(SvnTarget.fromFile(path1, rN), SvnTarget.fromFile(path2, rM));
+        diff.setSources(SvnTarget.fromFile(path1, rN), SvnTarget.fromFile(path2, rM));
         diff.setDepth(depth);
         diff.setIgnoreAncestry(!useAncestry);
         diff.setOutput(result);

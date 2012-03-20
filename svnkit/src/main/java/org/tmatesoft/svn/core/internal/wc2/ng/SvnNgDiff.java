@@ -1,7 +1,6 @@
 package org.tmatesoft.svn.core.internal.wc2.ng;
 
 import java.io.File;
-import java.util.Collection;
 
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -42,32 +41,39 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
 
     @Override
     public boolean isApplicable(SvnDiff operation, SvnWcGeneration wcGeneration) throws SVNException {
-//        if (wcGeneration != SvnWcGeneration.V17) {
-//            return false;
-//        }
-        Collection<SvnTarget> targets = operation.getTargets();
-        for (SvnTarget target : targets) {
-            if (target.isFile() && wcGeneration != SvnWcGeneration.V17) {
+        if (operation.getSource() != null) {
+            if (operation.getSource().isFile() && wcGeneration != SvnWcGeneration.V17) {
                 return false;
             }
+
+            return true;
+        } else {
+            if (operation.getFirstSource().isFile() && wcGeneration != SvnWcGeneration.V17) {
+                return false;
+            }
+
+            if (operation.getSecondSource().isFile() && wcGeneration != SvnWcGeneration.V17) {
+                return false;
+            }
+
+            return true;
         }
-        return true;
     }
 
     @Override
     protected Void run(SVNWCContext context) throws SVNException {
         if (isPeggedDiff()) {
-            SvnTarget target = getOperation().getFirstTarget();
+            SvnTarget target = getOperation().getSource();
             SVNRevision revision1 = getOperation().getStartRevision();
             SVNRevision revision2 = getOperation().getEndRevision();
             SVNRevision pegRevision = target.getPegRevision();
 
             doDiff(target, revision1, pegRevision, target, revision2);
         } else {
-            SvnTarget target1 = getOperation().getFirstTarget();
-            SvnTarget target2 = getOperation().getSecondTarget();
-            SVNRevision revision1 = getOperation().getStartRevision();
-            SVNRevision revision2 = getOperation().getEndRevision();
+            SvnTarget target1 = getOperation().getFirstSource();
+            SvnTarget target2 = getOperation().getSecondSource();
+            SVNRevision revision1 = target1.getPegRevision();
+            SVNRevision revision2 = target2.getPegRevision();
             SVNRevision pegRevision = SVNRevision.UNDEFINED;
 
             doDiff(target1, revision1, pegRevision, target2, revision2);
@@ -441,7 +447,7 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
     }
 
     private boolean isPeggedDiff() {
-        return getOperation().getTargets().size() == 1;
+        return getOperation().getSource() != null;
     }
 
     private boolean isRevisionBase(SVNRevision revision2) {

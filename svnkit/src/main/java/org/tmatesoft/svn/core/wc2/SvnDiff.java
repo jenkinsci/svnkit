@@ -139,7 +139,11 @@ public class SvnDiff extends SvnOperation<Void> {
     private ISvnDiffGenerator diffGenerator;
     private SVNDiffOptions diffOptions;
     private OutputStream output;
-    
+
+    private SvnTarget source;
+    private SvnTarget firstSource;
+    private SvnTarget secondSource;
+
     private SVNRevision startRevision;
     private SVNRevision endRevision;
     
@@ -157,69 +161,60 @@ public class SvnDiff extends SvnOperation<Void> {
     }
 
     /**
-     * Sets the diff's <code>target</code> with start and end revisions for one-target type of operation.
-     * All previously set targets are cleared.
-     * 
-     * @param source target of the diff 
+     * Sets the diff's <code>source</code> with start and end revisions for one-source type of operation.
+     *
+     * @param source source of the diff
      * @param start start revision of the diff
      * @param end end revision of the diff
      */
-    public void setTarget(SvnTarget source, SVNRevision start, SVNRevision end) {
-        setSingleTarget(source);
+    public void setSource(SvnTarget source, SVNRevision start, SVNRevision end) {
+        this.source = source;
         this.startRevision = start;
         this.endRevision = end;
-    }
-    
-    /**
-     * Sets both diff's <code>targets</code>. Start revision is retrieved from target1's <code>pegRevision</code>,
-     * end revision is retrieved from target2's <code>pegRevision</code>.
-     * All previously set targets are cleared.
-     * 
-     * @param target1 first target of the diff 
-     * @param target2 second target of the diff
-     */
-    public void setTargets(SvnTarget target1, SvnTarget target2) {
-        setTwoTargets(target1, target2);
-        this.startRevision = target1.getPegRevision();
-        this.endRevision = target2.getPegRevision();
+        if (source != null) {
+            setSources(null, null);
+        }
     }
 
     /**
-     * Sets diff's start revision.
-     * 
-     * @param startRevision start revision of the diff operation
+     * Sets both diff's <code>sources</code>.
+     *
+     * @param source1 first source of the diff
+     * @param source2 second source of the diff
      */
-    public void setStartRevision(SVNRevision startRevision) {
-        this.startRevision = startRevision;
+    public void setSources(SvnTarget source1, SvnTarget source2) {
+        this.firstSource = source1;
+        this.secondSource = source2;
+        if (firstSource != null) {
+            setSource(null, null, null);
+        }
     }
 
     /**
-     * Sets diff's end revision.
-     * 
-     * @param endRevision end revision of the diff operation
+     * Gets the diff's <code>source</code> with start and end revisions for one-target type of operation.
+     *
+     * @return source of the diff
      */
-    public void setEndRevision(SVNRevision endRevision) {
-        this.endRevision = endRevision;
+    public SvnTarget getSource() {
+        return source;
     }
 
-    /**
-     * Returns diff's start revision.
-     * 
-     * @return start revision of the diff operation
-     */
     public SVNRevision getStartRevision() {
         return startRevision;
     }
-    
-    /**
-     * Returns diff's end revision.
-     * 
-     * @return end revision of the diff operation
-     */
+
     public SVNRevision getEndRevision() {
         return endRevision;
     }
-    
+
+    public SvnTarget getFirstSource() {
+        return firstSource;
+    }
+
+    public SvnTarget getSecondSource() {
+        return secondSource;
+    }
+
     public void setRelativeToDirectory(File relativeToDirectory) {
         this.relativeToDirectory = relativeToDirectory;
     }
@@ -390,21 +385,6 @@ public class SvnDiff extends SvnOperation<Void> {
         this.useGitDiffFormat = useGitDiffFormat;
     }
 
-    /**
-     * Returns diff's second target.
-     * 
-     * @return second target of the diff
-     */
-    public SvnTarget getSecondTarget() {
-        if (getTargets().size() < 2) {
-            return null;
-        }
-
-        final Iterator<SvnTarget> iterator = getTargets().iterator();
-        iterator.next();
-        return iterator.next();
-    }
-
     @Override
     protected int getMinimumTargetsCount() {
         return super.getMinimumTargetsCount();
@@ -432,12 +412,16 @@ public class SvnDiff extends SvnOperation<Void> {
 
     @Override
     protected File getOperationalWorkingCopy() {
-        if (getTargets().size() == 1 && getFirstTarget().isFile()) {
-            return getFirstTarget().getFile();
-        } else if (getTargets().size() == 2 && getFirstTarget() != null && getFirstTarget().isFile()) {
-            return getFirstTarget().getFile();
-        } else if (getTargets().size() == 2 && getSecondTarget() != null && getSecondTarget().isFile()) {
-            return getSecondTarget().getFile();
+        if (getSource() != null && getSource().isFile()) {
+            return getSource().getFile();
+        } else {
+            if (getFirstSource() != null && getFirstSource().isFile()) {
+                return getFirstSource().getFile();
+            }
+
+            if (getSecondSource() != null && getSecondSource().isFile()) {
+                return getSecondSource().getFile();
+            }
         }
 
         return null;
