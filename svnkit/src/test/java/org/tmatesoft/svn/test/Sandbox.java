@@ -11,6 +11,7 @@ import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminClient;
+import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 
 public class Sandbox {
 
@@ -74,7 +75,11 @@ public class Sandbox {
     }
 
     public WorkingCopy checkoutNewWorkingCopy(SVNURL repositoryUrl, long revision) throws SVNException {
-        return checkoutNewWorkingCopy(repositoryUrl, revision, SvnWcGeneration.V17);
+        return checkoutNewWorkingCopy(repositoryUrl, revision, getDefaultWcGeneration());
+    }
+
+    private SvnWcGeneration getDefaultWcGeneration() {
+        return new SvnOperationFactory().getPrimaryWcGeneration();
     }
     
     public WorkingCopy checkoutNewWorkingCopy(SVNURL repositoryUrl, long revision, SvnWcGeneration wcGeneration) throws SVNException {
