@@ -139,11 +139,14 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
         SVNFileUtil.deleteAll(getAdminDirectory(nestedWC), true);
         context.getDb().forgetDirectoryTemp(nestedWC);
 
+        File lockRoot = null;
         try {
-            context.acquireWriteLock(wcRoot, true, false);
+            lockRoot = context.acquireWriteLock(wcRoot, true, true);
             copy(context, fakeWorkingCopyDirectory, nestedWC, true);
         } finally {
-            context.releaseWriteLock(wcRoot);
+            if (lockRoot != null) {
+                context.releaseWriteLock(lockRoot);
+            }
         }
 
         return null;
