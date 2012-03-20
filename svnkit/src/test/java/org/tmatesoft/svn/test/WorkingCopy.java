@@ -65,7 +65,7 @@ public class WorkingCopy {
     }
     
     public File deleteFile(String relativePath) throws SVNException {
-        SVNFileUtil.deleteFile(getFile(relativePath));
+        SVNFileUtil.deleteAll(getFile(relativePath), true);
         return getFile(relativePath);
     }
 
