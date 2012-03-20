@@ -433,10 +433,8 @@ public class DiffTest {
             diff.setOutput(byteArrayOutputStream);
             diff.run();
 
-            final String actualDiffOutput =  new String(byteArrayOutputStream.toByteArray());
+            final String actualDiffOutput = new String(byteArrayOutputStream.toByteArray()).replace(System.getProperty("line.separator"), "\n");
             final String expectedDiffOutput = "";
-
-            System.out.println("actualDiffOutput = " + actualDiffOutput);
 
             Assert.assertEquals(expectedDiffOutput, actualDiffOutput);
 
@@ -520,7 +518,7 @@ public class DiffTest {
             diff.setDiffGenerator(diffGenerator);
             diff.run();
 
-            final String actualDiffOutput = byteArrayOutputStream.toString();
+            final String actualDiffOutput = byteArrayOutputStream.toString().replace(System.getProperty("line.separator"), "\n");
             final String expectedDiffOutput = "Index: " +
                     getRelativePath(copyTargetFile, basePath) +
                     "\n" +
@@ -580,7 +578,7 @@ public class DiffTest {
             diff.setDiffGenerator(diffGenerator);
             diff.run();
 
-            final String actualDiffOutput = byteArrayOutputStream.toString();
+            final String actualDiffOutput = byteArrayOutputStream.toString().replace(System.getProperty("line.separator"), "\n");
             final String expectedDiffOutput = "Index: " +
                     getRelativePath(moveSourceFile, basePath) +
                     "\n" +
@@ -730,7 +728,7 @@ public class DiffTest {
         diff.setRelativeToDirectory(relativeToDirectory);
         diff.setIgnoreAncestry(true);
         diff.run();
-        return new String(byteArrayOutputStream.toByteArray());
+        return new String(byteArrayOutputStream.toByteArray()).replace(System.getProperty("line.separator"), "\n");
     }
 
     private String runDiff(SvnOperationFactory svnOperationFactory, SVNURL fileUrl, SVNRevision startRevision, SVNRevision endRevision) throws SVNException {
@@ -741,7 +739,7 @@ public class DiffTest {
         diff.setOutput(byteArrayOutputStream);
         diff.run();
 
-        return new String(byteArrayOutputStream.toByteArray());
+        return new String(byteArrayOutputStream.toByteArray()).replace(System.getProperty("line.separator"), "\n");
     }
 
     private String runDiff(SvnOperationFactory svnOperationFactory, SVNURL url1, SVNRevision svnRevision1, SVNURL url2, SVNRevision svnRevision2) throws SVNException {
@@ -752,7 +750,7 @@ public class DiffTest {
         diff.setOutput(byteArrayOutputStream);
         diff.run();
 
-        return new String(byteArrayOutputStream.toByteArray());
+        return new String(byteArrayOutputStream.toByteArray()).replace(System.getProperty("line.separator"), "\n");
     }
 
     private String runDiff(SvnOperationFactory svnOperationFactory, File file, SVNRevision startRevision, SVNRevision endRevision) throws SVNException {
@@ -763,7 +761,7 @@ public class DiffTest {
         diff.setOutput(byteArrayOutputStream);
         diff.run();
 
-        return new String(byteArrayOutputStream.toByteArray());
+        return new String(byteArrayOutputStream.toByteArray()).replace(System.getProperty("line.separator"), "\n");
     }
 
     public String getTestName() {
