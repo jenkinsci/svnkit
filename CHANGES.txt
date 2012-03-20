@@ -1,3 +1,8 @@
+== version 1.7.4-rc1 ==
+
++ Performance and stability improvements
+* Version bumped to match that of compatible native Subversion
+
 == version 1.7.0-beta3 ==
 
 + Performance and stability improvements
