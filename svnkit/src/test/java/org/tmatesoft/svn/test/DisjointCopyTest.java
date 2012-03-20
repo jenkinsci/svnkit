@@ -166,7 +166,9 @@ public class DisjointCopyTest {
 
             final Map<File,SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
             Assert.assertEquals(SVNStatusType.STATUS_NORMAL, statuses.get(alreadyVersionedDirectory).getNodeStatus());
-            Assert.assertEquals(SVNStatusType.STATUS_UNVERSIONED, statuses.get(new File(alreadyVersionedDirectory, "targetFile")).getNodeStatus());
+            Assert.assertEquals(
+                    TestUtil.isNewWorkingCopyTest() ? SVNStatusType.STATUS_UNVERSIONED : SVNStatusType.STATUS_NORMAL,
+                    statuses.get(new File(alreadyVersionedDirectory, "targetFile")).getNodeStatus());
         } finally {
             svnOperationFactory.dispose();
             sandbox.dispose();
