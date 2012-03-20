@@ -164,6 +164,7 @@ import org.tmatesoft.svn.core.wc.DefaultSVNRepositoryPool;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.ISVNRepositoryPool;
+import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.core.wc2.admin.SvnRepositoryCat;
 import org.tmatesoft.svn.core.wc2.admin.SvnRepositoryCopyRevisionProperties;
@@ -202,6 +203,18 @@ import org.tmatesoft.svn.core.wc2.admin.SvnRepositoryUpgrade;
 import org.tmatesoft.svn.core.wc2.admin.SvnRepositoryVerify;
 import org.tmatesoft.svn.util.SVNLogType;
 
+/**
+ * Represents factory for the Svn* operations.
+ * Contains corresponding create*() methods for all supported operations.
+ * Provides operation options by implementing {@link ISvnOperationOptionsProvider} interface.
+ * Handles working copy access and provides access to it {@link #getWcContext()}, {@link #isAutoCloseContext()}.
+ * Has set of working copy utility methods: {@link #getWorkingCopyRoot(File, boolean)}, {@link #isWorkingCopyRoot(File)}, 
+ * {@link #isVersionedDirectory(File)}, {@link #detectWcGeneration(File, boolean)},
+ * {@link #setPrimaryWcGeneration(SvnWcGeneration)}, {@link #isPrimaryWcGenerationOnly()(SvnWcGeneration)}
+ *  
+ * @author TMate Software Ltd.
+ * @version 1.7
+ */
 public class SvnOperationFactory implements ISvnOperationOptionsProvider {
     
     private Map<Class<?>, List<ISvnOperationRunner<?, SvnOperation<?>>>> anyFormatOperationRunners;
@@ -222,11 +235,24 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
     private SvnWcGeneration primaryWcGeneration;
     private int runLevel;
 
+    /**
+     * Creates operation factory and initializes it with empty <code>context</code>.
+     * 
+     * @param context operation's context
+     */
     public SvnOperationFactory() {
         this(null);
         runLevel = 0;
     }
     
+    /**
+     * Creates operation factory and initializes it with <code>context</code>.
+     * If <code>context</code> is set, retrieves its <code>options</code> and <code>eventHandler</code>
+     * and sets <code>autoCloseContext</code> to <code>false</code>, otherwise 
+     * sets <code>autoCloseContext</code> to <code>true</code>.
+     * 
+     * @param context operation's context
+     */
     public SvnOperationFactory(SVNWCContext context) {
         wcContext = context;
         
@@ -403,14 +429,30 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
         registerOperationRunner(SvnGetStatusSummary.class, new SvnNgGetStatusSummary());
     }
     
+    /**
+     * Returns whether to dispose context when operation finishes.
+     *  
+     * @return <code>true</code> if the context should be disposed, otherwise <code>false</code>
+     */
     public boolean isAutoCloseContext() {
         return autoCloseContext;
     }
 
+    /**
+     * Sets whether to dispose context when operation finishes.
+     *  
+     * @param autoCloseContext <code>true</code> if the context should be disposed, otherwise <code>false</code>
+     */
     public void setAutoCloseContext(boolean autoCloseContext) {
         this.autoCloseContext = autoCloseContext;
     }
 
+    /**
+     * Gets operation's authentication manager.
+     * If not set, creates default authentication manager.
+     * 
+     * @return authentication manager
+     */
     public ISVNAuthenticationManager getAuthenticationManager() {
         if (authenticationManager == null) {
             authenticationManager = SVNWCUtil.createDefaultAuthenticationManager();
@@ -418,6 +460,13 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
         return authenticationManager;
     }
 
+    /**
+     * Gets the cancel handler of the operation.
+     * If client's <code>canceller</code> is not set, 
+     * returns <code>eventHandler</code> as a canceller.
+     * 
+     * @return cancel handler
+     */
     public ISVNCanceller getCanceller() {
         if (canceller == null && getEventHandler() != null) {
             return getEventHandler();
@@ -425,6 +474,15 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
         return canceller;
     }
 
+    /**
+     * Gets the event handler for the operation. This event handler will be
+     * dispatched {@link SVNEvent} objects to provide detailed information about
+     * actions and progress state of version control operations. 
+     * If <code>wcContext</code> is set, returns {@link  SVNWCContext#getEventHandler()} 
+     * 
+     * @return handler for events
+     * @see ISVNEventHandler
+     */
     public ISVNEventHandler getEventHandler() {
         if (getWcContext() != null) {
             return getWcContext().getEventHandler();
@@ -432,6 +490,13 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
         return eventHandler;
     }
 
+    /**
+     * Gets the pool of repositories.
+     * If pool is not created, creates {@link DefaultSVNRepositoryPool} 
+     * with the authentication manager, options, and <code>autoDisposeRepositoryPool</code> = <code>true</code>.
+     * 
+     * @return pool of repositories
+     */
     public ISVNRepositoryPool getRepositoryPool() {
         if (repositoryPool == null) {
             repositoryPool = new DefaultSVNRepositoryPool(getAuthenticationManager(), getOptions());
@@ -440,6 +505,12 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
         return repositoryPool;
     }
 
+    /**
+     * Gets operation's options.
+     * If options are not set, creates default readonly options.
+     * 
+     * @return options of the operation
+     */
     public ISVNOptions getOptions() {
         if (options == null) {
             options = SVNWCUtil.createDefaultOptions(true);
@@ -447,6 +518,12 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
         return options;
     }
 
+    /**
+     * Sets operation's authentication manager.
+     * If <code>repositoryPool</code> is set, set its authentication manager to this value.
+     * 
+     * @param authenticationManager authentication manager
+     */
     public void setAuthenticationManager(ISVNAuthenticationManager authenticationManager) {
         this.authenticationManager = authenticationManager;
         if (repositoryPool != null) {
@@ -454,10 +531,25 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
         }
     }
 
+    /**
+     * Sets the cancel handler of the operation.
+     * 
+     * @param canceller cancel handler
+     */
     public void setCanceller(ISVNCanceller canceller) {
         this.canceller = canceller;
     }
 
+    /**
+     * Sets the event handler for the operation. This event handler will be
+     * dispatched {@link SVNEvent} objects to provide detailed information about
+     * actions and progress state of version control operations. 
+     * If <code>wcContext</code> is set, sets its event handler to this one. 
+     * If <code>wcContext</code> is not set, disposes it.
+     * 
+     * @param eventHandler handler for events
+     * @see ISVNEventHandler
+     */
     public void setEventHandler(ISVNEventHandler eventHandler) {
         this.eventHandler = eventHandler;
         if (this.wcContext != null) {
@@ -467,16 +559,31 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
         }
     }
 
+    /**
+     * Sets operation's options and disposes working copy context.
+     * 
+     * @param options options of the operation
+     */
     public void setOptions(ISVNOptions options) {
         this.options = options;
         disposeWcContext();
     }
 
+    /**
+     * Sets pool of repositories.
+     * If <code>repositoryPool</code> is not <code>null</code>sets <code>autoDisposeRepositoryPool</code> to <code>false</code>,
+     * otherwise to <code>true</code>
+     * 
+     * @param repositoryPool pool of repositories
+     */
     public void setRepositoryPool(ISVNRepositoryPool repositoryPool) {
         this.repositoryPool = repositoryPool;
         setAutoDisposeRepositoryPool(repositoryPool == null);
     }
     
+    /**
+     * Disposes context and repository pool if needed.
+     */
     public void dispose() {
         disposeWcContext();
         if (isAutoDisposeRepositoryPool() && repositoryPool != null) {
@@ -499,8 +606,7 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
     public SvnCopy createCopy() {
         return new SvnCopy(this);
     }
-    
-    
+        
     public SvnRemoteCopy createRemoteCopy() {
         return new SvnRemoteCopy(this);
     }
@@ -900,6 +1006,13 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
         return runner;
     }
     
+    /**
+     * Returns whether the operations should work only on primary working copy generation 
+     * (for example only on SVN 1.7 working copy) or on both primary and secondary generations. 
+     *   
+     * @return <code>true</code> operations should work only on primary working copy generation, 
+     * if <code>false</code> both primary and secondary generations are supported
+     */
     private boolean isPrimaryWcGenerationOnly() {
         return "true".equalsIgnoreCase(System.getProperty("svnkit.wc.17only", null));
     }
@@ -936,6 +1049,12 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
         }
     }
     
+    /**
+     * Detects whether the versioned directory is working copy root.
+     *  
+     * @param versionedDir directory to check
+     * @return <code>true</code> if the directory is working copy root, otherwise <code>false</code>
+     */
     public static boolean isWorkingCopyRoot(File versionedDir) {
         SVNWCDb db = new SVNWCDb();
         try {
@@ -960,10 +1079,23 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
         return false;
     }
     
+    /**
+     * Detects whether the directory is versioned directory.
+     * 
+     * @param directory directory to check
+     * @return <code>true</code> if the directory is versioned directory, otherwise <code>false</code>
+     */
     public static boolean isVersionedDirectory(File directory) {
         return isVersionedDirectory(directory, false);
     }
 
+    /**
+     * Detects whether the directory is versioned directory in or (not in) the addition mode.
+     * 
+     * @param directory directory to check
+     * @param isAdditionMode <code>true</code> if it is addition mode, otherwise <code>false</code>
+     * @return <code>true</code> if the directory is versioned directory, otherwise <code>false</code>
+     */
     public static boolean isVersionedDirectory(File directory, boolean isAdditionMode) {
         if (directory == null) {
             return false;
@@ -1014,6 +1146,14 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
         return false;
     }
 
+    /**
+     * Searches working copy root path by the versioned directory.
+     * 
+     * @param versionedDir versioned directory
+     * @param stopOnExternals <code>true</code> if externals should not be searched, otherwise <code>false</code>
+     * @return working copy root
+     * @throws SVNException
+     */
     public static File getWorkingCopyRoot(File versionedDir, boolean stopOnExternals) throws SVNException {
         if (versionedDir == null || (!isVersionedDirectory(versionedDir) && !isVersionedDirectory(versionedDir.getParentFile()))) {
             return null;
@@ -1121,11 +1261,31 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
         }
     }
 
-
+    /**
+     * 
+     * Detects working copy generation (1.6 or 1.7 format) by the working copy path.
+     * Recursively searches the by path's parents up to the root if <code>climbUp</code> is <code>true</code>.
+     * 
+     * @param path working copy path
+     * @param climbUp <code>true</code> if search recursively in path's parents, otherwise <code>false</code>
+     * @return working copy generation
+     * @throws SVNException
+     */
     public static SvnWcGeneration detectWcGeneration(File path, boolean climbUp) throws SVNException {
         return detectWcGeneration(path, climbUp, false);
     }
 
+    /**
+     * 
+     * Detects working copy generation (1.6 or 1.7 format) by the working copy path in (not in) the addition mode.
+     * Recursively searches the by path's parents up to the root if <code>climbUp</code> is <code>true</code>.
+     * 
+     * @param path working copy path
+     * @param climbUp <code>true</code> if search recursively in path's parents, otherwise <code>false</code>
+     * @param isAdditionMode <code>true</code> if it is addition mode, otherwise <code>false</code>
+     * @return working copy generation
+     * @throws SVNException
+     */
     public static SvnWcGeneration detectWcGeneration(File path, boolean climbUp, boolean isAdditionMode) throws SVNException {
         while(true) {
             if (path == null) {
@@ -1206,10 +1366,20 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
         return list;
     }
 
+    /**
+     * Returns working copy context.
+     * 
+     * @return working copy context
+     */
     public SVNWCContext getWcContext() {
         return wcContext;
     }
 
+    /**
+     * Returns primary (default) working copy generation.
+     * 
+     * @return working copy generation
+     */
     public SvnWcGeneration getPrimaryWcGeneration() {
         if (primaryWcGeneration == null) {
             String systemProperty = System.getProperty("svnkit.wc.17", "true");
@@ -1222,10 +1392,22 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
         return primaryWcGeneration;
     }
     
+    /**
+     * Returns secondary working copy generation.
+     * 
+     * @return working copy generation
+     */
     public SvnWcGeneration getSecondaryWcGeneration() {
         return getPrimaryWcGeneration() == SvnWcGeneration.V17 ? SvnWcGeneration.V16 : SvnWcGeneration.V17;
     }
 
+    /**
+     * (Re)sets primary (default) working copy generation.
+     * If <code>primaryWcGeneration</code> is not <code>null</code>, 
+     * registers operations' runners.
+     * 
+     * @param primaryWcGeneration
+     */
     public void setPrimaryWcGeneration(SvnWcGeneration primaryWcGeneration) {
         if (primaryWcGeneration == null) {
             return;

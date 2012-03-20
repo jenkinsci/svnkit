@@ -65,7 +65,7 @@ public class SvnOperation<V> implements ISvnOperationOptionsProvider {
     }
 
     /**
-     * Gets the event handler for the operation, provided by {@link SvnOperationFactory}. This event handler will be
+     * Gets the event handler for the operation, provided by {@link SvnOperationFactory#getEventHandler()}. This event handler will be
      * dispatched {@link SVNEvent} objects to provide detailed information about
      * actions and progress state of version control operations performed by
      * <code>run()</code> method of <code>SVN*</code> operation classes. 
@@ -78,7 +78,7 @@ public class SvnOperation<V> implements ISvnOperationOptionsProvider {
     }
 
     /**
-     * Gets operation's options, provided by {@link SvnOperationFactory}.
+     * Gets operation's options, provided by {@link SvnOperationFactory#getOptions()}.
      * 
      * @return options of the operation
      */
@@ -327,7 +327,7 @@ public class SvnOperation<V> implements ISvnOperationOptionsProvider {
     }
 
     /**
-     * Gets the operation's pool of repositories, provided by {@link SvnOperationFactory}.
+     * Gets the operation's pool of repositories, provided by {@link SvnOperationFactory#getRepositoryPool()}.
      * 
      * @return pool of repositories
      */
@@ -336,7 +336,7 @@ public class SvnOperation<V> implements ISvnOperationOptionsProvider {
     }
 
     /**
-     * Gets operation's authentication manager, provided by {@link SvnOperationFactory}.
+     * Gets operation's authentication manager, provided by {@link SvnOperationFactory#getAuthenticationManager()}.
      * 
      * @return authentication manager
      */
@@ -345,10 +345,10 @@ public class SvnOperation<V> implements ISvnOperationOptionsProvider {
     }
 
     /**
-     * Gets the cancel handler of the operation, provided by {@link SvnOperationFactory}.
-     * See {@link #cancel()}.
+     * Gets the cancel handler of the operation, provided by {@link SvnOperationFactory#getCanceller() }.
      * 
      * @return cancel handler
+     * @see #cancel()
      */
     public ISVNCanceller getCanceller() {
         return getOperationFactory().getCanceller();

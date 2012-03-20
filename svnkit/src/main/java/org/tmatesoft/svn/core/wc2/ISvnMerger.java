@@ -12,6 +12,9 @@ import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 /**
  * Implement this interface additionally to ISVNMerger, to provide custom text and properties merge code
  * for the 1.7 working copy format.
+ * 
+ * @author TMate Software Ltd.
+ * @version 1.7
  */
 public interface ISvnMerger extends ISVNMerger {
     

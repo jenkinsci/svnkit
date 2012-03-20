@@ -1,5 +1,18 @@
 package org.tmatesoft.svn.core.wc2;
 
+/**
+ * Operation for calculation canonicalize all urls in the specified Working Copy.
+ * Operation's <code>target</code> is destination working copy path.
+ * 
+ * 
+ * @param omitDefaultPort
+ *            if <span class="javakeyword">true</span> then removes all port
+ *            numbers from urls which equal to default ones, otherwise does
+ *            not
+ * @param recursive
+ *            recurses an operation
+ * @throws SVNException
+ */
 public class SvnCanonicalizeUrls extends SvnOperation<Void> {
 
     private boolean omitDefaultPort;
@@ -9,22 +22,43 @@ public class SvnCanonicalizeUrls extends SvnOperation<Void> {
         super(factory);
     }
 
+    /**
+     * Returns whether to remove all port numbers from urls which equal to default ones.
+     *            
+     * @return <code>true</code> if the default port numbers should be removed, otherwise <code>false</code>
+     */
     public boolean isOmitDefaultPort() {
         return omitDefaultPort;
     }
 
+    /**
+     * Sets whether to remove all port numbers from urls which equal to default ones.
+     *            
+     * @param omitDefaultPort <code>true</code> if the default port numbers should be removed, otherwise <code>false</code>
+     */
     public void setOmitDefaultPort(boolean omitDefaultPort) {
         this.omitDefaultPort = omitDefaultPort;
     }
 
+    /**
+     * Returns whether to ignore externals definitions.
+     * 
+     * @return <code>true</code> if externals definitions should be ignored, otherwise <code>false</code>
+     * @since 1.7
+     */
     public boolean isIgnoreExternals() {
         return ignoreExternals;
     }
     
+    /**
+     * Sets whether to ignore externals definitions.
+     * 
+     * @param ignoreExternals <code>true</code> if externals definitions should be ignored, otherwise <code>false</code>
+     * @since 1.7
+     */
     public void setIgnoreExternals(boolean ignoreExternals) {
         this.ignoreExternals = ignoreExternals;
     }
-
 
     @Override
     protected void initDefaults() {
