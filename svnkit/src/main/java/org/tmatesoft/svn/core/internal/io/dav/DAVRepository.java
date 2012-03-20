@@ -711,7 +711,7 @@ public class DAVRepository extends SVNRepository {
                     error = null;
                 } catch (SVNException e) {
                     if (e.getErrorMessage() != null && 
-                            (e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_NOT_LOCKED || FSErrors.isUnlockError(e.getErrorMessage()))) {
+                            (e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_NOT_LOCKED  || FSErrors.isUnlockError(e.getErrorMessage()))) {
                         error = e.getErrorMessage();
                         error = SVNErrorMessage.create(error.getErrorCode(), error.getMessageTemplate(), shortPath);
                     } else {
@@ -719,7 +719,7 @@ public class DAVRepository extends SVNRepository {
                     }
                 }
                 if (handler != null) {
-                    handler.handleUnlock(repositoryPath, new SVNLock(path, id, null, null, null, null), error);
+                    handler.handleUnlock(repositoryPath, new SVNLock(repositoryPath, id, null, null, null, null), error);
                 }
             }
         } finally {
