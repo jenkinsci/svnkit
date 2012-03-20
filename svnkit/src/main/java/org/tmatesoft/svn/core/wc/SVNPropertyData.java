@@ -56,7 +56,9 @@ public class SVNPropertyData {
         myValue = data;
         if (myValue != null && SVNProperty.isSVNProperty(myName) && myValue.isString()) {
             String nativeEOL = options == null ? System.getProperty("line.separator") : new String(options.getNativeEOL());
-            myValue = SVNPropertyValue.create(myValue.getString().replaceAll("\n", nativeEOL));
+            if (myValue.getString().indexOf(nativeEOL) < 0) {
+                myValue = SVNPropertyValue.create(myValue.getString().replaceAll("\n", nativeEOL));
+            }
         }
     }
     
