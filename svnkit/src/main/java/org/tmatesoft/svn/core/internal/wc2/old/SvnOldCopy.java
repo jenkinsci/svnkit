@@ -17,7 +17,7 @@ import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
 
 public class SvnOldCopy extends SvnOldRunner<Void, SvnCopy> {
-
+    
     @Override
     protected Void run() throws SVNException {
         if (getOperation().isDisjoint()) {

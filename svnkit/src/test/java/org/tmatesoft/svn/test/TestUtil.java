@@ -16,6 +16,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumInputStream;
+import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnGetStatus;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
@@ -81,14 +82,17 @@ public class TestUtil {
         }
     }
 
+    public static SvnWcGeneration getDefaultWcGeneration() {
+        return new SvnOperationFactory().getPrimaryWcGeneration();
+    }
+
     static boolean isNewWorkingCopyTest() {
-        final String propertyValue = System.getProperty("svnkit.wc.17", "true");
-        return "true".equals(propertyValue);
+        return getDefaultWcGeneration() == SvnWcGeneration.V17;
     }
 
     static boolean isNewWorkingCopyOnly() {
-        final String propertyValue = System.getProperty("svnkit.wc.17only", "true");
-        return "true".equals(propertyValue);
+        return getDefaultWcGeneration() == SvnWcGeneration.V17 &&
+                new SvnOperationFactory().isPrimaryWcGenerationOnly();
     }
 
     public static Map<File, SvnStatus> getStatuses(SvnOperationFactory svnOperationFactory, File workingCopyDirectory) throws SVNException {

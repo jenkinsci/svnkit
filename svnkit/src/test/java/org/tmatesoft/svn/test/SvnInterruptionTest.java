@@ -73,7 +73,9 @@ public class SvnInterruptionTest {
         }
         
         SvnStatus st = wc.getStatus("");
-        Assert.assertTrue(st.isWcLocked());
+        if (TestUtil.isNewWorkingCopyTest()) {
+            Assert.assertTrue(st.isWcLocked());
+        }
         Assert.assertEquals(SVNStatusType.STATUS_INCOMPLETE, st.getNodeStatus());
         
         SvnCleanup cup = of.createCleanup();
@@ -84,6 +86,7 @@ public class SvnInterruptionTest {
         Assert.assertFalse(st.isWcLocked());
         Assert.assertEquals(SVNStatusType.STATUS_INCOMPLETE, st.getNodeStatus());
         
+        of.setEventHandler(null);
         up.run();
         
         st = wc.getStatus("");

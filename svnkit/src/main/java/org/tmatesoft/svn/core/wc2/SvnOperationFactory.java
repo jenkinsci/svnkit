@@ -1013,7 +1013,7 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
      * @return <code>true</code> operations should work only on primary working copy generation, 
      * if <code>false</code> both primary and secondary generations are supported
      */
-    private boolean isPrimaryWcGenerationOnly() {
+    public boolean isPrimaryWcGenerationOnly() {
         return "true".equalsIgnoreCase(System.getProperty("svnkit.wc.17only", null));
     }
 

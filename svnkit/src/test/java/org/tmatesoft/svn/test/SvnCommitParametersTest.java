@@ -20,6 +20,7 @@ import org.tmatesoft.svn.core.wc2.SvnScheduleForAddition;
 import org.tmatesoft.svn.core.wc2.SvnScheduleForRemoval;
 import org.tmatesoft.svn.core.wc2.SvnStatus;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
+import org.tmatesoft.svn.core.wc2.SvnUpdate;
 
 public class SvnCommitParametersTest {
 
@@ -188,7 +189,8 @@ public class SvnCommitParametersTest {
         rm.setDeleteFiles(false);
         rm.run();
         
-        missingDir.mkdir();
+        restoreDirectory(missingDir, svnOperationFactory);
+        
         wc.changeFileContents(MISSING_FILE_PATH, "changed contents");
         
         Assert.assertTrue(missingDir.isDirectory());
@@ -197,12 +199,21 @@ public class SvnCommitParametersTest {
         SvnCommit ci = svnOperationFactory.createCommit();
         ci.setCommitMessage("message");
         ci.addTarget(SvnTarget.fromFile(dir));
-        ci.setCommitParameters(createCommitParameters(Action.SKIP, true, Action.SKIP, false));
+        ci.setCommitParameters(createCommitParameters(Action.DELETE, true, Action.SKIP, false));
         ci.setDepth(SVNDepth.INFINITY);
         ci.run();
 
         Assert.assertTrue(missingDir.isDirectory());
         Assert.assertTrue(!missingFile.exists());
+    }
+    private void restoreDirectory(File missingDir, SvnOperationFactory svnOperationFactory) throws SVNException {
+        if (TestUtil.isNewWorkingCopyTest()) {
+            missingDir.mkdir();
+        } else {
+            SvnUpdate up = svnOperationFactory.createUpdate();
+            up.setSingleTarget(SvnTarget.fromFile(missingDir));
+            up.run();
+        }
     }
 
     @Test
@@ -220,7 +231,7 @@ public class SvnCommitParametersTest {
         rm.setDepth(SVNDepth.EMPTY);
         rm.run();
         
-        missingDir.mkdir();
+        restoreDirectory(missingDir, svnOperationFactory);
         wc.changeFileContents(MISSING_FILE_PATH, "changed contents");
 
         SvnScheduleForAddition add = svnOperationFactory.createScheduleForAddition();
