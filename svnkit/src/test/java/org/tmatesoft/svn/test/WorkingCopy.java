@@ -348,9 +348,9 @@ public class WorkingCopy {
                 process.waitFor();
             }
         } catch (IOException e) {
-            wrapThrowable(e);
+            log("failed to start sqlite3");
         } catch (InterruptedException e) {
-            wrapThrowable(e);
+            log("failed to start sqlite3");
         } finally {
             SVNFileUtil.closeFile(bufferedReader);
         }
