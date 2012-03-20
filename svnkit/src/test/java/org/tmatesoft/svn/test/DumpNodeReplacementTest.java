@@ -7,6 +7,10 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CodingErrorAction;
 
+import org.junit.Assert;
+import org.junit.Assume;
+import org.junit.Before;
+import org.junit.Test;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -20,10 +24,12 @@ import org.tmatesoft.svn.core.wc.admin.SVNAdminClient;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
-import org.junit.Assert;
-import org.junit.Test;
-
 public class DumpNodeReplacementTest {
+
+    @Before
+    public void setup() {
+        Assume.assumeTrue(TestUtil.isNewWorkingCopyTest());
+    }
 
     @Test
     public void testReplaceFileByDirectory() throws SVNException {
