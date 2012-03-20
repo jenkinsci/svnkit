@@ -1,7 +1,9 @@
 package org.tmatesoft.svn.test;
 
-import junit.framework.Assert;
+import java.util.HashSet;
+import java.util.Set;
 
+import junit.framework.Assert;
 import org.junit.Test;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNCommitInfo;
@@ -66,8 +68,8 @@ public class SvnInterruptionTest {
         try {
             up.run();
             Assert.fail();
-        } catch (NullPointerException npe) {
-            Assert.assertEquals("TEST EXCEPTION", npe.getMessage());
+        } catch (Throwable npe) {
+            assertStacktraceContainsMessage("TEST EXCEPTION", npe);
         }
         
         SvnStatus st = wc.getStatus("");
@@ -89,4 +91,20 @@ public class SvnInterruptionTest {
         Assert.assertEquals(SVNStatusType.STATUS_NORMAL, st.getNodeStatus());
     }
 
+    private void assertStacktraceContainsMessage(String message, Throwable th) {
+        final Set<Throwable> seen = new HashSet<Throwable>();
+        boolean found = false;
+        while (th != null && !seen.contains(th)) {
+            if (message.equals(th.getMessage())) {
+                found = true;
+                break;
+            }
+            seen.add(th);
+            th = th.getCause();
+        }
+
+        if (!found) {
+            Assert.fail("Message \"" + message + "\" is not found in the stacktrace");
+        }
+    }
 }
