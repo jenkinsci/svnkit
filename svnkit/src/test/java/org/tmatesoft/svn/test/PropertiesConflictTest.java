@@ -46,12 +46,13 @@ public class PropertiesConflictTest {
             update.setDepthIsSticky(true);
             update.run();
 
-            final String actualPrejContents = TestUtil.readFileContentsString(new File(file.getPath() + ".prej"));
+            String actualPrejContents = TestUtil.readFileContentsString(new File(file.getPath() + ".prej"));
             final String expectedPrejContents = "Trying to add new property 'propertyName'\n" +
                     "but the property already exists.\n" +
                     "<<<<<<< (local property value)\n" +
                     "working copy value=======\n" +
                     "r2 value>>>>>>> (incoming property value)\n";
+            actualPrejContents = actualPrejContents.replace(System.getProperty("line.separator"), "\n");
             Assert.assertEquals(expectedPrejContents, actualPrejContents);
         } catch (SVNException e) {
             svnOperationFactory.dispose();
