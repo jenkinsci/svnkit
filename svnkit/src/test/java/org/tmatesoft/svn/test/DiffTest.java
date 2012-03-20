@@ -32,6 +32,7 @@ import org.tmatesoft.svn.core.wc2.SvnDiff;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
+@Ignore
 public class DiffTest {
 
     @Test
