@@ -1,7 +1,5 @@
 package org.tmatesoft.svn.core.internal.wc2.old;
 
-import java.util.Collection;
-
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc16.SVNDiffClient16;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
@@ -10,7 +8,6 @@ import org.tmatesoft.svn.core.wc.DefaultSVNDiffGenerator;
 import org.tmatesoft.svn.core.wc.ISVNDiffGenerator;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnDiff;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 public class SvnOldDiff extends SvnOldRunner<Void, SvnDiff> {
 
@@ -19,9 +16,15 @@ public class SvnOldDiff extends SvnOldRunner<Void, SvnDiff> {
         if (wcGeneration != SvnWcGeneration.V16) {
             return false;
         }
-        Collection<SvnTarget> targets = operation.getTargets();
-        for (SvnTarget target : targets) {
-            if (target.isFile()) {
+        if (operation.getSource() != null) {
+            if (operation.getSource().isFile()) {
+                return true;
+            }
+        } else {
+            if (operation.getFirstSource().isFile()) {
+                return true;
+            }
+            if (operation.getSecondSource().isFile()) {
                 return true;
             }
         }
