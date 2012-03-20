@@ -89,7 +89,6 @@ svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/ng/SvnNgLockUtil.java -
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/ng/SvnNgResolve.java -text svneol=native#unset
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/ng/SvnNgSetChangelist.java -text svneol=native#unset
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/ng/SvnNgSetLock.java -text svneol=native#unset
-svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/ng/SvnNgUnlock.java -text svneol=native#unset
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/ng/SvnNgUpgrade.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/ng/SvnNgUpgradeSDb.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/old/SvnOldAnnotate.java -text svneol=native#unset

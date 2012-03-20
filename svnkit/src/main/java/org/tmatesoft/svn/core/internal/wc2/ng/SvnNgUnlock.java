@@ -1,9 +1,5 @@
 package org.tmatesoft.svn.core.internal.wc2.ng;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -16,14 +12,14 @@ import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
+import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgLockUtil.LockInfo;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc2.SvnUnlock;
-import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgLockUtil.LockInfo;
 
-public class SvnNgUnlock extends SvnNgOperationRunner<SVNLock, SvnUnlock> implements ISVNLockHandler {
+public class SvnNgUnlock extends SvnNgOperationRunner<SVNLock, SvnUnlock> {
 
     @Override
     protected SVNLock run(SVNWCContext context) throws SVNException {
@@ -64,17 +60,4 @@ public class SvnNgUnlock extends SvnNgOperationRunner<SVNLock, SvnUnlock> implem
         
     	return getOperation().first();
     }
-    
-    public void handleLock(String path, SVNLock lock, SVNErrorMessage error) throws SVNException {
-        if (error != null) {
-            handleEvent(SVNEventFactory.createLockEvent(new File(path), SVNEventAction.LOCK_FAILED, lock, error), ISVNEventHandler.UNKNOWN);
-        } else {
-            handleEvent(SVNEventFactory.createLockEvent(new File(path), SVNEventAction.LOCKED, lock, null), ISVNEventHandler.UNKNOWN);
-        }
-    }
-
-    public void handleUnlock(String path, SVNLock lock, SVNErrorMessage error) throws SVNException {
-    }
-    
-    
 }
