@@ -24,8 +24,7 @@ public class SvnNgReposToReposCopy extends SvnRemoteOperationRunner<SVNCommitInf
 
     @Override
     public boolean isApplicable(SvnRemoteCopy operation, SvnWcGeneration wcGeneration) throws SVNException {
-        return operation.getOperationFactory().getPrimaryWcGeneration() == SvnWcGeneration.V17 &&
-                areAllSourcesRemote(operation) && !operation.getFirstTarget().isLocal();
+        return areAllSourcesRemote(operation) && !operation.getFirstTarget().isLocal();
     }
     
     private boolean areAllSourcesRemote(SvnRemoteCopy operation) {
