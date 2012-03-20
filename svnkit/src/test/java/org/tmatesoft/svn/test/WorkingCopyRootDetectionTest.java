@@ -4,6 +4,7 @@ import java.io.File;
 
 import org.junit.Assert;
 import org.junit.Assume;
+import org.junit.Before;
 import org.junit.Test;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
@@ -18,6 +19,12 @@ import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 
 public class WorkingCopyRootDetectionTest {
+
+    @Before
+    public void setup() {
+        Assume.assumeTrue(TestUtil.isNewWorkingCopyTest());
+    }
+
     @Test
     public void testBasics() throws Exception {
         final TestOptions options = TestOptions.getInstance();

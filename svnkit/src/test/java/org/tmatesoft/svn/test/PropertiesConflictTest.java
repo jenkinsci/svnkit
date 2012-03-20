@@ -3,6 +3,8 @@ package org.tmatesoft.svn.test;
 import java.io.File;
 
 import junit.framework.Assert;
+import org.junit.Assume;
+import org.junit.Before;
 import org.junit.Test;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
@@ -15,6 +17,13 @@ import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.core.wc2.SvnUpdate;
 
 public class PropertiesConflictTest {
+
+    @Before
+    public void setup() {
+        //properties merging is actual for 1.7 WC only
+        Assume.assumeTrue(TestUtil.isNewWorkingCopyTest());
+    }
+
     @Test
     public void testConflictOnUpdate() throws Exception {
         final TestOptions options = TestOptions.getInstance();

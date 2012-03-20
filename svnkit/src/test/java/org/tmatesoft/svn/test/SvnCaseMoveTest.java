@@ -3,6 +3,8 @@ package org.tmatesoft.svn.test;
 import java.io.File;
 
 import org.junit.Assert;
+import org.junit.Assume;
+import org.junit.Before;
 import org.junit.Test;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
@@ -18,6 +20,11 @@ import org.tmatesoft.svn.core.wc2.SvnRevert;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 public class SvnCaseMoveTest {
+
+    @Before
+    public void setup() {
+        Assume.assumeTrue(TestUtil.isNewWorkingCopyTest());
+    }
     
     @Test
     public void testFileMove() throws SVNException {
