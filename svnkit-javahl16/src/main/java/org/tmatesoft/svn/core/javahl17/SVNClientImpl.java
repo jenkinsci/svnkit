@@ -2327,27 +2327,23 @@ public class SVNClientImpl implements ISVNClient {
             operation = getConflictDescriptorOperation(treeConflictDescription.getOperation());
         }
 
-        try {
-            return new ConflictDescriptor(
-                    getFilePath(conflictDescription.getPath()),
-                    getConflictDescriptorKind(conflictDescription),
-                    getNodeKind(conflictDescription.getNodeKind()),
-                    conflictDescription.getPropertyName(),
-                    conflictDescription.getMergeFiles().isBinary(),
-                    conflictDescription.getMergeFiles().getMimeType(),
-                    getConflictDescriptorAction(conflictDescription.getConflictAction()),
-                    getConflictDescriptorReason(conflictDescription.getConflictReason()),
-                    operation,
-                    conflictDescription.getMergeFiles().getBasePath(),
-                    conflictDescription.getMergeFiles().getRepositoryPath(),
-                    conflictDescription.getMergeFiles().getLocalPath(),
-                    conflictDescription.getMergeFiles().getResultPath(),
-                    srcLeft,
-                    srcRight
-                    );
-        } catch (SVNException e) {
-            throw ClientException.fromException(e);
-        }
+        return new ConflictDescriptor(
+                getFilePath(conflictDescription.getPath()),
+                getConflictDescriptorKind(conflictDescription),
+                getNodeKind(conflictDescription.getNodeKind()),
+                conflictDescription.getPropertyName(),
+                conflictDescription.getMergeFiles().isBinary(),
+                conflictDescription.getMergeFiles().getMimeType(),
+                getConflictDescriptorAction(conflictDescription.getConflictAction()),
+                getConflictDescriptorReason(conflictDescription.getConflictReason()),
+                operation,
+                getFilePath(conflictDescription.getMergeFiles().getBaseFile()),
+                getFilePath(conflictDescription.getMergeFiles().getRepositoryFile()), 
+                getFilePath(conflictDescription.getMergeFiles().getLocalFile()),
+                getFilePath(conflictDescription.getMergeFiles().getResultFile()),
+                srcLeft,
+                srcRight
+                );
     }
 
     private ConflictDescriptor.Operation getConflictDescriptorOperation(SVNOperation operation) {
