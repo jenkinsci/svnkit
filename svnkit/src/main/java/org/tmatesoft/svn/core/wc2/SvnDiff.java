@@ -2,7 +2,6 @@ package org.tmatesoft.svn.core.wc2;
 
 import java.io.File;
 import java.io.OutputStream;
-import java.util.Iterator;
 
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
