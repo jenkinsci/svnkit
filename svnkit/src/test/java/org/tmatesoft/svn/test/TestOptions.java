@@ -29,7 +29,8 @@ public class TestOptions {
         final List<SVNRevisionRange> updateSchedule = getUpdateSchedule(properties);
         final String apacheCtlCommand = getApacheCtlCommand(properties);
         final File apacheRoot = getApacheRoot(properties);
-        return new TestOptions(repositoryUrl, tempDirectory, sqlite3Command, largeUpdateStep, svnCommand, updateSchedule, apacheCtlCommand, apacheRoot);
+        final String htpasswdCommand = getHtpasswdCommand(properties);
+        return new TestOptions(repositoryUrl, tempDirectory, sqlite3Command, largeUpdateStep, svnCommand, updateSchedule, apacheCtlCommand, apacheRoot, htpasswdCommand);
     }
 
     private final SVNURL repositoryUrl;
@@ -43,10 +44,11 @@ public class TestOptions {
     private final String svnCommand;
 
     private final List<SVNRevisionRange> updateSchedule;
+
     private final String apacheCtlCommand;
     private final File apacheRoot;
-
-    public TestOptions(SVNURL repositoryUrl, File tempDirectory, String sqlite3Command, long largeUpdateStep, String svnCommand, List<SVNRevisionRange> updateSchedule, String apacheCtlCommand, File apacheRoot) {
+    private final String htpasswdCommand;
+    public TestOptions(SVNURL repositoryUrl, File tempDirectory, String sqlite3Command, long largeUpdateStep, String svnCommand, List<SVNRevisionRange> updateSchedule, String apacheCtlCommand, File apacheRoot, String htpasswdCommand) {
         this.repositoryUrl = repositoryUrl;
         this.tempDirectory = tempDirectory;
         this.sqlite3Command = sqlite3Command;
@@ -55,11 +57,12 @@ public class TestOptions {
         this.updateSchedule = updateSchedule;
         this.apacheCtlCommand = apacheCtlCommand;
         this.apacheRoot = apacheRoot;
+        this.htpasswdCommand = htpasswdCommand;
     }
+
     public SVNURL getRepositoryUrl() {
         return repositoryUrl;
     }
-
     public File getTempDirectory() {
         return tempDirectory;
     }
@@ -86,6 +89,11 @@ public class TestOptions {
 
     public File getApacheRoot() {
         return apacheRoot;
+
+    }
+
+    public String getHtpasswdCommand() {
+        return htpasswdCommand;
     }
 
     public static TestOptions getInstance() {
@@ -196,5 +204,9 @@ public class TestOptions {
             return null;
         }
         return new File(apacheRootPath);
+    }
+
+    private static String getHtpasswdCommand(Properties properties) {
+        return properties.getProperty("htpasswd.command");
     }
 }

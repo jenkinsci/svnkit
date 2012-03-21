@@ -3,6 +3,7 @@ package org.tmatesoft.svn.test;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -10,6 +11,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminClient;
 
 public class Sandbox {
@@ -27,16 +29,21 @@ public class Sandbox {
     private final TestOptions testOptions;
     private final List<WorkingCopy> workingCopies;
     private File testDirectory;
+    private final List<ApacheProcess> apacheProcesses;
 
     private Sandbox(String testName, TestOptions testOptions) {
         this.testName = testName;
         this.testOptions = testOptions;
         this.workingCopies = new ArrayList<WorkingCopy>();
+        this.apacheProcesses = new ArrayList<ApacheProcess>();
     }
 
     public void dispose() {
         for (WorkingCopy workingCopy : workingCopies) {
             workingCopy.dispose();
+        }
+        for (ApacheProcess apacheProcess : apacheProcesses) {
+            ApacheProcess.shutdown(apacheProcess);
         }
     }
 
@@ -71,6 +78,10 @@ public class Sandbox {
         workingCopy.checkoutRevision(repositoryUrl, revision);
         workingCopies.add(workingCopy);
         return workingCopy;
+    }
+
+    public WorkingCopy checkoutNewWorkingCopy(SVNURL url) throws SVNException {
+        return checkoutNewWorkingCopy(url, SVNRevision.HEAD.getNumber());
     }
 
     public WorkingCopy checkoutNewWorkingCopy(SVNURL repositoryUrl, long revision) throws SVNException {
@@ -108,15 +119,19 @@ public class Sandbox {
 
     public SVNURL createSvnRepository() throws SVNException {
         final File repositoryDirectory = createDirectory("svn.repo");
+        createSvnRepository(repositoryDirectory);
+        return SVNURL.fromFile(repositoryDirectory);
+    }
 
-        final SVNClientManager clientManager = SVNClientManager.newInstance();
-        try {
-            SVNAdminClient adminClient = clientManager.getAdminClient();
-            adminClient.doCreateRepository(repositoryDirectory, null, true, false);
-            return SVNURL.fromFile(repositoryDirectory);
-        } finally {
-            clientManager.dispose();
-        }
+    public SVNURL createSvnRepositoryWithDavAccess() throws SVNException {
+        return createSvnRepositoryWithDavAccess(null);
+    }
+
+    public SVNURL createSvnRepositoryWithDavAccess(Map<String, String> loginToPassword) throws SVNException {
+        final File repositoryDirectory = createDirectory("svn.repo");
+        createSvnRepository(repositoryDirectory);
+        final ApacheProcess apacheProcess = runApacheForSvnRepository(repositoryDirectory, loginToPassword);
+        return apacheProcess.getUrl();
     }
 
     private File getWorkingCopyDirectory() {
@@ -155,5 +170,22 @@ public class Sandbox {
             sandbox.cleanup();
         }
         return sandbox;
+    }
+
+    private ApacheProcess runApacheForSvnRepository(File repositoryDirectory, Map<String, String> loginToPassword) throws SVNException {
+        final ApacheProcess apacheProcess = ApacheProcess.run(getTestOptions(), repositoryDirectory, loginToPassword);
+        apacheProcesses.add(apacheProcess);
+        return apacheProcess;
+    }
+
+    private void createSvnRepository(File repositoryDirectory) throws SVNException {
+        final SVNClientManager clientManager = SVNClientManager.newInstance();
+        try {
+            SVNAdminClient adminClient = clientManager.getAdminClient();
+            adminClient.doCreateRepository(repositoryDirectory, null, true, false);
+
+        } finally {
+            clientManager.dispose();
+        }
     }
 }

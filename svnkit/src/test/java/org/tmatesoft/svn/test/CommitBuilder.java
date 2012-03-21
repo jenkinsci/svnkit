@@ -15,6 +15,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.auth.BasicAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -31,6 +32,7 @@ public class CommitBuilder {
     private final Map<String, SVNProperties> directoriesToProperties;
     private final Set<String> directoriesToAdd;
     private final Set<String> entriesToDelete;
+    private BasicAuthenticationManager authenticationManager;
 
     public CommitBuilder(SVNURL url) {
         this.filesToAdd = new HashMap<String, byte[]>();
@@ -316,10 +318,16 @@ public class CommitBuilder {
     }
 
     private SVNRepository createSvnRepository() throws SVNException {
-        return SVNRepositoryFactory.create(url);
+        final SVNRepository svnRepository = SVNRepositoryFactory.create(url);
+        svnRepository.setAuthenticationManager(authenticationManager);
+        return svnRepository;
     }
 
     public void delete(String path) {
         entriesToDelete.add(path);
+    }
+
+    public void setAuthenticationManager(BasicAuthenticationManager authenticationManager) {
+        this.authenticationManager = authenticationManager;
     }
 }

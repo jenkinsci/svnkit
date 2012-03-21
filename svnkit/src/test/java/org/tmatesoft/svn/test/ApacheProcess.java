@@ -28,10 +28,11 @@ public class ApacheProcess {
         final File tempDirectory = SVNFileUtil.createTempDirectory("svnkit.test.apache.temp.dir");
         final String apachectlCommand = testOptions.getApacheCtlCommand();
         final File apacheRoot = testOptions.getApacheRoot();
+        final String htpasswdCommand = testOptions.getHtpasswdCommand();
 
         assert apacheRoot != null && apachectlCommand != null;
 
-        final ApacheProcess apacheProcess = new ApacheProcess(apachectlCommand, port, apacheRoot, repositoryRoot, tempDirectory, loginToPassword);
+        final ApacheProcess apacheProcess = new ApacheProcess(apachectlCommand, port, apacheRoot, repositoryRoot, tempDirectory, loginToPassword, htpasswdCommand);
         apacheProcess.start();
         return apacheProcess;
     }
@@ -48,16 +49,18 @@ public class ApacheProcess {
     private final File repositoryRoot;
     private final File tempDirectory;
     private final Map<String, String> loginToPassword;
+    private final String htpasswdCommand;
 
     private File configFile;
 
-    private ApacheProcess(String apachectlCommand, int port, File apacheRoot, File repositoryRoot, File tempDirectory, Map<String, String> loginToPassword) {
+    private ApacheProcess(String apachectlCommand, int port, File apacheRoot, File repositoryRoot, File tempDirectory, Map<String, String> loginToPassword, String htpasswdCommand) {
         this.apachectlCommand = apachectlCommand;
         this.port = port;
         this.apacheRoot = apacheRoot;
         this.repositoryRoot = repositoryRoot;
         this.tempDirectory = tempDirectory;
         this.loginToPassword = loginToPassword;
+        this.htpasswdCommand = htpasswdCommand;
     }
 
     public SVNURL getUrl() {
@@ -160,19 +163,73 @@ public class ApacheProcess {
             return "";
         }
 
-        final File htpasswdFile = createHtpasswdFile();
+        final File htpasswdFile = createHtpasswdFile(loginToPassword);
+
+        return "AuthType Basic" + "\n" +
+                "AuthName \"Subversion Repository\"" + "\n" +
+                "AuthUserFile " + htpasswdFile.getAbsolutePath() + "\n" +
+               "Require valid-user" + "\n";
+    }
+
+    private File createHtpasswdFile(Map<String, String> loginToPassword) {
+        final File htpasswdFile = new File(tempDirectory, "htpasswdfile");
+
+        if (htpasswdCommand != null) {
+            createHtpasswdWithCommand(loginToPassword, htpasswdFile, htpasswdCommand);
+        } else {
+            createHtpasswdManually(loginToPassword, htpasswdFile);
+        }
+        return htpasswdFile;
+    }
+
+    private void createHtpasswdWithCommand(Map<String, String> loginToPassword, File htpasswdFile, String htpasswdCommand) {
+        boolean createNewFile = true;
+
+        for (Map.Entry<String, String> entry : loginToPassword.entrySet()) {
+            final String login = entry.getKey();
+            final String password = entry.getValue();
+
+            runHtpasswd(htpasswdCommand, htpasswdFile, login, password, createNewFile);
+
+            createNewFile = false;
+        }
+    }
+
+    private void runHtpasswd(String htpasswdCommand, File htpasswdFile, String login, String password, boolean createNewFile) {
+        final List<String> commandLine = new ArrayList<String>();
+        commandLine.add(htpasswdCommand);
+        commandLine.add("-b");
+        if (createNewFile) {
+            commandLine.add("-c");
+        }
+        commandLine.add(htpasswdFile.getAbsolutePath());
+        commandLine.add(login);
+        commandLine.add(password);
+
+        final ProcessBuilder processBuilder = new ProcessBuilder();
+        processBuilder.command(commandLine);
         try {
-            TestUtil.writeFileContentsString(htpasswdFile, getHttpasswdFileContents(loginToPassword));
+            final Process process = processBuilder.start();
+            final int rc = process.waitFor();
+            if (rc != 0) {
+                throw new RuntimeException(htpasswdCommand + " returned " + rc);
+            }
+        } catch (IOException e) {
+            throw wrapException(e);
+        } catch (InterruptedException e) {
+            throw wrapException(e);
+        }
+    }
+
+    private void createHtpasswdManually(Map<String, String> loginToPassword, File htpasswdFile) {
+        try {
+            TestUtil.writeFileContentsString(htpasswdFile, createHttpasswdFileContents(loginToPassword));
         } catch (SVNException e) {
             throw wrapException(e);
         }
-
-        return "AuthType Basic" + "\n" +
-                "AuthUserFile " + htpasswdFile.getAbsolutePath() + "\n" +
-                "Require valid-user" + "\n";
     }
 
-    private String getHttpasswdFileContents(Map<String, String> loginToPassword) {
+    private String createHttpasswdFileContents(Map<String, String> loginToPassword) {
         final StringBuilder stringBuilder = new StringBuilder();
 
         for (Map.Entry<String, String> entry : loginToPassword.entrySet()) {
@@ -201,10 +258,6 @@ public class ApacheProcess {
 
     private String calculateBase64(byte[] digest) {
         return SVNBase64.byteArrayToBase64(digest);
-    }
-
-    private File createHtpasswdFile() {
-        return new File(tempDirectory, "htpasswdfile");
     }
 
     private String readFullyAndClose(InputStream inputStream) throws IOException {
