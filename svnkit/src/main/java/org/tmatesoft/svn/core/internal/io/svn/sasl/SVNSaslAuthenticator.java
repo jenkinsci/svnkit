@@ -37,6 +37,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.auth.BasicAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
@@ -97,7 +98,7 @@ public class SVNSaslAuthenticator extends SVNAuthenticator {
                     if (tryAuthentication(repository, getMechanismName(myClient, isAnonymous))) {
                         if (myAuthenticationManager != null && myAuthentication != null) {
                             String realmName = getFullRealmName(repository.getLocation(), realm);
-                            myAuthenticationManager.acknowledgeAuthentication(true, myAuthentication.getKind(), realmName, null, myAuthentication);
+                            BasicAuthenticationManager.acknowledgeAuthentication(true, myAuthentication.getKind(), realmName, null, myAuthentication, repository.getLocation(), myAuthenticationManager);
                         }
                         failed = false;
                         setLastError(null);
@@ -118,7 +119,7 @@ public class SVNSaslAuthenticator extends SVNAuthenticator {
                     }
                     if (myAuthentication != null) {
                         String realmName = getFullRealmName(repository.getLocation(), realm);
-                        myAuthenticationManager.acknowledgeAuthentication(false, myAuthentication.getKind(), realmName, getLastError(), myAuthentication);
+                        BasicAuthenticationManager.acknowledgeAuthentication(false, myAuthentication.getKind(), realmName, getLastError(), myAuthentication, repository.getLocation(), myAuthenticationManager);
                     } else {
                         // automatically generated authentication, do not try this mech again, will lead to the same error.
                         // 

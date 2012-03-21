@@ -24,6 +24,7 @@ import org.tmatesoft.svn.core.SVNAuthenticationException;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.auth.BasicAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManagerExt;
 import org.tmatesoft.svn.core.auth.ISVNSSHHostVerifier;
@@ -133,17 +134,17 @@ public class SVNSSHConnector implements ISVNConnector {
                             SVNErrorManager.error(err, SVNLogType.NETWORK);
                         }
                         
-                        authManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.SSH, realm, null, authentication);
+                        BasicAuthenticationManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.SSH, realm, null, authentication, repository.getLocation(), authManager);
                         break;
                     } catch (SVNAuthenticationException e) {
                         SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, e);
-                        authManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.SSH, realm, e.getErrorMessage(), authentication);
+                        BasicAuthenticationManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.SSH, realm, e.getErrorMessage(), authentication, repository.getLocation(), authManager);
                         authentication = (SVNSSHAuthentication) authManager.getNextAuthentication(ISVNAuthenticationManager.SSH, realm, repository.getLocation());
                         connection = null;
                     } catch (SshAuthenticationException auth) {
                         SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, auth);
                         SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, auth.getMessage());
-                        authManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.SSH, realm, error, authentication);
+                        BasicAuthenticationManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.SSH, realm, error, authentication, repository.getLocation(), authManager);
                         authentication = (SVNSSHAuthentication) authManager.getNextAuthentication(ISVNAuthenticationManager.SSH, realm, repository.getLocation());
                         connection = null;
                     } catch (IOException e) {
@@ -175,7 +176,7 @@ public class SVNSSHConnector implements ISVNConnector {
                         repository.setExternalUserName(author.getUserName()); 
                     }
                     author = new SVNUserNameAuthentication(userName, author.isStorageAllowed(), repository.getLocation(), false);
-                    authManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.USERNAME, realm, null, author);
+                    BasicAuthenticationManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.USERNAME, realm, null, author, repository.getLocation(), authManager);
     
                     if ("".equals(repository.getExternalUserName())) {
                         mySession.execCommand(SVNSERVE_COMMAND);

@@ -16,6 +16,7 @@ import java.text.MessageFormat;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.auth.BasicAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManagerExt;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
@@ -63,7 +64,7 @@ public class SVNTunnelConnector extends SVNAbstractTunnelConnector {
                 userName = System.getProperty("user.name");
             }
             auth = new SVNUserNameAuthentication(userName, auth.isStorageAllowed(), repository.getLocation(), false);
-            authManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.USERNAME, host, null, auth);
+            BasicAuthenticationManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.USERNAME, host, null, auth, repository.getLocation(), authManager);
             expandedTunnel += " --tunnel-user " + userName;
             
             repository.setExternalUserName(userName);

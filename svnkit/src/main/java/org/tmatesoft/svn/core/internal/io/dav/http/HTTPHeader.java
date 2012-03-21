@@ -60,7 +60,7 @@ public class HTTPHeader {
     public static final String SET_COOKIE = "Set-Cookie";
     public static final String COOKIE = "Cookie";
     
-    private Map myHeaders;
+    private Map<String, Collection<String>> myHeaders;
 
     public HTTPHeader() {
     }
@@ -71,10 +71,10 @@ public class HTTPHeader {
         }
         
         StringBuffer representation = new StringBuffer();        
-        for(Iterator headers = myHeaders.keySet().iterator(); headers.hasNext();){
+        for(Iterator<String> headers = myHeaders.keySet().iterator(); headers.hasNext();){
             String headerName = (String) headers.next();
-            Collection headerValues = (Collection) myHeaders.get(headerName);
-            for(Iterator values = headerValues.iterator(); values.hasNext();){
+            Collection<String> headerValues = myHeaders.get(headerName);
+            for(Iterator<String> values = headerValues.iterator(); values.hasNext();){
                 String value = (String) values.next();
                 representation.append(headerName);
                 representation.append(": ");
@@ -86,48 +86,48 @@ public class HTTPHeader {
     }
 
     public void addHeaderValue(String name, String value) {
-        Map headers = getHeaders();
-        Collection values = (Collection) headers.get(name);
+        Map<String, Collection<String>> headers = getHeaders();
+        Collection<String> values = headers.get(name);
         if (values == null) {
-            values = new LinkedList();
+            values = new LinkedList<String>();
             headers.put(name, values);
         }
         values.add(value);
     }
     
-    public Map getRawHeaders() {
+    public Map<String, Collection<String>> getRawHeaders() {
         return getHeaders();
     }
 
-    public Collection getHeaderValues(String name) {
+    public Collection<String> getHeaderValues(String name) {
         if (myHeaders == null) {
             return null;
         }
-        List values = new LinkedList();
-        for (Iterator names = myHeaders.keySet().iterator(); names.hasNext();) {
+        List<String> values = new LinkedList<String>();
+        for (Iterator<String> names = myHeaders.keySet().iterator(); names.hasNext();) {
             String headerName = (String) names.next();
             if (name.equalsIgnoreCase(headerName)) {
-                values.addAll((Collection) myHeaders.get(headerName));
+                values.addAll(myHeaders.get(headerName));
             }
         }        
         return values.isEmpty() ? null : values;
     }
     
     public String getFirstHeaderValue(String name){
-        LinkedList values = (LinkedList) getHeaderValues(name);
+        LinkedList<String> values = (LinkedList<String>) getHeaderValues(name);
         return values != null ? (String) values.getFirst() : null;
     }
     
     public boolean hasHeader(String name){
-        LinkedList values = (LinkedList) getHeaderValues(name);
+        LinkedList<String> values = (LinkedList<String>) getHeaderValues(name);
         return values != null && !values.isEmpty();
     }
     
     public void setHeaderValue(String name, String value){
-        Map headers = getHeaders();
-        Collection values = (Collection) headers.get(name);
+        Map<String, Collection<String>> headers = getHeaders();
+        Collection<String> values = headers.get(name);
         if (values == null) {
-            values = new LinkedList();
+            values = new LinkedList<String>();
             headers.put(name, values);
         } else {
             values.clear();
@@ -135,9 +135,9 @@ public class HTTPHeader {
         values.add(value);
     }
     
-    private Map getHeaders() {
+    private Map<String, Collection<String>> getHeaders() {
         if (myHeaders == null) {
-            myHeaders = new TreeMap();
+            myHeaders = new TreeMap<String, Collection<String>>();
         }
         return myHeaders;
     }

@@ -11,6 +11,8 @@
  */
 package org.tmatesoft.svn.core.auth;
 
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 
 /**
@@ -19,5 +21,8 @@ import org.tmatesoft.svn.core.SVNURL;
  * @since   1.7
  */
 public interface ISVNAuthenticationManagerExt extends ISVNAuthenticationManager {
+    
 	void acknowledgeConnectionSuccessful(SVNURL url);
+
+	void acknowledgeAuthentication(boolean accepted, String kind, String realm, SVNErrorMessage errorMessage, SVNAuthentication authentication, SVNURL accessedLocation) throws SVNException;
 }

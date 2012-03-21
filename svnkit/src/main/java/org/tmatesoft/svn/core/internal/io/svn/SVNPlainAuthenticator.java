@@ -18,6 +18,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.auth.BasicAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
@@ -64,7 +65,7 @@ public class SVNPlainAuthenticator extends SVNAuthenticator {
                     if (auth == null && authManager != null) {
                         auth = (SVNPasswordAuthentication) authManager.getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, realm, location);
                     } else if (authManager != null) {
-                        authManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.PASSWORD, realm, failureReason, auth);
+                        BasicAuthenticationManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.PASSWORD, realm, failureReason, auth, location, authManager);
                         auth = (SVNPasswordAuthentication) authManager.getNextAuthentication(ISVNAuthenticationManager.PASSWORD, realm, location);
                     }
                 } catch (SVNException e) {
@@ -91,7 +92,7 @@ public class SVNPlainAuthenticator extends SVNAuthenticator {
                     List items = getConnection().readTuple("w(?s)", true);
                     String status = SVNReader.getString(items, 0);
                     if (SVNAuthenticator.SUCCESS.equals(status)) {
-                        authManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.PASSWORD, realm, null, auth);
+                        BasicAuthenticationManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.PASSWORD, realm, null, auth, location, authManager);
                         return auth;
                     } else if (SVNAuthenticator.FAILURE.equals(status)) {                        
                         failureReason = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Authentication error from server: {0}", SVNReader.getString(items, 1));

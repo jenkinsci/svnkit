@@ -35,6 +35,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.auth.BasicAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
@@ -212,16 +213,16 @@ public final class HTTPSSLKeyManager implements X509KeyManager {
                     SVNFileUtil.closeFile(is);
                 }
                 if (auth != null) {
-                    authenticationManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.SSL, realm, null, auth);
+                    BasicAuthenticationManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.SSL, realm, null, auth, url, authenticationManager);
                 } else {
-                    authenticationManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.SSL, clientCertPath, null, 
-                            new SVNPasswordAuthentication("", clientCertPassword, sslAuthentication.isStorageAllowed(), sslAuthentication.getURL(), false) );
+                    BasicAuthenticationManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.SSL, clientCertPath, null,
+                            new SVNPasswordAuthentication("", clientCertPassword, sslAuthentication.isStorageAllowed(), sslAuthentication.getURL(), false), url, authenticationManager);
                 }
                 break;
             } catch (IOException io) {
                 SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, io);
                 if (auth != null) {
-                    authenticationManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.SSL, realm, SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, io.getMessage()), auth);
+                    BasicAuthenticationManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.SSL, realm, SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, io.getMessage()), auth, url, authenticationManager);
                     auth = authenticationManager.getNextAuthentication(ISVNAuthenticationManager.SSL, realm, sslAuthentication.getURL());
                 } else {
                     auth = authenticationManager.getFirstAuthentication(ISVNAuthenticationManager.SSL, realm, sslAuthentication.getURL());
@@ -374,7 +375,7 @@ public final class HTTPSSLKeyManager implements X509KeyManager {
 
     public void acknowledgeAndClearAuthentication(SVNErrorMessage errorMessage) throws SVNException {
         if (myAuthentication != null) {
-            authenticationManager.acknowledgeAuthentication(errorMessage == null, ISVNAuthenticationManager.SSL, realm, errorMessage, myAuthentication);
+            BasicAuthenticationManager.acknowledgeAuthentication(errorMessage == null, ISVNAuthenticationManager.SSL, realm, errorMessage, myAuthentication, url, authenticationManager);
         }
         if (errorMessage != null) {
             myKeyManagers = null;
@@ -442,7 +443,7 @@ public final class HTTPSSLKeyManager implements X509KeyManager {
                 throw cancel;
             } catch (SVNException ex) {
                 final SVNErrorMessage sslErr = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Failed to load SSL client certificate: ''{0}''", new Object[] { ex.getMessage() }, SVNErrorMessage.TYPE_ERROR, ex.getCause());
-                authenticationManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.SSL, realm, sslErr, myAuthentication);
+                BasicAuthenticationManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.SSL, realm, sslErr, myAuthentication, url, authenticationManager);
                 continue;
             }
 

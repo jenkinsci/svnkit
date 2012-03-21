@@ -125,7 +125,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         myHostOptionsProvider = hostOptionsProvider;
     }
 
-    public Collection getAuthTypes(SVNURL url) {
+    public Collection<String> getAuthTypes(SVNURL url) {
         return getHostOptionsProvider().getHostOptions(url).getAuthTypes();
     }
     

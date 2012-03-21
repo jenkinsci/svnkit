@@ -39,6 +39,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.auth.BasicAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
@@ -938,11 +939,11 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                     }
                     auth = new SVNUserNameAuthentication(userName, auth.isStorageAllowed(), getLocation(), false);
                     if (userName != null && !"".equals(userName.trim())) {
-                        authManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.USERNAME, realm, null, auth);
+                        BasicAuthenticationManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.USERNAME, realm, null, auth, myLocation, authManager);
                         return auth.getUserName();
                     }
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.AUTHN_CREDS_UNAVAILABLE, "Empty user name is not allowed");
-                    authManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.USERNAME, realm, err, auth);
+                    BasicAuthenticationManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.USERNAME, realm, err, auth, myLocation, authManager);
                     auth = authManager.getNextAuthentication(ISVNAuthenticationManager.USERNAME, realm, getLocation());
                 }
                 // auth manager returned null - that is cancellation.

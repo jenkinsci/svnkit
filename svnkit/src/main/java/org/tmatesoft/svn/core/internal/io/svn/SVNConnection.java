@@ -25,6 +25,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.auth.BasicAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManagerExt;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
@@ -167,7 +168,7 @@ public class SVNConnection {
         catch (SVNException ex) {
             final SVNErrorMessage errorMessage = ex.getErrorMessage();
             if (errorMessage != null && errorMessage.getErrorCode() == SVNErrorCode.RA_NOT_AUTHORIZED && authManager != null && myAuthentication != null) {
-                authManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.PASSWORD, myRealm, errorMessage, myAuthentication);
+                BasicAuthenticationManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.PASSWORD, myRealm, errorMessage, myAuthentication, repository.getLocation(), authManager);
             }
             throw ex;
         }

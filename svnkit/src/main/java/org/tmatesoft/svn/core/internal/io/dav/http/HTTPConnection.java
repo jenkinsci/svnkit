@@ -11,14 +11,6 @@
  */
 package org.tmatesoft.svn.core.internal.io.dav.http;
 
-import javax.net.ssl.KeyManager;
-import javax.net.ssl.SSLException;
-import javax.net.ssl.SSLHandshakeException;
-import javax.net.ssl.TrustManager;
-import javax.xml.parsers.FactoryConfigurationError;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
@@ -35,14 +27,25 @@ import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.text.ParseException;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
+
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLHandshakeException;
+import javax.net.ssl.TrustManager;
+import javax.xml.parsers.FactoryConfigurationError;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.auth.BasicAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManagerExt;
 import org.tmatesoft.svn.core.auth.ISVNProxyManager;
@@ -51,7 +54,6 @@ import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVErrorHandler;
 import org.tmatesoft.svn.core.internal.util.ChunkedInputStream;
 import org.tmatesoft.svn.core.internal.util.FixedSizeInputStream;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNSSLUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSocketFactory;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNAuthenticationManager;
@@ -121,7 +123,7 @@ class HTTPConnection implements IHTTPConnection {
     private boolean myIsSpoolAll;
     private File mySpoolDirectory;
     private long myNextRequestTimeout;
-    private Collection myCookies;
+    private Collection<String> myCookies;
     private int myRequestCount;
     private HTTPStatus myLastStatus;
 
@@ -437,14 +439,14 @@ class HTTPConnection implements IHTTPConnection {
 
             if (myLastStatus.getCode() == HttpURLConnection.HTTP_FORBIDDEN) {
                 if (httpAuth != null && authManager != null) {
-                    authManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.PASSWORD, realm, request.getErrorMessage(), httpAuth);
+                    BasicAuthenticationManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.PASSWORD, realm, request.getErrorMessage(), httpAuth, myRepository.getLocation(), authManager);
                 }
                 myLastValidAuth = null;
                 close();
                 err = request.getErrorMessage();
             } else if (myIsProxied && myLastStatus.getCode() == HttpURLConnection.HTTP_PROXY_AUTH) {
-                Collection proxyAuthHeaders = request.getResponseHeader().getHeaderValues(HTTPHeader.PROXY_AUTHENTICATE_HEADER);
-                Collection authTypes = null;
+                Collection<String> proxyAuthHeaders = request.getResponseHeader().getHeaderValues(HTTPHeader.PROXY_AUTHENTICATE_HEADER);
+                Collection<String> authTypes = null;
                 if (authManager != null && authManager instanceof DefaultSVNAuthenticationManager) {
                     DefaultSVNAuthenticationManager defaultAuthManager = (DefaultSVNAuthenticationManager) authManager;
                     authTypes = defaultAuthManager.getAuthTypes(myRepository.getLocation());
@@ -477,7 +479,7 @@ class HTTPConnection implements IHTTPConnection {
             } else if (myLastStatus.getCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
                 authAttempts++;//how many times did we try?
                 
-                Collection authHeaderValues = request.getResponseHeader().getHeaderValues(HTTPHeader.AUTHENTICATE_HEADER);
+                Collection<String> authHeaderValues = request.getResponseHeader().getHeaderValues(HTTPHeader.AUTHENTICATE_HEADER);
                 if (authHeaderValues == null || authHeaderValues.size() == 0) {
                     err = request.getErrorMessage();
                     myLastStatus.setError(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, err.getMessageTemplate(), err.getRelatedObjects()));
@@ -501,7 +503,7 @@ class HTTPConnection implements IHTTPConnection {
                     }
                 }
                 
-                Collection authTypes = null;
+                Collection<String> authTypes = null;
                 if (authManager != null && authManager instanceof DefaultSVNAuthenticationManager) {
                     DefaultSVNAuthenticationManager defaultAuthManager = (DefaultSVNAuthenticationManager) authManager;
                     authTypes = defaultAuthManager.getAuthTypes(myRepository.getLocation());
@@ -571,7 +573,7 @@ class HTTPConnection implements IHTTPConnection {
                 if (httpAuth == null) {
                     httpAuth = authManager.getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, realm, myRepository.getLocation());
                 } else if (authAttempts >= requestAttempts) {
-                    authManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.PASSWORD, realm, request.getErrorMessage(), httpAuth);
+                    BasicAuthenticationManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.PASSWORD, realm, request.getErrorMessage(), httpAuth, myRepository.getLocation(), authManager);
                     httpAuth = authManager.getNextAuthentication(ISVNAuthenticationManager.PASSWORD, realm, myRepository.getLocation());
                 }
                 
@@ -626,7 +628,7 @@ class HTTPConnection implements IHTTPConnection {
             }
             
             if (httpAuth != null && realm != null && authManager != null) {
-                authManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.PASSWORD, realm, null, httpAuth);
+                BasicAuthenticationManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.PASSWORD, realm, null, httpAuth, myRepository.getLocation(), authManager);
             }
 	        if (trustManager != null && authManager != null) {
 		        authManager.acknowledgeTrustManager(trustManager);
@@ -941,7 +943,7 @@ class HTTPConnection implements IHTTPConnection {
     private static synchronized SAXParserFactory getSAXParserFactory() throws FactoryConfigurationError {
         if (ourSAXParserFactory == null) {
             ourSAXParserFactory = createSAXParserFactory();
-            Map supportedFeatures = new SVNHashMap();
+            Map<String, Object> supportedFeatures = new HashMap<String, Object>();
             try {
                 ourSAXParserFactory.setFeature("http://xml.org/sax/features/namespaces", true);
                 supportedFeatures.put("http://xml.org/sax/features/namespaces", Boolean.TRUE);
@@ -965,8 +967,8 @@ class HTTPConnection implements IHTTPConnection {
             }
             if (supportedFeatures.size() < 3) {
                 ourSAXParserFactory = createSAXParserFactory();
-                for (Iterator names = supportedFeatures.keySet().iterator(); names.hasNext();) {
-                    String name = (String) names.next();
+                for (Iterator<String> names = supportedFeatures.keySet().iterator(); names.hasNext();) {
+                    String name = names.next();
                     try {
                         ourSAXParserFactory.setFeature(name, supportedFeatures.get(name) == Boolean.TRUE);
                     } catch (SAXNotRecognizedException e) {
@@ -994,7 +996,7 @@ class HTTPConnection implements IHTTPConnection {
             String className = parsers[i];
             ClassLoader loader = HTTPConnection.class.getClassLoader();
             try {
-                Class clazz = null;
+                Class<?> clazz = null;
                 if (loader != null) {
                     clazz = loader.loadClass(className);
                 } else {
