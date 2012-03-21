@@ -675,8 +675,7 @@ public class DAVRepository extends SVNRepository {
                 } catch (SVNException e) {
                     error = null;
                     if (e.getErrorMessage() != null) {
-                        SVNErrorCode code = e.getErrorMessage().getErrorCode();
-                        if (code == SVNErrorCode.FS_PATH_ALREADY_LOCKED || code == SVNErrorCode.FS_OUT_OF_DATE) {
+                        if (FSErrors.isLockError(e.getErrorMessage())) {
                             error = e.getErrorMessage();                            
                         }
                     }

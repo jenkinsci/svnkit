@@ -275,14 +275,14 @@ public class DavLockTest {
     }
 
     private String getIncorrectLockHookContents() {
-        final char c = 193;
+        final String token = "token";
         if (SVNFileUtil.isWindows) {
             return "@echo off" + "\r\n" +
-                    "echo " + c + "\r\n" +
+                    "echo|set /p=" + token + "\r\n" +
                     "exit 0" + "\r\n";
         } else {
             return "#!/bin/sh" + "\n" +
-                    "echo " + c + "\n" +
+                    "echo -n " + token + "\n" +
                     "exit 0" + "\n";
         }
     }
