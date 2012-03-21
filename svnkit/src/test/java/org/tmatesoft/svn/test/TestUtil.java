@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.ServerSocket;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,9 +15,11 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumInputStream;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
+import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnGetStatus;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
@@ -130,5 +133,32 @@ public class TestUtil {
         } finally {
             SVNFileUtil.closeFile(checksumStream);
         }
+    }
+
+
+    public static int findFreePort() {
+        ServerSocket socket = null;
+        try {
+            socket = new ServerSocket();
+            socket.bind(null);
+            return socket.getLocalPort();
+        }
+        catch (IOException e) {
+            return -1;
+        }
+        finally {
+            if (socket != null) {
+                try {
+                    socket.close();
+                }
+                catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    public static String convertSlashesToDirect(String path) {
+        return path.replace(File.separatorChar, '/');
     }
 }

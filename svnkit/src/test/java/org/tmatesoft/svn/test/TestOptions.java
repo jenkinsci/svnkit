@@ -27,7 +27,9 @@ public class TestOptions {
         final long largeUpdateStep = getLargeUpdateStep(properties);
         final String svnCommand = getSvnCommand(properties);
         final List<SVNRevisionRange> updateSchedule = getUpdateSchedule(properties);
-        return new TestOptions(repositoryUrl, tempDirectory, sqlite3Command, largeUpdateStep, svnCommand, updateSchedule);
+        final String apacheCtlCommand = getApacheCtlCommand(properties);
+        final File apacheRoot = getApacheRoot(properties);
+        return new TestOptions(repositoryUrl, tempDirectory, sqlite3Command, largeUpdateStep, svnCommand, updateSchedule, apacheCtlCommand, apacheRoot);
     }
 
     private final SVNURL repositoryUrl;
@@ -37,18 +39,23 @@ public class TestOptions {
     private final String sqlite3Command;
 
     private final long largeUpdateStep;
-    private final String svnCommand;
-    private final List<SVNRevisionRange> updateSchedule;
 
-    public TestOptions(SVNURL repositoryUrl, File tempDirectory, String sqlite3Command, long largeUpdateStep, String svnCommand, List<SVNRevisionRange> updateSchedule) {
+    private final String svnCommand;
+
+    private final List<SVNRevisionRange> updateSchedule;
+    private final String apacheCtlCommand;
+    private final File apacheRoot;
+
+    public TestOptions(SVNURL repositoryUrl, File tempDirectory, String sqlite3Command, long largeUpdateStep, String svnCommand, List<SVNRevisionRange> updateSchedule, String apacheCtlCommand, File apacheRoot) {
         this.repositoryUrl = repositoryUrl;
         this.tempDirectory = tempDirectory;
         this.sqlite3Command = sqlite3Command;
         this.largeUpdateStep = largeUpdateStep;
         this.svnCommand = svnCommand;
         this.updateSchedule = updateSchedule;
+        this.apacheCtlCommand = apacheCtlCommand;
+        this.apacheRoot = apacheRoot;
     }
-
     public SVNURL getRepositoryUrl() {
         return repositoryUrl;
     }
@@ -71,6 +78,14 @@ public class TestOptions {
 
     public List<SVNRevisionRange> getUpdateSchedule() {
         return updateSchedule;
+    }
+
+    public String getApacheCtlCommand() {
+        return apacheCtlCommand;
+    }
+
+    public File getApacheRoot() {
+        return apacheRoot;
     }
 
     public static TestOptions getInstance() {
@@ -169,5 +184,17 @@ public class TestOptions {
             }
         }
         return ranges;
+    }
+
+    private static String getApacheCtlCommand(Properties properties) {
+        return properties.getProperty("apachectl.command");
+    }
+
+    private static File getApacheRoot(Properties properties) {
+        final String apacheRootPath = properties.getProperty("apache.root");
+        if (apacheRootPath == null) {
+            return null;
+        }
+        return new File(apacheRootPath);
     }
 }
