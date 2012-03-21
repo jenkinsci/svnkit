@@ -203,23 +203,40 @@ public class DAVConnection {
         }
         DAVLockHandler handler = new DAVLockHandler();
         SVNErrorMessage context = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Lock request failed");
+        SVNException exception = null;
         IHTTPConnection httpConnection = getConnection();
-        HTTPStatus status = performHttpRequest(httpConnection, "LOCK", path, header, body, -1, 0, null, handler, context);
-        if (status != null) {
-            if (status.getError() != null) {
-                SVNErrorManager.error(status.getError(), SVNLogType.NETWORK);
+        try {
+            myLastStatus = performHttpRequest(httpConnection, "LOCK", path, header, body, -1, 0, null, handler, context);
+        } catch (SVNException e) {
+            myLastStatus = httpConnection.getLastStatus();
+            exception = e;
+        }
+
+            if (myLastStatus != null) {
+                if (myLastStatus.getCode() == 405) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_OUT_OF_DATE, "Lock request failed: {0} {1}",
+                            new Object[] {myLastStatus.getCode(), myLastStatus.getReason()});
+                    SVNErrorManager.error(err, SVNLogType.CLIENT);
+                }
+
+                if (myLastStatus.getError() != null) {
+                    SVNErrorManager.error(myLastStatus.getError(), SVNLogType.NETWORK);
+                }
+                String userName = myLastStatus.getHeader().getFirstHeaderValue(HTTPHeader.LOCK_OWNER_HEADER);
+                if (userName == null) {
+                    userName = httpConnection.getLastValidCredentials() != null ? httpConnection.getLastValidCredentials().getUserName() : null;
+                }
+                String created = myLastStatus.getHeader().getFirstHeaderValue(HTTPHeader.CREATION_DATE_HEADER);
+                if (userName == null || created == null) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, "Incomplete lock data returned");
+                    SVNErrorManager.error(err, SVNLogType.NETWORK);
+                }
+                Date createdDate = created != null ? SVNDate.parseDate(created) : null;
+                return new SVNLock(info.baselinePath, handler.getID(), userName, comment, createdDate, null);
             }
-            String userName = status.getHeader().getFirstHeaderValue(HTTPHeader.LOCK_OWNER_HEADER);
-            if (userName == null) {
-                userName = httpConnection.getLastValidCredentials() != null ? httpConnection.getLastValidCredentials().getUserName() : null;
-            }
-            String created = status.getHeader().getFirstHeaderValue(HTTPHeader.CREATION_DATE_HEADER);
-            if (userName == null || created == null) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, "Incomplete lock data returned");
-                SVNErrorManager.error(err, SVNLogType.NETWORK);
-            }
-            Date createdDate = created != null ? SVNDate.parseDate(created) : null;
-            return new SVNLock(info.baselinePath, handler.getID(), userName, comment, createdDate, null);
+
+        if (exception != null) {
+            throw exception;
         }
         return null;
     }
@@ -243,24 +260,37 @@ public class DAVConnection {
         }
         SVNErrorMessage context = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Unlock request failed");
         IHTTPConnection httpConnection = getConnection();
-        HTTPStatus status = performHttpRequest(httpConnection, "UNLOCK", path, header, (StringBuffer) null, -1, 0, null, null, context);
-        
-        if (status != null) {
-            if (status.getCode() == 400) {
-                SVNErrorManager.error(
-                        SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_LOCK, "No lock on path ''{0}'' (400 Bad Request)", path), 
-                        SVNLogType.NETWORK);
-            } else if (status.getCode() == 403) {
-                SVNErrorManager.error(
-                        SVNErrorMessage.create(SVNErrorCode.FS_LOCK_OWNER_MISMATCH, "Unlock failed on ''{0}'' (403 Forbidden)", path), 
-                        SVNLogType.NETWORK);
-            } else if (status.getCode() >= 300 && status.getError() != null) {
-                SVNErrorMessage error = status.getError() != null ? status.getError() : SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED);
+        SVNException exception = null;
+        try {
+            myLastStatus = performHttpRequest(httpConnection, "UNLOCK", path, header, (StringBuffer) null, -1, 0, null, null, context);
+        } catch (SVNException e) {
+            myLastStatus = httpConnection.getLastStatus();
+            exception = e;
+        }
+            if (myLastStatus != null) {
+                switch (myLastStatus.getCode()) {
+                    case 403:
+                    SVNErrorManager.error(
+                                SVNErrorMessage.create(SVNErrorCode.FS_LOCK_OWNER_MISMATCH, "Unlock failed on ''{0}'' (403 Forbidden)", path),
+                                SVNLogType.NETWORK);
+                    break;
+                    case 400:
+                        SVNErrorManager.error(
+                                SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_LOCK, "No lock on path ''{0}'' (400 Bad Request)", path),
+                                SVNLogType.NETWORK);
+                        break;
+                    default:
+                        break;
+                }
+                if (myLastStatus.getCode() >= 300 && myLastStatus.getError() != null) {
+                SVNErrorMessage error = myLastStatus.getError() != null ? myLastStatus.getError() : SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED);
                 SVNErrorManager.error(error, SVNLogType.NETWORK);
             }
-            return;
+            }
+        if (exception != null) {
+        throw exception;
         }
-        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED), SVNLogType.NETWORK);
+
     }
 
 	public void doGet(String path, OutputStream os) throws SVNException {
@@ -389,9 +419,15 @@ public class DAVConnection {
         }
         
         IHTTPConnection httpConnection = getConnection();
-        HTTPStatus status = performHttpRequest(httpConnection, "DELETE", path, header, request, 204, 0, null, null);
-        if (status.getError() != null) {
-            SVNErrorCode errCode = status.getError().getErrorCode();
+        SVNException exception = null;
+        try {
+            myLastStatus = performHttpRequest(httpConnection, "DELETE", path, header, request, 204, 0, null, null);
+        } catch (SVNException e) {
+            myLastStatus = httpConnection.getLastStatus();
+            exception = e;
+        }
+        if (myLastStatus.getError() != null) {
+            SVNErrorCode errCode = myLastStatus.getError().getErrorCode();
             if (errCode == SVNErrorCode.FS_BAD_LOCK_TOKEN || errCode == SVNErrorCode.FS_NO_LOCK_TOKEN || 
                     errCode == SVNErrorCode.FS_LOCK_OWNER_MISMATCH || errCode == SVNErrorCode.FS_PATH_ALREADY_LOCKED) {
                 Map childTokens = null;
@@ -406,9 +442,9 @@ public class DAVConnection {
                 }
                 
                 if (childTokens == null || childTokens.isEmpty()) {
-                    SVNErrorManager.error(status.getError(), SVNLogType.NETWORK);
+                    SVNErrorManager.error(myLastStatus.getError(), SVNLogType.NETWORK);
                 } else {
-                    status.setError(null);
+                    myLastStatus.setError(null);
                 }
                 
                 String token = myLocks != null ? (String) myLocks.get(path) : null;
@@ -421,16 +457,28 @@ public class DAVConnection {
                 locationPath = SVNEncodingUtil.uriEncode(locationPath);
                 
                 request = DAVMergeHandler.generateLockDataRequest(request, locationPath, repositoryPath, childTokens);
-                HTTPStatus status2 = performHttpRequest(httpConnection, "DELETE", path, header, request, 204, 404, null, null);
-                if (status2.getError() != null) {
-                    SVNErrorManager.error(status2.getError(), SVNLogType.NETWORK);
+                try {
+                    myLastStatus = performHttpRequest(httpConnection, "DELETE", path, header, request, 204, 404, null, null);
+                } catch (SVNException e) {
+                    myLastStatus = httpConnection.getLastStatus();
+                    exception = e;
                 }
-                return status2;
+                if (myLastStatus.getError() != null) {
+                    SVNErrorManager.error(myLastStatus.getError(), SVNLogType.NETWORK);
+                }
+                if (exception != null) {
+                    throw exception;
+                }
+                return myLastStatus;
             } 
-            SVNErrorManager.error(status.getError(), SVNLogType.NETWORK);    
+            SVNErrorManager.error(myLastStatus.getError(), SVNLogType.NETWORK);
+        }
+
+        if (exception != null) {
+            throw exception;
         }
         
-        return status;
+        return myLastStatus;
     }
 
     public HTTPStatus doMakeCollection(String path) throws SVNException {

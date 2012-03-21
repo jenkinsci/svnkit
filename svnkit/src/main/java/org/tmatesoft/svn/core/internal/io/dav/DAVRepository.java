@@ -713,6 +713,14 @@ public class DAVRepository extends SVNRepository {
                     if (e.getErrorMessage() != null && 
                             (e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_NOT_LOCKED  || FSErrors.isUnlockError(e.getErrorMessage()))) {
                         error = e.getErrorMessage();
+
+                        if (repositoryPath != null && repositoryPath.startsWith("/")) {
+                            shortPath = repositoryPath.substring("/".length());
+                        } else if (repositoryPath != null) {
+                            shortPath = repositoryPath;
+                        } else {
+                            shortPath = "";
+                        }
                         error = SVNErrorMessage.create(error.getErrorCode(), error.getMessageTemplate(), shortPath);
                     } else {
                         throw e;

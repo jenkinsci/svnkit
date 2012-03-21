@@ -2,6 +2,7 @@ package org.tmatesoft.svn.test;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -30,12 +31,14 @@ public class Sandbox {
     private final List<WorkingCopy> workingCopies;
     private File testDirectory;
     private final List<ApacheProcess> apacheProcesses;
+    private final Map<SVNURL, File> urlToRepositoryRoot;
 
     private Sandbox(String testName, TestOptions testOptions) {
         this.testName = testName;
         this.testOptions = testOptions;
         this.workingCopies = new ArrayList<WorkingCopy>();
         this.apacheProcesses = new ArrayList<ApacheProcess>();
+        this.urlToRepositoryRoot = new HashMap<SVNURL, File>();
     }
 
     public void dispose() {
@@ -120,7 +123,9 @@ public class Sandbox {
     public SVNURL createSvnRepository() throws SVNException {
         final File repositoryDirectory = createDirectory("svn.repo");
         createSvnRepository(repositoryDirectory);
-        return SVNURL.fromFile(repositoryDirectory);
+        SVNURL url = SVNURL.fromFile(repositoryDirectory);
+        urlToRepositoryRoot.put(url, repositoryDirectory);
+        return url;
     }
 
     public SVNURL createSvnRepositoryWithDavAccess() throws SVNException {
@@ -131,7 +136,36 @@ public class Sandbox {
         final File repositoryDirectory = createDirectory("svn.repo");
         createSvnRepository(repositoryDirectory);
         final ApacheProcess apacheProcess = runApacheForSvnRepository(repositoryDirectory, loginToPassword);
-        return apacheProcess.getUrl();
+        SVNURL url = apacheProcess.getUrl();
+        urlToRepositoryRoot.put(url, repositoryDirectory);
+        return url;
+    }
+
+    public File createFailingHook(SVNURL url, String hookName) throws SVNException {
+        final String failingHookContents = getFailingHookContents();
+        return createHook(url, hookName, failingHookContents);
+    }
+
+    public File createHook(SVNURL url, String hookName, String failingHookContents) throws SVNException {
+        final File repositoryRoot = urlToRepositoryRoot.get(url);
+        final File hookFile = getHookFile(repositoryRoot, hookName);
+        TestUtil.writeFileContentsString(hookFile, failingHookContents);
+        SVNFileUtil.setExecutable(hookFile, true);
+        return hookFile;
+    }
+
+    private String getFailingHookContents() {
+        if (SVNFileUtil.isWindows) {
+            return "@echo off" + "\r\n" + "exit 1" + "\r\n";
+        } else {
+            return "#!/bin/sh" + "\n" + "exit 1" + "\n";
+        }
+    }
+
+    private File getHookFile(File repositoryRoot, String hookName) {
+        final File hooksDirectory = new File(repositoryRoot, "hooks");
+        final String ext = SVNFileUtil.isWindows ? ".bat" : "";
+        return new File(hooksDirectory, hookName + ext);
     }
 
     private File getWorkingCopyDirectory() {
