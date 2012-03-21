@@ -17,6 +17,7 @@ import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.ISvnOperationOptionsProvider;
+import org.tmatesoft.svn.core.wc2.SvnCopySource;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -206,6 +207,23 @@ public class SvnNgRepositoryAccess extends SvnRepositoryAccess {
             }            
         }
         return createRepository(url, expectedUuid, true);
+    }
+
+    public SvnCopySource createRemoteCopySource(SVNWCContext context, SvnCopySource localCopySource) throws SVNException {
+        Structure<NodeOriginInfo> origin = context.getNodeOrigin(localCopySource.getSource().getFile(), true, NodeOriginInfo.reposRelpath, NodeOriginInfo.reposRootUrl, NodeOriginInfo.revision);
+        SVNURL url = origin.get(NodeOriginInfo.reposRootUrl);
+        url = url.appendPath(origin.<File>get(NodeOriginInfo.reposRelpath).getPath(), false);
+        SVNRevision pegRevision = localCopySource.getSource().getResolvedPegRevision();
+        SVNRevision revision = localCopySource.getRevision();
+        if (pegRevision == SVNRevision.BASE) {
+            pegRevision = SVNRevision.create(origin.lng(NodeOriginInfo.revision));
+        }
+        if (revision == SVNRevision.BASE) {
+            revision = SVNRevision.create(origin.lng(NodeOriginInfo.revision));
+        }
+        origin.release();
+        localCopySource = SvnCopySource.create(SvnTarget.fromURL(url, pegRevision), revision);
+        return localCopySource;
     }
     
     protected SVNURL getTargetURL(SvnTarget target) throws SVNException {

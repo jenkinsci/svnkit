@@ -1,22 +1,22 @@
 package org.tmatesoft.svn.core.internal.wc2.remote;
 
-import java.io.File;
 import java.util.Collection;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc16.SVNCopyClient16;
-import org.tmatesoft.svn.core.internal.wc17.db.Structure;
-import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeOriginInfo;
 import org.tmatesoft.svn.core.internal.wc2.SvnRemoteOperationRunner;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
+import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgRepositoryAccess;
+import org.tmatesoft.svn.core.internal.wc2.old.SvnOldRepositoryAccess;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.ISVNExternalsHandler;
 import org.tmatesoft.svn.core.wc.SVNCopySource;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnCopySource;
+import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 import org.tmatesoft.svn.core.wc2.SvnRemoteCopy;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -51,27 +51,20 @@ public class SvnNgReposToReposCopy extends SvnRemoteOperationRunner<SVNCommitInf
         int i = 0;
         for (SvnCopySource newSource : getOperation().getSources()) {
             if (newSource.getSource().isFile()) {
-                Structure<NodeOriginInfo> origin = getWcContext().getNodeOrigin(newSource.getSource().getFile(), true, NodeOriginInfo.reposRelpath, NodeOriginInfo.reposRootUrl, NodeOriginInfo.revision);
-                SVNURL url = origin.get(NodeOriginInfo.reposRootUrl);
-                url = url.appendPath(origin.<File>get(NodeOriginInfo.reposRelpath).getPath(), false);
-                SVNRevision pegRevision = newSource.getSource().getResolvedPegRevision();
-                SVNRevision revision = newSource.getRevision();
-                if (pegRevision == SVNRevision.BASE) {
-                    pegRevision = SVNRevision.create(origin.lng(NodeOriginInfo.revision));
+                SvnWcGeneration wcGeneration = SvnOperationFactory.detectWcGeneration(newSource.getSource().getFile(), false);
+                if (wcGeneration == SvnWcGeneration.V16) {
+                    newSource = new SvnOldRepositoryAccess(getOperation()).createRemoteCopySource(getWcContext(), newSource);
+                } else {
+                    newSource = new SvnNgRepositoryAccess(getOperation(), getWcContext()).createRemoteCopySource(getWcContext(), newSource);
                 }
-                if (revision == SVNRevision.BASE) {
-                    revision = SVNRevision.create(origin.lng(NodeOriginInfo.revision));
-                }
-                origin.release();
-                newSource = SvnCopySource.create(SvnTarget.fromURL(url, pegRevision), revision);
-            }
-            
+            }            
             sources[i] = SvnCodec.copySource(newSource);
             i++;
         }
 
         SVNCommitInfo info = client.doCopy(sources, target.getURL(), getOperation().isMove(), getOperation().isMakeParents(), getOperation().isFailWhenDstExists(), 
                 getOperation().getCommitMessage(), getOperation().getRevisionProperties());
+        
         if (info != null) {
             Collection<SvnTarget> targets = getOperation().getTargets();
             if (targets != null && targets.size() != 0) {

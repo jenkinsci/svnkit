@@ -9,11 +9,13 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.ISvnOperationOptionsProvider;
+import org.tmatesoft.svn.core.wc2.SvnCopySource;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -21,6 +23,31 @@ public class SvnOldRepositoryAccess extends SvnRepositoryAccess {
 
     public SvnOldRepositoryAccess(ISvnOperationOptionsProvider operationOptionsProvider) throws SVNException {
         super(operationOptionsProvider, null);
+    }
+    
+    public SvnCopySource createRemoteCopySource(SVNWCContext context, SvnCopySource localCopySource) throws SVNException {
+        final SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
+        final File path = localCopySource.getSource().getFile();
+        try {
+            wcAccess.probeOpen(path, false, 0);
+            SVNEntry entry = wcAccess.getEntry(path, false);
+            SVNURL url = entry.isCopied() ? entry.getCopyFromSVNURL() : entry.getSVNURL();
+            if (url == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' does not have a URL associated with it", path);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+            SVNRevision pegRevision = localCopySource.getSource().getResolvedPegRevision();
+            SVNRevision revision = localCopySource.getRevision();
+            if (pegRevision == SVNRevision.UNDEFINED || pegRevision == SVNRevision.WORKING || pegRevision == SVNRevision.BASE) {
+                pegRevision = entry.isCopied() ? SVNRevision.create(entry.getCopyFromRevision()) : SVNRevision.create(entry.getRevision());
+            }
+            if (revision == SVNRevision.BASE) {
+                revision= entry.isCopied() ? SVNRevision.create(entry.getCopyFromRevision()) : SVNRevision.create(entry.getRevision());
+            }
+            return SvnCopySource.create(SvnTarget.fromURL(url, pegRevision), revision);
+        } finally {
+            wcAccess.close();
+        }
     }
 
     @Override

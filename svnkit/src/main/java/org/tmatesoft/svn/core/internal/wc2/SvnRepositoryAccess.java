@@ -27,6 +27,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.ISvnOperationOptionsProvider;
+import org.tmatesoft.svn.core.wc2.SvnCopySource;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -60,8 +61,9 @@ public abstract class SvnRepositoryAccess {
         revNumber, youngestRevision;
     }
     
-    public abstract Structure<RepositoryInfo> createRepositoryFor(SvnTarget target, SVNRevision revision, SVNRevision pegRevision, File baseDirectory) throws SVNException;
+    public abstract SvnCopySource createRemoteCopySource(SVNWCContext context, SvnCopySource localCopySource) throws SVNException;
     
+    public abstract Structure<RepositoryInfo> createRepositoryFor(SvnTarget target, SVNRevision revision, SVNRevision pegRevision, File baseDirectory) throws SVNException;    
    
     public abstract Structure<RevisionsPair> getRevisionNumber(SVNRepository repository, SvnTarget path, SVNRevision revision, Structure<RevisionsPair> youngestRevision) throws SVNException;
     
