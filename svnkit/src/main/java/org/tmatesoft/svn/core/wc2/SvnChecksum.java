@@ -3,15 +3,15 @@ package org.tmatesoft.svn.core.wc2;
 import org.tmatesoft.svn.core.SVNException;
 
 /**
- * Represebts  a checksum for SVN files.
+ * Represents a checksum for SVN files.
  * 
  * @author TMate Software Ltd.
  * @version 1.7
  */
 public class SvnChecksum {
     
-	/* The <b>Kind</b> enum is used to describe the kind of used hash algorythm 
-	 * for computing the chechsum. This can be:
+	/**
+	 * Describes the kind of used hash algorythm for computing the chechsum. This can be:
 	 * <ul>
 	 * <li>sha1 - sha1 algorythm
 	 * <li>md5  - md5 algorythm

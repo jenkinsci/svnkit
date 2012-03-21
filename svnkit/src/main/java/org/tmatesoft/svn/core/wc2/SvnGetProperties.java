@@ -17,7 +17,7 @@ import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
  * This method throws {@link SVNException} if one of the following is true:
  *             <ul>
  *             <li><code>propertyName</code> starts with the
- *             {@link SVNProperty#SVN_WC_PREFIX svn:wc:} prefix
+ *             {@link org.tmatesoft.svn.core.SVNProperty#SVN_WC_PREFIX svn:wc:} prefix
  *             <li><code>target</code> is not under version control
  *             </ul>
  * 

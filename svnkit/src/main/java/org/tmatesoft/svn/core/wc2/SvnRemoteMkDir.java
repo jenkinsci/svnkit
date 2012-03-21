@@ -27,7 +27,7 @@ import org.tmatesoft.svn.core.wc.SVNEventAction;
  * will be called with {@link SVNEventAction#COMMIT_COMPLETED} event action.
  * 
  * <p/>
- * {@link #run()} method returns {@link SVNCommitInfo} information on a new revision as the result of the commit.
+ * {@link #run()} method returns {@link org.tmatesoft.svn.core.SVNCommitInfo} information on a new revision as the result of the commit.
  * This method throws SVNException if URL does not exist.
  * 
  * @author TMate Software Ltd.

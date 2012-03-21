@@ -9,7 +9,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNConflictDescription;
 
 /**
- * Represents working copy info, used by {@link SvnInfo}.
+ * Provides information about working copy info, used by {@link SvnInfo}.
  * 
  * @author TMate Software Ltd.
  * @version 1.7
@@ -177,7 +177,7 @@ public class SvnWorkingCopyInfo {
     /**
      * Sets the local item's depth.
      * 
-     * @param the local depth of the item
+     * @param depth the local depth of the item
      */
     public void setDepth(SVNDepth depth) {
         this.depth = depth;

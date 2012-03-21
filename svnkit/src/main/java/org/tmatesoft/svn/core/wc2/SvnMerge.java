@@ -128,35 +128,21 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
  * <p/>
  * Note: this operation requires repository access.
  * 
- * @param url1 a
- *            source URL
- * @param pegRevision a
- *            revision in which <code>url1</code> is first looked up
- * @param rangesToMergecollection
- *            of revision ranges to merge
- * @param dstPath target
- *            working copy path
- * @param depth tree
- *            depth to process
- * @param useAncestry if
- *            <span class="javakeyword">true</span> then the paths ancestry
- *            will be noticed while calculating differences, otherwise not
- * @param force
- *            <span class="javakeyword">true</span> to force the operation
- *            to run
- * @param dryRun if
- *            <span class="javakeyword">true</span> then only tries the
- *            operation to run (to find out if a file can be merged
- *            successfully)
- * @param recordOnly
- * @throws SVNException in
+ * <p/>
+ * {@link #run()} method throws org.tmatesoft.svn.core.SVNException in
  *             the following cases:
  *             <ul>
  *             <li/>exception with {@link SVNErrorCode#CLIENT_BAD_REVISION}-
  *             If any revision in the list of provided ranges is
  *             {@link SVNRevision#isValid() invalid}
+ *             <li/>exception with {@link SVNErrorCode#CLIENT_BAD_REVISION}
+ *             error code - if either <code>firstSource</code>'s <code>pegRevision</code> or <code>
+ *             firstSource</code>'s <code>pegRevision</code> is {@link SVNRevision#isValid() invalid}
  *             </ul>
- * @since 1.2, SVN 1.5
+ *             </ul>
+ *             
+ * @author TMate Software Ltd.
+ * @version 1.7
  */
 public class SvnMerge extends SvnOperation<Void> {
     
@@ -204,7 +190,7 @@ public class SvnMerge extends SvnOperation<Void> {
     * ranges, they may overlap fully or partially, and/or they may partially or
     * fully negate each other. This rangelist is not required to be sorted.
     * 
-    * @returns revision ranges of the merge
+    * @return revision ranges of the merge
     */
     public Collection<SvnRevisionRange> getRevisionRanges() {
         return ranges;
@@ -245,7 +231,7 @@ public class SvnMerge extends SvnOperation<Void> {
     /**
      * Returns source for merge between revisions and reintegrate merge.
      *
-     * @returns merge source 
+     * @return merge source 
      */
     public SvnTarget getSource() {
         return this.source;

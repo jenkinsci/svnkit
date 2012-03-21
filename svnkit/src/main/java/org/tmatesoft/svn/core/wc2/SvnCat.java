@@ -6,7 +6,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 /**
- * Operation for cat command. Outputs the content of file identified by <code>target</code> and 
+ * Represents cat operation. Outputs the content of file identified by <code>target</code> and 
  * revision to the output streams. 
  * 
  * <p/>
@@ -43,7 +43,7 @@ public class SvnCat extends SvnOperation<Void> {
      * Sets whether or not all keywords presenting in the file and listed in the file's
      * {@link org.tmatesoft.svn.core.SVNProperty#KEYWORDS}property (if set) should be substituted.
      * 
-     * @param <code>true</code> if keywords should expanded, otherwise <code>false</code>
+     * @param expandKeywords <code>true</code> if keywords should expanded, otherwise <code>false</code>
      */
     public void setExpandKeywords(boolean expandKeywords) {
         this.expandKeywords = expandKeywords;

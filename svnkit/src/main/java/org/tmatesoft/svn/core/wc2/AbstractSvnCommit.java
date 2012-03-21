@@ -7,7 +7,7 @@ import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.wc2.hooks.ISvnCommitHandler;
 
 /**
- * Base class for operations changing repository. 
+ * Base class for operations that changes repository. 
  * The <b>AbstractSvnCommit</b> class provides methods to perform operations that
  * relate to committing changes to an SVN repository. These operations are
  * similar to respective commands of the native SVN command line client and
@@ -19,7 +19,12 @@ import org.tmatesoft.svn.core.wc2.hooks.ISvnCommitHandler;
  * 
  * @author TMate Software Ltd.
  * @version 1.7
- * @see {@link SvnCommit}, {@link SvnImport}, {@link SvnRemoteCopy}, {@link SvnRemoteDelete}, {@link SvnRemoteMkDir}, {@link SvnRemoteSetProperty}
+ * @see SvnCommit
+ * @see SvnImport
+ * @see SvnRemoteCopy
+ * @see SvnRemoteDelete
+ * @see SvnRemoteMkDir
+ * @see SvnRemoteSetProperty
  */
 public abstract class AbstractSvnCommit extends SvnReceivingOperation<SVNCommitInfo> {
 

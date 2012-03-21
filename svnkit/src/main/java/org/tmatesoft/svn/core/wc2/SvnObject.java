@@ -29,7 +29,7 @@ public abstract class SvnObject {
     /**
      * Sets user data.
      * 
-     * @param user data
+     * @param userData user data
      */
     public void setUserData(Object userData) {
         this.userData = userData;

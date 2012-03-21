@@ -3,8 +3,7 @@ package org.tmatesoft.svn.core.wc2;
 import java.io.File;
 
 /**
- * Represents callback which is invoked 
- * when there are inconsistent EOLs found in text files which are being scheduled for addition.
+ * Represents callback that invokes when inconsistent EOLs are found in text files being scheduled for addition.
  * 
  * <p>
  * In other words, if a text file is scheduled for addition and an autoproperty 
@@ -21,14 +20,17 @@ import java.io.File;
  */
 public interface ISvnAddParameters {
    
-	/* The <b>Action</b> enum is used to describe an action add 
-     * operation should undertake in case of a inconsistent EOLs. 
+	/**
+	 * Describes an action add operation should undertake in case of a inconsistent EOLs. 
      * This can be:
 	 * <ul>
 	 * <li>ADD_AS_BINARY - Rules to add a file as binary.
 	 * <li>ADD_AS_IS - Rules to add a file ad is.
 	 * <li>REPORT_ERROR - Rules not to add file but to report an error, i.e. throw an exception
 	 * </ul>
+	 * 
+	 * @author TMate Software Ltd.
+	 * @version 1.7
 	 */
     public enum Action {
         ADD_AS_BINARY,

@@ -44,7 +44,7 @@ public class SvnResolve extends SvnOperation<Void> {
      * Gets kind of choice object for making decision while resolving.
      * 
      * @return choice object for the operation
-     * @see {@link #setConflictChoice(SVNConflictChoice)}
+     * @see #setConflictChoice(SVNConflictChoice)
      */
     public SVNConflictChoice getConflictChoice() {
         return conflictChoice;

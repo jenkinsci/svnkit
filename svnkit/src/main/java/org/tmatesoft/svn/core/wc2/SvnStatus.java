@@ -347,7 +347,7 @@ public class SvnStatus extends SvnObject {
     /**
      * Sets item's node kind.
      * 
-     * @param node kind of the item
+     * @param kind node kind of the item
      */
     public void setKind(SVNNodeKind kind) {
         this.kind = kind;
@@ -478,7 +478,7 @@ public class SvnStatus extends SvnObject {
     /**
      * Sets the revision when the item was last changed (committed).
      *
-     * @param changedRevisionthe last committed revision
+     * @param changedRevision the last committed revision
      */
     public void setChangedRevision(long changedRevision) {
         this.changedRevision = changedRevision;

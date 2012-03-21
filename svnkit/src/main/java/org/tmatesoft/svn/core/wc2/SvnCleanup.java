@@ -3,7 +3,7 @@ package org.tmatesoft.svn.core.wc2;
 import org.tmatesoft.svn.core.wc2.SvnOperation;
 
 /**
- * Cleanup opeartion. Recursively cleans up the working copy, removing locks and resuming
+ * Represents cleanup opeartion. Recursively cleans up the working copy, removing locks and resuming
  * unfinished operations.
  * 
  * <p/>
@@ -15,7 +15,7 @@ import org.tmatesoft.svn.core.wc2.SvnOperation;
  * connection.
  * 
  * <p/>
- * {@link #run()} method throws  {@link SVNException} if one of the following is true:
+ * {@link #run()} method throws  {@link org.tmatesoft.svn.core.SVNException} if one of the following is true:
  * <ul>
  * <li><code>path</code> does not exist <li><code>path</code>'s
  * parent directory is not under version control

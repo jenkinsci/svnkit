@@ -1,12 +1,16 @@
 package org.tmatesoft.svn.core.wc2;
 
-/* The <b>Schedule</b> enum is used to describe the kind of schedule. This can be:
+/**
+ * Describe the kind of schedule. This can be:
  * <ul>
  * <li>NORMAL - item is not scheduled
  * <li>ADD - item is scheduled for add
  * <li>DELETE - item is scheduled for delete
  * <li>REPLACE - item is scheduled for replace
  * </ul>
+ * 
+ * @author TMate Software Ltd.
+ * @version 1.7
  */
 public enum SvnSchedule {
     NORMAL, ADD, DELETE, REPLACE;

@@ -12,10 +12,6 @@
 
 package org.tmatesoft.svn.core;
 
-
-import java.util.HashSet;
-import java.util.Set;
-
 /**
  * A main exception class that is used in the SVNKit library. All other
  * SVNKit exception classes extend this one. Detailed information 

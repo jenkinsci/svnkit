@@ -253,7 +253,7 @@ public class SvnRemoteCopy extends AbstractSvnCommit {
      * {@link DefaultSVNCommitParameters default} ones.
      * 
      * @return commit parameters of the operation
-     * @see {@link ISvnCommitParameters}
+     * @see ISvnCommitParameters
      */
     public ISvnCommitParameters getCommitParameters() {
         return commitParameters;
@@ -264,8 +264,8 @@ public class SvnRemoteCopy extends AbstractSvnCommit {
      * When no parameters are set {@link DefaultSVNCommitParameters default}ones
      * are used.
      * 
-     * @param parameters commit parameters of the operation
-     * @see {@link ISvnCommitParameters}
+     * @param commitParameters commit parameters of the operation
+     * @see ISvnCommitParameters
      */
     public void setCommitParameters(ISvnCommitParameters commitParameters) {
         this.commitParameters = commitParameters;

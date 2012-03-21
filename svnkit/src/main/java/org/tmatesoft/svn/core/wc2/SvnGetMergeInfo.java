@@ -23,7 +23,7 @@ import org.tmatesoft.svn.core.SVNURL;
  * <p/>
  * Note: this routine requires repository access.
  * 
- * {@link #run()} throws {@link SVNException} in the following cases:
+ * {@link #run()} throws {@link org.tmatesoft.svn.core.SVNException} in the following cases:
  *             <ul>
  *             <li/>exception with {@link SVNErrorCode#UNSUPPORTED_FEATURE}
  *             error code - if the server doesn't support retrieval of

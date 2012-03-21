@@ -20,7 +20,7 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
- * SvnOperation is the base class for all version control operations. 
+ * Base class for all Svn* operations. 
  * Encapsulates mostly used parameters, operation state, different methods used by implementations.
  * 
  * <p/>
@@ -46,7 +46,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @author TMate Software Ltd.
  * @version 1.7
  * @see org.tmatesoft.svn.core.wc2
- * @param <V> type of returning value in {@link run()} method
+ * @param <V> type of returning value in {@link #run()} method
  */
 public class SvnOperation<V> implements ISvnOperationOptionsProvider {
     

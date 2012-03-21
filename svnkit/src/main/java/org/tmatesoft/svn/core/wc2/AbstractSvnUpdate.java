@@ -3,7 +3,7 @@ package org.tmatesoft.svn.core.wc2;
 import org.tmatesoft.svn.core.wc2.hooks.ISvnExternalsHandler;
 
 /**
- * This class provides methods which allow to check out, update, switch and
+ * Provides methods allowing to check out, update, switch and
  * relocate a working copy as well as export an unversioned directory or file
  * from a repository.
  * 

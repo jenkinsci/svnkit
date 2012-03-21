@@ -27,8 +27,8 @@ import org.tmatesoft.svn.core.SVNException;
  * 
  * <p/>
  * If an item specified for reversion is not under version control, then
- * does not fail with an exception, just invokes {@link ISVNEventHandler}
- * using notification code {@link SVNEventAction#SKIP}.
+ * does not fail with an exception, just invokes {@link org.tmatesoft.svn.core.wc.ISVNEventHandler}
+ * using notification code {@link org.tmatesoft.svn.core.wc.SVNEventAction#SKIP}.
  * 
  * @author TMate Software Ltd.
  * @version 1.7

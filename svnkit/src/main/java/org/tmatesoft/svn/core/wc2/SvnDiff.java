@@ -329,7 +329,7 @@ public class SvnDiff extends SvnOperation<Void> {
 
     /**
      * Sets whether to generate differences for deleted files.   
-     * In 1.6 version it was {@link ISVNDiffGenerator#setDiffDeleted()}.
+     * In 1.6 version it was {@link org.tmatesoft.svn.core.wc.ISVNDiffGenerator#setDiffDeleted(boolean)}.
      * 
      * @param noDiffDeleted <code>true</code> if deleted files should not be diffed, otherwise <code>false</code>
      */

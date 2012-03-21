@@ -88,7 +88,7 @@ public class SvnRemoteSetProperty extends AbstractSvnCommit {
     /**
      * Gets name of the property. 
      * 
-     * @param propertyName name of the property
+     * @return name of the property
      * @see #setPropertyName(String)
      */
     public String getPropertyName() {
@@ -101,7 +101,6 @@ public class SvnRemoteSetProperty extends AbstractSvnCommit {
      * with <span class="javastring">"svn:"</span>), then the caller is
      * responsible for ensuring that the value uses LF line-endings.
      * 
-     * @param name of the property
      */
     public void setPropertyName(String propertyName) {
         this.propertyName = propertyName;

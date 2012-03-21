@@ -3,14 +3,13 @@ package org.tmatesoft.svn.core.wc2;
 import org.tmatesoft.svn.core.SVNException;
 
 /**
- * Interface describing class that can receive object(s). 
+ * This interface describes the operation that can receive object(s). 
  * Implementation is {@link SvnReceivingOperation},
  * and many intermediate classes for 1.6 compability (classes that deal with handlers).
  * Clients can provide their own handlers for receiving the object(s) 
  * by implementing this interface and assign them in 
  * {@link SvnReceivingOperation#setReceiver(ISvnObjectReceiver)}.
- *  
- * 
+ *   
  * @author TMate Software Ltd.
  * @version 1.7
  * @param <T> type of received object

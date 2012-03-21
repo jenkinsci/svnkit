@@ -56,14 +56,7 @@ import org.tmatesoft.svn.core.SVNException;
  * {@link SVNErrorCode#CLIENT_MULTIPLE_SOURCES_DISALLOWED}.
  * 
  * <p/>
- * {@link ISVNAuthenticationManager Authentication manager} (whether
- * provided directly through the appropriate constructor or in an
- * {@link ISVNRepositoryPool} instance) and {@link #getCommitHandler()
- * commit handler} are used to immediately attempt to commit the copy action
- * in the repository.
- * 
- * <p/>
- * If the caller's {@link ISVNEventHandler} is non-<code>null</code>, invokes 
+ * If the caller's {@link org.tmatesoft.svn.core.wc.ISVNEventHandler} is non-<code>null</code>, invokes 
  * it for each item added at the new location.
  * 
  * <p/>
@@ -205,7 +198,7 @@ public class SvnCopy extends SvnOperation<Void> {
     /**
      * Sets whether to do copy as move operation (delete, then add with history).
      * 
-     * @param move <code>true</code> if move operation should be done, otherwise <code>false</code>
+     * @param isMove <code>true</code> if move operation should be done, otherwise <code>false</code>
      */
     public void setMove(boolean isMove) {
         this.move = isMove;
@@ -223,7 +216,7 @@ public class SvnCopy extends SvnOperation<Void> {
     /**
      * Sets whether to make parent folders if don't exist.
      * 
-     * @param makeParents <code>true</code> if non-existent parent directories should be createdy, otherwise <code>false</code>
+     * @param isMakeParents <code>true</code> if non-existent parent directories should be createdy, otherwise <code>false</code>
      */
     public void setMakeParents(boolean isMakeParents) {
         this.makeParents = isMakeParents;
@@ -242,7 +235,7 @@ public class SvnCopy extends SvnOperation<Void> {
     /**
      * Sets whether to fail if <code>target</code> already exists.
      * 
-     * @param failWhenDstExists <code>true</code> if fail when <code>target</code> already exists, otherwise <code>false</code>
+     * @param isFailWhenDstExist <code>true</code> if fail when <code>target</code> already exists, otherwise <code>false</code>
      * @see SvnRemoteCopy
      */
     public void setFailWhenDstExists(boolean isFailWhenDstExist) {

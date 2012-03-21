@@ -4,14 +4,8 @@ package org.tmatesoft.svn.core.wc2;
  * Operation for calculation canonicalize all urls in the specified Working Copy.
  * Operation's <code>target</code> is destination working copy path.
  * 
- * 
- * @param omitDefaultPort
- *            if <span class="javakeyword">true</span> then removes all port
- *            numbers from urls which equal to default ones, otherwise does
- *            not
- * @param recursive
- *            recurses an operation
- * @throws SVNException
+ * @author TMate Software Ltd.
+ * @version 1.7
  */
 public class SvnCanonicalizeUrls extends SvnOperation<Void> {
 

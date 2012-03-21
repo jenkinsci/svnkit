@@ -2,14 +2,36 @@ package org.tmatesoft.svn.core.wc2;
 
 import java.io.File;
 
+import org.tmatesoft.svn.core.wc.ISVNCommitParameters;
+
 /**
- * Commit parameters.
+ * Interface descibes the parameters defining behaviour for the commit operation 
+ * that touches still versioned files or dirs that are somehow missing.  
+ * 
+ * <p>
+ * To bring your commit parameters into usage, simply pass them to 
+ * a committer object, for example, to 
+ * {@link SvnCommit#setCommitParameters(ISVNCommitParameters) SvnCommit}. 
  * 
  * @author TMate Software Ltd.
  * @version 1.7
  */
 public interface ISvnCommitParameters {
     
+	/**
+	 * Describes an instruction that operation should take if it meets unversioned or missing item.
+	 * This can be:
+	 * <ul>
+	 * <li>DELETE - operation should force a deletion of the item. Although the item may be not 
+     * scheduled for deletion (only missing in filesystem) it will 
+     * be deleted from version control.
+	 * <li>ERROR - Commit should fail and error should be reported.
+	 * <li>SKIP - Item should not be commited.
+	 * </ul>
+	 * 
+	 * @author TMate Software Ltd.
+	 * @version 1.7
+	 */
 	public enum Action {
         DELETE,
         ERROR,

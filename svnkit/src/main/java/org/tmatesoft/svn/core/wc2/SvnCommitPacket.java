@@ -132,9 +132,9 @@ public class SvnCommitPacket {
      * @param path path of the commit item
      * @param rootUrl repository root URL of the commit item
      * @param kind node kind of the commit item
-     * @param repository URL of the commit item
+     * @param url repository URL of the commit item
      * @param revision revision number of the commit item
-     * @param copyFromPath path from those commt item was copied
+     * @param copyFromUrl url from those commt item was copied
      * @param copyFromRevision revision of the repository item from those commt item was copied
      * @param flags commit item flags
      * @return newly created commit item with initialized fields 

@@ -44,7 +44,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  *            of revision properties to retrieve
  * @param handlerthe
  *            caller's log entry handler
- * {@link #run()} throws {@link SVNException} in the following cases:
+ * {@link #run()} throws {@link org.tmatesoft.svn.core.SVNException} in the following cases:
  *             <ul>
  *             <li/>exception with {@link SVNErrorCode#UNSUPPORTED_FEATURE}
  *             error code - if the server doesn't support retrieval of
@@ -97,7 +97,7 @@ public class SvnLogMergeInfo extends SvnReceivingOperation<SVNLogEntry> {
     /**
      * Returns merge source, can represent URL or working copy path.
      * 
-     * @return merge source
+     * @param source merge source
      */
     public void setSource(SvnTarget source) {
         this.source = source;

@@ -6,7 +6,7 @@ import org.tmatesoft.svn.core.wc.SVNStatusType;
 /**
  * Represents a result of a text or properties merge operation. 
  * This class combines the following information about a merge result: a status type indicating how merge 
- * finished; base and actual (changed) properties.    
+ * finished; base and actual (working) properties.    
  * 
  * @author TMate Software Ltd.
  * @version 1.7
@@ -41,7 +41,7 @@ public class SvnMergeResult {
     }
 
     /**
-     * Returns all merge actual (changed) properties.
+     * Returns all merge actual (working) properties.
      * 
      * @return actual properties
      */
@@ -53,7 +53,7 @@ public class SvnMergeResult {
     }
 
     /**
-     * Sets all merge actual (changed) properties.
+     * Sets all merge actual (working) properties.
      * 
      * @param actualProperties actual properties
      */
@@ -62,7 +62,7 @@ public class SvnMergeResult {
     }
 
     /**
-     * Returns all base (not changed) properties.
+     * Returns all base (pristine) properties.
      * 
      * @return base properties
      */
@@ -74,7 +74,7 @@ public class SvnMergeResult {
     }
 
     /**
-     * Sets all base (not changed) properties.
+     * Sets all base (pristine) properties.
      * 
      * @param baseProperties base properties
      */

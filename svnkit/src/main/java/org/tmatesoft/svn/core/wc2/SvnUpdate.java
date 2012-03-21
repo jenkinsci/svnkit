@@ -10,7 +10,7 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
- * Update operation. Updates working copy to <code>revision</code>.
+ * Represents update operation. Updates working copy to <code>revision</code>.
  * If no revision is given, it brings working copy up-to-date with {@link SVNRevision#HEAD} revision.
    
  * Unversioned paths that are direct children of a versioned path will cause

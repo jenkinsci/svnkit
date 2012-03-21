@@ -8,7 +8,7 @@ import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 
 /**
- * Class for representation the annotate item.
+ * Provides information for annotate item in {@link SvnAnnotate} operation.
  * 
  * @author TMate Software Ltd.
  * @version 1.7

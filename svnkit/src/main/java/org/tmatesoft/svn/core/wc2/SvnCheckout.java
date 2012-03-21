@@ -10,7 +10,7 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
- * Checkout operation. Checks out a working copy of {@link #getSource()} <code>target</code> at revision,
+ * Represents checkout operation. Checks out a working copy of {@link #getSource()} <code>target</code> at revision,
  * looked up at {@link SvnTarget#getPegRevision()}, using operation targets as the
  * root directory of the newly checked out working copy.
  * <p/>

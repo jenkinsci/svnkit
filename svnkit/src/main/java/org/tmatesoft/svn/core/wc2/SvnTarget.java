@@ -53,7 +53,7 @@ public class SvnTarget {
      * Creates a target from URL and its peg revision
      * @param url target URL
      * @param pegRevision revision in which the file item is first looked up
-     * @param a new <code>SvnTarget</code> object representing URL with revisition 
+     * @return a new <code>SvnTarget</code> object representing URL with revisition 
      */
     public static SvnTarget fromURL(SVNURL url, SVNRevision pegRevision) {
         return new SvnTarget(url, pegRevision);
@@ -130,7 +130,8 @@ public class SvnTarget {
     }
 
     /**
-     * Calls <code>getResolvedPegRevision</code> with {@link SVNRevision.HEAD, SVNRevision.WORKING} as default values
+     * Calls <code>getResolvedPegRevision</code> with {@link org.tmatesoft.svn.core.wc.SVNRevision#HEAD}, 
+     * {@link org.tmatesoft.svn.core.wc.SVNRevision#WORKING} as default values
      * @return peg revision of the target
      * @see #getResolvedPegRevision(SVNRevision, SVNRevision)
      */

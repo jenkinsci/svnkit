@@ -5,7 +5,7 @@ import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 /**
- * Annotate operation. Obtains annotation information for each file text line from a repository
+ * Represents annotate operation. Obtains annotation information for each file text line from a repository
  * (using a working copy path to get a corresponding URL) and passes it to a
  * annotation handler if provided.
  * 

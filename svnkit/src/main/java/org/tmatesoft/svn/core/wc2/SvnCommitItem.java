@@ -9,7 +9,7 @@ import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 
 /**
- * Represents information about a committed 
+ * Provides information about a committed 
  * revision. Commit information includes:
  * <ol>
  * <li>a path;

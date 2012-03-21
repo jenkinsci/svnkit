@@ -18,7 +18,7 @@ public class SvnCopySource extends SvnObject {
     /**
      * Creates a new <code>SvnCopySource</code> object and initializes its fields. 
      * 
-     * @param target      source target with optional <code>pegRevision</code>, can be file or URL
+     * @param source      source target with optional <code>pegRevision</code>, can be file or URL
      * @param revision    revision of <code>target</code>
      */
     public static SvnCopySource create(SvnTarget source, SVNRevision revision) {

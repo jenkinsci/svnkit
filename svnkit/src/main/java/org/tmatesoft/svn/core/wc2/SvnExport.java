@@ -106,7 +106,7 @@ public class SvnExport extends AbstractSvnUpdate<Long> {
      * Sets whether or not all keywords presenting in the file and listed in the file's
      * {@link org.tmatesoft.svn.core.SVNProperty#KEYWORDS}property (if set) should be substituted.
      * 
-     * @param <code>true</code> if keywords should expanded, otherwise <code>false</code>
+     * @param expandKeywords <code>true</code> if keywords should expanded, otherwise <code>false</code>
      * @since 1.7, SVN 1.7
      */
     public void setExpandKeywords(boolean expandKeywords) {

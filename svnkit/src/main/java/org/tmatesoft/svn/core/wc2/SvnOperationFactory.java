@@ -210,7 +210,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * Handles working copy access and provides access to it {@link #getWcContext()}, {@link #isAutoCloseContext()}.
  * Has set of working copy utility methods: {@link #getWorkingCopyRoot(File, boolean)}, {@link #isWorkingCopyRoot(File)}, 
  * {@link #isVersionedDirectory(File)}, {@link #detectWcGeneration(File, boolean)},
- * {@link #setPrimaryWcGeneration(SvnWcGeneration)}, {@link #isPrimaryWcGenerationOnly()(SvnWcGeneration)}
+ * {@link #setPrimaryWcGeneration(SvnWcGeneration)}, {@link #isPrimaryWcGenerationOnly()}
  *  
  * @author TMate Software Ltd.
  * @version 1.7
@@ -237,8 +237,6 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
 
     /**
      * Creates operation factory and initializes it with empty <code>context</code>.
-     * 
-     * @param context operation's context
      */
     public SvnOperationFactory() {
         this(null);

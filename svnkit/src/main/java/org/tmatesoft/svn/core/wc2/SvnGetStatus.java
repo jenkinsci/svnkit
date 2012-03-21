@@ -137,7 +137,7 @@ public class SvnGetStatus extends SvnReceivingOperation<SvnStatus> {
      * that will tell if the local item is out-of-date 
      * (like <i>'-u'</i> option in the SVN client's <code>'svn status'</code> command)
      * 
-     * @return <code>true</code> if the status should be checked up in repository, otherwise <code>false</code>
+     * @param remote <code>true</code> if the status should be checked up in repository, otherwise <code>false</code>
     */ 
     public void setRemote(boolean remote) {
         this.remote = remote;

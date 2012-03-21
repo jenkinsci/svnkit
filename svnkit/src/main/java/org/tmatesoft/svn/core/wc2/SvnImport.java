@@ -43,7 +43,7 @@ import org.tmatesoft.svn.core.wc.SVNEventAction;
  * and everything under it fully recursively.
  *             
  * <p/>
- * {@link #run()} method returns {@link SVNCommitInfo} information about the new committed revision.
+ * {@link #run()} method returns {@link org.tmatesoft.svn.core.SVNCommitInfo} information about the new committed revision.
  * This method throws SVNException in the following cases:
  *             <ul>
  *             <li>exception with {@link SVNErrorCode#ENTRY_NOT_FOUND}

@@ -7,7 +7,7 @@ import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 
 /**
-* Commit operation. Commits files or directories into repository.
+* Represents commit operation. Commits files or directories into repository.
 * 
 * <p/>
 * If <code>targets</code> has zero elements, then do nothing and return
@@ -110,7 +110,7 @@ public class SvnCommit extends AbstractSvnCommit {
      * Gets operation's parameters of the commit.
      * 
      * @return commit parameters of the operation
-     * @see {@link ISvnCommitParameters} 
+     * @see ISvnCommitParameters 
      */
     public ISvnCommitParameters getCommitParameters() {
         return commitParameters;
@@ -120,7 +120,7 @@ public class SvnCommit extends AbstractSvnCommit {
      * Sets operation's parameters of the commit. 
      * 
      * @param commitParameters commit parameters of the operation
-     * @see {@link ISvnCommitParameters} 
+     * @see ISvnCommitParameters 
      */
     public void setCommitParameters(ISvnCommitParameters commitParameters) {
         this.commitParameters = commitParameters;
@@ -143,7 +143,7 @@ public class SvnCommit extends AbstractSvnCommit {
     }
     
     /**
-     * If commit packet is <code>null</code>, calls {@link #collectCommitItems(SvnCommit)}
+     * If commit packet is <code>null</code>, calls {@link #collectCommitItems()}
      * to create the commit packet, then executes the operation.  
      */
     public SVNCommitInfo run() throws SVNException {
@@ -170,7 +170,7 @@ public class SvnCommit extends AbstractSvnCommit {
      * Gets whether or not to force a non-recursive commit; if <code>depth</code> 
      * is {@link SVNDepth#INFINITY} the <code>force</code> flag is ignored.
      * 
-     * @return <code>true</code> if non-recursive commit should be forced, otherwise <code>false</code>
+     * @param force <code>true</code> if non-recursive commit should be forced, otherwise <code>false</code>
      */
     public void setForce(boolean force) {
         this.force = force;
