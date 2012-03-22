@@ -456,9 +456,10 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
                 }
             }
         } else if (element == TX_DELTA) {
+            String baseChecksum = attrs.getValue(BASE_CHECKSUM_ATTR);
             if (myIsReceiveAll) {
                 setDeltaProcessing(true);
-                myEditor.applyTextDelta(myPath, myChecksum);
+                myEditor.applyTextDelta(myPath, baseChecksum);
             }
         }
     }

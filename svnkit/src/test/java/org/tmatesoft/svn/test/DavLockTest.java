@@ -32,7 +32,7 @@ public class DavLockTest {
     @Test
     public void testUnlockWithAnotherUserDoesntResultIntoException() throws Exception {
         final TestOptions options = TestOptions.getInstance();
-        Assume.assumeTrue(areAllApacheOptionsSpecified(options));
+        Assume.assumeTrue(TestUtil.areAllApacheOptionsSpecified(options));
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
         final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testUnlockWithAnotherUserDoesntResultIntoException", options);
@@ -96,7 +96,7 @@ public class DavLockTest {
     @Test
     public void testLockingNonExistingInHeadPathIsNotAllowed() throws Exception {
         final TestOptions options = TestOptions.getInstance();
-        Assume.assumeTrue(areAllApacheOptionsSpecified(options));
+        Assume.assumeTrue(TestUtil.areAllApacheOptionsSpecified(options));
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
         final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testLockingNonExistingInHeadPathIsNotAllowed", options);
@@ -161,7 +161,7 @@ public class DavLockTest {
     @Test
     public void testFailingUnlockHookBlocksUnlocking() throws Exception {
         final TestOptions options = TestOptions.getInstance();
-        Assume.assumeTrue(areAllApacheOptionsSpecified(options));
+        Assume.assumeTrue(TestUtil.areAllApacheOptionsSpecified(options));
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
         final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testFailingUnlockHookBlocksUnlocking", options);
@@ -223,7 +223,7 @@ public class DavLockTest {
     @Test
     public void testIncorrectLockHookBlocksLocking() throws Exception {
         final TestOptions options = TestOptions.getInstance();
-        Assume.assumeTrue(areAllApacheOptionsSpecified(options));
+        Assume.assumeTrue(TestUtil.areAllApacheOptionsSpecified(options));
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
         final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testIncorrectLockHookBlocksLocking", options);
@@ -289,10 +289,6 @@ public class DavLockTest {
 
     public String getTestName() {
         return "DavLockTest";
-    }
-
-    private static boolean areAllApacheOptionsSpecified(TestOptions testOptions) {
-        return testOptions.getApacheRoot() != null && testOptions.getApacheCtlCommand() != null;
     }
 
     private LockEventHandler createUnlockEventHandler() {

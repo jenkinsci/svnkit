@@ -15,16 +15,17 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumInputStream;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
-import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
+import org.tmatesoft.svn.core.wc2.SvnChecksum;
 import org.tmatesoft.svn.core.wc2.SvnGetStatus;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 import org.tmatesoft.svn.core.wc2.SvnStatus;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
+import org.tmatesoft.svn.util.SVNLogType;
 
 public class TestUtil {
     public static File createDirectory(File parentPath, String suggestedName) {
@@ -160,5 +161,31 @@ public class TestUtil {
 
     public static String convertSlashesToDirect(String path) {
         return path.replace(File.separatorChar, '/');
+    }
+
+    public static boolean areAllApacheOptionsSpecified(TestOptions testOptions) {
+        return testOptions.getApacheRoot() != null && testOptions.getApacheCtlCommand() != null;
+    }
+
+    public static SvnChecksum calculateSha1(byte[] contents) throws SVNException {
+        final SVNChecksumInputStream inputStream = new SVNChecksumInputStream(new ByteArrayInputStream(contents), SvnChecksum.Kind.sha1.name());
+        final byte[] buffer = new byte[1024];
+        try {
+            while (true) {
+                final int read = inputStream.read(buffer);
+                if (read < 0) {
+                    break;
+                }
+            }
+
+            final String digest = inputStream.getDigest();
+            return new SvnChecksum(SvnChecksum.Kind.sha1, digest);
+        } catch (IOException e) {
+            SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.UNKNOWN);
+            SVNErrorManager.error(errorMessage, e, SVNLogType.CLIENT);
+            return null;
+        } finally {
+            SVNFileUtil.closeFile(inputStream);
+        }
     }
 }
