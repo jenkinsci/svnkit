@@ -52,6 +52,7 @@ public class ApacheProcess {
     private final String htpasswdCommand;
 
     private File configFile;
+    private File authzFile;
 
     private ApacheProcess(String apachectlCommand, int port, File apacheRoot, File repositoryRoot, File tempDirectory, Map<String, String> loginToPassword, String htpasswdCommand) {
         this.apachectlCommand = apachectlCommand;
@@ -71,6 +72,14 @@ public class ApacheProcess {
         }
     }
 
+    public File getAuthzFile() {
+        return authzFile;
+    }
+
+    public void reload() {
+        apachectl("graceful");
+    }
+
     public void shutdown() {
         stop();
 
@@ -78,7 +87,7 @@ public class ApacheProcess {
     }
 
     private void start() {
-        apachectl(true);
+        apachectl("start");
         try {
             Thread.sleep(1500);
         } catch (InterruptedException e) {
@@ -87,10 +96,10 @@ public class ApacheProcess {
     }
 
     private void stop() {
-        apachectl(false);
+        apachectl("stop");
     }
 
-    private void apachectl(boolean start) {
+    private void apachectl(String action) {
         List<String> command = new ArrayList<String>();
         String cfgPath = getOrCreateConfigFile().getAbsolutePath().replace(File.separatorChar, '/');
 
@@ -98,7 +107,7 @@ public class ApacheProcess {
         command.add("-f");
         command.add(cfgPath);
         command.add("-k");
-        command.add(start ? "start" : "stop");
+        command.add(action);
 
         final ProcessBuilder processBuilder = new ProcessBuilder();
         processBuilder.command(command);
@@ -123,6 +132,13 @@ public class ApacheProcess {
         return configFile;
     }
 
+    private File getOrCreateAuthzFile() {
+        if (authzFile == null) {
+            authzFile = generateAuthzFile();
+        }
+        return authzFile;
+    }
+
     private File generateConfigFile() {
         final File configFile = new File(tempDirectory, "apache.config");
         final InputStream inputStream = ApacheProcess.class.getResourceAsStream(APACHE_CONFIG_TEMPLATE_RESOURCE);
@@ -144,6 +160,7 @@ public class ApacheProcess {
         configContents = configContents.replaceAll("%apache.options%", getApacheOptions());
         configContents = configContents.replaceAll("%apache.modules%", new File(apacheRoot, "modules").getAbsolutePath());
         configContents = configContents.replaceAll("%apache.svn.modules%", new File(apacheRoot, "modules").getAbsolutePath());
+        configContents = configContents.replaceAll("%authzfile%", TestUtil.convertSlashesToDirect(getOrCreateAuthzFile().getAbsolutePath()));
 
         try {
             TestUtil.writeFileContentsString(configFile, configContents);
@@ -152,6 +169,20 @@ public class ApacheProcess {
         }
 
         return configFile;
+    }
+
+    private File generateAuthzFile() {
+        final File authzFile = new File(tempDirectory, "authz");
+
+        final String fullPermissions =
+                "[/]" + "\n" +
+                "*=rw" + "\n";
+        try {
+            TestUtil.writeFileContentsString(authzFile, fullPermissions);
+        } catch (SVNException e) {
+            throw wrapException(e);
+        }
+        return authzFile;
     }
 
     private String getApacheOptions() {

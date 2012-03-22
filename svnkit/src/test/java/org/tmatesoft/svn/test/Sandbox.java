@@ -154,6 +154,30 @@ public class Sandbox {
         return hookFile;
     }
 
+    public File writeActiveAuthzContents(SVNURL url, String contents) throws SVNException {
+        final ApacheProcess apacheProcess = findApacheProcess(url);
+        if (apacheProcess == null) {
+            return null;
+        }
+
+        final File activeAuthzFile = apacheProcess.getAuthzFile();
+        if (activeAuthzFile == null) {
+            return null;
+        }
+        TestUtil.writeFileContentsString(activeAuthzFile, contents);
+        apacheProcess.reload(); //reload apache configuration
+        return activeAuthzFile;
+    }
+
+    private ApacheProcess findApacheProcess(SVNURL url) {
+        for (ApacheProcess apacheProcess : apacheProcesses) {
+            if (apacheProcess.getUrl().equals(url)) {
+                return apacheProcess;
+            }
+        }
+        return null;
+    }
+
     private String getFailingHookContents() {
         if (SVNFileUtil.isWindows) {
             return "@echo off" + "\r\n" + "exit 1" + "\r\n";

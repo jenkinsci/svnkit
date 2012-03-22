@@ -41,6 +41,7 @@ ErrorLog "%home%/httpd.%port%.error.log"
      SetOutputFilter DEFLATE
      SVNPath "%repository.root%"
 
+     AuthzSVNAccessFile "%authzfile%"
      Allow from any
      %apache.options%
    </Location>
