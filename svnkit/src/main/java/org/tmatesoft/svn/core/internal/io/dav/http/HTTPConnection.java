@@ -145,7 +145,7 @@ class HTTPConnection implements IHTTPConnection {
         return myHost;
     }
 
-    private void connect(HTTPSSLKeyManager keyManager, TrustManager trustManager) throws IOException, SVNException {
+    private void connect(HTTPSSLKeyManager keyManager, TrustManager trustManager, ISVNProxyManager proxyManager) throws IOException, SVNException {
       SVNURL location = myRepository.getLocation();
 
 	    if (mySocket == null || SVNSocketFactory.isSocketStale(mySocket)) {
@@ -154,17 +154,16 @@ class HTTPConnection implements IHTTPConnection {
             int port = location.getPort();
             
 	        ISVNAuthenticationManager authManager = myRepository.getAuthenticationManager();
-	        ISVNProxyManager proxyAuth = authManager != null ? authManager.getProxyManager(location) : null;
 	        int connectTimeout = authManager != null ? authManager.getConnectTimeout(myRepository) : 0;
             int readTimeout = authManager != null ? authManager.getReadTimeout(myRepository) : DEFAULT_HTTP_TIMEOUT;
             if (readTimeout < 0) {
                 readTimeout = DEFAULT_HTTP_TIMEOUT;
             }
-		    if (proxyAuth != null && proxyAuth.getProxyHost() != null) {
-			    myRepository.getDebugLog().logFine(SVNLogType.NETWORK, "Using proxy " + proxyAuth.getProxyHost() + " (secured=" + myIsSecured + ")");
-                mySocket = SVNSocketFactory.createPlainSocket(proxyAuth.getProxyHost(), proxyAuth.getProxyPort(), connectTimeout, readTimeout, myRepository.getCanceller());
+            if (proxyManager != null && proxyManager.getProxyHost() != null) {
+                myRepository.getDebugLog().logFine(SVNLogType.NETWORK, "Using proxy " + proxyManager.getProxyHost() + " (secured=" + myIsSecured + ")");
+                mySocket = SVNSocketFactory.createPlainSocket(proxyManager.getProxyHost(), proxyManager.getProxyPort(), connectTimeout, readTimeout, myRepository.getCanceller());
                 if (myProxyAuthentication == null) {
-                    myProxyAuthentication = new HTTPBasicAuthentication(proxyAuth.getProxyUserName(), proxyAuth.getProxyPassword(), myCharset);
+                    myProxyAuthentication = new HTTPBasicAuthentication(proxyManager.getProxyUserName(), proxyManager.getProxyPassword(), myCharset);
                 }
                 myIsProxied = true;
                 if (myIsSecured) {
@@ -179,12 +178,12 @@ class HTTPConnection implements IHTTPConnection {
                         myInputStream = null;
                         myOutputStream = null;
                         mySocket = SVNSocketFactory.createSSLSocket(keyManager != null ? new KeyManager[] { keyManager } : new KeyManager[0], trustManager, host, port, mySocket, readTimeout);
-                        proxyAuth.acknowledgeProxyContext(true, null);
+                        proxyManager.acknowledgeProxyContext(true, null);
                         return;
                     }
-                    SVNURL proxyURL = SVNURL.parseURIEncoded("http://" + proxyAuth.getProxyHost() + ":" + proxyAuth.getProxyPort()); 
+                    SVNURL proxyURL = SVNURL.parseURIEncoded("http://" + proxyManager.getProxyHost() + ":" + proxyManager.getProxyPort());
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "{0} request failed on ''{1}''", new Object[] {"CONNECT", proxyURL});
-                    proxyAuth.acknowledgeProxyContext(false, err);
+                    proxyManager.acknowledgeProxyContext(false, err);
                     SVNErrorManager.error(err, connectRequest.getErrorMessage(), SVNLogType.NETWORK);
                 }
             } else {
@@ -303,6 +302,7 @@ class HTTPConnection implements IHTTPConnection {
         // 1. prompt for ssl client cert if needed, if cancelled - throw cancellation exception.
         HTTPSSLKeyManager keyManager = myKeyManager == null && authManager != null ? createKeyManager() : myKeyManager;
         TrustManager trustManager = myTrustManager == null && authManager != null ? authManager.getTrustManager(myRepository.getLocation()) : myTrustManager;
+        ISVNProxyManager proxyManager = authManager != null ? authManager.getProxyManager(myRepository.getLocation()) : null;
 
         String sslRealm = "<" + myHost.getProtocol() + "://" + myHost.getHost() + ":" + myHost.getPort() + ">";
         SVNAuthentication httpAuth = myLastValidAuth;
@@ -340,7 +340,7 @@ class HTTPConnection implements IHTTPConnection {
                 String httpAuthResponse = null;
                 String proxyAuthResponse = null;
                 while(retryCount >= 0) {
-                    connect(keyManager, trustManager);
+                    connect(keyManager, trustManager, proxyManager);
                     request.reset();
                     request.setProxied(myIsProxied);
                     request.setSecured(myIsSecured);                    
@@ -425,12 +425,20 @@ class HTTPConnection implements IHTTPConnection {
             } finally {
                 finishResponse(request);                
             }
-            
+
             if (err != null) {
+                if (proxyManager != null) {
+                    proxyManager.acknowledgeProxyContext(false, err);
+                }
+
                 close();
                 break;
             }
-            
+
+            if (proxyManager != null) {
+                proxyManager.acknowledgeProxyContext(true, err);
+            }
+
             if (keyManager != null) {
 	            myKeyManager = keyManager;
 	            myTrustManager = trustManager;
@@ -468,8 +476,6 @@ class HTTPConnection implements IHTTPConnection {
                 }
 
                 err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "HTTP proxy authorization failed");
-                SVNURL location = myRepository.getLocation();
-                ISVNProxyManager proxyManager = authManager != null ? authManager.getProxyManager(location) : null;
                 if (proxyManager != null) {
                     proxyManager.acknowledgeProxyContext(false, err);
                 }
@@ -620,8 +626,6 @@ class HTTPConnection implements IHTTPConnection {
             }
             
             if (myIsProxied) {
-                SVNURL location = myRepository.getLocation();
-                ISVNProxyManager proxyManager = authManager != null ? authManager.getProxyManager(location) : null;
                 if (proxyManager != null) {
                     proxyManager.acknowledgeProxyContext(true, null);
                 }
