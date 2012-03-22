@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.logging.Level;
 
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNCommitInfo;
@@ -44,6 +45,7 @@ import org.tmatesoft.svn.core.wc2.SvnCommit;
 import org.tmatesoft.svn.core.wc2.SvnCommitItem;
 import org.tmatesoft.svn.core.wc2.SvnCommitPacket;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
+import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 public class SvnNgCommit extends SvnNgOperationRunner<SVNCommitInfo, SvnCommit> implements ISvnCommitRunner, ISvnUrlKindCallback {
@@ -193,7 +195,12 @@ public class SvnNgCommit extends SvnNgOperationRunner<SVNCommitInfo, SvnCommit> 
                 }
             } finally {
                 if (commitEditor != null) {
-                    commitEditor.abortEdit();
+                    try {
+                        commitEditor.abortEdit();
+                    } catch (SVNException e) {
+                        SVNDebugLog.getDefaultLog().log(SVNLogType.CLIENT, e, Level.WARNING);
+                        //the exception should not mask original exception
+                    }
                 }
                 for (File tmpFile : mediator.getTmpFiles()) {
                     SVNFileUtil.deleteFile(tmpFile);

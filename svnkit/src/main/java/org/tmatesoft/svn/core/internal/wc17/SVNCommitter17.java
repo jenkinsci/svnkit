@@ -434,9 +434,10 @@ public class SVNCommitter17 implements ISVNCommitPathHandler {
         }
         if (expectedMd5Checksum != null && verifyChecksum != null && !expectedMd5Checksum.equals(verifyChecksum)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CHECKSUM_MISMATCH, "Checksum mismatch for ''{0}''; expected: ''{1}'', actual: ''{2}''", new Object[] {
-                    localAbspath, expectedMd5Checksum, verifyChecksum
+                    localAbspath, expectedMd5Checksum.getDigest(), verifyChecksum.getDigest()
             });
-            SVNErrorManager.error(err, SVNLogType.WC);
+            SVNErrorMessage corruptedBaseErr = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT_TEXT_BASE);
+            SVNErrorManager.error(corruptedBaseErr, err, SVNLogType.WC);
         }
         if (error != null) {
             SVNErrorManager.error(error, SVNLogType.WC);
