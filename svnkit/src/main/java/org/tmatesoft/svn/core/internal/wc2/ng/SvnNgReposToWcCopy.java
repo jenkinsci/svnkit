@@ -67,8 +67,13 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
     
     private boolean areAllSourcesRemote(SvnCopy operation) {
         for(SvnCopySource source : operation.getSources()) {
-            if (source.getSource().isFile() && isLocalRevision(source.getRevision()) && isLocalRevision(source.getSource().getResolvedPegRevision())) {
-                return false;
+            if (source.getSource().isFile()) {
+                if (operation.isMove()) {
+                    return false;
+                }
+                if (isLocalRevision(source.getRevision()) && isLocalRevision(source.getSource().getResolvedPegRevision())) {
+                    return false;
+                }
             }
         }
         return true;

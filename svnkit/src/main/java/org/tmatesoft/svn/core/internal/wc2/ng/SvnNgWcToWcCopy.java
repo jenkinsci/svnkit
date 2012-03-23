@@ -69,9 +69,13 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
     
     private boolean areAllSourcesLocal(SvnCopy operation) {
         for(SvnCopySource source : operation.getSources()) {
-            if (source.getSource().isFile() &&
-                    isLocalRevision(source.getRevision()) && isLocalRevision(source.getSource().getResolvedPegRevision())) {
-                continue;
+            if (source.getSource().isFile()) {
+                if (operation.isMove()) {
+                    continue;
+                }
+                if (isLocalRevision(source.getRevision()) && isLocalRevision(source.getSource().getResolvedPegRevision())) {
+                    continue;
+                }
             }
             return false;
         }

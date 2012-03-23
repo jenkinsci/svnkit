@@ -47,7 +47,7 @@ public class CopyTest {
             final File targetFile = new File(workingCopyDirectory, "targetFile");
 
             final String expectedNewContents = move ? "new contents" : "original contents";
-            TestUtil.writeFileContentsString(sourceFile, expectedNewContents);
+            TestUtil.writeFileContentsString(sourceFile, "new contents");
 
             final SvnCopy copy = svnOperationFactory.createCopy();
             copy.addCopySource(SvnCopySource.create(SvnTarget.fromFile(sourceFile, SVNRevision.BASE), SVNRevision.UNDEFINED));
@@ -61,9 +61,9 @@ public class CopyTest {
             Assert.assertEquals(expectedNewContents, actualNewContents);
 
             final Map<File,SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
-            Assert.assertEquals(move ? SVNStatusType.STATUS_DELETED : SVNStatusType.STATUS_NORMAL, statuses.get(sourceFile).getNodeStatus());
-            Assert.assertEquals(SVNStatusType.STATUS_ADDED, statuses.get(sourceFile).getNodeStatus());
-            Assert.assertEquals(url.appendPath(sourceFile.getName(), false), statuses.get(sourceFile).getCopyFromUrl());
+            Assert.assertEquals(move ? SVNStatusType.STATUS_DELETED : SVNStatusType.STATUS_MODIFIED, statuses.get(sourceFile).getNodeStatus());
+            Assert.assertEquals(SVNStatusType.STATUS_ADDED, statuses.get(targetFile).getNodeStatus());
+            Assert.assertEquals(url.appendPath(sourceFile.getName(), false), statuses.get(targetFile).getCopyFromUrl());
 
         } finally {
             svnOperationFactory.dispose();
