@@ -24,7 +24,6 @@ import java.util.TreeMap;
 import java.util.regex.PatternSyntaxException;
 
 import org.tmatesoft.svn.cli.SVNCommandUtil;
-import org.tmatesoft.svn.core.ISVNCanceller;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -34,31 +33,18 @@ import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
-import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
-import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess;
-import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
-import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgRepositoryAccess;
-import org.tmatesoft.svn.core.internal.wc2.old.SvnOldRepositoryAccess;
 import org.tmatesoft.svn.core.wc.ISVNDiffGenerator;
-import org.tmatesoft.svn.core.wc.ISVNEventHandler;
-import org.tmatesoft.svn.core.wc.ISVNOptions;
-import org.tmatesoft.svn.core.wc.ISVNRepositoryPool;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNDiffClient;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNRevisionRange;
-import org.tmatesoft.svn.core.wc2.ISvnOperationOptionsProvider;
-import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
 
 
@@ -300,52 +286,6 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
         } else if (!getSVNEnvironment().isIncremental()) {
             getSVNEnvironment().getOut().print(SEPARATOR);
         }
-    }
-
-    private SVNURL getURLFromTarget(SVNClientManager clientManager, SVNPath target) throws SVNException {
-        if (target.isURL()) {
-            return target.getURL();
-        }
-
-        File file = target.getFile();
-        SvnWcGeneration wcGeneration = SvnOperationFactory.detectWcGeneration(file, true);
-        SvnRepositoryAccess repositoryAccess = null;
-
-        ISvnOperationOptionsProvider operationOptionsProvider = createLocalOperationOptionsProvider(clientManager);
-
-        if (wcGeneration == SvnWcGeneration.V17) {
-            repositoryAccess = new SvnNgRepositoryAccess(operationOptionsProvider, new SVNWCContext(operationOptionsProvider.getOptions(), operationOptionsProvider.getEventHandler()));
-        } else if (wcGeneration == SvnWcGeneration.V16) {
-            repositoryAccess = new SvnOldRepositoryAccess(operationOptionsProvider);
-        } else {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Unsupported wc generation");
-            SVNErrorManager.error(err, SVNLogType.CLIENT);
-        }
-        return repositoryAccess.getURLFromPath(SvnTarget.fromFile(file), SVNRevision.WORKING, null).get(SvnRepositoryAccess.UrlInfo.url);
-    }
-
-    private ISvnOperationOptionsProvider createLocalOperationOptionsProvider(final SVNClientManager clientManager) {
-        return new ISvnOperationOptionsProvider() {
-            public ISVNEventHandler getEventHandler() {
-                return null;
-            }
-
-            public ISVNOptions getOptions() {
-                return clientManager.getOptions();
-            }
-
-            public ISVNRepositoryPool getRepositoryPool() {
-                return clientManager.getRepositoryPool();
-            }
-
-            public ISVNAuthenticationManager getAuthenticationManager() {
-                return null;
-            }
-
-            public ISVNCanceller getCanceller() {
-                return null;
-            }
-        };
     }
 
     public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
