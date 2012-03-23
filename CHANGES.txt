@@ -1,3 +1,10 @@
+== version 1.7.4-rc2 ==
+
+* Fixed: JavaHL ConflictDescriptor object contained relative paths in place of absolute, fixed
+* Fixed: base checksum were not passed to the ISVNEditor callback on file update over DAV.
+* Fixed: Repository to repository copy did not work with old working copy in certain cases. 
++ Added: More javadoc documentation
+
 == version 1.7.4-rc1 ==
 
 + Performance and stability improvements
