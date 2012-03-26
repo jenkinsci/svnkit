@@ -37,8 +37,8 @@ import org.tmatesoft.svn.util.SVNLogType;
  * Those methods are:
  * <ul>
  * <li>base implementation of <code>run</code> method, starts the operation execution</li>
- * <li>methos for access to the factory that created the object and its options, event handler, canceller</li>
- * <li>variety of methos for getting, setting, recognition operation's targets</li>
+ * <li>methods for access to the factory that created the object and its options, event handler, canceler</li>
+ * <li>variety of methods for getting, setting, recognition operation's targets</li>
  * <li>cancel the operation</li>
  * <li>access to the authentication manager</li>
  * </ul>
@@ -96,7 +96,7 @@ public class SvnOperation<V> implements ISvnOperationOptionsProvider {
     /**
      * Sets one target of the operation.
      *  
-     * @param target target of the operationn
+     * @param target target of the operation
      * @see SvnTarget
      */
     public void setSingleTarget(SvnTarget target) {
@@ -264,7 +264,7 @@ public class SvnOperation<V> implements ISvnOperationOptionsProvider {
     
     /**
      * Cancels the operation. Execution of operation will be stopped at the next point of checking <code>isCancelled</code> state.
-     * If canceller is set, {@link ISVNCanceller#checkCancelled()} is called, 
+     * If canceler is set, {@link ISVNCanceller#checkCancelled()} is called, 
      * otherwise {@link org.tmatesoft.svn.core.SVNCancelException} is raised at the point of checking <code>isCancelled</code> state.
      */
     public void cancel() {
@@ -364,7 +364,7 @@ public class SvnOperation<V> implements ISvnOperationOptionsProvider {
     }
 
     /**
-     * Analyses the targets and returns whether or not operation has at least one file in targets.
+     * Analyzes the targets and returns whether or not operation has at least one file in targets.
      * 
      * @return <code>true</code> if operation has at least one file in targets, otherwise <code>false</code>
      */

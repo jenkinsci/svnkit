@@ -5,8 +5,8 @@ import java.io.File;
 import org.tmatesoft.svn.core.wc.ISVNCommitParameters;
 
 /**
- * Interface descibes the parameters defining behaviour for the commit operation 
- * that touches still versioned files or dirs that are somehow missing.  
+ * Interface describes the parameters defining behavior for the commit operation 
+ * that touches still versioned files or directories that are somehow missing.  
  * 
  * <p>
  * To bring your commit parameters into usage, simply pass them to 
@@ -26,7 +26,7 @@ public interface ISvnCommitParameters {
      * scheduled for deletion (only missing in filesystem) it will 
      * be deleted from version control.
 	 * <li>ERROR - Commit should fail and error should be reported.
-	 * <li>SKIP - Item should not be commited.
+	 * <li>SKIP - Item should not be committed.
 	 * </ul>
 	 * 
 	 * @author TMate Software Ltd.
@@ -55,7 +55,7 @@ public interface ISvnCommitParameters {
      * Instructs whether to remove the local <code>directory</code> after commit or not.
      *    
      * @param directory  working copy directory
-     * @return           <span class="javakeyword">true</span> if directory should be deleted after commit
+     * @return           <code>true</code> if directory should be deleted after commit
      */
     public boolean onDirectoryDeletion(File directory);
     
@@ -63,7 +63,7 @@ public interface ISvnCommitParameters {
      * Instructs whether to remove the local <code>file</code> after commit or not.
      * 
      * @param file  working copy file 
-     * @return      <span class="javakeyword">true</span> if file should be deleted after commit
+     * @return      <code>true</code> if file should be deleted after commit
      */
     public boolean onFileDeletion(File file);
 }

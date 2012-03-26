@@ -11,10 +11,10 @@ import org.tmatesoft.svn.core.SVNException;
 public class SvnChecksum {
     
 	/**
-	 * Describes the kind of used hash algorythm for computing the chechsum. This can be:
+	 * Describes the kind of used hash algorithm for computing the checksum. This can be:
 	 * <ul>
-	 * <li>sha1 - sha1 algorythm
-	 * <li>md5  - md5 algorythm
+	 * <li>sha1 - sha1 algorithm
+	 * <li>md5  - md5 algorithm
 	 * </ul>
 	 */
     public enum Kind { sha1, md5 }

@@ -80,9 +80,9 @@ public interface ISVNAnnotateHandler {
      * Note: if there is no blame information for this line, <code>revision</code> will be
      * invalid and <code>author</code> and <code>date</code> will be <span class="javakeyword">null</span>.
      * 
-     * @param date           the time moment when changes to <code>line</code> were commited
+     * @param date           the time moment when changes to <code>line</code> were committed
      *                       to the repository       
-     * @param revision       the revision the changes were commited to
+     * @param revision       the revision the changes were committed to
      * @param author         the person who did those changes
      * @param line           a text line of the target file (on which 
      *                       {@link SVNLogClient#doAnnotate(File, SVNRevision, SVNRevision, SVNRevision, ISVNAnnotateHandler) doAnnotate()}
@@ -101,9 +101,9 @@ public interface ISVNAnnotateHandler {
      * Handles file information for a next revision. If this method returns <span class="javakeyword">true</span> 
      * then file contents will be annotated for <code>revision</code> as well.   
      * 
-     * @param date          the time moment when changes to <code>line</code> were commited
+     * @param date          the time moment when changes to <code>line</code> were committed
      *                      to the repository       
-     * @param revision      the revision the changes were commited to
+     * @param revision      the revision the changes were committed to
      * @param author        the person who did those changes
      * @param contents      temporary file with contents. This file shouldn't be used 
      *                      as persistent reference as it will be overwritten after this method exits

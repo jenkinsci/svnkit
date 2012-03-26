@@ -27,7 +27,7 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
  * 
  * <ul>
  * <li>
- * <b>Merge between sources/revision rabges, no reintegration.</b>
+ * <b>Merge between sources/revision ranges, no reintegration.</b>
  * 
  * <p/>
  * If <code>depth</code> is {@link SVNDepth#INFINITY}, merges fully
@@ -83,7 +83,7 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
  * <code>Ranges</code> is a collection of {@link SvnRevisionRange}
  * ranges. These ranges may describe additive and/or subtractive merge
  * ranges, they may overlap fully or partially, and/or they may partially or
- * fully negate each other. This rangelist is not required to be sorted.
+ * fully negate each other. This range list is not required to be sorted.
  * 
  * </li>
  * <li>
@@ -106,11 +106,11 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
  * This kind of merge should be used for back merging (for example, merging
  * branches back to trunk, in which case merge is carried out by comparing
  * the latest trunk tree with the latest branch tree; i.e. the resulting
- * difference is excatly the branch changes which will go back to trunk).
+ * difference is exactly the branch changes which will go back to trunk).
  * 
  * <p/>
  * Destination <code>target</code> must be a single-revision, {@link SVNDepth#INFINITY}, 
- * pristine, unswitched working copy -- in other words, it must reflect a
+ * pristine, unswitched working copy - in other words, it must reflect a
  * single revision tree, the "target". The mergeinfo on <code>source</code>
  * must reflect that all of the target has been merged into it.
  *  
@@ -188,7 +188,7 @@ public class SvnMerge extends SvnOperation<Void> {
     * Returns the  collection of {@link SvnRevisionRange}
     * ranges. These ranges may describe additive and/or subtractive merge
     * ranges, they may overlap fully or partially, and/or they may partially or
-    * fully negate each other. This rangelist is not required to be sorted.
+    * fully negate each other. This range list is not required to be sorted.
     * 
     * @return revision ranges of the merge
     */
@@ -260,7 +260,7 @@ public class SvnMerge extends SvnOperation<Void> {
      * This kind of merge should be used for back merging (for example, merging
      * branches back to trunk, in which case merge is carried out by comparing
      * the latest trunk tree with the latest branch tree; i.e. the resulting
-     * difference is excatly the branch changes which will go back to trunk).
+     * difference is exactly the branch changes which will go back to trunk).
      * 
      * @return <code>true</code> if it is reintegrate merge, otherwise <code>false</code>
      */

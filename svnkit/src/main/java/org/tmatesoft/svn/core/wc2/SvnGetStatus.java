@@ -26,7 +26,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * 
  * <p/>
  * If <code>remote</code> is set, contacts the repository and augments the
- * status objects with information about out-of-dateness (with respect to
+ * status objects with information about out-of-date items (with respect to
  * <code>revision</code>).
  * 
  * <p/>

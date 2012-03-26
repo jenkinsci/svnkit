@@ -58,7 +58,7 @@ public class SvnRemoteSetProperty extends AbstractSvnCommit {
     }
 
     /**
-     * Returns whether to skip validity checkingof <code>propertyName</code> and <code>propertyValue</code>.
+     * Returns whether to skip validity checking of <code>propertyName</code> and <code>propertyValue</code>.
      *  
      * @return force <code>true</code> if validity checking should be skipped, otherwise <code>false</code>
      * @see #setForce(boolean)

@@ -12,7 +12,7 @@ import org.tmatesoft.svn.core.wc2.hooks.ISvnCommitHandler;
  * relate to committing changes to an SVN repository. These operations are
  * similar to respective commands of the native SVN command line client and
  * include ones which operate on working copy items as well as ones that operate
- * only on a repository: commit, import, remote copy, remote delete, remote make dir, remote set property.
+ * only on a repository: commit, import, remote copy, remote delete, remote make directory, remote set property.
  * 
  * <p/>
  * {@link #run()} method returns {@link SVNCommitInfo} information on a new revision as the result of the commit.

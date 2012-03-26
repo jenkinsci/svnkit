@@ -25,7 +25,7 @@ public interface ISvnExternalsHandler {
      * Handles an external definition and says whether to skip it or not.
      * This method receives external definition parameters and returns whether 
      * <code>null</code> to indicate that this external definition must be excluded 
-     * from processing (for examle, not updated during an update), or a non-
+     * from processing (for example, not updated during an update), or a non-
      * <code>null</code> array. This array should contain at least two {@link SVNRevision}
      * objects [revision, pegRevision] which will be used by the operation instead of 
      * <code>externalRevision</code> and <code>externalPegRevision</code> respectively passed into 
@@ -39,7 +39,7 @@ public interface ISvnExternalsHandler {
      *                                  if external is about to be removed
      * @param externalRevision          default revision to checkout/copy external at or update to
      * @param externalPegRevision       default peg revision to use for checkout/update/copy of external
-     * @param externalsDefinition       raw <span class="javastring">svn:externals</code> property value
+     * @param externalsDefinition       raw <span class="javastring">svn:externals</span> property value
      * @param externalsWorkingRevision  current external working copy revision (relevant only for wc-to-url 
      *                                  copying operations)
      * @return                          array of {@link SVNRevision}s in form of {revision, pegRevision} or 

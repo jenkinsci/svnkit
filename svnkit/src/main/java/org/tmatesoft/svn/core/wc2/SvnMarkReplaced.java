@@ -2,7 +2,7 @@ package org.tmatesoft.svn.core.wc2;
 
 /**
  * Schedules <code>target</code> as being replaced. This method does not
- * perform any deletion\addition in the filesysem nor does it require a
+ * perform any deletion\addition in the filesystem nor does it require a
  * connection to the repository. It just marks the current <code>target</code>
  * item as being replaced.
  * 

@@ -9,7 +9,7 @@ import org.tmatesoft.svn.core.wc.SVNEventAction;
  * 
  * <p/>
  * All operation's targets should be URLs, representing repository locations to be removed. 
- * URLs can be from mupltiple repositories.
+ * URLs can be from multiple repositories.
  * 
  * <p/>
  * {@link #getCommitHandler() Commit handler} will be asked for a commit log

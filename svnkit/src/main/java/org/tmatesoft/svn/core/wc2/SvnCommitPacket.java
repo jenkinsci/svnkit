@@ -99,8 +99,8 @@ public class SvnCommitPacket {
      * @param repositoryRoot repository root URL of the commit item
      * @param repositoryPath repository path of the commit item 
      * @param revision revision number of the commit item
-     * @param copyFromPath path from those commt item was copied
-     * @param copyFromRevision revision of the repository item from those commt item was copied
+     * @param copyFromPath path from those commit item was copied
+     * @param copyFromRevision revision of the repository item from those commit item was copied
      * @param flags commit item flags
      * @return newly created commit item with initialized fields 
      * @throws SVNException if URL parse error occurred
@@ -134,8 +134,8 @@ public class SvnCommitPacket {
      * @param kind node kind of the commit item
      * @param url repository URL of the commit item
      * @param revision revision number of the commit item
-     * @param copyFromUrl url from those commt item was copied
-     * @param copyFromRevision revision of the repository item from those commt item was copied
+     * @param copyFromUrl url from those commit item was copied
+     * @param copyFromRevision revision of the repository item from those commit item was copied
      * @param flags commit item flags
      * @return newly created commit item with initialized fields 
      * @throws SVNException if URL parse error occurred

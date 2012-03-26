@@ -125,7 +125,7 @@ public class SvnStatus extends SvnObject {
     }
     
     /**
-     * Gets the working  opy local item's properties status type.
+     * Gets the working copy local item's properties status type.
      *
      * @return the local properties status type
      */

@@ -228,7 +228,7 @@ public class SVNEventAction {
     /**
      * In a commit operation denotes that the operation itself is completed
      * (for instance, in a console client can be used to print out the
-     * commited revsion).
+     * committed revision).
      */
     public static final SVNEventAction COMMIT_COMPLETED = new SVNEventAction(32, "commit_completed");
 

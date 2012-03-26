@@ -5,11 +5,11 @@ import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 
 /**
- * Creates directory(ies) in a repository. 
+ * Creates directory(s) in a repository. 
  * 
  * <p/>
  * All operation's targets should be URLs, representing repository locations to be created. 
- * URLs can be from mupltiple repositories.
+ * URLs can be from multiple repositories.
  * 
  * <p/>
  * If non-<code>null</code>, <code>revisionProperties</code> holds additional, custom revision

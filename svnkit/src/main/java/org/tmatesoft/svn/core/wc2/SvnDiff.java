@@ -234,7 +234,7 @@ public class SvnDiff extends SvnOperation<Void> {
 
     /**
      * Sets operation's diff generator of type ISVNDiffGenerator.
-     * Used for compability with 1.6 version.
+     * Used for compatibility with 1.6 version.
      * 
      * @param diffGenerator diff generator of the operation of type ISVNDiffGenerator
      */

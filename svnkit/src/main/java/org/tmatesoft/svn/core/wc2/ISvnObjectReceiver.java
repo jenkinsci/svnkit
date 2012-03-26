@@ -5,7 +5,7 @@ import org.tmatesoft.svn.core.SVNException;
 /**
  * This interface describes the operation that can receive object(s). 
  * Implementation is {@link SvnReceivingOperation},
- * and many intermediate classes for 1.6 compability (classes that deal with handlers).
+ * and many intermediate classes for 1.6 compatibility (classes that deal with handlers).
  * Clients can provide their own handlers for receiving the object(s) 
  * by implementing this interface and assign them in 
  * {@link SvnReceivingOperation#setReceiver(ISvnObjectReceiver)}.

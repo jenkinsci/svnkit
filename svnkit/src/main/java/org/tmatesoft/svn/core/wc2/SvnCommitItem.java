@@ -192,7 +192,7 @@ public class SvnCommitItem {
     }
     
     /**
-     * Returns all properties that should be commited within the item.
+     * Returns all properties that should be committed within the item.
      * 
      * @return properties of the commit item 
      */
@@ -201,7 +201,7 @@ public class SvnCommitItem {
     }
 
     /**
-     * Adds property with the name and the value that should be commited within the item.
+     * Adds property with the name and the value that should be committed within the item.
      * 
      * @param name of the property
      * @param value of the property

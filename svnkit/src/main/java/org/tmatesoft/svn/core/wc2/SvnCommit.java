@@ -52,7 +52,7 @@ import org.tmatesoft.svn.core.wc.SVNEventAction;
 * invalid (<code>&lt;0</code>), then the commit was a no-op; nothing needed
 * to be committed.
 *
-* {@link #run()} returns {@link SVNCommitInfo} information about new commited revision.
+* {@link #run()} returns {@link SVNCommitInfo} information about new committed revision.
 * 
 * @author TMate Software Ltd.
 * @version 1.7

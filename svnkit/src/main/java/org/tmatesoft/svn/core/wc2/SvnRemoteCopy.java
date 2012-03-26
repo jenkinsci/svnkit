@@ -72,12 +72,12 @@ import org.tmatesoft.svn.core.wc2.hooks.ISvnExternalsHandler;
  * When performing a wc-to-url copy (tagging|branching from a working copy)
  * it's possible to fix revisions of external working copies (if any) which
  * are located within the working copy being copied. For example, imagine
- * you have a working copy and on one of its subdirecotries you set an 
- * <scode>"svn:externals"</code> property which does not contain
+ * you have a working copy and on one of its subdirectories you set an 
+ * <code>"svn:externals"</code> property which does not contain
  * a revision number. Suppose you have made a tag from your working copy and
  * in some period of time a user checks out that tag. It could have happened
  * that the external project has evolved since the tag creation moment and
- * the tag version is nomore compatible with it. So, the user has a broken
+ * the tag version is no more compatible with it. So, the user has a broken
  * project since it will not compile because of the API incompatibility
  * between the two versions of the external project: the HEAD one and the
  * one existed in the moment of the tag creation. That is why it appears
@@ -139,7 +139,7 @@ public class SvnRemoteCopy extends AbstractSvnCommit {
     /**
      * Gets whether to make parent folders if don't exist.
      * 
-     * @return <code>true</code> if non-existent parent directories should be createdy, otherwise <code>false</code>
+     * @return <code>true</code> if non-existent parent directories should be created, otherwise <code>false</code>
      */
     public boolean isMakeParents() {
         return makeParents;
@@ -148,7 +148,7 @@ public class SvnRemoteCopy extends AbstractSvnCommit {
     /**
     * Sets whether to make parent folders if don't exist.
     * 
-    * @param makeParents <code>true</code> if non-existent parent directories should be createdy, otherwise <code>false</code>
+    * @param makeParents <code>true</code> if non-existent parent directories should be created, otherwise <code>false</code>
     */
     public void setMakeParents(boolean makeParents) {
         this.makeParents = makeParents;
@@ -178,7 +178,7 @@ public class SvnRemoteCopy extends AbstractSvnCommit {
     /**
      * Returns all operation's sources.
      * 
-     * @return sorces of the operation
+     * @return sources of the operation
      * @see SvnRemoteCopy
      */
     public Collection<SvnCopySource> getSources() {
@@ -186,7 +186,7 @@ public class SvnRemoteCopy extends AbstractSvnCommit {
     }
 
     /**
-     * And one sorce to the operation's sources.
+     * And one source to the operation's sources.
      * 
      * @param source source of the operation
      * @see SvnRemoteCopy
@@ -228,9 +228,9 @@ public class SvnRemoteCopy extends AbstractSvnCommit {
     }
 
     /**
-     * Gets operation's externals hanler.
+     * Gets operation's externals handler.
      * 
-     * @return extrenals handler of the operation
+     * @return externals handler of the operation
      * @see SvnRemoteCopy
      */
     public ISvnExternalsHandler getExternalsHandler() {
@@ -238,9 +238,9 @@ public class SvnRemoteCopy extends AbstractSvnCommit {
     }
 
     /**
-     * Sets operation's externals hanler.
+     * Sets operation's externals handler.
      * 
-     * @param externalsHandler extrenals handler of the operation
+     * @param externalsHandler externals handler of the operation
      * @see SvnRemoteCopy
      */
     public void setExternalsHandler(ISvnExternalsHandler externalsHandler) {

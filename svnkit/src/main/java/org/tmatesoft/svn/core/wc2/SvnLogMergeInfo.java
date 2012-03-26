@@ -23,27 +23,10 @@ import org.tmatesoft.svn.util.SVNLogType;
  * <p/>
  * If
  * <code>revisionProperties</code> is <code>null</code>, retrieves all revision properties; 
- * else, retrieves only the revprops named in the array (i.e. retrieves none if the array is empty).
+ * else, retrieves only the revision properties named in the array (i.e. retrieves none if the array is empty).
  * 
- * Note: this routine requires repository access.
+ * Note: this operation requires repository access.
  * 
- * @param urlrepository
- *            url (merge target)
- * @param pegRevisiona
- *            revision in which <code>url</code> is first looked up
- * @param mergeSrcURLmerge
- *            source repository url
- * @param srcPegRevisiona
- *            revision in which <code>mergeSrcURL</code> is first looked up
- * @param discoverChangedPaths
- *            <span class="javakeyword">true</span> to report of all changed
- *            paths for every revision being processed (those paths will be
- *            available by calling
- *            {@link org.tmatesoft.svn.core.SVNLogEntry#getChangedPaths()})
- * @param revisionPropertiesnames
- *            of revision properties to retrieve
- * @param handlerthe
- *            caller's log entry handler
  * {@link #run()} throws {@link org.tmatesoft.svn.core.SVNException} in the following cases:
  *             <ul>
  *             <li/>exception with {@link SVNErrorCode#UNSUPPORTED_FEATURE}

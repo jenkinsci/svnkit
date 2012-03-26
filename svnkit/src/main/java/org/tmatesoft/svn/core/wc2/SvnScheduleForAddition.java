@@ -12,7 +12,7 @@ import org.tmatesoft.svn.core.SVNException;
  * <p/>
  * If <code>depth</code> is {@link SVNDepth#EMPTY}, adds just
  * <code>targets</code> and nothing below it. If {@link SVNDepth#FILES}, adds
- * <code>targets</code> and any file children of <code>targtets</code>. If
+ * <code>targets</code> and any file children of <code>targets</code>. If
  * {@link SVNDepth#IMMEDIATES}, adds <code>targets</code>, any file children,
  * and any immediate subdirectories (but nothing underneath those
  * subdirectories). If {@link SVNDepth#INFINITY}, adds <code>targets</code>
@@ -170,7 +170,7 @@ public class SvnScheduleForAddition extends SvnOperation<Void> {
     }
 
     /**
-     * Returns operation's add parameters, whose controls incosistent EOL's.
+     * Returns operation's add parameters, whose controls inconsistent EOL's.
      * 
      * @return add parameters of the operation
      * @see ISvnAddParameters
@@ -180,7 +180,7 @@ public class SvnScheduleForAddition extends SvnOperation<Void> {
     }
 
     /**
-     * Sets operation's add parameters, whose controls incosistent EOL's.
+     * Sets operation's add parameters, whose controls inconsistent EOL's.
      * 
      * @param addParameters add parameters of the operation
      * @see ISvnAddParameters

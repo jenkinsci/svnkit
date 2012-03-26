@@ -16,9 +16,9 @@ public class SvnRevisionRange extends SvnObject {
     private SVNRevision end;
     
     /**
-     * Creates revision range and initialises its fields
+     * Creates revision range and initializes its fields
      * 
-     * @param start start revison
+     * @param start start revision
      * @param end end revision
      * 
      * @return newly created range

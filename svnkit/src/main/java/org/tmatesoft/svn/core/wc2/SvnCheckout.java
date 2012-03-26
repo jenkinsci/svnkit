@@ -37,7 +37,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * If  {@link #isAllowUnversionedObstructions()} is <span
  * class="javakeyword">true</span> then the checkout tolerates existing
  * unversioned items that obstruct added paths from source target. Only
- * obstructions of the same type (file or dir) as the added item are
+ * obstructions of the same type (file or directory) as the added item are
  * tolerated. The text of obstructing files is left as-is, effectively
  * treating it as a user modification after the checkout. Working properties
  * of obstructing items are set equal to the base properties. If
@@ -69,7 +69,7 @@ public class SvnCheckout extends AbstractSvnUpdate<Long> {
     }
 
     /**
-    * Gets a repository location from where a Working Copy will be checked out.
+    * Gets a repository location from where a working copy will be checked out.
     * 
     * @return source of repository
     */
@@ -78,7 +78,7 @@ public class SvnCheckout extends AbstractSvnUpdate<Long> {
     }
 
     /**
-     * Sets a repository location from where a Working Copy will be checked out.
+     * Sets a repository location from where a working copy will be checked out.
      * 
      * @param source source of repository
      */

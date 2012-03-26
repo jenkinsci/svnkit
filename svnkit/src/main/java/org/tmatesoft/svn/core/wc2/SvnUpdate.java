@@ -47,7 +47,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * If <code>allowUnversionedObstructions</code> is <span class="javakeyword">
  * true</span> then the update tolerates existing
  * unversioned items that obstruct added paths. Only obstructions of the
- * same type (file or dir) as the added item are tolerated. The text of
+ * same type (file or directory) as the added item are tolerated. The text of
  * obstructing files is left as-is, effectively treating it as a user
  * modification after the update. Working properties of obstructing items
  * are set equal to the base properties. If

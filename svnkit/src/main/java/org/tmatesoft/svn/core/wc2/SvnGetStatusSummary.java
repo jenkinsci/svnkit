@@ -35,7 +35,7 @@ public class SvnGetStatusSummary extends SvnOperation<SvnStatusSummary> {
     /**
      * Returns whether to retrieve last committed revisions or current revisions.
      * 
-     * @return <code>true</code> if last commited revisions should be retrieved, otherwise <code>false</code>
+     * @return <code>true</code> if last committed revisions should be retrieved, otherwise <code>false</code>
      */
     public boolean isCommitted() {
         return isCommitted;
@@ -44,7 +44,7 @@ public class SvnGetStatusSummary extends SvnOperation<SvnStatusSummary> {
     /**
      * Sets whether to retrieve last committed revisions or current revisions.
      * 
-     * @param isCommitted <code>true</code> if last commited revisions should be retrieved, otherwise <code>false</code>
+     * @param isCommitted <code>true</code> if last committed revisions should be retrieved, otherwise <code>false</code>
      */
     public void setCommitted(boolean isCommitted) {
         this.isCommitted = isCommitted;

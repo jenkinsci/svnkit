@@ -18,7 +18,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * <p/>
  * <code>changelists</code> is an array of <code>String</code> changelist
  * names, used as a restrictive filter on items whose changelist assignments
- * are adjusted; that is, doesn't tweak the changeset of any item unless
+ * are adjusted; that is, doesn't tweak the change set of any item unless
  * it's currently a member of one of those changelists. If
  * <code>changelists</code> is empty (or <code>null</code>), 
  * no changelist filtering occurs.

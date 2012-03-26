@@ -64,18 +64,18 @@ public abstract class AbstractSvnUpdate<V> extends SvnOperation<V> {
     }
 
     /**
-     * Gets whether or not to allow tollerating unversioned items during update.
+     * Gets whether or not to allow tolerating unversioned items during update.
      * 
-     * @return <code>true</code> if allow tollerating unversioned items during update, otherwise <code>false</code>
+     * @return <code>true</code> if allow tolerating unversioned items during update, otherwise <code>false</code>
      */
     public boolean isAllowUnversionedObstructions() {
         return allowUnversionedObstructions;
     }
 
     /**
-     * Set whether or not to allow tollerating unversioned items during update.
+     * Set whether or not to allow tolerating unversioned items during update.
      * 
-     * @param allowUnversionedObstructions <code>true</code> if allow tollerating unversioned items during update, otherwise <code>false</code>
+     * @param allowUnversionedObstructions <code>true</code> if allow tolerating unversioned items during update, otherwise <code>false</code>
      */
     public void setAllowUnversionedObstructions(boolean allowUnversionedObstructions) {
         this.allowUnversionedObstructions = allowUnversionedObstructions;

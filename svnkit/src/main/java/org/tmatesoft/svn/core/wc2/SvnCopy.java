@@ -35,7 +35,7 @@ import org.tmatesoft.svn.core.SVNException;
  * <p/>
  * If <code>sources</code> has only one item, attempts to copy it to
  * <code>target</code>. If <code>failWhenDstExists</code> is <code>false</code> 
- * and <code>dst</code> already exists,
+ * and <code>target</code> already exists,
  * attempts to copy the item as a child of <code>target</code>. If
  * <code>failWhenDstExists</code> is <code>true</code>
  * and <code>target</code> already exists, throws an {@link SVNException} with
@@ -45,7 +45,7 @@ import org.tmatesoft.svn.core.SVNException;
  * If <code>sources</code> has multiple items, and
  * <code>failWhenDstExists</code> is <code>false</code>,
  * all <code>sources</code> are copied as children of <code>target</code>. If
- * any child of <code>dst</code> already exists with the same name any item
+ * any child of <code>target</code> already exists with the same name any item
  * in <code>sources</code>, throws an {@link SVNException} with the
  * {@link SVNErrorCode#FS_ALREADY_EXISTS} error code.
  * 
@@ -66,7 +66,7 @@ import org.tmatesoft.svn.core.SVNException;
  * be removed with {@link SvnRevert}.
  *
  * <p/>
- * Note: this routine requires repository access only when sources are urls.
+ * Note: this routine requires repository access only when sources are URLs.
  * 
  * </li>
  * 
@@ -84,7 +84,7 @@ import org.tmatesoft.svn.core.SVNException;
  * Note: this routine does not require repository access. However if it's
  * performed on an old format working copy where repository root urls were
  * not written, the routine will connect to the repository to fetch the
- * repository root url.
+ * repository root urls.
  * 
  * {@link #run()} throws {@link SVNException} in the following cases:
  *             <ul>
@@ -131,7 +131,7 @@ import org.tmatesoft.svn.core.SVNException;
  * <p/>
  * This operation uses <code>sources</code> and <code>move</code> parameters.
  * If <code>move</code> is <code>true</code> then completes moving
- * <code>src</code> to <code>dst</code>, otherwise completes copying <code>src</code> to <code>dst</code>
+ * <code>src</code> to <code>target</code>, otherwise completes copying <code>src</code> to <code>dst</code>
  * {@link #run()} throws {@link SVNException} if one of the following is true:
  *             <ul>
  *             <li><code>move = true</code>
@@ -207,7 +207,7 @@ public class SvnCopy extends SvnOperation<Void> {
     /**
      * Gets whether to make parent folders if don't exist.
      * 
-     * @return <code>true</code> if non-existent parent directories should be createdy, otherwise <code>false</code>
+     * @return <code>true</code> if non-existent parent directories should be created, otherwise <code>false</code>
      */
     public boolean isMakeParents() {
         return makeParents;
@@ -216,7 +216,7 @@ public class SvnCopy extends SvnOperation<Void> {
     /**
      * Sets whether to make parent folders if don't exist.
      * 
-     * @param isMakeParents <code>true</code> if non-existent parent directories should be createdy, otherwise <code>false</code>
+     * @param isMakeParents <code>true</code> if non-existent parent directories should be created, otherwise <code>false</code>
      */
     public void setMakeParents(boolean isMakeParents) {
         this.makeParents = isMakeParents;

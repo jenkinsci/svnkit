@@ -5,10 +5,10 @@ import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 
 /**
- * This interface decribes Svn* operation runner.
+ * This interface describes Svn* operation runner.
  * Provides context for the operation.
  * Defines runner's working copy generation, which is used by 
- * for deciding whether it is applicable runner implentation of the operation.
+ * for deciding whether it is applicable runner implementation of the operation.
  * 
  * @author TMate Software Ltd.
  * @version 1.7

@@ -460,8 +460,8 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
 
     /**
      * Gets the cancel handler of the operation.
-     * If client's <code>canceller</code> is not set, 
-     * returns <code>eventHandler</code> as a canceller.
+     * If client's <code>canceler</code> is not set, 
+     * returns <code>eventHandler</code> as a canceler.
      * 
      * @return cancel handler
      */
@@ -589,226 +589,450 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
         }
     }
     
+    /**
+     * Creates annotate operation.
+     * @return new <code>SvnAnnotate</code> object
+     */
     public SvnAnnotate createAnnotate() {
         return new SvnAnnotate(this);
     }
     
+    /**
+     * Creates cat operation.
+     * @return new <code>SvnCat</code> object
+     */
     public SvnCat createCat() {
         return new SvnCat(this);
     }
 
+    /**
+     * Creates import operation.
+     * @return new <code>SvnImport</code> object
+     */
     public SvnImport createImport() {
         return new SvnImport(this);
     }
     
+    /**
+     * Creates copy operation.
+     * @return new <code>SvnCat</code> object
+     */
     public SvnCopy createCopy() {
         return new SvnCopy(this);
     }
-        
+    
+    /**
+     * Creates remote copy operation.
+     * @return new <code>SvnRemoteCopy</code> object
+     */
     public SvnRemoteCopy createRemoteCopy() {
         return new SvnRemoteCopy(this);
     }
     
+    /**
+     * Creates remote make directory operation.
+     * @return new <code>SvnRemoteMkDir</code> object
+     */
     public SvnRemoteMkDir createRemoteMkDir() {
         return new SvnRemoteMkDir(this);
     }
 
+    /**
+     * Creates remote set property operation.
+     * @return new <code>SvnRemoteSetProperty</code> object
+     */
     public SvnRemoteSetProperty createRemoteSetProperty() {
         return new SvnRemoteSetProperty(this);
     }
 
+    /**
+     * Creates set changelist operation.
+     * @return new <code>SvnSetChangelist</code> object
+     */
     public SvnSetChangelist createSetChangelist() {
         return new SvnSetChangelist(this);
     }
     
+    /**
+     * Creates get changelist paths operation.
+     * @return new <code>SvnGetChangelistPaths</code> object
+     */
     public SvnGetChangelistPaths createGetChangelistPaths() {
         return new SvnGetChangelistPaths(this);
     }
 
+    /**
+     * Creates set lock operation.
+     * @return new <code>SvnSetLock</code> object
+     */
     public SvnSetLock createSetLock() {
         return new SvnSetLock(this);
     }
 
+    /**
+     * Creates unlock operation.
+     * @return new <code>SvnUnlock</code> object
+     */
     public SvnUnlock createUnlock() {
         return new SvnUnlock(this);
     }
 
+    /**
+     * Creates upgrade operation.
+     * @return new <code>SvnUpgrade</code> object
+     */
     public SvnUpgrade createUpgrade() {
         return new SvnUpgrade(this);
     }
 
+    /**
+     * Creates get info operation.
+     * @return new <code>SvnGetInfo</code> object
+     */
     public SvnGetInfo createGetInfo() {
         return new SvnGetInfo(this);
     }
     
+    /**
+     * Creates get properties operation.
+     * @return new <code>SvnGetProperties</code> object
+     */
     public SvnGetProperties createGetProperties() {
         return new SvnGetProperties(this);
     }
 
+    /**
+     * Creates get status operation.
+     * @return new <code>SvnGetStatus</code> object
+     */
     public SvnGetStatus createGetStatus() {
         return new SvnGetStatus(this);
     }
     
+    /**
+     * Creates update operation.
+     * @return new <code>SvnUpdate</code> object
+     */
     public SvnUpdate createUpdate() {
         return new SvnUpdate(this);
     }
     
+    /**
+     * Creates switch operation.
+     * @return new <code>SvnSwitch</code> object
+     */
     public SvnSwitch createSwitch() {
         return new SvnSwitch(this);
     }
 
+    /**
+     * Creates checkout operation.
+     * @return new <code>SvnCheckout</code> object
+     */
     public SvnCheckout createCheckout() {
         return new SvnCheckout(this);
     }
 
+    /**
+     * Creates relocate operation.
+     * @return new <code>SvnRelocate</code> object
+     */
     public SvnRelocate createRelocate() {
         return new SvnRelocate(this);
     }
 
+    /**
+     * Creates export operation.
+     * @return new <code>SvnExport</code> object
+     */
     public SvnExport createExport() {
         return new SvnExport(this);
     }
     
+    /**
+     * Creates add operation.
+     * @return new <code>SvnScheduleForAddition</code> object
+     */
     public SvnScheduleForAddition createScheduleForAddition() {
         return new SvnScheduleForAddition(this);
     }
 
+    /**
+     * Creates commit operation.
+     * @return new <code>SvnCommit</code> object
+     */
     public SvnCommit createCommit() {
         return new SvnCommit(this);
     }
     
+    /**
+     * Creates delete operation.
+     * @return new <code>SvnScheduleForRemoval</code> object
+     */
     public SvnScheduleForRemoval createScheduleForRemoval() {
         return new SvnScheduleForRemoval(this);
     }
 
+    /**
+     * Creates mark replaced operation.
+     * @return new <code>SvnMarkReplaced</code> object
+     */
     public SvnMarkReplaced createMarkReplaced() {
         return new SvnMarkReplaced(this);
     }
 
+    /**
+     * Creates revert operation.
+     * @return new <code>SvnRevert</code> object
+     */
     public SvnRevert createRevert() {
         return new SvnRevert(this);
     }
 
+    /**
+     * Creates set property operation.
+     * @return new <code>SvnSetProperty</code> object
+     */
     public SvnSetProperty createSetProperty() {
         return new SvnSetProperty(this);
     }
     
+    /**
+     * Creates log operation.
+     * @return new <code>SvnLog</code> object
+     */
     public SvnLog createLog() {
         return new SvnLog(this);
     }
     
+    /**
+     * Creates remote make directory operation.
+     * @return new <code>SvnRemoteMkDir</code> object
+     */
     public SvnRemoteMkDir createMkDir() {
         return new SvnRemoteMkDir(this);
     }
     
+    /**
+     * Creates remote delete operation.
+     * @return new <code>SvnRemoteDelete</code> object
+     */
     public SvnRemoteDelete createRemoteDelete() {
         return new SvnRemoteDelete(this);
     }
     
+    /**
+     * Creates merge operation.
+     * @return new <code>SvnMerge</code> object
+     */
     public SvnMerge createMerge() {
         return new SvnMerge(this);
     }
     
+    /**
+     * Creates diff operation.
+     * @return new <code>SvnDiff</code> object
+     */
     public SvnDiff createDiff() {
         return new SvnDiff(this);
     }
     
+    /**
+     * Creates diff summarize operation.
+     * @return new <code>SvnDiffSummarize</code> object
+     */
     public SvnDiffSummarize createDiffSummarize() {
         return new SvnDiffSummarize(this);
     }
     
+    /**
+     * Creates suggest merge sources operation.
+     * @return new <code>SvnSuggestMergeSources</code> object
+     */
     public SvnSuggestMergeSources createSuggestMergeSources() {
         return new SvnSuggestMergeSources(this);
     }
-    
+
+    /**
+     * Creates get merge info operation.
+     * @return new <code>SvnGetMergeInfo</code> object
+     */
     public SvnGetMergeInfo createGetMergeInfo() {
         return new SvnGetMergeInfo(this);
     }
     
+    /**
+     * Creates log merge info operation.
+     * @return new <code>SvnLogMergeInfo</code> object
+     */
     public SvnLogMergeInfo createLogMergeInfo() {
         return new SvnLogMergeInfo(this);
     }
     
+    /**
+     * Creates resolve operation.
+     * @return new <code>SvnResolve</code> object
+     */
     public SvnResolve createResolve() {
         return new SvnResolve(this);
     }
     
+    /**
+     * Creates cleanup operation.
+     * @return new <code>SvnCleanup</code> object
+     */
     public SvnCleanup createCleanup() {
         return new SvnCleanup(this);
     }
     
+    /**
+     * Creates list operation.
+     * @return new <code>SvnList</code> object
+     */
     public SvnList createList() {
         return new SvnList(this);
     }
     
+    /**
+     * Creates canonicalize URLs operation.
+     * @return new <code>SvnCanonicalizeUrls</code> object
+     */
     public SvnCanonicalizeUrls createCanonicalizeUrls() {
         return new SvnCanonicalizeUrls(this);
     }
     
+    /**
+     * Creates administrative repository dump operation.
+     * @return new <code>SvnRepositoryDump</code> object
+     */
     public SvnRepositoryDump createRepositoryDump() {
         return new SvnRepositoryDump(this);
     }
     
+    /**
+     * Creates administrative repository create operation.
+     * @return new <code>SvnRepositoryreate</code> object
+     */
     public SvnRepositoryCreate createRepositoryCreate() {
         return new SvnRepositoryCreate(this);
     }
     
+    /**
+     * Creates administrative repository hot copy operation.
+     * @return new <code>SvnRepositoryHotCopy</code> object
+     */
     public SvnRepositoryHotCopy createRepositoryHotCopy() {
         return new SvnRepositoryHotCopy(this);
     }
     
+    /**
+     * Creates administrative repository load operation.
+     * @return new <code>SvnRepositoryLoad</code> object
+     */
     public SvnRepositoryLoad createRepositoryLoad() {
         return new SvnRepositoryLoad(this);
     }
     
+    /**
+     * Creates administrative repository list locks operation.
+     * @return new <code>SvnRepositoryListLocks</code> object
+     */
     public SvnRepositoryListLocks createRepositoryListLocks() {
         return new SvnRepositoryListLocks(this);
     }
     
+    /**
+     * Creates administrative repository list transactions operation.
+     * @return new <code>SvnRepositoryListTransactions</code> object
+     */
     public SvnRepositoryListTransactions createRepositoryListTransactions() {
         return new SvnRepositoryListTransactions(this);
     }
     
+    /**
+     * Creates administrative repository pack operation.
+     * @return new <code>SvnRepositoryPack</code> object
+     */
     public SvnRepositoryPack createRepositoryPack() {
         return new SvnRepositoryPack(this);
     }
     
+    /**
+     * Creates administrative repository recover operation.
+     * @return new <code>SvnRepositoryRecover</code> object
+     */
     public SvnRepositoryRecover createRepositoryRecover() {
         return new SvnRepositoryRecover(this);
     }
     
+    /**
+     * Creates administrative repository remove locks operation.
+     * @return new <code>SvnRepositoryRemoveLocks</code> object
+     */
     public SvnRepositoryRemoveLocks createRepositoryRemoveLocks() {
         return new SvnRepositoryRemoveLocks(this);
     }
     
+    /**
+     * Creates administrative repository remove transactions operation.
+     * @return new <code>SvnRepositoryRemoveTransactions</code> object
+     */
     public SvnRepositoryRemoveTransactions createRepositoryRemoveTransactions() {
         return new SvnRepositoryRemoveTransactions(this);
     }
     
+    /**
+     * Creates administrative repository set UUID operation.
+     * @return new <code>SvnRepositorySetUUID</code> object
+     */
     public SvnRepositorySetUUID createRepositorySetUUID() {
         return new SvnRepositorySetUUID(this);
     }
     
+    /**
+     * Creates administrative repository upgrade operation.
+     * @return new <code>SvnRepositoryUpgrade</code> object
+     */
     public SvnRepositoryUpgrade createRepositoryUpgrade() {
         return new SvnRepositoryUpgrade(this);
     }
     
+    /**
+     * Creates administrative repository verify operation.
+     * @return new <code>SvnRepositoryVerify</code> object
+     */
     public SvnRepositoryVerify createRepositoryVerify() {
         return new SvnRepositoryVerify(this);
     }
     
+    /**
+     * Creates administrative repository initialize operation.
+     * @return new <code>SvnRepositoryInitialize</code> object
+     */
     public SvnRepositoryInitialize createRepositoryInitialize() {
         return new SvnRepositoryInitialize(this);
     }
     
+    /**
+     * Creates administrative repository sync info operation.
+     * @return new <code>SvnRepositorySyncInfo</code> object
+     */
     public SvnRepositorySyncInfo createRepositorySyncInfo() {
         return new SvnRepositorySyncInfo(this);
     }
     
+    /**
+     * Creates administrative repository copy revision properties operation.
+     * @return new <code>SvnRepositoryCopyRevisionProperties</code> object
+     */
     public SvnRepositoryCopyRevisionProperties createRepositoryCopyRevisionProperties() {
         return new SvnRepositoryCopyRevisionProperties(this);
     }
     
+    /**
+     * Creates administrative repository synchronize operation.
+     * @return new <code>SvnRepositorySynchronize</code> object
+     */
     public SvnRepositorySynchronize createRepositorySynchronize() {
         return new SvnRepositorySynchronize(this);
     }
@@ -885,6 +1109,10 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
         return new SvnRepositoryGetRevisionProperties(this);
     }
 
+    /**
+     * Creates get status summary operation.
+     * @return new <code>SvnStatusSummary</code> object
+     */
     public SvnGetStatusSummary createGetStatusSummary() {
         return new SvnGetStatusSummary(this);
     }

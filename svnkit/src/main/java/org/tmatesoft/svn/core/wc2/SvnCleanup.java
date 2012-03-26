@@ -3,7 +3,7 @@ package org.tmatesoft.svn.core.wc2;
 import org.tmatesoft.svn.core.wc2.SvnOperation;
 
 /**
- * Represents cleanup opeartion. Recursively cleans up the working copy, removing locks and resuming
+ * Represents cleanup operation. Recursively cleans up the working copy, removing locks and resuming
  * unfinished operations.
  * 
  * <p/>

@@ -90,7 +90,7 @@ public class SvnScheduleForRemoval extends SvnOperation<Void> {
      * Sets whether files should be scheduled for deletion as well as deleted from the filesystem,
      * or files should be only scheduled for addition and still be present in the filesystem.
      * 
-     * @param deleteFiles <code>true</code> if files should be deleted on filsystem, otherwise <code>false</code>.
+     * @param deleteFiles <code>true</code> if files should be deleted on filesystem, otherwise <code>false</code>.
      */
     public void setDeleteFiles(boolean deleteFiles) {
         this.deleteFiles = deleteFiles;
@@ -100,7 +100,7 @@ public class SvnScheduleForRemoval extends SvnOperation<Void> {
      * Returns whether files should be scheduled for deletion as well as deleted from the filesystem,
      * or files should be only scheduled for addition and still be present in the filesystem.
      * 
-     * @return <code>true</code> if files should be deleted on filsystem, otherwise <code>false</code>.
+     * @return <code>true</code> if files should be deleted on filesystem, otherwise <code>false</code>.
      */
     public boolean isDeleteFiles() {
         return deleteFiles;

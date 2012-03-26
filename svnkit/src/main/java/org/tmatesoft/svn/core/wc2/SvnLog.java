@@ -61,7 +61,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * <p/>
  * If
  * <code>revisionProperties</code> is <code>null</code>, retrieves all revision properties; 
- * else, retrieves only the revprops named in the array (i.e. retrieves none if the array is empty).
+ * else, retrieves only the revision properties named in the array (i.e. retrieves none if the array is empty).
  *       
  * <p/>
  * For every {@link SvnRevisionRange} in <code>revisionRanges</code>: <b/>
@@ -230,7 +230,7 @@ public class SvnLog extends SvnReceivingOperation<SVNLogEntry> {
 	/**
 	 * Returns what properties should be retrieved. 
 	 * If <code>revisionProperties</code> is <code>null</code>, retrieves all revision properties; 
-     * else retrieves only the revprops named in the array (i.e. retrieves none if the array is empty).
+     * else retrieves only the revision properties named in the array (i.e. retrieves none if the array is empty).
      * 
 	 * @return array of names of the properties
 	 */
@@ -241,7 +241,7 @@ public class SvnLog extends SvnReceivingOperation<SVNLogEntry> {
 	/**
 	 * Sets what properties should be retrieved. 
 	 * If <code>revisionProperties</code> is <code>null</code>, retrieves all revision properties; 
-     * else retrieves only the revprops named in the array (i.e. retrieves none if the array is empty).
+     * else retrieves only the revision properties named in the array (i.e. retrieves none if the array is empty).
      * 
 	 * @param revisionProperties array of names of the properties
 	 */

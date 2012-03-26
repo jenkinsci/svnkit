@@ -140,8 +140,9 @@ public class SvnTarget {
     }
     
     /**
-     * Returns target's peg revision if defined, if not defined determines whether target is remote or local, and returns corresponding default revision
-     * @param defaultRemote default revision if target is remnote target
+     * Returns target's peg revision if defined, if not defined determines whether target is remote or local, 
+     * and returns corresponding default revision
+     * @param defaultRemote default revision if target is remote target
      * @param defaultLocal default revision if target is local target
      * @return peg revision of the target
      */
@@ -197,7 +198,8 @@ public class SvnTarget {
     }
 
     /**
-     * Determines whether target is remote or local, and returns corresponding <code>String</code> representation of the target's path and peg revision.
+     * Determines whether target is remote or local, and returns corresponding <code>String</code> 
+     * representation of the target's path and peg revision.
      *
      * @return <code>String</code> of the target's path and peg revision
      */

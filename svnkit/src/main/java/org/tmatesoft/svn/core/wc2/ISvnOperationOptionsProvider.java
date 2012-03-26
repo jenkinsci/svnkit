@@ -9,7 +9,7 @@ import org.tmatesoft.svn.core.wc.SVNEvent;
 
 /**
  * Implementing this interface allows to handle the operation options:
- * event handler, canceller, options, pool of repositories and authentication manager.  
+ * event handler, canceler, options, pool of repositories and authentication manager.  
  * 
  * @author TMate Software Ltd.
  * @version 1.7
