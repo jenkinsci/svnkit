@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Field;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -157,6 +158,8 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 public class SVNClientImpl implements ISVNClient {
 
+    private static final String APR_ERROR_FIELD_NAME = "aprError";
+
     public static SVNClientImpl newInstance() {
         return new SVNClientImpl();
     }
@@ -264,7 +267,7 @@ public class SVNClientImpl implements ISVNClient {
 
             status.run();
         } catch (SVNException e) {
-            throw ClientException.fromException(e);
+            throw getClientException(e);
         } finally {
             afterOperation();
         }
@@ -289,7 +292,7 @@ public class SVNClientImpl implements ISVNClient {
 
             list.run();
         } catch (SVNException e) {
-            throw ClientException.fromException(e);
+            throw getClientException(e);
         } finally {
             afterOperation();
         }
@@ -348,7 +351,7 @@ public class SVNClientImpl implements ISVNClient {
 
             log.run();
         } catch (SVNException e) {
-            throw ClientException.fromException(e);
+            throw getClientException(e);
         } finally {
             afterOperation();
         }
@@ -373,7 +376,7 @@ public class SVNClientImpl implements ISVNClient {
 
             return checkout.run();
         } catch (SVNException e) {
-            throw ClientException.fromException(e);
+            throw getClientException(e);
         } finally {
             afterOperation();
         }
@@ -492,7 +495,7 @@ public class SVNClientImpl implements ISVNClient {
 
             revert.run();
         } catch (SVNException e) {
-            throw ClientException.fromException(e);
+            throw getClientException(e);
         } finally {
             afterOperation();
         }
@@ -516,7 +519,7 @@ public class SVNClientImpl implements ISVNClient {
 
             add.run();
         } catch (SVNException e) {
-            throw ClientException.fromException(e);
+            throw getClientException(e);
         } finally {
             afterOperation();
         }
@@ -546,7 +549,7 @@ public class SVNClientImpl implements ISVNClient {
 
             return update.run();
         } catch (SVNException e) {
-            throw ClientException.fromException(e);
+            throw getClientException(e);
         } finally {
             afterOperation();
         }
@@ -577,7 +580,7 @@ public class SVNClientImpl implements ISVNClient {
 
             commit.run();
         } catch (SVNException e) {
-            throw ClientException.fromException(e);
+            throw getClientException(e);
         } finally {
             afterOperation();
         }
@@ -657,7 +660,7 @@ public class SVNClientImpl implements ISVNClient {
 
             cleanup.run();
         } catch (SVNException e) {
-            throw ClientException.fromException(e);
+            throw getClientException(e);
         } finally {
             afterOperation();
         }
@@ -679,7 +682,7 @@ public class SVNClientImpl implements ISVNClient {
 
             resolve.run();
         } catch (SVNException e) {
-            throw ClientException.fromException(e);
+            throw getClientException(e);
         } finally {
             afterOperation();
         }
@@ -705,7 +708,7 @@ public class SVNClientImpl implements ISVNClient {
 
             return export.run();
         } catch (SVNException e) {
-            throw ClientException.fromException(e);
+            throw getClientException(e);
         } finally {
             afterOperation();
         }
@@ -733,7 +736,7 @@ public class SVNClientImpl implements ISVNClient {
 
             return svnSwitch.run();
         } catch (SVNException e) {
-            throw ClientException.fromException(e);
+            throw getClientException(e);
         } finally {
             afterOperation();
         }
@@ -762,7 +765,7 @@ public class SVNClientImpl implements ISVNClient {
 
             svnImport.run();
         } catch (SVNException e) {
-            throw ClientException.fromException(e);
+            throw getClientException(e);
         } finally {
             afterOperation();
         }
@@ -788,7 +791,7 @@ public class SVNClientImpl implements ISVNClient {
             }
             return mergeSourcesStrings;
         } catch (SVNException e) {
-            throw ClientException.fromException(e);
+            throw getClientException(e);
         } finally {
             afterOperation();
         }
@@ -815,7 +818,7 @@ public class SVNClientImpl implements ISVNClient {
 
             merge.run();
         } catch (SVNException e) {
-            throw ClientException.fromException(e);
+            throw getClientException(e);
         } finally {
             afterOperation();
         }
@@ -845,7 +848,7 @@ public class SVNClientImpl implements ISVNClient {
 
             merge.run();
         } catch (SVNException e) {
-            throw ClientException.fromException(e);
+            throw getClientException(e);
         } finally {
             afterOperation();
         }
@@ -866,9 +869,7 @@ public class SVNClientImpl implements ISVNClient {
 
             merge.run();
         } catch (SVNException e) {
-            ClientException ce = ClientException.fromException(e);
-            ce.initCause(e);
-            throw ce;
+            throw SVNClientImpl.getClientException(e);
         } finally {
             afterOperation();
         }
@@ -884,7 +885,7 @@ public class SVNClientImpl implements ISVNClient {
 
             return getMergeinfo(getMergeInfo.run());
         } catch (SVNException e) {
-            throw ClientException.fromException(e);
+            throw getClientException(e);
         } finally {
             afterOperation();
         }
@@ -912,7 +913,7 @@ public class SVNClientImpl implements ISVNClient {
 
             logMergeInfo.run();
         } catch (SVNException e) {
-            throw ClientException.fromException(e);
+            throw getClientException(e);
         } finally {
             afterOperation();
         }
@@ -946,9 +947,9 @@ public class SVNClientImpl implements ISVNClient {
             diff.setShowCopiesAsAdds(copiesAsAdds);
             diff.run();
         } catch (FileNotFoundException e) {
-            throw ClientException.fromException(e);
+            throw SVNClientImpl.getClientException(e);
         } catch (SVNException e) {
-            throw ClientException.fromException(e);
+            throw getClientException(e);
         } finally {
             SVNFileUtil.closeFile(fileOutputStream);
             SVNFileUtil.closeFile(bufferedOutputStream);
@@ -984,9 +985,9 @@ public class SVNClientImpl implements ISVNClient {
             diff.setShowCopiesAsAdds(copiesAsAdds);
             diff.run();
         } catch (FileNotFoundException e) {
-            throw ClientException.fromException(e);
+            throw SVNClientImpl.getClientException(e);
         } catch (SVNException e) {
-            throw ClientException.fromException(e);
+            throw getClientException(e);
         } finally {
             SVNFileUtil.closeFile(fileOutputStream);
             SVNFileUtil.closeFile(bufferedOutputStream);
@@ -1013,7 +1014,7 @@ public class SVNClientImpl implements ISVNClient {
 
             diffSummarize.run();
         } catch (SVNException e) {
-            throw ClientException.fromException(e);
+            throw getClientException(e);
         } finally {
             afterOperation();
         }
@@ -1038,7 +1039,7 @@ public class SVNClientImpl implements ISVNClient {
 
             diffSummarize.run();
         } catch (SVNException e) {
-            throw ClientException.fromException(e);
+            throw getClientException(e);
         } finally {
             afterOperation();
         }
@@ -1063,7 +1064,7 @@ public class SVNClientImpl implements ISVNClient {
 
             getProperties.run();
         } catch (SVNException e) {
-            throw ClientException.fromException(e);
+            throw getClientException(e);
         } finally {
             afterOperation();
         }
@@ -1091,7 +1092,7 @@ public class SVNClientImpl implements ISVNClient {
 
             setProperty.run();
         } catch (SVNException e) {
-            throw ClientException.fromException(e);
+            throw getClientException(e);
         } finally {
             afterOperation();
         }
@@ -1119,7 +1120,7 @@ public class SVNClientImpl implements ISVNClient {
 
             remoteSetProperty.run();
         } catch (SVNException e) {
-            throw ClientException.fromException(e);
+            throw getClientException(e);
         } finally {
             afterOperation();
         }
@@ -1130,8 +1131,7 @@ public class SVNClientImpl implements ISVNClient {
         return getProperty(path, name, rev, null, true);
     }
 
-    public Map<String, byte[]> revProperties(String path, Revision rev)
-            throws ClientException {
+    public Map<String, byte[]> revProperties(String path, Revision rev) throws ClientException {
 
         beforeOperation();
 
@@ -1155,7 +1155,7 @@ public class SVNClientImpl implements ISVNClient {
 
             return getProperties(svnProperties[0]);
         } catch (SVNException e) {
-            throw ClientException.fromException(e);
+            throw getClientException(e);
         } finally {
             afterOperation();
         }
@@ -1180,7 +1180,7 @@ public class SVNClientImpl implements ISVNClient {
 
             remoteSetProperty.run();
         } catch (SVNException e) {
-            throw ClientException.fromException(e);
+            throw getClientException(e);
         } finally {
             afterOperation();
         }
@@ -1219,7 +1219,7 @@ public class SVNClientImpl implements ISVNClient {
 
             cat.run();
         } catch (SVNException e) {
-            throw ClientException.fromException(e);
+            throw getClientException(e);
         } finally {
             afterOperation();
         }
@@ -1240,7 +1240,7 @@ public class SVNClientImpl implements ISVNClient {
             relocate.setIgnoreExternals(ignoreExternals);
             relocate.run();
         } catch (SVNException e) {
-            throw ClientException.fromException(e);
+            throw getClientException(e);
         } finally {
             afterOperation();
         }
@@ -1266,10 +1266,31 @@ public class SVNClientImpl implements ISVNClient {
 
             annotate.run();
         } catch (SVNException e) {
-            throw ClientException.fromException(e);
+            throw getClientException(e);
         } finally {
             afterOperation();
         }
+    }
+
+    public static ClientException getClientException(Throwable e) throws ClientException {
+        ClientException ce = ClientException.fromException(e);
+        ce.initCause(e);
+        
+        if (e instanceof SVNException) {
+            int errorCode = ((SVNException) e).getErrorMessage().getErrorCode().getCode();
+            try {
+                Field f = ce.getClass().getSuperclass().getDeclaredField(APR_ERROR_FIELD_NAME);
+                if (f != null) {
+                    f.setAccessible(true);
+                    f.set(ce, errorCode);
+                }
+            } catch (SecurityException e1) {
+            } catch (NoSuchFieldException e1) {
+            } catch (IllegalArgumentException e1) {
+            } catch (IllegalAccessException e1) {
+            }
+        }
+        return ce;
     }
 
     public void setConfigDirectory(String configDir) throws ClientException {
@@ -1305,7 +1326,7 @@ public class SVNClientImpl implements ISVNClient {
 
             setChangeList.run();
         } catch (SVNException e) {
-            throw ClientException.fromException(e);
+            throw getClientException(e);
         } finally {
             afterOperation();
         }
@@ -1330,7 +1351,7 @@ public class SVNClientImpl implements ISVNClient {
 
             setChangelist.run();
         } catch (SVNException e) {
-            throw ClientException.fromException(e);
+            throw getClientException(e);
         } finally {
             afterOperation();
         }
@@ -1363,7 +1384,7 @@ public class SVNClientImpl implements ISVNClient {
 
             getInfo.run();
         } catch (SVNException e) {
-            throw ClientException.fromException(e);
+            throw getClientException(e);
         } finally {
             afterOperation();
         }
@@ -1387,7 +1408,7 @@ public class SVNClientImpl implements ISVNClient {
 
             lock.run();
         } catch (SVNException e) {
-            throw ClientException.fromException(e);
+            throw getClientException(e);
         } finally {
             afterOperation();
         }
@@ -1409,7 +1430,7 @@ public class SVNClientImpl implements ISVNClient {
 
             unlock.run();
         } catch (SVNException e) {
-            throw ClientException.fromException(e);
+            throw getClientException(e);
         } finally {
             afterOperation();
         }
@@ -1433,7 +1454,7 @@ public class SVNClientImpl implements ISVNClient {
 
             info.run();
         } catch (SVNException e) {
-            throw ClientException.fromException(e);
+            throw getClientException(e);
         } finally {
             afterOperation();
         }
@@ -1455,7 +1476,7 @@ public class SVNClientImpl implements ISVNClient {
                 return summary.toString();
             }
         } catch (SVNException e) {
-            throw ClientException.fromException(e);
+            throw getClientException(e);
         } finally {
             afterOperation();
         }
@@ -1474,7 +1495,7 @@ public class SVNClientImpl implements ISVNClient {
 
             upgrade.run();
         } catch (SVNException e) {
-            throw ClientException.fromException(e);
+            throw getClientException(e);
         } finally {
             afterOperation();
         }
@@ -1485,7 +1506,7 @@ public class SVNClientImpl implements ISVNClient {
             boolean removeTempfiles, PatchCallback callback)
             throws ClientException {
         // TODO
-        throw ClientException.fromException(new SVNException(SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
+        throw SVNClientImpl.getClientException(new SVNException(SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
                 "Patch operation is not implemented yet.")));
     }
 
@@ -1879,7 +1900,7 @@ public class SVNClientImpl implements ISVNClient {
 
             return SVNPropertyValue.getPropertyAsBytes(propertyValue[0]);
         } catch (SVNException e) {
-            throw ClientException.fromException(e);
+            throw getClientException(e);
         } finally {
             afterOperation();
         }
@@ -1975,7 +1996,7 @@ public class SVNClientImpl implements ISVNClient {
         try {
             add.run();
         } catch (SVNException e) {
-            throw ClientException.fromException(e);
+            throw getClientException(e);
         }
     }
 
@@ -1998,7 +2019,7 @@ public class SVNClientImpl implements ISVNClient {
         try {
             mkdir.run();
         } catch (SVNException e) {
-            throw ClientException.fromException(e);
+            throw getClientException(e);
         }
     }
 
@@ -2017,7 +2038,7 @@ public class SVNClientImpl implements ISVNClient {
         try {
             remove.run();
         } catch (SVNException e) {
-            throw ClientException.fromException(e);
+            throw getClientException(e);
         }
     }
 
@@ -2039,7 +2060,7 @@ public class SVNClientImpl implements ISVNClient {
         try {
             remoteDelete.run();
         } catch (SVNException e) {
-            throw ClientException.fromException(e);
+            throw getClientException(e);
         }
     }
 
@@ -2061,7 +2082,7 @@ public class SVNClientImpl implements ISVNClient {
         try {
             copy.run();
         } catch (SVNException e) {
-            throw ClientException.fromException(e);
+            throw getClientException(e);
         }
     }
 
@@ -2088,7 +2109,7 @@ public class SVNClientImpl implements ISVNClient {
         try {
             remoteCopy.run();
         } catch (SVNException e) {
-            throw ClientException.fromException(e);
+            throw getClientException(e);
         }
     }
 
@@ -2111,7 +2132,7 @@ public class SVNClientImpl implements ISVNClient {
         try {
             copy.run();
         } catch (SVNException e) {
-            throw ClientException.fromException(e);
+            throw getClientException(e);
         }
 
     }
@@ -2139,7 +2160,7 @@ public class SVNClientImpl implements ISVNClient {
         try {
             remoteCopy.run();
         } catch (SVNException e) {
-            throw ClientException.fromException(e);
+            throw getClientException(e);
         }
     }
 
