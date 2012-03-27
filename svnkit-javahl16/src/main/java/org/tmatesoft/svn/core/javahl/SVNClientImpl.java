@@ -1756,19 +1756,24 @@ public class SVNClientImpl implements SVNClientInterface {
                         path = "";
                     }
                     if (myNotify != null && event.getErrorMessage() == null) {
-                        myNotify.onNotify(
-                                path,
-                                JavaHLObjectFactory.getNotifyActionValue(event.getAction()),
-                                JavaHLObjectFactory.getNodeKind(event.getNodeKind()),
-                                event.getMimeType(),
-                                JavaHLObjectFactory.getStatusValue(event.getContentsStatus()),
-                                JavaHLObjectFactory.getStatusValue(event.getPropertiesStatus()),
-                                event.getRevision()
-                        );
+                        final int actionId = JavaHLObjectFactory.getNotifyActionValue(event.getAction());
+                        if (actionId != -1) {
+                            myNotify.onNotify(
+                                    path,
+                                    actionId,
+                                    JavaHLObjectFactory.getNodeKind(event.getNodeKind()),
+                                    event.getMimeType(),
+                                    JavaHLObjectFactory.getStatusValue(event.getContentsStatus()),
+                                    JavaHLObjectFactory.getStatusValue(event.getPropertiesStatus()),
+                                    event.getRevision()
+                            );
+                        }
                     }
                     if (myNotify2 != null) {
                         NotifyInformation info = JavaHLObjectFactory.createNotifyInformation(event, path);
-                        myNotify2.onNotify(info);
+                        if (info != null) {
+                            myNotify2.onNotify(info);
+                        }
                     }
                 }
 

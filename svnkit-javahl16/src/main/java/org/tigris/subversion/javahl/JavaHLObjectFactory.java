@@ -733,6 +733,10 @@ public class JavaHLObjectFactory {
     }
 
     public static NotifyInformation createNotifyInformation(SVNEvent event, String path) {
+        final int actionId = getNotifyActionValue(event.getAction());
+        if (actionId == -1) {
+            return null;
+        }
         // include full error message.
         String errMsg = null;
         if (event.getErrorMessage() != null) {
@@ -741,7 +745,7 @@ public class JavaHLObjectFactory {
         // TODO 16
         return new NotifyInformation(
                 path,
-                getNotifyActionValue(event.getAction()),
+                actionId,
                 getNodeKind(event.getNodeKind()),
                 event.getMimeType(),
                 createLock(event.getLock()),
