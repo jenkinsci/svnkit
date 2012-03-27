@@ -3,7 +3,10 @@ package org.tmatesoft.svn.core.internal.wc2.old;
 import java.io.File;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc16.SVNCommitClient16;
 import org.tmatesoft.svn.core.internal.wc2.ISvnCommitRunner;
 import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
@@ -11,6 +14,7 @@ import org.tmatesoft.svn.core.wc.SVNCommitPacket;
 import org.tmatesoft.svn.core.wc2.SvnCommit;
 import org.tmatesoft.svn.core.wc2.SvnCommitPacket;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
+import org.tmatesoft.svn.util.SVNLogType;
 
 public class SvnOldCommit extends SvnOldRunner<SVNCommitInfo, SvnCommit> implements ISvnCommitRunner {
 
@@ -31,8 +35,15 @@ public class SvnOldCommit extends SvnOldRunner<SVNCommitInfo, SvnCommit> impleme
         if (getOperation().getApplicableChangelists() != null && !getOperation().getApplicableChangelists().isEmpty()) {
             changelists = getOperation().getApplicableChangelists().toArray(new String[getOperation().getApplicableChangelists().size()]);
         }
-        SVNCommitPacket packet = client.doCollectCommitItems(paths, getOperation().isKeepLocks(), getOperation().isForce(), getOperation().getDepth(), changelists);
-        return SvnCodec.commitPacket(this, packet);
+        SVNCommitPacket[] packets = client.doCollectCommitItems(
+                paths, getOperation().isKeepLocks(), getOperation().isForce(), getOperation().getDepth(), true, changelists);
+        if (packets != null && packets.length == 1) {
+            return SvnCodec.commitPacket(this, packets[0]);
+        }
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
+                "Commit from different working copies belonging to different repositories is not supported");
+        SVNErrorManager.error(err, SVNLogType.WC);
+        return null;
     }
 
     @Override
