@@ -765,6 +765,18 @@ public class SVNStatus {
     public SVNStatusType getRemoteNodeStatus() {
         return myRemoteNodeStatus;
     }
+    
+    public SVNStatusType getCombinedNodeAndContentsStatus() {
+        if (getNodeStatus() == SVNStatusType.STATUS_CONFLICTED) {
+            if (!isVersioned() && isConflicted()) {
+                return SVNStatusType.STATUS_MISSING;
+            }
+            return getContentsStatus();
+        } else if (getNodeStatus() == SVNStatusType.STATUS_MODIFIED) {
+            return getContentsStatus();
+        }
+        return getNodeStatus();
+    }
 
     public SVNStatusType getNodeStatus() {
         if (myNodeStatus == null) {

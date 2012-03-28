@@ -152,15 +152,7 @@ public class SVNStatusPrinter {
     }
     
     public static SVNStatusType combineStatus(SVNStatus status) {
-        if (status.getNodeStatus() == SVNStatusType.STATUS_CONFLICTED) {
-            if (!status.isVersioned() && status.isConflicted()) {
-                return SVNStatusType.STATUS_MISSING;
-            }
-            return status.getContentsStatus();
-        } else if (status.getNodeStatus() == SVNStatusType.STATUS_MODIFIED) {
-            return status.getContentsStatus();
-        }
-        return status.getNodeStatus();
+        return status.getCombinedNodeAndContentsStatus();
     }
 
     private static char getSwitchCharacter(SVNStatus status) {
