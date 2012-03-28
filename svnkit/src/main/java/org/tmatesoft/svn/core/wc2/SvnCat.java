@@ -2,6 +2,7 @@ package org.tmatesoft.svn.core.wc2;
 
 import java.io.OutputStream;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
@@ -12,10 +13,32 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
  * <p/>
  * The actual node 
  * revision selected is determined by the <code>target</code> as it exists in 
- * {@link SvnTarget#getPegRevision()}. If <code>target</code> is remote and {@link SvnTarget#getPegRevision()} is 
+ * {@link SvnTarget#getPegRevision()}. If <code>target</code> is URL and {@link SvnTarget#getPegRevision()} is 
  * {@link SVNRevision#UNDEFINED}, then it defaults to {@link SVNRevision#HEAD}. 
  * If <code>target</code> is local and {@link SvnTarget#getPegRevision()} is 
  * {@link SVNRevision#UNDEFINED}, then it defaults to {@link SVNRevision#WORKING}.
+ * 
+ * <p/>
+ * If <code>revision</code> is one of:
+ * <ul>
+ * <li>{@link SVNRevision#BASE}
+ * <li>{@link SVNRevision#WORKING}
+ * <li>{@link SVNRevision#COMMITTED}
+ * </ul>
+ * then the file contents are taken from the working copy file item (no
+ * network connection is needed). Otherwise the file item's contents are
+ * taken from the repository at a particular revision.
+ * 
+ * {@link #run()} throws {@link org.tmatesoft.svn.core.SVNException} in the following cases:
+ *             <ul>
+ *             <li>exception with {@link SVNErrorCode#CLIENT_IS_DIRECTORY}
+ *             error code - if <code>target</code> refers to a directory 
+ *             <li>exception with {@link SVNErrorCode#UNVERSIONED_RESOURCE}
+ *             error code - if <code>target</code> is not under version control
+ *             <li>it's impossible to create temporary files (
+ *             {@link java.io.File#createTempFile(java.lang.String,java.lang.String)
+ *             createTempFile()}fails) necessary for file translating (used when <code>target</code> is URL)
+ *             </ul>
  * 
  * @author TMate Software Ltd.
  * @version 1.7

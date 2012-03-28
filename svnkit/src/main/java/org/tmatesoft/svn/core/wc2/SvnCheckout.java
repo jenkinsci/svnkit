@@ -13,9 +13,11 @@ import org.tmatesoft.svn.util.SVNLogType;
  * Represents checkout operation. Checks out a working copy of {@link #getSource()} <code>target</code> at revision,
  * looked up at {@link SvnTarget#getPegRevision()}, using operation targets as the
  * root directory of the newly checked out working copy.
+ * 
  * <p/>
  * If source {@link SvnTarget#getPegRevision()}> is {@link SVNRevision#UNDEFINED} or invalid, then it
  * defaults to {@link SVNRevision#HEAD}.
+ * 
  * <p/>
  * If {@link #getDepth()} is {@link SVNDepth#INFINITY}, checks out fully
  * recursively. Else if it is {@link SVNDepth#IMMEDIATES}, checks out
@@ -25,31 +27,35 @@ import org.tmatesoft.svn.util.SVNLogType;
  * but no subdirectories; else if {@link SVNDepth#EMPTY}, checks out
  * source <code>target</code> as an empty directory at that depth, with no entries
  * present.
+ * 
  * <p/>
  * If {@link #getDepth()} is {@link SVNDepth#UNKNOWN}, then behave as if for
  * {@link SVNDepth#INFINITY}, except in the case of resuming a previous
  * checkout of operation targets (i.e., updating), in which case uses the
  * depth of the existing working copy.
+ * 
  * <p/>
  * If externals are {@link #isIgnoreExternals() ignored}, doesn't process
  * externals definitions as part of this operation.
+ * 
  * <p/>
- * If  {@link #isAllowUnversionedObstructions()} is <span
- * class="javakeyword">true</span> then the checkout tolerates existing
+ * If  {@link #isAllowUnversionedObstructions()} is <code>true</code> 
+ * then the checkout tolerates existing
  * unversioned items that obstruct added paths from source target. Only
  * obstructions of the same type (file or directory) as the added item are
  * tolerated. The text of obstructing files is left as-is, effectively
  * treating it as a user modification after the checkout. Working properties
  * of obstructing items are set equal to the base properties. If
- * {@link #isAllowUnversionedObstructions()} is <span
- * class="javakeyword">false</span> then the checkout will abort if there
+ * {@link #isAllowUnversionedObstructions()} is <code>false</code> 
+ * then the checkout will abort if there
  * are any unversioned obstructing items.
  * <p/>
- * If the caller's {@link ISVNEventHandler} is non-<span
- * class="javakeyword">null</span>, it is invoked as the checkout processes.
+ * If the caller's {@link ISVNEventHandler} is non-<code>null</code>, 
+ * it is invoked as the checkout processes.
  * Also {@link ISVNEventHandler#checkCancelled()} will be used at various
  * places during the checkout to check whether the caller wants to stop the
  * checkout.
+ * 
  * <p/>
  * This operation requires repository access (in case the repository is not
  * on the same machine, network connection is established).

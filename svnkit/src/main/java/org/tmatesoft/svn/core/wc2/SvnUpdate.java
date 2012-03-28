@@ -44,20 +44,20 @@ import org.tmatesoft.svn.util.SVNLogType;
  * , also sets their sticky ambient depth value to <code>depth</code>.
  * 
  * <p/>
- * If <code>allowUnversionedObstructions</code> is <span class="javakeyword">
- * true</span> then the update tolerates existing
+ * If <code>allowUnversionedObstructions</code> is <code>
+ * true</code> then the update tolerates existing
  * unversioned items that obstruct added paths. Only obstructions of the
  * same type (file or directory) as the added item are tolerated. The text of
  * obstructing files is left as-is, effectively treating it as a user
  * modification after the update. Working properties of obstructing items
  * are set equal to the base properties. If
- * <code>allowUnversionedObstructions</code> is <span class="javakeyword">false
- * </span> then the update will abort if there are
+ * <code>allowUnversionedObstructions</code> is <code>false
+ * </code> then the update will abort if there are
  * any unversioned obstructing items.
  * 
  * <p/>
- * If the operation's {@link ISVNEventHandler} is non-<span
- * class="javakeyword">null</span>, it is invoked for each item handled by
+ * If the operation's {@link ISVNEventHandler} is non-<code>null</code>, 
+ * it is invoked for each item handled by
  * the update, and also for files restored from text-base. Also
  * {@link ISVNEventHandler#checkCancelled()} will be used at various places
  * during the update to check whether the caller wants to stop the update.

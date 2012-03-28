@@ -16,6 +16,9 @@ public class SvnChecksum {
 	 * <li>sha1 - sha1 algorithm
 	 * <li>md5  - md5 algorithm
 	 * </ul>
+	 * 
+	 * @author TMate Software Ltd.
+	 * @version 1.7
 	 */
     public enum Kind { sha1, md5 }
     

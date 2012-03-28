@@ -305,7 +305,7 @@ public class SVNWCClient16 extends SVNBasicDelegate {
      * {@link SVNRevision#UNDEFINED}, then it defaults to
      * {@link SVNRevision#WORKING}.
      * <p/>
-     * If <vode>revision</code> is one of:
+     * If <code>revision</code> is one of:
      * <ul>
      * <li>{@link SVNRevision#BASE}
      * <li>{@link SVNRevision#WORKING}

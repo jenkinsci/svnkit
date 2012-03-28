@@ -3,10 +3,21 @@ package org.tmatesoft.svn.core.wc2;
 import org.tmatesoft.svn.core.SVNLock;
 
 /**
- * Operation for unlocking files. It unlocks file items in a working copy as well as in a repository.
+ * Represents operation for unlocking files. 
+ * Unlocks file items in a working copy as well as in a repository.
  * 
  * <p/>
  * {@link #run()} method returns {@link SVNLock} object that represents information of lock.
+ * {@link #run()} method @throws {@link org.tmatesoft.svn.core.SVNException} if one of the following is true:
+ *             <ul>
+ *             <li>a <code>target</code>'s path is not under version control
+ *             <li>can not obtain a URL of a local <code>target</code>'s path to unlock it in the
+ *             repository - there's no such entry
+ *             <li>if a path is not locked in the working copy and
+ *             <code>breakLock</code> is <code>false</code>
+ *             <li><code>targets</code> to be unlocked belong to different
+ *             repositories
+ *             </ul>
  * 
  * @author TMate Software Ltd.
  * @version 1.7

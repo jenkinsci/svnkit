@@ -1,16 +1,70 @@
 package org.tmatesoft.svn.core.wc2;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 /**
- * Represents annotate operation. Obtains annotation information for each file text line from a repository
- * (using a working copy path to get a corresponding URL) and passes it to a
- * annotation handler if provided.
+ * Represents annotate operation. 
+ * Obtains and reports annotation information for each line-blame item
+ * associated with revision <code>endRevision</code> of <code>target</code>, using
+ * <code>startRevision</code> as the default source of all blame. 
+ * Passes annotation information to a annotation handler if provided.
+ * 
+ * <p/>
+ * <code>Target</code> can represent URL or working copy path (used to get corresponding URLs).
+ * 
+ * <p/>
+ * <code>Target</code>'s <code>pegRevision</code> indicates in which revision <code>target</code> is
+ * valid. If <code>pegRevision</code> is {@link SVNRevision#UNDEFINED}, then
+ * it defaults to {@link SVNRevision#HEAD}.
+ * 
+ * <p/>
+ * <ul>
+ * <li>
+ * <b>If working copy is SVN 1.7 working copy:</b>
+ * <p/>
+ * If <code>endRevision</code> is {@link SVNRevision#UNDEFINED}, 
+ * then it defaults to {@link SVNRevision#HEAD} if <code>target</code>
+ * is URL or {@link SVNRevision#WORKING} if <code>target</code> is working copy path.
+ * </li>
+ * <li>
+ * <b>If working copy is SVN 1.6 working copy:</b>
+ * <p/>
+ * If <code>startRevision</code> is <code>null</code> or
+ * {@link SVNRevision#isValid() invalid}, then it defaults to revision 1. 
+ * If <code>endRevision</code> is <code>null</code> or
+ * {@link SVNRevision#isValid() invalid}, then it defaults to 
+ * <code>target</code>'s <code>pegRevision</code>.
+ * </li>
+ * </ul>
+ * 
+ * <p/>
+ * Note: this operation requires repository access.
  * 
  * <p/>
  * {@link #run()} method returns {@link SvnAnnotateItem} information reported by the operation.
+ * {@link #run()} throws {@link org.tmatesoft.svn.core.SVNException} in the following cases:
+ *             <ul>
+ *             <li/>exception with {@link SVNErrorCode#CLIENT_BAD_REVISION}
+ *             error code - if <code>startRevision</code> is older than <code>
+ *             endRevision</code> 
+ *             <li/>exception with {@link SVNErrorCode#CLIENT_BAD_REVISION}
+ *             error code - if both <code>startRevision</code> and <code>
+ *             endRevision</code> are either <code>null</code> or
+ *             {@link SVNRevision#isValid() invalid} 
+ *             <li/>exception with
+ *             {@link SVNErrorCode#CLIENT_IS_BINARY_FILE} error code - if
+ *             any of the revisions of <code>target</code>'s path have a binary
+ *             mime-type, unless <code>ignoreMimeType</code> is <code>true</code>, in which case blame
+ *             information will be generated regardless of the MIME types of
+ *             the revisions
+ *             <li/>exception with
+ *             {@link SVNErrorCode#UNSUPPORTED_FEATURE} error code - if
+ *             either <code>startRevision</code> or <code>endRevision
+ *             </code> is {@link SVNRevision#WORKING} (for SVN 1.6 working copy only).
+ *             </ul>
  * 
  * @author TMate Software Ltd.
  * @version 1.7

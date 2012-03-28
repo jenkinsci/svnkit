@@ -7,7 +7,7 @@ import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.wc2.hooks.ISvnCommitHandler;
 
 /**
- * Base class for operations that changes repository. 
+ * Base class for operations that change repository. 
  * The <b>AbstractSvnCommit</b> class provides methods to perform operations that
  * relate to committing changes to an SVN repository. These operations are
  * similar to respective commands of the native SVN command line client and
@@ -39,7 +39,7 @@ public abstract class AbstractSvnCommit extends SvnReceivingOperation<SVNCommitI
     
     /**
      * Gets custom revision properties for the operation.
-     * If non-<span class="javakeyword">null</span>, <code>revisionProperties</code> 
+     * If non-<code>null</code>, <code>revisionProperties</code> 
      * holds additional, custom revision properties (<code>String</code> names
      * mapped to {@link SVNPropertyValue} values) to be set on the new revision.
      * This table cannot contain any standard Subversion properties.

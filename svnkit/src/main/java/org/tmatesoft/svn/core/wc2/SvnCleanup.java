@@ -33,7 +33,7 @@ public class SvnCleanup extends SvnOperation<Void> {
     }
     
     /**
-    * Gets whether or not DAV specific <span class="javastring">"svn:wc:"</span> properties
+    * Gets whether or not DAV specific <code>"svn:wc:"</code> properties
     * should be removed from the working copy
     * 
     * @return <code>true</code> if properties will be removed, otherwise <code>false</code>

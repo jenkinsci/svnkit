@@ -52,7 +52,6 @@ svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbSe
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbSelectUnreferencedPristines.java -text svneol=native#unset
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbUpdateBaseNodeDavCache.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbUpdateNodeProperties.java -text
-svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/admin/SvnRepositoryCatImpl.java -text svneol=native#unset
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/admin/SvnRepositoryCopyRevisionPropertiesImpl.java -text svneol=native#unset
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/admin/SvnRepositoryFilterImpl.java -text svneol=native#unset
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/admin/SvnRepositoryGetAuthorImpl.java -text svneol=native#unset
@@ -85,7 +84,6 @@ svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/admin/SvnRepositorySync
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/admin/SvnRepositorySynchronizeImpl.java -text svneol=native#unset
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/admin/SvnRepositoryUpgradeImpl.java -text svneol=native#unset
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/admin/SvnRepositoryVerifyImpl.java -text svneol=native#unset
-svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/ng/SvnNgLockUtil.java -text svneol=native#unset
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/ng/SvnNgResolve.java -text svneol=native#unset
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/ng/SvnNgSetChangelist.java -text svneol=native#unset
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc2/ng/SvnNgSetLock.java -text svneol=native#unset

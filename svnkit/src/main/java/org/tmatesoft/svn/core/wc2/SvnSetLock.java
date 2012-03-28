@@ -3,11 +3,20 @@ package org.tmatesoft.svn.core.wc2;
 import org.tmatesoft.svn.core.SVNLock;
 
 /**
- * Operation for locking files. It locks file items in a working copy as well as in a repository so that 
+ * Represents operation for locking files. 
+ * Locks file items in a working copy as well as in a repository so that 
  * no other user can commit changes to them.
  * 
-* <p/>
+ * <p/>
  * {@link #run()} method returns {@link SVNLock} object that represents information of lock.
+ * {@link #run()} method throws {@link org.tmatesoft.svn.core.SVNException} if one of the following is true:
+ *             <ul>
+ *             <li>a <code>target</code>'s path to be locked is not under version control
+ *             <li>can not obtain a URL of a local <code>target</code>'s path to lock it in the
+ *             repository - there's no such entry
+ *             <li><code>targets</code> to be locked belong to different
+ *             repositories ((for SVN 1.6 working copy only)
+ *             </ul>
  * 
  * @author TMate Software Ltd.
  * @version 1.7

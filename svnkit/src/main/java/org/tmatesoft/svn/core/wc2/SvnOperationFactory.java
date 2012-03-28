@@ -902,7 +902,7 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
     }
     
     /**
-     * Creates administrative repository dump operation.
+     * Creates repository dump administrative operation.
      * @return new <code>SvnRepositoryDump</code> object
      */
     public SvnRepositoryDump createRepositoryDump() {
@@ -910,15 +910,15 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
     }
     
     /**
-     * Creates administrative repository create operation.
-     * @return new <code>SvnRepositoryreate</code> object
+     * Creates repository create administrative operation.
+     * @return new <code>SvnRepositoryCreate</code> object
      */
     public SvnRepositoryCreate createRepositoryCreate() {
         return new SvnRepositoryCreate(this);
     }
     
     /**
-     * Creates administrative repository hot copy operation.
+     * Creates repository hot copy administrative operation.
      * @return new <code>SvnRepositoryHotCopy</code> object
      */
     public SvnRepositoryHotCopy createRepositoryHotCopy() {
@@ -926,7 +926,7 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
     }
     
     /**
-     * Creates administrative repository load operation.
+     * Creates repository load administrative operation.
      * @return new <code>SvnRepositoryLoad</code> object
      */
     public SvnRepositoryLoad createRepositoryLoad() {
@@ -934,7 +934,7 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
     }
     
     /**
-     * Creates administrative repository list locks operation.
+     * Creates administrative operation for retrieving list of locks from the repository.
      * @return new <code>SvnRepositoryListLocks</code> object
      */
     public SvnRepositoryListLocks createRepositoryListLocks() {
@@ -942,7 +942,7 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
     }
     
     /**
-     * Creates administrative repository list transactions operation.
+     * Creates administrative operation for retrieving list of transactions from the repository.
      * @return new <code>SvnRepositoryListTransactions</code> object
      */
     public SvnRepositoryListTransactions createRepositoryListTransactions() {
@@ -950,7 +950,7 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
     }
     
     /**
-     * Creates administrative repository pack operation.
+     * Creates repository pack administrative operation.
      * @return new <code>SvnRepositoryPack</code> object
      */
     public SvnRepositoryPack createRepositoryPack() {
@@ -958,7 +958,7 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
     }
     
     /**
-     * Creates administrative repository recover operation.
+     * Creates repository recover administrative operation.
      * @return new <code>SvnRepositoryRecover</code> object
      */
     public SvnRepositoryRecover createRepositoryRecover() {
@@ -966,7 +966,7 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
     }
     
     /**
-     * Creates administrative repository remove locks operation.
+     * Creates repository remove locks administrative operation.
      * @return new <code>SvnRepositoryRemoveLocks</code> object
      */
     public SvnRepositoryRemoveLocks createRepositoryRemoveLocks() {
@@ -974,7 +974,7 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
     }
     
     /**
-     * Creates administrative repository remove transactions operation.
+     * Creates repository remove transactions administrative operation.
      * @return new <code>SvnRepositoryRemoveTransactions</code> object
      */
     public SvnRepositoryRemoveTransactions createRepositoryRemoveTransactions() {
@@ -982,7 +982,7 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
     }
     
     /**
-     * Creates administrative repository set UUID operation.
+     * Creates repository set UUID administrative operation.
      * @return new <code>SvnRepositorySetUUID</code> object
      */
     public SvnRepositorySetUUID createRepositorySetUUID() {
@@ -990,7 +990,7 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
     }
     
     /**
-     * Creates administrative repository upgrade operation.
+     * Creates repository upgrade administrative operation.
      * @return new <code>SvnRepositoryUpgrade</code> object
      */
     public SvnRepositoryUpgrade createRepositoryUpgrade() {
@@ -998,7 +998,7 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
     }
     
     /**
-     * Creates administrative repository verify operation.
+     * Creates repository verify administrative operation.
      * @return new <code>SvnRepositoryVerify</code> object
      */
     public SvnRepositoryVerify createRepositoryVerify() {
@@ -1006,7 +1006,7 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
     }
     
     /**
-     * Creates administrative repository initialize operation.
+     * Creates initialize synchronization operation.
      * @return new <code>SvnRepositoryInitialize</code> object
      */
     public SvnRepositoryInitialize createRepositoryInitialize() {
@@ -1014,7 +1014,7 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
     }
     
     /**
-     * Creates administrative repository sync info operation.
+     * Creates operation for retrieving repository synchronization info.
      * @return new <code>SvnRepositorySyncInfo</code> object
      */
     public SvnRepositorySyncInfo createRepositorySyncInfo() {
@@ -1022,7 +1022,7 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
     }
     
     /**
-     * Creates administrative repository copy revision properties operation.
+     * Creates copy revision properties synchronization operation.
      * @return new <code>SvnRepositoryCopyRevisionProperties</code> object
      */
     public SvnRepositoryCopyRevisionProperties createRepositoryCopyRevisionProperties() {
@@ -1030,81 +1030,153 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
     }
     
     /**
-     * Creates administrative repository synchronize operation.
+     * Creates repository synchronize operation.
      * @return new <code>SvnRepositorySynchronize</code> object
      */
     public SvnRepositorySynchronize createRepositorySynchronize() {
         return new SvnRepositorySynchronize(this);
     }
     
+    /**
+     * Creates dumpfilter operation.
+     * @return new <code>SvnRepositoryFilter</code> object
+     */
     public SvnRepositoryFilter createRepositoryFilter() {
         return new SvnRepositoryFilter(this);
     }
     
+    /**
+     * Creates operation for retrieving author from the repository.
+     * @return new <code>SvnRepositoryGetAuthor</code> object
+     */
     public SvnRepositoryGetAuthor createRepositoryGetAuthor() {
         return new SvnRepositoryGetAuthor(this);
     }
     
+    /**
+     * Creates operation for retrieving date from the repository.
+     * @return new <code>SvnRepositoryGetDate</code> object
+     */
     public SvnRepositoryGetDate createRepositoryGetDate() {
         return new SvnRepositoryGetDate(this);
     }
     
+    /**
+     * Creates operation for retrieving info from the repository.
+     * @return new <code>SvnRepositoryGetInfo</code> object
+     */
     public SvnRepositoryGetInfo createRepositoryGetInfo() {
         return new SvnRepositoryGetInfo(this);
     }
     
+    /**
+     * Creates operation for retrieving the lock from the repository.
+     * @return new <code>SvnRepositoryGetLock</code> object
+     */
     public SvnRepositoryGetLock createRepositoryGetLock() {
         return new SvnRepositoryGetLock(this);
     }
     
+    /**
+     * Creates operation for retrieving repository log.
+     * @return new <code>SvnRepositoryGetLog</code> object
+     */
     public SvnRepositoryGetLog createRepositoryGetLog() {
         return new SvnRepositoryGetLog(this);
     }
     
+    /**
+     * Creates operation for retrieving repository UUID.
+     * @return new <code>SvnRepositoryGetUUID</code> object
+     */
     public SvnRepositoryGetUUID createRepositoryGetUUID() {
         return new SvnRepositoryGetUUID(this);
     }
     
+    /**
+     * Creates operation for retrieving the latest revision from the repository.
+     * @return new <code>SvnRepositoryGetYoungest</code> object
+     */
     public SvnRepositoryGetYoungest createRepositoryGetYoungest() {
         return new SvnRepositoryGetYoungest(this);
     }
     
+    /**
+     * Creates operation for retrieving property from the repository.
+     * @return new <code>SvnRepositoryGetProperty</code> object
+     */
     public SvnRepositoryGetProperty createRepositoryGetProperty() {
         return new SvnRepositoryGetProperty(this);
     }
     
+    /**
+     * Creates operation for retrieving revision property from the repository.
+     * @return new <code>SvnRepositoryGetRevisionProperty</code> object
+     */
     public SvnRepositoryGetRevisionProperty createRepositoryGetRevisionProperty() {
         return new SvnRepositoryGetRevisionProperty(this);
     }
     
+    /**
+     * Creates operation for retrieving properties from the repository.
+     * @return new <code>SvnRepositoryGetProperties</code> object
+     */
     public SvnRepositoryGetProperties createRepositoryGetProperties() {
         return new SvnRepositoryGetProperties(this);
     }
     
+    /**
+     * Creates operation for retrieving file contents from the repository.
+     * @return new <code>SvnRepositoryCat</code> object
+     */
     public SvnRepositoryCat createRepositoryGetCat() {
         return new SvnRepositoryCat(this);
     }
     
+    /**
+     * Creates operation for retrieving changed paths from the repository.
+     * @return new <code>SvnRepositoryGetChanged</code> object
+     */
     public SvnRepositoryGetChanged createRepositoryGetChanged() {
         return new SvnRepositoryGetChanged(this);
     }
     
+    /**
+     * Creates operation for retrieving changed directories from the repository.
+     * @return new <code>SvnRepositoryGetChangedDirectories</code> object
+     */
     public SvnRepositoryGetChangedDirectories createRepositoryGetChangedDirectories() {
         return new SvnRepositoryGetChangedDirectories(this);
     }
     
+    /**
+     * Creates repository diff operation.
+     * @return new <code>SvnRepositoryGetDiff</code> object
+     */
     public SvnRepositoryGetDiff createRepositoryGetDiff() {
         return new SvnRepositoryGetDiff(this);
     }
     
+    /**
+     * Creates operation for retrieving the history from the repository.
+     * @return new <code>SvnRepositoryGetHistory</code> object
+     */
     public SvnRepositoryGetHistory createRepositoryGetHistory() {
         return new SvnRepositoryGetHistory(this);
     }
     
+    /**
+     * Creates operation for retrieving items tree from the repository.
+     * @return new <code>SvnRepositoryGetTree</code> object
+     */
     public SvnRepositoryGetTree createRepositoryGetTree() {
         return new SvnRepositoryGetTree(this);
     }
     
+    /**
+     * Creates operation for retrieving revision properties from the repository.
+     * @return new <code>SvnRepositoryGetRevisionProperties</code> object
+     */
     public SvnRepositoryGetRevisionProperties createRepositoryGetRevisionProperties() {
         return new SvnRepositoryGetRevisionProperties(this);
     }
