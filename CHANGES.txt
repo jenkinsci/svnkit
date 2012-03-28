@@ -1,3 +1,10 @@
+== version 1.7.4-rc3 ==
+
++ Few backward compatibility issues fixed.
++ SqlJet Library dependency upgraded to 1.1.0 
++ Added: SVNStatus.getCombinedNodeAndContentsStatus() method
++ Added: More javadoc documentation
+
 == version 1.7.4-rc2 ==
 
 * Fixed: JavaHL ConflictDescriptor object contained relative paths in place of absolute, fixed
