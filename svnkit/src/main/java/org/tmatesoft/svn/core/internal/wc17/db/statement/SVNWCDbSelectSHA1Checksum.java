@@ -29,7 +29,7 @@ public class SVNWCDbSelectSHA1Checksum extends SVNSqlJetSelectStatement {
     @Override
     protected boolean isFilterPassed() throws SVNException {
         String md5Checksum = (String) getBind(1);
-        return md5Checksum.equals(getColumnString(SVNWCDbSchema.PRISTINE__Fields.checksum));
+        return md5Checksum.equals(getColumnString(SVNWCDbSchema.PRISTINE__Fields.md5_checksum));
     }
 
     @Override
