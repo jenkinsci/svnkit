@@ -578,6 +578,7 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
                 }
                 releaseLock = false;
             }
+            getWcContext().getDb().clearDavCacheRecursive(localAbsPath);
             return switchInternal(localAbsPath, anchor, switchUrl, revision, pegRevision, depth, depthIsSticky, ignoreExternals, allowUnversionedObstructions, ignoreAncestry, sleepForTimestamp);
         } finally {
             if (anchor != null && releaseLock) {

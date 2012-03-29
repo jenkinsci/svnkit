@@ -32,7 +32,6 @@ svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc/admin/SVNAdminArea16.jav
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc/admin/SVNAdminArea16Factory.java -text svneol=native#unset
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/SvnChangelistActualNodesTrigger.java -text svneol=native#unset
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/SvnWcDbChangelist.java -text svneol=native#unset
-svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbClearDavCacheRecursive.java -text svneol=native#unset
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbDeletePristineIfUnreferenced.java -text svneol=native#unset
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbInsertActualEmpties.java -text svneol=native#unset
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/wc17/db/statement/SVNWCDbInsertExternal.java -text

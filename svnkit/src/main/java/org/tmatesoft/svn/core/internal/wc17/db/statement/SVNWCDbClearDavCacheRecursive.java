@@ -51,18 +51,15 @@ public class SVNWCDbClearDavCacheRecursive extends SVNSqlJetUpdateStatement {
     protected boolean isFilterPassed() throws SVNException {
     	if (isColumnNull(SVNWCDbSchema.NODES__Fields.dav_cache)) {
             return false;
-        }
-    	
+        }    	
         if (getColumnLong(SVNWCDbSchema.NODES__Fields.op_depth) != 0) {
             return false;
         }
-        
-        String selectPath = getBind(2).toString();
-        if ("".equals(selectPath)) {
-            return true;
-        }
-        
-        String rowPath = getColumnString(SVNWCDbSchema.NODES__Fields.local_relpath);
-        return selectPath.equals(rowPath) || rowPath.startsWith(selectPath + '/');
+        return true;
+    }
+
+    @Override
+    protected String getPathScope() {
+        return (String) getBind(2);
     }
 }
