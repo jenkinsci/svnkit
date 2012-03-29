@@ -79,7 +79,7 @@ public class SVNMergeInfoUtil {
             }
         }
         for(; j < changes.size(); j++) {
-            String changeKey = (String) changesKeys[j];
+            Object changeKey = changesKeys[j];
             Map changesMergeinfo= (Map) changes.get(changeKey);
             changesMergeinfo = dupMergeInfo(changesMergeinfo, null);
             catalog.put(changeKey, changesMergeinfo);
