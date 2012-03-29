@@ -265,8 +265,6 @@ public class DavLockTest {
             setLock.setSingleTarget(SvnTarget.fromFile(file));
             setLock.run();
 
-            final List<SVNEvent> events = lockEventHandler.events;
-
             //TODO: finish the test
         } finally {
             svnOperationFactory.dispose();
@@ -301,10 +299,6 @@ public class DavLockTest {
 
         private LockEventHandler() {
             events = new ArrayList<SVNEvent>();
-        }
-
-        public List<SVNEvent> getEvents() {
-            return events;
         }
 
         public void handleEvent(SVNEvent event, double progress) throws SVNException {
