@@ -31,4 +31,9 @@ public class SVNWCDbSelectSHA1Checksum extends SVNSqlJetSelectStatement {
         String md5Checksum = (String) getBind(1);
         return md5Checksum.equals(getColumnString(SVNWCDbSchema.PRISTINE__Fields.checksum));
     }
+
+    @Override
+    protected Object[] getWhere() throws SVNException {
+        return null;
+    }
 }
