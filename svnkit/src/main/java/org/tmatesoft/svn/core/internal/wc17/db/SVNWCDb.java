@@ -11,27 +11,6 @@
  */
 package org.tmatesoft.svn.core.internal.wc17.db;
 
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbShared.begingReadTransaction;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbShared.commitTransaction;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbShared.doesNodeExists;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnBlob;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnBoolean;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnChecksum;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnDepth;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnInt64;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnKind;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnPath;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnPresence;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnProperties;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnRevNum;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnText;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getKindText;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getPresenceText;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getTranslatedSize;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.hasColumnProperties;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.isColumnNull;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.parseDepth;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -112,6 +91,27 @@ import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnChecksum;
 import org.tmatesoft.svn.util.SVNLogType;
+
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbShared.begingReadTransaction;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbShared.commitTransaction;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbShared.doesNodeExists;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnBlob;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnBoolean;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnChecksum;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnDepth;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnInt64;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnKind;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnPath;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnPresence;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnProperties;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnRevNum;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnText;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getKindText;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getPresenceText;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getTranslatedSize;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.hasColumnProperties;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.isColumnNull;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.parseDepth;
 
 /**
  *
@@ -949,17 +949,18 @@ public class SVNWCDb implements ISVNWCDb {
         addWorkItems(pdh.getWCRoot().getSDb(), workItem);
     }
 
-    public boolean checkPristine(File wcRootAbsPath, SvnChecksum sha1Checksum) throws SVNException {
+    public boolean checkPristine(File wcRootAbsPath, SvnChecksum checksum) throws SVNException {
         assert (SVNFileUtil.isAbsolute(wcRootAbsPath));
-        assert (sha1Checksum != null);
-        if (sha1Checksum.getKind() != SvnChecksum.Kind.sha1) {
-            sha1Checksum = getPristineSHA1(wcRootAbsPath, sha1Checksum);
+        assert (checksum != null);
+        if (checksum.getKind() != SvnChecksum.Kind.sha1) {
+            //i.e. checksum has kind "md5"
+            checksum = getPristineSHA1(wcRootAbsPath, checksum);
         }
-        assert (sha1Checksum.getKind() == SvnChecksum.Kind.sha1);
+        assert (checksum.getKind() == SvnChecksum.Kind.sha1);
         DirParsedInfo parseDir = parseDir(wcRootAbsPath, Mode.ReadWrite);
         SVNWCDbDir pdh = parseDir.wcDbDir;
         verifyDirUsable(pdh);
-        return SvnWcDbPristines.checkPristine(pdh.getWCRoot(), sha1Checksum);
+        return SvnWcDbPristines.checkPristine(pdh.getWCRoot(), checksum);
     }
 
     public void completedWorkQueue(File wcRootAbsPath, long id) throws SVNException {
@@ -1237,17 +1238,18 @@ public class SVNWCDb implements ISVNWCDb {
         }
     }
 
-    public File getPristinePath(File wcRootAbsPath, SvnChecksum sha1Checksum) throws SVNException {
+    public File getPristinePath(File wcRootAbsPath, SvnChecksum checksum) throws SVNException {
         assert (SVNFileUtil.isAbsolute(wcRootAbsPath));
-        assert (sha1Checksum != null);
-        if (sha1Checksum.getKind() != SvnChecksum.Kind.sha1) {
-            sha1Checksum = getPristineSHA1(wcRootAbsPath, sha1Checksum);
+        assert (checksum != null);
+        if (checksum.getKind() != SvnChecksum.Kind.sha1) {
+            //i.e. checksum has kind "md5"
+            checksum = getPristineSHA1(wcRootAbsPath, checksum);
         }
-        assert (sha1Checksum.getKind() == SvnChecksum.Kind.sha1);
+        assert (checksum.getKind() == SvnChecksum.Kind.sha1);
         final DirParsedInfo parsed = parseDir(wcRootAbsPath, Mode.ReadOnly);
         final SVNWCDbDir pdh = parsed.wcDbDir;
         verifyDirUsable(pdh);
-        return SvnWcDbPristines.getPristinePath(pdh.getWCRoot(), sha1Checksum);
+        return SvnWcDbPristines.getPristinePath(pdh.getWCRoot(), checksum);
     }
 
     public SvnChecksum getPristineSHA1(File wcRootAbsPath, SvnChecksum md5Checksum) throws SVNException {
@@ -2770,18 +2772,19 @@ public class SVNWCDb implements ISVNWCDb {
         }
     }
 
-    public InputStream readPristine(File wcRootAbsPath, SvnChecksum sha1Checksum) throws SVNException {
+    public InputStream readPristine(File wcRootAbsPath, SvnChecksum checksum) throws SVNException {
         assert (isAbsolute(wcRootAbsPath));
-        assert (sha1Checksum != null);
+        assert (checksum != null);
 
         /*
          * ### Transitional: accept MD-5 and look up the SHA-1. Return an error
          * if the pristine text is not in the store.
          */
-        if (sha1Checksum.getKind() != SvnChecksum.Kind.sha1) {
-            sha1Checksum = getPristineSHA1(wcRootAbsPath, sha1Checksum);
+        if (checksum.getKind() != SvnChecksum.Kind.sha1) {
+            //i.e. checksum has kind "md5"
+            checksum = getPristineSHA1(wcRootAbsPath, checksum);
         }
-        assert (sha1Checksum.getKind() == SvnChecksum.Kind.sha1);
+        assert (checksum.getKind() == SvnChecksum.Kind.sha1);
 
         final DirParsedInfo parsed = parseDir(wcRootAbsPath, Mode.ReadOnly);
         SVNWCDbDir pdh = parsed.wcDbDir;
@@ -2789,7 +2792,7 @@ public class SVNWCDb implements ISVNWCDb {
 
         /* ### should we look in the PRISTINE table for anything? */
 
-        return SvnWcDbPristines.readPristine(pdh.getWCRoot(), wcRootAbsPath, sha1Checksum);
+        return SvnWcDbPristines.readPristine(pdh.getWCRoot(), wcRootAbsPath, checksum);
 
     }
 
@@ -2898,18 +2901,19 @@ public class SVNWCDb implements ISVNWCDb {
         pdh.flushEntries(localAbsPath);
     }
 
-    public void removePristine(File wcRootAbsPath, SvnChecksum sha1Checksum) throws SVNException {
+    public void removePristine(File wcRootAbsPath, SvnChecksum checksum) throws SVNException {
         assert (isAbsolute(wcRootAbsPath));
-        assert (sha1Checksum != null);
-        if (sha1Checksum.getKind() != SvnChecksum.Kind.sha1) {
-            sha1Checksum = getPristineSHA1(wcRootAbsPath, sha1Checksum);
+        assert (checksum != null);
+        if (checksum.getKind() != SvnChecksum.Kind.sha1) {
+            //i.e. checksum has kind "md5"
+            checksum = getPristineSHA1(wcRootAbsPath, checksum);
         }
-        assert (sha1Checksum.getKind() == SvnChecksum.Kind.sha1);
+        assert (checksum.getKind() == SvnChecksum.Kind.sha1);
         DirParsedInfo parseDir = parseDir(wcRootAbsPath, Mode.ReadWrite);
         SVNWCDbDir pdh = parseDir.wcDbDir;
         verifyDirUsable(pdh);
         
-        SvnWcDbPristines.removePristine(pdh.getWCRoot(), sha1Checksum);
+        SvnWcDbPristines.removePristine(pdh.getWCRoot(), checksum);
     }
 
     public WCDbAdditionInfo scanAddition(File localAbsPath, AdditionInfoField... fields) throws SVNException {

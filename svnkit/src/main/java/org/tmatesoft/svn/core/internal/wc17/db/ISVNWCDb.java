@@ -728,13 +728,13 @@ public interface ISVNWCDb {
      * ### This is temporary - callers should not be looking at the file
      * directly.
      */
-    File getPristinePath(File wcRootAbsPath, SvnChecksum sha1Checksum) throws SVNException;
+    File getPristinePath(File wcRootAbsPath, SvnChecksum checksum) throws SVNException;
 
     /**
      * Get a readable stream that will yield the pristine text identified by
      * CHECKSUM (### which should/must be its SHA-1 checksum?).
      */
-    InputStream readPristine(File wcRootAbsPath, SvnChecksum sha1Checksum) throws SVNException;
+    InputStream readPristine(File wcRootAbsPath, SvnChecksum checksum) throws SVNException;
 
     /**
      * Get a directory in which the caller should create a uniquely named file
@@ -781,7 +781,7 @@ public interface ISVNWCDb {
      * pristine store, if it is not referenced by any of the (other) WC DB
      * tables.
      */
-    void removePristine(File wcRootAbsPath, SvnChecksum sha1Checksum) throws SVNException;
+    void removePristine(File wcRootAbsPath, SvnChecksum checksum) throws SVNException;
 
     /** Remove all unreferenced pristines belonging to WRI_ABSPATH in DB. */
     void cleanupPristine(File wcRootAbsPath) throws SVNException;
@@ -790,7 +790,7 @@ public interface ISVNWCDb {
      * Check for presence, according to the given mode (on how hard we should
      * examine things)
      */
-    boolean checkPristine(File wcRootAbsPath, SvnChecksum sha1Checksum) throws SVNException;
+    boolean checkPristine(File wcRootAbsPath, SvnChecksum checksum) throws SVNException;
     
     /** svn cp WCPATH WCPATH ... can copy mixed base/working around */
     void opCopy(File srcAbsPath, File dstAbspath, SVNSkel workItems) throws SVNException;

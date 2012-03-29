@@ -1,7 +1,5 @@
 package org.tmatesoft.svn.core.internal.wc17.db;
 
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnChecksum;
-
 import java.io.File;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -22,11 +20,13 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
-import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODES__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.PRISTINE__Fields;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.core.wc2.SvnChecksum;
 import org.tmatesoft.svn.util.SVNLogType;
+
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnChecksum;
 
 public class SvnWcDbPristines extends SvnWcDbShared {
 	
@@ -137,7 +137,7 @@ public class SvnWcDbPristines extends SvnWcDbShared {
 	    
 	 public static boolean checkPristine(SVNWCDbRoot root, SvnChecksum sha1Checksum) throws SVNException {
 	        boolean haveRow = false;
-	        SVNSqlJetStatement stmt = root.getSDb().getStatement(SVNWCDbStatements.SELECT_PRISTINE_SHA1_CHECKSUM);
+	        SVNSqlJetStatement stmt = root.getSDb().getStatement(SVNWCDbStatements.SELECT_PRISTINE_MD5_CHECKSUM);
 	        stmt.bindf("s", sha1Checksum);
 	        try {
 	            haveRow = stmt.next();
@@ -156,7 +156,7 @@ public class SvnWcDbPristines extends SvnWcDbShared {
 	 }
 
 	 public static SvnChecksum getPristineSHA1(SVNWCDbRoot root, SvnChecksum md5Checksum) throws SVNException {
-	        SVNSqlJetStatement stmt = root.getSDb().getStatement(SVNWCDbStatements.SELECT_PRISTINE_MD5_CHECKSUM);
+	        SVNSqlJetStatement stmt = root.getSDb().getStatement(SVNWCDbStatements.SELECT_PRISTINE_SHA1_CHECKSUM);
 	        try {
 	            stmt.bindChecksum(1, md5Checksum);
 	            boolean have_row = stmt.next();
