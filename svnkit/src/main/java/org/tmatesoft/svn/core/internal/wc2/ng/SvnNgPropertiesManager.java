@@ -39,6 +39,9 @@ import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
+import org.tmatesoft.svn.core.wc.SVNPropertyData;
+import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.core.wc2.hooks.ISvnPropertyValueProvider;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -94,11 +97,16 @@ public class SvnNgPropertiesManager {
 
     public static void setProperty(final SVNWCContext context, File path, final String propertyName, final SVNPropertyValue propertyValue, SVNDepth depth, final boolean skipChecks, 
             final ISVNEventHandler eventHandler, Collection<String> changelists) throws SVNException {
-        setProperty(context, path, propertyName, propertyValue, null, depth, skipChecks, eventHandler, changelists);
+        setProperty(context, path, propertyName, propertyValue, null, depth, skipChecks, eventHandler, null, changelists);
+    }
+
+    public static void setProperty(final SVNWCContext context, File path, final String propertyName, final SVNPropertyValue propertyValue, SVNDepth depth, final boolean skipChecks, 
+            final ISVNEventHandler eventHandler, final ISvnObjectReceiver<SVNPropertyData> receiver, Collection<String> changelists) throws SVNException {
+        setProperty(context, path, propertyName, propertyValue, null, depth, skipChecks, eventHandler, receiver, changelists);
     }
 
     public static void setProperty(final SVNWCContext context, File path, final String propertyName, final SVNPropertyValue propertyValue, final ISvnPropertyValueProvider pvProvider, SVNDepth depth, final boolean skipChecks, 
-            final ISVNEventHandler eventHandler, Collection<String> changelists) throws SVNException {
+            final ISVNEventHandler eventHandler, final ISvnObjectReceiver<SVNPropertyData> receiver, final Collection<String> changelists) throws SVNException {
         if (propertyName != null) {
             if (SVNProperty.isEntryProperty(propertyName)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_PROP_KIND, "Property ''{0}'' is an entry property", propertyName);
@@ -131,12 +139,12 @@ public class SvnNgPropertiesManager {
             if (!context.matchesChangelist(path, changelists)) {
                 return;
             }
-            setProperty(context, path, kind, propertyName, propertyValue, pvProvider, skipChecks, eventHandler);
+            setProperty(context, path, kind, propertyName, propertyValue, pvProvider, skipChecks, eventHandler, receiver);
         } else {
             context.nodeWalkChildren(path, new SVNWCContext.ISVNWCNodeHandler() {
                 public void nodeFound(File localAbspath, SVNWCDbKind kind) throws SVNException {
                     try {
-                        setProperty(context, localAbspath, kind.toNodeKind(), propertyName, propertyValue, pvProvider, skipChecks, eventHandler);
+                        setProperty(context, localAbspath, kind.toNodeKind(), propertyName, propertyValue, pvProvider, skipChecks, eventHandler, receiver);
                     } catch (SVNException e) {
                         if (e.getErrorMessage().getErrorCode() == SVNErrorCode.ILLEGAL_TARGET ||
                                 e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_INVALID_SCHEDULE) {
@@ -150,7 +158,7 @@ public class SvnNgPropertiesManager {
     }
 
     private static void setProperty(final SVNWCContext context, final File path, SVNNodeKind kind, String propertyName, SVNPropertyValue value, 
-            ISvnPropertyValueProvider pvProvider, boolean skipChecks, ISVNEventHandler eventHandler) throws SVNException {
+            ISvnPropertyValueProvider pvProvider, boolean skipChecks, ISVNEventHandler eventHandler, ISvnObjectReceiver<SVNPropertyData> receiver) throws SVNException {
         Structure<NodeInfo> nodeInfo = context.getDb().readInfo(path, NodeInfo.status);
         ISVNWCDb.SVNWCDbStatus status = nodeInfo.get(NodeInfo.status);
         if (status != SVNWCDbStatus.Normal && status != SVNWCDbStatus.Added && status != SVNWCDbStatus.Incomplete) {
@@ -261,6 +269,9 @@ public class SvnNgPropertiesManager {
         context.getDb().opSetProps(path, properties, null, clearRecordedInfo, workItems);
         if (workItems != null) {
             context.wqRun(path);
+        }
+        if (receiver != null) {
+            receiver.receive(SvnTarget.fromFile(path), new SVNPropertyData(propertyName, value, context.getOptions()));
         }
         if (eventHandler != null) {
             SVNEvent event = SVNEventFactory.createSVNEvent(path, SVNNodeKind.NONE, 

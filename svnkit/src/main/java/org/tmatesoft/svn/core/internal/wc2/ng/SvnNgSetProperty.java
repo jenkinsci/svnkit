@@ -38,16 +38,20 @@ public class SvnNgSetProperty extends SvnNgOperationRunner<SVNPropertyData, SvnS
             }
             File lockedPath = context.acquireWriteLock(localAbsPath, false, true);
             try {                
-                SvnNgPropertiesManager.setProperty(getWcContext(), localAbsPath, getOperation().getPropertyName(), 
-                        getOperation().getPropertyValue(), getOperation().getDepth(), 
-                        getOperation().isForce(), getOperation().getEventHandler(),
+                SvnNgPropertiesManager.setProperty(getWcContext(), 
+                        localAbsPath, 
+                        getOperation().getPropertyName(), 
+                        getOperation().getPropertyValue(), 
+                        getOperation().getPropertyValueProvider(), 
+                        getOperation().getDepth(), 
+                        getOperation().isForce(), 
+                        getOperation().getEventHandler(),
+                        getOperation(),
                         getOperation().getApplicableChangelists());
             } finally {
                 context.releaseWriteLock(lockedPath);
             }
-            
         }
-        
         return getOperation().first();
     }
 
