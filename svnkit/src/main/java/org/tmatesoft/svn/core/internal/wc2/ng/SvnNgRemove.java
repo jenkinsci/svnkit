@@ -87,7 +87,7 @@ public class SvnNgRemove extends SvnNgOperationRunner<Void, SvnScheduleForRemova
                             (status.getPropertiesStatus() != SVNStatusType.STATUS_NONE &&
                             status.getPropertiesStatus() != SVNStatusType.STATUS_NORMAL)) {
                     err = SVNErrorMessage.create(SVNErrorCode.CLIENT_MODIFIED, 
-                    "''{0}'' has local modiciations -- commit or revert them first", target.getFile());
+                    "''{0}'' has local modifications -- commit or revert them first", target.getFile());
                 }
                 if (err != null) {
                     SVNErrorManager.error(err, SVNLogType.WC);
