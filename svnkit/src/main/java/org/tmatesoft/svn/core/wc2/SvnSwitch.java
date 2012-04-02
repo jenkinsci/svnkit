@@ -6,7 +6,6 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -21,14 +20,6 @@ import org.tmatesoft.svn.util.SVNLogType;
  * <code>switchTarget</code> from scratch.
  * 
  * <p/>
- * <code>revision</code> must represent a valid revision number (
- * {@link SVNRevision#getNumber()} >= 0), or date (
- * {@link SVNRevision#getDate()} != <span class="javakeyword">true</span>),
- * or be equal to {@link SVNRevision#HEAD}. If <code>revision</code> does
- * not meet these requirements, an exception with the error code
- * {@link SVNErrorCode#CLIENT_BAD_REVISION} is thrown.
- * 
- * <p/>
  * If <code>depth</code> is {@link SVNDepth#INFINITY}, switches fully
  * recursively. Else if it is {@link SVNDepth#IMMEDIATES}, switches
  * <code>target</code> and its file children (if any), and switches
@@ -38,24 +29,21 @@ import org.tmatesoft.svn.util.SVNLogType;
  * nothing underneath it.
  * 
  * <p/>
- * If externals are {@link #isIgnoreExternals() ignored}, doesn't process
+ * If externals are ignored (<code>ignoreExternals</code> is <code>true</code>), doesn't process
  * externals definitions as part of this operation.
  * 
  * <p/>
- * If <code>allowUnversionedObstructions</code> is <span
- * class="javakeyword">true</span> then the switch tolerates existing
+ * If <code>allowUnversionedObstructions</code> is <code>true</code> then the switch tolerates existing
  * unversioned items that obstruct added paths. Only obstructions of the
  * same type (file or directory) as the added item are tolerated. The text of
  * obstructing files is left as-is, effectively treating it as a user
  * modification after the switch. Working properties of obstructing items
  * are set equal to the base properties. If
- * <code>allowUnversionedObstructions</code> is <span
- * class="javakeyword">false</span> then the switch will abort if there are
+ * <code>allowUnversionedObstructions</code> is <code>false</code> then the switch will abort if there are
  * any unversioned obstructing items.
  * 
  * <p/>
- * If the caller's {@link ISVNEventHandler} is non-<span
- * class="javakeyword">null</span>, it is invoked for paths affected by the
+ * If the caller's {@link ISVNEventHandler} is non-<code>null</code>, it is invoked for paths affected by the
  * switch, and also for files restored from text-base. Also
  * {@link ISVNEventHandler#checkCancelled()} will be used at various places
  * during the switch to check whether the caller wants to stop the switch.
@@ -65,7 +53,22 @@ import org.tmatesoft.svn.util.SVNLogType;
  * on the same machine, network connection is established).
  * 
  * <p/>
+ * {@link #run()} method returns value of the revision value to which the working copy was actually
+ * switched.
+ * 
+ * <p/>
  * {@link #run()} method returns value of the revision to which the working copy was actually switched.
+ *             	<ul>
+ *             <li/>exception with {@link SVNErrorCode#UNSUPPORTED_FEATURE}
+ *             	error code - if <code>target</code> is not in the repository yet
+ *             <li/>exception with {@link SVNErrorCode#ENTRY_MISSING_URL} error code 
+ *        		- if <code>switchTarget</code> directory has no URL
+ *        		<li/>exception with {@link SVNErrorCode#WC_INVALID_SWITCH} error code 
+ *        		- if <code>switchTarget</code> is not the same repository as <code>target</code>'s repository
+ *       		<li/>exception with {@link SVNErrorCode#CLIENT_UNRELATED_RESOURCES} error code 
+ *        		- if <code>ignoreAncestry</code> is <code>false</code> and  
+ *        		<code>switchTarget</code> shares no common ancestry with <code>target</code>
+ *        		</ul>
  * 
  * @author TMate Software Ltd.
  * @version 1.7

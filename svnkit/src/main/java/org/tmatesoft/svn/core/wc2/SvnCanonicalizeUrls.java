@@ -1,9 +1,8 @@
 package org.tmatesoft.svn.core.wc2;
 
 /**
- * Operation for calculation canonicalize all URLs in the specified Working Copy.
- * Operation's <code>target</code> is destination working copy path.
- * 
+ * Canonicalizes all urls in the working copy <code>target</code>.
+ *  
  * @author TMate Software Ltd.
  * @version 1.7
  */

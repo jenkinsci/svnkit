@@ -2,6 +2,7 @@ package org.tmatesoft.svn.core.wc2;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
@@ -41,7 +42,7 @@ import org.tmatesoft.svn.core.wc.SVNEventAction;
 * Unlocks paths in the repository, unless <code>keepLocks</code> is <code>true</code>.
 * 
 * <p/>
-* {@link #getApplicableChangelists()} used as a restrictive filter on items that are committed; that is,
+* <code>changelists</code> used as a restrictive filter on items that are committed; that is,
 * doesn't commit anything unless it's a member of one of those changelists.
 * After the commit completes successfully, removes changelist associations
 * from the targets, unless <code>keepChangelist</code> is set. If
@@ -53,6 +54,36 @@ import org.tmatesoft.svn.core.wc.SVNEventAction;
 * to be committed.
 *
 * {@link #run()} returns {@link SVNCommitInfo} information about new committed revision.
+* 
+* {@link #run()} throws {@link org.tmatesoft.svn.core.SVNException} in the following cases:
+*             <ul>
+*             <li/>exception with {@link SVNErrorCode#UNSUPPORTED_FEATURE} error code 
+*             - if it is commit from different working copies belonging to different repositories
+*             <li/>exception with {@link SVNErrorCode#CLIENT_PROPERTY_NAME} error code 
+*             - if there is standard Subversion property among revision properties
+*             <li/>exception with {@link SVNErrorCode#WC_FOUND_CONFLICT} error code 
+*             - if item is remaining in conflict
+*             <li/>exception with {@link SVNErrorCode#ILLEGAL_TARGET} error code 
+*             - if item is not under version control
+*             or item's parent is not known to exist in the repository and is not part of the commit, yet item is part of the commit
+*             <li/>exception with {@link SVNErrorCode#WC_PATH_NOT_FOUND} error code 
+*             - if item is scheduled for addition within unversioned parent
+*             or item is scheduled for addition, but is missing
+*             <li/>exception with {@link SVNErrorCode#NODE_UNKNOWN_KIND} error code 
+*             - if item is of unknown kind
+*             <li/>exception with {@link SVNErrorCode#NODE_UNEXPECTED_KIND} error code 
+*             - item has unexpectedly changed special status
+*             <li/>exception with {@link SVNErrorCode#WC_NOT_LOCKED} error code 
+*             - if working copy directory/file is missing
+*             <li/>exception with {@link SVNErrorCode#CLIENT_DUPLICATE_COMMIT_URL} error code 
+*             - if operation trying to commit different items referring to the same URL
+*             <li/>exception with {@link SVNErrorCode#BAD_URL} error code 
+*             - if working copy directory/file is missing
+*             <li/>exception with {@link SVNErrorCode#WC_NOT_LOCKED} error code 
+*             - if operation cannot compute base URL for commit operation
+*             <li/>exception with {@link SVNErrorCode#WC_CORRUPT_TEXT_BASE} error code 
+*             - if working copy is corrupted
+*             </ul>
 * 
 * @author TMate Software Ltd.
 * @version 1.7

@@ -11,7 +11,7 @@ import org.tmatesoft.svn.core.wc.ISVNCommitParameters;
  * <p>
  * To bring your commit parameters into usage, simply pass them to 
  * a committer object, for example, to 
- * {@link SvnCommit#setCommitParameters(ISVNCommitParameters) SvnCommit}. 
+ * {@link SvnCommit#setCommitParameters(ISvnCommitParameters) SvnCommit}. 
  * 
  * @author TMate Software Ltd.
  * @version 1.7

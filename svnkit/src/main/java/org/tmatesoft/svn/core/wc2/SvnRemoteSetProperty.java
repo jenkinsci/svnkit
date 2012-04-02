@@ -11,7 +11,7 @@ import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 /**
- * Sets <code>propertyName</code> to <code>propertyValue</code> on each operation's target. 
+ * Sets <code>propertyName</code> to <code>propertyValue</code> on each <code>targets</code>. 
  * If <code>propertyValue</code> is <code>null</code>, operation will delete the property.
  * Targets should represent URLs.
  * 
@@ -72,7 +72,7 @@ public class SvnRemoteSetProperty extends AbstractSvnCommit {
     * If <code>force</code> is <code>true</code>, this
     * operation does no validity checking. But if <code>force</code> is <code>false</code>, 
     * and <code>propertyName</code> is not a
-    * valid property for operation's target, it throws an exception, either with
+    * valid property for <code>targets</code>, it throws an exception, either with
     * an error code {@link org.tmatesoft.svn.core.SVNErrorCode#ILLEGAL_TARGET}
     * (if the property is not appropriate for target), or with
     * {@link org.tmatesoft.svn.core.SVNErrorCode#BAD_MIME_TYPE} (if

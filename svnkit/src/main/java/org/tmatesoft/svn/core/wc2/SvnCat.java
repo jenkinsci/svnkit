@@ -13,9 +13,10 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
  * <p/>
  * The actual node 
  * revision selected is determined by the <code>target</code> as it exists in 
- * {@link SvnTarget#getPegRevision()}. If <code>target</code> is URL and {@link SvnTarget#getPegRevision()} is 
+ * <code>target</code>'s <code>pegRevision</code>. 
+ * If <code>target</code> is URL and its <code>pegRevision</code> is 
  * {@link SVNRevision#UNDEFINED}, then it defaults to {@link SVNRevision#HEAD}. 
- * If <code>target</code> is local and {@link SvnTarget#getPegRevision()} is 
+ * If <code>target</code> is local and its <code>pegRevision</code> is 
  * {@link SVNRevision#UNDEFINED}, then it defaults to {@link SVNRevision#WORKING}.
  * 
  * <p/>

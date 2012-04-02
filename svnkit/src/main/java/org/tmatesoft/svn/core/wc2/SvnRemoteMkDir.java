@@ -1,14 +1,15 @@
 package org.tmatesoft.svn.core.wc2;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 
 /**
- * Creates directory(s) in a repository. 
+ * Creates directory(ies) in a repository. 
  * 
  * <p/>
- * All operation's targets should be URLs, representing repository locations to be created. 
+ * All <code>targets</code> should be URLs, representing repository locations to be created. 
  * URLs can be from multiple repositories.
  * 
  * <p/>
@@ -18,17 +19,26 @@ import org.tmatesoft.svn.core.wc.SVNEventAction;
  * standard Subversion properties.
  * 
  * <p/>
- * {@link #getCommitHandler() Commit handler} will be asked for a commit log
- * message.
+ * <code>commitHandler</code> will be asked for a commit log message.
  * 
  * <p/>
- * If the caller's {@link ISVNEventHandler event handler} is not <span
- * class="javakeyword">null</span> and if the commit succeeds, the handler
+ * If the caller's {@link ISVNEventHandler event handler} is not <code>null</code> and if the commit succeeds, the handler
  * will be called with {@link SVNEventAction#COMMIT_COMPLETED} event action.
  * 
  * <p/>
  * {@link #run()} method returns {@link org.tmatesoft.svn.core.SVNCommitInfo} information on a new revision as the result of the commit.
- * This method throws SVNException if URL does not exist.
+ * 
+ * {@link #run()} throws {@link org.tmatesoft.svn.core.SVNException} in the following cases:
+ *             <ul>
+ *             <li/>exception with {@link SVNErrorCode#RA_ILLEGAL_URL} error code 
+ *             - if cannot compute common root url for <code>targets</code>, 
+ *             <code>targets</code> can refer to different repositories
+ *             <li/>exception with {@link SVNErrorCode#CLIENT_PROPERTY_NAME} error code 
+ *             - if there is standard Subversion property among revision properties
+ *             <li/>exception with {@link SVNErrorCode#FS_NOT_FOUND} error code 
+ *             - if some of the <code>targets</code> does not exist
+ *             </ul>
+ * 
  * 
  * @author TMate Software Ltd.
  * @version 1.7

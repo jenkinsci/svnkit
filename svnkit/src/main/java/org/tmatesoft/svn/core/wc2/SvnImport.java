@@ -23,15 +23,14 @@ import org.tmatesoft.svn.core.wc.SVNEventAction;
  * {@link SVNEventAction#COMMIT_COMPLETED} event action.
  * 
  * <p/>
- * If non-<span class="javakeyword">null</span>,
+ * If non-<code>null</code>,
  * <code>revisionProperties</code> holds additional, custom revision
  * properties (<code>String</code> names mapped to {@link SVNPropertyValue}
  * values) to be set on the new revision. This table cannot contain any
  * standard Subversion properties.
  * 
  * <p/>
- * {@link #getCommitHandler() Commit handler} will be asked for a commit log
- * message.
+ * <code>commitHandler</code> will be asked for a commit log message.
  * 
  * <p/>
  * If <code>depth</code> is {@link SVNDepth#EMPTY}, imports just
@@ -99,7 +98,7 @@ public class SvnImport extends AbstractSvnCommit {
 
     /**
      * Sets source of the import. If <code>source</code> is a directory, the contents of that directory are
-     * imported directly into the directory identified by operation's target.
+     * imported directly into the directory identified by <code>target</code>.
      * Note that the directory itself is not imported -- that
      * is, the base name of directory is not part of the import.
      * 

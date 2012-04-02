@@ -1,10 +1,13 @@
 package org.tmatesoft.svn.core.wc2;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.wc2.SvnOperation;
 
 /**
  * Represents cleanup operation. Recursively cleans up the working copy, removing locks and resuming
  * unfinished operations.
+ * 
+ * <code>Target</code> should represent working copy path.
  * 
  * <p/>
  * If you ever get a "working copy locked" error, use this method to remove
@@ -17,8 +20,10 @@ import org.tmatesoft.svn.core.wc2.SvnOperation;
  * <p/>
  * {@link #run()} method throws  {@link org.tmatesoft.svn.core.SVNException} if one of the following is true:
  * <ul>
- * <li><code>path</code> does not exist <li><code>path</code>'s
- * parent directory is not under version control
+ * <li>exception with {@link SVNErrorCode#ILLEGAL_TARGET} error code 
+ * - if <code>target</code> is URL
+ * <li>exception with {@link SVNErrorCode#WC_NOT_WORKING_COPY} error code 
+ * - if <code>target</code> is not under version control
  * </ul>
  *             
  * @author TMate Software Ltd.
@@ -43,7 +48,7 @@ public class SvnCleanup extends SvnOperation<Void> {
     }
 
     /**
-     * Sets whether or not DAV specific <span class="javastring">"svn:wc:"</span> properties
+     * Sets whether or not DAV specific <code">"svn:wc:"</code> properties
      * should be removed from the working copy
      * 
      * @param deleteWCProperties <code>true</code> if properties will be removed, otherwise <code>false</code>

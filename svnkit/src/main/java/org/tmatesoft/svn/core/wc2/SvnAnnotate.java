@@ -47,22 +47,18 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
  * {@link #run()} method returns {@link SvnAnnotateItem} information reported by the operation.
  * {@link #run()} throws {@link org.tmatesoft.svn.core.SVNException} in the following cases:
  *             <ul>
- *             <li/>exception with {@link SVNErrorCode#CLIENT_BAD_REVISION}
- *             error code - if <code>startRevision</code> is older than <code>
- *             endRevision</code> 
- *             <li/>exception with {@link SVNErrorCode#CLIENT_BAD_REVISION}
- *             error code - if both <code>startRevision</code> and <code>
- *             endRevision</code> are either <code>null</code> or
+ *             <li/>exception with {@link SVNErrorCode#CLIENT_BAD_REVISION} error code 
+ *             - if <code>startRevision</code> is older than <code> endRevision</code> 
+ *             <li/>exception with {@link SVNErrorCode#CLIENT_BAD_REVISION} error code 
+ *             - if both <code>startRevision</code> and <code> endRevision</code> are either <code>null</code> or
  *             {@link SVNRevision#isValid() invalid} 
- *             <li/>exception with
- *             {@link SVNErrorCode#CLIENT_IS_BINARY_FILE} error code - if
- *             any of the revisions of <code>target</code>'s path have a binary
+ *             <li/>exception with {@link SVNErrorCode#CLIENT_IS_BINARY_FILE} error code 
+ *             - if any of the revisions of <code>target</code>'s path have a binary
  *             mime-type, unless <code>ignoreMimeType</code> is <code>true</code>, in which case blame
  *             information will be generated regardless of the MIME types of
  *             the revisions
- *             <li/>exception with
- *             {@link SVNErrorCode#UNSUPPORTED_FEATURE} error code - if
- *             either <code>startRevision</code> or <code>endRevision
+ *             <li/>exception with {@link SVNErrorCode#UNSUPPORTED_FEATURE} error code - 
+ *             if either <code>startRevision</code> or <code>endRevision
  *             </code> is {@link SVNRevision#WORKING} (for SVN 1.6 working copy only).
  *             </ul>
  * 

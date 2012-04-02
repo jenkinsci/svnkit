@@ -24,7 +24,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * {@link SVNRevision#HEAD} will remain the same as each path is updated.
  * 
  * <p/>
- * If externals are {@link #isIgnoreExternals() ignored}, doesn't process
+ * If externals are ignored (<code>ignoreExternals</code> is <code>true</code>), doesn't process
  * externals definitions as part of this operation.
  * 
  * <p/>
@@ -69,6 +69,17 @@ import org.tmatesoft.svn.util.SVNLogType;
  * <p/>
  * {@link #run()} method returns an array of <code>long</code> revisions with each element set to
  * the revision to which <code>revision</code> was resolved.
+ * 
+ * {@link #run()} throws {@link org.tmatesoft.svn.core.SVNException} in the following cases:
+ *             	<ul>
+ *             	<li/>exception with {@link SVNErrorCode#ILLEGAL_TARGET} error code 
+ *             	- if <code>target</code> is not a local path
+ *             	<li/>exception with {@link SVNErrorCode#RA_ILLEGAL_URL} error code 
+ *             	- if external item at the <code>revision</code> doesn't exist, 
+ *             	or if external item at the <code>revision</code> is not file or a directory
+ *            	<li/>exception with {@link SVNErrorCode#ENTRY_MISSING_URL} error code 
+ *        		- if working copy item that has no URL
+ *        		</ul>
  * 
  * @author TMate Software Ltd.
  * @version 1.7

@@ -16,7 +16,7 @@ import org.tmatesoft.svn.core.SVNException;
  * 
  * <ul>
  * <li>
- * <b> If {@link #isDisjoint()} and {@link #isVirtual()} are <code>false</code>:</b>
+ * <b> If <code>disjoint</code> and <code>virtual</code> are <code>false</code>:</b>
  * 
  * <p/>
  * If multiple <code>sources</code> are given, <code>target</code> must be a
@@ -72,7 +72,7 @@ import org.tmatesoft.svn.core.SVNException;
  * 
  * <li>
  * 
- * <b> If {@link #isDisjoint()} is <code>true</code>:</b>
+ * <b> If <code>disjoint</code> is <code>true</code>:</b>
  * 
  * <p/>
  * <code>Targets</code> represent the roots of the working copies located in another working copies.
@@ -110,7 +110,7 @@ import org.tmatesoft.svn.core.SVNException;
  * </li>
  * <li>
  * 
- * <b> If {@link #isVirtual()} is <code>true</code>:</b>
+ * <b> If <code>virtual</code> is <code>true</code>:</b>
  * 
  * <p/>
  * Copies/moves administrative version control information of a source files

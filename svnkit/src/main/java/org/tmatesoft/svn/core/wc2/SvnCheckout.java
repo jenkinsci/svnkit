@@ -10,8 +10,8 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
- * Represents checkout operation. Checks out a working copy of {@link #getSource()} <code>target</code> at revision,
- * looked up at {@link SvnTarget#getPegRevision()}, using operation targets as the
+ * Represents checkout operation. Checks out a working copy of <code>source</code> at revision,
+ * looked up at {@link SvnTarget#getPegRevision()}, using <code>target</code> as the
  * root directory of the newly checked out working copy.
  * 
  * <p/>
@@ -19,7 +19,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * defaults to {@link SVNRevision#HEAD}.
  * 
  * <p/>
- * If {@link #getDepth()} is {@link SVNDepth#INFINITY}, checks out fully
+ * If <code>depth</depth> is {@link SVNDepth#INFINITY}, checks out fully
  * recursively. Else if it is {@link SVNDepth#IMMEDIATES}, checks out
  * source <code>target</code> and its immediate entries (subdirectories will be
  * present, but will be at depth {@link SVNDepth#EMPTY} themselves); else
@@ -29,26 +29,27 @@ import org.tmatesoft.svn.util.SVNLogType;
  * present.
  * 
  * <p/>
- * If {@link #getDepth()} is {@link SVNDepth#UNKNOWN}, then behave as if for
+ * If <code>depth</depth> is {@link SVNDepth#UNKNOWN}, then behave as if for
  * {@link SVNDepth#INFINITY}, except in the case of resuming a previous
- * checkout of operation targets (i.e., updating), in which case uses the
+ * checkout of <code>target</code> (i.e., updating), in which case uses the
  * depth of the existing working copy.
  * 
  * <p/>
- * If externals are {@link #isIgnoreExternals() ignored}, doesn't process
+ * If externals are ignored (<code>ignoreExternals</code> is <code>true</code>), doesn't process
  * externals definitions as part of this operation.
  * 
  * <p/>
- * If  {@link #isAllowUnversionedObstructions()} is <code>true</code> 
+ * If <code>isAllowUnversionedObstructions</code> is <code>true</code> 
  * then the checkout tolerates existing
  * unversioned items that obstruct added paths from source target. Only
  * obstructions of the same type (file or directory) as the added item are
  * tolerated. The text of obstructing files is left as-is, effectively
  * treating it as a user modification after the checkout. Working properties
  * of obstructing items are set equal to the base properties. If
- * {@link #isAllowUnversionedObstructions()} is <code>false</code> 
+ * <code>isAllowUnversionedObstructions</code> is <code>false</code> 
  * then the checkout will abort if there
  * are any unversioned obstructing items.
+ * 
  * <p/>
  * If the caller's {@link ISVNEventHandler} is non-<code>null</code>, 
  * it is invoked as the checkout processes.
@@ -62,6 +63,24 @@ import org.tmatesoft.svn.util.SVNLogType;
  *
  * <p/>
  * {@link #run()} method returns value of the revision actually checked out from the repository.
+ * 
+ * <p/>
+ * {@link #run()} throws {@link org.tmatesoft.svn.core.SVNException} in the following cases:
+ *             <ul>
+ *             <li/>exception with {@link SVNErrorCode#UNSUPPORTED_FEATURE}
+ *             error code - if <code>target</code>'s URL refers to a file rather than a directory 
+ *             <li/>exception with {@link SVNErrorCode#RA_ILLEGAL_URL} error code 
+ *             - if <code>target</code>'s URL
+ *             does not exist, or if external item at the <code>revision</code> doesn't exist, 
+ *             or if external item at the <code>revision</code> is not file or a directory
+ *             <li/>exception with {@link SVNErrorCode#WC_OBSTRUCTED_UPDATE} error code  
+ *             - if the working copy item 
+ *             is already a working copy item for a different URL 
+ *             <li/>exception with {@link SVNErrorCode#WC_NODE_KIND_CHANGE} error code 
+ *             - if local file is already exists with the same name that incoming added directory
+ *        	   <li/>exception with {@link SVNErrorCode#ENTRY_MISSING_URL} error code 
+ *        		- if working copy item that has no URL
+ *       </ul>
  * 
  * @author TMate Software Ltd.
  * @version 1.7

@@ -28,13 +28,20 @@ import org.tmatesoft.svn.util.SVNLogType;
  * <li/>{@link SVNRevision#BASE}
  * <li/>{@link SVNRevision#WORKING}
  * <li/>{@link SVNRevision#COMMITTED}
- * <li/>{@link SVNRevision#UNDEFINED}
  * </ul>
  * then local export is performed. Otherwise exporting from the repository.
+ * If <code>revision</code> is {@link SVNRevision#UNDEFINED} it defaults to {@link SVNRevision#WORKING}.
  * 
  * <p/>
- * If externals are {@link #isIgnoreExternals() ignored}, doesn't process
+ * If externals are ignored (<code>ignoreExternals</code> is <code>true</code>), doesn't process
  * externals definitions as part of this operation.
+ * 
+ * <p/>
+ * <code>eolStyle</code> allows you to override the standard eol marker on
+ * the platform you are running on. Can be either "LF", "CR" or "CRLF" or
+ * <code>null</code>. If <code>null</code> will use the standard eol marker. Any
+ * other value will cause an exception with the error code
+ * {@link SVNErrorCode#IO_UNKNOWN_EOL} error to be returned.
  * 
  * <p>
  * If <code>depth</code> is {@link SVNDepth#INFINITY}, exports fully
@@ -49,6 +56,16 @@ import org.tmatesoft.svn.util.SVNLogType;
  * <p/>
  * {@link #run()} method returns value of the revision actually exported.
  * 
+ * <p/>
+ * {@link #run()} throws {@link org.tmatesoft.svn.core.SVNException} in the following cases:
+ *             <ul>
+ *             <li/>exception with {@link SVNErrorCode#IO_ERROR} error code 
+ *             - if <code>target</code>'s directory already exists and <code>force</code> is <code>false</code>
+ *             <li/>exception with {@link SVNErrorCode#ILLEGAL_TARGET} error code 
+ *             - if destination file already exists and <code>force</code> is <code>false</code>,
+ *             	or if destination directory exists and should be overridden by source file
+ *             </ul>
+ *              
  * @author TMate Software Ltd.
  * @version 1.7
  */

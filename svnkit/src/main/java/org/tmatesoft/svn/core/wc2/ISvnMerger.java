@@ -19,7 +19,7 @@ import org.tmatesoft.svn.core.wc.SVNDiffOptions;
  * 
  * @author TMate Software Ltd.
  * @version 1.7
- * @see DefaultSvnMerger
+ * @see org.tmatesoft.svn.core.internal.wc17.DefaultSvnMerger
  */
 public interface ISvnMerger extends ISVNMerger {
     

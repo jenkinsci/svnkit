@@ -301,7 +301,7 @@ public class SVNUpdateClient16 extends SVNBasicDelegate {
      * @param depth
      *            tree depth to update
      * @param allowUnversionedObstructions
-     *            flag that allows tollerating unversioned items during update
+     *            flag that allows tolerating unversioned items during update
      * @param depthIsSticky
      *            flag that controls whether the requested depth should be
      *            written to the working copy
@@ -763,7 +763,7 @@ public class SVNUpdateClient16 extends SVNBasicDelegate {
      * @param depth
      *            tree depth to update
      * @param allowUnversionedObstructions
-     *            flag that allows tollerating unversioned items during update
+     *            flag that allows tolerating unversioned items during update
      * @param depthIsSticky
      *            flag that controls whether the requested depth should be
      *            written into the working copy
@@ -899,7 +899,7 @@ public class SVNUpdateClient16 extends SVNBasicDelegate {
      * @param depth
      *            tree depth
      * @param allowUnversionedObstructions
-     *            flag that allows tollerating unversioned items during
+     *            flag that allows tolerating unversioned items during
      * @return value of the revision actually checked out from the repository
      * @throws SVNException
      *             <ul>
