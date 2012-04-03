@@ -397,7 +397,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
                     MergeSource source1 = (MergeSource) o1;
                     MergeSource source2 = (MergeSource) o2;
                     long src1Rev1 = source1.rev1;
-                    long src2Rev1 = source2.rev2;
+                    long src2Rev1 = source2.rev1;
                     if (src1Rev1 == src2Rev1) {
                         return 0;
                     }
