@@ -551,8 +551,15 @@ public class DAVConnection {
         }
         // update location to be a path!
         if (status.getHeader().hasHeader(HTTPHeader.LOCATION_HEADER)) {
-            SVNURL location = SVNURL.parseURIEncoded(status.getHeader().getFirstHeaderValue(HTTPHeader.LOCATION_HEADER));
-            status.getHeader().setHeaderValue(HTTPHeader.LOCATION_HEADER, location.getURIEncodedPath());
+            String location = null;
+            final String locationHeaderValue = status.getHeader().getFirstHeaderValue(HTTPHeader.LOCATION_HEADER);
+            if (locationHeaderValue.startsWith("/")) {
+                location = locationHeaderValue;
+            } else {
+                SVNURL url = SVNURL.parseURIEncoded(status.getHeader().getFirstHeaderValue(HTTPHeader.LOCATION_HEADER));
+                location = url.getURIEncodedPath();
+            }
+            status.getHeader().setHeaderValue(HTTPHeader.LOCATION_HEADER, location);
         }
         return status;
     }
