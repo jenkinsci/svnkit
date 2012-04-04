@@ -11,7 +11,7 @@ buildscript {
             snapshotTimeout = org.gradle.api.internal.artifacts.ivyservice.GradleIBiblioResolver.ALWAYS
         }
     }
-    dependencies { classpath 'org.tmatesoft.build:build:0.9.8-SNAPSHOT' }
+    dependencies { classpath 'org.tmatesoft.build:build:0.9.8' }
 }
 
 task wrapper(type: Wrapper) {}
