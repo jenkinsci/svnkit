@@ -18,7 +18,6 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.auth.BasicAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationManagerExt;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -71,9 +70,6 @@ public class SVNTunnelConnector extends SVNAbstractTunnelConnector {
         } 
         SVNDebugLog.getDefaultLog().logFinest(SVNLogType.NETWORK, "tunnel command: " + expandedTunnel);
         open(repository, expandedTunnel);
-        if (authManager instanceof ISVNAuthenticationManagerExt) {
-            ((ISVNAuthenticationManagerExt)authManager).acknowledgeConnectionSuccessful(repository.getLocation());
-        }
     }
 
     private static String expandTunnelSpec(String name, String tunnelSpec) throws SVNException {
