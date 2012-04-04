@@ -83,9 +83,9 @@ project(':svnkit') {
 project(':svnkit-javahl16') {
     dependencies {
         compile project(path: ':svnkit')
-        compile 'org.apache.subversion:svn-javahl-api:1.7.0-SNAPSHOT'
+        compile 'org.apache.subversion:svn-javahl-api:1.7.4'
 
-        testCompile 'org.apache.subversion:svn-javahl-tests:1.7.0-SNAPSHOT'
+        testCompile 'org.apache.subversion:svn-javahl-tests:1.7.4'
     }
     artifacts { maven jar, sourcesJar }
 }
