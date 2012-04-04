@@ -1,4 +1,4 @@
-setPropertyDefaultValue('buildPluginRepositoryURL', 'http://maven.tmatesoft.com/content/public/')
+setPropertyDefaultValue('buildPluginRepositoryURL', 'http://maven.tmatesoft.com/content/groups/public/')
 
 if (!project.hasProperty('mavenProxyRepository.url')) {
     setPropertyDefaultValue('mavenTMateSoftSnapshotsRepository.url', 'http://maven.tmatesoft.com/content/repositories/snapshots/')
