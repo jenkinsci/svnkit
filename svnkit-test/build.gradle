@@ -3,11 +3,11 @@ configurations {
     svnBinaries16 
 }
 dependencies {
-    pythonTests16 'org.tigris.subversion:svn-python-tests:1.6.18-SNAPSHOT@tgz'
+    pythonTests16 'org.tigris.subversion:svn-python-tests:1.6.18@tgz'
     if (project.hasProperty('svn17binaries')) {
-        svnBinaries16 'org.apache.subversion:svn-binaries:1.7.0-SNAPSHOT@tgz'
+        svnBinaries16 'org.apache.subversion:svn-binaries:1.7.4@tgz'
     } else {
-        svnBinaries16 'org.tigris.subversion:svn-binaries:1.6.18-SNAPSHOT@tgz'
+        svnBinaries16 'org.tigris.subversion:svn-binaries:1.6.18@tgz'
     }
 }
 
