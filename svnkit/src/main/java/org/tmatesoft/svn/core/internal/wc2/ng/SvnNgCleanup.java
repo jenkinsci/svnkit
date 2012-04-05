@@ -82,7 +82,7 @@ public class SvnNgCleanup extends SvnNgOperationRunner<Void, SvnCleanup> {
     	wcContext.getDb().releaseWCLock(localAbsPath);
     }
     
-    private void repairTimestamps(SVNWCContext wcContext, File localAbsPath) throws SVNException {
+    public static void repairTimestamps(SVNWCContext wcContext, File localAbsPath) throws SVNException {
     	wcContext.checkCancelled();
     	WCDbInfo info = wcContext.getDb().readInfo(localAbsPath, InfoField.status, InfoField.kind);
     	if (info.status == ISVNWCDb.SVNWCDbStatus.ServerExcluded
