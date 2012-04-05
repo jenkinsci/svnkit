@@ -39,10 +39,11 @@ public class SvnOldCommit extends SvnOldRunner<SVNCommitInfo, SvnCommit> impleme
                 paths, getOperation().isKeepLocks(), getOperation().isForce(), getOperation().getDepth(), true, changelists);
         if (packets != null && packets.length == 1) {
             return SvnCodec.commitPacket(this, packets[0]);
+        } else  if (packets != null && packets.length > 1) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
+                    "Commit from different working copies belonging to different repositories is not supported");
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
-        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
-                "Commit from different working copies belonging to different repositories is not supported");
-        SVNErrorManager.error(err, SVNLogType.WC);
         return null;
     }
 

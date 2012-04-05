@@ -79,6 +79,12 @@ public class CommitTest {
                     "message", null, null, false, true, SVNDepth.INFINITY);
             Assert.assertNotNull(info);
             Assert.assertEquals(2, info.getNewRevision());
+
+            final SVNCommitInfo info2 = ci.doCommit(new File[] {path}, 
+                    false, 
+                    "message", null, null, false, true, SVNDepth.INFINITY);
+            Assert.assertNotNull(info2);
+            Assert.assertEquals(-1, info2.getNewRevision());
         } finally {
             svnOperationFactory.dispose();
             sandbox.dispose();

@@ -1076,8 +1076,11 @@ public class SVNCommitClient extends SVNBasicClient {
             commit.setApplicalbeChangelists(Arrays.asList(changelists));
         }
         
-        SvnCommitPacket packet = commit.collectCommitItems();        
-        return new SVNCommitPacket[] {SvnCodec.commitPacket(commit, packet)};
+        SvnCommitPacket packet = commit.collectCommitItems();  
+        if (packet != null) {
+            return new SVNCommitPacket[] {SvnCodec.commitPacket(commit, packet)};
+        }
+        return new SVNCommitPacket[0];
     }
 
 }
