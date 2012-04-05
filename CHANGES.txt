@@ -1,3 +1,9 @@
+== version 1.7.4-rc5 ==
+
++ All snapshot dependencies are replaced with fixed versions.
++ NPE on remote proplist opertation fixed.
++ Incompatibility with GitHub Subversion bridge fixed (commit did not work) 
+
 == version 1.7.4-rc4 ==
 
 + Fixed issue with Eclipse update site.
