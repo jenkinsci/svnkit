@@ -78,7 +78,7 @@ public class SvnRemoteStatusTest {
         commitBuilder.commit();
 
         // move
-        WorkingCopy wc = sandbox.checkoutNewWorkingCopy(url, -1, wcGeneration);
+        WorkingCopy wc = sandbox.checkoutNewWorkingCopy(url, -1, true, wcGeneration);
         final SvnOperationFactory svnOperationFactory = wc.getOperationFactory();
         
         // make changes
@@ -129,7 +129,7 @@ public class SvnRemoteStatusTest {
         commitBuilder.commit();
 
         // move
-        WorkingCopy wc = sandbox.checkoutNewWorkingCopy(url, -1, wcGeneration);
+        WorkingCopy wc = sandbox.checkoutNewWorkingCopy(url, -1, true, wcGeneration);
         
         // make changes
         final CommitBuilder remoteChange = new CommitBuilder(url);

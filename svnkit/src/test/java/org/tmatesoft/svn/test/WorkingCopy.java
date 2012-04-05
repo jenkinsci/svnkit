@@ -81,8 +81,11 @@ public class WorkingCopy {
     public long checkoutLatestRevision(SVNURL repositoryUrl) throws SVNException {
         return checkoutRevision(repositoryUrl, SVNRepository.INVALID_REVISION);
     }
-
     public long checkoutRevision(SVNURL repositoryUrl, long revision) throws SVNException {
+        return checkoutRevision(repositoryUrl, revision, true);
+    }
+
+    public long checkoutRevision(SVNURL repositoryUrl, long revision, boolean ignoreExternals) throws SVNException {
         disposeLogger();
         SVNFileUtil.deleteFile(getLogFile());
 
@@ -91,7 +94,7 @@ public class WorkingCopy {
         log("Checking out " + repositoryUrl);
 
         final SvnCheckout checkout = getOperationFactory().createCheckout();
-        checkout.setIgnoreExternals(true);
+        checkout.setIgnoreExternals(ignoreExternals);
 
         this.repositoryUrl = repositoryUrl;
 

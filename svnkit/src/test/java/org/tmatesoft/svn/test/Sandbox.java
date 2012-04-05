@@ -88,13 +88,13 @@ public class Sandbox {
     }
 
     public WorkingCopy checkoutNewWorkingCopy(SVNURL repositoryUrl, long revision) throws SVNException {
-        return checkoutNewWorkingCopy(repositoryUrl, revision, TestUtil.getDefaultWcGeneration());
+        return checkoutNewWorkingCopy(repositoryUrl, revision, true, TestUtil.getDefaultWcGeneration());
     }
     
-    public WorkingCopy checkoutNewWorkingCopy(SVNURL repositoryUrl, long revision, SvnWcGeneration wcGeneration) throws SVNException {
+    public WorkingCopy checkoutNewWorkingCopy(SVNURL repositoryUrl, long revision, boolean ignoreExternals, SvnWcGeneration wcGeneration) throws SVNException {
         final WorkingCopy workingCopy = new WorkingCopy(getTestOptions(), createWorkingCopyDirectory());
         workingCopy.setWcGeneration(wcGeneration);
-        workingCopy.checkoutRevision(repositoryUrl, revision);
+        workingCopy.checkoutRevision(repositoryUrl, revision, ignoreExternals);
         workingCopies.add(workingCopy);
         return workingCopy;
     }
