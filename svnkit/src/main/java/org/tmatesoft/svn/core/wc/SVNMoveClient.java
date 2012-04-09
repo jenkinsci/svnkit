@@ -17,9 +17,11 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc16.SVNMoveClient16;
+import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc2.SvnCopy;
 import org.tmatesoft.svn.core.wc2.SvnCopySource;
+import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 /**
@@ -155,15 +157,28 @@ public class SVNMoveClient extends SVNBasicClient {
      *             </ul>
      */
     public void doMove(File src, File dst) throws SVNException {
-        try {
-            SVNMoveClient16 oldClient = new SVNMoveClient16(getOperationsFactory().getAuthenticationManager(), getOptions());
-            oldClient.doMove(src, dst);
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                SvnCopy cp = getOperationsFactory().createCopy();
-                cp.setSingleTarget(SvnTarget.fromFile(dst));
-                cp.addCopySource(SvnCopySource.create(SvnTarget.fromFile(src), SVNRevision.WORKING));
-                cp.run();
+        final SvnWcGeneration srcGeneration = SvnOperationFactory.detectWcGeneration(src, true, false);
+        final SvnWcGeneration dstGeneration = SvnOperationFactory.detectWcGeneration(dst, true, true);
+        if (srcGeneration == SvnWcGeneration.V17 && dstGeneration == SvnWcGeneration.V17) {
+            final SvnCopy copy = getOperationsFactory().createCopy();
+            copy.setMove(true);
+            copy.setSingleTarget(SvnTarget.fromFile(dst));
+            copy.addCopySource(SvnCopySource.create(SvnTarget.fromFile(src), SVNRevision.WORKING));
+            copy.setFailWhenDstExists(true);
+            copy.run();
+        } else {
+            try {
+                final SVNMoveClient16 oldClient = new SVNMoveClient16(getOperationsFactory().getAuthenticationManager(), getOptions());
+                oldClient.doMove(src, dst);
+            } catch (SVNException e) {
+                if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                    final SvnCopy cp = getOperationsFactory().createCopy();
+                    cp.setMove(true);
+                    cp.setSingleTarget(SvnTarget.fromFile(dst));
+                    cp.addCopySource(SvnCopySource.create(SvnTarget.fromFile(src), SVNRevision.WORKING));
+                    cp.setFailWhenDstExists(true);
+                    cp.run();
+                }
             }
         }
     }
