@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.tmatesoft.svn.core.SVNCommitInfo;
@@ -467,6 +468,7 @@ public class DiffTest {
 
     @Test
     public void testGitDiffFormatForCopiedFile() throws Exception {
+        Assume.assumeTrue(TestUtil.isNewWorkingCopyTest());
         final TestOptions options = TestOptions.getInstance();
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
@@ -526,6 +528,7 @@ public class DiffTest {
 
     @Test
     public void testGitDiffFormatForMovedFile() throws Exception {
+        Assume.assumeTrue(TestUtil.isNewWorkingCopyTest());
         final TestOptions options = TestOptions.getInstance();
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
