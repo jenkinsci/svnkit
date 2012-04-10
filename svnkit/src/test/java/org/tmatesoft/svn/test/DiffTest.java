@@ -183,7 +183,7 @@ public class DiffTest {
         final TestOptions options = TestOptions.getInstance();
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
-        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testLocalDiffOneFile", options);
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testLocalToRemoteDiffOneFile", options);
         try {
             final SVNURL url = sandbox.createSvnRepository();
 
@@ -200,15 +200,29 @@ public class DiffTest {
             final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
 
             final File file = new File(workingCopyDirectory, "directory/file");
+            final SVNURL anotherFileUrl = url.appendPath("directory/anotherFile", false);
 
             final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            final SvnDiffGenerator diffGenerator = new SvnDiffGenerator();
 
             final SvnDiff diff = svnOperationFactory.createDiff();
-            diff.setSources(SvnTarget.fromFile(file, SVNRevision.WORKING), SvnTarget.fromURL(url.appendPath("directory/anotherFile", false), SVNRevision.create(1)));
+            diff.setSources(SvnTarget.fromFile(file, SVNRevision.WORKING), SvnTarget.fromURL(anotherFileUrl, SVNRevision.create(1)));
             diff.setOutput(byteArrayOutputStream);
+            diff.setDiffGenerator(diffGenerator);
             diff.run();
 
-            //TODO finish the test
+            final String actualDiffOutput = byteArrayOutputStream.toString();
+            final String expectedDiffOutput = "Index: " + file + "\n" +
+                    "===================================================================\n" +
+                    "--- " + file + "\t(..." + file + ")\t(working copy)\n" +
+                    "+++ " + file + "\t(.../" + anotherFileUrl + ")\t(revision 1)\n" +
+                    "@@ -1 +1 @@\n" +
+                    "-contents2\n" +
+                    "\\ No newline at end of file\n" +
+                    "+anotherContents\n" +
+                    "\\ No newline at end of file\n";
+
+            Assert.assertEquals(expectedDiffOutput, actualDiffOutput);
         } finally {
             svnOperationFactory.dispose();
             sandbox.dispose();

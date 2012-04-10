@@ -5,6 +5,8 @@ import java.io.OutputStream;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.DefaultSVNDiffGenerator;
 import org.tmatesoft.svn.core.wc.ISVNDiffGenerator;
@@ -40,8 +42,8 @@ public class SvnNewDiffGenerator implements ISVNDiffGenerator {
     }
 
     public void init(String anchorPath1, String anchorPath2) {
-        generator.setOriginalTargets(getTarget(anchorPath1), getTarget(anchorPath2));
-        generator.setAnchors(getTarget(anchorPath1), getTarget(anchorPath2));
+        generator.setOriginalTargets(getAbsoluteTarget(anchorPath1), getAbsoluteTarget(anchorPath2));
+        generator.setAnchors(getAbsoluteTarget(anchorPath1), getAbsoluteTarget(anchorPath2));
     }
 
     public void setBasePath(File basePath) {
@@ -132,6 +134,18 @@ public class SvnNewDiffGenerator implements ISVNDiffGenerator {
 
     private SvnTarget getTarget(String path) {
         //TODO:
-        return SvnTarget.fromFile(new File(path));
+        return SvnTarget.fromFile(SVNFileUtil.createFilePath(path));
+    }
+
+    private SvnTarget getAbsoluteTarget(String path) {
+        if (SVNPathUtil.isURL(path)) {
+            try {
+                return SvnTarget.fromURL(SVNURL.parseURIEncoded(path));
+            } catch (SVNException e) {
+                return SvnTarget.fromFile(SVNFileUtil.createFilePath(path));
+            }
+        } else {
+            return SvnTarget.fromFile(SVNFileUtil.createFilePath(path));
+        }
     }
 }
