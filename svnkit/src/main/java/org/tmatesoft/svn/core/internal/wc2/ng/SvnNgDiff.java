@@ -232,7 +232,8 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
         }
 
         ISvnDiffGenerator generator = getDiffGenerator();
-        generator.init(SvnTarget.fromURL(anchor1), SvnTarget.fromURL(anchor2));
+        generator.setOriginalTargets(SvnTarget.fromURL(url1), SvnTarget.fromURL(url2));
+        generator.setAnchors(SvnTarget.fromURL(anchor1), SvnTarget.fromURL(anchor2));
         if (getOperation().isUseGitDiffFormat()) {
             if (repositoryRoot == null) {
                 repositoryRoot = repository.getRepositoryRoot(true);
@@ -312,15 +313,19 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
             url1 = getRepositoryAccess().getLocations(null, target1, pegRevision, revision1, SVNRevision.UNDEFINED).get(SvnRepositoryAccess.LocationsInfo.startUrl);
 
             if (!reverse) {
-                generator.init(SvnTarget.fromURL(url1), SvnTarget.fromURL(anchorUrl.appendPath(target, false)));
+                generator.setOriginalTargets(SvnTarget.fromURL(url1), SvnTarget.fromURL(anchorUrl.appendPath(target, false)));
+                generator.setAnchors(SvnTarget.fromURL(url1), SvnTarget.fromURL(anchorUrl.appendPath(target, false)));
             } else {
-                generator.init(SvnTarget.fromURL(anchorUrl.appendPath(target, false)), SvnTarget.fromURL(url1));
+                generator.setOriginalTargets(SvnTarget.fromURL(anchorUrl.appendPath(target, false)), SvnTarget.fromURL(url1));
+                generator.setAnchors(SvnTarget.fromURL(anchorUrl.appendPath(target, false)), SvnTarget.fromURL(url1));
             }
         } else {
             if (!reverse) {
-                generator.init(target1, target2);
+                generator.setOriginalTargets(target1, target2);
+                generator.setAnchors(target1, target2);
             } else {
-                generator.init(target2, target1);
+                generator.setOriginalTargets(target2, target1);
+                generator.setAnchors(target2, target1);
             }
         }
 
@@ -382,7 +387,8 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
         }
 
         final ISvnDiffGenerator generator = getDiffGenerator();
-        generator.init(target1, target2);
+        generator.setOriginalTargets(target1, target2);
+        generator.setAnchors(target1, target2);
 
         if (getOperation().isUseGitDiffFormat()) {
             generator.setRepositoryRoot(SvnTarget.fromFile(getWcContext().getDb().getWCRoot(target1.getFile())));

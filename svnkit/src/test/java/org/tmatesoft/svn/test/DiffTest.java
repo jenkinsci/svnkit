@@ -54,19 +54,24 @@ public class DiffTest {
             final SVNURL url1 = url.appendPath("directory/file1", false);
             final SVNURL url2 = url.appendPath("directory/file2", false);
 
-            final String actualDiffOutput = runDiff(svnOperationFactory, url1, svnRevision, url2, svnRevision);
+            final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            final SvnDiffGenerator diffGenerator = new SvnDiffGenerator();
+            diffGenerator.setBasePath(new File(""));
+
+            final SvnDiff diff = svnOperationFactory.createDiff();
+            diff.setSources(SvnTarget.fromURL(url1, svnRevision), SvnTarget.fromURL(url2, svnRevision));
+            diff.setDiffGenerator(diffGenerator);
+            diff.setOutput(byteArrayOutputStream);
+            diff.run();
+
+            final String actualDiffOutput = new String(byteArrayOutputStream.toByteArray()).replace(System.getProperty("line.separator"), "\n");
             final String expectedDiffOutput = "Index: file1" + "\n" +
                     "===================================================================" + "\n" +
                     "--- file1\t(.../file1)\t(revision 1)" + "\n" +
                     "+++ file1\t(.../file2)\t(revision 1)" + "\n" +
-                    "@@ -1 +0,0 @@" + "\n" +
+                    "@@ -1 +1 @@" + "\n" +
                     "-contents1\n" +
                     "\\ No newline at end of file" + "\n" +
-                    "Index: file1" + "\n" +
-                    "===================================================================" + "\n" +
-                    "--- file1\t(.../file1)\t(revision 0)" + "\n" +
-                    "+++ file1\t(.../file2)\t(revision 1)" + "\n" +
-                    "@@ -0,0 +1 @@" + "\n" +
                     "+contents2" + "\n" +
                     "\\ No newline at end of file" + "\n";
 
@@ -100,7 +105,17 @@ public class DiffTest {
 
             final SVNURL fileUrl = url.appendPath("directory/file", false);
 
-            final String actualDiffOutput = runDiff(svnOperationFactory, fileUrl, startRevision, endRevision);
+            final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            final SvnDiffGenerator diffGenerator = new SvnDiffGenerator();
+            diffGenerator.setBasePath(new File(""));
+
+            final SvnDiff diff = svnOperationFactory.createDiff();
+            diff.setSource(SvnTarget.fromURL(fileUrl, startRevision), startRevision, endRevision);
+            diff.setOutput(byteArrayOutputStream);
+            diff.setDiffGenerator(diffGenerator);
+            diff.run();
+
+            final String actualDiffOutput = new String(byteArrayOutputStream.toByteArray()).replace(System.getProperty("line.separator"), "\n");
 
             final String expectedDiffOutput = "Index: file" + "\n" +
                     "===================================================================" + "\n" +

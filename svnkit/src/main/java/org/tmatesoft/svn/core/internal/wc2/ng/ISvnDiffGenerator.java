@@ -9,7 +9,9 @@ import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 public interface ISvnDiffGenerator {
 
-    void init(SvnTarget originalTarget1, SvnTarget originalTarget2);
+    void setOriginalTargets(SvnTarget originalTarget1, SvnTarget originalTarget2);
+
+    void setAnchors(SvnTarget anchor1, SvnTarget anchor2);
 
     public void setBaseTarget(SvnTarget baseTarget);
 

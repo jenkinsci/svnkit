@@ -112,9 +112,13 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
         this.useGitFormat = useGitFormat;
     }
 
-    public void init(SvnTarget originalTarget1, SvnTarget originalTarget2) {
+    public void setOriginalTargets(SvnTarget originalTarget1, SvnTarget originalTarget2) {
         this.originalTarget1 = originalTarget1;
         this.originalTarget2 = originalTarget2;
+    }
+
+    public void setAnchors(SvnTarget originalTarget1, SvnTarget originalTarget2) {
+        //anchors are not used
     }
 
     public void setRepositoryRoot(SvnTarget repositoryRoot) {
