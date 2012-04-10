@@ -432,50 +432,6 @@ public class DiffTest {
     }
 
     @Test
-    public void testDiffLocalRelativeTarget() throws Exception {
-        final TestOptions options = TestOptions.getInstance();
-
-        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
-        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testDiffLocalRelativeTarget", options);
-        try {
-            final SVNURL url = sandbox.createSvnRepository();
-
-            final CommitBuilder commitBuilder = new CommitBuilder(url);
-            commitBuilder.addFile("directory/file");
-            commitBuilder.commit();
-
-            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, SVNRevision.HEAD.getNumber());
-            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
-
-            final File absoluteFile = new File(workingCopyDirectory, "directory/file");
-            final File relativeFile = new File(SVNPathUtil.getRelativePath(
-                    new File("").getAbsolutePath().replace(File.separatorChar, '/'),
-                    absoluteFile.getAbsolutePath().replace(File.separatorChar, '/')
-            ));
-
-            TestUtil.writeFileContentsString(absoluteFile, "new contents");
-
-            final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-
-            SvnDiff diff = svnOperationFactory.createDiff();
-            diff.setSources(SvnTarget.fromFile(relativeFile, SVNRevision.BASE), SvnTarget.fromFile(relativeFile, SVNRevision.WORKING));
-            diff.setIgnoreAncestry(true);
-            diff.setOutput(byteArrayOutputStream);
-            diff.run();
-
-            final String actualDiffOutput = new String(byteArrayOutputStream.toByteArray()).replace(System.getProperty("line.separator"), "\n");
-            final String expectedDiffOutput = "";
-
-            Assert.assertEquals(expectedDiffOutput, actualDiffOutput);
-
-
-        } finally {
-            svnOperationFactory.dispose();
-            sandbox.dispose();
-        }
-    }
-
-    @Test
     public void testOldDiffGeneratorIsCalledOnCorrectPaths() throws Exception {
         final TestOptions options = TestOptions.getInstance();
 
