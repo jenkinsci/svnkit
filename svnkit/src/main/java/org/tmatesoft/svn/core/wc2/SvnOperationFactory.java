@@ -227,6 +227,7 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
     private ISVNEventHandler eventHandler;
     private ISVNOptions options;
     private ISVNRepositoryPool repositoryPool;
+    private ISvnOperationHandler operationHandler;
     
     private boolean autoCloseContext;
     private boolean autoDisposeRepositoryPool;
@@ -489,6 +490,17 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
     }
 
     /**
+     * Get a callback that is called before and after each operation
+     * @return a callback that is called before and after each operation
+     */
+    public ISvnOperationHandler getOperationHandler() {
+        if (operationHandler == null) {
+            operationHandler = ISvnOperationHandler.NOOP;
+        }
+        return operationHandler;
+    }
+
+    /**
      * Gets the pool of repositories.
      * If pool is not created, creates {@link DefaultSVNRepositoryPool} 
      * with the authentication manager, options, and <code>autoDisposeRepositoryPool</code> = <code>true</code>.
@@ -579,6 +591,14 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
         setAutoDisposeRepositoryPool(repositoryPool == null);
     }
     
+    /**
+     * Sets a callback that is called before and after each operation
+     * @param operationHandler callback to call before and after operation
+     */
+    public void setOperationHandler(ISvnOperationHandler operationHandler) {
+        this.operationHandler = operationHandler;
+    }
+
     /**
      * Disposes context and repository pool if needed.
      */
@@ -1197,7 +1217,13 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
             try {
                 wcContext = obtainWcContext();
                 runner.setWcContext(wcContext);
-                return runner.run(operation);
+                getOperationHandler().beforeOperation(operation);
+                Object result = runner.run(operation);
+                getOperationHandler().afterOperationSuccess(operation);
+                return result;
+            } catch (SVNException e) {
+                getOperationHandler().afterOperationFailure(operation);
+                throw e;
             } finally {
                 runLevel--;
                 if (runLevel == 0) {
