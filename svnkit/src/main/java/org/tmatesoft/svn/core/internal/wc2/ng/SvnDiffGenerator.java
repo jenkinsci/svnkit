@@ -32,6 +32,7 @@ import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.ISVNReturnValueCallback;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -139,7 +140,13 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
     }
 
     public String getGlobalEncoding() {
-        return null; //TODO
+        ISVNOptions options = getOptions();
+
+        if (options != null && options instanceof DefaultSVNOptions) {
+            DefaultSVNOptions defaultOptions = (DefaultSVNOptions) options;
+            return defaultOptions.getGlobalCharset();
+        }
+        return null;
     }
 
     public void setEOL(byte[] eol) {
@@ -1026,6 +1033,10 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
 
     public void setOptions(ISVNOptions options) {
         this.options = options;
+    }
+
+    public ISVNOptions getOptions() {
+        return options;
     }
 
     private class EmptyDetectionWriter extends Writer {
