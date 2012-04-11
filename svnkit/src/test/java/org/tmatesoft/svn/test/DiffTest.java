@@ -688,6 +688,44 @@ public class DiffTest {
         }
     }
 
+    @Test
+    public void testEolSupportInDiffGenerator() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testEolSupportInDiffGenerator", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("file");
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url);
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+
+            final File file = new File(workingCopyDirectory, "file");
+            TestUtil.writeFileContentsString(file, "new contents");
+
+            final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            final SvnDiffGenerator diffGenerator = new SvnDiffGenerator();
+            diffGenerator.setBasePath(new File(""));
+            diffGenerator.setEOL(SVNProperty.EOL_CR_BYTES); //set CR as EOL
+
+            final SvnDiff diff = svnOperationFactory.createDiff();
+            diff.setSources(SvnTarget.fromFile(file, SVNRevision.BASE), SvnTarget.fromFile(file, SVNRevision.WORKING));
+            diff.setOutput(byteArrayOutputStream);
+            diff.setDiffGenerator(diffGenerator);
+            diff.run();
+
+            final String diffOutput = byteArrayOutputStream.toString();
+            Assert.assertFalse(diffOutput.contains("\n")); //LF is not EOL anymore
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
     private void diffFiles(SVNURL url, final SVNRevision fromVersion, final SVNRevision toVersion, final ISVNDiffGenerator diffGenerator) throws SVNException {
         DefaultSVNOptions options = SVNWCUtil.createDefaultOptions(true);
         final DefaultSVNRepositoryPool pool = new DefaultSVNRepositoryPool(SVNWCUtil.createDefaultAuthenticationManager(), options);

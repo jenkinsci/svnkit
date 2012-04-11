@@ -394,6 +394,7 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
             Map properties = new SVNHashMap();
 
             properties.put(QDiffGeneratorFactory.IGNORE_EOL_PROPERTY, Boolean.valueOf(getDiffOptions().isIgnoreEOLStyle()));
+            properties.put(QDiffGeneratorFactory.EOL_PROPERTY, new String(getEOL()));
             if (getDiffOptions().isIgnoreAllWhitespace()) {
                 properties.put(QDiffGeneratorFactory.IGNORE_SPACE_PROPERTY, QDiffGeneratorFactory.IGNORE_ALL_SPACE);
             } else if (getDiffOptions().isIgnoreAmountOfWhitespace()) {
@@ -657,6 +658,7 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
                 Map properties = new SVNHashMap();
 
                 properties.put(QDiffGeneratorFactory.IGNORE_EOL_PROPERTY, Boolean.valueOf(getDiffOptions().isIgnoreEOLStyle()));
+                properties.put(QDiffGeneratorFactory.EOL_PROPERTY, new String(getEOL()));
                 properties.put(QDiffGeneratorFactory.HUNK_DELIMITER, "##");
                 if (getDiffOptions().isIgnoreAllWhitespace()) {
                     properties.put(QDiffGeneratorFactory.IGNORE_SPACE_PROPERTY, QDiffGeneratorFactory.IGNORE_ALL_SPACE);
