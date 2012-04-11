@@ -1,7 +1,6 @@
 package org.tmatesoft.svn.core.wc2;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.wc2.SvnOperation;
 
 /**
  * Represents cleanup operation. Recursively cleans up the working copy, removing locks and resuming
@@ -57,4 +56,12 @@ public class SvnCleanup extends SvnOperation<Void> {
         this.deleteWCProperties = deleteWCProperties;
     }
 
+    /**
+     * Gets whether the operation changes working copy
+     * @return <code>true</code> if the operation changes the working copy, otherwise <code>false</code>
+     */
+    @Override
+    public boolean isChangesWorkingCopy() {
+        return true;
+    }
 }

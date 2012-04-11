@@ -62,6 +62,12 @@ public class SvnRevert extends SvnOperation<Void> {
         return Integer.MAX_VALUE;
     }
     
-    
-
+    /**
+     * Gets whether the operation changes working copy
+     * @return <code>true</code> if the operation changes the working copy, otherwise <code>false</code>
+     */
+    @Override
+    public boolean isChangesWorkingCopy() {
+        return true;
+    }
 }

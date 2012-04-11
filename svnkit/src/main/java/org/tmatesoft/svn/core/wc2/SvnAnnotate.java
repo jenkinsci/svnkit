@@ -206,7 +206,13 @@ public class SvnAnnotate extends SvnReceivingOperation<SvnAnnotateItem> {
     public void setDiffOptions(SVNDiffOptions diffOptions) {
     	this.diffOptions = diffOptions;
     }
-    
-    
 
+    /**
+     * Gets whether the operation changes working copy
+     * @return <code>true</code> if the operation changes the working copy, otherwise <code>false</code>
+     */
+    @Override
+    public boolean isChangesWorkingCopy() {
+        return false;
+    }
 }

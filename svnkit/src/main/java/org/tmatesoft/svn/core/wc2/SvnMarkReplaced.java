@@ -14,4 +14,13 @@ public class SvnMarkReplaced extends SvnOperation<Void> {
     protected SvnMarkReplaced(SvnOperationFactory factory) {
         super(factory);
     }
+
+    /**
+     * Gets whether the operation changes working copy
+     * @return <code>true</code> if the operation changes the working copy, otherwise <code>false</code>
+     */
+    @Override
+    public boolean isChangesWorkingCopy() {
+        return true;
+    }
 }

@@ -385,7 +385,15 @@ public class SvnOperation<V> implements ISvnOperationOptionsProvider {
     public boolean isUseParentWcFormat() {
         return false;
     }
-    
+
+    /**
+     * Gets whether the operation changes working copy
+     * @return <code>true</code> if the operation changes the working copy, otherwise <code>false</code>
+     */
+    public boolean isChangesWorkingCopy() {
+        return true;
+    }
+
     protected File getOperationalWorkingCopy() {
         if (hasFileTargets()) {
             return getFirstTarget().getFile();

@@ -138,5 +138,12 @@ public class SvnLogMergeInfo extends SvnReceivingOperation<SVNLogEntry> {
         }
     }
     
-    
+    /**
+     * Gets whether the operation changes working copy
+     * @return <code>true</code> if the operation changes the working copy, otherwise <code>false</code>
+     */
+    @Override
+    public boolean isChangesWorkingCopy() {
+        return false;
+    }
 }

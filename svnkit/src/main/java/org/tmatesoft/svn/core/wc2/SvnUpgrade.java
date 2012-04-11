@@ -1,7 +1,6 @@
 package org.tmatesoft.svn.core.wc2;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 
 /**
@@ -34,5 +33,14 @@ public class SvnUpgrade extends SvnOperation<SvnWcGeneration> {
     
     protected SvnUpgrade(SvnOperationFactory factory) {
         super(factory);
+    }
+
+    /**
+     * Gets whether the operation changes working copy
+     * @return <code>true</code> if the operation changes the working copy, otherwise <code>false</code>
+     */
+    @Override
+    public boolean isChangesWorkingCopy() {
+        return true;
     }
 }
