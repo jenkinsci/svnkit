@@ -11,3 +11,13 @@ test {
     enableAssertions = true
     systemProperty 'svnkit.wc.17', (project.svnVersion == '17')
 }
+
+javadoc {
+    excludes = ['**/internal/**']
+    options.breakIterator="yes"
+    options.stylesheetFile=new File("svnkit/src/javadoc/javadoc.css")
+    options.windowTitle="SVNKit $project.version Javadoc"
+    title="SVNKit $project.version Javadoc"
+    header="<![CDATA[<a target=\"_top\" href=\"http://svnkit.com/\"><span class=\"svnkit\">SVNKit</span>&nbsp;Home<a/>]]>"
+    bottom="<![CDATA[Copyright &#169; 2004-2012 TMate Software Ltd. All Rights Reserved.]]>"
+}
