@@ -411,10 +411,10 @@ class HTTPConnection implements IHTTPConnection {
                     SVNErrorManager.cancel(e.getMessage(), SVNLogType.NETWORK);
                 } else if (e instanceof SSLException) {                   
                     err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, 
-                            e.getMessage());
+                            e);
                 } else {
                     err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, 
-                            e.getMessage());
+                            e);
                 }
             } catch (SVNException e) {
                 myRepository.getDebugLog().logFine(SVNLogType.NETWORK, e);
