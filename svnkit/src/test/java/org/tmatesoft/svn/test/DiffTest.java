@@ -726,6 +726,59 @@ public class DiffTest {
         }
     }
 
+    @Test
+    public void testDiffDeleted() throws Exception {
+          final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testDiffDeleted", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder1 = new CommitBuilder(url);
+            commitBuilder1.addFile("file");
+            commitBuilder1.commit();
+
+            final CommitBuilder commitBuilder2 = new CommitBuilder(url);
+            commitBuilder2.delete("file");
+            commitBuilder2.commit();
+
+            final ByteArrayOutputStream diffNoDeletedOutputStream = new ByteArrayOutputStream();
+            final SvnDiffGenerator diffNoDeletedGenerator = new SvnDiffGenerator();
+            diffNoDeletedGenerator.setBasePath(new File(""));
+            diffNoDeletedGenerator.setDiffDeleted(false);
+
+            final SvnDiff diffNoDeleted = svnOperationFactory.createDiff();
+            diffNoDeleted.setSource(SvnTarget.fromURL(url, SVNRevision.create(1)), SVNRevision.create(1), SVNRevision.create(2));
+            diffNoDeleted.setOutput(diffNoDeletedOutputStream);
+            diffNoDeleted.setDiffGenerator(diffNoDeletedGenerator);
+            diffNoDeleted.run();
+
+            final String expectedDiffNoDeletedOutput = "Index: file (deleted)\n" +
+                    "===================================================================\n";
+            final String actualDiffNoDeletedOutput = diffNoDeletedOutputStream.toString();
+
+            final ByteArrayOutputStream diffDeletedOutputStream = new ByteArrayOutputStream();
+            final SvnDiffGenerator diffDeletedGenerator = new SvnDiffGenerator();
+            diffDeletedGenerator.setBasePath(new File(""));
+            diffDeletedGenerator.setDiffDeleted(true);
+
+            final SvnDiff diffDeleted = svnOperationFactory.createDiff();
+            diffDeleted.setSource(SvnTarget.fromURL(url, SVNRevision.create(1)), SVNRevision.create(1), SVNRevision.create(2));
+            diffDeleted.setOutput(diffDeletedOutputStream);
+            diffDeleted.run();
+
+            final String expectedDiffDeletedOutput = "";
+            final String actualDiffDeletedOutput = diffDeletedOutputStream.toString();
+
+            Assert.assertEquals(expectedDiffNoDeletedOutput, actualDiffNoDeletedOutput);
+            Assert.assertEquals(expectedDiffDeletedOutput, actualDiffDeletedOutput);
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
     private void diffFiles(SVNURL url, final SVNRevision fromVersion, final SVNRevision toVersion, final ISVNDiffGenerator diffGenerator) throws SVNException {
         DefaultSVNOptions options = SVNWCUtil.createDefaultOptions(true);
         final DefaultSVNRepositoryPool pool = new DefaultSVNRepositoryPool(SVNWCUtil.createDefaultAuthenticationManager(), options);
