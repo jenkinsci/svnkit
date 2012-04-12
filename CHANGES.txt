@@ -1,3 +1,9 @@
+== version 1.7.4 ==
+
++ Minor diff generator improvements
++ ISvnOperationHandler callback added to let users 
+  receive notifications before and after operation.
+
 == version 1.7.4-rc5 ==
 
 + All snapshot dependencies are replaced with fixed versions.
