@@ -13,7 +13,7 @@ public interface ISvnDiffGenerator {
 
     void setAnchors(SvnTarget anchor1, SvnTarget anchor2);
 
-    public void setBaseTarget(SvnTarget baseTarget);
+    void setBaseTarget(SvnTarget baseTarget);
 
     void setRepositoryRoot(SvnTarget repositoryRoot);
 
