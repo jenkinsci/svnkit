@@ -766,6 +766,7 @@ public class DiffTest {
             final SvnDiff diffDeleted = svnOperationFactory.createDiff();
             diffDeleted.setSource(SvnTarget.fromURL(url, SVNRevision.create(1)), SVNRevision.create(1), SVNRevision.create(2));
             diffDeleted.setOutput(diffDeletedOutputStream);
+            diffDeleted.setDiffGenerator(diffDeletedGenerator);
             diffDeleted.run();
 
             final String expectedDiffDeletedOutput = "";
