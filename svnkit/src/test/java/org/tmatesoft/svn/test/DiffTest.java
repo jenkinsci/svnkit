@@ -736,7 +736,7 @@ public class DiffTest {
             final SVNURL url = sandbox.createSvnRepository();
 
             final CommitBuilder commitBuilder1 = new CommitBuilder(url);
-            commitBuilder1.addFile("file");
+            commitBuilder1.addFile("file", "contents".getBytes());
             commitBuilder1.commit();
 
             final CommitBuilder commitBuilder2 = new CommitBuilder(url);
@@ -769,7 +769,13 @@ public class DiffTest {
             diffDeleted.setDiffGenerator(diffDeletedGenerator);
             diffDeleted.run();
 
-            final String expectedDiffDeletedOutput = "";
+            final String expectedDiffDeletedOutput = "Index: file\n" +
+                    "===================================================================\n" +
+                    "--- file\t(revision 1)\n" +
+                    "+++ file\t(revision 2)\n" +
+                    "@@ -1 +0,0 @@\n" +
+                    "-contents\n" +
+                    "\\ No newline at end of file\n";
             final String actualDiffDeletedOutput = diffDeletedOutputStream.toString();
 
             Assert.assertEquals(expectedDiffNoDeletedOutput, actualDiffNoDeletedOutput);
