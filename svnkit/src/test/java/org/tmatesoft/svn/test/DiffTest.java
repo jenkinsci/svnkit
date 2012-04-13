@@ -21,6 +21,7 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnDiffGenerator;
+import org.tmatesoft.svn.core.wc.DefaultSVNDiffGenerator;
 import org.tmatesoft.svn.core.wc.DefaultSVNRepositoryPool;
 import org.tmatesoft.svn.core.wc.ISVNDiffGenerator;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
@@ -780,6 +781,41 @@ public class DiffTest {
 
             Assert.assertEquals(expectedDiffNoDeletedOutput, actualDiffNoDeletedOutput);
             Assert.assertEquals(expectedDiffDeletedOutput, actualDiffDeletedOutput);
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testDiffAdded() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testDiffDeleted", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("file", "contents".getBytes());
+            commitBuilder.setFileProperty("file", "propertyName", SVNPropertyValue.create("propertyValue"));
+            commitBuilder.commit();
+
+            final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+
+            final DefaultSVNDiffGenerator oldDiffGenerator = new DefaultSVNDiffGenerator();
+            oldDiffGenerator.setDiffAdded(false);
+
+            final SvnDiff diff = svnOperationFactory.createDiff();
+            diff.setSource(SvnTarget.fromURL(url, SVNRevision.create(0)), SVNRevision.create(0), SVNRevision.create(1));
+            diff.setDiffGenerator(oldDiffGenerator);
+            diff.setOutput(byteArrayOutputStream);
+            diff.run();
+
+            final String expectedDiffOutput = "";
+            final String actualDiffOutput = byteArrayOutputStream.toString();
+
+            Assert.assertEquals(expectedDiffOutput, actualDiffOutput);
         } finally {
             svnOperationFactory.dispose();
             sandbox.dispose();
