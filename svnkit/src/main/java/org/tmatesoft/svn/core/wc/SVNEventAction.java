@@ -270,7 +270,7 @@ public class SVNEventAction {
      * An working copy directory was upgraded to the latest format
      * @since New in 1.7. 
      */
-    public static final SVNEventAction UPGRADED_PATH = new SVNEventAction(-3, "wc_upgrade");
+    public static final SVNEventAction UPGRADED_PATH = new SVNEventAction(50, "upgraded_path");
 
     /**
      * Denotes that tried adding a path that already exists.
@@ -294,68 +294,68 @@ public class SVNEventAction {
      * Denotes that a path has moved from one changelist to another.
      * @since 1.2.0, SVN 1.5.0
      */
-    public static final SVNEventAction CHANGELIST_MOVED = new SVNEventAction(31, "changelist_moved");
+    public static final SVNEventAction CHANGELIST_MOVED = new SVNEventAction(28, "changelist_moved");
 
     /**
      * Denotes that a merge operation (to path) has begun. See {@link SVNEvent#getMergeRange()}.
      * @since 1.2.0, SVN 1.5.0
      */
-    public static final SVNEventAction MERGE_BEGIN = new SVNEventAction(28, "merge_begin");
+    public static final SVNEventAction MERGE_BEGIN = new SVNEventAction(29, "merge_begin");
 
     /**
      * Denotes that a merge operation (to path) from a foreign repository has begun.
      * See {@link SVNEvent#getMergeRange()}.
      * @since 1.2.0, SVN 1.5.0
      */
-    public static final SVNEventAction FOREIGN_MERGE_BEGIN = new SVNEventAction(29, "foreign_merge_begin");
+    public static final SVNEventAction FOREIGN_MERGE_BEGIN = new SVNEventAction(30, "foreign_merge_begin");
 
     /**
      * Denotes a replace notification.
      * @since 1.2.0, SVN 1.5.0
      */
-    public static final SVNEventAction UPDATE_REPLACE = new SVNEventAction(30, "update_replace");
+    public static final SVNEventAction UPDATE_REPLACE = new SVNEventAction(31, "update_replace");
     /**
      * @since 1.3, SVN 1.6
      */
-    public static final SVNEventAction PROPERTY_ADD = new SVNEventAction(31, "property_added");
+    public static final SVNEventAction PROPERTY_ADD = new SVNEventAction(32, "property_added");
     /**
      * @since 1.3, SVN 1.6
      */
-    public static final SVNEventAction PROPERTY_MODIFY = new SVNEventAction(32, "property_modified");
+    public static final SVNEventAction PROPERTY_MODIFY = new SVNEventAction(33, "property_modified");
     /**
      * @since 1.3, SVN 1.6
      */
-    public static final SVNEventAction PROPERTY_DELETE = new SVNEventAction(33, "property_deleted");
+    public static final SVNEventAction PROPERTY_DELETE = new SVNEventAction(34, "property_deleted");
     /**
      * @since 1.3, SVN 1.6
      */
-    public static final SVNEventAction PROPERTY_DELETE_NONEXISTENT = new SVNEventAction(34, "property_deleted_nonexistent");
+    public static final SVNEventAction PROPERTY_DELETE_NONEXISTENT = new SVNEventAction(35, "property_deleted_nonexistent");
     /**
      * @since 1.3, SVN 1.6
      */
-    public static final SVNEventAction REVPROPER_SET = new SVNEventAction(35, "revprop_set");
+    public static final SVNEventAction REVPROPER_SET = new SVNEventAction(36, "revprop_set");
     /**
      * @since 1.3, SVN 1.6
      */
-    public static final SVNEventAction REVPROP_DELETE = new SVNEventAction(36, "revprop_deleted");
+    public static final SVNEventAction REVPROP_DELETE = new SVNEventAction(37, "revprop_deleted");
     /**
      * @since 1.3, SVN 1.6
      */
-    public static final SVNEventAction MERGE_COMPLETE = new SVNEventAction(37, "merge_completed");
+    public static final SVNEventAction MERGE_COMPLETE = new SVNEventAction(38, "merge_completed");
     /**
      * @since 1.3, SVN 1.6
      */
-    public static final SVNEventAction TREE_CONFLICT = new SVNEventAction(38, "tree_conflict");
+    public static final SVNEventAction TREE_CONFLICT = new SVNEventAction(39, "tree_conflict");
 
     /**
      * @since 1.3, SVN 1.6
      */
-    public static final SVNEventAction FAILED_EXTERNAL = new SVNEventAction(39, "failed_external");
+    public static final SVNEventAction FAILED_EXTERNAL = new SVNEventAction(40, "failed_external");
 
     /**
      * @since 1.4, SVN 1.7
      */
-    public static final SVNEventAction PATCH = new SVNEventAction(40, "patch");
+    public static final SVNEventAction PATCH = new SVNEventAction(53, "patch");
 
     /**
      * @since 1.4, SVN 1.7
@@ -365,72 +365,72 @@ public class SVNEventAction {
     /**
      * @since 1.4, SVN 1.7
      */
-    public static final SVNEventAction PATCH_REJECTED_HUNK = new SVNEventAction(42, "patch_rejected_hunk");
+    public static final SVNEventAction PATCH_REJECTED_HUNK = new SVNEventAction(55, "patch_rejected_hunk");
 
     /**
      * @since 1.4, SVN 1.7
      */
-    public static final SVNEventAction PATCH_APPLIED_HUNK = new SVNEventAction(43, "patch_applied_hunk");
+    public static final SVNEventAction PATCH_APPLIED_HUNK = new SVNEventAction(54, "patch_applied_hunk");
 
     /**
      * @since 1.4, SVN 1.7
      */
-    public static final SVNEventAction UPDATE_SKIP_OBSTRUCTION = new SVNEventAction(44, "update_skip_obstruction");
+    public static final SVNEventAction UPDATE_SKIP_OBSTRUCTION = new SVNEventAction(42, "update_skip_obstruction");
     
     /**
      * @since 1.4, SVN 1.7
      */
-    public static final SVNEventAction UPDATE_SKIP_WORKING_ONLY = new SVNEventAction(45, "update_skip_obstruction");
+    public static final SVNEventAction UPDATE_SKIP_WORKING_ONLY = new SVNEventAction(43, "update_skip_working_only");
 
     /**
      * @since 1.4, SVN 1.7
      */
-    public static final SVNEventAction UPDATE_SKIP_ACCESS_DENINED = new SVNEventAction(46, "update_skip_obstruction");
+    public static final SVNEventAction UPDATE_SKIP_ACCESS_DENINED = new SVNEventAction(44, "update_skip_access_denied");
     
     /**
      * @since 1.4, SVN 1.7
      */
-    public static final SVNEventAction UPDATE_EXTERNAL_REMOVED = new SVNEventAction(47, "update_skip_obstruction");
+    public static final SVNEventAction UPDATE_EXTERNAL_REMOVED = new SVNEventAction(45, "update_external_removed");
 
     /**
      * @since 1.4, SVN 1.7
      */
-    public static final SVNEventAction UPDATE_SHADOWED_ADD = new SVNEventAction(48, "update_add_deleted");
+    public static final SVNEventAction UPDATE_SHADOWED_ADD = new SVNEventAction(46, "update_shadowed_add");
 
     /**
      * @since 1.4, SVN 1.7
      */
-    public static final SVNEventAction UPDATE_SHADOWED_UPDATE = new SVNEventAction(49, "update_update_deleted");
+    public static final SVNEventAction UPDATE_SHADOWED_UPDATE = new SVNEventAction(47, "update_shadowed_update");
 
     /**
      * @since 1.4, SVN 1.7
      */
-    public static final SVNEventAction UPDATE_SHADOWED_DELETE = new SVNEventAction(50, "update_update_deleted");
+    public static final SVNEventAction UPDATE_SHADOWED_DELETE = new SVNEventAction(48, "update_shadowed_delete");
 
     /**
      * @since 1.4, SVN 1.7
      */
-    public static final SVNEventAction SKIP_CONFLICTED = new SVNEventAction(45, "skip_conflicted");
+    public static final SVNEventAction SKIP_CONFLICTED = new SVNEventAction(68, "skip_conflicted");
 
     /**
      * @since 1.7, SVN 1.7
      */
-    public static final SVNEventAction PATH_NONEXISTENT = new SVNEventAction(51, "wc_path_nonexistent");
+    public static final SVNEventAction PATH_NONEXISTENT = new SVNEventAction(60, "path_nonexistent");
 
     /**
      * @since 1.7, SVN 1.7
      */
-    public static final SVNEventAction MERGE_RECORD_INFO = new SVNEventAction(53, "merge_record_info");
+    public static final SVNEventAction MERGE_RECORD_INFO = new SVNEventAction(49, "merge_record_info");
 
     /**
      * @since 1.7, SVN 1.7
      */
-    public static final SVNEventAction MERGE_RECORD_INFO_BEGIN = new SVNEventAction(52, "merge_record_info_begin");
+    public static final SVNEventAction MERGE_RECORD_INFO_BEGIN = new SVNEventAction(51, "merge_record_info_begin");
 
     /**
      * @since 1.7, SVN 1.7
      */
-    public static final SVNEventAction MERGE_ELIDE_INFO = new SVNEventAction(54, "merge_elide_info");
+    public static final SVNEventAction MERGE_ELIDE_INFO = new SVNEventAction(52, "merge_elide_info");
 
     /**
      * @since 1.7, SVN 1.7
