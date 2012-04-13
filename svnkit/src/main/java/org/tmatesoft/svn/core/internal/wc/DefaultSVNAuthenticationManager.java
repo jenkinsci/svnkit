@@ -404,15 +404,23 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
     private class CacheAuthenticationProvider implements ISVNAuthenticationProvider {        
 
         public SVNAuthentication requestClientAuthentication(String kind, SVNURL url, String realm, SVNErrorMessage errorMessage, SVNAuthentication previousAuth, boolean authMayBeStored) {
-            return (SVNAuthentication) getRuntimeAuthStorage().getData(kind, realm);
+            String actualRealm = realm;
+            if (url != null && url.getUserInfo() != null) {
+                actualRealm = url.getUserInfo() + "$" + actualRealm;
+            }
+            return (SVNAuthentication) getRuntimeAuthStorage().getData(kind, actualRealm);
         }
         
         public void saveAuthentication(SVNAuthentication auth, String realm) {
             if (auth == null || realm == null) {
                 return;
             }
-            String kind = auth.getKind();
-            getRuntimeAuthStorage().putData(kind, realm, auth);
+            final String kind = auth.getKind();
+            String actualRealm = realm;
+            if (auth.getURL() != null && auth.getURL().getUserInfo() != null) {
+                actualRealm = auth.getURL().getUserInfo() + "$" + actualRealm;
+            }
+            getRuntimeAuthStorage().putData(kind, actualRealm, auth);
         }
         
         public int acceptServerAuthentication(SVNURL url, String r, Object serverAuth, boolean resultMayBeStored) {
