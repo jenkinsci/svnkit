@@ -8,7 +8,6 @@ import java.util.List;
 
 import org.junit.Assert;
 import org.junit.Assume;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
@@ -305,9 +304,9 @@ public class DiffTest {
         }
     }
 
-    @Ignore("Temporarily ignored")
     @Test
     public void testPropertiesChangedOnlyHeaderIsPrinted() throws Exception {
+        Assume.assumeTrue(TestUtil.isNewWorkingCopyTest());
         final TestOptions options = TestOptions.getInstance();
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
@@ -373,10 +372,10 @@ public class DiffTest {
             workingCopy.add(fileToReplace);
 
             final String actualDiffOutput = runLocalDiff(svnOperationFactory, fileToReplace, workingCopyDirectory);
-            final String expectedDiffOutput = "Index: " + fileToReplace.getPath() + "\n" +
+            final String expectedDiffOutput = "Index: " + fileToReplace.getName() + "\n" +
                     "===================================================================\n" +
-                    "--- " + fileToReplace.getPath() + "\t" + (TestUtil.isNewWorkingCopyTest() ? "(working copy)" : "(revision 1)") + "\n" +
-                    "+++ " + fileToReplace.getPath() + "\t(working copy)\n" +
+                    "--- " + fileToReplace.getName() + "\t" + (TestUtil.isNewWorkingCopyTest() ? "(working copy)" : "(revision 1)") + "\n" +
+                    "+++ " + fileToReplace.getName() + "\t(working copy)\n" +
                     "@@ -0,0 +1 @@\n" +
                     "+newContents\n" +
                     "\\ No newline at end of file\n";
@@ -387,7 +386,6 @@ public class DiffTest {
         }
     }
 
-    @Ignore
     @Test
     public void testDiffLocalCopiedFile() throws Exception {
         final TestOptions options = TestOptions.getInstance();
