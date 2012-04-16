@@ -125,20 +125,21 @@ public class SVNSqlJetDb {
         if (stmt == null) {
             stmt = prepareStatement(statementIndex);
             statements.put(statementIndex, stmt);
+        } else {
+            if (stmt instanceof SVNSqlJetInsertStatement
+             || stmt instanceof SVNSqlJetUpdateStatement
+             || stmt instanceof SVNSqlJetDeleteStatement) {
+                String targetTableName = ((SVNSqlJetTableStatement) stmt).getTableName();
+                if (SVNWCDbSchema.NODES.toString().equals(targetTableName)) {
+                    SvnNodesPristineTrigger trigger = new SvnNodesPristineTrigger();
+                    ((SVNSqlJetTableStatement) stmt).addTrigger(trigger);
+                }
+            }
         }
         if (stmt != null && stmt.isNeedsReset()) {
             stmt.reset();
         }
         
-        if (stmt instanceof SVNSqlJetInsertStatement
-         || stmt instanceof SVNSqlJetUpdateStatement
-         || stmt instanceof SVNSqlJetDeleteStatement) {
-            String targetTableName = ((SVNSqlJetTableStatement) stmt).getTableName();
-            if (SVNWCDbSchema.NODES.toString().equals(targetTableName)) {
-                SvnNodesPristineTrigger trigger = new SvnNodesPristineTrigger();
-                ((SVNSqlJetTableStatement) stmt).addTrigger(trigger);
-            }
-        }        
         return stmt;
     }
 

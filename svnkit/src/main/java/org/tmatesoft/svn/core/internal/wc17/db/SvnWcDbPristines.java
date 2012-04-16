@@ -297,7 +297,7 @@ public class SvnWcDbPristines extends SvnWcDbShared {
             }
 
             if (refCount == 0) {
-                SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "Working copy ''{0}'' is corrupted: {1} table contains incorrect zero ''refcount'' value for checksum {2}",
+                SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "Working copy ''{0}'' is corrupted: {1} table contains zero ''refcount'' value for checksum {2}",
                         root.getAbsPath().getAbsolutePath().replace('/', File.separatorChar), SVNWCDbSchema.PRISTINE.name(), sha1Checksum);
                 SVNErrorManager.error(errorMessage, SVNLogType.WC);
             }
