@@ -295,12 +295,6 @@ public class SvnWcDbPristines extends SvnWcDbShared {
                         root.getAbsPath().getAbsolutePath().replace('/', File.separatorChar), SVNWCDbSchema.PRISTINE.name(), refCount, sha1Checksum, correctRefCount);
                 SVNErrorManager.error(errorMessage, SVNLogType.WC);
             }
-
-            if (refCount == 0) {
-                SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "Working copy ''{0}'' is corrupted: {1} table contains zero ''refcount'' value for checksum {2}",
-                        root.getAbsPath().getAbsolutePath().replace('/', File.separatorChar), SVNWCDbSchema.PRISTINE.name(), sha1Checksum);
-                SVNErrorManager.error(errorMessage, SVNLogType.WC);
-            }
         }
 
         for (Map.Entry<SvnChecksum, Integer> entry : correctChecksumRefcounts.entrySet()) {
