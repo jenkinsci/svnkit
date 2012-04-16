@@ -7,8 +7,10 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
+import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
 import org.tmatesoft.sqljet.core.table.ISqlJetTable;
+import org.tmatesoft.sqljet.core.table.SqlJetDb;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -275,6 +277,107 @@ public class SvnWcDbPristines extends SvnWcDbShared {
 	        commitTransaction(root);
 	    }
 	}
-	 
+
+    public static void checkPristineChecksumRefcounts(SVNWCDbRoot root) throws SVNException {
+        final Map<SvnChecksum, Integer> correctChecksumRefcounts = calculateCorrectChecksumRefcounts(root);
+        final Map<SvnChecksum, Integer> checksumRefcountsFromTable = loadChecksumsRefcountsFromTable(root);
+
+        for (Map.Entry<SvnChecksum, Integer> entry : checksumRefcountsFromTable.entrySet()) {
+            final SvnChecksum sha1Checksum = entry.getKey();
+            final Integer refCountInteger = entry.getValue();
+            final Integer correctRefCountInteger = correctChecksumRefcounts.get(sha1Checksum);
+
+            final int refCount = refCountInteger == null ? 0 : refCountInteger;
+            final int correctRefCount = correctRefCountInteger == null ? 0 : correctRefCountInteger;
+
+            if (correctRefCount != refCount) {
+                SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "Working copy ''{0}'' is corrupted: {1} table contains incorrect ''refcount'' value {2} for checksum {3} (instead of {4})",
+                        root.getAbsPath().getAbsolutePath().replace('/', File.separatorChar), SVNWCDbSchema.PRISTINE.name(), refCount, sha1Checksum, correctRefCount);
+                SVNErrorManager.error(errorMessage, SVNLogType.WC);
+            }
+
+            if (refCount == 0) {
+                SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "Working copy ''{0}'' is corrupted: {1} table contains incorrect zero ''refcount'' value for checksum {2}",
+                        root.getAbsPath().getAbsolutePath().replace('/', File.separatorChar), SVNWCDbSchema.PRISTINE.name(), sha1Checksum);
+                SVNErrorManager.error(errorMessage, SVNLogType.WC);
+            }
+        }
+
+        for (Map.Entry<SvnChecksum, Integer> entry : correctChecksumRefcounts.entrySet()) {
+            final SvnChecksum sha1Checksum = entry.getKey();
+            if (!checksumRefcountsFromTable.containsKey(sha1Checksum)) {
+                SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "Working copy ''{0}'' is corrupted: checksum {1} that is present in {2} table is not listed in {3} table",
+                        root.getAbsPath().getAbsolutePath().replace('/', File.separatorChar), sha1Checksum, SVNWCDbSchema.NODES.name(), SVNWCDbSchema.PRISTINE.name());
+                SVNErrorManager.error(errorMessage, SVNLogType.WC);
+            }
+        }
+    }
+
+    private static Map<SvnChecksum, Integer> calculateCorrectChecksumRefcounts(SVNWCDbRoot root) throws SVNException {
+        Map<SvnChecksum, Integer> checksumToRefCount = new HashMap<SvnChecksum, Integer>();
+
+        final SqlJetDb db = root.getSDb().getDb();
+        try {
+            final ISqlJetTable nodesTable = db.getTable(SVNWCDbSchema.NODES.name());
+            db.beginTransaction(SqlJetTransactionMode.READ_ONLY);
+            final ISqlJetCursor cursor = nodesTable.open();
+
+            for (; !cursor.eof(); cursor.next()) {
+                String sha1ChecksumString = cursor.getString(SVNWCDbSchema.NODES__Fields.checksum.name());
+                if (sha1ChecksumString == null) {
+                    continue;
+                }
+                SvnChecksum sha1Checksum = SvnChecksum.fromString(sha1ChecksumString);
+
+                Integer refCount = checksumToRefCount.get(sha1Checksum);
+                int incrementedRefCount = refCount == null ? 1 : refCount + 1;
+                checksumToRefCount.put(sha1Checksum, incrementedRefCount);
+            }
+            cursor.close();
+        } catch (SqlJetException e) {
+            SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.WC_DB_ERROR, e);
+            SVNErrorManager.error(errorMessage, e, SVNLogType.WC);
+        } finally {
+            try {
+                db.commit();
+            } catch (SqlJetException ignore) {
+            }
+        }
+
+        return checksumToRefCount;
+    }
+
+    private static Map<SvnChecksum, Integer> loadChecksumsRefcountsFromTable(SVNWCDbRoot root) throws SVNException {
+        Map<SvnChecksum, Integer> checksumToRefCount = new HashMap<SvnChecksum, Integer>();
+
+        final SqlJetDb db = root.getSDb().getDb();
+        try {
+            final ISqlJetTable pristineTable = db.getTable(SVNWCDbSchema.PRISTINE.name());
+            db.beginTransaction(SqlJetTransactionMode.READ_ONLY);
+            final ISqlJetCursor cursor = pristineTable.open();
+
+            for (; !cursor.eof(); cursor.next()) {
+                String sha1ChecksumString = cursor.getString(PRISTINE__Fields.checksum.name());
+                if (sha1ChecksumString == null) {
+                    continue;
+                }
+                SvnChecksum sha1Checksum = SvnChecksum.fromString(sha1ChecksumString);
+                long refcount = cursor.getInteger(PRISTINE__Fields.refcount.name());
+
+                checksumToRefCount.put(sha1Checksum, (int)refcount);
+            }
+            cursor.close();
+        } catch (SqlJetException e) {
+            SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.WC_DB_ERROR, e);
+            SVNErrorManager.error(errorMessage, e, SVNLogType.WC);
+        } finally {
+            try {
+                db.commit();
+            } catch (SqlJetException ignore) {
+            }
+        }
+
+        return checksumToRefCount;
+    }
 }
 

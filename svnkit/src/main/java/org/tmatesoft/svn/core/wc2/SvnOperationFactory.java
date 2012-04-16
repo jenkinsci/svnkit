@@ -31,14 +31,17 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.internal.wc17.SVNExternalsStore;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbOpenMode;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
-import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.DirParsedInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
+import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.DirParsedInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDbDir;
+import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDbRoot;
+import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbPristines;
 import org.tmatesoft.svn.core.internal.wc2.ISvnCommitRunner;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.internal.wc2.admin.SvnRepositoryCatImpl;
@@ -1220,6 +1223,8 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
                 getOperationHandler().beforeOperation(operation);
                 Object result = runner.run(operation);
                 getOperationHandler().afterOperationSuccess(operation);
+
+                assertRefCount(operation, wcContext);
                 return result;
             } catch (SVNException e) {
                 getOperationHandler().afterOperationFailure(operation);
@@ -1294,7 +1299,7 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
             File wcPath = operation.getOperationalWorkingCopy();
             int format = SVNAdminAreaFactory.checkWC(wcPath, true);
             if (format > 0) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UPGRADE_REQUIRED, "Working copy ''{0}'' is too old (format {1}, created  by Subversion 1.6)", 
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UPGRADE_REQUIRED, "Working copy ''{0}'' is too old (format {1}, created  by Subversion 1.6)",
                         new Object[] {wcPath, new Integer(format)});
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
@@ -1312,7 +1317,7 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
         
         ISvnOperationRunner<?, SvnOperation<?>> runner = null;
         
-        for (ISvnOperationRunner<?, SvnOperation<?>> candidateRunner : candidateRunners) {            
+        for (ISvnOperationRunner<?, SvnOperation<?>> candidateRunner : candidateRunners) {
             boolean isApplicable = candidateRunner.isApplicable(operation, wcGeneration);
             if (!isApplicable) {
                 continue;
@@ -1331,14 +1336,18 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
     }
     
     /**
-     * Returns whether the operations should work only on primary working copy generation 
-     * (for example only on SVN 1.7 working copy) or on both primary and secondary generations. 
-     *   
-     * @return <code>true</code> operations should work only on primary working copy generation, 
+     * Returns whether the operations should work only on primary working copy generation
+     * (for example only on SVN 1.7 working copy) or on both primary and secondary generations.
+     *
+     * @return <code>true</code> operations should work only on primary working copy generation,
      * if <code>false</code> both primary and secondary generations are supported
      */
     public boolean isPrimaryWcGenerationOnly() {
         return "true".equalsIgnoreCase(System.getProperty("svnkit.wc.17only", null));
+    }
+
+    public boolean isAssertRefCount() {
+        return "true".equalsIgnoreCase(System.getProperty("svnkit.wc.assertRefCount", null));
     }
 
     @SuppressWarnings("unchecked")
@@ -1375,7 +1384,7 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
     
     /**
      * Detects whether the versioned directory is working copy root.
-     *  
+     *
      * @param versionedDir directory to check
      * @return <code>true</code> if the directory is working copy root, otherwise <code>false</code>
      */
@@ -1405,7 +1414,7 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
     
     /**
      * Detects whether the directory is versioned directory.
-     * 
+     *
      * @param directory directory to check
      * @return <code>true</code> if the directory is versioned directory, otherwise <code>false</code>
      */
@@ -1415,7 +1424,7 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
 
     /**
      * Detects whether the directory is versioned directory in or (not in) the addition mode.
-     * 
+     *
      * @param directory directory to check
      * @param isAdditionMode <code>true</code> if it is addition mode, otherwise <code>false</code>
      * @return <code>true</code> if the directory is versioned directory, otherwise <code>false</code>
@@ -1433,8 +1442,8 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
         db.open(SVNWCDbOpenMode.ReadOnly, null, false, false);
         try {
             DirParsedInfo info = db.parseDir(localAbsPath, Mode.ReadOnly, true, isAdditionMode);
-            if (info != null 
-                    && info.wcDbDir != null 
+            if (info != null
+                    && info.wcDbDir != null
                     && SVNWCDbDir.isUsable(info.wcDbDir)) {
                 WCDbInfo nodeInfo = db.readInfo(localAbsPath, InfoField.status, InfoField.kind);
                 if (nodeInfo != null) {
@@ -1472,7 +1481,7 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
 
     /**
      * Searches working copy root path by the versioned directory.
-     * 
+     *
      * @param versionedDir versioned directory
      * @param stopOnExternals <code>true</code> if externals should not be searched, otherwise <code>false</code>
      * @return working copy root
@@ -1567,7 +1576,7 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
                 SVNExternalsStore storage = new SVNExternalsStore();
                 db.gatherExternalDefinitions(parentWcRoot, storage);
                 for(File defPath : storage.getNewExternals().keySet()) {
-                    String externalDefinition = storage.getNewExternals().get(defPath); 
+                    String externalDefinition = storage.getNewExternals().get(defPath);
                     SVNExternal[] externals = SVNExternal.parseExternals(defPath, externalDefinition);
                     for (int i = 0; i < externals.length; i++) {
                         File targetAbsPath = SVNFileUtil.createFilePath(defPath, externals[i].getPath());
@@ -1586,10 +1595,10 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
     }
 
     /**
-     * 
+     *
      * Detects working copy generation (1.6 or 1.7 format) by the working copy path.
      * Recursively searches the by path's parents up to the root if <code>climbUp</code> is <code>true</code>.
-     * 
+     *
      * @param path working copy path
      * @param climbUp <code>true</code> if search recursively in path's parents, otherwise <code>false</code>
      * @return working copy generation
@@ -1600,10 +1609,10 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
     }
 
     /**
-     * 
+     *
      * Detects working copy generation (1.6 or 1.7 format) by the working copy path in (not in) the addition mode.
      * Recursively searches the by path's parents up to the root if <code>climbUp</code> is <code>true</code>.
-     * 
+     *
      * @param path working copy path
      * @param climbUp <code>true</code> if search recursively in path's parents, otherwise <code>false</code>
      * @param isAdditionMode <code>true</code> if it is addition mode, otherwise <code>false</code>
@@ -1621,8 +1630,8 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
                 DirParsedInfo info = db.parseDir(path, Mode.ReadOnly, true, isAdditionMode);
                 if (info != null && SVNWCDbDir.isUsable(info.wcDbDir)) {
                     return SvnWcGeneration.V17;
-                } else if (info != null 
-                        && info.wcDbDir != null 
+                } else if (info != null
+                        && info.wcDbDir != null
                         && info.wcDbDir.getWCRoot() != null
                         && info.wcDbDir.getWCRoot().getSDb() == null) {
                     return SvnWcGeneration.V16;
@@ -1646,7 +1655,7 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
                         return SvnWcGeneration.NOT_DETECTED;
                     }
                     continue;
-                } else if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {                
+                } else if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
                     // there should be an exception for an 'add' and 'checkout' operations.
                     SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
                     if (SVNFileType.getType(path) != SVNFileType.DIRECTORY) {
@@ -1692,7 +1701,7 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
 
     /**
      * Returns working copy context.
-     * 
+     *
      * @return working copy context
      */
     public SVNWCContext getWcContext() {
@@ -1701,7 +1710,7 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
 
     /**
      * Returns primary (default) working copy generation.
-     * 
+     *
      * @return working copy generation
      */
     public SvnWcGeneration getPrimaryWcGeneration() {
@@ -1718,7 +1727,7 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
     
     /**
      * Returns secondary working copy generation.
-     * 
+     *
      * @return working copy generation
      */
     public SvnWcGeneration getSecondaryWcGeneration() {
@@ -1727,9 +1736,9 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
 
     /**
      * (Re)sets primary (default) working copy generation.
-     * If <code>primaryWcGeneration</code> is not <code>null</code>, 
+     * If <code>primaryWcGeneration</code> is not <code>null</code>,
      * registers operations' runners.
-     * 
+     *
      * @param primaryWcGeneration
      */
     public void setPrimaryWcGeneration(SvnWcGeneration primaryWcGeneration) {
@@ -1766,6 +1775,24 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
             }
         }
         return new SvnCommitPacket();
+    }
+
+    private void assertRefCount(SvnOperation<?> operation, SVNWCContext wcContext) throws SVNException {
+        if (!isAssertRefCount()) {
+            return;
+        }
+
+        ISVNWCDb wcdb = wcContext.getDb();
+        if (operation.isChangesWorkingCopy() && wcdb instanceof SVNWCDb) {
+            File operationalWorkingCopy = operation.getOperationalWorkingCopy();
+            if (operationalWorkingCopy != null) {
+                DirParsedInfo dirParsedInfo = ((SVNWCDb) wcdb).parseDir(operationalWorkingCopy, Mode.ReadOnly);
+                if (SVNWCDbDir.isUsable(dirParsedInfo.wcDbDir)) {
+                    SVNWCDbRoot root = dirParsedInfo.wcDbDir.getWCRoot();
+                    SvnWcDbPristines.checkPristineChecksumRefcounts(root);
+                }
+            }
+        }
     }
     
 }
