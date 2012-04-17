@@ -586,7 +586,7 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
         }
         
         if (copyFromURL != null) {
-            context.getDb().installPristine(wbInfo.tempBaseAbspath, wbInfo.getSHA1Checksum(), wbInfo.getSHA1Checksum());
+            context.getDb().installPristine(wbInfo.tempBaseAbspath, wbInfo.getSHA1Checksum(), wbInfo.getMD5Checksum());
         } 
         
         if (newContents == null && copyFromURL == null) {
