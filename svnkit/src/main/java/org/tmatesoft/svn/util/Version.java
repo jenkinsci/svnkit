@@ -13,7 +13,6 @@ package org.tmatesoft.svn.util;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
 import java.util.Properties;
 
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -141,12 +140,6 @@ public class Version {
                 return;
             }
             ourProperties = new Properties();
-            URL resourceURL = Version.class.getResource(PROPERTIES_PATH);
-            if (resourceURL != null) {
-                if (resourceURL.toString().lastIndexOf(".jar!/") < 0) {
-                    return;
-                }
-            }
             InputStream is = Version.class.getResourceAsStream(PROPERTIES_PATH);
             if (is == null) {
                 return;
