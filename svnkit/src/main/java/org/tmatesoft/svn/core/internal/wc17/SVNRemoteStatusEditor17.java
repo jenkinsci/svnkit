@@ -145,7 +145,7 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
              * revision than the path was deleted, but this is better than
              * nothing...
              */
-            if (deletedRev == null)
+                if (deletedRev == null || !deletedRev.isValid())
                 statstruct.setRepositoryChangedRevision(dirInfo.ood_changed_rev);
             else
                 statstruct.setRepositoryChangedRevision(deletedRev.getNumber());
