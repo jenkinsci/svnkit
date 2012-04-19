@@ -1,12 +1,13 @@
 package org.tmatesoft.svn.test;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
@@ -53,6 +54,41 @@ public class SvnRemoteStatusTest {
         }
     }
 
+    @Test
+    public void testRemoteStatusDeletedFile() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+        Assume.assumeTrue(TestUtil.areAllApacheOptionsSpecified(options));
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testRemoteStatusDeletedFile", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder1 = new CommitBuilder(url);
+            commitBuilder1.addFile("file");
+            commitBuilder1.commit();
+
+            final CommitBuilder commitBuilder2 = new CommitBuilder(url);
+            commitBuilder2.delete("file");
+            commitBuilder2.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, 1);
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+
+            final File file = new File(workingCopyDirectory, "file");
+
+            final SvnGetStatus getStatus = svnOperationFactory.createGetStatus();
+            getStatus.setSingleTarget(SvnTarget.fromFile(file));
+            getStatus.setRemote(true);
+            final SvnStatus status = getStatus.run();
+
+            Assert.assertEquals(2, status.getRepositoryChangedRevision());
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
     private void compare(SVNStatus newStatus, SVNStatus oldStatus) {
         Assert.assertEquals(oldStatus.getRemoteRevision(), newStatus.getRemoteRevision());
         Assert.assertEquals(oldStatus.getRevision(), newStatus.getRevision());
@@ -80,29 +116,29 @@ public class SvnRemoteStatusTest {
         // move
         WorkingCopy wc = sandbox.checkoutNewWorkingCopy(url, -1, true, wcGeneration);
         final SvnOperationFactory svnOperationFactory = wc.getOperationFactory();
-        
+
         // make changes
         final CommitBuilder remoteChange = new CommitBuilder(url);
         remoteChange.addFile("trunk/remotelyAdded.txt");
         remoteChange.addDirectory("trunk/remotelyAdded");
         remoteChange.delete("trunk/remotelyDeleted");
         remoteChange.delete("trunk/remotelyDeleted.txt");
-        
+
         remoteChange.delete("trunk/remotelyReplaced");
         remoteChange.delete("trunk/remotelyReplaced.txt");
-        
+
         remoteChange.addFile("trunk/remotelyReplaced.txt");
         remoteChange.addDirectory("trunk/remotelyReplaced");
-        
+
         remoteChange.changeFile("trunk/remotelyChanged.txt", "change".getBytes());
         remoteChange.commit();
-        
+
         SvnGetStatus st = svnOperationFactory.createGetStatus();
         st.setSingleTarget(SvnTarget.fromFile(wc.getWorkingCopyDirectory()));
         st.setRemote(true);
         Collection<SvnStatus> statuses = new ArrayList<SvnStatus>();
         st.run(statuses);
-        
+
         for (SvnStatus status : statuses) {
             String remotePath = status.getRepositoryRelativePath();
             SVNURL repositoryRoot = status.getRepositoryRootUrl();
@@ -130,30 +166,34 @@ public class SvnRemoteStatusTest {
 
         // move
         WorkingCopy wc = sandbox.checkoutNewWorkingCopy(url, -1, true, wcGeneration);
-        
+
         // make changes
         final CommitBuilder remoteChange = new CommitBuilder(url);
         remoteChange.addFile("trunk/remotelyAdded.txt");
         remoteChange.addDirectory("trunk/remotelyAdded");
         remoteChange.delete("trunk/remotelyDeleted");
         remoteChange.delete("trunk/remotelyDeleted.txt");
-        
+
         remoteChange.delete("trunk/remotelyReplaced");
         remoteChange.delete("trunk/remotelyReplaced.txt");
-        
+
         remoteChange.addFile("trunk/remotelyReplaced.txt");
         remoteChange.addDirectory("trunk/remotelyReplaced");
-        
+
         remoteChange.changeFile("trunk/remotelyChanged.txt", "change".getBytes());
         remoteChange.commit();
-        
+
         final Map<String, SVNStatus> result = new HashMap<String, SVNStatus>();
         SVNStatusClient stClient = SVNClientManager.newInstance().getStatusClient();
         stClient.doStatus(wc.getWorkingCopyDirectory(), SVNRevision.WORKING, SVNDepth.INFINITY, true, true, true, false, new ISVNStatusHandler() {
-            public void handleStatus(SVNStatus status) throws SVNException {                
+            public void handleStatus(SVNStatus status) throws SVNException {
                 result.put(status.getRepositoryRelativePath(), status);
             }
         }, null);
         return result;
+    }
+
+    private String getTestName() {
+        return "SvnRemoteStatusTest";
     }
 }
