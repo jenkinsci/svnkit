@@ -1558,15 +1558,24 @@ public class SVNFileUtil {
             // force writable.
             setReadonly(file, false);
         }
+        OutputStream fos = null;
+        OutputStream result = null;
         try {
-            return new BufferedOutputStream(createFileOutputStream(file, append));
+            fos = createFileOutputStream(file, append);
+            result = new BufferedOutputStream(fos);
         } catch (IOException e) {
+            closeFile(fos);
+            closeFile(result);
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot write to ''{0}'': {1}", new Object[] {
                     file, e.getMessage()
             });
             SVNErrorManager.error(err, e, Level.FINE, SVNLogType.DEFAULT);
+        } finally {
+            if (result == null) {
+                closeFile(fos);
+            }
         }
-        return null;
+        return result;
     }
 
     public static FileOutputStream createFileOutputStream(File file, boolean append) throws IOException {
@@ -1578,10 +1587,10 @@ public class SVNFileUtil {
                 os = new FileOutputStream(file, append);
                 break;
             } catch (IOException e) {
+                SVNFileUtil.closeFile(os);
                 if (i + 1 >= retryCount) {
                     throw e;
                 }
-                SVNFileUtil.closeFile(os);
                 if (file.exists() && file.isFile() && file.canWrite()) {
                     try {
                         Thread.sleep(sleep);
@@ -1605,24 +1614,32 @@ public class SVNFileUtil {
         if (SVNFileUtil.getFileDir(file) != null && !SVNFileUtil.getFileDir(file).exists()) {
             SVNFileUtil.getFileDir(file).mkdirs();
         }
-        RandomAccessFile raFile = null;
+        RandomAccessFile raf = null;
+        RandomAccessFile result = null;
         try {
-            raFile = new RandomAccessFile(file, "rw");
+            raf = new RandomAccessFile(file, "rw");
             if (append) {
-                raFile.seek(raFile.length());
+                raf.seek(raf.length());
             }
+            result = raf;
         } catch (FileNotFoundException e) {
+            closeFile(raf);
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can not write to file ''{0}'': {1}", new Object[] {
                     file, e.getMessage()
             });
             SVNErrorManager.error(err, e, Level.FINE, SVNLogType.DEFAULT);
         } catch (IOException ioe) {
+            closeFile(raf);
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can not set position pointer in file ''{0}'': {1}", new Object[] {
                     file, ioe.getMessage()
             });
             SVNErrorManager.error(err, ioe, Level.FINE, SVNLogType.DEFAULT);
+        } finally {
+            if (result == null) {
+                closeFile(raf);
+            }
         }
-        return raFile;
+        return result;
     }
 
     public static InputStream openFileForReading(File file) throws SVNException {
@@ -1637,20 +1654,31 @@ public class SVNFileUtil {
         if (file == null) {
             return null;
         }
+        InputStream fis = null;
+        InputStream result = null;
         try {
-            return new BufferedInputStream(createFileInputStream(file));
+            fis = createFileInputStream(file);
+            result = new BufferedInputStream(fis);
         } catch (FileNotFoundException nfe) {
+            closeFile(fis);
+            closeFile(result);
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot read from ''{0}'': {1}", new Object[] {
                     file, nfe.getMessage()
             });
             SVNErrorManager.error(err, logLevel, logType);
         } catch (IOException e) {
+            closeFile(fis);
+            closeFile(result);
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot read from ''{0}'': {1}", new Object[] {
                     file, e.getMessage()
             });
             SVNErrorManager.error(err, e, logLevel, logType);
+        } finally {
+            if (result == null) {
+                closeFile(fis);
+            }
         }
-        return null;
+        return result;
     }
 
     public static FileInputStream createFileInputStream(File file) throws IOException {
@@ -1662,10 +1690,10 @@ public class SVNFileUtil {
                 is = new FileInputStream(file);
                 break;
             } catch (IOException e) {
+                SVNFileUtil.closeFile(is);
                 if (i + 1 >= retryCount) {
                     throw e;
                 }
-                SVNFileUtil.closeFile(is);
                 if (file.exists() && file.isFile() && file.canRead()) {
                     try {
                         Thread.sleep(sleep);
