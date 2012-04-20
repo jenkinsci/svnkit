@@ -2,12 +2,17 @@ package org.tmatesoft.svn.test;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Map;
 
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
+import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNLogEntry;
+import org.tmatesoft.svn.core.SVNLogEntryPath;
+import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
@@ -16,6 +21,8 @@ import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
+import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc2.SvnChecksum;
@@ -23,6 +30,7 @@ import org.tmatesoft.svn.core.wc2.SvnCopy;
 import org.tmatesoft.svn.core.wc2.SvnCopySource;
 import org.tmatesoft.svn.core.wc2.SvnMerge;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
+import org.tmatesoft.svn.core.wc2.SvnRemoteCopy;
 import org.tmatesoft.svn.core.wc2.SvnRevisionRange;
 import org.tmatesoft.svn.core.wc2.SvnStatus;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -76,6 +84,63 @@ public class CopyTest {
             merge.run();
 
             assertWCDbContainsCorrectChecksumTypesInPristineTable(svnOperationFactory, workingCopyDirectory);
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testWorkingToRepositoryCopy() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testWorkingToRepositoryCopy", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder1 = new CommitBuilder(url);
+            commitBuilder1.addFile("directory/file");
+            commitBuilder1.commit();
+
+            final CommitBuilder commitBuilder2 = new CommitBuilder(url);
+            commitBuilder2.delete("directory");
+            commitBuilder2.commit();
+
+            final SVNURL subUrl = url.appendPath("directory", false);
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(subUrl, 1);
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+
+            final File localFile = new File(workingCopyDirectory, "local");
+            TestUtil.writeFileContentsString(localFile, "contents");
+            workingCopy.add(localFile);
+
+            final SvnRemoteCopy remoteCopy = svnOperationFactory.createRemoteCopy();
+            remoteCopy.addCopySource(SvnCopySource.create(SvnTarget.fromFile(workingCopyDirectory), SVNRevision.create(1)));
+            remoteCopy.setSingleTarget(SvnTarget.fromURL(url.appendPath("another directory", false)));
+            final SVNCommitInfo commitInfo = remoteCopy.run();
+
+            Assert.assertEquals(3, commitInfo.getNewRevision());
+
+            //check SVN log
+            SVNRepository svnRepository = SVNRepositoryFactory.create(url);
+            try {
+                final Collection logEntries = svnRepository.log(new String[]{""}, null, 3, 3, true, true);
+
+                Assert.assertEquals(1, logEntries.size());
+                final SVNLogEntry logEntry = (SVNLogEntry) logEntries.iterator().next();
+
+                final Map<String,SVNLogEntryPath> changedPaths = logEntry.getChangedPaths();
+                Assert.assertEquals(1, changedPaths.size());
+
+                final SVNLogEntryPath logEntryPath = changedPaths.get("/another directory");
+                Assert.assertNotNull(logEntryPath);
+                Assert.assertEquals(SVNNodeKind.DIR, logEntryPath.getKind());
+                Assert.assertEquals('A', logEntryPath.getType());
+            } finally {
+                svnRepository.closeSession();
+            }
         } finally {
             svnOperationFactory.dispose();
             sandbox.dispose();

@@ -215,7 +215,7 @@ public class SvnNgRepositoryAccess extends SvnRepositoryAccess {
         url = url.appendPath(origin.<File>get(NodeOriginInfo.reposRelpath).getPath(), false);
         SVNRevision pegRevision = localCopySource.getSource().getResolvedPegRevision();
         SVNRevision revision = localCopySource.getRevision();
-        if (pegRevision == SVNRevision.BASE) {
+        if (pegRevision == SVNRevision.UNDEFINED || pegRevision == SVNRevision.WORKING || pegRevision == SVNRevision.BASE) {
             pegRevision = SVNRevision.create(origin.lng(NodeOriginInfo.revision));
         }
         if (revision == SVNRevision.BASE) {
