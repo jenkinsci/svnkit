@@ -3956,9 +3956,9 @@ public class SVNWCContext {
                     OutputStream result = null;
                     try {
                         result = SVNFileUtil.openFileForWriting(autoResolveSrc);
-                        localIS = new RandomAccessFile(conflictOld, "r");
-                        latestIS = new RandomAccessFile(conflictWorking, "r");
-                        baseIS = new RandomAccessFile(conflictNew, "r");
+                        baseIS = new RandomAccessFile(conflictOld, "r");
+                        localIS = new RandomAccessFile(conflictWorking, "r");
+                        latestIS = new RandomAccessFile(conflictNew, "r");
                         QSequenceLineRAData baseData = new QSequenceLineRAFileData(baseIS);
                         QSequenceLineRAData localData = new QSequenceLineRAFileData(localIS);
                         QSequenceLineRAData latestData = new QSequenceLineRAFileData(latestIS);
