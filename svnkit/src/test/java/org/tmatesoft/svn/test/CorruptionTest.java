@@ -21,6 +21,7 @@ public class CorruptionTest {
     public void testDavUpdateFileWithCorruptedPristine() throws Exception {
         final TestOptions options = TestOptions.getInstance();
         Assume.assumeTrue(TestUtil.areAllApacheOptionsSpecified(options));
+        Assume.assumeTrue(TestUtil.isNewWorkingCopyTest());
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
         final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testDavUpdateFileWithCorruptedPristine", options);
