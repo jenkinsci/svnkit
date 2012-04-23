@@ -426,52 +426,54 @@ public class DAVConnection {
             myLastStatus = httpConnection.getLastStatus();
             exception = e;
         }
-        if (myLastStatus.getError() != null) {
-            SVNErrorCode errCode = myLastStatus.getError().getErrorCode();
-            if (errCode == SVNErrorCode.FS_BAD_LOCK_TOKEN || errCode == SVNErrorCode.FS_NO_LOCK_TOKEN || 
-                    errCode == SVNErrorCode.FS_LOCK_OWNER_MISMATCH || errCode == SVNErrorCode.FS_PATH_ALREADY_LOCKED) {
-                Map childTokens = null;
-                if (myLocks != null) {
-                    childTokens = new SVNHashMap();
-                    for (Iterator locksIter = myLocks.keySet().iterator(); locksIter.hasNext();) {
-                        String lockPath = (String) locksIter.next();
-                        if (lockPath.startsWith(path)) {
-                            childTokens.put(lockPath, myLocks.get(lockPath));
+        if (myLastStatus != null) {
+            if (myLastStatus.getError() != null) {
+                SVNErrorCode errCode = myLastStatus.getError().getErrorCode();
+                if (errCode == SVNErrorCode.FS_BAD_LOCK_TOKEN || errCode == SVNErrorCode.FS_NO_LOCK_TOKEN ||
+                        errCode == SVNErrorCode.FS_LOCK_OWNER_MISMATCH || errCode == SVNErrorCode.FS_PATH_ALREADY_LOCKED) {
+                    Map childTokens = null;
+                    if (myLocks != null) {
+                        childTokens = new SVNHashMap();
+                        for (Iterator locksIter = myLocks.keySet().iterator(); locksIter.hasNext();) {
+                            String lockPath = (String) locksIter.next();
+                            if (lockPath.startsWith(path)) {
+                                childTokens.put(lockPath, myLocks.get(lockPath));
+                            }
                         }
                     }
+
+                    if (childTokens == null || childTokens.isEmpty()) {
+                        SVNErrorManager.error(myLastStatus.getError(), SVNLogType.NETWORK);
+                    } else {
+                        myLastStatus.setError(null);
+                    }
+
+                    String token = myLocks != null ? (String) myLocks.get(path) : null;
+                    if (token != null) {
+                        childTokens.put(path, token);
+                    }
+
+                    request = new StringBuffer();
+                    String locationPath = getLocation().getPath();
+                    locationPath = SVNEncodingUtil.uriEncode(locationPath);
+
+                    request = DAVMergeHandler.generateLockDataRequest(request, locationPath, repositoryPath, childTokens);
+                    try {
+                        myLastStatus = performHttpRequest(httpConnection, "DELETE", path, header, request, 204, 404, null, null);
+                    } catch (SVNException e) {
+                        myLastStatus = httpConnection.getLastStatus();
+                        exception = e;
+                    }
+                    if (myLastStatus.getError() != null) {
+                        SVNErrorManager.error(myLastStatus.getError(), SVNLogType.NETWORK);
+                    }
+                    if (exception != null) {
+                        throw exception;
+                    }
+                    return myLastStatus;
                 }
-                
-                if (childTokens == null || childTokens.isEmpty()) {
-                    SVNErrorManager.error(myLastStatus.getError(), SVNLogType.NETWORK);
-                } else {
-                    myLastStatus.setError(null);
-                }
-                
-                String token = myLocks != null ? (String) myLocks.get(path) : null;
-                if (token != null) {
-                    childTokens.put(path, token);
-                }
-                
-                request = new StringBuffer();
-                String locationPath = getLocation().getPath();
-                locationPath = SVNEncodingUtil.uriEncode(locationPath);
-                
-                request = DAVMergeHandler.generateLockDataRequest(request, locationPath, repositoryPath, childTokens);
-                try {
-                    myLastStatus = performHttpRequest(httpConnection, "DELETE", path, header, request, 204, 404, null, null);
-                } catch (SVNException e) {
-                    myLastStatus = httpConnection.getLastStatus();
-                    exception = e;
-                }
-                if (myLastStatus.getError() != null) {
-                    SVNErrorManager.error(myLastStatus.getError(), SVNLogType.NETWORK);
-                }
-                if (exception != null) {
-                    throw exception;
-                }
-                return myLastStatus;
-            } 
-            SVNErrorManager.error(myLastStatus.getError(), SVNLogType.NETWORK);
+                SVNErrorManager.error(myLastStatus.getError(), SVNLogType.NETWORK);
+            }
         }
 
         if (exception != null) {
