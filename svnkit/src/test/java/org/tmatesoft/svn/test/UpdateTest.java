@@ -88,12 +88,10 @@ public class UpdateTest {
             return events;
         }
 
-        @Override
         public void handleEvent(SVNEvent event, double progress) throws SVNException {
             events.add(event);
         }
 
-        @Override
         public void checkCancelled() throws SVNCancelException {
         }
     }
