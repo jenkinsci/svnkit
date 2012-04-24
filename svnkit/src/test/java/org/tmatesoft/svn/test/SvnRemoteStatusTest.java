@@ -6,6 +6,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.wc.*;
@@ -71,6 +72,51 @@ public class SvnRemoteStatusTest {
             final SvnStatus status = getStatus.run();
 
             Assert.assertEquals(2, status.getRepositoryChangedRevision());
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testRemoteLockIsReported() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testRemoteLockIsReported", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("file");
+            commitBuilder.commit();
+
+            //lock a file remotely
+            final SVNURL fileUrl = url.appendPath("file", false);
+
+            final String lockMessage = "lock message";
+
+            final SvnSetLock setLock = svnOperationFactory.createSetLock();
+            setLock.setLockMessage(lockMessage);
+            setLock.setSingleTarget(SvnTarget.fromURL(fileUrl));
+            setLock.run();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url);
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+
+            final File file = new File(workingCopyDirectory, "file");
+
+            final SvnGetStatus getStatus = svnOperationFactory.createGetStatus();
+            getStatus.setRemote(true);
+            getStatus.setSingleTarget(SvnTarget.fromFile(file));
+            final SvnStatus fileStatus = getStatus.run();
+
+            final SVNLock repositoryLock = fileStatus.getRepositoryLock();
+
+            Assert.assertNotNull(repositoryLock);
+            Assert.assertEquals("/file", repositoryLock.getPath());
+            Assert.assertEquals(lockMessage, repositoryLock.getComment());
+
         } finally {
             svnOperationFactory.dispose();
             sandbox.dispose();
