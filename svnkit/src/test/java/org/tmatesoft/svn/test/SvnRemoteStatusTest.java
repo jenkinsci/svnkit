@@ -1,12 +1,5 @@
 package org.tmatesoft.svn.test;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Before;
@@ -15,15 +8,11 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
-import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
-import org.tmatesoft.svn.core.wc.SVNClientManager;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNStatus;
-import org.tmatesoft.svn.core.wc.SVNStatusClient;
-import org.tmatesoft.svn.core.wc2.SvnGetStatus;
-import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
-import org.tmatesoft.svn.core.wc2.SvnStatus;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
+import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.wc2.*;
+
+import java.io.File;
+import java.util.*;
 
 public class SvnRemoteStatusTest {
 
@@ -57,7 +46,6 @@ public class SvnRemoteStatusTest {
     @Test
     public void testRemoteStatusDeletedFile() throws Exception {
         final TestOptions options = TestOptions.getInstance();
-        Assume.assumeTrue(TestUtil.areAllApacheOptionsSpecified(options));
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
         final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testRemoteStatusDeletedFile", options);
@@ -83,6 +71,45 @@ public class SvnRemoteStatusTest {
             final SvnStatus status = getStatus.run();
 
             Assert.assertEquals(2, status.getRepositoryChangedRevision());
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testRemoteStatusRemotelyDeletedWorkingCopy() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testRemoteStatusRemotelyDeletedWorkingCopy", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder1 = new CommitBuilder(url);
+            commitBuilder1.addFile("directory/file");
+            commitBuilder1.commit();
+
+            final CommitBuilder commitBuilder2 = new CommitBuilder(url);
+            commitBuilder2.delete("directory");
+            commitBuilder2.commit();
+
+            final SVNURL subUrl = url.appendPath("directory", false);
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(subUrl, 1);
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+
+            final SvnGetStatus getStatus = svnOperationFactory.createGetStatus();
+            getStatus.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            getStatus.setRemote(true);
+            getStatus.setReportAll(false);
+            getStatus.setReceiver(new ISvnObjectReceiver<SvnStatus>() {
+                public void receive(SvnTarget target, SvnStatus status) throws SVNException {
+                    Assert.fail("No status should be reported for this working copy");
+                }
+            });
+            getStatus.run();
+
         } finally {
             svnOperationFactory.dispose();
             sandbox.dispose();
