@@ -1,21 +1,10 @@
 package org.tmatesoft.svn.core.internal.wc17.db;
 
-import java.io.File;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
 import org.tmatesoft.sqljet.core.table.ISqlJetTable;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNProperties;
-import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb.Mode;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
@@ -33,34 +22,19 @@ import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.AdditionInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.DeletionInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.RepositoryInfo;
-import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbCollectTargets;
-import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbCreateSchema;
-import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbInsertTarget;
-import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.*;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.LOCK__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODES__Fields;
-import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSelectDeletionInfo;
-import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
 
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnBlob;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnBoolean;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnChecksum;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnDate;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnDepth;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnInt64;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnKind;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnPath;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnPresence;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnRevNum;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnText;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getLockFromColumns;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.hasColumnProperties;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.isColumnNull;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.parseDepth;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.reset;
+import java.io.File;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.*;
 
 public class SvnWcDbShared {
     
@@ -336,6 +310,10 @@ public class SvnWcDbShared {
             reset(stmt);
         }
         return info;
+    }
+
+    public static Structure<NodeInfo> getBaseInfo(SVNWCDbRoot wcroot, File localRelPath, NodeInfo... fields) throws SVNException {
+        return getDepthInfo(wcroot, localRelPath, 0, fields);
     }
 
     public static Structure<NodeInfo> getBaseInfo(SVNWCDb db, File localAbsPath, NodeInfo... fields) throws SVNException {

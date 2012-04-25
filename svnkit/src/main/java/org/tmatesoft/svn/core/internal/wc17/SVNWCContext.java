@@ -11,108 +11,39 @@
  */
 package org.tmatesoft.svn.core.internal.wc17;
 
-import static org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.isAbsolute;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.RandomAccessFile;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.Stack;
-import java.util.logging.Level;
-
-import org.tmatesoft.svn.core.SVNCancelException;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNMergeRangeList;
-import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.SVNProperties;
-import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.SVNPropertyValue;
-import org.tmatesoft.svn.core.SVNURL;
+import de.regnis.q.sequence.line.QSequenceLineRAByteData;
+import de.regnis.q.sequence.line.QSequenceLineRAData;
+import de.regnis.q.sequence.line.QSequenceLineRAFileData;
+import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb.Mode;
-import org.tmatesoft.svn.core.internal.util.SVNDate;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
-import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.util.SVNSkel;
-import org.tmatesoft.svn.core.internal.wc.FSMergerBySequence;
-import org.tmatesoft.svn.core.internal.wc.SVNConflictVersion;
-import org.tmatesoft.svn.core.internal.wc.SVNDiffConflictChoiceStyle;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.SVNFileType;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.util.*;
+import org.tmatesoft.svn.core.internal.wc.*;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumOutputStream;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
-import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
-import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
-import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbLock;
-import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbOpenMode;
-import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
-import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbAdditionInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.*;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.*;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbAdditionInfo.AdditionInfoField;
-import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbBaseInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbBaseInfo.BaseInfoField;
-import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbDeletionInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbDeletionInfo.DeletionInfoField;
-import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
-import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo.RepositoryInfoField;
-import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbWorkQueueInfo;
-import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.DirParsedInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.ReposInfo;
-import org.tmatesoft.svn.core.internal.wc17.db.Structure;
-import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.AdditionInfo;
-import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.DeletionInfo;
-import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
-import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeOriginInfo;
-import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.PristineInfo;
-import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.WalkerChildInfo;
-import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbReader;
-import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbShared;
+import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.*;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldUpgrade;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.wc.ISVNConflictHandler;
-import org.tmatesoft.svn.core.wc.ISVNEventHandler;
-import org.tmatesoft.svn.core.wc.ISVNMerger;
-import org.tmatesoft.svn.core.wc.ISVNOptions;
-import org.tmatesoft.svn.core.wc.SVNConflictAction;
-import org.tmatesoft.svn.core.wc.SVNConflictChoice;
-import org.tmatesoft.svn.core.wc.SVNConflictDescription;
-import org.tmatesoft.svn.core.wc.SVNConflictReason;
-import org.tmatesoft.svn.core.wc.SVNConflictResult;
-import org.tmatesoft.svn.core.wc.SVNDiffOptions;
-import org.tmatesoft.svn.core.wc.SVNEvent;
-import org.tmatesoft.svn.core.wc.SVNEventAction;
-import org.tmatesoft.svn.core.wc.SVNMergeFileSet;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNStatusType;
-import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
+import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.core.wc2.ISvnMerger;
 import org.tmatesoft.svn.core.wc2.SvnChecksum;
 import org.tmatesoft.svn.core.wc2.SvnMergeResult;
 import org.tmatesoft.svn.util.SVNLogType;
 
-import de.regnis.q.sequence.line.QSequenceLineRAByteData;
-import de.regnis.q.sequence.line.QSequenceLineRAData;
-import de.regnis.q.sequence.line.QSequenceLineRAFileData;
+import java.io.*;
+import java.util.*;
+import java.util.logging.Level;
+
+import static org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.isAbsolute;
 
 /**
  * @version 1.4
@@ -993,7 +924,9 @@ public class SVNWCContext {
                 File baseDelRelpath = deletionInfo.get(DeletionInfo.baseDelRelPath);
                 File workDelRelpath = deletionInfo.get(DeletionInfo.workDelRelPath);
                 if (baseDelRelpath != null) {
-                    Structure<NodeInfo> baseInfo = SvnWcDbShared.getBaseInfo((SVNWCDb) db, path, NodeInfo.reposRelPath, NodeInfo.reposId);
+                    DirParsedInfo dirParsedInfo = ((SVNWCDb) db).parseDir(path, Mode.ReadOnly);
+
+                    Structure<NodeInfo> baseInfo = SvnWcDbShared.getBaseInfo(dirParsedInfo.wcDbDir.getWCRoot(), baseDelRelpath, NodeInfo.reposRelPath, NodeInfo.reposId);
                     reposRelPath = baseInfo.get(NodeInfo.reposRelPath);
                     reposId = baseInfo.lng(NodeInfo.reposId);
                     baseInfo.release();

@@ -1,7 +1,11 @@
 package org.tmatesoft.svn.test;
 
-import org.junit.*;
+import org.junit.Assert;
+import org.junit.Assume;
+import org.junit.Before;
+import org.junit.Test;
 import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.core.wc2.*;
@@ -107,6 +111,54 @@ public class SvnRemoteStatusTest {
             getStatus.setRemote(true);
             getStatus.setReportAll(false);
             getStatus.run();
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testSubdirectoryOfLocallyDeletedDirectory() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testSubdirectoryOfLocallyDeletedDirectory", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("directory/subdirectory/file");
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url);
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+
+            final File directory = new File(workingCopyDirectory, "directory");
+            final File subdirectory = new File(directory, "subdirectory");
+
+
+            final SvnScheduleForRemoval scheduleForRemoval = svnOperationFactory.createScheduleForRemoval();
+            scheduleForRemoval.setSingleTarget(SvnTarget.fromFile(directory));
+            scheduleForRemoval.run();
+
+            SVNFileUtil.ensureDirectoryExists(directory);
+
+            final int[] statusTargetsCount = {0};
+
+            final SvnGetStatus getStatus = svnOperationFactory.createGetStatus();
+            getStatus.setRemote(true);
+            getStatus.setReportAll(false);
+            getStatus.setSingleTarget(SvnTarget.fromFile(subdirectory));
+            getStatus.setReceiver(new ISvnObjectReceiver<SvnStatus>() {
+                public void receive(SvnTarget target, SvnStatus status) throws SVNException {
+                    statusTargetsCount[0]++;
+                    Assert.assertEquals(SVNStatusType.STATUS_NONE, status.getRepositoryNodeStatus());
+                }
+            });
+            getStatus.run();
+
+            Assert.assertEquals(2, statusTargetsCount[0]);
 
         } finally {
             svnOperationFactory.dispose();
