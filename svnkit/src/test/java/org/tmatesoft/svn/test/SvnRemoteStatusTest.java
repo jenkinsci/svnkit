@@ -4,10 +4,7 @@ import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNLock;
-import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.core.wc2.*;
@@ -144,6 +141,17 @@ public class SvnRemoteStatusTest {
 
             final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(subUrl, 1);
             final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+
+            svnOperationFactory.setEventHandler(new ISVNEventHandler() {
+                public void handleEvent(SVNEvent event, double progress) throws SVNException {
+                    if (event.getAction() == SVNEventAction.STATUS_COMPLETED) {
+                        Assert.assertEquals(-1, event.getRevision());
+                    }
+                }
+
+                public void checkCancelled() throws SVNCancelException {
+                }
+            });
 
             final SvnGetStatus getStatus = svnOperationFactory.createGetStatus();
             getStatus.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));

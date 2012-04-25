@@ -1,43 +1,23 @@
 package org.tmatesoft.svn.core.internal.wc2.ng;
 
-import java.io.File;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.Map;
-
-import org.tmatesoft.svn.core.SVNCancelException;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.wc.SVNCancellableEditor;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
-import org.tmatesoft.svn.core.internal.wc.SVNExternal;
-import org.tmatesoft.svn.core.internal.wc.SVNFileType;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc17.SVNExternalsStore;
-import org.tmatesoft.svn.core.internal.wc17.SVNRemoteStatusEditor17;
-import org.tmatesoft.svn.core.internal.wc17.SVNReporter17;
-import org.tmatesoft.svn.core.internal.wc17.SVNStatusEditor17;
-import org.tmatesoft.svn.core.internal.wc17.SVNStatusReporter17;
-import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
+import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.internal.wc.*;
+import org.tmatesoft.svn.core.internal.wc17.*;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNCapability;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.wc.ISVNEventHandler;
-import org.tmatesoft.svn.core.wc.SVNEvent;
-import org.tmatesoft.svn.core.wc.SVNEventAction;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnGetStatus;
 import org.tmatesoft.svn.core.wc2.SvnStatus;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
+
+import java.io.File;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.Map;
 
 public class SvnNgGetStatus extends SvnNgOperationRunner<SvnStatus, SvnGetStatus> implements ISvnObjectReceiver<SvnStatus> {
     
@@ -101,7 +81,6 @@ public class SvnNgGetStatus extends SvnNgOperationRunner<SvnStatus, SvnGetStatus
                 editor = new SVNStatusEditor17(getFirstTarget(), context, 
                         getOperation().getOptions(), getOperation().isReportIgnored(), getOperation().isReportAll(), getOperation().getDepth(), this);
                 editor.setFileListHook(getOperation().getFileListHook());
-                editor.targetRevision(rev >= 0 ? rev : repository.getLatestRevision());
                 checkCancelled();
                 editor.closeEdit();
             } else {
