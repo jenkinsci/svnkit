@@ -211,29 +211,35 @@ public class DAVConnection {
             myLastStatus = httpConnection.getLastStatus();
             exception = e;
         }
-
-            if (myLastStatus != null) {
-                if (myLastStatus.getCode() == 405) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_OUT_OF_DATE, "Lock request failed: {0} {1}",
-                            new Object[] {myLastStatus.getCode(), myLastStatus.getReason()});
-                    SVNErrorManager.error(err, SVNLogType.CLIENT);
-                }
-
-                if (myLastStatus.getError() != null) {
-                    SVNErrorManager.error(myLastStatus.getError(), SVNLogType.NETWORK);
-                }
-                String userName = myLastStatus.getHeader().getFirstHeaderValue(HTTPHeader.LOCK_OWNER_HEADER);
-                if (userName == null) {
-                    userName = httpConnection.getLastValidCredentials() != null ? httpConnection.getLastValidCredentials().getUserName() : null;
-                }
-                String created = myLastStatus.getHeader().getFirstHeaderValue(HTTPHeader.CREATION_DATE_HEADER);
-                if (userName == null || created == null) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, "Incomplete lock data returned");
-                    SVNErrorManager.error(err, SVNLogType.NETWORK);
-                }
-                Date createdDate = created != null ? SVNDate.parseDate(created) : null;
-                return new SVNLock(info.baselinePath, handler.getID(), userName, comment, createdDate, null);
+        if (myLastStatus != null) {
+            if (myLastStatus.getCode() == 405) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_OUT_OF_DATE, "Lock request failed: {0} {1}",
+                        new Object[] {myLastStatus.getCode(), myLastStatus.getReason()});
+                SVNErrorManager.error(err, SVNLogType.CLIENT);
             }
+            if (myLastStatus.getError() != null) {
+                SVNErrorManager.error(myLastStatus.getError(), SVNLogType.NETWORK);
+            }
+            
+            if (myLastStatus.getHeader() == null) {
+                if (exception != null) {
+                    throw exception;
+                }
+                return null;
+            }
+            
+            String userName = myLastStatus.getHeader().getFirstHeaderValue(HTTPHeader.LOCK_OWNER_HEADER);
+            if (userName == null) {
+                userName = httpConnection.getLastValidCredentials() != null ? httpConnection.getLastValidCredentials().getUserName() : null;
+            }
+            String created = myLastStatus.getHeader().getFirstHeaderValue(HTTPHeader.CREATION_DATE_HEADER);
+            if (userName == null || created == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, "Incomplete lock data returned");
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
+            }
+            Date createdDate = created != null ? SVNDate.parseDate(created) : null;
+            return new SVNLock(info.baselinePath, handler.getID(), userName, comment, createdDate, null);
+        }
 
         if (exception != null) {
             throw exception;
