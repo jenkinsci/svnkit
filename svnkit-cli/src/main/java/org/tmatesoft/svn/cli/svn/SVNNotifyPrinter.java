@@ -11,26 +11,17 @@
  */
 package org.tmatesoft.svn.cli.svn;
 
-import java.io.File;
-import java.io.PrintStream;
-
 import org.tmatesoft.svn.cli.SVNCommandUtil;
-import org.tmatesoft.svn.core.SVNCancelException;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNMergeRange;
-import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.internal.wc.patch.SVNPatchHunk;
 import org.tmatesoft.svn.core.internal.wc.patch.SVNPatchHunkInfo;
-import org.tmatesoft.svn.core.wc.ISVNEventHandler;
-import org.tmatesoft.svn.core.wc.SVNEvent;
-import org.tmatesoft.svn.core.wc.SVNEventAction;
-import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
+
+import java.io.File;
+import java.io.PrintStream;
 
 
 /**
@@ -98,8 +89,10 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
         if (event.getAction() == SVNEventAction.STATUS_EXTERNAL) {
             buffer.append("\nPerforming status on external item at '" + path + "'\n");
         } else if (event.getAction() == SVNEventAction.STATUS_COMPLETED) {
-            String revStr = Long.toString(event.getRevision());
-            buffer.append("Status against revision: " + SVNFormatUtil.formatString(revStr, 6, false) + "\n");
+            if (!SVNRevision.isValidRevisionNumber(event.getRevision())) {
+                String revStr = Long.toString(event.getRevision());
+                buffer.append("Status against revision: " + SVNFormatUtil.formatString(revStr, 6, false) + "\n");
+            }
         } else if (event.getAction() == SVNEventAction.SKIP) {
             if (event.getErrorMessage() != null && event.getExpectedAction() == SVNEventAction.UPDATE_EXTERNAL) {
                 // hack to let external test #14 work.
