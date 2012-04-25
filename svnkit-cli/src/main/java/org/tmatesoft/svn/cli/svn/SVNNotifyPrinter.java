@@ -89,7 +89,7 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
         if (event.getAction() == SVNEventAction.STATUS_EXTERNAL) {
             buffer.append("\nPerforming status on external item at '" + path + "'\n");
         } else if (event.getAction() == SVNEventAction.STATUS_COMPLETED) {
-            if (!SVNRevision.isValidRevisionNumber(event.getRevision())) {
+            if (SVNRevision.isValidRevisionNumber(event.getRevision())) {
                 String revStr = Long.toString(event.getRevision());
                 buffer.append("Status against revision: " + SVNFormatUtil.formatString(revStr, 6, false) + "\n");
             }

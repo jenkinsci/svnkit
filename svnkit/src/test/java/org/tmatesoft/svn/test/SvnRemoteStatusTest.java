@@ -1,9 +1,6 @@
 package org.tmatesoft.svn.test;
 
-import org.junit.Assert;
-import org.junit.Assume;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.wc.*;
@@ -69,6 +66,48 @@ public class SvnRemoteStatusTest {
             final SvnStatus status = getStatus.run();
 
             Assert.assertEquals(2, status.getRepositoryChangedRevision());
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testRemoteRevisionIsReported() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testRemoteRevisionIsReported", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("file");
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, 1);
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+
+            final File file = new File(workingCopyDirectory, "file");
+
+            //STATUS_COMPLETED should be called with a correct revision
+            svnOperationFactory.setEventHandler(new ISVNEventHandler() {
+                public void handleEvent(SVNEvent event, double progress) throws SVNException {
+                    if (event.getAction() == SVNEventAction.STATUS_COMPLETED) {
+                        Assert.assertEquals(1, event.getRevision());
+                    }
+                }
+
+                public void checkCancelled() throws SVNCancelException {
+                }
+            });
+
+            final SvnGetStatus getStatus = svnOperationFactory.createGetStatus();
+            getStatus.setSingleTarget(SvnTarget.fromFile(file));
+            getStatus.setRemote(true);
+            getStatus.setReportAll(false);
+            getStatus.run();
+
         } finally {
             svnOperationFactory.dispose();
             sandbox.dispose();
