@@ -1,11 +1,5 @@
 package org.tmatesoft.svn.test;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -14,6 +8,12 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminClient;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class Sandbox {
 
@@ -97,6 +97,18 @@ public class Sandbox {
         workingCopy.checkoutRevision(repositoryUrl, revision, ignoreExternals);
         workingCopies.add(workingCopy);
         return workingCopy;
+    }
+
+    public SVNURL getFSFSAccessUrl(SVNURL url) {
+        if ("file".equals(url.getProtocol())) {
+            return url;
+        }
+        final File repositoryRoot = urlToRepositoryRoot.get(url);
+        try {
+            return SVNURL.fromFile(repositoryRoot);
+        } catch (SVNException e) {
+            return null;
+        }
     }
 
     private SVNURL getRepositoryUrl() {
