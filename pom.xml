@@ -27,7 +27,7 @@
     <dependency>
       <groupId>org.jvnet.hudson</groupId>
       <artifactId>trilead-ssh2</artifactId>
-      <version>build212-hudson-6</version>
+      <version>build214-hudson-1</version>
       <optional>true</optional>
     </dependency>
     <dependency>
@@ -45,14 +45,8 @@
   
   <repositories>
     <repository>
-      <id>m.g.o-public</id>
-      <url>http://maven.glassfish.org/content/groups/public/</url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
+      <id>repo.jenkins-ci.org</id>
+      <url>http://repo.jenkins-ci.org/public/</url>
     </repository>
   </repositories>
 </project>
