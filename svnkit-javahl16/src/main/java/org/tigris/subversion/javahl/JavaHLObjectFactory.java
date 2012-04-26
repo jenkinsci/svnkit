@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -686,6 +686,9 @@ public class JavaHLObjectFactory {
             path = path.replace(File.separatorChar, '/');
         }
         int depth = info.getDepth() != null ? info.getDepth().getId() : Depth.unknown;
+        if (info.getKind() == SVNNodeKind.FILE) {
+        	depth = 0;
+        }
         return new Info2(
                 path,
                 info.getURL() != null ? info.getURL().toString() : null,
@@ -730,6 +733,10 @@ public class JavaHLObjectFactory {
     }
 
     public static NotifyInformation createNotifyInformation(SVNEvent event, String path) {
+        final int actionId = getNotifyActionValue(event.getAction());
+        if (actionId == -1) {
+            return null;
+        }
         // include full error message.
         String errMsg = null;
         if (event.getErrorMessage() != null) {
@@ -738,7 +745,7 @@ public class JavaHLObjectFactory {
         // TODO 16
         return new NotifyInformation(
                 path,
-                getNotifyActionValue(event.getAction()),
+                actionId,
                 getNodeKind(event.getNodeKind()),
                 event.getMimeType(),
                 createLock(event.getLock()),

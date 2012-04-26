@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -17,6 +17,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -25,6 +26,10 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.wc.SVNDiffClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
+import org.tmatesoft.svn.core.wc2.SvnLogMergeInfo;
+import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
 
 
@@ -38,15 +43,17 @@ public class SVNMergeInfoCommand extends SVNCommand implements ISVNLogEntryHandl
         super("mergeinfo", null);
     }
     
-    protected Collection createSupportedOptions() {
-        Collection options = new LinkedList();
+    protected Collection<SVNOption> createSupportedOptions() {
+        Collection<SVNOption> options = new LinkedList<SVNOption>();
         options.add(SVNOption.REVISION);
         options.add(SVNOption.SHOW_REVS);
+        options.add(SVNOption.RECURSIVE);
+        options.add(SVNOption.DEPTH);
         return options;
     }
 
     public void run() throws SVNException {
-        List targets = getSVNEnvironment().combineTargets(null, true);
+        List<String> targets = getSVNEnvironment().combineTargets(null, true);
         if (targets.size() < 1) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
                     "Not enough arguments given");
@@ -82,49 +89,43 @@ public class SVNMergeInfoCommand extends SVNCommand implements ISVNLogEntryHandl
             }
         }
         
-        
         SVNDiffClient client = getSVNEnvironment().getClientManager().getDiffClient();
-        if (getSVNEnvironment().getShowRevisionType() == SVNShowRevisionType.MERGED) {
-            if (target.isURL()) {
-                if (source.isURL()) {
-                    client.doGetLogMergedMergeInfo(target.getURL(), tgtPegRevision, source.getURL(), srcPegRevision, 
-                            false, null, this);
-                } else {
-                    client.doGetLogMergedMergeInfo(target.getURL(), tgtPegRevision, source.getFile(), srcPegRevision, 
-                            false, null, this);
-                }
-            } else {
-                if (source.isURL()) {
-                    client.doGetLogMergedMergeInfo(target.getFile(), tgtPegRevision, source.getURL(), srcPegRevision,
-                            false, null, this);
-                } else {
-                    client.doGetLogMergedMergeInfo(target.getFile(), tgtPegRevision, source.getFile(), srcPegRevision,
-                            false, null, this);
-                }
-            }
-        } else if (getSVNEnvironment().getShowRevisionType() == SVNShowRevisionType.ELIGIBLE) {
-            if (target.isURL()) {
-                if (source.isURL()) {
-                    client.doGetLogEligibleMergeInfo(target.getURL(), tgtPegRevision, source.getURL(), srcPegRevision, 
-                            false, null, this);
-                } else {
-                    client.doGetLogEligibleMergeInfo(target.getURL(), tgtPegRevision, source.getFile(), srcPegRevision, 
-                            false, null, this);
-                }
-            } else {
-                if (source.isURL()) {
-                    client.doGetLogEligibleMergeInfo(target.getFile(), tgtPegRevision, source.getURL(), srcPegRevision, 
-                            false, null, this);
-                } else {
-                    client.doGetLogEligibleMergeInfo(target.getFile(), tgtPegRevision, source.getFile(), srcPegRevision, 
-                            false, null, this);
-                }
-            }
+        SvnOperationFactory of = client.getOperationsFactory();
+        SVNDepth depth = getSVNEnvironment().getDepth();
+        if (depth == SVNDepth.UNKNOWN) {
+            depth = SVNDepth.EMPTY;
         }
+        SvnLogMergeInfo logMergeInfo = of.createLogMergeInfo();
+        logMergeInfo.setDepth(depth);
+        logMergeInfo.setDiscoverChangedPaths(true);
+        logMergeInfo.setRevisionProperties(null);
+        logMergeInfo.setReceiver(new ISvnObjectReceiver<SVNLogEntry>() {            
+            public void receive(SvnTarget target, SVNLogEntry object) throws SVNException {
+                handleLogEntry(object);
+            }
+        });
+        logMergeInfo.setFindMerged(getSVNEnvironment().getShowRevisionType() == SVNShowRevisionType.MERGED);
+        if (target.isURL()) {
+            logMergeInfo.setSingleTarget(SvnTarget.fromURL(target.getURL(), tgtPegRevision));
+        } else {
+            logMergeInfo.setSingleTarget(SvnTarget.fromFile(target.getFile(), tgtPegRevision));
+        }
+        if (source.isURL()) {
+            logMergeInfo.setSource(SvnTarget.fromURL(source.getURL(), srcPegRevision));
+        } else {
+            logMergeInfo.setSource(SvnTarget.fromFile(source.getFile(), srcPegRevision));
+        }
+        
+        logMergeInfo.run();
     }
     
     public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
-        String message = MessageFormat.format("r{0}", new Object[] { String.valueOf(logEntry.getRevision()) });
+        String message;
+        if (logEntry.isNonInheritable()) {
+            message = MessageFormat.format("r{0}*", new Object[] { String.valueOf(logEntry.getRevision()) });
+        } else {
+            message = MessageFormat.format("r{0}", new Object[] { String.valueOf(logEntry.getRevision()) });
+        }
         getSVNEnvironment().getOut().println(message);
     }
     

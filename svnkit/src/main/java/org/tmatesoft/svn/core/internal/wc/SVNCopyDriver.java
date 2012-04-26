@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -56,19 +56,17 @@ import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNExternalsHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.ISVNRepositoryPool;
-import org.tmatesoft.svn.core.wc.SVNBasicClient;
 import org.tmatesoft.svn.core.wc.SVNCommitItem;
 import org.tmatesoft.svn.core.wc.SVNCopySource;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNUpdateClient;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
+import org.tmatesoft.svn.core.internal.wc16.*;
 
-public class SVNCopyDriver extends SVNBasicClient {
+public class SVNCopyDriver extends SVNBasicDelegate {
 
     private SVNWCAccess myWCAccess;
     private boolean myIsDisableLocalModificationsCopying;
@@ -559,7 +557,7 @@ public class SVNCopyDriver extends SVNBasicClient {
                     }
                     if (same) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
-                                "Cannot move path ''{0}'' into itself", p);
+                                "Cannot move {1} ''{0}'' into itself", p, srcIsURL ? "URL" : "path");
                         SVNErrorManager.error(err, SVNLogType.WC);
                     }
                 }
@@ -761,7 +759,8 @@ public class SVNCopyDriver extends SVNBasicClient {
                     for (Iterator pathsIter = pathsToExternalsProps.keySet().iterator(); pathsIter.hasNext();) {
                         File localPath = (File) pathsIter.next();
                         String externalsPropString = (String) pathsToExternalsProps.get(localPath);
-                        SVNExternal[] externals = SVNExternal.parseExternals(localPath, externalsPropString);
+                        SVNExternal[] externals = SVNExternal.parseExternals(localPath.getAbsolutePath(),
+                                externalsPropString);
                         boolean introduceVirtualExternalChange = false;
                         newExternals.clear();
                         for (int k = 0; k < externals.length; k++) {
@@ -801,7 +800,7 @@ public class SVNCopyDriver extends SVNBasicClient {
                             SVNURL resolvedURL = externals[k].resolveURL(repos.getRepositoryRoot(true), ownerURL);
                             String unresolvedURL = externals[k].getUnresolvedUrl();
                             if (unresolvedURL != null && !SVNPathUtil.isURL(unresolvedURL) && unresolvedURL.startsWith("../"))  {
-                                unresolvedURL = SVNURLUtil.getRelativeURL(repos.getRepositoryRoot(true), resolvedURL);
+                                unresolvedURL = SVNURLUtil.getRelativeURL(repos.getRepositoryRoot(true), resolvedURL, true);
                                 if (unresolvedURL.startsWith("/")) {
                                     unresolvedURL = "^" + unresolvedURL;
                                 } else {
@@ -1084,7 +1083,7 @@ public class SVNCopyDriver extends SVNBasicClient {
             // do checkout
             String srcURL = pair.myOriginalSource;
             SVNURL url = SVNURL.parseURIEncoded(srcURL);
-            SVNUpdateClient updateClient = new SVNUpdateClient(getRepositoryPool(), getOptions());
+            SVNUpdateClient16 updateClient = new SVNUpdateClient16(getRepositoryPool(), getOptions());
             updateClient.setEventHandler(getEventDispatcher());
 
             File dstFile = new File(pair.myDst);
@@ -1137,7 +1136,7 @@ public class SVNCopyDriver extends SVNBasicClient {
             Map mergeInfo = calculateTargetMergeInfo(null, null, url, srcRevNum, topSrcRepos, false);
             extendWCMergeInfo(dst, entry, mergeInfo, dstAccess);
 
-            SVNEvent event = SVNEventFactory.createSVNEvent(dst, SVNNodeKind.FILE, null, SVNRepository.INVALID_REVISION, SVNEventAction.ADD, null, null, null);
+            SVNEvent event = SVNEventFactory.createSVNEvent(dst, SVNNodeKind.FILE, null, SVNRepository.INVALID_REVISION, SVNEventAction.COPY, null, null, null);
             dstAccess.handleEvent(event);
 
             sleepForTimeStamp();
@@ -1275,7 +1274,7 @@ public class SVNCopyDriver extends SVNBasicClient {
     }
 
     private void copyDisjointDir(File nestedWC, SVNWCAccess parentAccess, File nestedWCParent) throws SVNException {
-        SVNWCClient wcClient = new SVNWCClient((ISVNAuthenticationManager) null, null);
+        SVNWCClient16 wcClient = new SVNWCClient16((ISVNAuthenticationManager) null, null);
         wcClient.setEventHandler(getEventDispatcher());
         wcClient.doCleanup(nestedWC);
 
@@ -1487,7 +1486,7 @@ public class SVNCopyDriver extends SVNBasicClient {
                 dstDir.runLogs();
             }
         }
-        SVNEvent event = SVNEventFactory.createSVNEvent(dst, SVNNodeKind.FILE, null, SVNRepository.INVALID_REVISION, SVNEventAction.ADD, null, null, null);
+        SVNEvent event = SVNEventFactory.createSVNEvent(dst, SVNNodeKind.FILE, null, SVNRepository.INVALID_REVISION, SVNEventAction.COPY, null, null, null);
         dstAccess.handleEvent(event);
     }
 
@@ -1517,7 +1516,7 @@ public class SVNCopyDriver extends SVNBasicClient {
             SVNErrorManager.error(err, SVNLogType.WC);
         }
         SVNFileUtil.copyDirectory(src, dst, true, getEventDispatcher());
-        SVNWCClient wcClient = new SVNWCClient((ISVNAuthenticationManager) null, null);
+        SVNWCClient16 wcClient = new SVNWCClient16((ISVNAuthenticationManager) null, null);
         wcClient.setEventHandler(getEventDispatcher());
         wcClient.doCleanup(dst);
 
@@ -1644,7 +1643,7 @@ public class SVNCopyDriver extends SVNBasicClient {
 
     private void addLocalParents(File path, ISVNEventHandler handler) throws SVNException {
         boolean created = path.mkdirs();
-        SVNWCClient wcClient = new SVNWCClient((ISVNAuthenticationManager) null, null);
+        SVNWCClient16 wcClient = new SVNWCClient16((ISVNAuthenticationManager) null, null);
         try {
             wcClient.setEventHandler(handler);
             wcClient.doAdd(path, false, false, true, SVNDepth.EMPTY, true, true);

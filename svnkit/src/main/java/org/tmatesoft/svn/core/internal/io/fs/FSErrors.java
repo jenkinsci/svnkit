@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -177,7 +177,10 @@ public class FSErrors {
             return false;
         }
         SVNErrorCode errCode = err.getErrorCode();
-        return errCode == SVNErrorCode.FS_PATH_ALREADY_LOCKED || errCode == SVNErrorCode.FS_OUT_OF_DATE;
+        return errCode == SVNErrorCode.FS_PATH_ALREADY_LOCKED 
+                || errCode == SVNErrorCode.FS_NOT_FOUND
+                || errCode == SVNErrorCode.FS_BAD_LOCK_TOKEN
+                || errCode == SVNErrorCode.FS_OUT_OF_DATE;
     }
 
     public static boolean isUnlockError(SVNErrorMessage err) {

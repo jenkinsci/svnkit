@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -17,6 +17,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNMergeRange;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNURL;
 
 /**
@@ -121,6 +122,9 @@ public class SVNEvent {
     private SVNEventAction myExpectedAction;
     private String myChangelistName;
     private SVNMergeRange myRange;
+    private SVNProperties myRevisionProperties;
+    private String myPropertyName;
+    private Object info;
 
     /**
      * Constructs an <b>SVNEvent</b> object given
@@ -160,14 +164,15 @@ public class SVNEvent {
      */
     public SVNEvent(File file, SVNNodeKind kind, String mimetype, long revision, SVNStatusType cstatus, 
             SVNStatusType pstatus, SVNStatusType lstatus, SVNLock lock, SVNEventAction action, 
-            SVNEventAction expected, SVNErrorMessage error, SVNMergeRange range, String changelistName) {
+            SVNEventAction expected, SVNErrorMessage error, SVNMergeRange range, String changelistName, SVNProperties revisionProperties,
+            String propertyName) {
         myFile = file != null ? file.getAbsoluteFile() : null;
         myNodeKind = kind == null ? SVNNodeKind.UNKNOWN : kind;
         myMimeType = mimetype;
         myRevision = revision;
         myContentsStatus = cstatus == null ? SVNStatusType.INAPPLICABLE : cstatus;
         myPropertiesStatus = pstatus == null ? SVNStatusType.INAPPLICABLE : pstatus;
-        myLockStatus = lstatus == null ? SVNStatusType.INAPPLICABLE : lstatus;
+        myLockStatus = lstatus == null ? SVNStatusType.LOCK_INAPPLICABLE : lstatus;
         myLock = lock;
         myAction = action;
         myExpectedAction = expected == null ? action : expected;
@@ -175,6 +180,8 @@ public class SVNEvent {
         myRange = range;
         myChangelistName = changelistName;
         myPreviousRevision = -1;
+        myRevisionProperties = revisionProperties;
+        myPropertyName = propertyName;
     }
 
     /**
@@ -426,5 +433,37 @@ public class SVNEvent {
         }
         return sb.toString();
     }
+
+
     
+    public Object getInfo() {
+        return info;
+    }
+
+
+    
+    public void setInfo(Object info) {
+        this.info = info;
+    }
+
+
+    public void setFile(File path) {
+        this.myFile = path;
+    }
+
+    public SVNProperties getRevisionProperties() {
+        return myRevisionProperties;
+    }
+
+    public void setRevisionProperties(SVNProperties revisionProperties) {
+        this.myRevisionProperties = revisionProperties;
+    }
+
+    public String getPropertyName() {
+        return myPropertyName;
+    }
+
+    public void setPropertyName(String propertyName) {
+        this.myPropertyName = propertyName;
+    }
 }

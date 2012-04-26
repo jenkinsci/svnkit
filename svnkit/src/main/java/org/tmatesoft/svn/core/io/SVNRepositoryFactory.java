@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -31,6 +31,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
@@ -45,23 +46,24 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNWCProperties;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * <b>SVNRepositoryFactory</b> is an abstract factory that is responsible
- * for creating an appropriate <b>SVNRepository</b> driver specific for the 
+ * for creating an appropriate <b>SVNRepository</b> driver specific for the
  * protocol to use.
- * 
+ *
  * <p>
  * Depending on what protocol a user exactly would like to use
- * to access the repository he should first of all set up an 
+ * to access the repository he should first of all set up an
  * appropriate extension of this factory. So, if the user is going to
- * work with the repository via the custom <i>svn</i>-protocol (or 
+ * work with the repository via the custom <i>svn</i>-protocol (or
  * <i>svn+xxx</i>) he initially calls:
  * <pre class="javacode">
  * ...
  * <span class="javakeyword">import</span> org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
- * ...      
+ * ...
  *     <span class="javacomment">//do it once in your application prior to using the library</span>
  *     <span class="javacomment">//enables working with a repository via the svn-protocol (over svn and svn+ssh)</span>
  *     SVNRepositoryFactoryImpl.setup();
@@ -75,12 +77,12 @@ import org.tmatesoft.svn.util.SVNLogType;
  *     String url = <span class="javastring">"svn://host/path"</span>;
  *     SVNRepository repository = SVNRepositoryFactory.create(SVNURL.parseURIDecoded(url));
  *     ...</pre><br />
- * 
+ *
  * <table cellpadding="3" cellspacing="1" border="0" width="70%" bgcolor="#999933">
  * <tr bgcolor="#ADB8D9" align="left">
  * <td><b>Supported Protocols</b></td>
  * <td><b>Factory to setup</b></td>
- * </tr>   
+ * </tr>
  * <tr bgcolor="#EAEAEA" align="left">
  * <td>svn://, svn+xxx://</td><td>SVNRepositoryFactoryImpl (<b>org.tmatesoft.svn.core.internal.io.svn</b>)</td>
  * </tr>
@@ -91,11 +93,11 @@ import org.tmatesoft.svn.util.SVNLogType;
  * <td>file:/// (FSFS only)</td><td>FSRepositoryFactory (<b>org.tmatesoft.svn.core.internal.io.fs</b>)</td>
  * </tr>
  * </table>
- * 
+ *
  * <p>
- * Also <b>SVNRepositoryFactory</b> may be used to create local 
+ * Also <b>SVNRepositoryFactory</b> may be used to create local
  * FSFS-type repositories.
- * 
+ *
  * @version 1.3
  * @author  TMate Software Ltd.
  * @since   1.2
@@ -103,7 +105,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @see     <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>
  */
 public abstract class SVNRepositoryFactory {
-    
+
     private static final Map myFactoriesMap = new SVNHashMap();
     private static final String REPOSITORY_TEMPLATE_PATH = "/org/tmatesoft/svn/core/io/repository/template.jar";
     
@@ -112,7 +114,7 @@ public abstract class SVNRepositoryFactory {
         SVNRepositoryFactoryImpl.setup();
         DAVRepositoryFactory.setup();
     }
-    
+
     protected static void registerRepositoryFactory(String protocol, SVNRepositoryFactory factory) {
         if (protocol != null && factory != null) {
             synchronized (myFactoriesMap) {
@@ -120,7 +122,7 @@ public abstract class SVNRepositoryFactory {
             }
         }
     }
-    
+
     protected static boolean hasRepositoryFactory(String protocol) {
         if (protocol != null) {
             synchronized (myFactoriesMap) {
@@ -129,74 +131,74 @@ public abstract class SVNRepositoryFactory {
         }
         return false;
     }
-    
+
     /**
-     * Creates an <b>SVNRepository</b> driver according to the protocol that is to be 
+     * Creates an <b>SVNRepository</b> driver according to the protocol that is to be
      * used to access a repository.
-     * 
+     *
      * <p>
      * The protocol is defined as the beginning part of the URL schema. Currently
      * SVNKit supports only <i>svn://</i> (<i>svn+ssh://</i>) and <i>http://</i> (<i>https://</i>)
      * schemas.
-     * 
+     *
      * <p>
      * The created <b>SVNRepository</b> driver can later be <i>"reused"</i> for another
      * location - that is you can switch it to another repository url not to
-     * create yet one more <b>SVNRepository</b> object. Use the {@link SVNRepository#setLocation(SVNURL, boolean) SVNRepository.setLocation()} 
+     * create yet one more <b>SVNRepository</b> object. Use the {@link SVNRepository#setLocation(SVNURL, boolean) SVNRepository.setLocation()}
      * method for this purpose.
-     * 
+     *
      * <p>
      * An <b>SVNRepository</b> driver created by this method uses a default
-     * session options driver ({@link ISVNSession#DEFAULT}) which does not 
+     * session options driver ({@link ISVNSession#DEFAULT}) which does not
      * allow to keep a single socket connection opened and commit log messages
-     * caching.     
-     * 
-     * @param  url              a repository location URL  
+     * caching.
+     *
+     * @param  url              a repository location URL
      * @return                  a protocol specific <b>SVNRepository</b> driver
      * @throws SVNException     if there's no implementation for the specified protocol
-     *                          (the user may have forgotten to register a specific 
+     *                          (the user may have forgotten to register a specific
      *                          factory that creates <b>SVNRepository</b>
-     *                          instances for that protocol or the SVNKit 
+     *                          instances for that protocol or the SVNKit
      *                          library does not support that protocol at all)
      * @see                     #create(SVNURL, ISVNSession)
      * @see                     SVNRepository
-     * 
+     *
      */
     public static SVNRepository create(SVNURL url) throws SVNException {
         return create(url, null);
-        
+
     }
-    
+
     /**
-     * Creates an <b>SVNRepository</b> driver according to the protocol that is to be 
+     * Creates an <b>SVNRepository</b> driver according to the protocol that is to be
      * used to access a repository.
-     * 
+     *
      * <p>
      * The protocol is defined as the beginning part of the URL schema. Currently
      * SVNKit supports only <i>svn://</i> (<i>svn+ssh://</i>) and <i>http://</i> (<i>https://</i>)
      * schemas.
-     * 
+     *
      * <p>
      * The created <b>SVNRepository</b> driver can later be <i>"reused"</i> for another
      * location - that is you can switch it to another repository url not to
-     * create yet one more <b>SVNRepository</b> object. Use the {@link SVNRepository#setLocation(SVNURL, boolean) SVNRepository.setLocation()} 
+     * create yet one more <b>SVNRepository</b> object. Use the {@link SVNRepository#setLocation(SVNURL, boolean) SVNRepository.setLocation()}
      * method for this purpose.
-     * 
+     *
      * <p>
      * This method allows to customize a session options driver for an <b>SVNRepository</b> driver.
      * A session options driver must implement the <b>ISVNSession</b> interface. It manages socket
      * connections - says whether an <b>SVNRepository</b> driver may use a single socket connection
      * during the runtime, or it should open a new connection per each repository access operation.
      * And also a session options driver may cache and provide commit log messages during the
-     * runtime. 
-     * 
-     * @param  url              a repository location URL  
+     * runtime.
+     *
+     * @param  url              a repository location URL
      * @param  options          a session options driver
      * @return                  a protocol specific <b>SVNRepository</b> driver
      * @throws SVNException     if there's no implementation for the specified protocol
-     *                          (the user may have forgotten to register a specific 
+     *                          (the user may have forgotten to register a specific
      *                          factory that creates <b>SVNRepository</b>
-     *                          instances for that protocol or the SVNKit 
+     *                          instances for that protocol or the SVNKit
      *                          library does not support that protocol at all)
      * @see                     #create(SVNURL)
      * @see                     SVNRepository
@@ -222,13 +224,13 @@ public abstract class SVNRepositoryFactory {
 
     /**
      * Creates a local blank FSFS-type repository.
-     * A call to this routine is equivalent to 
+     * A call to this routine is equivalent to
      * <code>createLocalRepository(path, null, enableRevisionProperties, force)</code>.
-     * 
+     *
      * @param  path                          a repository root location
-     * @param  enableRevisionProperties      enables or not revision property 
+     * @param  enableRevisionProperties      enables or not revision property
      *                                       modifications
-     * @param  force                         forces operation to run               
+     * @param  force                         forces operation to run
      * @return                               a local URL (file:///) of a newly
      *                                       created repository
      * @throws SVNException
@@ -238,37 +240,37 @@ public abstract class SVNRepositoryFactory {
     public static SVNURL createLocalRepository(File path, boolean enableRevisionProperties, boolean force) throws SVNException {
         return createLocalRepository(path, null, enableRevisionProperties, force);
     }
-    
+
     /**
-     * Creates a local blank FSFS-type repository. This is just similar to 
+     * Creates a local blank FSFS-type repository. This is just similar to
      * the Subversion's command: <code>svnadmin create --fs-type=fsfs REPOS_PATH</code>.
      * The resultant repository is absolutely format-compatible with Subversion.
-     * 
-     * <p>
-     * If <code>uuid</code> is <span class="javakeyword">null</span> or not 36 chars 
-     * wide, the method generates a new UUID for the repository. This UUID would have 
-     * the same format as if it's generated by Subversion itself.
-     * 
-     * <p>
-     * If <code>enableRevisionProperties</code> is <span class="javakeyword">true</span>
-     * then the method creates a <code>pre-revprop-change</code> executable file inside 
-     * the <code>"hooks"</code> subdir of the repository tree. This executable file 
-     * simply returns 0 thus allowing revision property modifications, which are not 
-     * permitted, unless one puts such a hook into that very directory.   
      *
      * <p>
-     * If <code>force</code> is <span class="javakeyword">true</span> and <code>path</code> already 
-     * exists, deletes that path and creates a repository in its place. 
-     * 
+     * If <code>uuid</code> is <span class="javakeyword">null</span> or not 36 chars
+     * wide, the method generates a new UUID for the repository. This UUID would have
+     * the same format as if it's generated by Subversion itself.
+     *
      * <p>
-     * A call to this routine is equivalent to 
+     * If <code>enableRevisionProperties</code> is <span class="javakeyword">true</span>
+     * then the method creates a <code>pre-revprop-change</code> executable file inside
+     * the <code>"hooks"</code> subdir of the repository tree. This executable file
+     * simply returns 0 thus allowing revision property modifications, which are not
+     * permitted, unless one puts such a hook into that very directory.
+     *
+     * <p>
+     * If <code>force</code> is <span class="javakeyword">true</span> and <code>path</code> already
+     * exists, deletes that path and creates a repository in its place.
+     *
+     * <p>
+     * A call to this routine is equivalent to
      * <code>createLocalRepository(path, uuid, enableRevisionProperties, force, false)</code>.
-     * 
+     *
      * @param  path                          a repository root location
      * @param  uuid                          a repository's uuid
-     * @param  enableRevisionProperties      enables or not revision property 
+     * @param  enableRevisionProperties      enables or not revision property
      *                                       modifications
-     * @param  force                         forces operation to run               
+     * @param  force                         forces operation to run
      * @return                               a local URL (file:///) of a newly
      *                                       created repository
      * @throws SVNException
@@ -280,39 +282,39 @@ public abstract class SVNRepositoryFactory {
     }
 
     /**
-     * Creates a local blank FSFS-type repository. This is just similar to 
+     * Creates a local blank FSFS-type repository. This is just similar to
      * the Subversion's command: <code>svnadmin create --fs-type=fsfs REPOS_PATH</code>.
      * The resultant repository is absolutely format-compatible with Subversion.
-     * 
-     * <p>
-     * If <code>uuid</code> is <span class="javakeyword">null</span> or not 36 chars 
-     * wide, the method generates a new UUID for the repository. This UUID would have 
-     * the same format as if it's generated by Subversion itself.
-     * 
-     * <p>
-     * If <code>enableRevisionProperties</code> is <span class="javakeyword">true</span>
-     * then the method creates a <code>pre-revprop-change</code> executable file inside 
-     * the <code>"hooks"</code> subdir of the repository tree. This executable file 
-     * simply returns 0 thus allowing revision property modifications, which are not 
-     * permitted, unless one puts such a hook into that very directory.   
      *
      * <p>
-     * If <code>force</code> is <span class="javakeyword">true</span> and <code>path</code> already 
-     * exists, deletes that path and creates a repository in its place. 
-     * 
+     * If <code>uuid</code> is <span class="javakeyword">null</span> or not 36 chars
+     * wide, the method generates a new UUID for the repository. This UUID would have
+     * the same format as if it's generated by Subversion itself.
+     *
      * <p>
-     * Set <code>pre14Compatible</code> to <span class="javakeyword">true</span> if you want a new repository 
+     * If <code>enableRevisionProperties</code> is <span class="javakeyword">true</span>
+     * then the method creates a <code>pre-revprop-change</code> executable file inside
+     * the <code>"hooks"</code> subdir of the repository tree. This executable file
+     * simply returns 0 thus allowing revision property modifications, which are not
+     * permitted, unless one puts such a hook into that very directory.
+     *
+     * <p>
+     * If <code>force</code> is <span class="javakeyword">true</span> and <code>path</code> already
+     * exists, deletes that path and creates a repository in its place.
+     *
+     * <p>
+     * Set <code>pre14Compatible</code> to <span class="javakeyword">true</span> if you want a new repository
      * to be compatible with pre-1.4 servers.
-     *  
+     *
      * <p>
      * Note: this method is identical to <code>createLocalRepository(path, uuid, enableRevisionProperties, force, pre14Compatible, false)</code>.
-     * 
+     *
      * @param  path                          a repository root location
      * @param  uuid                          a repository's uuid
-     * @param  enableRevisionProperties      enables or not revision property 
+     * @param  enableRevisionProperties      enables or not revision property
      *                                       modifications
-     * @param  force                         forces operation to run               
-     * @param  pre14Compatible               <span class="javakeyword">true</span> to 
+     * @param  force                         forces operation to run
+     * @param  pre14Compatible               <span class="javakeyword">true</span> to
      *                                       create a repository with pre-1.4 format
      * @return                               a local URL (file:///) of a newly
      *                                       created repository
@@ -325,44 +327,44 @@ public abstract class SVNRepositoryFactory {
     }
 
     /**
-     * Creates a local blank FSFS-type repository. This is just similar to 
+     * Creates a local blank FSFS-type repository. This is just similar to
      * the Subversion's command: <code>svnadmin create --fs-type=fsfs REPOS_PATH</code>.
      * The resultant repository is absolutely format-compatible with Subversion.
-     * 
-     * <p>
-     * If <code>uuid</code> is <span class="javakeyword">null</span> or not 36 chars 
-     * wide, the method generates a new UUID for the repository. This UUID would have 
-     * the same format as if it's generated by Subversion itself.
-     * 
-     * <p>
-     * If <code>enableRevisionProperties</code> is <span class="javakeyword">true</span>
-     * then the method creates a <code>pre-revprop-change</code> executable file inside 
-     * the <code>"hooks"</code> subdir of the repository tree. This executable file 
-     * simply returns 0 thus allowing revision property modifications, which are not 
-     * permitted, unless one puts such a hook into that very directory.   
      *
      * <p>
-     * If <code>force</code> is <span class="javakeyword">true</span> and <code>path</code> already 
-     * exists, deletes that path and creates a repository in its place. 
-     * 
+     * If <code>uuid</code> is <span class="javakeyword">null</span> or not 36 chars
+     * wide, the method generates a new UUID for the repository. This UUID would have
+     * the same format as if it's generated by Subversion itself.
+     *
      * <p>
-     * Set <code>pre14Compatible</code> to <span class="javakeyword">true</span> if you want a new repository 
+     * If <code>enableRevisionProperties</code> is <span class="javakeyword">true</span>
+     * then the method creates a <code>pre-revprop-change</code> executable file inside
+     * the <code>"hooks"</code> subdir of the repository tree. This executable file
+     * simply returns 0 thus allowing revision property modifications, which are not
+     * permitted, unless one puts such a hook into that very directory.
+     *
+     * <p>
+     * If <code>force</code> is <span class="javakeyword">true</span> and <code>path</code> already
+     * exists, deletes that path and creates a repository in its place.
+     *
+     * <p>
+     * Set <code>pre14Compatible</code> to <span class="javakeyword">true</span> if you want a new repository
      * to be compatible with pre-1.4 servers.
      *
      * <p>
-     * Set <code>pre15Compatible</code> to <span class="javakeyword">true</span> if you want a new repository 
+     * Set <code>pre15Compatible</code> to <span class="javakeyword">true</span> if you want a new repository
      * to be compatible with pre-1.5 servers.
      *
      * <p>
-     * There must be only one option (either <code>pre14Compatible</code> or <code>pre15Compatible</code>) 
+     * There must be only one option (either <code>pre14Compatible</code> or <code>pre15Compatible</code>)
      * set to <span class="javakeyword">true</span> at a time.
-     * 
+     *
      * @param  path                          a repository root location
      * @param  uuid                          a repository's uuid
-     * @param  enableRevisionProperties      enables or not revision property 
+     * @param  enableRevisionProperties      enables or not revision property
      *                                       modifications
-     * @param  force                         forces operation to run               
-     * @param  pre14Compatible               <span class="javakeyword">true</span> to 
+     * @param  force                         forces operation to run
+     * @param  pre14Compatible               <span class="javakeyword">true</span> to
      *                                       create a repository with pre-1.4 format
      * @param  pre15Compatible               <span class="javakeyword">true</span> to
      *                                       create a repository with pre-1.5 format
@@ -371,54 +373,54 @@ public abstract class SVNRepositoryFactory {
      * @throws SVNException
      * @since                                1.2
      */
-    public static SVNURL createLocalRepository(File path, String uuid, boolean enableRevisionProperties, 
+    public static SVNURL createLocalRepository(File path, String uuid, boolean enableRevisionProperties,
             boolean force, boolean pre14Compatible, boolean pre15Compatible) throws SVNException {
         return createLocalRepository(path, uuid, enableRevisionProperties, force, pre14Compatible, pre15Compatible, false);
     }
-    
+
     /**
-     * Creates a local blank FSFS-type repository. This is just similar to 
+     * Creates a local blank FSFS-type repository. This is just similar to
      * the Subversion's command: <code>svnadmin create --fs-type=fsfs REPOS_PATH</code>.
      * The resultant repository is absolutely format-compatible with Subversion.
-     * 
-     * <p>
-     * If <code>uuid</code> is <span class="javakeyword">null</span> or not 36 chars 
-     * wide, the method generates a new UUID for the repository. This UUID would have 
-     * the same format as if it's generated by Subversion itself.
-     * 
-     * <p>
-     * If <code>enableRevisionProperties</code> is <span class="javakeyword">true</span>
-     * then the method creates a <code>pre-revprop-change</code> executable file inside 
-     * the <code>"hooks"</code> subdir of the repository tree. This executable file 
-     * simply returns 0 thus allowing revision property modifications, which are not 
-     * permitted, unless one puts such a hook into that very directory.   
      *
      * <p>
-     * If <code>force</code> is <span class="javakeyword">true</span> and <code>path</code> already 
-     * exists, deletes that path and creates a repository in its place. 
-     * 
+     * If <code>uuid</code> is <span class="javakeyword">null</span> or not 36 chars
+     * wide, the method generates a new UUID for the repository. This UUID would have
+     * the same format as if it's generated by Subversion itself.
+     *
      * <p>
-     * Set <code>pre14Compatible</code> to <span class="javakeyword">true</span> if you want a new repository 
+     * If <code>enableRevisionProperties</code> is <span class="javakeyword">true</span>
+     * then the method creates a <code>pre-revprop-change</code> executable file inside
+     * the <code>"hooks"</code> subdir of the repository tree. This executable file
+     * simply returns 0 thus allowing revision property modifications, which are not
+     * permitted, unless one puts such a hook into that very directory.
+     *
+     * <p>
+     * If <code>force</code> is <span class="javakeyword">true</span> and <code>path</code> already
+     * exists, deletes that path and creates a repository in its place.
+     *
+     * <p>
+     * Set <code>pre14Compatible</code> to <span class="javakeyword">true</span> if you want a new repository
      * to be compatible with pre-1.4 servers.
      *
      * <p>
-     * Set <code>pre15Compatible</code> to <span class="javakeyword">true</span> if you want a new repository 
+     * Set <code>pre15Compatible</code> to <span class="javakeyword">true</span> if you want a new repository
      * to be compatible with pre-1.5 servers.
      *
      * <p>
-     * Set <code>pre16Compatible</code> to <span class="javakeyword">true</span> if you want a new repository 
+     * Set <code>pre16Compatible</code> to <span class="javakeyword">true</span> if you want a new repository
      * to be compatible with pre-1.6 servers.
-     * 
+     *
      * <p>
-     * There must be only one option (either <code>pre14Compatible</code> or <code>pre15Compatible</code> or 
+     * There must be only one option (either <code>pre14Compatible</code> or <code>pre15Compatible</code> or
      * <code>pre16Compatible</code>) set to <span class="javakeyword">true</span> at a time.
-     * 
+     *
      * @param  path                          a repository root location
      * @param  uuid                          a repository's uuid
-     * @param  enableRevisionProperties      enables or not revision property 
+     * @param  enableRevisionProperties      enables or not revision property
      *                                       modifications
-     * @param  force                         forces operation to run               
-     * @param  pre14Compatible               <span class="javakeyword">true</span> to 
+     * @param  force                         forces operation to run
+     * @param  pre14Compatible               <span class="javakeyword">true</span> to
      *                                       create a repository with pre-1.4 format
      * @param  pre15Compatible               <span class="javakeyword">true</span> to
      *                                       create a repository with pre-1.5 format
@@ -429,8 +431,15 @@ public abstract class SVNRepositoryFactory {
      * @throws SVNException
      * @since                                1.3
      */
-     public static SVNURL createLocalRepository(File path, String uuid, boolean enableRevisionProperties, 
+     public static SVNURL createLocalRepository(File path, String uuid, boolean enableRevisionProperties,
             boolean force, boolean pre14Compatible, boolean pre15Compatible, boolean pre16Compatible) throws SVNException {
+         return createLocalRepository(path, uuid, enableRevisionProperties,
+                 force, pre14Compatible, pre15Compatible, pre16Compatible, false, false);
+     }
+
+     public static SVNURL createLocalRepository(File path, String uuid, boolean enableRevisionProperties,
+            boolean force, boolean pre14Compatible, boolean pre15Compatible, boolean pre16Compatible,
+            boolean pre17Compatible, boolean with17Compatible) throws SVNException {
         SVNFileType fType = SVNFileType.getType(path);
         if (fType != SVNFileType.NONE) {
             if (fType == SVNFileType.DIRECTORY) {
@@ -469,7 +478,7 @@ public abstract class SVNRepositoryFactory {
             SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         File jarFile = SVNFileUtil.createUniqueFile(path, ".template", ".jar", true);
-        OutputStream uuidOS = null; 
+        OutputStream uuidOS = null;
         OutputStream reposFormatOS = null;
         OutputStream fsFormatOS = null;
         OutputStream txnCurrentOS = null;
@@ -494,7 +503,7 @@ public abstract class SVNRepositoryFactory {
                     try {
                         os.write("@echo off".getBytes());
                     } catch (IOException e) {
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot create pre-rev-prop-change hook file at ''{0}'': {1}", 
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot create pre-rev-prop-change hook file at ''{0}'': {1}",
                                 new Object[] {hookFile, e.getLocalizedMessage()});
                         SVNErrorManager.error(err, SVNLogType.FSFS);
                     } finally {
@@ -505,9 +514,9 @@ public abstract class SVNRepositoryFactory {
                     OutputStream os = null;
                     try {
                         os = SVNFileUtil.openFileForWriting(hookFile);
-                        os.write("#!/bin/sh\nexit 0".getBytes("US-ASCII"));                        
+                        os.write("#!/bin/sh\nexit 0".getBytes("US-ASCII"));
                     } catch (IOException e) {
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot create pre-rev-prop-change hook file at ''{0}'': {1}", 
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot create pre-rev-prop-change hook file at ''{0}'': {1}",
                                 new Object[] {hookFile, e.getLocalizedMessage()});
                         SVNErrorManager.error(err, SVNLogType.FSFS);
                     } finally {
@@ -521,8 +530,8 @@ public abstract class SVNRepositoryFactory {
             if (uuid == null || uuid.length() != 36) {
                 byte[] uuidBytes = SVNUUIDGenerator.generateUUID();
                 uuid = SVNUUIDGenerator.formatUUID(uuidBytes);
-            } 
-            uuid += '\n'; 
+            }
+            uuid += '\n';
             try {
                 uuidOS = SVNFileUtil.openFileForWriting(uuidFile);
                 uuidOS.write(uuid.getBytes("US-ASCII"));
@@ -531,8 +540,14 @@ public abstract class SVNRepositoryFactory {
                 err.setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage()));
                 SVNErrorManager.error(err, SVNLogType.FSFS);
             }
-            
+
             int fsFormat = FSFS.DB_FORMAT;
+            if( FSFS.DB_FORMAT_PRE_17_USE_AS_DEFAULT && !with17Compatible ) {
+                fsFormat = FSFS.DB_FORMAT_PRE_17;
+            }
+            if( pre17Compatible) {
+                fsFormat = FSFS.DB_FORMAT_PRE_17;
+            }
             if (pre14Compatible) {
                 File reposFormatFile = new File(path, "format");
                 try {
@@ -554,7 +569,7 @@ public abstract class SVNRepositoryFactory {
                     fsFormat = 1;
                 } else if (pre15Compatible) {
                     fsFormat = 2;
-                } //else 
+                } //else
                 File fsFormatFile = new File(path, "db/format");
                 try {
                     fsFormatOS = SVNFileUtil.openFileForWriting(fsFormatFile);
@@ -562,7 +577,7 @@ public abstract class SVNRepositoryFactory {
                     format += '\n';
                     fsFormatOS.write(format.getBytes("US-ASCII"));
                 } catch (IOException e) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR,
                             "Error writing fs format to ''{0}''", fsFormatFile);
                     err.setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage()));
                     SVNErrorManager.error(err, SVNLogType.FSFS);
@@ -574,7 +589,7 @@ public abstract class SVNRepositoryFactory {
                 final File currentTxnLockFile = new File(path, "db/" + FSFS.TXN_CURRENT_LOCK_FILE);
                 SVNFileUtil.createEmptyFile(currentTxnLockFile);
             }
-            
+
             long maxFilesPerDir = 0;
             if (fsFormat >= FSFS.LAYOUT_FORMAT_OPTION_MINIMAL_FORMAT) {
                 maxFilesPerDir = FSFS.getDefaultMaxFilesPerDirectory();
@@ -622,7 +637,7 @@ public abstract class SVNRepositoryFactory {
                         new Object[]{currentFile.getName(), e.getLocalizedMessage()});
                 SVNErrorManager.error(err, e, SVNLogType.FSFS);
             }
-            
+
             if (fsFormat >= FSFS.MIN_PACKED_FORMAT) {
                 File minUnpackedFile = new File(path, "db/" + FSFS.MIN_UNPACKED_REV_FILE);
                 SVNFileUtil.createEmptyFile(minUnpackedFile);
@@ -630,13 +645,13 @@ public abstract class SVNRepositoryFactory {
                 try {
                     minUnpacledOS.write("0\n".getBytes("US-ASCII"));
                 } catch (IOException e) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
-                            "Can not write to ''{0}'' file: {1}", 
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR,
+                            "Can not write to ''{0}'' file: {1}",
                             new Object[] { minUnpackedFile.getName(), e.getLocalizedMessage() });
                     SVNErrorManager.error(err, e, SVNLogType.FSFS);
                 }
             }
-            
+
             if (fsFormat >= FSFS.MIN_CURRENT_TXN_FORMAT) {
                 File txnCurrentFile = new File(path, "db/" + FSFS.TXN_CURRENT_FILE);
                 SVNFileUtil.createEmptyFile(txnCurrentFile);
@@ -644,13 +659,13 @@ public abstract class SVNRepositoryFactory {
                 try {
                     txnCurrentOS.write("0\n".getBytes("US-ASCII"));
                 } catch (IOException e) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
-                            "Can not write to ''{0}'' file: {1}", 
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR,
+                            "Can not write to ''{0}'' file: {1}",
                             new Object[] { txnCurrentFile.getName(), e.getLocalizedMessage() });
                     SVNErrorManager.error(err, e, SVNLogType.FSFS);
                 }
             }
-            
+
             if (fsFormat >= FSFS.MIN_PROTOREVS_DIR_FORMAT) {
                 File protoRevsDir = new File(path, "db/txn-protorevs");
                 protoRevsDir.mkdirs();
@@ -662,14 +677,28 @@ public abstract class SVNRepositoryFactory {
             Map props = new SVNHashMap();
             props.put(SVNRevisionProperty.DATE, date);
             SVNWCProperties.setProperties(SVNProperties.wrap(props), rev0File, null, SVNWCProperties.SVN_HASH_TERMINATOR);
-        
+
             setSGID(new File(path, FSFS.DB_DIR));
-            
+
             if (fsFormat >= FSFS.MIN_REP_SHARING_FORMAT) {
                 File repCacheFile = new File(path, FSFS.DB_DIR + "/" + FSFS.REP_CACHE_DB);
                 FSRepresentationCacheUtil.create(repCacheFile);
             }
-            
+
+            /* Create the revprops directory. */
+            if (fsFormat >= FSFS.MIN_PACKED_REVPROP_FORMAT)
+              {
+                File minUnpackedRevPropFile = new File(path, FSFS.DB_DIR + "/" + FSFS.MIN_UNPACKED_REVPROP);
+                SVNFileUtil.writeToFile(minUnpackedRevPropFile, "0\n", "US-ASCII");
+                File revPropFile = new File(path, FSFS.DB_DIR + "/" + FSFS.REVISION_PROPERTIES_DIR + "/" + FSFS.REVISION_PROPERTIES_DB);
+                final SVNSqlJetDb revPropDb = SVNSqlJetDb.open( revPropFile, SVNSqlJetDb.Mode.RWCreate );
+                try{
+                    revPropDb.execStatement(SVNWCDbStatements.REVPROP_CREATE_SCHEMA);
+                } finally {
+                    revPropDb.close();
+                }
+              }
+
         } finally {
             SVNFileUtil.closeFile(uuidOS);
             SVNFileUtil.closeFile(reposFormatOS);
@@ -683,9 +712,9 @@ public abstract class SVNRepositoryFactory {
     }
 
     protected abstract SVNRepository createRepositoryImpl(SVNURL url, ISVNSession session);
-    
+
     private static void copyToFile(InputStream is, File dstFile) throws SVNException {
-        OutputStream os = null; 
+        OutputStream os = null;
         byte[] buffer = new byte[16*1024];
         try {
             os = SVNFileUtil.openFileForWriting(dstFile);
@@ -712,7 +741,7 @@ public abstract class SVNRepositoryFactory {
         JarInputStream jis = null;
         InputStream is = SVNFileUtil.openFileForReading(srcFile, SVNLogType.NETWORK);
         byte[] buffer = new byte[16*1024];
-        
+
         JarFile jarFile = null;
         try {
             jarFile = new JarFile(srcFile);
@@ -723,7 +752,7 @@ public abstract class SVNRepositoryFactory {
                     break;
                 }
                 String name = entry.getName();
-                File entryFile = new File(dst, name); 
+                File entryFile = new File(dst, name);
                 if (entry.isDirectory()) {
                     entryFile.mkdirs();
                 } else {
@@ -749,7 +778,7 @@ public abstract class SVNRepositoryFactory {
                 jis.closeEntry();
             }
         } catch (IOException e) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can not extract repository files from ''{0}'' to ''{1}''", 
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can not extract repository files from ''{0}'' to ''{1}''",
                     new Object[] {srcFile, dst});
             err.setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage()));
             SVNErrorManager.error(err, SVNLogType.NETWORK);
@@ -764,7 +793,7 @@ public abstract class SVNRepositoryFactory {
             }
         }
     }
-    
+
     private static void translateFiles(File directory) throws SVNException {
         File[] children = SVNFileListUtil.listFiles(directory);
         byte[] eol = new byte[] {'\n'};
@@ -783,7 +812,7 @@ public abstract class SVNRepositoryFactory {
             }
         }
     }
-    
+
     private static void setSGID(File dbDir) {
         SVNFileUtil.setSGID(dbDir);
         File[] dirContents = dbDir.listFiles();

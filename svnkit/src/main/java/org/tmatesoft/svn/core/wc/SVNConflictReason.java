@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -13,16 +13,16 @@ package org.tmatesoft.svn.core.wc;
 
 
 /**
- * The <b>SVNConflictReason</b> class represents an enumeration of constants describing the reason of a 
- * conflict state in a working copy produced by a merge operation. 
- *  
+ * The <b>SVNConflictReason</b> class represents an enumeration of constants describing the reason of a
+ * conflict state in a working copy produced by a merge operation.
+ *
  * @version 1.3
  * @author  TMate Software Ltd.
  * @since   1.2
  */
 public class SVNConflictReason {
     /**
-     * Constant saying that local edits are already present. 
+     * Constant saying that local edits are already present.
      */
     public static final SVNConflictReason EDITED = new SVNConflictReason("edited");
     /**
@@ -46,12 +46,16 @@ public class SVNConflictReason {
      */
     public static final SVNConflictReason ADDED = new SVNConflictReason("added");
 
+    /** Constant saying that an object is already replaced.
+     * @since New in 1.7. */
+    public static final SVNConflictReason REPLACED = new SVNConflictReason("replaced");
+
     /**
      * Converts a string reason name to an <code>SVNConflictReason</code> object.
-     *  
+     *
      * @param   reason name
      * @return  an <code>SVNConflictReason</code> that matches the <code>reason</code> name;
-     *          <code>null</code> if no match is found 
+     *          <code>null</code> if no match is found
      * @since   1.3
      */
     public static SVNConflictReason fromString(String reason) {
@@ -73,6 +77,9 @@ public class SVNConflictReason {
         if (ADDED.getName().equals(reason)) {
             return ADDED;
         }
+        if (REPLACED.getName().equals(reason)) {
+            return REPLACED;
+        }
         return null;
     }
 
@@ -84,7 +91,7 @@ public class SVNConflictReason {
 
     /**
      * Retunrns a string representation of this object.
-     * 
+     *
      * @return conflict reason name
      * @since  1.3
      */
@@ -94,7 +101,7 @@ public class SVNConflictReason {
 
     /**
      * Retunrns a string representation of this object.
-     * 
+     *
      * @return conflict reason name
      * @since  1.3
      */

@@ -64,8 +64,8 @@
 ### Note store-ssl-client-cert-pp only prevents the saving of *new*
 ### passphrases; it doesn't invalidate existing passphrases.  To do
 ### that, remove the cache files by hand as described in the
-### Subversion book at http://svnbook.red-bean.com/nightly/en/\
-###                    svn.serverconfig.netmodel.html\
+### Subversion book at http://svnbook.red-bean.com/nightly/en/\\
+###                    svn.serverconfig.netmodel.html\\
 ###                    #svn.serverconfig.netmodel.credcache
 ###
 ### Set store-ssl-client-cert-pp-plaintext to 'no' to avoid storing

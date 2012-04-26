@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -90,6 +90,10 @@ public class FSPathChange extends SVNLogEntryPath {
     
     public void setCopyPath(String path) {
         super.setCopyPath(path);
+    }
+
+    public void setNodeKind(SVNNodeKind nodeKind) {
+        super.setNodeKind(nodeKind);
     }
 
     public static FSPathChange fromString(String changeLine, String copyfromLine) throws SVNException {

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -334,6 +334,23 @@ class DAVCommitEditor implements ISVNEditor {
                     combinedData = new HTTPBodyInputStream(myDeltaFile);
                     myConnection.doPutDiff(currentFile.getURL(), currentFile.getWorkingURL(), combinedData, myDeltaFile.length(),
                             myBaseChecksum, textChecksum);
+
+                } catch (SVNException e) {
+                    HTTPStatus httpStatus = myConnection.getLastStatus();
+                    if (e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_DAV_REQUEST_FAILED && httpStatus != null) {
+                        switch (httpStatus.getCode()) {
+                            case 423:
+                                SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.RA_NOT_LOCKED,
+                                        "No lock on path ''{0}'' (Status {0} on PUT Request)",
+                                        new Object[]{currentFile.getWorkingURL(), httpStatus.getCode()});
+                                SVNErrorManager.error(errorMessage, e, SVNLogType.CLIENT);
+                            default:
+                                throw e;
+                        }
+
+                    } else {
+                        throw e;
+                    }
                 } finally {
                     SVNFileUtil.closeFile(combinedData);
                     SVNFileUtil.deleteFile(myDeltaFile);

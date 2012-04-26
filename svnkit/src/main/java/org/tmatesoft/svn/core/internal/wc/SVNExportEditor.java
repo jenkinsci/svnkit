@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -51,7 +51,7 @@ public class SVNExportEditor implements ISVNEditor {
     private File myCurrentFile;
     private File myCurrentTmpFile;
     private String myCurrentPath;
-    private Map myExternals;
+    private Map<String,String> myExternals;
     private SVNProperties myFileProperties;
     private ISVNEventHandler myEventDispatcher;
     private String myURL;
@@ -73,7 +73,7 @@ public class SVNExportEditor implements ISVNEditor {
         myIsExpandKeywords = expandKeywords;
     }
 
-    public Map getCollectedExternals() {
+    public Map<String,String> getCollectedExternals() {
         return myExternals;
     }
 

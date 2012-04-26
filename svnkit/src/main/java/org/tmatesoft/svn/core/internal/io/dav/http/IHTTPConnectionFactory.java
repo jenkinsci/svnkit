@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -23,8 +23,9 @@ public interface IHTTPConnectionFactory {
     public IHTTPConnectionFactory DEFAULT = new IHTTPConnectionFactory() {
 
         public IHTTPConnection createHTTPConnection(SVNRepository repository) throws SVNException {
-            String charset = System.getProperty("svnkit.http.encoding", "US-ASCII");
+            String charset = System.getProperty("svnkit.http.encoding", "UTF-8");
             return new HTTPConnection(repository, charset, null, false);
+//            return new HttpConnection(repository, charset, null, false);
         }
 
         public boolean useSendAllForDiff(SVNRepository repository) throws SVNException {

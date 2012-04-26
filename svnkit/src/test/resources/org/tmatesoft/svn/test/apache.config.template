@@ -1,0 +1,47 @@
+ServerRoot "%root%"
+
+PidFile "%pidfile%"
+Timeout 300
+KeepAlive On
+MaxKeepAliveRequests 100
+KeepAliveTimeout 300
+
+<IfModule mpm_winnt.c>
+	ThreadsPerChild 100
+	MaxRequestsPerChild  10000
+</IfModule>
+
+Listen %port%
+
+LoadModule alias_module "%root%/modules/mod_alias.so"
+LoadModule auth_basic_module "%root%/modules/mod_auth_basic.so"
+LoadModule authn_file_module "%root%/modules/mod_authn_file.so"
+LoadModule authz_default_module "%root%/modules/mod_authz_default.so"
+LoadModule authz_groupfile_module "%root%/modules/mod_authz_groupfile.so"
+LoadModule authz_host_module "%root%/modules/mod_authz_host.so"
+LoadModule authz_user_module "%root%/modules/mod_authz_user.so"
+LoadModule authn_anon_module "%root%/modules/mod_authn_anon.so"
+LoadModule auth_digest_module "%root%/modules/mod_auth_digest.so"
+LoadModule dav_module "%root%/modules/mod_dav.so"
+LoadModule deflate_module "%root%/modules/mod_deflate.so"
+
+LoadModule dav_svn_module "%apache.svn.modules%/mod_dav_svn.so"
+LoadModule authz_svn_module "%apache.svn.modules%/mod_authz_svn.so"
+
+ServerName localhost:%port%
+
+UseCanonicalName Off
+HostnameLookups Off
+
+LogLevel emerg
+ErrorLog "%home%/httpd.%port%.error.log"
+     
+   <Location /repos>
+     DAV svn
+     SetOutputFilter DEFLATE
+     SVNPath "%repository.root%"
+
+     AuthzSVNAccessFile "%authzfile%"
+     Allow from any
+     %apache.options%
+   </Location>

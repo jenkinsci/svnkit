@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -23,13 +23,16 @@ import java.util.Map;
 import org.tmatesoft.svn.cli.SVNCommandUtil;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -63,9 +66,15 @@ public class SVNPropListCommand extends SVNPropertiesCommand {
         }
 
         if (getSVNEnvironment().isRevprop()) {
-            SVNURL url = getRevpropURL(getSVNEnvironment().getStartRevision(), targets);
             SVNWCClient wcClient = getSVNEnvironment().getClientManager().getWCClient();
-            long rev = wcClient.doGetRevisionProperty(url, null, getSVNEnvironment().getStartRevision(), this);
+            String target = checkRevPropTarget(getSVNEnvironment().getStartRevision(), targets);            
+            long rev;
+            if (SVNCommandUtil.isURL(target)) {
+                rev = wcClient.doGetRevisionProperty(SVNURL.parseURIEncoded(target), null, getSVNEnvironment().getStartRevision(), this);
+            } else {
+                File targetPath = new SVNPath(target).getFile();
+                rev = wcClient.doGetRevisionProperty(targetPath, null, getSVNEnvironment().getStartRevision(), this);
+            }
             Map revisionPropertiesMap = getRevisionProperties();
             List revisionProperties = (List) revisionPropertiesMap.get(new Long(rev));
             if (revisionProperties == null) {
@@ -113,6 +122,7 @@ public class SVNPropListCommand extends SVNPropertiesCommand {
             
             Collection changeLists = getSVNEnvironment().getChangelistsCollection();
             SVNWCClient client = getSVNEnvironment().getClientManager().getWCClient();
+            SVNErrorCode errorCode = null;
             for (Iterator ts = targets.iterator(); ts.hasNext();) {
                 String targetPath = (String) ts.next();
                 SVNPath target = new SVNPath(targetPath, true);
@@ -128,6 +138,7 @@ public class SVNPropListCommand extends SVNPropertiesCommand {
                     getSVNEnvironment().handleWarning(e.getErrorMessage(), 
                             new SVNErrorCode[] {SVNErrorCode.UNVERSIONED_RESOURCE, SVNErrorCode.ENTRY_NOT_FOUND},
                             getSVNEnvironment().isQuiet());
+                    errorCode = e.getErrorMessage().getErrorCode();
                 }
                 if (!getSVNEnvironment().isXML()) {
                     printCollectedProperties(target.isURL());
@@ -138,6 +149,13 @@ public class SVNPropListCommand extends SVNPropertiesCommand {
             }
             if (getSVNEnvironment().isXML()) {
                 printXMLFooter("properties");
+            }
+            if (errorCode == SVNErrorCode.UNVERSIONED_RESOURCE) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Could not display properties of all targets because some targets don't exist");
+                SVNErrorManager.error(err, SVNLogType.CLIENT);
+            } else if (errorCode == SVNErrorCode.ENTRY_NOT_FOUND) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Could not display properties of all targets because some targets are not versioned");
+                SVNErrorManager.error(err, SVNLogType.CLIENT);
             }
         }
     }

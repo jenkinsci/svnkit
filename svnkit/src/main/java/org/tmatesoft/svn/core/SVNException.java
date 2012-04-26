@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -11,7 +11,6 @@
  */
 
 package org.tmatesoft.svn.core;
-
 
 /**
  * A main exception class that is used in the SVNKit library. All other
@@ -80,5 +79,10 @@ public class SVNException extends Exception {
             return error.getFullMessage();
         }
         return super.getMessage();
+    }
+    
+    public boolean isEnoent() {
+    	SVNErrorCode errorCode = getErrorMessage().getErrorCode();
+        return errorCode == SVNErrorCode.ENTRY_NOT_FOUND || errorCode == SVNErrorCode.FS_NOT_FOUND || errorCode == SVNErrorCode.FS_NOT_OPEN || errorCode == SVNErrorCode.FS_NOT_FILE;
     }
 }

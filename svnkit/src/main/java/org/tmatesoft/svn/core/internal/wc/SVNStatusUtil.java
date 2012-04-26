@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -23,6 +23,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
@@ -164,9 +165,11 @@ public class SVNStatusUtil {
             SVNStatus status = new SVNStatus(null, file, SVNNodeKind.UNKNOWN,
                     SVNRevision.UNDEFINED, SVNRevision.UNDEFINED, null, null, SVNStatusType.STATUS_NONE, 
                     SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, false,
-                    false, false, false, null, null, null, null, null, SVNRevision.UNDEFINED, repositoryLock, 
-                    null, null, null, -1, treeConflict);
+                    false, false, false, null, null, null, null, null, SVNRevision.UNDEFINED, repositoryLock, null, 
+                    null, null, -1, treeConflict);
+            status.setDepth(SVNDepth.UNKNOWN);
             status.setRemoteStatus(SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, repositoryLock, SVNNodeKind.NONE);
+            status.setRepositoryRootURL(reposRoot);
             SVNStatusType text = SVNStatusType.STATUS_NONE;
             SVNFileType fileType = SVNFileType.getType(file);
             if (fileType != SVNFileType.NONE) {
@@ -176,6 +179,10 @@ public class SVNStatusUtil {
                 text = SVNStatusType.STATUS_MISSING;
             }
             status.setContentsStatus(text);
+            if (status.getURL() != null && status.getRepositoryRelativePath() == null) {
+                status.setRepositoryRelativePath(SVNURLUtil.getRelativeURL(reposRoot, status.getURL(), false));
+            }
+
             return status;
         }
         if (entry.getKind() == SVNNodeKind.DIR) {
@@ -277,8 +284,13 @@ public class SVNStatusUtil {
                 textStatus,  propStatus, SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, 
                 isLocked, entry.isCopied(), isSwitched, isFileExternal, conflictNew, conflictOld, conflictWrk, conflictProp, 
                 entry.getCopyFromURL(), SVNRevision.create(entry.getCopyFromRevision()),
-                repositoryLock, localLock, null, entry.getChangelistName(), wcFormatNumber, treeConflict);
+                repositoryLock, localLock, entry.asMap(), entry.getChangelistName(), wcFormatNumber, treeConflict);
         status.setEntry(entry);
+        status.setDepth(entry.isDirectory() ? entry.getDepth() : SVNDepth.UNKNOWN);
+        status.setRepositoryRootURL(reposRoot);
+        if (reposRoot != null && status.getURL() != null && status.getRepositoryRelativePath() == null) {
+            status.setRepositoryRelativePath(SVNURLUtil.getRelativeURL(reposRoot, status.getURL(), false));
+        }
         return status;
     }
 

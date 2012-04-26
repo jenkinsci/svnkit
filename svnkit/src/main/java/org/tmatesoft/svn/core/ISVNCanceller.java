@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -36,7 +36,7 @@ public interface ISVNCanceller {
     
     /**
      * Checks if the current operation is cancelled (somehow interrupted)
-     * and should throw an <b>SVNCancelException</b>.
+     * and should throw an <b>SVNCancelException</b> or notify the handler if exists.
      * 
      * <p/>
      * This method is often called during iterations when processing trees of versioned items.

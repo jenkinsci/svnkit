@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -34,6 +34,7 @@ public class SVNOption extends AbstractSVNOption {
     public static final SVNOption CONFIG_DIR = new SVNOption("config-dir", false);
     public static final SVNOption CONFIG_OPTION = new SVNOption("config-option", false);
     public static final SVNOption IGNORE_EXTERNALS = new SVNOption("ignore-externals");
+    public static final SVNOption IGNORE_KEYWORDS = new SVNOption("ignore-keywords");
     public static final SVNOption CHANGELIST = new SVNOption("changelist", false);
     public static final SVNOption HELP = new SVNOption("help", "h");
     public static final SVNOption QUESTION = new SVNOption(null, "?");
@@ -62,6 +63,7 @@ public class SVNOption extends AbstractSVNOption {
     public static final SVNOption USE_MERGE_HISTORY = new SVNOption("use-merge-history", "g");
     public static final SVNOption EXTENSIONS = new SVNOption("extensions", "x", false);
     public static final SVNOption IGNORE_ANCESTRY = new SVNOption("ignore-ancestry");
+    public static final SVNOption SHOW_COPIES_AS_ADDS = new SVNOption("show-copies-as-adds");
     public static final SVNOption NATIVE_EOL = new SVNOption("native-eol", false);
     public static final SVNOption RELOCATE = new SVNOption("relocate");
     public static final SVNOption AUTOPROPS = new SVNOption("auto-props");
@@ -85,6 +87,8 @@ public class SVNOption extends AbstractSVNOption {
     public static final SVNOption REGULAR_EXPRESSION = new SVNOption("regexp", false);
     public static final SVNOption WITH_ALL_REVPROPS = new SVNOption("with-all-revprops");
     public static final SVNOption WITH_NO_REVPROPS = new SVNOption("with-no-revprops");
+    public static final SVNOption GIT_DIFF_FORMAT = new SVNOption("git");
+    public static final SVNOption DIFF = new SVNOption("diff");
 
     // auth options.
     public static final SVNOption USERNAME = new SVNOption("username", false);
@@ -92,7 +96,10 @@ public class SVNOption extends AbstractSVNOption {
     public static final SVNOption NO_AUTH_CACHE = new SVNOption("no-auth-cache");
     public static final SVNOption NON_INTERACTIVE = new SVNOption("non-interactive");
     public static final SVNOption TRUST_SERVER_CERT = new SVNOption("trust-server-cert");
-    
+
+    public static final SVNOption STRIP = new SVNOption("strip", "p");
+    public static final SVNOption ALLOW_MIXED_REVISIONS = new SVNOption("allow-mixed-revisions");
+
     public static Collection addLogMessageOptions(Collection target) {
         if (target != null) {
             target.add(MESSAGE);
@@ -104,7 +111,7 @@ public class SVNOption extends AbstractSVNOption {
         }
         return target;
     }
-    
+
     private SVNOption(String name) {
         this(name, null, true);
     }

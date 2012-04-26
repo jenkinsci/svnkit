@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -66,7 +66,7 @@ public class SVNURL {
         if ((host == null && !"file".equalsIgnoreCase(protocol)) || (host != null && host.indexOf('@') >= 0)) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.BAD_URL, "Invalid host name ''{0}''", host), SVNLogType.DEFAULT);
         }
-        path = path == null ? "/" : path.trim();
+        path = path == null ? "/" : path;
         if (!uriEncoded) {
             path = SVNEncodingUtil.uriEncode(path);
         } else {

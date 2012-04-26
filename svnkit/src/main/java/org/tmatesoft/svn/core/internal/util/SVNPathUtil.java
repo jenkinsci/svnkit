@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -121,6 +121,9 @@ public class SVNPathUtil {
         if (path == null){
             return null;           
         }
+        
+        boolean isUrl = isURL(path);
+        
         StringBuffer result = new StringBuffer();
         int i = 0;
         for (; i < path.length(); i++) {
@@ -146,22 +149,30 @@ public class SVNPathUtil {
         int segmentCount = 0;
         while (index < path.length()) {
             int nextIndex = index;
-            while (nextIndex < path.length() && path.charAt(nextIndex) != '/') {
-                nextIndex++;
+            while (nextIndex < path.length() && path.charAt(nextIndex) != '/' 
+            		 && !(isUrl && (nextIndex + 2) < path.length() && path.charAt(nextIndex) == '%' && path.charAt(nextIndex + 1) == '2' &&
+    				Character.toUpperCase(path.charAt(nextIndex + 2)) == 'F')) {
+            	nextIndex++;
+            }
+            int slashLength = 0;
+            if (nextIndex < path.length()) {
+            	if (path.charAt(nextIndex) == '/')
+            		slashLength = 1;
+            	else if (path.charAt(nextIndex) == '%')
+            		slashLength = 3;
             }
             int segmentLength = nextIndex - index;
-            if (segmentLength == 0 || (segmentLength == 1 && path.charAt(index) == '.')) {
-
+            if (segmentLength == 0 || (segmentLength == 1 && path.charAt(index) == '.')
+            		|| (isUrl && segmentLength == 3 && path.charAt(index) == '%' && path.charAt(index + 1) == '2' && Character.toUpperCase(path.charAt(index + 2))  == 'E')) {
             } else {
-                if (nextIndex < path.length()) {
-                    segmentLength++;
-                }
                 result.append(path.substring(index, index + segmentLength));
-                segmentCount++;
+            	if (slashLength > 0)
+            		result.append('/');
+            	segmentCount++;
             }
             index = nextIndex;
             if (index < path.length()) {
-                index++;
+                index += slashLength;
             }
         }
         if ((segmentCount > 0 || scheme != null) && result.charAt(result.length() - 1) == '/') {
@@ -402,22 +413,22 @@ public class SVNPathUtil {
         return count;
     }
 
-    public static boolean isAncestor(String parentPath, String ancestorPath) {
+    public static boolean isAncestor(String parentPath, String childPath) {
         parentPath = parentPath == null ? "" : parentPath;
-        ancestorPath = ancestorPath == null ? "" : ancestorPath;
+        childPath = childPath == null ? "" : childPath;
 
         if (parentPath.length() == 0) {
-            return !ancestorPath.startsWith("/");
+            return !childPath.startsWith("/");
         }
 
-        if (ancestorPath.startsWith(parentPath)) {
-            if (parentPath.length() != ancestorPath.length() && !parentPath.endsWith("/") &&
-                    ancestorPath.charAt(parentPath.length()) != '/') {
-                if (parentPath.startsWith("file://") && ancestorPath.startsWith("file://")) {
+        if (childPath.startsWith(parentPath)) {
+            if (parentPath.length() != childPath.length() && !parentPath.endsWith("/") &&
+                    childPath.charAt(parentPath.length()) != '/') {
+                if (parentPath.startsWith("file://") && childPath.startsWith("file://")) {
                     //HACK: maybe encoded back slashes (UNC path)?
                     String encodedSlash = SVNEncodingUtil.uriEncode("\\");
                     return parentPath.endsWith(encodedSlash) ||
-                            ancestorPath.substring(parentPath.length()).startsWith(encodedSlash);
+                            childPath.substring(parentPath.length()).startsWith(encodedSlash);
                 }
                 return false;
             }
@@ -473,14 +484,12 @@ public class SVNPathUtil {
     }
 
     public static boolean isAbsolute(String path) {
-        if (path == null) {
+        if (path == null || path.length() == 0) {
             return false;
         }
-        
-        if (path.startsWith("/")) {
+        if (path.charAt(0) == '/') {
             return true;
         }
-        
         if (SVNFileUtil.isWindows && path.length() > 1) {
             char ch0 = path.charAt(0);
             char ch1 = path.charAt(1);
@@ -490,4 +499,5 @@ public class SVNPathUtil {
         }
         return false;
     }
+
 }
