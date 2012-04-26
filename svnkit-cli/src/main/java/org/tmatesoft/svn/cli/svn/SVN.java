@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -68,6 +68,8 @@ public class SVN extends AbstractSVNLauncher {
         AbstractSVNCommand.registerCommand(new SVNUnLockCommand());
         AbstractSVNCommand.registerCommand(new SVNUpdateCommand());
         AbstractSVNCommand.registerCommand(new SVNMergeInfoCommand());
+        AbstractSVNCommand.registerCommand(new SVNPatchCommand());
+        AbstractSVNCommand.registerCommand(new SVNUpgradeCommand());
     }
 
     protected void registerOptions() {
@@ -82,6 +84,7 @@ public class SVN extends AbstractSVNLauncher {
         SVNCommandLine.registerOption(SVNOption.XML);
         SVNCommandLine.registerOption(SVNOption.CONFIG_DIR);
         SVNCommandLine.registerOption(SVNOption.IGNORE_EXTERNALS);
+        SVNCommandLine.registerOption(SVNOption.IGNORE_KEYWORDS);
         SVNCommandLine.registerOption(SVNOption.CHANGELIST);
         SVNCommandLine.registerOption(SVNOption.HELP);
         SVNCommandLine.registerOption(SVNOption.QUESTION);
@@ -108,6 +111,7 @@ public class SVN extends AbstractSVNLauncher {
         SVNCommandLine.registerOption(SVNOption.USE_MERGE_HISTORY);
         SVNCommandLine.registerOption(SVNOption.EXTENSIONS);
         SVNCommandLine.registerOption(SVNOption.IGNORE_ANCESTRY);
+        SVNCommandLine.registerOption(SVNOption.SHOW_COPIES_AS_ADDS);
         SVNCommandLine.registerOption(SVNOption.NATIVE_EOL);
         SVNCommandLine.registerOption(SVNOption.RELOCATE);
         SVNCommandLine.registerOption(SVNOption.AUTOPROPS);
@@ -118,6 +122,7 @@ public class SVN extends AbstractSVNLauncher {
         SVNCommandLine.registerOption(SVNOption.ACCEPT);
         SVNCommandLine.registerOption(SVNOption.REMOVE);
 
+        SVNCommandLine.registerOption(SVNOption.DIFF);
         SVNCommandLine.registerOption(SVNOption.OLD);
         SVNCommandLine.registerOption(SVNOption.NEW);
         SVNCommandLine.registerOption(SVNOption.SUMMARIZE);
@@ -127,7 +132,8 @@ public class SVN extends AbstractSVNLauncher {
         SVNCommandLine.registerOption(SVNOption.LIMIT);
         SVNCommandLine.registerOption(SVNOption.AUTHOR_OF_INTEREST);
         SVNCommandLine.registerOption(SVNOption.REGULAR_EXPRESSION);
-        
+        SVNCommandLine.registerOption(SVNOption.GIT_DIFF_FORMAT);
+
         SVNCommandLine.registerOption(SVNOption.USERNAME);
         SVNCommandLine.registerOption(SVNOption.PASSWORD);
         SVNCommandLine.registerOption(SVNOption.NO_AUTH_CACHE);
@@ -135,9 +141,13 @@ public class SVN extends AbstractSVNLauncher {
         SVNCommandLine.registerOption(SVNOption.WITH_ALL_REVPROPS);
         SVNCommandLine.registerOption(SVNOption.SHOW_REVS);
         SVNCommandLine.registerOption(SVNOption.REINTEGRATE);
+        SVNCommandLine.registerOption(SVNOption.ALLOW_MIXED_REVISIONS);
         SVNCommandLine.registerOption(SVNOption.DIFF_CMD);
         SVNCommandLine.registerOption(SVNOption.TRUST_SERVER_CERT);
         SVNCommandLine.registerOption(SVNOption.CONFIG_OPTION);
+
+        SVNCommandLine.registerOption(SVNOption.STRIP);
+        
     }
 
     protected boolean needArgs() {

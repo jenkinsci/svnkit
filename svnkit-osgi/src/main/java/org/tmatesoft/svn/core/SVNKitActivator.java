@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -17,7 +17,7 @@ import org.eclipse.osgi.service.debug.DebugOptions;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.util.tracker.ServiceTracker;
-import org.tmatesoft.svn.core.internal.io.svn.SVNSSHSession;
+import org.tmatesoft.svn.core.internal.io.svn.SVNSSHConnector;
 import org.tmatesoft.svn.util.ISVNDebugLog;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
@@ -74,7 +74,7 @@ public class SVNKitActivator implements BundleActivator {
     }
 
     public void stop(BundleContext context) throws Exception {
-        SVNSSHSession.shutdown();
+        SVNSSHConnector.shutdown();
         
         try {
             if (myDebugTracker != null) {

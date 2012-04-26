@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -17,7 +17,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.SequenceInputStream;
-import java.lang.reflect.Constructor;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -26,10 +25,13 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.auth.BasicAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManagerExt;
+import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.internal.util.SVNHashSet;
+import org.tmatesoft.svn.core.internal.wc.SVNClassLoader;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -52,6 +54,7 @@ public class SVNConnection {
     private Set myCapabilities;
     private byte[] myHandshakeBuffer = new byte[8192];
     private SVNAuthenticator myEncryptor;
+    private SVNAuthentication myAuthentication;
     
     private static final String EDIT_PIPELINE = "edit-pipeline";
     private static final String SVNDIFF1 = "svndiff1";
@@ -157,49 +160,44 @@ public class SVNConnection {
     }
     
     public void authenticate(SVNRepositoryImpl repository) throws SVNException {
-        List items = read("ls", null, true);
+        ISVNAuthenticationManager authManager = myRepository.getAuthenticationManager();
+        List items;
+        try {
+            items = read("ls", null, true);
+        }
+        catch (SVNException ex) {
+            final SVNErrorMessage errorMessage = ex.getErrorMessage();
+            if (errorMessage != null && errorMessage.getErrorCode() == SVNErrorCode.RA_NOT_AUTHORIZED && authManager != null && myAuthentication != null) {
+                BasicAuthenticationManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.PASSWORD, myRealm, errorMessage, myAuthentication, repository.getLocation(), authManager);
+            }
+            throw ex;
+        }
+
         List mechs = SVNReader.getList(items, 0);
         if (mechs == null || mechs.size() == 0) {
+            if (authManager instanceof ISVNAuthenticationManagerExt) {
+                ((ISVNAuthenticationManagerExt)authManager).acknowledgeConnectionSuccessful(myRepository.getLocation());
+            }
             return;
         }
         myRealm = SVNReader.getString(items, 1);
-        
-        ISVNAuthenticationManager authManager = myRepository.getAuthenticationManager();
-        if (authManager != null && authManager.isAuthenticationForced() && mechs.contains("ANONYMOUS") && 
+
+        if (authManager != null && authManager.isAuthenticationForced() && mechs.contains("ANONYMOUS") &&
                 (mechs.contains("CRAM-MD5") || mechs.contains("DIGEST-MD5"))) {
             mechs.remove("ANONYMOUS");
         }
         SVNAuthenticator authenticator = createSASLAuthenticator();
-        authenticator.authenticate(mechs, myRealm, repository);
+        myAuthentication = authenticator.authenticate(mechs, myRealm, repository);
         receiveRepositoryCredentials(repository);
+        if (authManager instanceof ISVNAuthenticationManagerExt) {
+            ((ISVNAuthenticationManagerExt)authManager).acknowledgeConnectionSuccessful(myRepository.getLocation());
+        }
     }
     
     private SVNAuthenticator createSASLAuthenticator() throws SVNException {
-        if (isSASLAPIAvailable()) {
-            try {
-                Class saslClass = 
-                    SVNConnection.class.getClassLoader().loadClass("org.tmatesoft.svn.core.internal.io.svn.sasl.SVNSaslAuthenticator");
-                if (saslClass != null) {
-                    Constructor constructor = saslClass.getConstructor(new Class[] {SVNConnection.class});
-                    if (constructor != null) {
-                        return (SVNAuthenticator) constructor.newInstance(new Object[] {this});
-                    }
-                }
-            } catch (Throwable th) {
-                SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, th.getMessage());
-            }
-        }
-        return new SVNPlainAuthenticator(this);
+        return SVNClassLoader.getSASLAuthenticator(this);
     }
     
-    private static boolean isSASLAPIAvailable() {
-        try {
-            return SVNConnection.class.getClassLoader().loadClass("javax.security.sasl.SaslClient") != null;
-        } catch (ClassNotFoundException e) {
-        }
-        return false;
-    }
-
     private void addCapabilities(List capabilities) throws SVNException {
         if (myCapabilities == null) {
             myCapabilities = new SVNHashSet();

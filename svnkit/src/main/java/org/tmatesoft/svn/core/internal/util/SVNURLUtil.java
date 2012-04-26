@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -23,11 +23,29 @@ import org.tmatesoft.svn.core.SVNURL;
  */
 public class SVNURLUtil {
 
-    public static String getRelativeURL(SVNURL parent, SVNURL child) {
-        String parentURLAsString = parent.toString();
-        String childURLAsString = child.toString();
+    public static String getRelativeURL(SVNURL parent, SVNURL child, boolean encoded) {
+        String parentURLAsString = encoded ? parent.toString() : parent.toDecodedString();
+        String childURLAsString = encoded ? child.toString() : child.toDecodedString();
         String relativePath = SVNPathUtil.getPathAsChild(parentURLAsString, childURLAsString);
         return relativePath == null ? "" : relativePath;
+    }
+    
+    public static boolean isAncestor(SVNURL ancestor, SVNURL descendant) {
+        if (ancestor == null || descendant == null) {
+            return false;
+        }
+        String aStr = ancestor.toString();
+        String dStr = descendant.toString();
+        if (aStr.length() > dStr.length()) {
+            return false;
+        }
+        if (dStr.startsWith(aStr)) {
+            if (aStr.length() == dStr.length()) {
+                return true;
+            }
+            return dStr.charAt(aStr.length()) == '/';
+        }
+        return false;
     }
     
     public static SVNURL getCommonURLAncestor(SVNURL url1, SVNURL url2) {

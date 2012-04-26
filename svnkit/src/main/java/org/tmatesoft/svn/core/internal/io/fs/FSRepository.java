@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -39,6 +39,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.auth.BasicAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
@@ -75,9 +76,22 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
     private FSFS myFSFS;
     private SVNMergeInfoManager myMergeInfoManager;
     private FSLog myLogDriver;
+    private boolean myIsHooksEnabled;
     
     protected FSRepository(SVNURL location, ISVNSession options) {
         super(location, options);
+        setHooksEnabled(true);
+    }
+
+    public void setHooksEnabled(boolean enabled) {
+        myIsHooksEnabled = enabled;
+        if (getFSFS() != null) {
+            getFSFS().setHooksEnabled(isHooksEnabled());
+        }
+    }
+    
+    public boolean isHooksEnabled() {
+        return myIsHooksEnabled;
     }
 
     public FSFS getFSFS() {
@@ -161,11 +175,11 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             }
 
             byte[] bytes = SVNPropertyValue.getPropertyAsBytes(propertyValue);
-            if (FSHooks.isHooksEnabled() && !bypassPreRevpropHook) {
+            if (isHooksEnabled() && FSHooks.isHooksEnabled() && !bypassPreRevpropHook) {
                 FSHooks.runPreRevPropChangeHook(myReposRootDir, propertyName, bytes, userName, revision, action);
             }
             myFSFS.setRevisionProperty(revision, propertyName, propertyValue);
-            if (FSHooks.isHooksEnabled() && !bypassPostRevpropHook) {
+            if (isHooksEnabled() && FSHooks.isHooksEnabled() && !bypassPostRevpropHook) {
                 FSHooks.runPostRevPropChangeHook(myReposRootDir, propertyName, bytes, userName, revision, action);
             }
         } finally {
@@ -329,7 +343,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         try {
             openRepository();
             if (targetPaths == null || targetPaths.length == 0) {
-                targetPaths = new String[] {"/"};
+                targetPaths = new String[] {""};
             }
             String[] absPaths = new String[targetPaths.length];
             for (int i = 0; i < targetPaths.length; i++) {
@@ -348,11 +362,11 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             long histEnd = endRevision;
 
             if (startRevision > youngestRev) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "No such revision {0}", new Long(startRevision));
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "No such revision {0}", String.valueOf(startRevision));
                 SVNErrorManager.error(err, SVNLogType.FSFS);
             }
             if (endRevision > youngestRev) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "No such revision {0}", new Long(endRevision));
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "No such revision {0}", String.valueOf(endRevision));
                 SVNErrorManager.error(err, SVNLogType.FSFS);
             }
 
@@ -444,8 +458,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         }
         // fetch user name!
         String author = getUserName();
-        FSCommitEditor commitEditor = new FSCommitEditor(getRepositoryPath(""), logMessage, author, locks, keepLocks, null, myFSFS, this);
-        return commitEditor;
+        return new FSCommitEditor(getRepositoryPath(""), logMessage, author, locks, keepLocks, null, myFSFS, this);
     }
 
     public SVNLock getLock(String path) throws SVNException {
@@ -731,6 +744,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
     protected long getDeletedRevisionImpl(String path, long pegRevision, long endRevision) throws SVNException {
         try {
             openRepository();
+            path = getRepositoryPath(path);
             return myFSFS.getDeletedRevision(path, pegRevision, endRevision);
         } finally {
             closeRepository();
@@ -771,6 +785,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         myReposRootDir = hasCustomHostName ? new File("\\\\" + hostName, dirPath).getAbsoluteFile() :
                                              new File(dirPath).getAbsoluteFile();
         myFSFS = new FSFS(myReposRootDir);
+        myFSFS.setHooksEnabled(isHooksEnabled());
         myFSFS.open();
         setRepositoryCredentials(myFSFS.getUUID(), getLocation().setPath(rootPath, false));
     }
@@ -916,6 +931,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                 while (auth != null) {
                     String userName = auth.getUserName();
                     if (userName == null) {
+                        // anonymous.
                         return null;
                     }
                     if ("".equals(userName.trim())) {
@@ -923,11 +939,11 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                     }
                     auth = new SVNUserNameAuthentication(userName, auth.isStorageAllowed(), getLocation(), false);
                     if (userName != null && !"".equals(userName.trim())) {
-                        authManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.USERNAME, realm, null, auth);
+                        BasicAuthenticationManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.USERNAME, realm, null, auth, myLocation, authManager);
                         return auth.getUserName();
                     }
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.AUTHN_CREDS_UNAVAILABLE, "Empty user name is not allowed");
-                    authManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.USERNAME, realm, err, auth);
+                    BasicAuthenticationManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.USERNAME, realm, err, auth, myLocation, authManager);
                     auth = authManager.getNextAuthentication(ISVNAuthenticationManager.USERNAME, realm, getLocation());
                 }
                 // auth manager returned null - that is cancellation.
@@ -941,6 +957,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                 throw e;
             }
         }
+        // anonymous
         return null;
     }
 

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -38,11 +38,12 @@ import org.tmatesoft.svn.core.internal.util.SVNHashMap;
  */
 public class SVNErrorCode implements Serializable {
     
-    private String myDescription;
+	private static final long serialVersionUID = 1L;
+	
+	private String myDescription;
     private int myCategory;
     private int myCode;
     
-    private static final long serialVersionUID = 1L;
     private static final Map ourErrorCodes = new SVNHashMap();
     
     /**
@@ -165,6 +166,12 @@ public class SVNErrorCode implements Serializable {
     public static final int RA_SVN_CATEGORY = ERR_BASE + 18*ERR_CATEGORY_SIZE;
     public static final int AUTHN_CATEGORY = ERR_BASE + 19*ERR_CATEGORY_SIZE;
     public static final int AUTHZ_CATEGORY = ERR_BASE + 20*ERR_CATEGORY_SIZE;
+    public static final int DIFF_CATEGORY = ERR_BASE + 21*ERR_CATEGORY_SIZE;
+    public static final int RA_SERF_CATEGORY = ERR_BASE + 22*ERR_CATEGORY_SIZE;
+    public static final int MALFUNC_CATEGORY = ERR_BASE + 23*ERR_CATEGORY_SIZE;
+    
+
+    
     
     public static final SVNErrorCode UNKNOWN = new SVNErrorCode(MISC_CATEGORY, ERR_CATEGORY_SIZE - 100, "Unknown error");
     public static final SVNErrorCode IO_ERROR = new SVNErrorCode(MISC_CATEGORY, ERR_CATEGORY_SIZE - 101, "Generic IO error");
@@ -233,6 +240,7 @@ public class SVNErrorCode implements Serializable {
     public static final SVNErrorCode ENTRY_MISSING_REVISION = new SVNErrorCode(ENTRY_CATEGORY, 3, "Entry has no revision");
     public static final SVNErrorCode ENTRY_MISSING_URL = new SVNErrorCode(ENTRY_CATEGORY, 4, "Entry has no URL");
     public static final SVNErrorCode ENTRY_ATTRIBUTE_INVALID = new SVNErrorCode(ENTRY_CATEGORY, 5, "Entry has an invalid attribute");
+    public static final SVNErrorCode ENTRY_FORBIDDEN = new SVNErrorCode(ENTRY_CATEGORY, 6, "Can't create an entry for a forbidden name");
     
     public static final SVNErrorCode WC_OBSTRUCTED_UPDATE = new SVNErrorCode(WC_CATEGORY, 0, "Obstructed update");
     public static final SVNErrorCode WC_UNWIND_MISMATCH = new SVNErrorCode(WC_CATEGORY, 1, "Mismatch popping the WC unwind stack");
@@ -241,7 +249,16 @@ public class SVNErrorCode implements Serializable {
     public static final SVNErrorCode WC_LOCKED = new SVNErrorCode(WC_CATEGORY, 4, "Attempted to lock an already-locked dir");
     public static final SVNErrorCode WC_NOT_LOCKED = new SVNErrorCode(WC_CATEGORY, 5, "Working copy not locked; this is probably a bug, please report");
     public static final SVNErrorCode WC_INVALID_LOCK = new SVNErrorCode(WC_CATEGORY, 6, "Invalid lock");
-    public static final SVNErrorCode WC_NOT_DIRECTORY = new SVNErrorCode(WC_CATEGORY, 7, "Path is not a working copy directory");
+
+    /**
+     * @since 1.4, SVN 1.7
+     */
+    public static final SVNErrorCode WC_NOT_WORKING_COPY = new SVNErrorCode(WC_CATEGORY, 7, "Path is not a working copy directory");
+
+    /**
+     * This code is deprecated. Use WC_NOT_WORKING_COPY. Provided for backward compatibility with pre-1.4 API
+     */
+    public static final SVNErrorCode WC_NOT_DIRECTORY = WC_NOT_WORKING_COPY;
     public static final SVNErrorCode WC_NOT_FILE = new SVNErrorCode(WC_CATEGORY, 8, "Path is not a working copy file");
     public static final SVNErrorCode WC_BAD_ADM_LOG = new SVNErrorCode(WC_CATEGORY, 9, "Problem running log");
     public static final SVNErrorCode WC_PATH_NOT_FOUND = new SVNErrorCode(WC_CATEGORY, 10, "Can't find a working copy path");
@@ -291,6 +308,37 @@ public class SVNErrorCode implements Serializable {
      */
     public static final SVNErrorCode WC_CANNOT_MOVE_FILE_EXTERNAL =  new SVNErrorCode(WC_CATEGORY, 31, "Cannot move a file external");
 
+    /**
+     * @since 1.4, SVN 1.7
+     */
+    public static final SVNErrorCode WC_DB_ERROR = new SVNErrorCode(WC_CATEGORY, 32, "Something's amiss with the wc sqlite database");
+
+    /**
+     * @since 1.4, SVN 1.7
+     */
+    public static final SVNErrorCode WC_MISSING = new SVNErrorCode(WC_CATEGORY, 33, "The working copy is missing");
+
+    /**
+     * @since 1.4, SVN 1.7
+     */
+    public static final SVNErrorCode WC_NOT_SYMLINK = new SVNErrorCode(WC_CATEGORY, 34, "The specified node is not a symlink");
+
+    /**
+     * @since 1.4, SVN 1.7
+     */
+    public static final SVNErrorCode WC_PATH_UNEXPECTED_STATUS = new SVNErrorCode(WC_CATEGORY, 35, "The specified path has an unexpected status");
+
+    /**
+     * @since 1.4, SVN 1.7
+     */
+    public static final SVNErrorCode WC_UPGRADE_REQUIRED = new SVNErrorCode(WC_CATEGORY, 36, "The working copy needs to be upgraded");
+    
+    /**
+     * @since 1.4, SVN 1.7
+     */
+    public static final SVNErrorCode WC_CLEANUP_REQUIRED = new SVNErrorCode(WC_CATEGORY, 37, "Previous operation was interrupted; run 'svn cleanup'");
+    public static final SVNErrorCode WC_INVALID_OPERATION_DEPTH = new SVNErrorCode(WC_CATEGORY, 38, "The operation can not be performed with the specified depth");
+    
     public static final SVNErrorCode FS_GENERAL = new SVNErrorCode(FS_CATEGORY, 0, "General filesystem error");
     public static final SVNErrorCode FS_CLEANUP = new SVNErrorCode(FS_CATEGORY, 1, "Error closing filesystem");
     public static final SVNErrorCode FS_ALREADY_OPEN = new SVNErrorCode(FS_CATEGORY, 2, "Filesystem is already open");
@@ -390,7 +438,17 @@ public class SVNErrorCode implements Serializable {
      * @since 1.2.0, SVN 1.5
      */
     public static final SVNErrorCode RA_DAV_RELOCATED = new SVNErrorCode(RA_DAV_CATEGORY, 11, "Repository has been moved");
-    
+
+    /**
+     * @since 1.7, SVN 1.7
+     */
+    public static final SVNErrorCode RA_DAV_CONN_TIMEOUT = new SVNErrorCode(RA_DAV_CATEGORY, 12, "Connection timed out");
+
+    /**
+     * @since 1.7, SVN 1.6
+     */
+    public static final SVNErrorCode RA_DAV_FORBIDDEN = new SVNErrorCode(RA_DAV_CATEGORY, 13, "Connection timed out");
+
     public static final SVNErrorCode RA_LOCAL_REPOS_NOT_FOUND = new SVNErrorCode(RA_LOCAL_CATEGORY, 0, "Couldn't find a repository");
     public static final SVNErrorCode RA_LOCAL_REPOS_OPEN_FAILED = new SVNErrorCode(RA_LOCAL_CATEGORY, 1, "Couldn't open a repository");
     
@@ -463,6 +521,43 @@ public class SVNErrorCode implements Serializable {
      */
     public static final SVNErrorCode CLIENT_FILE_EXTERNAL_OVERWRITE_VERSIONED = new SVNErrorCode(CLIENT_CATEGORY, 17, 
             "A file external cannot overwrite an existing versioned item");
+
+    /**
+     * @since 1.7, SVN 1.7
+     */
+    public static final SVNErrorCode CLIENT_BAD_STRIP_COUNT = new SVNErrorCode(CLIENT_CATEGORY, 18,
+            "Invalid path component strip count specified");
+
+    /**
+     * @since 1.7, SVN 1.7
+     */
+    public static final SVNErrorCode CLIENT_CYCLE_DETECTED = new SVNErrorCode(CLIENT_CATEGORY, 19,
+            "Detected a cycle while processing the operation");
+
+    /**
+     * @since 1.7, SVN 1.7
+     */
+    public static final SVNErrorCode CLIENT_MERGE_UPDATE_REQUIRED = new SVNErrorCode(CLIENT_CATEGORY, 20,
+            "Working copy and merge source not ready for reintegration");
+
+    /**
+     * @since 1.7, SVN 1.7
+     */
+    public static final SVNErrorCode CLIENT_INVALID_MERGEINFO_NO_MERGETRACKING = new SVNErrorCode(CLIENT_CATEGORY, 21,
+            "Invalid mergeinfo detected in merge target");
+
+    /**
+     * @since 1.7, SVN 1.7
+     */
+    public static final SVNErrorCode CLIENT_NO_LOCK_TOKEN = new SVNErrorCode(CLIENT_CATEGORY, 22,
+            "Can't perform this operation without a valid lock token");
+
+    /**
+     * @since 1.7, SVN 1.7
+     */
+    public static final SVNErrorCode CLIENT_FORBIDDEN_BY_SERVER = new SVNErrorCode(CLIENT_CATEGORY, 23,
+            "The operation is forbidden by the server");
+
     
     public static final SVNErrorCode BASE = new SVNErrorCode(MISC_CATEGORY, 0, "A problem occurred; see later errors for details");
     public static final SVNErrorCode PLUGIN_LOAD_FAILURE = new SVNErrorCode(MISC_CATEGORY, 1, "Failure loading plugin");    
@@ -485,7 +580,10 @@ public class SVNErrorCode implements Serializable {
     public static final SVNErrorCode NO_AUTH_FILE_PATH = new SVNErrorCode(MISC_CATEGORY, 18, "No auth file path available");
     public static final SVNErrorCode VERSION_MISMATCH = new SVNErrorCode(MISC_CATEGORY, 19, "Incompatible library version");
     
-    /**
+    
+    
+
+        /**
      * @since  1.2.0, SVN 1.5
      */
     public static final SVNErrorCode MERGE_INFO_PARSE_ERROR = new SVNErrorCode(MISC_CATEGORY, 20, "Merge info parse error");
@@ -552,5 +650,17 @@ public class SVNErrorCode implements Serializable {
      * @since  1.2.0, SVN 1.5
      */
     public static final SVNErrorCode CL_NO_EXTERNAL_MERGE_TOOL = new SVNErrorCode(CL_CATEGORY, 10, "No external merge tool available");
+    public static final SVNErrorCode CL_ERROR_PROCESSING_EXTERNALS = new SVNErrorCode(CL_CATEGORY, 11, "Failed processing one or more externals definitions");
+    /**
+     * @since 1.3.3
+     */
+    public static final SVNErrorCode ASSERTION_FAIL = new SVNErrorCode(MALFUNC_CATEGORY, 0, "Assertion failure");
+    
+    /** 
+     * @since New in 1.7. 
+     */
+    public static final SVNErrorCode BAD_CHANGELIST_NAME = new SVNErrorCode(BAD_CATEGORY, 14, "Invalid changelist name");
+
 
 }
+

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -87,7 +87,9 @@ public class SVNImportCommand extends SVNCommand {
         SVNCommitInfo info = client.doImport(src.getFile(), url.getURL(), getSVNEnvironment().getMessage(), 
                 getSVNEnvironment().getRevisionProperties(), !getSVNEnvironment().isNoIgnore(), 
                 getSVNEnvironment().isForce(), depth);
-        getSVNEnvironment().printCommitInfo(info);
+        if (!getSVNEnvironment().isQuiet()) {
+            getSVNEnvironment().printCommitInfo(info);
+        }
     }
 
 }

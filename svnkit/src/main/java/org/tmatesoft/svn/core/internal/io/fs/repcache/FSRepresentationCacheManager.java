@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -15,6 +15,7 @@ import java.io.File;
 
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
+import org.tmatesoft.sqljet.core.internal.SqlJetSafetyLevel;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
 import org.tmatesoft.sqljet.core.table.ISqlJetRunnableWithLock;
 import org.tmatesoft.sqljet.core.table.ISqlJetTable;
@@ -50,10 +51,12 @@ public class FSRepresentationCacheManager implements IFSRepresentationCacheManag
     private ISqlJetTable myTable;
     private FSFS myFSFS;
     
-    public static FSRepresentationCacheManager openRepresentationCache(FSFS fsfs) throws SVNException {
+    public static IFSRepresentationCacheManager openRepresentationCache(FSFS fsfs) throws SVNException {
         final FSRepresentationCacheManager cacheObj = new FSRepresentationCacheManager();
         try {
             cacheObj.myRepCacheDB = SqlJetDb.open(fsfs.getRepositoryCacheFile(), true);
+            cacheObj.myRepCacheDB.setSafetyLevel(SqlJetSafetyLevel.OFF);
+            
             checkFormat(cacheObj.myRepCacheDB);
             cacheObj.myTable = cacheObj.myRepCacheDB.getTable(REP_CACHE_TABLE);
         } catch (SqlJetException e) {

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -15,7 +15,7 @@ import java.io.File;
 
 
 /**
- * The <b>ISVNCommitParameters</b> is the interface for parameters 
+ * ISVNCommitParameters is the interface for parameters 
  * which set behaviour for a commit operation that touches 
  * still versioned files or dirs that are somehow missing.  
  * 

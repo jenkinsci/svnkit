@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -87,6 +87,7 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
             depth = SVNDepth.EMPTY;
         }
         SVNWCClient client = getSVNEnvironment().getClientManager().getWCClient();
+        boolean seenNonExistingTargets = false;
         for(int i = 0; i < targets.size(); i++) {
             String targetName = (String) targets.get(i);
             SVNPath target = new SVNPath(targetName, true);
@@ -105,15 +106,19 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
                 SVNErrorMessage err = e.getErrorMessage();
                 if (err.getErrorCode() == SVNErrorCode.UNVERSIONED_RESOURCE) {
                     getSVNEnvironment().getErr().print(SVNCommandUtil.getLocalPath(target.getTarget()) + ": (Not a versioned resource)\n\n");
-                } else if (err.getErrorCode() == SVNErrorCode.RA_ILLEGAL_URL) {
-                    getSVNEnvironment().getErr().print(target.getTarget() + ": (Not a valid URL)\n\n");
-                } else {
-                    throw e;
+                }  else {
+                    getSVNEnvironment().handleWarning(err, new SVNErrorCode[] {SVNErrorCode.RA_ILLEGAL_URL, SVNErrorCode.WC_PATH_NOT_FOUND}, 
+                        getSVNEnvironment().isQuiet());
+                    getSVNEnvironment().getErr().println();
+                    seenNonExistingTargets = true;
                 }
             }
         }
         if (getSVNEnvironment().isXML() && !getSVNEnvironment().isIncremental()) {
             printXMLFooter("info");
+        }
+        if (seenNonExistingTargets) {
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Could not display info for all targets because some targets don't exist"), SVNLogType.CLIENT);
         }
     }
 
@@ -133,10 +138,16 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
             path = SVNCommandUtil.getLocalPath(path);
         } else {
             path = info.getPath();
+            if ("".equals(path) && info.getURL() != null) {
+                path = SVNPathUtil.tail(info.getURL().getPath());
+            }
         }
         buffer.append("Path: " + path + "\n");
         if (info.getKind() != SVNNodeKind.DIR) {
             buffer.append("Name: " + SVNPathUtil.tail(path.replace(File.separatorChar, '/')) + "\n");
+        }
+        if (info.getWorkingCopyRoot() != null) {
+            buffer.append("Working Copy Root Path: " + SVNPathUtil.validateFilePath(info.getWorkingCopyRoot().getAbsolutePath())+ "\n");
         }
         buffer.append("URL: " + info.getURL() + "\n");
         if (info.getRepositoryRootURL() != null) {
@@ -191,16 +202,24 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
                 buffer.append("Checksum: " + info.getChecksum() + "\n");
             }
             if (info.getConflictOldFile() != null) {
-                buffer.append("Conflict Previous Base File: " + info.getConflictOldFile().getName() + "\n");
+                String cpath = getSVNEnvironment().getRelativePath(info.getConflictOldFile());
+                cpath = SVNCommandUtil.getLocalPath(cpath);
+                buffer.append("Conflict Previous Base File: " + cpath + "\n");
             }
             if (info.getConflictWrkFile() != null) {
-                buffer.append("Conflict Previous Working File: " + info.getConflictWrkFile().getName() + "\n");
+                String cpath = getSVNEnvironment().getRelativePath(info.getConflictWrkFile());
+                cpath = SVNCommandUtil.getLocalPath(cpath);
+                buffer.append("Conflict Previous Working File: " + cpath + "\n");
             }
             if (info.getConflictNewFile() != null) {
-                buffer.append("Conflict Current Base File: " + info.getConflictNewFile().getName() + "\n");
+                String cpath = getSVNEnvironment().getRelativePath(info.getConflictNewFile());
+                cpath = SVNCommandUtil.getLocalPath(cpath);
+                buffer.append("Conflict Current Base File: " + cpath + "\n");
             }
             if (info.getPropConflictFile() != null) {
-                buffer.append("Conflict Properties File: " + info.getPropConflictFile().getName() + "\n");
+                String cpath = getSVNEnvironment().getRelativePath(info.getPropConflictFile());
+                cpath = SVNCommandUtil.getLocalPath(cpath);
+                buffer.append("Conflict Properties File: " + cpath + "\n");
             }
         }
         if (info.getLock() != null) {
@@ -236,13 +255,9 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
         	String description = SVNTreeConflictUtil.getHumanReadableConflictDescription(tc);
             buffer.append("Tree conflict: " + description + "\n");
             SVNConflictVersion left = tc.getSourceLeftVersion();
-            if (left != null) {
-                buffer.append("  Source  left: " + SVNTreeConflictUtil.getHumanReadableConflictVersion(left) + "\n");
-            }
+            buffer.append("  Source  left: " + SVNTreeConflictUtil.getHumanReadableConflictVersion(left) + "\n");
             SVNConflictVersion right = tc.getSourceRightVersion();
-            if (right != null) {
-                buffer.append("  Source right: " + SVNTreeConflictUtil.getHumanReadableConflictVersion(right) + "\n");
-            }
+            buffer.append("  Source right: " + SVNTreeConflictUtil.getHumanReadableConflictVersion(right) + "\n");
         }
         buffer.append("\n");
         getSVNEnvironment().getOut().print(buffer.toString());
@@ -260,7 +275,7 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
         Map attrs = new LinkedHashMap();
         attrs.put("kind", info.getKind().toString());
         attrs.put("path", path);
-        attrs.put("revision", info.getRevision().toString());
+        attrs.put("revision", info.getRevision() != SVNRevision.UNDEFINED ? info.getRevision().toString() : "Resource is not under version control.");
         buffer = openXMLTag("entry", SVNXMLUtil.XML_STYLE_NORMAL, attrs, buffer);
         
         String url = info.getURL() != null ? info.getURL().toString() : null;
@@ -276,13 +291,20 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
         }   
         if (info.getFile() != null) {
             buffer = openXMLTag("wc-info", SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
+            if (info.getWorkingCopyRoot() != null) {
+                buffer = openCDataTag("wcroot-abspath", SVNPathUtil.validateFilePath(info.getWorkingCopyRoot().getAbsolutePath()), buffer);
+            }
             String schedule = info.getSchedule();
             if (schedule == null || "".equals(schedule)) {
                 schedule = "normal";
             }
             buffer = openCDataTag("schedule", schedule, buffer);
             if (info.getDepth() != null) {
-                buffer = openCDataTag("depth", info.getDepth().getName(), buffer);
+                SVNDepth depth = info.getDepth();
+                if (depth == SVNDepth.UNKNOWN && info.getKind() == SVNNodeKind.FILE) {
+                    depth = SVNDepth.INFINITY;
+                }
+                buffer = openCDataTag("depth", depth.getName(), buffer);
             }
             if (info.getCopyFromURL() != null) {
                 buffer = openCDataTag("copy-from-url", info.getCopyFromURL().toString(), buffer);

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -86,6 +86,8 @@ public class SVNRevertCommand extends SVNCommand {
             SVNErrorMessage err = e.getErrorMessage();
             if (!depth.isRecursive() && err.getErrorCode() == SVNErrorCode.WC_NOT_LOCKED) {
                 err = err.wrap("Try 'svn revert --recursive' instead?");
+            } else if (!depth.isRecursive() && err.getErrorCode() == SVNErrorCode.WC_INVALID_OPERATION_DEPTH) {
+                err = err.wrap("Try 'svn revert --depth infinity' instead?");
             }
             SVNErrorManager.error(err, SVNLogType.CLIENT);
         }

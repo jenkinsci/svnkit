@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -74,7 +74,8 @@ public class PythonTests {
 			System.exit(1);
 		}
 		File testResultsDirectory = new File(properties.getProperty("python.tests.results", "build/logs"));
-        ourLoggers = new AbstractTestLogger[] {new ConsoleLogger(), new JUnitTestLogger(testResultsDirectory)};
+		boolean logAll = Boolean.TRUE.toString().equalsIgnoreCase(properties.getProperty("logAll", "false").trim());
+        ourLoggers = new AbstractTestLogger[] {new ConsoleLogger(), new JUnitTestLogger(testResultsDirectory, logAll)};
 		
 		ourProperties = properties;
         Logger logger = setupLogging();
@@ -288,6 +289,7 @@ public class PythonTests {
                 logHandler = createLogHandler(logsDirectory, type + "_" + suiteName + "_python");
 			    pythonLogger.addHandler(logHandler);
 			}
+			long startTime = System.currentTimeMillis();
 			try {
     			if (tokens.isEmpty() || (tokens.size() == 1 && "ALL".equals(tokens.get(0)))) {
                     processTestCase(pythonLauncher, testsLocation, testFile, options, null, url, libPath, fsfsConfig, pythonLogger);
@@ -331,7 +333,6 @@ public class PythonTests {
                 commandsList.add(String.valueOf(testCase));
             }
         }
-        
         String[] commands = (String[]) commandsList.toArray(new String[commandsList.size()]); 
 
 		try {
@@ -460,6 +461,7 @@ public class PythonTests {
 		final List tests = new ArrayList();
 		String line;
 		while ((line = reader.readLine()) != null) {
+		    line = line.trim();
 			final StringTokenizer tokenizer = new StringTokenizer(line, " \t", false);
 			if (!tokenizer.hasMoreTokens()) {
 				continue;
@@ -480,6 +482,7 @@ public class PythonTests {
 			try {
 				tests.add(new Integer(first));
 			} catch (NumberFormatException ex) {
+			    ex.printStackTrace();
 			    continue;
 			}
 		}
@@ -583,15 +586,29 @@ public class PythonTests {
         // create client scripts.
         String svnHome = properties.getProperty("svn.home", "/usr/bin");
         File template = SVNFileUtil.isWindows ? new File("daemon/template.bat") : new File("daemon/template");
+        File templatePy = SVNFileUtil.isWindows ? new File("daemon/template.py") : null;
         
-        generateClientScript(template, new File("daemon/jsvn"), NailgunProcessor.class.getName(), "svn", portNumber, svnHome);
-        generateClientScript(template, new File("daemon/jsvnadmin"), NailgunProcessor.class.getName(), "svnadmin", portNumber, svnHome);
-        generateClientScript(template, new File("daemon/jsvnversion"), NailgunProcessor.class.getName(), "svnversion", portNumber, svnHome);
-        generateClientScript(template, new File("daemon/jsvnlook"), NailgunProcessor.class.getName(), "svnlook", portNumber, svnHome);
-        generateClientScript(template, new File("daemon/jsvnsync"), NailgunProcessor.class.getName(), "svnsync", portNumber, svnHome);
-        generateClientScript(template, new File("daemon/jsvndumpfilter"), NailgunProcessor.class.getName(), "svndumpfilter", portNumber, svnHome);
-
         String pattern = properties.getProperty("python.tests.pattern", null);
+
+        generateClientScript(template, new File("daemon/jsvn"), NailgunProcessor.class.getName(), "svn", portNumber, svnHome, pattern);
+        generateClientScript(template, new File("daemon/jsvnadmin"), NailgunProcessor.class.getName(), "svnadmin", portNumber, svnHome, pattern);
+//        generateClientScript(template, new File("daemon/jsvnversion"), NailgunProcessor.class.getName(), "svnversion", portNumber, svnHome, pattern);
+        generateClientScript(template, new File("daemon/jsvnlook"), NailgunProcessor.class.getName(), "svnlook", portNumber, svnHome, pattern);
+        generateClientScript(template, new File("daemon/jsvnsync"), NailgunProcessor.class.getName(), "svnsync", portNumber, svnHome, pattern);
+        generateClientScript(template, new File("daemon/jsvndumpfilter"), NailgunProcessor.class.getName(), "svndumpfilter", portNumber, svnHome, pattern);
+
+        generateProxyScript("jsvnmucc", "svnmucc", svnHome);
+        generateProxyScript("jsvnversion", "svnversion", svnHome);
+        
+        if (SVNFileUtil.isWindows) {
+            generateClientScript(templatePy, new File("daemon/jsvn.py"), NailgunProcessor.class.getName(), "svn", portNumber, svnHome, pattern);
+            generateClientScript(templatePy, new File("daemon/jsvnadmin.py"), NailgunProcessor.class.getName(), "svnadmin", portNumber, svnHome, pattern);
+            generateClientScript(templatePy, new File("daemon/jsvnversion.py"), NailgunProcessor.class.getName(), "svnversion", portNumber, svnHome, pattern);
+            generateClientScript(templatePy, new File("daemon/jsvnlook.py"), NailgunProcessor.class.getName(), "svnlook", portNumber, svnHome, pattern);
+            generateClientScript(templatePy, new File("daemon/jsvnsync.py"), NailgunProcessor.class.getName(), "svnsync", portNumber, svnHome, pattern);
+            generateClientScript(templatePy, new File("daemon/jsvndumpfilter.py"), NailgunProcessor.class.getName(), "svndumpfilter", portNumber, svnHome, pattern);
+        }
+
         if (pattern != null) {
             generateMatcher(new File("daemon/matcher.pl"), new File("daemon/matcher.pl"), pattern);
         } else {
@@ -599,7 +616,17 @@ public class PythonTests {
                SVNFileUtil.deleteFile(new File("daemon/matcher.pl"));
            } catch (SVNException e) {}
         }
+        SVNFileUtil.setExecutable(new File("daemon/snapshot"), Boolean.TRUE.toString().equalsIgnoreCase(properties.getProperty("snapshot", "false")));
         return new File("daemon").getAbsolutePath();
+    }
+
+    private static void generateProxyScript(String jsvnName, String svnName, String svnHome) {
+        File svnMuccScriptFile = new File("daemon/" + jsvnName);
+        try {
+            SVNFileUtil.writeToFile(svnMuccScriptFile, "#!/bin/bash\n" + svnHome + "/bin/" + svnName + " \"$@\" < /dev/stdin\nexit $?", "UTF-8");
+            SVNFileUtil.setExecutable(svnMuccScriptFile, true);
+        } catch (SVNException e) {
+        }
     }
     
     public static int startSVNServe(Properties props) throws Throwable {
@@ -639,13 +666,15 @@ public class PythonTests {
 
     public static void stopApache(Properties props, int port, Logger pythonLogger) throws Throwable {
         apache(props, port, false, pythonLogger);
+        // delete apache log.
+        File file = new File(System.getProperty("user.home"), "httpd." + port + ".error.log");
+        SVNFileUtil.deleteFile(file);
     }
     
     private static int apache(Properties props, int port, boolean start, Logger pythonLogger) throws Throwable {
         String[] command = null;
-        File parentFile = new File("build/sandbox").getAbsoluteFile();
-        parentFile.mkdirs();
-        File configFile = SVNFileUtil.createUniqueFile(parentFile, "httpd", ".conf", false);
+        File configFile = File.createTempFile("jsvn.", ".apache.config.tmp");
+        configFile.deleteOnExit();
         String path = configFile.getAbsolutePath().replace(File.separatorChar, '/');
         port = generateApacheConfig(configFile, props, port);
 
@@ -749,7 +778,7 @@ public class PythonTests {
         return connectorPort;
     }
 
-    private static void generateClientScript(File src, File destination, String mainClass, String name, int port, String svnHome) throws IOException {
+    private static void generateClientScript(File src, File destination, String mainClass, String name, int port, String svnHome, String pattern) throws IOException {
         byte[] contents = new byte[(int) src.length()];
         InputStream is = new FileInputStream(src);
         SVNFileUtil.readIntoBuffer(is, contents, 0, contents.length);
@@ -759,13 +788,18 @@ public class PythonTests {
         script = script.replaceAll("%mainclass%", mainClass);
         script = script.replaceAll("%name%", name);
         script = script.replaceAll("%port%", Integer.toString(port));
-        script = script.replaceAll("%svn_home%", svnHome);
+        script = script.replaceAll("%svn_home%", new File(svnHome).getAbsolutePath().replace(File.separatorChar, '/'));
         script = script.replaceAll("%NG%", new File("daemon/ng").getAbsolutePath().replace(File.separatorChar, '/'));
-        script = script.replace('/', File.separatorChar);
-        
-        if (SVNFileUtil.isWindows) {
-            destination = new File(destination.getParentFile(), destination.getName() + ".bat");
+        script = script.replaceAll("%svn_test_work%", new File("svn-python-tests/svn-test-work").getAbsolutePath().replace(File.separatorChar, '/'));
+        if (pattern != null) {
+            script = script.replace("%pattern%", pattern);
+        }        
+        if (!destination.getName().endsWith(".py")) {
+            script = script.replace('/', File.separatorChar);
         }
+        if (SVNFileUtil.isWindows && !destination.getName().endsWith(".py")) {
+            destination = new File(destination.getParentFile(), destination.getName() + ".bat");
+        } 
         
         FileOutputStream os = new FileOutputStream(destination);
         os.write(script.getBytes());
@@ -781,7 +815,7 @@ public class PythonTests {
         is.close();
 
         String script = new String(contents);
-        script = script.replaceAll("%pattern%", pattern);
+        script = script.replace("%pattern%", pattern);
         
         FileOutputStream os = new FileOutputStream(destination);
         os.write(script.getBytes());

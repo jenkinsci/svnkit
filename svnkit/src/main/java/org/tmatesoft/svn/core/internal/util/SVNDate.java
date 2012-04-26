@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -80,7 +80,7 @@ public class SVNDate extends Date {
 
     private int myMicroSeconds;
 
-    private SVNDate(long time, int micro) {
+    public SVNDate(long time, int micro) {
         super((1000 * time + micro) / 1000);
         myMicroSeconds = micro >= 0 ? micro % 1000 : 1000 + (micro % 1000);
     }
@@ -334,6 +334,16 @@ public class SVNDate extends Date {
             CALENDAR.set(Calendar.MILLISECOND, ms);
             return CALENDAR.getTimeInMillis();
         }
+    }
+    
+    public static SVNDate fromDate(Date d) {
+        if (d == null) {
+            return SVNDate.NULL;
+        }
+        if (d instanceof SVNDate) {
+            return (SVNDate) d;
+        }
+        return new SVNDate(d.getTime(), 0);
     }
 
     public int hashCode() {

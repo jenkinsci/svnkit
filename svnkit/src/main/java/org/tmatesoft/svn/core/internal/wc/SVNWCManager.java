@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -172,7 +172,7 @@ public class SVNWCManager {
                 SVNPropertiesManager.deleteWCProperties(dir, null, true);
             }
         }
-        SVNEvent event = SVNEventFactory.createSVNEvent(parentDir.getFile(name), kind, null, 0, SVNEventAction.ADD, null, null, null);
+        SVNEvent event = SVNEventFactory.createSVNEvent(parentDir.getFile(name), kind, null, 0, copyFromURL != null ? SVNEventAction.COPY : SVNEventAction.ADD, null, null, null);
         parentDir.getWCAccess().handleEvent(event);
     }
 

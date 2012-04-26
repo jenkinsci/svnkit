@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -10,6 +10,14 @@
  * ====================================================================
  */
 package org.tmatesoft.svn.core.internal.wc;
+
+import java.io.File;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.StringTokenizer;
+import java.util.TreeMap;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
@@ -35,14 +43,6 @@ import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
-import java.io.File;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.StringTokenizer;
-import java.util.TreeMap;
-
 
 /**
  * @version 1.3
@@ -62,7 +62,7 @@ public class SVNStatusEditor {
     private Map myExternalsMap;
     private Collection myGlobalIgnores;
     
-    private SVNURL myRepositoryRoot;
+    protected SVNURL myRepositoryRoot;
     private Map myRepositoryLocks;
     private long myTargetRevision;
     private String myWCRootPath;
@@ -123,6 +123,7 @@ public class SVNStatusEditor {
     public void setRepositoryInfo(SVNURL root, Map repositoryLocks) {
         myRepositoryRoot = root;
         myRepositoryLocks = repositoryLocks;
+        
     }
     
     protected void getDirStatus(SVNEntry parentEntry, SVNAdminArea dir, String entryName,
@@ -139,7 +140,7 @@ public class SVNStatusEditor {
             myAdminInfo.addExternal(path, externals, externals);
             myAdminInfo.addDepth(path, dirEntry.getDepth());
             
-            SVNExternal[] externalsInfo = SVNExternal.parseExternals(myAdminInfo.getAnchor(), externals);
+            SVNExternal[] externalsInfo = SVNExternal.parseExternals(dir.getRelativePath(myAdminInfo.getAnchor()), externals);
             for (int i = 0; i < externalsInfo.length; i++) {
                 SVNExternal external = externalsInfo[i];
                 myExternalsMap.put(SVNPathUtil.append(path, external.getPath()), external);
@@ -233,8 +234,10 @@ public class SVNStatusEditor {
                         SVNStatusType.STATUS_NAME_CONFLICT,  SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, 
                         false, entry.isCopied(), false, false, null, null, null, null, 
                         entry.getCopyFromURL(), SVNRevision.create(entry.getCopyFromRevision()),
-                        null, null, null, entry.getChangelistName(), dir.getFormatVersion(), null);                
+                        null, null, entry.asMap(), entry.getChangelistName(), dir.getFormatVersion(), null);
+                status.setDepth(entry.isDirectory() ? entry.getDepth() : SVNDepth.UNKNOWN);
                 status.setEntry(entry);
+                status.setRepositoryRootURL(myRepositoryRoot);
                 handler.handleStatus(status);                
                 continue;
             } else if (entry.isHidden()) {

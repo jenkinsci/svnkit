@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -36,6 +36,7 @@ import org.tmatesoft.svn.core.internal.delta.SVNDeltaCombiner;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.util.SVNUUIDGenerator;
 import org.tmatesoft.svn.core.internal.wc.IOExceptionWrapper;
 import org.tmatesoft.svn.core.internal.wc.ISVNCommitPathHandler;
 import org.tmatesoft.svn.core.internal.wc.SVNCommitUtil;
@@ -55,12 +56,19 @@ public class FSRepositoryUtil {
     
     public static final int MAX_KEY_SIZE = 200;
 
-    private static final ThreadLocal ourCopyBuffer = new ThreadLocal() {
-        protected Object initialValue() {
+    private static final ThreadLocal<byte[]> ourCopyBuffer = new ThreadLocal<byte[]>() {
+        @Override
+        protected byte[] initialValue() {
             return new byte[1024*16];
         }
     };
 
+    public static String generateLockToken() throws SVNException {
+        String uuid = SVNUUIDGenerator.formatUUID(SVNUUIDGenerator.generateUUID());
+        return FSFS.SVN_OPAQUE_LOCK_TOKEN + uuid;
+
+    }
+    
     public static void replay(FSFS fsfs, FSRoot root, String basePath, long lowRevision, boolean sendDeltas, ISVNEditor editor) throws SVNException {
         Map fsChanges = root.getChangedPaths();
         basePath = basePath.startsWith("/") ? basePath.substring(1) : basePath;
@@ -107,7 +115,7 @@ public class FSRepositoryUtil {
     
     public static void copy(InputStream src, OutputStream dst, ISVNCanceller canceller) throws SVNException {
         try {
-            byte[] buffer = (byte[]) ourCopyBuffer.get();
+            byte[] buffer = ourCopyBuffer.get();
             while (true) {
                 if (canceller != null) {
                     canceller.checkCancelled();
@@ -234,7 +242,7 @@ public class FSRepositoryUtil {
 
     public static void sendTextDelta(ISVNEditor editor, String editPath, String sourcePath, 
             String hexDigest, FSRevisionRoot sourceRoot, String targetPath, 
-            FSRevisionRoot targetRoot, boolean sendDeltas, SVNDeltaCombiner deltaCombiner, 
+            FSRoot targetRoot, boolean sendDeltas, SVNDeltaCombiner deltaCombiner, 
             SVNDeltaGenerator deltaGenerator, FSFS fsfs) throws SVNException {
         editor.applyTextDelta(editPath, hexDigest);
 

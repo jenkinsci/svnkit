@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -88,7 +88,11 @@ public class SVNBase64 {
      *             if <tt>s</tt> is not a valid SVNBase64 string.
      */
     public static int base64ToByteArray(StringBuffer s, byte[] buffer) {
+      try {
         return base64ToByteArray(s, buffer, false);
+      } catch (ArrayIndexOutOfBoundsException e) {
+        throw new IllegalArgumentException("Invalid SVNBase64 string: " + s.toString(), e);
+      }
     }
     
     public static StringBuffer normalizeBase64(StringBuffer in) {

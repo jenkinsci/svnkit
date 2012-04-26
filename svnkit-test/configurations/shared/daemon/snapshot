@@ -1,0 +1,17 @@
+#!/bin/bash
+export GIT_AUTHOR_NAME="Mortimer Adler"
+export GIT_COMMITTER_NAME="Mortimer Adler"
+
+git init $1
+pushd $1
+cat commit_msg >> commits_log
+
+git init
+git add -A
+git commit -F commit_msg
+
+tag=`wc -l < commits_log`
+git tag -a "$tag" -m "$tag"
+
+popd
+exit 0

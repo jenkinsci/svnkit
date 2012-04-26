@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -26,6 +26,7 @@ import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.ConflictInfo;
 import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
@@ -41,11 +42,15 @@ public class SVNStatusCommand extends SVNXMLCommand implements ISVNStatusHandler
 
     private SVNStatusPrinter myStatusPrinter;
     private Map myStatusCache;
+    
+    private int textConflicts;
+    private int propConflicts;
+    private int treeConflicts;
 
     public SVNStatusCommand() {
         super("status", new String[] {"stat", "st"});
     }
-    
+
     protected Collection createSupportedOptions() {
         Collection options = new ArrayList();
 
@@ -63,7 +68,7 @@ public class SVNStatusCommand extends SVNXMLCommand implements ISVNStatusHandler
     }
 
     public void run() throws SVNException {
-        Collection targets = new ArrayList(); 
+        Collection targets = new ArrayList();
         targets = getSVNEnvironment().combineTargets(targets, true);
         if (targets.isEmpty()) {
             targets.add("");
@@ -91,7 +96,7 @@ public class SVNStatusCommand extends SVNXMLCommand implements ISVNStatusHandler
                 StringBuffer xmlBuffer = openXMLTag("target", SVNXMLUtil.XML_STYLE_NORMAL, "path", SVNCommandUtil.getLocalPath(target), null);
                 getSVNEnvironment().getOut().print(xmlBuffer);
             }
-            
+
             try {
                 long rev = client.doStatus(commandTarget.getFile(), SVNRevision.HEAD,
                         getSVNEnvironment().getDepth(), getSVNEnvironment().isUpdate(),
@@ -107,7 +112,7 @@ public class SVNStatusCommand extends SVNXMLCommand implements ISVNStatusHandler
                     getSVNEnvironment().getOut().print(xmlBuffer);
                 }
             } catch (SVNException e) {
-                getSVNEnvironment().handleWarning(e.getErrorMessage(), new SVNErrorCode[] {SVNErrorCode.WC_NOT_DIRECTORY}, 
+                getSVNEnvironment().handleWarning(e.getErrorMessage(), new SVNErrorCode[] {SVNErrorCode.WC_NOT_DIRECTORY},
                         getSVNEnvironment().isQuiet());
             }
         }
@@ -119,8 +124,8 @@ public class SVNStatusCommand extends SVNXMLCommand implements ISVNStatusHandler
                 for (Iterator paths = statuses.keySet().iterator(); paths.hasNext();) {
                     String path = (String) paths.next();
                     SVNStatus status = (SVNStatus) statuses.get(path);
-                    myStatusPrinter.printStatus(path, status, 
-                            getSVNEnvironment().isVerbose() || getSVNEnvironment().isUpdate(), 
+                    myStatusPrinter.printStatus(path, status,
+                            getSVNEnvironment().isVerbose() || getSVNEnvironment().isUpdate(),
                             getSVNEnvironment().isVerbose(), getSVNEnvironment().isQuiet(), getSVNEnvironment().isUpdate());
                 }
             }
@@ -128,9 +133,15 @@ public class SVNStatusCommand extends SVNXMLCommand implements ISVNStatusHandler
         if (getSVNEnvironment().isXML() && !getSVNEnvironment().isIncremental()) {
             printXMLFooter("status");
         }
+        if (! getSVNEnvironment().isQuiet() && ! getSVNEnvironment().isXML()) {
+            printConflictStats();
+        }
+
     }
 
     public void handleStatus(SVNStatus status) throws SVNException {
+        countConflicts(status);
+        
         String path = getSVNEnvironment().getRelativePath(status.getFile());
         path = SVNCommandUtil.getLocalPath(path);
         if (status != null && status.getChangelistName() != null) {
@@ -144,15 +155,29 @@ public class SVNStatusCommand extends SVNXMLCommand implements ISVNStatusHandler
             return;
         }
         if (getSVNEnvironment().isXML()) {
-            if (status.getContentsStatus() == SVNStatusType.STATUS_NONE && status.getRemoteContentsStatus() == SVNStatusType.STATUS_NONE) {
+            if (SVNStatusPrinter.combineStatus(status) == SVNStatusType.STATUS_NONE && status.getRemoteContentsStatus() == SVNStatusType.STATUS_NONE) {
                 return;
             }
             StringBuffer xmlBuffer = printXMLStatus(status, path);
             getSVNEnvironment().getOut().print(xmlBuffer);
         } else {
-            myStatusPrinter.printStatus(path, status, 
-                getSVNEnvironment().isVerbose() || getSVNEnvironment().isUpdate(), 
+            myStatusPrinter.printStatus(path, status,
+                getSVNEnvironment().isVerbose() || getSVNEnvironment().isUpdate(),
                 getSVNEnvironment().isVerbose(), getSVNEnvironment().isQuiet(), getSVNEnvironment().isUpdate());
+        }
+    }
+
+    private void countConflicts(SVNStatus status) throws SVNException {
+        if (status.isConflicted()) {
+            if (status.getPropRejectFile() != null) {
+                propConflicts++;
+            } 
+            if (status.getConflictWrkFile() != null || status.getConflictOldFile() != null || status.getConflictNewFile() != null) {
+                textConflicts++;
+            }
+            if (status.getTreeConflict() != null) {
+                treeConflicts++;
+            }
         }
     }
 
@@ -173,27 +198,27 @@ public class SVNStatusCommand extends SVNXMLCommand implements ISVNStatusHandler
         if (status.isFileExternal()) {
             xmlMap.put("file-external", "true");
         }
-        if (status.getEntry() != null && !status.isCopied()) {
+        if (status.isVersioned() && !status.isCopied()) {
             xmlMap.put("revision", status.getRevision().toString());
         }
         if (status.getTreeConflict() != null) {
             xmlMap.put("tree-conflicted", "true");
         }
         xmlBuffer = openXMLTag("wc-status", SVNXMLUtil.XML_STYLE_NORMAL, xmlMap, xmlBuffer);
-        if (status.getEntry() != null && status.getCommittedRevision().isValid()) {
+        if (status.isVersioned() && status.getCommittedRevision().isValid()) {
             xmlBuffer = openXMLTag("commit", SVNXMLUtil.XML_STYLE_NORMAL, "revision", status.getCommittedRevision().toString(), xmlBuffer);
             xmlBuffer = openCDataTag("author", status.getAuthor(), xmlBuffer);
             if (status.getCommittedDate() != null) {
-                xmlBuffer = openCDataTag("date", ((SVNDate) status.getCommittedDate()).format(), xmlBuffer);
+                xmlBuffer = openCDataTag("date", SVNDate.formatDate(status.getCommittedDate()), xmlBuffer);
             }
             xmlBuffer = closeXMLTag("commit", xmlBuffer);
         }
-        if (status.getEntry() != null && status.getLocalLock() != null) {
+        if (status.isVersioned() && status.getLocalLock() != null) {
             xmlBuffer = openXMLTag("lock", SVNXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
             xmlBuffer = openCDataTag("token", status.getLocalLock().getID(), xmlBuffer);
             xmlBuffer = openCDataTag("owner", status.getLocalLock().getOwner(), xmlBuffer);
             xmlBuffer = openCDataTag("comment", status.getLocalLock().getComment(), xmlBuffer);
-            xmlBuffer = openCDataTag("created", ((SVNDate) status.getLocalLock().getCreationDate()).format(), xmlBuffer);
+            xmlBuffer = openCDataTag("created", SVNDate.formatDate(status.getLocalLock().getCreationDate()), xmlBuffer);
             xmlBuffer = closeXMLTag("lock", xmlBuffer);
         }
         xmlBuffer = closeXMLTag("wc-status", xmlBuffer);
@@ -207,9 +232,9 @@ public class SVNStatusCommand extends SVNXMLCommand implements ISVNStatusHandler
                 xmlBuffer = openCDataTag("token", status.getRemoteLock().getID(), xmlBuffer);
                 xmlBuffer = openCDataTag("owner", status.getRemoteLock().getOwner(), xmlBuffer);
                 xmlBuffer = openCDataTag("comment", status.getRemoteLock().getComment(), xmlBuffer);
-                xmlBuffer = openCDataTag("created", ((SVNDate) status.getRemoteLock().getCreationDate()).format(), xmlBuffer);
+                xmlBuffer = openCDataTag("created", SVNDate.formatDate(status.getRemoteLock().getCreationDate()), xmlBuffer);
                 if (status.getRemoteLock().getExpirationDate() != null) {
-                    xmlBuffer = openCDataTag("expires", ((SVNDate) status.getRemoteLock().getExpirationDate()).format(), xmlBuffer);
+                    xmlBuffer = openCDataTag("expires", SVNDate.formatDate(status.getRemoteLock().getExpirationDate()), xmlBuffer);
                 }
                 xmlBuffer = closeXMLTag("lock", xmlBuffer);
             }
@@ -218,4 +243,26 @@ public class SVNStatusCommand extends SVNXMLCommand implements ISVNStatusHandler
         xmlBuffer = closeXMLTag("entry", xmlBuffer);
         return xmlBuffer;
     }
+    
+    private void printConflictStats()
+    {
+      if (textConflicts > 0 || propConflicts > 0 ||
+          treeConflicts > 0)
+      getEnvironment().getOut().println("Summary of conflicts:");
+
+      if (textConflicts > 0)
+          getEnvironment().getOut().println(
+          "  Text conflicts: " + textConflicts);
+
+      if (propConflicts > 0)
+          getEnvironment().getOut().println(
+          "  Property conflicts: " + propConflicts);
+
+      if (treeConflicts > 0)
+          getEnvironment().getOut().println(
+          "  Tree conflicts: " + treeConflicts);
+
+    }
+
+    
 }

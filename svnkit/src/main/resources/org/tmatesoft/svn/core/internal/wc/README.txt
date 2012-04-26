@@ -121,4 +121,3 @@ and one for per-user configuration:
     REGISTRY:HKCU\Software\Tigris.org\Subversion\Servers
     REGISTRY:HKCU\Software\Tigris.org\Subversion\Config
     REGISTRY:HKCU\Software\Tigris.org\Subversion\Hairstyles
-

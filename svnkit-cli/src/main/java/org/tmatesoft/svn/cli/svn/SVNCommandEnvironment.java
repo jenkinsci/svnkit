@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -78,6 +78,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
     private boolean myIsIncremental;
     private boolean myIsHelp;
     private boolean myIsIgnoreExternals;
+    private boolean myIsIgnoreKeywords;
     private boolean myIsXML;
     private boolean myIsVersion;
     private String myChangelist;
@@ -111,6 +112,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
     private boolean myIsUseMergeHistory;
     private Collection myExtensions;
     private boolean myIsIgnoreAncestry;
+    private boolean myIsShowCopiesAsAdds;
     private String myNativeEOL;
     private boolean myIsRelocate;
     private boolean myIsNoAutoProps;
@@ -132,6 +134,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
     private boolean myIsWithAllRevprops;
     private boolean myIsReIntegrate;
     private boolean myIsTrustServerCertificate;
+    private boolean myIsAllowMixedRevisions;
     private List myRevisionRanges;
     private SVNShowRevisionType myShowRevsType;
     private Collection myChangelists;
@@ -139,6 +142,10 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
     private String myRegularExpression;
     private Map myConfigOptions;
     private Map myServersOptions;
+    private boolean myIsGitDiffFormat;
+    private boolean myIsShowDiff;
+
+    private int myStripCount;
     
     public SVNCommandEnvironment(String programName, PrintStream out, PrintStream err, InputStream in) {
         super(programName, out, err, in);
@@ -353,30 +360,62 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
             String chValue = optionValue.getValue();
             for(StringTokenizer tokens = new StringTokenizer(chValue, ", \n\r\t"); tokens.hasMoreTokens();) {
                 String token = tokens.nextToken();
+                boolean isNegative = false;
+                if (token.startsWith("-")) {
+                    token = token.substring(1);
+                    isNegative = true;
+                }
                 while (token.startsWith("r")) {
                     token = token.substring(1);
                 }
                 long change = 0;
+                long changeEnd = 0;
                 try {
-                    change = Long.parseLong(token);
+                    if (token.indexOf("-") > 0) {
+                        if (isNegative || token.startsWith("-")) {
+                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
+                                    "Negative number in range ({0}) is not supported with -c", token);
+                            SVNErrorManager.error(err, SVNLogType.CLIENT);
+                        }
+                        String firstPart = token.substring(0, token.indexOf("-"));
+                        String secondPart = token.substring(token.indexOf("-") + 1);
+                        change = Long.parseLong(firstPart);
+                        while (secondPart.startsWith("r")) {
+                            secondPart = secondPart.substring(1);
+                        }
+                        changeEnd = Long.parseLong(secondPart);
+                    } else {
+                        change = Long.parseLong(token);
+                        changeEnd = change;
+                    }
                 } catch (NumberFormatException nfe) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
                             "Non-numeric change argument ({0}) given to -c", token);
                     SVNErrorManager.error(err, SVNLogType.CLIENT);
                 }
+                if (isNegative) {
+                    change = -change;
+                }
                 SVNRevisionRange range = null;
+                
                 if (change == 0) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
                             "There is no change 0");
                     SVNErrorManager.error(err, SVNLogType.CLIENT);
                 } else if (change > 0) {
-                    range = new SVNRevisionRange(SVNRevision.create(change - 1), SVNRevision.create(change));
+                    if (change <= changeEnd) {
+                        change--;
+                    } else {
+                        changeEnd--;
+                    }
+                    range = new SVNRevisionRange(SVNRevision.create(change), SVNRevision.create(changeEnd));
                 } else {
                     change = -change;
-                    range = new SVNRevisionRange(SVNRevision.create(change), SVNRevision.create(change - 1));
+                    changeEnd = change - 1;
+                    range = new SVNRevisionRange(SVNRevision.create(change), SVNRevision.create(changeEnd));
                 }
+                    myIsChangeOptionUsed = true;
                 myRevisionRanges.add(range);
-                myIsChangeOptionUsed = true;
             }
         } else if (option == SVNOption.REVISION) {
             String revStr = optionValue.getValue();
@@ -487,8 +526,16 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
             myIsNoticeAncestry = true;
         } else if (option == SVNOption.IGNORE_ANCESTRY) {
             myIsIgnoreAncestry = true;
+        } else if (option == SVNOption.SHOW_COPIES_AS_ADDS) {
+            myIsShowCopiesAsAdds = true;
+        } else if (option == SVNOption.GIT_DIFF_FORMAT) {
+            myIsGitDiffFormat = true;
+        } else if (option == SVNOption.DIFF) {
+            myIsShowDiff = true;
         } else if (option == SVNOption.IGNORE_EXTERNALS) {
             myIsIgnoreExternals = true;
+        } else if (option == SVNOption.IGNORE_KEYWORDS) {
+            myIsIgnoreKeywords = true;
         } else if (option == SVNOption.RELOCATE) {
             if (myDepth != SVNDepth.UNKNOWN) {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_MUTUALLY_EXCLUSIVE_ARGS, 
@@ -584,12 +631,24 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
             }
         } else if (option == SVNOption.REINTEGRATE) {
             myIsReIntegrate = true;
+        } else if (option == SVNOption.ALLOW_MIXED_REVISIONS) {
+            myIsAllowMixedRevisions = true;
         } else if (option == SVNOption.AUTHOR_OF_INTEREST) {
             myAuthorOfInterest = optionValue.getValue();
         } else if (option == SVNOption.REGULAR_EXPRESSION) {
             myRegularExpression = optionValue.getValue();
         } else if (option == SVNOption.TRUST_SERVER_CERT) {
             myIsTrustServerCertificate = true;
+        } else if(option == SVNOption.STRIP ) {
+            final String value = optionValue.getValue();
+            try {
+                myStripCount = Integer.parseInt(optionValue.getValue());
+            } catch (NumberFormatException nfe) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
+                        "Non-numeric change argument ({0}) given to -strip", value);
+                SVNErrorManager.error(err, SVNLogType.CLIENT);
+            }
+
         }
     }
     
@@ -630,6 +689,9 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
                 myDepth = SVNDepth.FILES;
             }
         }
+        if ("relocate".equals(getCommandName())) {
+            myIsRelocate = true;
+        }
     }
     
     protected String getCommandLineClientName() {
@@ -665,6 +727,10 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
 
     public Collection getChangelistsCollection() {
         return myChangelists;
+    }
+    
+    public boolean isIgnoreKeywords() {
+        return myIsIgnoreKeywords;
     }
 
     public SVNDepth getDepth() {
@@ -766,7 +832,19 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
     public boolean isIgnoreAncestry() {
         return myIsIgnoreAncestry;
     }
-    
+
+    public boolean isShowCopiesAsAdds() {
+        return myIsShowCopiesAsAdds;
+    }
+
+    public boolean isGitDiffFormat() {
+        return myIsGitDiffFormat;
+    }
+
+    public boolean isShowDiff() {
+        return myIsShowDiff;
+    }
+
     public boolean isUseMergeHistory() {
         return myIsUseMergeHistory;
     }
@@ -851,6 +929,10 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         return myIsWithAllRevprops;
     }
     
+    public int getStripCount() {
+        return myStripCount;
+    }
+    
     public SVNDiffOptions getDiffOptions() throws SVNException {
         if (myExtensions == null) {
             return null;
@@ -879,6 +961,9 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         return new SVNDiffOptions(ignoreAllWS, ignoreAmountOfWS, ignoreEOLStyle);
     }
 
+    public boolean isAllowMixedRevisions() {
+        return myIsAllowMixedRevisions;
+    }
 
     public SVNProperties getRevisionProperties(String message, SVNCommitItem[] commitables, SVNProperties revisionProperties) throws SVNException {
         return revisionProperties == null ? new SVNProperties() : revisionProperties;
@@ -1051,5 +1136,4 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         }
         return buffer.toString();
     }
-
 }
