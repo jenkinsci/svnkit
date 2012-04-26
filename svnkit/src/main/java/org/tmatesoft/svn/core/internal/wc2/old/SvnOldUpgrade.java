@@ -385,9 +385,11 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 			SVNFileUtil.deleteAll(upgradeData.rootAbsPath, true);
 		}
 
-		SVNEvent event = SVNEventFactory.createSVNEvent(localAbsPath, SVNNodeKind.DIR, null, -1, SVNEventAction.UPGRADE, null, null, null);
-		getOperation().getEventHandler().handleEvent(event, -1);
-	}
+        if (getOperation().getEventHandler() != null) {
+            SVNEvent event = SVNEventFactory.createSVNEvent(localAbsPath, SVNNodeKind.DIR, null, -1, SVNEventAction.UPGRADE, null, null, null);
+            getOperation().getEventHandler().handleEvent(event, -1);
+        }
+    }
 
 	private void upgradeWorkingCopy(WriteBaton parentDirBaton, SVNWCDb db, File dirAbsPath, SVNWCDbUpgradeData data, Map<SVNURL, String> reposCache, RepositoryInfo reposInfo) throws SVNException {
 
