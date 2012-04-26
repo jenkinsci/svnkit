@@ -19,7 +19,11 @@ public class SshSession {
     
     public void close() {
         mySession.close();
-        waitForCondition(ChannelCondition.CLOSED, 0);        
+        try {
+            waitForCondition(ChannelCondition.CLOSED, 0);        
+        } catch (InterruptedException e) {
+       	    // TODO: what to do here?
+        }
         myOwner.sessionClosed(this);
     }    
     
@@ -43,7 +47,7 @@ public class SshSession {
         return mySession.getExitSignal();
     }
     
-    public void waitForCondition(int code, long timeout) {
+    public void waitForCondition(int code, long timeout) throws InterruptedException {
         mySession.waitForCondition(code, timeout);
     }
     
