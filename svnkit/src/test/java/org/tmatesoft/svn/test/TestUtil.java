@@ -188,4 +188,27 @@ public class TestUtil {
             SVNFileUtil.closeFile(inputStream);
         }
     }
+
+    public static File getHookFile(File repositoryRoot, String hookName) {
+        final File hooksDirectory = new File(repositoryRoot, "hooks");
+        final String ext = SVNFileUtil.isWindows ? ".bat" : "";
+        return new File(hooksDirectory, hookName + ext);
+    }
+
+    public static String getFailingHookContents() {
+        return getTrivialHookContentsForExitCode(1);
+    }
+
+    public static String getSucceedingHookContents() {
+        return getTrivialHookContentsForExitCode(0);
+    }
+
+    private static String getTrivialHookContentsForExitCode(int exitCode) {
+        final String exitCodeString = String.valueOf(exitCode);
+        if (SVNFileUtil.isWindows) {
+            return "@echo off" + "\r\n" + "exit " + exitCodeString + "\r\n";
+        } else {
+            return "#!/bin/sh" + "\n" + "exit " + exitCodeString + "\n";
+        }
+    }
 }

@@ -154,13 +154,13 @@ public class Sandbox {
     }
 
     public File createFailingHook(SVNURL url, String hookName) throws SVNException {
-        final String failingHookContents = getFailingHookContents();
+        final String failingHookContents = TestUtil.getFailingHookContents();
         return createHook(url, hookName, failingHookContents);
     }
 
     public File createHook(SVNURL url, String hookName, String failingHookContents) throws SVNException {
         final File repositoryRoot = urlToRepositoryRoot.get(url);
-        final File hookFile = getHookFile(repositoryRoot, hookName);
+        final File hookFile = TestUtil.getHookFile(repositoryRoot, hookName);
         TestUtil.writeFileContentsString(hookFile, failingHookContents);
         SVNFileUtil.setExecutable(hookFile, true);
         return hookFile;
@@ -188,20 +188,6 @@ public class Sandbox {
             }
         }
         return null;
-    }
-
-    private String getFailingHookContents() {
-        if (SVNFileUtil.isWindows) {
-            return "@echo off" + "\r\n" + "exit 1" + "\r\n";
-        } else {
-            return "#!/bin/sh" + "\n" + "exit 1" + "\n";
-        }
-    }
-
-    private File getHookFile(File repositoryRoot, String hookName) {
-        final File hooksDirectory = new File(repositoryRoot, "hooks");
-        final String ext = SVNFileUtil.isWindows ? ".bat" : "";
-        return new File(hooksDirectory, hookName + ext);
     }
 
     private File getWorkingCopyDirectory() {
