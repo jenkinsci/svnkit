@@ -1,0 +1,50 @@
+PLAIN
+K 12
+svn:keywords
+V 3
+Rev
+END
+ENDREP
+id: 2-1.0.r2/43
+type: file
+pred: 2-1.0.r1/48
+count: 1
+text: 1 0 35 23 3031a954dd5ae1c93c34e4cb5bec0c01 368d0bd76297d69e5361633ad81563b70c368725 0-0/_4
+props: 2 0 30 30 dd36a9e40238a85890c743d32c3f71df
+cpath: /directory/file
+copyroot: 0 /
+
+PLAIN
+K 4
+file
+V 16
+file 2-1.0.r2/43
+END
+ENDREP
+id: 0-1.0.r2/330
+type: dir
+pred: 0-1.0.r1/267
+count: 1
+text: 2 282 35 35 60ef7155eb6e630fe2ad7b319f968e7e
+cpath: /directory
+copyroot: 0 /
+
+PLAIN
+K 9
+directory
+V 16
+dir 0-1.0.r2/330
+END
+ENDREP
+id: 0.0.r2/522
+type: dir
+pred: 0.0.r1/440
+count: 2
+text: 2 469 40 40 982fc806d179c5b69d32133b2aa68c05
+cpath: /
+copyroot: 0 /
+
+2-1.0.t1-1 modify-file false true /directory/file
+
+
+522 648

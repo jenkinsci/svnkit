@@ -1,0 +1,53 @@
+id: 4-1.0.r1/0
+type: dir
+count: 0
+cpath: /target
+copyroot: 0 /
+
+id: 2-1.0.r1/64
+type: dir
+count: 0
+cpath: /source/directory
+copyroot: 0 /
+
+PLAIN
+K 9
+directory
+V 15
+dir 2-1.0.r1/64
+END
+ENDREP
+id: 0-1.0.r1/191
+type: dir
+count: 0
+text: 1 139 39 39 d6e5e7a468de28ecc288a7d1b6d0900e
+cpath: /source
+copyroot: 0 /
+
+PLAIN
+K 6
+source
+V 16
+dir 0-1.0.r1/191
+K 6
+target
+V 14
+dir 4-1.0.r1/0
+END
+ENDREP
+id: 0.0.r1/389
+type: dir
+pred: 0.0.r0/17
+count: 1
+text: 1 308 68 68 487bd2320fc8227f148946eebbfd447d
+cpath: /
+copyroot: 0 /
+
+_4.0.t0-0 add-dir false false /target
+
+_2.0.t0-0 add-dir false false /source/directory
+
+_0.0.t0-0 add-dir false false /source
+
+
+389 514

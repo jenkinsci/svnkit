@@ -1,0 +1,50 @@
+PLAIN
+K 12
+propertyName
+V 8
+r2 value
+END
+ENDREP
+id: 2-1.0.r2/48
+type: file
+pred: 2-1.0.r1/17
+count: 1
+text: 1 0 4 0 d41d8cd98f00b204e9800998ecf8427e da39a3ee5e6b4b0d3255bfef95601890afd80709 0-0/_4
+props: 2 0 35 35 32fe2b60776b486b0e712c4cfbf2a9df
+cpath: /directory/file
+copyroot: 0 /
+
+PLAIN
+K 4
+file
+V 16
+file 2-1.0.r2/48
+END
+ENDREP
+id: 0-1.0.r2/333
+type: dir
+pred: 0-1.0.r1/234
+count: 1
+text: 2 285 35 35 a069bc160c04d4c27cc24e38638f66b6
+cpath: /directory
+copyroot: 0 /
+
+PLAIN
+K 9
+directory
+V 16
+dir 0-1.0.r2/333
+END
+ENDREP
+id: 0.0.r2/525
+type: dir
+pred: 0.0.r1/407
+count: 2
+text: 2 472 40 40 dcf809a3694cc0424ebf1a9635aba373
+cpath: /
+copyroot: 0 /
+
+2-1.0.t1-1 modify-file false true /directory/file
+
+
+525 651

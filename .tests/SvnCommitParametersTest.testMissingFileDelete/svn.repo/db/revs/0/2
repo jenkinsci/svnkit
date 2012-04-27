@@ -1,0 +1,15 @@
+PLAIN
+END
+ENDREP
+id: 0.0.r2/17
+type: dir
+pred: 0.0.r1/232
+count: 2
+text: 2 0 4 4 2d2977d1c96f487abe4a1e202dd03b4e
+cpath: /
+copyroot: 0 /
+
+0-1.0.r1/17 delete-file false false /someFile
+
+
+17 138

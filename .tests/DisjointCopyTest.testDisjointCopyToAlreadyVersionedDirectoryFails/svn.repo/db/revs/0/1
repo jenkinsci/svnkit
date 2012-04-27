@@ -1,0 +1,103 @@
+DELTA
+SVNENDREP
+DELTA
+SVNENDREP
+id: 9-1.0.r1/34
+type: file
+count: 0
+text: 1 17 4 0 d41d8cd98f00b204e9800998ecf8427e da39a3ee5e6b4b0d3255bfef95601890afd80709 0-0/_b
+cpath: /target/targetFile
+copyroot: 0 /
+
+PLAIN
+K 10
+targetFile
+V 16
+file 9-1.0.r1/34
+END
+ENDREP
+id: 8-1.0.r1/262
+type: dir
+count: 0
+text: 1 207 42 42 548a6b0f2a4c942440c33e7180e1e24a
+cpath: /target
+copyroot: 0 /
+
+id: 5-1.0.r1/379
+type: file
+count: 0
+text: 1 0 4 0 d41d8cd98f00b204e9800998ecf8427e da39a3ee5e6b4b0d3255bfef95601890afd80709 0-0/_7
+cpath: /source/directory/sourceFile
+copyroot: 0 /
+
+PLAIN
+K 10
+sourceFile
+V 17
+file 5-1.0.r1/379
+END
+ENDREP
+id: 4-1.0.r1/618
+type: dir
+count: 0
+text: 1 562 43 43 166327a513d8a57dbffdda7a596341b8
+cpath: /source/directory
+copyroot: 0 /
+
+id: 2-1.0.r1/745
+type: dir
+count: 0
+cpath: /source/alreadyVersioned
+copyroot: 0 /
+
+PLAIN
+K 16
+alreadyVersioned
+V 16
+dir 2-1.0.r1/745
+K 9
+directory
+V 16
+dir 4-1.0.r1/618
+END
+ENDREP
+id: 0-1.0.r1/925
+type: dir
+count: 0
+text: 1 828 84 84 3291b465d80632ebff1af605b08e95a8
+cpath: /source
+copyroot: 0 /
+
+PLAIN
+K 6
+source
+V 16
+dir 0-1.0.r1/925
+K 6
+target
+V 16
+dir 8-1.0.r1/262
+END
+ENDREP
+id: 0.0.r1/1125
+type: dir
+pred: 0.0.r0/17
+count: 1
+text: 1 1042 70 70 791f9fe0def736757f119822349892c8
+cpath: /
+copyroot: 0 /
+
+_8.0.t0-0 add-dir false false /target
+
+_2.0.t0-0 add-dir false false /source/alreadyVersioned
+
+_4.0.t0-0 add-dir false false /source/directory
+
+_0.0.t0-0 add-dir false false /source
+
+_9.0.t0-0 add-file true false /target/targetFile
+
+_5.0.t0-0 add-file true false /source/directory/sourceFile
+
+
+1125 1252

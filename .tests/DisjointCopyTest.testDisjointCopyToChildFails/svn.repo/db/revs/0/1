@@ -1,0 +1,75 @@
+DELTA
+SVNENDREP
+DELTA
+SVNENDREP
+id: 4-1.0.r1/34
+type: file
+count: 0
+text: 1 0 4 0 d41d8cd98f00b204e9800998ecf8427e da39a3ee5e6b4b0d3255bfef95601890afd80709 0-0/_6
+cpath: /source/directory/sourceFile
+copyroot: 0 /
+
+PLAIN
+K 10
+sourceFile
+V 16
+file 4-1.0.r1/34
+END
+ENDREP
+id: 2-1.0.r1/271
+type: dir
+count: 0
+text: 1 216 42 42 a93b174af2d502421f6f33356d69d3c1
+cpath: /source/directory
+copyroot: 0 /
+
+PLAIN
+K 9
+directory
+V 16
+dir 2-1.0.r1/271
+END
+ENDREP
+id: 0-1.0.r1/451
+type: dir
+count: 0
+text: 1 398 40 40 200af19cac04d96468c17c571b51d4a8
+cpath: /source
+copyroot: 0 /
+
+id: 7-1.0.r1/568
+type: file
+count: 0
+text: 1 17 4 0 d41d8cd98f00b204e9800998ecf8427e da39a3ee5e6b4b0d3255bfef95601890afd80709 0-0/_8
+cpath: /targetFile
+copyroot: 0 /
+
+PLAIN
+K 6
+source
+V 16
+dir 0-1.0.r1/451
+K 10
+targetFile
+V 17
+file 7-1.0.r1/568
+END
+ENDREP
+id: 0.0.r1/824
+type: dir
+pred: 0.0.r0/17
+count: 1
+text: 1 735 76 76 b42c11af2aa5bc6a6a46918276607bfd
+cpath: /
+copyroot: 0 /
+
+_2.0.t0-0 add-dir false false /source/directory
+
+_0.0.t0-0 add-dir false false /source
+
+_7.0.t0-0 add-file true false /targetFile
+
+_4.0.t0-0 add-file true false /source/directory/sourceFile
+
+
+824 949

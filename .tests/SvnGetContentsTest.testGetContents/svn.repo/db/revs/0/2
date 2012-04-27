@@ -1,0 +1,59 @@
+id: 2-1.0-2.r2/0
+type: file
+pred: 2-1.0.r1/82
+count: 1
+text: 1 0 4 0 d41d8cd98f00b204e9800998ecf8427e da39a3ee5e6b4b0d3255bfef95601890afd80709 0-0/_4
+cpath: /target/file
+copyfrom: 1 /source/file
+
+PLAIN
+K 4
+file
+V 17
+file 2-1.0-2.r2/0
+END
+ENDREP
+id: 5-1.0.r2/245
+type: dir
+pred: 5-1.0.r1/17
+count: 1
+text: 2 196 36 36 820135a342a2eeafc8d80462ce1c0b07
+cpath: /target
+copyroot: 0 /
+
+PLAIN
+END
+ENDREP
+id: 0-1.0.r2/397
+type: dir
+pred: 0-1.0.r1/296
+count: 1
+text: 2 380 4 4 2d2977d1c96f487abe4a1e202dd03b4e
+cpath: /source
+copyroot: 0 /
+
+PLAIN
+K 6
+source
+V 16
+dir 0-1.0.r2/397
+K 6
+target
+V 16
+dir 5-1.0.r2/245
+END
+ENDREP
+id: 0.0.r2/614
+type: dir
+pred: 0.0.r1/495
+count: 2
+text: 2 531 70 70 6e4c6d72002d965f37e5769bb78a23f0
+cpath: /
+copyroot: 0 /
+
+2-1.0.r1/82 delete-file false false /source/file
+
+2-1._0.t1-1 add-file false false /target/file
+1 /source/file
+
+614 740

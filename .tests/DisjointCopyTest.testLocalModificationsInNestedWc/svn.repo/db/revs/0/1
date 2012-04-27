@@ -1,0 +1,91 @@
+DELTA
+SVNENDREP
+DELTA
+SVNENDREP
+id: 8-1.0.r1/34
+type: file
+count: 0
+text: 1 17 4 0 d41d8cd98f00b204e9800998ecf8427e da39a3ee5e6b4b0d3255bfef95601890afd80709 0-0/_a
+cpath: /target/deletedFile
+copyroot: 0 /
+
+PLAIN
+K 11
+deletedFile
+V 16
+file 8-1.0.r1/34
+END
+ENDREP
+id: 7-1.0.r1/264
+type: dir
+count: 0
+text: 1 208 43 43 c8d30033e4ecbfba7eafe7c70fe2de4c
+cpath: /target
+copyroot: 0 /
+
+id: 4-1.0.r1/381
+type: file
+count: 0
+text: 1 0 4 0 d41d8cd98f00b204e9800998ecf8427e da39a3ee5e6b4b0d3255bfef95601890afd80709 0-0/_6
+cpath: /source/directory/sourceFile
+copyroot: 0 /
+
+PLAIN
+K 10
+sourceFile
+V 17
+file 4-1.0.r1/381
+END
+ENDREP
+id: 2-1.0.r1/620
+type: dir
+count: 0
+text: 1 564 43 43 d012906a0e9948a8048352970a8aca69
+cpath: /source/directory
+copyroot: 0 /
+
+PLAIN
+K 9
+directory
+V 16
+dir 2-1.0.r1/620
+END
+ENDREP
+id: 0-1.0.r1/800
+type: dir
+count: 0
+text: 1 747 40 40 0654596f47f2c066a6f00a74d6a3527b
+cpath: /source
+copyroot: 0 /
+
+PLAIN
+K 6
+source
+V 16
+dir 0-1.0.r1/800
+K 6
+target
+V 16
+dir 7-1.0.r1/264
+END
+ENDREP
+id: 0.0.r1/1000
+type: dir
+pred: 0.0.r0/17
+count: 1
+text: 1 917 70 70 72faef4cfd6630e32d4ba31561da6d94
+cpath: /
+copyroot: 0 /
+
+_7.0.t0-0 add-dir false false /target
+
+_8.0.t0-0 add-file true false /target/deletedFile
+
+_2.0.t0-0 add-dir false false /source/directory
+
+_0.0.t0-0 add-dir false false /source
+
+_4.0.t0-0 add-file true false /source/directory/sourceFile
+
+
+1000 1126

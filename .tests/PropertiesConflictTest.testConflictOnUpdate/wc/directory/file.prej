@@ -1,0 +1,5 @@
+Trying to add new property 'propertyName'
+but the property already exists.
+<<<<<<< (local property value)
+working copy value=======
+r2 value>>>>>>> (incoming property value)

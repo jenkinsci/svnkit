@@ -1,0 +1,44 @@
+DELTA
+SVNENDREP
+id: 2-1.0.r1/17
+type: file
+count: 0
+text: 1 0 4 0 d41d8cd98f00b204e9800998ecf8427e da39a3ee5e6b4b0d3255bfef95601890afd80709 0-0/_4
+cpath: /dima/file.txt
+copyroot: 0 /
+
+PLAIN
+K 8
+file.txt
+V 16
+file 2-1.0.r1/17
+END
+ENDREP
+id: 0-1.0.r1/237
+type: dir
+count: 0
+text: 1 185 39 39 a868ab26621bb40e3d14107a6df47a40
+cpath: /dima
+copyroot: 0 /
+
+PLAIN
+K 4
+dima
+V 16
+dir 0-1.0.r1/237
+END
+ENDREP
+id: 0.0.r1/400
+type: dir
+pred: 0.0.r0/17
+count: 1
+text: 1 352 35 35 058485847f8e286aa42e74c802735b6f
+cpath: /
+copyroot: 0 /
+
+_2.0.t0-0 add-file true false /dima/file.txt
+
+_0.0.t0-0 add-dir false false /dima
+
+
+400 525

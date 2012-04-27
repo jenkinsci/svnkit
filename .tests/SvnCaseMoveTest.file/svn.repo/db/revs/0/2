@@ -1,0 +1,29 @@
+id: 0-1.0-2.r2/0
+type: file
+pred: 0-1.0.r1/17
+count: 1
+text: 1 0 4 0 d41d8cd98f00b204e9800998ecf8427e da39a3ee5e6b4b0d3255bfef95601890afd80709 0-0/_2
+cpath: /File.txt
+copyfrom: 1 /file.txt
+
+PLAIN
+K 8
+File.txt
+V 17
+file 0-1.0-2.r2/0
+END
+ENDREP
+id: 0.0.r2/243
+type: dir
+pred: 0.0.r1/232
+count: 2
+text: 2 190 40 40 abd9d2b7e47541723f366b00f4dde17d
+cpath: /
+copyroot: 0 /
+
+0-1._0.t1-1 add-file false false /File.txt
+1 /file.txt
+0-1.0.r1/17 delete-file false false /file.txt
+
+
+243 369

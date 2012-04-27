@@ -1,0 +1,29 @@
+DELTA 1 0 28
+SVNENDREP
+id: 0-1.0.r2/24
+type: file
+pred: 0-1.0.r1/41
+count: 1
+text: 2 0 4 0 d41d8cd98f00b204e9800998ecf8427e da39a3ee5e6b4b0d3255bfef95601890afd80709 1-1/_1
+cpath: /file
+copyroot: 0 /
+
+PLAIN
+K 4
+file
+V 16
+file 0-1.0.r2/24
+END
+ENDREP
+id: 0.0.r2/249
+type: dir
+pred: 0.0.r1/250
+count: 2
+text: 2 201 35 35 ded1c071bd66a8915f35f449e7e745de
+cpath: /
+copyroot: 0 /
+
+0-1.0.t1-1 modify-file true false /file
+
+
+249 375

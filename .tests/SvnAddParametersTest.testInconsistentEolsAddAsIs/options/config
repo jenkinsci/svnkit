@@ -1,0 +1,4 @@
+[miscellany]
+enable-auto-props  = true
+[auto-props]
+someFile  = svn:eol-style=CR

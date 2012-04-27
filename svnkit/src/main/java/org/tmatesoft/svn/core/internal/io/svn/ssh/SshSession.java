@@ -22,7 +22,7 @@ public class SshSession {
         try {
             waitForCondition(ChannelCondition.CLOSED, 0);        
         } catch (InterruptedException e) {
-       	    // TODO: what to do here?
+       	    Thread.currentThread().interrupt();
         }
         myOwner.sessionClosed(this);
     }    

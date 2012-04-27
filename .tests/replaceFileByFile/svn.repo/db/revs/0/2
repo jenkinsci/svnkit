@@ -1,0 +1,41 @@
+id: 2-2.0.r2/0
+type: file
+count: 0
+text: 1 0 30 18 bebdab4cd5f679be8738d7d6736fecac 53cda3a4dfb0895c0c6b8b35b38c64eda735f64b 1-1/_3
+cpath: /trunk/node
+copyroot: 0 /
+
+PLAIN
+K 4
+node
+V 15
+file 2-2.0.r2/0
+END
+ENDREP
+id: 0-1.0.r2/213
+type: dir
+pred: 0-1.0.r1/258
+count: 1
+text: 2 166 34 34 9bf2abdbffb5c8d94d0fc76df0f9f1e0
+cpath: /trunk
+copyroot: 0 /
+
+PLAIN
+K 5
+trunk
+V 16
+dir 0-1.0.r2/213
+END
+ENDREP
+id: 0.0.r2/397
+type: dir
+pred: 0.0.r1/423
+count: 2
+text: 2 348 36 36 e732ea95df4fbae15e2d8b85ec540402
+cpath: /
+copyroot: 0 /
+
+_2.0.t1-1 replace-file true false /trunk/node
+
+
+397 523

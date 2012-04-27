@@ -1,0 +1,57 @@
+id: 4-1.0.r1/0
+type: dir
+count: 0
+cpath: /directory/subdirectory/subsubdirectory
+copyroot: 0 /
+
+PLAIN
+K 15
+subsubdirectory
+V 14
+dir 4-1.0.r1/0
+END
+ENDREP
+id: 2-1.0.r1/154
+type: dir
+count: 0
+text: 1 96 45 45 3b422088911d291c5ce6dddb4aa89320
+cpath: /directory/subdirectory
+copyroot: 0 /
+
+PLAIN
+K 12
+subdirectory
+V 16
+dir 2-1.0.r1/154
+END
+ENDREP
+id: 0-1.0.r1/343
+type: dir
+count: 0
+text: 1 286 44 44 8246c874e0248eded0b6fd1c68dee472
+cpath: /directory
+copyroot: 0 /
+
+PLAIN
+K 9
+directory
+V 16
+dir 0-1.0.r1/343
+END
+ENDREP
+id: 0.0.r1/516
+type: dir
+pred: 0.0.r0/17
+count: 1
+text: 1 463 40 40 41490583a65a1326f7ec3efb37cd22ba
+cpath: /
+copyroot: 0 /
+
+_4.0.t0-0 add-dir false false /directory/subdirectory/subsubdirectory
+
+_0.0.t0-0 add-dir false false /directory
+
+_2.0.t0-0 add-dir false false /directory/subdirectory
+
+
+516 641

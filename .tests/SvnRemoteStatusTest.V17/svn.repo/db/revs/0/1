@@ -1,0 +1,110 @@
+DELTA
+SVNENDREP
+DELTA
+SVNENDREP
+DELTA
+SVNENDREP
+id: 9-1.0.r1/51
+type: dir
+count: 0
+cpath: /trunk/remotelyChanged
+copyroot: 0 /
+
+id: 2-1.0.r1/131
+type: file
+count: 0
+text: 1 0 4 0 d41d8cd98f00b204e9800998ecf8427e da39a3ee5e6b4b0d3255bfef95601890afd80709 0-0/_4
+cpath: /trunk/remotelyChanged.txt
+copyroot: 0 /
+
+id: b-1.0.r1/312
+type: dir
+count: 0
+cpath: /trunk/remotelyReplaced
+copyroot: 0 /
+
+id: 5-1.0.r1/394
+type: file
+count: 0
+text: 1 17 4 0 d41d8cd98f00b204e9800998ecf8427e da39a3ee5e6b4b0d3255bfef95601890afd80709 0-0/_6
+cpath: /trunk/remotelyReplaced.txt
+copyroot: 0 /
+
+id: a-1.0.r1/577
+type: dir
+count: 0
+cpath: /trunk/remotelyDeleted
+copyroot: 0 /
+
+id: 7-1.0.r1/658
+type: file
+count: 0
+text: 1 34 4 0 d41d8cd98f00b204e9800998ecf8427e da39a3ee5e6b4b0d3255bfef95601890afd80709 0-0/_8
+cpath: /trunk/remotelyDeleted.txt
+copyroot: 0 /
+
+PLAIN
+K 15
+remotelyChanged
+V 15
+dir 9-1.0.r1/51
+K 19
+remotelyChanged.txt
+V 17
+file 2-1.0.r1/131
+K 15
+remotelyDeleted
+V 16
+dir a-1.0.r1/577
+K 19
+remotelyDeleted.txt
+V 17
+file 7-1.0.r1/658
+K 16
+remotelyReplaced
+V 16
+dir b-1.0.r1/312
+K 20
+remotelyReplaced.txt
+V 17
+file 5-1.0.r1/394
+END
+ENDREP
+id: 0-1.0.r1/1131
+type: dir
+count: 0
+text: 1 840 278 278 50eaee815a33a9bad954658120849705
+cpath: /trunk
+copyroot: 0 /
+
+PLAIN
+K 5
+trunk
+V 17
+dir 0-1.0.r1/1131
+END
+ENDREP
+id: 0.0.r1/1300
+type: dir
+pred: 0.0.r0/17
+count: 1
+text: 1 1250 37 37 696652688ebb1ae850a1763d14745175
+cpath: /
+copyroot: 0 /
+
+_0.0.t0-0 add-dir false false /trunk
+
+_9.0.t0-0 add-dir false false /trunk/remotelyChanged
+
+_2.0.t0-0 add-file true false /trunk/remotelyChanged.txt
+
+_a.0.t0-0 add-dir false false /trunk/remotelyDeleted
+
+_b.0.t0-0 add-dir false false /trunk/remotelyReplaced
+
+_7.0.t0-0 add-file true false /trunk/remotelyDeleted.txt
+
+_5.0.t0-0 add-file true false /trunk/remotelyReplaced.txt
+
+
+1300 1427

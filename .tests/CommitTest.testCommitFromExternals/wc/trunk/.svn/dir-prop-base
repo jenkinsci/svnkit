@@ -1,0 +1,5 @@
+K 13
+svn:externals
+V 124
+ext file:///Volumes/HD/Users/nicolas/Boulot/jenkins-ci/svnkit/.tests/CommitTest.testCommitFromExternals/svn.repo.0/trunk/dir
+END

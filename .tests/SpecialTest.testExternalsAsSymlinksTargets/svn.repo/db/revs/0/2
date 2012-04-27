@@ -1,0 +1,20 @@
+PLAIN
+K 13
+svn:externals
+V 27
+^/directory externalsTarget
+END
+ENDREP
+id: 0.0.r2/69
+type: dir
+pred: 0.0.r1/407
+count: 2
+text: 1 354 40 40 ba371067347b4a2104f43f68ee27d81b
+props: 2 0 56 56 c077d778c6972a6f4478212f43fa60d7
+cpath: /
+copyroot: 0 /
+
+0.0.t1-1 modify-dir false true /
+
+
+69 244

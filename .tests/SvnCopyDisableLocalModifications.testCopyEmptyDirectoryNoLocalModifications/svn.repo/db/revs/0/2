@@ -1,0 +1,45 @@
+id: 2-1.0-2.r2/0
+type: dir
+pred: 2-1.0.r1/64
+count: 1
+cpath: /target/directory
+copyfrom: 1 /source/directory
+
+PLAIN
+K 9
+directory
+V 16
+dir 2-1.0-2.r2/0
+END
+ENDREP
+id: 4-1.0.r2/163
+type: dir
+pred: 4-1.0.r1/0
+count: 1
+text: 2 110 40 40 6a7c54f731bfa18903eefb139bd4dced
+cpath: /target
+copyroot: 0 /
+
+PLAIN
+K 6
+source
+V 16
+dir 0-1.0.r1/191
+K 6
+target
+V 16
+dir 4-1.0.r2/163
+END
+ENDREP
+id: 0.0.r2/380
+type: dir
+pred: 0.0.r1/389
+count: 2
+text: 2 297 70 70 9ef35e9229edfbb06e797b93200af442
+cpath: /
+copyroot: 0 /
+
+2-1._0.t1-1 add-dir false false /target/directory
+1 /source/directory
+
+380 506

@@ -1,0 +1,50 @@
+id: 7-1.0-2.r2/0
+type: dir
+pred: 7-1.0.r1/262
+count: 1
+text: 1 207 42 42 34785976c8b02063c5a607abd36147cc
+cpath: /source/anotherDirectory
+copyfrom: 1 /target
+
+PLAIN
+K 16
+anotherDirectory
+V 16
+dir 7-1.0-2.r2/0
+K 9
+directory
+V 16
+dir 2-1.0.r1/618
+END
+ENDREP
+id: 0-1.0.r2/256
+type: dir
+pred: 0-1.0.r1/798
+count: 1
+text: 2 159 84 84 efd1a6f4cc3e844da8c60723dd2d287c
+cpath: /source
+copyroot: 0 /
+
+PLAIN
+K 6
+source
+V 16
+dir 0-1.0.r2/256
+K 6
+target
+V 16
+dir 7-1.0.r1/262
+END
+ENDREP
+id: 0.0.r2/475
+type: dir
+pred: 0.0.r1/998
+count: 2
+text: 2 392 70 70 70db615c42fcede86e59050faf09c2d5
+cpath: /
+copyroot: 0 /
+
+7-1._0.t1-1 add-dir false false /source/anotherDirectory
+1 /target
+
+475 601

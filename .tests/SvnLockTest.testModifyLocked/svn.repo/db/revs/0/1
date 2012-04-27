@@ -1,0 +1,76 @@
+DELTA
+SVNENDREP
+id: 6-1.0.r1/17
+type: file
+count: 0
+text: 1 0 4 0 d41d8cd98f00b204e9800998ecf8427e da39a3ee5e6b4b0d3255bfef95601890afd80709 0-0/_8
+cpath: /Project/Prueba/Modify/prueba.txt
+copyroot: 0 /
+
+PLAIN
+K 10
+prueba.txt
+V 16
+file 6-1.0.r1/17
+END
+ENDREP
+id: 4-1.0.r1/259
+type: dir
+count: 0
+text: 1 204 42 42 8fab7341da331ebc72252b51c38e6e05
+cpath: /Project/Prueba/Modify
+copyroot: 0 /
+
+PLAIN
+K 6
+Modify
+V 16
+dir 4-1.0.r1/259
+END
+ENDREP
+id: 2-1.0.r1/441
+type: dir
+count: 0
+text: 1 391 37 37 5fb425f8bfa1ace86d95308a7a443ae5
+cpath: /Project/Prueba
+copyroot: 0 /
+
+PLAIN
+K 6
+Prueba
+V 16
+dir 2-1.0.r1/441
+END
+ENDREP
+id: 0-1.0.r1/616
+type: dir
+count: 0
+text: 1 566 37 37 bf6a070a0fb261acd50b83f0de9114ef
+cpath: /Project
+copyroot: 0 /
+
+PLAIN
+K 7
+Project
+V 16
+dir 0-1.0.r1/616
+END
+ENDREP
+id: 0.0.r1/785
+type: dir
+pred: 0.0.r0/17
+count: 1
+text: 1 734 38 38 0ea501240a658c2a1594aff589554437
+cpath: /
+copyroot: 0 /
+
+_4.0.t0-0 add-dir false false /Project/Prueba/Modify
+
+_2.0.t0-0 add-dir false false /Project/Prueba
+
+_0.0.t0-0 add-dir false false /Project
+
+_6.0.t0-0 add-file true false /Project/Prueba/Modify/prueba.txt
+
+
+785 910

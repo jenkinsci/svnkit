@@ -1,0 +1,29 @@
+id: 0-1.0-2.r2/0
+type: dir
+pred: 0-1.0.r1/237
+count: 1
+text: 1 185 39 39 a868ab26621bb40e3d14107a6df47a40
+cpath: /Dima
+copyfrom: 1 /dima
+
+PLAIN
+K 4
+Dima
+V 16
+dir 0-1.0-2.r2/0
+END
+ENDREP
+id: 0.0.r2/186
+type: dir
+pred: 0.0.r1/400
+count: 2
+text: 2 138 35 35 9e1e4036c17a9270881c7423abf9f1dd
+cpath: /
+copyroot: 0 /
+
+0-1._0.t1-1 add-dir false false /Dima
+1 /dima
+0-1.0.r1/237 delete-dir false false /dima
+
+
+186 312
