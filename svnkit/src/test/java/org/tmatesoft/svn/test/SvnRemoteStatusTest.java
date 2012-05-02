@@ -244,16 +244,29 @@ public class SvnRemoteStatusTest {
                 }
             });
 
-            final SvnGetStatus getStatus = svnOperationFactory.createGetStatus();
-            getStatus.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
-            getStatus.setRemote(true);
-            getStatus.setReportAll(false);
-            getStatus.setReceiver(new ISvnObjectReceiver<SvnStatus>() {
+            final SvnGetStatus getShortStatus = svnOperationFactory.createGetStatus();
+            getShortStatus.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            getShortStatus.setRemote(true);
+            getShortStatus.setReportAll(false);
+            getShortStatus.setReceiver(new ISvnObjectReceiver<SvnStatus>() {
                 public void receive(SvnTarget target, SvnStatus status) throws SVNException {
                     Assert.fail("No status should be reported for this working copy");
                 }
             });
-            getStatus.run();
+            getShortStatus.run();
+
+            final SvnGetStatus getFullStatus = svnOperationFactory.createGetStatus();
+            getFullStatus.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            getFullStatus.setRemote(true);
+            getFullStatus.setReportAll(true);
+            getFullStatus.setReceiver(new ISvnObjectReceiver<SvnStatus>() {
+                public void receive(SvnTarget target, SvnStatus status) throws SVNException {
+                    Assert.assertEquals(SVNStatusType.STATUS_DELETED, status.getRepositoryNodeStatus());
+                    Assert.assertEquals(SVNStatusType.STATUS_NONE, status.getRepositoryPropertiesStatus());
+                    Assert.assertEquals(SVNStatusType.STATUS_NONE, status.getRepositoryTextStatus());
+                }
+            });
+            getFullStatus.run();
 
         } finally {
             svnOperationFactory.dispose();
