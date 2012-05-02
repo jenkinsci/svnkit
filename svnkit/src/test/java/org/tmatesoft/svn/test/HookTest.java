@@ -8,7 +8,6 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.core.wc2.admin.SvnRepositoryCreate;
 
 import java.io.File;
@@ -31,10 +30,10 @@ public class HookTest {
             //create pre-commit hook
             final SVNURL url = SVNURL.fromFile(directory);
             final File preCommitHookFile = TestUtil.getHookFile(directory, "pre-commit");
-            SVNFileUtil.setExecutable(preCommitHookFile, true);
 
             //blocked by hook
             TestUtil.writeFileContentsString(preCommitHookFile, TestUtil.getFailingHookContents());
+            SVNFileUtil.setExecutable(preCommitHookFile, true);
 
             final CommitBuilder failingCommitBuilder = new CommitBuilder(url);
             failingCommitBuilder.addFile("file");
