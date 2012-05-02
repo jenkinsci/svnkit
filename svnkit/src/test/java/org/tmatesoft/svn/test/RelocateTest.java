@@ -21,6 +21,7 @@ public class RelocateTest {
     public void testRelocateCleansDavCache() throws Exception {
         final TestOptions options = TestOptions.getInstance();
         Assume.assumeTrue(TestUtil.areAllApacheOptionsSpecified(options));
+        Assume.assumeTrue(TestUtil.isNewWorkingCopyTest());
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
         final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testRelocateCleansDavCache", options);

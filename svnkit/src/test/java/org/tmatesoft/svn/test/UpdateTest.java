@@ -1,12 +1,9 @@
 package org.tmatesoft.svn.test;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.tmatesoft.svn.core.SVNCancelException;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
@@ -98,15 +95,29 @@ public class UpdateTest {
             final File file = new File(workingCopyDirectory, "file");
             TestUtil.writeFileContentsString(file, "contents");
 
-            final SvnUpdate update = svnOperationFactory.createUpdate();
-            update.setSingleTarget(SvnTarget.fromFile(file));
-            update.run();
+            if (TestUtil.isNewWorkingCopyTest()) {
+                final SvnUpdate update = svnOperationFactory.createUpdate();
+                update.setSingleTarget(SvnTarget.fromFile(file));
+                update.run();
 
-            final SvnGetStatus getStatus = svnOperationFactory.createGetStatus();
-            getStatus.setSingleTarget(SvnTarget.fromFile(file));
-            final SvnStatus status = getStatus.run();
+                //in new working copy a conflict should be produced
+                final SvnGetStatus getStatus = svnOperationFactory.createGetStatus();
+                getStatus.setSingleTarget(SvnTarget.fromFile(file));
+                final SvnStatus status = getStatus.run();
 
-            Assert.assertTrue(status.isConflicted());
+                Assert.assertTrue(status.isConflicted());
+            } else {
+                final SvnUpdate update = svnOperationFactory.createUpdate();
+                update.setSingleTarget(SvnTarget.fromFile(file));
+                try {
+                    update.run();
+                    //in old working copy obstructed update should cause an exception
+                    Assert.fail("An exception should be thrown");
+                } catch (SVNException e) {
+                    //expected
+                    Assert.assertEquals(SVNErrorCode.WC_OBSTRUCTED_UPDATE, e.getErrorMessage().getErrorCode());
+                }
+            }
 
         } finally {
             svnOperationFactory.dispose();
