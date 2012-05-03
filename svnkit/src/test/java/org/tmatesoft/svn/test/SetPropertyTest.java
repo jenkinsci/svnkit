@@ -59,6 +59,48 @@ public class SetPropertyTest {
         }
     }
 
+    @Ignore("SVNKIT-230, currently fails")
+    @Test
+    public void testSetMimeTypeAndEolStyle() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testSetEolStyleAndMimeType", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("file");
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url);
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+
+            final File file = new File(workingCopyDirectory, "file");
+
+            final SvnSetProperty setMimeType = svnOperationFactory.createSetProperty();
+            setMimeType.setSingleTarget(SvnTarget.fromFile(file));
+            setMimeType.setPropertyName(SVNProperty.MIME_TYPE);
+            setMimeType.setPropertyValue(SVNPropertyValue.create("application/xml"));
+            setMimeType.run();
+
+            final SvnSetProperty setEolStyle = svnOperationFactory.createSetProperty();
+            setEolStyle.setSingleTarget(SvnTarget.fromFile(file));
+            setEolStyle.setPropertyName(SVNProperty.EOL_STYLE);
+            setEolStyle.setPropertyValue(SVNPropertyValue.create(SVNProperty.EOL_STYLE_LF));
+            setEolStyle.run();
+
+            final SvnCommit commit = svnOperationFactory.createCommit();
+            commit.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            final SVNCommitInfo commitInfo = commit.run();
+
+            Assert.assertEquals(2, commitInfo.getNewRevision());
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
 
     private String getTestName() {
         return "SetPropertyTest";
