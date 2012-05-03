@@ -1,21 +1,24 @@
 package org.tmatesoft.svn.test;
 
-import java.io.File;
-
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Test;
-import org.tmatesoft.svn.core.SVNCommitInfo;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNPropertyValue;
-import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
+import org.tmatesoft.svn.core.internal.wc17.db.Structure;
+import org.tmatesoft.svn.core.internal.wc17.db.StructureFields;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNCommitClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc2.SvnCommit;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
+import org.tmatesoft.svn.core.wc2.SvnStatus;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
+
+import java.io.File;
+import java.util.Map;
 
 public class CommitTest {
     @Test
@@ -88,6 +91,61 @@ public class CommitTest {
         } finally {
             svnOperationFactory.dispose();
             sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testCommitIncompleteDirectory() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        Assume.assumeTrue(TestUtil.isNewWorkingCopyTest());
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testCommitIncompleteDirectory", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("directory/file");
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url);
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+
+            final File directory = new File(workingCopyDirectory, "directory");
+
+            workingCopy.setProperty(directory, "propertyName", SVNPropertyValue.create("propertyValue"));
+
+            setIncomplete(svnOperationFactory, directory, 1, null);
+
+            final SvnCommit commit = svnOperationFactory.createCommit();
+            commit.setSingleTarget(SvnTarget.fromFile(directory));
+            final SVNCommitInfo commitInfo = commit.run();
+
+            Assert.assertEquals(2, commitInfo.getNewRevision());
+
+            final Map<File,SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
+            final SvnStatus status = statuses.get(directory);
+            Assert.assertEquals(SVNStatusType.STATUS_INCOMPLETE, status.getNodeStatus());
+            Assert.assertEquals(2, status.getRevision());
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+   }
+
+    private void setIncomplete(SvnOperationFactory svnOperationFactory, File path, long revision, File reposRelpath) throws SVNException {
+        SVNWCContext context = new SVNWCContext(svnOperationFactory.getOptions(), svnOperationFactory.getEventHandler());
+        try {
+            if (reposRelpath == null) {
+                final Structure<StructureFields.NodeInfo> nodeInfoStructure = context.getDb().readInfo(path, StructureFields.NodeInfo.reposRelPath);
+                reposRelpath = nodeInfoStructure.get(StructureFields.NodeInfo.reposRelPath);
+            }
+
+            context.getDb().opStartDirectoryUpdateTemp(path, reposRelpath, revision);
+        } finally {
+            context.close();
         }
     }
 
