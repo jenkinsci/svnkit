@@ -1299,7 +1299,6 @@ public class DAVRepository extends SVNRepository {
     private SVNDirEntry createDirEntry(String fullPath, DAVProperties child) throws SVNException {
         String href = child.getURL();
         href = SVNEncodingUtil.uriDecode(href);
-        String name = SVNPathUtil.tail(href);
         // build direntry
         SVNNodeKind kind = SVNNodeKind.FILE;
         Object revisionStr = child.getPropertyValue(DAVElement.VERSION_NAME);
@@ -1341,6 +1340,7 @@ public class DAVRepository extends SVNRepository {
         connection.fetchRepositoryRoot(this);            
         SVNURL repositoryRoot = getRepositoryRoot(false);
         SVNURL url = getLocation().setPath(fullPath, true);
+        String name = repositoryRoot.equals(url) ? "" : SVNPathUtil.tail(href);
         return new SVNDirEntry(url, repositoryRoot, name, kind, size, hasProperties, lastRevision, date, author);
     }
 
