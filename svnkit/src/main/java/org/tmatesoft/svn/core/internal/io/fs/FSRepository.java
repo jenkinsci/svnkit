@@ -11,34 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.io.fs;
 
-import java.io.File;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Set;
-
-import org.tmatesoft.svn.core.ISVNDirEntryHandler;
-import org.tmatesoft.svn.core.ISVNLogEntryHandler;
-import org.tmatesoft.svn.core.SVNAuthenticationException;
-import org.tmatesoft.svn.core.SVNCancelException;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNDirEntry;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNLock;
-import org.tmatesoft.svn.core.SVNMergeInfoInheritance;
-import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.SVNProperties;
-import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.SVNPropertyValue;
-import org.tmatesoft.svn.core.SVNRevisionProperty;
-import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.auth.BasicAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
@@ -50,19 +23,13 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNMergeInfoManager;
-import org.tmatesoft.svn.core.io.ISVNEditor;
-import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
-import org.tmatesoft.svn.core.io.ISVNLocationEntryHandler;
-import org.tmatesoft.svn.core.io.ISVNLocationSegmentHandler;
-import org.tmatesoft.svn.core.io.ISVNLockHandler;
-import org.tmatesoft.svn.core.io.ISVNReplayHandler;
-import org.tmatesoft.svn.core.io.ISVNReporter;
-import org.tmatesoft.svn.core.io.ISVNReporterBaton;
-import org.tmatesoft.svn.core.io.ISVNSession;
-import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
-import org.tmatesoft.svn.core.io.SVNCapability;
-import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.io.*;
 import org.tmatesoft.svn.util.SVNLogType;
+
+import java.io.File;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.*;
 
 /**
  * @version 1.3
@@ -439,8 +406,8 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             FSRevisionNode revNode = root.getRevisionNode(path);
             String fullPath = getFullPath(path);
             String parentFullPath = "/".equals(path) ? fullPath : SVNPathUtil.removeTail(fullPath);
+            String name = "";
             SVNURL url = getLocation().setPath(parentFullPath, false);
-            String name = SVNPathUtil.tail(path);
             FSEntry fsEntry = new FSEntry(revNode.getId(), revNode.getType(), name);
             SVNDirEntry entry = buildDirEntry(fsEntry, url, revNode, SVNDirEntry.DIRENT_ALL);
             return entry;
