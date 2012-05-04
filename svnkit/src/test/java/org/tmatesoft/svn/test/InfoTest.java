@@ -1,6 +1,7 @@
 package org.tmatesoft.svn.test;
 
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Test;
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNNodeKind;
@@ -39,6 +40,7 @@ public class InfoTest {
     @Test
     public void testLowLevelInfoDavAccess() throws Exception {
         final TestOptions options = TestOptions.getInstance();
+        Assume.assumeTrue(TestUtil.areAllApacheOptionsSpecified(options));
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
         final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testLowLevelInfoDavAccess", options);
