@@ -301,6 +301,15 @@ public class SVNDirEntry implements Comparable {
 
     /**
      * This method is used by SVNKit internals and not intended for users (from an API point of view).
+     *
+     * @param name this entry's name
+     */
+    public void setName(String name) {
+        this.myName = name;
+    }
+
+    /**
+     * This method is used by SVNKit internals and not intended for users (from an API point of view).
      * 
      * @param path this entry's path
      */
