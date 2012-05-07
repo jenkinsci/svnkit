@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.jenkins-ci.svnkit</groupId>
   <artifactId>svnkit</artifactId>
-  <version>1.7.4-jenkins-1</version>
+  <version>1.7.4-jenkins-2</version>
   <name>SVNKit</name>
   <description>A pure Java Subversion library, formerly known as JavaSVN</description>
   <url>http://svnkit.com/</url>
