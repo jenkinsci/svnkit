@@ -5,8 +5,37 @@
 
 ### Section for authentication and authorization customizations.
 [auth]
+### Set password stores used by Subversion. They should be
+### delimited by spaces or commas. The order of values determines
+### the order in which password stores are used.
+### Valid password stores:
+###   gnome-keyring        (Unix-like systems)
+###   kwallet              (Unix-like systems)
+###   keychain             (Mac OS X)
+###   windows-cryptoapi    (Windows)
+# password-stores = keychain
+# password-stores = windows-cryptoapi
+#else
+# password-stores = gnome-keyring,kwallet
+###
+### Set KWallet wallet used by Subversion. If empty or unset,
+### then the default network wallet will be used.
+# kwallet-wallet =
+###
+### Include PID (Process ID) in Subversion application name when
+### using KWallet. It defaults to 'no'.
+# kwallet-svn-application-name-with-pid = yes
+###
+### The rest of this section in this file has been deprecated.
+### Both 'store-passwords' and 'store-auth-creds' can now be
+### specified in the 'servers' file in your config directory.
+### Anything specified in this section is overridden by settings
+### specified in the 'servers' file.
+###
 ### Set store-passwords to 'no' to avoid storing passwords in the
-### auth/ area of your config directory.  It defaults to 'yes'.
+### auth/ area of your config directory.  It defaults to 'yes',
+### but Subversion will never save your password to disk in
+### plaintext unless you tell it to (see the 'servers' file).
 ### Note that this option only prevents saving of *new* passwords;
 ### it doesn't invalidate existing passwords.  (To do that, remove
 ### the cache files by hand as described in the Subversion book.)
@@ -20,7 +49,7 @@
 
 ### Section for configuring external helper applications.
 [helpers]
-### Set editor to the command used to invoke your text editor.
+### Set editor-cmd to the command used to invoke your text editor.
 ###   This will override the environment variables that Subversion
 ###   examines by default to find this information ($EDITOR, 
 ###   et al).
@@ -33,9 +62,9 @@
 ###   This will override the compile-time default, which is to use
 ###   Subversion's internal diff3 implementation.
 # diff3-cmd = diff3_program (diff3, gdiff3, etc.)
-### Set diff3-has-program-arg to 'true' or 'yes' if your 'diff3'
-###   program accepts the '--diff-program' option.
-# diff3-has-program-arg = [true | false]
+### Set diff3-has-program-arg to 'yes' if your 'diff3' program
+###   accepts the '--diff-program' option.
+# diff3-has-program-arg = [yes | no]
 ### Set merge-tool-cmd to the command used to invoke your external
 ### merging tool of choice. Subversion will pass 4 arguments to
 ### the specified command: base theirs mine merged
@@ -53,18 +82,17 @@
 ### spaces.  The command will be invoked as:
 ###   <command> <hostname> svnserve -t
 ### (If the URL includes a username, then the hostname will be
-### passed to the tunnel agent as <user>@<hostname>.)  Here we
-### redefine the built-in 'ssh' scheme to avoid an unfortunate
-### interaction with the "ControlMaster auto" feature (for
-### details, see Debian Bug #413102):
-ssh = $SVN_SSH ssh -o ControlMaster=no
+### passed to the tunnel agent as <user>@<hostname>.)  If the
+### built-in ssh scheme were not predefined, it could be defined
+### as:
+# ssh = $SVN_SSH ssh -q
 ### If you wanted to define a new 'rsh' scheme, to be used with
 ### 'svn+rsh:' URLs, you could do so as follows:
 # rsh = rsh
 ### Or, if you wanted to specify a full path and arguments:
 # rsh = /path/to/rsh -l myusername
 ### On Windows, if you are specifying a full path to a command,
-### use a forward slash (/) or a paired backslash (\\) as the
+### use a forward slash (/) or a paired backslash (\\\\) as the
 ### path separator.  A single backslash will be treated as an
 ### escape for the following character.
 
@@ -112,12 +140,11 @@ ssh = $SVN_SSH ssh -o ControlMaster=no
 ### 'enable-auto-props' option.
 # *.c = svn:eol-style=native
 # *.cpp = svn:eol-style=native
-# *.h = svn:eol-style=native
+# *.h = svn:keywords=Author Date Id Rev URL;svn:eol-style=native
 # *.dsp = svn:eol-style=CRLF
 # *.dsw = svn:eol-style=CRLF
 # *.sh = svn:eol-style=native;svn:executable
-# *.txt = svn:eol-style=native
+# *.txt = svn:eol-style=native;svn:keywords=Author Date Id Rev URL;
 # *.png = svn:mime-type=image/png
 # *.jpg = svn:mime-type=image/jpeg
 # Makefile = svn:eol-style=native
-

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -677,8 +677,7 @@ public class DAVRepository extends SVNRepository {
                 } catch (SVNException e) {
                     error = null;
                     if (e.getErrorMessage() != null) {
-                        SVNErrorCode code = e.getErrorMessage().getErrorCode();
-                        if (code == SVNErrorCode.FS_PATH_ALREADY_LOCKED || code == SVNErrorCode.FS_OUT_OF_DATE) {
+                        if (FSErrors.isLockError(e.getErrorMessage())) {
                             error = e.getErrorMessage();                            
                         }
                     }
@@ -713,15 +712,23 @@ public class DAVRepository extends SVNRepository {
                     error = null;
                 } catch (SVNException e) {
                     if (e.getErrorMessage() != null && 
-                            (e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_NOT_LOCKED || FSErrors.isUnlockError(e.getErrorMessage()))) {
+                            (e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_NOT_LOCKED  || FSErrors.isUnlockError(e.getErrorMessage()))) {
                         error = e.getErrorMessage();
+
+                        if (repositoryPath != null && repositoryPath.startsWith("/")) {
+                            shortPath = repositoryPath.substring("/".length());
+                        } else if (repositoryPath != null) {
+                            shortPath = repositoryPath;
+                        } else {
+                            shortPath = "";
+                        }
                         error = SVNErrorMessage.create(error.getErrorCode(), error.getMessageTemplate(), shortPath);
                     } else {
                         throw e;
                     }
                 }
                 if (handler != null) {
-                    handler.handleUnlock(repositoryPath, new SVNLock(path, id, null, null, null, null), error);
+                    handler.handleUnlock(repositoryPath, new SVNLock(repositoryPath, id, null, null, null, null), error);
                 }
             }
         } finally {
@@ -1219,7 +1226,7 @@ public class DAVRepository extends SVNRepository {
         }
         String[] repositoryPaths = new String[paths.length];
         for (int i = 0; i < paths.length; i++) {
-            repositoryPaths[i] = getRepositoryPath(paths[i]);
+            repositoryPaths[i] = paths[i];
         }
         StringBuffer request = DAVMergeInfoHandler.generateMergeInfoRequest(null, revision, repositoryPaths, inherit, includeDescendants);
         DAVMergeInfoHandler handler = new DAVMergeInfoHandler();

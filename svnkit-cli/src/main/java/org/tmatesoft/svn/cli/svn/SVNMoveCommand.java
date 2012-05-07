@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -103,7 +103,7 @@ public class SVNMoveCommand extends SVNCommand {
             if (code == SVNErrorCode.UNVERSIONED_RESOURCE || code == SVNErrorCode.CLIENT_MODIFIED) {
                 err = err.wrap("Use --force to override this restriction");
             }
-            SVNErrorManager.error(err, SVNLogType.CLIENT);
+            SVNErrorManager.error(err, e, SVNLogType.CLIENT);
         }
     }
 

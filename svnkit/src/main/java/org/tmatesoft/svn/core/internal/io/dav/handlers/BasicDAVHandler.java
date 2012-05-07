@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -12,16 +12,13 @@
 
 package org.tmatesoft.svn.core.internal.io.dav.handlers;
 
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Stack;
-
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
+import org.tmatesoft.svn.core.internal.util.SVNBase64;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.util.SVNDebugLog;
@@ -29,6 +26,13 @@ import org.tmatesoft.svn.util.SVNLogType;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
+
+import java.io.UnsupportedEncodingException;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Stack;
 
 
 /**
@@ -166,6 +170,54 @@ public abstract class BasicDAVHandler extends DefaultHandler {
             qName = qName.substring(index + 1);
         }
         return DAVElement.getElement(prefix, qName);
+    }
+
+    protected SVNPropertyValue createPropertyValue(DAVElement element, String propertyName, StringBuffer cdata, String encoding) throws SVNException {
+        if ("base64".equalsIgnoreCase(encoding)) {
+            return createPropertyValueFromBase64(element, propertyName, cdata);
+        }
+        if (encoding != null && !"".equals(encoding)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.XML_UNKNOWN_ENCODING,
+                    "Unknown XML encoding: ''{0}''", encoding);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
+        }
+        
+        if (useStringProperty(element, propertyName)) {
+            return SVNPropertyValue.create(cdata.toString());
+        }
+
+        byte[] rawValue;
+        try {
+            rawValue = cdata.toString().getBytes("UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            rawValue = cdata.toString().getBytes();
+        }
+        return SVNPropertyValue.create(propertyName, rawValue);
+    }
+
+    protected SVNPropertyValue createPropertyValueFromBase64(DAVElement element, String propertyName, StringBuffer cdata) {
+        StringBuffer sb = SVNBase64.normalizeBase64(cdata);
+        byte[] buffer = allocateBuffer(sb.length());
+        int length = SVNBase64.base64ToByteArray(sb, buffer);
+        if (useStringProperty(element, propertyName)) {
+            String str;
+            try {
+                str = new String(buffer, 0, length, "UTF-8");
+            } catch (UnsupportedEncodingException e) {
+                str = new String(buffer, 0, length);
+            }
+            return SVNPropertyValue.create(str);
+        }
+        return SVNPropertyValue.create(propertyName, buffer, 0, length);
+    }
+
+    private boolean useStringProperty(DAVElement element, String propertyName) {
+        String namespace = element == null ? null : element.getNamespace();
+        return SVNProperty.isSVNProperty(propertyName) ||
+                DAVElement.SVN_DAV_PROPERTY_NAMESPACE.equals(namespace) ||
+                DAVElement.SVN_SVN_PROPERTY_NAMESPACE.equals(namespace) ||
+                DAVElement.SVN_NAMESPACE.equals(namespace) ||
+                DAVElement.DAV_NAMESPACE.equals(namespace);
     }
 
     protected byte[] allocateBuffer(int length) {

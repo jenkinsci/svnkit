@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -56,7 +56,9 @@ public class SVNPropertyData {
         myValue = data;
         if (myValue != null && SVNProperty.isSVNProperty(myName) && myValue.isString()) {
             String nativeEOL = options == null ? System.getProperty("line.separator") : new String(options.getNativeEOL());
-            myValue = SVNPropertyValue.create(myValue.getString().replaceAll("\n", nativeEOL));
+            if (myValue.getString().indexOf(nativeEOL) < 0) {
+                myValue = SVNPropertyValue.create(myValue.getString().replaceAll("\n", nativeEOL));
+            }
         }
     }
     

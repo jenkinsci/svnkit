@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -59,22 +59,25 @@ public class SVNMkDirCommand extends SVNCommand {
         }
         boolean hasURLs = false;
         boolean hasPaths = false;
+        
         for (Iterator ts = targets.iterator(); ts.hasNext();) {
             String targetName = (String) ts.next();
             if (!SVNCommandUtil.isURL(targetName)) {
-                if (getSVNEnvironment().getMessage() != null || getSVNEnvironment().getFileData() != null || getSVNEnvironment().getRevisionProperties() != null) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_UNNECESSARY_LOG_MESSAGE,
-                            "Local, non-commit operations do not take a log message or revision properties");
-                    SVNErrorManager.error(err, SVNLogType.CLIENT);
-                }
-                hasPaths = true;
+            	hasPaths = true;
             } else {
                 hasURLs = true;
             }
         }
+        
         if (hasURLs && hasPaths) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Specify either URLs or local paths, not both"), SVNLogType.CLIENT);
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Cannot mix repository and working copy targets"), SVNLogType.CLIENT);
         }
+        
+        if (hasPaths && (getSVNEnvironment().getMessage() != null || getSVNEnvironment().getFileData() != null || getSVNEnvironment().getRevisionProperties() != null)) {
+        	SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_UNNECESSARY_LOG_MESSAGE, "Local, non-commit operations do not take a log message or revision properties");
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
+        }
+        
         if (hasURLs) {
             SVNCommitClient client = getSVNEnvironment().getClientManager().getCommitClient();
             if (!getSVNEnvironment().isQuiet()) {
@@ -88,7 +91,9 @@ public class SVNMkDirCommand extends SVNCommand {
             }
             try {
                 SVNCommitInfo info = client.doMkDir(urls, getSVNEnvironment().getMessage(), getSVNEnvironment().getRevisionProperties(), getSVNEnvironment().isParents());
-                getSVNEnvironment().printCommitInfo(info);
+                if (!getSVNEnvironment().isQuiet()) {
+                    getSVNEnvironment().printCommitInfo(info);
+                }
             } catch (SVNException e) {
                 SVNErrorMessage err = e.getErrorMessage();
                 if (!getSVNEnvironment().isParents() && 
@@ -114,9 +119,15 @@ public class SVNMkDirCommand extends SVNCommand {
             } catch (SVNException e) {
                 SVNErrorMessage err = e.getErrorMessage();
                 if (err.getErrorCode() == SVNErrorCode.IO_ERROR) {
-                    err = err.wrap("Try 'svn mkdir --parents' instead?");
-                } else if (!getSVNEnvironment().isParents() && (err.getErrorCode() == SVNErrorCode.IO_ERROR)) {
-                    err = err.wrap("Try 'svn add' or 'svn add --non-recursive' instead?");
+                	err = err.wrap("Try 'svn add' or 'svn add --non-recursive' instead?");
+                } else if (!getSVNEnvironment().isParents() && 
+                		(err.getErrorCode() == SVNErrorCode.IO_ERROR
+                		|| err.getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND
+                		|| err.getErrorCode() == SVNErrorCode.FS_NOT_DIRECTORY
+                		|| err.getErrorCode() == SVNErrorCode.FS_NOT_FOUND
+                		|| err.getErrorCode() == SVNErrorCode.ENTRY_NOT_FOUND
+                		)) {
+                	err = err.wrap("Try 'svn mkdir --parents' instead?");
                 }
                 SVNErrorManager.error(err, SVNLogType.CLIENT);
             }

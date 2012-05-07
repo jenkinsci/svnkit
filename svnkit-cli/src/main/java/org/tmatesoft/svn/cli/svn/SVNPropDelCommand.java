@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.cli.svn;
 
+import java.io.File;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -72,9 +73,15 @@ public class SVNPropDelCommand extends SVNPropertiesCommand {
             targets.add("");
         }
         
-        if (getSVNEnvironment().isRevprop()) {
-            SVNURL revPropURL = getRevpropURL(getSVNEnvironment().getStartRevision(), targets);
-            getSVNEnvironment().getClientManager().getWCClient().doSetRevisionProperty(revPropURL, getSVNEnvironment().getStartRevision(), propertyName, null, getSVNEnvironment().isForce(), this);
+        if (getSVNEnvironment().isRevprop()) {            
+            String target = checkRevPropTarget(getSVNEnvironment().getStartRevision(), targets);
+            if (SVNCommandUtil.isURL(target)) {
+                SVNURL url = SVNURL.parseURIEncoded(target);
+                getSVNEnvironment().getClientManager().getWCClient().doSetRevisionProperty(url, getSVNEnvironment().getStartRevision(), propertyName, null, getSVNEnvironment().isForce(), this);
+            } else {
+                File targetFile = new SVNPath(target).getFile();
+                getSVNEnvironment().getClientManager().getWCClient().doSetRevisionProperty(targetFile, getSVNEnvironment().getStartRevision(), propertyName, null, getSVNEnvironment().isForce(), this);
+            }
         } else if (getSVNEnvironment().getStartRevision() != SVNRevision.UNDEFINED) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
                     "Cannot specify revision for deleting versioned property ''{0}''", propertyName);
@@ -114,7 +121,8 @@ public class SVNPropDelCommand extends SVNPropertiesCommand {
                         }
                         if (deletedNonExistent[0]) {
                             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, "Attempting to delete nonexistent property ''{0}''", propertyName);
-                            SVNErrorManager.error(err, SVNLogType.CLIENT);
+                            getSVNEnvironment().getOut().println(err.getFullMessage());
+                            success = false;
                         }
                     } catch (SVNException e) {
                         success = getSVNEnvironment().handleWarning(e.getErrorMessage(), 

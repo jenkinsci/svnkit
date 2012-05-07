@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -102,6 +102,10 @@ public class SVNTreeConflictDescription extends SVNConflictDescription {
      */
     public SVNConflictVersion getSourceLeftVersion() {
         return mySourceLeftVersion;
+    }
+    
+    public void setSourceLeftVersion(SVNConflictVersion sourceLeftVersion) {
+        mySourceLeftVersion = sourceLeftVersion;
     }
 
     /**

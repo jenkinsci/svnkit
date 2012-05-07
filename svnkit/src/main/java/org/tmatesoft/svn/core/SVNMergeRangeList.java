@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -118,8 +119,8 @@ public class SVNMergeRangeList {
      * 
      * @return a new list instance containing all of the ranges stored in this merge range list 
      */
-    public List getRangesAsList() {
-    	LinkedList list = new LinkedList();
+    public List<SVNMergeRange> getRangesAsList() {
+    	List<SVNMergeRange> list = new ArrayList<SVNMergeRange>();
     	for (int i = 0; i < myRanges.length; i++) {
 			SVNMergeRange range = myRanges[i];
 			list.add(range);
@@ -222,12 +223,7 @@ public class SVNMergeRangeList {
             }
         }
         
-        if (i < myRanges.length && j < rangeList.myRanges.length) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
-                    "ASSERTION FAILURE in SVNMergeRangeList.merge(): expected to reach the end of at least " +
-                    "one range list");
-            SVNErrorManager.error(err, SVNLogType.DEFAULT);
-        }
+        SVNErrorManager.assertionFailure(i >= myRanges.length || j >= rangeList.myRanges.length, "expected to reach the end of at least one range list", SVNLogType.DEFAULT);
         
         for (; i < myRanges.length; i++) {
             SVNMergeRange range = myRanges[i];
@@ -337,6 +333,10 @@ public class SVNMergeRangeList {
      *                     this range list
      */
     public SVNMergeRangeList getInheritableRangeList(long startRev, long endRev) {
+        return getInheritableRangeList(startRev, endRev, true);
+    }
+
+    public SVNMergeRangeList getInheritableRangeList(long startRev, long endRev, boolean inheritable) {
         LinkedList inheritableRanges = new LinkedList();
         if (myRanges.length > 0) {
             if (!SVNRevision.isValidRevisionNumber(startRev) ||
@@ -344,7 +344,7 @@ public class SVNMergeRangeList {
                 endRev < startRev) {
                 for (int i = 0; i < myRanges.length; i++) {
                     SVNMergeRange range = myRanges[i];
-                    if (range.isInheritable()) {
+                    if (range.isInheritable() == inheritable) {
                         SVNMergeRange inheritableRange = new SVNMergeRange(range.getStartRevision(),
                                                                            range.getEndRevision(), 
                                                                            true);
@@ -559,7 +559,8 @@ public class SVNMergeRangeList {
                         if (lastRange.getEndRevision() < mRange.getEndRevision()) {
                             if (pushedMRange2 == null) {
                                 pushedMRange2 = new SVNMergeRange(lastRange.getEndRevision(), mRange.getEndRevision(), mRange.isInheritable());
-                            } 
+                            }
+                            
                             tmpRevision = lastRange.getStartRevision();
                             lastRange.setStartRevision(mRange.getStartRevision());
                             lastRange.setEndRevision(tmpRevision);
@@ -571,7 +572,7 @@ public class SVNMergeRangeList {
                         } else {
                             if (pushedMRange2 == null) {
                                 pushedMRange2 = new SVNMergeRange(mRange.getEndRevision(), lastRange.getEndRevision(), lastRange.isInheritable());
-                            } 
+                            }
                             
                             tmpRevision = lastRange.getStartRevision();
                             lastRange.setStartRevision(mRange.getStartRevision());
@@ -596,5 +597,14 @@ public class SVNMergeRangeList {
             lastRange = pushedMRange2;
         }
         return lastRange;
+    }
+
+    public SVNMergeRangeList mergeRevision(long revision) {
+        if (getSize() > 0 && getRanges()[getSize() - 1].getEndRevision() == revision - 1) {
+            getRanges()[getSize() - 1].setEndRevision(revision);
+            return this;
+        }
+        pushRange(revision -1 , revision, true);
+        return this;
     }
 }

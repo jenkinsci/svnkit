@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -124,5 +124,21 @@ public class SVNErrorManager {
             throw new SVNAuthenticationException(err1, cause);
         } 
         throw new SVNException(err1, cause);
+    }
+    
+    public static void assertionFailure(boolean isTrueCondition, String optionalMessage, SVNLogType logType) throws SVNException {
+        if (!isTrueCondition) {
+            try {
+                throw new Exception();
+            } catch (Exception e) {
+                StackTraceElement[] stackTraceElements = e.getStackTrace();
+                StackTraceElement callerStackElement = stackTraceElements[1];
+                String genericAssertionFailureReport = "Assertion failure in class ''{0}'' (file {1}) in method ''{2}'' on line {3}"; 
+                genericAssertionFailureReport = optionalMessage != null ? genericAssertionFailureReport + ": {4}" : genericAssertionFailureReport;
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ASSERTION_FAIL, genericAssertionFailureReport, new Object[] { callerStackElement.getClassName(), 
+                        callerStackElement.getFileName(), callerStackElement.getMethodName(), String.valueOf(callerStackElement.getLineNumber()), optionalMessage });
+                error(err, logType);
+            }
+        }
     }
 }

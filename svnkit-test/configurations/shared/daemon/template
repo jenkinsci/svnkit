@@ -1,6 +1,16 @@
 #!/bin/bash
 
+snapshot() {
+if [ -x $dir/snapshot ]
+then
+   echo "$@" > "%svn_test_work%/commit_msg"
+   $dir/snapshot "%svn_test_work%" > /dev/null 2> /dev/null
+fi
+}
+
 dir=`dirname $0`
+scriptname=`basename $0`
+
 if [ -x $dir/matcher.pl ] 
 then
 # only run jsvn if matched
@@ -8,8 +18,10 @@ then
    if [ $? -ne 0 ] 
    then
    # run native
-       %svn_home%/bin/%name% "$@" < /dev/stdin    
-       exit $?
+       %svn_home%/bin/%name% "$@" < /dev/stdin
+       sr=$?
+       snapshot $scriptname "$@"
+       exit $sr
    fi
 fi
 
@@ -17,3 +29,6 @@ NG_MAINCLASS=%mainclass%
 NG_PORT=%port%
 
 %NG% $NG_MAINCLASS --nailgun-port $NG_PORT %name% "$@"
+sr=$?
+snapshot $scriptname "$@"
+exit $sr

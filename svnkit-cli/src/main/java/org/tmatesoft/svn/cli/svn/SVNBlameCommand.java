@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -91,6 +91,7 @@ public class SVNBlameCommand extends SVNXMLCommand implements ISVNAnnotateHandle
         myBuffer = new StringBuffer();
         SVNLogClient client = getSVNEnvironment().getClientManager().getLogClient();
         client.setDiffOptions(getSVNEnvironment().getDiffOptions());
+        boolean hasMissingTargets = false;
         for (Iterator ts = targets.iterator(); ts.hasNext();) {
             String targetName = (String) ts.next();
             SVNPath target = new SVNPath(targetName, true);
@@ -98,10 +99,6 @@ public class SVNBlameCommand extends SVNXMLCommand implements ISVNAnnotateHandle
             if (endRev == SVNRevision.UNDEFINED) {
                 if (target.getPegRevision() != SVNRevision.UNDEFINED) {
                     endRev = target.getPegRevision();
-                } else if (target.isURL()) {
-                    endRev = SVNRevision.HEAD;
-                } else {
-                    endRev = SVNRevision.BASE;
                 }
             }
             if (getSVNEnvironment().isXML()) {
@@ -127,13 +124,21 @@ public class SVNBlameCommand extends SVNXMLCommand implements ISVNAnnotateHandle
                 if (e.getErrorMessage().getErrorCode() == SVNErrorCode.CLIENT_IS_BINARY_FILE) {
                     getSVNEnvironment().getErr().println("Skipping binary file: '" + SVNCommandUtil.getLocalPath(targetName) + "'");
                 } else {
-                    throw e;
+                    getSVNEnvironment().handleWarning(e.getErrorMessage(), 
+                            new SVNErrorCode[] {SVNErrorCode.WC_PATH_NOT_FOUND, SVNErrorCode.FS_NOT_FILE, SVNErrorCode.FS_NOT_FOUND}, 
+                            getSVNEnvironment().isQuiet());
+                    hasMissingTargets = true;
                 }
             }
             myBuffer = myBuffer.delete(0, myBuffer.length());
         }
         if (getSVNEnvironment().isXML() && !getSVNEnvironment().isIncremental()) {
             printXMLFooter("blame");
+        }
+        if (hasMissingTargets) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Could not perform blame on all targets because some " +
+            		"targets don't exist");
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
     }
     

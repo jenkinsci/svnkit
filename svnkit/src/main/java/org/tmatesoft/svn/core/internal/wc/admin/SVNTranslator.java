@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -10,26 +10,6 @@
  * ====================================================================
  */
 package org.tmatesoft.svn.core.internal.wc.admin;
-
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNProperties;
-import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.internal.util.SVNCharsetInputStream;
-import org.tmatesoft.svn.core.internal.util.SVNCharsetOutputStream;
-import org.tmatesoft.svn.core.internal.util.SVNDate;
-import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
-import org.tmatesoft.svn.core.internal.wc.IOExceptionWrapper;
-import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.SVNFileType;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.wc.ISVNOptions;
-import org.tmatesoft.svn.util.SVNLogType;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -45,8 +25,28 @@ import java.nio.charset.IllegalCharsetNameException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
+
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.util.SVNCharsetInputStream;
+import org.tmatesoft.svn.core.internal.util.SVNCharsetOutputStream;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
+import org.tmatesoft.svn.core.internal.wc.IOExceptionWrapper;
+import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileType;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.wc.ISVNOptions;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -57,7 +57,7 @@ public class SVNTranslator {
 
     private static final Charset UTF8_CHARSET = Charset.forName("UTF-8");
 
-    public static String transalteString(String str, byte[] eol, Map keywords, boolean repair, boolean expand) throws SVNException {
+    public static String translateString(String str, byte[] eol, Map<String, byte[]> keywords, boolean repair, boolean expand) throws SVNException {
         ByteArrayOutputStream bufferOS = new ByteArrayOutputStream();
         OutputStream resultOS = null;
         try {
@@ -68,10 +68,10 @@ public class SVNTranslator {
         } finally {
             SVNFileUtil.closeFile(resultOS);
         }
-        
+
         return new String(bufferOS.toByteArray());
     }
-    
+
     public static void translate(SVNAdminArea adminArea, String name, String srcPath,
                                  String dstPath, boolean expand) throws SVNException {
         translate(adminArea, name, srcPath, dstPath, false, expand);
@@ -115,7 +115,7 @@ public class SVNTranslator {
             eolStyle = props.getStringPropertyValue(SVNProperty.EOL_STYLE);
         }
         boolean special = props.getPropertyValue(SVNProperty.SPECIAL) != null;
-        Map keywordsMap = null;
+        Map<String, byte[]> keywordsMap = null;
         byte[] eols;
         if (keywords != null) {
             if (expand) {
@@ -148,7 +148,7 @@ public class SVNTranslator {
         }
     }
 
-    public static void translate(File src, File dst, String charset, byte[] eol, Map keywords, boolean special, boolean expand) throws SVNException {
+    public static void translate(File src, File dst, String charset, byte[] eol, Map<String, byte[]> keywords, boolean special, boolean expand) throws SVNException {
         if (src == null || dst == null) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS), SVNLogType.DEFAULT);
             return;
@@ -231,7 +231,7 @@ public class SVNTranslator {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_UNKNOWN_EOL);
                     SVNErrorManager.error(err, SVNLogType.DEFAULT);
                 }
-                Map keywordsMap = computeKeywords(keywords, null, null, null, null, null);
+                Map<String, byte[]> keywordsMap = computeKeywords(keywords, null, null, null, null, null);
                 boolean repair = (eolStyle != null && eol != null && !SVNProperty.EOL_STYLE_NATIVE.equals(eolStyle)) || repairEOL;
                 return getTranslatingInputStream(SVNFileUtil.openFileForReading(src, SVNLogType.WC), charset, eol, repair, keywordsMap, false);
             }
@@ -241,7 +241,7 @@ public class SVNTranslator {
             String author = entry.getAuthor();
             String date = entry.getCommittedDate();
             String rev = Long.toString(entry.getCommittedRevision());
-            Map keywordsMap = computeKeywords(keywords, url, author, date, rev, options);
+            Map<String, byte[]> keywordsMap = computeKeywords(keywords, url, author, date, rev, options);
             return getTranslatingInputStream(SVNFileUtil.openFileForReading(src, SVNLogType.WC), charset, eol, true, keywordsMap, true);
         }
         return SVNFileUtil.openFileForReading(src, SVNLogType.WC);
@@ -273,7 +273,7 @@ public class SVNTranslator {
                 String author = entry.getAuthor();
                 String date = entry.getCommittedDate();
                 String rev = Long.toString(entry.getCommittedRevision());
-                Map keywordsMap = computeKeywords(keywords, url, author, date, rev, options);
+                Map<String, byte[]> keywordsMap = computeKeywords(keywords, url, author, date, rev, options);
                 copyAndTranslate(src, result, charset, getEOL(eolStyle, options), keywordsMap, special, true, true);
             }
         }
@@ -355,12 +355,12 @@ public class SVNTranslator {
             SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
 
-        Map keywordsMap = computeKeywords(keywords, null, null, null, null, null);
+        Map<String, byte[]> keywordsMap = computeKeywords(keywords, null, null, null, null, null);
         boolean repair = (eolStyle != null && eol != null && !SVNProperty.EOL_STYLE_NATIVE.equals(eolStyle)) || alwaysRepairEOLs;
         copyAndTranslate(source, destination, charset, eol, keywordsMap, isSpecial, false, repair);
     }
 
-    private static void copyAndTranslate(File source, File destination, String charset, byte[] eol, Map keywords, boolean special, boolean expand, boolean repair) throws SVNException {
+    public static void copyAndTranslate(File source, File destination, String charset, byte[] eol, Map<String, byte[]> keywords, boolean special, boolean expand, boolean repair) throws SVNException {
         boolean isSpecialPath = false;
         if (SVNFileUtil.symlinksSupported()) {
             SVNFileType type = SVNFileType.getType(source);
@@ -374,8 +374,11 @@ public class SVNTranslator {
             if (!SVNFileUtil.symlinksSupported()) {
                 SVNFileUtil.copyFile(source, destination, true);
             } else if (expand) {
-                // create symlink to target, and create it at dst
-                SVNFileUtil.createSymlink(destination, source);
+                if (isSpecialPath) {
+                    SVNFileUtil.createSymlink(destination, SVNFileUtil.getSymlinkName(source));
+                } else {
+                    SVNFileUtil.createSymlink(destination, source);
+                }
             } else {
                 SVNFileUtil.detranslateSymlink(source, destination);
             }
@@ -405,16 +408,37 @@ public class SVNTranslator {
         } catch (IOException e) {
             translationError(destination, e);
         } finally {
-            if (dst != null) {
-                try {
-                    dst.flush();
-                } catch (IOException ioe) {
-                    //
+            try {
+                if (dst != null) {
+                    try {
+                        dst.flush();
+                    } catch (IOException ioe) {
+                        checkWrappedException(ioe, source);
+                    }
                 }
+                if (translatingStream != null) {
+                    try {
+                        translatingStream.flush();
+                    } catch (IOException ioe) {
+                        checkWrappedException(ioe, source);
+                    }
+                }
+            } finally {
+                SVNFileUtil.closeFile(src);
+                SVNFileUtil.closeFile(translatingStream);
+                SVNFileUtil.closeFile(dst);
             }
-            SVNFileUtil.closeFile(src);
-            SVNFileUtil.closeFile(translatingStream);
-            SVNFileUtil.closeFile(dst);
+        }
+    }
+
+    private static void checkWrappedException(IOException ioe, File file) throws SVNException {
+        if(ioe instanceof IOExceptionWrapper) {
+            IOExceptionWrapper ew = (IOExceptionWrapper)ioe;
+            if (ew.getOriginalException().getErrorMessage().getErrorCode() == SVNErrorCode.IO_INCONSISTENT_EOL) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_INCONSISTENT_EOL, "File ''{0}'' has inconsistent newlines", file);
+                SVNErrorManager.error(err, SVNLogType.DEFAULT);
+            }
+            throw ew.getOriginalException();
         }
     }
 
@@ -467,7 +491,7 @@ public class SVNTranslator {
         }
     }
 
-    public static OutputStream getTranslatingOutputStream(OutputStream out, String charset, byte[] eol, boolean repair, Map keywords, boolean expand) {
+    public static OutputStream getTranslatingOutputStream(OutputStream out, String charset, byte[] eol, boolean repair, Map<String, byte[]> keywords, boolean expand) {
         if (charset == null || SVNProperty.isUTF8(charset)) {
             return new SVNTranslatorOutputStream(out, eol, repair, keywords, expand);
         }
@@ -502,7 +526,7 @@ public class SVNTranslator {
         return new SVNCharsetOutputStream(out, cs, UTF8_CHARSET, CodingErrorAction.REPORT, CodingErrorAction.REPORT);
     }
 
-    public static InputStream getTranslatingInputStream(InputStream in, String charset, byte[] eol, boolean repair, Map keywords, boolean expand) {
+    public static InputStream getTranslatingInputStream(InputStream in, String charset, byte[] eol, boolean repair, Map<String, byte[]> keywords, boolean expand) {
         if (charset == null || SVNProperty.isUTF8(charset)) {
             return new SVNTranslatorInputStream(in, eol, repair, keywords, expand);
         }
@@ -546,9 +570,9 @@ public class SVNTranslator {
         return result;
     }
 
-    public static Map computeKeywords(String keywords, String u, String a, String d, String r, ISVNOptions options) {
+    public static Map<String, byte[]> computeKeywords(String keywords, String u, String a, String d, String r, ISVNOptions options) {
         if (keywords == null) {
-            return Collections.EMPTY_MAP;
+            return Collections.emptyMap();
         }
         boolean expand = u != null;
         byte[] date = null;
@@ -562,25 +586,25 @@ public class SVNTranslator {
 
         Date jDate = d == null ? null : SVNDate.parseDate(d);
 
-        Map map = new SVNHashMap();
+        Map<String, byte[]> map = new HashMap<String, byte[]>();
         try {
             for (StringTokenizer tokens = new StringTokenizer(keywords, " \t\n\b\r\f"); tokens.hasMoreTokens();) {
                 String token = tokens.nextToken();
-                if ("LastChangedDate".equalsIgnoreCase(token) || "Date".equalsIgnoreCase(token)) {
+                if ("LastChangedDate".equals(token) || "Date".equalsIgnoreCase(token)) {
                     date = expand && date == null ? SVNDate.formatHumanDate(jDate, options).getBytes("UTF-8") : date;
                     map.put("LastChangedDate", date);
                     map.put("Date", date);
                 } else
-                if ("LastChangedRevision".equalsIgnoreCase(token) || "Revision".equalsIgnoreCase(token) || "Rev".equalsIgnoreCase(token)) {
+                if ("LastChangedRevision".equals(token) || "Revision".equals(token) || "Rev".equalsIgnoreCase(token)) {
                     rev = expand && rev == null ? r.getBytes("UTF-8") : rev;
                     map.put("LastChangedRevision", rev);
                     map.put("Revision", rev);
                     map.put("Rev", rev);
-                } else if ("LastChangedBy".equalsIgnoreCase(token) || "Author".equalsIgnoreCase(token)) {
+                } else if ("LastChangedBy".equals(token) || "Author".equalsIgnoreCase(token)) {
                     author = expand && author == null ? (a == null ? new byte[0] : a.getBytes("UTF-8")) : author;
                     map.put("LastChangedBy", author);
                     map.put("Author", author);
-                } else if ("HeadURL".equalsIgnoreCase(token) || "URL".equalsIgnoreCase(token)) {
+                } else if ("HeadURL".equals(token) || "URL".equalsIgnoreCase(token)) {
                     url = expand && url == null ? SVNEncodingUtil.uriDecode(u).getBytes("UTF-8") : url;
                     map.put("HeadURL", url);
                     map.put("URL", url);
@@ -664,9 +688,9 @@ public class SVNTranslator {
         if (charset == null) {
             return null;
         }
-        boolean isSupported = true;
+        boolean isSupported;
         try {
-            isSupported = charset == null || Charset.isSupported(charset);
+            isSupported = Charset.isSupported(charset);
         } catch (IllegalCharsetNameException e) {
             isSupported = false;
         }

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -28,6 +28,7 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslatorInputStream;
 import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
 import org.tmatesoft.svn.core.io.SVNFileRevision;
@@ -205,7 +206,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
         myBlameChunks = new ArrayList();
         myDeltaProcessor = new SVNDeltaProcessor();
         myStartRevision = startRevision;
-        myDiffOptions = diffOptions;
+        myDiffOptions = diffOptions == null ? new SVNDiffOptions() : diffOptions;
         myIncludeMergedRevisions = includeMergedRevisions;
         myFileHandler = handler;
         myEncoding = encoding;
@@ -230,16 +231,16 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
         }
         myCurrentRevision = fileRevision.getRevision();
         boolean known = fileRevision.getRevision() >= myStartRevision;
+        SVNProperties props = fileRevision.getRevisionProperties();
         if (myCancelBaton != null) {
             File file = SVNPathUtil.isURL(myPath) ? null : new File(myPath);
-            SVNEvent event = SVNEventFactory.createSVNEvent(file, SVNNodeKind.NONE, null, myCurrentRevision, SVNEventAction.ANNOTATE, null, null, null);
+            SVNEvent event = SVNEventFactory.createSVNEvent(file, SVNNodeKind.NONE, null, myCurrentRevision, SVNEventAction.ANNOTATE, null, null, null, props, null);
             if (file == null) {
                 event.setURL(SVNURL.parseURIDecoded(myPath));
             }
             myCancelBaton.handleEvent(event, ISVNEventHandler.UNKNOWN);
             myCancelBaton.checkCancelled();
         }
-        SVNProperties props = fileRevision.getRevisionProperties();
         if (known && props != null && props.getStringValue(SVNRevisionProperty.AUTHOR) != null) {
             myCurrentAuthor = props.getStringValue(SVNRevisionProperty.AUTHOR);
         } else {
@@ -340,6 +341,29 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
         }
     }
     
+    public void addFileBlame(InputStream contents) throws SVNException {
+        if (myCurrentFile == null) {
+            myCurrentFile = SVNFileUtil.createUniqueFile(myTmpDirectory, "annotate", ".tmp", false);
+        }
+        OutputStream os = null;
+        try {
+            os = SVNFileUtil.openFileForWriting(myCurrentFile);
+            SVNTranslator.copy(contents, os);
+        } catch (IOException e) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e);
+            SVNErrorManager.error(err, SVNLogType.WC);
+        } finally {
+            SVNFileUtil.closeFile(os);
+        }
+        myBlameChunks = addFileBlame(myPreviousFile, myCurrentFile, myBlameChunks);
+        if (myPreviousFile == null) {
+            myPreviousFile = myCurrentFile;
+            myCurrentFile = null;
+        } else {
+            SVNFileUtil.rename(myCurrentFile, myPreviousFile);
+        }
+    }
+    
     /**
      * This method is used by <code>SVNKit</code> internals and is not intended for API users.
      * @return whether the last revision was reported or not yet
@@ -367,12 +391,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
             return;
         }
 
-        if (myPreviousFile == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
-                    "ASSERTION FAILURE in SVNAnnotationGenerator.reportAnnotations(): myPreviousFile is null, " +
-                    "generator has to have been called at least once");
-            SVNErrorManager.error(err, SVNLogType.DEFAULT);
-        }
+        SVNErrorManager.assertionFailure(myPreviousFile != null, null, SVNLogType.WC);
         int mergedCount = -1;
         if (myIncludeMergedRevisions) {
             if (myBlameChunks.isEmpty()) {
@@ -622,12 +641,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
         for (; i < chain.size() - 1 && k < mergedChain.size() - 1; i++, k++) {
             BlameChunk chunk = (BlameChunk) chain.get(i);
             BlameChunk mergedChunk = (BlameChunk) mergedChain.get(k);
-            if (chunk.blockStart != mergedChunk.blockStart) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN,                               
-                        "ASSERTION FAILURE in SVNAnnotationGenerator.normalizeBlames():" +
-                        "current chunks should always start at the same offset");
-                SVNErrorManager.error(err, SVNLogType.DEFAULT);
-            }
+            SVNErrorManager.assertionFailure(chunk.blockStart == mergedChunk.blockStart, null, SVNLogType.WC);
 
             BlameChunk nextChunk = (BlameChunk) chain.get(i + 1);
             BlameChunk nextMergedChunk = (BlameChunk) mergedChain.get(k + 1);

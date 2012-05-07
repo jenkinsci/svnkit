@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -85,6 +85,10 @@ public class DefaultSVNHostOptions implements ISVNHostOptions {
 
     public boolean isStorePasswords() {
         boolean store = true;
+//        String value = getConfigFile().getPropertyValue("auth", "store-passwords");
+//        if (value != null) {
+//            store = "yes".equalsIgnoreCase(value) || "on".equalsIgnoreCase(value) || "true".equalsIgnoreCase(value);
+//        }
         Map properties = getHostProperties();
         String storePasswords = (String) properties.get("store-passwords");
         if (storePasswords == null) {
@@ -144,6 +148,9 @@ public class DefaultSVNHostOptions implements ISVNHostOptions {
     }
 
     public String getUserName() {
+//        if (url != null && url.getUserInfo() != null) {
+//            return url.getUserInfo();
+//        }
         Map properties = getHostProperties();
         String userName = (String) properties.get("username");
         return userName;

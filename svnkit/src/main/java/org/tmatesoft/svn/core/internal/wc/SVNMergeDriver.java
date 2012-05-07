@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -63,14 +63,11 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.ISVNRepositoryPool;
-import org.tmatesoft.svn.core.wc.SVNBasicClient;
 import org.tmatesoft.svn.core.wc.SVNConflictAction;
 import org.tmatesoft.svn.core.wc.SVNConflictReason;
-import org.tmatesoft.svn.core.wc.SVNDiffClient;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
-import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNOperation;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNRevisionRange;
@@ -79,13 +76,14 @@ import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
+import org.tmatesoft.svn.core.internal.wc16.*;
 
 
 /**
  * @version 1.3
  * @author  TMate Software Ltd.
  */
-public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMergeStrategy {
+public abstract class SVNMergeDriver extends SVNBasicDelegate implements ISVNMergeStrategy {
 
     protected boolean myAreSourcesAncestral;
     protected boolean myIsSameRepository;
@@ -113,7 +111,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
     protected SVNWCAccess myWCAccess;
     protected SVNRepository myRepository1;
     protected SVNRepository myRepository2;
-    private SVNLogClient myLogClient;
+    private SVNLogClient16 myLogClient;
     private List myPathsWithNewMergeInfo;
     private LinkedList myPathsWithDeletedMergeInfo;
     private MergeSource myCurrentMergeSource;
@@ -144,8 +142,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
     public void getLogMergedMergeInfo(File path, SVNRevision pegRevision, SVNURL mergeSrcURL, 
             SVNRevision srcPegRevision, boolean discoverChangedPaths, String[] revisionProperties, 
             ISVNLogEntryHandler handler) throws SVNException {
-        if (this instanceof SVNDiffClient) {
-            SVNDiffClient diffClient = (SVNDiffClient) this;
+        if (this instanceof SVNDiffClient16) {
+            SVNDiffClient16 diffClient = (SVNDiffClient16) this;
             diffClient.doGetLogMergedMergeInfo(path, pegRevision, mergeSrcURL, srcPegRevision, 
                     discoverChangedPaths, revisionProperties, handler);
 
@@ -167,8 +165,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
     public void getLogMergedMergeInfo(SVNURL url, SVNRevision pegRevision, SVNURL mergeSrcURL, 
             SVNRevision srcPegRevision, boolean discoverChangedPaths, String[] revisionProperties, 
             ISVNLogEntryHandler handler) throws SVNException {
-        if (this instanceof SVNDiffClient) {
-            SVNDiffClient diffClient = (SVNDiffClient) this;
+        if (this instanceof SVNDiffClient16) {
+            SVNDiffClient16 diffClient = (SVNDiffClient16) this;
             diffClient.doGetLogMergedMergeInfo(url, pegRevision, mergeSrcURL, srcPegRevision, 
                     discoverChangedPaths, revisionProperties, handler);
         }
@@ -189,8 +187,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
     public void getLogMergedMergeInfo(File path, SVNRevision pegRevision, File mergeSrcPath, 
             SVNRevision srcPegRevision, boolean discoverChangedPaths, 
             String[] revisionProperties, ISVNLogEntryHandler handler) throws SVNException {
-        if (this instanceof SVNDiffClient) {
-            SVNDiffClient diffClient = (SVNDiffClient) this;
+        if (this instanceof SVNDiffClient16) {
+            SVNDiffClient16 diffClient = (SVNDiffClient16) this;
             diffClient.doGetLogMergedMergeInfo(path, pegRevision, mergeSrcPath, srcPegRevision, 
                     discoverChangedPaths, revisionProperties, handler);
         }
@@ -211,8 +209,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
     public void getLogMergedMergeInfo(SVNURL url, SVNRevision pegRevision, File mergeSrcPath, 
             SVNRevision srcPegRevision, boolean discoverChangedPaths, String[] revisionProperties, 
             ISVNLogEntryHandler handler) throws SVNException {
-        if (this instanceof SVNDiffClient) {
-            SVNDiffClient diffClient = (SVNDiffClient) this;
+        if (this instanceof SVNDiffClient16) {
+            SVNDiffClient16 diffClient = (SVNDiffClient16) this;
             diffClient.doGetLogMergedMergeInfo(url, pegRevision, mergeSrcPath, srcPegRevision, 
                     discoverChangedPaths, revisionProperties, handler);
         }
@@ -233,8 +231,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
     public void getLogEligibleMergeInfo(File path, SVNRevision pegRevision, 
             SVNURL mergeSrcURL, SVNRevision srcPegRevision, boolean discoverChangedPaths, 
             String[] revisionProperties, ISVNLogEntryHandler handler) throws SVNException {
-        if (this instanceof SVNDiffClient) {
-            SVNDiffClient diffClient = (SVNDiffClient) this;
+        if (this instanceof SVNDiffClient16) {
+            SVNDiffClient16 diffClient = (SVNDiffClient16) this;
             diffClient.doGetLogEligibleMergeInfo(path, pegRevision, mergeSrcURL, srcPegRevision, discoverChangedPaths, revisionProperties, handler);
         }
     }
@@ -254,8 +252,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
     public void getLogEligibleMergeInfo(SVNURL url, SVNRevision pegRevision, 
             SVNURL mergeSrcURL, SVNRevision srcPegRevision, boolean discoverChangedPaths, 
             String[] revisionProperties, ISVNLogEntryHandler handler) throws SVNException {
-        if (this instanceof SVNDiffClient) {
-            SVNDiffClient diffClient = (SVNDiffClient) this;
+        if (this instanceof SVNDiffClient16) {
+            SVNDiffClient16 diffClient = (SVNDiffClient16) this;
             diffClient.doGetLogEligibleMergeInfo(url, pegRevision, mergeSrcURL, srcPegRevision, 
                     discoverChangedPaths, revisionProperties, handler);
         }
@@ -276,8 +274,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
     public void getLogEligibleMergeInfo(File path, SVNRevision pegRevision, 
             File mergeSrcPath, SVNRevision srcPegRevision, boolean discoverChangedPaths, 
             String[] revisionProperties, ISVNLogEntryHandler handler) throws SVNException {
-        if (this instanceof SVNDiffClient) {
-            SVNDiffClient diffClient = (SVNDiffClient) this;
+        if (this instanceof SVNDiffClient16) {
+            SVNDiffClient16 diffClient = (SVNDiffClient16) this;
             diffClient.doGetLogEligibleMergeInfo(path, pegRevision, mergeSrcPath, srcPegRevision, 
                     discoverChangedPaths, revisionProperties, handler);
         }
@@ -298,8 +296,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
     public void getLogEligibleMergeInfo(SVNURL url, SVNRevision pegRevision, 
             File mergeSrcPath, SVNRevision srcPegRevision, boolean discoverChangedPaths, 
             String[] revisionProperties, ISVNLogEntryHandler handler) throws SVNException {
-        if (this instanceof SVNDiffClient) {
-            SVNDiffClient diffClient = (SVNDiffClient) this;
+        if (this instanceof SVNDiffClient16) {
+            SVNDiffClient16 diffClient = (SVNDiffClient16) this;
             diffClient.doGetLogEligibleMergeInfo(url, pegRevision, mergeSrcPath, srcPegRevision, 
                     discoverChangedPaths, revisionProperties, handler);
         }
@@ -314,8 +312,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
      *                        instead
      */
     public Map getMergedMergeInfo(File path, SVNRevision pegRevision) throws SVNException {
-        if (this instanceof SVNDiffClient) {
-            SVNDiffClient diffClient = (SVNDiffClient) this;
+        if (this instanceof SVNDiffClient16) {
+            SVNDiffClient16 diffClient = (SVNDiffClient16) this;
             return diffClient.doGetMergedMergeInfo(path, pegRevision);
         }
         return null;
@@ -330,8 +328,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
      *                           instead
      */
     public Map getMergedMergeInfo(SVNURL url, SVNRevision pegRevision) throws SVNException {
-        if (this instanceof SVNDiffClient) {
-            SVNDiffClient diffClient = (SVNDiffClient) this;
+        if (this instanceof SVNDiffClient16) {
+            SVNDiffClient16 diffClient = (SVNDiffClient16) this;
             return diffClient.doGetMergedMergeInfo(url, pegRevision);
         }
         return null;
@@ -346,8 +344,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
      *                        instead
      */
     public Collection suggestMergeSources(File path, SVNRevision pegRevision) throws SVNException {
-        if (this instanceof SVNDiffClient) {
-            SVNDiffClient diffClient = (SVNDiffClient) this;
+        if (this instanceof SVNDiffClient16) {
+            SVNDiffClient16 diffClient = (SVNDiffClient16) this;
             return diffClient.doSuggestMergeSources(path, pegRevision);
         }
         return null;
@@ -362,8 +360,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
      *                        instead
      */
     public Collection suggestMergeSources(SVNURL url, SVNRevision pegRevision) throws SVNException {
-        if (this instanceof SVNDiffClient) {
-            SVNDiffClient diffClient = (SVNDiffClient) this;
+        if (this instanceof SVNDiffClient16) {
+            SVNDiffClient16 diffClient = (SVNDiffClient16) this;
             return diffClient.doSuggestMergeSources(url, pegRevision);
         }
         return null;
@@ -480,7 +478,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
         SVNRevision oldestRev = SVNRevision.create(oldestRange.getStartRevision()); 
             
         LogHandlerFilter filterHandler = new LogHandlerFilter(handler, rangeList);
-        SVNLogClient logClient = getLogClient();
+        SVNLogClient16 logClient = getLogClient();
         logClient.doLog(reposRootURL, paths, youngestRev, oldestRev, youngestRev, false, discoverChangedPaths, 
                 false, 0, revProps, filterHandler);
         checkCancelled();
@@ -1012,20 +1010,12 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
             mergeInfoPath = getPathRelativeToRoot(null, primaryURL, sourceRootURL, null, null);            
         }
         SVNMergeRange range = new SVNMergeRange(revision1, revision2, true);
-        
-        SVNDebugLog.getDefaultLog().logFinest(SVNLogType.WC, "File merge: url1@rev1: " + url1 + "@" + revision1);
-        SVNDebugLog.getDefaultLog().logFinest(SVNLogType.WC, "File merge: url2@rev2: " + url2 + "@" + revision2);
-        SVNDebugLog.getDefaultLog().logFinest(SVNLogType.WC, "File merge: range: " + range);
-        
+
         Object[] mergeInfoBundle = calculateRemainingRangeList(targetWCPath, entry, sourceRootURL, indirect,
                 url1, revision1, url2, revision2, range);
         SVNMergeRangeList remainingRangeList = (SVNMergeRangeList) mergeInfoBundle[0];
         targetMergeInfo = (Map) mergeInfoBundle[1];
         implicitMergeInfo = (Map) mergeInfoBundle[1];
-
-        SVNDebugLog.getDefaultLog().logFinest(SVNLogType.WC, "File merge: remaining ranges: " + remainingRangeList);
-        SVNDebugLog.getDefaultLog().logFinest(SVNLogType.WC, "File merge: target mergeinfo: " + targetMergeInfo);
-        SVNDebugLog.getDefaultLog().logFinest(SVNLogType.WC, "File merge: implicit mergeinfo: " + implicitMergeInfo);
 
         SVNMergeRange[] remainingRanges = remainingRangeList.getRanges();
         AbstractDiffCallback callback = getMergeCallback(adminArea);
@@ -1045,7 +1035,6 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
             
             for (int i = 0; i < rangesToMerge.length; i++) {
                 SVNMergeRange nextRange = rangesToMerge[i];
-                SVNDebugLog.getDefaultLog().logFinest(SVNLogType.WC, "File merge: merging range: " + nextRange);
                 boolean headerSent = false;
                 SVNEvent event = SVNEventFactory.createSVNEvent(targetWCPath, SVNNodeKind.UNKNOWN, null, 
                         SVNRepository.INVALID_REVISION, myIsSameRepository ? SVNEventAction.MERGE_BEGIN : SVNEventAction.FOREIGN_MERGE_BEGIN, null, null, 
@@ -1082,7 +1071,6 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
                     SVNProperties propsDiff = computePropsDiff(props1, props2);
                     
                     if (!(myIsIgnoreAncestry || sourcesRelated)) {
-                        SVNDebugLog.getDefaultLog().logFinest(SVNLogType.WC, "File merge: merging as replace.");
                         SVNStatusType cstatus = callback.fileDeleted(targetName, f1, f2, mimeType1, 
                                 mimeType2, props1, isTreeConflict);
                         headerSent = notifySingleFileMerge(targetWCPath, isTreeConflict[0] ? SVNEventAction.TREE_CONFLICT : 
@@ -1093,7 +1081,6 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
                         headerSent = notifySingleFileMerge(targetWCPath, isTreeConflict[0] ? SVNEventAction.TREE_CONFLICT : 
                             SVNEventAction.UPDATE_ADD, mergeResult[0], mergeResult[1], event, headerSent);
                     } else {
-                        SVNDebugLog.getDefaultLog().logFinest(SVNLogType.WC, "File merge: merging as modification.");
                         mergeResult = callback.fileChanged(targetName, f1, f2, nextRange.getStartRevision(), 
                                                            nextRange.getEndRevision(), mimeType1, 
                                                            mimeType2, props1, propsDiff, isTreeConflict);
@@ -1467,9 +1454,9 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
         return adjustedProperties;
     }
 
-    protected SVNLogClient getLogClient() {
+    protected SVNLogClient16 getLogClient() {
         if (myLogClient == null) {
-            myLogClient = new SVNLogClient(getRepositoryPool(), getOptions());
+            myLogClient = new SVNLogClient16(getRepositoryPool(), getOptions());
         }
         return myLogClient;
     }
@@ -1514,9 +1501,9 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
             rightURL = myCurrentMergeSource.myURL2;
         }
         
-        SVNConflictVersion leftConflictVersion = new SVNConflictVersion(srcReposRoot, SVNURLUtil.getRelativeURL(srcReposRoot, leftURL), 
+        SVNConflictVersion leftConflictVersion = new SVNConflictVersion(srcReposRoot, SVNURLUtil.getRelativeURL(srcReposRoot, leftURL, false), 
                 myCurrentMergeSource.myRevision1, kind);
-        SVNConflictVersion rightConflictVersion = new SVNConflictVersion(srcReposRoot, SVNURLUtil.getRelativeURL(srcReposRoot, rightURL), 
+        SVNConflictVersion rightConflictVersion = new SVNConflictVersion(srcReposRoot, SVNURLUtil.getRelativeURL(srcReposRoot, rightURL, false), 
                 myCurrentMergeSource.myRevision2, kind);
         SVNTreeConflictDescription conflictDescription  = new SVNTreeConflictDescription(victim, kind, action, reason, SVNOperation.MERGE, 
                 leftConflictVersion, rightConflictVersion);
@@ -1745,10 +1732,6 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
                 String srcPath = (String) srcCatalogIter.next();
                 SVNMergeInfo sourceMergeInfoObject = (SVNMergeInfo) srcCatalog.get(srcPath);
                 Map srcMergeInfo = sourceMergeInfoObject.getMergeSourcesToMergeLists();
-                if (srcPath.length() < sourceReposPath.length()) {
-                    SVNDebugLog.getDefaultLog().logError(SVNLogType.WC, "Merge: wrong combination of source path ('" + srcPath + "') and sourcer repository path: '" + sourceReposPath + "')");
-                    continue;
-                }
                 String targetPath = srcPath.substring(sourceReposPath.length());
                 if (targetPath.startsWith("/")) {
                     targetPath = targetPath.substring(1);
@@ -2153,19 +2136,12 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
 
     protected Map[] getFullMergeInfo(SVNEntry entry, boolean getRecorded, boolean getImplicit, boolean[] indirect, SVNMergeInfoInheritance inherit,
             SVNRepository repos, File target, long start, long end) throws SVNException {
-        SVNDebugLog.getDefaultLog().logFinest(SVNLogType.WC, "merge: fetching mergeinfo for: " + target);
         Map[] result = new Map[2];
-        if (!SVNRevision.isValidRevisionNumber(start) || !SVNRevision.isValidRevisionNumber(end) || 
-                start <= end) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
-                    "ASSERTION FAILED in SVNMergeDriver.getFullMergeInfo()");
-            SVNErrorManager.error(err, SVNLogType.DEFAULT);
-        }
+        SVNErrorManager.assertionFailure(SVNRevision.isValidRevisionNumber(start) && SVNRevision.isValidRevisionNumber(end) && start > end, null, SVNLogType.WC);
         
         //get recorded merge info
         if (getRecorded) {
             result[0] = getWCOrRepositoryMergeInfo(target, entry, inherit, indirect, false, repos);
-            SVNDebugLog.getDefaultLog().logFinest(SVNLogType.WC, "merge: target mergeinfo " + result[0]);
         }
         if (getImplicit) {
             long[] targetRev = new long[1];
@@ -2175,11 +2151,9 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
                 result[1] = new TreeMap();
                 return result;
             }
-
-            SVNDebugLog.getDefaultLog().logFinest(SVNLogType.WC, "merge: fetching implicit mergeinfo for: " + url + "@" + start + ":" + end);
+    
             Map implicitMergeInfo = calculateImplicitMergeInfo(repos, url, targetRev, start, end);
             if (implicitMergeInfo != null) {
-                SVNDebugLog.getDefaultLog().logFinest(SVNLogType.WC, "merge: implicit mergeinfo: " + implicitMergeInfo);
                 result[1] = implicitMergeInfo;
             }
         }
@@ -2197,10 +2171,9 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
                 repos = createRepository(url, null, null, false);
                 closeSession = true;
             }
-            
+
             if (targetRev[0] < start) {
-                getLocations(url, null, repos, SVNRevision.create(targetRev[0]), 
-                        SVNRevision.create(start), SVNRevision.UNDEFINED);
+                getLocations(url, null, repos, SVNRevision.create(targetRev[0]), SVNRevision.create(start), SVNRevision.UNDEFINED);
                 targetRev[0] = start;
             }
             implicitMergeInfo = getHistoryAsMergeInfo(url, null, SVNRevision.create(targetRev[0]), start, end, repos, null);
@@ -2214,7 +2187,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
         }
         return implicitMergeInfo;
     }
-    
+
     private int findNearestAncestor(Object[] childrenWithMergeInfoArray, boolean pathIsOwnAncestor, File path) {
         if (childrenWithMergeInfoArray == null) {
             return 0;
@@ -2260,7 +2233,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
         }
     }
 
-    public static Map getMergeInfoFromSegments(Collection segments) {
+    public static Map<String, SVNMergeRangeList> getMergeInfoFromSegments(Collection segments) {
         Map mergeInfo = new TreeMap();
         for (Iterator segmentsIter = segments.iterator(); segmentsIter.hasNext();) {
             SVNLocationSegment segment = (SVNLocationSegment) segmentsIter.next();
@@ -2277,7 +2250,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
                     segment.getEndRevision(), true);
             pathRanges.add(range);
         }
-        Map result = new TreeMap();
+        Map<String, SVNMergeRangeList> result = new TreeMap<String, SVNMergeRangeList>();
         for (Iterator paths = mergeInfo.keySet().iterator(); paths.hasNext();) {
             String path = (String) paths.next();
             Collection pathRanges = (Collection) mergeInfo.get(path);
@@ -2989,11 +2962,6 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
         SVNURL primaryURL = revision1 < revision2 ? url2 : url1;
         Map adjustedTargetMergeInfo = null;
 
-        SVNDebugLog.getDefaultLog().logFinest(SVNLogType.WC, "merge: calculating remaining merge ranges for: " + child.myPath);
-        SVNDebugLog.getDefaultLog().logFinest(SVNLogType.WC, "merge: target merge info: " + targetMergeInfo);
-        SVNDebugLog.getDefaultLog().logFinest(SVNLogType.WC, "merge: implicit src gap: " + implicitSrcGap);
-        SVNDebugLog.getDefaultLog().logFinest(SVNLogType.WC, "merge: target pre-merge info: " + child.myPreMergeMergeInfo);
-
         String mergeInfoPath = getPathRelativeToRoot(null, primaryURL, sourceRootURL, null, repository);
         if (implicitSrcGap != null && child.myPreMergeMergeInfo != null) {
             SVNMergeRangeList explicitMergeInfoGapRanges = (SVNMergeRangeList) child.myPreMergeMergeInfo.get(mergeInfoPath);
@@ -3006,10 +2974,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
             adjustedTargetMergeInfo = targetMergeInfo;
         }
         
-        SVNDebugLog.getDefaultLog().logFinest(SVNLogType.WC, "merge: filtering already merged revisions for target with mergeinfo: " + adjustedTargetMergeInfo);
         filterMergedRevisions(parent, child, entry, repository, mergeInfoPath, 
                 adjustedTargetMergeInfo, revision1, revision2, childInheritsImplicit); 
-        SVNDebugLog.getDefaultLog().logFinest(SVNLogType.WC, "merge: remaining range after filtering: " + child.myRemainingRanges);
         
         if (isSubtree) {
             boolean isRollback = revision2 < revision1;
@@ -3054,11 +3020,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
     
     private void adjustDeletedSubTreeRanges(MergePath child, MergePath parent, long revision1, long revision2, 
             SVNURL primaryURL, SVNRepository repository) throws SVNException {
-        if (parent.myRemainingRanges == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
-                    "Assertions failed: parent must already have non-null remaining ranges set");
-            SVNErrorManager.error(err, SVNLogType.WC);
-        }
+
+        SVNErrorManager.assertionFailure(parent.myRemainingRanges != null, "parent must already have non-null remaining ranges set", SVNLogType.WC);
 
         String relativePath = getPathRelativeToRoot(null, primaryURL, repository.getLocation(), null, repository);
         if (relativePath.startsWith("/")) {
@@ -3081,10 +3044,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
                     child.myRemainingRanges = parent.myRemainingRanges.dup();
                 } else {
                     long primaryURLDeletedRevision = repository.getDeletedRevision(relativePath, olderRev, youngerRev);
-                    if (!SVNRevision.isValidRevisionNumber(primaryURLDeletedRevision)) {
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Assertion failed: deleted revision must exist");
-                        SVNErrorManager.error(err, SVNLogType.WC);
-                    }
+                    SVNErrorManager.assertionFailure(SVNRevision.isValidRevisionNumber(primaryURLDeletedRevision), "deleted revision must exist", SVNLogType.WC);
                     if (isRollback) {
                         child.myRemainingRanges = child.myRemainingRanges.reverse();
                         parent.myRemainingRanges = parent.myRemainingRanges.reverse();
@@ -3362,12 +3322,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
                 return;
             }
             
-            if (intersection.getSize() != 1) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
-                        "assertion failure in SVNMergeDriver.LogHandlerFilter.handleLogEntry: intersection list " +
-                        "size is {0}", new Integer(intersection.getSize()));
-                SVNErrorManager.error(err, SVNLogType.DEFAULT);
-            }
+            SVNErrorManager.assertionFailure(intersection.getSize() == 1, "intersection list size is " + intersection.getSize(), SVNLogType.WC);
             if (myRealHandler != null) {
                 myRealHandler.handleLogEntry(logEntry);
             }

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -29,7 +29,8 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
-import org.tmatesoft.svn.core.wc.DefaultSVNDiffGenerator;
+import org.tmatesoft.svn.core.internal.wc2.ng.SvnDiffGenerator;
+import org.tmatesoft.svn.core.internal.wc2.ng.SvnNewDiffGenerator;
 import org.tmatesoft.svn.core.wc.ISVNDiffStatusHandler;
 import org.tmatesoft.svn.core.wc.SVNDiffClient;
 import org.tmatesoft.svn.core.wc.SVNDiffStatus;
@@ -64,10 +65,12 @@ public class SVNDiffCommand extends SVNXMLCommand implements ISVNDiffStatusHandl
         options.add(SVNOption.EXTENSIONS);
         options.add(SVNOption.NO_DIFF_DELETED);
         options.add(SVNOption.NOTICE_ANCESTRY);
+        options.add(SVNOption.SHOW_COPIES_AS_ADDS);
         options.add(SVNOption.SUMMARIZE);
         options.add(SVNOption.CHANGELIST);
         options.add(SVNOption.FORCE);
         options.add(SVNOption.XML);
+        options.add(SVNOption.GIT_DIFF_FORMAT);
         return options;
     }
 
@@ -172,20 +175,11 @@ public class SVNDiffCommand extends SVNXMLCommand implements ISVNDiffStatusHandl
         }
 
         SVNDiffClient client = getSVNEnvironment().getClientManager().getDiffClient();
-        DefaultSVNDiffGenerator diffGenerator = new DefaultSVNDiffGenerator();
-        if (getSVNEnvironment().getDiffCommand() != null) {
-            diffGenerator.setExternalDiffCommand(getSVNEnvironment().getDiffCommand());
-            diffGenerator.setRawDiffOptions(getSVNEnvironment().getExtensions());
-        } else {
-            diffGenerator.setDiffOptions(getSVNEnvironment().getDiffOptions());
-        }
-        
-        diffGenerator.setDiffDeleted(!getSVNEnvironment().isNoDiffDeleted());
-        diffGenerator.setForcedBinaryDiff(getSVNEnvironment().isForce());
-        diffGenerator.setBasePath(new File("").getAbsoluteFile());
-        diffGenerator.setFallbackToAbsolutePath(true);
-        diffGenerator.setOptions(client.getOptions());
-        client.setDiffGenerator(diffGenerator);
+        SVNCommandEnvironment environment = (SVNCommandEnvironment) getEnvironment();
+        client.setShowCopiesAsAdds(environment.isShowCopiesAsAdds());
+        client.setGitDiffFormat(environment.isGitDiffFormat());
+        SvnNewDiffGenerator generator = createDiffGenerator(getSVNEnvironment());
+        client.setDiffGenerator(generator);
         
         PrintStream ps = getSVNEnvironment().getOut();
         Collection changeLists = getSVNEnvironment().getChangelistsCollection();
@@ -250,6 +244,24 @@ public class SVNDiffCommand extends SVNXMLCommand implements ISVNDiffStatusHandl
             getSVNEnvironment().getOut().print(buffer.toString());
             printXMLFooter("diff");
         }
+    }
+
+    static SvnNewDiffGenerator createDiffGenerator(SVNCommandEnvironment svnEnvironment) throws SVNException {
+        SvnDiffGenerator diffGenerator = new SvnDiffGenerator();
+        if (svnEnvironment.getDiffCommand() != null) {
+            diffGenerator.setExternalDiffCommand(svnEnvironment.getDiffCommand());
+            diffGenerator.setRawDiffOptions((List<String>) svnEnvironment.getExtensions());
+        } else {
+            diffGenerator.setDiffOptions(svnEnvironment.getDiffOptions());
+        }
+
+        diffGenerator.setDiffDeleted(!svnEnvironment.isNoDiffDeleted());
+        diffGenerator.setForcedBinaryDiff(svnEnvironment.isForce());
+        diffGenerator.setBasePath(new File("").getAbsoluteFile());
+        diffGenerator.setFallbackToAbsolutePath(true);
+        diffGenerator.setOptions(svnEnvironment.getOptions());
+        diffGenerator.setDiffDeleted(!svnEnvironment.isNoDiffDeleted());
+        return new SvnNewDiffGenerator(diffGenerator);
     }
 
     public void handleDiffStatus(SVNDiffStatus diffStatus) throws SVNException {

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -52,13 +52,20 @@ public class FSMergerBySequence {
 	private final byte[] myConflictStart;
 	private final byte[] myConflictSeparator;
 	private final byte[] myConflictEnd;
-
+	private final byte[] myOriginalMarker;
+	
 	// Setup ==================================================================
 
 	public FSMergerBySequence(byte[] conflictStart, byte[] conflictSeparator, byte[] conflictEnd) {
-		myConflictStart = conflictStart;
-		myConflictSeparator = conflictSeparator;
-		myConflictEnd = conflictEnd;
+	    this(conflictStart, conflictSeparator, conflictEnd, null);
+	}
+
+
+	public FSMergerBySequence(byte[] conflictStart, byte[] conflictSeparator, byte[] conflictEnd, byte[] originalMarker) {
+	    myConflictStart = conflictStart;
+	    myConflictSeparator = conflictSeparator;
+	    myConflictEnd = conflictEnd;
+	    myOriginalMarker = originalMarker;
 	}
 
 	// Accessing ==============================================================
@@ -68,7 +75,9 @@ public class FSMergerBySequence {
 	                 SVNDiffOptions options,
 	                 OutputStream result, 
 	                 SVNDiffConflictChoiceStyle style) throws IOException {
-
+	    
+	    style = style == null ? SVNDiffConflictChoiceStyle.CHOOSE_MODIFIED_LATEST : style;
+	    
 		final QSequenceLineResult localResult;
 		final QSequenceLineResult latestResult;
 		final QSequenceLineTeeSimplifier mySimplifer = createSimplifier(options);
@@ -91,10 +100,15 @@ public class FSMergerBySequence {
 			int baseLineIndex = -1;
 			boolean conflict = false;
 			boolean merged = false;
-
+			boolean chooseOnlyConflicts = style == SVNDiffConflictChoiceStyle.CHOOSE_ONLY_CONFLICTS;
+			OutputStream realResult = result;
+			if (chooseOnlyConflicts) {
+			    result = SVNFileUtil.DUMMY_OUT;
+			}
+			
 			while (local.hasCurrent() || latest.hasCurrent()) {
 				if (local.hasCurrent() && latest.hasCurrent() && isEqualChange(local.current(), latest.current(), localLines, latestLines)) {
-					baseLineIndex = appendLines(result, local.current(), localLines, baseLineIndex, transformedLocalLines);
+				    baseLineIndex = appendLines(result, local.current(), localLines, baseLineIndex, transformedLocalLines);
 					local.forward();
 					latest.forward();
 					continue;
@@ -105,35 +119,43 @@ public class FSMergerBySequence {
 					final QSequenceDifferenceBlock latestStartBlock = latest.current();
 					if (checkConflict(local, latest, localLines, latestLines, baseLines.getLineCount())) {
 						if (style == SVNDiffConflictChoiceStyle.CHOOSE_LATEST) {
-		                    baseLineIndex = appendLines(result, latest.current(), latestLines, baseLineIndex, transformedLocalLines);
-                            local.forward();
-		                    latest.forward();
-		                    merged = true;
-						} else if (style == SVNDiffConflictChoiceStyle.CHOOSE_MODIFIED) {
-		                    baseLineIndex = appendLines(result, local.current(), localLines, baseLineIndex, transformedLocalLines);
+                            baseLineIndex = createConflict(result, localStartBlock, local.current(), latestStartBlock, latest.current(), 
+                                    localLines, latestLines, baseLineIndex, transformedLocalLines, style);
 		                    local.forward();
 		                    latest.forward();
 		                    merged = true;
-						} else {
-	                        //TODO: this is actually SVNDiffConflictChoiceStyle.CHOOSE_MODIFIED_LATEST style 
-						    baseLineIndex = createConflict(result, localStartBlock, local.current(), latestStartBlock, latest.current(), localLines, latestLines, baseLineIndex, transformedLocalLines);
+						} else if (style == SVNDiffConflictChoiceStyle.CHOOSE_MODIFIED) {
+                            baseLineIndex = createConflict(result, localStartBlock, local.current(), latestStartBlock, latest.current(), 
+                                    localLines, latestLines, baseLineIndex, transformedLocalLines, style);
+		                    local.forward();
+		                    latest.forward();
+		                    merged = true;
+						} else if (style == SVNDiffConflictChoiceStyle.CHOOSE_MODIFIED_LATEST) {
+						    baseLineIndex = createConflict(result, localStartBlock, local.current(), latestStartBlock, latest.current(), 
+						            localLines, latestLines, baseLineIndex, transformedLocalLines, style);
 	                        local.forward();
 	                        latest.forward();
 	                        conflict = true;
+						} else if (style == SVNDiffConflictChoiceStyle.CHOOSE_ONLY_CONFLICTS) {
+                            baseLineIndex = createOnlyConflictWithContext(realResult, localStartBlock, local.current(), latestStartBlock, latest.current(), 
+                                    localLines, latestLines, baseLines);
+                            local.forward();
+                            latest.forward();
+                            conflict = true;
 						}
 						continue;
 					}
 				}
 
 				if (local.hasCurrent() && isBefore(local.current(), latest.hasCurrent() ? latest.current() : null)) {
-					baseLineIndex = appendLines(result, local.current(), localLines, baseLineIndex, transformedLocalLines);
+				    baseLineIndex = appendLines(result, local.current(), localLines, baseLineIndex, transformedLocalLines);
 					local.forward();
 					merged = true;
 					continue;
 				}
 
 				if (latest.hasCurrent()) {
-					baseLineIndex = appendLines(result, latest.current(), latestLines, baseLineIndex, transformedLocalLines);
+				    baseLineIndex = appendLines(result, latest.current(), latestLines, baseLineIndex, transformedLocalLines);
 					latest.forward();
 					merged = true;
 				}
@@ -298,7 +320,8 @@ public class FSMergerBySequence {
 	                           QSequenceDifferenceBlock latestStart,
 	                           QSequenceDifferenceBlock latestEnd,
 	                           QSequenceLineCache localLines, QSequenceLineCache latestLines,
-	                           int baseLineIndex, List transformedLocalLines) throws IOException {
+	                           int baseLineIndex, List transformedLocalLines, 
+	                           SVNDiffConflictChoiceStyle style) throws IOException {
 		final int minBaseFrom = Math.min(localStart.getLeftFrom(), latestStart.getLeftFrom());
 		final int maxBaseTo = Math.max(localEnd.getLeftTo(), latestEnd.getLeftTo());
 
@@ -309,24 +332,108 @@ public class FSMergerBySequence {
 		final int latestFrom = Math.max(0, latestStart.getRightFrom() - (latestStart.getLeftFrom() - minBaseFrom));
 		final int latestTo = Math.min(latestLines.getLineCount() - 1, latestEnd.getRightTo() + (maxBaseTo - latestEnd.getLeftTo()));
 
-		writeBytesAndEol(result, myConflictStart);
-		for (int index = localFrom; index <= localTo; index++) {
-			writeLine(result, localLines.getLine(index));
+		if (style == SVNDiffConflictChoiceStyle.CHOOSE_MODIFIED_LATEST) {
+	        writeBytesAndEol(result, myConflictStart);
 		}
-		writeBytesAndEol(result, myConflictSeparator);
-		for (int index = latestFrom; index <= latestTo; index++) {
-			writeLine(result, latestLines.getLine(index));
+
+		if (style == SVNDiffConflictChoiceStyle.CHOOSE_MODIFIED || style == SVNDiffConflictChoiceStyle.CHOOSE_MODIFIED_LATEST) {
+	        for (int index = localFrom; index <= localTo; index++) {
+	            writeLine(result, localLines.getLine(index));
+	        }
 		}
-		writeBytesAndEol(result, myConflictEnd);
+		
+		if (style == SVNDiffConflictChoiceStyle.CHOOSE_MODIFIED_LATEST) {
+	        writeBytesAndEol(result, myConflictSeparator);
+		}
+
+		if (style == SVNDiffConflictChoiceStyle.CHOOSE_LATEST || style == SVNDiffConflictChoiceStyle.CHOOSE_MODIFIED_LATEST) {
+	        for (int index = latestFrom; index <= latestTo; index++) {
+	            writeLine(result, latestLines.getLine(index));
+	        }
+		}
+		
+		if (style == SVNDiffConflictChoiceStyle.CHOOSE_MODIFIED_LATEST) {
+	        writeBytesAndEol(result, myConflictEnd);
+		}
 
 		return maxBaseTo;
 	}
+
+	   private int createOnlyConflictWithContext(OutputStream result, QSequenceDifferenceBlock localStart, QSequenceDifferenceBlock localEnd, 
+	           QSequenceDifferenceBlock latestStart, QSequenceDifferenceBlock latestEnd, QSequenceLineCache localLines, QSequenceLineCache latestLines, 
+	           QSequenceLineCache baseLines) throws IOException {
+
+	       final int minBaseFrom = Math.min(localStart.getLeftFrom(), latestStart.getLeftFrom());
+	       final int maxBaseTo = Math.max(localEnd.getLeftTo(), latestEnd.getLeftTo());
+	       final int localFrom = Math.max(0, localStart.getRightFrom() - (localStart.getLeftFrom() - minBaseFrom));
+	       final int localTo = Math.min(localLines.getLineCount() - 1, localEnd.getRightTo() + (maxBaseTo - localEnd.getLeftTo()));
+	       final int latestFrom = Math.max(0, latestStart.getRightFrom() - (latestStart.getLeftFrom() - minBaseFrom));
+	       final int latestTo = Math.min(latestLines.getLineCount() - 1, latestEnd.getRightTo() + (maxBaseTo - latestEnd.getLeftTo()));
+
+	       //local changes block
+	       writeBytes(result, myConflictStart);
+
+	       int localLinesNum = localTo - localFrom + 1;
+           String localContext = null;
+	       int localStartFrom = localFrom + 1;
+           if (localLinesNum > 1) {
+	           localContext = " (" + localStartFrom + "," + localLinesNum + ")"; 
+           } else {
+               localContext = " (" + localStartFrom + ")"; 
+           }
+
+	       writeBytesAndEol(result, localContext.getBytes());
+	       
+	       for (int index = localFrom; index <= localTo; index++) {
+	           writeLine(result, localLines.getLine(index));
+	       }
+
+	       //original block
+           writeBytes(result, myOriginalMarker);
+           int originalLinesNum = maxBaseTo - minBaseFrom + 1;
+           String originalContext = null;
+           int originalStartFrom = minBaseFrom + 1;
+           if (originalLinesNum > 1) {
+               originalContext = " (" + originalStartFrom + "," + originalLinesNum + ")"; 
+           } else {
+               originalContext = " (" + originalStartFrom + ")"; 
+           }
+           writeBytesAndEol(result, originalContext.getBytes());
+           
+           for (int index = minBaseFrom; index <= maxBaseTo; index++) {
+               writeLine(result, baseLines.getLine(index));
+           }
+	       
+	       //conflict separator
+	       writeBytesAndEol(result, myConflictSeparator);
+
+	       //server changes block
+	       for (int index = latestFrom; index <= latestTo; index++) {
+	           writeLine(result, latestLines.getLine(index));
+	       }
+
+	       writeBytes(result, myConflictEnd);
+
+	       int latestLinesNum = latestTo - latestFrom + 1;
+           String latestContext = null;
+           int latestStartFrom = latestFrom + 1;
+           if (latestLinesNum > 1) {
+               latestContext = " (" + latestStartFrom + "," + latestLinesNum + ")"; 
+           } else {
+               latestContext = " (" + latestStartFrom + ")"; 
+           }
+
+           writeBytesAndEol(result, latestContext.getBytes());
+
+	       return maxBaseTo;
+
+	   }
 
 	private void appendTransformedLocalLines(int baseLineIndex, int to, List transformedLocalLines, OutputStream result) throws IOException {
 		for (baseLineIndex++; baseLineIndex < to; baseLineIndex++) {
 			final QSequenceLine sequenceLine = (QSequenceLine)transformedLocalLines.get(baseLineIndex);
 			if (sequenceLine == null) {
-				throw new RuntimeException();
+				throw new IOException("Can not merge: sequence line is null for this base index");
 			}
 			writeLine(result, sequenceLine);
 		}
@@ -347,6 +454,13 @@ public class FSMergerBySequence {
 			os.write(bytes);
 			os.write(DEFAULT_EOL.getBytes());
 		}
+	}
+
+
+	private void writeBytes(OutputStream os, final byte[] bytes) throws IOException {
+	    if (bytes.length > 0) {
+	        os.write(bytes);
+	    }
 	}
 
 	private QSequenceLineTeeSimplifier createSimplifier(SVNDiffOptions options) {

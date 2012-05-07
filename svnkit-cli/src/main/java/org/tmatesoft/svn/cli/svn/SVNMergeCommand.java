@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -56,6 +56,7 @@ public class SVNMergeCommand extends SVNCommand {
         options.add(SVNOption.IGNORE_ANCESTRY);
         options.add(SVNOption.ACCEPT);
         options.add(SVNOption.REINTEGRATE);
+        options.add(SVNOption.ALLOW_MIXED_REVISIONS);
         return options;
     }
     
@@ -177,76 +178,86 @@ public class SVNMergeCommand extends SVNCommand {
             target = new SVNPath("");
         }
         SVNDiffClient client = getSVNEnvironment().getClientManager().getDiffClient();
+        SVNNotifyPrinter printer = new SVNNotifyPrinter(getSVNEnvironment());
         if (!getSVNEnvironment().isQuiet()) {
-            client.setEventHandler(new SVNNotifyPrinter(getSVNEnvironment()));
+            client.setEventHandler(printer);
         }
+        client.setAllowMixedRevisionsWCForMerge(getSVNEnvironment().isAllowMixedRevisions());
         try {
             client.setMergeOptions(getSVNEnvironment().getDiffOptions());
-            if (!twoSourcesSpecified) {
-                if (firstRangeStart == SVNRevision.UNDEFINED && firstRangeEnd == SVNRevision.UNDEFINED) {
-                	SVNRevisionRange range = new SVNRevisionRange(SVNRevision.create(1), pegRevision1);
-                	rangesToMerge = new LinkedList();
-                	rangesToMerge.add(range);
-                }
-                
-                if (source1 == null) {
-                    source1 = target;
-                }
-                
-                if (getSVNEnvironment().isReIntegrate()) {
-                    if (getSVNEnvironment().getDepth() != SVNDepth.UNKNOWN) {
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_MUTUALLY_EXCLUSIVE_ARGS, 
-                                "--depth cannot be used with --reintegrate");
-                        SVNErrorManager.error(err, SVNLogType.CLIENT);
+            try {
+                if (!twoSourcesSpecified) {
+                    if (firstRangeStart == SVNRevision.UNDEFINED && firstRangeEnd == SVNRevision.UNDEFINED) {
+                    	SVNRevisionRange range = new SVNRevisionRange(SVNRevision.create(1), pegRevision1);
+                    	rangesToMerge = new LinkedList();
+                    	rangesToMerge.add(range);
                     }
                     
-                    if (getSVNEnvironment().isForce()) {
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_MUTUALLY_EXCLUSIVE_ARGS, 
-                                "--force cannot be used with --reintegrate");
-                        SVNErrorManager.error(err, SVNLogType.CLIENT);
+                    if (source1 == null) {
+                        source1 = target;
                     }
                     
-                    if (source1.isURL()) {
-                        client.doMergeReIntegrate(source1.getURL(), pegRevision1, target.getFile(), 
-                                getSVNEnvironment().isDryRun());
+                    if (getSVNEnvironment().isReIntegrate()) {
+                        if (getSVNEnvironment().getDepth() != SVNDepth.UNKNOWN) {
+                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_MUTUALLY_EXCLUSIVE_ARGS, 
+                                    "--depth cannot be used with --reintegrate");
+                            SVNErrorManager.error(err, SVNLogType.CLIENT);
+                        }
+                        
+                        if (getSVNEnvironment().isForce()) {
+                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_MUTUALLY_EXCLUSIVE_ARGS, 
+                                    "--force cannot be used with --reintegrate");
+                            SVNErrorManager.error(err, SVNLogType.CLIENT);
+                        }
+                        
+                        if (source1.isURL()) {
+                            client.doMergeReIntegrate(source1.getURL(), pegRevision1, target.getFile(), 
+                                    getSVNEnvironment().isDryRun());
+                        } else {
+                            client.doMergeReIntegrate(source1.getFile(), pegRevision1, target.getFile(), 
+                                    getSVNEnvironment().isDryRun());
+                        }
                     } else {
-                        client.doMergeReIntegrate(source1.getFile(), pegRevision1, target.getFile(), 
-                                getSVNEnvironment().isDryRun());
+                        if (source1.isURL()) {
+                            client.doMerge(source1.getURL(), pegRevision1, rangesToMerge, target.getFile(), 
+                                    getSVNEnvironment().getDepth(), !getSVNEnvironment().isIgnoreAncestry(), 
+                                    getSVNEnvironment().isForce(), getSVNEnvironment().isDryRun(), 
+                                    getSVNEnvironment().isRecordOnly());
+                        } else {
+                            client.doMerge(source1.getFile(), pegRevision1, rangesToMerge, target.getFile(), 
+                                    getSVNEnvironment().getDepth(), !getSVNEnvironment().isIgnoreAncestry(), 
+                                    getSVNEnvironment().isForce(), getSVNEnvironment().isDryRun(), 
+                                    getSVNEnvironment().isRecordOnly());
+                        }
                     }
                 } else {
-                    if (source1.isURL()) {
-                        client.doMerge(source1.getURL(), pegRevision1, rangesToMerge, target.getFile(), 
-                                getSVNEnvironment().getDepth(), !getSVNEnvironment().isIgnoreAncestry(), 
-                                getSVNEnvironment().isForce(), getSVNEnvironment().isDryRun(), 
-                                getSVNEnvironment().isRecordOnly());
+                    if (source1.isURL() && source2.isURL()) {
+                        client.doMerge(source1.getURL(), firstRangeStart, source2.getURL(), firstRangeEnd, 
+                        		target.getFile(), getSVNEnvironment().getDepth(), 
+                        		!getSVNEnvironment().isIgnoreAncestry(), getSVNEnvironment().isForce(), 
+                        		getSVNEnvironment().isDryRun(), getSVNEnvironment().isRecordOnly());
+                    } else if (source1.isURL() && source2.isFile()) {
+                        client.doMerge(source1.getURL(), firstRangeStart, source2.getFile(), firstRangeEnd, 
+                        		target.getFile(), getSVNEnvironment().getDepth(), 
+                        		!getSVNEnvironment().isIgnoreAncestry(), getSVNEnvironment().isForce(), 
+                        		getSVNEnvironment().isDryRun(), getSVNEnvironment().isRecordOnly());
+                    } else if (source1.isFile() && source2.isURL()) {
+                        client.doMerge(source1.getFile(), firstRangeStart, source2.getURL(), firstRangeEnd, 
+                        		target.getFile(), getSVNEnvironment().getDepth(), 
+                        		!getSVNEnvironment().isIgnoreAncestry(), getSVNEnvironment().isForce(), 
+                        		getSVNEnvironment().isDryRun(), getSVNEnvironment().isRecordOnly());
                     } else {
-                        client.doMerge(source1.getFile(), pegRevision1, rangesToMerge, target.getFile(), 
-                                getSVNEnvironment().getDepth(), !getSVNEnvironment().isIgnoreAncestry(), 
-                                getSVNEnvironment().isForce(), getSVNEnvironment().isDryRun(), 
-                                getSVNEnvironment().isRecordOnly());
+                        client.doMerge(source1.getFile(), firstRangeStart, source2.getFile(), firstRangeEnd, 
+                        		target.getFile(), getSVNEnvironment().getDepth(), 
+                        		!getSVNEnvironment().isIgnoreAncestry(), getSVNEnvironment().isForce(), 
+                        		getSVNEnvironment().isDryRun(), getSVNEnvironment().isRecordOnly());
                     }
                 }
-            } else {
-                if (source1.isURL() && source2.isURL()) {
-                    client.doMerge(source1.getURL(), firstRangeStart, source2.getURL(), firstRangeEnd, 
-                    		target.getFile(), getSVNEnvironment().getDepth(), 
-                    		!getSVNEnvironment().isIgnoreAncestry(), getSVNEnvironment().isForce(), 
-                    		getSVNEnvironment().isDryRun(), getSVNEnvironment().isRecordOnly());
-                } else if (source1.isURL() && source2.isFile()) {
-                    client.doMerge(source1.getURL(), firstRangeStart, source2.getFile(), firstRangeEnd, 
-                    		target.getFile(), getSVNEnvironment().getDepth(), 
-                    		!getSVNEnvironment().isIgnoreAncestry(), getSVNEnvironment().isForce(), 
-                    		getSVNEnvironment().isDryRun(), getSVNEnvironment().isRecordOnly());
-                } else if (source1.isFile() && source2.isURL()) {
-                    client.doMerge(source1.getFile(), firstRangeStart, source2.getURL(), firstRangeEnd, 
-                    		target.getFile(), getSVNEnvironment().getDepth(), 
-                    		!getSVNEnvironment().isIgnoreAncestry(), getSVNEnvironment().isForce(), 
-                    		getSVNEnvironment().isDryRun(), getSVNEnvironment().isRecordOnly());
-                } else {
-                    client.doMerge(source1.getFile(), firstRangeStart, source2.getFile(), firstRangeEnd, 
-                    		target.getFile(), getSVNEnvironment().getDepth(), 
-                    		!getSVNEnvironment().isIgnoreAncestry(), getSVNEnvironment().isForce(), 
-                    		getSVNEnvironment().isDryRun(), getSVNEnvironment().isRecordOnly());
+            } finally {
+                if (!getSVNEnvironment().isQuiet()) {
+                    StringBuffer status = new StringBuffer();
+                    printer.printConflictStatus(status);
+                    getSVNEnvironment().getOut().print(status);
                 }
             }
         } catch (SVNException e) {

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -13,9 +13,9 @@ package org.tmatesoft.svn.core.wc;
 
 
 /**
- * The <b>SVNConflictAction</b> represents the type of action being attempted on an object which leads to 
- * a conflict.  
- * 
+ * The <b>SVNConflictAction</b> represents the type of action being attempted on an object which leads to
+ * a conflict.
+ *
  * @version 1.3
  * @author  TMate Software Ltd.
  * @since   1.2
@@ -33,13 +33,17 @@ public class SVNConflictAction {
      * Constant representing an attempt to delete an object.
      */
     public static final SVNConflictAction DELETE = new SVNConflictAction("deleted");
+    /**
+     * Constant representing an attempt to replace an object.
+     */
+    public static final SVNConflictAction REPLACE = new SVNConflictAction("replaced");
 
     /**
      * Converts string to an <code>SVNConflictAction</code> object when possible.
      * @param   action    action name
-     * @return  <code>SVNConflictAction</code> object which {@link #getName()} 
+     * @return  <code>SVNConflictAction</code> object which {@link #getName()}
      *          equals to <code>action</code>; <code>null</code> in case <code>action</code>
-     *          matches no <code>SVNConflictAction</code> constant 
+     *          matches no <code>SVNConflictAction</code> constant
      * @since   1.3
      */
     public static SVNConflictAction fromString(String action) {
@@ -51,6 +55,9 @@ public class SVNConflictAction {
         }
         if (DELETE.getName().equals(action)) {
             return DELETE;
+        }
+        if (REPLACE.getName().equals(action)) {
+            return REPLACE;
         }
         return null;
     }

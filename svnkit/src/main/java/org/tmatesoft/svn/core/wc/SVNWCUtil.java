@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -14,19 +14,13 @@ package org.tmatesoft.svn.core.wc;
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.util.logging.Level;
 
-import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
-import org.tmatesoft.svn.core.internal.wc.SVNExternal;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
+import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 
 /**
  * The <b>SVNWCUtil</b> is a utility class providing some common methods used
@@ -191,9 +185,9 @@ public class SVNWCUtil {
                 if (loader == null) {
                     loader = ClassLoader.getSystemClassLoader();
                 }
-                Class managerClass = loader.loadClass(ECLIPSE_AUTH_MANAGER_CLASSNAME);
+                Class<?> managerClass = loader.loadClass(ECLIPSE_AUTH_MANAGER_CLASSNAME);
                 if (managerClass != null) {
-                    Constructor method = managerClass.getConstructor(new Class[] {
+                    Constructor<?> method = managerClass.getConstructor(new Class[] {
                             File.class, Boolean.TYPE, String.class, String.class, File.class, String.class
                     });
                     if (method != null) {
@@ -259,19 +253,7 @@ public class SVNWCUtil {
      *         <span class="javakeyword">false</span>
      */
     public static boolean isVersionedDirectory(File dir) {
-        SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
-        try {
-	        wcAccess.open(dir, false, false, false, 0, Level.FINEST);
-        } catch (SVNException e) {
-            return false;
-        } finally {
-            try {
-                wcAccess.close();
-            } catch (SVNException e) {
-                //
-            }
-        }
-        return true;
+        return SvnOperationFactory.isVersionedDirectory(dir);
     }
 
     /**
@@ -288,15 +270,7 @@ public class SVNWCUtil {
      * @since 1.1
      */
     public static boolean isWorkingCopyRoot(final File versionedDir) throws SVNException {
-        SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
-        try {
-	        wcAccess.open(versionedDir, false, false, false, 0, Level.FINEST);
-	        return wcAccess.isWCRoot(versionedDir);
-        } catch (SVNException e) {
-            return false;
-        } finally {
-            wcAccess.close();
-        }
+        return SvnOperationFactory.isWorkingCopyRoot(versionedDir);
     }
 
     /**
@@ -317,7 +291,7 @@ public class SVNWCUtil {
                 return true;
 
             }
-            File root = getWorkingCopyRoot(versionedDir, false);
+            File root = SvnOperationFactory.getWorkingCopyRoot(versionedDir, false);
             return root.equals(versionedDir);
         }
         return false;
@@ -342,67 +316,10 @@ public class SVNWCUtil {
      *         class="javakeyword">null</span>.
      * @throws SVNException
      */
-    public static File getWorkingCopyRoot(File versionedDir, boolean stopOnExtenrals) throws SVNException {
-        versionedDir = versionedDir.getAbsoluteFile();
-        if (versionedDir == null || 
-                (!isVersionedDirectory(versionedDir) && 
-                (versionedDir.getParentFile() == null || !isVersionedDirectory(versionedDir.getParentFile())))) {
-            // both this dir and its parent are not versioned, 
-            // or dir is root and not versioned
-            return null;
-        }
-
-        File parent = versionedDir.getParentFile();
-        if (parent == null) {
-            return versionedDir;
-        }
-
-        if (isWorkingCopyRoot(versionedDir)) {
-            // this is root.
-            if (stopOnExtenrals) {
-                return versionedDir;
-            }
-            File parentRoot = getWorkingCopyRoot(parent, stopOnExtenrals);
-            if (parentRoot == null) {
-                // if parent is not versioned return this dir.
-                return versionedDir;
-            }
-            // parent is versioned. we have to check if it contains externals
-            // definition for this dir.
-
-            while (parent != null) {
-                SVNWCAccess parentAccess = SVNWCAccess.newInstance(null);
-                try {
-                    SVNAdminArea dir = parentAccess.open(parent, false, 0);
-                    SVNVersionedProperties props = dir.getProperties(dir.getThisDirName());
-	                final String externalsProperty = props.getStringPropertyValue(SVNProperty.EXTERNALS);
-	                SVNExternal[] externals = externalsProperty != null ? SVNExternal.parseExternals(dir.getRoot(), externalsProperty) : new SVNExternal[0];
-                    // now externals could point to our dir.
-                    for (int i = 0; i < externals.length; i++) {
-                        SVNExternal external = externals[i];
-                        File externalFile = new File(parent, external.getPath());
-                        if (externalFile.equals(versionedDir)) {
-                            return parentRoot;
-                        }
-                    }
-                } catch (SVNException e) {
-                    if (e instanceof SVNCancelException) {
-                        throw e;
-                    }
-                } finally {
-                    parentAccess.close();
-                }
-                if (parent.equals(parentRoot)) {
-                    break;
-                }
-                parent = parent.getParentFile();
-            }
-            return versionedDir;
-        }
-
-        return getWorkingCopyRoot(parent, stopOnExtenrals);
+    public static File getWorkingCopyRoot(File versionedDir, boolean stopOnExternals) throws SVNException {
+        return SvnOperationFactory.getWorkingCopyRoot(versionedDir, stopOnExternals);
     }
-
+    
     private static boolean isEclipse() {
         if (ourIsEclipse == null) {
             try {
@@ -410,7 +327,7 @@ public class SVNWCUtil {
                 if (loader == null) {
                     loader = ClassLoader.getSystemClassLoader();
                 }
-                Class platform = loader.loadClass("org.eclipse.core.runtime.Platform");
+                Class<?> platform = loader.loadClass("org.eclipse.core.runtime.Platform");
                 Method isRunning = platform.getMethod("isRunning", new Class[0]);
                 Object result = isRunning.invoke(null, new Object[0]);
                 if (result != null && Boolean.TRUE.equals(result)) {

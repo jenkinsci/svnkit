@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -92,9 +92,11 @@ public abstract class BasicDAVDeltaHandler extends BasicDAVHandler {
                 index--;
             }
             byte[] buffer = allocateBuffer(toDecode.length());
-            int decodedLength = SVNBase64.base64ToByteArray(toDecode, buffer);
             try {
+                int decodedLength = SVNBase64.base64ToByteArray(toDecode, buffer);
                 myDeltaReader.nextWindow(buffer, 0, decodedLength, getCurrentPath(), getDeltaConsumer());
+            } catch (IllegalArgumentException e) {
+                throw new SAXException(e);
             } catch (SVNException e) {
                 throw new SAXException(e);
             }

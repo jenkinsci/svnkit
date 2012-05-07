@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -40,7 +40,7 @@ public abstract class SVNXMLCommand extends SVNCommand {
 
     protected void printXMLHeader(String header) {
         StringBuffer xmlBuffer = new StringBuffer();
-        SVNXMLUtil.addXMLHeader(xmlBuffer, false);
+        SVNXMLUtil.addXMLHeader(xmlBuffer, true);
         SVNXMLUtil.openXMLTag(null, header, SVNXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
         getSVNEnvironment().getOut().print(xmlBuffer.toString());
     }

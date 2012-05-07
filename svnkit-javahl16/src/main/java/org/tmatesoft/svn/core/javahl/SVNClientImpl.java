@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -26,6 +26,7 @@ import java.util.Map;
 
 import org.tigris.subversion.javahl.BlameCallback;
 import org.tigris.subversion.javahl.BlameCallback2;
+import org.tigris.subversion.javahl.BlameCallback3;
 import org.tigris.subversion.javahl.ChangelistCallback;
 import org.tigris.subversion.javahl.ClientException;
 import org.tigris.subversion.javahl.CommitItem;
@@ -81,7 +82,7 @@ import org.tmatesoft.svn.core.internal.io.dav.http.IHTTPConnectionFactory;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.ISVNConnectorFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
-import org.tmatesoft.svn.core.internal.io.svn.SVNSSHSession;
+import org.tmatesoft.svn.core.internal.io.svn.SVNSSHConnector;
 import org.tmatesoft.svn.core.internal.util.DefaultSVNDebugFormatter;
 import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
@@ -1182,7 +1183,7 @@ public class SVNClientImpl implements SVNClientInterface {
                 JavaHLObjectFactory.getSVNDepth(depth), changelists);
         Map propsMap = new SVNHashMap();
         for (int i = 0; i < properties.length; i++) {
-            propsMap.put(properties[i].getName(), properties[i].getValue());
+            propsMap.put(properties[i].getName(), properties[i].getData());
         }
         callback.singlePath(path, propsMap);
 	}
@@ -1597,7 +1598,7 @@ public class SVNClientImpl implements SVNClientInterface {
             ourInstanceCount--;
             if (ourInstanceCount <= 0) {
                 ourInstanceCount = 0;
-                SVNSSHSession.shutdown();
+                SVNSSHConnector.shutdown();
             }
         }
     }
@@ -1755,19 +1756,24 @@ public class SVNClientImpl implements SVNClientInterface {
                         path = "";
                     }
                     if (myNotify != null && event.getErrorMessage() == null) {
-                        myNotify.onNotify(
-                                path,
-                                JavaHLObjectFactory.getNotifyActionValue(event.getAction()),
-                                JavaHLObjectFactory.getNodeKind(event.getNodeKind()),
-                                event.getMimeType(),
-                                JavaHLObjectFactory.getStatusValue(event.getContentsStatus()),
-                                JavaHLObjectFactory.getStatusValue(event.getPropertiesStatus()),
-                                event.getRevision()
-                        );
+                        final int actionId = JavaHLObjectFactory.getNotifyActionValue(event.getAction());
+                        if (actionId != -1) {
+                            myNotify.onNotify(
+                                    path,
+                                    actionId,
+                                    JavaHLObjectFactory.getNodeKind(event.getNodeKind()),
+                                    event.getMimeType(),
+                                    JavaHLObjectFactory.getStatusValue(event.getContentsStatus()),
+                                    JavaHLObjectFactory.getStatusValue(event.getPropertiesStatus()),
+                                    event.getRevision()
+                            );
+                        }
                     }
                     if (myNotify2 != null) {
                         NotifyInformation info = JavaHLObjectFactory.createNotifyInformation(event, path);
-                        myNotify2.onNotify(info);
+                        if (info != null) {
+                            myNotify2.onNotify(info);
+                        }
                     }
                 }
 
@@ -2265,5 +2271,37 @@ public class SVNClientImpl implements SVNClientInterface {
     public void setRevProperty(String path, String name, Revision rev, String value, String originalValue, boolean force) throws ClientException {
         // TODO use original value.
         setRevProperty(path, name, rev, value, force);
+    }
+
+    public void copy(CopySource[] sources, String destPath, String message,
+            boolean copyAsChild, boolean makeParents, boolean ignoreExternals,
+            Map revpropTable) throws ClientException {
+    }
+
+    public void getMergeinfoLog(int kind, String pathOrUrl,
+            Revision pegRevision, String mergeSourceUrl,
+            Revision srcPegRevision, boolean discoverChangedPaths, int depth,
+            String[] revProps, LogMessageCallback callback)
+            throws ClientException {
+    }
+
+    public void diff(String target1, Revision revision1, String target2,
+            Revision revision2, String relativeToDir, String outFileName,
+            int depth, String[] changelists, boolean ignoreAncestry,
+            boolean noDiffDeleted, boolean force, boolean copiesAsAdds)
+            throws ClientException {
+    }
+
+    public void diff(String target, Revision pegRevision,
+            Revision startRevision, Revision endRevision, String relativeToDir,
+            String outFileName, int depth, String[] changelists,
+            boolean ignoreAncestry, boolean noDiffDeleted, boolean force,
+            boolean copiesAsAdds) throws ClientException {
+    }
+
+    public void blame(String path, Revision pegRevision, Revision revisionStart, Revision revisionEnd, boolean ignoreMimeType, boolean includeMergedRevisions, BlameCallback3 callback) throws ClientException {
+    }
+
+    public void upgrade(String path) throws ClientException {
     }
 }

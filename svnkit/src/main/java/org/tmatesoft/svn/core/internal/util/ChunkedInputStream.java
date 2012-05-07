@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -15,6 +15,11 @@ package org.tmatesoft.svn.core.internal.util;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.wc.IOExceptionWrapper;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -144,7 +149,12 @@ public class ChunkedInputStream extends InputStream {
                             baos.write(b);
                     }
                     break;
-                default: throw new RuntimeException("assertion failed");
+                default: 
+                    try {
+                        SVNErrorManager.assertionFailure(false, null, SVNLogType.NETWORK);
+                    } catch (SVNException svne) {
+                        throw new IOExceptionWrapper(svne);
+                    }
             }
         }
 

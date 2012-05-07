@@ -33,14 +33,26 @@ classes << {
 }
 
 test {
-    includes = ['**/BasicTests*', '**/SVNAdminTests*']    
+    includes = ['**/tigris/subversion/javahl/BasicTests*', '**/tigris/subversion/javahl/SVNAdminTests*']    
     //does not pass on Windows: BasicTests.testBasicChangelist
- 
+    systemProperty 'svnkit.wc.17', 'false'
     ignoreFailures = true
     workingDir = file('build/tests-working-dir')
 } 
 
+task testJavaHL2(type: Test) {
+    includes = ['*/apache/subversion/javahl/BasicTests*']
+    //does not pass on Windows: BasicTests.testBasicChangelist
+    ignoreFailures = true
+    workingDir = file('build/tests-working-dir')
+    enableAssertions = true
+}
+
 test.doFirst() {
+    mkdir('build/tests-working-dir')
+}
+
+testJavaHL2.doFirst() {
     mkdir('build/tests-working-dir')
 }
 
@@ -49,7 +61,7 @@ configurations {
 }
 
 dependencies {
-    javahlSources group: 'org.tigris.subversion', name: 'svn-javahl-api', version: '1.6.18-SNAPSHOT', classifier: 'sources'
+    javahlSources group: 'org.tigris.subversion', name: 'svn-javahl-api', version: '1.6.18', classifier: 'sources'
 }
 
 sourcesJar {

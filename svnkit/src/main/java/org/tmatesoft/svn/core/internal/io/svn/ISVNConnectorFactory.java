@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -30,8 +30,6 @@ public interface ISVNConnectorFactory {
         public ISVNConnector createConnector(SVNRepository repository) throws SVNException {
             SVNURL location = repository.getLocation();
             if ("svn+ssh".equals(location.getProtocol())) {
-                return new SVNSSHConnector2();
-            } else if ("svn+ssh2".equals(location.getProtocol())) {
                 return new SVNSSHConnector();
             } else if (location.getProtocol().startsWith("svn+")) {
                 String name = location.getProtocol().substring("svn+".length());

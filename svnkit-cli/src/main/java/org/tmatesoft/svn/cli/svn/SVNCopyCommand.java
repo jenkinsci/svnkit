@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2011 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2012 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -85,7 +85,9 @@ public class SVNCopyCommand extends SVNCommand {
                 client.setEventHandler(new SVNNotifyPrinter(getSVNEnvironment()));
             }
         } else if (!sourceIsURL && dst.isURL()){
-            // skip
+            SVNNotifyPrinter printer = new SVNNotifyPrinter(getSVNEnvironment());
+            printer.setWcToReposCopy(true);
+            client.setEventHandler(printer);
         } else if (sourceIsURL && !dst.isURL()) {
             if (!getSVNEnvironment().isQuiet()) {
                 client.setEventHandler(new SVNNotifyPrinter(getSVNEnvironment(), true, false, false));
