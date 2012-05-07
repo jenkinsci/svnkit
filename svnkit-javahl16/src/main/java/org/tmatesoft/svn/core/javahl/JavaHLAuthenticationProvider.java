@@ -12,7 +12,6 @@
 package org.tmatesoft.svn.core.javahl;
 
 import java.io.File;
-import java.io.IOException;
 import java.security.cert.X509Certificate;
 import java.text.MessageFormat;
 
