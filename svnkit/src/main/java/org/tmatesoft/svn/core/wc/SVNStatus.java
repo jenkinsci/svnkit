@@ -276,6 +276,10 @@ public class SVNStatus {
      * getURL()} returns the item's URL as it's defined in a URL entry property.
      * Applicable for a remote status invocation.
      *
+     * Used by SVNKit internals and not intended for users (from an API point of view).
+     * Use {@link SVNStatus#getRepositoryRelativePath getRepositoryRelativePath} and
+     * {@link SVNStatus#getRepositoryRootURL()} instead.
+     *
      * @return the item's URL as it's real repository location
      */
     public SVNURL getRemoteURL() {

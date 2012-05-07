@@ -321,8 +321,9 @@ public class SvnCodec {
         
         if (status.getRepositoryRootUrl() != null && status.getRepositoryRelativePath() != null) {
             SVNURL url = status.getRepositoryRootUrl().appendPath(status.getRepositoryRelativePath(), false);
-            result.setURL(url);
-            // TODO when may these two urls differ?
+            if (status.isVersioned()) {
+                result.setURL(url);
+            }
             result.setRemoteURL(url);
         }
         

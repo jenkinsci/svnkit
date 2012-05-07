@@ -6,7 +6,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
+import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
 import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.core.wc2.*;
 
@@ -268,6 +270,150 @@ public class SvnRemoteStatusTest {
             });
             getFullStatus.run();
 
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testRemoteStatusForLocallyAddedFile() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testRemoteStatusForLocallyAddedFile", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addDirectory("directory");
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url);
+
+            final File file = workingCopy.getFile("directory/file");
+            SVNFileUtil.ensureDirectoryExists(file.getParentFile());
+            TestUtil.writeFileContentsString(file, "contents");
+            workingCopy.add(file);
+
+            final SvnGetStatus getStatus = svnOperationFactory.createGetStatus();
+            getStatus.setSingleTarget(SvnTarget.fromFile(file));
+            getStatus.setRemote(true);
+            final SvnStatus status = getStatus.run();
+
+            final SVNWCContext context = new SVNWCContext(svnOperationFactory.getOptions(), svnOperationFactory.getEventHandler());
+            try {
+                final SVNStatus oldStatus = SvnCodec.status(context, status);
+
+                Assert.assertEquals(url.appendPath("directory/file", false), oldStatus.getURL());
+                Assert.assertEquals(url, oldStatus.getRepositoryRootURL());
+                Assert.assertEquals("directory/file", oldStatus.getRepositoryRelativePath());
+
+                Assert.assertEquals(url, status.getRepositoryRootUrl());
+                Assert.assertEquals("directory/file", status.getRepositoryRelativePath());
+
+            } finally {
+                context.close();
+            }
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testRemoteStatusForRemotelyAddedFile() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testRemoteStatusForRemotelyAddedFile", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder1 = new CommitBuilder(url);
+            commitBuilder1.addDirectory("directory");
+            commitBuilder1.commit();
+
+            final CommitBuilder commitBuilder2 = new CommitBuilder(url);
+            commitBuilder2.addFile("directory/file");
+            commitBuilder2.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, 1);
+
+            final File file = workingCopy.getFile("directory/file");
+
+            final SvnGetStatus getStatus = svnOperationFactory.createGetStatus();
+            getStatus.setSingleTarget(SvnTarget.fromFile(file));
+            getStatus.setRemote(true);
+            final SvnStatus status = getStatus.run();
+
+            final SVNWCContext context = new SVNWCContext(svnOperationFactory.getOptions(), svnOperationFactory.getEventHandler());
+            try {
+                final SVNStatus oldStatus = SvnCodec.status(context, status);
+
+                Assert.assertEquals(null, oldStatus.getURL());
+                Assert.assertEquals(url, oldStatus.getRepositoryRootURL());
+                Assert.assertEquals("directory/file", oldStatus.getRepositoryRelativePath());
+
+                Assert.assertEquals(url, status.getRepositoryRootUrl());
+                Assert.assertEquals("directory/file", status.getRepositoryRelativePath());
+
+            } finally {
+                context.close();
+            }
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testRemoteStatusForSwitchedFile() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testRemoteStatusForSwitchedFile", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder1 = new CommitBuilder(url);
+            commitBuilder1.addFile("directory1/file");
+            commitBuilder1.commit();
+
+            final CommitBuilder commitBuilder2 = new CommitBuilder(url);
+            commitBuilder2.addFile("directory2/file");
+            commitBuilder2.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, 1);
+
+            final File directory1 = workingCopy.getFile("directory1");
+            final File file = workingCopy.getFile("directory1/file");
+
+            SvnSwitch svnSwitch = svnOperationFactory.createSwitch();
+            svnSwitch.setIgnoreAncestry(true);
+            svnSwitch.setSingleTarget(SvnTarget.fromFile(directory1));
+            svnSwitch.setSwitchTarget(SvnTarget.fromURL(url.appendPath("directory2", false)));
+            svnSwitch.run();
+
+            final SvnGetStatus getStatus = svnOperationFactory.createGetStatus();
+            getStatus.setSingleTarget(SvnTarget.fromFile(file));
+            getStatus.setRemote(true);
+            final SvnStatus status = getStatus.run();
+
+            final SVNWCContext context = new SVNWCContext(svnOperationFactory.getOptions(), svnOperationFactory.getEventHandler());
+            try {
+                final SVNStatus oldStatus = SvnCodec.status(context, status);
+
+                Assert.assertEquals(url.appendPath("directory2/file", false), oldStatus.getURL());
+                Assert.assertEquals(url, oldStatus.getRepositoryRootURL());
+                Assert.assertEquals("directory2/file", oldStatus.getRepositoryRelativePath());
+
+                Assert.assertEquals(url, status.getRepositoryRootUrl());
+                Assert.assertEquals("directory2/file", status.getRepositoryRelativePath());
+
+            } finally {
+                context.close();
+            }
         } finally {
             svnOperationFactory.dispose();
             sandbox.dispose();
