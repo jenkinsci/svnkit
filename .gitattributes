@@ -1,6 +1,7 @@
 * text=auto !eol
 /CHANGES.txt eol=lf
 /LICENSE.txt eol=lf
+/build.pom.gradle -text
 gradle/wrapper/gradle-wrapper.jar -text
 /gradlew eol=lf
 svnkit-cli/src/main/resources/org/tmatesoft/svn/cli/svn/commands.properties eol=lf

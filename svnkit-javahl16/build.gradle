@@ -1,10 +1,10 @@
-srcRoot = file('src/main/java')
+project.ext.srcRoot = file('src/main/java')
 
 testClasses << {
     def resolvedArtifact = configurations.testCompile.resolvedConfiguration.resolvedArtifacts.find { it.name == 'svn-javahl-tests' }
     copy {
         from zipTree(resolvedArtifact.file)
-        into sourceSets.test.classesDir
+        into sourceSets.test.output.classesDir
     }
 }
 
@@ -12,7 +12,7 @@ classes << {
     def resolvedArtifact = configurations.testCompile.resolvedConfiguration.resolvedArtifacts.find { it.name == 'svn-javahl-api' }
     copy {
         from zipTree(resolvedArtifact.file)
-        into sourceSets.main.classesDir
+        into sourceSets.main.output.classesDir
         exclude 'META-INF/**'
         eachFile { details ->
             if (details.isDirectory()) {

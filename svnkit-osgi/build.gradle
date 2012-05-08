@@ -1,9 +1,10 @@
 apply plugin: 'osgi'
-
-bundleName = rootProject.group
-bundleSymbolicName = 'SVNKit pure Java Subversion Library'
-bundleVersion = buildVersion.getFullOSGIVersion()
-bundleVendor = 'TMate Software'
+project.ext {
+    bundleName = rootProject.group
+    bundleSymbolicName = 'SVNKit pure Java Subversion Library'
+    bundleVersion = buildVersion.getFullOSGIVersion()
+    bundleVendor = 'TMate Software'
+}
 
 configurations {
     embedOsgi
@@ -22,10 +23,12 @@ dependencies {
 classes << {
     configurations.embedOsgi.files.each {
         f ->
+        if (f.name.endsWith('.jar') || f.name.endsWith('.zip')) {
         copy {
             into 'build/classes/main'
             from zipTree(f)
             exclude 'META-INF/**'
+        }
         }
     }
 }

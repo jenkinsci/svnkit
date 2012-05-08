@@ -1,4 +1,4 @@
-svnVersion  = project.hasProperty('svnVersion') ? project.getProperty('svnVersion') : '16'
+project.ext.svnVersion  = project.hasProperty('svnVersion') ? project.getProperty('svnVersion') : '16'
 processResources {
     eachFile {
         if (it.name == 'svnkit.build.properties') {
@@ -18,6 +18,6 @@ javadoc {
     options.stylesheetFile=new File("svnkit/src/javadoc/javadoc.css")
     options.windowTitle="SVNKit $project.version Javadoc"
     title="SVNKit $project.version Javadoc"
-    header="<![CDATA[<a target=\"_top\" href=\"http://svnkit.com/\"><span class=\"svnkit\">SVNKit</span>&nbsp;Home<a/>]]>"
-    bottom="<![CDATA[Copyright &#169; 2004-2012 TMate Software Ltd. All Rights Reserved.]]>"
+    options.header="<![CDATA[<a target=\"_top\" href=\"http://svnkit.com/\"><span class=\"svnkit\">SVNKit</span>&nbsp;Home<a/>]]>"
+    options.bottom="<![CDATA[Copyright &#169; 2004-2012 TMate Software Ltd. All Rights Reserved.]]>"
 }

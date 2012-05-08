@@ -33,7 +33,7 @@ public class Version {
     private static final String VERSION_REVISION_PROPERTY = "svnkit.version.revision";
     private static final String SVN_VERSION_PROPERTY = "svnkit.svn.version";  
     
-    private static final String VERSION_STRING_DEFAULT = "SVN/1.7.4 SVNKit/1.7.4 (http://svnkit.com/) rSNAPSHOT";
+    private static final String VERSION_STRING_DEFAULT = "SVN/1.7.4 SVNKit/1.7.4.1 (http://svnkit.com/) rSNAPSHOT";
     private static final String VERSION_MAJOR_DEFAULT = "1";
     private static final String VERSION_MINOR_DEFAULT = "7";
     private static final String VERSION_MICRO_DEFAULT = "4";

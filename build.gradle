@@ -1,17 +1,27 @@
 group = 'org.tmatesoft.svnkit'
-version = '1.7.5'
-release = false
-target = '1.5'
-compatibleSvnVersion = '1.7.4'
+version = '1.7.4.1'
+
+project.ext {
+   release = false
+   target = '1.5'
+   compatibleSvnVersion = '1.7.4'
+}
+apply from: 'build.pom.gradle'
 
 buildscript {
     apply from: 'build.defaults.gradle'
-    repositories {
-        mavenRepo(urls: [buildPluginRepositoryURL]) {
-            snapshotTimeout = org.gradle.api.internal.artifacts.ivyservice.GradleIBiblioResolver.ALWAYS
+    configurations.all {
+        resolutionStrategy {
+            cacheChangingModulesFor 0, 'seconds'
+            cacheDynamicVersionsFor 0, 'seconds'
         }
     }
-    dependencies { classpath 'org.tmatesoft.build:build:0.9.8' }
+    repositories {
+        maven {
+           url project.ext.buildPluginRepositoryURL
+        }
+    }
+    dependencies { classpath 'org.tmatesoft.build:build:0.9.9-SNAPSHOT' }
 }
 
 task wrapper(type: Wrapper) {}
@@ -44,6 +54,7 @@ configure(javaProjects() + rootProject) {
 
 configure(javaProjects()) {
     apply plugin : 'java'
+    apply plugin : 'signing'
 
     sourceCompatibility = target
     targetCompatibility = target
@@ -57,6 +68,12 @@ configure(javaProjects()) {
         description = 'Builds Java Sources Jar'
         from sourceSets.main.java.srcDirs
         classifier = 'sources'
+    }
+
+    task javadocJar(type: Jar, dependsOn: javadoc) {
+        description="Builds Javadoc Jar"
+        from "$docsDir/javadoc"
+        classifier = 'javadoc'
     }
 
     jar {
@@ -77,7 +94,7 @@ project(':svnkit') {
 
         testCompile 'junit:junit:4.8'
     }
-    artifacts { maven jar, sourcesJar }
+    artifacts { maven jar, sourcesJar, javadocJar }
 }
 
 project(':svnkit-javahl16') {
@@ -87,14 +104,14 @@ project(':svnkit-javahl16') {
 
         testCompile 'org.apache.subversion:svn-javahl-tests:1.7.4'
     }
-    artifacts { maven jar, sourcesJar }
+    artifacts { maven jar, sourcesJar, javadocJar }
 }
 
 project(':svnkit-cli') {
     dependencies {
         compile project(path: ':svnkit')
     }
-    artifacts { maven jar, sourcesJar }
+    artifacts { maven jar, sourcesJar, javadocJar }
 }
 
 project(':svnkit-dav') {

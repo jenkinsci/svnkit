@@ -9,6 +9,6 @@ if (!project.hasProperty('mavenProxyRepository.url')) {
 
 def setPropertyDefaultValue(String name, String value) {
     if (!project.hasProperty(name)) {
-         project.setProperty(name, value)
+         project.ext.setProperty(name, value)
     }
 }

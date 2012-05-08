@@ -60,16 +60,18 @@ task buildUpdateSite << {
     
     configurations.osgi.resolvedConfiguration.each { conf ->
         conf.resolvedArtifacts.each { artifact ->
-            org.tmatesoft.build.BuildVersion fileVersion = org.tmatesoft.build.BuildVersion.fromJarFile(artifact.file)
-            String name = artifact.resolvedDependency.moduleName
-            name = name.replace('-', '_')
-            tokens[name + '_version'] = fileVersion.bundleVersion
-            tokens[name + '_name'] = fileVersion.bundleSymbolicName
-            tokens[name + '_fullName'] = fullJarName(artifact.file) 
-            copy {
-                from artifact.file
-                into pluginsDir
-                eachFile fullJarNameExpander
+            if (artifact.file.name.endsWith('.zip') || artifact.file.name.endsWith('.jar')) {
+                org.tmatesoft.build.BuildVersion fileVersion = org.tmatesoft.build.BuildVersion.fromJarFile(artifact.file)
+                String name = artifact.getModuleVersion().getId().getName()
+                name = name.replace('-', '_')
+                tokens[name + '_version'] = fileVersion.bundleVersion
+                tokens[name + '_name'] = fileVersion.bundleSymbolicName
+                tokens[name + '_fullName'] = fullJarName(artifact.file) 
+                copy {
+                   from artifact.file
+                   into pluginsDir
+                   eachFile fullJarNameExpander
+                }
             }
         }
     }
