@@ -17,7 +17,7 @@ dependencies {
 
     embedOsgi project(path: ':svnkit', transitive: false, configuration: 'archives')
     embedOsgi project(path: ':svnkit-javahl16', transitive: false, configuration: 'archives')
-    embedOsgi 'de.regnis.q.sequence:sequence-library:1.0.0'
+    embedOsgi 'de.regnis.q.sequence:sequence-library:1.0.2'
 }
 
 classes << {
