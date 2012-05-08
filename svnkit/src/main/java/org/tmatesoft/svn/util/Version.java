@@ -110,7 +110,6 @@ public class Version {
 
     /**
      * @deprecated use getRevisionString instead
-     * @return
      */
     @Deprecated    
     public static long getRevisionNumber() {

@@ -308,7 +308,7 @@ public class SVNWCUtil {
      * @param versionedDir
      *            a directory belonging to the WC which root is to be searched
      *            for
-     * @param stopOnExtenrals
+     * @param stopOnExternals
      *            if <span class="javakeyword">true</span> then this method
      *            will stop at the directory on which any externals definitions
      *            are set
