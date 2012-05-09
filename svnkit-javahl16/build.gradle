@@ -61,7 +61,7 @@ configurations {
 }
 
 dependencies {
-    javahlSources group: 'org.tigris.subversion', name: 'svn-javahl-api', version: '1.6.18', classifier: 'sources'
+    javahlSources group: 'org.tigris.subversion', name: 'svn-javahl-api', version: '1.6.18-v2', classifier: 'sources'
 }
 
 sourcesJar {
