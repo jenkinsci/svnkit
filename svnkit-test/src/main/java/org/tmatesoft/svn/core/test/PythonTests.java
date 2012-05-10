@@ -12,35 +12,19 @@
 
 package org.tmatesoft.svn.core.test;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.PrintStream;
-import java.io.StringReader;
+import com.martiansoftware.nailgun.NGServer;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.util.DefaultSVNDebugFormatter;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+
+import java.io.*;
 import java.net.ServerSocket;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Properties;
-import java.util.StringTokenizer;
+import java.util.*;
 import java.util.logging.FileHandler;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
-
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.util.DefaultSVNDebugFormatter;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-
-import com.martiansoftware.nailgun.NGServer;
 
 /**
  * @version 1.3
@@ -48,13 +32,16 @@ import com.martiansoftware.nailgun.NGServer;
  */
 public class PythonTests {
 
-	private static File ourPropertiesFile;
+    public static final int DEFAULT_DAEMON_PORT_NUMBER = 1729;
+
+    private static File ourPropertiesFile;
+
     private static Process ourSVNServer;
-    
     private static AbstractTestLogger[] ourLoggers;
     private static NGServer ourDaemon;
     private static Properties ourProperties;
     private static String ourTestType;
+    private static int daemonPortNumber = -1;
 
     public static void main(String[] args) {
 		String fileName = args[0];
@@ -104,6 +91,44 @@ public class PythonTests {
         if(!absTestsRootLocation.startsWith("/")){
             absTestsRootLocation = "/" + absTestsRootLocation; 
         }
+
+        final File currentDirectory = new File("").getAbsoluteFile();
+        runPythonTestsForAllProtocols(libPath, properties, defaultTestSuite, logger, absTestsRootLocation);
+
+        if (false) {
+            //TODO: put proper condition
+            changeCurrentDirectory(currentDirectory);
+            final String patternMatchingNoCommand = "^$";
+            properties.put("python.tests.pattern", patternMatchingNoCommand);
+
+            try {
+                generateScripts(properties);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            runPythonTestsForAllProtocols(libPath, properties, defaultTestSuite, logger, absTestsRootLocation);
+        }
+		
+        for (int i = 0; i < ourLoggers.length; i++) {
+            ourLoggers[i].endTests(properties);
+        }
+        if (ourDaemon != null) {
+            ourDaemon.shutdown(false);
+        }
+	}
+
+    private static void changeCurrentDirectory(File currentDirectory) {
+        System.setProperty("user.dir", currentDirectory.getAbsolutePath());
+    }
+
+    public static int getDaemonPortNumber() {
+        if (daemonPortNumber == -1) {
+            daemonPortNumber = findUnoccupiedPort(DEFAULT_DAEMON_PORT_NUMBER);
+        }
+        return daemonPortNumber;
+    }
+
+    private static void runPythonTestsForAllProtocols(String libPath, Properties properties, String defaultTestSuite, Logger logger, String absTestsRootLocation) {
         String url = "file://" + absTestsRootLocation;
         if (Boolean.TRUE.toString().equals(properties.getProperty("python.file"))) {
             boolean started = false;
@@ -147,7 +172,7 @@ public class PythonTests {
 			}
 		}
 
-		if (Boolean.TRUE.toString().equals(properties.getProperty("python.http"))) {
+        if (Boolean.TRUE.toString().equals(properties.getProperty("python.http"))) {
             String apacheEnabled = properties.getProperty("apache", "true");
             if (Boolean.TRUE.toString().equals(apacheEnabled.trim())) {
                 properties.setProperty("apache.conf", "apache/python.template.conf");
@@ -176,47 +201,40 @@ public class PythonTests {
                     }
                 }
             }
-			
-			//now check the servlet flag
-			String servletContainer = properties.getProperty("servlet.container", "false");
-			if (Boolean.TRUE.toString().equals(servletContainer.trim())) {
-			    boolean started = false;
-	            int port = -1;
-	            try {
-	                port = startTomcat(properties, logger);
-	                url = "http://localhost:" + port + "/svnkit";
-	                for (int i = 0; i < ourLoggers.length; i++) {
-	                    ourLoggers[i].startServer("tomcat", url);
-	                }
-	                //wait a little until tomcat
-	                Thread.sleep(1000);
-	                started = true;
-	                runPythonTests(properties, defaultTestSuite, "dav", url, libPath, logger);
-	            } catch (Throwable th) {
-	                th.printStackTrace();
-	            } finally {
-	                try {
-	                    stopTomcat(properties, logger);
-	                    if (started) {
-	                        for (int i = 0; i < ourLoggers.length; i++) {
-	                            ourLoggers[i].endServer("tomcat", url);
-	                        }
-	                    }
-	                } catch (Throwable th) {
-	                    th.printStackTrace();
-	                }
-	            }
-			}
-		}
-		
-        for (int i = 0; i < ourLoggers.length; i++) {
-            ourLoggers[i].endTests(properties);
+
+            //now check the servlet flag
+            String servletContainer = properties.getProperty("servlet.container", "false");
+            if (Boolean.TRUE.toString().equals(servletContainer.trim())) {
+                boolean started = false;
+                int port = -1;
+                try {
+                    port = startTomcat(properties, logger);
+                    url = "http://localhost:" + port + "/svnkit";
+                    for (int i = 0; i < ourLoggers.length; i++) {
+                        ourLoggers[i].startServer("tomcat", url);
+                    }
+                    //wait a little until tomcat
+                    Thread.sleep(1000);
+                    started = true;
+                    runPythonTests(properties, defaultTestSuite, "dav", url, libPath, logger);
+                } catch (Throwable th) {
+                    th.printStackTrace();
+                } finally {
+                    try {
+                        stopTomcat(properties, logger);
+                        if (started) {
+                            for (int i = 0; i < ourLoggers.length; i++) {
+                                ourLoggers[i].endServer("tomcat", url);
+                            }
+                        }
+                    } catch (Throwable th) {
+                        th.printStackTrace();
+                    }
+                }
+            }
         }
-        if (ourDaemon != null) {
-            ourDaemon.shutdown(false);
-        }
-	}
-    
+    }
+
     private static void setTestType(String type) {
         ourTestType = type;
     }
@@ -280,7 +298,7 @@ public class PythonTests {
 			for (int i = 0; i < ourLoggers.length; i++) {
                 ourLoggers[i].startSuite(getTestType() + "." + suiteName);
             }
-			
+
 			final String testFile = suiteName + "_tests.py";
 			tokens = tokens.subList(1, tokens.size());
 			
@@ -333,7 +351,7 @@ public class PythonTests {
                 commandsList.add(String.valueOf(testCase));
             }
         }
-        String[] commands = (String[]) commandsList.toArray(new String[commandsList.size()]); 
+        String[] commands = (String[]) commandsList.toArray(new String[commandsList.size()]);
 
 		try {
 			Process process = Runtime.getRuntime().exec(commands, null, new File(testsLocation));
@@ -342,8 +360,8 @@ public class PythonTests {
 			ReaderThread errReader = new ReaderThread(process.getErrorStream(), null, pythonLogger);
 			errReader.start();
 			try {
-				process.waitFor();
-			} catch (InterruptedException e) {
+                process.waitFor();
+            } catch (InterruptedException e) {
 			} finally {
 			    inReader.close();
 			    errReader.close();
@@ -575,8 +593,7 @@ public class PythonTests {
     }
     
     public static String startCommandDaemon(Properties properties) throws IOException {
-        int portNumber = 1729;
-        portNumber = findUnoccupiedPort(portNumber);
+        int portNumber = getDaemonPortNumber();
 
         ourDaemon = new NGServer(null, portNumber);        
         Thread daemonThread = new Thread(ourDaemon);
@@ -584,10 +601,16 @@ public class PythonTests {
         daemonThread.start();
 
         // create client scripts.
+        generateScripts(properties);
+        return new File("daemon").getAbsolutePath();
+    }
+
+    private static void generateScripts(Properties properties) throws IOException {
+        int portNumber = getDaemonPortNumber();
         String svnHome = properties.getProperty("svn.home", "/usr/bin");
         File template = SVNFileUtil.isWindows ? new File("daemon/template.bat") : new File("daemon/template");
         File templatePy = SVNFileUtil.isWindows ? new File("daemon/template.py") : null;
-        
+
         String pattern = properties.getProperty("python.tests.pattern", null);
 
         generateClientScript(template, new File("daemon/jsvn"), NailgunProcessor.class.getName(), "svn", portNumber, svnHome, pattern);
@@ -599,7 +622,7 @@ public class PythonTests {
 
         generateProxyScript("jsvnmucc", "svnmucc", svnHome);
         generateProxyScript("jsvnversion", "svnversion", svnHome);
-        
+
         if (SVNFileUtil.isWindows) {
             generateClientScript(templatePy, new File("daemon/jsvn.py"), NailgunProcessor.class.getName(), "svn", portNumber, svnHome, pattern);
             generateClientScript(templatePy, new File("daemon/jsvnadmin.py"), NailgunProcessor.class.getName(), "svnadmin", portNumber, svnHome, pattern);
@@ -610,14 +633,25 @@ public class PythonTests {
         }
 
         if (pattern != null) {
-            generateMatcher(new File("daemon/matcher.pl"), new File("daemon/matcher.pl"), pattern);
+            generateMatcher(new File("daemon/matcher.pl.template"), new File("daemon/matcher.pl"), pattern);
         } else {
            try {
                SVNFileUtil.deleteFile(new File("daemon/matcher.pl"));
            } catch (SVNException e) {}
         }
         SVNFileUtil.setExecutable(new File("daemon/snapshot"), Boolean.TRUE.toString().equalsIgnoreCase(properties.getProperty("snapshot", "false")));
-        return new File("daemon").getAbsolutePath();
+    }
+
+    private static void generateMatcher(String pattern) {
+        if (pattern != null) {
+            try {
+                generateMatcher(new File("daemon/matcher.pl.template"), new File("daemon/matcher.pl"), pattern);
+            } catch (IOException e) {}
+        } else {
+           try {
+               SVNFileUtil.deleteFile(new File("daemon/matcher.pl"));
+           } catch (SVNException e) {}
+        }
     }
 
     private static void generateProxyScript(String jsvnName, String svnName, String svnHome) {
