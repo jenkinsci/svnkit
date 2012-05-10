@@ -98,6 +98,9 @@ public class PythonTests {
         if (false) {
             //TODO: put proper condition
             changeCurrentDirectory(currentDirectory);
+
+            File gitRepository = new File("svn-python-tests/svn-test-work");
+
             final String patternMatchingNoCommand = "^$";
             properties.put("python.tests.pattern", patternMatchingNoCommand);
 
@@ -106,9 +109,10 @@ public class PythonTests {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+
             runPythonTestsForAllProtocols(libPath, properties, defaultTestSuite, logger, absTestsRootLocation);
         }
-		
+
         for (int i = 0; i < ourLoggers.length; i++) {
             ourLoggers[i].endTests(properties);
         }
