@@ -1,39 +1,26 @@
 package org.tmatesoft.svn.test;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Map;
-
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
-import org.tmatesoft.svn.core.SVNCommitInfo;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNLogEntry;
-import org.tmatesoft.svn.core.SVNLogEntryPath;
-import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectFieldsStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
-import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
-import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
-import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
+import org.tmatesoft.svn.core.internal.wc17.db.*;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
-import org.tmatesoft.svn.core.wc2.SvnChecksum;
-import org.tmatesoft.svn.core.wc2.SvnCopy;
-import org.tmatesoft.svn.core.wc2.SvnCopySource;
-import org.tmatesoft.svn.core.wc2.SvnMerge;
-import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
-import org.tmatesoft.svn.core.wc2.SvnRemoteCopy;
-import org.tmatesoft.svn.core.wc2.SvnRevisionRange;
-import org.tmatesoft.svn.core.wc2.SvnStatus;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
+import org.tmatesoft.svn.core.wc2.*;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Map;
 
 public class CopyTest {
 
@@ -131,7 +118,7 @@ public class CopyTest {
                 Assert.assertEquals(1, logEntries.size());
                 final SVNLogEntry logEntry = (SVNLogEntry) logEntries.iterator().next();
 
-                final Map<String,SVNLogEntryPath> changedPaths = logEntry.getChangedPaths();
+                final Map<String, SVNLogEntryPath> changedPaths = logEntry.getChangedPaths();
                 Assert.assertEquals(1, changedPaths.size());
 
                 final SVNLogEntryPath logEntryPath = changedPaths.get("/another directory");
@@ -147,24 +134,67 @@ public class CopyTest {
         }
     }
 
-    private void assertWCDbContainsCorrectChecksumTypesInPristineTable(SvnOperationFactory svnOperationFactory, File workingCopyDirectory) throws SVNException {
-        final SVNWCDb db = new SVNWCDb();
-        db.open(ISVNWCDb.SVNWCDbOpenMode.ReadOnly, svnOperationFactory.getOptions(), false, true);
+    @Test
+    public void testRepositoryToWorkingCopyCorrectRepositoryPathSvnAccess() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+        Assume.assumeTrue(TestUtil.areAllSvnserveOptionsSpecified(options));
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testRepositoryToWorkingCopyCorrectRepositoryPathSvnAccess", options);
         try {
-            final SVNWCDb.DirParsedInfo dirParsedInfo = db.parseDir(workingCopyDirectory, SVNSqlJetDb.Mode.ReadOnly);
-            final SVNSqlJetStatement selectMd5Statement = dirParsedInfo.wcDbDir.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_PRISTINE_MD5_CHECKSUM);
-            try {
-                while (selectMd5Statement.next()) {
-                    final SvnChecksum md5Checksum = SvnWcDbStatementUtil.getColumnChecksum(selectMd5Statement, SVNWCDbSchema.PRISTINE__Fields.md5_checksum);
-                    final SvnChecksum sha1Checksum = SvnWcDbStatementUtil.getColumnChecksum(selectMd5Statement, SVNWCDbSchema.PRISTINE__Fields.checksum);
-                    Assert.assertEquals(SvnChecksum.Kind.md5, md5Checksum.getKind());
-                    Assert.assertEquals(SvnChecksum.Kind.sha1, sha1Checksum.getKind());
-                }
-            } finally {
-                selectMd5Statement.reset();
-            }
+            final SVNURL url = sandbox.createSvnRepositoryWithSvnAccess();
+            Assume.assumeTrue(url.getPath().length() == 0);
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("sourceFile");
+            commitBuilder.addFile("targetFile");
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url);
+
+            final SVNURL sourceFileUrl = url.appendPath("sourceFile", false);
+            final File targetFile = workingCopy.getFile("targetFile");
+
+            workingCopy.delete(targetFile);
+
+            final SvnCopy copy = svnOperationFactory.createCopy();
+            copy.addCopySource(SvnCopySource.create(SvnTarget.fromURL(sourceFileUrl), SVNRevision.HEAD));
+            copy.setSingleTarget(SvnTarget.fromFile(targetFile));
+            copy.run();
+
+            assertNoRepositoryPathStartsWithSlash(svnOperationFactory, workingCopy.getWorkingCopyDirectory());
+
         } finally {
-            db.close();
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    private void assertNoRepositoryPathStartsWithSlash(SvnOperationFactory svnOperationFactory, File workingCopyDirectory) throws SVNException {
+        final SVNWCContext context = new SVNWCContext(ISVNWCDb.SVNWCDbOpenMode.ReadOnly, svnOperationFactory.getOptions(), false, false, svnOperationFactory.getEventHandler());
+        try {
+            final SVNWCDb db = (SVNWCDb) context.getDb();
+            final SVNWCDb.DirParsedInfo dirParsedInfo = db.parseDir(workingCopyDirectory, SVNSqlJetDb.Mode.ReadOnly);
+            final SVNSqlJetDb sdb = dirParsedInfo.wcDbDir.getWCRoot().getSDb();
+
+            final SelectRepositoryRelPath selectRepositoryRelPath = new SelectRepositoryRelPath(sdb);
+            try {
+                selectRepositoryRelPath.bindf("i", dirParsedInfo.wcDbDir.getWCRoot().getWcId());
+
+                int recordsCount = 0;
+                while (selectRepositoryRelPath.next()) {
+                    recordsCount++;
+                    final String reposPath = selectRepositoryRelPath.getColumnString(SVNWCDbSchema.NODES__Fields.repos_path);
+                    Assert.assertFalse(reposPath.startsWith("/"));
+                }
+
+                Assert.assertEquals(4, recordsCount); //1 for root, 1 for sourceFile, 2 for targetFile
+            } finally {
+                selectRepositoryRelPath.reset();
+            }
+
+        } finally {
+            context.close();
         }
     }
 
@@ -200,7 +230,7 @@ public class CopyTest {
             final String actualNewContents = TestUtil.readFileContentsString(targetFile);
             Assert.assertEquals(expectedNewContents, actualNewContents);
 
-            final Map<File,SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
             Assert.assertEquals(move ? SVNStatusType.STATUS_DELETED : SVNStatusType.STATUS_MODIFIED, statuses.get(sourceFile).getNodeStatus());
             Assert.assertEquals(SVNStatusType.STATUS_ADDED, statuses.get(targetFile).getNodeStatus());
             Assert.assertEquals(url.appendPath(sourceFile.getName(), false), statuses.get(targetFile).getCopyFromUrl());
@@ -211,7 +241,40 @@ public class CopyTest {
         }
     }
 
+    private void assertWCDbContainsCorrectChecksumTypesInPristineTable(SvnOperationFactory svnOperationFactory, File workingCopyDirectory) throws SVNException {
+        final SVNWCDb db = new SVNWCDb();
+        db.open(ISVNWCDb.SVNWCDbOpenMode.ReadOnly, svnOperationFactory.getOptions(), false, true);
+        try {
+            final SVNWCDb.DirParsedInfo dirParsedInfo = db.parseDir(workingCopyDirectory, SVNSqlJetDb.Mode.ReadOnly);
+            final SVNSqlJetStatement selectMd5Statement = dirParsedInfo.wcDbDir.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_PRISTINE_MD5_CHECKSUM);
+            try {
+                while (selectMd5Statement.next()) {
+                    final SvnChecksum md5Checksum = SvnWcDbStatementUtil.getColumnChecksum(selectMd5Statement, SVNWCDbSchema.PRISTINE__Fields.md5_checksum);
+                    final SvnChecksum sha1Checksum = SvnWcDbStatementUtil.getColumnChecksum(selectMd5Statement, SVNWCDbSchema.PRISTINE__Fields.checksum);
+                    Assert.assertEquals(SvnChecksum.Kind.md5, md5Checksum.getKind());
+                    Assert.assertEquals(SvnChecksum.Kind.sha1, sha1Checksum.getKind());
+                }
+            } finally {
+                selectMd5Statement.reset();
+            }
+        } finally {
+            db.close();
+        }
+    }
+
     private String getTestName() {
         return "CopyTest";
+    }
+
+    private static class SelectRepositoryRelPath extends SVNSqlJetSelectFieldsStatement<SVNWCDbSchema.NODES__Fields> {
+
+        public SelectRepositoryRelPath(SVNSqlJetDb sDb) throws SVNException {
+            super(sDb, SVNWCDbSchema.NODES);
+        }
+
+        @Override
+        protected void defineFields() {
+            fields.add(SVNWCDbSchema.NODES__Fields.repos_path);
+        }
     }
 }
