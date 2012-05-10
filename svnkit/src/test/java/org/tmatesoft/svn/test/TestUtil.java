@@ -1,16 +1,5 @@
 package org.tmatesoft.svn.test;
 
-import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.ServerSocket;
-import java.util.HashMap;
-import java.util.Map;
-
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -19,13 +8,13 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumInputStream;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
-import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
-import org.tmatesoft.svn.core.wc2.SvnChecksum;
-import org.tmatesoft.svn.core.wc2.SvnGetStatus;
-import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
-import org.tmatesoft.svn.core.wc2.SvnStatus;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
+import org.tmatesoft.svn.core.wc2.*;
 import org.tmatesoft.svn.util.SVNLogType;
+
+import java.io.*;
+import java.net.ServerSocket;
+import java.util.HashMap;
+import java.util.Map;
 
 public class TestUtil {
     public static File createDirectory(File parentPath, String suggestedName) {
@@ -163,8 +152,16 @@ public class TestUtil {
         return path.replace(File.separatorChar, '/');
     }
 
+    public static String convertSlashesToSystem(String path) {
+        return path.replace('/', File.separatorChar);
+    }
+
     public static boolean areAllApacheOptionsSpecified(TestOptions testOptions) {
         return testOptions.getApacheRoot() != null && testOptions.getApacheCtlCommand() != null;
+    }
+
+    public static boolean areAllSvnserveOptionsSpecified(TestOptions testOptions) {
+        return testOptions.getSvnserveCommand() != null;
     }
 
     public static SvnChecksum calculateSha1(byte[] contents) throws SVNException {
