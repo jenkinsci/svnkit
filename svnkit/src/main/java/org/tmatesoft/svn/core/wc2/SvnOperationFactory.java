@@ -1211,7 +1211,18 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
     public SvnGetStatusSummary createGetStatusSummary() {
         return new SvnGetStatusSummary(this);
     }
-    
+
+    /**
+     * Sets whether to dispose repository pool on {@link #dispose()} call.
+     * This flag has sense only if <code>repositoryPool</code> field is not <code>null</code>.
+     * Otherwise the flag value can be overwritten by {@link #setRepositoryPool(ISVNRepositoryPool)} or
+     * {@link #getRepositoryPool()} calls.
+     * @param dispose whether to dispose repository pool on {@link #dispose()} call
+     */
+    public void setAutoDisposeRepositoryPool(boolean dispose) {
+        autoDisposeRepositoryPool = dispose;
+    }
+
     protected Object run(SvnOperation<?> operation) throws SVNException {
         ISvnOperationRunner<?, SvnOperation<?>> runner = getImplementation(operation);
         if (runner != null) {
@@ -1269,10 +1280,6 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
     
     private boolean isAutoDisposeRepositoryPool() {
         return autoDisposeRepositoryPool;
-    }
-    
-    private void setAutoDisposeRepositoryPool(boolean dispose) {
-        autoDisposeRepositoryPool = dispose;
     }
 
     protected ISvnOperationRunner<?, SvnOperation<?>> getImplementation(SvnOperation<?> operation) throws SVNException {
