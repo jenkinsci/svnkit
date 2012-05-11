@@ -5,6 +5,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNStreamGobbler;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.util.SVNLogType;
 
 import java.io.File;
@@ -23,9 +24,53 @@ public class GitRepositoryAccess {
         this.gitCommand = gitCommand;
     }
 
+    public void deleteDotGitDirectory() throws SVNException {
+        SVNFileUtil.deleteAll(new File(workingTree, ".git"), true, null);
+    }
+
+    public void init() throws SVNException {
+        runGit("init", ".");
+    }
+
+    public void performImport(String commitMessage) throws SVNException {
+        runGit("add", ".");
+        runGit("commit", "-m", commitMessage);
+    }
+
+    public String getCommitMessage(GitObjectId commitId) throws SVNException {
+        final String output = runGit("cat-file", "commit", commitId.asString());
+        final String[] lines = output.split("\n");
+        final StringBuilder commitMessageBuilder = new StringBuilder();
+
+        boolean emptyLineFound = false;
+        for (String line : lines) {
+            line = line.trim();
+            if (line.length() == 0) {
+                emptyLineFound = true;
+                continue;
+            }
+            if (!emptyLineFound) {
+                continue;
+            }
+            //this line belongs to a commit message
+            commitMessageBuilder.append(line).append('\n');
+        }
+        return commitMessageBuilder.toString();
+    }
+
     public GitObjectId getHeadId() throws SVNException {
-        String output = runGit("rev-parse", "HEAD");
-        return new GitObjectId(output);
+        final String output = runGit("rev-parse", "HEAD");
+        return new GitObjectId(output.trim());
+    }
+
+    public List<GitObjectId> getCommitsByFirstParent(GitObjectId fromCommitId) throws SVNException {
+        final String output = runGit("rev-list", "--first-parent", fromCommitId.asString());
+        return parseCommitsList(output);
+    }
+
+    public List<GitObjectId> getCommitsByFirstParentUntil(GitObjectId fromCommitId, GitObjectId toCommitIdExcluding) throws SVNException {
+        final String output = runGit("rev-list", "--first-parent", fromCommitId.asString(), "^" + toCommitIdExcluding);
+        return parseCommitsList(output);
     }
 
     private String runGit(String... args) throws SVNException {
@@ -67,5 +112,18 @@ public class GitRepositoryAccess {
         }
 
         return inputGobbler.getResult();
+    }
+
+    private List<GitObjectId> parseCommitsList(String output) {
+        final String[] lines = output.split("\n");
+        final List<GitObjectId> commits = new ArrayList<GitObjectId>(lines.length);
+        for (String line : lines) {
+            line = line.trim();
+            if (line.length() == 0) {
+                continue;
+            }
+            commits.add(new GitObjectId(line));
+        }
+        return commits;
     }
 }

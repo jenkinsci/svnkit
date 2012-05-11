@@ -92,25 +92,40 @@ public class PythonTests {
             absTestsRootLocation = "/" + absTestsRootLocation; 
         }
 
-        final File currentDirectory = new File("").getAbsoluteFile();
-        runPythonTestsForAllProtocols(libPath, properties, defaultTestSuite, logger, absTestsRootLocation);
+        try {
+            final File currentDirectory = new File("").getAbsoluteFile();
 
-        if (false) {
-            //TODO: put proper condition
-            changeCurrentDirectory(currentDirectory);
+            final File gitRepositoryDirectory = new File("svn-python-tests/svn-test-work");
+            final GitRepositoryAccess gitRepositoryAccess = new GitRepositoryAccess(gitRepositoryDirectory, "git");
 
-            File gitRepository = new File("svn-python-tests/svn-test-work");
-
-            final String patternMatchingNoCommand = "^$";
-            properties.put("python.tests.pattern", patternMatchingNoCommand);
-
-            try {
-                generateScripts(properties);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            gitRepositoryAccess.deleteDotGitDirectory();
 
             runPythonTestsForAllProtocols(libPath, properties, defaultTestSuite, logger, absTestsRootLocation);
+
+            if (false) {
+                //TODO: put proper condition
+                changeCurrentDirectory(currentDirectory);
+
+                final GitObjectId headIdAfterJSVN = gitRepositoryAccess.getHeadId();
+                final List<GitObjectId> commitsAfterJSVN = gitRepositoryAccess.getCommitsByFirstParent(headIdAfterJSVN);
+                //TODO: work with commitsAfterJSVN
+
+                final String patternMatchingNoCommand = "^$";
+                properties.put("python.tests.pattern", patternMatchingNoCommand);
+
+                try {
+                    generateScripts(properties);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                runPythonTestsForAllProtocols(libPath, properties, defaultTestSuite, logger, absTestsRootLocation);
+                final GitObjectId headIdAfterSVN = gitRepositoryAccess.getHeadId();
+                final List<GitObjectId> commitsAfterSVN = gitRepositoryAccess.getCommitsByFirstParentUntil(headIdAfterSVN, headIdAfterJSVN);
+                //TODO: work with commitsAfterSVN
+            }
+        } catch (SVNException e) {
+            e.printStackTrace();
         }
 
         for (int i = 0; i < ourLoggers.length; i++) {
