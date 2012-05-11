@@ -1,12 +1,12 @@
 package org.tmatesoft.svn.test;
 
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
+import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc2.*;
 
 import java.io.File;
@@ -15,7 +15,6 @@ import java.util.List;
 
 public class UpdateTest {
 
-    @Ignore("Currently fails, see SVNKIT-243")
     @Test
     public void testUpdateWithoutChangesReportsUnlock() throws Exception {
         final TestOptions options = TestOptions.getInstance();
@@ -57,12 +56,14 @@ public class UpdateTest {
             final SVNEvent updateCompletedEvent = events.get(2);
 
             Assert.assertEquals(SVNEventAction.UPDATE_STARTED, updateStartedEvent.getAction());
-            Assert.assertEquals(SVNEventAction.UNLOCKED, unlockedEvent.getAction());
+            Assert.assertEquals(SVNEventAction.UPDATE_UPDATE, unlockedEvent.getAction());
             Assert.assertEquals(SVNEventAction.UPDATE_COMPLETED, updateCompletedEvent.getAction());
 
             Assert.assertEquals(workingCopyDirectory, updateStartedEvent.getFile());
             Assert.assertEquals(file, unlockedEvent.getFile());
             Assert.assertEquals(workingCopyDirectory, updateCompletedEvent.getFile());
+
+            Assert.assertEquals(SVNStatusType.LOCK_UNLOCKED, unlockedEvent.getLockStatus());
 
         } finally {
             svnOperationFactory.dispose();

@@ -1452,16 +1452,20 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             fb.directoryBaton.notPresentFiles.remove(fb.name);
         }
         
-        if (myWCContext.getEventHandler() != null && !fb.alreadyNotified && fb.edited) {
+        if (myWCContext.getEventHandler() != null && !fb.alreadyNotified
+                && (fb.edited || lockState == SVNStatusType.LOCK_UNLOCKED)) {
             SVNEventAction action = SVNEventAction.UPDATE_UPDATE;
-            if (fb.shadowed) {
-                action = fb.addingFile ? SVNEventAction.UPDATE_SHADOWED_ADD : SVNEventAction.UPDATE_SHADOWED_UPDATE;
-            } else if (fb.obstructionFound || fb.addExisted) {
-                if (contentState != SVNStatusType.CONFLICTED) {
-                    action = SVNEventAction.UPDATE_EXISTS;
+
+            if (fb.edited) {
+                if (fb.shadowed) {
+                    action = fb.addingFile ? SVNEventAction.UPDATE_SHADOWED_ADD : SVNEventAction.UPDATE_SHADOWED_UPDATE;
+                } else if (fb.obstructionFound || fb.addExisted) {
+                    if (contentState != SVNStatusType.CONFLICTED) {
+                        action = SVNEventAction.UPDATE_EXISTS;
+                    }
+                } else if (fb.addingFile) {
+                    action = SVNEventAction.UPDATE_ADD;
                 }
-            } else if (fb.addingFile) {
-                action = SVNEventAction.UPDATE_ADD;
             }
             
             String mimeType = myWCContext.getProperty(fb.localAbsolutePath, SVNProperty.MIME_TYPE);
