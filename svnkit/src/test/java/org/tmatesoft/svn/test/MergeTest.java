@@ -1,7 +1,5 @@
 package org.tmatesoft.svn.test;
 
-import java.io.File;
-
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -9,16 +7,22 @@ import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNConflictChoice;
+import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
+import org.tmatesoft.svn.core.wc2.SvnStatus;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.core.wc2.SvnUpdate;
 
-@Ignore("Temporarily ignored")
+import java.io.File;
+import java.util.Map;
+
 public class MergeTest {
 
+    @Ignore("Temporarily ignored")
     @Test
     public void testConflictResolution() throws Exception {
         final TestOptions options = TestOptions.getInstance();
@@ -50,6 +54,47 @@ public class MergeTest {
 
             final String fileContentsString = TestUtil.readFileContentsString(file);
             Assert.assertEquals("mine", fileContentsString);
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testRemoteAddOverUnversionedFileConflictResolution() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testRemoteAddOverUnversionedFileConflictResolution", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder1 = new CommitBuilder(url);
+            commitBuilder1.commit();
+
+            final CommitBuilder commitBuilder2 = new CommitBuilder(url);
+            commitBuilder2.addFile("file", "their".getBytes());
+            commitBuilder2.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, 1);
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+            final File file = workingCopy.getFile("file");
+
+            SVNFileUtil.ensureDirectoryExists(file.getParentFile());
+            TestUtil.writeFileContentsString(file, "mine");
+
+            final SvnUpdate update = svnOperationFactory.createUpdate();
+            update.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            update.run();
+
+            runResolve(svnOperationFactory, file, SVNConflictChoice.MERGED);
+
+            Assert.assertEquals("mine", TestUtil.readFileContentsString(file));
+
+            final Map<File,SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
+            Assert.assertEquals(SVNStatusType.STATUS_DELETED, statuses.get(file).getNodeStatus());
+            Assert.assertFalse(statuses.get(file).isConflicted());
 
         } finally {
             svnOperationFactory.dispose();
