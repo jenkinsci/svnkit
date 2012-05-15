@@ -17,6 +17,8 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.ISVNGnomeKeyringPasswordProvider;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -43,6 +45,8 @@ public class SVNJNAUtil {
         }
         String jnaEnabledProperty = System.getProperty("svnkit.useJNA", "true");
         ourIsJNAEnabled = Boolean.valueOf(jnaEnabledProperty).booleanValue();
+        
+        SVNDebugLog.getDefaultLog().logFine(SVNLogType.WC, "JNA present/enabled: " + ourIsJNAPresent + "/" + ourIsJNAEnabled);
     }
     
     public static void setJNAEnabled(boolean enabled) {
