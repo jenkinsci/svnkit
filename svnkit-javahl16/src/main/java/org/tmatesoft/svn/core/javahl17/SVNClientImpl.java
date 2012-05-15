@@ -2182,8 +2182,9 @@ public class SVNClientImpl implements ISVNClient {
     private Info getInfo(SvnInfo info) throws ClientException {
         String url = getUrlString(info.getUrl());
         String repositoryRoot = getUrlString(info.getRepositoryRootUrl());
-        String path = SVNPathUtil.getRelativePath(repositoryRoot, url);
         boolean hasWcInfo = info.getWcInfo() != null;
+        String path = (repositoryRoot != null && url != null) ? SVNPathUtil.getRelativePath(repositoryRoot, url) :
+                        (hasWcInfo ? getFilePath(info.getWcInfo().getPath()) : null);
 
         return new Info(path,
                 hasWcInfo ? getFilePath(info.getWcInfo().getWcRoot()) : null,
