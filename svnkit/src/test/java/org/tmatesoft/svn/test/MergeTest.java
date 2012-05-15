@@ -8,16 +8,11 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.wc.SVNClientManager;
-import org.tmatesoft.svn.core.wc.SVNConflictChoice;
-import org.tmatesoft.svn.core.wc.SVNStatusType;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
-import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
-import org.tmatesoft.svn.core.wc2.SvnStatus;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
-import org.tmatesoft.svn.core.wc2.SvnUpdate;
+import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.wc2.*;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.Map;
 
 public class MergeTest {
@@ -95,6 +90,51 @@ public class MergeTest {
             final Map<File,SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
             Assert.assertEquals(SVNStatusType.STATUS_DELETED, statuses.get(file).getNodeStatus());
             Assert.assertFalse(statuses.get(file).isConflicted());
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testBothDeletedTreeConflict() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testBothDeletedTreeConflict", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder1 = new CommitBuilder(url);
+            commitBuilder1.addFile("file");
+            commitBuilder1.commit();
+
+            final CommitBuilder commitBuilder2 = new CommitBuilder(url);
+            commitBuilder2.delete("file");
+            commitBuilder2.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, 1);
+            final File file = workingCopy.getFile("file");
+
+            workingCopy.delete(file);
+
+            final SvnUpdate update = svnOperationFactory.createUpdate();
+            update.setSingleTarget(SvnTarget.fromFile(workingCopy.getWorkingCopyDirectory()));
+            update.run();
+
+            final SvnGetInfo getInfo = svnOperationFactory.createGetInfo();
+            getInfo.setSingleTarget(SvnTarget.fromFile(file));
+            final SvnInfo svnInfo = getInfo.run();
+
+            final Collection<SVNConflictDescription> conflicts = svnInfo.getWcInfo().getConflicts();
+            Assert.assertEquals(1, conflicts.size());
+
+            final SVNTreeConflictDescription conflict = (SVNTreeConflictDescription)conflicts.iterator().next();
+            Assert.assertEquals(SVNConflictAction.DELETE, conflict.getConflictAction());
+            Assert.assertEquals(SVNConflictReason.DELETED, conflict.getConflictReason());
+            Assert.assertEquals(url, conflict.getSourceLeftVersion().getRepositoryRoot());
+            Assert.assertEquals(url, conflict.getSourceRightVersion().getRepositoryRoot());
 
         } finally {
             svnOperationFactory.dispose();
