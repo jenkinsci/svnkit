@@ -117,5 +117,5 @@ public interface ISVNAnnotateHandler {
      * Handles the EOF met after the document contents.
      * @since  1.2.0
      */
-    public void handleEOF();
+    public void handleEOF() throws SVNException;
 }
