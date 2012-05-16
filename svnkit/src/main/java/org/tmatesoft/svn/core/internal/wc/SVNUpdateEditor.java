@@ -1657,9 +1657,14 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
         File victim = alreadyInTreeConflict(fullPath);
         SVNTreeConflictDescription treeConflict = null;
         if (victim == null) {
+            //tree conflict didn't exist before
             SVNLog log = parent.getLog();
             SVNURL theirURL = SVNURL.parseURIEncoded(info.URL);
             treeConflict = checkTreeConflict(fullPath, entry, adminArea, log, SVNConflictAction.EDIT, SVNNodeKind.FILE, theirURL);
+            if (treeConflict != null) {
+                //now tree conflict is created
+                info.isTreeConflictCreationAddedToLog = true;
+            }
         }
         String name = SVNPathUtil.tail(path);
         boolean hasTextConflicts = adminArea.hasTextConflict(name);
@@ -1690,6 +1695,13 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
         if (fileInfo.isSkipped) {
             maybeBumpDirInfo(dirInfo);
             return;
+        }
+
+        // a workaround for SVN issue 3525 on the client side
+        if (fileInfo.isTreeConflictCreationAddedToLog && !fileInfo.receivedTextDelta &&
+                (fileInfo.getChangedEntryProperties() != null && !fileInfo.getChangedEntryProperties().isEmpty()) &&
+                (fileInfo.getChangedProperties() != null && !fileInfo.getChangedProperties().isEmpty())) {
+            dirInfo.getLog().deleteCommandsByName(SVNLog.ADD_TREE_CONFLICT, false);
         }
 
         File fullPath = myAdminInfo.getAnchor().getFile(fileInfo.getPath());
@@ -2202,6 +2214,13 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
         private SVNChecksumInputStream sourceChecksumStream;
         private boolean treeConficted;
 
+        // a workaround for SVN issue 3525 on the client side
+        // in short: because of some bug, all SVN servers of version < 1.6.17
+        // may send only entry properties change in update editor (instead of sending nothing)
+        // if a client working with such a buggy server, it should ignore those changes
+        // instead of a tree conflict creation
+        private boolean isTreeConflictCreationAddedToLog;
+
         // Set if this file is locally deleted or is being added
         // within a locally deleted tree.
         private boolean isDeleted;
@@ -2217,6 +2236,7 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
             super(path);
             this.Parent = parent;
             this.isDeleted = false;
+            this.isTreeConflictCreationAddedToLog = false;
         }
 
         public SVNAdminArea getAdminArea() throws SVNException {

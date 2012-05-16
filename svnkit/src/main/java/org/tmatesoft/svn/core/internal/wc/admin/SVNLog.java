@@ -128,6 +128,32 @@ public abstract class SVNLog {
         }
     }
 
+    public void deleteCommandsByName(String name, boolean save) throws SVNException {
+        if (myCache == null) {
+            return;
+        }
+
+        for (Iterator iterator = myCache.iterator(); iterator.hasNext(); ) {
+            Object command = iterator.next();
+            if (!(command instanceof SVNProperties)) {
+                continue;
+            }
+
+            SVNProperties attributes = (SVNProperties) command;
+            String commandName = attributes.getStringValue("");
+
+            if (!name.equals(commandName)) {
+                continue;
+            }
+
+            iterator.remove();
+        }
+
+        if (save) {
+            save();
+        }
+    }
+
     public SVNStatusType logChangedEntryProperties(String name, SVNProperties modifiedEntryProps) throws SVNException {
         SVNStatusType status = SVNStatusType.LOCK_UNCHANGED;
         if (modifiedEntryProps != null) {
