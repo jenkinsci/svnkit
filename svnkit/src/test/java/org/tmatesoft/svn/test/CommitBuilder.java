@@ -114,11 +114,11 @@ public class CommitBuilder {
             deleteEntries(commitEditor, directory);
             addChildrensFiles(commitEditor, directory);
         }
+        closeUntilCommonAncestor(commitEditor, currentDirectory, "");
+        currentDirectory = "";
 
         deleteEntries(commitEditor, "");
         addChildrensFiles(commitEditor, "");
-
-        closeUntilCommonAncestor(commitEditor, currentDirectory, "");
 
         commitEditor.closeDir();
         return commitEditor.closeEdit();
