@@ -148,12 +148,12 @@ public class MergeTest {
     }
 
     @Test
-    public void testUpdateDeletedLockedFileDoesntCauseTreeConflict() throws Exception {
+    public void testUpdateDeletedLockedFileDoesntCauseTreeConflictDavAccess() throws Exception {
         final TestOptions options = TestOptions.getInstance();
         Assume.assumeTrue(TestUtil.areAllApacheOptionsSpecified(options));
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
-        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testUpdateDeletedLockedFileDoesntCauseTreeConflict", options);
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testUpdateDeletedLockedFileDoesntCauseTreeConflictDavAccess", options);
         try {
             final BasicAuthenticationManager authenticationManager = new BasicAuthenticationManager("user", "password");
             svnOperationFactory.setAuthenticationManager(authenticationManager);
@@ -164,11 +164,69 @@ public class MergeTest {
 
             final CommitBuilder commitBuilder = new CommitBuilder(url);
             commitBuilder.setAuthenticationManager(authenticationManager);
-            commitBuilder.addFile("dir/file");
+            commitBuilder.addFile("directory/file");
             commitBuilder.commit();
 
             final File workingCopyDirectory = sandbox.createDirectory("wc");
-            final File file = new File(workingCopyDirectory, "dir/file");
+            final File file = new File(workingCopyDirectory, "directory/file");
+
+            final SvnCheckout checkout = svnOperationFactory.createCheckout();
+            checkout.setSource(SvnTarget.fromURL(url));
+            checkout.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            checkout.run();
+
+            final SvnScheduleForRemoval scheduleForRemoval = svnOperationFactory.createScheduleForRemoval();
+            scheduleForRemoval.setSingleTarget(SvnTarget.fromFile(file));
+            scheduleForRemoval.run();
+
+            final SvnSetLock setLock = svnOperationFactory.createSetLock();
+            setLock.setSingleTarget(SvnTarget.fromFile(file));
+            setLock.run();
+
+            final SvnUpdate update = svnOperationFactory.createUpdate();
+            update.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            update.run();
+
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
+            Assert.assertEquals(SVNStatusType.STATUS_DELETED, statuses.get(file).getNodeStatus());
+            Assert.assertNotNull(statuses.get(file).getLock());
+
+            final SVNWCContext context = new SVNWCContext(svnOperationFactory.getOptions(), svnOperationFactory.getEventHandler());
+            try {
+                final SVNStatus oldStatus = SvnCodec.status(context, statuses.get(file));
+                Assert.assertNull(oldStatus.getTreeConflict());
+            } finally {
+                context.close();
+            }
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testUpdateDeletedLockedFileDoesntCauseTreeConflictSvnAccess() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+        Assume.assumeTrue(TestUtil.areAllSvnserveOptionsSpecified(options));
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testUpdateDeletedLockedFileDoesntCauseTreeConflictSvnAccess", options);
+        try {
+            final BasicAuthenticationManager authenticationManager = new BasicAuthenticationManager("user", "password");
+            svnOperationFactory.setAuthenticationManager(authenticationManager);
+
+            final Map<String, String> loginToPassword = new HashMap<String, String>();
+            loginToPassword.put("user", "password");
+            final SVNURL url = sandbox.createSvnRepositoryWithSvnAccess(loginToPassword);
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.setAuthenticationManager(authenticationManager);
+            commitBuilder.addFile("directory/file");
+            commitBuilder.commit();
+
+            final File workingCopyDirectory = sandbox.createDirectory("wc");
+            final File file = new File(workingCopyDirectory, "directory/file");
 
             final SvnCheckout checkout = svnOperationFactory.createCheckout();
             checkout.setSource(SvnTarget.fromURL(url));
