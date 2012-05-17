@@ -138,6 +138,7 @@ public class CopyTest {
     public void testRepositoryToWorkingCopyCorrectRepositoryPathSvnAccess() throws Exception {
         final TestOptions options = TestOptions.getInstance();
         Assume.assumeTrue(TestUtil.areAllSvnserveOptionsSpecified(options));
+        Assume.assumeTrue(TestUtil.isNewWorkingCopyTest());
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
         final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testRepositoryToWorkingCopyCorrectRepositoryPathSvnAccess", options);
