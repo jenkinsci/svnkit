@@ -555,6 +555,150 @@ public class MergeTest {
         }
     }
 
+    @Test
+    public void testUpdateOnMovedParentOfLockedFileDoesntCauseTreeConflictDavAccess() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+        Assume.assumeTrue(TestUtil.areAllApacheOptionsSpecified(options));
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testUpdateOnRenamedParentOfLockedFileDoesntCauseTreeConflictDavAccess", options);
+        try {
+            final BasicAuthenticationManager authenticationManager = new BasicAuthenticationManager("user", "password");
+            svnOperationFactory.setAuthenticationManager(authenticationManager);
+
+            final Map<String, String> loginToPassword = new HashMap<String, String>();
+            loginToPassword.put("user", "password");
+            final SVNURL url = sandbox.createSvnRepositoryWithDavAccess(loginToPassword);
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.setAuthenticationManager(authenticationManager);
+            commitBuilder.addFile("directory/subdirectory/file");
+            commitBuilder.addDirectory("anotherDirectory");
+            commitBuilder.commit();
+
+            final File workingCopyDirectory = sandbox.createDirectory("wc");
+            final File directory = new File(workingCopyDirectory, "directory");
+            final File subdirectory = new File(directory, "subdirectory");
+            final File file = new File(subdirectory, "file");
+            final File anotherDirectory = new File(workingCopyDirectory, "anotherDirectory");
+
+            final SvnCheckout checkout = svnOperationFactory.createCheckout();
+            checkout.setSource(SvnTarget.fromURL(url));
+            checkout.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            checkout.run();
+
+            final SvnSetLock setLock = svnOperationFactory.createSetLock();
+            setLock.setSingleTarget(SvnTarget.fromFile(file));
+            setLock.run();
+
+            final SvnScheduleForRemoval scheduleForRemoval = svnOperationFactory.createScheduleForRemoval();
+            scheduleForRemoval.setSingleTarget(SvnTarget.fromFile(file));
+            scheduleForRemoval.run();
+
+            final SvnCopy copy = svnOperationFactory.createCopy();
+            copy.setFailWhenDstExists(false);
+            copy.setMove(true);
+            copy.addCopySource(SvnCopySource.create(SvnTarget.fromFile(subdirectory), SVNRevision.WORKING));
+            copy.setSingleTarget(SvnTarget.fromFile(anotherDirectory));
+            copy.run();
+
+            final SvnUpdate update = svnOperationFactory.createUpdate();
+            update.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            update.run();
+
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
+            Assert.assertEquals(SVNStatusType.STATUS_DELETED, statuses.get(subdirectory).getNodeStatus());
+            Assert.assertEquals(SVNStatusType.STATUS_DELETED, statuses.get(file).getNodeStatus());
+            Assert.assertNotNull(statuses.get(file).getLock());
+
+            final SVNWCContext context = new SVNWCContext(svnOperationFactory.getOptions(), svnOperationFactory.getEventHandler());
+            try {
+                final SVNStatus oldDirectoryStatus = SvnCodec.status(context, statuses.get(subdirectory));
+                Assert.assertNull(oldDirectoryStatus.getTreeConflict());
+                final SVNStatus oldFileStatus = SvnCodec.status(context, statuses.get(file));
+                Assert.assertNull(oldFileStatus.getTreeConflict());
+            } finally {
+                context.close();
+            }
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testUpdateOnMovedParentOfLockedFileDoesntCauseTreeConflictSvnAccess() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+        Assume.assumeTrue(TestUtil.areAllSvnserveOptionsSpecified(options));
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testUpdateOnRenamedParentOfLockedFileDoesntCauseTreeConflictSvnAccess", options);
+        try {
+            final BasicAuthenticationManager authenticationManager = new BasicAuthenticationManager("user", "password");
+            svnOperationFactory.setAuthenticationManager(authenticationManager);
+
+            final Map<String, String> loginToPassword = new HashMap<String, String>();
+            loginToPassword.put("user", "password");
+            final SVNURL url = sandbox.createSvnRepositoryWithSvnAccess(loginToPassword);
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.setAuthenticationManager(authenticationManager);
+            commitBuilder.addFile("directory/subdirectory/file");
+            commitBuilder.addDirectory("anotherDirectory");
+            commitBuilder.commit();
+
+            final File workingCopyDirectory = sandbox.createDirectory("wc");
+            final File directory = new File(workingCopyDirectory, "directory");
+            final File subdirectory = new File(directory, "subdirectory");
+            final File file = new File(subdirectory, "file");
+            final File anotherDirectory = new File(workingCopyDirectory, "anotherDirectory");
+
+            final SvnCheckout checkout = svnOperationFactory.createCheckout();
+            checkout.setSource(SvnTarget.fromURL(url));
+            checkout.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            checkout.run();
+
+            final SvnSetLock setLock = svnOperationFactory.createSetLock();
+            setLock.setSingleTarget(SvnTarget.fromFile(file));
+            setLock.run();
+
+            final SvnScheduleForRemoval scheduleForRemoval = svnOperationFactory.createScheduleForRemoval();
+            scheduleForRemoval.setSingleTarget(SvnTarget.fromFile(file));
+            scheduleForRemoval.run();
+
+            final SvnCopy copy = svnOperationFactory.createCopy();
+            copy.setFailWhenDstExists(false);
+            copy.setMove(true);
+            copy.addCopySource(SvnCopySource.create(SvnTarget.fromFile(subdirectory), SVNRevision.WORKING));
+            copy.setSingleTarget(SvnTarget.fromFile(anotherDirectory));
+            copy.run();
+
+            final SvnUpdate update = svnOperationFactory.createUpdate();
+            update.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            update.run();
+
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
+            Assert.assertEquals(SVNStatusType.STATUS_DELETED, statuses.get(subdirectory).getNodeStatus());
+            Assert.assertEquals(SVNStatusType.STATUS_DELETED, statuses.get(file).getNodeStatus());
+            Assert.assertNotNull(statuses.get(file).getLock());
+
+            final SVNWCContext context = new SVNWCContext(svnOperationFactory.getOptions(), svnOperationFactory.getEventHandler());
+            try {
+                final SVNStatus oldDirectoryStatus = SvnCodec.status(context, statuses.get(subdirectory));
+                Assert.assertNull(oldDirectoryStatus.getTreeConflict());
+                final SVNStatus oldFileStatus = SvnCodec.status(context, statuses.get(file));
+                Assert.assertNull(oldFileStatus.getTreeConflict());
+            } finally {
+                context.close();
+            }
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
     private void runResolve(SvnOperationFactory svnOperationFactory, File file, SVNConflictChoice resolution) throws SVNException {
         final SVNClientManager clientManager = SVNClientManager.newInstance(svnOperationFactory.getOptions(), svnOperationFactory.getRepositoryPool());
         try {
