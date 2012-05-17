@@ -192,7 +192,7 @@ public abstract class SVNLog {
             }
 
             SVNProperties commandAttributesWithoutName = new SVNProperties(commandAttributes);
-            commandAttributes.remove("");
+            commandAttributesWithoutName.remove("");
 
             if (!commandAttributesWithoutName.equals(attributes)) {
                 continue;
