@@ -1700,7 +1700,7 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
         // a workaround for SVN issue 3525 on the client side
         if (fileInfo.isTreeConflictCreationAddedToLog && !fileInfo.receivedTextDelta &&
                 (fileInfo.getChangedEntryProperties() != null && !fileInfo.getChangedEntryProperties().isEmpty()) &&
-                (fileInfo.getChangedProperties() != null && !fileInfo.getChangedProperties().isEmpty())) {
+                (fileInfo.getChangedProperties() == null || fileInfo.getChangedProperties().isEmpty())) {
             dirInfo.getLog().deleteCommandsByName(SVNLog.ADD_TREE_CONFLICT, false);
         }
 
