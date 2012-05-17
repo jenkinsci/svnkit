@@ -4,10 +4,7 @@ import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.tmatesoft.svn.core.SVNCommitInfo;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.auth.BasicAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
@@ -84,17 +81,31 @@ public class MergeTest {
             SVNFileUtil.ensureDirectoryExists(file.getParentFile());
             TestUtil.writeFileContentsString(file, "mine");
 
-            final SvnUpdate update = svnOperationFactory.createUpdate();
-            update.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
-            update.run();
+            boolean isExceptionExpected = !TestUtil.isNewWorkingCopyTest();
 
-            runResolve(svnOperationFactory, file, SVNConflictChoice.MERGED);
+            if (isExceptionExpected) {
+                final SvnUpdate update = svnOperationFactory.createUpdate();
+                update.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+                try {
+                    update.run();
+                    Assert.fail("An exception should be thrown");
+                } catch (SVNException e) {
+                    //expected for WC 1.6
+                    Assert.assertEquals(SVNErrorCode.WC_OBSTRUCTED_UPDATE, e.getErrorMessage().getErrorCode());
+                }
+            } else {
+                final SvnUpdate update = svnOperationFactory.createUpdate();
+                update.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+                update.run();
 
-            Assert.assertEquals("mine", TestUtil.readFileContentsString(file));
+                runResolve(svnOperationFactory, file, SVNConflictChoice.MERGED);
 
-            final Map<File,SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
-            Assert.assertEquals(SVNStatusType.STATUS_DELETED, statuses.get(file).getNodeStatus());
-            Assert.assertFalse(statuses.get(file).isConflicted());
+                Assert.assertEquals("mine", TestUtil.readFileContentsString(file));
+
+                final Map<File,SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
+                Assert.assertEquals(SVNStatusType.STATUS_DELETED, statuses.get(file).getNodeStatus());
+                Assert.assertFalse(statuses.get(file).isConflicted());
+            }
 
         } finally {
             svnOperationFactory.dispose();
