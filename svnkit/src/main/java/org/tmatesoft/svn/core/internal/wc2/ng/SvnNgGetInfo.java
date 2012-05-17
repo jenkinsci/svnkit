@@ -139,6 +139,7 @@ public class SvnNgGetInfo extends SvnNgOperationRunner<SvnInfo, SvnGetInfo> impl
         wcInfo.setDepth(SVNDepth.UNKNOWN);
         wcInfo.setRecordedSize(ISVNWCDb.INVALID_FILESIZE);
         wcInfo.setCopyFromRevision(SVNWCContext.INVALID_REVNUM);
+        wcInfo.setSchedule(SvnSchedule.NORMAL);
         
         return info;
     }
