@@ -152,6 +152,9 @@ public class MergeTest {
             Assert.assertEquals(url, conflict.getSourceLeftVersion().getRepositoryRoot());
             Assert.assertEquals(url, conflict.getSourceRightVersion().getRepositoryRoot());
 
+            final SvnSchedule schedule = svnInfo.getWcInfo().getSchedule();
+            Assert.assertEquals(SvnSchedule.NORMAL, schedule);
+
         } finally {
             svnOperationFactory.dispose();
             sandbox.dispose();
