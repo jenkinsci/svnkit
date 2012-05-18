@@ -68,6 +68,7 @@ class JNALibraryLoader {
         if (SVNFileUtil.isOSX || SVNFileUtil.isLinux || SVNFileUtil.isBSD || SVNFileUtil.isSolaris) {
             try {
                 ourCLibrary = (ISVNCLibrary) Native.loadLibrary("c", ISVNCLibrary.class);
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "C Library loaded with JNA: " + ourCLibrary);
                 try {
                     ourUID = ourCLibrary.getuid();
                 } catch (Throwable th) {

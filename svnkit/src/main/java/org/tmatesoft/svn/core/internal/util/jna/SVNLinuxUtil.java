@@ -15,6 +15,8 @@ import java.io.File;
 
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 import com.sun.jna.Memory;
 
@@ -184,6 +186,7 @@ public class SVNLinuxUtil {
             if (cLibrary == null) {
                 return false;
             }
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "Calling JNA.setExecutable");
             synchronized (ourSharedMemory) {
                 ourSharedMemory.clear();
                 int rc;
@@ -242,6 +245,7 @@ public class SVNLinuxUtil {
             if (cLibrary == null) {
                 return false;
             }
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "Calling JNA.setWritable");
             synchronized (ourSharedMemory) {
                 ourSharedMemory.clear();
                 int rc;
