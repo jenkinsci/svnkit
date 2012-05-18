@@ -839,7 +839,7 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
             //originally there were no tree conflict
             SVNURL theirURL = SVNURL.parseURIEncoded(myCurrentDirectory.URL);
             treeConflict = checkTreeConflict(fullPath, entry, parentInfo.getAdminArea(), parentInfo.getLog(), SVNConflictAction.EDIT, SVNNodeKind.DIR, theirURL);
-            if (treeConflict != null) {
+            if (treeConflict != null && treeConflict.getConflictAction() == SVNConflictAction.EDIT) {
                 //now tree conflict is created
                 myCurrentDirectory.treeConflictCreationAttributes = getTreeConflictCreationAttributes(parentInfo.getAdminArea(), treeConflict);
             }
@@ -1685,7 +1685,7 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
             SVNLog log = parent.getLog();
             SVNURL theirURL = SVNURL.parseURIEncoded(info.URL);
             treeConflict = checkTreeConflict(fullPath, entry, adminArea, log, SVNConflictAction.EDIT, SVNNodeKind.FILE, theirURL);
-            if (treeConflict != null) {
+            if (treeConflict != null && treeConflict.getConflictAction() == SVNConflictAction.EDIT) {
                 //now tree conflict is created
 
                 info.treeConflictCreationAttributes = getTreeConflictCreationAttributes(adminArea, treeConflict);
