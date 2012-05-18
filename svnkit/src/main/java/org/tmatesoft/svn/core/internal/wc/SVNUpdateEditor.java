@@ -207,6 +207,8 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
         String name = SVNPathUtil.tail(path);
         SVNEntry entry = myWCAccess.getVersionedEntry(fullPath, true);
 
+        parent.anyChangesInChildren = true;
+
         if (entry.getDepth() == SVNDepth.EXCLUDE) {
             parentArea.deleteEntry(name);
             parentArea.saveEntries(true);
@@ -453,12 +455,7 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
             SVNTreeConflictDescription treeConflict = new SVNTreeConflictDescription(path, entry.getKind(), action, reason,
                     mySwitchURL != null ? SVNOperation.SWITCH : SVNOperation.UPDATE, srcLeftVersion, srcRightVersion);
 
-            Map conflicts = new SVNHashMap();
-            conflicts.put(treeConflict.getPath(), treeConflict);
-            String conflictData = SVNTreeConflictUtil.getTreeConflictData(conflicts);
-            SVNProperties command = new SVNProperties();
-            command.put(SVNLog.NAME_ATTR, parentArea.getThisDirName());
-            command.put(SVNLog.DATA_ATTR, conflictData);
+            SVNProperties command = getTreeConflictCreationAttributes(parentArea, treeConflict);
             log.addCommand(SVNLog.ADD_TREE_CONFLICT, command, false);
             return treeConflict;
         }
@@ -851,8 +848,14 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
         if (victim != null) {
             treeConflict = null;
         } else {
+            //originally there were no tree conflict
             SVNURL theirURL = SVNURL.parseURIEncoded(myCurrentDirectory.URL);
             treeConflict = checkTreeConflict(fullPath, entry, parentInfo.getAdminArea(), parentInfo.getLog(), SVNConflictAction.EDIT, SVNNodeKind.DIR, theirURL);
+            if (treeConflict != null && treeConflict.getConflictAction() == SVNConflictAction.EDIT) {
+                //now tree conflict is created
+                myCurrentDirectory.treeConflictCreationAttributes = getTreeConflictCreationAttributes(parentInfo.getAdminArea(), treeConflict);
+            }
+
         }
 
         if (treeConflict != null && treeConflict.getConflictReason() == SVNConflictReason.DELETED && !inDeletedTree(fullPath, true)) {
@@ -966,6 +969,26 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
         SVNProperties modifiedWCProps = myCurrentDirectory.getChangedWCProperties();
         SVNProperties modifiedEntryProps = myCurrentDirectory.getChangedEntryProperties();
         SVNProperties modifiedProps = myCurrentDirectory.getChangedProperties();
+
+        if (!myCurrentDirectory.anyChangesInChildren &&
+                (modifiedProps == null || modifiedProps.isEmpty())) {
+            // a workaround for SVN issue 3525 on the client side
+            // a situation is possible that openDir/openFile/closeFile/closeDir invocation describes no real changes
+            // (except maybe entry- and wc- properties)
+            // in this case we should make sure no tree conflict is created
+            if (myCurrentDirectory.treeConflictCreationAttributes != null) {
+                SVNDirectoryInfo parentDirectoryInfo = myCurrentDirectory.Parent;
+                if (parentDirectoryInfo != null) {
+                    SVNLog log = parentDirectoryInfo.getLog();
+                    log.deleteCommandsByNameAndAttributes(SVNLog.ADD_TREE_CONFLICT, myCurrentDirectory.treeConflictCreationAttributes, false);
+                }
+            }
+        } else {
+            SVNDirectoryInfo parentDirectoryInfo = myCurrentDirectory.Parent;
+            if (parentDirectoryInfo != null) {
+                parentDirectoryInfo.anyChangesInChildren = true;
+            }
+        }
 
         SVNStatusType propStatus = SVNStatusType.UNKNOWN;
         SVNAdminArea adminArea = myCurrentDirectory.getAdminArea();
@@ -1701,9 +1724,15 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
         File victim = alreadyInTreeConflict(fullPath);
         SVNTreeConflictDescription treeConflict = null;
         if (victim == null) {
+            //tree conflict didn't exist before
             SVNLog log = parent.getLog();
             SVNURL theirURL = SVNURL.parseURIEncoded(info.URL);
             treeConflict = checkTreeConflict(fullPath, entry, adminArea, log, SVNConflictAction.EDIT, SVNNodeKind.FILE, theirURL);
+            if (treeConflict != null && treeConflict.getConflictAction() == SVNConflictAction.EDIT) {
+                //now tree conflict is created
+
+                info.treeConflictCreationAttributes = getTreeConflictCreationAttributes(adminArea, treeConflict);
+            }
         }
         String name = SVNPathUtil.tail(path);
         boolean hasTextConflicts = adminArea.hasTextConflict(name);
@@ -1732,10 +1761,34 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
         return info;
     }
 
+    private SVNProperties getTreeConflictCreationAttributes(SVNAdminArea adminArea, SVNTreeConflictDescription treeConflict) throws SVNException {
+        Map conflicts = new SVNHashMap();
+        conflicts.put(treeConflict.getPath(), treeConflict);
+        String conflictData = SVNTreeConflictUtil.getTreeConflictData(conflicts);
+
+        SVNProperties command = new SVNProperties();
+        command.put(SVNLog.NAME_ATTR, adminArea.getThisDirName());
+        command.put(SVNLog.DATA_ATTR, conflictData);
+        return command;
+    }
+
     private void closeFile(String textChecksum, SVNFileInfo fileInfo, SVNDirectoryInfo dirInfo) throws SVNException {
         if (fileInfo.isSkipped) {
             maybeBumpDirInfo(dirInfo);
             return;
+        }
+
+        if (!fileInfo.receivedTextDelta &&
+                (fileInfo.getChangedProperties() == null || fileInfo.getChangedProperties().isEmpty())) {
+
+            //only "fake" changes received
+
+            // a workaround for SVN issue 3525 on the client side
+            if (fileInfo.treeConflictCreationAttributes != null) {
+                dirInfo.getLog().deleteCommandsByNameAndAttributes(SVNLog.ADD_TREE_CONFLICT, fileInfo.treeConflictCreationAttributes, false);
+            }
+        } else {
+            dirInfo.anyChangesInChildren = true;
         }
 
         File fullPath = myAdminInfo.getAnchor().getFile(fileInfo.getPath());
@@ -2209,8 +2262,18 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
         private SVNProperties myChangedEntryProperties;
         private SVNProperties myChangedWCProperties;
 
+        // a workaround for SVN issue 3525 on the client side
+        // in short: because of some bug, all SVN servers of version < 1.6.17
+        // may send only entry properties change in update editor (instead of sending nothing)
+        // if a client working with such a buggy server, it should ignore those changes
+        // instead of a tree conflict creation
+        //
+        // the variable keeps tree conflict creation command to remove in closeFile
+        protected SVNProperties treeConflictCreationAttributes;
+
         protected SVNEntryInfo(String path) {
             myPath = path;
+            this.treeConflictCreationAttributes = null;
         }
 
         protected String getPath() {
@@ -2268,8 +2331,8 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
         private SVNChecksumInputStream sourceChecksumStream;
         private boolean treeConficted;
 
-//     Set if this file is locally deleted or is being added
-//     within a locally deleted tree.
+        // Set if this file is locally deleted or is being added
+        // within a locally deleted tree.
         private boolean isDeleted;
 
 //     The checksum for the file located at newBaseFile.
@@ -2299,8 +2362,11 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
 
         public boolean wasIncomplete;
 
+        public boolean anyChangesInChildren;
+
         public SVNDirectoryInfo(String path) {
             super(path);
+            this.anyChangesInChildren = false;
         }
 
         public SVNAdminArea getAdminArea() throws SVNException {
