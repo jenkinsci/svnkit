@@ -11,20 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.wc17;
 
-import java.io.File;
-import java.io.OutputStream;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.TreeMap;
-
-import org.tmatesoft.svn.core.SVNCommitInfo;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNLock;
-import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -40,6 +27,13 @@ import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnStatus;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
+
+import java.io.File;
+import java.io.OutputStream;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * @version 1.3
@@ -427,7 +421,8 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
                      * path format
                      */
                     File repos_relpath = SVNFileUtil.createFilePath(dir_repos_relpath, myFileInfo.name);
-                    repos_lock = (SVNLock) myRepositoryLocks.get(SVNEncodingUtil.uriDecode("/" + repos_relpath.toString()));
+                    String reposRelPathWithDirectSlashes = repos_relpath.toString().replace(File.separatorChar, '/');
+                    repos_lock = (SVNLock) myRepositoryLocks.get(SVNEncodingUtil.uriDecode("/" + reposRelPathWithDirectSlashes));
                 }
             }
         } else {
