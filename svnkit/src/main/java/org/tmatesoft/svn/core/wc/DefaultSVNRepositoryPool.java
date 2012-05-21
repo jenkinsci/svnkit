@@ -327,7 +327,7 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
 
         synchronized (DefaultSVNRepositoryPool.class) {
             if (myScheduledTimeoutTask != null) {
-                final boolean cancelled = myScheduledTimeoutTask.cancel(false);
+                myScheduledTimeoutTask.cancel(false);
                 myScheduledTimeoutTask = null;
             }
             ourInstanceCount--;
