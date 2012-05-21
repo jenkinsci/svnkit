@@ -1,6 +1,7 @@
 package org.tmatesoft.svn.test;
 
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Test;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -21,6 +22,7 @@ public class StatusTest {
     @Test
     public void testRemoteStatusShowsLockDavAccess() throws Exception {
         final TestOptions options = TestOptions.getInstance();
+        Assume.assumeTrue(TestUtil.areAllApacheOptionsSpecified(options));
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
         final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testRemoteStatusShowsLockDavAccess", options);
