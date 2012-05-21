@@ -108,7 +108,6 @@ public class PythonTests {
 
                 final GitObjectId headIdAfterJSVN = gitRepositoryAccess.getHeadId();
                 final List<GitObjectId> commitsAfterJSVN = gitRepositoryAccess.getCommitsByFirstParent(headIdAfterJSVN);
-                //TODO: work with commitsAfterJSVN
 
                 final String patternMatchingNoCommand = "^$";
                 properties.put("python.tests.pattern", patternMatchingNoCommand);
@@ -117,12 +116,14 @@ public class PythonTests {
                     generateScripts(properties);
                 } catch (IOException e) {
                     e.printStackTrace();
+                    return;
                 }
 
                 runPythonTestsForAllProtocols(libPath, properties, defaultTestSuite, logger, absTestsRootLocation);
                 final GitObjectId headIdAfterSVN = gitRepositoryAccess.getHeadId();
                 final List<GitObjectId> commitsAfterSVN = gitRepositoryAccess.getCommitsByFirstParentUntil(headIdAfterSVN, headIdAfterJSVN);
-                //TODO: work with commitsAfterSVN
+
+                checkWorkingCopiesByGitSnapshots(gitRepositoryAccess, commitsAfterJSVN, commitsAfterSVN);
             }
         } catch (SVNException e) {
             e.printStackTrace();
@@ -135,6 +136,49 @@ public class PythonTests {
             ourDaemon.shutdown(false);
         }
 	}
+
+    private static List<PythonTestsGitCommitInfo> loadCommitsInfo(GitRepositoryAccess gitRepositoryAccess, List<GitObjectId> commits) throws SVNException {
+        ArrayList<PythonTestsGitCommitInfo> commitInfo = new ArrayList<PythonTestsGitCommitInfo>(commits.size());
+        for (GitObjectId commit : commits) {
+            commitInfo.add(PythonTestsGitCommitInfo.loadFromCommit(gitRepositoryAccess, commit));
+        }
+        return commitInfo;
+    }
+
+    private static void checkWorkingCopiesByGitSnapshots(GitRepositoryAccess gitRepositoryAccess, List<GitObjectId> commitsAfterJSVN, List<GitObjectId> commitsAfterSVN) throws SVNException {
+        final List<PythonTestsGitCommitInfo> commitsInfoAfterJSVN = loadCommitsInfo(gitRepositoryAccess, commitsAfterJSVN);
+        final List<PythonTestsGitCommitInfo> commitsInfoAfterSVN = loadCommitsInfo(gitRepositoryAccess, commitsAfterSVN);
+
+        checkWorkingCopiesByGitSnapshots(commitsInfoAfterJSVN, commitsInfoAfterSVN);
+    }
+
+    private static void checkWorkingCopiesByGitSnapshots(List<PythonTestsGitCommitInfo> commitsInfoAfterJSVN, List<PythonTestsGitCommitInfo> commitsInfoAfterSVN) {
+        int j = 0;
+        for (int i = 0; i < commitsInfoAfterJSVN.size(); i++) {
+            final PythonTestsGitCommitInfo commitInfoAfterJSVN = commitsInfoAfterJSVN.get(i);
+
+            boolean found = false;
+            while (j < commitsInfoAfterSVN.size()){
+                found = commitsInfoAfterSVN.get(j).getCanonicalizedCommitMessage().equals(commitInfoAfterJSVN.getCanonicalizedCommitMessage());
+                if (found) {
+                    break;
+                }
+                j++;
+            }
+
+            if (found) {
+                final PythonTestsGitCommitInfo commitInfoAfterSVN = commitsInfoAfterSVN.get(j);
+                checkThatCommitsAreTheSame(commitInfoAfterJSVN, commitInfoAfterSVN);
+                j++;
+            } else {
+                System.out.println("Can't find pair for commit " + commitInfoAfterJSVN.getCommitId());
+            }
+        }
+    }
+
+    private static void checkThatCommitsAreTheSame(PythonTestsGitCommitInfo commitInfoAfterJSVN, PythonTestsGitCommitInfo commitInfoAfterSVN) {
+        System.out.println(commitInfoAfterJSVN.getCommitId() + " <-> " + commitInfoAfterSVN.getCommitId());
+    }
 
     private static void changeCurrentDirectory(File currentDirectory) {
         System.setProperty("user.dir", currentDirectory.getAbsolutePath());
