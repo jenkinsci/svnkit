@@ -255,7 +255,7 @@ public class SvnNgRemoteDiffEditor implements ISVNEditor {
         if (currentResult.contentState != SVNStatusType.MISSING && currentResult.contentState != SVNStatusType.OBSTRUCTED && !currentResult.treeConflicted) {
             action = SVNEventAction.UPDATE_DELETE;
         }
-        if (context.getEventHandler() != null) {
+        if (eventHandler != null) {
             final DeletedPath dp = new DeletedPath();
             dp.action = currentResult.treeConflicted ? SVNEventAction.TREE_CONFLICT : action;
             dp.kind = kind;

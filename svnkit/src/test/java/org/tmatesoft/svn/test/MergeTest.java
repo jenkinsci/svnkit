@@ -713,6 +713,53 @@ public class MergeTest {
         }
     }
 
+
+    @Test
+    public void testMergeFileAdditionAndDeletion() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testMergeFileAdditionAndDeletion", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder1 = new CommitBuilder(url);
+            commitBuilder1.addDirectory("directory1/directory");
+            commitBuilder1.commit();
+
+            final CommitBuilder commitBuilder2 = new CommitBuilder(url);
+            commitBuilder2.addDirectoryByCopying("directory2", "directory1");
+            commitBuilder2.commit();
+
+            final CommitBuilder commitBuilder3 = new CommitBuilder(url);
+            commitBuilder3.addFile("directory2/directory/file", "contents".getBytes());
+            commitBuilder3.commit();
+
+            final CommitBuilder commitBuilder4 = new CommitBuilder(url);
+            commitBuilder4.delete("directory2/directory/file");
+            commitBuilder4.commit();
+
+            final SVNURL directory1Url = url.appendPath("directory1", false);
+            final SVNURL directory2Url = url.appendPath("directory2", false);
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(directory1Url);
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+
+            final SvnMerge merge = svnOperationFactory.createMerge();
+            merge.addRevisionRange(SvnRevisionRange.create(SVNRevision.create(2), SVNRevision.create(3)));
+            merge.addRevisionRange(SvnRevisionRange.create(SVNRevision.create(3), SVNRevision.create(4)));
+            merge.setSource(SvnTarget.fromURL(directory2Url), false);
+            merge.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            merge.run();
+
+            Assert.assertFalse(workingCopy.getFile("directory/file").exists());
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
     private void runResolve(SvnOperationFactory svnOperationFactory, File file, SVNConflictChoice resolution) throws SVNException {
         final SVNClientManager clientManager = SVNClientManager.newInstance(svnOperationFactory.getOptions(), svnOperationFactory.getRepositoryPool());
         try {
