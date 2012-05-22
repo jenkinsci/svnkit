@@ -348,7 +348,11 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
     public static void shutdownTimer() {
         synchronized (DefaultSVNRepositoryPool.class) {
             if (ourTimer != null) {
-                ourTimer.shutdownNow();
+                try {
+                    ourTimer.shutdownNow();
+                } catch (SecurityException se) {
+                    
+                }
                 ourTimer = null;
             }
         }
