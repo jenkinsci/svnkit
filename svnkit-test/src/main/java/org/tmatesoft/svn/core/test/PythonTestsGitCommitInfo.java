@@ -1,12 +1,16 @@
 package org.tmatesoft.svn.core.test;
 
+import org.tmatesoft.svn.cli.SVNCommandLine;
 import org.tmatesoft.svn.core.SVNException;
 
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class PythonTestsGitCommitInfo {
 
+    private static Pattern WORKING_COPY_PATH_PATTERN = Pattern.compile(".*/working_copies/((\\w|-)+)");
     private static Pattern COMMIT_MESSAGE_PATTERN = Pattern.compile("(\\w+) (\\w+) .*/(\\w+)_tests-(\\d+).*");
 
     public static PythonTestsGitCommitInfo loadFromCommit(GitRepositoryAccess gitRepositoryAccess, GitObjectId commitId) throws SVNException {
@@ -25,6 +29,7 @@ public class PythonTestsGitCommitInfo {
     private String subcommand;
     private String testCase;
     private int testNumber;
+    private String workingCopyName;
 
     public PythonTestsGitCommitInfo(GitRepositoryAccess gitRepositoryAccess, GitObjectId commitId) {
         this.gitRepositoryAccess = gitRepositoryAccess;
@@ -50,6 +55,7 @@ public class PythonTestsGitCommitInfo {
             this.testCase = null;
             this.testNumber = -1;
         }
+        this.workingCopyName = detectWorkingCopyDirectory(commitMessage);
     }
 
     public GitObjectId getCommitId() {
@@ -80,7 +86,34 @@ public class PythonTestsGitCommitInfo {
         return testNumber;
     }
 
+    public String getWorkingCopyName() {
+        return workingCopyName;
+    }
+
     private String canonicalizeCommitMessage(String commitMessage) {
         return commitMessage.replaceAll("/localhost:\\d+/", "/localhost/");
+    }
+
+    private String detectWorkingCopyDirectory(String commitMessage) throws SVNException {
+        //remove not-yet-supported options
+        commitMessage = commitMessage.replace("--ignore-uuid", "");
+        commitMessage = commitMessage.replace("--bdb-txn-nosync", "");
+
+        final SVNCommandLine commandLine = new SVNCommandLine();
+        commandLine.init(commitMessage.split(" "));
+
+        final Collection arguments = commandLine.getArguments();
+        final Iterator argumentsIterator = arguments.iterator();
+        final String commandName = argumentsIterator.hasNext() ? (String) argumentsIterator.next() : null;
+
+        while (argumentsIterator.hasNext()) {
+            final String argument = (String) argumentsIterator.next();
+            final Matcher matcher = WORKING_COPY_PATH_PATTERN.matcher(argument);
+            if (matcher.matches()) {
+                return matcher.group(1);
+            }
+        }
+
+        return null;
     }
 }

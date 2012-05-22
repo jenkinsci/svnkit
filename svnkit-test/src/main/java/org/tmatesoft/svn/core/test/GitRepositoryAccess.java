@@ -25,7 +25,11 @@ public class GitRepositoryAccess {
     }
 
     public void deleteDotGitDirectory() throws SVNException {
-        SVNFileUtil.deleteAll(new File(workingTree, ".git"), true, null);
+        SVNFileUtil.deleteAll(getDotGitDirectory(), true, null);
+    }
+
+    public File getDotGitDirectory() {
+        return new File(workingTree, ".git");
     }
 
     public void init() throws SVNException {
