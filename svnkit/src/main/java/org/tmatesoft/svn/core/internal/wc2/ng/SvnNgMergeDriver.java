@@ -2539,12 +2539,18 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
                 treeConflictedPaths.add(event.getFile());
             }
             if (event.getAction() == SVNEventAction.UPDATE_ADD) {
-                boolean subtreeRoot;
+                boolean subtreeRoot = true;
                 if (addedPaths == null) {
                     addedPaths = new HashSet<File>();
-                    subtreeRoot = true;
                 } else {
-                    subtreeRoot = !addedPaths.contains(SVNFileUtil.getFileDir(event.getFile()));
+                    File addedPathParent = SVNFileUtil.getFileDir(event.getFile());
+                    while (!targetAbsPath.equals(addedPathParent)) {
+                        if (addedPaths.contains(addedPathParent)) {
+                            subtreeRoot = false;
+                            break;
+                        }
+                        addedPathParent = SVNFileUtil.getFileDir(addedPathParent);
+                    }
                 }
                 if (subtreeRoot) {
                     addedPaths.add(event.getFile());
