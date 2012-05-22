@@ -126,6 +126,41 @@ public class UpdateTest {
         }
     }
 
+    @Test
+    public void testCorrectDepthIsReportedForDepthImmediates() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testCorrectDepthIsReportedForDepthImmediates", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("directory/file");
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url);
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+            final File file = workingCopy.getFile("directory/file");
+            TestUtil.writeFileContentsString(file, "changed contents");
+
+            final SvnCommit commit = svnOperationFactory.createCommit();
+            commit.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            commit.run();
+
+            final SvnUpdate update = svnOperationFactory.createUpdate();
+            update.setDepth(SVNDepth.IMMEDIATES);
+            update.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            final long[] revision = update.run();
+
+            Assert.assertEquals(2, revision[0]);
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
     private String getTestName() {
         return "UpdateTest";
     }

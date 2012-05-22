@@ -342,6 +342,12 @@ public class SVNReporter17 implements ISVNReporterBaton {
             } else if (ths.kind == SVNWCDbKind.Dir && (depth == SVNDepth.UNKNOWN || depth.compareTo(SVNDepth.FILES) > 0)) {
                 boolean isIncomplete = ths.status == SVNWCDbStatus.Incomplete;
                 boolean startEmpty = isIncomplete;
+                SVNDepth reportDepth = ths.depth;
+
+                if (!depth.isRecursive()) {
+                    reportDepth = SVNDepth.EMPTY;
+                }
+
                 if (isIncomplete && ths.revision < 0) {
                     ths.revision = dirRev;
                 }
@@ -355,15 +361,15 @@ public class SVNReporter17 implements ISVNReporterBaton {
                         SVNURL url = SVNWCUtils.join(dirReposRoot, ths.reposRelPath);
                         reporter.linkPath(url, thisReportRelpath, 
                                 ths.lock != null ? ths.lock.token : null, 
-                                        ths.revision, ths.depth, startEmpty);
+                                        ths.revision, reportDepth, startEmpty);
                     } else {
-                        reporter.setPath(thisReportRelpath, ths.lock != null ? ths.lock.token : null, ths.revision, ths.depth, startEmpty);
+                        reporter.setPath(thisReportRelpath, ths.lock != null ? ths.lock.token : null, ths.revision, reportDepth, startEmpty);
                     }
                 } else if (thisSwitched) {
                     SVNURL url = SVNWCUtils.join(dirReposRoot, ths.reposRelPath);
                     reporter.linkPath(url, thisReportRelpath, 
                             ths.lock != null ? ths.lock.token : null, 
-                                    ths.revision, ths.depth, startEmpty);
+                                    ths.revision, reportDepth, startEmpty);
                 } else if (ths.revision != dirRev
                         || isIncomplete
                         || ths.lock != null 
@@ -371,7 +377,7 @@ public class SVNReporter17 implements ISVNReporterBaton {
                         || dirDepth == SVNDepth.FILES
                         || (dirDepth == SVNDepth.IMMEDIATES && ths.depth != SVNDepth.EMPTY)
                         || (ths.depth.compareTo(SVNDepth.INFINITY) < 0 && depth.isRecursive())) {
-                    reporter.setPath(thisReportRelpath, ths.lock != null ? ths.lock.token : null, ths.revision, ths.depth, startEmpty);
+                    reporter.setPath(thisReportRelpath, ths.lock != null ? ths.lock.token : null, ths.revision, reportDepth, startEmpty);
                 }
                 if (depth.isRecursive()) {
                     File reposRelPath = ths.reposRelPath;
