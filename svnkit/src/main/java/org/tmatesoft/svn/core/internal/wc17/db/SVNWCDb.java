@@ -1486,7 +1486,7 @@ public class SVNWCDb implements ISVNWCDb {
                 wcId = fetchWCId(sDb);
             } catch (SVNException e) {
                 if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_CORRUPT) {
-                    SVNErrorMessage err = e.getErrorMessage().wrap("Missing a row in WCROOT for '{0}'.", originalAbspath);
+                    SVNErrorMessage err = e.getErrorMessage().wrap("Missing a row in WCROOT for ''{0}''.", originalAbspath);
                     SVNErrorManager.error(err, SVNLogType.WC);
                 }
             }

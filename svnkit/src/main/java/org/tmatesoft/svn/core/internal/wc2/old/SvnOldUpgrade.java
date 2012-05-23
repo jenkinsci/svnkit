@@ -280,7 +280,7 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 
 		if (getEntryURL(entry) == null) {
 			SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT,
-							"Working copy '{0}' can't be upgraded because it doesn't have a url", localAbsPath);
+							"Working copy ''{0}'' can't be upgraded because it doesn't have a url", localAbsPath);
 			SVNErrorManager.error(err, SVNLogType.WC);
 		}
 
