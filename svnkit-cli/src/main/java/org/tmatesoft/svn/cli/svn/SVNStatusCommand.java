@@ -185,7 +185,7 @@ public class SVNStatusCommand extends SVNXMLCommand implements ISVNStatusHandler
         StringBuffer xmlBuffer = openXMLTag("entry", SVNXMLUtil.XML_STYLE_NORMAL, "path", path, null);
         Map xmlMap = new LinkedHashMap();
         xmlMap.put("props", status.getNodeStatus() != SVNStatusType.STATUS_DELETED ?
-                status.getPropertiesStatus().toString() : SVNStatusType.STATUS_NONE);
+                status.getPropertiesStatus().toString() : SVNStatusType.STATUS_NONE.toString());
         xmlMap.put("item", status.getCombinedNodeAndContentsStatus().toString());
         if (status.isLocked()) {
             xmlMap.put("wc-locked", "true");
