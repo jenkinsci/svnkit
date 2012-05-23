@@ -305,31 +305,22 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
     }
 
     private void handleExternalItemChange(SVNURL rootUrl, File parentPath, SVNURL parentUrl, File localAbsPath, File oldDefiningPath, SVNExternal newItem) throws SVNException {
+        assert newItem != null;
+        assert rootUrl != null && parentUrl != null;
+
         SVNURL newUrl = newItem.resolveURL(rootUrl, parentUrl);
         newUrl = SvnTarget.fromURL(newUrl).getURL();
-        
+
         SVNRevision externalRevision  = newItem.getRevision();
         SVNRevision externalPegRevision = newItem.getPegRevision();
-        
-        if (getOperation().getExternalsHandler() != null) {
-            SVNRevision[] revs = getOperation().getExternalsHandler().handleExternal(localAbsPath, newUrl, 
-                    externalRevision, externalPegRevision, newItem.getRawValue(), 
-                    SVNRevision.UNDEFINED);
-            
-            if (revs == null) {
-                handleEvent(SVNEventFactory.createSVNEvent(localAbsPath, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.SKIP, SVNEventAction.UPDATE_EXTERNAL, null, null));
-                return;
-            }
-            externalRevision = revs.length > 0 && revs[0] != null ? revs[0] : externalRevision;
-            externalPegRevision = revs.length > 1 && revs[1] != null ? revs[1] : externalPegRevision;
-        }
 
-        
         Structure<RepositoryInfo> repositoryInfo = getRepositoryAccess().createRepositoryFor(SvnTarget.fromURL(newUrl), externalRevision, externalPegRevision, null);
         SVNRepository repository = repositoryInfo.<SVNRepository>get(RepositoryInfo.repository);
         long externalRevnum = repositoryInfo.lng(RepositoryInfo.revision);
         repositoryInfo.release();
-        
+
+        String repositoryUUID = repository.getRepositoryUUID(true);
+        SVNURL repositoryRoot = repository.getRepositoryRoot(true);
         SVNNodeKind externalKind = repository.checkPath("", externalRevnum);
         
         if (externalKind == SVNNodeKind.NONE) {
@@ -343,22 +334,38 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
             SVNErrorManager.error(err, SVNLogType.WC);
         }
 
+        SVNNodeKind localKind = externalKind;
+
         handleEvent(SVNEventFactory.createSVNEvent(localAbsPath, externalKind, null, -1, SVNEventAction.UPDATE_EXTERNAL, null, null, null, 0, 0));
         if (oldDefiningPath == null) {
-            // checkout or export.
-            if (externalKind == SVNNodeKind.DIR) {                
-                SVNFileUtil.ensureDirectoryExists(SVNFileUtil.getParentFile(localAbsPath));
-                switchDirExternal(localAbsPath, newUrl, externalRevision, externalPegRevision, parentPath);
-            } else if (externalKind == SVNNodeKind.FILE) {
-                switchFileExternal(localAbsPath, newUrl, externalPegRevision, externalRevision, parentPath, repository, externalRevnum, repository.getRepositoryRoot(true));
+            SVNFileUtil.ensureDirectoryExists(SVNFileUtil.getParentFile(localAbsPath));
+        }
+        if (localKind == SVNNodeKind.DIR) {
+            switchDirExternal(localAbsPath, newUrl, externalRevision, externalPegRevision, parentPath);
+        } else if (localKind == SVNNodeKind.FILE) {
+            if (!repositoryRoot.equals(rootUrl)) {
+                SVNWCNodeReposInfo localReposInfo = getWcContext().getNodeReposInfo(parentPath);
+                SVNURL localReposRootUrl = localReposInfo.reposRootUrl;
+                String localReposUuid = localReposInfo.reposUuid;
+
+                String externalRepositoryPath = SVNURLUtil.getRelativeURL(repositoryRoot, newUrl, false);
+
+                if  (localReposUuid == null || localReposRootUrl == null ||
+                        externalRepositoryPath == null || !localReposUuid.equals(repositoryUUID)) {
+                    SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Unsupported external: url of " +
+                            "file external ''{0}'' is not in repository ''{0}''", newUrl, rootUrl);
+                    SVNErrorManager.error(errorMessage, SVNLogType.WC);
+                }
+
+                newUrl = localReposRootUrl.appendPath(externalRepositoryPath, false);
+                Structure<RepositoryInfo> repositoryInfoStructure = getRepositoryAccess().createRepositoryFor(SvnTarget.fromURL(newUrl), newItem.getRevision(), newItem.getPegRevision(), null);
+                repository = repositoryInfoStructure.get(RepositoryInfo.repository);
+                externalRevnum = repositoryInfoStructure.lng(RepositoryInfo.revision);
             }
+            switchFileExternal(localAbsPath, newUrl, externalPegRevision, externalRevision, parentPath, repository, externalRevnum, repository.getRepositoryRoot(true));
         } else {
-            // modification or update
-            if (externalKind == SVNNodeKind.DIR) {                
-                switchDirExternal(localAbsPath, newUrl, externalRevision, externalPegRevision, parentPath);
-            } else if (externalKind == SVNNodeKind.FILE) {
-                switchFileExternal(localAbsPath, newUrl, externalPegRevision, externalRevision, parentPath, repository, externalRevnum, repository.getRepositoryRoot(true));
-            }
+            SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.ASSERTION_FAIL);
+            SVNErrorManager.error(errorMessage, SVNLogType.WC);
         }
     }
 
