@@ -184,8 +184,9 @@ public class SVNStatusCommand extends SVNXMLCommand implements ISVNStatusHandler
     protected StringBuffer printXMLStatus(SVNStatus status, String path) {
         StringBuffer xmlBuffer = openXMLTag("entry", SVNXMLUtil.XML_STYLE_NORMAL, "path", path, null);
         Map xmlMap = new LinkedHashMap();
-        xmlMap.put("props", status.getPropertiesStatus().toString());
-        xmlMap.put("item", status.getContentsStatus().toString());
+        xmlMap.put("props", status.getNodeStatus() != SVNStatusType.STATUS_DELETED ?
+                status.getPropertiesStatus().toString() : SVNStatusType.STATUS_NONE);
+        xmlMap.put("item", status.getCombinedNodeAndContentsStatus().toString());
         if (status.isLocked()) {
             xmlMap.put("wc-locked", "true");
         }
@@ -222,10 +223,10 @@ public class SVNStatusCommand extends SVNXMLCommand implements ISVNStatusHandler
             xmlBuffer = closeXMLTag("lock", xmlBuffer);
         }
         xmlBuffer = closeXMLTag("wc-status", xmlBuffer);
-        if (status.getRemoteContentsStatus() != SVNStatusType.STATUS_NONE || status.getRemotePropertiesStatus() != SVNStatusType.STATUS_NONE ||
+        if (status.getRemoteNodeStatus() != SVNStatusType.STATUS_NONE || status.getRemotePropertiesStatus() != SVNStatusType.STATUS_NONE ||
                 status.getRemoteLock() != null) {
             xmlMap.put("props", status.getRemotePropertiesStatus().toString());
-            xmlMap.put("item", status.getRemoteContentsStatus().toString());
+            xmlMap.put("item", status.getCombinedRemoteNodeAndContentsStatus().toString());
             xmlBuffer = openXMLTag("repos-status", SVNXMLUtil.XML_STYLE_NORMAL, xmlMap, xmlBuffer);
             if (status.getRemoteLock() != null) {
                 xmlBuffer = openXMLTag("lock", SVNXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
