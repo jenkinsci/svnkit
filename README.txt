@@ -29,7 +29,7 @@ available with the command line Subversion client.
 This version of SVNKit supports all Subversion 1.6.17 features and supports older Subversion repositories.
 
 This version of SVNKit supports Subversion 1.7.0 and newer servers, but DOES NOT support new Subversion 1.7
-working copy format. New Subversion 1.7 working copy format is supported in SVNKit 1.7 or newer versions. 
+working copy format. New Subversion 1.7 working copy format is supported in SVNKit 1.7.4 or newer versions. 
 
 4. RESOURCES
 
