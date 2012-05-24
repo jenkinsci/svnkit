@@ -8,8 +8,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.util.SVNLogType;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -74,6 +73,10 @@ public class GitRepositoryAccess {
         return new GitObjectId(output.split(" ")[2].split("\t")[0].trim());
     }
 
+    public void copyBlobToFile(GitObjectId blobId, File outputFile) throws SVNException {
+        runGitRedirectOutput(outputFile, "cat-file", "blob", blobId.asString());
+    }
+
     public GitObjectId getHeadId() throws SVNException {
         final String output = runGit("rev-parse", "HEAD");
         return new GitObjectId(output.trim());
@@ -130,6 +133,38 @@ public class GitRepositoryAccess {
         return inputGobbler.getResult();
     }
 
+    private void runGitRedirectOutput(File outputFile, String... args) throws SVNException {
+        List<String> command = new ArrayList<String>(1 + (args == null ? 0 : args.length));
+        command.add(gitCommand);
+        if (args != null) {
+            Collections.addAll(command, args);
+        }
+
+        ProcessBuilder processBuilder = new ProcessBuilder(command);
+        processBuilder.directory(workingTree);
+
+        SVNBinaryStreamGobbler inputGobbler = null;
+        try {
+            Process process = processBuilder.start();
+            inputGobbler = new SVNBinaryStreamGobbler(process.getInputStream(), new BufferedOutputStream(new FileOutputStream(outputFile)));
+            inputGobbler.start();
+
+            process.waitFor();
+            inputGobbler.waitFor();
+
+        } catch (IOException e) {
+            SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e);
+            SVNErrorManager.error(errorMessage, SVNLogType.WC);
+        } catch (InterruptedException e) {
+            SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e);
+            SVNErrorManager.error(errorMessage, SVNLogType.WC);
+        } finally {
+            if (inputGobbler != null) {
+                inputGobbler.close();
+            }
+        }
+    }
+
     private List<GitObjectId> parseCommitsList(String output) {
         final String[] lines = output.split("\n");
         final List<GitObjectId> commits = new ArrayList<GitObjectId>(lines.length);
@@ -142,4 +177,69 @@ public class GitRepositoryAccess {
         }
         return commits;
     }
+
+    private static class SVNBinaryStreamGobbler extends Thread {
+
+        private IOException error;
+        private boolean myIsEOF;
+        private boolean myIsClosed;
+
+        private final InputStream inputStream;
+        private final OutputStream outputStream;
+
+        public SVNBinaryStreamGobbler(InputStream inputStream, OutputStream outputStream) {
+            this.inputStream = inputStream;
+            this.outputStream = outputStream;
+        }
+
+        public void run() {
+            byte[] buffer = new byte[1024];
+            synchronized (outputStream) {
+                while (true) {
+                    try {
+                        int r = inputStream.read(buffer);
+                        if (r < 0) {
+                            break;
+                        }
+                        if (r > 0) {
+                            outputStream.write(buffer, 0, r);
+                        }
+                    } catch (IOException e) {
+                        if (!myIsClosed) {
+                            error = e;
+                        }
+                        break;
+                    }
+                }
+                myIsEOF = true;
+                outputStream.notifyAll();
+            }
+        }
+
+        public void waitFor() {
+            synchronized (outputStream) {
+                while (!myIsEOF) {
+                    try {
+                        outputStream.wait();
+                    } catch (InterruptedException e) {
+                    }
+                }
+            }
+        }
+
+        public void close() {
+            synchronized (outputStream) {
+                myIsEOF = true;
+                outputStream.notifyAll();
+                myIsClosed = true;
+                SVNFileUtil.closeFile(inputStream);
+                SVNFileUtil.closeFile(outputStream);
+            }
+        }
+
+        public IOException getError() {
+            return error;
+        }
+    }
+
 }

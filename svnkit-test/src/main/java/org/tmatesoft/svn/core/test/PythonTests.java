@@ -13,10 +13,18 @@
 package org.tmatesoft.svn.core.test;
 
 import com.martiansoftware.nailgun.NGServer;
+import org.tmatesoft.sqljet.core.SqlJetException;
+import org.tmatesoft.sqljet.core.schema.ISqlJetSchema;
+import org.tmatesoft.sqljet.core.table.SqlJetDb;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.util.DefaultSVNDebugFormatter;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.util.SVNLogType;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -220,7 +228,45 @@ public class PythonTests {
         final GitObjectId wcDbBlobAfterJSVN = gitRepositoryAccess.getBlobId(commitInfoAfterJSVN.getCommitId(), relativeWCDbPath);
         final GitObjectId wcDbBlobAfterSVN = gitRepositoryAccess.getBlobId(commitInfoAfterSVN.getCommitId(), relativeWCDbPath);
 
-        System.out.println(commitInfoAfterJSVN.getCommitId() + " <-> " + commitInfoAfterSVN.getCommitId() + " " + wcDbBlobAfterJSVN + " <-> " + wcDbBlobAfterSVN);
+        final File wcDbAfterJSVN = SVNFileUtil.createTempFile("svnkit.tests.wc.db.after.jsvn", "");
+        final File wcDbAfterSVN = SVNFileUtil.createTempFile("svnkit.tests.wc.db.after.svn", "");
+
+        gitRepositoryAccess.copyBlobToFile(wcDbBlobAfterJSVN, wcDbAfterJSVN);
+        gitRepositoryAccess.copyBlobToFile(wcDbBlobAfterSVN, wcDbAfterSVN);
+
+        compareWCDbContents(wcDbAfterJSVN, wcDbAfterSVN);
+    }
+
+    private static void compareWCDbContents(File wcDbAfterJSVN, File wcDbAfterSVN) throws SVNException {
+        final SVNSqlJetDb svnSqlJetDbAfterJSVN = SVNSqlJetDb.open(wcDbAfterJSVN, SVNSqlJetDb.Mode.ReadOnly);
+        final SVNSqlJetDb svnSqlJetDbAfterSVN = SVNSqlJetDb.open(wcDbAfterSVN, SVNSqlJetDb.Mode.ReadOnly);
+        try {
+            final SqlJetDb dbAfterJSVN = svnSqlJetDbAfterJSVN.getDb();
+            final SqlJetDb dbAfterSVN = svnSqlJetDbAfterJSVN.getDb();
+
+            final ISqlJetSchema schemaAfterJSVN = dbAfterJSVN.getSchema();
+            final Set<String> tableNamesAfterJSVN = schemaAfterJSVN.getTableNames();
+
+            final ISqlJetSchema schemaAfterSVN = dbAfterJSVN.getSchema();
+            final Set<String> tableNamesAfterSVN = schemaAfterJSVN.getTableNames();
+
+            System.out.println("===============");
+            for (String table : tableNamesAfterJSVN) {
+                System.out.println("table = " + table);
+            }
+            System.out.println("===============");
+            for (String table : tableNamesAfterSVN) {
+                System.out.println("table = " + table);
+            }
+            System.out.println("===============");
+
+        } catch (SqlJetException e) {
+            SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.WC_DB_ERROR);
+            SVNErrorManager.error(errorMessage, e, SVNLogType.WC);
+        } finally {
+            svnSqlJetDbAfterJSVN.close();
+            svnSqlJetDbAfterSVN.close();
+        }
     }
 
     private static boolean isReadOnlyCommand(String command) {
