@@ -112,8 +112,6 @@ public class PythonTestsGitCommitInfo {
             final Matcher matcher = WORKING_COPY_PATH_PATTERN.matcher(argument);
             if (matcher.matches()) {
                 return matcher.group(1);
-            } else {
-                System.out.println("Mismatch: " + WORKING_COPY_PATH_PATTERN + "<->" + argument);
             }
         }
 

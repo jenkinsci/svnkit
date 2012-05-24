@@ -204,7 +204,7 @@ public class PythonTests {
 
             if (found) {
                 final PythonTestsGitCommitInfo commitInfoAfterSVN = commitsInfoAfterSVN.get(j);
-                checkThatCommitsAreTheSame(workingCopiesDirectory, gitRepositoryAccess, commitInfoAfterJSVN, commitInfoAfterSVN);
+                processMatchedGitCommits(workingCopiesDirectory, gitRepositoryAccess, commitInfoAfterJSVN, commitInfoAfterSVN);
                 j++;
             } else {
                 System.out.println("Can't find pair for commit " + commitInfoAfterJSVN.getCommitId());
@@ -212,10 +212,9 @@ public class PythonTests {
         }
     }
 
-    private static void checkThatCommitsAreTheSame(File workingCopiesDirectory, GitRepositoryAccess gitRepositoryAccess, PythonTestsGitCommitInfo commitInfoAfterJSVN, PythonTestsGitCommitInfo commitInfoAfterSVN) throws SVNException {
+    private static void processMatchedGitCommits(File workingCopiesDirectory, GitRepositoryAccess gitRepositoryAccess, PythonTestsGitCommitInfo commitInfoAfterJSVN, PythonTestsGitCommitInfo commitInfoAfterSVN) throws SVNException {
         final boolean commandTouchesWorkingCopy = commitInfoAfterJSVN.getWorkingCopyName() != null && !isReadOnlyCommand(commitInfoAfterJSVN.getSubcommand());
         if (!commandTouchesWorkingCopy) {
-            System.out.println(commitInfoAfterJSVN.getCommitId() + " <-> " + commitInfoAfterSVN.getCommitId() + " " + null);
             return;
         }
         final File workingCopyDirectory = new File(workingCopiesDirectory, commitInfoAfterJSVN.getWorkingCopyName());
@@ -234,10 +233,10 @@ public class PythonTests {
         gitRepositoryAccess.copyBlobToFile(wcDbBlobAfterJSVN, wcDbAfterJSVN);
         gitRepositoryAccess.copyBlobToFile(wcDbBlobAfterSVN, wcDbAfterSVN);
 
-        compareWCDbContents(wcDbAfterJSVN, wcDbAfterSVN);
+        compareWCDbContents(commitInfoAfterJSVN, commitInfoAfterSVN, wcDbAfterJSVN, wcDbAfterSVN);
     }
 
-    private static void compareWCDbContents(File wcDbAfterJSVN, File wcDbAfterSVN) throws SVNException {
+    private static void compareWCDbContents(PythonTestsGitCommitInfo commitInfoAfterJSVN, PythonTestsGitCommitInfo commitInfoAfterSVN, File wcDbAfterJSVN, File wcDbAfterSVN) throws SVNException {
         final SVNSqlJetDb svnSqlJetDbAfterJSVN = SVNSqlJetDb.open(wcDbAfterJSVN, SVNSqlJetDb.Mode.ReadOnly);
         final SVNSqlJetDb svnSqlJetDbAfterSVN = SVNSqlJetDb.open(wcDbAfterSVN, SVNSqlJetDb.Mode.ReadOnly);
         try {
@@ -245,20 +244,15 @@ public class PythonTests {
             final SqlJetDb dbAfterSVN = svnSqlJetDbAfterJSVN.getDb();
 
             final ISqlJetSchema schemaAfterJSVN = dbAfterJSVN.getSchema();
+            final ISqlJetSchema schemaAfterSVN = dbAfterSVN.getSchema();
+
             final Set<String> tableNamesAfterJSVN = schemaAfterJSVN.getTableNames();
+            final Set<String> tableNamesAfterSVN = schemaAfterSVN.getTableNames();
 
-            final ISqlJetSchema schemaAfterSVN = dbAfterJSVN.getSchema();
-            final Set<String> tableNamesAfterSVN = schemaAfterJSVN.getTableNames();
+            if (!tableNamesAfterJSVN.equals(tableNamesAfterSVN)) {
+                System.out.println("ERROR: jsvn commit=" + commitInfoAfterJSVN.getCommitId() + "; svn commit=" + commitInfoAfterJSVN.getCommitId());
+            }
 
-            System.out.println("===============");
-            for (String table : tableNamesAfterJSVN) {
-                System.out.println("table = " + table);
-            }
-            System.out.println("===============");
-            for (String table : tableNamesAfterSVN) {
-                System.out.println("table = " + table);
-            }
-            System.out.println("===============");
 
         } catch (SqlJetException e) {
             SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.WC_DB_ERROR);
@@ -266,6 +260,18 @@ public class PythonTests {
         } finally {
             svnSqlJetDbAfterJSVN.close();
             svnSqlJetDbAfterSVN.close();
+        }
+    }
+
+    private static void compareSchemas(PythonTestsGitCommitInfo commitInfoAfterJSVN, PythonTestsGitCommitInfo commitInfoAfterSVN, SqlJetDb dbAfterJSVN, SqlJetDb dbAfterSVN) throws SqlJetException {
+        final ISqlJetSchema schemaAfterJSVN = dbAfterJSVN.getSchema();
+        final ISqlJetSchema schemaAfterSVN = dbAfterSVN.getSchema();
+
+        final Set<String> tableNamesAfterJSVN = schemaAfterJSVN.getTableNames();
+        final Set<String> tableNamesAfterSVN = schemaAfterSVN.getTableNames();
+
+        if (!tableNamesAfterJSVN.equals(tableNamesAfterSVN)) {
+            System.out.println("ERROR: jsvn commit=" + commitInfoAfterJSVN.getCommitId() + "; svn commit=" + commitInfoAfterSVN.getCommitId());
         }
     }
 
