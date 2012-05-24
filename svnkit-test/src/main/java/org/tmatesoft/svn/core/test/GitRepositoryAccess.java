@@ -62,7 +62,7 @@ public class GitRepositoryAccess {
             //this line belongs to a commit message
             commitMessageBuilder.append(line).append('\n');
         }
-        return commitMessageBuilder.toString();
+        return commitMessageBuilder.toString().trim();
     }
 
     public GitObjectId getBlobId(GitObjectId treeish, String relativePath) throws SVNException {

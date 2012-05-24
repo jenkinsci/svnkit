@@ -31,7 +31,7 @@ public class PythonTestsGitCommitInfo {
     private int testNumber;
     private String workingCopyName;
 
-    public PythonTestsGitCommitInfo(GitRepositoryAccess gitRepositoryAccess, GitObjectId commitId) {
+    private PythonTestsGitCommitInfo(GitRepositoryAccess gitRepositoryAccess, GitObjectId commitId) {
         this.gitRepositoryAccess = gitRepositoryAccess;
         this.commitId = commitId;
     }
@@ -116,5 +116,17 @@ public class PythonTestsGitCommitInfo {
         }
 
         return null;
+    }
+
+    public static void main(String[] args) {
+        String s = "jsvn checkout file:///home/dmit10/work/svnkit/svnkit-test/build/sandbox/svn-python-tests/svn-test-work/repositories/commit_tests-26 svn-test-work/working_copies/commit_tests-26/wc1 --config-dir /home/dmit10/work/svnkit/svnkit-test/build/sandbox/svn-python-tests/svn-test-work/local_tmp/config --password rayjandom --no-auth-cache --username jrandom";
+        Matcher matcher = COMMIT_MESSAGE_PATTERN.matcher(s);
+        System.out.println("matcher = " + matcher.matches());
+        int groupCount = matcher.groupCount();
+        System.out.println("groupCount = " + groupCount);
+        for (int i = 0; i < groupCount; i++) {
+            String group = matcher.group(i + 1);
+            System.out.println("group = " + group);
+        }
     }
 }

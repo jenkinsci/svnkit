@@ -14,7 +14,11 @@ package org.tmatesoft.svn.core.test;
 
 import com.martiansoftware.nailgun.NGServer;
 import org.tmatesoft.sqljet.core.SqlJetException;
+import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
+import org.tmatesoft.sqljet.core.internal.memory.SqlJetMemoryPointer;
 import org.tmatesoft.sqljet.core.schema.ISqlJetSchema;
+import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
+import org.tmatesoft.sqljet.core.table.ISqlJetTable;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -52,12 +56,14 @@ public class PythonTests {
     private static String ourTestType;
     private static int daemonPortNumber = -1;
 
-    private static Set<String> readOnlyCommands;
+    private static Set<String> commandsNotToCheckWorkingCopyAfter;
     static {
-        readOnlyCommands = new HashSet<String>();
-        readOnlyCommands.add("status");
-        readOnlyCommands.add("st");
-        readOnlyCommands.add("info");
+        commandsNotToCheckWorkingCopyAfter = new HashSet<String>();
+        commandsNotToCheckWorkingCopyAfter.add("status");
+        commandsNotToCheckWorkingCopyAfter.add("st");
+        commandsNotToCheckWorkingCopyAfter.add("info");
+        commandsNotToCheckWorkingCopyAfter.add("checkout");
+        commandsNotToCheckWorkingCopyAfter.add("co");
     }
 
     public static void main(String[] args) {
@@ -213,10 +219,19 @@ public class PythonTests {
     }
 
     private static void processMatchedGitCommits(File workingCopiesDirectory, GitRepositoryAccess gitRepositoryAccess, PythonTestsGitCommitInfo commitInfoAfterJSVN, PythonTestsGitCommitInfo commitInfoAfterSVN) throws SVNException {
-        final boolean commandTouchesWorkingCopy = commitInfoAfterJSVN.getWorkingCopyName() != null && !isReadOnlyCommand(commitInfoAfterJSVN.getSubcommand());
-        if (!commandTouchesWorkingCopy) {
+        final boolean checkWorkingCopy = commitInfoAfterJSVN.getWorkingCopyName() != null && !commandsNotToCheckWorkingCopyAfter.contains(commitInfoAfterJSVN.getSubcommand());
+        if (!checkWorkingCopy) {
             return;
         }
+        System.out.println(commitInfoAfterJSVN.getCommitMessage());
+        System.out.println("command = " + commitInfoAfterJSVN.getCommand());
+        System.out.println("subcommand = " + commitInfoAfterJSVN.getSubcommand());
+        System.out.println("testcase = " + commitInfoAfterJSVN.getTestCase());
+        System.out.println("testnumber = " + commitInfoAfterJSVN.getTestNumber());
+        System.out.println("working copy name = " + commitInfoAfterJSVN.getWorkingCopyName());
+        System.out.println("jsvn commit id = " + commitInfoAfterJSVN.getCommitId());
+        System.out.println("svn commit id = " + commitInfoAfterSVN.getCommitId());
+
         final File workingCopyDirectory = new File(workingCopiesDirectory, commitInfoAfterJSVN.getWorkingCopyName());
         final File wcDbFile = new File(workingCopyDirectory, SVNFileUtil.getAdminDirectoryName() +"/wc.db");
         final File workingTree = gitRepositoryAccess.getWorkingTree();
@@ -226,6 +241,14 @@ public class PythonTests {
 
         final GitObjectId wcDbBlobAfterJSVN = gitRepositoryAccess.getBlobId(commitInfoAfterJSVN.getCommitId(), relativeWCDbPath);
         final GitObjectId wcDbBlobAfterSVN = gitRepositoryAccess.getBlobId(commitInfoAfterSVN.getCommitId(), relativeWCDbPath);
+
+        if (wcDbBlobAfterJSVN == null && wcDbBlobAfterSVN == null) {
+            return;
+        }
+
+        if (wcDbBlobAfterJSVN == null || wcDbBlobAfterSVN == null) {
+            System.out.println("ERROR: jsvn commit=" + commitInfoAfterJSVN.getCommitId() + "; svn commit=" + commitInfoAfterSVN.getCommitId() + "; one commit has " + relativeWCDbPath + " another one has not");
+        }
 
         final File wcDbAfterJSVN = SVNFileUtil.createTempFile("svnkit.tests.wc.db.after.jsvn", "");
         final File wcDbAfterSVN = SVNFileUtil.createTempFile("svnkit.tests.wc.db.after.svn", "");
@@ -250,9 +273,57 @@ public class PythonTests {
             final Set<String> tableNamesAfterSVN = schemaAfterSVN.getTableNames();
 
             if (!tableNamesAfterJSVN.equals(tableNamesAfterSVN)) {
-                System.out.println("ERROR: jsvn commit=" + commitInfoAfterJSVN.getCommitId() + "; svn commit=" + commitInfoAfterJSVN.getCommitId());
+                System.out.println("ERROR: jsvn commit=" + commitInfoAfterJSVN.getCommitId() + "; svn commit=" + commitInfoAfterSVN.getCommitId() + "; tables set differ");
+                return;
             }
 
+            for (String tableName : tableNamesAfterJSVN) {
+                final ISqlJetTable tableAfterJSVN = dbAfterJSVN.getTable(tableName);
+                final ISqlJetTable tableAfterSVN = dbAfterSVN.getTable(tableName);
+
+                dbAfterJSVN.beginTransaction(SqlJetTransactionMode.READ_ONLY);
+                dbAfterSVN.beginTransaction(SqlJetTransactionMode.READ_ONLY);
+
+                final ISqlJetCursor cursorAfterJSVN = tableAfterJSVN.open();
+                final ISqlJetCursor cursorAfterSVN = tableAfterSVN.open();
+
+                int row = 0;
+                while (true) {
+                    if (cursorAfterJSVN.eof() != cursorAfterSVN.eof()) {
+                        System.out.println("ERROR: jsvn commit=" + commitInfoAfterJSVN.getCommitId() + "; svn commit=" + commitInfoAfterSVN.getCommitId() + "; table=" + tableName + "; size mismatch");
+                    }
+
+                    if (cursorAfterJSVN.eof() || cursorAfterSVN.eof()) {
+                        break;
+                    }
+
+                    final Object[] valuesAfterJSVN = cursorAfterJSVN.getRowValues();
+                    final Object[] valuesAfterSVN = cursorAfterSVN.getRowValues();
+
+                    if (valuesAfterJSVN.length != valuesAfterSVN.length) {
+                        System.out.println("ERROR: jsvn commit=" + commitInfoAfterJSVN.getCommitId() + "; svn commit=" + commitInfoAfterSVN.getCommitId() + "; table=" + tableName + "; row=" + row + "; length mismatch");
+                        return;
+                    }
+
+                    for (int i = 0; i < valuesAfterJSVN.length; i++) {
+                        final Object valueAfterJSVN = valuesAfterJSVN[i];
+                        final Object valueAfterSVN = valuesAfterSVN[i];
+
+                        if (!areSqlJetValuesEqual(valueAfterJSVN, valueAfterSVN)) {
+                            System.out.println("ERROR: jsvn commit=" + commitInfoAfterJSVN.getCommitId() + "; svn commit=" + commitInfoAfterSVN.getCommitId() + "; table=" + tableName + "; row=" + row + "; field = " + schemaAfterJSVN.getTable(tableName).getColumns().get(i).getName() +  "; value mismatch (" + valueAfterJSVN + " != " + valueAfterSVN + ")");
+                            return;
+                        }
+                    }
+//                    System.out.println("OK: jsvn commit=" + commitInfoAfterJSVN.getCommitId() + "; svn commit=" + commitInfoAfterSVN.getCommitId() + "; table=" + tableName + "; row=" + row);
+
+                    row++;
+                    cursorAfterJSVN.next();
+                    cursorAfterSVN.next();
+                }
+
+                cursorAfterJSVN.close();
+                cursorAfterSVN.close();
+            }
 
         } catch (SqlJetException e) {
             SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.WC_DB_ERROR);
@@ -263,20 +334,27 @@ public class PythonTests {
         }
     }
 
-    private static void compareSchemas(PythonTestsGitCommitInfo commitInfoAfterJSVN, PythonTestsGitCommitInfo commitInfoAfterSVN, SqlJetDb dbAfterJSVN, SqlJetDb dbAfterSVN) throws SqlJetException {
-        final ISqlJetSchema schemaAfterJSVN = dbAfterJSVN.getSchema();
-        final ISqlJetSchema schemaAfterSVN = dbAfterSVN.getSchema();
-
-        final Set<String> tableNamesAfterJSVN = schemaAfterJSVN.getTableNames();
-        final Set<String> tableNamesAfterSVN = schemaAfterSVN.getTableNames();
-
-        if (!tableNamesAfterJSVN.equals(tableNamesAfterSVN)) {
-            System.out.println("ERROR: jsvn commit=" + commitInfoAfterJSVN.getCommitId() + "; svn commit=" + commitInfoAfterSVN.getCommitId());
+    private static boolean areSqlJetValuesEqual(Object value1, Object value2) {
+        if (value1 == null) {
+            return value2 == null;
         }
-    }
 
-    private static boolean isReadOnlyCommand(String command) {
-        return readOnlyCommands.contains(command);
+        if (value2 == null) {
+            return false;
+        }
+
+        if (!value1.getClass().equals(value2.getClass())) {
+            return false;
+        }
+
+        if (value1 instanceof SqlJetMemoryPointer) {
+            SqlJetMemoryPointer memoryPointer1 = (SqlJetMemoryPointer) value1;
+            SqlJetMemoryPointer memoryPointer2 = (SqlJetMemoryPointer) value2;
+
+            return memoryPointer1.compareTo(memoryPointer2) == 0;
+        }
+
+        return value1.equals(value2);
     }
 
     private static void changeCurrentDirectory(File currentDirectory) {
