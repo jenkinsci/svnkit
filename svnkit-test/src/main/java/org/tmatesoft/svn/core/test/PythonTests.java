@@ -15,6 +15,7 @@ package org.tmatesoft.svn.core.test;
 import com.martiansoftware.nailgun.NGServer;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.DefaultSVNDebugFormatter;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
 import java.io.*;
@@ -176,10 +177,10 @@ public class PythonTests {
         }
         System.out.println();
 
-        checkWorkingCopiesByGitSnapshots(workingCopiesDirectory, commitsInfoAfterJSVN, commitsInfoAfterSVN);
+        checkWorkingCopiesByGitSnapshots(workingCopiesDirectory, gitRepositoryAccess, commitsInfoAfterJSVN, commitsInfoAfterSVN);
     }
 
-    private static void checkWorkingCopiesByGitSnapshots(File workingCopiesDirectory, List<PythonTestsGitCommitInfo> commitsInfoAfterJSVN, List<PythonTestsGitCommitInfo> commitsInfoAfterSVN) {
+    private static void checkWorkingCopiesByGitSnapshots(File workingCopiesDirectory, GitRepositoryAccess gitRepositoryAccess, List<PythonTestsGitCommitInfo> commitsInfoAfterJSVN, List<PythonTestsGitCommitInfo> commitsInfoAfterSVN) throws SVNException {
         int j = 0;
         for (int i = 0; i < commitsInfoAfterJSVN.size(); i++) {
             final PythonTestsGitCommitInfo commitInfoAfterJSVN = commitsInfoAfterJSVN.get(i);
@@ -195,7 +196,7 @@ public class PythonTests {
 
             if (found) {
                 final PythonTestsGitCommitInfo commitInfoAfterSVN = commitsInfoAfterSVN.get(j);
-                checkThatCommitsAreTheSame(workingCopiesDirectory, commitInfoAfterJSVN, commitInfoAfterSVN);
+                checkThatCommitsAreTheSame(workingCopiesDirectory, gitRepositoryAccess, commitInfoAfterJSVN, commitInfoAfterSVN);
                 j++;
             } else {
                 System.out.println("Can't find pair for commit " + commitInfoAfterJSVN.getCommitId());
@@ -203,14 +204,23 @@ public class PythonTests {
         }
     }
 
-    private static void checkThatCommitsAreTheSame(File workingCopiesDirectory, PythonTestsGitCommitInfo commitInfoAfterJSVN, PythonTestsGitCommitInfo commitInfoAfterSVN) {
+    private static void checkThatCommitsAreTheSame(File workingCopiesDirectory, GitRepositoryAccess gitRepositoryAccess, PythonTestsGitCommitInfo commitInfoAfterJSVN, PythonTestsGitCommitInfo commitInfoAfterSVN) throws SVNException {
         final boolean commandTouchesWorkingCopy = commitInfoAfterJSVN.getWorkingCopyName() != null && !isReadOnlyCommand(commitInfoAfterJSVN.getSubcommand());
         if (!commandTouchesWorkingCopy) {
             System.out.println(commitInfoAfterJSVN.getCommitId() + " <-> " + commitInfoAfterSVN.getCommitId() + " " + null);
             return;
         }
-        final File workingCopyDirectory = !commandTouchesWorkingCopy ? null : new File(workingCopiesDirectory, commitInfoAfterJSVN.getWorkingCopyName());
-        System.out.println(commitInfoAfterJSVN.getCommitId() + " <-> " + commitInfoAfterSVN.getCommitId() + " " + workingCopyDirectory);
+        final File workingCopyDirectory = new File(workingCopiesDirectory, commitInfoAfterJSVN.getWorkingCopyName());
+        final File wcDbFile = new File(workingCopyDirectory, SVNFileUtil.getAdminDirectoryName() +"/wc.db");
+        final File workingTree = gitRepositoryAccess.getWorkingTree();
+
+        final String relativeWCDbPath = SVNPathUtil.getRelativePath(workingTree.getAbsolutePath().replace(File.separatorChar, '/'),
+                wcDbFile.getAbsolutePath().replace(File.separatorChar, '/'));
+
+        final GitObjectId wcDbBlobAfterJSVN = gitRepositoryAccess.getBlobId(commitInfoAfterJSVN.getCommitId(), relativeWCDbPath);
+        final GitObjectId wcDbBlobAfterSVN = gitRepositoryAccess.getBlobId(commitInfoAfterSVN.getCommitId(), relativeWCDbPath);
+
+        System.out.println(commitInfoAfterJSVN.getCommitId() + " <-> " + commitInfoAfterSVN.getCommitId() + " " + wcDbBlobAfterJSVN + " <-> " + wcDbBlobAfterSVN);
     }
 
     private static boolean isReadOnlyCommand(String command) {

@@ -10,7 +10,7 @@ import java.util.regex.Pattern;
 
 public class PythonTestsGitCommitInfo {
 
-    private static Pattern WORKING_COPY_PATH_PATTERN = Pattern.compile(".*/working_copies/((\\w|-)+)");
+    private static Pattern WORKING_COPY_PATH_PATTERN = Pattern.compile(".*/working_copies/((\\w|-)+)($|\\s|/).*");
     private static Pattern COMMIT_MESSAGE_PATTERN = Pattern.compile("(\\w+) (\\w+) .*/(\\w+)_tests-(\\d+).*");
 
     public static PythonTestsGitCommitInfo loadFromCommit(GitRepositoryAccess gitRepositoryAccess, GitObjectId commitId) throws SVNException {
@@ -112,6 +112,8 @@ public class PythonTestsGitCommitInfo {
             final Matcher matcher = WORKING_COPY_PATH_PATTERN.matcher(argument);
             if (matcher.matches()) {
                 return matcher.group(1);
+            } else {
+                System.out.println("Mismatch: " + WORKING_COPY_PATH_PATTERN + "<->" + argument);
             }
         }
 

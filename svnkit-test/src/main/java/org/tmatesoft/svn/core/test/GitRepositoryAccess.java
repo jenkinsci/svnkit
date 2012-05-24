@@ -28,6 +28,10 @@ public class GitRepositoryAccess {
         SVNFileUtil.deleteAll(getDotGitDirectory(), true, null);
     }
 
+    public File getWorkingTree() {
+        return workingTree;
+    }
+
     public File getDotGitDirectory() {
         return new File(workingTree, ".git");
     }
@@ -60,6 +64,14 @@ public class GitRepositoryAccess {
             commitMessageBuilder.append(line).append('\n');
         }
         return commitMessageBuilder.toString();
+    }
+
+    public GitObjectId getBlobId(GitObjectId treeish, String relativePath) throws SVNException {
+        final String output = runGit("ls-tree", "-r", treeish.asString(), relativePath).trim();
+        if (output.length() == 0) {
+            return null;
+        }
+        return new GitObjectId(output.split(" ")[2].split("\t")[0].trim());
     }
 
     public GitObjectId getHeadId() throws SVNException {
