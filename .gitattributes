@@ -1,6 +1,7 @@
 * text=auto !eol
 /CHANGES.txt eol=lf
 /LICENSE.txt eol=lf
+/build.pom.gradle -text
 gradle/wrapper/gradle-wrapper.jar -text
 /gradlew -text
 /gradlew.bat -text
@@ -24,6 +25,8 @@ svnkit-test/nailgun/Makefile -text
 svnkit-test/nailgun/nailgun-0.7.1.jar -text
 svnkit-test/nailgun/ng.exe -text
 svnkit-test/nailgun/src/c/ng.c -text
+svnkit/src/javadoc/info.png -text
+svnkit/src/javadoc/javadoc.css -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/io/dav/http/DefaultHTTPNegotiateAuthentication.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/io/dav/http/IHTTPNegotiateAuthenticationFactory.java -text
 svnkit/src/main/java/org/tmatesoft/svn/core/internal/io/fs/IFSRepresentationCacheManager.java -text

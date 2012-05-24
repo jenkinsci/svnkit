@@ -19,14 +19,16 @@ sourceSets {
     }
 }
 
-sandboxDir = getSandboxLocation()
-logsDir = new File(sandboxDir, 'logs')
-svnBinariesDir = getSvnBinariesLocation()
+project.ext {
+    sandboxDir = getSandboxLocation()
+    logsDir = new File(sandboxDir, 'logs')
+    svnBinariesDir = getSvnBinariesLocation()
 
-pythonTestsDir = new File(sandboxDir, 'svn-python-tests')
-testPropertiesFile = new File(sandboxDir, 'test.properties')
-svnVersion  = project.hasProperty('svnVersion') ? project.getProperty('svnVersion') : '16'
-testConfiguration = project.hasProperty('testConfiguration') ? project.getProperty('testConfiguration') : 'default'
+    pythonTestsDir = new File(sandboxDir, 'svn-python-tests')
+    testPropertiesFile = new File(sandboxDir, 'test.properties')
+    svnVersion  = project.hasProperty('svnVersion') ? project.getProperty('svnVersion') : '16'
+    testConfiguration = project.hasProperty('testConfiguration') ? project.getProperty('testConfiguration') : 'default'
+}
 
 test.dependsOn configurations."pythonTests${project.svnVersion}"
 test.dependsOn configurations."svnBinaries${project.svnVersion}"
