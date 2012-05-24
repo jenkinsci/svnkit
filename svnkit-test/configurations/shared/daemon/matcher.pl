@@ -3,7 +3,7 @@
 my $command_line = "";
 
 foreach $argnum (0 .. $#ARGV) {
-   $command_line .= "@ARGV[$argnum] ";
+   $command_line .= "'@ARGV[$argnum]' ";
 }
 if ($command_line =~ m/%pattern%/) {
    exit 0;
