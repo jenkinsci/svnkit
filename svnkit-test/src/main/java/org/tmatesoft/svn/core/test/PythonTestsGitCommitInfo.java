@@ -98,6 +98,7 @@ public class PythonTestsGitCommitInfo {
         //remove not-yet-supported options
         commitMessage = commitMessage.replace("--ignore-uuid", "");
         commitMessage = commitMessage.replace("--bdb-txn-nosync", "");
+        commitMessage = commitMessage.replace("--copy-info", "");
 
         final SVNCommandLine commandLine = new SVNCommandLine();
         commandLine.init(commitMessage.split(" "));

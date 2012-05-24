@@ -43,6 +43,14 @@ public class PythonTests {
     private static String ourTestType;
     private static int daemonPortNumber = -1;
 
+    private static Set<String> readOnlyCommands;
+    static {
+        readOnlyCommands = new HashSet<String>();
+        readOnlyCommands.add("status");
+        readOnlyCommands.add("st");
+        readOnlyCommands.add("info");
+    }
+
     public static void main(String[] args) {
 		String fileName = args[0];
 		String libPath = args[1];
@@ -196,13 +204,17 @@ public class PythonTests {
     }
 
     private static void checkThatCommitsAreTheSame(File workingCopiesDirectory, PythonTestsGitCommitInfo commitInfoAfterJSVN, PythonTestsGitCommitInfo commitInfoAfterSVN) {
-        final boolean commandTouchesWorkingCopy = commitInfoAfterJSVN.getWorkingCopyName() != null;
+        final boolean commandTouchesWorkingCopy = commitInfoAfterJSVN.getWorkingCopyName() != null && !isReadOnlyCommand(commitInfoAfterJSVN.getSubcommand());
         if (!commandTouchesWorkingCopy) {
             System.out.println(commitInfoAfterJSVN.getCommitId() + " <-> " + commitInfoAfterSVN.getCommitId() + " " + null);
             return;
         }
         final File workingCopyDirectory = !commandTouchesWorkingCopy ? null : new File(workingCopiesDirectory, commitInfoAfterJSVN.getWorkingCopyName());
         System.out.println(commitInfoAfterJSVN.getCommitId() + " <-> " + commitInfoAfterSVN.getCommitId() + " " + workingCopyDirectory);
+    }
+
+    private static boolean isReadOnlyCommand(String command) {
+        return readOnlyCommands.contains(command);
     }
 
     private static void changeCurrentDirectory(File currentDirectory) {
