@@ -364,7 +364,10 @@ public class SVNLinuxUtil {
         if (SVNFileUtil.isOSX) {
             return 8;
         }
-        if (SVNFileUtil.isSolaris) {
+        if (SVNFileUtil.isSolaris && SVNFileUtil.is64Bit) {
+            return 16;
+        }
+        if (SVNFileUtil.isSolaris && SVNFileUtil.is32Bit) {
             return 20;
         }
         if (SVNFileUtil.isBSD) {
@@ -397,4 +400,5 @@ public class SVNLinuxUtil {
     private static int getFileGroupIDOffset() {
         return getFileUserIDOffset() + 4;
     }
+    
 }
