@@ -2673,7 +2673,8 @@ public class SVNWCContext {
         File detranslatedTargetAbspath = detranslateWCFile(targetAbspath, !isBinary, propDiff, targetAbspath);
         leftAbspath = maybeUpdateTargetEols(leftAbspath, propDiff);
         info.mergeOutcome = SVNStatusType.NO_MERGE;
-        if (isBinary || createCustomMerger() == null) {
+        ISvnMerger customMerger = createCustomMerger();
+        if (isBinary || customMerger == null) {
             attemptTrivialMerge(info, leftAbspath, rightAbspath, targetAbspath, dryRun);
         }
         if (info.mergeOutcome == SVNStatusType.NO_MERGE) {
@@ -2685,7 +2686,7 @@ public class SVNWCContext {
                             getOptions().getConflictResolver());
                 }
             } else {
-                info = mergeTextFile(leftAbspath, rightAbspath, targetAbspath, leftLabel, rightLabel, targetLabel, dryRun, options, leftVersion, rightVersion, null, detranslatedTargetAbspath,
+                info = mergeTextFile(customMerger, leftAbspath, rightAbspath, targetAbspath, leftLabel, rightLabel, targetLabel, dryRun, options, leftVersion, rightVersion, null, detranslatedTargetAbspath,
                         mimeprop, getOptions().getConflictResolver());
             }
         }
@@ -2833,7 +2834,7 @@ public class SVNWCContext {
         return oldTargetAbspath;
     }
 
-    private MergeInfo mergeTextFile(File leftAbspath, File rightAbspath, File targetAbspath, String leftLabel, String rightLabel, String targetLabel, boolean dryRun, SVNDiffOptions options,
+    private MergeInfo mergeTextFile(ISvnMerger customMerger, File leftAbspath, File rightAbspath, File targetAbspath, String leftLabel, String rightLabel, String targetLabel, boolean dryRun, SVNDiffOptions options,
             SVNConflictVersion leftVersion, SVNConflictVersion rightVersion, File copyfromText, File detranslatedTargetAbspath, SVNPropertyValue mimeprop, ISVNConflictHandler conflictResolver)
             throws SVNException {
         MergeInfo info = new MergeInfo();
@@ -2841,7 +2842,7 @@ public class SVNWCContext {
         String baseName = SVNFileUtil.getFileName(targetAbspath);
         File tempDir = db.getWCRootTempDir(targetAbspath);
         File resultTarget = SVNFileUtil.createUniqueFile(tempDir, baseName, ".tmp", false);
-        boolean containsConflicts = doTextMerge(resultTarget, targetAbspath, detranslatedTargetAbspath, leftAbspath, rightAbspath, targetLabel, leftLabel, rightLabel, options);
+        boolean containsConflicts = doTextMerge(customMerger, resultTarget, targetAbspath, detranslatedTargetAbspath, leftAbspath, rightAbspath, targetLabel, leftLabel, rightLabel, options);
         if (containsConflicts && !dryRun) {
             info = maybeResolveConflicts(leftAbspath, rightAbspath, targetAbspath, copyfromText, leftLabel, rightLabel, targetLabel, leftVersion, rightVersion, resultTarget,
                     detranslatedTargetAbspath, mimeprop, options, conflictResolver);
@@ -2874,9 +2875,8 @@ public class SVNWCContext {
         return info;
     }
 
-    private boolean doTextMerge(File resultFile, File targetAbsPath, File detranslatedTargetAbspath, File leftAbspath, File rightAbspath, String targetLabel, String leftLabel, String rightLabel, SVNDiffOptions options) throws SVNException {
+    private boolean doTextMerge(ISvnMerger customMerger, File resultFile, File targetAbsPath, File detranslatedTargetAbspath, File leftAbspath, File rightAbspath, String targetLabel, String leftLabel, String rightLabel, SVNDiffOptions options) throws SVNException {
         ISvnMerger defaultMerger = createDefaultMerger();
-        ISvnMerger customMerger = createCustomMerger();
         SvnMergeResult mergeResult;
         if (customMerger != null) {
             mergeResult = customMerger.mergeText(defaultMerger, resultFile, targetAbsPath, detranslatedTargetAbspath, leftAbspath, rightAbspath, targetLabel, leftLabel, rightLabel, options);
