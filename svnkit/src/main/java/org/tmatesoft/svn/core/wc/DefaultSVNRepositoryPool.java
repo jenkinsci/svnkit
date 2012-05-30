@@ -168,13 +168,15 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
     }
 
     private ScheduledExecutorService createExecutor() {
-        return Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
-            public Thread newThread(Runnable r) {
-                final Thread t = new Thread(r);
-                t.setDaemon(true);
-                return t;
-            }
-        });
+        return Executors.newSingleThreadScheduledExecutor(new DaemonThreadFactory());
+    }
+    
+    private static final class DaemonThreadFactory implements ThreadFactory {
+        public Thread newThread(Runnable r) {
+            final Thread t = new Thread(r);
+            t.setDaemon(true);
+            return t;
+        }        
     }
     
     /**
