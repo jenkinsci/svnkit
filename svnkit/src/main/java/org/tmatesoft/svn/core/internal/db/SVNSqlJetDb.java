@@ -46,6 +46,7 @@ public class SVNSqlJetDb {
     };
     
     private static final ISqlJetBusyHandler DEFAULT_BUSY_HANDLER = new SqlJetTimeoutBusyHandler(10000);
+    private static boolean logTransactions = "true".equalsIgnoreCase(System.getProperty("svnkit.log.transactions", "false"));
 
     private SqlJetDb db;
     private EnumMap<SVNWCDbStatements, SVNSqlJetStatement> statements;
@@ -176,11 +177,15 @@ public class SVNSqlJetDb {
     public void beginTransaction(SqlJetTransactionMode mode) throws SVNException {
         if (mode != null) {
             openCount++;
-            logCall("Being transaction request (" + openCount + "): " + mode, 5);
+            if (isLogTransactions()) {
+                logCall("Being transaction request (" + openCount + "): " + mode, 5);
+            }
             if (isNeedStartTransaction(mode)) {
                 try {
                     db.beginTransaction(mode);
-                    SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "transaction started");
+                    if (isLogTransactions()) {
+                        SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "transaction started");
+                    }
                 } catch (SqlJetException e) {
                     createSqlJetError(e);
                 }
@@ -201,11 +206,15 @@ public class SVNSqlJetDb {
     public void commit() throws SVNException {
         if (openCount > 0) {
             openCount--;
-            logCall("Commit transaction request (" + openCount + ")", 5);
+            if (isLogTransactions()) {
+                logCall("Commit transaction request (" + openCount + ")", 5);
+            }
             if (openCount == 0) {
                 try {
                     db.commit();
-                    SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "transaction committed");
+                    if (isLogTransactions()) {
+                        SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "transaction committed");
+                    }
                 } catch (SqlJetException e) {
                     createSqlJetError(e);
                 }
@@ -261,19 +270,25 @@ public class SVNSqlJetDb {
     }
     
     private void logCall(String message, int count) {
-        StackTraceElement[] trace = Thread.currentThread().getStackTrace();
-        StringBuffer sb = new StringBuffer();
-        sb.append(message);
-        sb.append(":\n");
-        for (int i = 0; i < trace.length && i < count; i++) {
-            sb.append(trace[i].getClassName());
-            sb.append('.');
-            sb.append(trace[i].getMethodName());
-            sb.append(':');
-            sb.append(trace[i].getLineNumber());
-            sb.append('\n');
+        if (isLogTransactions()) {
+            StackTraceElement[] trace = Thread.currentThread().getStackTrace();
+            StringBuffer sb = new StringBuffer();
+            sb.append(message);
+            sb.append(":\n");
+            for (int i = 0; i < trace.length && i < count; i++) {
+                sb.append(trace[i].getClassName());
+                sb.append('.');
+                sb.append(trace[i].getMethodName());
+                sb.append(':');
+                sb.append(trace[i].getLineNumber());
+                sb.append('\n');
+            }
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, message.toString());
         }
-        SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, message.toString());
+    }
+
+    private static boolean isLogTransactions() {
+        return logTransactions;
     }
 
 }
