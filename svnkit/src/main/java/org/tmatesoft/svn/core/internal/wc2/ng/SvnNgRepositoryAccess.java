@@ -7,6 +7,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.SVNWCNodeReposInfo;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
@@ -212,7 +213,7 @@ public class SvnNgRepositoryAccess extends SvnRepositoryAccess {
     public SvnCopySource createRemoteCopySource(SVNWCContext context, SvnCopySource localCopySource) throws SVNException {
         Structure<NodeOriginInfo> origin = context.getNodeOrigin(localCopySource.getSource().getFile(), true, NodeOriginInfo.reposRelpath, NodeOriginInfo.reposRootUrl, NodeOriginInfo.revision);
         SVNURL url = origin.get(NodeOriginInfo.reposRootUrl);
-        url = url.appendPath(origin.<File>get(NodeOriginInfo.reposRelpath).getPath(), false);
+        url = url.appendPath(SVNFileUtil.getFilePath(origin.<File>get(NodeOriginInfo.reposRelpath)), false);
         SVNRevision pegRevision = localCopySource.getSource().getResolvedPegRevision();
         SVNRevision revision = localCopySource.getRevision();
         if (pegRevision == SVNRevision.UNDEFINED || pegRevision == SVNRevision.WORKING || pegRevision == SVNRevision.BASE) {
