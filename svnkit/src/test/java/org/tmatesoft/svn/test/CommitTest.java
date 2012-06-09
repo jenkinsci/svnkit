@@ -2,6 +2,7 @@ package org.tmatesoft.svn.test;
 
 import org.junit.Assert;
 import org.junit.Assume;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
@@ -12,10 +13,7 @@ import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNCommitClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
-import org.tmatesoft.svn.core.wc2.SvnCommit;
-import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
-import org.tmatesoft.svn.core.wc2.SvnStatus;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
+import org.tmatesoft.svn.core.wc2.*;
 
 import java.io.File;
 import java.util.Map;
@@ -156,6 +154,45 @@ public class CommitTest {
             final SVNCommitInfo commitInfo = commit.run();
 
             Assert.assertNull(commitInfo);
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Ignore("SVNKIT-262")
+    @Test
+    public void testCommitMessageContainsCRLF() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testCommitMessageContainsCRLF", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url);
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+
+            final File file = workingCopy.getFile("file");
+            TestUtil.writeFileContentsString(file, "contents");
+            workingCopy.add(file);
+
+            final String commitMessage = "Commit message with " + "\r\n" + "CRLF";
+
+            final SvnCommit commit = svnOperationFactory.createCommit();
+            commit.setCommitMessage(commitMessage);
+            commit.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            final SVNCommitInfo commitInfo = commit.run();
+
+            workingCopy.updateToRevision(commitInfo.getNewRevision());
+
+            final SvnLog log = svnOperationFactory.createLog();
+            log.addRange(SvnRevisionRange.create(SVNRevision.create(commitInfo.getNewRevision()), SVNRevision.create(commitInfo.getNewRevision())));
+            log.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            final SVNLogEntry logEntry = log.run();
+
+            Assert.assertEquals(commitMessage.replace("\r\n", "\n"), logEntry.getMessage());
 
         } finally {
             svnOperationFactory.dispose();
