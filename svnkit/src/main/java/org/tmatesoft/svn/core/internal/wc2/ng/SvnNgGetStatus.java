@@ -29,13 +29,18 @@ public class SvnNgGetStatus extends SvnNgOperationRunner<SvnStatus, SvnGetStatus
         String targetName;
         
         SVNNodeKind kind = context.readKind(getFirstTarget(), false);
+        SVNDepth depth = getOperation().getDepth();
         if (kind == SVNNodeKind.DIR) {
             directoryPath = getFirstTarget();
             targetName = "";            
         } else {
             directoryPath = SVNFileUtil.getParentFile(getFirstTarget());
             targetName = SVNFileUtil.getFileName(getFirstTarget());
-            if (kind != SVNNodeKind.FILE) {
+            if (kind == SVNNodeKind.FILE) {
+                if (depth == SVNDepth.EMPTY) {
+                    depth = SVNDepth.FILES;
+                }
+            } else {
                 boolean notAWc = false;
                 try {
                     kind = context.readKind(directoryPath, false);
@@ -79,24 +84,24 @@ public class SvnNgGetStatus extends SvnNgOperationRunner<SvnStatus, SvnGetStatus
                 }
                 setTargetDeletedInRepository(!added);
                 editor = new SVNStatusEditor17(getFirstTarget(), context, 
-                        getOperation().getOptions(), getOperation().isReportIgnored(), getOperation().isReportAll(), getOperation().getDepth(), this);
+                        getOperation().getOptions(), getOperation().isReportIgnored(), getOperation().isReportAll(), depth, this);
                 editor.setFileListHook(getOperation().getFileListHook());
                 checkCancelled();
                 editor.closeEdit();
             } else {
                 editor = new SVNRemoteStatusEditor17(directoryPath, targetName, context, 
-                        getOperation().getOptions(), getOperation().isReportIgnored(), getOperation().isReportAll(), 
-                        getOperation().getDepth(), this);
+                        getOperation().getOptions(), getOperation().isReportIgnored(), getOperation().isReportAll(),
+                        depth, this);
                 editor.setFileListHook(getOperation().getFileListHook());
                 
                 SVNRepository locksRepos = getRepositoryAccess().createRepository(url, null, false);
                 checkCancelled();
                 boolean serverSupportsDepth = repository.hasCapability(SVNCapability.DEPTH);
-                reporter = new SVNReporter17(getFirstTarget(), context, false, !serverSupportsDepth, 
-                        getOperation().getDepth(), false, true, true, false, null);
+                reporter = new SVNReporter17(getFirstTarget(), context, false, !serverSupportsDepth,
+                        depth, false, true, true, false, null);
                 SVNStatusReporter17 statusReporter = new SVNStatusReporter17(locksRepos, reporter, editor);
                 String target = "".equals(targetName) ? null : targetName;
-                SVNDepth statusDepth = getOperation().isDepthAsSticky() ? getOperation().getDepth() : SVNDepth.UNKNOWN;
+                SVNDepth statusDepth = getOperation().isDepthAsSticky() ? depth : SVNDepth.UNKNOWN;
                 repository.status(rev, target, statusDepth, statusReporter, SVNCancellableEditor.newInstance((ISVNEditor) editor, this, null));
             }
             getOperation().setRemoteRevision(editor.getTargetRevision());                
@@ -110,13 +115,13 @@ public class SvnNgGetStatus extends SvnNgOperationRunner<SvnStatus, SvnGetStatus
         } else {
             SVNStatusEditor17 editor = new SVNStatusEditor17(directoryPath, context, context.getOptions(), 
                     getOperation().isReportIgnored(), 
-                    getOperation().isReportAll(), 
-                    getOperation().getDepth(), 
+                    getOperation().isReportAll(),
+                    depth,
                     this);
             editor.setFileListHook(getOperation().getFileListHook());
             try {
-                editor.walkStatus(getFirstTarget(), 
-                        getOperation().getDepth(),
+                editor.walkStatus(getFirstTarget(),
+                        depth,
                         getOperation().isReportAll(),
                         getOperation().isReportIgnored(),
                         false,
@@ -130,7 +135,7 @@ public class SvnNgGetStatus extends SvnNgOperationRunner<SvnStatus, SvnGetStatus
             }
         }
         
-        if (getOperation().getDepth().isRecursive() && getOperation().isReportExternals()) {
+        if (depth.isRecursive() && getOperation().isReportExternals()) {
             SVNExternalsStore externalsStore = new SVNExternalsStore();
             context.getDb().gatherExternalDefinitions(getFirstTarget(), externalsStore);
             

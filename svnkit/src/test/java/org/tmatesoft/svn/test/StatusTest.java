@@ -3,6 +3,7 @@ package org.tmatesoft.svn.test;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.BasicAuthenticationManager;
@@ -11,6 +12,7 @@ import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
+import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc2.*;
 
 import java.io.File;
@@ -89,6 +91,38 @@ public class StatusTest {
             } finally {
                 context.close();
             }
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testRemoteStatusOnModifiedFileDepthEmpty() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testRemoteStatusOnModifiedFileDepthEmpty", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("file");
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url);
+
+            final File file = workingCopy.getFile("file");
+            TestUtil.writeFileContentsString(file, "modified");
+
+            final SvnGetStatus getStatus = svnOperationFactory.createGetStatus();
+            getStatus.setDepth(SVNDepth.EMPTY);
+            getStatus.setRemote(true);
+            getStatus.setSingleTarget(SvnTarget.fromFile(file));
+            final SvnStatus status = getStatus.run();
+
+            Assert.assertNotNull(status);
+            Assert.assertEquals(SVNStatusType.STATUS_MODIFIED, status.getTextStatus());
         } finally {
             svnOperationFactory.dispose();
             sandbox.dispose();
