@@ -314,6 +314,19 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
         SVNRevision externalRevision  = newItem.getRevision();
         SVNRevision externalPegRevision = newItem.getPegRevision();
 
+        if (getOperation().getExternalsHandler() != null) {
+            SVNRevision[] revs = getOperation().getExternalsHandler().handleExternal(localAbsPath, newUrl, 
+                    externalRevision, externalPegRevision, newItem.getRawValue(), 
+                    SVNRevision.UNDEFINED);
+            
+            if (revs == null) {
+                handleEvent(SVNEventFactory.createSVNEvent(localAbsPath, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.SKIP, SVNEventAction.UPDATE_EXTERNAL, null, null));
+                return;
+            }
+            externalRevision = revs.length > 0 && revs[0] != null ? revs[0] : externalRevision;
+            externalPegRevision = revs.length > 1 && revs[1] != null ? revs[1] : externalPegRevision;
+        }
+
         Structure<RepositoryInfo> repositoryInfo = getRepositoryAccess().createRepositoryFor(SvnTarget.fromURL(newUrl), externalRevision, externalPegRevision, null);
         SVNRepository repository = repositoryInfo.<SVNRepository>get(RepositoryInfo.repository);
         long externalRevnum = repositoryInfo.lng(RepositoryInfo.revision);
