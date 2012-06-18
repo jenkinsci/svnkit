@@ -1170,12 +1170,12 @@ public class SVNClientImpl implements ISVNClient {
         try {
             getEventHandler().setPathPrefix(getPathPrefix(path));
 
-            SvnRemoteSetProperty remoteSetProperty = svnOperationFactory.createRemoteSetProperty();
+            SvnSetProperty remoteSetProperty = svnOperationFactory.createSetProperty();
             remoteSetProperty.setSingleTarget(getTarget(path));
             remoteSetProperty.setPropertyName(name);
             remoteSetProperty.setRevision(getSVNRevision(rev));
             remoteSetProperty.setPropertyValue(SVNPropertyValue.create(value));
-            remoteSetProperty.setOriginalPropertyValue(SVNPropertyValue.create(originalValue));
+            remoteSetProperty.setRevisionProperty(true);
             remoteSetProperty.setForce(force);
 
             remoteSetProperty.run();
