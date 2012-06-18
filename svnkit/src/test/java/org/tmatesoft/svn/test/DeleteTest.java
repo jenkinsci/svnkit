@@ -58,7 +58,6 @@ public class DeleteTest {
         }
     }
 
-    @Ignore("SVNKIT-264")
     @Test
     public void testRemoteDeleteRootUnreadableDavAccess() throws Exception {
         final TestOptions options = TestOptions.getInstance();
@@ -88,14 +87,59 @@ public class DeleteTest {
 
             Assert.assertEquals(2, commitInfo.getNewRevision());
 
-            final SVNRepository svnRepository = SVNRepositoryFactory.create(url);
+            final SVNRepository svnRepository = SVNRepositoryFactory.create(url.appendPath("directory", false));
             try {
-                final SVNNodeKind nodeKind = svnRepository.checkPath("directory/file", 2);
-                Assert.assertEquals(SVNNodeKind.NONE, nodeKind);
+                Assert.assertEquals(SVNNodeKind.NONE, svnRepository.checkPath("file", 2));
             } finally {
                 svnRepository.closeSession();
             }
 
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testRemoteDeleteSeveralTargetsRootUnreadableDavAccess() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+        Assume.assumeTrue(TestUtil.areAllApacheOptionsSpecified(options));
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testRemoteDeleteSeveralTargetsRootUnreadableDavAccess", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepositoryWithDavAccess();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("directory/file1");
+            commitBuilder.addFile("directory/file2");
+            commitBuilder.commit();
+
+            sandbox.writeActiveAuthzContents(url,
+                    "[/]" + "\n" +
+                    "* = " + "\n" +
+                    "[/directory]" + "\n" +
+                    "* = rw" + "\n"
+            );
+
+            final SVNURL file1Url = url.appendPath("directory/file1", false);
+            final SVNURL file2Url = url.appendPath("directory/file2", false);
+
+            final SvnRemoteDelete remoteDelete = svnOperationFactory.createRemoteDelete();
+            remoteDelete.addTarget(SvnTarget.fromURL(file1Url));
+            remoteDelete.addTarget(SvnTarget.fromURL(file2Url));
+            final SVNCommitInfo commitInfo = remoteDelete.run();
+
+            Assert.assertEquals(2, commitInfo.getNewRevision());
+
+            final SVNRepository svnRepository = SVNRepositoryFactory.create(url.appendPath("directory", false));
+            try {
+                Assert.assertEquals(SVNNodeKind.NONE, svnRepository.checkPath("file1", 2));
+                Assert.assertEquals(SVNNodeKind.NONE, svnRepository.checkPath("file2", 2));
+            } finally {
+                svnRepository.closeSession();
+            }
 
         } finally {
             svnOperationFactory.dispose();

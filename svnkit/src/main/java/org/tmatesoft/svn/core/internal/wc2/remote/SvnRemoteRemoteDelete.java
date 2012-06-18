@@ -135,8 +135,19 @@ public class SvnRemoteRemoteDelete extends SvnRemoteOperationRunner<SVNCommitInf
     	else {
     		commitMessage = "";
     	}
-    	
-    	ISVNEditor commitEditor = repository.getCommitEditor(commitMessage, null, false, getOperation().getRevisionProperties(), null);
+
+        final String[] pathsArray = new String[paths.size()];
+        paths.toArray(pathsArray);
+        final List<String> condencedPaths = new ArrayList<String>();
+        String commonParentPath = SVNPathUtil.condencePaths(pathsArray, condencedPaths, false);
+        if (condencedPaths.isEmpty()) {
+            condencedPaths.add(SVNPathUtil.tail(commonParentPath));
+            commonParentPath = SVNPathUtil.removeTail(commonParentPath);
+        }
+
+        repository.setLocation(rootURL.appendPath(commonParentPath, false), false);
+
+        ISVNEditor commitEditor = repository.getCommitEditor(commitMessage, null, false, getOperation().getRevisionProperties(), null);
         ISVNCommitPathHandler deleter = new ISVNCommitPathHandler() {
 
             public boolean handleCommitPath(String commitPath, ISVNEditor commitEditor) throws SVNException {
@@ -146,7 +157,7 @@ public class SvnRemoteRemoteDelete extends SvnRemoteOperationRunner<SVNCommitInf
         };
         SVNCommitInfo info;
         try {
-            SVNCommitUtil.driveCommitEditor(deleter, paths, commitEditor, -1);
+            SVNCommitUtil.driveCommitEditor(deleter, condencedPaths, commitEditor, -1);
             info = commitEditor.closeEdit();
         } catch (SVNException e) {
             try {
