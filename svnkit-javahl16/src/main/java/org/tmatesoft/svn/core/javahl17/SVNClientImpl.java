@@ -2409,9 +2409,9 @@ public class SVNClientImpl implements ISVNClient {
             return ConflictDescriptor.Action.delete;
         } else if (conflictAction == SVNConflictAction.EDIT) {
             return ConflictDescriptor.Action.edit;
-//        } else if (conflictAction == SVNConflictAction.REPLACE) {
-            //TODO: unsupported
-//            throw new IllegalArgumentException("Unknown conflict action: " + conflictAction);
+        } else if (conflictAction == SVNConflictAction.REPLACE) {
+            //TODO: change to REPLACE when available in JavaHL API
+            return ConflictDescriptor.Action.add;
         } else {
             throw new IllegalArgumentException("Unknown conflict action: " + conflictAction);
         }
@@ -2432,7 +2432,8 @@ public class SVNClientImpl implements ISVNClient {
         } else if (conflictReason == SVNConflictReason.OBSTRUCTED) {
             return ConflictDescriptor.Reason.obstructed;
         } else if (conflictReason == SVNConflictReason.REPLACED) {
-            throw new IllegalArgumentException("Unknown conflict reason: " + conflictReason);
+            //TODO: change to REPLACE when available in JavaHL API
+            return ConflictDescriptor.Reason.added;
         } else if (conflictReason == SVNConflictReason.UNVERSIONED) {
             return ConflictDescriptor.Reason.unversioned;
         } else {
