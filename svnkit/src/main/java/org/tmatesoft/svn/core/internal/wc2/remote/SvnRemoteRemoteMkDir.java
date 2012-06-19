@@ -112,7 +112,7 @@ public class SvnRemoteRemoteMkDir extends SvnRemoteOperationRunner<SVNCommitInfo
 	        }
         }
         else {
-        	commitMessage = "";
+        	commitMessage = getOperation().getCommitMessage();
         }
         List<String> decodedPaths = new ArrayList<String>();
         for (Iterator<String> commitPaths = sortedPaths.iterator(); commitPaths.hasNext();) {
