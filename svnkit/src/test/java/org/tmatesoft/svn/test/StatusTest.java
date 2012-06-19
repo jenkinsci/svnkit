@@ -8,11 +8,11 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.BasicAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNStatus;
-import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.core.wc2.*;
 
 import java.io.File;
@@ -123,6 +123,48 @@ public class StatusTest {
 
             Assert.assertNotNull(status);
             Assert.assertEquals(SVNStatusType.STATUS_MODIFIED, status.getTextStatus());
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testWorkingCopyFormatReported() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testWorkingCopyFormatReported", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("remotelyAddedFile");
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, 0);
+
+            final File unversionedFile = workingCopy.getFile("unversionedFile");
+            TestUtil.writeFileContentsString(unversionedFile, "contents");
+
+            final File addedFile = workingCopy.getFile("addedFile");
+            TestUtil.writeFileContentsString(addedFile, "contents");
+            workingCopy.add(addedFile);
+
+            final int expectedWcFormat = TestUtil.isNewWorkingCopyTest() ? ISVNWCDb.WC_FORMAT_17 : SVNAdminAreaFactory.WC_FORMAT_16;
+
+            final SVNClientManager clientManager = SVNClientManager.newInstance();
+            try {
+                final SVNStatusClient statusClient = clientManager.getStatusClient();
+                statusClient.doStatus(workingCopy.getWorkingCopyDirectory(), SVNRevision.WORKING, SVNDepth.INFINITY, true, true, true, false, new ISVNStatusHandler() {
+                    public void handleStatus(SVNStatus status) throws SVNException {
+                        Assert.assertEquals(expectedWcFormat, status.getWorkingCopyFormat());
+                    }
+                }, null);
+            } finally {
+                clientManager.dispose();
+            }
+
         } finally {
             svnOperationFactory.dispose();
             sandbox.dispose();
