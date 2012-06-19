@@ -134,7 +134,7 @@ public class SvnRemoteRemoteDelete extends SvnRemoteOperationRunner<SVNCommitInf
     	else {
     		commitMessage = getOperation().getCommitMessage();
     	}
-        commitMessage = SVNCommitUtil.validateCommitMessage(commitMessage);
+        commitMessage = commitMessage == null ? "" : SVNCommitUtil.validateCommitMessage(commitMessage);
 
         final String[] pathsArray = new String[paths.size()];
         paths.toArray(pathsArray);

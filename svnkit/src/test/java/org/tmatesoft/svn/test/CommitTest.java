@@ -2,7 +2,6 @@ package org.tmatesoft.svn.test;
 
 import org.junit.Assert;
 import org.junit.Assume;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
@@ -161,7 +160,6 @@ public class CommitTest {
         }
     }
 
-    @Ignore("SVNKIT-262")
     @Test
     public void testCommitMessageContainsCRLF() throws Exception {
         final TestOptions options = TestOptions.getInstance();

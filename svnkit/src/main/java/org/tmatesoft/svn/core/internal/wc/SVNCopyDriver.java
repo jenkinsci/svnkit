@@ -701,6 +701,8 @@ public class SVNCopyDriver extends SVNBasicDelegate {
             if (message == null) {
                 return SVNCommitInfo.NULL;
             }
+            message = SVNCommitUtil.validateCommitMessage(message);
+
             revprops = commitHandler.getRevisionProperties(message, commitables, revprops == null ? new SVNProperties() : revprops);
             if (revprops == null) {
                 return SVNCommitInfo.NULL;
