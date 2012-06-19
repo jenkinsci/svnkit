@@ -1693,11 +1693,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
     }
     
     protected FSCommitter getCommitter(FSFS fsfs, FSRoot root, FSTransactionInfo txn, Collection lockTokens, String userName) {
-        if (myCommitter == null) {
-            myCommitter = new FSCommitter(fsfs, (FSTransactionRoot) root, txn, lockTokens, userName);
-        } else {
-            myCommitter.reset(fsfs, (FSTransactionRoot) root, txn, lockTokens, userName);
-        }
+        myCommitter = new FSCommitter(fsfs, (FSTransactionRoot) root, txn, lockTokens, userName);
         return myCommitter;
     }
     
