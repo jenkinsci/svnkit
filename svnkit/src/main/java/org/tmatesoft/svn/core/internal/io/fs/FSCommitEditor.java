@@ -14,8 +14,8 @@ package org.tmatesoft.svn.core.internal.io.fs;
 import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.Map;
 import java.util.Stack;
 
@@ -73,7 +73,7 @@ public class FSCommitEditor implements ISVNEditor {
 
     public FSCommitEditor(String path, Map lockTokens, boolean keepLocks, FSTransactionInfo txn, FSFS owner, FSRepository repository, SVNProperties revProps) {
         myPathsToLockTokens = !keepLocks ? lockTokens : null;
-        myLockTokens = lockTokens != null ? lockTokens.values() : new LinkedList();
+        myLockTokens = lockTokens != null ? lockTokens.values() : new HashSet();
         myBasePath = path;
         myTxn = txn;
         isTxnOwner = txn == null;
@@ -199,7 +199,7 @@ public class FSCommitEditor implements ISVNEditor {
                 kind = parentPath.getRevNode().getType();
 
                 if ((myTxnRoot.getTxnFlags() & FSTransactionRoot.SVN_FS_TXN_CHECK_LOCKS) != 0) {
-                    FSCommitter.allowLockedOperation(myFSFS, path, getAuthor(), myLockTokens, false, false);
+                    myCommitter.allowLockedOperation(myFSFS, path, getAuthor(), myLockTokens, false, false);
                 }
 
                 myCommitter.makePathMutable(parentPath, path);
@@ -379,17 +379,24 @@ public class FSCommitEditor implements ISVNEditor {
     }
 
     private void releaseLocks() {
-        if (myPathsToLockTokens != null) {
-            for (Iterator paths = myPathsToLockTokens.keySet().iterator(); paths.hasNext();) {
-                String path = (String) paths.next();
-                String token = (String) myPathsToLockTokens.get(path);
-                String absPath = !path.startsWith("/") ? SVNPathUtil.getAbsolutePath(SVNPathUtil.append(myBasePath, path)) : path;
+        releaseLocks(myPathsToLockTokens, false, true);
+        final Map autoUnlockPaths = myCommitter.getAutoUnlockPaths();
+        releaseLocks(autoUnlockPaths, true, false);
+    }
 
-                try {
-                    myFSFS.unlockPath(absPath, token, getAuthor(), false, true);
-                } catch (SVNException svne) {
-                    // ignore exceptions
-                }
+    private void releaseLocks(Map pathsToLockTokens, boolean breakLocks, boolean runHooks) {
+        if (pathsToLockTokens == null) {
+            return;
+        }
+        for (Iterator paths = pathsToLockTokens.keySet().iterator(); paths.hasNext();) {
+            String path = (String) paths.next();
+            String token = (String) pathsToLockTokens.get(path);
+            String absPath = !path.startsWith("/") ? SVNPathUtil.getAbsolutePath(SVNPathUtil.append(myBasePath, path)) : path;
+
+            try {
+                myFSFS.unlockPath(absPath, token, getAuthor(), breakLocks, runHooks);
+            } catch (SVNException svne) {
+                // ignore exceptions
             }
         }
     }

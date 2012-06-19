@@ -64,7 +64,7 @@ public class FSDeltaConsumer implements ISVNDeltaConsumer {
         FSParentPath parentPath = myTxnRoot.openPath(fullPath, true, true);
 
         if ((myTxnRoot.getTxnFlags() & FSTransactionRoot.SVN_FS_TXN_CHECK_LOCKS) != 0) {
-            FSCommitter.allowLockedOperation(myFSFS, fullPath, myAuthor, myLockTokens, false, false);
+            myCommitter.allowLockedOperation(myFSFS, fullPath, myAuthor, myLockTokens, false, false);
         }
 
         myCommitter.makePathMutable(parentPath, fullPath);
@@ -106,7 +106,7 @@ public class FSDeltaConsumer implements ISVNDeltaConsumer {
         FSParentPath parentPath = myTxnRoot.openPath(fullPath, true, true);
 
         if ((myTxnRoot.getTxnFlags() & FSTransactionRoot.SVN_FS_TXN_CHECK_LOCKS) != 0) {
-            FSCommitter.allowLockedOperation(myFSFS, fullPath, myAuthor, myLockTokens, false, false);
+            myCommitter.allowLockedOperation(myFSFS, fullPath, myAuthor, myLockTokens, false, false);
         }
 
         myCommitter.makePathMutable(parentPath, fullPath);
