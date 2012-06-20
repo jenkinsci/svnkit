@@ -147,7 +147,7 @@ public class PythonTests {
 
                 runPythonTestsForAllProtocols(libPath, properties, defaultTestSuite, logger, absTestsRootLocation);
                 final GitObjectId headIdAfterSVN = gitRepositoryAccess.getHeadId();
-                System.out.println("headIdAfterSVN = " + headIdAfterJSVN);
+                System.out.println("headIdAfterSVN = " + headIdAfterSVN);
                 final List<GitObjectId> commitsAfterSVN = gitRepositoryAccess.getCommitsByFirstParentUntil(headIdAfterSVN, headIdAfterJSVN);
 
                 Collections.reverse(commitsAfterJSVN);
@@ -179,13 +179,13 @@ public class PythonTests {
         final List<PythonTestsGitCommitInfo> commitsInfoAfterJSVN = loadCommitsInfo(gitRepositoryAccess, commitsAfterJSVN);
         final List<PythonTestsGitCommitInfo> commitsInfoAfterSVN = loadCommitsInfo(gitRepositoryAccess, commitsAfterSVN);
 
-        System.out.println("commitsInfoAfterSVN");
+        System.out.println("commitsInfoAfterSVN (total " + commitsAfterSVN.size() +")");
         for (PythonTestsGitCommitInfo commitInfo : commitsInfoAfterSVN) {
             System.out.println(commitInfo.getCommitId());
         }
         System.out.println();
 
-        System.out.println("commitsInfoAfterJSVN");
+        System.out.println("commitsInfoAfterJSVN (total " + commitsAfterJSVN.size() + ")");
         for (PythonTestsGitCommitInfo commitInfo : commitsInfoAfterJSVN) {
             System.out.println(commitInfo.getCommitId());
         }
