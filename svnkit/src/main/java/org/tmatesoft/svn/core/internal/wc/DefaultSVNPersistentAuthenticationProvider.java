@@ -318,7 +318,7 @@ public class DefaultSVNPersistentAuthenticationProvider implements ISVNAuthentic
         if (authFile.isFile()) {
             SVNWCProperties props = new SVNWCProperties(authFile, "");
             try {
-                if (!shouldSaveCredentials(values, props.asMap())) {
+                if (!shouldSaveCredentials(kind, values, props.asMap())) {
                     return;
                 }
             } catch (SVNException e) {
@@ -337,15 +337,15 @@ public class DefaultSVNPersistentAuthenticationProvider implements ISVNAuthentic
         return ACCEPTED;
     }
 
-    private boolean shouldSaveCredentials(SVNProperties newValues, SVNProperties oldValues) throws SVNException {
+    private boolean shouldSaveCredentials(String kind, SVNProperties newValues, SVNProperties oldValues) throws SVNException {
         assert newValues != null;
         assert oldValues != null;
 
-        String newPassType = newValues.getStringValue("passtype");
-        if (!SIMPLE_PASSTYPE.equals(newPassType)) {
+        if (!ISVNAuthenticationManager.PASSWORD.equals(kind)) {
             return !newValues.equals(oldValues);
         }
         String newUsername = newValues.getStringValue("username");
+        String newPassType = newValues.getStringValue("passtype");
         String newRealm = newValues.getStringValue("svn:realmstring");
         IPasswordStorage newPasswordStorage = getPasswordStorage(newPassType);
         String newPassword = newPasswordStorage == null ? null : newPasswordStorage.readPassword(newRealm, newUsername, newValues);
