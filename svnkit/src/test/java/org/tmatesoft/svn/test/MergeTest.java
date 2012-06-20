@@ -6,6 +6,8 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.auth.BasicAuthenticationManager;
+import org.tmatesoft.svn.core.internal.wc.SVNExternal;
+import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
@@ -13,9 +15,7 @@ import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.core.wc2.*;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class MergeTest {
 
@@ -753,6 +753,69 @@ public class MergeTest {
             merge.run();
 
             Assert.assertFalse(workingCopy.getFile("directory/file").exists());
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testConflictOnFileExternalUpdate() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testConflictOnFileExternalUpdate", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepositoryWithDavAccess();
+
+            final SVNExternal external = new SVNExternal("file", url.appendPath("file", false).toString(), SVNRevision.HEAD, SVNRevision.HEAD, false, false, true);
+
+            final CommitBuilder commitBuilder1 = new CommitBuilder(url);
+            commitBuilder1.addDirectory("directory");
+            commitBuilder1.addFile("file");
+
+            commitBuilder1.setDirectoryProperty("directory", SVNProperty.EXTERNALS, SVNPropertyValue.create(external.toString()));
+            commitBuilder1.commit();
+
+            final SVNURL directoryUrl = url.appendPath("directory", false);
+
+            final File workingCopyDirectory = sandbox.createDirectory("wc");
+            final File file = new File(workingCopyDirectory, "file");
+
+            final SvnCheckout checkout = svnOperationFactory.createCheckout();
+            checkout.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            checkout.setSource(SvnTarget.fromURL(directoryUrl));
+            checkout.setIgnoreExternals(false);
+            checkout.run();
+
+            final CommitBuilder commitBuilder2 = new CommitBuilder(url);
+            commitBuilder2.changeFile("file", "theirs".getBytes());
+            commitBuilder2.commit();
+
+            TestUtil.writeFileContentsString(file, "mine");
+
+            final SvnUpdate update = svnOperationFactory.createUpdate();
+            update.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            update.run();
+
+            final Set<String> expectedNames = new HashSet<String>();
+            expectedNames.add("file");
+            expectedNames.add("file.r1");
+            expectedNames.add("file.r2");
+            expectedNames.add("file.mine");
+
+            final Set<String> actualNames = new HashSet<String>();
+            final File[] files = SVNFileListUtil.listFiles(workingCopyDirectory);
+            for (File child : files) {
+                String name = SVNFileUtil.getFileName(child);
+                if (SVNFileUtil.getAdminDirectoryName().equals(name)) {
+                    continue;
+                }
+                actualNames.add(name);
+            }
+
+            Assert.assertEquals(expectedNames, actualNames);
 
         } finally {
             svnOperationFactory.dispose();
