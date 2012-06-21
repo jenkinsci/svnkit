@@ -768,7 +768,7 @@ public class MergeTest {
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
         final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testConflictOnFileExternalUpdate", options);
         try {
-            final SVNURL url = sandbox.createSvnRepositoryWithDavAccess();
+            final SVNURL url = sandbox.createSvnRepository();
 
             final SVNExternal external = new SVNExternal("file", url.appendPath("file", false).toString(), SVNRevision.HEAD, SVNRevision.HEAD, false, false, true);
 
