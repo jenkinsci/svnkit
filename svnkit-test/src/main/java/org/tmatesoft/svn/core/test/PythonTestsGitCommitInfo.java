@@ -3,14 +3,16 @@ package org.tmatesoft.svn.core.test;
 import org.tmatesoft.svn.cli.SVNCommandLine;
 import org.tmatesoft.svn.core.SVNException;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class PythonTestsGitCommitInfo {
 
-    private static Pattern WORKING_COPY_PATH_PATTERN = Pattern.compile(".*/working_copies/((\\w|-)+)($|\\s|/).*");
+    private static Pattern WORKING_COPY_PATH_PATTERN = Pattern.compile(".*/working_copies/((\\w|-|\\.)+)($|\\s|/).*");
     private static Pattern COMMIT_MESSAGE_PATTERN = Pattern.compile("(\\w+) (\\w+) .*/(\\w+)_tests-(\\d+).*");
 
     public static PythonTestsGitCommitInfo loadFromCommit(GitRepositoryAccess gitRepositoryAccess, GitObjectId commitId) throws SVNException {
@@ -100,8 +102,9 @@ public class PythonTestsGitCommitInfo {
         commitMessage = commitMessage.replace("--bdb-txn-nosync", "");
         commitMessage = commitMessage.replace("--copy-info", "");
 
+        try {
         final SVNCommandLine commandLine = new SVNCommandLine();
-        commandLine.init(commitMessage.split(" "));
+        commandLine.init(splitIntoArguments(commitMessage));
 
         final Collection arguments = commandLine.getArguments();
         final Iterator argumentsIterator = arguments.iterator();
@@ -111,22 +114,67 @@ public class PythonTestsGitCommitInfo {
             final String argument = (String) argumentsIterator.next();
             final Matcher matcher = WORKING_COPY_PATH_PATTERN.matcher(argument);
             if (matcher.matches()) {
+                System.out.println(commitId + " Working copy pattern matching " + argument);
                 return matcher.group(1);
+            } else {
+                System.out.println(commitId + " Doesn't match " + argument + "(" + commitMessage + ")");
             }
+        }    }
+        catch (Throwable th) {
+            System.out.println("Bad commmit message " + commitMessage);
+            throw new RuntimeException(th);
         }
 
         return null;
     }
 
+    private static String[] splitIntoArguments(String commitMessage) {
+        final List<String> arguments = new ArrayList<String>();
+
+        StringBuilder argumentBuilder = new StringBuilder();
+        Character currentQuoteCharacter = null;
+        for (int i = 0; i < commitMessage.length(); i++) {
+            final char c = commitMessage.charAt(i);
+
+            switch (c) {
+                case '\"':
+                case '\'':
+                    if (currentQuoteCharacter == null) {
+                        currentQuoteCharacter = c;
+                    } else if (currentQuoteCharacter == c) {
+                        currentQuoteCharacter = null;
+                    }
+                    argumentBuilder.append(c);
+                    break;
+                case ' ':
+                case '\t':
+                    if (currentQuoteCharacter == null) {
+                        if (argumentBuilder.length() > 0) {
+                            arguments.add(argumentBuilder.toString());
+                            argumentBuilder = new StringBuilder();
+                        }
+                    } else {
+                        argumentBuilder.append(c);
+                    }
+                    break;
+                default:
+                    argumentBuilder.append(c);
+                    break;
+            }
+        }
+
+        if (argumentBuilder.length() > 0) {
+            arguments.add(argumentBuilder.toString());
+        }
+
+        return arguments.toArray(new String[]{});
+    }
+
     public static void main(String[] args) {
-        String s = "jsvn checkout file:///home/dmit10/work/svnkit/svnkit-test/build/sandbox/svn-python-tests/svn-test-work/repositories/commit_tests-26 svn-test-work/working_copies/commit_tests-26/wc1 --config-dir /home/dmit10/work/svnkit/svnkit-test/build/sandbox/svn-python-tests/svn-test-work/local_tmp/config --password rayjandom --no-auth-cache --username jrandom";
-        Matcher matcher = COMMIT_MESSAGE_PATTERN.matcher(s);
-        System.out.println("matcher = " + matcher.matches());
-        int groupCount = matcher.groupCount();
-        System.out.println("groupCount = " + groupCount);
-        for (int i = 0; i < groupCount; i++) {
-            String group = matcher.group(i + 1);
-            System.out.println("group = " + group);
+        String s = "a b  c 'd e' \"f g h\"";
+        String[] arguments = splitIntoArguments(s);
+        for (String argument : arguments) {
+            System.out.println("argument = " + argument);
         }
     }
 }

@@ -64,6 +64,9 @@ public class PythonTests {
         commandsNotToCheckWorkingCopyAfter.add("info");
         commandsNotToCheckWorkingCopyAfter.add("checkout");
         commandsNotToCheckWorkingCopyAfter.add("co");
+        commandsNotToCheckWorkingCopyAfter.add("propget");
+        commandsNotToCheckWorkingCopyAfter.add("pg");
+        commandsNotToCheckWorkingCopyAfter.add("proplist");
     }
 
     public static void main(String[] args) {
@@ -199,6 +202,7 @@ public class PythonTests {
         for (int i = 0; i < commitsInfoAfterJSVN.size(); i++) {
             final PythonTestsGitCommitInfo commitInfoAfterJSVN = commitsInfoAfterJSVN.get(i);
 
+            int jOriginal = j;
             boolean found = false;
             while (j < commitsInfoAfterSVN.size()){
                 found = commitsInfoAfterSVN.get(j).getCanonicalizedCommitMessage().equals(commitInfoAfterJSVN.getCanonicalizedCommitMessage());
@@ -213,14 +217,21 @@ public class PythonTests {
                 processMatchedGitCommits(workingCopiesDirectory, gitRepositoryAccess, commitInfoAfterJSVN, commitInfoAfterSVN);
                 j++;
             } else {
+                j = jOriginal + 1;
                 System.out.println("Can't find pair for commit " + commitInfoAfterJSVN.getCommitId());
             }
         }
     }
 
     private static void processMatchedGitCommits(File workingCopiesDirectory, GitRepositoryAccess gitRepositoryAccess, PythonTestsGitCommitInfo commitInfoAfterJSVN, PythonTestsGitCommitInfo commitInfoAfterSVN) throws SVNException {
-        final boolean checkWorkingCopy = commitInfoAfterJSVN.getWorkingCopyName() != null && !commandsNotToCheckWorkingCopyAfter.contains(commitInfoAfterJSVN.getSubcommand());
+        boolean canDetermineWorkingCopy = commitInfoAfterJSVN.getWorkingCopyName() != null;
+        if (!canDetermineWorkingCopy) {
+            System.out.println("jsvn commit=" + commitInfoAfterJSVN.getCommitId() + "; svn commit=" + commitInfoAfterSVN.getCommitId() + "; can't detect working copy");
+        }
+
+        final boolean checkWorkingCopy = canDetermineWorkingCopy && !commandsNotToCheckWorkingCopyAfter.contains(commitInfoAfterJSVN.getSubcommand());
         if (!checkWorkingCopy) {
+            System.out.println("jsvn commit=" + commitInfoAfterJSVN.getCommitId() + "; svn commit=" + commitInfoAfterSVN.getCommitId() + "; working copy shouldn't be checked");
             return;
         }
         System.out.println(commitInfoAfterJSVN.getCommitMessage());
@@ -243,6 +254,7 @@ public class PythonTests {
         final GitObjectId wcDbBlobAfterSVN = gitRepositoryAccess.getBlobId(commitInfoAfterSVN.getCommitId(), relativeWCDbPath);
 
         if (wcDbBlobAfterJSVN == null && wcDbBlobAfterSVN == null) {
+            System.out.println("jsvn commit=" + commitInfoAfterJSVN.getCommitId() + "; svn commit=" + commitInfoAfterSVN.getCommitId() + "; both don't have wc.db");
             return;
         }
 
