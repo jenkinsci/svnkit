@@ -181,7 +181,7 @@ public class SVNStatusUtil {
                 text = SVNStatusType.STATUS_MISSING;
             }
             status.setContentsStatus(text);
-            if (status.getURL() != null && status.getRepositoryRelativePath() == null) {
+            if (status.getURL() != null && status.getRepositoryRelativePath() == null && reposRoot != null) {
                 status.setRepositoryRelativePath(SVNURLUtil.getRelativeURL(reposRoot, status.getURL(), false));
             }
 
@@ -288,6 +288,9 @@ public class SVNStatusUtil {
                 repositoryLock, localLock, entry.asMap(), entry.getChangelistName(), wcFormatNumber, treeConflict);
         status.setEntry(entry);
         status.setDepth(entry.isDirectory() ? entry.getDepth() : SVNDepth.UNKNOWN);
+        if (reposRoot == null) {
+        	reposRoot = entry.getRepositoryRootURL();
+        }
         status.setRepositoryRootURL(reposRoot);
         if (reposRoot != null && status.getURL() != null && status.getRepositoryRelativePath() == null) {
             status.setRepositoryRelativePath(SVNURLUtil.getRelativeURL(reposRoot, status.getURL(), false));
