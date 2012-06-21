@@ -119,10 +119,10 @@ public class PythonTestsGitCommitInfo {
             final String argument = (String) argumentsIterator.next();
             final Matcher matcher = WORKING_COPY_PATH_PATTERN.matcher(argument);
             if (matcher.matches()) {
-                System.out.println(commitId + " Working copy pattern matching " + argument);
+//                System.out.println(commitId + " Working copy pattern matching " + argument);
                 return matcher.group(1);
             } else {
-                System.out.println(commitId + " Doesn't match " + argument + "(" + commitMessage + ")");
+//                System.out.println(commitId + " Doesn't match " + argument + "(" + commitMessage + ")");
             }
         }    }
         catch (Throwable th) {
@@ -176,21 +176,6 @@ public class PythonTestsGitCommitInfo {
         return arguments.toArray(new String[]{});
     }
 
-    public static void main(String[] args) {
-
-
-        String s = "jsvn import -m 'Log message for revision 1.' svn-test-work/local_tmp/greekfiles file:///home/dmit10/work/svnkit/svnkit-test/build/sandbox/svn-python-tests/svn-test-work/local_tmp/repos --config-dir /home/dmit10/work/svnkit/svnkit-test/build/sandbox/svn-python-tests/svn-test-work/local_tmp/config --password rayjandom --no-auth-cache --username jrandom";
-        String[] arguments = splitIntoArguments(s);
-        for (String argument : arguments) {
-            System.out.println("argument = " + argument);
-        }
-        SVNCommandLine commandLine = new SVNCommandLine();
-        try {
-            commandLine.init(arguments);
-        } catch (SVNException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-        }
-    }
 
     private static void registerOptionsWorkaround() {
         //TODO: in perfect world registerOptions() method should be static

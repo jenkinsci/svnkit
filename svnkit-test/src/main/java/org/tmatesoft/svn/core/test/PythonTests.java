@@ -59,6 +59,12 @@ public class PythonTests {
     private static int currentTestNumber = -1;
     private static String currentTestErrorMessage = null;
 
+    /**
+     * true if tests are run in regular modes;
+     * in wc.db checking mode tests are run twice: for JSVN and SVN; logging is disabled for this case and only wc.db mismatches are logged
+     */
+    private static boolean regularLoggingEnabled = true;
+
     private static Set<String> commandsNotToCheckWorkingCopyAfter;
     static {
         commandsNotToCheckWorkingCopyAfter = new HashSet<String>();
@@ -104,7 +110,7 @@ public class PythonTests {
                 System.exit(1);
             }
         }
-        
+
         if (Boolean.TRUE.toString().equals(properties.getProperty("daemon"))) {
             try {
                 libPath = startCommandDaemon(properties);
@@ -113,6 +119,9 @@ public class PythonTests {
                 System.exit(1);
             }
         }
+
+        boolean wcdbCheckMode = true;
+        regularLoggingEnabled = !wcdbCheckMode;
 
         String pythonTestsRoot = properties.getProperty("python.tests", "python/cmdline");
 		properties.setProperty("repository.root", new File(pythonTestsRoot).getAbsolutePath());
@@ -129,16 +138,21 @@ public class PythonTests {
 
             gitRepositoryAccess.deleteDotGitDirectory();
 
+            if (wcdbCheckMode) {
+                System.out.println("Running all tests with JSVN, then with SVN, please wait (there will be no output for a long time)...");
+            }
+
             runPythonTestsForAllProtocols(libPath, properties, defaultTestSuite, logger, absTestsRootLocation);
 
-            if (true && gitRepositoryAccess.getDotGitDirectory().isDirectory()) {
-                //TODO: put proper condition
+            if (wcdbCheckMode) {
+                assert gitRepositoryAccess.getDotGitDirectory().isDirectory();
+
                 changeCurrentDirectory(currentDirectory);
 
                 final File workingCopiesDirectory = new File(gitRepositoryDirectory, "working_copies");
 
                 final GitObjectId headIdAfterJSVN = gitRepositoryAccess.getHeadId();
-                System.out.println("headIdAfterJSVN = " + headIdAfterJSVN);
+//                System.out.println("headIdAfterJSVN = " + headIdAfterJSVN);
                 final List<GitObjectId> commitsAfterJSVN = gitRepositoryAccess.getCommitsByFirstParent(headIdAfterJSVN);
 
                 final String patternMatchingNoCommand = "^$";
@@ -153,7 +167,7 @@ public class PythonTests {
 
                 runPythonTestsForAllProtocols(libPath, properties, defaultTestSuite, logger, absTestsRootLocation);
                 final GitObjectId headIdAfterSVN = gitRepositoryAccess.getHeadId();
-                System.out.println("headIdAfterSVN = " + headIdAfterSVN);
+//                System.out.println("headIdAfterSVN = " + headIdAfterSVN);
                 final List<GitObjectId> commitsAfterSVN = gitRepositoryAccess.getCommitsByFirstParentUntil(headIdAfterSVN, headIdAfterJSVN);
 
                 Collections.reverse(commitsAfterJSVN);
@@ -188,18 +202,6 @@ public class PythonTests {
         final List<PythonTestsGitCommitInfo> commitsInfoAfterJSVN = loadCommitsInfo(gitRepositoryAccess, commitsAfterJSVN);
         final List<PythonTestsGitCommitInfo> commitsInfoAfterSVN = loadCommitsInfo(gitRepositoryAccess, commitsAfterSVN);
 
-        System.out.println("commitsInfoAfterSVN (total " + commitsAfterSVN.size() +")");
-        for (PythonTestsGitCommitInfo commitInfo : commitsInfoAfterSVN) {
-            System.out.println(commitInfo.getCommitId());
-        }
-        System.out.println();
-
-        System.out.println("commitsInfoAfterJSVN (total " + commitsAfterJSVN.size() + ")");
-        for (PythonTestsGitCommitInfo commitInfo : commitsInfoAfterJSVN) {
-            System.out.println(commitInfo.getCommitId());
-        }
-        System.out.println();
-
         checkWorkingCopiesByGitSnapshots(workingCopiesDirectory, gitRepositoryAccess, commitsInfoAfterJSVN, commitsInfoAfterSVN);
     }
 
@@ -224,7 +226,7 @@ public class PythonTests {
                 j++;
             } else {
                 j = jOriginal + 1;
-                System.out.println("Can't find pair for commit " + commitInfoAfterJSVN.getCommitId());
+//                System.out.println("Can't find pair for commit " + commitInfoAfterJSVN.getCommitId());
             }
         }
     }
@@ -232,22 +234,22 @@ public class PythonTests {
     private static void processMatchedGitCommits(File workingCopiesDirectory, GitRepositoryAccess gitRepositoryAccess, PythonTestsGitCommitInfo commitInfoAfterJSVN, PythonTestsGitCommitInfo commitInfoAfterSVN) throws SVNException {
         boolean canDetermineWorkingCopy = commitInfoAfterJSVN.getWorkingCopyName() != null;
         if (!canDetermineWorkingCopy) {
-            System.out.println("jsvn commit=" + commitInfoAfterJSVN.getCommitId() + "; svn commit=" + commitInfoAfterSVN.getCommitId() + "; can't detect working copy");
+//            System.out.println("jsvn commit=" + commitInfoAfterJSVN.getCommitId() + "; svn commit=" + commitInfoAfterSVN.getCommitId() + "; can't detect working copy");
         }
 
         final boolean checkWorkingCopy = canDetermineWorkingCopy && !commandsNotToCheckWorkingCopyAfter.contains(commitInfoAfterJSVN.getSubcommand());
         if (!checkWorkingCopy) {
-            System.out.println("jsvn commit=" + commitInfoAfterJSVN.getCommitId() + "; svn commit=" + commitInfoAfterSVN.getCommitId() + "; working copy shouldn't be checked");
+//            System.out.println("jsvn commit=" + commitInfoAfterJSVN.getCommitId() + "; svn commit=" + commitInfoAfterSVN.getCommitId() + "; working copy shouldn't be checked");
             return;
         }
-        System.out.println(commitInfoAfterJSVN.getCommitMessage());
-        System.out.println("command = " + commitInfoAfterJSVN.getCommand());
-        System.out.println("subcommand = " + commitInfoAfterJSVN.getSubcommand());
-        System.out.println("testcase = " + commitInfoAfterJSVN.getTestCase());
-        System.out.println("testnumber = " + commitInfoAfterJSVN.getTestNumber());
-        System.out.println("working copy name = " + commitInfoAfterJSVN.getWorkingCopyName());
-        System.out.println("jsvn commit id = " + commitInfoAfterJSVN.getCommitId());
-        System.out.println("svn commit id = " + commitInfoAfterSVN.getCommitId());
+//        System.out.println(commitInfoAfterJSVN.getCommitMessage());
+//        System.out.println("command = " + commitInfoAfterJSVN.getCommand());
+//        System.out.println("subcommand = " + commitInfoAfterJSVN.getSubcommand());
+//        System.out.println("testcase = " + commitInfoAfterJSVN.getTestCase());
+//        System.out.println("testnumber = " + commitInfoAfterJSVN.getTestNumber());
+//        System.out.println("working copy name = " + commitInfoAfterJSVN.getWorkingCopyName());
+//        System.out.println("jsvn commit id = " + commitInfoAfterJSVN.getCommitId());
+//        System.out.println("svn commit id = " + commitInfoAfterSVN.getCommitId());
 
         String newTestCase = commitInfoAfterJSVN.getTestCase();
         int newTestNumber = commitInfoAfterJSVN.getTestNumber();
@@ -263,12 +265,12 @@ public class PythonTests {
         boolean shouldChangeTestCase = !areEqual(currentTestCase, newTestCase);
         boolean shouldChangeTestNumber = (currentTestNumber != newTestNumber) || shouldChangeTestCase;
 
-        System.out.println("currentTestCase = " + currentTestCase);
-        System.out.println("currentTestNumber = " + currentTestNumber);
-        System.out.println("newTestCase = " + newTestCase);
-        System.out.println("newTestNumber = " + newTestNumber);
-        System.out.println("shouldChangeTestCase = " + shouldChangeTestCase);
-        System.out.println("shouldChangeTestNumber = " + shouldChangeTestNumber);
+//        System.out.println("currentTestCase = " + currentTestCase);
+//        System.out.println("currentTestNumber = " + currentTestNumber);
+//        System.out.println("newTestCase = " + newTestCase);
+//        System.out.println("newTestNumber = " + newTestNumber);
+//        System.out.println("shouldChangeTestCase = " + shouldChangeTestCase);
+//        System.out.println("shouldChangeTestNumber = " + shouldChangeTestNumber);
 
         if (shouldChangeTestNumber) {
             maybeEndTest();
@@ -297,7 +299,7 @@ public class PythonTests {
         final GitObjectId wcDbBlobAfterSVN = gitRepositoryAccess.getBlobId(commitInfoAfterSVN.getCommitId(), relativeWCDbPath);
 
         if (wcDbBlobAfterJSVN == null && wcDbBlobAfterSVN == null) {
-            System.out.println("jsvn commit=" + commitInfoAfterJSVN.getCommitId() + "; svn commit=" + commitInfoAfterSVN.getCommitId() + "; both don't have wc.db");
+//            System.out.println("jsvn commit=" + commitInfoAfterJSVN.getCommitId() + "; svn commit=" + commitInfoAfterSVN.getCommitId() + "; both don't have wc.db");
             return;
         }
 
@@ -639,8 +641,10 @@ public class PythonTests {
 			List tokens = tokenizeTestFileString(testFileString);
 
             String suiteName = (String) tokens.get(0);
-			for (int i = 0; i < ourLoggers.length; i++) {
-                ourLoggers[i].startSuite(getTestType() + "." + suiteName);
+            if (regularLoggingEnabled) {
+                for (int i = 0; i < ourLoggers.length; i++) {
+                    ourLoggers[i].startSuite(getTestType() + "." + suiteName);
+                }
             }
 
 			final String testFile = suiteName + "_tests.py";
@@ -666,8 +670,10 @@ public class PythonTests {
 			        pythonLogger.removeHandler(logHandler);
 			    }
 			}
-            for (int i = 0; i < ourLoggers.length; i++) {
-                ourLoggers[i].endSuite(getTestType() + "." + suiteName);
+            if (regularLoggingEnabled) {
+                for (int i = 0; i < ourLoggers.length; i++) {
+                    ourLoggers[i].endSuite(getTestType() + "." + suiteName);
+                }
             }
 		}
 	}
@@ -884,9 +890,11 @@ public class PythonTests {
                     if (testResult != null) {
                         testResult.setOutput(myTestOutput);
                         myTestOutput = new StringBuffer();
-                    
-                        for (int i = 0; i < ourLoggers.length; i++) {
-                            ourLoggers[i].handleTest(testResult);
+
+                        if (regularLoggingEnabled) {
+                            for (int i = 0; i < ourLoggers.length; i++) {
+                                ourLoggers[i].handleTest(testResult);
+                            }
                         }
 
                     } else {
