@@ -3,7 +3,7 @@
 snapshot() {
 if [ -x $dir/snapshot ]
 then
-    rm "%svn_test_work%/commit_msg"
+    echo "" > "%svn_test_work%/commit_msg"
     i=1
     for arg in "$@"; do
 
