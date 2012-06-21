@@ -55,6 +55,9 @@ public class PythonTests {
     private static Properties ourProperties;
     private static String ourTestType;
     private static int daemonPortNumber = -1;
+    private static String currentTestCase = null;
+    private static int currentTestNumber = -1;
+    private static String currentTestErrorMessage = null;
 
     private static Set<String> commandsNotToCheckWorkingCopyAfter;
     static {
@@ -157,6 +160,9 @@ public class PythonTests {
                 Collections.reverse(commitsAfterSVN);
 
                 checkWorkingCopiesByGitSnapshots(gitRepositoryAccess, workingCopiesDirectory, commitsAfterJSVN, commitsAfterSVN);
+
+                maybeEndTest();
+                maybeEndTestCase();
             }
         } catch (SVNException e) {
             e.printStackTrace();
@@ -243,6 +249,43 @@ public class PythonTests {
         System.out.println("jsvn commit id = " + commitInfoAfterJSVN.getCommitId());
         System.out.println("svn commit id = " + commitInfoAfterSVN.getCommitId());
 
+        String newTestCase = commitInfoAfterJSVN.getTestCase();
+        int newTestNumber = commitInfoAfterJSVN.getTestNumber();
+
+        if (newTestCase == null) {
+            newTestCase = currentTestCase;
+        }
+
+        if (newTestNumber == -1) {
+            newTestNumber = currentTestNumber;
+        }
+
+        boolean shouldChangeTestCase = !areEqual(currentTestCase, newTestCase);
+        boolean shouldChangeTestNumber = (currentTestNumber != newTestNumber) || shouldChangeTestCase;
+
+        System.out.println("currentTestCase = " + currentTestCase);
+        System.out.println("currentTestNumber = " + currentTestNumber);
+        System.out.println("newTestCase = " + newTestCase);
+        System.out.println("newTestNumber = " + newTestNumber);
+        System.out.println("shouldChangeTestCase = " + shouldChangeTestCase);
+        System.out.println("shouldChangeTestNumber = " + shouldChangeTestNumber);
+
+        if (shouldChangeTestNumber) {
+            maybeEndTest();
+        }
+
+        if (shouldChangeTestCase) {
+            maybeEndTestCase();
+        }
+
+        if (shouldChangeTestCase) {
+            maybeStartTestCase(newTestCase);
+        }
+
+        if (shouldChangeTestNumber) {
+            maybeStartTest(newTestNumber);
+        }
+
         final File workingCopyDirectory = new File(workingCopiesDirectory, commitInfoAfterJSVN.getWorkingCopyName());
         final File wcDbFile = new File(workingCopyDirectory, SVNFileUtil.getAdminDirectoryName() +"/wc.db");
         final File workingTree = gitRepositoryAccess.getWorkingTree();
@@ -269,6 +312,55 @@ public class PythonTests {
         gitRepositoryAccess.copyBlobToFile(wcDbBlobAfterSVN, wcDbAfterSVN);
 
         compareWCDbContents(commitInfoAfterJSVN, commitInfoAfterSVN, wcDbAfterJSVN, wcDbAfterSVN);
+    }
+
+    private static boolean areEqual(Object o1, Object o2) {
+        return o1 == null ? o2 == null : o1.equals(o2);
+    }
+
+    private static void maybeStartTest(int testNumber) {
+        if (testNumber == -1) {
+            return;
+        }
+        currentTestErrorMessage = null;
+        currentTestNumber = testNumber;
+    }
+
+    private static void maybeEndTest() {
+        if (currentTestNumber == -1) {
+            return;
+        }
+
+        TestResult testResult = new TestResult(currentTestCase, String.valueOf(currentTestNumber), currentTestErrorMessage == null);
+        if (currentTestErrorMessage != null) {
+            testResult.setOutput(new StringBuffer(currentTestErrorMessage));
+        }
+
+        for (AbstractTestLogger ourLogger : ourLoggers) {
+            ourLogger.handleTest(testResult);
+        }
+        currentTestNumber = -1;
+        currentTestErrorMessage = null;
+    }
+
+    private static void maybeStartTestCase(String testCase) {
+        if (testCase == null) {
+            return;
+        }
+        for (AbstractTestLogger ourLogger : ourLoggers) {
+            ourLogger.startSuite(testCase);
+        }
+        currentTestCase = testCase;
+    }
+
+    private static void maybeEndTestCase() {
+        if (currentTestCase == null) {
+            return;
+        }
+        for (AbstractTestLogger ourLogger : ourLoggers) {
+            ourLogger.endSuite(currentTestCase);
+        }
+        currentTestCase = null;
     }
 
     private static void compareWCDbContents(PythonTestsGitCommitInfo commitInfoAfterJSVN, PythonTestsGitCommitInfo commitInfoAfterSVN, File wcDbAfterJSVN, File wcDbAfterSVN) throws SVNException {
