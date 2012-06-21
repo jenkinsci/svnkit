@@ -761,6 +761,7 @@ public class MergeTest {
     }
 
     @Test
+    @Ignore
     public void testConflictOnFileExternalUpdate() throws Exception {
         final TestOptions options = TestOptions.getInstance();
 
