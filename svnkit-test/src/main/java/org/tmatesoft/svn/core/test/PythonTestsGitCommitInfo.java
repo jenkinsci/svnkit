@@ -1,6 +1,7 @@
 package org.tmatesoft.svn.core.test;
 
 import org.tmatesoft.svn.cli.SVNCommandLine;
+import org.tmatesoft.svn.cli.svn.SVN;
 import org.tmatesoft.svn.core.SVNException;
 
 import java.util.ArrayList;
@@ -11,6 +12,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class PythonTestsGitCommitInfo {
+
+    static {
+        registerOptionsWorkaround();
+    }
 
     private static Pattern WORKING_COPY_PATH_PATTERN = Pattern.compile(".*/working_copies/((\\w|-|\\.)+)($|\\s|/).*");
     private static Pattern COMMIT_MESSAGE_PATTERN = Pattern.compile("(\\w+) (\\w+) .*/(\\w+)_tests-(\\d+).*");
@@ -143,8 +148,9 @@ public class PythonTestsGitCommitInfo {
                         currentQuoteCharacter = c;
                     } else if (currentQuoteCharacter == c) {
                         currentQuoteCharacter = null;
+                    } else {
+                        argumentBuilder.append(c);
                     }
-                    argumentBuilder.append(c);
                     break;
                 case ' ':
                 case '\t':
@@ -171,10 +177,28 @@ public class PythonTestsGitCommitInfo {
     }
 
     public static void main(String[] args) {
-        String s = "a b  c 'd e' \"f g h\"";
+
+
+        String s = "jsvn import -m 'Log message for revision 1.' svn-test-work/local_tmp/greekfiles file:///home/dmit10/work/svnkit/svnkit-test/build/sandbox/svn-python-tests/svn-test-work/local_tmp/repos --config-dir /home/dmit10/work/svnkit/svnkit-test/build/sandbox/svn-python-tests/svn-test-work/local_tmp/config --password rayjandom --no-auth-cache --username jrandom";
         String[] arguments = splitIntoArguments(s);
         for (String argument : arguments) {
             System.out.println("argument = " + argument);
         }
+        SVNCommandLine commandLine = new SVNCommandLine();
+        try {
+            commandLine.init(arguments);
+        } catch (SVNException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
+    }
+
+    private static void registerOptionsWorkaround() {
+        //TODO: in perfect world registerOptions() method should be static
+        new SVN(){
+            @Override
+            protected void registerOptions() {
+                super.registerOptions();
+            }
+        }.registerOptions();
     }
 }
