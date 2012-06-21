@@ -18,7 +18,7 @@ public class PythonTestsGitCommitInfo {
     }
 
     private static Pattern WORKING_COPY_PATH_PATTERN = Pattern.compile(".*/working_copies/((\\w|-|\\.)+)($|\\s|/).*");
-    private static Pattern COMMIT_MESSAGE_PATTERN = Pattern.compile("(\\w+) (\\w+) .*/(\\w+)_tests-(\\d+).*");
+    private static Pattern COMMIT_MESSAGE_PATTERN = Pattern.compile("(\\w+)( -m '.*')? (\\w+)( -m '.*')? .*/(\\w+)_tests-(\\d+).*");
 
     public static PythonTestsGitCommitInfo loadFromCommit(GitRepositoryAccess gitRepositoryAccess, GitObjectId commitId) throws SVNException {
         PythonTestsGitCommitInfo commitInfo = new PythonTestsGitCommitInfo(gitRepositoryAccess, commitId);
@@ -49,10 +49,10 @@ public class PythonTestsGitCommitInfo {
         final Matcher matcher = COMMIT_MESSAGE_PATTERN.matcher(commitMessage);
         if (matcher.matches()) {
             this.command = matcher.group(1);
-            this.subcommand = matcher.group(2);
-            this.testCase = matcher.group(3);
+            this.subcommand = matcher.group(3);
+            this.testCase = matcher.group(5);
             try {
-                this.testNumber = Integer.parseInt(matcher.group(4));
+                this.testNumber = Integer.parseInt(matcher.group(6));
             } catch (NumberFormatException e) {
                 this.testNumber = -1;
             }
