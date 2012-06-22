@@ -304,7 +304,8 @@ public class PythonTests {
         }
 
         if (wcDbBlobAfterJSVN == null || wcDbBlobAfterSVN == null) {
-            System.out.println("ERROR: jsvn commit=" + commitInfoAfterJSVN.getCommitId() + "; svn commit=" + commitInfoAfterSVN.getCommitId() + "; one commit has " + relativeWCDbPath + " another one has not");
+            currentTestErrorMessage = "jsvn commit=" + commitInfoAfterJSVN.getCommitId() + "; svn commit=" + commitInfoAfterSVN.getCommitId() + "; one commit has " + relativeWCDbPath + " another one has not";
+            System.out.println("ERROR: " + currentTestErrorMessage);
         }
 
         final File wcDbAfterJSVN = SVNFileUtil.createTempFile("svnkit.tests.wc.db.after.jsvn", "");
@@ -379,7 +380,8 @@ public class PythonTests {
             final Set<String> tableNamesAfterSVN = schemaAfterSVN.getTableNames();
 
             if (!tableNamesAfterJSVN.equals(tableNamesAfterSVN)) {
-                System.out.println("ERROR: jsvn commit=" + commitInfoAfterJSVN.getCommitId() + "; svn commit=" + commitInfoAfterSVN.getCommitId() + "; tables set differ");
+                currentTestErrorMessage = "jsvn commit=" + commitInfoAfterJSVN.getCommitId() + "; svn commit=" + commitInfoAfterSVN.getCommitId() + "; tables set differ";
+                System.out.println("ERROR: " + currentTestErrorMessage);
                 return;
             }
 
@@ -396,7 +398,8 @@ public class PythonTests {
                 int row = 0;
                 while (true) {
                     if (cursorAfterJSVN.eof() != cursorAfterSVN.eof()) {
-                        System.out.println("ERROR: jsvn commit=" + commitInfoAfterJSVN.getCommitId() + "; svn commit=" + commitInfoAfterSVN.getCommitId() + "; table=" + tableName + "; size mismatch");
+                        currentTestErrorMessage = "jsvn commit=" + commitInfoAfterJSVN.getCommitId() + "; svn commit=" + commitInfoAfterSVN.getCommitId() + "; table=" + tableName + "; size mismatch";
+                        System.out.println("ERROR: " + currentTestErrorMessage);
                     }
 
                     if (cursorAfterJSVN.eof() || cursorAfterSVN.eof()) {
@@ -407,7 +410,8 @@ public class PythonTests {
                     final Object[] valuesAfterSVN = cursorAfterSVN.getRowValues();
 
                     if (valuesAfterJSVN.length != valuesAfterSVN.length) {
-                        System.out.println("ERROR: jsvn commit=" + commitInfoAfterJSVN.getCommitId() + "; svn commit=" + commitInfoAfterSVN.getCommitId() + "; table=" + tableName + "; row=" + row + "; length mismatch");
+                        currentTestErrorMessage = "jsvn commit=" + commitInfoAfterJSVN.getCommitId() + "; svn commit=" + commitInfoAfterSVN.getCommitId() + "; table=" + tableName + "; row=" + row + "; length mismatch";
+                        System.out.println("ERROR: " + currentTestErrorMessage);
                         return;
                     }
 
@@ -416,7 +420,8 @@ public class PythonTests {
                         final Object valueAfterSVN = valuesAfterSVN[i];
 
                         if (!areSqlJetValuesEqual(valueAfterJSVN, valueAfterSVN)) {
-                            System.out.println("ERROR: jsvn commit=" + commitInfoAfterJSVN.getCommitId() + "; svn commit=" + commitInfoAfterSVN.getCommitId() + "; table=" + tableName + "; row=" + row + "; field = " + schemaAfterJSVN.getTable(tableName).getColumns().get(i).getName() +  "; value mismatch (" + valueAfterJSVN + " != " + valueAfterSVN + ")");
+                            currentTestErrorMessage = "jsvn commit=" + commitInfoAfterJSVN.getCommitId() + "; svn commit=" + commitInfoAfterSVN.getCommitId() + "; table=" + tableName + "; row=" + row + "; field = " + schemaAfterJSVN.getTable(tableName).getColumns().get(i).getName() + "; value mismatch (" + valueAfterJSVN + " != " + valueAfterSVN + ")";
+                            System.out.println("ERROR: " + currentTestErrorMessage);
                             return;
                         }
                     }
