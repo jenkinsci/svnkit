@@ -323,7 +323,7 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 		/* Create the new DB in the temporary root wc/.svn/tmp/wcng/.svn */
 
 		upgradeData.rootAbsPath = SVNFileUtil.createFilePath(SVNWCUtils.admChild(localAbsPath, "tmp"), "wcng");
-		File rootAdmAbsPath = SVNWCUtils.admChild(upgradeData.rootAbsPath, "tmp");
+		File rootAdmAbsPath = SVNWCUtils.admChild(upgradeData.rootAbsPath, "");
 
 		try {
 
