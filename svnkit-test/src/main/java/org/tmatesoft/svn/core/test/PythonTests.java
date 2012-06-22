@@ -16,7 +16,9 @@ import com.martiansoftware.nailgun.NGServer;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.sqljet.core.internal.memory.SqlJetMemoryPointer;
+import org.tmatesoft.sqljet.core.schema.ISqlJetColumnDef;
 import org.tmatesoft.sqljet.core.schema.ISqlJetSchema;
+import org.tmatesoft.sqljet.core.schema.ISqlJetTableDef;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
 import org.tmatesoft.sqljet.core.table.ISqlJetTable;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
@@ -25,9 +27,11 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.util.DefaultSVNDebugFormatter;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
 import org.tmatesoft.svn.util.SVNLogType;
 
 import java.io.*;
@@ -376,8 +380,8 @@ public class PythonTests {
             final ISqlJetSchema schemaAfterJSVN = dbAfterJSVN.getSchema();
             final ISqlJetSchema schemaAfterSVN = dbAfterSVN.getSchema();
 
-            final Set<String> tableNamesAfterJSVN = schemaAfterJSVN.getTableNames();
-            final Set<String> tableNamesAfterSVN = schemaAfterSVN.getTableNames();
+            final SortedSet<String> tableNamesAfterJSVN = new TreeSet<String>(schemaAfterJSVN.getTableNames());
+            final SortedSet<String> tableNamesAfterSVN = new TreeSet<String>(schemaAfterSVN.getTableNames());
 
             if (!tableNamesAfterJSVN.equals(tableNamesAfterSVN)) {
                 currentTestErrorMessage = "jsvn commit=" + commitInfoAfterJSVN.getCommitId() + "; svn commit=" + commitInfoAfterSVN.getCommitId() + "; tables set differ";
@@ -386,54 +390,45 @@ public class PythonTests {
             }
 
             for (String tableName : tableNamesAfterJSVN) {
+                if (tableName.startsWith("sqlite_")) {
+                    //skip special table
+                    continue;
+                }
+
                 final ISqlJetTable tableAfterJSVN = dbAfterJSVN.getTable(tableName);
                 final ISqlJetTable tableAfterSVN = dbAfterSVN.getTable(tableName);
 
-                dbAfterJSVN.beginTransaction(SqlJetTransactionMode.READ_ONLY);
-                dbAfterSVN.beginTransaction(SqlJetTransactionMode.READ_ONLY);
+                final ISqlJetTableDef definition = tableAfterJSVN.getDefinition();
+                final List<ISqlJetColumnDef> columnDefinitions = definition.getColumns();
 
-                final ISqlJetCursor cursorAfterJSVN = tableAfterJSVN.open();
-                final ISqlJetCursor cursorAfterSVN = tableAfterSVN.open();
 
-                int row = 0;
-                while (true) {
-                    if (cursorAfterJSVN.eof() != cursorAfterSVN.eof()) {
-                        currentTestErrorMessage = "jsvn commit=" + commitInfoAfterJSVN.getCommitId() + "; svn commit=" + commitInfoAfterSVN.getCommitId() + "; table=" + tableName + "; size mismatch";
-                        System.out.println("ERROR: " + currentTestErrorMessage);
+                final List<Object[]> rowsAfterJSVN = loadRows(dbAfterJSVN, tableAfterJSVN, tableName);
+                final List<Object[]> rowsAfterSVN = loadRows(dbAfterSVN, tableAfterSVN, tableName);
+
+                if (rowsAfterJSVN.size() != rowsAfterSVN.size()) {
+                    currentTestErrorMessage = "jsvn commit=" + commitInfoAfterJSVN.getCommitId() + "; svn commit=" + commitInfoAfterSVN.getCommitId() + "; table " + tableName + " rows count differ";
+                    System.out.println("ERROR: " + currentTestErrorMessage);
+                    return;
+                }
+
+                int rowAfterJSVN = 0;
+                for (Object[] valuesAfterJSVN : rowsAfterJSVN) {
+                    boolean found = false;
+                    for (Object[] valuesAfterSVN : rowsAfterSVN) {
+                        if (areSqlJetArraysEqual(columnDefinitions, valuesAfterJSVN, valuesAfterSVN)) {
+                            found = true;
+                            break;
+                        }
                     }
 
-                    if (cursorAfterJSVN.eof() || cursorAfterSVN.eof()) {
-                        break;
-                    }
-
-                    final Object[] valuesAfterJSVN = cursorAfterJSVN.getRowValues();
-                    final Object[] valuesAfterSVN = cursorAfterSVN.getRowValues();
-
-                    if (valuesAfterJSVN.length != valuesAfterSVN.length) {
-                        currentTestErrorMessage = "jsvn commit=" + commitInfoAfterJSVN.getCommitId() + "; svn commit=" + commitInfoAfterSVN.getCommitId() + "; table=" + tableName + "; row=" + row + "; length mismatch";
+                    if (!found) {
+                        currentTestErrorMessage = "jsvn commit=" + commitInfoAfterJSVN.getCommitId() + "; svn commit=" + commitInfoAfterSVN.getCommitId() + "; table " + tableName + " row " + rowAfterJSVN + " corresponds no row of reference table";
                         System.out.println("ERROR: " + currentTestErrorMessage);
                         return;
                     }
 
-                    for (int i = 0; i < valuesAfterJSVN.length; i++) {
-                        final Object valueAfterJSVN = valuesAfterJSVN[i];
-                        final Object valueAfterSVN = valuesAfterSVN[i];
-
-                        if (!areSqlJetValuesEqual(valueAfterJSVN, valueAfterSVN)) {
-                            currentTestErrorMessage = "jsvn commit=" + commitInfoAfterJSVN.getCommitId() + "; svn commit=" + commitInfoAfterSVN.getCommitId() + "; table=" + tableName + "; row=" + row + "; field = " + schemaAfterJSVN.getTable(tableName).getColumns().get(i).getName() + "; value mismatch (" + valueAfterJSVN + " != " + valueAfterSVN + ")";
-                            System.out.println("ERROR: " + currentTestErrorMessage);
-                            return;
-                        }
-                    }
-//                    System.out.println("OK: jsvn commit=" + commitInfoAfterJSVN.getCommitId() + "; svn commit=" + commitInfoAfterSVN.getCommitId() + "; table=" + tableName + "; row=" + row);
-
-                    row++;
-                    cursorAfterJSVN.next();
-                    cursorAfterSVN.next();
+                    rowAfterJSVN++;
                 }
-
-                cursorAfterJSVN.close();
-                cursorAfterSVN.close();
             }
 
         } catch (SqlJetException e) {
@@ -445,7 +440,56 @@ public class PythonTests {
         }
     }
 
-    private static boolean areSqlJetValuesEqual(Object value1, Object value2) {
+    private static boolean areSqlJetArraysEqual(List<ISqlJetColumnDef> columnDefinitions, Object[] valuesAfterJSVN, Object[] valuesAfterSVN) {
+        if (valuesAfterJSVN.length != valuesAfterSVN.length) {
+            return false;
+        }
+        int length = valuesAfterJSVN.length;
+        for (int i = 0; i < length; i++) {
+            if (!areSqlJetValuesEqual(columnDefinitions.get(i), valuesAfterJSVN[i], valuesAfterSVN[i])) {
+                System.out.println(columnDefinitions.get(i).getName() + ":" + valuesAfterJSVN[i] + "!=" + valuesAfterSVN[i]);
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static List<Object[]> loadRows(SqlJetDb db, ISqlJetTable table, String tableName) throws SqlJetException {
+        db.beginTransaction(SqlJetTransactionMode.READ_ONLY);
+        final ISqlJetCursor cursor = table.open();
+        final List<Object[]> rows = new ArrayList<Object[]>();
+
+        System.out.println("===========" + tableName + "==============");
+        int row = 0;
+        while (!cursor.eof()) {
+            final Object[] values = cursor.getRowValues();
+            rows.add(values);
+
+            cursor.next();
+
+            System.out.print(row);
+            System.out.print(":  ");
+            for (Object value : values) {
+                System.out.print(value);
+                System.out.print(';');
+            }
+
+            System.out.println();
+            row++;
+        }
+        System.out.println("=========================");
+        cursor.close();
+        return rows;
+    }
+
+    private static boolean areSqlJetValuesEqual(ISqlJetColumnDef columnDefinition, Object value1, Object value2) {
+        String columnDefinitionName = columnDefinition.getName();
+        if (columnDefinitionName.endsWith("_date") || columnDefinitionName.endsWith("_time")) {
+            value1 = value1 == null ? 0L : value1;
+            value2 = value2 == null ? 0L : value2;
+            //TODO: is it a bug?
+        }
+
         if (value1 == null) {
             return value2 == null;
         }
@@ -463,6 +507,20 @@ public class PythonTests {
             SqlJetMemoryPointer memoryPointer2 = (SqlJetMemoryPointer) value2;
 
             return memoryPointer1.compareTo(memoryPointer2) == 0;
+        }
+
+        if (columnDefinitionName.endsWith("_date") || columnDefinitionName.endsWith("_time")) {
+            SVNDate date1 = SVNWCUtils.readDate((Long) value1);
+            SVNDate date2 = SVNWCUtils.readDate((Long) value2);
+
+            long time1 = date1.getTime();
+            long time2 = date2.getTime();
+
+            return Math.abs(time1 - time2) < 100000000000L;
+        }
+
+        if (columnDefinitionName.equals("uuid")) {
+            return true;
         }
 
         return value1.equals(value2);
