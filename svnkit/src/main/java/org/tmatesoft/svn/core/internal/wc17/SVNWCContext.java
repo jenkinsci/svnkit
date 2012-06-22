@@ -2686,7 +2686,7 @@ public class SVNWCContext {
                             getOptions().getConflictResolver());
                 }
             } else {
-                info = mergeTextFile(customMerger, leftAbspath, rightAbspath, targetAbspath, leftLabel, rightLabel, targetLabel, dryRun, options, leftVersion, rightVersion, null, detranslatedTargetAbspath,
+                info = mergeTextFile(customMerger, leftAbspath, rightAbspath, targetAbspath, wriAbspath, leftLabel, rightLabel, targetLabel, dryRun, options, leftVersion, rightVersion, null, detranslatedTargetAbspath,
                         mimeprop, getOptions().getConflictResolver());
             }
         }
@@ -2834,13 +2834,13 @@ public class SVNWCContext {
         return oldTargetAbspath;
     }
 
-    private MergeInfo mergeTextFile(ISvnMerger customMerger, File leftAbspath, File rightAbspath, File targetAbspath, String leftLabel, String rightLabel, String targetLabel, boolean dryRun, SVNDiffOptions options,
+    private MergeInfo mergeTextFile(ISvnMerger customMerger, File leftAbspath, File rightAbspath, File targetAbspath, File wriAbspath, String leftLabel, String rightLabel, String targetLabel, boolean dryRun, SVNDiffOptions options,
             SVNConflictVersion leftVersion, SVNConflictVersion rightVersion, File copyfromText, File detranslatedTargetAbspath, SVNPropertyValue mimeprop, ISVNConflictHandler conflictResolver)
             throws SVNException {
         MergeInfo info = new MergeInfo();
         info.workItems = null;
         String baseName = SVNFileUtil.getFileName(targetAbspath);
-        File tempDir = db.getWCRootTempDir(targetAbspath);
+        File tempDir = db.getWCRootTempDir(wriAbspath == null ? targetAbspath : wriAbspath);
         File resultTarget = SVNFileUtil.createUniqueFile(tempDir, baseName, ".tmp", false);
         boolean containsConflicts = doTextMerge(customMerger, resultTarget, targetAbspath, detranslatedTargetAbspath, leftAbspath, rightAbspath, targetLabel, leftLabel, rightLabel, options);
         if (containsConflicts && !dryRun) {
