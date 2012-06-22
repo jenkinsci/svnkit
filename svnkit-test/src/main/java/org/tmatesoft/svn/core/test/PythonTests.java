@@ -371,7 +371,7 @@ public class PythonTests {
         final SVNSqlJetDb svnSqlJetDbAfterSVN = SVNSqlJetDb.open(wcDbAfterSVN, SVNSqlJetDb.Mode.ReadOnly);
         try {
             final SqlJetDb dbAfterJSVN = svnSqlJetDbAfterJSVN.getDb();
-            final SqlJetDb dbAfterSVN = svnSqlJetDbAfterJSVN.getDb();
+            final SqlJetDb dbAfterSVN = svnSqlJetDbAfterSVN.getDb();
 
             final ISqlJetSchema schemaAfterJSVN = dbAfterJSVN.getSchema();
             final ISqlJetSchema schemaAfterSVN = dbAfterSVN.getSchema();
