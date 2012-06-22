@@ -120,7 +120,7 @@ public class PythonTests {
             }
         }
 
-        boolean wcdbCheckMode = true;
+        boolean wcdbCheckMode = Boolean.TRUE.toString().equals(properties.getProperty("python.check.wc.db"));
         regularLoggingEnabled = !wcdbCheckMode;
 
         String pythonTestsRoot = properties.getProperty("python.tests", "python/cmdline");
