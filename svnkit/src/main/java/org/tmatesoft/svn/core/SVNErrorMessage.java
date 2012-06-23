@@ -320,7 +320,10 @@ public class SVNErrorMessage extends Exception implements Serializable {
      * @return throwable that caused error or null if not applicable or not known.
      */
     public Throwable getCause() {
-        return myThrowable;
+        if (myThrowable!=null)
+            return myThrowable;
+        else
+            return super.getCause();
     }
 
     /**
@@ -394,6 +397,7 @@ public class SVNErrorMessage extends Exception implements Serializable {
     @Override
     public SVNErrorMessage initCause(Throwable cause) {
         super.initCause(cause);
+        myThrowable = cause;
         return this;
     }
 
