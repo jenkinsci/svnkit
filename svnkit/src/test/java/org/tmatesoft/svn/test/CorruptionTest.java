@@ -8,17 +8,13 @@ import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
 import org.tmatesoft.sqljet.core.table.ISqlJetTable;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
+import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnChecksum;
-import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
-import org.tmatesoft.svn.core.wc2.SvnUpdate;
+import org.tmatesoft.svn.core.wc2.*;
 
 import java.io.File;
 
@@ -101,6 +97,59 @@ public class CorruptionTest {
         }
     }
 
+    @Test
+    public void testPropdelOfSvnEolStyleResetsTranslatedSizeCache() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testPropdelOfSvnEolStyleResetsTranslatedSizeCache", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("file");
+            commitBuilder.setFileProperty("file", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE));
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url);
+            final File file = workingCopy.getFile("file");
+
+            final SvnSetProperty setProperty = svnOperationFactory.createSetProperty();
+            setProperty.setSingleTarget(SvnTarget.fromFile(file));
+            setProperty.setPropertyName(SVNProperty.EOL_STYLE);
+            setProperty.setPropertyValue(null);
+            setProperty.run();
+
+            assertTranslatedSizeCacheIsReset(workingCopy);
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    private void assertTranslatedSizeCacheIsReset(WorkingCopy workingCopy) throws SqlJetException {
+        final SqlJetDb db = SqlJetDb.open(workingCopy.getWCDbFile(), false);
+        try {
+            final ISqlJetTable table = db.getTable(SVNWCDbSchema.NODES.name());
+            db.beginTransaction(SqlJetTransactionMode.READ_ONLY);
+            final ISqlJetCursor cursor = table.open();
+
+            for (; !cursor.eof(); cursor.next()) {
+                final ISVNWCDb.SVNWCDbKind kind = SvnWcDbStatementUtil.parseKind(cursor.getString(SVNWCDbSchema.NODES__Fields.kind.name()));
+                if (kind != ISVNWCDb.SVNWCDbKind.File) {
+                    continue;
+                }
+                final long translatedSize = cursor.getInteger(SVNWCDbSchema.NODES__Fields.translated_size.name());
+                Assert.assertEquals(-1, translatedSize);
+            }
+            cursor.close();
+            db.commit();
+        } finally {
+            db.close();
+        }
+    }
+
     private void assertNoReposPathStartsWithSlash(WorkingCopy workingCopy) throws SqlJetException {
         final SqlJetDb db = SqlJetDb.open(workingCopy.getWCDbFile(), false);
         try {
@@ -114,6 +163,7 @@ public class CorruptionTest {
                 Assert.assertFalse("repos_path '" + reposPath + "' starts with '/'", reposPath.startsWith("/"));
             }
             cursor.close();
+            db.commit();
         } finally {
             db.close();
         }
