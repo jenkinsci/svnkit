@@ -32,6 +32,7 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 import org.tmatesoft.svn.util.SVNLogType;
 
 import java.io.*;
@@ -463,7 +464,10 @@ public class PythonTests {
         int row = 0;
         while (!cursor.eof()) {
             final Object[] values = cursor.getRowValues();
-            rows.add(values);
+            final boolean zeroRefCountInPristine = SVNWCDbSchema.PRISTINE.name().equals(tableName) && (cursor.getInteger("refcount") == 0);
+            if (!zeroRefCountInPristine) {
+                rows.add(values);
+            }
 
             cursor.next();
 
@@ -520,6 +524,10 @@ public class PythonTests {
         }
 
         if (columnDefinitionName.equals("uuid")) {
+            return true;
+        }
+
+        if (columnDefinitionName.equals("lock_token")) {
             return true;
         }
 
