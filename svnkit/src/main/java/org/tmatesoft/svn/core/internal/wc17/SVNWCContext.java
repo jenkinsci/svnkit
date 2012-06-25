@@ -1240,7 +1240,7 @@ public class SVNWCContext {
                     if (f.contains(NodeCopyFromField.rootUrl))
                         copyFrom.rootUrl = original_root_url;
                     if (f.contains(NodeCopyFromField.reposRelPath))
-                        copyFrom.reposRelPath = new File(original_repos_relpath, src_relpath);
+                        copyFrom.reposRelPath = SVNFileUtil.createFilePath(original_repos_relpath, src_relpath);
                     if (f.contains(NodeCopyFromField.url))
                         copyFrom.url = SVNURL.parseURIEncoded(SVNPathUtil.append(src_parent_url.toString(), src_relpath.toString()));
                     if (f.contains(NodeCopyFromField.rev))
@@ -3331,7 +3331,7 @@ public class SVNWCContext {
                 if (revision >= 0) {
                     File dirAbsPath = SVNFileUtil.getParentFile(localAbspath);
                     WCDbRepositoryInfo info = ctx.getDb().scanBaseRepository(dirAbsPath, RepositoryInfoField.relPath, RepositoryInfoField.rootUrl, RepositoryInfoField.uuid);
-                    reposRelPath = new File(info.relPath, SVNFileUtil.getFileName(localAbspath));
+                    reposRelPath = SVNFileUtil.createFilePath(info.relPath, SVNFileUtil.getFileName(localAbspath));
                     reposRootUrl = info.rootUrl;
                     reposUuid = info.uuid;
                 }
