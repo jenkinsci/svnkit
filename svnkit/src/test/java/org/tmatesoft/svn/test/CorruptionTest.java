@@ -9,6 +9,7 @@ import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
 import org.tmatesoft.sqljet.core.table.ISqlJetTable;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
 import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil;
@@ -125,6 +126,60 @@ public class CorruptionTest {
         } finally {
             svnOperationFactory.dispose();
             sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testSymlinkHasCorrectTranslatedSize() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testSymlinkHasCorrectTranslatedSize", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url);
+            final File link = workingCopy.getFile("directory/link");
+            SVNFileUtil.ensureDirectoryExists(link.getParentFile());
+            SVNFileUtil.createSymlink(link, "target");
+            workingCopy.add(link);
+            workingCopy.commit("Added a link");
+
+            assertTranslatedSizeMaybeEquals(workingCopy, "directory/link", "target".getBytes().length);
+
+            workingCopy.copy("directory", "copiedDirectory");
+            assertTranslatedSizeMaybeEquals(workingCopy, "copiedDirectory/link", "target".getBytes().length);
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    private void assertTranslatedSizeMaybeEquals(WorkingCopy workingCopy, String path, int expectedTranslatedSize) throws SqlJetException {
+        final SqlJetDb db = SqlJetDb.open(workingCopy.getWCDbFile(), false);
+        try {
+            final ISqlJetTable table = db.getTable(SVNWCDbSchema.NODES.name());
+            db.beginTransaction(SqlJetTransactionMode.READ_ONLY);
+            final ISqlJetCursor cursor = table.open();
+
+            for (; !cursor.eof(); cursor.next()) {
+                String cursorPath = cursor.getString(SVNWCDbSchema.NODES__Fields.local_relpath.name());
+                if (!path.equals(cursorPath)) {
+                    continue;
+                }
+                final String translatedSizeString = cursor.getString(SVNWCDbSchema.NODES__Fields.translated_size.name());
+                if (translatedSizeString == null) {
+                    //valid value, skip it
+                    continue;
+                }
+                int translatedSize = Integer.parseInt(translatedSizeString);
+                Assert.assertEquals(expectedTranslatedSize, translatedSize);
+            }
+            cursor.close();
+            db.commit();
+        } finally {
+            db.close();
         }
     }
 

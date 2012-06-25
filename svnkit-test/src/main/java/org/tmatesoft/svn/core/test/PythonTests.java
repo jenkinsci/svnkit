@@ -25,7 +25,9 @@ import org.tmatesoft.sqljet.core.table.SqlJetDb;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.util.DefaultSVNDebugFormatter;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -510,7 +512,56 @@ public class PythonTests {
             SqlJetMemoryPointer memoryPointer1 = (SqlJetMemoryPointer) value1;
             SqlJetMemoryPointer memoryPointer2 = (SqlJetMemoryPointer) value2;
 
-            return memoryPointer1.compareTo(memoryPointer2) == 0;
+            boolean areEqual = memoryPointer1.compareTo(memoryPointer2) == 0;
+            if (!areEqual && columnDefinitionName.equals("properties")) {
+                int count1 = memoryPointer1.getBuffer().getSize() - memoryPointer1.getPointer();
+                int count2 = memoryPointer2.getBuffer().getSize() - memoryPointer2.getPointer();
+
+                byte[] buffer1 = new byte[count1];
+                byte[] buffer2 = new byte[count2];
+                memoryPointer1.getBytes(buffer1);
+                memoryPointer2.getBytes(buffer2);
+
+                try {
+                    final SVNProperties properties1 = SVNSqlJetStatement.parseProperties(buffer1);
+                    final SVNProperties properties2 = SVNSqlJetStatement.parseProperties(buffer2);
+
+                    if (properties1 == null) {
+                        return properties2 == null;
+                    }
+
+                    if (properties2 == null) {
+                        return false;
+                    }
+
+                    Set propertiesNames = new HashSet();
+                    propertiesNames.addAll(properties1.asMap().keySet());
+                    propertiesNames.addAll(properties2.asMap().keySet());
+
+                    for (Object name : propertiesNames) {
+                        String propertyName = (String) name;
+                        byte[] binaryValue1 = properties1.getBinaryValue(propertyName);
+                        byte[] binaryValue2 = properties2.getBinaryValue(propertyName);
+
+                        if (!Arrays.equals(binaryValue1, binaryValue2)) {
+                            System.out.println("binaryValue1.length = " + binaryValue1.length);
+                            System.out.println("binaryValue2.length = " + binaryValue2.length);
+                            for (int i = 0; i < Math.min(binaryValue1.length, binaryValue2.length); i++) {
+                                System.out.println(binaryValue1[i]);
+                                System.out.println(binaryValue2[i]);
+                            }
+                            return false;
+                        }
+                    }
+
+                    return true;
+
+                } catch (SVNException e) {
+                    e.printStackTrace();
+                    return false;
+                }
+            }
+            return areEqual;
         }
 
         if (columnDefinitionName.endsWith("_date") || columnDefinitionName.endsWith("_time")) {
