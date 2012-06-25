@@ -772,8 +772,8 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     public void insertIncompleteChildren(SVNSqlJetDb db, long wcId, File localRelpath, long revision, List<File> children, long opDepth) throws SVNException {
-        SVNSqlJetStatement stmt = db.getStatement(SVNWCDbStatements.INSERT_NODE);
         for (File name : children) {
+            SVNSqlJetStatement stmt = db.getStatement(SVNWCDbStatements.INSERT_NODE);
             stmt.bindf("isisnnrsns", wcId, SVNFileUtil.createFilePath(localRelpath, name), opDepth, localRelpath, revision, "incomplete", "unknown");
             stmt.done();
         }

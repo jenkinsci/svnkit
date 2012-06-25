@@ -165,14 +165,18 @@ public class FSPacker {
         long startRev = shard * fsfs.getMaxFilesPerDirectory();
         long endRev = (shard + 1) * fsfs.getMaxFilesPerDirectory() - 1;
         final SVNSqlJetStatement stmt = fsfs.getRevisionProperitesDb().getStatement(SVNWCDbStatements.FSFS_SET_REVPROP);
-        for (long rev = startRev; rev <= endRev; rev++) {
-            FSFile fsRevPropFile = new FSFile(fsfs.getRevisionPropertiesFile(rev, false));
-            try{
-                final SVNProperties fsRevProp = fsRevPropFile.readProperties(false, true);
-                stmt.insert(new Object[] {rev,SVNSkel.createPropList(fsRevProp.asMap()).getData()});
-            }finally{
-                fsRevPropFile.close();
+        try {
+            for (long rev = startRev; rev <= endRev; rev++) {
+                FSFile fsRevPropFile = new FSFile(fsfs.getRevisionPropertiesFile(rev, false));
+                try{
+                    final SVNProperties fsRevProp = fsRevPropFile.readProperties(false, true);
+                    stmt.insert(new Object[] {rev,SVNSkel.createPropList(fsRevProp.asMap()).getData()});
+                }finally{
+                    fsRevPropFile.close();
+                }
             }
+        } finally {
+            stmt.reset();
         }
 
         File finalPath = fsfs.getMinUnpackedRevPropPath();
