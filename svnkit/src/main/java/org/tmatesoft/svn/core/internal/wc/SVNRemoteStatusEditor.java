@@ -105,7 +105,7 @@ public class SVNRemoteStatusEditor extends SVNStatusEditor implements ISVNEditor
         }
         
         if (dir.getEntry(name, false) != null) {
-            tweakStatusHash(myDirectoryInfo, null, file, SVNStatusType.STATUS_DELETED, SVNStatusType.STATUS_NONE, null, SVNRevision.create(revision));
+            tweakStatusHash(myDirectoryInfo, myDirectoryInfo, file, SVNStatusType.STATUS_DELETED, SVNStatusType.STATUS_NONE, null, SVNRevision.create(revision));
             // set entry node kind
             SVNStatus status = (SVNStatus) myDirectoryInfo.myChildrenStatuses.get(file);
             if (status != null) {
@@ -342,10 +342,20 @@ public class SVNRemoteStatusEditor extends SVNStatusEditor implements ISVNEditor
             text = SVNStatusType.STATUS_REPLACED;
         }
         if (text == SVNStatusType.STATUS_DELETED) {
+            SVNURL remoteURL = dirInfo.myURL;
+            if (childDir != null) {
+                if (childDir.myURL != null) {
+                    remoteURL = childDir.myURL.appendPath(SVNFileUtil.getFileName(path), false);
+                }
+            } else {
+                if (dirInfo.myURL != null) {
+                    remoteURL = dirInfo.myURL.appendPath(SVNFileUtil.getFileName(path), false);
+                }
+            }
             if (revision == SVNRevision.UNDEFINED) {
                 revision = dirInfo.myRemoteRevision;
             }
-            status.setRemoteStatus(dirInfo.myURL, text, props, lock, SVNNodeKind.NONE, revision, null, null);
+            status.setRemoteStatus(remoteURL, text, props, lock, SVNNodeKind.NONE, revision, null, null);
         } else if (childDir == null) {
             status.setRemoteStatus(dirInfo.myURL, text, props, lock, dirInfo.myRemoteKind, dirInfo.myRemoteRevision, dirInfo.myRemoteDate, dirInfo.myRemoteAuthor);
         } else {
