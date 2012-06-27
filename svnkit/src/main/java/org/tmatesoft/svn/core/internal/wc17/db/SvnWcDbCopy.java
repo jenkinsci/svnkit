@@ -1,29 +1,9 @@
 package org.tmatesoft.svn.core.internal.wc17.db;
 
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.bindf;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnBlob;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnInt64;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnPath;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnPresence;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnText;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.reset;
-
-import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.schema.SqlJetConflictAction;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNProperties;
-import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetInsertStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectStatement;
@@ -46,6 +26,11 @@ import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODES__Fi
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.core.wc2.SvnChecksum;
 import org.tmatesoft.svn.util.SVNLogType;
+
+import java.io.File;
+import java.util.*;
+
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.*;
 
 public class SvnWcDbCopy extends SvnWcDbShared {
     
@@ -207,14 +192,18 @@ public class SvnWcDbCopy extends SvnWcDbShared {
             } else {
                 stmt = new InsertWorkingNodeCopy(srcPdh.getWCRoot().getSDb(), 0);                
             }
-            stmt.bindf("issist", 
-                    srcPdh.getWCRoot().getWcId(), 
-                    srcRelpath,
-                    dstRelpath,
-                    dstOpDepth,
-                    SVNFileUtil.getFileDir(dstRelpath),
-                    SvnWcDbStatementUtil.getPresenceText(dstPresence));
-            stmt.done();
+            try {
+                stmt.bindf("issist",
+                        srcPdh.getWCRoot().getWcId(),
+                        srcRelpath,
+                        dstRelpath,
+                        dstOpDepth,
+                        SVNFileUtil.getFileDir(dstRelpath),
+                        SvnWcDbStatementUtil.getPresenceText(dstPresence));
+                stmt.done();
+            } finally {
+                stmt.reset();
+            }
             
             InsertWorking iw = dstPdh.getWCRoot().getDb().new InsertWorking();
             iw.opDepth = delOpDepth;
@@ -390,25 +379,33 @@ public class SvnWcDbCopy extends SvnWcDbShared {
         if (srcPdh.getWCRoot() == dstPdh.getWCRoot()) {
             File dstParentRelpath = SVNFileUtil.getFileDir(localDstRelpath);
             SVNSqlJetStatement stmt = new InsertWorkingNodeCopy(srcPdh.getWCRoot().getSDb(), !copyInfo.is(CopyInfo.haveWork));
-            stmt.bindf("issist", srcPdh.getWCRoot().getWcId(), localSrcRelpath, localDstRelpath, dstOpDepths[0], dstParentRelpath, 
-                    SvnWcDbStatementUtil.getPresenceText(dstPresence));
-            stmt.done();
+            try {
+                stmt.bindf("issist", srcPdh.getWCRoot().getWcId(), localSrcRelpath, localDstRelpath, dstOpDepths[0], dstParentRelpath,
+                        SvnWcDbStatementUtil.getPresenceText(dstPresence));
+                stmt.done();
+            } finally {
+                stmt.reset();
+            }
             
             copyActual(srcPdh, localSrcRelpath, dstPdh, localDstRelpath);
             
             if (dstOpDepths[1] > 0) {
                 stmt = srcPdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.INSERT_NODE);
-                stmt.bindf("isisisrtnt", 
-                        srcPdh.getWCRoot().getWcId(),
-                        localDstRelpath,
-                        dstOpDepths[1],
-                        dstParentRelpath,
-                        copyInfo.lng(CopyInfo.copyFromId),
-                        copyInfo.get(CopyInfo.copyFromRelpath),
-                        copyInfo.lng(CopyInfo.copyFromRev),
-                        SvnWcDbStatementUtil.getPresenceText(SVNWCDbStatus.NotPresent),
-                        SvnWcDbStatementUtil.getKindText(kind));
-                stmt.done();                
+                try {
+                    stmt.bindf("isisisrtnt",
+                            srcPdh.getWCRoot().getWcId(),
+                            localDstRelpath,
+                            dstOpDepths[1],
+                            dstParentRelpath,
+                            copyInfo.lng(CopyInfo.copyFromId),
+                            copyInfo.get(CopyInfo.copyFromRelpath),
+                            copyInfo.lng(CopyInfo.copyFromRev),
+                            SvnWcDbStatementUtil.getPresenceText(SVNWCDbStatus.NotPresent),
+                            SvnWcDbStatementUtil.getKindText(kind));
+                    stmt.done();
+                } finally {
+                    stmt.reset();
+                }
             }
             if (kind == SVNWCDbKind.Dir && dstPresence == SVNWCDbStatus.Normal) {
                 List<File> fileChildren = new LinkedList<File>();
@@ -478,14 +475,18 @@ public class SvnWcDbCopy extends SvnWcDbShared {
                 if (changelist != null || properties != null) {
                     reset(stmt);
                     stmt = srcPdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.INSERT_ACTUAL_NODE);
-                    stmt.bindf("issbssssss", 
-                            dstPdh.getWCRoot().getWcId(),
-                            localDstRelpath,
-                            SVNFileUtil.getFileDir(localDstRelpath),
-                            properties,
-                            null, null, null,
-                            null, changelist, null);
-                    stmt.done();
+                    try {
+                        stmt.bindf("issbssssss",
+                                dstPdh.getWCRoot().getWcId(),
+                                localDstRelpath,
+                                SVNFileUtil.getFileDir(localDstRelpath),
+                                properties,
+                                null, null, null,
+                                null, changelist, null);
+                        stmt.done();
+                    } finally {
+                        stmt.reset();
+                    }
                 }
             }
         } finally {
@@ -577,15 +578,18 @@ public class SvnWcDbCopy extends SvnWcDbShared {
         long incompleteOpDepth = -1;
         
         SVNSqlJetStatement stmt = wcRoot.getSDb().getStatement(SVNWCDbStatements.SELECT_WORKING_NODE);
-        bindf(stmt, "is", wcRoot.getWcId(), localRelpath);
-        if (stmt.next()) {
-            SVNWCDbStatus status = getColumnPresence(stmt);
-            minOpDepth = getColumnInt64(stmt, NODES__Fields.op_depth);
-            if (status == SVNWCDbStatus.Incomplete) {
-                incompleteOpDepth = minOpDepth;
+        try {
+            bindf(stmt, "is", wcRoot.getWcId(), localRelpath);
+            if (stmt.next()) {
+                SVNWCDbStatus status = getColumnPresence(stmt);
+                minOpDepth = getColumnInt64(stmt, NODES__Fields.op_depth);
+                if (status == SVNWCDbStatus.Incomplete) {
+                    incompleteOpDepth = minOpDepth;
+                }
             }
+        } finally {
+            reset(stmt);
         }
-        reset(stmt);
         File parentRelpath = SVNFileUtil.getFileDir(localRelpath);
         bindf(stmt, "is", wcRoot.getWcId(), parentRelpath);
         if (stmt.next()) {

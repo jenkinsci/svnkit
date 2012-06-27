@@ -1,9 +1,5 @@
 package org.tmatesoft.svn.core.internal.wc17.db;
 
-import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
-
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -25,6 +21,10 @@ import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.LOCK__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODES__Fields;
 import org.tmatesoft.svn.util.SVNLogType;
+
+import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 
 public class SvnWcDbRelocate extends SvnWcDbShared {
     
@@ -146,13 +146,21 @@ public class SvnWcDbRelocate extends SvnWcDbShared {
     private static void relocate(SVNWCDbRoot root, File localRelPath, SVNURL reposRootUrl, String reposUuid, boolean haveBaseNode, long oldReposId) throws SVNException {
         long newReposId = root.getDb().createReposId(root.getSDb(), reposRootUrl, reposUuid);
         SVNSqlJetUpdateStatement stmt = new RecursiveUpdateNodeRepo(root.getSDb());
-        stmt.bindf("isii", root.getWcId(), localRelPath, oldReposId, newReposId);
-        stmt.done();
+        try {
+            stmt.bindf("isii", root.getWcId(), localRelPath, oldReposId, newReposId);
+            stmt.done();
+        } finally {
+            stmt.reset();
+        }
         
         if (haveBaseNode) {
             stmt = new UpdateLockReposId(root.getSDb());
-            stmt.bindf("ii", oldReposId, newReposId);
-            stmt.done();
+            try {
+                stmt.bindf("ii", oldReposId, newReposId);
+                stmt.done();
+            } finally {
+                stmt.reset();
+            }
         }
     }
     
