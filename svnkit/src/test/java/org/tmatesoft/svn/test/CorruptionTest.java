@@ -1,19 +1,26 @@
 package org.tmatesoft.svn.test;
 
-import java.io.File;
-
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
+import org.tmatesoft.sqljet.core.SqlJetException;
+import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
+import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
+import org.tmatesoft.sqljet.core.table.ISqlJetTable;
+import org.tmatesoft.sqljet.core.table.SqlJetDb;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnChecksum;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.core.wc2.SvnUpdate;
+
+import java.io.File;
 
 public class CorruptionTest {
 
@@ -63,6 +70,52 @@ public class CorruptionTest {
         } finally {
             svnOperationFactory.dispose();
             sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testReposPathDoesntStartWithSlashAfterUpdateOnFile() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testReposPathDoesntStartWithSlashAfterUpdateOnFile", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("file");
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url);
+
+            final SvnUpdate update = svnOperationFactory.createUpdate();
+            update.setSingleTarget(SvnTarget.fromFile(workingCopy.getFile("file")));
+            update.setRevision(SVNRevision.create(0));
+            update.run();
+
+            assertNoReposPathStartsWithSlash(workingCopy);
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    private void assertNoReposPathStartsWithSlash(WorkingCopy workingCopy) throws SqlJetException {
+        final SqlJetDb db = SqlJetDb.open(workingCopy.getWCDbFile(), false);
+        try {
+            final ISqlJetTable table = db.getTable(SVNWCDbSchema.NODES.name());
+            db.beginTransaction(SqlJetTransactionMode.READ_ONLY);
+            final ISqlJetCursor cursor = table.open();
+
+            for (; !cursor.eof(); cursor.next()) {
+                final String reposPath = cursor.getString(SVNWCDbSchema.NODES__Fields.repos_path.name());
+
+                Assert.assertFalse("repos_path '" + reposPath + "' starts with '/'", reposPath.startsWith("/"));
+            }
+            cursor.close();
+        } finally {
+            db.close();
         }
     }
 
