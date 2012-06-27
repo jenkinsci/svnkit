@@ -868,6 +868,11 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         SVNSkel allWorkItems = null;
         SVNProperties entryProps = db.entryPropChanges;
         SVNProperties davProps = db.davPropChanges;
+        SVNPropertyValue newWCDavURL = davProps.getSVNPropertyValue(SVNProperty.WC_URL);
+        if (newWCDavURL == null) {
+            davProps = null;
+        }
+
         SVNProperties regularProps = db.regularPropChanges;
         
         SVNProperties actualProps = null;
@@ -937,6 +942,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             allWorkItems = myWCContext.wqMerge(allWorkItems, mergeProperiesInfo.workItems);            
         }
         AccumulatedChangeInfo change = accumulateLastChange(db.localAbsolutePath, entryProps);
+
         newChangedRev = change.changedRev;
         newChangedDate = change.changedDate;
         newChangedAuthor = change.changedAuthor;
@@ -1267,6 +1273,10 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
 
         SVNProperties entryProps = fb.entryPropChanges;
         SVNProperties davProps = fb.davPropChanges;
+        SVNPropertyValue newWCDavURL = davProps.getSVNPropertyValue(SVNProperty.WC_URL);
+        if (newWCDavURL == null) {
+            davProps = null;
+        }
         SVNProperties regularProps = fb.regularPropChanges;
 
         AccumulatedChangeInfo lastChange = accumulateLastChange(fb.localAbsolutePath, entryProps);
