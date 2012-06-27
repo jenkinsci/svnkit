@@ -868,7 +868,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         SVNSkel allWorkItems = null;
         SVNProperties entryProps = db.entryPropChanges;
         SVNProperties davProps = db.davPropChanges;
-        SVNPropertyValue newWCDavURL = davProps.getSVNPropertyValue(SVNProperty.WC_URL);
+        SVNPropertyValue newWCDavURL = davProps != null ? davProps.getSVNPropertyValue(SVNProperty.WC_URL) : null;
         if (newWCDavURL == null) {
             davProps = null;
         }
@@ -1273,7 +1273,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
 
         SVNProperties entryProps = fb.entryPropChanges;
         SVNProperties davProps = fb.davPropChanges;
-        SVNPropertyValue newWCDavURL = davProps.getSVNPropertyValue(SVNProperty.WC_URL);
+        SVNPropertyValue newWCDavURL = davProps != null ? davProps.getSVNPropertyValue(SVNProperty.WC_URL) : null;
         if (newWCDavURL == null) {
             davProps = null;
         }
