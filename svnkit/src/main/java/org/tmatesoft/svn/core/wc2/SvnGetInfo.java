@@ -98,8 +98,13 @@ public class SvnGetInfo extends SvnReceivingOperation<SvnInfo> {
     
     @Override
     protected void ensureArgumentsAreValid() throws SVNException {
-        if (getRevision() == null || !getRevision().isValid()) {
-            setRevision(hasRemoteTargets() ? SVNRevision.HEAD : SVNRevision.WORKING);
+        if (getFirstTarget().getPegRevision() == null || getFirstTarget().getPegRevision() == SVNRevision.UNDEFINED)
+        {
+            if (getRevision() == null || !getRevision().isValid()) {
+                setRevision(hasRemoteTargets() ? SVNRevision.HEAD : SVNRevision.WORKING);
+            }
+        } else {
+//            TODO: should we add setRevision(getFirstTarget().getPegRevision()); ? currently everything is working without this line
         }
         if (getDepth() == null || getDepth() == SVNDepth.UNKNOWN) {
             setDepth(SVNDepth.EMPTY);
