@@ -15,7 +15,6 @@ import de.regnis.q.sequence.line.QSequenceLineRAByteData;
 import de.regnis.q.sequence.line.QSequenceLineRAData;
 import de.regnis.q.sequence.line.QSequenceLineRAFileData;
 import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb.Mode;
 import org.tmatesoft.svn.core.internal.util.*;
 import org.tmatesoft.svn.core.internal.wc.*;
@@ -3500,9 +3499,33 @@ public class SVNWCContext {
         public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) throws SVNException {
             File localAbspath = SVNFileUtil.createFilePath(wcRootAbspath, workItem.getChild(1).getValue());
             int listSize = workItem.getListSize();
-            File oldBasename = listSize > 2 ? SVNFileUtil.createFilePath(workItem.getChild(2).getValue()) : null;
-            File newBasename = listSize > 3 ? SVNFileUtil.createFilePath(workItem.getChild(3).getValue()) : null;
-            File wrkBasename = listSize > 4 ? SVNFileUtil.createFilePath(workItem.getChild(4).getValue()) : null;
+
+            File oldBasename;
+            if (listSize > 2) {
+                String value = workItem.getChild(2).getValue();
+                oldBasename = (value == null || value.length() == 0) ? null : SVNFileUtil.createFilePath(value);
+            }
+            else {
+                oldBasename = null;
+            }
+
+            File newBasename;
+            if (listSize > 3) {
+                String value = workItem.getChild(3).getValue();
+                newBasename = (value == null || value.length() == 0) ? null : SVNFileUtil.createFilePath(value);
+            }
+            else {
+                newBasename = null;
+            }
+
+            File wrkBasename;
+            if (listSize > 4) {
+                String value = workItem.getChild(4).getValue();
+                wrkBasename = (value == null || value.length() == 0) ? null : SVNFileUtil.createFilePath(value);
+            }
+            else {
+                wrkBasename = null;
+            }
             ctx.getDb().opSetTextConflictMarkerFilesTemp(localAbspath, oldBasename, newBasename, wrkBasename);
         }
     }

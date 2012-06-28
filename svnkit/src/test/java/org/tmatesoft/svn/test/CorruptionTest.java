@@ -17,7 +17,10 @@ import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.*;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 public class CorruptionTest {
 
@@ -133,6 +136,8 @@ public class CorruptionTest {
     public void testSymlinkHasCorrectTranslatedSize() throws Exception {
         final TestOptions options = TestOptions.getInstance();
 
+        Assume.assumeTrue(TestUtil.isNewWorkingCopyTest());
+
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
         final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testSymlinkHasCorrectTranslatedSize", options);
         try {
@@ -153,6 +158,76 @@ public class CorruptionTest {
         } finally {
             svnOperationFactory.dispose();
             sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testActualNodeConflictWorkingHasNullValueForBinaryConflict() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        Assume.assumeTrue(TestUtil.isNewWorkingCopyTest());
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testActualNodeConflictWorkingHasNullValueForBinaryConflict", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder1 = new CommitBuilder(url);
+            commitBuilder1.addFile("file");
+            commitBuilder1.commit();
+
+            final CommitBuilder commitBuilder2 = new CommitBuilder(url);
+            commitBuilder2.changeFile("file", new byte[]{0, 1, 2});
+            commitBuilder2.setFileProperty("file", SVNProperty.MIME_TYPE, SVNPropertyValue.create("application/octet-stream"));
+            commitBuilder2.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, 1);
+            final File file = workingCopy.getFile("file");
+
+            writeBinaryContents(file, new byte[]{0, 1});
+
+            final SvnUpdate update = svnOperationFactory.createUpdate();
+            update.setSingleTarget(SvnTarget.fromFile(workingCopy.getWorkingCopyDirectory()));
+            update.run();
+
+            assertActualNodeHasNullConflictWorking(workingCopy, "file");
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    private void assertActualNodeHasNullConflictWorking(WorkingCopy workingCopy, String path) throws SqlJetException {
+        final SqlJetDb db = SqlJetDb.open(workingCopy.getWCDbFile(), false);
+        try {
+            final ISqlJetTable table = db.getTable(SVNWCDbSchema.ACTUAL_NODE.name());
+            db.beginTransaction(SqlJetTransactionMode.READ_ONLY);
+            final ISqlJetCursor cursor = table.open();
+
+            for (; !cursor.eof(); cursor.next()) {
+                String cursorPath = cursor.getString(SVNWCDbSchema.NODES__Fields.local_relpath.name());
+                if (!path.equals(cursorPath)) {
+                    continue;
+                }
+
+                final String conflictWorking = cursor.getString(SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_working.name());
+                Assert.assertNull(conflictWorking);
+            }
+            cursor.close();
+            db.commit();
+        } finally {
+            db.close();
+        }
+    }
+
+    private void writeBinaryContents(File file, byte[] binaryContents) throws IOException {
+        BufferedOutputStream bufferedOutputStream = null;
+        try {
+            bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(file));
+            bufferedOutputStream.write(binaryContents);
+        } finally {
+            SVNFileUtil.closeFile(bufferedOutputStream);
         }
     }
 
