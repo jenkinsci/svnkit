@@ -44,7 +44,12 @@ public class SVNException extends Exception {
      * @param cause        the real cause of the error
      */
     public SVNException(SVNErrorMessage errorMessage, Throwable cause) {
-        super(cause);
+        super(cause != null ? cause : errorMessage.getCause());
+        
+        if (cause == null) {
+            cause = errorMessage.getCause();
+        }
+        
         if (cause instanceof SVNException) {
             SVNErrorMessage childMessages = ((SVNException) cause).getErrorMessage();
             SVNErrorMessage parent = errorMessage;
@@ -56,6 +61,9 @@ public class SVNException extends Exception {
             }
         }
         myErrorMessage = errorMessage;
+        if (getCause() == null && errorMessage != null) {
+            errorMessage.initCause(this);
+        }
     }
     
     /**

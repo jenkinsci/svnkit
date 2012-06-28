@@ -34,7 +34,7 @@ public class SVNAuthenticationException extends SVNException {
      * @param cause        an original cause
      */
     public SVNAuthenticationException(SVNErrorMessage errorMessage, Throwable cause) {
-        super(errorMessage, cause);
+        super(errorMessage, cause != null ? cause : errorMessage.getCause());
     }
 
     /**
@@ -44,6 +44,6 @@ public class SVNAuthenticationException extends SVNException {
      * @param errorMessage an error message
      */
     public SVNAuthenticationException(SVNErrorMessage errorMessage) {
-        super(errorMessage);
+        super(errorMessage, errorMessage.getCause());
     }
 }
