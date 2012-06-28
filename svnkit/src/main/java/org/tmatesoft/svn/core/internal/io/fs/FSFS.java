@@ -1162,7 +1162,7 @@ public class FSFS {
         if (lock != null) {
             Date current = new Date(System.currentTimeMillis());
             if (lock.getExpirationDate() == null || current.compareTo(lock.getExpirationDate()) < 0) {
-                getLocksHandler.handleLock(null, lock, null);
+                getLocksHandler.handleLock(lock.getPath(), lock, null);
             } else if (haveWriteLock) {
                 deleteLock(lock);
             }
