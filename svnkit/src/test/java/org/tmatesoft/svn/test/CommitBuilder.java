@@ -139,6 +139,9 @@ public class CommitBuilder {
 
         String currentDirectory = "";
         for (String directory : directoriesToVisit) {
+            if (directory.length() == 0) {
+                continue;
+            }
             closeUntilCommonAncestor(commitEditor, currentDirectory, directory);
             openOrAddDir(commitEditor, directory, latestRevision);
             setDirProperties(commitEditor, directory);
@@ -150,6 +153,7 @@ public class CommitBuilder {
         closeUntilCommonAncestor(commitEditor, currentDirectory, "");
         currentDirectory = "";
 
+        setDirProperties(commitEditor, "");
         addChildrensFiles(commitEditor, "", latestRevision);
         deleteEntries(commitEditor, "");
 
