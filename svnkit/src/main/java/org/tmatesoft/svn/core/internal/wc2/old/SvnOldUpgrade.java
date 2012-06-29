@@ -478,6 +478,9 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 					SVNErrorMessage err = ex.getErrorMessage().wrap("This working copy is corrupt and cannot be upgraded. Please check out a new working copy.");
 					SVNErrorManager.error(err, SVNLogType.WC);
 				}
+                if (ex.getErrorMessage().getErrorCode() == SVNErrorCode.WC_INVALID_SCHEDULE) {
+                    throw ex;
+                }
 			}
 
 			/***** WC PROPS *****/

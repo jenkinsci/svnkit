@@ -203,7 +203,23 @@ public class SvnOldUpgradeEntries {
 	     delete+copied    delete+copied      [base|work]+work  [base|work]+work
 	     replace+copied   replace+copied     [base|work]+work  [base|work]+work
 	  */
-		
+
+        if (parentNode == null && entry.getSchedule() != null) {
+            String scheduleOperation;
+            if (SVNProperty.SCHEDULE_ADD.equals(entry.getSchedule())) {
+                scheduleOperation = "addition";
+            } else if (SVNProperty.SCHEDULE_DELETE.equals(entry.getSchedule())) {
+                scheduleOperation = "deletion";
+            } else if (SVNProperty.SCHEDULE_REPLACE.equals(entry.getSchedule())) {
+                scheduleOperation = "replacement";
+            } else {
+                scheduleOperation = entry.getSchedule();
+            }
+
+            SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_SCHEDULE, "Working copy root directory is scheduled for {0}; revert it before upgrade.", scheduleOperation);
+            SVNErrorManager.error(errorMessage, SVNLogType.WC);
+        }
+
 		assert(parentNode != null || entry.getSchedule() == null);
 		assert(parentNode == null || parentNode.base != null || parentNode.belowWork != null || parentNode.work != null);
 		
