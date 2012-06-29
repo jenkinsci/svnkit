@@ -148,18 +148,19 @@ public class SVNWCManager {
             createRevertProperties(wcAccess, path, true);
         }
         if (kind == SVNNodeKind.DIR) {
+            boolean adminAreaExisted = false;
             if (copyFromURL == null) {
                 SVNEntry pEntry = wcAccess.getEntry(path.getParentFile(), false);
                 SVNURL newURL = pEntry.getSVNURL().appendPath(name, false);
                 SVNURL rootURL = pEntry.getRepositoryRootURL();
                 String uuid = pEntry.getUUID();
-                ensureAdminAreaExists(path, newURL.toString(), rootURL != null ? rootURL.toString() : null, uuid, 0, depth == null ? SVNDepth.INFINITY : depth);
+                adminAreaExisted = !ensureAdminAreaExists(path, newURL.toString(), rootURL != null ? rootURL.toString() : null, uuid, 0, depth == null ? SVNDepth.INFINITY : depth);
             } else {
                 SVNURL rootURL = parentEntry.getRepositoryRootURL();
-                ensureAdminAreaExists(path, copyFromURL.toString(), rootURL != null ? rootURL.toString() : null, parentEntry.getUUID(), 
+                adminAreaExisted = !ensureAdminAreaExists(path, copyFromURL.toString(), rootURL != null ? rootURL.toString() : null, parentEntry.getUUID(),
                         copyFromRev, depth == null ? SVNDepth.INFINITY : depth);
             }
-            if (entry == null || entry.isDeleted()) {
+            if (entry == null || entry.isDeleted() || !adminAreaExisted) {
                 dir = wcAccess.open(path, true, copyFromURL != null ? SVNWCAccess.INFINITE_DEPTH : 0);
             }
             command.put(SVNProperty.INCOMPLETE, null);

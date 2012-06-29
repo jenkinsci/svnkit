@@ -97,8 +97,11 @@ public class UpgradeTest {
             scheduleForAddition.setSingleTarget(SvnTarget.fromFile(directory));
             scheduleForAddition.run();
 
+            //delete .svn from working copy root, now the replaced directory becomes working copy root
+            SVNFileUtil.deleteAll(new File(workingCopy.getWorkingCopyDirectory(), SVNFileUtil.getAdminDirectoryName()), true);
+
             final SvnUpgrade upgrade = svnOperationFactory.createUpgrade();
-            upgrade.setSingleTarget(SvnTarget.fromFile(workingCopy.getWorkingCopyDirectory()));
+            upgrade.setSingleTarget(SvnTarget.fromFile(directory));
             try {
                 upgrade.run();
                 Assert.fail("An exception should be thrown");
