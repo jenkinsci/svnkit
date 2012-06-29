@@ -203,8 +203,8 @@ public abstract class SVNAdminArea {
                 if (textTime == null) {
                     compare = true;
                 } else {
-                    long textTimeAsLong = SVNFileUtil.roundTimeStamp(SVNDate.parseDateAsMilliseconds(textTime));
-                    long tstamp = SVNFileUtil.roundTimeStamp(textFile.lastModified());
+                    long textTimeAsLong = SVNDate.parseDateAsMilliseconds(textTime);
+                    long tstamp = textFile.lastModified();
                     if (textTimeAsLong != tstamp ) {
                         compare = true;
                     }
@@ -443,7 +443,7 @@ public abstract class SVNAdminArea {
         } else {
             tstamp = System.currentTimeMillis();
             SVNFileUtil.setLastModified(dst, tstamp);
-            entry.setTextTime(SVNDate.formatDate(new Date(tstamp)));
+            entry.setTextTime(SVNDate.formatDate(new Date(dst.lastModified())));
         }
         saveEntries(false);
     }
