@@ -1,18 +1,5 @@
 package org.tmatesoft.svn.core.internal.wc17.db;
 
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnInt64;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnKind;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnPath;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnPresence;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnText;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.reset;
-
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
@@ -38,6 +25,14 @@ import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODES__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.util.SVNLogType;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.*;
 
 public class SvnWcDbReader extends SvnWcDbShared {
     
@@ -415,10 +410,10 @@ public class SvnWcDbReader extends SvnWcDbShared {
                             long size = cursor.getInteger(SVNWCDbSchema.NODES__Fields.translated_size.toString());
                             long date = cursor.getInteger(SVNWCDbSchema.NODES__Fields.last_mod_time.toString());
                             if (size != -1 && date != 0) {
-                                if (size != localFile.length()) {
+                                if (size != SVNFileUtil.getFileLength(localFile)) {
                                     return true;
                                 }
-                                if (date/1000 == localFile.lastModified()) {
+                                if (date/1000 == SVNFileUtil.getFileLastModified(localFile)) {
                                     cursor.next();
                                     continue;
                                 }

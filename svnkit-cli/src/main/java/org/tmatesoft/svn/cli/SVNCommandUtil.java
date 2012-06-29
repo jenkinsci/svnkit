@@ -11,20 +11,6 @@
  */
 package org.tmatesoft.svn.cli;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.text.MessageFormat;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.Map;
-
 import org.tmatesoft.svn.cli.svn.SVNCommandEnvironment;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -36,6 +22,10 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.util.SVNLogType;
 import org.tmatesoft.svn.util.Version;
+
+import java.io.*;
+import java.text.MessageFormat;
+import java.util.*;
 
 
 /**
@@ -174,7 +164,7 @@ public class SVNCommandUtil {
             SVNFileUtil.closeFile(os);
         }
         SVNFileUtil.setLastModified(tmpFile, System.currentTimeMillis() - 2000);
-        long timestamp = tmpFile.lastModified();
+        long timestamp = SVNFileUtil.getFileLastModified(tmpFile);
         editorCommand = getEditorCommand(env, editorCommand);
         String[] testEnv = SVNFileUtil.getTestEnvironment();
         if (testEnv[0] != null) {
@@ -189,7 +179,7 @@ public class SVNCommandUtil {
                 SVNErrorManager.error(err, SVNLogType.CLIENT);
             }
             // now read from file.
-            if (timestamp == tmpFile.lastModified()) {
+            if (timestamp == SVNFileUtil.getFileLastModified(tmpFile)) {
                 return null;
             }
             InputStream is = null;

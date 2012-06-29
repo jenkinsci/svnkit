@@ -11,14 +11,13 @@
  */
 package org.tmatesoft.svn.core.internal.util.jna;
 
-import java.io.File;
-
+import com.sun.jna.Memory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
-import com.sun.jna.Memory;
+import java.io.File;
 
 /**
  * @version 1.3
@@ -170,6 +169,44 @@ public class SVNLinuxUtil {
                 ourSharedMemory.read(0, buffer, 0, rc);
                 // intentionally read in system default encoding.
                 return new String(buffer, 0, rc);
+            }
+        } catch (Throwable th) {
+            //
+        }
+        return null;
+    }
+
+
+    public static Long getSymlinkLastModified(File file) {
+        if (file == null || ourSharedMemory == null) {
+            return null;
+        }
+        String path = file.getAbsolutePath();
+        if (path.endsWith("/") && path.length() > 1) {
+            path = path.substring(0, path.length() - 1);
+        }
+        try {
+            ISVNCLibrary cLibrary = JNALibraryLoader.getCLibrary();
+            if (cLibrary == null) {
+                return null;
+            }
+            synchronized (ourSharedMemory) {
+                ourSharedMemory.clear();
+                int rc;
+                synchronized (cLibrary) {
+                    if (ourIsDashStat && SVNFileUtil.isBSD) {
+                        rc = cLibrary._lstat(path, ourSharedMemory);
+                    } else {
+                        rc = SVNFileUtil.isOSX || SVNFileUtil.isBSD || SVNFileUtil.isSolaris ?
+                            cLibrary.lstat(path, ourSharedMemory) :
+                            cLibrary.__lxstat64(0, path, ourSharedMemory);
+                    }
+                }
+                if (rc < 0) {
+                    return null;
+                }
+
+                return ourSharedMemory.getLong(getFileLastModifiedOffset());
             }
         } catch (Throwable th) {
             //
@@ -407,6 +444,26 @@ public class SVNLinuxUtil {
 
     private static int getFileGroupIDOffset() {
         return getFileUserIDOffset() + 4;
+    }
+
+    private static int getFileLastModifiedOffset() {
+        if (SVNFileUtil.isLinux && SVNFileUtil.is64Bit) {
+            return 88;
+        }
+        if (SVNFileUtil.isLinux && SVNFileUtil.is32Bit) {
+            return 64;
+        }
+        if (SVNFileUtil.isBSD) {
+            return 32;
+        }
+        if (SVNFileUtil.isSolaris) {
+            //64bit
+            return 64;
+        }
+        if (SVNFileUtil.isOSX) {
+            return 48;
+        }
+        return 88;
     }
     
 }

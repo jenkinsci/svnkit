@@ -11,59 +11,15 @@
  */
 package org.tmatesoft.svn.core.internal.wc.admin;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.Writer;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-
-import org.tmatesoft.svn.core.SVNCancelException;
-import org.tmatesoft.svn.core.SVNCommitInfo;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.SVNProperties;
-import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.SVNPropertyValue;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.util.SVNDate;
-import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
-import org.tmatesoft.svn.core.internal.util.SVNEntryHashMap;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.wc.DefaultSVNMerger;
-import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNDiffConflictChoiceStyle;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.SVNFileType;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNObjectsPool;
-import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
-import org.tmatesoft.svn.core.internal.wc.SVNWCProperties;
-import org.tmatesoft.svn.core.wc.ISVNCommitParameters;
-import org.tmatesoft.svn.core.wc.ISVNMerger;
-import org.tmatesoft.svn.core.wc.ISVNMergerFactory;
-import org.tmatesoft.svn.core.wc.SVNConflictChoice;
-import org.tmatesoft.svn.core.wc.SVNDiffOptions;
-import org.tmatesoft.svn.core.wc.SVNMergeFileSet;
-import org.tmatesoft.svn.core.wc.SVNMergeResult;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNStatusType;
-import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
+import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.internal.util.*;
+import org.tmatesoft.svn.core.internal.wc.*;
+import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
+
+import java.io.*;
+import java.util.*;
 
 
 /**
@@ -193,7 +149,7 @@ public abstract class SVNAdminArea {
 
             if (!compare && isEntryPropertyApplicable(SVNProperty.WORKING_SIZE)) {
                 if (entry.getWorkingSize() != SVNProperty.WORKING_SIZE_UNKNOWN &&
-                    textFile.length() != entry.getWorkingSize()) {
+                    SVNFileUtil.getFileLength(textFile) != entry.getWorkingSize()) {
                     compare = true;
                 }
             }
@@ -204,7 +160,7 @@ public abstract class SVNAdminArea {
                     compare = true;
                 } else {
                     long textTimeAsLong = SVNDate.parseDateAsMilliseconds(textTime);
-                    long tstamp = textFile.lastModified();
+                    long tstamp = SVNFileUtil.getFileLastModified(textFile);
                     if (textTimeAsLong != tstamp ) {
                         compare = true;
                     }
@@ -224,8 +180,8 @@ public abstract class SVNAdminArea {
         boolean differs = compareAndVerify(textFile, baseFile, compareTextBase, compareChecksum);
         if (!differs && isLocked()) {
             Map attributes = new SVNHashMap();
-            attributes.put(SVNProperty.WORKING_SIZE, Long.toString(textFile.length()));
-            attributes.put(SVNProperty.TEXT_TIME, SVNDate.formatDate(new Date(textFile.lastModified())));
+            attributes.put(SVNProperty.WORKING_SIZE, Long.toString(SVNFileUtil.getFileLength(textFile)));
+            attributes.put(SVNProperty.TEXT_TIME, SVNDate.formatDate(new Date(SVNFileUtil.getFileLastModified(textFile))));
             modifyEntry(name, attributes, true, false);
         }
         return differs;
@@ -591,7 +547,7 @@ public abstract class SVNAdminArea {
     public String getPropertyTime(String name) {
         String path = getThisDirName().equals(name) ? "dir-props" : "props/" + name + ".svn-work";
         File file = getAdminFile(path);
-        return SVNDate.formatDate(new Date(file.lastModified()));
+        return SVNDate.formatDate(new Date(SVNFileUtil.getFileLastModified(file)));
     }
 
     public SVNLog getLog() {

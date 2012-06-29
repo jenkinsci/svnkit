@@ -11,16 +11,16 @@
  */
 package org.tmatesoft.svn.core.wc;
 
-import java.io.File;
-import java.util.Date;
-import java.util.Map;
-
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
+
+import java.io.File;
+import java.util.Date;
+import java.util.Map;
 
 /**
  * The <b>SVNStatus</b> class is used to provide detailed status information for
@@ -590,7 +590,7 @@ public class SVNStatus {
     public Date getWorkingContentsDate() {
         if (myLocalContentsDate == null) {
             if (getFile() != null && getKind() == SVNNodeKind.FILE) {
-                myLocalContentsDate = new Date(getFile().lastModified());
+                myLocalContentsDate = new Date(SVNFileUtil.getFileLastModified(getFile()));
             } else {
                 myLocalContentsDate = new Date(0);
             }
@@ -613,7 +613,7 @@ public class SVNStatus {
                 propFile = new File(getFile().getAbsoluteFile().getParentFile(), SVNFileUtil.getAdminDirectoryName());
                 propFile = new File(propFile, "props/" + getFile().getName() + ".svn-work");
             }
-            myLocalPropertiesDate = propFile != null ? new Date(propFile.lastModified()) : new Date(0);
+            myLocalPropertiesDate = propFile != null ? new Date(SVNFileUtil.getFileLastModified(propFile)) : new Date(0);
         }
         return myLocalPropertiesDate;
     }

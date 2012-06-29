@@ -566,10 +566,10 @@ public class SVNWCContext {
         if (!exactComparison && fileType != SVNFileType.SYMLINK) {
             boolean compare = false;
             long recordedSize = nodeInfo.lng(NodeInfo.recordedSize); 
-            if (recordedSize != -1 && localAbsPath.length() != recordedSize) {
+            if (recordedSize != -1 && SVNFileUtil.getFileLength(localAbsPath) != recordedSize) {
                 compare = true;
             }
-            if (!compare && (nodeInfo.lng(NodeInfo.recordedTime)/1000) != localAbsPath.lastModified()) {
+            if (!compare && (nodeInfo.lng(NodeInfo.recordedTime)/1000) != SVNFileUtil.getFileLastModified(localAbsPath)) {
                 compare = true;
             }
             if (!compare) {
@@ -584,7 +584,7 @@ public class SVNWCContext {
         
         if (!modified) {
             if (getDb().isWCLockOwns(localAbsPath, false)) {
-                db.globalRecordFileinfo(localAbsPath, localAbsPath.length(), new SVNDate(localAbsPath.lastModified(), 0));
+                db.globalRecordFileinfo(localAbsPath, SVNFileUtil.getFileLength(localAbsPath), new SVNDate(SVNFileUtil.getFileLastModified(localAbsPath), 0));
             }
         }
         return modified;
@@ -601,7 +601,7 @@ public class SVNWCContext {
             translateInfo = getTranslateInfo(localAbsPath, true, true, true);
             translationRequired = isTranslationRequired(translateInfo.eolStyleInfo.eolStyle, translateInfo.eolStyleInfo.eolStr, translateInfo.keywords, translateInfo.special, true);
         }
-        if (!translationRequired && localAbsPath.length() != pristineFile.length()) {
+        if (!translationRequired && SVNFileUtil.getFileLength(localAbsPath) != pristineFile.length()) {
             return true;
         }
         
@@ -3622,8 +3622,8 @@ public class SVNWCContext {
 
     public void getAndRecordFileInfo(File localAbspath, boolean ignoreError) throws SVNException {
         if (localAbspath.exists()) {
-            SVNDate lastModified = new SVNDate(localAbspath.lastModified(), 0);
-            long length = localAbspath.length();
+            SVNDate lastModified = new SVNDate(SVNFileUtil.getFileLastModified(localAbspath), 0);
+            long length = SVNFileUtil.getFileLength(localAbspath);
             db.globalRecordFileinfo(localAbspath, length, lastModified);
         }
     }

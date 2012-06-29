@@ -1,17 +1,6 @@
 package org.tmatesoft.svn.core.internal.wc2.ng;
 
-import java.io.File;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
-
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.SVNProperties;
-import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
@@ -32,6 +21,11 @@ import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc2.SvnRevert;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
+
+import java.io.File;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 
 public class SvnNgRevert extends SvnNgOperationRunner<Void, SvnRevert> {
 
@@ -212,8 +206,8 @@ public class SvnNgRevert extends SvnNgOperationRunner<Void, SvnRevert> {
                     SVNFileUtil.deleteFile(localAbsPath);
                     onDisk = SVNNodeKind.NONE;                    
                 } else {
-                    long lastModified = localAbsPath.lastModified();
-                    long size = localAbsPath.length();
+                    long lastModified = SVNFileUtil.getFileLastModified(localAbsPath);
+                    long size = SVNFileUtil.getFileLength(localAbsPath);
                     if (recordedSize != -1
                             && recordedTime != 0
                             && recordedSize == size 
