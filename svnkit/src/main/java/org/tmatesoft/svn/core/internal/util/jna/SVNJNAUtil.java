@@ -11,12 +11,12 @@
  */
 package org.tmatesoft.svn.core.internal.util.jna;
 
-import java.io.File;
-
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.ISVNGnomeKeyringPasswordProvider;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+
+import java.io.File;
 
 
 /**
@@ -99,6 +99,13 @@ public class SVNJNAUtil {
             return SVNLinuxUtil.createSymlink(file, linkName);
         }
         return false;
+    }
+
+    public static Long getSymlinkLastModified(File file) {
+        if (isJNAPresent()) {
+            return SVNLinuxUtil.getSymlinkLastModified(file);
+        }
+        return null;
     }
 
     // linux and win32.

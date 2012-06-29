@@ -3977,7 +3977,7 @@ public class SVNWCClient16 extends SVNBasicDelegate {
             String charset = SVNTranslator.getCharset(charsetProp, mimeType, path.getPath(), getOptions());
             eols = SVNTranslator.getEOL(eolStyle, getOptions());
             if (hasMods && !special) {
-                time = SVNDate.formatDate(new Date(path.lastModified()));
+                time = SVNDate.formatDate(new Date(SVNFileUtil.getFileLastModified(path)));
             } else {
                 time = entry.getCommittedDate();
             }

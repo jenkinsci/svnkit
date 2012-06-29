@@ -11,22 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.wc.admin;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.Map;
-
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.SVNProperties;
-import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -35,6 +20,11 @@ import org.tmatesoft.svn.core.internal.wc.SVNTreeConflictUtil;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.util.SVNLogType;
+
+import java.io.*;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.Map;
 
 
 /**
@@ -118,7 +108,7 @@ public class SVNLogRunner {
                     String value = (String) entryAttrs.get(SVNProperty.TEXT_TIME); 
                     if (SVNLog.WC_TIMESTAMP.equals(value)) {
                         File file = adminArea.getFile(fileName);
-                        value = SVNDate.formatDate(new Date(file.lastModified()));
+                        value = SVNDate.formatDate(new Date(SVNFileUtil.getFileLastModified(file)));
                         entryAttrs.put(SVNProperty.TEXT_TIME, value);
                     }
                 }
@@ -147,7 +137,7 @@ public class SVNLogRunner {
                             entryAttrs.put(SVNProperty.WORKING_SIZE, "0");
                         } else {
                             try {
-                                entryAttrs.put(SVNProperty.WORKING_SIZE, Long.toString(file.length()));
+                                entryAttrs.put(SVNProperty.WORKING_SIZE, Long.toString(SVNFileUtil.getFileLength(file)));
                             } catch (SecurityException se) {
                                 SVNErrorCode code = count <= 1 ? SVNErrorCode.WC_BAD_ADM_LOG_START : SVNErrorCode.WC_BAD_ADM_LOG;
                                 SVNErrorMessage err = SVNErrorMessage.create(code, "Error getting file size on ''{0}''", file);

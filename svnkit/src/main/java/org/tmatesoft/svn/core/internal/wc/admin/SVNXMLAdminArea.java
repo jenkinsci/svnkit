@@ -11,46 +11,18 @@
  */
 package org.tmatesoft.svn.core.internal.wc.admin;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.SVNProperties;
-import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.util.SVNDate;
-import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
-import org.tmatesoft.svn.core.internal.util.SVNEntryHashMap;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
-import org.tmatesoft.svn.core.internal.util.SVNHashSet;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNFileType;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNWCProperties;
+import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.internal.util.*;
+import org.tmatesoft.svn.core.internal.wc.*;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
+
+import java.io.*;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.*;
 
 
 /**
@@ -559,22 +531,22 @@ public class SVNXMLAdminArea extends SVNAdminArea {
             baseFile = getAdminFile("prop-base/" + name + ".svn-base");
         }
         SVNEntry entry = getEntry(name, true);
-        long propLength = propFile.length();
+        long propLength = SVNFileUtil.getFileLength(propFile);
         boolean propEmtpy = propLength <= 4;
         if (entry.isScheduledForReplacement()) {
             return !propEmtpy;
         }
         if (propEmtpy) {
-            boolean baseEmtpy = baseFile.length() <= 4;
+            boolean baseEmtpy = SVNFileUtil.getFileLength(baseFile) <= 4;
             if (baseEmtpy) {
                 return !propEmtpy;
             }
             return true;
         }
-        if (propLength != baseFile.length()) {
+        if (propLength != SVNFileUtil.getFileLength(baseFile)) {
             return true;
         }
-        String realTimestamp = SVNDate.formatDate(new Date(propFile.lastModified()));
+        String realTimestamp = SVNDate.formatDate(new Date(SVNFileUtil.getFileLastModified(propFile)));
         String fullRealTimestamp = realTimestamp;
         realTimestamp = realTimestamp.substring(0, 23);
         String timeStamp = entry.getPropTime();
@@ -608,7 +580,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         if (!forceComparison) {
             String textTime = entry.getTextTime();
             long textTimeAsLong = SVNFileUtil.roundTimeStamp(SVNDate.parseDateAsMilliseconds(textTime));
-            long tstamp = SVNFileUtil.roundTimeStamp(getFile(name).lastModified());
+            long tstamp = SVNFileUtil.roundTimeStamp(SVNFileUtil.getFileLastModified(getFile(name)));
             if (textTimeAsLong == tstamp ) {
                 return false;
             }
@@ -648,7 +620,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         }
 
         if (equals && isLocked()) {
-            entry.setTextTime(SVNDate.formatDate(new Date(versionedFile.lastModified())));
+            entry.setTextTime(SVNDate.formatDate(new Date(SVNFileUtil.getFileLastModified(versionedFile))));
             saveEntries(false);
         }
         return !equals;
@@ -942,7 +914,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
                     tmpFile2.delete();
                 }
 
-                textTime = modified ? tmpFile.lastModified() : workingFile.lastModified();
+                textTime = modified ? SVNFileUtil.getFileLastModified(tmpFile) : SVNFileUtil.getFileLastModified(workingFile);
             }
         }
         if (!implicit && entry.isScheduledForReplacement()) {
@@ -967,7 +939,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
             SVNWCProperties workingTmp = new SVNWCProperties(tmpPropsFile, null);
             SVNProperties pDiff = working.compareTo(workingTmp);
             boolean equals = pDiff == null || pDiff.isEmpty();
-            propTime = equals ? wcPropsFile.lastModified() : tmpPropsFile.lastModified();
+            propTime = equals ? SVNFileUtil.getFileLastModified(wcPropsFile) : SVNFileUtil.getFileLastModified(tmpPropsFile);
 
             if (!getThisDirName().equals(fileName)) {
                 SVNVersionedProperties propDiff = baseProps.compareTo(wcProps);
@@ -988,7 +960,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
                 SVNFileUtil.deleteFile(tmpPropsFile);
             }
         } else if (entry.getPropTime() == null && !wcProps.isEmpty()) {
-            propTime = wcPropsFile.lastModified();
+            propTime = SVNFileUtil.getFileLastModified(wcPropsFile);
         }
 
         if (!getThisDirName().equals(fileName) && !implicit) {
@@ -1036,7 +1008,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
                     overwritten = true;
                 }
                 if (overwritten) {
-                    textTime = wcFile.lastModified();
+                    textTime = SVNFileUtil.getFileLastModified(wcFile);
                 }
             } catch (SVNException svne) {
                 SVNErrorMessage err = SVNErrorMessage.create(errorCode, "Error replacing text-base of ''{0}''", fileName);

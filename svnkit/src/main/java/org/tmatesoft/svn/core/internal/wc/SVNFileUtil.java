@@ -11,23 +11,19 @@
  */
 package org.tmatesoft.svn.core.internal.wc;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.RandomAccessFile;
-import java.io.Reader;
-import java.io.UnsupportedEncodingException;
-import java.io.Writer;
+import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.util.SVNUUIDGenerator;
+import org.tmatesoft.svn.core.internal.util.jna.SVNJNAUtil;
+import org.tmatesoft.svn.core.internal.util.jna.SVNOS2Util;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
+import org.tmatesoft.svn.core.wc.ISVNOptions;
+import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
+
+import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
@@ -41,22 +37,6 @@ import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
 
-import org.tmatesoft.svn.core.ISVNCanceller;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.util.SVNUUIDGenerator;
-import org.tmatesoft.svn.core.internal.util.jna.SVNJNAUtil;
-import org.tmatesoft.svn.core.internal.util.jna.SVNOS2Util;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
-import org.tmatesoft.svn.core.wc.ISVNEventHandler;
-import org.tmatesoft.svn.core.wc.ISVNOptions;
-import org.tmatesoft.svn.util.SVNDebugLog;
-import org.tmatesoft.svn.util.SVNLogType;
-
 /**
  * @version 1.3
  * @author TMate Software Ltd., Peter Skoog
@@ -69,6 +49,7 @@ public class SVNFileUtil {
     private static final String CHMOD_COMMAND;
     private static final String ATTRIB_COMMAND;
     private static final String ENV_COMMAND;
+    private static final String STAT_COMMAND;
 
     public static final boolean isWindows;
     public static final boolean isOS2;
@@ -175,6 +156,7 @@ public class SVNFileUtil {
         CHMOD_COMMAND = props.getProperty(prefix + "chmod", "chmod");
         ATTRIB_COMMAND = props.getProperty(prefix + "attrib", "attrib");
         ENV_COMMAND = props.getProperty(prefix + "env", "env");
+        STAT_COMMAND = props.getProperty(prefix + "stat", "stat");
 
         try {
             ourSetWritableMethod = File.class.getMethod("setWritable", new Class[] {
@@ -243,6 +225,10 @@ public class SVNFileUtil {
 
     public static String getEnvCommand() {
         return ENV_COMMAND;
+    }
+
+    public static String getStatCommand() {
+        return STAT_COMMAND;
     }
 
     public static File getParentFile(File file) {
@@ -2194,4 +2180,43 @@ public class SVNFileUtil {
         return openFileForReading(link);
     }
 
+    public static long getFileLength(File file) {
+        if (symlinksSupported()) {
+            SVNFileType type = SVNFileType.getType(file);
+            if (type == SVNFileType.SYMLINK) {
+                try {
+                    return getSymlinkName(file).getBytes("UTF-8").length;
+                } catch (UnsupportedEncodingException e) {
+                    return getSymlinkName(file).getBytes().length;
+                }
+            }
+        }
+        return file.length();
+    }
+
+    public static long getFileLastModified(File file) {
+        if (symlinksSupported()) {
+            SVNFileType type = SVNFileType.getType(file);
+            if (type == SVNFileType.SYMLINK) {
+                Long lastModified = SVNJNAUtil.getSymlinkLastModified(file);
+                if (lastModified != null) {
+                    return lastModified;
+                }
+                try {
+                    String output = execCommand(new String[]{
+                            STAT_COMMAND, "-c", "%Y", file.getAbsolutePath()
+                    });
+                    if (output != null) {
+                        try {
+                            return Long.parseLong(output);
+                        } catch (NumberFormatException e) {
+                        }
+                    }
+                } catch (Throwable th) {
+                    SVNDebugLog.getDefaultLog().logFinest(SVNLogType.DEFAULT, th);
+                }
+            }
+        }
+        return file.lastModified();
+    }
 }

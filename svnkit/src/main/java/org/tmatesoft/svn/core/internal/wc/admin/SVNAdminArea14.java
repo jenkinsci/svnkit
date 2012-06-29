@@ -11,49 +11,18 @@
  */
 package org.tmatesoft.svn.core.internal.wc.admin;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.SVNProperties;
-import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.io.fs.FSFile;
-import org.tmatesoft.svn.core.internal.util.SVNDate;
-import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
-import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
-import org.tmatesoft.svn.core.internal.util.SVNHashSet;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNFileType;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNWCProperties;
+import org.tmatesoft.svn.core.internal.util.*;
+import org.tmatesoft.svn.core.internal.wc.*;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
+
+import java.io.*;
+import java.util.*;
 
 
 /**
@@ -1699,7 +1668,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
         long fileLength = 0;
         if (!getThisDirName().equals(fileName)) {
             File workingFile = getFile(fileName);
-            fileLength = workingFile.length();
+            fileLength = SVNFileUtil.getFileLength(workingFile);
         }
 
         long textTime = 0;
@@ -1709,8 +1678,8 @@ public class SVNAdminArea14 extends SVNAdminArea {
             if (fileType == SVNFileType.FILE || fileType == SVNFileType.SYMLINK) {
                 boolean modified = false;
                 File workingFile = getFile(fileName);
-                long tmpTimestamp = tmpFile.lastModified();
-                long wkTimestamp = workingFile.lastModified();
+                long tmpTimestamp = SVNFileUtil.getFileLastModified(tmpFile);
+                long wkTimestamp = SVNFileUtil.getFileLastModified(workingFile);
                 if (tmpTimestamp != wkTimestamp) {
                     // check if wc file is not modified
                     File tmpFile2 = SVNFileUtil.createUniqueFile(tmpFile.getParentFile(), fileName, ".tmp", true);
@@ -1811,8 +1780,8 @@ public class SVNAdminArea14 extends SVNAdminArea {
                     overwritten = true;
                 }
                 if (overwritten) {
-                    textTime = wcFile.lastModified();
-                    fileLength = wcFile.length();
+                    textTime = SVNFileUtil.getFileLastModified(wcFile);
+                    fileLength = SVNFileUtil.getFileLength(wcFile);
                 }
             } catch (SVNException svne) {
                 SVNErrorMessage err = SVNErrorMessage.create(errorCode, "Error replacing text-base of ''{0}''", fileName);

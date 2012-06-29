@@ -1,26 +1,8 @@
 package org.tmatesoft.svn.core.internal.wc2.ng;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.List;
-import java.util.Map;
-
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.SVNProperties;
-import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
-import org.tmatesoft.svn.core.internal.wc.SVNExternal;
-import org.tmatesoft.svn.core.internal.wc.SVNFileType;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.*;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 import org.tmatesoft.svn.core.internal.wc17.SVNStatusEditor17;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
@@ -37,6 +19,13 @@ import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc2.SvnExport;
 import org.tmatesoft.svn.core.wc2.SvnStatus;
 import org.tmatesoft.svn.util.SVNLogType;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.List;
+import java.util.Map;
 
 public class SvnNgExport extends SvnNgOperationRunner<Long, SvnExport> {
 
@@ -191,7 +180,7 @@ public class SvnNgExport extends SvnNgOperationRunner<Long, SvnExport> {
         }
         SVNDate committedDate; 
         if (modified) {
-            timestamp = from.lastModified();
+            timestamp = SVNFileUtil.getFileLastModified(from);
             committedDate = new SVNDate(timestamp, 0);
         } else {
             Structure<NodeInfo> nodeInfo = getWcContext().getDb().readInfo(from, NodeInfo.changedDate);
