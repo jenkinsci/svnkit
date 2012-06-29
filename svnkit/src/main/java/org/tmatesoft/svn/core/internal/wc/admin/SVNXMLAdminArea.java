@@ -613,7 +613,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
                 }
             }
         } catch (NoSuchAlgorithmException e) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "MD5 implementation not found: {1}", e.getLocalizedMessage());
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "MD5 implementation not found: {0}", e.getLocalizedMessage());
             SVNErrorManager.error(err, e, SVNLogType.WC);
         } finally {
             baseTmpFile.delete();

@@ -14,6 +14,8 @@ package org.tmatesoft.svn.core.internal.util.jna;
 import com.sun.jna.Memory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 import java.io.File;
 
@@ -47,6 +49,7 @@ public class SVNLinuxUtil {
             if (cLibrary == null) {
                 return null;
             }
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "Detecting file type: " + file);
             synchronized (ourSharedMemory) {
                 ourSharedMemory.clear();
                 int rc;
@@ -59,6 +62,7 @@ public class SVNLinuxUtil {
                             cLibrary.__lxstat64(0, path, ourSharedMemory);
                     }
                 }
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "Detecting file type, rc: " + rc);
                 if (rc < 0) {
                     if (file.exists() || file.isDirectory() || file.isFile()) {
                         return null;
@@ -68,6 +72,7 @@ public class SVNLinuxUtil {
                 int mode = SVNFileUtil.isOSX || SVNFileUtil.isBSD || SVNFileUtil.isSolaris ?
                         ourSharedMemory.getShort(getFileModeOffset()) : ourSharedMemory.getInt(getFileModeOffset());
                 int type = mode & 0170000;
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "Detecting file type, type: " + type);
                 if (type == 0120000) {
                     return SVNFileType.SYMLINK;
                 } else if (type == 0040000) {
@@ -82,6 +87,7 @@ public class SVNLinuxUtil {
                 }
             }
         } catch (Throwable th) {
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, th);
             //
         }
         return null;
@@ -221,6 +227,7 @@ public class SVNLinuxUtil {
             if (cLibrary == null) {
                 return false;
             }
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "Calling JNA.setExecutable");
             synchronized (ourSharedMemory) {
                 ourSharedMemory.clear();
                 int rc;
@@ -279,6 +286,7 @@ public class SVNLinuxUtil {
             if (cLibrary == null) {
                 return false;
             }
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "Calling JNA.setWritable");
             synchronized (ourSharedMemory) {
                 ourSharedMemory.clear();
                 int rc;
@@ -401,7 +409,10 @@ public class SVNLinuxUtil {
         if (SVNFileUtil.isOSX) {
             return 8;
         }
-        if (SVNFileUtil.isSolaris) {
+        if (SVNFileUtil.isSolaris && SVNFileUtil.is64Bit) {
+            return 16;
+        }
+        if (SVNFileUtil.isSolaris && SVNFileUtil.is32Bit) {
             return 20;
         }
         if (SVNFileUtil.isBSD) {

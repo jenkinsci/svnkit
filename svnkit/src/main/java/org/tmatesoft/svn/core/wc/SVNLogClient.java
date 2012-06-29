@@ -1092,7 +1092,7 @@ public class SVNLogClient extends SVNBasicClient {
      *             instead
      */
     public void doList(File path, SVNRevision pegRevision, SVNRevision revision, boolean fetchLocks, boolean recursive, ISVNDirEntryHandler handler) throws SVNException {
-        doList(path, pegRevision, revision, fetchLocks, SVNDepth.fromRecurse(recursive), SVNDirEntry.DIRENT_ALL, handler);
+        doList(path, pegRevision, revision, fetchLocks, recursive ? SVNDepth.INFINITY : SVNDepth.IMMEDIATES, SVNDirEntry.DIRENT_ALL, handler);
     }
 
     /**
@@ -1197,7 +1197,7 @@ public class SVNLogClient extends SVNBasicClient {
      *             instead
      */
     public void doList(File path, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNDirEntryHandler handler) throws SVNException {
-        doList(path, pegRevision, revision, false, SVNDepth.fromRecurse(recursive), SVNDirEntry.DIRENT_ALL, handler);
+        doList(path, pegRevision, revision, false, recursive ? SVNDepth.INFINITY : SVNDepth.IMMEDIATES, SVNDirEntry.DIRENT_ALL, handler);
     }
 
     /**
@@ -1233,7 +1233,7 @@ public class SVNLogClient extends SVNBasicClient {
      *      ISVNDirEntryHandler)
      */
     public void doList(SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean fetchLocks, boolean recursive, ISVNDirEntryHandler handler) throws SVNException {
-        doList(url, pegRevision, revision, fetchLocks, SVNDepth.fromRecurse(recursive), SVNDirEntry.DIRENT_ALL, handler);
+        doList(url, pegRevision, revision, fetchLocks, recursive ? SVNDepth.INFINITY : SVNDepth.IMMEDIATES, SVNDirEntry.DIRENT_ALL, handler);
     }
 
     /**
@@ -1338,7 +1338,7 @@ public class SVNLogClient extends SVNBasicClient {
      *             instead
      */
     public void doList(SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNDirEntryHandler handler) throws SVNException {
-        doList(url, pegRevision, revision, false, SVNDepth.fromRecurse(recursive), SVNDirEntry.DIRENT_ALL, handler);
+        doList(url, pegRevision, revision, false, recursive ? SVNDepth.INFINITY : SVNDepth.IMMEDIATES, SVNDirEntry.DIRENT_ALL, handler);
     }
 
 }

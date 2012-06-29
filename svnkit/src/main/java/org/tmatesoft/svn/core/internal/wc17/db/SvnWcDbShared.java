@@ -86,12 +86,24 @@ public class SvnWcDbShared {
         SVNSqlJetStatement stmt = null;
         try {
             stmt = new SVNWCDbCreateSchema(tmpDb, SVNWCDbCreateSchema.TARGETS_LIST, -1);
-            stmt.done();
+            try {
+                stmt.done();
+            } finally {
+                stmt.reset();
+            }
             stmt = new SVNWCDbInsertTarget(tmpDb, new SVNWCDbCollectTargets(root.getSDb(), root.getWcId(), relpath, depth, changelists));
-            stmt.done();
+            try {
+                stmt.done();
+            } finally {
+                stmt.reset();
+            }
             if (depth == SVNDepth.FILES || depth == SVNDepth.IMMEDIATES) {
                 stmt  = new SVNWCDbInsertTarget(tmpDb, new SVNWCDbCollectTargets(root.getSDb(), root.getWcId(), relpath, SVNDepth.EMPTY, changelists));
-                stmt.done();
+                try {
+                    stmt.done();
+                } finally {
+                    stmt.reset();
+                }
             }
         } finally {
             reset(stmt);

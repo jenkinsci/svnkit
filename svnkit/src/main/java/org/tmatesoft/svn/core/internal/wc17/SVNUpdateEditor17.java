@@ -868,6 +868,11 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         SVNSkel allWorkItems = null;
         SVNProperties entryProps = db.entryPropChanges;
         SVNProperties davProps = db.davPropChanges;
+        SVNPropertyValue newWCDavURL = davProps != null ? davProps.getSVNPropertyValue(SVNProperty.WC_URL) : null;
+        if (newWCDavURL == null) {
+            davProps = null;
+        }
+
         SVNProperties regularProps = db.regularPropChanges;
         
         SVNProperties actualProps = null;
@@ -937,6 +942,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             allWorkItems = myWCContext.wqMerge(allWorkItems, mergeProperiesInfo.workItems);            
         }
         AccumulatedChangeInfo change = accumulateLastChange(db.localAbsolutePath, entryProps);
+
         newChangedRev = change.changedRev;
         newChangedDate = change.changedDate;
         newChangedAuthor = change.changedAuthor;
@@ -1267,6 +1273,10 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
 
         SVNProperties entryProps = fb.entryPropChanges;
         SVNProperties davProps = fb.davPropChanges;
+        SVNPropertyValue newWCDavURL = davProps != null ? davProps.getSVNPropertyValue(SVNProperty.WC_URL) : null;
+        if (newWCDavURL == null) {
+            davProps = null;
+        }
         SVNProperties regularProps = fb.regularPropChanges;
 
         AccumulatedChangeInfo lastChange = accumulateLastChange(fb.localAbsolutePath, entryProps);
@@ -1452,16 +1462,20 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             fb.directoryBaton.notPresentFiles.remove(fb.name);
         }
         
-        if (myWCContext.getEventHandler() != null && !fb.alreadyNotified && fb.edited) {
+        if (myWCContext.getEventHandler() != null && !fb.alreadyNotified
+                && (fb.edited || lockState == SVNStatusType.LOCK_UNLOCKED)) {
             SVNEventAction action = SVNEventAction.UPDATE_UPDATE;
-            if (fb.shadowed) {
-                action = fb.addingFile ? SVNEventAction.UPDATE_SHADOWED_ADD : SVNEventAction.UPDATE_SHADOWED_UPDATE;
-            } else if (fb.obstructionFound || fb.addExisted) {
-                if (contentState != SVNStatusType.CONFLICTED) {
-                    action = SVNEventAction.UPDATE_EXISTS;
+
+            if (fb.edited) {
+                if (fb.shadowed) {
+                    action = fb.addingFile ? SVNEventAction.UPDATE_SHADOWED_ADD : SVNEventAction.UPDATE_SHADOWED_UPDATE;
+                } else if (fb.obstructionFound || fb.addExisted) {
+                    if (contentState != SVNStatusType.CONFLICTED) {
+                        action = SVNEventAction.UPDATE_EXISTS;
+                    }
+                } else if (fb.addingFile) {
+                    action = SVNEventAction.UPDATE_ADD;
                 }
-            } else if (fb.addingFile) {
-                action = SVNEventAction.UPDATE_ADD;
             }
             
             String mimeType = myWCContext.getProperty(fb.localAbsolutePath, SVNProperty.MIME_TYPE);
@@ -1519,7 +1533,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         if (recordedBaseChecksum != null && expectedBaseChecksum != null && !expectedBaseChecksum.equals(recordedBaseChecksum)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT_TEXT_BASE, "Checksum mismatch for ''{0}'':\n " + "   expected:  ''{1}''\n" + "   recorded:  ''{2}''\n",
                     new Object[] {
-                            fb.localAbsolutePath, expectedChecksum, recordedBaseChecksum
+                            fb.localAbsolutePath, expectedBaseChecksum, recordedBaseChecksum
                     });
             SVNErrorManager.error(err, SVNLogType.WC);
             return;

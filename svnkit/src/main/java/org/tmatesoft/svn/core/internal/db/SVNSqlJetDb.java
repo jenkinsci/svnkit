@@ -28,6 +28,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnNodesPristineTrigger;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
+import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -45,6 +46,7 @@ public class SVNSqlJetDb {
     };
     
     private static final ISqlJetBusyHandler DEFAULT_BUSY_HANDLER = new SqlJetTimeoutBusyHandler(10000);
+    private static boolean logTransactions = "true".equalsIgnoreCase(System.getProperty("svnkit.log.transactions", "false"));
 
     private SqlJetDb db;
     private EnumMap<SVNWCDbStatements, SVNSqlJetStatement> statements;
@@ -175,9 +177,15 @@ public class SVNSqlJetDb {
     public void beginTransaction(SqlJetTransactionMode mode) throws SVNException {
         if (mode != null) {
             openCount++;
+            if (isLogTransactions()) {
+                logCall("Being transaction request (" + openCount + "): " + mode, 5);
+            }
             if (isNeedStartTransaction(mode)) {
                 try {
                     db.beginTransaction(mode);
+                    if (isLogTransactions()) {
+                        SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "transaction started");
+                    }
                 } catch (SqlJetException e) {
                     createSqlJetError(e);
                 }
@@ -198,9 +206,15 @@ public class SVNSqlJetDb {
     public void commit() throws SVNException {
         if (openCount > 0) {
             openCount--;
+            if (isLogTransactions()) {
+                logCall("Commit transaction request (" + openCount + ")", 5);
+            }
             if (openCount == 0) {
                 try {
                     db.commit();
+                    if (isLogTransactions()) {
+                        SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "transaction committed");
+                    }
                 } catch (SqlJetException e) {
                     createSqlJetError(e);
                 }
@@ -253,6 +267,28 @@ public class SVNSqlJetDb {
             SVNErrorManager.error(err1, SVNLogType.DEFAULT);
         }
         return false;
+    }
+    
+    private void logCall(String message, int count) {
+        if (isLogTransactions()) {
+            StackTraceElement[] trace = Thread.currentThread().getStackTrace();
+            StringBuffer sb = new StringBuffer();
+            sb.append(message);
+            sb.append(":\n");
+            for (int i = 0; i < trace.length && i < count; i++) {
+                sb.append(trace[i].getClassName());
+                sb.append('.');
+                sb.append(trace[i].getMethodName());
+                sb.append(':');
+                sb.append(trace[i].getLineNumber());
+                sb.append('\n');
+            }
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, message.toString());
+        }
+    }
+
+    private static boolean isLogTransactions() {
+        return logTransactions;
     }
 
 }

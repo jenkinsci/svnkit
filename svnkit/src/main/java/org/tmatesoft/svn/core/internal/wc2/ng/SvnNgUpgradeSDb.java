@@ -1,30 +1,10 @@
 package org.tmatesoft.svn.core.internal.wc2.ng;
  
-import java.io.File;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
- 
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
-import org.tmatesoft.sqljet.core.schema.SqlJetConflictAction;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNProperties;
-import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
-import org.tmatesoft.svn.core.internal.db.SVNSqlJetInsertStatement;
-import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectFieldsStatement;
-import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectStatement;
-import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
-import org.tmatesoft.svn.core.internal.db.SVNSqlJetUpdateStatement;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.SVNExternal;
-import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNFileType;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNTreeConflictUtil;
+import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.internal.db.*;
+import org.tmatesoft.svn.core.internal.wc.*;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
@@ -33,6 +13,11 @@ import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldUpgrade;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.util.SVNLogType;
+
+import java.io.File;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
  
 public class SvnNgUpgradeSDb {
 	private static String PRISTINE_STORAGE_EXT = ".svn-base";
@@ -788,10 +773,9 @@ public class SvnNgUpgradeSDb {
     }
     
     private static void upgradeExternals(SVNSqlJetDb sDb, File wcRootAbsPath) throws SVNException {
-    	SVNSqlJetStatement stmt = sDb.getStatement(SVNWCDbStatements.SELECT_EXTERNAL_PROPERTIES);
-    	SVNSqlJetStatement addStmt = sDb.getStatement(SVNWCDbStatements.INSERT_EXTERNAL);
-    	
-    	/* ### For this intermediate upgrade we just assume WC_ID = 1. 
+        SVNSqlJetStatement stmt = sDb.getStatement(SVNWCDbStatements.SELECT_EXTERNAL_PROPERTIES);
+
+    	/* ### For this intermediate upgrade we just assume WC_ID = 1.
         ### Before this bump we lost track of externals all the time, so lets keep this easy. */
     	stmt.bindf("is", 1, "");
     	try {
@@ -808,16 +792,21 @@ public class SvnNgUpgradeSDb {
         		    	
         		    	/* Insert dummy externals definitions: Insert an unknown external, to make sure it will be cleaned up when it is not
                            updated on the next update. */
-        		    	addStmt.bindf("isssssis", 
-        		    			1, /* wc_id*/
-        		    			SVNFileUtil.getFilePath(externalPath),
-        		    			SVNFileUtil.getFilePath(SVNFileUtil.getFileDir(externalPath)),
-        		    			"normal",
-                                "unknown",
-                                SVNFileUtil.getFilePath(localRelPath),
-                                1, /* repos_id */
-        		    			"" /* repos_relpath */);
-        		    	addStmt.exec();
+                        SVNSqlJetStatement addStmt = sDb.getStatement(SVNWCDbStatements.INSERT_EXTERNAL);
+                        try {
+                            addStmt.bindf("isssssis",
+                                    1, /* wc_id*/
+                                    SVNFileUtil.getFilePath(externalPath),
+                                    SVNFileUtil.getFilePath(SVNFileUtil.getFileDir(externalPath)),
+                                    "normal",
+                                    "unknown",
+                                    SVNFileUtil.getFilePath(localRelPath),
+                                    1, /* repos_id */
+                                    "" /* repos_relpath */);
+                            addStmt.exec();
+                        } finally {
+                            addStmt.reset();
+                        }
                     }
             	}
             }

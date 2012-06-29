@@ -1,24 +1,25 @@
 package org.tmatesoft.svn.test;
 
-import java.io.File;
-
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.tmatesoft.svn.core.SVNCommitInfo;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNClientManager;
-import org.tmatesoft.svn.core.wc.SVNConflictChoice;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
-import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
-import org.tmatesoft.svn.core.wc2.SvnUpdate;
+import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.auth.BasicAuthenticationManager;
+import org.tmatesoft.svn.core.internal.wc.SVNExternal;
+import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
+import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
+import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.wc2.*;
 
-@Ignore("Temporarily ignored")
+import java.io.File;
+import java.util.*;
+
 public class MergeTest {
 
+    @Ignore("Temporarily ignored")
     @Test
     public void testConflictResolution() throws Exception {
         final TestOptions options = TestOptions.getInstance();
@@ -50,6 +51,771 @@ public class MergeTest {
 
             final String fileContentsString = TestUtil.readFileContentsString(file);
             Assert.assertEquals("mine", fileContentsString);
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testRemoteAddOverUnversionedFileConflictResolution() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testRemoteAddOverUnversionedFileConflictResolution", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder1 = new CommitBuilder(url);
+            commitBuilder1.commit();
+
+            final CommitBuilder commitBuilder2 = new CommitBuilder(url);
+            commitBuilder2.addFile("file", "their".getBytes());
+            commitBuilder2.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, 1);
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+            final File file = workingCopy.getFile("file");
+
+            SVNFileUtil.ensureDirectoryExists(file.getParentFile());
+            TestUtil.writeFileContentsString(file, "mine");
+
+            boolean isExceptionExpected = !TestUtil.isNewWorkingCopyTest();
+
+            if (isExceptionExpected) {
+                final SvnUpdate update = svnOperationFactory.createUpdate();
+                update.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+                try {
+                    update.run();
+                    Assert.fail("An exception should be thrown");
+                } catch (SVNException e) {
+                    //expected for WC 1.6
+                    Assert.assertEquals(SVNErrorCode.WC_OBSTRUCTED_UPDATE, e.getErrorMessage().getErrorCode());
+                }
+            } else {
+                final SvnUpdate update = svnOperationFactory.createUpdate();
+                update.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+                update.run();
+
+                runResolve(svnOperationFactory, file, SVNConflictChoice.MERGED);
+
+                Assert.assertEquals("mine", TestUtil.readFileContentsString(file));
+
+                final Map<File,SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
+                Assert.assertEquals(SVNStatusType.STATUS_DELETED, statuses.get(file).getNodeStatus());
+                Assert.assertFalse(statuses.get(file).isConflicted());
+            }
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testBothDeletedTreeConflict() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testBothDeletedTreeConflict", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder1 = new CommitBuilder(url);
+            commitBuilder1.addFile("file");
+            commitBuilder1.commit();
+
+            final CommitBuilder commitBuilder2 = new CommitBuilder(url);
+            commitBuilder2.delete("file");
+            commitBuilder2.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, 1);
+            final File file = workingCopy.getFile("file");
+
+            workingCopy.delete(file);
+
+            final SvnUpdate update = svnOperationFactory.createUpdate();
+            update.setSingleTarget(SvnTarget.fromFile(workingCopy.getWorkingCopyDirectory()));
+            update.run();
+
+            final SvnGetInfo getInfo = svnOperationFactory.createGetInfo();
+            getInfo.setSingleTarget(SvnTarget.fromFile(file));
+            final SvnInfo svnInfo = getInfo.run();
+
+            final Collection<SVNConflictDescription> conflicts = svnInfo.getWcInfo().getConflicts();
+            Assert.assertEquals(1, conflicts.size());
+
+            final SVNTreeConflictDescription conflict = (SVNTreeConflictDescription)conflicts.iterator().next();
+            Assert.assertEquals(SVNConflictAction.DELETE, conflict.getConflictAction());
+            Assert.assertEquals(SVNConflictReason.DELETED, conflict.getConflictReason());
+            Assert.assertEquals(url, conflict.getSourceLeftVersion().getRepositoryRoot());
+            Assert.assertEquals(url, conflict.getSourceRightVersion().getRepositoryRoot());
+
+            final SvnSchedule schedule = svnInfo.getWcInfo().getSchedule();
+            Assert.assertEquals(SvnSchedule.NORMAL, schedule);
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testUpdateDeletedLockedFileDoesntCauseTreeConflictDavAccess() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+        Assume.assumeTrue(TestUtil.areAllApacheOptionsSpecified(options));
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testUpdateDeletedLockedFileDoesntCauseTreeConflictDavAccess", options);
+        try {
+            final BasicAuthenticationManager authenticationManager = new BasicAuthenticationManager("user", "password");
+            svnOperationFactory.setAuthenticationManager(authenticationManager);
+
+            final Map<String, String> loginToPassword = new HashMap<String, String>();
+            loginToPassword.put("user", "password");
+            final SVNURL url = sandbox.createSvnRepositoryWithDavAccess(loginToPassword);
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.setAuthenticationManager(authenticationManager);
+            commitBuilder.addFile("directory/file");
+            commitBuilder.commit();
+
+            final File workingCopyDirectory = sandbox.createDirectory("wc");
+            final File file = new File(workingCopyDirectory, "directory/file");
+
+            final SvnCheckout checkout = svnOperationFactory.createCheckout();
+            checkout.setSource(SvnTarget.fromURL(url));
+            checkout.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            checkout.run();
+
+            final SvnScheduleForRemoval scheduleForRemoval = svnOperationFactory.createScheduleForRemoval();
+            scheduleForRemoval.setSingleTarget(SvnTarget.fromFile(file));
+            scheduleForRemoval.run();
+
+            final SvnSetLock setLock = svnOperationFactory.createSetLock();
+            setLock.setSingleTarget(SvnTarget.fromFile(file));
+            setLock.run();
+
+            final SvnUpdate update = svnOperationFactory.createUpdate();
+            update.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            update.run();
+
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
+            Assert.assertEquals(SVNStatusType.STATUS_DELETED, statuses.get(file).getNodeStatus());
+            Assert.assertNotNull(statuses.get(file).getLock());
+
+            final SVNWCContext context = new SVNWCContext(svnOperationFactory.getOptions(), svnOperationFactory.getEventHandler());
+            try {
+                final SVNStatus oldStatus = SvnCodec.status(context, statuses.get(file));
+                Assert.assertNull(oldStatus.getTreeConflict());
+            } finally {
+                context.close();
+            }
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testUpdateDeletedLockedFileDoesntCauseTreeConflictSvnAccess() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+        Assume.assumeTrue(TestUtil.areAllSvnserveOptionsSpecified(options));
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testUpdateDeletedLockedFileDoesntCauseTreeConflictSvnAccess", options);
+        try {
+            final BasicAuthenticationManager authenticationManager = new BasicAuthenticationManager("user", "password");
+            svnOperationFactory.setAuthenticationManager(authenticationManager);
+
+            final Map<String, String> loginToPassword = new HashMap<String, String>();
+            loginToPassword.put("user", "password");
+            final SVNURL url = sandbox.createSvnRepositoryWithSvnAccess(loginToPassword);
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.setAuthenticationManager(authenticationManager);
+            commitBuilder.addFile("directory/file");
+            commitBuilder.commit();
+
+            final File workingCopyDirectory = sandbox.createDirectory("wc");
+            final File file = new File(workingCopyDirectory, "directory/file");
+
+            final SvnCheckout checkout = svnOperationFactory.createCheckout();
+            checkout.setSource(SvnTarget.fromURL(url));
+            checkout.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            checkout.run();
+
+            final SvnScheduleForRemoval scheduleForRemoval = svnOperationFactory.createScheduleForRemoval();
+            scheduleForRemoval.setSingleTarget(SvnTarget.fromFile(file));
+            scheduleForRemoval.run();
+
+            final SvnSetLock setLock = svnOperationFactory.createSetLock();
+            setLock.setSingleTarget(SvnTarget.fromFile(file));
+            setLock.run();
+
+            final SvnUpdate update = svnOperationFactory.createUpdate();
+            update.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            update.run();
+
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
+            Assert.assertEquals(SVNStatusType.STATUS_DELETED, statuses.get(file).getNodeStatus());
+            Assert.assertNotNull(statuses.get(file).getLock());
+
+            final SVNWCContext context = new SVNWCContext(svnOperationFactory.getOptions(), svnOperationFactory.getEventHandler());
+            try {
+                final SVNStatus oldStatus = SvnCodec.status(context, statuses.get(file));
+                Assert.assertNull(oldStatus.getTreeConflict());
+            } finally {
+                context.close();
+            }
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testUpdateOnRenamedParentOfLockedFileDoesntCauseTreeConflictDavAccess() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+        Assume.assumeTrue(TestUtil.areAllApacheOptionsSpecified(options));
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testUpdateOnRenamedParentOfLockedFileDoesntCauseTreeConflictDavAccess", options);
+        try {
+            final BasicAuthenticationManager authenticationManager = new BasicAuthenticationManager("user", "password");
+            svnOperationFactory.setAuthenticationManager(authenticationManager);
+
+            final Map<String, String> loginToPassword = new HashMap<String, String>();
+            loginToPassword.put("user", "password");
+            final SVNURL url = sandbox.createSvnRepositoryWithDavAccess(loginToPassword);
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.setAuthenticationManager(authenticationManager);
+            commitBuilder.addFile("directory/file");
+            commitBuilder.commit();
+
+            final File workingCopyDirectory = sandbox.createDirectory("wc");
+            final File file = new File(workingCopyDirectory, "directory/file");
+            final File directory = new File(workingCopyDirectory, "directory");
+            final File renamedDirectory = new File(workingCopyDirectory, "renamedDirectory");
+
+            final SvnCheckout checkout = svnOperationFactory.createCheckout();
+            checkout.setSource(SvnTarget.fromURL(url));
+            checkout.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            checkout.run();
+
+            final SvnSetLock setLock = svnOperationFactory.createSetLock();
+            setLock.setSingleTarget(SvnTarget.fromFile(file));
+            setLock.run();
+
+            final SvnScheduleForRemoval scheduleForRemoval = svnOperationFactory.createScheduleForRemoval();
+            scheduleForRemoval.setSingleTarget(SvnTarget.fromFile(file));
+            scheduleForRemoval.run();
+
+            final SvnCopy copy = svnOperationFactory.createCopy();
+            copy.setMove(true);
+            copy.addCopySource(SvnCopySource.create(SvnTarget.fromFile(directory), SVNRevision.WORKING));
+            copy.setSingleTarget(SvnTarget.fromFile(renamedDirectory));
+            copy.run();
+
+            final SvnUpdate update = svnOperationFactory.createUpdate();
+            update.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            update.run();
+
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
+            Assert.assertEquals(SVNStatusType.STATUS_DELETED, statuses.get(directory).getNodeStatus());
+            Assert.assertEquals(SVNStatusType.STATUS_DELETED, statuses.get(file).getNodeStatus());
+            Assert.assertNotNull(statuses.get(file).getLock());
+
+            final SVNWCContext context = new SVNWCContext(svnOperationFactory.getOptions(), svnOperationFactory.getEventHandler());
+            try {
+                final SVNStatus oldDirectoryStatus = SvnCodec.status(context, statuses.get(directory));
+                Assert.assertNull(oldDirectoryStatus.getTreeConflict());
+                final SVNStatus oldFileStatus = SvnCodec.status(context, statuses.get(file));
+                Assert.assertNull(oldFileStatus.getTreeConflict());
+            } finally {
+                context.close();
+            }
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testUpdateOnRenamedParentOfLockedFileDoesntCauseTreeConflictSvnAccess() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+        Assume.assumeTrue(TestUtil.areAllSvnserveOptionsSpecified(options));
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testUpdateOnRenamedParentOfLockedFileDoesntCauseTreeConflictSvnAccess", options);
+        try {
+            final BasicAuthenticationManager authenticationManager = new BasicAuthenticationManager("user", "password");
+            svnOperationFactory.setAuthenticationManager(authenticationManager);
+
+            final Map<String, String> loginToPassword = new HashMap<String, String>();
+            loginToPassword.put("user", "password");
+            final SVNURL url = sandbox.createSvnRepositoryWithSvnAccess(loginToPassword);
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.setAuthenticationManager(authenticationManager);
+            commitBuilder.addFile("directory/file");
+            commitBuilder.commit();
+
+            final File workingCopyDirectory = sandbox.createDirectory("wc");
+            final File file = new File(workingCopyDirectory, "directory/file");
+            final File directory = new File(workingCopyDirectory, "directory");
+            final File renamedDirectory = new File(workingCopyDirectory, "renamedDirectory");
+
+            final SvnCheckout checkout = svnOperationFactory.createCheckout();
+            checkout.setSource(SvnTarget.fromURL(url));
+            checkout.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            checkout.run();
+
+            final SvnSetLock setLock = svnOperationFactory.createSetLock();
+            setLock.setSingleTarget(SvnTarget.fromFile(file));
+            setLock.run();
+
+            final SvnScheduleForRemoval scheduleForRemoval = svnOperationFactory.createScheduleForRemoval();
+            scheduleForRemoval.setSingleTarget(SvnTarget.fromFile(file));
+            scheduleForRemoval.run();
+
+            final SvnCopy copy = svnOperationFactory.createCopy();
+            copy.setMove(true);
+            copy.addCopySource(SvnCopySource.create(SvnTarget.fromFile(directory), SVNRevision.WORKING));
+            copy.setSingleTarget(SvnTarget.fromFile(renamedDirectory));
+            copy.run();
+
+            final SvnUpdate update = svnOperationFactory.createUpdate();
+            update.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            update.run();
+
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
+            Assert.assertEquals(SVNStatusType.STATUS_DELETED, statuses.get(directory).getNodeStatus());
+            Assert.assertEquals(SVNStatusType.STATUS_DELETED, statuses.get(file).getNodeStatus());
+            Assert.assertNotNull(statuses.get(file).getLock());
+
+            final SVNWCContext context = new SVNWCContext(svnOperationFactory.getOptions(), svnOperationFactory.getEventHandler());
+            try {
+                final SVNStatus oldDirectoryStatus = SvnCodec.status(context, statuses.get(directory));
+                Assert.assertNull(oldDirectoryStatus.getTreeConflict());
+                final SVNStatus oldFileStatus = SvnCodec.status(context, statuses.get(file));
+                Assert.assertNull(oldFileStatus.getTreeConflict());
+            } finally {
+                context.close();
+            }
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testUpdateOnRenamedParentOfLockedFileAnotherFileDeletedDavAccess() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+        Assume.assumeTrue(TestUtil.areAllApacheOptionsSpecified(options));
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testUpdateOnRenamedParentOfLockedFileAnotherFileDeletedDavAccess", options);
+        try {
+            final BasicAuthenticationManager authenticationManager = new BasicAuthenticationManager("user", "password");
+            svnOperationFactory.setAuthenticationManager(authenticationManager);
+
+            final Map<String, String> loginToPassword = new HashMap<String, String>();
+            loginToPassword.put("user", "password");
+            final SVNURL url = sandbox.createSvnRepositoryWithDavAccess(loginToPassword);
+
+            final CommitBuilder commitBuilder1 = new CommitBuilder(url);
+            commitBuilder1.setAuthenticationManager(authenticationManager);
+            commitBuilder1.addFile("directory/file");
+            commitBuilder1.addFile("directory/fileToDelete");
+            commitBuilder1.addFile("fileToDelete");
+            commitBuilder1.commit();
+
+            final CommitBuilder commitBuilder2 = new CommitBuilder(url);
+            commitBuilder2.setAuthenticationManager(authenticationManager);
+            commitBuilder2.delete("directory/fileToDelete");
+            commitBuilder2.delete("fileToDelete");
+            commitBuilder2.commit();
+
+            final File workingCopyDirectory = sandbox.createDirectory("wc");
+            final File file = new File(workingCopyDirectory, "directory/file");
+            final File directory = new File(workingCopyDirectory, "directory");
+            final File renamedDirectory = new File(workingCopyDirectory, "renamedDirectory");
+
+            final SvnCheckout checkout = svnOperationFactory.createCheckout();
+            checkout.setSource(SvnTarget.fromURL(url));
+            checkout.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            checkout.run();
+
+            final SvnSetLock setLock = svnOperationFactory.createSetLock();
+            setLock.setSingleTarget(SvnTarget.fromFile(file));
+            setLock.run();
+
+            final SvnScheduleForRemoval scheduleForRemoval = svnOperationFactory.createScheduleForRemoval();
+            scheduleForRemoval.setSingleTarget(SvnTarget.fromFile(file));
+            scheduleForRemoval.run();
+
+            final SvnCopy copy = svnOperationFactory.createCopy();
+            copy.setMove(true);
+            copy.addCopySource(SvnCopySource.create(SvnTarget.fromFile(directory), SVNRevision.WORKING));
+            copy.setSingleTarget(SvnTarget.fromFile(renamedDirectory));
+            copy.run();
+
+            final SvnUpdate update = svnOperationFactory.createUpdate();
+            update.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            update.run();
+
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
+            Assert.assertEquals(SVNStatusType.STATUS_DELETED, statuses.get(directory).getNodeStatus());
+            Assert.assertEquals(SVNStatusType.STATUS_DELETED, statuses.get(file).getNodeStatus());
+            Assert.assertNotNull(statuses.get(file).getLock());
+
+            final SVNWCContext context = new SVNWCContext(svnOperationFactory.getOptions(), svnOperationFactory.getEventHandler());
+            try {
+                final SVNStatus oldDirectoryStatus = SvnCodec.status(context, statuses.get(directory));
+                Assert.assertNull(oldDirectoryStatus.getTreeConflict());
+                final SVNStatus oldFileStatus = SvnCodec.status(context, statuses.get(file));
+                Assert.assertNull(oldFileStatus.getTreeConflict());
+            } finally {
+                context.close();
+            }
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testUpdateOnRenamedParentOfLockedFileAnotherFileDeletedSvnAccess() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+        Assume.assumeTrue(TestUtil.areAllSvnserveOptionsSpecified(options));
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testUpdateOnRenamedParentOfLockedFileAnotherFileDeletedSvnAccess", options);
+        try {
+            final BasicAuthenticationManager authenticationManager = new BasicAuthenticationManager("user", "password");
+            svnOperationFactory.setAuthenticationManager(authenticationManager);
+
+            final Map<String, String> loginToPassword = new HashMap<String, String>();
+            loginToPassword.put("user", "password");
+            final SVNURL url = sandbox.createSvnRepositoryWithSvnAccess(loginToPassword);
+
+            final CommitBuilder commitBuilder1 = new CommitBuilder(url);
+            commitBuilder1.setAuthenticationManager(authenticationManager);
+            commitBuilder1.addFile("directory/file");
+            commitBuilder1.addFile("directory/fileToDelete");
+            commitBuilder1.addFile("fileToDelete");
+            commitBuilder1.commit();
+
+            final CommitBuilder commitBuilder2 = new CommitBuilder(url);
+            commitBuilder2.setAuthenticationManager(authenticationManager);
+            commitBuilder2.delete("directory/fileToDelete");
+            commitBuilder2.delete("fileToDelete");
+            commitBuilder2.commit();
+
+            final File workingCopyDirectory = sandbox.createDirectory("wc");
+            final File file = new File(workingCopyDirectory, "directory/file");
+            final File directory = new File(workingCopyDirectory, "directory");
+            final File renamedDirectory = new File(workingCopyDirectory, "renamedDirectory");
+
+            final SvnCheckout checkout = svnOperationFactory.createCheckout();
+            checkout.setSource(SvnTarget.fromURL(url));
+            checkout.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            checkout.run();
+
+            final SvnSetLock setLock = svnOperationFactory.createSetLock();
+            setLock.setSingleTarget(SvnTarget.fromFile(file));
+            setLock.run();
+
+            final SvnScheduleForRemoval scheduleForRemoval = svnOperationFactory.createScheduleForRemoval();
+            scheduleForRemoval.setSingleTarget(SvnTarget.fromFile(file));
+            scheduleForRemoval.run();
+
+            final SvnCopy copy = svnOperationFactory.createCopy();
+            copy.setMove(true);
+            copy.addCopySource(SvnCopySource.create(SvnTarget.fromFile(directory), SVNRevision.WORKING));
+            copy.setSingleTarget(SvnTarget.fromFile(renamedDirectory));
+            copy.run();
+
+            final SvnUpdate update = svnOperationFactory.createUpdate();
+            update.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            update.run();
+
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
+            Assert.assertEquals(SVNStatusType.STATUS_DELETED, statuses.get(directory).getNodeStatus());
+            Assert.assertEquals(SVNStatusType.STATUS_DELETED, statuses.get(file).getNodeStatus());
+            Assert.assertNotNull(statuses.get(file).getLock());
+
+            final SVNWCContext context = new SVNWCContext(svnOperationFactory.getOptions(), svnOperationFactory.getEventHandler());
+            try {
+                final SVNStatus oldDirectoryStatus = SvnCodec.status(context, statuses.get(directory));
+                Assert.assertNull(oldDirectoryStatus.getTreeConflict());
+                final SVNStatus oldFileStatus = SvnCodec.status(context, statuses.get(file));
+                Assert.assertNull(oldFileStatus.getTreeConflict());
+            } finally {
+                context.close();
+            }
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testUpdateOnMovedParentOfLockedFileDoesntCauseTreeConflictDavAccess() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+        Assume.assumeTrue(TestUtil.areAllApacheOptionsSpecified(options));
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testUpdateOnRenamedParentOfLockedFileDoesntCauseTreeConflictDavAccess", options);
+        try {
+            final BasicAuthenticationManager authenticationManager = new BasicAuthenticationManager("user", "password");
+            svnOperationFactory.setAuthenticationManager(authenticationManager);
+
+            final Map<String, String> loginToPassword = new HashMap<String, String>();
+            loginToPassword.put("user", "password");
+            final SVNURL url = sandbox.createSvnRepositoryWithDavAccess(loginToPassword);
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.setAuthenticationManager(authenticationManager);
+            commitBuilder.addFile("directory/subdirectory/file");
+            commitBuilder.addDirectory("anotherDirectory");
+            commitBuilder.commit();
+
+            final File workingCopyDirectory = sandbox.createDirectory("wc");
+            final File directory = new File(workingCopyDirectory, "directory");
+            final File subdirectory = new File(directory, "subdirectory");
+            final File file = new File(subdirectory, "file");
+            final File anotherDirectory = new File(workingCopyDirectory, "anotherDirectory");
+
+            final SvnCheckout checkout = svnOperationFactory.createCheckout();
+            checkout.setSource(SvnTarget.fromURL(url));
+            checkout.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            checkout.run();
+
+            final SvnSetLock setLock = svnOperationFactory.createSetLock();
+            setLock.setSingleTarget(SvnTarget.fromFile(file));
+            setLock.run();
+
+            final SvnScheduleForRemoval scheduleForRemoval = svnOperationFactory.createScheduleForRemoval();
+            scheduleForRemoval.setSingleTarget(SvnTarget.fromFile(file));
+            scheduleForRemoval.run();
+
+            final SvnCopy copy = svnOperationFactory.createCopy();
+            copy.setFailWhenDstExists(false);
+            copy.setMove(true);
+            copy.addCopySource(SvnCopySource.create(SvnTarget.fromFile(subdirectory), SVNRevision.WORKING));
+            copy.setSingleTarget(SvnTarget.fromFile(anotherDirectory));
+            copy.run();
+
+            final SvnUpdate update = svnOperationFactory.createUpdate();
+            update.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            update.run();
+
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
+            Assert.assertEquals(SVNStatusType.STATUS_DELETED, statuses.get(subdirectory).getNodeStatus());
+            Assert.assertEquals(SVNStatusType.STATUS_DELETED, statuses.get(file).getNodeStatus());
+            Assert.assertNotNull(statuses.get(file).getLock());
+
+            final SVNWCContext context = new SVNWCContext(svnOperationFactory.getOptions(), svnOperationFactory.getEventHandler());
+            try {
+                final SVNStatus oldDirectoryStatus = SvnCodec.status(context, statuses.get(subdirectory));
+                Assert.assertNull(oldDirectoryStatus.getTreeConflict());
+                final SVNStatus oldFileStatus = SvnCodec.status(context, statuses.get(file));
+                Assert.assertNull(oldFileStatus.getTreeConflict());
+            } finally {
+                context.close();
+            }
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testUpdateOnMovedParentOfLockedFileDoesntCauseTreeConflictSvnAccess() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+        Assume.assumeTrue(TestUtil.areAllSvnserveOptionsSpecified(options));
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testUpdateOnRenamedParentOfLockedFileDoesntCauseTreeConflictSvnAccess", options);
+        try {
+            final BasicAuthenticationManager authenticationManager = new BasicAuthenticationManager("user", "password");
+            svnOperationFactory.setAuthenticationManager(authenticationManager);
+
+            final Map<String, String> loginToPassword = new HashMap<String, String>();
+            loginToPassword.put("user", "password");
+            final SVNURL url = sandbox.createSvnRepositoryWithSvnAccess(loginToPassword);
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.setAuthenticationManager(authenticationManager);
+            commitBuilder.addFile("directory/subdirectory/file");
+            commitBuilder.addDirectory("anotherDirectory");
+            commitBuilder.commit();
+
+            final File workingCopyDirectory = sandbox.createDirectory("wc");
+            final File directory = new File(workingCopyDirectory, "directory");
+            final File subdirectory = new File(directory, "subdirectory");
+            final File file = new File(subdirectory, "file");
+            final File anotherDirectory = new File(workingCopyDirectory, "anotherDirectory");
+
+            final SvnCheckout checkout = svnOperationFactory.createCheckout();
+            checkout.setSource(SvnTarget.fromURL(url));
+            checkout.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            checkout.run();
+
+            final SvnSetLock setLock = svnOperationFactory.createSetLock();
+            setLock.setSingleTarget(SvnTarget.fromFile(file));
+            setLock.run();
+
+            final SvnScheduleForRemoval scheduleForRemoval = svnOperationFactory.createScheduleForRemoval();
+            scheduleForRemoval.setSingleTarget(SvnTarget.fromFile(file));
+            scheduleForRemoval.run();
+
+            final SvnCopy copy = svnOperationFactory.createCopy();
+            copy.setFailWhenDstExists(false);
+            copy.setMove(true);
+            copy.addCopySource(SvnCopySource.create(SvnTarget.fromFile(subdirectory), SVNRevision.WORKING));
+            copy.setSingleTarget(SvnTarget.fromFile(anotherDirectory));
+            copy.run();
+
+            final SvnUpdate update = svnOperationFactory.createUpdate();
+            update.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            update.run();
+
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
+            Assert.assertEquals(SVNStatusType.STATUS_DELETED, statuses.get(subdirectory).getNodeStatus());
+            Assert.assertEquals(SVNStatusType.STATUS_DELETED, statuses.get(file).getNodeStatus());
+            Assert.assertNotNull(statuses.get(file).getLock());
+
+            final SVNWCContext context = new SVNWCContext(svnOperationFactory.getOptions(), svnOperationFactory.getEventHandler());
+            try {
+                final SVNStatus oldDirectoryStatus = SvnCodec.status(context, statuses.get(subdirectory));
+                Assert.assertNull(oldDirectoryStatus.getTreeConflict());
+                final SVNStatus oldFileStatus = SvnCodec.status(context, statuses.get(file));
+                Assert.assertNull(oldFileStatus.getTreeConflict());
+            } finally {
+                context.close();
+            }
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+
+    @Test
+    public void testMergeFileAdditionAndDeletion() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testMergeFileAdditionAndDeletion", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder1 = new CommitBuilder(url);
+            commitBuilder1.addDirectory("directory1/directory");
+            commitBuilder1.commit();
+
+            final CommitBuilder commitBuilder2 = new CommitBuilder(url);
+            commitBuilder2.addDirectoryByCopying("directory2", "directory1");
+            commitBuilder2.commit();
+
+            final CommitBuilder commitBuilder3 = new CommitBuilder(url);
+            commitBuilder3.addFile("directory2/directory/file", "contents".getBytes());
+            commitBuilder3.commit();
+
+            final CommitBuilder commitBuilder4 = new CommitBuilder(url);
+            commitBuilder4.delete("directory2/directory/file");
+            commitBuilder4.commit();
+
+            final SVNURL directory1Url = url.appendPath("directory1", false);
+            final SVNURL directory2Url = url.appendPath("directory2", false);
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(directory1Url);
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+
+            final SvnMerge merge = svnOperationFactory.createMerge();
+            merge.addRevisionRange(SvnRevisionRange.create(SVNRevision.create(2), SVNRevision.create(3)));
+            merge.addRevisionRange(SvnRevisionRange.create(SVNRevision.create(3), SVNRevision.create(4)));
+            merge.setSource(SvnTarget.fromURL(directory2Url), false);
+            merge.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            merge.run();
+
+            Assert.assertFalse(workingCopy.getFile("directory/file").exists());
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testConflictOnFileExternalUpdate() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testConflictOnFileExternalUpdate", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final SVNExternal external = new SVNExternal("file", url.appendPath("file", false).toString(), SVNRevision.HEAD, SVNRevision.HEAD, false, false, true);
+
+            final CommitBuilder commitBuilder1 = new CommitBuilder(url);
+            commitBuilder1.addDirectory("directory");
+            commitBuilder1.addFile("file");
+
+            commitBuilder1.setDirectoryProperty("directory", SVNProperty.EXTERNALS, SVNPropertyValue.create(external.toString()));
+            commitBuilder1.commit();
+
+            final SVNURL directoryUrl = url.appendPath("directory", false);
+
+            final File workingCopyDirectory = sandbox.createDirectory("wc");
+            final File file = new File(workingCopyDirectory, "file");
+
+            final SvnCheckout checkout = svnOperationFactory.createCheckout();
+            checkout.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            checkout.setSource(SvnTarget.fromURL(directoryUrl));
+            checkout.setIgnoreExternals(false);
+            checkout.run();
+
+            final CommitBuilder commitBuilder2 = new CommitBuilder(url);
+            commitBuilder2.changeFile("file", "theirs".getBytes());
+            commitBuilder2.commit();
+
+            TestUtil.writeFileContentsString(file, "mine");
+
+            final SvnUpdate update = svnOperationFactory.createUpdate();
+            update.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            update.run();
+
+            final Set<String> expectedNames = new HashSet<String>();
+            expectedNames.add("file");
+            expectedNames.add("file.r1");
+            expectedNames.add("file.r2");
+            expectedNames.add("file.mine");
+
+            final Set<String> actualNames = new HashSet<String>();
+            final File[] files = SVNFileListUtil.listFiles(workingCopyDirectory);
+            for (File child : files) {
+                String name = SVNFileUtil.getFileName(child);
+                if (SVNFileUtil.getAdminDirectoryName().equals(name)) {
+                    continue;
+                }
+                actualNames.add(name);
+            }
+
+            Assert.assertEquals(expectedNames, actualNames);
 
         } finally {
             svnOperationFactory.dispose();

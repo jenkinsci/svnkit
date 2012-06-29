@@ -1,3 +1,25 @@
+== version 1.7.6 ==
+
+== version 1.7.5 ==
+
++ File externals merge issues fixed.
++ SVNStatus reported for old and new working copy formats made more consistent.
++ Existing credentials in default cache 
+  are no longer overwritten by truncated ones when store-passwords option is set to false.
++ Deleting a file remotely resulted in grand-parent directory access, fixed.
++ SVNLogClient.doList(recursive=false) now uses SVNDepth.IMMEDIATES, not FILES.
++ SqlJet 1.1.3 is used and potential NPE on concurrent working copy access fixed.
++ Other minor stability improvements and bugfixes. 
+
+== version 1.7.4-v1 ==
+
++ SVNLogClient.doList() method issues fixed.
++ Potential PRISTINE wc.db table corruption fixed.
++ SVNWCClient.doResolve() was choosing wrong file version when resolving conflict, fixed.
++ JavaHL SVNClient reported wrong version, fixed.
++ Minor stability improvements and bugfixes.
++ Build script upgraded to use Gradle 1.0-rc3.
+
 == version 1.7.4 ==
 
 + Minor diff generator improvements

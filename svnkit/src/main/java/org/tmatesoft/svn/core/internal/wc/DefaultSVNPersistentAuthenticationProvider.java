@@ -11,27 +11,16 @@
  */
 package org.tmatesoft.svn.core.internal.wc;
 
+import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.auth.*;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
+import org.tmatesoft.svn.core.internal.util.jna.SVNJNAUtil;
+import org.tmatesoft.svn.util.SVNLogType;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNProperties;
-import org.tmatesoft.svn.core.SVNPropertyValue;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
-import org.tmatesoft.svn.core.auth.SVNAuthentication;
-import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
-import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
-import org.tmatesoft.svn.core.auth.SVNSSLAuthentication;
-import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
-import org.tmatesoft.svn.core.internal.util.jna.SVNJNAUtil;
-import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @author TMate Software Ltd.
@@ -329,7 +318,7 @@ public class DefaultSVNPersistentAuthenticationProvider implements ISVNAuthentic
         if (authFile.isFile()) {
             SVNWCProperties props = new SVNWCProperties(authFile, "");
             try {
-                if (values.equals(props.asMap())) {
+                if (!shouldSaveCredentials(kind, values, props.asMap())) {
                     return;
                 }
             } catch (SVNException e) {
@@ -346,6 +335,44 @@ public class DefaultSVNPersistentAuthenticationProvider implements ISVNAuthentic
 
     public int acceptServerAuthentication(SVNURL url, String r, Object serverAuth, boolean resultMayBeStored) {
         return ACCEPTED;
+    }
+
+    private boolean shouldSaveCredentials(String kind, SVNProperties newValues, SVNProperties oldValues) throws SVNException {
+        assert newValues != null;
+        assert oldValues != null;
+
+        if (!ISVNAuthenticationManager.PASSWORD.equals(kind)) {
+            return !newValues.equals(oldValues);
+        }
+        String newUsername = newValues.getStringValue("username");
+        String newPassType = newValues.getStringValue("passtype");
+        String newRealm = newValues.getStringValue("svn:realmstring");
+        IPasswordStorage newPasswordStorage = getPasswordStorage(newPassType);
+        String newPassword = newPasswordStorage == null ? null : newPasswordStorage.readPassword(newRealm, newUsername, newValues);
+
+        String oldUsername = oldValues.getStringValue("username");
+        String oldPassType = oldValues.getStringValue("passtype");
+        String oldRealm = oldValues.getStringValue("svn:realmstring");
+        IPasswordStorage oldPasswordStorage = getPasswordStorage(oldPassType);
+        String oldPassword = oldPasswordStorage == null ? null : oldPasswordStorage.readPassword(oldRealm, oldUsername, oldValues);
+
+        if (newUsername != null) {
+            if (oldUsername == null) {
+                return true;
+            } else if (!newUsername.equals(oldUsername)) {
+                return true;
+            }
+        }
+
+        if (newPassword != null) {
+            if (oldPassword == null) {
+                return true;
+            } else if (!newPassword.equals(oldPassword)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void saveUserNameCredential(SVNProperties values, SVNAuthentication auth) {

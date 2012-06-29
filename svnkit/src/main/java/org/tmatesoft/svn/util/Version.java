@@ -33,12 +33,13 @@ public class Version {
     private static final String VERSION_REVISION_PROPERTY = "svnkit.version.revision";
     private static final String SVN_VERSION_PROPERTY = "svnkit.svn.version";  
     
-    private static final String VERSION_STRING_DEFAULT = "SVN/1.7.4 SVNKit/1.7.4 (http://svnkit.com/) rSNAPSHOT";
+    private static final String VERSION_STRING_DEFAULT = "SVN/1.7.6 SVNKit/1.7.6 (http://svnkit.com/) rSNAPSHOT";
+    
     private static final String VERSION_MAJOR_DEFAULT = "1";
     private static final String VERSION_MINOR_DEFAULT = "7";
-    private static final String VERSION_MICRO_DEFAULT = "4";
+    private static final String VERSION_MICRO_DEFAULT = "6";
     private static final String VERSION_REVISION_DEFAULT = "SNAPSHOT";
-    private static final String SVN_VERSION_DEFAULT = "1.7.4";
+    private static final String SVN_VERSION_DEFAULT = "1.7.6";
     private static String ourUserAgent;
 
     private static Properties ourProperties;
@@ -114,11 +115,29 @@ public class Version {
     @Deprecated    
     public static long getRevisionNumber() {
         loadProperties();
+        String revisionProperty = ourProperties.getProperty(VERSION_REVISION_PROPERTY, VERSION_REVISION_DEFAULT);
         try {
-            return Long.parseLong(ourProperties.getProperty(
-                    VERSION_REVISION_PROPERTY, VERSION_REVISION_DEFAULT));
+            return Long.parseLong(revisionProperty);
         } catch (NumberFormatException nfe) {
-            //
+            // try to fetch revision in other way.
+            if (revisionProperty.lastIndexOf('.') > 0) {
+                revisionProperty = revisionProperty.substring(revisionProperty.lastIndexOf('.') + 1);
+            }
+            if (revisionProperty.indexOf('r') >= 0) {
+                int start = revisionProperty.indexOf('r') + 1;
+                final StringBuffer revValue = new StringBuffer();
+                while(start < revisionProperty.length()) {
+                    char ch = revisionProperty.charAt(start);
+                    start++;
+                    if (!Character.isDigit(ch)) {
+                        break;
+                    }
+                    revValue.append(ch);
+                }
+                if (revValue.length() > 0) {
+                    return Long.parseLong(revValue.toString());
+                }
+            }
         }
         try {
             return Long.parseLong(VERSION_REVISION_DEFAULT);

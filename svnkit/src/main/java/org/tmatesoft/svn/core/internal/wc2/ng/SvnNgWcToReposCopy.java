@@ -167,6 +167,8 @@ public class SvnNgWcToReposCopy extends SvnNgOperationRunner<SVNCommitInfo, SvnR
         if (commitMessage == null) {
             return SVNCommitInfo.NULL;
         }
+        commitMessage = SVNCommitUtil.validateCommitMessage(commitMessage);
+
         revisionProperties = getOperation().getCommitHandler().getRevisionProperties(commitMessage, items, revisionProperties);
         if (revisionProperties == null) {
             return SVNCommitInfo.NULL;

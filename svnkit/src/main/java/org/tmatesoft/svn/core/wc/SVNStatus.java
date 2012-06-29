@@ -782,6 +782,13 @@ public class SVNStatus {
         return getNodeStatus();
     }
 
+    public SVNStatusType getCombinedRemoteNodeAndContentsStatus() {
+        if (getRemoteNodeStatus() == SVNStatusType.STATUS_MODIFIED) {
+            return getRemoteContentsStatus();
+        }
+        return getRemoteNodeStatus();
+    }
+
     public SVNStatusType getNodeStatus() {
         if (myNodeStatus == null) {
             return myContentsStatus;

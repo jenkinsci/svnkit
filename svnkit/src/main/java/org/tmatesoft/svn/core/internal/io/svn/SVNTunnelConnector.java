@@ -103,4 +103,8 @@ public class SVNTunnelConnector extends SVNAbstractTunnelConnector {
         }
         return tunnelSpec;
     }
+
+    public void handleExceptionOnOpen(SVNRepositoryImpl repository, SVNException exception) throws SVNException {
+        throw exception;
+    }
 }

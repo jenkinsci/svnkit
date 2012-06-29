@@ -81,7 +81,7 @@ public class SVNWCDbRoot {
 
         /* If this working copy is PRE-1.0, then simply bail out. */
         if (format < 4) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, "Working copy format of ''{0}'' is too old '{1}'", new Object[] {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, "Working copy format of ''{0}'' is too old ''{1}''", new Object[] {
                     absPath, format
             });
             SVNErrorManager.error(err, SVNLogType.WC);
@@ -89,7 +89,7 @@ public class SVNWCDbRoot {
 
         /* If this working copy is from a future version, then bail out. */
         if (format > ISVNWCDb.WC_FORMAT_17) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, "This client is too old to work with the working copy at\n" + "''{0}'' (format '{1}').", new Object[] {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, "This client is too old to work with the working copy at\n" + "''{0}'' (format ''{1}'').", new Object[] {
                     absPath, format
             });
             SVNErrorManager.error(err, SVNLogType.WC);
@@ -100,7 +100,7 @@ public class SVNWCDbRoot {
             if (autoUpgrade) {
                 //format = SvnNgUpgradeSDb.upgrade(absPath, sDb, format);
             } else {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, "Working copy format of ''{0}'' is too old '{1}'", new Object[] {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, "Working copy format of ''{0}'' is too old ''{1}''", new Object[] {
                         absPath, format
                 });
                 SVNErrorManager.error(err, SVNLogType.WC);

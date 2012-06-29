@@ -263,4 +263,8 @@ public class SVNSSHConnector implements ISVNConnector {
     public static void shutdown() {
         ourSessionPool.shutdown();
     }
+
+    public void handleExceptionOnOpen(SVNRepositoryImpl repository, SVNException exception) throws SVNException {
+        throw exception;
+    }
 }

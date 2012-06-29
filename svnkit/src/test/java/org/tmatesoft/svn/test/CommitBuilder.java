@@ -1,7 +1,7 @@
 package org.tmatesoft.svn.test;
 
 import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.auth.BasicAuthenticationManager;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -20,15 +20,19 @@ public class CommitBuilder {
     private final Map<String, byte[]> filesToChange;
     private final Map<String, SVNProperties> filesToProperties;
     private final Map<String, SVNProperties> directoriesToProperties;
+    private final Map<String, String> filesToCopyFromPath;
+    private final Map<String, Long> filesToCopyFromRevision;
     private final Map<String, String> directoriesToCopyFromPath;
     private final Map<String, Long> directoriesToCopyFromRevision;
     private final Set<String> directoriesToAdd;
     private final Set<String> entriesToDelete;
-    private BasicAuthenticationManager authenticationManager;
+    private ISVNAuthenticationManager authenticationManager;
 
     public CommitBuilder(SVNURL url) {
         this.filesToAdd = new HashMap<String, byte[]>();
         this.filesToChange = new HashMap<String, byte[]>();
+        this.filesToCopyFromPath = new HashMap<String, String>();
+        this.filesToCopyFromRevision = new HashMap<String, Long>();
         this.directoriesToCopyFromPath = new HashMap<String, String>();
         this.directoriesToCopyFromRevision = new HashMap<String, Long>();
         this.directoriesToAdd = new HashSet<String>();
@@ -90,10 +94,39 @@ public class CommitBuilder {
         return addDirectoryByCopying(path, copyFromPath, -1); //the latest revision is used in this case
     }
 
+    public void addFileByCopying(String path, String copyFromPath) {
+        addFileByCopying(path, copyFromPath, -1);
+    }
+
+    private void addFileByCopying(String path, String copyFromPath, long copyFromRevision) {
+        filesToCopyFromPath.put(path, copyFromPath);
+        filesToCopyFromRevision.put(path, copyFromRevision);
+    }
+
     public CommitBuilder addDirectoryByCopying(String path, String copyFromPath, long copyFromRevision) {
         directoriesToCopyFromPath.put(path, copyFromPath);
         directoriesToCopyFromRevision.put(path, copyFromRevision);
         return this;
+    }
+
+    public void replaceFileByCopying(String path, String copyFromPath) {
+        delete(path);
+        addFileByCopying(path, copyFromPath);
+    }
+
+    public void replaceDirectoryByCopying(String path, String copyFromPath) {
+        delete(path);
+        addDirectoryByCopying(path, copyFromPath);
+    }
+
+    public void replaceFileByCopying(String path, String copyFromPath, long copyFromRevision) {
+        delete(path);
+        addFileByCopying(path, copyFromPath, copyFromRevision);
+    }
+
+    public void replaceDirectoryByCopying(String path, String copyFromPath, long copyFromRevision) {
+        delete(path);
+        addDirectoryByCopying(path, copyFromPath, copyFromRevision);
     }
 
     public SVNCommitInfo commit() throws SVNException {
@@ -111,14 +144,14 @@ public class CommitBuilder {
             setDirProperties(commitEditor, directory);
             currentDirectory = directory;
 
+            addChildrensFiles(commitEditor, directory, latestRevision);
             deleteEntries(commitEditor, directory);
-            addChildrensFiles(commitEditor, directory);
         }
-
-        deleteEntries(commitEditor, "");
-        addChildrensFiles(commitEditor, "");
-
         closeUntilCommonAncestor(commitEditor, currentDirectory, "");
+        currentDirectory = "";
+
+        addChildrensFiles(commitEditor, "", latestRevision);
+        deleteEntries(commitEditor, "");
 
         commitEditor.closeDir();
         return commitEditor.closeEdit();
@@ -146,27 +179,26 @@ public class CommitBuilder {
         }
     }
 
-    private void deleteEntries(ISVNEditor commitEditor, String directory) throws SVNException {
-        for (String path : entriesToDelete) {
-            String parent = getParent(path);
-            if (parent == null) {
-                parent = "";
-            }
-            if (directory.equals(parent)) {
-                commitEditor.deleteEntry(path, -1);
-            }
-        }
-
-    }
-
-    private void addChildrensFiles(ISVNEditor commitEditor, String directory) throws SVNException {
+    private void addChildrensFiles(ISVNEditor commitEditor, String directory, long latestRevision) throws SVNException {
         for (String file : filesToAdd.keySet()) {
             String parent = getParent(file);
             if (parent == null) {
                 parent = "";
             }
             if (directory.equals(parent)) {
-                addFile(commitEditor, file, filesToAdd.get(file));
+                maybeDelete(commitEditor, file);
+                addFile(commitEditor, file, filesToAdd.get(file), latestRevision);
+            }
+        }
+
+        for (String file : filesToCopyFromPath.keySet()) {
+            String parent = getParent(file);
+            if (parent == null) {
+                parent = "";
+            }
+            if (directory.equals(parent)) {
+                maybeDelete(commitEditor, file);
+                addFileByCopying(commitEditor, file, filesToCopyFromPath.get(file), filesToCopyFromRevision.get(file), latestRevision);
             }
         }
 
@@ -193,7 +225,42 @@ public class CommitBuilder {
         }
     }
 
-    private void addFile(ISVNEditor commitEditor, String file, byte[] contents) throws SVNException {
+    private void deleteEntries(ISVNEditor commitEditor, String directory) throws SVNException {
+        for (String path : entriesToDelete) {
+            String parent = getParent(path);
+            if (parent == null) {
+                parent = "";
+            }
+            if (directory.equals(parent)) {
+                if (!filesToAdd.containsKey(path) && !filesToCopyFromPath.containsKey(path) && !directoriesToAdd.contains(path) && !directoriesToCopyFromPath.containsKey(path)) {
+                    commitEditor.deleteEntry(path, -1);
+                }
+            }
+        }
+
+    }
+
+    private void maybeDelete(ISVNEditor commitEditor, String file) throws SVNException {
+        for (Iterator<String> iterator = entriesToDelete.iterator(); iterator.hasNext(); ) {
+            String path = iterator.next();
+            if (file.equals(path)) {
+                commitEditor.deleteEntry(file, -1);
+                iterator.remove();
+                break;
+            }
+        }
+    }
+
+    private void addFileByCopying(ISVNEditor commitEditor, String file, String copySource, Long copyRevisionLong, long latestRevision) throws SVNException {
+        final long copyRevisionSpecified = copyRevisionLong == null ? -1 : copyRevisionLong;
+        final long copyRevision = copyRevisionSpecified == -1 ? latestRevision : copyRevisionSpecified;
+        commitEditor.addFile(file, copySource, copyRevision);
+        final byte[] originalContents = getOriginalContents(copySource);
+        final String checksum = TestUtil.md5(originalContents);
+        commitEditor.closeFile(file, checksum);
+    }
+
+    private void addFile(ISVNEditor commitEditor, String file, byte[] contents, long latestRevision) throws SVNException {
         final SVNDeltaGenerator deltaGenerator = new SVNDeltaGenerator();
 
         commitEditor.addFile(file, null, -1);
@@ -251,7 +318,20 @@ public class CommitBuilder {
     }
 
     private void openOrAddDir(ISVNEditor commitEditor, String directory, long latestRevision) throws SVNException {
-        if (existsDirectory(directory)) {
+        boolean exists = existsDirectory(directory);
+
+        //process replacement
+        for (Iterator<String> iterator = entriesToDelete.iterator(); iterator.hasNext(); ) {
+            final String path = iterator.next();
+            if (directory.equals(path)) {
+                commitEditor.deleteEntry(path, -1);
+                iterator.remove();
+                exists = false;
+                break;
+            }
+        }
+
+        if (exists) {
             if (!directoriesToAdd.contains(directory)) {
                 commitEditor.openDir(directory, -1);
             } else {
@@ -295,26 +375,23 @@ public class CommitBuilder {
             addDirectoryToVisit(directory, directoriesToVisit);
         }
         directoriesToVisit.addAll(directoriesToAdd);
-        for (String file : filesToAdd.keySet()) {
-            final String directory = getParent(file);
-            if (directory != null) {
-                addDirectoryToVisit(directory, directoriesToVisit);
-            }
-        }
-        for (String file : filesToChange.keySet()) {
-            final String directory = getParent(file);
-            if (directory != null) {
-                addDirectoryToVisit(directory, directoriesToVisit);
-            }
-        }
-        for (String file : filesToProperties.keySet()) {
-            final String directory = getParent(file);
-            if (directory != null) {
-                addDirectoryToVisit(directory, directoriesToVisit);
-            }
-        }
+
+        addFilesParents(directoriesToVisit, filesToAdd.keySet());
+        addFilesParents(directoriesToVisit, filesToChange.keySet());
+        addFilesParents(directoriesToVisit, filesToProperties.keySet());
+        addFilesParents(directoriesToVisit, filesToCopyFromPath.keySet());
+
         directoriesToVisit.addAll(directoriesToCopyFromPath.keySet());
         return directoriesToVisit;
+    }
+
+    private void addFilesParents(SortedSet<String> directoriesToVisit, Set<String> files) {
+        for (String file : files) {
+            final String directory = getParent(file);
+            if (directory != null) {
+                addDirectoryToVisit(directory, directoriesToVisit);
+            }
+        }
     }
 
     private void addDirectoryToVisit(String directory, SortedSet<String> directoriesToVisit) {
@@ -345,7 +422,7 @@ public class CommitBuilder {
         entriesToDelete.add(path);
     }
 
-    public void setAuthenticationManager(BasicAuthenticationManager authenticationManager) {
+    public void setAuthenticationManager(ISVNAuthenticationManager authenticationManager) {
         this.authenticationManager = authenticationManager;
     }
 }

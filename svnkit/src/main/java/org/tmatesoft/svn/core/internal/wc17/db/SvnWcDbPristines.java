@@ -1,11 +1,5 @@
 package org.tmatesoft.svn.core.internal.wc17.db;
 
-import java.io.File;
-import java.io.InputStream;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
@@ -28,6 +22,12 @@ import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.core.wc2.SvnChecksum;
 import org.tmatesoft.svn.util.SVNLogType;
 
+import java.io.File;
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnChecksum;
 
 public class SvnWcDbPristines extends SvnWcDbShared {
@@ -42,11 +42,15 @@ public class SvnWcDbPristines extends SvnWcDbShared {
 	        
 	        public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
 	        	SVNSqlJetStatement stmt = db.getStatement(SVNWCDbStatements.DELETE_PRISTINE_IF_UNREFERENCED);
-	        	stmt.bindf("s", sha1_checksum);
-	        	Long affectedRows = stmt.done();
-	        	if (affectedRows > 0) {
-	        		pristineRemoveFile(true);
-	        	}
+                try {
+                    stmt.bindf("s", sha1_checksum);
+                    Long affectedRows = stmt.done();
+                    if (affectedRows > 0) {
+                        pristineRemoveFile(true);
+                    }
+                } finally {
+                    stmt.reset();
+                }
 	        }
 	        
 	        /* Remove the file at FILE_ABSPATH in such a way that we could re-create a
@@ -198,17 +202,21 @@ public class SvnWcDbPristines extends SvnWcDbShared {
 	        pristineRemove(root, sha1Checksum);
 	    }
 
-	private static void pristineRemove(SVNWCDbRoot root, SvnChecksum sha1Checksum) throws SVNException {
-	        SVNSqlJetStatement stmt = root.getSDb().getStatement(SVNWCDbStatements.DELETE_PRISTINE);
-	        stmt.bindChecksum(1, sha1Checksum);
-	        
-	        if (stmt.done() != 0) {
-	            File pristineAbspath = getPristineFileName(root, sha1Checksum, true);
-	            SVNFileUtil.deleteFile(pristineAbspath);
-	        }
-	    }
-	
-	public static void installPristine(SVNWCDbRoot root, File tempfileAbspath, SvnChecksum sha1Checksum, SvnChecksum md5Checksum) throws SVNException {
+    private static void pristineRemove(SVNWCDbRoot root, SvnChecksum sha1Checksum) throws SVNException {
+        SVNSqlJetStatement stmt = root.getSDb().getStatement(SVNWCDbStatements.DELETE_PRISTINE);
+        try {
+            stmt.bindChecksum(1, sha1Checksum);
+
+            if (stmt.done() != 0) {
+                File pristineAbspath = getPristineFileName(root, sha1Checksum, true);
+                SVNFileUtil.deleteFile(pristineAbspath);
+            }
+        } finally {
+            stmt.reset();
+        }
+    }
+
+    public static void installPristine(SVNWCDbRoot root, File tempfileAbspath, SvnChecksum sha1Checksum, SvnChecksum md5Checksum) throws SVNException {
         File pristineAbspath = getPristineFileName(root, sha1Checksum, true);
         if (pristineAbspath.isFile()) {
             SVNFileUtil.deleteFile(tempfileAbspath);
@@ -217,10 +225,14 @@ public class SvnWcDbPristines extends SvnWcDbShared {
         SVNFileUtil.rename(tempfileAbspath, pristineAbspath);
         long size = pristineAbspath.length();
         SVNSqlJetStatement stmt = root.getSDb().getStatement(SVNWCDbStatements.INSERT_PRISTINE);
-        stmt.bindChecksum(1, sha1Checksum);
-        stmt.bindChecksum(2, md5Checksum);
-        stmt.bindLong(3, size);
-        stmt.done();
+        try {
+            stmt.bindChecksum(1, sha1Checksum);
+            stmt.bindChecksum(2, md5Checksum);
+            stmt.bindLong(3, size);
+            stmt.done();
+        } finally {
+            stmt.reset();
+        }
     }
 	
 	public static InputStream readPristine(SVNWCDbRoot root, File wcRootAbsPath, SvnChecksum sha1Checksum) throws SVNException {

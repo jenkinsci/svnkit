@@ -1,18 +1,5 @@
 package org.tmatesoft.svn.core.internal.wc17.db;
 
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnBoolean;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnInt64;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnKind;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnPath;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnText;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.isColumnNull;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.reset;
-
-import java.io.File;
-import java.util.Comparator;
-import java.util.Map;
-import java.util.TreeMap;
-
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
@@ -20,11 +7,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
-import org.tmatesoft.svn.core.internal.db.SVNSqlJetDeleteStatement;
-import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectStatement;
-import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
-import org.tmatesoft.svn.core.internal.db.SVNSqlJetTableStatement;
+import org.tmatesoft.svn.core.internal.db.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
@@ -42,86 +25,130 @@ import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.util.SVNLogType;
 
+import java.io.File;
+import java.util.Comparator;
+import java.util.Map;
+import java.util.TreeMap;
+
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.*;
+
 public class SvnWcDbRevert extends SvnWcDbShared {
     
     public static void revert(SVNWCDbRoot root, File localRelPath) throws SVNException {
         SVNSqlJetDb sdb = root.getSDb();
-        
+
         SvnRevertNodesTrigger nodesTableTrigger = new SvnRevertNodesTrigger(sdb);
         SvnRevertActualNodesTrigger actualNodesTableTrigger = new SvnRevertActualNodesTrigger(sdb);
-        
+
         SVNSqlJetStatement stmt = sdb.getStatement(SVNWCDbStatements.SELECT_NODE_INFO);
-        stmt.bindf("is", root.getWcId(), localRelPath);
-        if (!stmt.next()) {
-            reset(stmt);
-            
-            stmt = sdb.getStatement(SVNWCDbStatements.DELETE_ACTUAL_NODE);
-            ((SVNSqlJetTableStatement) stmt).addTrigger(actualNodesTableTrigger);
-            
+        long opDepth;
+        try {
             stmt.bindf("is", root.getWcId(), localRelPath);
-            long affectedRows = stmt.done();
-            if (affectedRows > 0) {
-                stmt = sdb.getStatement(SVNWCDbStatements.SELECT_ACTUAL_CHILDREN_INFO);
+            if (!stmt.next()) {
+                reset(stmt);
+
+                stmt = sdb.getStatement(SVNWCDbStatements.DELETE_ACTUAL_NODE);
+                long affectedRows;
                 try {
+                    ((SVNSqlJetTableStatement) stmt).addTrigger(actualNodesTableTrigger);
+
                     stmt.bindf("is", root.getWcId(), localRelPath);
-                    if (stmt.next()) {
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_OPERATION_DEPTH, "Can''t revert ''{0}'' without reverting children", root.getAbsPath(localRelPath));
-                        SVNErrorManager.error(err, SVNLogType.WC);
-                    }
+                    affectedRows = stmt.done();
                 } finally {
-                    reset(stmt);
+                    stmt.reset();
                 }
-                return;
+                if (affectedRows > 0) {
+                    stmt = sdb.getStatement(SVNWCDbStatements.SELECT_ACTUAL_CHILDREN_INFO);
+                    try {
+                        stmt.bindf("is", root.getWcId(), localRelPath);
+                        if (stmt.next()) {
+                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_OPERATION_DEPTH, "Can''t revert ''{0}'' without reverting children", root.getAbsPath(localRelPath));
+                            SVNErrorManager.error(err, SVNLogType.WC);
+                        }
+                    } finally {
+                        reset(stmt);
+                    }
+                    return;
+                }
+                nodeNotFound(root, localRelPath);
             }
-            nodeNotFound(root, localRelPath);
-        }
-        long opDepth = getColumnInt64(stmt, NODES__Fields.op_depth);
-        reset(stmt);
-        if (opDepth > 0 && opDepth == SVNWCUtils.relpathDepth(localRelPath)) {
-            
-            stmt = sdb.getStatement(SVNWCDbStatements.SELECT_GE_OP_DEPTH_CHILDREN);
-            stmt.bindf("isi", root.getWcId(), localRelPath, opDepth);
-            boolean haveRow = stmt.next();
+            opDepth = getColumnInt64(stmt, NODES__Fields.op_depth);
+        } finally {
             reset(stmt);
+        }
+        if (opDepth > 0 && opDepth == SVNWCUtils.relpathDepth(localRelPath)) {
+
+            boolean haveRow;
+            stmt = sdb.getStatement(SVNWCDbStatements.SELECT_GE_OP_DEPTH_CHILDREN);
+            try {
+                stmt.bindf("isi", root.getWcId(), localRelPath, opDepth);
+                haveRow = stmt.next();
+            } finally {
+                reset(stmt);
+            }
             if (haveRow) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_OPERATION_DEPTH, "Can''t revert ''{0}'' without reverting children", root.getAbsPath(localRelPath));
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
             stmt = sdb.getStatement(SVNWCDbStatements.SELECT_ACTUAL_CHILDREN_INFO);
-            stmt.bindf("is", root.getWcId(), localRelPath);
-            haveRow = stmt.next();
-            reset(stmt);
+            try {
+                stmt.bindf("is", root.getWcId(), localRelPath);
+                haveRow = stmt.next();
+            } finally {
+                reset(stmt);
+            }
             if (haveRow) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_OPERATION_DEPTH, "Can''t revert ''{0}'' without reverting children", root.getAbsPath(localRelPath));
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
 
             stmt = sdb.getStatement(SVNWCDbStatements.UPDATE_OP_DEPTH_INCREASE_RECURSIVE);
-            ((SVNSqlJetTableStatement) stmt).addTrigger(nodesTableTrigger);
+            try {
+                ((SVNSqlJetTableStatement) stmt).addTrigger(nodesTableTrigger);
 
-            stmt.bindf("isi", root.getWcId(), localRelPath, opDepth);
-            stmt.done();
-            
+                stmt.bindf("isi", root.getWcId(), localRelPath, opDepth);
+                stmt.done();
+            } finally {
+                stmt.reset();
+            }
+
             stmt = sdb.getStatement(SVNWCDbStatements.DELETE_WORKING_NODE);
-            ((SVNSqlJetTableStatement) stmt).addTrigger(nodesTableTrigger);
+            try {
+                ((SVNSqlJetTableStatement) stmt).addTrigger(nodesTableTrigger);
 
-            stmt.bindf("is", root.getWcId(), localRelPath);
-            stmt.done();
+                stmt.bindf("is", root.getWcId(), localRelPath);
+                stmt.done();
+            } finally {
+                stmt.reset();
+            }
             stmt = sdb.getStatement(SVNWCDbStatements.DELETE_WC_LOCK_ORPHAN);
-            stmt.bindf("is", root.getWcId(), localRelPath);
-            stmt.done();
+            try {
+                stmt.bindf("is", root.getWcId(), localRelPath);
+                stmt.done();
+            } finally {
+                stmt.reset();
+            }
         }
+        long affectedRows;
         stmt = sdb.getStatement(SVNWCDbStatements.DELETE_ACTUAL_NODE_LEAVING_CHANGELIST);
-        ((SVNSqlJetTableStatement) stmt).addTrigger(actualNodesTableTrigger);
-        stmt.bindf("is", root.getWcId(), localRelPath);
-        
-        long affectedRows = stmt.done();
+        try {
+            ((SVNSqlJetTableStatement) stmt).addTrigger(actualNodesTableTrigger);
+            stmt.bindf("is", root.getWcId(), localRelPath);
+
+            affectedRows = stmt.done();
+        } finally {
+            stmt.reset();
+        }
         if (affectedRows == 0) {
             stmt = sdb.getStatement(SVNWCDbStatements.CLEAR_ACTUAL_NODE_LEAVING_CHANGELIST);
-            ((SVNSqlJetTableStatement) stmt).addTrigger(actualNodesTableTrigger);
-            
-            stmt.bindf("is", root.getWcId(), localRelPath);
-            stmt.done();
+            try {
+                ((SVNSqlJetTableStatement) stmt).addTrigger(actualNodesTableTrigger);
+
+                stmt.bindf("is", root.getWcId(), localRelPath);
+                stmt.done();
+            } finally {
+                stmt.reset();
+            }
         }
     }
 
@@ -129,23 +156,32 @@ public class SvnWcDbRevert extends SvnWcDbShared {
         SVNSqlJetDb sdb = root.getSDb();
         SvnRevertNodesTrigger nodesTableTrigger = new SvnRevertNodesTrigger(sdb);
         SvnRevertActualNodesTrigger actualNodesTableTrigger = new SvnRevertActualNodesTrigger(sdb);
-        
-        SVNSqlJetStatement stmt = sdb.getStatement(SVNWCDbStatements.SELECT_NODE_INFO);
-        stmt.bindf("is", root.getWcId(), localRelPath);
-        if (!stmt.next()) {
-            reset(stmt);
-            stmt = sdb.getStatement(SVNWCDbStatements.DELETE_ACTUAL_NODE_RECURSIVE);
-            ((SVNSqlJetTableStatement) stmt).addTrigger(actualNodesTableTrigger);
 
+        SVNSqlJetStatement stmt = sdb.getStatement(SVNWCDbStatements.SELECT_NODE_INFO);
+        long opDepth;
+        try {
             stmt.bindf("is", root.getWcId(), localRelPath);
-            long affectedRows = stmt.done();
-            if (affectedRows > 0) {
-                return;
+            if (!stmt.next()) {
+                reset(stmt);
+                long affectedRows;
+                stmt = sdb.getStatement(SVNWCDbStatements.DELETE_ACTUAL_NODE_RECURSIVE);
+                try {
+                    ((SVNSqlJetTableStatement) stmt).addTrigger(actualNodesTableTrigger);
+
+                    stmt.bindf("is", root.getWcId(), localRelPath);
+                    affectedRows = stmt.done();
+                } finally {
+                    stmt.reset();
+                }
+                if (affectedRows > 0) {
+                    return;
+                }
+                nodeNotFound(root, localRelPath);
             }
-            nodeNotFound(root, localRelPath);
+            opDepth = getColumnInt64(stmt, NODES__Fields.op_depth);
+        } finally {
+            reset(stmt);
         }
-        long opDepth = getColumnInt64(stmt, NODES__Fields.op_depth);
-        reset(stmt);
         if (opDepth > 0 && opDepth != SVNWCUtils.relpathDepth(localRelPath)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_OPERATION_DEPTH, "Can''t revert ''{0}'' without reverting parent", root.getAbsPath(localRelPath));
             SVNErrorManager.error(err, SVNLogType.WC);
@@ -153,25 +189,41 @@ public class SvnWcDbRevert extends SvnWcDbShared {
         if (opDepth == 0) {
             opDepth = 1;
         }
-        
+
         stmt = sdb.getStatement(SVNWCDbStatements.DELETE_NODES_RECURSIVE);
-        ((SVNSqlJetTableStatement) stmt).addTrigger(nodesTableTrigger);
-        stmt.bindf("isi", root.getWcId(), localRelPath, opDepth);
-        stmt.done();
-        
+        try {
+            ((SVNSqlJetTableStatement) stmt).addTrigger(nodesTableTrigger);
+            stmt.bindf("isi", root.getWcId(), localRelPath, opDepth);
+            stmt.done();
+        } finally {
+            stmt.reset();
+        }
+
         stmt = sdb.getStatement(SVNWCDbStatements.DELETE_ACTUAL_NODE_LEAVING_CHANGELIST_RECURSIVE);
-        ((SVNSqlJetTableStatement) stmt).addTrigger(actualNodesTableTrigger);
-        stmt.bindf("is", root.getWcId(), localRelPath);
-        stmt.done();
-        
+        try {
+            ((SVNSqlJetTableStatement) stmt).addTrigger(actualNodesTableTrigger);
+            stmt.bindf("is", root.getWcId(), localRelPath);
+            stmt.done();
+        } finally {
+            stmt.reset();
+        }
+
         stmt = sdb.getStatement(SVNWCDbStatements.CLEAR_ACTUAL_NODE_LEAVING_CHANGELIST_RECURSIVE);
-        ((SVNSqlJetTableStatement) stmt).addTrigger(actualNodesTableTrigger);
-        stmt.bindf("is", root.getWcId(), localRelPath);
-        stmt.done();
-        
+        try {
+            ((SVNSqlJetTableStatement) stmt).addTrigger(actualNodesTableTrigger);
+            stmt.bindf("is", root.getWcId(), localRelPath);
+            stmt.done();
+        } finally {
+            stmt.reset();
+        }
+
         stmt = sdb.getStatement(SVNWCDbStatements.DELETE_WC_LOCK_ORPHAN_RECURSIVE);
-        stmt.bindf("is", root.getWcId(), localRelPath);
-        stmt.done();
+        try {
+            stmt.bindf("is", root.getWcId(), localRelPath);
+            stmt.done();
+        } finally {
+            stmt.reset();
+        }
     }
     
     public enum RevertInfo {
@@ -202,16 +254,17 @@ public class SvnWcDbRevert extends SvnWcDbShared {
         SVNWCDbRoot root = dirInfo.wcDbDir.getWCRoot();
 
         root.getSDb().getTemporaryDb().beginTransaction(SqlJetTransactionMode.READ_ONLY);
+        SVNSqlJetStatement stmt = null;
         try {
-            SVNSqlJetStatement stmt = root.getSDb().getTemporaryDb().getStatement(SVNWCDbStatements.SELECT_REVERT_LIST_COPIED_CHILDREN);
+            stmt = root.getSDb().getTemporaryDb().getStatement(SVNWCDbStatements.SELECT_REVERT_LIST_COPIED_CHILDREN);
             stmt.bindf("si", localRelpath, SVNWCUtils.relpathDepth(localRelpath));
             while(stmt.next()) {
                 String relpath = getColumnText(stmt, REVERT_LIST__Fields.local_relpath);
                 File childFile = SVNFileUtil.createFilePath(root.getAbsPath(), relpath);
                 result.put(childFile, getColumnKind(stmt, REVERT_LIST__Fields.kind));
             }
-            reset(stmt);
         } finally {
+            reset(stmt);
             root.getSDb().getTemporaryDb().commit();
         }
         
@@ -286,8 +339,12 @@ public class SvnWcDbRevert extends SvnWcDbShared {
             reset(stmt);
             if (haveRow) {
                 stmt = new SVNSqlJetDeleteStatement(root.getSDb().getTemporaryDb(), SVNWCDbSchema.REVERT_LIST);
-                stmt.bindf("s", localRelpath);
-                stmt.done();
+                try {
+                    stmt.bindf("s", localRelpath);
+                    stmt.done();
+                } finally {
+                    stmt.reset();
+                }
             }
         } catch (SVNException e) {
             root.getSDb().getTemporaryDb().rollback();
@@ -304,7 +361,11 @@ public class SvnWcDbRevert extends SvnWcDbShared {
         SVNWCDbRoot root = dirInfo.wcDbDir.getWCRoot();
         
         SVNSqlJetStatement stmt = new SVNWCDbCreateSchema(root.getSDb(), SVNWCDbCreateSchema.DROP_REVERT_LIST, -1);
-        stmt.done();
+        try {
+            stmt.done();
+        } finally {
+            stmt.reset();
+        }
     }
 
     public static void notifyRevert(SVNWCContext context, File localAbsPath, ISVNEventHandler eventHandler) throws SVNException {
@@ -364,7 +425,11 @@ public class SvnWcDbRevert extends SvnWcDbShared {
                 return rowPath.equals(selectPath) || rowPath.startsWith(selectPath + "/");
             }
         };
-        stmt.bindf("s", localRelpath);
-        stmt.done();
+        try {
+            stmt.bindf("s", localRelpath);
+            stmt.done();
+        } finally {
+            stmt.reset();
+        }
     }
 }

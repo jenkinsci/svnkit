@@ -258,7 +258,7 @@ public class CorruptionTest {
         }
     }
 
-    private void assertTranslatedSizeCacheIsReset(WorkingCopy workingCopy) throws SqlJetException {
+        private void assertTranslatedSizeCacheIsReset(WorkingCopy workingCopy) throws SqlJetException {
         final SqlJetDb db = SqlJetDb.open(workingCopy.getWCDbFile(), false);
         try {
             final ISqlJetTable table = db.getTable(SVNWCDbSchema.NODES.name());

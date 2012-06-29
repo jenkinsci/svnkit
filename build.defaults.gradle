@@ -1,4 +1,4 @@
-setPropertyDefaultValue('buildPluginRepositoryURL', 'http://maven.tmatesoft.com/content/repositories/releases/')
+project.ext.setProperty('buildPluginRepositoryURL', 'http://maven.tmatesoft.com/content/repositories/releases/')
 
 if (!project.hasProperty('mavenProxyRepository.url')) {
     setPropertyDefaultValue('mavenTMateSoftSnapshotsRepository.url', 'http://maven.tmatesoft.com/content/repositories/snapshots/')
@@ -9,6 +9,6 @@ if (!project.hasProperty('mavenProxyRepository.url')) {
 
 def setPropertyDefaultValue(String name, String value) {
     if (!project.hasProperty(name)) {
-         project.setProperty(name, value)
+         project.ext.setProperty(name, value)
     }
 }

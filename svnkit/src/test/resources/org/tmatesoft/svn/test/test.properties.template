@@ -7,3 +7,4 @@ svn.command=svn
 # apachectl.command=/usr/sbin/apache2ctl
 # apache.root=/usr/lib/apache2
 # htpasswd.command=/usr/bin/htpasswd
+svnserve.command=svnserve

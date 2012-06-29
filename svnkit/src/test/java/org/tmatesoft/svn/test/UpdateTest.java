@@ -1,12 +1,12 @@
 package org.tmatesoft.svn.test;
 
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
+import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc2.*;
 
 import java.io.File;
@@ -15,7 +15,6 @@ import java.util.List;
 
 public class UpdateTest {
 
-    @Ignore("Currently fails, see SVNKIT-243")
     @Test
     public void testUpdateWithoutChangesReportsUnlock() throws Exception {
         final TestOptions options = TestOptions.getInstance();
@@ -57,12 +56,14 @@ public class UpdateTest {
             final SVNEvent updateCompletedEvent = events.get(2);
 
             Assert.assertEquals(SVNEventAction.UPDATE_STARTED, updateStartedEvent.getAction());
-            Assert.assertEquals(SVNEventAction.UNLOCKED, unlockedEvent.getAction());
+            Assert.assertEquals(SVNEventAction.UPDATE_UPDATE, unlockedEvent.getAction());
             Assert.assertEquals(SVNEventAction.UPDATE_COMPLETED, updateCompletedEvent.getAction());
 
             Assert.assertEquals(workingCopyDirectory, updateStartedEvent.getFile());
             Assert.assertEquals(file, unlockedEvent.getFile());
             Assert.assertEquals(workingCopyDirectory, updateCompletedEvent.getFile());
+
+            Assert.assertEquals(SVNStatusType.LOCK_UNLOCKED, unlockedEvent.getLockStatus());
 
         } finally {
             svnOperationFactory.dispose();
@@ -118,6 +119,41 @@ public class UpdateTest {
                     Assert.assertEquals(SVNErrorCode.WC_OBSTRUCTED_UPDATE, e.getErrorMessage().getErrorCode());
                 }
             }
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testCorrectDepthIsReportedForDepthImmediates() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testCorrectDepthIsReportedForDepthImmediates", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("directory/file");
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url);
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+            final File file = workingCopy.getFile("directory/file");
+            TestUtil.writeFileContentsString(file, "changed contents");
+
+            final SvnCommit commit = svnOperationFactory.createCommit();
+            commit.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            commit.run();
+
+            final SvnUpdate update = svnOperationFactory.createUpdate();
+            update.setDepth(SVNDepth.IMMEDIATES);
+            update.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            final long[] revision = update.run();
+
+            Assert.assertEquals(2, revision[0]);
 
         } finally {
             svnOperationFactory.dispose();

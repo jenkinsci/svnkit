@@ -1,17 +1,28 @@
 group = 'org.tmatesoft.svnkit'
-version = '1.7.5'
-release = false
-target = '1.5'
-compatibleSvnVersion = '1.7.4'
+version = '1.7.6'
+
+project.ext {
+   release = false
+   target = '1.5'
+   compatibleSvnVersion = '1.7.6'
+}
+
+apply from: 'build.pom.gradle'
 
 buildscript {
     apply from: 'build.defaults.gradle'
-    repositories {
-        mavenRepo(urls: [buildPluginRepositoryURL]) {
-            snapshotTimeout = org.gradle.api.internal.artifacts.ivyservice.GradleIBiblioResolver.ALWAYS
+    configurations.all {
+        resolutionStrategy {
+            cacheChangingModulesFor 0, 'seconds'
+            cacheDynamicVersionsFor 0, 'seconds'
         }
     }
-    dependencies { classpath 'org.tmatesoft.build:build:0.9.8' }
+    repositories {
+        maven {
+           url project.ext.buildPluginRepositoryURL
+        }
+    }
+    dependencies { classpath 'org.tmatesoft.build:build:0.9.9' }
 }
 
 task wrapper(type: Wrapper) {}
@@ -44,6 +55,7 @@ configure(javaProjects() + rootProject) {
 
 configure(javaProjects()) {
     apply plugin : 'java'
+    apply plugin : 'signing'
 
     sourceCompatibility = target
     targetCompatibility = target
@@ -59,6 +71,12 @@ configure(javaProjects()) {
         classifier = 'sources'
     }
 
+    task javadocJar(type: Jar, dependsOn: javadoc) {
+        description="Builds Javadoc Jar"
+        from "$docsDir/javadoc"
+        classifier = 'javadoc'
+    }
+
     jar {
         metaInf {
             from rootProject.file('LICENSE.txt')
@@ -70,31 +88,31 @@ configure(javaProjects()) {
 
 project(':svnkit') {
     dependencies {
-        compile 'de.regnis.q.sequence:sequence-library:1.0.1'
-        compile 'org.tmatesoft.sqljet:sqljet:1.1.0'
+        compile 'de.regnis.q.sequence:sequence-library:1.0.2'
+        compile 'org.tmatesoft.sqljet:sqljet:1.1.3'
         compile 'net.java.dev.jna:jna:3.4.0'
-        compile 'com.trilead:trilead-ssh2:1.0.0-build214'
+        compile 'com.trilead:trilead-ssh2:1.0.0-build215'
 
         testCompile 'junit:junit:4.8'
     }
-    artifacts { maven jar, sourcesJar }
+    artifacts { maven jar, sourcesJar, javadocJar }
 }
 
 project(':svnkit-javahl16') {
     dependencies {
         compile project(path: ':svnkit')
-        compile 'org.apache.subversion:svn-javahl-api:1.7.4'
+        compile 'org.apache.subversion:svn-javahl-api:1.7.5'
 
-        testCompile 'org.apache.subversion:svn-javahl-tests:1.7.4'
+        testCompile 'org.apache.subversion:svn-javahl-tests:1.7.5'
     }
-    artifacts { maven jar, sourcesJar }
+    artifacts { maven jar, sourcesJar, javadocJar }
 }
 
 project(':svnkit-cli') {
     dependencies {
         compile project(path: ':svnkit')
     }
-    artifacts { maven jar, sourcesJar }
+    artifacts { maven jar, sourcesJar, javadocJar }
 }
 
 project(':svnkit-dav') {
@@ -139,8 +157,8 @@ project(':svnkit-distribution') {
         scripts project(path: ':svnkit-cli', configuration: 'scripts')
 
         osgi project(path: ':svnkit-osgi', configuration: 'archives')
-        osgi 'com.trilead:trilead-ssh2-osgi:1.0.0-build214'
-        osgi 'org.tmatesoft.sqljet:sqljet-osgi:1.1.0-1'
+        osgi 'com.trilead:trilead-ssh2-osgi:1.0.0-build215'
+        osgi 'org.tmatesoft.sqljet:sqljet-osgi:1.1.3'
         osgi 'net.java.dev.jna:jna-osgi:3.4.0'
     }
 }
