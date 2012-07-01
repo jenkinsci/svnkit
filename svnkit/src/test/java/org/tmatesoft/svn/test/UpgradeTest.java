@@ -116,6 +116,47 @@ public class UpgradeTest {
         }
     }
 
+    @Test
+    public void testUpgradeWorkingCopyWithReplacedDirectoryInside() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        Assume.assumeTrue(TestUtil.isNewWorkingCopyTest());
+        Assume.assumeTrue(!TestUtil.isNewWorkingCopyOnly());
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testUpgradeWorkingCopyWithReplacedDirectoryInside", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("directory/file");
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, SVNRevision.HEAD.getNumber(), true, SvnWcGeneration.V16);
+            final File directory = workingCopy.getFile("directory");
+
+            SVNFileUtil.deleteAll(directory, true);
+
+            final SvnScheduleForRemoval scheduleForRemoval = svnOperationFactory.createScheduleForRemoval();
+            scheduleForRemoval.setSingleTarget(SvnTarget.fromFile(directory));
+            scheduleForRemoval.run();
+
+            SVNFileUtil.ensureDirectoryExists(directory);
+
+            final SvnScheduleForAddition scheduleForAddition = svnOperationFactory.createScheduleForAddition();
+            scheduleForAddition.setSingleTarget(SvnTarget.fromFile(directory));
+            scheduleForAddition.run();
+
+            final SvnUpgrade upgrade = svnOperationFactory.createUpgrade();
+            upgrade.setSingleTarget(SvnTarget.fromFile(workingCopy.getWorkingCopyDirectory()));
+            upgrade.run();
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
     private void checkout(SvnOperationFactory svnOperationFactory, SVNURL url, File wcngDirectory, SvnWcGeneration primaryWcGeneration) throws SVNException {
         svnOperationFactory.setPrimaryWcGeneration(primaryWcGeneration);
 
