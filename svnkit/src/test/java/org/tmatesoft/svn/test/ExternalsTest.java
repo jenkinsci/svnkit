@@ -3,10 +3,6 @@ package org.tmatesoft.svn.test;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tmatesoft.sqljet.core.SqlJetException;
-import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
-import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
-import org.tmatesoft.sqljet.core.table.ISqlJetTable;
-import org.tmatesoft.sqljet.core.table.SqlJetDb;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
@@ -109,7 +105,7 @@ public class ExternalsTest {
 
             final WorkingCopy workingCopy = new WorkingCopy(options, workingCopyDirectory);
             try {
-                Assert.assertEquals(1, getTableSize(workingCopy, SVNWCDbSchema.ACTUAL_NODE.name()));
+                Assert.assertEquals(1, TestUtil.getTableSize(workingCopy, SVNWCDbSchema.ACTUAL_NODE.name()));
             } finally {
                 workingCopy.dispose();
             }
@@ -121,28 +117,7 @@ public class ExternalsTest {
     }
 
     private void assertTableIsEmpty(WorkingCopy workingCopy, String tableName) throws SqlJetException {
-        Assert.assertEquals(0, getTableSize(workingCopy, tableName));
-    }
-
-    private int getTableSize(WorkingCopy workingCopy, String tableName) throws SqlJetException {
-        final SqlJetDb db = SqlJetDb.open(workingCopy.getWCDbFile(), false);
-        try {
-            final ISqlJetTable table = db.getTable(tableName);
-            db.beginTransaction(SqlJetTransactionMode.READ_ONLY);
-            final ISqlJetCursor cursor = table.open();
-
-            int count = 0;
-
-            for (; !cursor.eof(); cursor.next()) {
-                count++;
-            }
-            cursor.close();
-            db.commit();
-
-            return count;
-        } finally {
-            db.close();
-        }
+        Assert.assertEquals(0, TestUtil.getTableSize(workingCopy, tableName));
     }
 
     private String getTestName() {
