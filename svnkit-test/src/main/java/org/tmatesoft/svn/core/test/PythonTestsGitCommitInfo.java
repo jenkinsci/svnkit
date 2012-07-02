@@ -106,6 +106,7 @@ public class PythonTestsGitCommitInfo {
         commitMessage = commitMessage.replace("--ignore-uuid", "");
         commitMessage = commitMessage.replace("--bdb-txn-nosync", "");
         commitMessage = commitMessage.replace("--copy-info", "");
+        commitMessage = commitMessage.replace("--force-uuid", "");
 
         try {
         final SVNCommandLine commandLine = new SVNCommandLine();
