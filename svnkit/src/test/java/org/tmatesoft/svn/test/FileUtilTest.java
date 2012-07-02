@@ -26,7 +26,7 @@ public class FileUtilTest {
             final long currentTime = System.currentTimeMillis();
 
             Assert.assertEquals("target".getBytes().length, SVNFileUtil.getFileLength(link));
-            Assert.assertTrue(Math.abs(SVNFileUtil.getFileLastModified(link) * 1000 - currentTime) < 100000);
+            Assert.assertTrue(Math.abs(SVNFileUtil.getFileLastModified(link) - currentTime) < 100000);
 
         } finally {
             svnOperationFactory.dispose();

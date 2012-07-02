@@ -206,7 +206,7 @@ public class SVNLinuxUtil {
                     return null;
                 }
 
-                return ourSharedMemory.getLong(getFileLastModifiedOffset());
+                return ourSharedMemory.getLong(getFileLastModifiedOffset()) * 1000;
             }
         } catch (Throwable th) {
             //
