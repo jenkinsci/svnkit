@@ -47,7 +47,7 @@ public class TestResult {
         return null;
     }
     
-    private TestResult(String test, String id, boolean pass) {
+    public TestResult(String test, String id, boolean pass) {
         myName = test;
         myID = Integer.parseInt(id);
         myIsPass = pass;

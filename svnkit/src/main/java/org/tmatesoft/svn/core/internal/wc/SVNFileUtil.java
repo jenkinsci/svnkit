@@ -2208,7 +2208,7 @@ public class SVNFileUtil {
                     });
                     if (output != null) {
                         try {
-                            return Long.parseLong(output);
+                            return Long.parseLong(output) * 1000;
                         } catch (NumberFormatException e) {
                         }
                     }

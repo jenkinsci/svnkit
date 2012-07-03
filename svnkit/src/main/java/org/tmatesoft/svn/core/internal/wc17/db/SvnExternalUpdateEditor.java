@@ -208,7 +208,8 @@ public class SvnExternalUpdateEditor implements ISVNUpdateEditor {
         SVNSkel allWorkItems = null;
         if (!added) {
             newChecksum = originalChecksum;
-            actualProperties = context.getDb().getBaseProps(localAbsPath);
+            baseProperties = context.getDb().getBaseProps(localAbsPath);
+            actualProperties = context.getDb().readProperties(localAbsPath);
         }
         if (actualProperties == null) {
             actualProperties = new SVNProperties();

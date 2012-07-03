@@ -12,12 +12,10 @@ import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
+import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnChecksum;
-import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
-import org.tmatesoft.svn.core.wc2.SvnUpdate;
+import org.tmatesoft.svn.core.wc2.*;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -104,6 +102,66 @@ public class CorruptionTest {
     }
 
     @Test
+    public void testPropdelOfSvnEolStyleResetsTranslatedSizeCache() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testPropdelOfSvnEolStyleResetsTranslatedSizeCache", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("file");
+            commitBuilder.setFileProperty("file", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_NATIVE));
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url);
+            final File file = workingCopy.getFile("file");
+
+            final SvnSetProperty setProperty = svnOperationFactory.createSetProperty();
+            setProperty.setSingleTarget(SvnTarget.fromFile(file));
+            setProperty.setPropertyName(SVNProperty.EOL_STYLE);
+            setProperty.setPropertyValue(null);
+            setProperty.run();
+
+            assertTranslatedSizeCacheIsReset(workingCopy);
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testSymlinkHasCorrectTranslatedSize() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        Assume.assumeTrue(TestUtil.isNewWorkingCopyTest());
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testSymlinkHasCorrectTranslatedSize", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url);
+            final File link = workingCopy.getFile("directory/link");
+            SVNFileUtil.ensureDirectoryExists(link.getParentFile());
+            SVNFileUtil.createSymlink(link, "target");
+            workingCopy.add(link);
+            workingCopy.commit("Added a link");
+
+            assertTranslatedSizeMaybeEquals(workingCopy, "directory/link", "target".getBytes().length);
+
+            workingCopy.copy("directory", "copiedDirectory");
+            assertTranslatedSizeMaybeEquals(workingCopy, "copiedDirectory/link", "target".getBytes().length);
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
     public void testActualNodeConflictWorkingHasNullValueForBinaryConflict() throws Exception {
         final TestOptions options = TestOptions.getInstance();
 
@@ -140,30 +198,26 @@ public class CorruptionTest {
         }
     }
 
-    @Test
-    public void testSymlinkHasCorrectTranslatedSize() throws Exception {
-        final TestOptions options = TestOptions.getInstance();
-
-        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
-        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testSymlinkHasCorrectTranslatedSize", options);
+    private void assertActualNodeHasNullConflictWorking(WorkingCopy workingCopy, String path) throws SqlJetException {
+        final SqlJetDb db = SqlJetDb.open(workingCopy.getWCDbFile(), false);
         try {
-            final SVNURL url = sandbox.createSvnRepository();
+            final ISqlJetTable table = db.getTable(SVNWCDbSchema.ACTUAL_NODE.name());
+            db.beginTransaction(SqlJetTransactionMode.READ_ONLY);
+            final ISqlJetCursor cursor = table.open();
 
-            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url);
-            final File link = workingCopy.getFile("directory/link");
-            SVNFileUtil.ensureDirectoryExists(link.getParentFile());
-            SVNFileUtil.createSymlink(link, "target");
-            workingCopy.add(link);
-            workingCopy.commit("Added a link");
+            for (; !cursor.eof(); cursor.next()) {
+                String cursorPath = cursor.getString(SVNWCDbSchema.NODES__Fields.local_relpath.name());
+                if (!path.equals(cursorPath)) {
+                    continue;
+                }
 
-            assertTranslatedSizeMaybeEquals(workingCopy, "directory/link", "target".getBytes().length);
-
-            workingCopy.copy("directory", "copiedDirectory");
-            assertTranslatedSizeMaybeEquals(workingCopy, "copiedDirectory/link", "target".getBytes().length);
-
+                final String conflictWorking = cursor.getString(SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_working.name());
+                Assert.assertNull(conflictWorking);
+            }
+            cursor.close();
+            db.commit();
         } finally {
-            svnOperationFactory.dispose();
-            sandbox.dispose();
+            db.close();
         }
     }
 
@@ -194,21 +248,20 @@ public class CorruptionTest {
         }
     }
 
-    private void assertActualNodeHasNullConflictWorking(WorkingCopy workingCopy, String path) throws SqlJetException {
+    private void assertTranslatedSizeCacheIsReset(WorkingCopy workingCopy) throws SqlJetException {
         final SqlJetDb db = SqlJetDb.open(workingCopy.getWCDbFile(), false);
         try {
-            final ISqlJetTable table = db.getTable(SVNWCDbSchema.ACTUAL_NODE.name());
+            final ISqlJetTable table = db.getTable(SVNWCDbSchema.NODES.name());
             db.beginTransaction(SqlJetTransactionMode.READ_ONLY);
             final ISqlJetCursor cursor = table.open();
 
             for (; !cursor.eof(); cursor.next()) {
-                String cursorPath = cursor.getString(SVNWCDbSchema.NODES__Fields.local_relpath.name());
-                if (!path.equals(cursorPath)) {
+                final ISVNWCDb.SVNWCDbKind kind = SvnWcDbStatementUtil.parseKind(cursor.getString(SVNWCDbSchema.NODES__Fields.kind.name()));
+                if (kind != ISVNWCDb.SVNWCDbKind.File) {
                     continue;
                 }
-
-                final String conflictWorking = cursor.getString(SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_working.name());
-                Assert.assertNull(conflictWorking);
+                final long translatedSize = cursor.getInteger(SVNWCDbSchema.NODES__Fields.translated_size.name());
+                Assert.assertEquals(-1, translatedSize);
             }
             cursor.close();
             db.commit();

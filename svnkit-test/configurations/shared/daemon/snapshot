@@ -8,7 +8,7 @@ cat commit_msg >> commits_log
 
 git init
 git add -A
-git commit -F commit_msg
+git commit -F commit_msg --allow-empty
 
 tag=`wc -l < commits_log`
 git tag -a "$tag" -m "$tag"

@@ -12,35 +12,39 @@
 
 package org.tmatesoft.svn.core.test;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.PrintStream;
-import java.io.StringReader;
+import com.martiansoftware.nailgun.NGServer;
+import org.tmatesoft.sqljet.core.SqlJetException;
+import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
+import org.tmatesoft.sqljet.core.internal.memory.SqlJetMemoryPointer;
+import org.tmatesoft.sqljet.core.schema.ISqlJetColumnDef;
+import org.tmatesoft.sqljet.core.schema.ISqlJetSchema;
+import org.tmatesoft.sqljet.core.schema.ISqlJetTableDef;
+import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
+import org.tmatesoft.sqljet.core.table.ISqlJetTable;
+import org.tmatesoft.sqljet.core.table.SqlJetDb;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
+import org.tmatesoft.svn.core.internal.util.DefaultSVNDebugFormatter;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
+import org.tmatesoft.svn.util.SVNLogType;
+
+import java.io.*;
 import java.net.ServerSocket;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Properties;
-import java.util.StringTokenizer;
+import java.util.*;
 import java.util.logging.FileHandler;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
-
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.util.DefaultSVNDebugFormatter;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-
-import com.martiansoftware.nailgun.NGServer;
 
 /**
  * @version 1.3
@@ -48,13 +52,38 @@ import com.martiansoftware.nailgun.NGServer;
  */
 public class PythonTests {
 
-	private static File ourPropertiesFile;
+    public static final int DEFAULT_DAEMON_PORT_NUMBER = 1729;
+
+    private static File ourPropertiesFile;
+
     private static Process ourSVNServer;
-    
     private static AbstractTestLogger[] ourLoggers;
     private static NGServer ourDaemon;
     private static Properties ourProperties;
     private static String ourTestType;
+    private static int daemonPortNumber = -1;
+    private static String currentTestCase = null;
+    private static int currentTestNumber = -1;
+    private static String currentTestErrorMessage = null;
+
+    /**
+     * true if tests are run in regular modes;
+     * in wc.db checking mode tests are run twice: for JSVN and SVN; logging is disabled for this case and only wc.db mismatches are logged
+     */
+    private static boolean regularLoggingEnabled = true;
+
+    private static Set<String> commandsNotToCheckWorkingCopyAfter;
+    static {
+        commandsNotToCheckWorkingCopyAfter = new HashSet<String>();
+        commandsNotToCheckWorkingCopyAfter.add("status");
+        commandsNotToCheckWorkingCopyAfter.add("st");
+        commandsNotToCheckWorkingCopyAfter.add("info");
+        commandsNotToCheckWorkingCopyAfter.add("checkout");
+        commandsNotToCheckWorkingCopyAfter.add("co");
+        commandsNotToCheckWorkingCopyAfter.add("propget");
+        commandsNotToCheckWorkingCopyAfter.add("pg");
+        commandsNotToCheckWorkingCopyAfter.add("proplist");
+    }
 
     public static void main(String[] args) {
 		String fileName = args[0];
@@ -88,7 +117,7 @@ public class PythonTests {
                 System.exit(1);
             }
         }
-        
+
         if (Boolean.TRUE.toString().equals(properties.getProperty("daemon"))) {
             try {
                 libPath = startCommandDaemon(properties);
@@ -98,12 +127,476 @@ public class PythonTests {
             }
         }
 
+        boolean wcdbCheckMode = Boolean.TRUE.toString().equals(properties.getProperty("python.check.wc.db"));
+        regularLoggingEnabled = !wcdbCheckMode;
+
         String pythonTestsRoot = properties.getProperty("python.tests", "python/cmdline");
 		properties.setProperty("repository.root", new File(pythonTestsRoot).getAbsolutePath());
         String absTestsRootLocation = new File(pythonTestsRoot).getAbsolutePath().replace(File.separatorChar, '/');
         if(!absTestsRootLocation.startsWith("/")){
             absTestsRootLocation = "/" + absTestsRootLocation; 
         }
+
+        try {
+            final File currentDirectory = new File("").getAbsoluteFile();
+
+            final File gitRepositoryDirectory = new File("svn-python-tests/svn-test-work");
+            final GitRepositoryAccess gitRepositoryAccess = new GitRepositoryAccess(gitRepositoryDirectory, "git");
+
+            gitRepositoryAccess.deleteDotGitDirectory();
+
+            if (wcdbCheckMode) {
+                System.out.println("Running all tests with JSVN, then with SVN, please wait (there will be no output for a long time)...");
+            }
+
+            runPythonTestsForAllProtocols(libPath, properties, defaultTestSuite, logger, absTestsRootLocation);
+
+            if (wcdbCheckMode) {
+                assert gitRepositoryAccess.getDotGitDirectory().isDirectory();
+
+                changeCurrentDirectory(currentDirectory);
+
+                final File workingCopiesDirectory = new File(gitRepositoryDirectory, "working_copies");
+
+                final GitObjectId headIdAfterJSVN = gitRepositoryAccess.getHeadId();
+//                System.out.println("headIdAfterJSVN = " + headIdAfterJSVN);
+                final List<GitObjectId> commitsAfterJSVN = gitRepositoryAccess.getCommitsByFirstParent(headIdAfterJSVN);
+
+                final String patternMatchingNoCommand = "^$";
+                properties.put("python.tests.pattern", patternMatchingNoCommand);
+
+                try {
+                    generateScripts(properties);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    return;
+                }
+
+                runPythonTestsForAllProtocols(libPath, properties, defaultTestSuite, logger, absTestsRootLocation);
+                final GitObjectId headIdAfterSVN = gitRepositoryAccess.getHeadId();
+//                System.out.println("headIdAfterSVN = " + headIdAfterSVN);
+                final List<GitObjectId> commitsAfterSVN = gitRepositoryAccess.getCommitsByFirstParentUntil(headIdAfterSVN, headIdAfterJSVN);
+
+                Collections.reverse(commitsAfterJSVN);
+                Collections.reverse(commitsAfterSVN);
+
+                checkWorkingCopiesByGitSnapshots(gitRepositoryAccess, workingCopiesDirectory, commitsAfterJSVN, commitsAfterSVN);
+
+                maybeEndTest();
+                maybeEndTestCase();
+            }
+        } catch (SVNException e) {
+            e.printStackTrace();
+        }
+
+        for (int i = 0; i < ourLoggers.length; i++) {
+            ourLoggers[i].endTests(properties);
+        }
+        if (ourDaemon != null) {
+            ourDaemon.shutdown(false);
+        }
+	}
+
+    private static List<PythonTestsGitCommitInfo> loadCommitsInfo(GitRepositoryAccess gitRepositoryAccess, List<GitObjectId> commits) throws SVNException {
+        ArrayList<PythonTestsGitCommitInfo> commitInfo = new ArrayList<PythonTestsGitCommitInfo>(commits.size());
+        for (GitObjectId commit : commits) {
+            commitInfo.add(PythonTestsGitCommitInfo.loadFromCommit(gitRepositoryAccess, commit));
+        }
+        return commitInfo;
+    }
+
+    private static void checkWorkingCopiesByGitSnapshots(GitRepositoryAccess gitRepositoryAccess, File workingCopiesDirectory, List<GitObjectId> commitsAfterJSVN, List<GitObjectId> commitsAfterSVN) throws SVNException {
+        final List<PythonTestsGitCommitInfo> commitsInfoAfterJSVN = loadCommitsInfo(gitRepositoryAccess, commitsAfterJSVN);
+        final List<PythonTestsGitCommitInfo> commitsInfoAfterSVN = loadCommitsInfo(gitRepositoryAccess, commitsAfterSVN);
+
+        checkWorkingCopiesByGitSnapshots(workingCopiesDirectory, gitRepositoryAccess, commitsInfoAfterJSVN, commitsInfoAfterSVN);
+    }
+
+    private static void checkWorkingCopiesByGitSnapshots(File workingCopiesDirectory, GitRepositoryAccess gitRepositoryAccess, List<PythonTestsGitCommitInfo> commitsInfoAfterJSVN, List<PythonTestsGitCommitInfo> commitsInfoAfterSVN) throws SVNException {
+        int j = 0;
+        for (int i = 0; i < commitsInfoAfterJSVN.size(); i++) {
+            final PythonTestsGitCommitInfo commitInfoAfterJSVN = commitsInfoAfterJSVN.get(i);
+
+            int jOriginal = j;
+            boolean found = false;
+            while (j < commitsInfoAfterSVN.size()){
+                found = commitsInfoAfterSVN.get(j).getCanonicalizedCommitMessage().equals(commitInfoAfterJSVN.getCanonicalizedCommitMessage());
+                if (found) {
+                    break;
+                }
+                j++;
+            }
+
+            if (found) {
+                final PythonTestsGitCommitInfo commitInfoAfterSVN = commitsInfoAfterSVN.get(j);
+                processMatchedGitCommits(workingCopiesDirectory, gitRepositoryAccess, commitInfoAfterJSVN, commitInfoAfterSVN);
+                j++;
+            } else {
+                j = jOriginal + 1;
+//                System.out.println("Can't find pair for commit " + commitInfoAfterJSVN.getCommitId());
+            }
+        }
+    }
+
+    private static void processMatchedGitCommits(File workingCopiesDirectory, GitRepositoryAccess gitRepositoryAccess, PythonTestsGitCommitInfo commitInfoAfterJSVN, PythonTestsGitCommitInfo commitInfoAfterSVN) throws SVNException {
+        boolean canDetermineWorkingCopy = commitInfoAfterJSVN.getWorkingCopyName() != null;
+        if (!canDetermineWorkingCopy) {
+//            System.out.println("jsvn commit=" + commitInfoAfterJSVN.getCommitId() + "; svn commit=" + commitInfoAfterSVN.getCommitId() + "; can't detect working copy");
+        }
+
+        final boolean checkWorkingCopy = canDetermineWorkingCopy && !commandsNotToCheckWorkingCopyAfter.contains(commitInfoAfterJSVN.getSubcommand());
+        if (!checkWorkingCopy) {
+//            System.out.println("jsvn commit=" + commitInfoAfterJSVN.getCommitId() + "; svn commit=" + commitInfoAfterSVN.getCommitId() + "; working copy shouldn't be checked");
+            return;
+        }
+//        System.out.println(commitInfoAfterJSVN.getCommitMessage());
+//        System.out.println("command = " + commitInfoAfterJSVN.getCommand());
+//        System.out.println("subcommand = " + commitInfoAfterJSVN.getSubcommand());
+//        System.out.println("testcase = " + commitInfoAfterJSVN.getTestCase());
+//        System.out.println("testnumber = " + commitInfoAfterJSVN.getTestNumber());
+//        System.out.println("working copy name = " + commitInfoAfterJSVN.getWorkingCopyName());
+//        System.out.println("jsvn commit id = " + commitInfoAfterJSVN.getCommitId());
+//        System.out.println("svn commit id = " + commitInfoAfterSVN.getCommitId());
+
+        String newTestCase = commitInfoAfterJSVN.getTestCase();
+        int newTestNumber = commitInfoAfterJSVN.getTestNumber();
+
+        if (newTestCase == null) {
+            newTestCase = currentTestCase;
+        }
+
+        if (newTestNumber == -1) {
+            newTestNumber = currentTestNumber;
+        }
+
+        boolean shouldChangeTestCase = !areEqual(currentTestCase, newTestCase);
+        boolean shouldChangeTestNumber = (currentTestNumber != newTestNumber) || shouldChangeTestCase;
+
+//        System.out.println("currentTestCase = " + currentTestCase);
+//        System.out.println("currentTestNumber = " + currentTestNumber);
+//        System.out.println("newTestCase = " + newTestCase);
+//        System.out.println("newTestNumber = " + newTestNumber);
+//        System.out.println("shouldChangeTestCase = " + shouldChangeTestCase);
+//        System.out.println("shouldChangeTestNumber = " + shouldChangeTestNumber);
+
+        if (shouldChangeTestNumber) {
+            maybeEndTest();
+        }
+
+        if (shouldChangeTestCase) {
+            maybeEndTestCase();
+        }
+
+        if (shouldChangeTestCase) {
+            maybeStartTestCase(newTestCase);
+        }
+
+        if (shouldChangeTestNumber) {
+            maybeStartTest(newTestNumber);
+        }
+
+        final File workingCopyDirectory = new File(workingCopiesDirectory, commitInfoAfterJSVN.getWorkingCopyName());
+        final File wcDbFile = new File(workingCopyDirectory, SVNFileUtil.getAdminDirectoryName() +"/wc.db");
+        final File workingTree = gitRepositoryAccess.getWorkingTree();
+
+        final String relativeWCDbPath = SVNPathUtil.getRelativePath(workingTree.getAbsolutePath().replace(File.separatorChar, '/'),
+                wcDbFile.getAbsolutePath().replace(File.separatorChar, '/'));
+
+        final GitObjectId wcDbBlobAfterJSVN = gitRepositoryAccess.getBlobId(commitInfoAfterJSVN.getCommitId(), relativeWCDbPath);
+        final GitObjectId wcDbBlobAfterSVN = gitRepositoryAccess.getBlobId(commitInfoAfterSVN.getCommitId(), relativeWCDbPath);
+
+        if (wcDbBlobAfterJSVN == null && wcDbBlobAfterSVN == null) {
+//            System.out.println("jsvn commit=" + commitInfoAfterJSVN.getCommitId() + "; svn commit=" + commitInfoAfterSVN.getCommitId() + "; both don't have wc.db");
+            return;
+        }
+
+        if (wcDbBlobAfterJSVN == null || wcDbBlobAfterSVN == null) {
+            currentTestErrorMessage = "jsvn commit=" + commitInfoAfterJSVN.getCommitId() + "; svn commit=" + commitInfoAfterSVN.getCommitId() + "; one commit has " + relativeWCDbPath + " another one has not";
+            System.out.println("ERROR: " + currentTestErrorMessage);
+        }
+
+        final File wcDbAfterJSVN = SVNFileUtil.createTempFile("svnkit.tests.wc.db.after.jsvn", "");
+        final File wcDbAfterSVN = SVNFileUtil.createTempFile("svnkit.tests.wc.db.after.svn", "");
+
+        gitRepositoryAccess.copyBlobToFile(wcDbBlobAfterJSVN, wcDbAfterJSVN);
+        gitRepositoryAccess.copyBlobToFile(wcDbBlobAfterSVN, wcDbAfterSVN);
+
+        compareWCDbContents(commitInfoAfterJSVN, commitInfoAfterSVN, wcDbAfterJSVN, wcDbAfterSVN);
+    }
+
+    private static boolean areEqual(Object o1, Object o2) {
+        return o1 == null ? o2 == null : o1.equals(o2);
+    }
+
+    private static void maybeStartTest(int testNumber) {
+        if (testNumber == -1) {
+            return;
+        }
+        currentTestErrorMessage = null;
+        currentTestNumber = testNumber;
+    }
+
+    private static void maybeEndTest() {
+        if (currentTestNumber == -1) {
+            return;
+        }
+
+        TestResult testResult = new TestResult(currentTestCase, String.valueOf(currentTestNumber), currentTestErrorMessage == null);
+        if (currentTestErrorMessage != null) {
+            testResult.setOutput(new StringBuffer(currentTestErrorMessage));
+        }
+
+        for (AbstractTestLogger ourLogger : ourLoggers) {
+            ourLogger.handleTest(testResult);
+        }
+        currentTestNumber = -1;
+        currentTestErrorMessage = null;
+    }
+
+    private static void maybeStartTestCase(String testCase) {
+        if (testCase == null) {
+            return;
+        }
+        for (AbstractTestLogger ourLogger : ourLoggers) {
+            ourLogger.startSuite(testCase);
+        }
+        currentTestCase = testCase;
+    }
+
+    private static void maybeEndTestCase() {
+        if (currentTestCase == null) {
+            return;
+        }
+        for (AbstractTestLogger ourLogger : ourLoggers) {
+            ourLogger.endSuite(currentTestCase);
+        }
+        currentTestCase = null;
+    }
+
+    private static void compareWCDbContents(PythonTestsGitCommitInfo commitInfoAfterJSVN, PythonTestsGitCommitInfo commitInfoAfterSVN, File wcDbAfterJSVN, File wcDbAfterSVN) throws SVNException {
+        final SVNSqlJetDb svnSqlJetDbAfterJSVN = SVNSqlJetDb.open(wcDbAfterJSVN, SVNSqlJetDb.Mode.ReadOnly);
+        final SVNSqlJetDb svnSqlJetDbAfterSVN = SVNSqlJetDb.open(wcDbAfterSVN, SVNSqlJetDb.Mode.ReadOnly);
+        try {
+            final SqlJetDb dbAfterJSVN = svnSqlJetDbAfterJSVN.getDb();
+            final SqlJetDb dbAfterSVN = svnSqlJetDbAfterSVN.getDb();
+
+            final ISqlJetSchema schemaAfterJSVN = dbAfterJSVN.getSchema();
+            final ISqlJetSchema schemaAfterSVN = dbAfterSVN.getSchema();
+
+            final SortedSet<String> tableNamesAfterJSVN = new TreeSet<String>(schemaAfterJSVN.getTableNames());
+            final SortedSet<String> tableNamesAfterSVN = new TreeSet<String>(schemaAfterSVN.getTableNames());
+
+            if (!tableNamesAfterJSVN.equals(tableNamesAfterSVN)) {
+                currentTestErrorMessage = "jsvn commit=" + commitInfoAfterJSVN.getCommitId() + "; svn commit=" + commitInfoAfterSVN.getCommitId() + "; tables set differ";
+                System.out.println("ERROR: " + currentTestErrorMessage);
+                return;
+            }
+
+            for (String tableName : tableNamesAfterJSVN) {
+                if (tableName.startsWith("sqlite_")) {
+                    //skip special table
+                    continue;
+                }
+
+                final ISqlJetTable tableAfterJSVN = dbAfterJSVN.getTable(tableName);
+                final ISqlJetTable tableAfterSVN = dbAfterSVN.getTable(tableName);
+
+                final ISqlJetTableDef definition = tableAfterJSVN.getDefinition();
+                final List<ISqlJetColumnDef> columnDefinitions = definition.getColumns();
+
+
+                final List<Object[]> rowsAfterJSVN = loadRows(dbAfterJSVN, tableAfterJSVN, tableName);
+                final List<Object[]> rowsAfterSVN = loadRows(dbAfterSVN, tableAfterSVN, tableName);
+
+                if (rowsAfterJSVN.size() != rowsAfterSVN.size()) {
+                    currentTestErrorMessage = "jsvn commit=" + commitInfoAfterJSVN.getCommitId() + "; svn commit=" + commitInfoAfterSVN.getCommitId() + "; table " + tableName + " rows count differ";
+                    System.out.println("ERROR: " + currentTestErrorMessage);
+                    return;
+                }
+
+                int rowAfterJSVN = 0;
+                for (Object[] valuesAfterJSVN : rowsAfterJSVN) {
+                    boolean found = false;
+                    for (Object[] valuesAfterSVN : rowsAfterSVN) {
+                        if (areSqlJetArraysEqual(columnDefinitions, valuesAfterJSVN, valuesAfterSVN)) {
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    if (!found) {
+                        currentTestErrorMessage = "jsvn commit=" + commitInfoAfterJSVN.getCommitId() + "; svn commit=" + commitInfoAfterSVN.getCommitId() + "; table " + tableName + " row " + rowAfterJSVN + " corresponds no row of reference table";
+                        System.out.println("ERROR: " + currentTestErrorMessage);
+                        return;
+                    }
+
+                    rowAfterJSVN++;
+                }
+            }
+
+        } catch (SqlJetException e) {
+            SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.WC_DB_ERROR);
+            SVNErrorManager.error(errorMessage, e, SVNLogType.WC);
+        } finally {
+            svnSqlJetDbAfterJSVN.close();
+            svnSqlJetDbAfterSVN.close();
+        }
+    }
+
+    private static boolean areSqlJetArraysEqual(List<ISqlJetColumnDef> columnDefinitions, Object[] valuesAfterJSVN, Object[] valuesAfterSVN) {
+        if (valuesAfterJSVN.length != valuesAfterSVN.length) {
+            return false;
+        }
+        int length = valuesAfterJSVN.length;
+        for (int i = 0; i < length; i++) {
+            if (!areSqlJetValuesEqual(columnDefinitions.get(i), valuesAfterJSVN[i], valuesAfterSVN[i])) {
+                System.out.println(columnDefinitions.get(i).getName() + ":" + valuesAfterJSVN[i] + "!=" + valuesAfterSVN[i]);
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static List<Object[]> loadRows(SqlJetDb db, ISqlJetTable table, String tableName) throws SqlJetException {
+        db.beginTransaction(SqlJetTransactionMode.READ_ONLY);
+        final ISqlJetCursor cursor = table.open();
+        final List<Object[]> rows = new ArrayList<Object[]>();
+
+        System.out.println("===========" + tableName + "==============");
+        int row = 0;
+        while (!cursor.eof()) {
+            final Object[] values = cursor.getRowValues();
+            final boolean zeroRefCountInPristine = SVNWCDbSchema.PRISTINE.name().equals(tableName) && (cursor.getInteger("refcount") == 0);
+            if (!zeroRefCountInPristine) {
+                rows.add(values);
+            }
+
+            cursor.next();
+
+            System.out.print(row);
+            System.out.print(":  ");
+            for (Object value : values) {
+                System.out.print(value);
+                System.out.print(';');
+            }
+
+            System.out.println();
+            row++;
+        }
+        System.out.println("=========================");
+        cursor.close();
+        return rows;
+    }
+
+    private static boolean areSqlJetValuesEqual(ISqlJetColumnDef columnDefinition, Object value1, Object value2) {
+        String columnDefinitionName = columnDefinition.getName();
+        if (columnDefinitionName.endsWith("_date") || columnDefinitionName.endsWith("_time")) {
+            value1 = value1 == null ? 0L : value1;
+            value2 = value2 == null ? 0L : value2;
+            //TODO: is it a bug?
+        }
+
+        if (value1 == null) {
+            return value2 == null;
+        }
+
+        if (value2 == null) {
+            return false;
+        }
+
+        if (!value1.getClass().equals(value2.getClass())) {
+            return false;
+        }
+
+        if (value1 instanceof SqlJetMemoryPointer) {
+            SqlJetMemoryPointer memoryPointer1 = (SqlJetMemoryPointer) value1;
+            SqlJetMemoryPointer memoryPointer2 = (SqlJetMemoryPointer) value2;
+
+            boolean areEqual = memoryPointer1.compareTo(memoryPointer2) == 0;
+            if (!areEqual && columnDefinitionName.equals("properties")) {
+                int count1 = memoryPointer1.getBuffer().getSize() - memoryPointer1.getPointer();
+                int count2 = memoryPointer2.getBuffer().getSize() - memoryPointer2.getPointer();
+
+                byte[] buffer1 = new byte[count1];
+                byte[] buffer2 = new byte[count2];
+                memoryPointer1.getBytes(buffer1);
+                memoryPointer2.getBytes(buffer2);
+
+                try {
+                    final SVNProperties properties1 = SVNSqlJetStatement.parseProperties(buffer1);
+                    final SVNProperties properties2 = SVNSqlJetStatement.parseProperties(buffer2);
+
+                    if (properties1 == null) {
+                        return properties2 == null;
+                    }
+
+                    if (properties2 == null) {
+                        return false;
+                    }
+
+                    Set propertiesNames = new HashSet();
+                    propertiesNames.addAll(properties1.asMap().keySet());
+                    propertiesNames.addAll(properties2.asMap().keySet());
+
+                    for (Object name : propertiesNames) {
+                        String propertyName = (String) name;
+                        byte[] binaryValue1 = properties1.getBinaryValue(propertyName);
+                        byte[] binaryValue2 = properties2.getBinaryValue(propertyName);
+
+                        if (!Arrays.equals(binaryValue1, binaryValue2)) {
+                            System.out.println("binaryValue1.length = " + binaryValue1.length);
+                            System.out.println("binaryValue2.length = " + binaryValue2.length);
+                            for (int i = 0; i < Math.min(binaryValue1.length, binaryValue2.length); i++) {
+                                System.out.println(binaryValue1[i]);
+                                System.out.println(binaryValue2[i]);
+                            }
+                            return false;
+                        }
+                    }
+
+                    return true;
+
+                } catch (SVNException e) {
+                    e.printStackTrace();
+                    return false;
+                }
+            }
+            return areEqual;
+        }
+
+        if (columnDefinitionName.endsWith("_date") || columnDefinitionName.endsWith("_time")) {
+            SVNDate date1 = SVNWCUtils.readDate((Long) value1);
+            SVNDate date2 = SVNWCUtils.readDate((Long) value2);
+
+            long time1 = date1.getTime();
+            long time2 = date2.getTime();
+
+            return Math.abs(time1 - time2) < 100000000000L;
+        }
+
+        if (columnDefinitionName.equals("uuid")) {
+            return true;
+        }
+
+        if (columnDefinitionName.equals("lock_token")) {
+            return true;
+        }
+
+        return value1.equals(value2);
+    }
+
+    private static void changeCurrentDirectory(File currentDirectory) {
+        System.setProperty("user.dir", currentDirectory.getAbsolutePath());
+    }
+
+    public static int getDaemonPortNumber() {
+        if (daemonPortNumber == -1) {
+            daemonPortNumber = findUnoccupiedPort(DEFAULT_DAEMON_PORT_NUMBER);
+        }
+        return daemonPortNumber;
+    }
+
+    private static void runPythonTestsForAllProtocols(String libPath, Properties properties, String defaultTestSuite, Logger logger, String absTestsRootLocation) {
         String url = "file://" + absTestsRootLocation;
         if (Boolean.TRUE.toString().equals(properties.getProperty("python.file"))) {
             boolean started = false;
@@ -147,7 +640,7 @@ public class PythonTests {
 			}
 		}
 
-		if (Boolean.TRUE.toString().equals(properties.getProperty("python.http"))) {
+        if (Boolean.TRUE.toString().equals(properties.getProperty("python.http"))) {
             String apacheEnabled = properties.getProperty("apache", "true");
             if (Boolean.TRUE.toString().equals(apacheEnabled.trim())) {
                 properties.setProperty("apache.conf", "apache/python.template.conf");
@@ -176,47 +669,40 @@ public class PythonTests {
                     }
                 }
             }
-			
-			//now check the servlet flag
-			String servletContainer = properties.getProperty("servlet.container", "false");
-			if (Boolean.TRUE.toString().equals(servletContainer.trim())) {
-			    boolean started = false;
-	            int port = -1;
-	            try {
-	                port = startTomcat(properties, logger);
-	                url = "http://localhost:" + port + "/svnkit";
-	                for (int i = 0; i < ourLoggers.length; i++) {
-	                    ourLoggers[i].startServer("tomcat", url);
-	                }
-	                //wait a little until tomcat
-	                Thread.sleep(1000);
-	                started = true;
-	                runPythonTests(properties, defaultTestSuite, "dav", url, libPath, logger);
-	            } catch (Throwable th) {
-	                th.printStackTrace();
-	            } finally {
-	                try {
-	                    stopTomcat(properties, logger);
-	                    if (started) {
-	                        for (int i = 0; i < ourLoggers.length; i++) {
-	                            ourLoggers[i].endServer("tomcat", url);
-	                        }
-	                    }
-	                } catch (Throwable th) {
-	                    th.printStackTrace();
-	                }
-	            }
-			}
-		}
-		
-        for (int i = 0; i < ourLoggers.length; i++) {
-            ourLoggers[i].endTests(properties);
+
+            //now check the servlet flag
+            String servletContainer = properties.getProperty("servlet.container", "false");
+            if (Boolean.TRUE.toString().equals(servletContainer.trim())) {
+                boolean started = false;
+                int port = -1;
+                try {
+                    port = startTomcat(properties, logger);
+                    url = "http://localhost:" + port + "/svnkit";
+                    for (int i = 0; i < ourLoggers.length; i++) {
+                        ourLoggers[i].startServer("tomcat", url);
+                    }
+                    //wait a little until tomcat
+                    Thread.sleep(1000);
+                    started = true;
+                    runPythonTests(properties, defaultTestSuite, "dav", url, libPath, logger);
+                } catch (Throwable th) {
+                    th.printStackTrace();
+                } finally {
+                    try {
+                        stopTomcat(properties, logger);
+                        if (started) {
+                            for (int i = 0; i < ourLoggers.length; i++) {
+                                ourLoggers[i].endServer("tomcat", url);
+                            }
+                        }
+                    } catch (Throwable th) {
+                        th.printStackTrace();
+                    }
+                }
+            }
         }
-        if (ourDaemon != null) {
-            ourDaemon.shutdown(false);
-        }
-	}
-    
+    }
+
     private static void setTestType(String type) {
         ourTestType = type;
     }
@@ -277,10 +763,12 @@ public class PythonTests {
 			List tokens = tokenizeTestFileString(testFileString);
 
             String suiteName = (String) tokens.get(0);
-			for (int i = 0; i < ourLoggers.length; i++) {
-                ourLoggers[i].startSuite(getTestType() + "." + suiteName);
+            if (regularLoggingEnabled) {
+                for (int i = 0; i < ourLoggers.length; i++) {
+                    ourLoggers[i].startSuite(getTestType() + "." + suiteName);
+                }
             }
-			
+
 			final String testFile = suiteName + "_tests.py";
 			tokens = tokens.subList(1, tokens.size());
 			
@@ -304,8 +792,10 @@ public class PythonTests {
 			        pythonLogger.removeHandler(logHandler);
 			    }
 			}
-            for (int i = 0; i < ourLoggers.length; i++) {
-                ourLoggers[i].endSuite(getTestType() + "." + suiteName);
+            if (regularLoggingEnabled) {
+                for (int i = 0; i < ourLoggers.length; i++) {
+                    ourLoggers[i].endSuite(getTestType() + "." + suiteName);
+                }
             }
 		}
 	}
@@ -333,7 +823,7 @@ public class PythonTests {
                 commandsList.add(String.valueOf(testCase));
             }
         }
-        String[] commands = (String[]) commandsList.toArray(new String[commandsList.size()]); 
+        String[] commands = (String[]) commandsList.toArray(new String[commandsList.size()]);
 
 		try {
 			Process process = Runtime.getRuntime().exec(commands, null, new File(testsLocation));
@@ -342,8 +832,8 @@ public class PythonTests {
 			ReaderThread errReader = new ReaderThread(process.getErrorStream(), null, pythonLogger);
 			errReader.start();
 			try {
-				process.waitFor();
-			} catch (InterruptedException e) {
+                process.waitFor();
+            } catch (InterruptedException e) {
 			} finally {
 			    inReader.close();
 			    errReader.close();
@@ -522,9 +1012,11 @@ public class PythonTests {
                     if (testResult != null) {
                         testResult.setOutput(myTestOutput);
                         myTestOutput = new StringBuffer();
-                    
-                        for (int i = 0; i < ourLoggers.length; i++) {
-                            ourLoggers[i].handleTest(testResult);
+
+                        if (regularLoggingEnabled) {
+                            for (int i = 0; i < ourLoggers.length; i++) {
+                                ourLoggers[i].handleTest(testResult);
+                            }
                         }
 
                     } else {
@@ -575,8 +1067,7 @@ public class PythonTests {
     }
     
     public static String startCommandDaemon(Properties properties) throws IOException {
-        int portNumber = 1729;
-        portNumber = findUnoccupiedPort(portNumber);
+        int portNumber = getDaemonPortNumber();
 
         ourDaemon = new NGServer(null, portNumber);        
         Thread daemonThread = new Thread(ourDaemon);
@@ -584,10 +1075,16 @@ public class PythonTests {
         daemonThread.start();
 
         // create client scripts.
+        generateScripts(properties);
+        return new File("daemon").getAbsolutePath();
+    }
+
+    private static void generateScripts(Properties properties) throws IOException {
+        int portNumber = getDaemonPortNumber();
         String svnHome = properties.getProperty("svn.home", "/usr/bin");
         File template = SVNFileUtil.isWindows ? new File("daemon/template.bat") : new File("daemon/template");
         File templatePy = SVNFileUtil.isWindows ? new File("daemon/template.py") : null;
-        
+
         String pattern = properties.getProperty("python.tests.pattern", null);
 
         generateClientScript(template, new File("daemon/jsvn"), NailgunProcessor.class.getName(), "svn", portNumber, svnHome, pattern);
@@ -599,7 +1096,7 @@ public class PythonTests {
 
         generateProxyScript("jsvnmucc", "svnmucc", svnHome);
         generateProxyScript("jsvnversion", "svnversion", svnHome);
-        
+
         if (SVNFileUtil.isWindows) {
             generateClientScript(templatePy, new File("daemon/jsvn.py"), NailgunProcessor.class.getName(), "svn", portNumber, svnHome, pattern);
             generateClientScript(templatePy, new File("daemon/jsvnadmin.py"), NailgunProcessor.class.getName(), "svnadmin", portNumber, svnHome, pattern);
@@ -610,14 +1107,25 @@ public class PythonTests {
         }
 
         if (pattern != null) {
-            generateMatcher(new File("daemon/matcher.pl"), new File("daemon/matcher.pl"), pattern);
+            generateMatcher(new File("daemon/matcher.pl.template"), new File("daemon/matcher.pl"), pattern);
         } else {
            try {
                SVNFileUtil.deleteFile(new File("daemon/matcher.pl"));
            } catch (SVNException e) {}
         }
         SVNFileUtil.setExecutable(new File("daemon/snapshot"), Boolean.TRUE.toString().equalsIgnoreCase(properties.getProperty("snapshot", "false")));
-        return new File("daemon").getAbsolutePath();
+    }
+
+    private static void generateMatcher(String pattern) {
+        if (pattern != null) {
+            try {
+                generateMatcher(new File("daemon/matcher.pl.template"), new File("daemon/matcher.pl"), pattern);
+            } catch (IOException e) {}
+        } else {
+           try {
+               SVNFileUtil.deleteFile(new File("daemon/matcher.pl"));
+           } catch (SVNException e) {}
+        }
     }
 
     private static void generateProxyScript(String jsvnName, String svnName, String svnHome) {

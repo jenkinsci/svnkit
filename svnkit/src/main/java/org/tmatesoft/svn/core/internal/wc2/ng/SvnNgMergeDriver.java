@@ -2556,8 +2556,10 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
                     addedPaths.add(event.getFile());
                 }
             }
-            if (event.getAction() == SVNEventAction.UPDATE_DELETE && addedPaths != null && addedPaths.size() > 0) {
-                addedPaths = null;
+            if (event.getAction() == SVNEventAction.UPDATE_DELETE) {
+                if (addedPaths != null) {
+                    addedPaths.remove(event.getFile());
+                }
             }
         }
         

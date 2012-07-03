@@ -10,6 +10,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNExternal;
 import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
 import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.core.wc2.*;
@@ -816,6 +817,46 @@ public class MergeTest {
             }
 
             Assert.assertEquals(expectedNames, actualNames);
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testMergeRecordsActualPropertiesForFileWithMergeInfo() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testMergeRecordsActualPropertiesForFileWithMergeInfo", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder1 = new CommitBuilder(url);
+            commitBuilder1.addFile("directory/file");
+            commitBuilder1.setFileProperty("directory/file", SVNProperty.MERGE_INFO, SVNPropertyValue.create("/somefile:1"));
+            commitBuilder1.commit();
+
+            final CommitBuilder commitBuilder2 = new CommitBuilder(url);
+            commitBuilder2.addFileByCopying("directory/copiedFile", "directory/file");
+            commitBuilder2.delete("directory/file");
+            commitBuilder2.commit();
+
+            final CommitBuilder commitBuilder3 = new CommitBuilder(url);
+            commitBuilder3.addDirectoryByCopying("copiedDirectory", "directory", 1);
+            commitBuilder3.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url.appendPath("copiedDirectory", false));
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+
+            final SvnMerge merge = svnOperationFactory.createMerge();
+            merge.addRevisionRange(SvnRevisionRange.create(SVNRevision.create(1), SVNRevision.create(2)));
+            merge.setSource(SvnTarget.fromURL(url.appendPath("directory", false)), false);
+            merge.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            merge.run();
+
+            Assert.assertEquals(2, TestUtil.getTableSize(workingCopy, SVNWCDbSchema.ACTUAL_NODE.name()));
 
         } finally {
             svnOperationFactory.dispose();
