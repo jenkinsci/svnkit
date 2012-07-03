@@ -221,16 +221,6 @@ public class CorruptionTest {
         }
     }
 
-    private void writeBinaryContents(File file, byte[] binaryContents) throws IOException {
-        BufferedOutputStream bufferedOutputStream = null;
-        try {
-            bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(file));
-            bufferedOutputStream.write(binaryContents);
-        } finally {
-            SVNFileUtil.closeFile(bufferedOutputStream);
-        }
-    }
-
     private void assertTranslatedSizeMaybeEquals(WorkingCopy workingCopy, String path, int expectedTranslatedSize) throws SqlJetException {
         final SqlJetDb db = SqlJetDb.open(workingCopy.getWCDbFile(), false);
         try {
@@ -258,7 +248,7 @@ public class CorruptionTest {
         }
     }
 
-        private void assertTranslatedSizeCacheIsReset(WorkingCopy workingCopy) throws SqlJetException {
+    private void assertTranslatedSizeCacheIsReset(WorkingCopy workingCopy) throws SqlJetException {
         final SqlJetDb db = SqlJetDb.open(workingCopy.getWCDbFile(), false);
         try {
             final ISqlJetTable table = db.getTable(SVNWCDbSchema.NODES.name());
@@ -277,6 +267,16 @@ public class CorruptionTest {
             db.commit();
         } finally {
             db.close();
+        }
+    }
+
+    private void writeBinaryContents(File file, byte[] binaryContents) throws IOException {
+        BufferedOutputStream bufferedOutputStream = null;
+        try {
+            bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(file));
+            bufferedOutputStream.write(binaryContents);
+        } finally {
+            SVNFileUtil.closeFile(bufferedOutputStream);
         }
     }
 

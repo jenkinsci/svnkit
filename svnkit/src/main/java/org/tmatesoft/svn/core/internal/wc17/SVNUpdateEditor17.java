@@ -1004,6 +1004,9 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             if (props == null) {
                 props = baseProps;
             }
+            if (davProps != null) {
+                davProps.removeNullValues();
+            }
             myWCContext.getDb().addBaseDirectory(db.localAbsolutePath, db.newRelativePath, myReposRootURL, myReposUuid, myTargetRevision, props, db.changedRevsion, db.changedDate, db.changedAuthor, null, db.ambientDepth, 
                     davProps != null && !davProps.isEmpty() ? davProps : null, null, !db.shadowed && newBaseProps != null, newActualProps, allWorkItems);
             
@@ -1450,7 +1453,10 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         if (newChecksum == null) {
             newChecksum = fb.originalChecksum;
         }
-        
+
+        if (davProps != null) {
+            davProps.removeNullValues();
+        }
         myWCContext.getDb().addBaseFile(fb.localAbsolutePath, fb.newRelativePath, myReposRootURL, myReposUuid, myTargetRevision, newBaseProps, fb.changedRevison, fb.changedDate, fb.changedAuthor, newChecksum, 
                 davProps != null && !davProps.isEmpty() ? davProps : null, null, 
                 !fb.shadowed && newBaseProps != null, newActualProps, keepRecordedInfo, fb.shadowed && fb.obstructionFound, allWorkItems);

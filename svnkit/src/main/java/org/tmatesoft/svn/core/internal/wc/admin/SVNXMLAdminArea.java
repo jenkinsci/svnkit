@@ -579,8 +579,8 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         }
         if (!forceComparison) {
             String textTime = entry.getTextTime();
-            long textTimeAsLong = SVNFileUtil.roundTimeStamp(SVNDate.parseDateAsMilliseconds(textTime));
-            long tstamp = SVNFileUtil.roundTimeStamp(SVNFileUtil.getFileLastModified(getFile(name)));
+            long textTimeAsLong = SVNDate.parseDateAsMilliseconds(textTime);
+            long tstamp = SVNFileUtil.getFileLastModified(getFile(name));
             if (textTimeAsLong == tstamp ) {
                 return false;
             }

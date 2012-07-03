@@ -20,8 +20,6 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 import java.io.File;
 
-import java.io.File;
-
 
 /**
  * @version 1.3
