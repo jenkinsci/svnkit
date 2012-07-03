@@ -2,6 +2,7 @@ package org.tmatesoft.svn.test;
 
 import org.junit.Assert;
 import org.junit.Assume;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
@@ -116,6 +117,7 @@ public class UpgradeTest {
         }
     }
 
+    @Ignore("SVNKIT-276")
     @Test
     public void testUpgradeWorkingCopyWithReplacedDirectoryInside() throws Exception {
         final TestOptions options = TestOptions.getInstance();
