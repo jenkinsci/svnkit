@@ -318,10 +318,22 @@ public class PythonTests {
         final File wcDbAfterJSVN = SVNFileUtil.createTempFile("svnkit.tests.wc.db.after.jsvn", "");
         final File wcDbAfterSVN = SVNFileUtil.createTempFile("svnkit.tests.wc.db.after.svn", "");
 
-        gitRepositoryAccess.copyBlobToFile(wcDbBlobAfterJSVN, wcDbAfterJSVN);
-        gitRepositoryAccess.copyBlobToFile(wcDbBlobAfterSVN, wcDbAfterSVN);
+        try {
 
-        compareWCDbContents(commitInfoAfterJSVN, commitInfoAfterSVN, wcDbAfterJSVN, wcDbAfterSVN);
+            gitRepositoryAccess.copyBlobToFile(wcDbBlobAfterJSVN, wcDbAfterJSVN);
+            gitRepositoryAccess.copyBlobToFile(wcDbBlobAfterSVN, wcDbAfterSVN);
+
+            compareWCDbContents(commitInfoAfterJSVN, commitInfoAfterSVN, wcDbAfterJSVN, wcDbAfterSVN);
+        } finally {
+            try {
+                SVNFileUtil.deleteFile(wcDbAfterJSVN);
+            } catch (SVNException ignore) {
+            }
+            try {
+                SVNFileUtil.deleteFile(wcDbAfterSVN);
+            } catch (SVNException ignore) {
+            }
+        }
     }
 
     private static boolean areEqual(Object o1, Object o2) {
