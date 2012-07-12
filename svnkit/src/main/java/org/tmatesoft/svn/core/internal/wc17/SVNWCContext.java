@@ -886,7 +886,7 @@ public class SVNWCContext {
             } else {
                 SVNURL svnUrl = getNodeUrl(localAbsPath);
                 if (svnUrl != null) {
-                    url = svnUrl.toDecodedString();
+                    url = svnUrl.toString();
                 }
             }
         } else {

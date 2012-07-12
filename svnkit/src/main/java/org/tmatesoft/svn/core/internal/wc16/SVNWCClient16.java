@@ -446,7 +446,7 @@ public class SVNWCClient16 extends SVNBasicDelegate {
             repos.getFile("", revNumber, properties, null);
             checkCancelled();
             String mimeType = properties.getStringValue(SVNProperty.MIME_TYPE);
-            String charset = SVNTranslator.getCharset(properties.getStringValue(SVNProperty.CHARSET), mimeType, repos.getLocation().toDecodedString(), getOptions());
+            String charset = SVNTranslator.getCharset(properties.getStringValue(SVNProperty.CHARSET), mimeType, repos.getLocation().toString(), getOptions());
             String keywords = properties.getStringValue(SVNProperty.KEYWORDS);
             String eol = properties.getStringValue(SVNProperty.EOL_STYLE);
             if (charset != null || keywords != null || eol != null) {

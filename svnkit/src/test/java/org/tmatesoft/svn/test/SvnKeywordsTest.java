@@ -1,14 +1,18 @@
 package org.tmatesoft.svn.test;
 
-import java.io.File;
-
 import org.junit.Assert;
 import org.junit.Test;
+import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc2.SvnCheckout;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
+import org.tmatesoft.svn.core.wc2.admin.SvnRepositoryCreate;
+
+import java.io.File;
 
 public class SvnKeywordsTest {
     @Test
@@ -41,6 +45,43 @@ public class SvnKeywordsTest {
             svnOperationFactory.dispose();
             sandbox.dispose();
         }
+    }
+
+    @Test
+    public void testRepositoryUrlContainsSpace() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testRepositoryUrlContainsSpace", options);
+        try {
+            //prepare a repository with a space in the URL
+            final File repositoryDirectory = sandbox.createDirectory("svn.repo with space");
+
+            final SvnRepositoryCreate repositoryCreate = svnOperationFactory.createRepositoryCreate();
+            repositoryCreate.setRepositoryRoot(repositoryDirectory);
+            final SVNURL url = repositoryCreate.run();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("file", "$HeadURL$ $Revision$".getBytes());
+            commitBuilder.setFileProperty("file", SVNProperty.KEYWORDS, SVNPropertyValue.create("HeadURL Revision"));
+            final SVNCommitInfo commitInfo = commitBuilder.commit();
+
+            final File workingCopyDirectory = sandbox.createDirectory("wc");
+            final File file = new File(workingCopyDirectory, "file");
+
+            final SvnCheckout checkout = svnOperationFactory.createCheckout();
+            checkout.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            checkout.setSource(SvnTarget.fromURL(url));
+            checkout.run();
+
+            Assert.assertEquals("$HeadURL: " + url.toString() + " $ $Revision: " + commitInfo.getNewRevision() + " $",
+                    TestUtil.readFileContentsString(file));
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+
     }
 
     private String getTestName() {
