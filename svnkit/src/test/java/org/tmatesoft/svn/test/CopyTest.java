@@ -2,13 +2,16 @@ package org.tmatesoft.svn.test;
 
 import org.junit.Assert;
 import org.junit.Assume;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectFieldsStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
-import org.tmatesoft.svn.core.internal.wc17.db.*;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
+import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
+import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -164,6 +167,49 @@ public class CopyTest {
             copy.run();
 
             assertNoRepositoryPathStartsWithSlash(svnOperationFactory, workingCopy.getWorkingCopyDirectory());
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Ignore("SVNKIT-284, currently fails")
+    @Test
+    public void testRemoteCopyURLAutoEncodeCorruptsFilename() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testRemoteCopyURLAutoEncodeCorruptsFilename", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addDirectory("directory");
+            commitBuilder.addFile("file%20with%20space");
+            commitBuilder.commit();
+
+            final SvnRemoteCopy remoteCopy = svnOperationFactory.createRemoteCopy();
+            remoteCopy.addCopySource(SvnCopySource.create(SvnTarget.fromURL(url.appendPath("file%20with%20space", false)), SVNRevision.HEAD));
+            remoteCopy.setSingleTarget(SvnTarget.fromURL(url.appendPath("directory", false)));
+            remoteCopy.setFailWhenDstExists(false);
+            remoteCopy.run();
+
+            final int[] count = {0};
+            final SvnList list = svnOperationFactory.createList();
+            list.setSingleTarget(SvnTarget.fromURL(url.appendPath("directory", false)));
+            list.setReceiver(new ISvnObjectReceiver<SVNDirEntry>() {
+                @Override
+                public void receive(SvnTarget target, SVNDirEntry dirEntry) throws SVNException {
+                    count[0]++;
+                    if (dirEntry.getKind() == SVNNodeKind.FILE) {
+                        Assert.assertEquals("file%20with%20space", dirEntry.getName());
+                    }
+                }
+            });
+            list.run();
+
+            Assert.assertEquals(2, count[0]);
 
         } finally {
             svnOperationFactory.dispose();
