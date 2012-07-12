@@ -205,7 +205,7 @@ public class SVNWCUtils {
     }
 
     public static SVNURL join(SVNURL rootUrl, File relPath) throws SVNException {
-        return SVNURL.parseURIDecoded(SVNPathUtil.append(rootUrl.toDecodedString(), SVNFileUtil.getFilePath(relPath).replace(File.separatorChar, '/')));
+        return rootUrl.appendPath(SVNFileUtil.getFilePath(relPath), false);
     }
 
     public static long parseLong(String value) throws SVNException {
