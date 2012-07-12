@@ -3088,7 +3088,7 @@ public class SVNWCDb implements ISVNWCDb {
                     if (f.contains(AdditionInfoField.originalRootUrl) || f.contains(AdditionInfoField.originalUuid)) {
                         originalReposId = getColumnInt64(stmt, NODES__Fields.repos_id);
                         ReposInfo reposInfo = fetchReposInfo(pdh.getWCRoot().getSDb(), originalReposId);
-                        additionInfo.originalRootUrl = SVNURL.parseURIDecoded(reposInfo.reposRootUrl);
+                        additionInfo.originalRootUrl = SVNURL.parseURIEncoded(reposInfo.reposRootUrl);
                         additionInfo.originalUuid = reposInfo.reposUuid;
                     }
                     if (f.contains(AdditionInfoField.status)) {
@@ -3132,7 +3132,7 @@ public class SVNWCDb implements ISVNWCDb {
             if (reposId != INVALID_REPOS_ID && f.contains(AdditionInfoField.reposRootUrl) || f.contains(AdditionInfoField.reposUuid)) {
                 ReposInfo reposInfo = fetchReposInfo(pdh.getWCRoot().getSDb(), reposId);
                 if (reposInfo.reposRootUrl != null) {
-                    additionInfo.reposRootUrl = SVNURL.parseURIDecoded(reposInfo.reposRootUrl);
+                    additionInfo.reposRootUrl = SVNURL.parseURIEncoded(reposInfo.reposRootUrl);
                 }
                 additionInfo.reposUuid = reposInfo.reposUuid;
             }
@@ -3141,7 +3141,7 @@ public class SVNWCDb implements ISVNWCDb {
         if (originalReposId != INVALID_REPOS_ID && f.contains(AdditionInfoField.originalRootUrl) || f.contains(AdditionInfoField.originalUuid)) {
             ReposInfo reposInfo = fetchReposInfo(pdh.getWCRoot().getSDb(), originalReposId);
             if (reposInfo.reposRootUrl != null) {
-                additionInfo.originalRootUrl = SVNURL.parseURIDecoded(reposInfo.reposRootUrl);
+                additionInfo.originalRootUrl = SVNURL.parseURIEncoded(reposInfo.reposRootUrl);
             }
             additionInfo.originalUuid = reposInfo.reposUuid;
         }
