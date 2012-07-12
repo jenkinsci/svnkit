@@ -178,7 +178,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
     /**
      * Constructs an annotation generator object.
      * 
-     * @param path                    a file path (relative to a repository location)
+     * @param path                    a file path (relative to a repository location) or URL-encoded URL
      * @param tmpDirectory            a revision to stop at
      * @param startRevision           a start revision to begin annotation with
      * @param force                   forces binary files processing  
@@ -236,7 +236,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
             File file = SVNPathUtil.isURL(myPath) ? null : new File(myPath);
             SVNEvent event = SVNEventFactory.createSVNEvent(file, SVNNodeKind.NONE, null, myCurrentRevision, SVNEventAction.ANNOTATE, null, null, null, props, null);
             if (file == null) {
-                event.setURL(SVNURL.parseURIDecoded(myPath));
+                event.setURL(SVNURL.parseURIEncoded(myPath));
             }
             myCancelBaton.handleEvent(event, ISVNEventHandler.UNKNOWN);
             myCancelBaton.checkCancelled();
