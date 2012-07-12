@@ -755,7 +755,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         try {
             openRepositoryRoot();
         } catch (SVNException svne) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_LOCAL_REPOS_OPEN_FAILED, "Unable to open repository ''{0}''", getLocation().toDecodedString());
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_LOCAL_REPOS_OPEN_FAILED, "Unable to open repository ''{0}''", getLocation().toString());
             err.setChildErrorMessage(svne.getErrorMessage());
             SVNErrorManager.error(err.wrap("Unable to open an ra_local session to URL"), SVNLogType.FSFS);
         }
@@ -769,14 +769,14 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                                     !"localhost".equalsIgnoreCase(hostName);
 
         if (!SVNFileUtil.isWindows && hasCustomHostName) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "Local URL ''{0}'' contains unsupported hostname", getLocation().toDecodedString());
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "Local URL ''{0}'' contains unsupported hostname", getLocation().toString());
             SVNErrorManager.error(err, SVNLogType.FSFS);
         }
 
         String startPath = SVNEncodingUtil.uriDecode(getLocation().getURIEncodedPath());
         String rootPath = FSFS.findRepositoryRoot(hasCustomHostName ? hostName : null, startPath);
         if (rootPath == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_LOCAL_REPOS_OPEN_FAILED, "Unable to open repository ''{0}''", getLocation().toDecodedString());
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_LOCAL_REPOS_OPEN_FAILED, "Unable to open repository ''{0}''", getLocation().toString());
             SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         
