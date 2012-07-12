@@ -7,11 +7,13 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc2.SvnCat;
 import org.tmatesoft.svn.core.wc2.SvnCheckout;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.core.wc2.admin.SvnRepositoryCreate;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 
 public class SvnKeywordsTest {
@@ -49,6 +51,7 @@ public class SvnKeywordsTest {
 
     @Test
     public void testRepositoryUrlContainsSpace() throws Exception {
+        //SVNKIT-284
         final TestOptions options = TestOptions.getInstance();
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
@@ -74,8 +77,19 @@ public class SvnKeywordsTest {
             checkout.setSource(SvnTarget.fromURL(url));
             checkout.run();
 
-            Assert.assertEquals("$HeadURL: " + url.toString() + " $ $Revision: " + commitInfo.getNewRevision() + " $",
+            Assert.assertEquals("$HeadURL: " + url.appendPath("file", false).toString() + " $ $Revision: " + commitInfo.getNewRevision() + " $",
                     TestUtil.readFileContentsString(file));
+
+            final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+
+            final SvnCat cat = svnOperationFactory.createCat();
+            cat.setExpandKeywords(true);
+            cat.setOutput(byteArrayOutputStream);
+            cat.setSingleTarget(SvnTarget.fromURL(url.appendPath("file", false)));
+            cat.run();
+
+            Assert.assertEquals("$HeadURL: " + url.appendPath("file", false).toString() + " $ $Revision: " + commitInfo.getNewRevision() + " $",
+                    byteArrayOutputStream.toString());
 
         } finally {
             svnOperationFactory.dispose();
