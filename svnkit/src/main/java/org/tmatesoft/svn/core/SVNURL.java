@@ -103,7 +103,8 @@ public class SVNURL {
      * @return               a new <b>SVNURL</b> representation of <code>url</code>
      * @throws SVNException  if <code>url</code> is malformed
      */
-    private static SVNURL parseURIDecoded(String url) throws SVNException {
+    @Deprecated
+    public static SVNURL parseURIDecoded(String url) throws SVNException {
         return new SVNURL(url, false);
     }
     
