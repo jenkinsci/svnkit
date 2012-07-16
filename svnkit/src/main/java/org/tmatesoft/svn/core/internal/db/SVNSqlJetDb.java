@@ -156,7 +156,9 @@ public class SVNSqlJetDb {
             final SVNSqlJetStatement stmt = constructor.newInstance(this);
             return stmt;
         } catch (Exception e) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, e);
+            SVNErrorCode errorCode = SVNErrorCode.UNSUPPORTED_FEATURE;
+            String message = e.getMessage() != null ? e.getMessage() : errorCode.getDescription();
+            SVNErrorMessage err = SVNErrorMessage.create(errorCode, message, new Object[0], SVNErrorMessage.TYPE_ERROR, e);
             SVNErrorManager.error(err, SVNLogType.WC);
             return null;
         }
