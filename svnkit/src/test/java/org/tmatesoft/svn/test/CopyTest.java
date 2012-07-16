@@ -199,7 +199,6 @@ public class CopyTest {
             final SvnList list = svnOperationFactory.createList();
             list.setSingleTarget(SvnTarget.fromURL(url.appendPath("directory", false)));
             list.setReceiver(new ISvnObjectReceiver<SVNDirEntry>() {
-                @Override
                 public void receive(SvnTarget target, SVNDirEntry dirEntry) throws SVNException {
                     count[0]++;
                     if (dirEntry.getKind() == SVNNodeKind.FILE) {
