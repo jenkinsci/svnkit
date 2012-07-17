@@ -33,13 +33,11 @@ public class SvnLookTest {
             try {
                 final SVNLookClient lookClient = clientManager.getLookClient();
                 lookClient.doGetChangedDirectories(repositoryRoot, SVNRevision.create(0), new ISVNChangedDirectoriesHandler() {
-                    @Override
                     public void handleDir(String path) throws SVNException {
                         Assert.fail("The handler should be never called, because there're no changes at r0");
                     }
                 });
                 lookClient.doGetChangedDirectories(repositoryRoot, SVNRevision.HEAD, new ISVNChangedDirectoriesHandler() {
-                    @Override
                     public void handleDir(String path) throws SVNException {
                         Assert.fail("The handler should be never called, because there're no changes at r0");
                     }
