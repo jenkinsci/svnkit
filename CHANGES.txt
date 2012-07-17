@@ -1,4 +1,13 @@
-== version 1.7.6 ==
+== version 1.7.5-v1 ==
+
++ SVNLookClient.doGetChangedDirectories failed on revision 0, fixed.
++ Text changes might not be reported properly after native Subversion operated on 
+  the working copy in 1.6 format, fixed.
++ Symbolic link last modified time now reported properly.
++ Pristine files ref count values may become invalid, fixed.
++ Empty strings might be stored as a DAV URL cache values, fixed.
++ SqlJet library 1.1.4 is used
++ Other minor stability improvements and bugfixes. 
 
 == version 1.7.5 ==
 
