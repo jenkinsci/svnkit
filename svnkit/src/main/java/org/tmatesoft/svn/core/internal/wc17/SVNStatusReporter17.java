@@ -79,6 +79,9 @@ public class SVNStatusReporter17 implements ISVNReporterBaton, ISVNReporter {
             repositoryLocation = ancestor;
 
             // TODO set depth infinity to reportBaton:
+            // This depth is only used to report locks in finishReport() method
+            // Currently SVNRepository#getLocks doesn't support depth, so the assignment is useless
+            // But when it will, the depth should be kept and passed to SVNRepository#getLocks
             // rb->depth = svn_depth_infinity;
         }
 
