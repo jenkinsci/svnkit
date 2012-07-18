@@ -6,7 +6,9 @@ task buildAll << {
         into new File(dstDir, "svnkit-${version}")
         into('lib') {
             from configurations.binaries.files
+            exclude '**/*.asc'
             eachFile fullJarNameExpander
+            
         }
         into ('bin') {
             from configurations.scripts.files
