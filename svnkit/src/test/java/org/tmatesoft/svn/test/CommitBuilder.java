@@ -378,14 +378,19 @@ public class CommitBuilder {
         for (String directory : directoriesToProperties.keySet()) {
             addDirectoryToVisit(directory, directoriesToVisit);
         }
-        directoriesToVisit.addAll(directoriesToAdd);
+        for (String directoryToAdd : directoriesToAdd) {
+            addDirectoryToVisit(directoryToAdd, directoriesToVisit);
+        }
 
         addFilesParents(directoriesToVisit, filesToAdd.keySet());
         addFilesParents(directoriesToVisit, filesToChange.keySet());
         addFilesParents(directoriesToVisit, filesToProperties.keySet());
         addFilesParents(directoriesToVisit, filesToCopyFromPath.keySet());
 
-        directoriesToVisit.addAll(directoriesToCopyFromPath.keySet());
+        for (String directoryToCopy : directoriesToCopyFromPath.keySet()) {
+            addDirectoryToVisit(directoryToCopy, directoriesToVisit);
+        }
+
         return directoriesToVisit;
     }
 
