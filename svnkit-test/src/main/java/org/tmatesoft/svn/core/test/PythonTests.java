@@ -313,6 +313,7 @@ public class PythonTests {
         if (wcDbBlobAfterJSVN == null || wcDbBlobAfterSVN == null) {
             currentTestErrorMessage = "jsvn commit=" + commitInfoAfterJSVN.getCommitId() + "; svn commit=" + commitInfoAfterSVN.getCommitId() + "; one commit has " + relativeWCDbPath + " another one has not";
             System.out.println("ERROR: " + currentTestErrorMessage);
+            return;
         }
 
         final File wcDbAfterJSVN = SVNFileUtil.createTempFile("svnkit.tests.wc.db.after.jsvn", "");
