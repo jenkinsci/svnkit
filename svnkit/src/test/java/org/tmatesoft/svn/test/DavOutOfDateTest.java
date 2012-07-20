@@ -31,6 +31,7 @@ public class DavOutOfDateTest {
     public void testAlwaysOutOfDate() throws Exception {
         final TestOptions options = TestOptions.getInstance();
         Assume.assumeTrue(TestUtil.areAllApacheOptionsSpecified(options));
+        Assume.assumeTrue(TestUtil.areAllSvnserveOptionsSpecified(options));
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
         final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testAlwaysOutOfDate", options);
@@ -38,10 +39,11 @@ public class DavOutOfDateTest {
         final Map<String, String> loginToPassword = new HashMap<String, String>();
         loginToPassword.put("user1", "password1");
 
-        final SVNURL davURL = sandbox.createSvnRepositoryWithDavAccess(loginToPassword);
-        final SVNURL svnURL = sandbox.createSvnRepositoryWithSvnAccess(loginToPassword);
-        final SVNURL fsfsURL = sandbox.createSvnRepository();
         try {
+            final SVNURL davURL = sandbox.createSvnRepositoryWithDavAccess(loginToPassword);
+            final SVNURL svnURL = sandbox.createSvnRepositoryWithSvnAccess(loginToPassword);
+            final SVNURL fsfsURL = sandbox.createSvnRepository();
+
         	testOutOfDatedCommit(fsfsURL, authenticationManager);
         	testOutOfDatedCommit(svnURL, authenticationManager);
         	testOutOfDatedCommit(davURL, authenticationManager);
