@@ -1,6 +1,7 @@
 package org.tmatesoft.svn.test;
 
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Test;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
@@ -171,6 +172,8 @@ public class UpdateTest {
     @Test
     public void testDavCacheIsCleaned() throws Exception {
         final TestOptions options = TestOptions.getInstance();
+
+        Assume.assumeTrue(TestUtil.areAllApacheOptionsSpecified());
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
         final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testDavCacheIsCleaned", options);
