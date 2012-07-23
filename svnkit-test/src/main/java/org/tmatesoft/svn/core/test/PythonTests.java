@@ -233,7 +233,7 @@ public class PythonTests {
                 j++;
             } else {
                 j = jOriginal + 1;
-//                System.out.println("Can't find pair for commit " + commitInfoAfterJSVN.getCommitId());
+                System.out.println("Can't find pair for commit " + commitInfoAfterJSVN.getCommitId());
             }
         }
     }
