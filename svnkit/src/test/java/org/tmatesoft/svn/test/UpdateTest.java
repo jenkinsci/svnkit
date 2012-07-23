@@ -173,7 +173,7 @@ public class UpdateTest {
     public void testDavCacheIsCleaned() throws Exception {
         final TestOptions options = TestOptions.getInstance();
 
-        Assume.assumeTrue(TestUtil.areAllApacheOptionsSpecified());
+        Assume.assumeTrue(TestUtil.areAllApacheOptionsSpecified(options));
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
         final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testDavCacheIsCleaned", options);
