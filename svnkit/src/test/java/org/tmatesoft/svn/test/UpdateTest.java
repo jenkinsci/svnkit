@@ -2,11 +2,17 @@ package org.tmatesoft.svn.test;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.tmatesoft.sqljet.core.SqlJetException;
+import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
+import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
+import org.tmatesoft.sqljet.core.table.ISqlJetTable;
+import org.tmatesoft.sqljet.core.table.SqlJetDb;
 import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.wc.ISVNEventHandler;
-import org.tmatesoft.svn.core.wc.SVNEvent;
-import org.tmatesoft.svn.core.wc.SVNEventAction;
-import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
+import org.tmatesoft.svn.core.internal.io.dav.DAVUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNExternal;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
+import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.core.wc2.*;
 
 import java.io.File;
@@ -158,6 +164,64 @@ public class UpdateTest {
         } finally {
             svnOperationFactory.dispose();
             sandbox.dispose();
+        }
+    }
+
+
+    @Test
+    public void testDavCacheIsCleaned() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testDavCacheIsCleaned", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepositoryWithDavAccess();
+
+            final SVNExternal external = new SVNExternal("external", url.appendPath("file", false).toString(), SVNRevision.HEAD, SVNRevision.HEAD, false, false, true);
+
+            final CommitBuilder commitBuilder1 = new CommitBuilder(url);
+            commitBuilder1.addFile("file");
+
+            commitBuilder1.setDirectoryProperty("", SVNProperty.EXTERNALS, SVNPropertyValue.create(external.toString()));
+            commitBuilder1.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url);
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+
+            final CommitBuilder commitBuilder2 = new CommitBuilder(url);
+            commitBuilder2.changeFile("file", "contents".getBytes());
+            commitBuilder2.commit();
+
+            DAVUtil.setUseDAVWCURL(false);
+
+            final SvnUpdate update = svnOperationFactory.createUpdate();
+            update.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            update.run();
+
+            assertDavPropertiesAreCleaned(workingCopy);
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    private void assertDavPropertiesAreCleaned(WorkingCopy workingCopy) throws SqlJetException, SVNException {
+        final SqlJetDb db = SqlJetDb.open(workingCopy.getWCDbFile(), false);
+        try {
+            final ISqlJetTable table = db.getTable(SVNWCDbSchema.NODES.name());
+            db.beginTransaction(SqlJetTransactionMode.READ_ONLY);
+            final ISqlJetCursor cursor = table.open();
+
+            for (; !cursor.eof(); cursor.next()) {
+                final SVNProperties properties = SVNSqlJetStatement.parseProperties(cursor.getBlobAsArray(SVNWCDbSchema.NODES__Fields.dav_cache.name()));
+                final SVNPropertyValue wcUrlPropertyValue = properties == null ? null : properties.getSVNPropertyValue(SVNProperty.WC_URL);
+                Assert.assertNull(wcUrlPropertyValue);
+            }
+            cursor.close();
+            db.commit();
+        } finally {
+            db.close();
         }
     }
 
