@@ -21,6 +21,7 @@ import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.util.SVNLogType;
 
 
@@ -132,11 +133,21 @@ public class SVNURL {
             return null;
         }
         String path = repositoryPath.getAbsoluteFile().getAbsolutePath();
-        path = path.replace(File.separatorChar, '/');
+        String host = null;
+        if (SVNFileUtil.isWindows && path.startsWith("//") || path.startsWith("\\\\")) {
+            // this is UNC path, remove host.
+            path = path.replace(File.separatorChar, '/');
+            path = path.substring("//".length());
+            final int lastIndex = path.indexOf("/") > 0 ? path.indexOf("/") : path.length();
+            host = path.substring(0, lastIndex);
+            path = path.substring(host.length());
+        } else {
+            path = path.replace(File.separatorChar, '/');
+        }
         if (!path.startsWith("/")) {
             path = "/" + path;
         }
-        return SVNURL.parseURIDecoded("file://" + path);
+        return SVNURL.create("file", null, host, -1, path, false);
     }
     
     /**
