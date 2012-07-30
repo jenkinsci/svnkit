@@ -82,7 +82,6 @@ public class CredentialsTest {
     private DefaultSVNAuthenticationManager createAuthenticationManager(File configDirectory, final boolean storageAllowed, final String username, final String password) {
         final DefaultSVNAuthenticationManager defaultAuthenticationManager = new DefaultSVNAuthenticationManager(configDirectory, storageAllowed, null, null);
         defaultAuthenticationManager.setAuthenticationProvider(new ISVNAuthenticationProvider() {
-            @Override
             public SVNAuthentication requestClientAuthentication(String kind, SVNURL url, String realm, SVNErrorMessage errorMessage, SVNAuthentication previousAuth, boolean authMayBeStored) {
                 if (errorMessage != null && errorMessage.getErrorCode() == SVNErrorCode.RA_NOT_AUTHORIZED) {
                     return null;
@@ -90,7 +89,6 @@ public class CredentialsTest {
                 return new SVNPasswordAuthentication(username, password, storageAllowed, url, false);
             }
 
-            @Override
             public int acceptServerAuthentication(SVNURL url, String realm, Object certificate, boolean resultMayBeStored) {
                 return ACCEPTED;
             }
