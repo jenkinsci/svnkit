@@ -344,15 +344,15 @@ public class DefaultSVNPersistentAuthenticationProvider implements ISVNAuthentic
         if (!ISVNAuthenticationManager.PASSWORD.equals(kind)) {
             return !newValues.equals(oldValues);
         }
-        String newUsername = newValues.getStringValue("username");
-        String newPassType = newValues.getStringValue("passtype");
-        String newRealm = newValues.getStringValue("svn:realmstring");
+        String newUsername = SVNPropertyValue.getPropertyAsString(newValues.getSVNPropertyValue("username"));
+        String newPassType = SVNPropertyValue.getPropertyAsString(newValues.getSVNPropertyValue("passtype"));
+        String newRealm = SVNPropertyValue.getPropertyAsString(newValues.getSVNPropertyValue("svn:realmstring"));
         IPasswordStorage newPasswordStorage = getPasswordStorage(newPassType);
         String newPassword = newPasswordStorage == null ? null : newPasswordStorage.readPassword(newRealm, newUsername, newValues);
 
-        String oldUsername = oldValues.getStringValue("username");
-        String oldPassType = oldValues.getStringValue("passtype");
-        String oldRealm = oldValues.getStringValue("svn:realmstring");
+        String oldUsername = SVNPropertyValue.getPropertyAsString(oldValues.getSVNPropertyValue("username"));
+        String oldPassType = SVNPropertyValue.getPropertyAsString(oldValues.getSVNPropertyValue("passtype"));
+        String oldRealm = SVNPropertyValue.getPropertyAsString(oldValues.getSVNPropertyValue("svn:realmstring"));
         IPasswordStorage oldPasswordStorage = getPasswordStorage(oldPassType);
         String oldPassword = oldPasswordStorage == null ? null : oldPasswordStorage.readPassword(oldRealm, oldUsername, oldValues);
 
