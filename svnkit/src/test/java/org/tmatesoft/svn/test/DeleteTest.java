@@ -4,16 +4,19 @@ import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.tmatesoft.sqljet.core.SqlJetException;
+import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
+import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
+import org.tmatesoft.sqljet.core.table.ISqlJetTable;
+import org.tmatesoft.sqljet.core.table.SqlJetDb;
 import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
-import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
-import org.tmatesoft.svn.core.wc2.SvnRemoteDelete;
-import org.tmatesoft.svn.core.wc2.SvnScheduleForRemoval;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
+import org.tmatesoft.svn.core.wc2.*;
 
 import java.io.File;
 
@@ -144,6 +147,63 @@ public class DeleteTest {
         } finally {
             svnOperationFactory.dispose();
             sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testRemovalOfExcludedNodeDoesntAddBaseDeletedEntry() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testRemovalOfExcludedNodeDoesntAddBaseDeletedEntry", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addDirectory("directory/subdirectory");
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url);
+
+            final SvnUpdate update = svnOperationFactory.createUpdate();
+            update.setDepthIsSticky(true);
+            update.setDepth(SVNDepth.EXCLUDE);
+            update.setSingleTarget(SvnTarget.fromFile(workingCopy.getFile("directory/subdirectory")));
+            update.run();
+
+            final SvnScheduleForRemoval scheduleForRemoval = svnOperationFactory.createScheduleForRemoval();
+            scheduleForRemoval.setSingleTarget(SvnTarget.fromFile(workingCopy.getFile("directory")));
+            scheduleForRemoval.run();
+
+            isMarkedAsExcludedOnly(workingCopy, "directory/subdirectory");
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    private void isMarkedAsExcludedOnly(WorkingCopy workingCopy, String path) throws SqlJetException {
+        final SqlJetDb db = SqlJetDb.open(workingCopy.getWCDbFile(), false);
+        try {
+            final ISqlJetTable table = db.getTable(SVNWCDbSchema.NODES.name());
+            db.beginTransaction(SqlJetTransactionMode.READ_ONLY);
+            final ISqlJetCursor cursor = table.open();
+
+            for (; !cursor.eof(); cursor.next()) {
+                final String localRelpath = cursor.getString(SVNWCDbSchema.NODES__Fields.local_relpath.name());
+
+                if (!localRelpath.equals(path)) {
+                    continue;
+                }
+
+                final String presence = cursor.getString(SVNWCDbSchema.NODES__Fields.presence.name());
+                Assert.assertEquals("excluded", presence);
+            }
+            cursor.close();
+            db.commit();
+        } finally {
+            db.close();
         }
     }
 
