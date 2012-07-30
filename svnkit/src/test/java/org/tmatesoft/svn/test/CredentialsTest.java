@@ -1,6 +1,7 @@
 package org.tmatesoft.svn.test;
 
 import junit.framework.Assert;
+import org.junit.Assume;
 import org.junit.Test;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -23,6 +24,8 @@ public class CredentialsTest {
     @Test
     public void testPasswordIsNotRemovedIfStorePasswordsOptionIsFalse() throws Exception {
         final TestOptions testOptions = TestOptions.getInstance();
+
+        Assume.assumeTrue(TestUtil.areAllApacheOptionsSpecified(testOptions));
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
         final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testPasswordIsNotRemovedIfStorePasswordsOptionIsFalse", testOptions);
