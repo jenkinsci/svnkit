@@ -1727,7 +1727,7 @@ public class SVNClientImpl implements ISVNClient {
         }
         return new ISvnObjectReceiver<SvnStatus>() {
             public void receive(SvnTarget target, SvnStatus status) throws SVNException {
-                callback.doStatus(getFilePath(target.getFile()), getStatus(status));
+                callback.doStatus(target == null ? null : target.getPathOrUrlString(), getStatus(status));
             }
         };
     }
@@ -1853,7 +1853,7 @@ public class SVNClientImpl implements ISVNClient {
         }
         return new ISvnObjectReceiver<SVNProperties>() {
             public void receive(SvnTarget target, SVNProperties svnProperties) throws SVNException {
-                callback.singlePath(getFilePath(target.getFile()), getProperties(svnProperties));
+                callback.singlePath(target == null ? null : target.getPathOrUrlString(), getProperties(svnProperties));
             }
         };
     }
