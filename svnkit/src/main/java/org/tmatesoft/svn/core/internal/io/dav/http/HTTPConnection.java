@@ -163,29 +163,67 @@ class HTTPConnection implements IHTTPConnection {
             if (proxyManager != null && proxyManager.getProxyHost() != null) {
                 myRepository.getDebugLog().logFine(SVNLogType.NETWORK, "Using proxy " + proxyManager.getProxyHost() + " (secured=" + myIsSecured + ")");
                 mySocket = SVNSocketFactory.createPlainSocket(proxyManager.getProxyHost(), proxyManager.getProxyPort(), connectTimeout, readTimeout, myRepository.getCanceller());
-                if (myProxyAuthentication == null) {
-                    myProxyAuthentication = new HTTPBasicAuthentication(proxyManager.getProxyUserName(), proxyManager.getProxyPassword(), myCharset);
-                }
                 myIsProxied = true;
                 if (myIsSecured) {
-                    HTTPRequest connectRequest = new HTTPRequest(myCharset);
-                    connectRequest.setConnection(this);
-                    connectRequest.initCredentials(myProxyAuthentication, "CONNECT", host + ":" + port);
-                    connectRequest.setProxyAuthentication(myProxyAuthentication.authenticate());
-                    connectRequest.setForceProxyAuth(true);
-                    connectRequest.dispatch("CONNECT", host + ":" + port, null, 0, 0, null);
-                    HTTPStatus status = connectRequest.getStatus();
-                    if (status.getCode() == HttpURLConnection.HTTP_OK) {
-                        myInputStream = null;
-                        myOutputStream = null;
-                        mySocket = SVNSocketFactory.createSSLSocket(keyManager != null ? new KeyManager[] { keyManager } : new KeyManager[0], trustManager, host, port, mySocket, readTimeout);
-                        proxyManager.acknowledgeProxyContext(true, null);
-                        return;
+                    while(true) {
+                        HTTPRequest connectRequest = new HTTPRequest(myCharset);
+                        connectRequest.setConnection(this);
+                        
+                        if (myProxyAuthentication == null) {
+                            myProxyAuthentication = new HTTPBasicAuthentication(proxyManager.getProxyUserName(), proxyManager.getProxyPassword(), myCharset);
+                            connectRequest.initCredentials(myProxyAuthentication, "CONNECT", host + ":" + port);
+                        } 
+                        connectRequest.setProxyAuthentication(myProxyAuthentication.authenticate());
+                        connectRequest.setForceProxyAuth(true);
+                        connectRequest.dispatch("CONNECT", host + ":" + port, null, 0, 0, null);
+                        HTTPStatus status = connectRequest.getStatus();
+                        
+                        if (status.getCode() == HttpURLConnection.HTTP_OK) {
+                            myInputStream = null;
+                            myOutputStream = null;
+                            myProxyAuthentication = null;
+                            mySocket = SVNSocketFactory.createSSLSocket(keyManager != null ? new KeyManager[] { keyManager } : new KeyManager[0], trustManager, host, port, mySocket, readTimeout);
+                            proxyManager.acknowledgeProxyContext(true, null);
+                            return;
+                        } else if (status.getCode() == HttpURLConnection.HTTP_PROXY_AUTH) {
+                            Collection<String> proxyAuthHeaders = connectRequest.getResponseHeader().getHeaderValues(HTTPHeader.PROXY_AUTHENTICATE_HEADER);
+                            Collection<String> authTypes = null;
+                            if (authManager != null && authManager instanceof DefaultSVNAuthenticationManager) {
+                                DefaultSVNAuthenticationManager defaultAuthManager = (DefaultSVNAuthenticationManager) authManager;
+                                authTypes = defaultAuthManager.getAuthTypes(myRepository.getLocation());
+                            }
+                            try {
+                                myProxyAuthentication = HTTPAuthentication.parseAuthParameters(proxyAuthHeaders, myProxyAuthentication, myCharset, authTypes, null, myRequestCount); 
+                            } catch (SVNException svne) {
+                                myRepository.getDebugLog().logFine(SVNLogType.NETWORK, svne);
+                                close();
+                                throw svne;
+                            }
+                            if (myProxyAuthentication instanceof HTTPNTLMAuthentication) {
+                                HTTPNTLMAuthentication ntlmProxyAuth = (HTTPNTLMAuthentication) myProxyAuthentication;
+                                if (ntlmProxyAuth.isInType3State()) {
+                                    continue;
+                                }
+                            } else if (myProxyAuthentication instanceof HTTPNegotiateAuthentication) {
+                                HTTPNegotiateAuthentication negotiateProxyAuth = (HTTPNegotiateAuthentication) myProxyAuthentication;
+                                if (negotiateProxyAuth.isStarted()) {
+                                    continue;
+                                }
+                            }
+                            
+                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "HTTP proxy authorization failed");
+                            if (proxyManager != null) {
+                                proxyManager.acknowledgeProxyContext(false, err);
+                            }
+                            close();
+                            SVNErrorManager.error(err, SVNLogType.NETWORK);
+                            break;
+                        }                        
+                        SVNURL proxyURL = SVNURL.parseURIEncoded("http://" + proxyManager.getProxyHost() + ":" + proxyManager.getProxyPort());
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "{0} request failed on ''{1}''", new Object[] {"CONNECT", proxyURL});
+                        proxyManager.acknowledgeProxyContext(false, err);
+                        SVNErrorManager.error(err, connectRequest.getErrorMessage(), SVNLogType.NETWORK);
                     }
-                    SVNURL proxyURL = SVNURL.parseURIEncoded("http://" + proxyManager.getProxyHost() + ":" + proxyManager.getProxyPort());
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "{0} request failed on ''{1}''", new Object[] {"CONNECT", proxyURL});
-                    proxyManager.acknowledgeProxyContext(false, err);
-                    SVNErrorManager.error(err, connectRequest.getErrorMessage(), SVNLogType.NETWORK);
                 }
             } else {
                 myIsProxied = false;
@@ -468,7 +506,7 @@ class HTTPConnection implements IHTTPConnection {
 
                 if (myProxyAuthentication instanceof HTTPNTLMAuthentication) {
                     ntlmProxyAuthIsRequired = true;
-                    HTTPNTLMAuthentication ntlmProxyAuth = (HTTPNTLMAuthentication)myProxyAuthentication;
+                    HTTPNTLMAuthentication ntlmProxyAuth = (HTTPNTLMAuthentication) myProxyAuthentication;
                     if (ntlmProxyAuth.isInType3State()) {
                         continue;
                     }
