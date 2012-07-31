@@ -11,36 +11,106 @@
  */
 package org.tmatesoft.svn.core.internal.wc17;
 
-import de.regnis.q.sequence.line.QSequenceLineRAByteData;
-import de.regnis.q.sequence.line.QSequenceLineRAData;
-import de.regnis.q.sequence.line.QSequenceLineRAFileData;
-import org.tmatesoft.svn.core.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.RandomAccessFile;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.Stack;
+import java.util.logging.Level;
+
+import org.tmatesoft.svn.core.SVNCancelException;
+import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNMergeRangeList;
+import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb.Mode;
-import org.tmatesoft.svn.core.internal.util.*;
-import org.tmatesoft.svn.core.internal.wc.*;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
+import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.util.SVNSkel;
+import org.tmatesoft.svn.core.internal.wc.FSMergerBySequence;
+import org.tmatesoft.svn.core.internal.wc.SVNConflictVersion;
+import org.tmatesoft.svn.core.internal.wc.SVNDiffConflictChoiceStyle;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileType;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumOutputStream;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
-import org.tmatesoft.svn.core.internal.wc17.db.*;
-import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.*;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbLock;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbOpenMode;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbAdditionInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbAdditionInfo.AdditionInfoField;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbBaseInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbBaseInfo.BaseInfoField;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbDeletionInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbDeletionInfo.DeletionInfoField;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo.RepositoryInfoField;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbWorkQueueInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.DirParsedInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.ReposInfo;
-import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.*;
+import org.tmatesoft.svn.core.internal.wc17.db.Structure;
+import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.AdditionInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.DeletionInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeOriginInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.PristineInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.WalkerChildInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbReader;
+import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbShared;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldUpgrade;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.wc.ISVNConflictHandler;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
+import org.tmatesoft.svn.core.wc.ISVNMerger;
+import org.tmatesoft.svn.core.wc.ISVNOptions;
+import org.tmatesoft.svn.core.wc.SVNConflictAction;
+import org.tmatesoft.svn.core.wc.SVNConflictChoice;
+import org.tmatesoft.svn.core.wc.SVNConflictDescription;
+import org.tmatesoft.svn.core.wc.SVNConflictReason;
+import org.tmatesoft.svn.core.wc.SVNConflictResult;
+import org.tmatesoft.svn.core.wc.SVNDiffOptions;
+import org.tmatesoft.svn.core.wc.SVNEvent;
+import org.tmatesoft.svn.core.wc.SVNEventAction;
+import org.tmatesoft.svn.core.wc.SVNMergeFileSet;
+import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.core.wc2.ISvnMerger;
 import org.tmatesoft.svn.core.wc2.SvnChecksum;
 import org.tmatesoft.svn.core.wc2.SvnMergeResult;
 import org.tmatesoft.svn.util.SVNLogType;
 
-import java.io.*;
-import java.util.*;
-import java.util.logging.Level;
+import de.regnis.q.sequence.line.QSequenceLineRAByteData;
+import de.regnis.q.sequence.line.QSequenceLineRAData;
+import de.regnis.q.sequence.line.QSequenceLineRAFileData;
 
 import static org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.isAbsolute;
 
@@ -598,7 +668,7 @@ public class SVNWCContext {
         
         TranslateInfo translateInfo = null;
         if (hasProps) {
-            translateInfo = getTranslateInfo(localAbsPath, true, true, true);
+            translateInfo = getTranslateInfo(localAbsPath, true, true, true, true);
             translationRequired = isTranslationRequired(translateInfo.eolStyleInfo.eolStyle, translateInfo.eolStyleInfo.eolStr, translateInfo.keywords, translateInfo.special, true);
         }
         if (!translationRequired && SVNFileUtil.getFileLength(localAbsPath) != pristineFile.length()) {
@@ -840,20 +910,24 @@ public class SVNWCContext {
     public static class TranslateInfo {
 
         public SVNEolStyleInfo eolStyleInfo;
+        public String charset;
         public Map<String, byte[]> keywords;
         public boolean special;
     }
-    public TranslateInfo getTranslateInfo(File localAbspath, boolean fetchEolStyle, boolean fetchKeywords, boolean fetchSpecial) throws SVNException {
-        return getTranslateInfo(localAbspath, null, false, fetchEolStyle, fetchKeywords, fetchSpecial);
+    public TranslateInfo getTranslateInfo(File localAbspath, boolean fetchEolStyle, boolean fetchCharset, boolean fetchKeywords, boolean fetchSpecial) throws SVNException {
+        return getTranslateInfo(localAbspath, null, false, fetchEolStyle, fetchCharset, fetchKeywords, fetchSpecial);
     }
 
-    public TranslateInfo getTranslateInfo(File localAbspath, SVNProperties props, boolean forNormalization, boolean fetchEolStyle, boolean fetchKeywords, boolean fetchSpecial) throws SVNException {
+    public TranslateInfo getTranslateInfo(File localAbspath, SVNProperties props, boolean forNormalization, boolean fetchEolStyle, boolean fetchCharset, boolean fetchKeywords, boolean fetchSpecial) throws SVNException {
         TranslateInfo info = new TranslateInfo();
         if (props == null) {
             props = getActualProperties(localAbspath);
         }
         if (fetchEolStyle) {
             info.eolStyleInfo = SVNEolStyleInfo.fromValue(props.getStringValue(SVNProperty.EOL_STYLE));
+        }
+        if (fetchCharset) {
+            info.charset = SVNTranslator.getCharset(props.getStringValue(SVNProperty.CHARSET), props.getStringValue(SVNProperty.MIME_TYPE), localAbspath, getOptions());
         }
         if (fetchKeywords) {
             String keywordsProp = props.getStringValue(SVNProperty.KEYWORDS);
@@ -893,7 +967,7 @@ public class SVNWCContext {
             url = "";
             changedRev = INVALID_REVNUM;
             changedDate = SVNDate.NULL;
-            changedAuthor = "";            
+            changedAuthor = "";
         }
         return SVNTranslator.computeKeywords(keywordsList, url, changedAuthor, changedDate.format(), Long.toString(changedRev), getOptions());
     }
@@ -2463,7 +2537,7 @@ public class SVNWCContext {
     public InputStream getTranslatedStream(File localAbspath, File versionedAbspath, boolean translateToNormalForm, boolean repairEOL) throws SVNException {
         assert (SVNFileUtil.isAbsolute(localAbspath));
         assert (SVNFileUtil.isAbsolute(versionedAbspath));
-        TranslateInfo translateInfo = getTranslateInfo(localAbspath, true, true, true);
+        TranslateInfo translateInfo = getTranslateInfo(localAbspath, true, true, true, true);
         boolean special = translateInfo.special;
         SVNEolStyle eolStyle = translateInfo.eolStyleInfo.eolStyle;
         byte[] eolStr = translateInfo.eolStyleInfo.eolStr;
@@ -2471,7 +2545,7 @@ public class SVNWCContext {
         if (special) {
             return readSpecialFile(localAbspath);
         }
-        String charset = getCharset(localAbspath);
+        String charset = translateInfo.charset;
         boolean translationRequired = special || keywords != null || eolStyle != null || charset != null;
         if (translationRequired) {
             if (translateToNormalForm) {
@@ -2492,9 +2566,10 @@ public class SVNWCContext {
 
     public File getTranslatedFile(File src, File versionedAbspath, boolean toNormalFormat, boolean forceEOLRepair, boolean useGlobalTmp, boolean forceCopy) throws SVNException {
         assert (SVNFileUtil.isAbsolute(versionedAbspath));
-        TranslateInfo translateInfo = getTranslateInfo(versionedAbspath, true, true, true);
+        TranslateInfo translateInfo = getTranslateInfo(versionedAbspath, true, true, true, true);
         SVNEolStyle style = translateInfo.eolStyleInfo.eolStyle;
         byte[] eol = translateInfo.eolStyleInfo.eolStr;
+        String charset = translateInfo.charset;
         Map<String, byte[]> keywords = translateInfo.keywords;
         boolean special = translateInfo.special;
         File xlated_path;
@@ -2523,7 +2598,7 @@ public class SVNWCContext {
                     SVNErrorManager.error(err, SVNLogType.WC);
                 }
             }
-            SVNTranslator.copyAndTranslate(src, tmpVFile, null, eol, keywords, special, expand, repairForced);
+            SVNTranslator.copyAndTranslate(src, tmpVFile, charset, eol, keywords, special, expand, repairForced);
             xlated_path = tmpVFile;
         }
         return xlated_path.getAbsoluteFile();
@@ -2669,42 +2744,49 @@ public class SVNWCContext {
         }
         SVNEolStyle style;
         byte[] eol;
+        String charset;
         Map<String, byte[]> keywords;
         boolean special;
         if (isBinary && (((prop = propDiff.getSVNPropertyValue(SVNProperty.MIME_TYPE)) != null && prop.isString() && mimeTypeIsBinary(prop.getString())) || prop == null)) {
             keywords = null;
             special = false;
             eol = null;
+            charset = null;
             style = SVNEolStyle.None;
         } else if ((!isBinary) && (prop = propDiff.getSVNPropertyValue(SVNProperty.MIME_TYPE)) != null && prop.isString() && mimeTypeIsBinary(prop.getString())) {
             if (kind == SVNWCDbKind.File) {
-                TranslateInfo translateInfo = getTranslateInfo(targetAbspath, true, true, true);
+                TranslateInfo translateInfo = getTranslateInfo(targetAbspath, true, true, true, true);
                 style = translateInfo.eolStyleInfo.eolStyle;
                 eol = translateInfo.eolStyleInfo.eolStr;
+                charset = translateInfo.charset;
                 special = translateInfo.special;
                 keywords = translateInfo.keywords;
             } else {
                 special = false;
                 keywords = null;
                 eol = null;
+                charset = null;
                 style = SVNEolStyle.None;
             }
         } else {
             if (kind == SVNWCDbKind.File) {
-                TranslateInfo translateInfo = getTranslateInfo(targetAbspath, true, true, true);
+                TranslateInfo translateInfo = getTranslateInfo(targetAbspath, true, true, true, true);
                 style = translateInfo.eolStyleInfo.eolStyle;
                 eol = translateInfo.eolStyleInfo.eolStr;
+                charset = translateInfo.charset;
                 special = translateInfo.special;
                 keywords = translateInfo.keywords;
             } else {
                 special = false;
                 keywords = null;
                 eol = null;
+                charset = null;
                 style = SVNEolStyle.None;
             }
             if (special) {
                 keywords = null;
                 eol = null;
+                charset = null;
                 style = SVNEolStyle.None;
             } else {
                 if ((prop = propDiff.getSVNPropertyValue(SVNProperty.EOL_STYLE)) != null && prop.isString()) {
@@ -2721,7 +2803,7 @@ public class SVNWCContext {
                 }
             }
         }
-        if (forceCopy || keywords != null || eol != null || special) {
+        if (forceCopy || keywords != null || eol != null || charset != null || special) {
             File detranslated = openUniqueFile(getDb().getWCRootTempDir(targetAbspath), false).path;
             if (style == SVNEolStyle.Native) {
                 eol = SVNEolStyleInfo.LF_EOL_STR;
@@ -2729,7 +2811,7 @@ public class SVNWCContext {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_UNKNOWN_EOL);
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
-            SVNTranslator.copyAndTranslate(sourceAbspath, detranslated, null, eol, keywords, special, false, true);
+            SVNTranslator.copyAndTranslate(sourceAbspath, detranslated, charset, eol, keywords, special, false, true);
             return detranslated.getAbsoluteFile();
         }
         return sourceAbspath;
@@ -2794,7 +2876,7 @@ public class SVNWCContext {
         } else if (copyfromText != null) {
             info.mergeOutcome = SVNStatusType.MERGED;
         } else {
-            boolean special = getTranslateInfo(targetAbspath, false, false, true).special;
+            boolean special = getTranslateInfo(targetAbspath, false, false, false, true).special;
             boolean same = SVNFileUtil.compareFiles(resultTarget, (special ? detranslatedTargetAbspath : targetAbspath), null);
             info.mergeOutcome = same ? SVNStatusType.UNCHANGED : SVNStatusType.MERGED;
         }
@@ -3368,8 +3450,8 @@ public class SVNWCContext {
             } else {
                 srcPath = SVNFileUtil.createFilePath(wcRootAbspath, workItem.getChild(4).getValue());
             }
-            TranslateInfo tinfo = ctx.getTranslateInfo(localAbspath, true, true, true);
-            SVNTranslator.translate(srcPath, localAbspath, null, tinfo.eolStyleInfo.eolStr, tinfo.keywords, tinfo.special, true);
+            TranslateInfo tinfo = ctx.getTranslateInfo(localAbspath, true, true, true, true);
+            SVNTranslator.translate(srcPath, localAbspath, tinfo.charset, tinfo.eolStyleInfo.eolStr, tinfo.keywords, tinfo.special, true);
             if (tinfo.special) {
                 return;
             }
@@ -3391,7 +3473,7 @@ public class SVNWCContext {
         public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) throws SVNException {
             File localAbspath = SVNFileUtil.createFilePath(wcRootAbspath, workItem.getChild(1).getValue());
             File tmpFile = ctx.getTranslatedFile(localAbspath, localAbspath, false, false, false, false);
-            TranslateInfo info = ctx.getTranslateInfo(localAbspath, false, false, true);
+            TranslateInfo info = ctx.getTranslateInfo(localAbspath, false, false, false, true);
             boolean sameContents = false;
             boolean overwroteWorkFile = false;
             if ((info == null || !info.special) && !tmpFile.equals(localAbspath)) {
@@ -3448,8 +3530,8 @@ public class SVNWCContext {
             File localAbspath = SVNFileUtil.createFilePath(wcRootAbspath, workItem.getChild(1).getValue());
             File srcAbspath = SVNFileUtil.createFilePath(wcRootAbspath, workItem.getChild(2).getValue());
             File dstAbspath = SVNFileUtil.createFilePath(wcRootAbspath, workItem.getChild(3).getValue());
-            TranslateInfo tinf = ctx.getTranslateInfo(localAbspath, true, true, true);
-            SVNTranslator.copyAndTranslate(srcAbspath, dstAbspath, null, tinf.eolStyleInfo.eolStr, tinf.keywords, tinf.special, true, true);
+            TranslateInfo tinf = ctx.getTranslateInfo(localAbspath, true, true, true, true);
+            SVNTranslator.copyAndTranslate(srcAbspath, dstAbspath, tinf.charset, tinf.eolStyleInfo.eolStr, tinf.keywords, tinf.special, true, true);
         }
     }
 

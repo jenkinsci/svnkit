@@ -2027,7 +2027,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             mergeFileInfo.contentState = mergeInfo.mergeOutcome;
         } else {
             magicPropsChanged = myWCContext.hasMagicProperty(propChanges);
-            TranslateInfo translateInfo = myWCContext.getTranslateInfo(fb.localAbsolutePath, actualProps, true, false, true, false);
+            TranslateInfo translateInfo = myWCContext.getTranslateInfo(fb.localAbsolutePath, actualProps, true, false, false, true, false);
             if (magicPropsChanged || (translateInfo.keywords != null && !translateInfo.keywords.isEmpty())) {
                 if (isLocallyModified) {
                     File tmpText = null;
