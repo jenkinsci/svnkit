@@ -154,6 +154,8 @@ public class DeleteTest {
     public void testRemovalOfExcludedNodeDoesntAddBaseDeletedEntry() throws Exception {
         final TestOptions options = TestOptions.getInstance();
 
+        Assume.assumeTrue(TestUtil.isNewWorkingCopyTest());
+
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
         final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testRemovalOfExcludedNodeDoesntAddBaseDeletedEntry", options);
         try {

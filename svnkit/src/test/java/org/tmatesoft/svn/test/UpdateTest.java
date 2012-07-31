@@ -173,6 +173,7 @@ public class UpdateTest {
     public void testDavCacheIsCleaned() throws Exception {
         final TestOptions options = TestOptions.getInstance();
 
+        Assume.assumeTrue(TestUtil.isNewWorkingCopyTest());
         Assume.assumeTrue(TestUtil.areAllApacheOptionsSpecified(options));
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();

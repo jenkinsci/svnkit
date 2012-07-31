@@ -828,6 +828,8 @@ public class MergeTest {
     public void testMergeRecordsActualPropertiesForFileWithMergeInfo() throws Exception {
         final TestOptions options = TestOptions.getInstance();
 
+        Assume.assumeTrue(TestUtil.isNewWorkingCopyTest());
+
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
         final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testMergeRecordsActualPropertiesForFileWithMergeInfo", options);
         try {

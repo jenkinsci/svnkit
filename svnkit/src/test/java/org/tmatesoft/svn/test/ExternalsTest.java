@@ -1,6 +1,7 @@
 package org.tmatesoft.svn.test;
 
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Test;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.svn.core.SVNProperty;
@@ -18,6 +19,8 @@ public class ExternalsTest {
     @Test
     public void testFileExternalDeletedTogetherWithPropertyOwner() throws Exception {
         final TestOptions options = TestOptions.getInstance();
+
+        Assume.assumeTrue(TestUtil.isNewWorkingCopyTest());
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
         final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testFileExternalDeletedTogetherWithPropertyOwner", options);
@@ -69,6 +72,8 @@ public class ExternalsTest {
     @Test
     public void testExternalTargetChangeDoesntProduceConflictingInformation() throws Exception {
         final TestOptions options = TestOptions.getInstance();
+
+        Assume.assumeTrue(TestUtil.isNewWorkingCopyTest());
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
         final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testExternalTargetChangeDoesntProduceConflictingInformation", options);
