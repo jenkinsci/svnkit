@@ -232,6 +232,67 @@ public class StatusTest {
         }
     }
 
+    @Test
+    public void testCombinedNodeAndContentsStatus() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testCombinedNodeAndContentsStatus", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder1 = new CommitBuilder(url);
+            commitBuilder1.addFile("notModifiedFile");
+            commitBuilder1.addFile("modifiedFile");
+            commitBuilder1.addFile("deletedFile");
+            commitBuilder1.commit();
+
+            final CommitBuilder commitBuilder2 = new CommitBuilder(url);
+            commitBuilder2.changeFile("modifiedFile", "contents".getBytes());
+            commitBuilder2.delete("deletedFile");
+            commitBuilder2.addFile("addedFile");
+            commitBuilder2.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, 1);
+
+            final SVNClientManager clientManager = SVNClientManager.newInstance();
+            try {
+                final SVNStatusClient statusClient = clientManager.getStatusClient();
+                statusClient.doStatus(workingCopy.getWorkingCopyDirectory(),
+                        SVNRevision.HEAD,
+                        SVNDepth.INFINITY,
+                        true,
+                        true,
+                        false,
+                        false,
+                        new ISVNStatusHandler() {
+                            public void handleStatus(SVNStatus status) throws SVNException {
+                                final File file = status.getFile();
+                                if (file.getName().endsWith("addedFile")) {
+                                    Assert.assertEquals(SVNStatusType.STATUS_ADDED, status.getCombinedRemoteNodeAndContentsStatus());
+                                } else if (file.getName().endsWith("deletedFile")) {
+                                    Assert.assertEquals(SVNStatusType.STATUS_DELETED, status.getCombinedRemoteNodeAndContentsStatus());
+                                } else if (file.getName().endsWith("modifiedFile")) {
+                                    Assert.assertEquals(SVNStatusType.STATUS_MODIFIED, status.getCombinedRemoteNodeAndContentsStatus());
+                                } else if (file.getName().endsWith("notModifiedFile")) {
+                                    Assert.assertEquals(SVNStatusType.STATUS_NONE, status.getCombinedRemoteNodeAndContentsStatus());
+                                }
+                            }
+                        },
+                        null);
+
+
+            } finally {
+                clientManager.dispose();
+            }
+
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
     private String getTestName() {
         return "StatusTest";
     }

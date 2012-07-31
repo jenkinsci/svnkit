@@ -17,6 +17,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 
 import java.io.File;
 import java.util.Date;
@@ -771,22 +772,30 @@ public class SVNStatus {
     }
     
     public SVNStatusType getCombinedNodeAndContentsStatus() {
-        if (getNodeStatus() == SVNStatusType.STATUS_CONFLICTED) {
-            if (!isVersioned() && isConflicted()) {
-                return SVNStatusType.STATUS_MISSING;
+        if (getWorkingCopyFormat() == ISVNWCDb.WC_FORMAT_17) {
+            if (getNodeStatus() == SVNStatusType.STATUS_CONFLICTED) {
+                if (!isVersioned() && isConflicted()) {
+                    return SVNStatusType.STATUS_MISSING;
+                }
+                return getContentsStatus();
+            } else if (getNodeStatus() == SVNStatusType.STATUS_MODIFIED) {
+                return getContentsStatus();
             }
-            return getContentsStatus();
-        } else if (getNodeStatus() == SVNStatusType.STATUS_MODIFIED) {
+            return getNodeStatus();
+        } else {
             return getContentsStatus();
         }
-        return getNodeStatus();
     }
 
     public SVNStatusType getCombinedRemoteNodeAndContentsStatus() {
-        if (getRemoteNodeStatus() == SVNStatusType.STATUS_MODIFIED) {
+        if (getWorkingCopyFormat() == ISVNWCDb.WC_FORMAT_17) {
+            if (getRemoteNodeStatus() == SVNStatusType.STATUS_MODIFIED) {
+                return getRemoteContentsStatus();
+            }
+            return getRemoteNodeStatus();
+        } else {
             return getRemoteContentsStatus();
         }
-        return getRemoteNodeStatus();
     }
 
     public SVNStatusType getNodeStatus() {
