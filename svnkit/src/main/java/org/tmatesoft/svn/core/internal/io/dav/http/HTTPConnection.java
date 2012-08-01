@@ -165,15 +165,14 @@ class HTTPConnection implements IHTTPConnection {
                 mySocket = SVNSocketFactory.createPlainSocket(proxyManager.getProxyHost(), proxyManager.getProxyPort(), connectTimeout, readTimeout, myRepository.getCanceller());
                 myIsProxied = true;
                 if (myIsSecured) {
+                    int authAttempts = 0;
+                    boolean credentialsUsed = false;
                     while(true) {
                         HTTPRequest connectRequest = new HTTPRequest(myCharset);
                         connectRequest.setConnection(this);
-                        
-                        if (myProxyAuthentication == null) {
-                            myProxyAuthentication = new HTTPBasicAuthentication(proxyManager.getProxyUserName(), proxyManager.getProxyPassword(), myCharset);
-                            connectRequest.initCredentials(myProxyAuthentication, "CONNECT", host + ":" + port);
-                        } 
-                        connectRequest.setProxyAuthentication(myProxyAuthentication.authenticate());
+                        if (myProxyAuthentication != null) {
+                            connectRequest.setProxyAuthentication(myProxyAuthentication.authenticate());
+                        }
                         connectRequest.setForceProxyAuth(true);
                         connectRequest.dispatch("CONNECT", host + ":" + port, null, 0, 0, null);
                         HTTPStatus status = connectRequest.getStatus();
@@ -186,6 +185,10 @@ class HTTPConnection implements IHTTPConnection {
                             proxyManager.acknowledgeProxyContext(true, null);
                             return;
                         } else if (status.getCode() == HttpURLConnection.HTTP_PROXY_AUTH) {
+                            if (hasToCloseConnection(connectRequest.getResponseHeader())) {
+                                close();
+                            }
+                            authAttempts++;
                             Collection<String> proxyAuthHeaders = connectRequest.getResponseHeader().getHeaderValues(HTTPHeader.PROXY_AUTHENTICATE_HEADER);
                             Collection<String> authTypes = null;
                             if (authManager != null && authManager instanceof DefaultSVNAuthenticationManager) {
@@ -199,25 +202,40 @@ class HTTPConnection implements IHTTPConnection {
                                 close();
                                 throw svne;
                             }
+                            connectRequest.initCredentials(myProxyAuthentication, "CONNECT", host + ":" + port);
+                            
+                            HTTPNTLMAuthentication ntlmProxyAuth = null;
+                            HTTPNegotiateAuthentication negotiateProxyAuth = null;
                             if (myProxyAuthentication instanceof HTTPNTLMAuthentication) {
-                                HTTPNTLMAuthentication ntlmProxyAuth = (HTTPNTLMAuthentication) myProxyAuthentication;
+                                ntlmProxyAuth = (HTTPNTLMAuthentication) myProxyAuthentication;
                                 if (ntlmProxyAuth.isInType3State()) {
                                     continue;
                                 }
                             } else if (myProxyAuthentication instanceof HTTPNegotiateAuthentication) {
-                                HTTPNegotiateAuthentication negotiateProxyAuth = (HTTPNegotiateAuthentication) myProxyAuthentication;
+                                negotiateProxyAuth = (HTTPNegotiateAuthentication) myProxyAuthentication;
                                 if (negotiateProxyAuth.isStarted()) {
                                     continue;
                                 }
                             }
                             
-                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "HTTP proxy authorization failed");
-                            if (proxyManager != null) {
-                                proxyManager.acknowledgeProxyContext(false, err);
+                            if (ntlmProxyAuth != null && ntlmProxyAuth.isNative() && authAttempts == 1) {
+                                continue;
                             }
-                            close();
-                            SVNErrorManager.error(err, SVNLogType.NETWORK);
-                            break;
+                            if (negotiateProxyAuth != null && !negotiateProxyAuth.needsLogin()) {
+                                continue;
+                            }
+
+                            if (!credentialsUsed) {
+                                myProxyAuthentication.setCredentials(new SVNPasswordAuthentication(proxyManager.getProxyUserName(), 
+                                        proxyManager.getProxyPassword(), false, myRepository.getLocation(), false));
+                                credentialsUsed = true;
+                            } else {
+                                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "HTTP proxy authorization failed");
+                                if (proxyManager != null) {
+                                    proxyManager.acknowledgeProxyContext(false, err);
+                                }
+                                SVNErrorManager.error(err, SVNLogType.NETWORK);
+                            }
                         }                        
                         SVNURL proxyURL = SVNURL.parseURIEncoded("http://" + proxyManager.getProxyHost() + ":" + proxyManager.getProxyPort());
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "{0} request failed on ''{1}''", new Object[] {"CONNECT", proxyURL});
