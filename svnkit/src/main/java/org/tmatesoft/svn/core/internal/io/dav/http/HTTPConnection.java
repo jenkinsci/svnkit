@@ -170,6 +170,10 @@ class HTTPConnection implements IHTTPConnection {
                     int authAttempts = 0;
                     boolean credentialsUsed = false;
                     while(true) {
+                        if (mySocket == null) {
+                            mySocket = SVNSocketFactory.createPlainSocket(proxyManager.getProxyHost(), proxyManager.getProxyPort(), connectTimeout, readTimeout, myRepository.getCanceller());
+                            debugLog.logFine(SVNLogType.NETWORK, "proxy connection reopened");
+                        }
                         HTTPRequest connectRequest = new HTTPRequest(myCharset);
                         connectRequest.setConnection(this);
                         if (myProxyAuthentication != null) {
