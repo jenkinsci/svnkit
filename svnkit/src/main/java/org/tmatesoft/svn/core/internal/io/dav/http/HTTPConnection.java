@@ -254,11 +254,12 @@ class HTTPConnection implements IHTTPConnection {
                                 }
                                 SVNErrorManager.error(err, SVNLogType.NETWORK);
                             }
-                        }                        
-                        SVNURL proxyURL = SVNURL.parseURIEncoded("http://" + proxyManager.getProxyHost() + ":" + proxyManager.getProxyPort());
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "{0} request failed on ''{1}''", new Object[] {"CONNECT", proxyURL});
-                        proxyManager.acknowledgeProxyContext(false, err);
-                        SVNErrorManager.error(err, connectRequest.getErrorMessage(), SVNLogType.NETWORK);
+                        } else {                        
+                            SVNURL proxyURL = SVNURL.parseURIEncoded("http://" + proxyManager.getProxyHost() + ":" + proxyManager.getProxyPort());
+                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "{0} request failed on ''{1}''", new Object[] {"CONNECT", proxyURL});
+                            proxyManager.acknowledgeProxyContext(false, err);
+                            SVNErrorManager.error(err, connectRequest.getErrorMessage(), SVNLogType.NETWORK);
+                        }
                     }
                 }
             } else {
