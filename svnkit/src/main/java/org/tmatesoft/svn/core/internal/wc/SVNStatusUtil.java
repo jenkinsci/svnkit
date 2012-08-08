@@ -184,6 +184,10 @@ public class SVNStatusUtil {
             if (status.getURL() != null && status.getRepositoryRelativePath() == null && reposRoot != null) {
                 status.setRepositoryRelativePath(SVNURLUtil.getRelativeURL(reposRoot, status.getURL(), false));
             }
+            if (treeConflict != null) {
+                status.setNodeStatus(SVNStatusType.STATUS_CONFLICTED);
+                status.setIsConflicted(true);
+            }
 
             return status;
         }
@@ -294,6 +298,9 @@ public class SVNStatusUtil {
         status.setRepositoryRootURL(reposRoot);
         if (reposRoot != null && status.getURL() != null && status.getRepositoryRelativePath() == null) {
             status.setRepositoryRelativePath(SVNURLUtil.getRelativeURL(reposRoot, status.getURL(), false));
+        }
+        if (textStatus == SVNStatusType.STATUS_CONFLICTED || propStatus == SVNStatusType.STATUS_CONFLICTED || treeConflict != null) {
+            status.setIsConflicted(true);
         }
         return status;
     }

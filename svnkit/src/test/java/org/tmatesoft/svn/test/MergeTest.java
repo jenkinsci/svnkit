@@ -156,6 +156,12 @@ public class MergeTest {
             final SvnSchedule schedule = svnInfo.getWcInfo().getSchedule();
             Assert.assertEquals(SvnSchedule.NORMAL, schedule);
 
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopy.getWorkingCopyDirectory());
+            final SvnStatus fileStatus = statuses.get(file);
+
+            Assert.assertTrue(fileStatus.isConflicted());
+            Assert.assertEquals(SVNStatusType.STATUS_CONFLICTED, fileStatus.getNodeStatus());
+
         } finally {
             svnOperationFactory.dispose();
             sandbox.dispose();
