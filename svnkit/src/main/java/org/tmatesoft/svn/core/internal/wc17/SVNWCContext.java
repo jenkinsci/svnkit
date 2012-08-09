@@ -660,7 +660,7 @@ public class SVNWCContext {
         return modified;
     }
         
-    private boolean compareAndVerify(File localAbsPath, File pristineFile, boolean hasProps, boolean propMods, boolean exactComparison) throws SVNException {
+    public boolean compareAndVerify(File localAbsPath, File pristineFile, boolean hasProps, boolean propMods, boolean exactComparison) throws SVNException {
         if (propMods) {
             hasProps = true;
         }
