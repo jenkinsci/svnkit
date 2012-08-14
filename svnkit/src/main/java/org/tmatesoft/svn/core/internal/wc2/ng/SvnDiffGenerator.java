@@ -678,7 +678,12 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
             setEOL(SVNProperty.EOL_LF_BYTES);
         }
         if (getEncoding() == null) {
-            setEncoding("UTF-8");
+            final ISVNOptions options = getOptions();
+            if (options != null && options.getNativeCharset() != null) {
+                setEncoding(options.getNativeCharset());
+            } else {
+                setEncoding("UTF-8");
+            }
         }
     }
 
