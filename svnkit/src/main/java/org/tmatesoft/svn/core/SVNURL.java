@@ -11,18 +11,18 @@
  */
 package org.tmatesoft.svn.core;
 
-import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.Map;
-import java.util.StringTokenizer;
-
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.util.SVNLogType;
+
+import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.Map;
+import java.util.StringTokenizer;
 
 
 /**
@@ -237,13 +237,13 @@ public class SVNURL {
         if ("file".equals(myProtocol)) {
             String normalizedPath = norlmalizeURLPath(url, url.substring("file://".length()));
             int slashInd = normalizedPath.indexOf('/');
-            if (slashInd == -1) {
+            if (slashInd == -1 && normalizedPath.length() > 0) {
                 //no path, only host - follow subversion behaviour
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "Local URL ''{0}'' contains only a hostname, no path", url);
                 SVNErrorManager.error(err, SVNLogType.DEFAULT);
             }
             
-            myPath = normalizedPath.substring(slashInd);
+            myPath = slashInd == -1 ? "" : normalizedPath.substring(slashInd);
             if (normalizedPath.equals(myPath)) {
                 myHost = "";
             } else {
@@ -552,7 +552,7 @@ public class SVNURL {
         if (path != null && !path.startsWith("/")) {
             path = '/' + path;
         }
-        if ("/".equals(path)) {
+        if ("/".equals(path) && !"file".equals(protocol)) {
             path = "";
         }
         url.append(path);
