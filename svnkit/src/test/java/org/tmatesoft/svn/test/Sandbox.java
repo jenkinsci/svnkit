@@ -208,7 +208,7 @@ public class Sandbox {
             }
 
             TestUtil.writeFileContentsString(activeAuthzFile, contents);
-            //no reload is required
+            svnserveProcess.reload();
             return activeAuthzFile;
         }
 

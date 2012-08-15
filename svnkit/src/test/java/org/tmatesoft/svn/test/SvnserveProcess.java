@@ -79,6 +79,11 @@ public class SvnserveProcess {
         SVNFileUtil.deleteAll(tempDirectory, true);
     }
 
+    public void reload() {
+        stop();
+        start();
+    }
+
     private void start() {
         svnserve();
         try {
