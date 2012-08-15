@@ -98,7 +98,7 @@ public class CommitBuilder {
         addFileByCopying(path, copyFromPath, -1);
     }
 
-    private void addFileByCopying(String path, String copyFromPath, long copyFromRevision) {
+    public void addFileByCopying(String path, String copyFromPath, long copyFromRevision) {
         filesToCopyFromPath.put(path, copyFromPath);
         filesToCopyFromRevision.put(path, copyFromRevision);
     }
@@ -259,7 +259,7 @@ public class CommitBuilder {
         final long copyRevisionSpecified = copyRevisionLong == null ? -1 : copyRevisionLong;
         final long copyRevision = copyRevisionSpecified == -1 ? latestRevision : copyRevisionSpecified;
         commitEditor.addFile(file, copySource, copyRevision);
-        final byte[] originalContents = getOriginalContents(copySource);
+        final byte[] originalContents = getOriginalContents(copySource, copyRevision);
         final String checksum = TestUtil.md5(originalContents);
         commitEditor.closeFile(file, checksum);
     }
@@ -276,7 +276,7 @@ public class CommitBuilder {
 
     private void changeFile(ISVNEditor commitEditor, String file, byte[] newContents) throws SVNException {
         final SVNDeltaGenerator deltaGenerator = new SVNDeltaGenerator();
-        final byte[] originalContents = getOriginalContents(file);
+        final byte[] originalContents = getOriginalContents(file, -1);
 
         if (newContents == null) {
             newContents = originalContents;
@@ -291,12 +291,12 @@ public class CommitBuilder {
         commitEditor.closeFile(file, checksum);
     }
 
-    private byte[] getOriginalContents(String file) throws SVNException {
+    private byte[] getOriginalContents(String file, long revision) throws SVNException {
         final SVNRepository svnRepository = createSvnRepository();
         try {
             final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
-            svnRepository.getFile(file, SVNRepository.INVALID_REVISION, null, byteArrayOutputStream);
+            svnRepository.getFile(file, revision, null, byteArrayOutputStream);
             return byteArrayOutputStream.toByteArray();
         } finally {
             svnRepository.closeSession();
