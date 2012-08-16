@@ -869,7 +869,7 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
         SVNMergeRangeList requestedRanges = new SVNMergeRangeList(
                 new SVNMergeRange(Math.min(revision1, revision2), 
                         Math.max(revision1, revision2), true));
-        SVNMergeRangeList subtreeGapRanges = rootPath.remainingRanges.remove(requestedRanges, false);
+        SVNMergeRangeList subtreeGapRanges = requestedRanges.remove(rootPath.remainingRanges, false);
         if (subtreeGapRanges.isEmpty()) {
             return;
         }
@@ -897,11 +897,16 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
         
         repository.log(new String[] {""}, oldestGapRev.getStartRevision() + 1, youngestRev.getEndRevision(), true, true, -1, false, null, logHandler);
         
-        SVNMergeRangeList inoperativeRanges = new SVNMergeRangeList(oldestGapRev.getEndRevision(), youngestRev.getStartRevision(), true);
+        SVNMergeRangeList inoperativeRanges = new SVNMergeRangeList(oldestGapRev.getStartRevision(), youngestRev.getEndRevision(), true);
         inoperativeRanges = inoperativeRanges.remove(logHandler.operativeRanges, false);
         logHandler.mergedRanges = logHandler.mergedRanges.merge(inoperativeRanges);
-        
-        for (MergePath child : childrenWithMergeInfo.values()) {
+
+        Iterator<MergePath> iterator = childrenWithMergeInfo.values().iterator();
+        if (iterator.hasNext()) {
+            iterator.next();
+        }
+        for (; iterator.hasNext(); ) {
+            MergePath child = iterator.next();
             if (child.remainingRanges != null && !child.remainingRanges.isEmpty()) {
                 child.remainingRanges = child.remainingRanges.remove(logHandler.mergedRanges, false);
             }
@@ -1557,24 +1562,6 @@ public class SvnNgMergeDriver implements ISVNEventHandler {
         filterMergedRevisions(parent, child, repository, mergeInfoPath, 
                 adjustedTargetMergeInfo, revision1, revision2, childInheritsImplicit); 
         
-        if (isSubtree) {
-            boolean isRollback = revision2 < revision1;
-            if (isRollback) {
-                child.remainingRanges.reverse();
-                parent.remainingRanges.reverse();
-            }
-            SVNMergeRangeList[] rangeListDiff = SVNMergeInfoUtil.diffMergeRangeLists(child.remainingRanges, parent.remainingRanges, true);
-            SVNMergeRangeList deletedRangeList = rangeListDiff[0];
-            SVNMergeRangeList addedRangeList = rangeListDiff[1];
-            if (isRollback) {
-                child.remainingRanges.reverse();
-                parent.remainingRanges.reverse();
-            }
-            if (!deletedRangeList.isEmpty() || !addedRangeList.isEmpty()) {
-                adjustDeletedSubTreeRanges(child, parent, revision1, revision2, primaryURL, repository);
-            }
-        }
-
         long childBaseRevision = context.getNodeBaseRev(child.absPath);
         if (childBaseRevision >= 0 &&
                 (child.remainingRanges == null || child.remainingRanges.isEmpty()) &&

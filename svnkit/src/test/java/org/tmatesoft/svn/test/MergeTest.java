@@ -870,11 +870,12 @@ public class MergeTest {
         }
     }
 
-    @Ignore("SVNKIT-305")
     @Test
     public void testImplicitGapIsExcludedFromMerging() throws Exception {
         //SVNKIT-305
         final TestOptions options = TestOptions.getInstance();
+
+        Assume.assumeTrue(TestUtil.isNewWorkingCopyTest());
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
         final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testImplicitGapIsExcludedFromMerging", options);
