@@ -74,7 +74,7 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
         } else {
             String targetString = target.getPathOrUrlDecodedString();
             String baseTargetString = baseTarget.getPathOrUrlDecodedString();
-            relativePath = SVNPathUtil.getRelativePath(baseTargetString, targetString);
+            relativePath = SVNPathUtil.getPathAsChild(baseTargetString, targetString);
         }
 
         return relativePath != null ? relativePath : target.getPathOrUrlString();
@@ -88,11 +88,11 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
             if (repositoryRoot.isFile() == target.isFile()) {
                 String targetString = target.getPathOrUrlDecodedString();
                 String baseTargetString = repositoryRoot.getPathOrUrlDecodedString();
-                relativePath = SVNPathUtil.getRelativePath(baseTargetString, targetString);
+                relativePath = SVNPathUtil.getPathAsChild(baseTargetString, targetString);
             } else {
                 String targetString = target.getPathOrUrlDecodedString();
                 String baseTargetString = new File("").getAbsolutePath();
-                relativePath = SVNPathUtil.getRelativePath(baseTargetString, targetString);
+                relativePath = SVNPathUtil.getPathAsChild(baseTargetString, targetString);
             }
         }
 
@@ -104,7 +104,11 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
             return null;
         }
 
-        String relativePath = SVNPathUtil.getRelativePath(relativeToPath, path);
+        String relativePath = SVNPathUtil.getPathAsChild(relativeToPath, path);
+        if (relativePath == null) {
+            return path;
+        }
+
         if (relativePath.length() > 0) {
             return relativePath;
         }
@@ -310,7 +314,7 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
     private String adjustRelativeToReposRoot(String targetString) {
         if (repositoryRoot != null) {
             String repositoryRootString = repositoryRoot.getPathOrUrlDecodedString();
-            String relativePath = SVNPathUtil.getRelativePath(repositoryRootString, targetString);
+            String relativePath = SVNPathUtil.getPathAsChild(repositoryRootString, targetString);
             return relativePath == null ? "" : relativePath;
         }
         return targetString;
@@ -936,7 +940,7 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
     }
 
     private String getAdjustedPath(String displayPath, String path1, String commonAncestor) {
-        String adjustedPath = SVNPathUtil.getRelativePath(commonAncestor, path1);
+        String adjustedPath = SVNPathUtil.getPathAsChild(commonAncestor, path1);
 
         if (adjustedPath == null || adjustedPath.length() == 0) {
             adjustedPath = displayPath;

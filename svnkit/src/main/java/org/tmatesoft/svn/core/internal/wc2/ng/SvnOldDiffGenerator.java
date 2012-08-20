@@ -102,7 +102,7 @@ public class SvnOldDiffGenerator implements ISvnDiffGenerator {
             final String absolutePath = path.getFile().getAbsolutePath().replace(File.separatorChar, '/');
             final String currentPath = new File("").getAbsolutePath();
 
-            String relativePath = SVNPathUtil.getRelativePath(currentPath, absolutePath);
+            String relativePath = SVNPathUtil.getPathAsChild(currentPath, absolutePath);
             if (relativePath != null) {
                 return relativePath;
             } else {
