@@ -21,9 +21,7 @@ import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class SvnNgRevert extends SvnNgOperationRunner<Void, SvnRevert> {
 
@@ -117,61 +115,80 @@ public class SvnNgRevert extends SvnNgOperationRunner<Void, SvnRevert> {
             getWcContext().writeCheck(localAbsPath);
         }
         try {
+
             //we should detect that the copy was modified here
             //after opRevert() call we won't be able to do that
-            boolean isModifiedCopyThatShouldBePreserved = isModifiedCopyThatShouldBePreserved(localAbsPath, wcRoot);
+            final Set<File> modifiedCopiesThatShouldBePreserved = new HashSet<File>();
+            populateModifiedCopiesThatShouldBePreserved(localAbsPath, wcRoot, modifiedCopiesThatShouldBePreserved);
 
             getWcContext().getDb().opRevert(localAbsPath, depth);
-            restore(getWcContext(), localAbsPath, depth, useCommitTimes, getWcContext().getEventHandler(), isModifiedCopyThatShouldBePreserved);
+            restore(getWcContext(), localAbsPath, depth, useCommitTimes, getWcContext().getEventHandler(), modifiedCopiesThatShouldBePreserved);
         } finally {
             SvnWcDbRevert.dropRevertList(getWcContext(), localAbsPath);
         }
     }
 
-    private boolean isModifiedCopyThatShouldBePreserved(File localAbsPath, File wcRoot) throws SVNException {
+    private void populateModifiedCopiesThatShouldBePreserved(File localAbsPath, File wcRoot, Set<File> modifiedCopiesThatShouldBePreserved) throws SVNException {
         if (!getOperation().isPreserveModifiedCopies()) {
-            return false;
+            return;
         }
         try {
             final ISVNWCDb.WCDbInfo wcDbInfo = getWcContext().getDb().readInfo(localAbsPath, ISVNWCDb.WCDbInfo.InfoField.checksum,
                     ISVNWCDb.WCDbInfo.InfoField.originalRootUrl, ISVNWCDb.WCDbInfo.InfoField.propsMod,
-                    ISVNWCDb.WCDbInfo.InfoField.lastModTime, ISVNWCDb.WCDbInfo.InfoField.translatedSize);
+                    ISVNWCDb.WCDbInfo.InfoField.lastModTime, ISVNWCDb.WCDbInfo.InfoField.translatedSize,
+                    ISVNWCDb.WCDbInfo.InfoField.kind);
 
-            if (wcDbInfo.propsMod) {
-                //properties are modified
-                return true;
-            }
-            if (wcDbInfo.originalRootUrl != null && wcDbInfo.checksum != null) {
-                //now we are sure that the file is copied
-                long fileSize = SVNFileUtil.getFileLength(localAbsPath);
-                long fileTime = SVNFileUtil.getFileLastModified(localAbsPath);
+            final SVNNodeKind nodeKind = SVNFileType.getNodeKind(SVNFileType.getType(localAbsPath));
+            if (nodeKind == SVNNodeKind.NONE ) {
+                //there's nothing to preserve
+            } else if (nodeKind == SVNNodeKind.DIR) {
+                if (wcDbInfo.kind == SVNWCDbKind.Dir) {
+                    final List<File> children = getWcContext().getChildrenOfWorkingNode(localAbsPath, false);
+                    for (File child : children) {
+                        populateModifiedCopiesThatShouldBePreserved(child, wcRoot, modifiedCopiesThatShouldBePreserved);
+                    }
+                }
+            } else {
+                if (wcDbInfo.kind != SVNWCDbKind.File) {
+                    //obstruction, nothing to preserve
+                    return;
+                }
 
-                if (wcDbInfo.translatedSize != -1 && wcDbInfo.lastModTime != 0 &&
-                        wcDbInfo.translatedSize == fileSize && wcDbInfo.lastModTime == fileTime) {
-                    //not modified
-                } else {
-                    SVNWCDb db = (SVNWCDb) getWcContext().getDb();
-                    SVNWCDb.DirParsedInfo dirParsedInfo = db.parseDir(wcRoot, SVNSqlJetDb.Mode.ReadOnly);
-                    File pristineFileName = SvnWcDbPristines.getPristineFileName(dirParsedInfo.wcDbDir.getWCRoot(), wcDbInfo.checksum, false);
-                    return getWcContext().compareAndVerify(localAbsPath, pristineFileName, true, false, false);
+
+                if (wcDbInfo.propsMod) {
+                    modifiedCopiesThatShouldBePreserved.add(localAbsPath);
+                    return;
+                }
+                if (wcDbInfo.originalRootUrl != null && wcDbInfo.checksum != null) {
+                    //now we are sure that the file is copied
+                    long fileSize = SVNFileUtil.getFileLength(localAbsPath);
+                    long fileTime = SVNFileUtil.getFileLastModified(localAbsPath);
+
+                    if (wcDbInfo.translatedSize != -1 && wcDbInfo.lastModTime != 0 &&
+                            wcDbInfo.translatedSize == fileSize && wcDbInfo.lastModTime == fileTime) {
+                        //not modified
+                    } else {
+                        SVNWCDb db = (SVNWCDb) getWcContext().getDb();
+                        SVNWCDb.DirParsedInfo dirParsedInfo = db.parseDir(wcRoot, SVNSqlJetDb.Mode.ReadOnly);
+                        File pristineFileName = SvnWcDbPristines.getPristineFileName(dirParsedInfo.wcDbDir.getWCRoot(), wcDbInfo.checksum, false);
+                        if (getWcContext().compareAndVerify(localAbsPath, pristineFileName, true, false, false)) {
+                            modifiedCopiesThatShouldBePreserved.add(localAbsPath);
+                        }
+                    }
                 }
             }
         } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.ENTRY_NOT_FOUND || e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND) {
-                return false;
-            } else {
+            if (e.getErrorMessage().getErrorCode() != SVNErrorCode.ENTRY_NOT_FOUND && e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND) {
                 throw e;
             }
         }
-
-        return false;
     }
 
     public static void restore(SVNWCContext context, File localAbsPath, SVNDepth depth, boolean useCommitTimes, ISVNEventHandler notifier) throws SVNException {
-        restore(context, localAbsPath, depth, useCommitTimes, notifier, false);
+        restore(context, localAbsPath, depth, useCommitTimes, notifier, Collections.<File>emptySet());
     }
 
-    public static void restore(SVNWCContext context, File localAbsPath, SVNDepth depth, boolean useCommitTimes, ISVNEventHandler notifier, boolean isModifiedCopyThatShouldBePreserved) throws SVNException {
+    public static void restore(SVNWCContext context, File localAbsPath, SVNDepth depth, boolean useCommitTimes, ISVNEventHandler notifier, Set<File> modifiedCopiesThatShouldBePreserved) throws SVNException {
         context.checkCancelled();
         
         Structure<RevertInfo> revertInfo = SvnWcDbRevert.readRevertInfo(context, localAbsPath);
@@ -222,13 +239,13 @@ public class SvnNgRevert extends SvnNgOperationRunner<Void, SvnRevert> {
         
         if (revertInfo.is(RevertInfo.copiedHere)) {
             if (revertInfo.get(RevertInfo.kind) == SVNWCDbKind.File && onDisk == SVNNodeKind.FILE) {
-                if (isModifiedCopyThatShouldBePreserved) {
+                if (modifiedCopiesThatShouldBePreserved.contains(localAbsPath)) {
                     return;
                 }
                 SVNFileUtil.deleteFile(localAbsPath);
                 onDisk = SVNNodeKind.NONE;
             } else if (revertInfo.get(RevertInfo.kind) == SVNWCDbKind.Dir && onDisk == SVNNodeKind.DIR) {
-                boolean removed = restoreCopiedDirectory(context, localAbsPath, true);
+                boolean removed = restoreCopiedDirectory(context, localAbsPath, true, modifiedCopiesThatShouldBePreserved);
                 if (removed) {
                     onDisk = SVNNodeKind.NONE;
                 }
@@ -328,7 +345,7 @@ public class SvnNgRevert extends SvnNgOperationRunner<Void, SvnRevert> {
         }
         
         if (depth == SVNDepth.INFINITY && kind == SVNWCDbKind.Dir) {
-            restoreCopiedDirectory(context, localAbsPath, false);
+            restoreCopiedDirectory(context, localAbsPath, false, modifiedCopiesThatShouldBePreserved);
             
             Set<String> children = ((SVNWCDb) context.getDb()).getChildrenOfWorkingNode(localAbsPath);
             for (String childName : children) {
@@ -340,7 +357,7 @@ public class SvnNgRevert extends SvnNgOperationRunner<Void, SvnRevert> {
         SvnWcDbRevert.notifyRevert(context, localAbsPath, notifier);
     }
 
-    private static boolean restoreCopiedDirectory(SVNWCContext context, File localAbsPath, boolean removeSelf) throws SVNException {
+    private static boolean restoreCopiedDirectory(SVNWCContext context, File localAbsPath, boolean removeSelf, Set<File> modifiedCopiesThatShouldBePreserved) throws SVNException {
         boolean selfRemoved = false;
         
         Map<File, SVNWCDbKind> children = SvnWcDbRevert.readRevertCopiedChildren(context, localAbsPath);
@@ -355,7 +372,10 @@ public class SvnNgRevert extends SvnNgOperationRunner<Void, SvnRevert> {
             if (childFileType != SVNFileType.FILE && childFileType != SVNFileType.SYMLINK) {
                 continue;
             }
-            SVNFileUtil.deleteFile(child);
+            if (!modifiedCopiesThatShouldBePreserved.contains(child)) {
+                SVNFileUtil.deleteFile(child);
+                selfRemoved = false;
+            }
         }
 
         for (File child : children.keySet()) {
@@ -364,7 +384,10 @@ public class SvnNgRevert extends SvnNgOperationRunner<Void, SvnRevert> {
             if (childKind != SVNWCDbKind.Dir) {
                 continue;
             }
-            SVNFileUtil.deleteFile(child);
+            if (!modifiedCopiesThatShouldBePreserved.contains(child)) {
+                SVNFileUtil.deleteFile(child);
+                selfRemoved = false;
+            }
         }
         
         if (removeSelf) {
