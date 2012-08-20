@@ -201,6 +201,41 @@ public class RevertTest {
         }
     }
 
+    @Test
+    public void testModifiedCopiedFileSpecialOptionDeeperTree() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".test", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("sourceDirectory/sourceFile");
+            commitBuilder.addDirectory("targetDirectory");
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url);
+            final File targetFile = workingCopy.getFile("targetDirectory/targetFile");
+
+            workingCopy.copy("sourceDirectory/sourceFile", "targetDirectory/targetFile");
+            TestUtil.writeFileContentsString(targetFile, "contents");
+
+            final SvnRevert revert = svnOperationFactory.createRevert();
+            revert.setSingleTarget(SvnTarget.fromFile(workingCopy.getWorkingCopyDirectory()));
+            revert.setDepth(SVNDepth.INFINITY);
+            revert.setPreserveModifiedCopies(true);
+            revert.run();
+
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopy.getWorkingCopyDirectory());
+            Assert.assertEquals(SVNStatusType.STATUS_UNVERSIONED, statuses.get(targetFile).getNodeStatus());
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
     private void testRevertCopy(String testName, boolean recursiveRevert, boolean preserveModifiedCopies, boolean modifyFileContents, boolean modifyProperties, boolean expectedFileExistence16, SVNStatusType expectedNodeStatus16, boolean expectedFileExistence17, SVNStatusType expectedNodeStatus17) throws SVNException {
         final TestOptions options = TestOptions.getInstance();
 

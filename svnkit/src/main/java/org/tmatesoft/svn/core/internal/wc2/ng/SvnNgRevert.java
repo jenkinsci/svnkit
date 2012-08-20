@@ -349,7 +349,7 @@ public class SvnNgRevert extends SvnNgOperationRunner<Void, SvnRevert> {
             Set<String> children = ((SVNWCDb) context.getDb()).getChildrenOfWorkingNode(localAbsPath);
             for (String childName : children) {
                 File childAbsPath = SVNFileUtil.createFilePath(localAbsPath, childName);
-                restore(context, childAbsPath, depth, useCommitTimes, notifier);
+                restore(context, childAbsPath, depth, useCommitTimes, notifier, modifiedCopiesThatShouldBePreserved);
             }
         }
         
