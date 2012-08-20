@@ -2,10 +2,10 @@ package org.tmatesoft.svn.test;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNPropertyValue;
-import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
+import org.tmatesoft.svn.core.wc.SVNEvent;
+import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 import org.tmatesoft.svn.core.wc2.SvnRevert;
@@ -13,6 +13,8 @@ import org.tmatesoft.svn.core.wc2.SvnStatus;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class RevertTest {
@@ -223,6 +225,19 @@ public class RevertTest {
                 workingCopy.setProperty(targetFile, "custom", SVNPropertyValue.create("custom value"));
             }
 
+            final List<SVNEvent> events = new ArrayList<SVNEvent>();
+
+            svnOperationFactory.setEventHandler(new ISVNEventHandler() {
+                @Override
+                public void handleEvent(SVNEvent event, double progress) throws SVNException {
+                    events.add(event);
+                }
+
+                @Override
+                public void checkCancelled() throws SVNCancelException {
+                }
+            });
+
             final SvnRevert revert = svnOperationFactory.createRevert();
             if (recursiveRevert) {
                 revert.setSingleTarget(SvnTarget.fromFile(workingCopy.getWorkingCopyDirectory()));
@@ -232,6 +247,10 @@ public class RevertTest {
             }
             revert.setPreserveModifiedCopies(preserveModifiedCopies);
             revert.run();
+
+            Assert.assertEquals(1, events.size());
+            Assert.assertEquals(SVNEventAction.REVERT, events.get(0).getAction());
+            Assert.assertEquals(targetFile, events.get(0).getFile());
 
             final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopy.getWorkingCopyDirectory());
             if (TestUtil.isNewWorkingCopyTest()) {

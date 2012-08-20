@@ -239,10 +239,9 @@ public class SvnNgRevert extends SvnNgOperationRunner<Void, SvnRevert> {
         
         if (revertInfo.is(RevertInfo.copiedHere)) {
             if (revertInfo.get(RevertInfo.kind) == SVNWCDbKind.File && onDisk == SVNNodeKind.FILE) {
-                if (modifiedCopiesThatShouldBePreserved.contains(localAbsPath)) {
-                    return;
+                if (!modifiedCopiesThatShouldBePreserved.contains(localAbsPath)) {
+                    SVNFileUtil.deleteFile(localAbsPath);
                 }
-                SVNFileUtil.deleteFile(localAbsPath);
                 onDisk = SVNNodeKind.NONE;
             } else if (revertInfo.get(RevertInfo.kind) == SVNWCDbKind.Dir && onDisk == SVNNodeKind.DIR) {
                 boolean removed = restoreCopiedDirectory(context, localAbsPath, true, modifiedCopiesThatShouldBePreserved);
