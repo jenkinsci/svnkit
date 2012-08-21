@@ -1,14 +1,14 @@
 package org.tmatesoft.svn.core.internal.wc2.ng;
 
-import java.io.File;
-import java.io.OutputStream;
-
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.DefaultSVNDiffGenerator;
 import org.tmatesoft.svn.core.wc.ISVNDiffGenerator;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
+
+import java.io.File;
+import java.io.OutputStream;
 
 public class SvnOldDiffGenerator implements ISvnDiffGenerator {
 
@@ -102,7 +102,7 @@ public class SvnOldDiffGenerator implements ISvnDiffGenerator {
             final String absolutePath = path.getFile().getAbsolutePath().replace(File.separatorChar, '/');
             final String currentPath = new File("").getAbsolutePath();
 
-            String relativePath = SVNPathUtil.getPathAsChild(currentPath, absolutePath);
+            String relativePath = getRelativePath(absolutePath, currentPath);
             if (relativePath != null) {
                 return relativePath;
             } else {
@@ -111,6 +111,17 @@ public class SvnOldDiffGenerator implements ISvnDiffGenerator {
         }
 
         return path.getPathOrUrlString();
+    }
+
+    private String getRelativePath(String targetString, String baseTargetString) {
+        final String pathAsChild = SVNPathUtil.getPathAsChild(baseTargetString, targetString);
+        if (pathAsChild != null) {
+            return pathAsChild;
+        }
+        if (targetString.equals(baseTargetString)) {
+            return "";
+        }
+        return null;
     }
 
     public boolean isForcedBinaryDiff() {

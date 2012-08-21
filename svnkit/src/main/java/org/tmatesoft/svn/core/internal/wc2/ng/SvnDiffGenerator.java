@@ -1,34 +1,10 @@
 package org.tmatesoft.svn.core.internal.wc2.ng;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.RandomAccessFile;
-import java.io.UnsupportedEncodingException;
-import java.io.Writer;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-
 import de.regnis.q.sequence.line.diff.QDiffGenerator;
 import de.regnis.q.sequence.line.diff.QDiffGeneratorFactory;
 import de.regnis.q.sequence.line.diff.QDiffManager;
 import de.regnis.q.sequence.line.diff.QDiffUniGenerator;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNMergeRangeList;
-import org.tmatesoft.svn.core.SVNProperties;
-import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -40,6 +16,9 @@ import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
+
+import java.io.*;
+import java.util.*;
 
 public class SvnDiffGenerator implements ISvnDiffGenerator {
 
@@ -74,7 +53,7 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
         } else {
             String targetString = target.getPathOrUrlDecodedString();
             String baseTargetString = baseTarget.getPathOrUrlDecodedString();
-            relativePath = SVNPathUtil.getPathAsChild(baseTargetString, targetString);
+            relativePath = getRelativePath(targetString, baseTargetString);
         }
 
         return relativePath != null ? relativePath : target.getPathOrUrlString();
@@ -88,15 +67,26 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
             if (repositoryRoot.isFile() == target.isFile()) {
                 String targetString = target.getPathOrUrlDecodedString();
                 String baseTargetString = repositoryRoot.getPathOrUrlDecodedString();
-                relativePath = SVNPathUtil.getPathAsChild(baseTargetString, targetString);
+                relativePath = getRelativePath(targetString, baseTargetString);
             } else {
                 String targetString = target.getPathOrUrlDecodedString();
                 String baseTargetString = new File("").getAbsolutePath();
-                relativePath = SVNPathUtil.getPathAsChild(baseTargetString, targetString);
+                relativePath = getRelativePath(targetString, baseTargetString);
             }
         }
 
         return relativePath != null ? relativePath : target.getPathOrUrlString();
+    }
+
+    private String getRelativePath(String targetString, String baseTargetString) {
+        final String pathAsChild = SVNPathUtil.getPathAsChild(baseTargetString, targetString);
+        if (pathAsChild != null) {
+            return pathAsChild;
+        }
+        if (targetString.equals(baseTargetString)) {
+            return "";
+        }
+        return null;
     }
 
     private String getChildPath(String path, String relativeToPath) {
@@ -104,7 +94,7 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
             return null;
         }
 
-        String relativePath = SVNPathUtil.getPathAsChild(relativeToPath, path);
+        String relativePath = getRelativePath(path, relativeToPath);
         if (relativePath == null) {
             return path;
         }
@@ -314,7 +304,7 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
     private String adjustRelativeToReposRoot(String targetString) {
         if (repositoryRoot != null) {
             String repositoryRootString = repositoryRoot.getPathOrUrlDecodedString();
-            String relativePath = SVNPathUtil.getPathAsChild(repositoryRootString, targetString);
+            String relativePath = getRelativePath(targetString, repositoryRootString);
             return relativePath == null ? "" : relativePath;
         }
         return targetString;
@@ -940,7 +930,7 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
     }
 
     private String getAdjustedPath(String displayPath, String path1, String commonAncestor) {
-        String adjustedPath = SVNPathUtil.getPathAsChild(commonAncestor, path1);
+        String adjustedPath = getRelativePath(path1, commonAncestor);
 
         if (adjustedPath == null || adjustedPath.length() == 0) {
             adjustedPath = displayPath;
