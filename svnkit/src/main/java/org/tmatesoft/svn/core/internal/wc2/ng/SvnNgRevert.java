@@ -373,7 +373,9 @@ public class SvnNgRevert extends SvnNgOperationRunner<Void, SvnRevert> {
             }
             if (!modifiedCopiesThatShouldBePreserved.contains(child)) {
                 SVNFileUtil.deleteFile(child);
+            } else {
                 selfRemoved = false;
+                removeSelf = false;
             }
         }
 
@@ -385,7 +387,9 @@ public class SvnNgRevert extends SvnNgOperationRunner<Void, SvnRevert> {
             }
             if (!modifiedCopiesThatShouldBePreserved.contains(child)) {
                 SVNFileUtil.deleteFile(child);
+            } else {
                 selfRemoved = false;
+                removeSelf = false;
             }
         }
         

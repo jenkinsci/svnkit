@@ -344,6 +344,46 @@ public class RevertTest {
         }
     }
 
+    @Test
+    public void testDirectoryWithCopiedModifiedFileIsPreservedRecursiveRevert() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testDirectoryWithCopiedModifiedFileIsPreservedRecursiveRevert", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("sourceDirectory/sourceFile");
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url);
+            final File sourceFile = workingCopy.getFile("sourceDirectory/sourceFile");
+            final File targetFile = workingCopy.getFile("targetDirectory/targetFile");
+            final File targetDirectory = workingCopy.getFile("targetDirectory");
+            SVNFileUtil.ensureDirectoryExists(targetDirectory);
+            workingCopy.add(targetDirectory);
+            workingCopy.copy("sourceDirectory/sourceFile", "targetDirectory/targetFile");
+            SVNFileUtil.deleteFile(targetFile);
+            TestUtil.writeFileContentsString(targetFile, "contents");
+
+            final SvnRevert revert = svnOperationFactory.createRevert();
+            revert.setSingleTarget(SvnTarget.fromFile(workingCopy.getWorkingCopyDirectory()));
+            revert.setDepth(SVNDepth.INFINITY);
+            revert.setPreserveModifiedCopies(true);
+            revert.run();
+
+            Assert.assertTrue(sourceFile.isFile());
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopy.getWorkingCopyDirectory());
+            Assert.assertEquals(SVNStatusType.STATUS_NORMAL, statuses.get(sourceFile).getNodeStatus());
+            Assert.assertNull(statuses.get(targetFile));
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
     private void testRevertCopy(String testName, boolean recursiveRevert, boolean preserveModifiedCopies, boolean modifyFileContents, boolean modifyProperties, boolean expectedFileExistence16, SVNStatusType expectedNodeStatus16, boolean expectedFileExistence17, SVNStatusType expectedNodeStatus17) throws SVNException {
         final TestOptions options = TestOptions.getInstance();
 
