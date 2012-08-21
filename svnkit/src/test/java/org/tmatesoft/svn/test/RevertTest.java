@@ -263,12 +263,10 @@ public class RevertTest {
             final List<SVNEvent> events = new ArrayList<SVNEvent>();
 
             svnOperationFactory.setEventHandler(new ISVNEventHandler() {
-                @Override
                 public void handleEvent(SVNEvent event, double progress) throws SVNException {
                     events.add(event);
                 }
 
-                @Override
                 public void checkCancelled() throws SVNCancelException {
                 }
             });
