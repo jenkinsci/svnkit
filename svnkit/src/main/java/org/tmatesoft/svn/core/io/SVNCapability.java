@@ -49,6 +49,12 @@ public class SVNCapability {
      * a normal transaction.
      */
 	public static final SVNCapability COMMIT_REVPROPS = new SVNCapability("commit-revprops");
+
+	/**
+     * Represents the capability of specifying (and atomically verifying) expected
+     * preexisting values when modifying revprops.
+     */
+    public static final SVNCapability ATOMIC_REVPROPS = new SVNCapability("atomic-revprops");
 	
 	private String myName;
 	

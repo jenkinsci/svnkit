@@ -646,6 +646,7 @@ public class DAVConnection {
         myCapabilities.put(SVNCapability.DEPTH, DAV_CAPABILITY_NO);
         myCapabilities.put(SVNCapability.MERGE_INFO, DAV_CAPABILITY_NO);
         myCapabilities.put(SVNCapability.LOG_REVPROPS, DAV_CAPABILITY_NO);
+        myCapabilities.put(SVNCapability.ATOMIC_REVPROPS, DAV_CAPABILITY_NO);
     	
     	Collection capValues = status.getHeader().getHeaderValues(HTTPHeader.DAV_HEADER);
     	if (capValues != null) {
@@ -659,7 +660,9 @@ public class DAVConnection {
     				myCapabilities.put(SVNCapability.LOG_REVPROPS, DAV_CAPABILITY_YES);
     			} else if (DAVElement.PARTIAL_REPLAY_OPTION.equalsIgnoreCase(value)) {
     				myCapabilities.put(SVNCapability.PARTIAL_REPLAY, DAV_CAPABILITY_YES);
-    			}
+    			} else if (DAVElement.ATOMIC_REVPROPS_OPTION.equalsIgnoreCase(value)) {
+                    myCapabilities.put(SVNCapability.ATOMIC_REVPROPS, DAV_CAPABILITY_YES);
+                }
 			}
     	}
     }

@@ -675,7 +675,9 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
 				capability == SVNCapability.PARTIAL_REPLAY || 
 				capability == SVNCapability.COMMIT_REVPROPS) {
 			return true;
-		} else if (capability == SVNCapability.MERGE_INFO) {
+		} else if (capability == SVNCapability.ATOMIC_REVPROPS) {
+		    return false;		
+		} else if (capability == SVNCapability.MERGE_INFO) {		
 		    try {
 		        getMergeInfoImpl(new String[] { "" }, 0, SVNMergeInfoInheritance.EXPLICIT, false);
 		    } catch (SVNException svne) {
