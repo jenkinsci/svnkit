@@ -23,12 +23,22 @@ import org.tmatesoft.svn.core.internal.util.SVNHashMap;
  * @author  TMate Software Ltd.
  */
 public class SVNFileListUtil {
+    
+    private static boolean ourIsCompositionEnabled = Boolean.TRUE.toString().equalsIgnoreCase(System.getProperty("svnkit.fs.composeFileNames", "true"));
+
+    public static synchronized void setCompositionEnabled(boolean enabled) {
+        ourIsCompositionEnabled = enabled;
+    }
+
+    public static synchronized boolean isCompositionEnabled() {
+        return ourIsCompositionEnabled;
+    }
 
     /**
      * This method is a replacement for file.list(), which composes decomposed file names (e.g. umlauts in file names on the Mac).
      */
     private static String[] list(File directory) {
-        if (!SVNFileUtil.isOSX) {
+        if (!SVNFileUtil.isOSX || !isCompositionEnabled()) {
             return directory.list();
         }
         final String[] fileNames = directory.list();
