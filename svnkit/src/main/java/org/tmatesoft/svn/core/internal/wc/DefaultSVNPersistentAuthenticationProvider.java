@@ -209,7 +209,7 @@ public class DefaultSVNPersistentAuthenticationProvider implements ISVNAuthentic
         if (!dir.isDirectory()) {
             return null;
         }
-        String fileName = SVNFileUtil.computeChecksum(realm);
+        String fileName = getAuthDirectoryName(realm);
         File authFile = new File(dir, fileName);
         if (authFile.exists()) {
             SVNWCProperties props = new SVNWCProperties(authFile, "");
@@ -323,7 +323,7 @@ public class DefaultSVNPersistentAuthenticationProvider implements ISVNAuthentic
             saveUserNameCredential(values, auth);
         }
         // get file name for auth and store password.
-        String fileName = SVNFileUtil.computeChecksum(realm);
+        String fileName = getAuthDirectoryName(realm);
         File authFile = new File(dir, fileName);
 
         if (authFile.isFile()) {
@@ -342,6 +342,10 @@ public class DefaultSVNPersistentAuthenticationProvider implements ISVNAuthentic
         } finally {
             SVNFileUtil.deleteFile(tmpFile);
         }
+    }
+
+    protected String getAuthDirectoryName(String realm) {
+        return SVNFileUtil.computeChecksum(realm);
     }
 
     public int acceptServerAuthentication(SVNURL url, String r, Object serverAuth, boolean resultMayBeStored) {
@@ -470,7 +474,7 @@ public class DefaultSVNPersistentAuthenticationProvider implements ISVNAuthentic
         if (!dir.isDirectory()) {
             return null;
         }
-        File file = new File(dir, SVNFileUtil.computeChecksum(realm));
+        File file = new File(dir, getAuthDirectoryName(realm));
         if (!file.isFile()) {
             return null;
         }
@@ -493,7 +497,7 @@ public class DefaultSVNPersistentAuthenticationProvider implements ISVNAuthentic
         if (!dir.isDirectory()) {
             dir.mkdirs();
         }
-        File file = new File(dir, SVNFileUtil.computeChecksum(realm));
+        File file = new File(dir, getAuthDirectoryName(realm));
 
         SVNProperties values = new SVNProperties();
         values.put("svn:realmstring", realm);
