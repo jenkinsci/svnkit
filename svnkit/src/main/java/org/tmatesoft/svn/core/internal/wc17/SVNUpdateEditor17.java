@@ -2032,7 +2032,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                 if (isLocallyModified) {
                     File tmpText = null;
                     
-                    tmpText = myWCContext.getTranslatedFile(fb.localAbsolutePath, fb.localAbsolutePath, true, true, false, false);
+                    tmpText = myWCContext.getTranslatedFile(fb.localAbsolutePath, fb.localAbsolutePath, true, true, false, false, false);
                     mergeFileInfo.installPristine = true;
                     mergeFileInfo.installFrom = tmpText;
                 } else {

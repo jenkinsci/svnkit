@@ -385,7 +385,7 @@ public class SVNTranslator {
             return;
 
         }
-        if (charset == null && eol == null && (keywords == null || keywords.isEmpty())) {
+        if ((charset == null || SVNProperty.isUTF8(charset)) && eol == null && (keywords == null || keywords.isEmpty())) {
             // no expansion, fast copy.
             SVNFileUtil.copyFile(source, destination, false);
             return;

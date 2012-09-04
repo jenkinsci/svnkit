@@ -669,7 +669,7 @@ public class SVNWCContext {
         TranslateInfo translateInfo = null;
         if (hasProps) {
             translateInfo = getTranslateInfo(localAbsPath, true, true, true, true);
-            translationRequired = isTranslationRequired(translateInfo.eolStyleInfo.eolStyle, translateInfo.eolStyleInfo.eolStr, translateInfo.keywords, translateInfo.special, true);
+            translationRequired = isTranslationRequired(translateInfo.eolStyleInfo.eolStyle, translateInfo.eolStyleInfo.eolStr, translateInfo.charset, translateInfo.keywords, translateInfo.special, true);
         }
         if (!translationRequired && SVNFileUtil.getFileLength(localAbsPath) != pristineFile.length()) {
             return true;
@@ -845,10 +845,11 @@ public class SVNWCContext {
         return null;
     }
 
-    private boolean isTranslationRequired(SVNEolStyle style, byte[] eol, Map<String, byte[]> keywords, boolean special, boolean force_eol_check) {
+    private boolean isTranslationRequired(SVNEolStyle style, byte[] eol, String charset, Map<String, byte[]> keywords, boolean special, boolean force_eol_check) {
         return (special 
                 || (keywords != null && !keywords.isEmpty()) 
                 || (style != SVNEolStyle.None && force_eol_check)
+                || (charset != null)
         // || (style == SVNEolStyle.Native && strcmp(APR_EOL_STR,
         // SVN_SUBST_NATIVE_EOL_STR) != 0)
                 || (style == SVNEolStyle.Fixed && !Arrays.equals(SVNEolStyleInfo.NATIVE_EOL_STR, eol)));
@@ -2564,7 +2565,22 @@ public class SVNWCContext {
         return SVNFileUtil.openFileForReading(localAbspath, SVNLogType.WC);
     }
 
-    public File getTranslatedFile(File src, File versionedAbspath, boolean toNormalFormat, boolean forceEOLRepair, boolean useGlobalTmp, boolean forceCopy) throws SVNException {
+    /**
+     * When expanding working copy file (which is already expanded, we just have to update EOLs, keywords, etc)
+     * One has to pass safelyEncode argument set to true as for this case we have to carefully update necessary parts of
+     * the file taking its encoding into account.
+     *
+     * @param src
+     * @param versionedAbspath
+     * @param toNormalFormat
+     * @param forceEOLRepair
+     * @param useGlobalTmp
+     * @param forceCopy
+     * @param safelyEncode
+     * @return
+     * @throws SVNException
+     */
+    public File getTranslatedFile(File src, File versionedAbspath, boolean toNormalFormat, boolean forceEOLRepair, boolean useGlobalTmp, boolean forceCopy, boolean safelyEncode) throws SVNException {
         assert (SVNFileUtil.isAbsolute(versionedAbspath));
         TranslateInfo translateInfo = getTranslateInfo(versionedAbspath, true, true, true, true);
         SVNEolStyle style = translateInfo.eolStyleInfo.eolStyle;
@@ -2573,7 +2589,7 @@ public class SVNWCContext {
         Map<String, byte[]> keywords = translateInfo.keywords;
         boolean special = translateInfo.special;
         File xlated_path;
-        if (!isTranslationRequired(style, eol, keywords, special, true) && !forceCopy) {
+        if (!isTranslationRequired(style, eol, charset, keywords, special, true) && !forceCopy) {
             xlated_path = src;
         } else {
             File tmpDir;
@@ -2598,7 +2614,19 @@ public class SVNWCContext {
                     SVNErrorManager.error(err, SVNLogType.WC);
                 }
             }
-            SVNTranslator.copyAndTranslate(src, tmpVFile, charset, eol, keywords, special, expand, repairForced);
+
+            if (expand && charset != null && safelyEncode) {
+                File tmp = SVNFileUtil.createUniqueFile(tmpDir, src.getName(), ".tmp", false);
+                try {
+                    SVNTranslator.copyAndTranslate(src, tmp, charset, eol, keywords, special, false, repairForced);
+                    SVNTranslator.copyAndTranslate(tmp, tmpVFile, charset, eol, keywords, special, true, repairForced);
+                } finally {
+                    SVNFileUtil.deleteFile(tmp);
+                }
+            } else {
+                SVNTranslator.copyAndTranslate(src, tmpVFile, charset, eol, keywords, special, expand, repairForced);
+            }
+
             xlated_path = tmpVFile;
         }
         return xlated_path.getAbsoluteFile();
@@ -2967,7 +2995,7 @@ public class SVNWCContext {
         workItem = wqBuildFileCopyTranslated(targetAbspath, tmpRight, info.rightCopy);
         info.workItems = wqMerge(info.workItems, workItem);
         try {
-            detranslatedTargetCopy = getTranslatedFile(targetAbspath, targetAbspath, true, false, false, false);
+            detranslatedTargetCopy = getTranslatedFile(targetAbspath, targetAbspath, true, false, false, false, false);
         } catch (SVNException e) {
             if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND) {
                 detranslatedTargetCopy = detranslatedTargetAbspath;
@@ -3472,7 +3500,7 @@ public class SVNWCContext {
 
         public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) throws SVNException {
             File localAbspath = SVNFileUtil.createFilePath(wcRootAbspath, workItem.getChild(1).getValue());
-            File tmpFile = ctx.getTranslatedFile(localAbspath, localAbspath, false, false, false, false);
+            File tmpFile = ctx.getTranslatedFile(localAbspath, localAbspath, false, false, false, false, true);
             TranslateInfo info = ctx.getTranslateInfo(localAbspath, false, false, false, true);
             boolean sameContents = false;
             boolean overwroteWorkFile = false;

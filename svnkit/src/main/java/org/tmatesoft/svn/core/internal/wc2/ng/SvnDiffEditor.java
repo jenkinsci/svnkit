@@ -316,7 +316,7 @@ public class SvnDiffEditor implements ISVNEditor, ISVNUpdateEditor {
             if (useTextBase) {
                 localFile = getPristineFile(currentEntry.localAbspath, false);
             } else {
-                localFile = context.getTranslatedFile(currentEntry.localAbspath, currentEntry.localAbspath, true, false, false, false);
+                localFile = context.getTranslatedFile(currentEntry.localAbspath, currentEntry.localAbspath, true, false, false, false, false);
 
                 //TODO: cancellation?
             }
@@ -454,7 +454,7 @@ public class SvnDiffEditor implements ISVNEditor, ISVNUpdateEditor {
             sourceFile = localAbspath;
         }
 
-        File translatedFile = context.getTranslatedFile(sourceFile, localAbspath, true, false, false, false);//TODO; cancel
+        File translatedFile = context.getTranslatedFile(sourceFile, localAbspath, true, false, false, false, false);//TODO; cancel
 
         callback.fileAdded(null, localAbspath,
                 null, translatedFile,
@@ -594,7 +594,7 @@ public class SvnDiffEditor implements ISVNEditor, ISVNUpdateEditor {
             SVNProperties baseProps = new SVNProperties();
             SVNProperties propChanges = computePropDiff(baseProps, workingProps);
 
-            translatedFile = context.getTranslatedFile(localAbspath, localAbspath, true, false, false, false);
+            translatedFile = context.getTranslatedFile(localAbspath, localAbspath, true, false, false, false, false);
 
             callback.fileAdded(null, localAbspath,
                     (!showCopiesAsAdds && useGitDiffFormat && status != ISVNWCDb.SVNWCDbStatus.Added) ? textBase : null,
@@ -608,7 +608,7 @@ public class SvnDiffEditor implements ISVNEditor, ISVNUpdateEditor {
         } else {
             boolean modified = context.isTextModified(localAbspath, false);
             if (modified) {
-                translatedFile = context.getTranslatedFile(localAbspath, localAbspath, true, false, false, false);
+                translatedFile = context.getTranslatedFile(localAbspath, localAbspath, true, false, false, false, false);
             }
 
             SVNProperties baseProps;
