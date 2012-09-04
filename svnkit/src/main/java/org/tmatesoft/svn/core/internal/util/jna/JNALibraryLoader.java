@@ -86,7 +86,9 @@ class JNALibraryLoader {
                 SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, th);
                 ourCLibrary = null;
             }
+        }
 
+        if (SVNFileUtil.isLinux || SVNFileUtil.isBSD || SVNFileUtil.isSolaris) {
             try {
                 ISVNGnomeKeyringLibrary gnomeKeyringLibrary = (ISVNGnomeKeyringLibrary) Native.loadLibrary(getGnomeKeyringLibraryName(), ISVNGnomeKeyringLibrary.class);
                 ISVNGLibrary gLibrary = (ISVNGLibrary) Native.loadLibrary(getGLibraryName(), ISVNGLibrary.class);
@@ -103,7 +105,7 @@ class JNALibraryLoader {
                 } else {
                     ourGLibrary = null;
                 }
-                
+
                 SVNGnomeKeyring.initialize();
             } catch (Throwable th) {
                 SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, th);
