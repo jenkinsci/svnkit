@@ -49,7 +49,6 @@ public class SVNLinuxUtil {
             if (cLibrary == null) {
                 return null;
             }
-            SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "Detecting file type: " + file);
             synchronized (ourSharedMemory) {
                 ourSharedMemory.clear();
                 int rc;
@@ -62,7 +61,6 @@ public class SVNLinuxUtil {
                             cLibrary.__lxstat64(0, path, ourSharedMemory);
                     }
                 }
-                SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "Detecting file type, rc: " + rc);
                 if (rc < 0) {
                     if (file.exists() || file.isDirectory() || file.isFile()) {
                         return null;
@@ -72,7 +70,6 @@ public class SVNLinuxUtil {
                 int mode = SVNFileUtil.isOSX || SVNFileUtil.isBSD || SVNFileUtil.isSolaris ?
                         ourSharedMemory.getShort(getFileModeOffset()) : ourSharedMemory.getInt(getFileModeOffset());
                 int type = mode & 0170000;
-                SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "Detecting file type, type: " + type);
                 if (type == 0120000) {
                     return SVNFileType.SYMLINK;
                 } else if (type == 0040000) {
