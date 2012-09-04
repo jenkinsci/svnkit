@@ -126,6 +126,9 @@ import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
+import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
+import org.tmatesoft.svn.core.wc2.SvnUpgrade;
 import org.tmatesoft.svn.util.ISVNDebugLog;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
@@ -2303,5 +2306,13 @@ public class SVNClientImpl implements SVNClientInterface {
     }
 
     public void upgrade(String path) throws ClientException {
+        try {
+            final SvnOperationFactory of = getSVNWCClient().getOperationsFactory();
+            final SvnUpgrade upgrade = of.createUpgrade();
+            upgrade.setSingleTarget(SvnTarget.fromFile(new File(path)));
+            upgrade.run();
+        } catch (SVNException e) {
+            throwException(e);
+        }
     }
 }
