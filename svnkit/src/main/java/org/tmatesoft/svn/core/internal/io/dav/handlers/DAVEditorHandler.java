@@ -334,8 +334,7 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
             if (!myIsReceiveAll && bcURL != null) {
                 DAVElement[] elements = null;
                 Map propsMap = new SVNHashMap();
-                DAVUtil.getProperties(getConnection(), DAVUtil.getPathFromURL(bcURL), 0, null, 
-                        elements, propsMap);
+                DAVUtil.getProperties(getConnection(), DAVUtil.getPathFromURL(bcURL), 1, null, elements, propsMap);
                 
                 if (!propsMap.isEmpty()) {
                     dirInfo.myChildren = new SVNHashMap();
@@ -343,7 +342,7 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
                         DAVProperties props = (DAVProperties) propsIter.next();
                         SVNPropertyValue vcURL = props.getPropertyValue(DAVElement.CHECKED_IN);
                         if (vcURL != null) {
-                            dirInfo.myChildren.put(vcURL.getString(), props);
+                            dirInfo.myChildren.put(SVNPropertyValue.getPropertyAsString(vcURL), props);
                         }
                     }
                 }
