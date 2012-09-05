@@ -49,6 +49,7 @@ import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.FSMergerBySequence;
 import org.tmatesoft.svn.core.internal.wc.SVNConflictVersion;
 import org.tmatesoft.svn.core.internal.wc.SVNDiffConflictChoiceStyle;
@@ -665,9 +666,9 @@ public class SVNWCContext {
             hasProps = true;
         }
         boolean translationRequired = false;
-        
+
         TranslateInfo translateInfo = null;
-        if (hasProps) {
+        if (hasProps || isGlobalCharsetSpecified()) {
             translateInfo = getTranslateInfo(localAbsPath, true, true, true, true);
             translationRequired = isTranslationRequired(translateInfo.eolStyleInfo.eolStyle, translateInfo.eolStyleInfo.eolStr, translateInfo.charset, translateInfo.keywords, translateInfo.special, true);
         }
@@ -700,7 +701,7 @@ public class SVNWCContext {
                             
                         versionedStream = SVNTranslator.getTranslatingInputStream(
                                 versionedStream, 
-                                null, 
+                                translateInfo.charset,
                                 eolStr, 
                                 true, 
                                 translateInfo.keywords, 
@@ -708,7 +709,7 @@ public class SVNWCContext {
                     } else {
                         pristineStream = SVNTranslator.getTranslatingInputStream(
                                 pristineStream, 
-                                null,
+                                translateInfo.charset,
                                 translateInfo.eolStyleInfo.eolStr, 
                                 false, 
                                 translateInfo.keywords, 
@@ -724,6 +725,16 @@ public class SVNWCContext {
         } else {
             return !isSameContents(localAbsPath, pristineFile);
         }
+    }
+
+    private boolean isGlobalCharsetSpecified() {
+        ISVNOptions options = getOptions();
+        if (options instanceof DefaultSVNOptions) {
+            DefaultSVNOptions defaultOptions = (DefaultSVNOptions) options;
+            String globalCharset = defaultOptions.getGlobalCharset();
+            return globalCharset != null;
+        }
+        return false;
     }
 
     public static class PristineContentsInfo {
