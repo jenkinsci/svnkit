@@ -58,7 +58,7 @@ class HTTPRequest {
 
     private long myTimeout;
 
-    private Collection myCookies;
+    private Collection<String> myCookies;
 
     public HTTPRequest(String charset) {
         myCharset = charset;
@@ -239,9 +239,9 @@ class HTTPRequest {
             if (value != null && value.toLowerCase().indexOf("keep-alive") >= 0) {
                 return Long.MAX_VALUE;
             }
-            Collection connectionHeaders = header.getHeaderValues(HTTPHeader.CONNECTION_HEADER);
+            Collection<String> connectionHeaders = header.getHeaderValues(HTTPHeader.CONNECTION_HEADER);
             if (connectionHeaders != null) {
-                for (Iterator headers = connectionHeaders.iterator(); headers.hasNext();) {
+                for (Iterator<String> headers = connectionHeaders.iterator(); headers.hasNext();) {
                     value = (String) headers.next();
                     if (value != null && value.toLowerCase().indexOf("keep-alive") >= 0) {
                         return Long.MAX_VALUE;
@@ -381,8 +381,8 @@ class HTTPRequest {
         }
 
         if (myCookies != null) {
-            for (Iterator cookies = myCookies.iterator(); cookies.hasNext();) {
-                String cookie = (String) cookies.next();
+            for (Iterator<String> cookies = myCookies.iterator(); cookies.hasNext();) {
+                String cookie = cookies.next();
                 if (cookie != null) {
                     sb.append(HTTPHeader.COOKIE);
                     sb.append(": ");
@@ -426,9 +426,17 @@ class HTTPRequest {
             errorCode = SVNErrorCode.FS_NOT_FOUND;
         } else if (status != null && (status.getCode() == HttpURLConnection.HTTP_MOVED_PERM || 
                 status.getCode() == HttpURLConnection.HTTP_MOVED_TEMP)) {
-            message = status.getCode() == HttpURLConnection.HTTP_MOVED_PERM ? "Repository moved permanently to ''{0}''; please relocate" : 
-                "Repository moved temporarily to ''{0}''; please relocate";
-            return SVNErrorMessage.create(SVNErrorCode.RA_DAV_RELOCATED, message, path);
+            final String location = status.getHeader() != null ? status.getHeader().getFirstHeaderValue("Location") : null;
+            
+            if (location != null) {
+                message = status.getCode() == HttpURLConnection.HTTP_MOVED_PERM ? "Repository moved permanently to ''{0}''; please relocate" : 
+                    "Repository moved temporarily to ''{0}''; please relocate";
+                return SVNErrorMessage.create(SVNErrorCode.RA_DAV_RELOCATED, message, location);
+            } else {
+                message = status.getCode() == HttpURLConnection.HTTP_MOVED_PERM ? "Repository moved permanently; please relocate" : 
+                    "Repository moved temporarily; please relocate";
+                return SVNErrorMessage.create(SVNErrorCode.RA_DAV_RELOCATED, message);
+            }
         }
         // extend context object to include host:port (empty location).
         Object[] messageObjects = contextObjects == null ? new Object[1] : new Object[contextObjects.length + 1];
@@ -444,7 +452,7 @@ class HTTPRequest {
         myIsKeepAlive = isKeepAlive;
     }
 
-    public void setCookies(Collection cookie) {
+    public void setCookies(Collection<String> cookie) {
         myCookies = cookie;
     }
     
