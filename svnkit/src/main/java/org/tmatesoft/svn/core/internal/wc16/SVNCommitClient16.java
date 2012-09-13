@@ -61,6 +61,7 @@ import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
+import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -1114,6 +1115,7 @@ public class SVNCommitClient16 extends SVNBasicDelegate {
                 if (e instanceof SVNCancelException) {
                     throw e;
                 }
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.WC, e);
                 SVNErrorMessage err = e.getErrorMessage().wrap("Commit failed (details follow):");
                 infos.add(new SVNCommitInfo(-1, null, null, err));
                 dispatchEvent(SVNEventFactory.createErrorEvent(err, SVNEventAction.COMMIT_COMPLETED), ISVNEventHandler.UNKNOWN);
