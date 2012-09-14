@@ -171,7 +171,7 @@ public class DefaultHTTPNegotiateAuthentication extends HTTPNegotiateAuthenticat
                         initializeContext();
                         SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "NEGOTIATE: authenticate action: context initializaed");
                     } catch (GSSException gsse) {
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Negotiate authentication failed: ''{0}''", gsse.getMajorString());
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Negotiate authentication failed: ''{0}''", gsse.getMajorString());
                         SVNErrorManager.error(err, SVNLogType.NETWORK);
                         return null;
                     }
@@ -187,7 +187,7 @@ public class DefaultHTTPNegotiateAuthentication extends HTTPNegotiateAuthenticat
                         SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "NEGOTIATE: authenticate action: out token: " + SVNBase64.byteArrayToBase64(outtoken));
                     }
                 } catch (GSSException gsse) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Negotiate authentication failed: ''{0}''", gsse.getMajorString());
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Negotiate authentication failed: ''{0}''", gsse.getMajorString());
                     SVNErrorManager.error(err, SVNLogType.NETWORK);
                     return null;
                 }
@@ -213,7 +213,7 @@ public class DefaultHTTPNegotiateAuthentication extends HTTPNegotiateAuthenticat
                 if (cause instanceof SVNException) {
                     throw (SVNException)cause;
                 }
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), SVNLogType.NETWORK);
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, e), SVNLogType.NETWORK);
             }
         }
         
@@ -225,7 +225,7 @@ public class DefaultHTTPNegotiateAuthentication extends HTTPNegotiateAuthenticat
             if (cause instanceof SVNException) {
                 throw (SVNException) cause;
             }
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, cause), SVNLogType.NETWORK);
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, cause), SVNLogType.NETWORK);
         }
         return null;
     }
