@@ -562,7 +562,7 @@ class HTTPConnection implements IHTTPConnection {
                 Collection<String> authHeaderValues = request.getResponseHeader().getHeaderValues(HTTPHeader.AUTHENTICATE_HEADER);
                 if (authHeaderValues == null || authHeaderValues.size() == 0) {
                     err = request.getErrorMessage();
-                    myLastStatus.setError(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, err.getMessageTemplate(), err.getRelatedObjects()));
+                    myLastStatus.setError(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, err.getMessageTemplate(), err.getRelatedObjects()));
                     if ("LOCK".equalsIgnoreCase(method)) {
                         myLastStatus.getError().setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
                                 "Probably you are trying to lock file in repository that only allows anonymous access"));
