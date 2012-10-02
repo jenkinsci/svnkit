@@ -17,6 +17,7 @@ import java.io.OutputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -506,7 +507,7 @@ public class FSTransactionRoot extends FSRoot {
     }
 
     public FSID writeFinalRevision(FSID newId, final CountingOutputStream protoFile, long revision, FSID id, 
-            String startNodeId, String startCopyId) throws SVNException, IOException {
+            String startNodeId, String startCopyId, Collection<FSRepresentation> representations) throws SVNException, IOException {
         newId = null;
         if (!id.isTxn()) {
             return newId;
@@ -518,7 +519,7 @@ public class FSTransactionRoot extends FSRoot {
             for (Iterator entries = namesToEntries.values().iterator(); entries.hasNext();) {
                 FSEntry dirEntry = (FSEntry) entries.next();
                 newId = writeFinalRevision(newId, protoFile, revision, dirEntry.getId(), 
-                        startNodeId, startCopyId);
+                        startNodeId, startCopyId, representations);
                 if (newId != null && newId.getRevision() == revision) {
                     dirEntry.setId(newId);
                 }
@@ -604,10 +605,9 @@ public class FSTransactionRoot extends FSRoot {
         newId = FSID.createRevId(myNodeId, myCopyId, revision, myOffset);
         revNode.setId(newId);
         getOwner().writeTxnNodeRevision(protoFile, revNode);
-        IFSRepresentationCacheManager reposCacheManager = getOwner().getRepositoryCacheManager();
-        if (reposCacheManager != null && revNode.getTextRepresentation() != null && revNode.getType() == SVNNodeKind.FILE && 
+        if (representations != null && revNode.getTextRepresentation() != null && revNode.getType() == SVNNodeKind.FILE && 
                 revNode.getTextRepresentation().getRevision() == revision) {
-            reposCacheManager.insert(revNode.getTextRepresentation(), false);
+            representations.add(revNode.getTextRepresentation());
         }
         revNode.setIsFreshTxnRoot(false);
         getOwner().putTxnRevisionNode(id, revNode);

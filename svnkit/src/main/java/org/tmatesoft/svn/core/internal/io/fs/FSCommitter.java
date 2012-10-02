@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.internal.io.fs;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
@@ -42,6 +43,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 
@@ -302,10 +304,12 @@ public class FSCommitter {
             myTxn.setBaseRevision(youngishRev);
 
             FSWriteLock writeLock = FSWriteLock.getWriteLockForDB(myFSFS);
+            final Collection<FSRepresentation> representations = myFSFS.getRepositoryCacheManager() != null ?
+                    new ArrayList<FSRepresentation>() : null;
             synchronized (writeLock) {
                 try {
                     writeLock.lock();
-                    newRevision = commit();
+                    newRevision = commit(representations);
                 } catch (SVNException svne) {
                     if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.FS_TXN_OUT_OF_DATE) {
                         long youngestRev = myFSFS.getYoungestRevision();
@@ -318,6 +322,23 @@ public class FSCommitter {
                 } finally {
                     writeLock.unlock();
                     FSWriteLock.release(writeLock);
+                }
+            }
+            // write representations here.
+            if (representations != null && !representations.isEmpty()) {
+                if (myFSFS.getRepositoryCacheManager() != null) {
+                    try {
+                        myFSFS.getRepositoryCacheManager().runWriteTransaction(new IFSSqlJetTransaction() {
+                            public void run() throws SVNException {
+                                for (FSRepresentation fsRepresentation : representations) {
+                                    myFSFS.getRepositoryCacheManager().insert(fsRepresentation, false);
+                                }
+                            }
+                        });
+                    } catch (SVNException e) {
+                        // ignore
+                        SVNDebugLog.getDefaultLog().logError(SVNLogType.FSFS, e);
+                    }
                 }
             }
             break;
@@ -458,7 +479,7 @@ public class FSCommitter {
         return id;
     }
 
-    private long commit() throws SVNException {
+    private long commit(Collection<FSRepresentation> representations) throws SVNException {
         long oldRev = myFSFS.getYoungestRevision();
 
         if (myTxn.getBaseRevision() != oldRev) {
@@ -490,15 +511,7 @@ public class FSCommitter {
                 txnWriteLock.lock();
                 final File revisionPrototypeFile = txnRoot.getTransactionProtoRevFile();
                 final long offset = revisionPrototypeFile.length();
-                if (myFSFS.getRepositoryCacheManager() != null) {
-                    myFSFS.getRepositoryCacheManager().runWriteTransaction(new IFSSqlJetTransaction() {
-                        public void run() throws SVNException {
-                            commit(startNodeId, startCopyId, newRevision, protoFileOS, newRootId, txnRoot, revisionPrototypeFile, offset);
-                        }
-                    });
-                } else {
-                    commit(startNodeId, startCopyId, newRevision, protoFileOS, newRootId, txnRoot, revisionPrototypeFile, offset);
-                }
+                commit(startNodeId, startCopyId, newRevision, protoFileOS, newRootId, txnRoot, revisionPrototypeFile, offset, representations);
                 File dstRevFile = myFSFS.getNewRevisionFile(newRevision);
                 SVNFileUtil.rename(revisionPrototypeFile, dstRevFile);
             } finally {
@@ -548,15 +561,15 @@ public class FSCommitter {
         return newRevision;
     }
 
-    private void commit(String startNodeId, String startCopyId, long newRevision, OutputStream protoFileOS, FSID newRootId, FSTransactionRoot txnRoot, File revisionPrototypeFile, long offset)
-            throws SVNException {
+    private void commit(String startNodeId, String startCopyId, long newRevision, OutputStream protoFileOS, FSID newRootId, FSTransactionRoot txnRoot, File revisionPrototypeFile, long offset,
+            Collection<FSRepresentation> representations) throws SVNException {
         try {
             protoFileOS = SVNFileUtil.openFileForWriting(revisionPrototypeFile, true);
             FSID rootId = FSID.createTxnId("0", "0", myTxn.getTxnId());
 
             CountingOutputStream revWriter = new CountingOutputStream(protoFileOS, offset);
             newRootId = txnRoot.writeFinalRevision(newRootId, revWriter, newRevision, rootId,
-                    startNodeId, startCopyId);
+                    startNodeId, startCopyId, representations);
             long changedPathOffset = txnRoot.writeFinalChangedPathInfo(revWriter);
 
             String offsetsLine = "\n" + newRootId.getOffset() + " " + changedPathOffset + "\n";
@@ -614,6 +627,9 @@ public class FSCommitter {
         }
 
         if (!FSRepresentation.compareRepresentations(target.getPropsRepresentation(), ancestor.getPropsRepresentation())) {
+            SVNErrorManager.error(FSErrors.errorConflict(targetPath, conflictPath), SVNLogType.FSFS);
+        }
+        if (!FSRepresentation.compareRepresentations(source.getPropsRepresentation(), ancestor.getPropsRepresentation())) {
             SVNErrorManager.error(FSErrors.errorConflict(targetPath, conflictPath), SVNLogType.FSFS);
         }
 

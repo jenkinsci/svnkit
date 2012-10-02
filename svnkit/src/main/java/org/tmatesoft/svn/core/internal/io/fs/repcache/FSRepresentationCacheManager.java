@@ -60,7 +60,9 @@ public class FSRepresentationCacheManager implements IFSRepresentationCacheManag
             checkFormat(cacheObj.myRepCacheDB);
             cacheObj.myTable = cacheObj.myRepCacheDB.getTable(REP_CACHE_TABLE);
         } catch (SqlJetException e) {
-            SVNErrorManager.error(convertError(e), SVNLogType.FSFS);
+            SVNDebugLog.getDefaultLog().logError(SVNLogType.FSFS, e);
+            return new FSEmptyRepresentationCacheManager();
+            
         }
         return cacheObj;
     }
@@ -71,7 +73,7 @@ public class FSRepresentationCacheManager implements IFSRepresentationCacheManag
             db = SqlJetDb.open(path, true);
             checkFormat(db);
         } catch (SqlJetException e) {
-            SVNErrorManager.error(FSRepresentationCacheManager.convertError(e), SVNLogType.FSFS);
+            SVNDebugLog.getDefaultLog().logError(SVNLogType.FSFS, e);
         } finally {
             if (db != null) {
                 try {
