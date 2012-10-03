@@ -834,7 +834,7 @@ public class SvnCodec {
     
     public static ISVNExternalsHandler externalsHandler(final ISvnExternalsHandler target) {
         if (target == null) {
-            return null;
+            return ISVNExternalsHandler.DEFAULT;
         }
         return new ISVNExternalsHandler() {
             public SVNRevision[] handleExternal(File externalPath, SVNURL externalURL,
@@ -847,7 +847,11 @@ public class SvnCodec {
 
     public static ISvnExternalsHandler externalsHandler(final ISVNExternalsHandler target) {
         if (target == null) {
-            return null;
+            return new ISvnExternalsHandler() {
+                public SVNRevision[] handleExternal(File externalPath, SVNURL externalURL, SVNRevision externalRevision, SVNRevision externalPegRevision, String externalsDefinition, SVNRevision externalsWorkingRevision) {
+                    return new SVNRevision[] {externalRevision, externalPegRevision};
+                }
+            };
         }
         return new ISvnExternalsHandler() {
             public SVNRevision[] handleExternal(File externalPath, SVNURL externalURL,

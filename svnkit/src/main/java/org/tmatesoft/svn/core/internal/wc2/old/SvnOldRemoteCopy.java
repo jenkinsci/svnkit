@@ -35,7 +35,6 @@ public class SvnOldRemoteCopy extends SvnOldRunner<SVNCommitInfo, SvnRemoteCopy>
     protected SVNCommitInfo run() throws SVNException {
         SVNCopyClient16 client = new SVNCopyClient16(getOperation().getRepositoryPool(), getOperation().getOptions());
         client.setEventHandler(getOperation().getEventHandler());
-        client.setExternalsHandler(ISVNExternalsHandler.DEFAULT);
         client.setOptions(getOperation().getOptions());
         client.setCommitHandler(SvnCodec.commitHandler(getOperation().getCommitHandler()));
         client.setExternalsHandler(SvnCodec.externalsHandler(getOperation().getExternalsHandler()));
