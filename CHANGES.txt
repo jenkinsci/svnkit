@@ -1,5 +1,8 @@
 == version 1.3.10 ==
 
++ Errors caused by usage of fsfs repository sqlite representations 
+  cache are now handled inside the library without throwing exception to the user. 
+
 == version 1.3.9 ==
 
 + SVNURL.fromFile(...) did not work properly for UNC-style paths, fixed.
