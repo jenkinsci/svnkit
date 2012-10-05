@@ -538,6 +538,9 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
                 String key = (String) paths.next();
                 SVNLogEntryPath path = (SVNLogEntryPath) logEntry.getChangedPaths().get(key);
                 Map attrs = new LinkedHashMap();
+                if (path.getKind() != null) {
+                    attrs.put("kind", path.getKind() + "");
+                }
                 attrs.put("action", path.getType() + "");
                 if (path.getCopyPath() != null) {
                     attrs.put("copyfrom-path", path.getCopyPath());
