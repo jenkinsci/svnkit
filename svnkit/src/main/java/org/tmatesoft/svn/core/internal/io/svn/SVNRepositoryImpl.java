@@ -1234,8 +1234,8 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
     }
 
     protected void openConnection() throws SVNException {
-        lock();
         fireConnectionOpened();
+        lock();
         // check if connection is stale.
         if (myConnection != null && myConnection.isConnectionStale()) {
             closeSession();

@@ -1008,8 +1008,8 @@ public class DAVRepository extends SVNRepository {
     }
 
     protected void openConnection() throws SVNException {
-        lock();
         fireConnectionOpened();
+        lock();
         if (myConnection == null) {
             myConnection = createDAVConnection(myConnectionFactory, this);
             myConnection.setReportResponseSpooled(isSpoolResponse());
