@@ -49,13 +49,21 @@ class JNALibraryLoader {
             try {
                 ourWinCryptLibrary = (ISVNWinCryptLibrary) Native.loadLibrary("Crypt32", 
                         ISVNWinCryptLibrary.class);
+                ourWinCryptLibrary = SVNFileUtil.logNativeCalls && ourWinCryptLibrary != null ?
+                        new DebugProxyISVNWinCryptLibrary(ourWinCryptLibrary, SVNDebugLog.getDefaultLog()) : ourWinCryptLibrary;
                 ourKenrelLibrary = (ISVNKernel32Library) Native.loadLibrary("Kernel32", 
                         ISVNKernel32Library.class);
+                ourKenrelLibrary = SVNFileUtil.logNativeCalls && ourKenrelLibrary != null ?
+                        new DebugProxyISVNKernel32Library(ourKenrelLibrary, SVNDebugLog.getDefaultLog()) : ourKenrelLibrary;
                 String securityLibraryName = getSecurityLibraryName();
                 ourSecurityLibrary = securityLibraryName != null ? 
                         (ISVNSecurityLibrary) Native.loadLibrary(securityLibraryName, 
                         ISVNSecurityLibrary.class) : null;
+                ourSecurityLibrary = SVNFileUtil.logNativeCalls && ourSecurityLibrary != null ?
+                        new DebugProxyISVNSecurityLibrary(ourSecurityLibrary, SVNDebugLog.getDefaultLog()) : ourSecurityLibrary;
                 ourWin32Library = (ISVNWin32Library) Native.loadLibrary("Shell32", ISVNWin32Library.class);
+                ourWin32Library = SVNFileUtil.logNativeCalls && ourWin32Library != null ?
+                        new DebugProxyISVNWin32Library(ourWin32Library, SVNDebugLog.getDefaultLog()) : ourWin32Library;
             } catch (Throwable th) {
                 SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, th);
                 ourWinCryptLibrary = null;
@@ -67,8 +75,9 @@ class JNALibraryLoader {
         
         if (SVNFileUtil.isOSX || SVNFileUtil.isLinux || SVNFileUtil.isBSD || SVNFileUtil.isSolaris) {
             try {
-                ourCLibrary = (ISVNCLibrary) Native.loadLibrary("c", ISVNCLibrary.class);
-                SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "C Library loaded with JNA: " + ourCLibrary);
+                ISVNCLibrary isvncLibrary = (ISVNCLibrary) Native.loadLibrary("c", ISVNCLibrary.class);
+                ourCLibrary = SVNFileUtil.logNativeCalls && isvncLibrary != null ? new DebugProxyISVNCLibrary(isvncLibrary, SVNDebugLog.getDefaultLog()) :  isvncLibrary;
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "C Library loaded with JNA: " + isvncLibrary);
                 try {
                     ourUID = ourCLibrary.getuid();
                 } catch (Throwable th) {
@@ -96,12 +105,16 @@ class JNALibraryLoader {
                 Class<?>[] callSites = new Class[]{SVNGnomeKeyring.class, JNALibraryLoader.class};
                 if (gnomeKeyringLibrary != null) {
                     ourGnomeKeyringLibrary = (ISVNGnomeKeyringLibrary) SVNMethodCallLogger.newInstance(gnomeKeyringLibrary, callSites);
+                    ourGnomeKeyringLibrary = SVNFileUtil.logNativeCalls && ourGnomeKeyringLibrary != null ?
+                            new DebugProxyISVNGnomeKeyringLibrary(ourGnomeKeyringLibrary, SVNDebugLog.getDefaultLog()) : ourGnomeKeyringLibrary;
                 } else {
                     ourGnomeKeyringLibrary = null;
                 }
 
                 if (gLibrary != null) {
                     ourGLibrary = (ISVNGLibrary) SVNMethodCallLogger.newInstance(gLibrary, callSites);
+                    ourGLibrary = SVNFileUtil.logNativeCalls && ourGLibrary != null?
+                            new DebugProxyISVNGLibrary(ourGLibrary, SVNDebugLog.getDefaultLog()) : ourGLibrary;
                 } else {
                     ourGLibrary = null;
                 }
@@ -117,7 +130,11 @@ class JNALibraryLoader {
         if (SVNFileUtil.isOSX) {
             try {
                 ourMacOsSecurityLibrary = (ISVNMacOsSecurityLibrary) Native.loadLibrary("Security", ISVNMacOsSecurityLibrary.class);
+                ourMacOsSecurityLibrary = SVNFileUtil.logNativeCalls && ourMacOsSecurityLibrary != null?
+                        new DebugProxyISVNMacOsSecurityLibrary(ourMacOsSecurityLibrary, SVNDebugLog.getDefaultLog()) : ourMacOsSecurityLibrary;
                 ourMacOsCFLibrary = (ISVNMacOsCFLibrary) Native.loadLibrary("CoreFoundation", ISVNMacOsCFLibrary.class);
+                ourMacOsCFLibrary = SVNFileUtil.logNativeCalls && ourMacOsCFLibrary != null?
+                        new DebugProxyISVNMacOsCFLibrary(ourMacOsCFLibrary, SVNDebugLog.getDefaultLog()) : ourMacOsCFLibrary;
             } catch (Throwable th) {
                 SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, th);
                 ourMacOsSecurityLibrary = null;

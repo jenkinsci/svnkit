@@ -51,6 +51,7 @@ public class SVNFileUtil {
     private static final String ENV_COMMAND;
     private static final String STAT_COMMAND;
 
+    public static final boolean logNativeCalls;
     public static final boolean isWindows;
     public static final boolean isOS2;
     public static final boolean isOSX;
@@ -96,6 +97,9 @@ public class SVNFileUtil {
     public static final String BINARY_MIME_TYPE = "application/octet-stream";
 
     static {
+        final String logNativeCallsString = System.getProperty("svnkit.log.native.calls", "false");
+        logNativeCalls = logNativeCallsString == null ? false : Boolean.parseBoolean(logNativeCallsString);
+
         String retryCountStr = System.getProperty("svnkit.fs.win32_retry_count", "100");
         int retryCount = -1;
         try {
