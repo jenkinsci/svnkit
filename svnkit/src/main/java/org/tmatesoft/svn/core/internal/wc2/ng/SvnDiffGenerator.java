@@ -79,6 +79,13 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
     }
 
     private String getRelativePath(String targetString, String baseTargetString) {
+        if (targetString != null) {
+            targetString = targetString.replace(File.separatorChar, '/');
+        }
+        if (baseTargetString != null) {
+            baseTargetString = baseTargetString.replace(File.separatorChar, '/');
+        }
+
         final String pathAsChild = SVNPathUtil.getPathAsChild(baseTargetString, targetString);
         if (pathAsChild != null) {
             return pathAsChild;
