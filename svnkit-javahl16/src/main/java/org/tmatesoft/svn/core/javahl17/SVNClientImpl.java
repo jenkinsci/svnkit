@@ -85,6 +85,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNConflictVersion;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.patch.SVNPatchHunkInfo;
+import org.tmatesoft.svn.core.internal.wc2.ng.SvnDiffGenerator;
 import org.tmatesoft.svn.core.javahl.JavaHLCompositeLog;
 import org.tmatesoft.svn.core.javahl.JavaHLDebugLog;
 import org.tmatesoft.svn.core.wc.ISVNConflictHandler;
@@ -935,6 +936,9 @@ public class SVNClientImpl implements ISVNClient {
             fileOutputStream = new FileOutputStream(outFileName);
             bufferedOutputStream = new BufferedOutputStream(fileOutputStream);
 
+            SvnDiffGenerator diffGenerator = new SvnDiffGenerator();
+            diffGenerator.setBasePath(new File("").getAbsoluteFile());
+
             SvnDiff diff = svnOperationFactory.createDiff();
             diff.setSources(getTarget(target1, revision1), getTarget(target2, revision2));
             diff.setRelativeToDirectory(getFile(relativeToDir));
@@ -945,6 +949,7 @@ public class SVNClientImpl implements ISVNClient {
             diff.setNoDiffDeleted(noDiffDeleted);
             diff.setIgnoreContentType(force);
             diff.setShowCopiesAsAdds(copiesAsAdds);
+            diff.setDiffGenerator(diffGenerator);
             diff.run();
         } catch (FileNotFoundException e) {
             throw SVNClientImpl.getClientException(e);
@@ -973,6 +978,9 @@ public class SVNClientImpl implements ISVNClient {
             fileOutputStream = new FileOutputStream(outFileName);
             bufferedOutputStream = new BufferedOutputStream(fileOutputStream);
 
+            SvnDiffGenerator diffGenerator = new SvnDiffGenerator();
+            diffGenerator.setBasePath(new File("").getAbsoluteFile());
+
             SvnDiff diff = svnOperationFactory.createDiff();
             diff.setSource(getTarget(target, pegRevision), getSVNRevision(startRevision), getSVNRevision(endRevision));
             diff.setRelativeToDirectory(getFile(relativeToDir));
@@ -983,6 +991,7 @@ public class SVNClientImpl implements ISVNClient {
             diff.setNoDiffDeleted(noDiffDeleted);
             diff.setIgnoreContentType(force);
             diff.setShowCopiesAsAdds(copiesAsAdds);
+            diff.setDiffGenerator(diffGenerator);
             diff.run();
         } catch (FileNotFoundException e) {
             throw SVNClientImpl.getClientException(e);
