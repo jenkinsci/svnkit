@@ -17,7 +17,6 @@ import org.tmatesoft.svn.core.internal.wc17.SVNAmbientDepthFilterEditor17;
 import org.tmatesoft.svn.core.internal.wc17.SVNReporter17;
 import org.tmatesoft.svn.core.internal.wc17.SVNStatusEditor17;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
-import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
@@ -243,48 +242,51 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
 
         SvnDiffCallback callback = createDiffCallback(generator, false, revisionNumber1, revisionNumber2);
         SVNRepository extraRepository = getRepositoryAccess().createRepository(anchor1, null, false);
-
-        boolean pureRemoteDiff = (basePath == null);
-        SvnNgRemoteDiffEditor remoteDiffEditor = SvnNgRemoteDiffEditor.createEditor(getWcContext(), pureRemoteDiff ? new File("") : basePath, getOperation().getDepth(), extraRepository, revisionNumber1, true, false, pureRemoteDiff, callback, this);
-
-        ISVNEditor editor;
-        editor = remoteDiffEditor;
-        editor = SVNCancellableEditor.newInstance(editor, this, SVNDebugLog.getDefaultLog());
-
-        if (oldKind1 != SVNNodeKind.NONE && oldKind2 != SVNNodeKind.NONE)  {
-            ISVNReporterBaton reporter = new ISVNReporterBaton() {
-
-                public void report(ISVNReporter reporter) throws SVNException {
-                    reporter.setPath("", null, revisionNumber1, SVNDepth.INFINITY, false);
-                    reporter.finishReport();
+        try {
+            boolean pureRemoteDiff = (basePath == null);
+            SvnNgRemoteDiffEditor remoteDiffEditor = SvnNgRemoteDiffEditor.createEditor(getWcContext(), pureRemoteDiff ? new File("") : basePath, getOperation().getDepth(), extraRepository, revisionNumber1, true, false, pureRemoteDiff, callback, this);
+    
+            ISVNEditor editor;
+            editor = remoteDiffEditor;
+            editor = SVNCancellableEditor.newInstance(editor, this, SVNDebugLog.getDefaultLog());
+    
+            if (oldKind1 != SVNNodeKind.NONE && oldKind2 != SVNNodeKind.NONE)  {
+                ISVNReporterBaton reporter = new ISVNReporterBaton() {
+    
+                    public void report(ISVNReporter reporter) throws SVNException {
+                        reporter.setPath("", null, revisionNumber1, SVNDepth.INFINITY, false);
+                        reporter.finishReport();
+                    }
+                };
+    
+                try {
+                    repository.diff(url2, revisionNumber2, revisionNumber1, targetString1,
+                            getOperation().isIgnoreAncestry(), getOperation().getDepth(), true, reporter, editor);
+                } finally {
+                    remoteDiffEditor.cleanup();
                 }
-            };
-
-            try {
-                repository.diff(url2, revisionNumber2, revisionNumber1, targetString1,
-                        getOperation().isIgnoreAncestry(), getOperation().getDepth(), true, reporter, editor);
-            } finally {
-                remoteDiffEditor.cleanup();
-            }
-        } else {
-            //oldKind1 == NONE or oldKind2 == NONE
-
-            repository.setLocation(anchor1, false);
-
-            ISVNReporterBaton reporter = new ISVNReporterBaton() {
-
-                public void report(ISVNReporter reporter) throws SVNException {
-                    reporter.setPath("", null, revisionNumber1, SVNDepth.INFINITY, false);
-                    reporter.finishReport();
+            } else {
+                //oldKind1 == NONE or oldKind2 == NONE
+    
+                repository.setLocation(anchor1, false);
+    
+                ISVNReporterBaton reporter = new ISVNReporterBaton() {
+    
+                    public void report(ISVNReporter reporter) throws SVNException {
+                        reporter.setPath("", null, revisionNumber1, SVNDepth.INFINITY, false);
+                        reporter.finishReport();
+                    }
+                };
+    
+                try {
+                    repository.diff(anchor2.appendPath(SVNPathUtil.head(targetString2), false), revisionNumber2, revisionNumber1, SVNPathUtil.head(targetString2),
+                            getOperation().isIgnoreAncestry(), getOperation().getDepth(), true, reporter, editor);
+                } finally {
+                    remoteDiffEditor.cleanup();
                 }
-            };
-
-            try {
-                repository.diff(anchor2.appendPath(SVNPathUtil.head(targetString2), false), revisionNumber2, revisionNumber1, SVNPathUtil.head(targetString2),
-                        getOperation().isIgnoreAncestry(), getOperation().getDepth(), true, reporter, editor);
-            } finally {
-                remoteDiffEditor.cleanup();
             }
+        } finally {
+            extraRepository.closeSession();
         }
 
     }
@@ -378,14 +380,6 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
             }
         }
 
-        File anchor;
-        SVNNodeKind kind = getWcContext().readKind(target1.getFile(), false);
-        if (kind == SVNNodeKind.DIR) {
-            anchor = SVNFileUtil.getParentFile(target1.getFile());
-        } else {
-            anchor = target1.getFile();
-        }
-
         final ISvnDiffGenerator generator = getDiffGenerator();
         generator.setOriginalTargets(target1, target2);
         generator.setAnchors(target1, target2);
@@ -400,14 +394,6 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
     }
 
     private void doDiffWC(File localAbspath, ISvnDiffCallback callback) throws SVNException {
-        ISVNWCDb.SVNWCDbKind kind = getWcContext().getDb().readKind(localAbspath, false);
-        File anchorAbspath;
-        if (kind == ISVNWCDb.SVNWCDbKind.Dir) {
-            anchorAbspath = localAbspath;
-        } else {
-            anchorAbspath = SVNFileUtil.getParentFile(localAbspath);
-        }
-
         final boolean getAll;
         //noinspection RedundantIfStatement
         if (getOperation().isShowCopiesAsAdds() || getOperation().isUseGitDiffFormat()) {
