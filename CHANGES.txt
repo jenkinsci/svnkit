@@ -1,3 +1,13 @@
+== version 1.7.6 ==
+
++ Deadlock in connections pool code fixed.
++ Connections might be left open on connections pool disposal.
++ Error reporting improved for DAV operations.
++ Remote diff might leave SSH connection open for a while when svn+ssh was used.
++ SSL Proxy supports authentication other than Basic.
++ SqlJet library 1.1.4 is used.
++ Other minor stability improvements and bugfixes. 
+
 == version 1.7.5-v1 ==
 
 + SVNLookClient.doGetChangedDirectories failed on revision 0, fixed.
