@@ -43,7 +43,6 @@ public class SqlJetTest {
                 final SVNSqlJetDb db = SVNSqlJetDb.open(wcDbFile, SVNSqlJetDb.Mode.ReadWrite);
                 try {
                     db.getDb().setBusyHandler(new ISqlJetBusyHandler() {
-                        @Override
                         public boolean call(int number) {
 
                             if (shouldContinue[0]) {
