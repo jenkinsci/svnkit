@@ -375,7 +375,7 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 
 		if (oldFormat >= SVNWCContext.WC_NG_VERSION) {
 			if (getOperation().getEventHandler() != null) {
-				SVNEvent event = SVNEventFactory.createSVNEvent(dirAbsPath,SVNNodeKind.DIR, null, -1, SVNEventAction.SKIP, null, null, null);
+				SVNEvent event = SVNEventFactory.createSVNEvent(dirAbsPath,SVNNodeKind.DIR, null, -1, SVNEventAction.SKIP, SVNEventAction.UPGRADED_PATH, null, null);
 				getOperation().getEventHandler().handleEvent(event, -1);
 			}
 			return;
@@ -387,7 +387,7 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 		} catch (SVNException ex) {
 			if (ex.isEnoent()) {
 				if (getOperation().getEventHandler() != null) {
-					SVNEvent event = SVNEventFactory.createSVNEvent(dirAbsPath, SVNNodeKind.DIR, null, -1, SVNEventAction.SKIP, null, null, null);
+					SVNEvent event = SVNEventFactory.createSVNEvent(dirAbsPath, SVNNodeKind.DIR, null, -1, SVNEventAction.SKIP, SVNEventAction.UPGRADED_PATH, null, null);
 					getOperation().getEventHandler().handleEvent(event, -1);
 				}
 			}
