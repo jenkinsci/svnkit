@@ -172,7 +172,7 @@ public class SVNTranslator {
         }
         if ((charset == null || SVNProperty.isUTF8(charset)) && eol == null && (keywords == null || keywords.isEmpty())) {
             // no expansion, fast copy.
-            SVNFileUtil.copyFile(src, dst, false);
+            SVNFileUtil.copyFile(src, dst, false, false);
             return;
         }
         OutputStream os = SVNFileUtil.openFileForWriting(dst);
