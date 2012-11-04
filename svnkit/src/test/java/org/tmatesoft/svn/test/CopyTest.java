@@ -8,6 +8,7 @@ import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectFieldsStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
+import org.tmatesoft.svn.core.internal.wc.SVNExternal;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
@@ -251,6 +252,40 @@ public class CopyTest {
             } finally {
                 clientManager.dispose();
             }
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testWCWithExternalsToRepos() throws Exception {
+        //SVNKIT-324
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testWCWithExternalsToRepos", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+            final SVNURL targetUrl = url.appendPath("target", false);
+
+            final SVNExternal external = new SVNExternal("external", targetUrl.toString(), SVNRevision.HEAD, SVNRevision.HEAD, false, false, true);
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("file");
+            commitBuilder.setDirectoryProperty("", SVNProperty.EXTERNALS, SVNPropertyValue.create(external.toString()));
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url);
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+
+            final SvnRemoteCopy remoteCopy = svnOperationFactory.createRemoteCopy();
+            remoteCopy.addCopySource(SvnCopySource.create(SvnTarget.fromFile(workingCopyDirectory), SVNRevision.WORKING));
+            remoteCopy.setSingleTarget(SvnTarget.fromURL(targetUrl));
+            final SVNCommitInfo commitInfo = remoteCopy.run();
+
+            Assert.assertEquals(2, commitInfo.getNewRevision());
+
         } finally {
             svnOperationFactory.dispose();
             sandbox.dispose();
