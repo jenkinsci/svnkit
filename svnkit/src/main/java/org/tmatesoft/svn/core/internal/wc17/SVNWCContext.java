@@ -3036,7 +3036,7 @@ public class SVNWCContext {
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
 
-            if (result.getMergedFile() != null) {
+            if (result.isIsSaveMerged()) {
                 info.workItems = saveMergeResult(targetAbspath, result.getMergedFile() != null ? result.getMergedFile() : resultTarget);
             }
         }
