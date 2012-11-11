@@ -1012,7 +1012,6 @@ public class MergeTest {
 
             final DefaultSVNOptions svnOptions = new DefaultSVNOptions();
             svnOptions.setConflictHandler(new ISVNConflictHandler() {
-                @Override
                 public SVNConflictResult handleConflict(SVNConflictDescription conflictDescription) throws SVNException {
                     return new SVNConflictResult(SVNConflictChoice.POSTPONE, anyFile);
                 }
