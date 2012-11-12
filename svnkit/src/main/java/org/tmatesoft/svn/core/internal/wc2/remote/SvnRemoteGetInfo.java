@@ -102,7 +102,6 @@ public class SvnRemoteGetInfo extends SvnRemoteOperationRunner<SvnInfo, SvnGetIn
                 
                 SVNRepository parentRepository = getRepositoryAccess().createRepository(parentURL, null, false);
                 
-                @SuppressWarnings("unchecked")
                 Collection<SVNDirEntry> dirEntries = parentRepository.getDir("", revNum, null, SVNDirEntry.DIRENT_KIND | SVNDirEntry.DIRENT_CREATED_REVISION | SVNDirEntry.DIRENT_TIME
                         | SVNDirEntry.DIRENT_LAST_AUTHOR, (Collection<SVNDirEntry>) null);
                 
@@ -181,8 +180,7 @@ public class SvnRemoteGetInfo extends SvnRemoteOperationRunner<SvnInfo, SvnGetIn
     }
     
     private void pushDirInfo(SVNRepository repos, SVNRevision rev, String path, SVNURL root, String uuid, SVNURL url, Map<String, SVNLock> locks, SVNDepth depth) throws SVNException {
-        @SuppressWarnings("unchecked")
-        Collection<SVNDirEntry> children =  repos.getDir(path, rev.getNumber(), null, SVNDirEntry.DIRENT_KIND | SVNDirEntry.DIRENT_CREATED_REVISION | SVNDirEntry.DIRENT_TIME | SVNDirEntry.DIRENT_LAST_AUTHOR,  new ArrayList<SVNDirEntry>());
+        Collection<SVNDirEntry> children =  repos.getDir(path, rev.getNumber(), null, SVNDirEntry.DIRENT_SIZE | SVNDirEntry.DIRENT_KIND | SVNDirEntry.DIRENT_CREATED_REVISION | SVNDirEntry.DIRENT_TIME | SVNDirEntry.DIRENT_LAST_AUTHOR,  new ArrayList<SVNDirEntry>());
         
         for (SVNDirEntry child : children) {
             SVNURL childURL = url.appendPath(child.getName(), false);
