@@ -2474,9 +2474,18 @@ public class SVNWCDb implements ISVNWCDb {
                     conflicts.add(desc);
                 }
 
-                final String conflict_old = getColumnText(stmt, ACTUAL_NODE__Fields.conflict_old);
-                final String conflict_new = getColumnText(stmt, ACTUAL_NODE__Fields.conflict_new);
-                final String conflict_working = getColumnText(stmt, ACTUAL_NODE__Fields.conflict_working);
+                String conflict_old = getColumnText(stmt, ACTUAL_NODE__Fields.conflict_old);
+                if ("".equals(conflict_old)) {
+                    conflict_old = null;
+                }
+                String conflict_new = getColumnText(stmt, ACTUAL_NODE__Fields.conflict_new);
+                if ("".equals(conflict_new)) {
+                    conflict_new = null;
+                }
+                String conflict_working = getColumnText(stmt, ACTUAL_NODE__Fields.conflict_working);
+                if ("".equals(conflict_working)) {
+                    conflict_working = null;
+                }
 
                 if (conflict_old != null || conflict_new != null || conflict_working != null) {
                     File baseFile = conflict_old != null ? SVNFileUtil.createFilePath(pdh.getWCRoot().getAbsPath(), conflict_old) : null;
