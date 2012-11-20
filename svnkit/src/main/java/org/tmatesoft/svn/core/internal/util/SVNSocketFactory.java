@@ -73,6 +73,14 @@ public class SVNSocketFactory {
         socket.setSoTimeout(readTimeout);
         return socket;
     }
+    
+    public static synchronized void setSSLProtocols(String sslProtocols) {
+        ourSSLProtocols = sslProtocols;
+    }
+
+    public static synchronized String getSSLProtocols() {
+        return ourSSLProtocols;
+    }
 
     public static Socket createSSLSocket(KeyManager[] keyManagers, TrustManager trustManager, String host, int port, int connectTimeout, int readTimeout, ISVNCanceller cancel) throws IOException, SVNException {
         InetAddress address = createAddres(host);
@@ -244,15 +252,19 @@ public class SVNSocketFactory {
             return null;
         }
         SSLSocket sslSocket = (SSLSocket) socket;
-        if (ourSSLProtocols != null && "SSLv3".equals(ourSSLProtocols.trim())) {
+        final String sslProtocols;
+        synchronized (SVNSocketFactory.class) {
+            sslProtocols = ourSSLProtocols;
+        }
+        if (sslProtocols != null && "SSLv3".equals(sslProtocols.trim())) {
             sslSocket.setEnabledProtocols(new String[] {"SSLv3"});
             return sslSocket;
         }
         String[] protocols = null;
         
-        if (ourSSLProtocols != null) {
-            Collection userProtocols = new ArrayList();
-            for(StringTokenizer tokens = new StringTokenizer(ourSSLProtocols, ","); tokens.hasMoreTokens();) {
+        if (sslProtocols != null) {
+            final Collection<String> userProtocols = new ArrayList<String>();
+            for(StringTokenizer tokens = new StringTokenizer(sslProtocols, ","); tokens.hasMoreTokens();) {
                 String userProtocol = tokens.nextToken().trim();
                 if (!"".equals(userProtocol)) {
                     userProtocols.add(userProtocol);
