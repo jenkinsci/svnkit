@@ -568,7 +568,7 @@ public class SVNClientImpl implements ISVNClient {
 
             SvnCommit commit = svnOperationFactory.createCommit();
             commit.setDepth(getSVNDepth(depth));
-            commit.setKeepLocks(!noUnlock);
+            commit.setKeepLocks(noUnlock);
             commit.setKeepChangelists(keepChangelist);
             commit.setApplicalbeChangelists(changelists);
             commit.setRevisionProperties(getSVNProperties(revpropTable));
