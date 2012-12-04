@@ -380,7 +380,7 @@ class HTTPConnection implements IHTTPConnection {
         TrustManager trustManager = myTrustManager == null && authManager != null ? authManager.getTrustManager(myRepository.getLocation()) : myTrustManager;
         ISVNProxyManager proxyManager = authManager != null ? authManager.getProxyManager(myRepository.getLocation()) : null;
 
-        String sslRealm = "<" + myHost.getProtocol() + "://" + myHost.getHost() + ":" + myHost.getPort() + ">";
+        String sslRealm = composeRealm("");
         SVNAuthentication httpAuth = myLastValidAuth;
         boolean isAuthForced = authManager != null ? authManager.isAuthenticationForced() : false;
         if (httpAuth == null && isAuthForced) {
@@ -648,7 +648,7 @@ class HTTPConnection implements IHTTPConnection {
 
                 realm = myChallengeCredentials.getChallengeParameter("realm");
                 realm = realm == null ? "" : " " + realm;
-                realm = "<" + myHost.getProtocol() + "://" + myHost.getHost() + ":" + myHost.getPort() + ">" + realm;
+                realm = composeRealm(realm); 
                 
                 if (httpAuth == null) {
                     httpAuth = authManager.getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, realm, myRepository.getLocation());
@@ -735,6 +735,25 @@ class HTTPConnection implements IHTTPConnection {
         SVNErrorMessage err2 = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "{0} request failed on ''{1}''", new Object[] {method, path}, err.getType(), err.getCause());
         SVNErrorManager.error(err, err2, SVNLogType.NETWORK);
         return null;
+    }
+
+    private String composeRealm(String realm) {
+        final StringBuffer buffer = new StringBuffer();
+        buffer.append("<");
+        buffer.append(myHost.getProtocol());
+        buffer.append("://");
+        if (myHost.getUserInfo() != null && !"".equals(myHost.getUserInfo().trim())) {
+            buffer.append(myHost.getUserInfo());
+            buffer.append("@");
+        }
+        buffer.append(myHost.getHost());
+        buffer.append(":");
+        buffer.append(myHost.getPort());
+        buffer.append(">");
+        if (realm != null) {
+            buffer.append(realm);
+        }
+        return buffer.toString();
     }
 
     private boolean isClearCredentialsOnClose(HTTPAuthentication auth) {
