@@ -2,16 +2,15 @@ package org.tmatesoft.svn.test;
 
 import org.junit.Assert;
 import org.junit.Assume;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
-import org.tmatesoft.svn.core.wc.SVNClientManager;
-import org.tmatesoft.svn.core.wc.SVNCommitClient;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.core.wc2.*;
 import org.tmatesoft.svn.core.wc2.admin.SvnRepositoryCreate;
 
@@ -225,6 +224,64 @@ public class CommitTest {
             final SvnCommit commit = svnOperationFactory.createCommit();
             commit.setSingleTarget(SvnTarget.fromFile(file));
             commit.run();
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Ignore("Currently fails")
+    @Test
+    public void testSkipCommitItem() throws Exception {
+        //SVNKIT-334
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testSkipCommitItem", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url);
+
+            final File directory = workingCopy.getFile("directory");
+            final File file1 = new File(directory, "file1");
+            final File file2 = new File(directory, "file2");
+
+            SVNFileUtil.ensureDirectoryExists(directory);
+            TestUtil.writeFileContentsString(file1, "contents");
+            TestUtil.writeFileContentsString(file2, "contents");
+
+            final SvnScheduleForAddition scheduleForAddition = svnOperationFactory.createScheduleForAddition();
+            scheduleForAddition.addTarget(SvnTarget.fromFile(directory));
+            scheduleForAddition.addTarget(SvnTarget.fromFile(file1));
+            scheduleForAddition.addTarget(SvnTarget.fromFile(file2));
+            scheduleForAddition.run();
+
+            final SVNClientManager clientManager = SVNClientManager.newInstance();
+            try {
+                final SVNCommitClient commitClient = clientManager.getCommitClient();
+                commitClient.setCommitHandler(new DefaultSVNCommitHandler());
+                final SVNCommitPacket commitPacket = commitClient.doCollectCommitItems(new File[]{workingCopy.getWorkingCopyDirectory()}, false, true, SVNDepth.INFINITY, null);
+                for (SVNCommitItem commitItem : commitPacket.getCommitItems()) {
+                    if (commitItem.getFile().equals(file2)) {
+                        commitPacket.setCommitItemSkipped(commitItem, true);
+                    }
+                }
+                commitClient.doCommit(commitPacket, true, "");
+            } finally {
+                clientManager.dispose();
+            }
+
+            final SvnLog log = svnOperationFactory.createLog();
+            log.addRange(SvnRevisionRange.create(SVNRevision.create(1), SVNRevision.HEAD));
+            log.setSingleTarget(SvnTarget.fromURL(url));
+            log.setDiscoverChangedPaths(true);
+            final SVNLogEntry logEntry = log.run();
+
+            final Map<String, SVNLogEntryPath> changedPaths = logEntry.getChangedPaths();
+            final SVNLogEntryPath logEntryPath = changedPaths.get("/directory/file2");
+            Assert.assertNull(logEntryPath);
 
         } finally {
             svnOperationFactory.dispose();
