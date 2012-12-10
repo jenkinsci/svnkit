@@ -3,7 +3,10 @@ package org.tmatesoft.svn.test;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNMoveClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -102,6 +105,48 @@ public class MoveTest {
             Assert.assertEquals(SVNStatusType.STATUS_DELETED, statuses.get(new File(movedDirectory, "file")).getNodeStatus());
             Assert.assertEquals(SVNStatusType.STATUS_DELETED, statuses.get(file).getNodeStatus());
             Assert.assertEquals(SVNStatusType.STATUS_DELETED, statuses.get(directory).getNodeStatus());
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testMoveAddedDirectoryWithPropertiesBetweenWorkingCopies() throws Exception {
+        //SVNKIT-333
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testMoveAddedDirectoryWithPropertiesBetweenWorkingCopies", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final WorkingCopy workingCopy1 = sandbox.checkoutNewWorkingCopy(url);
+            final WorkingCopy workingCopy2 = sandbox.checkoutNewWorkingCopy(url);
+
+            final File sourceDirectory = workingCopy1.getFile("sourceDirectory");
+            SVNFileUtil.ensureDirectoryExists(sourceDirectory);
+            workingCopy1.add(sourceDirectory);
+            workingCopy1.setProperty(sourceDirectory, "propertyName", SVNPropertyValue.create("propertyValue"));
+
+            final File targetDirectory = workingCopy2.getFile("targetDirectory");
+
+            final SVNClientManager clientManager = SVNClientManager.newInstance();
+            try {
+                final SVNMoveClient moveClient = clientManager.getMoveClient();
+                moveClient.doMove(sourceDirectory, targetDirectory);
+            } finally {
+                clientManager.dispose();
+            }
+
+            final SvnGetProperties getProperties = svnOperationFactory.createGetProperties();
+            getProperties.setSingleTarget(SvnTarget.fromFile(targetDirectory));
+            final SVNProperties properties = getProperties.run();
+
+            Assert.assertNotNull(properties);
+            final SVNPropertyValue propertyValue = properties.getSVNPropertyValue("propertyName");
+            Assert.assertEquals("propertyValue", SVNPropertyValue.getPropertyAsString(propertyValue));
 
         } finally {
             svnOperationFactory.dispose();
