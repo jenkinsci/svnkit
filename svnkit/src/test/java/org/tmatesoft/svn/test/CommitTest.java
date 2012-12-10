@@ -2,8 +2,10 @@ package org.tmatesoft.svn.test;
 
 import org.junit.Assert;
 import org.junit.Assume;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.internal.wc.SVNExternal;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
@@ -280,6 +282,113 @@ public class CommitTest {
             final Map<String, SVNLogEntryPath> changedPaths = logEntry.getChangedPaths();
             final SVNLogEntryPath logEntryPath = changedPaths.get("/directory/file2");
             Assert.assertNull(logEntryPath);
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Ignore("Currently fails")
+    @Test
+    public void testCollectCommitItemsNotCombinedWithExternal() throws Exception {
+        //SVNKIT-336
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testCollectCommitItemsNotCombinedWithExternal", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder1 = new CommitBuilder(url);
+            commitBuilder1.addFile("directory/externalFile");
+            commitBuilder1.commit();
+
+            final SVNExternal external = new SVNExternal("external", url.appendPath("directory", false).toString(), SVNRevision.HEAD, SVNRevision.HEAD, false, false, true);
+
+            final CommitBuilder commitBuilder2 = new CommitBuilder(url);
+            commitBuilder2.setDirectoryProperty("", SVNProperty.EXTERNALS, SVNPropertyValue.create(external.toString()));
+            commitBuilder2.addFile("file");
+            commitBuilder2.commit();
+
+            final File workingCopyDirectory = sandbox.createDirectory("wc");
+
+            final SvnCheckout checkout = svnOperationFactory.createCheckout();
+            checkout.setSource(SvnTarget.fromURL(url));
+            checkout.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            checkout.setIgnoreExternals(false);
+            checkout.run();
+
+            final File file = new File(workingCopyDirectory, "file");
+            final File externalFile = new File(workingCopyDirectory, "external/externalFile");
+
+            TestUtil.writeFileContentsString(file, "contents");
+            TestUtil.writeFileContentsString(externalFile, "contents");
+
+            final SVNClientManager clientManager = SVNClientManager.newInstance();
+            try {
+                final SVNCommitClient commitClient = clientManager.getCommitClient();
+                commitClient.setCommitHandler(new DefaultSVNCommitHandler());
+                final SVNCommitPacket[] commitPackets = commitClient.doCollectCommitItems(new File[]{workingCopyDirectory, externalFile}, false, false, SVNDepth.INFINITY, false, null);
+
+                Assert.assertEquals(2, commitPackets.length);
+            } finally {
+                clientManager.dispose();
+            }
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Ignore("Currently fails")
+    @Test
+    public void testCollectCommitItemsNotCombinedDifferentRepositories() throws Exception {
+        //SVNKIT-336
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testCollectCommitItemsNotCombinedDifferentRepositories", options);
+        try {
+            final SVNURL url1 = sandbox.createSvnRepository();
+            final SVNURL url2 = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder1 = new CommitBuilder(url1);
+            commitBuilder1.addFile("directory/externalFile");
+            commitBuilder1.commit();
+
+            final SVNExternal external = new SVNExternal("external", url1.appendPath("directory", false).toString(), SVNRevision.HEAD, SVNRevision.HEAD, false, false, true);
+
+            final CommitBuilder commitBuilder2 = new CommitBuilder(url2);
+            commitBuilder2.setDirectoryProperty("", SVNProperty.EXTERNALS, SVNPropertyValue.create(external.toString()));
+            commitBuilder2.addFile("file");
+            commitBuilder2.commit();
+
+            final File workingCopyDirectory = sandbox.createDirectory("wc");
+
+            final SvnCheckout checkout = svnOperationFactory.createCheckout();
+            checkout.setSource(SvnTarget.fromURL(url2));
+            checkout.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            checkout.setIgnoreExternals(false);
+            checkout.run();
+
+            final File file = new File(workingCopyDirectory, "file");
+            final File externalFile = new File(workingCopyDirectory, "external/externalFile");
+
+            TestUtil.writeFileContentsString(file, "contents");
+            TestUtil.writeFileContentsString(externalFile, "contents");
+
+            final SVNClientManager clientManager = SVNClientManager.newInstance();
+            try {
+                final SVNCommitClient commitClient = clientManager.getCommitClient();
+                commitClient.setCommitHandler(new DefaultSVNCommitHandler());
+                final SVNCommitPacket[] commitPackets = commitClient.doCollectCommitItems(new File[]{workingCopyDirectory, externalFile}, false, false, SVNDepth.INFINITY, false, null);
+
+                Assert.assertEquals(2, commitPackets.length);
+            } finally {
+                clientManager.dispose();
+            }
 
         } finally {
             svnOperationFactory.dispose();
