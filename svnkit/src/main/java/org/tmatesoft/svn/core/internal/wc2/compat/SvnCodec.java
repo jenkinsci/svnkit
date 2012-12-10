@@ -1,21 +1,8 @@
 package org.tmatesoft.svn.core.internal.wc2.compat;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-
-import org.tmatesoft.svn.core.ISVNLogEntryHandler;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNLogEntry;
-import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.SVNProperties;
-import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCConflictDescription17;
@@ -27,55 +14,16 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbBaseInfo.BaseInfoFie
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
 import org.tmatesoft.svn.core.internal.wc2.ISvnCommitRunner;
-import org.tmatesoft.svn.core.wc.ISVNAddParameters;
-import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
-import org.tmatesoft.svn.core.wc.ISVNChangelistHandler;
-import org.tmatesoft.svn.core.wc.ISVNCommitHandler;
-import org.tmatesoft.svn.core.wc.ISVNCommitParameters;
-import org.tmatesoft.svn.core.wc.ISVNDiffStatusHandler;
-import org.tmatesoft.svn.core.wc.ISVNExternalsHandler;
-import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
-import org.tmatesoft.svn.core.wc.ISVNPropertyValueProvider;
-import org.tmatesoft.svn.core.wc.ISVNStatusFileProvider;
-import org.tmatesoft.svn.core.wc.SVNCommitItem;
-import org.tmatesoft.svn.core.wc.SVNCommitPacket;
-import org.tmatesoft.svn.core.wc.SVNConflictDescription;
-import org.tmatesoft.svn.core.wc.SVNCopySource;
-import org.tmatesoft.svn.core.wc.SVNDiffStatus;
-import org.tmatesoft.svn.core.wc.SVNInfo;
-import org.tmatesoft.svn.core.wc.SVNPropertyData;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNRevisionRange;
-import org.tmatesoft.svn.core.wc.SVNStatus;
-import org.tmatesoft.svn.core.wc.SVNStatusType;
-import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
-import org.tmatesoft.svn.core.wc.SVNWCUtil;
-import org.tmatesoft.svn.core.wc.admin.ISVNChangeEntryHandler;
-import org.tmatesoft.svn.core.wc.admin.ISVNChangedDirectoriesHandler;
-import org.tmatesoft.svn.core.wc.admin.ISVNHistoryHandler;
-import org.tmatesoft.svn.core.wc.admin.ISVNTreeHandler;
-import org.tmatesoft.svn.core.wc.admin.SVNAdminPath;
-import org.tmatesoft.svn.core.wc.admin.SVNChangeEntry;
-import org.tmatesoft.svn.core.wc2.ISvnAddParameters;
-import org.tmatesoft.svn.core.wc2.ISvnCommitParameters;
-import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
-import org.tmatesoft.svn.core.wc2.SvnAnnotateItem;
-import org.tmatesoft.svn.core.wc2.SvnChecksum;
-import org.tmatesoft.svn.core.wc2.SvnCommit;
-import org.tmatesoft.svn.core.wc2.SvnCommitItem;
-import org.tmatesoft.svn.core.wc2.SvnCommitPacket;
-import org.tmatesoft.svn.core.wc2.SvnCopySource;
-import org.tmatesoft.svn.core.wc2.SvnDiffStatus;
-import org.tmatesoft.svn.core.wc2.SvnInfo;
-import org.tmatesoft.svn.core.wc2.SvnRevisionRange;
-import org.tmatesoft.svn.core.wc2.SvnSchedule;
-import org.tmatesoft.svn.core.wc2.SvnStatus;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
-import org.tmatesoft.svn.core.wc2.SvnWorkingCopyInfo;
+import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.wc.admin.*;
+import org.tmatesoft.svn.core.wc2.*;
 import org.tmatesoft.svn.core.wc2.hooks.ISvnCommitHandler;
 import org.tmatesoft.svn.core.wc2.hooks.ISvnExternalsHandler;
 import org.tmatesoft.svn.core.wc2.hooks.ISvnFileListHook;
 import org.tmatesoft.svn.core.wc2.hooks.ISvnPropertyValueProvider;
+
+import java.io.File;
+import java.util.*;
 
 public class SvnCodec {
     
@@ -641,14 +589,38 @@ public class SvnCodec {
         public SvnCommit getOperation() {
             return operation;
         }
-        
+
+        @Override
+        public void setCommitItemSkipped(SVNCommitItem item, boolean skipped) {
+            super.setCommitItemSkipped(item, skipped);
+            packet.setItemSkipped(item.getFile(), skipped);
+        }
+
+        @Override
+        public SVNCommitPacket removeSkippedItems() {
+            packet.removeSkippedItems();
+
+            if (this == EMPTY) {
+                return EMPTY;
+            }
+            Collection items = new ArrayList();
+            Map lockTokens = getLockTokens() == null ? null : new SVNHashMap(getLockTokens());
+            SVNCommitItem[] filteredItems = filterSkippedItemsAndLockTokens(items, lockTokens);
+            return new SVNCommitPacketWrapper(getOperation(), packet, filteredItems, lockTokens);
+        }
     }
     
     public static SVNCommitPacket commitPacket(final SvnCommit operation, final SvnCommitPacket packet) {
+        Collection<SVNCommitItem> skippedItems = new ArrayList<SVNCommitItem>();
         Collection<SVNCommitItem> oldItems = new ArrayList<SVNCommitItem>();
         for (SVNURL reposRoot : packet.getRepositoryRoots()) {
             for (SvnCommitItem item : packet.getItems(reposRoot)) {
-                oldItems.add(commitItem(item));
+                SVNCommitItem oldItem = commitItem(item);
+                oldItems.add(oldItem);
+
+                if (packet.isItemSkipped(item.getPath())) {
+                    skippedItems.add(oldItem);
+                }
             }
         }
         final SVNCommitItem[] allItems = oldItems.toArray(new SVNCommitItem[oldItems.size()]);
@@ -660,8 +632,12 @@ public class SvnCodec {
                 oldLockTokens.put(url.toString(), token);
             }
         }
-        
-        return new SVNCommitPacketWrapper(operation, packet, allItems, oldLockTokens);
+
+        final SVNCommitPacketWrapper packetWrapper = new SVNCommitPacketWrapper(operation, packet, allItems, oldLockTokens);
+        for (SVNCommitItem skippedItem : skippedItems) {
+            packetWrapper.setCommitItemSkipped(skippedItem, true);
+        }
+        return packetWrapper;
     }
 
     public static SvnCommitPacket commitPacket(ISvnCommitRunner runner, SVNCommitPacket oldPacket) {
@@ -718,13 +694,16 @@ public class SvnCodec {
                 flags |= SvnCommitItem.PROPS_MODIFIED;
             }
             try {
-                packet.addItem(item.getFile(), 
+                SvnCommitItem newItem = packet.addItem(item.getFile(),
                         rootUrl,
                         item.getKind(),
-                        item.getURL(), item.getRevision() != null ? item.getRevision().getNumber() : -1, 
-                        item.getCopyFromURL(), 
-                        item.getCopyFromRevision() != null ? item.getCopyFromRevision().getNumber() : -1, 
-                                flags);
+                        item.getURL(), item.getRevision() != null ? item.getRevision().getNumber() : -1,
+                        item.getCopyFromURL(),
+                        item.getCopyFromRevision() != null ? item.getCopyFromRevision().getNumber() : -1,
+                        flags);
+                if (oldPacket.isCommitItemSkipped(item)) {
+                    packet.setItemSkipped(newItem.getPath(), true);
+                }
             } catch (SVNException e) {
                 //
             }

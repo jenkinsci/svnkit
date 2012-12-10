@@ -2,7 +2,6 @@ package org.tmatesoft.svn.test;
 
 import org.junit.Assert;
 import org.junit.Assume;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -231,7 +230,6 @@ public class CommitTest {
         }
     }
 
-    @Ignore("Currently fails")
     @Test
     public void testSkipCommitItem() throws Exception {
         //SVNKIT-334

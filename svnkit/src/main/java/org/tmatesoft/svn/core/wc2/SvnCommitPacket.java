@@ -1,17 +1,16 @@
 package org.tmatesoft.svn.core.wc2;
 
-import java.io.File;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc2.ISvnCommitRunner;
+import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
+import org.tmatesoft.svn.core.wc.SVNCommitItem;
+import org.tmatesoft.svn.core.wc.SVNCommitPacket;
+
+import java.io.File;
+import java.util.*;
 
 /**
  * Represents storage for <code>SvnCommitItem</code>
@@ -32,6 +31,7 @@ public class SvnCommitPacket {
     private Object lockingContext;
     private ISvnCommitRunner runner;
     private Map<SVNURL, String> lockTokens;
+    private Set<String> skippedPaths;
     
     /**
      * Creates a commit packet and initializes its fields with empty lists. 
@@ -40,8 +40,18 @@ public class SvnCommitPacket {
         items = new HashMap<SVNURL, Collection<SvnCommitItem>>();
         itemsByPath = new HashMap<String, SvnCommitItem>();
         lockTokens = new HashMap<SVNURL, String>();
+        skippedPaths = new HashSet<String>();
     }
-    
+
+    private SvnCommitPacket(Map<SVNURL, Collection<SvnCommitItem>> items, Map<String, SvnCommitItem> itemsByPath, Object lockingContext, Map<SVNURL, String> lockTokens, ISvnCommitRunner runner, Set<String> skippedPaths) {
+        this.items = items;
+        this.itemsByPath = itemsByPath;
+        this.lockingContext = lockingContext;
+        this.lockTokens = lockTokens;
+        this.runner = runner;
+        this.skippedPaths = skippedPaths;
+    }
+
     /**
      * Tests if the commit packet contains the commit item with the path
      * @param path the path of the commit item to test
@@ -250,5 +260,67 @@ public class SvnCommitPacket {
      */
     public ISvnCommitRunner getRunner() {
         return runner;
+    }
+
+    public void setItemSkipped(File file, boolean skipped) {
+        final String path = SVNFileUtil.getFilePath(file);
+        if (skipped) {
+            skippedPaths.add(path);
+        } else {
+            skippedPaths.remove(path);
+        }
+        if (lockingContext != null && lockingContext instanceof SVNCommitPacket && !(lockingContext instanceof SvnCodec.SVNCommitPacketWrapper)) {
+            final SvnCommitItem commitItem = itemsByPath.get(path);
+            if (commitItem != null) {
+                final SVNCommitPacket oldPacket = (SVNCommitPacket) lockingContext;
+                final SVNCommitItem[] oldItems = oldPacket.getCommitItems();
+                for (SVNCommitItem oldItem : oldItems) {
+                    if (SVNFileUtil.getFilePath(oldItem.getFile()).equals(path)) {
+                        oldPacket.setCommitItemSkipped(oldItem, true);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    public boolean isItemSkipped(File file) {
+        return skippedPaths.contains(SVNFileUtil.getFilePath(file));
+    }
+
+    public SvnCommitPacket removeSkippedItems() {
+        final HashMap<String, SvnCommitItem> filteredItemsByPath = new HashMap<String, SvnCommitItem>();
+        final Map<SVNURL, Collection<SvnCommitItem>> filteredItems = new HashMap<SVNURL, Collection<SvnCommitItem>>();
+        final Map<SVNURL, String> filteredLockTokens = new HashMap<SVNURL, String>(this.lockTokens);
+        Object filteredLockingContext = lockingContext;
+
+        for (Map.Entry<String, SvnCommitItem> entry : this.itemsByPath.entrySet()) {
+            final String path = entry.getKey();
+            SvnCommitItem commitItem = entry.getValue();
+
+            if (!skippedPaths.contains(path)) {
+                filteredItemsByPath.put(path, commitItem);
+            }
+        }
+
+        for (Map.Entry<SVNURL, Collection<SvnCommitItem>> entry : this.items.entrySet()) {
+            final SVNURL url = entry.getKey();
+            final Collection<SvnCommitItem> commitItems = entry.getValue();
+
+            final List<SvnCommitItem> filteredCommitItems = new ArrayList<SvnCommitItem>();
+            for (SvnCommitItem commitItem : commitItems) {
+                final String path = SVNFileUtil.getFilePath(commitItem.getPath());
+                if (!skippedPaths.contains(path)) {
+                    filteredCommitItems.add(commitItem);
+                } else {
+                    lockTokens.remove(commitItem.getUrl());
+                }
+            }
+
+            if (filteredCommitItems.size() > 0) {
+                filteredItems.put(url, filteredCommitItems);
+            }
+        }
+        return new SvnCommitPacket(filteredItems, filteredItemsByPath, filteredLockingContext, filteredLockTokens, runner, skippedPaths);
     }
 }

@@ -121,6 +121,8 @@ public class SvnNgCommit extends SvnNgOperationRunner<SVNCommitInfo, SvnCommit> 
         if (packet == null || packet.isEmpty()) {
             return null;
         }
+        packet = packet.removeSkippedItems();
+
         SVNProperties revisionProperties = getOperation().getRevisionProperties();
         SVNPropertiesManager.validateRevisionProperties(revisionProperties);
         String commitMessage = getOperation().getCommitMessage();

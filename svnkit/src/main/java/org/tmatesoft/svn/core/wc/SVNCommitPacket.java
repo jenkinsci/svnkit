@@ -11,13 +11,13 @@
  */
 package org.tmatesoft.svn.core.wc;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Map;
-
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Map;
 
 /**
  * The <b>SVNCommitPacket</b> is a storage for <b>SVNCommitItem</b>
@@ -154,16 +154,8 @@ public class SVNCommitPacket {
             return EMPTY;
         }
         Collection items = new ArrayList();
-        Map lockTokens = myLockTokens == null ? null : new SVNHashMap(myLockTokens);
-        for (int i = 0; myCommitItems != null && i < myCommitItems.length; i++) {
-            SVNCommitItem commitItem = myCommitItems[i];
-            if (!myIsSkipped[i]) {
-                items.add(commitItem);
-            } else if (lockTokens != null) {
-                lockTokens.remove(commitItem.getURL().toString());
-            }
-        }
-        SVNCommitItem[] filteredItems = (SVNCommitItem[]) items.toArray(new SVNCommitItem[items.size()]);
+        Map lockTokens = getLockTokens() == null ? null : new SVNHashMap(getLockTokens());
+        SVNCommitItem[] filteredItems = filterSkippedItemsAndLockTokens(items, lockTokens);
         return new SVNCommitPacket(null, filteredItems, lockTokens);
     }
 
@@ -216,6 +208,18 @@ public class SVNCommitPacket {
             }
         }
         return result.toString();
+    }
+
+    protected SVNCommitItem[] filterSkippedItemsAndLockTokens(Collection items, Map lockTokens) {
+        for (int i = 0; myCommitItems != null && i < myCommitItems.length; i++) {
+            SVNCommitItem commitItem = myCommitItems[i];
+            if (!myIsSkipped[i]) {
+                items.add(commitItem);
+            } else if (lockTokens != null) {
+                lockTokens.remove(commitItem.getURL().toString());
+            }
+        }
+        return (SVNCommitItem[]) items.toArray(new SVNCommitItem[items.size()]);
     }
 
 }
