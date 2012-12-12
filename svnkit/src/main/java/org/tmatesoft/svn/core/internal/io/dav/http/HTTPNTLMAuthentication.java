@@ -408,7 +408,7 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
             SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
         
-        String username = getUserName();
+        final String username = getUserName();
         String domain = getDomain();
         if (domain == null) {
             domain = "";
@@ -750,7 +750,7 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
             }
             userName = login.substring(lastInd);
         } else {
-            userName = login;
+            userName = login == null ? System.getProperty("user.name") : login;
         }
         return userName;
     }
