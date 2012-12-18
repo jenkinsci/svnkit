@@ -261,6 +261,11 @@ class HTTPConnection implements IHTTPConnection {
                             SVNErrorManager.error(err, connectRequest.getErrorMessage(), SVNLogType.NETWORK);
                         }
                     }
+                } else if (proxyManager.getProxyUserName() != null && proxyManager.getProxyPassword() != null ){
+                    myProxyAuthentication = new HTTPBasicAuthentication("UTF-8");
+                    myProxyAuthentication.setCredentials(new SVNPasswordAuthentication(proxyManager.getProxyUserName(), 
+                            proxyManager.getProxyPassword(), false, myRepository.getLocation(), false));
+                    debugLog.logFine(SVNLogType.NETWORK, "explicit credentials set");
                 }
             } else {
                 myIsProxied = false;
@@ -547,7 +552,7 @@ class HTTPConnection implements IHTTPConnection {
                     if (ntlmProxyAuth.isInType3State()) {
                         continue;
                     }
-                }
+                } 
 
                 err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "HTTP proxy authorization failed");
                 if (proxyManager != null) {
