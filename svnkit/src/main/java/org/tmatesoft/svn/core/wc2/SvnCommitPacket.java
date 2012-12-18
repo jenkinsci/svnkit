@@ -1,5 +1,15 @@
 package org.tmatesoft.svn.core.wc2;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
@@ -8,9 +18,6 @@ import org.tmatesoft.svn.core.internal.wc2.ISvnCommitRunner;
 import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
 import org.tmatesoft.svn.core.wc.SVNCommitItem;
 import org.tmatesoft.svn.core.wc.SVNCommitPacket;
-
-import java.io.File;
-import java.util.*;
 
 /**
  * Represents storage for <code>SvnCommitItem</code>
@@ -322,5 +329,38 @@ public class SvnCommitPacket {
             }
         }
         return new SvnCommitPacket(filteredItems, filteredItemsByPath, filteredLockingContext, filteredLockTokens, runner, skippedPaths);
+    }
+
+    public SvnCommitPacket[] split(boolean combinePackets) throws SVNException {
+        final Map<String, SvnCommitPacket> splitPackets = new HashMap<String, SvnCommitPacket>();
+        for (SVNURL root : getRepositoryRoots()) {
+            Collection<SvnCommitItem> items = getItems(root);
+            for (SvnCommitItem item : items) {
+                if (isItemSkipped(item.getPath())) {
+                    continue;
+                }
+                final String key = getItemKey(item, root, combinePackets);
+                if (!splitPackets.containsKey(key)) {
+                    final SvnCommitPacket newPacket = new SvnCommitPacket();
+                    newPacket.lockingContext = this.lockingContext;
+                    newPacket.runner = this.runner;
+                    splitPackets.put(key, newPacket);
+                }
+                if (getLockTokens().containsKey(item.getUrl())) {
+                    splitPackets.get(key).getLockTokens().put(item.getUrl(), getLockTokens().get(item.getUrl()));
+                }
+                splitPackets.get(key).addItem(item, root);
+            }
+        }
+        return splitPackets.values().toArray(new SvnCommitPacket[splitPackets.size()]);
+    }
+
+    private String getItemKey(SvnCommitItem item, SVNURL rootURL, boolean combinePackets) throws SVNException {
+        if (combinePackets) {
+            return rootURL.toString();
+        }
+        
+        final File wcRoot = SvnOperationFactory.getWorkingCopyRoot(item.getKind() == SVNNodeKind.FILE ? item.getPath().getParentFile() : item.getPath(), true);
+        return rootURL.toString() + ":" + wcRoot.getAbsolutePath();
     }
 }
