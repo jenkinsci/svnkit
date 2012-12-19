@@ -78,6 +78,18 @@ public class SvnOldCommit extends SvnOldRunner<SVNCommitInfo, SvnCommit> impleme
                     //
                 }
             }
+        } else if (lockingContext instanceof SVNCommitPacket) {
+            ((SVNCommitPacket) lockingContext).dispose();
+        }
+    }
+
+    public Object splitLockingContext(Object lockingContext, SvnCommitPacket newPacket) {
+        if (lockingContext instanceof SVNCommitPacket[]) {
+            final SVNCommitPacket[] oldPackets = (SVNCommitPacket[]) lockingContext;
+            // TODO 
+            return lockingContext;
+        } else {
+            return lockingContext;
         }
     }
 }

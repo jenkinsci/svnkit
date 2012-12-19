@@ -9,5 +9,7 @@ public interface ISvnCommitRunner {
     public SvnCommitPacket collectCommitItems(SvnCommit operation) throws SVNException;
 
     public void disposeCommitPacket(Object lockingContext) throws SVNException;
+    
+    public Object splitLockingContext(Object lockingContext, SvnCommitPacket newPacket);
 
 }

@@ -342,7 +342,6 @@ public class SvnCommitPacket {
                 final String key = getItemKey(item, root, combinePackets);
                 if (!splitPackets.containsKey(key)) {
                     final SvnCommitPacket newPacket = new SvnCommitPacket();
-                    newPacket.lockingContext = this.lockingContext;
                     newPacket.runner = this.runner;
                     splitPackets.put(key, newPacket);
                 }
@@ -351,6 +350,9 @@ public class SvnCommitPacket {
                 }
                 splitPackets.get(key).addItem(item, root);
             }
+        }
+        for (SvnCommitPacket splitPacket : splitPackets.values()) {
+            splitPacket.lockingContext = getRunner().splitLockingContext(this.lockingContext, splitPacket);
         }
         return splitPackets.values().toArray(new SvnCommitPacket[splitPackets.size()]);
     }

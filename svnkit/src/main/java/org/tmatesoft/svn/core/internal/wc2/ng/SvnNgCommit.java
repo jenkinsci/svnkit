@@ -86,6 +86,7 @@ public class SvnNgCommit extends SvnNgOperationRunner<SVNCommitInfo, SvnCommit> 
                     !getOperation().isKeepLocks(), getOperation().getApplicableChangelists(), 
                     this, getOperation().getCommitParameters(), null);
             packet.setLockTokens(lockTokens);
+            
             if (packet.getRepositoryRoots().size() > 1) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
                         "Commit can only commit to a single repository at a time.\n" +
@@ -287,6 +288,28 @@ public class SvnNgCommit extends SvnNgOperationRunner<SVNCommitInfo, SvnCommit> 
         return lockTargets;
     }
 
+    public Object splitLockingContext(Object lockingContext, SvnCommitPacket newPacket) {
+        if (!(lockingContext instanceof Collection)) {
+            return lockingContext;
+        }
+        @SuppressWarnings("unchecked")
+        final Collection<File> lockedPaths = (Collection<File>) lockingContext;
+        final Collection<File> newLockedPaths = new ArrayList<File>();
+
+        for (SVNURL root : newPacket.getRepositoryRoots()) {
+            for(SvnCommitItem item : newPacket.getItems(root)) {
+                final File path = item.getPath();
+                for (File lockedPath : lockedPaths) {
+                    if (path.equals(lockedPath) || (path.isFile() && path.getParentFile().equals(lockedPath))) {
+                        newLockedPaths.add(lockedPath);
+                        break;
+                    }
+                }
+            }
+        }
+        return newLockedPaths;
+    };
+
     public void disposeCommitPacket(Object lockingContext) throws SVNException {
         if (!(lockingContext instanceof Collection)) {
             return;
@@ -396,6 +419,6 @@ public class SvnNgCommit extends SvnNgOperationRunner<SVNCommitInfo, SvnCommit> 
         public boolean keepChangelist;
         public SvnChecksum sha1Checksum;
         public SVNProperties newDavCache;
-    };
+    }
 
 }
