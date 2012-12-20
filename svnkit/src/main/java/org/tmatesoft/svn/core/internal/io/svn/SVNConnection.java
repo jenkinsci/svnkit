@@ -76,7 +76,11 @@ public class SVNConnection {
             myIsCredentialsReceived = false;
             myConnector.open(repository);
             myRepository = repository;
-            handshake(repository);
+            try {
+                handshake(repository);
+            } catch (SVNException th) {
+                myConnector.handleExceptionOnOpen(repository, th);
+            }
         } finally {
             myIsReopening = false;
         }

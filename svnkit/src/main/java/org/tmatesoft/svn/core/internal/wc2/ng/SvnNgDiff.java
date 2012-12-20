@@ -474,6 +474,13 @@ public class SvnNgDiff extends SvnNgOperationRunner<Void, SvnDiff> {
             diffGenerator = new SvnDiffGenerator();
         }
         diffGenerator.setUseGitFormat(getOperation().isUseGitDiffFormat());
+        if (getOperation().getRelativeToDirectory() != null) {
+            if (diffGenerator instanceof SvnDiffGenerator) {
+                ((SvnDiffGenerator)diffGenerator).setRelativeToTarget(SvnTarget.fromFile(getOperation().getRelativeToDirectory()));
+            } else {
+                diffGenerator.setBaseTarget(SvnTarget.fromFile(getOperation().getRelativeToDirectory()));
+            }
+        }
         return diffGenerator;
     }
 }

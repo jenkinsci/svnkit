@@ -16,8 +16,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -50,26 +51,34 @@ import org.tmatesoft.svn.util.SVNLogType;
  */
 public class FSCommitter {
 
+    private static volatile boolean ourAutoUnlock;
+    
     private FSFS myFSFS;
     private FSTransactionRoot myTxnRoot;
     private FSTransactionInfo myTxn;
-    private Collection myLockTokens;
+    private Collection<String> myLockTokens;
+    private Map<String, String> myAutoUnlockPaths;
     private String myAuthor;
-
-    public FSCommitter(FSFS fsfs, FSTransactionRoot txnRoot, FSTransactionInfo txn, Collection lockTokens, String author) {
-        myFSFS = fsfs;
-        myTxnRoot = txnRoot;
-        myTxn = txn;
-        myLockTokens = lockTokens != null ? lockTokens : Collections.EMPTY_LIST;
-        myAuthor = author;
+    
+    public static synchronized void setAutoUnlock(boolean autoUnlock) {
+        ourAutoUnlock = autoUnlock;
     }
 
-    public void reset(FSFS fsfs, FSTransactionRoot txnRoot, FSTransactionInfo txn, Collection lockTokens, String author) {
+    public static synchronized boolean isAutoUnlock() {
+        return ourAutoUnlock;
+    }
+
+    public FSCommitter(FSFS fsfs, FSTransactionRoot txnRoot, FSTransactionInfo txn, Collection<String> lockTokens, String author) {
         myFSFS = fsfs;
         myTxnRoot = txnRoot;
         myTxn = txn;
-        myLockTokens = lockTokens != null ? lockTokens : Collections.EMPTY_LIST;
+        myLockTokens = lockTokens != null ? lockTokens : new HashSet<String>();
+        myAutoUnlockPaths = new HashMap<String, String>();
         myAuthor = author;
+    }
+    
+    public Map<String, String> getAutoUnlockPaths() {
+        return myAutoUnlockPaths;
     }
 
     public void deleteNode(String path) throws SVNException {
@@ -105,7 +114,7 @@ public class FSCommitter {
         SVNNodeKind kind = parentPath.getRevNode().getType();
 
         if ((txnRoot.getTxnFlags() & FSTransactionRoot.SVN_FS_TXN_CHECK_LOCKS) != 0) {
-            FSCommitter.allowLockedOperation(myFSFS, path, myAuthor, myLockTokens, false, false);
+            allowLockedOperation(myFSFS, path, myAuthor, myLockTokens, false, false);
         }
 
         makePathMutable(parentPath, path);
@@ -146,7 +155,7 @@ public class FSCommitter {
 
         FSParentPath toParentPath = txnRoot.openPath(toPath, false, true);
         if ((txnRoot.getTxnFlags() & FSTransactionRoot.SVN_FS_TXN_CHECK_LOCKS) != 0) {
-            FSCommitter.allowLockedOperation(myFSFS, toPath, myAuthor, myLockTokens, true, false);
+            allowLockedOperation(myFSFS, toPath, myAuthor, myLockTokens, true, false);
         }
 
         if (toParentPath.getRevNode() != null && toParentPath.getRevNode().getId().equals(fromNode.getId())) {
@@ -195,7 +204,7 @@ public class FSCommitter {
         }
 
         if ((txnRoot.getTxnFlags() & FSTransactionRoot.SVN_FS_TXN_CHECK_LOCKS) != 0) {
-            FSCommitter.allowLockedOperation(myFSFS, path, myAuthor, myLockTokens, false, false);
+            allowLockedOperation(myFSFS, path, myAuthor, myLockTokens, false, false);
         }
 
         makePathMutable(parentPath.getParent(), path);
@@ -216,7 +225,7 @@ public class FSCommitter {
         }
 
         if ((txnRoot.getTxnFlags() & FSTransactionRoot.SVN_FS_TXN_CHECK_LOCKS) != 0) {
-            FSCommitter.allowLockedOperation(myFSFS, path, myAuthor, myLockTokens, true, false);
+            allowLockedOperation(myFSFS, path, myAuthor, myLockTokens, true, false);
         }
 
         makePathMutable(parentPath.getParent(), path);
@@ -744,18 +753,18 @@ public class FSCommitter {
         return myTxnRoot;
     }
 
-    public static void allowLockedOperation(FSFS fsfs, String path, final String username, final Collection lockTokens, boolean recursive, boolean haveWriteLock) throws SVNException {
+    public void allowLockedOperation(FSFS fsfs, String path, final String username, final Collection<String> lockTokens, boolean recursive, boolean haveWriteLock) throws SVNException {
+        
         path = SVNPathUtil.canonicalizeAbsolutePath(path);
         if (recursive) {
             ISVNLockHandler handler = new ISVNLockHandler() {
-
-                private String myUsername = username;
-                private Collection myTokens = lockTokens;
-
                 public void handleLock(String path, SVNLock lock, SVNErrorMessage error) throws SVNException {
-                    verifyLock(lock, myTokens, myUsername);
+                    if (isAutoUnlock()) {
+                        scheduleForAutoUnlock(username, path, lock);
+                    } else {
+                        verifyLock(lock, lockTokens, username);
+                    }
                 }
-
                 public void handleUnlock(String path, SVNLock lock, SVNErrorMessage error) throws SVNException {
                 }
             };
@@ -763,12 +772,20 @@ public class FSCommitter {
         } else {
             SVNLock lock = fsfs.getLockHelper(path, haveWriteLock);
             if (lock != null) {
-                verifyLock(lock, lockTokens, username);
+                if (isAutoUnlock()) {
+                    scheduleForAutoUnlock(username, path, lock);
+                } else {
+                    verifyLock(lock, lockTokens, username);
+                }
             }
         }
     }
+    
+    private void scheduleForAutoUnlock(final String username, String path, SVNLock lock) {
+        myAutoUnlockPaths.put(path, lock.getID());
+    }
 
-    private static void verifyLock(SVNLock lock, Collection lockTokens, String username) throws SVNException {
+    private void verifyLock(SVNLock lock, Collection<String> lockTokens, String username) throws SVNException {
         if (username == null || "".equals(username)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_USER, "Cannot verify lock on path ''{0}''; no username available", lock.getPath());
             SVNErrorManager.error(err, SVNLogType.FSFS);
@@ -778,11 +795,9 @@ public class FSCommitter {
             });
             SVNErrorManager.error(err, SVNLogType.FSFS);
         }
-
         if (lockTokens.contains(lock.getID())) {
             return;
         }
-
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_BAD_LOCK_TOKEN, "Cannot verify lock on path ''{0}''; no matching lock-token available", lock.getPath());
         SVNErrorManager.error(err, SVNLogType.FSFS);
     }

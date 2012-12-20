@@ -56,8 +56,7 @@ fi
 
 CLASSPATH="$BASEDIR/conf"
 CLASSPATH=$CLASSPATH:"$SVNKIT_LIB/${classpathEntry}"
-
-EXTRA_JVM_ARGUMENTS="-Djava.util.logging.config.file=$BASEDIR/conf/logging.properties -Dsun.io.useCanonCaches=false"
+LOGGING_PROPERTIES_PATH="$BASEDIR/conf/logging.properties"
 
 # For Cygwin, switch paths to Windows format before running java
 if $cygwin; then
@@ -66,7 +65,10 @@ if $cygwin; then
   [ -n "$HOME" ] && HOME=`cygpath --path --windows "$HOME"`
   [ -n "$BASEDIR" ] && BASEDIR=`cygpath --path --windows "$BASEDIR"`
   [ -n "$REPO" ] && REPO=`cygpath --path --windows "$REPO"`
+  [ -n "$LOGGING_PROPERTIES_PATH" ] && REPO=`cygpath --path --windows "$LOGGING_PROPERTIES_PATH"`
 fi
+
+EXTRA_JVM_ARGUMENTS="-Djava.util.logging.config.file=$LOGGING_PROPERTIES_PATH -Dsun.io.useCanonCaches=false"
 
 exec "$JAVACMD" $JAVA_OPTS \
   $EXTRA_JVM_ARGUMENTS \

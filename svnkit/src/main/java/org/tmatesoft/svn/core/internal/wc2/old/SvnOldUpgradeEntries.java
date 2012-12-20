@@ -45,7 +45,7 @@ public class SvnOldUpgradeEntries {
 		SVNEntry thisDir = entries.get("");
 		/* If there is no "this dir" entry, something is wrong. */
 		if (thisDir == null) {
-			SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "No default entry in directory '{0}'", dirAbsPath);
+			SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "No default entry in directory ''{0}''", dirAbsPath);
             SVNErrorManager.error(err, SVNLogType.WC);
 		}  
 		File oldRootAbsPath = SVNFileUtil.createFilePath(SVNPathUtil.getCommonPathAncestor(
@@ -274,7 +274,7 @@ public class SvnOldUpgradeEntries {
 				workingNode.revision = parentNode.work.revision;
 				workingNode.opDepth = parentNode.work.opDepth;
 			} else {
-				SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "No copyfrom URL for '{0}'", localRelPath);
+				SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "No copyfrom URL for ''{0}''", localRelPath);
 	            SVNErrorManager.error(err, SVNLogType.WC);
 			}
 		}
@@ -415,7 +415,7 @@ public class SvnOldUpgradeEntries {
 										
 					if (entryMd5Checksum.getDigest() != null && foundMd5Checksum != null && !entryMd5Checksum.equals(foundMd5Checksum)) {
 						SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, 
-							"Bad base MD5 checksum for '{0}'; expected: '{1}'; found '{2}';", 
+							"Bad base MD5 checksum for ''{0}''; expected: ''{1}''; found ''{2}'';",
 									SVNFileUtil.createFilePath(rootAbsPath, localRelPath), entryMd5Checksum, foundMd5Checksum);
 			           SVNErrorManager.error(err, SVNLogType.WC);
 					}  else {

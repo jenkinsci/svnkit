@@ -280,7 +280,7 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 
 		if (getEntryURL(entry) == null) {
 			SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT,
-							"Working copy '{0}' can't be upgraded because it doesn't have a url", localAbsPath);
+							"Working copy ''{0}'' can't be upgraded because it doesn't have a url", localAbsPath);
 			SVNErrorManager.error(err, SVNLogType.WC);
 		}
 
@@ -385,7 +385,11 @@ public class SvnOldUpgrade extends SvnOldRunner<SvnWcGeneration, SvnUpgrade> {
 			SVNFileUtil.deleteAll(upgradeData.rootAbsPath, true);
 		}
 
-	}
+        if (getOperation().getEventHandler() != null) {
+            SVNEvent event = SVNEventFactory.createSVNEvent(localAbsPath, SVNNodeKind.DIR, null, -1, SVNEventAction.UPGRADE, null, null, null);
+            getOperation().getEventHandler().handleEvent(event, -1);
+        }
+    }
 
 	private void upgradeWorkingCopy(WriteBaton parentDirBaton, SVNWCDb db, File dirAbsPath, SVNWCDbUpgradeData data, Map<SVNURL, String> reposCache, RepositoryInfo reposInfo) throws SVNException {
 

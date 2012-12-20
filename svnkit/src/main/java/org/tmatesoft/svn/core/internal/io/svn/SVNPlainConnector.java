@@ -128,4 +128,8 @@ public class SVNPlainConnector implements ISVNConnector {
     public boolean occupy() {
         return true;
     }
+
+    public void handleExceptionOnOpen(SVNRepositoryImpl repository, SVNException exception) throws SVNException {
+        throw exception;
+    }
 }

@@ -440,7 +440,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             String fullPath = getFullPath(path);
             String parentFullPath = "/".equals(path) ? fullPath : SVNPathUtil.removeTail(fullPath);
             SVNURL url = getLocation().setPath(parentFullPath, false);
-            String name = SVNPathUtil.tail(path);
+            String name = "/".equals(path) ? "" : SVNPathUtil.tail(path);
             FSEntry fsEntry = new FSEntry(revNode.getId(), revNode.getType(), name);
             SVNDirEntry entry = buildDirEntry(fsEntry, url, revNode, SVNDirEntry.DIRENT_ALL);
             return entry;

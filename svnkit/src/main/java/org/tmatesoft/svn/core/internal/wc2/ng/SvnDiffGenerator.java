@@ -99,6 +99,23 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
         return relativePath != null ? relativePath : target.getPathOrUrlString();
     }
 
+    private String getChildPath(String path, String relativeToPath) {
+        if (relativeToTarget == null) {
+            return null;
+        }
+
+        String relativePath = SVNPathUtil.getRelativePath(relativeToPath, path);
+        if (relativePath.length() > 0) {
+            return relativePath;
+        }
+
+        if (relativeToPath.equals(path)) {
+            return ".";
+        }
+
+        return null;
+    }
+
     public SvnDiffGenerator() {
         this.originalTarget1 = null;
         this.originalTarget2 = null;
@@ -117,6 +134,10 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
     public void setOriginalTargets(SvnTarget originalTarget1, SvnTarget originalTarget2) {
         this.originalTarget1 = originalTarget1;
         this.originalTarget2 = originalTarget2;
+    }
+
+    public void setRelativeToTarget(SvnTarget relativeToTarget) {
+        this.relativeToTarget = relativeToTarget;
     }
 
     public void setAnchors(SvnTarget originalTarget1, SvnTarget originalTarget2) {
@@ -205,7 +226,25 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
             newTargetString2 = computeLabel(newTargetString, newTargetString2);
 
             if (relativeToTarget != null) {
-                //TODO
+                String relativeToPath = relativeToTarget.getPathOrUrlDecodedString();
+                String absolutePath = target.getPathOrUrlDecodedString();
+
+                String childPath = getChildPath(absolutePath, relativeToPath);
+                if (childPath == null) {
+                    throwBadRelativePathException(absolutePath, relativeToPath);
+                }
+                String childPath1 = getChildPath(newTargetString1, relativeToPath);
+                if (childPath1 == null) {
+                    throwBadRelativePathException(newTargetString1, relativeToPath);
+                }
+                String childPath2 = getChildPath(newTargetString2, relativeToPath);
+                if (childPath2 == null) {
+                    throwBadRelativePathException(newTargetString2, relativeToPath);
+                }
+
+                displayPath = childPath;
+                newTargetString1 = childPath1;
+                newTargetString2 = childPath2;
             }
 
             String label1 = getLabel(newTargetString1, revision1);
@@ -244,6 +283,12 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
         displayPropertyChangesOn(useGitFormat ? getRelativeToRootPath(target, originalTarget1) : displayPath, outputStream);
 
         displayPropDiffValues(outputStream, propChanges, originalProps);
+    }
+
+    private void throwBadRelativePathException(String displayPath, String relativeToPath) throws SVNException {
+        SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.BAD_RELATIVE_PATH, "Path ''{0}'' must be an immediate child of the directory ''{0}''",
+                displayPath, relativeToPath);
+        SVNErrorManager.error(errorMessage, SVNLogType.CLIENT);
     }
 
     private void displayGitHeaderFields(OutputStream outputStream, SvnTarget target, String revision1, String revision2, SvnDiffCallback.OperationKind operation, String copyFromPath) throws SVNException {
@@ -306,9 +351,27 @@ public class SvnDiffGenerator implements ISvnDiffGenerator {
         newTargetString1 = computeLabel(newTargetString, newTargetString1);
         newTargetString2 = computeLabel(newTargetString, newTargetString2);
 
-        if (relativeToTarget != null) {
-            //TODO
-        }
+            if (relativeToTarget != null) {
+                String relativeToPath = relativeToTarget.getPathOrUrlDecodedString();
+                String absolutePath = target.getPathOrUrlDecodedString();
+
+                String childPath = getChildPath(absolutePath, relativeToPath);
+                if (childPath == null) {
+                    throwBadRelativePathException(absolutePath, relativeToPath);
+                }
+                String childPath1 = getChildPath(newTargetString1, relativeToPath);
+                if (childPath1 == null) {
+                    throwBadRelativePathException(newTargetString1, relativeToPath);
+                }
+                String childPath2 = getChildPath(newTargetString2, relativeToPath);
+                if (childPath2 == null) {
+                    throwBadRelativePathException(newTargetString2, relativeToPath);
+                }
+
+                displayPath = childPath;
+                newTargetString1 = childPath1;
+                newTargetString2 = childPath2;
+            }
 
         String label1 = getLabel(newTargetString1, revision1);
         String label2 = getLabel(newTargetString2, revision2);

@@ -109,7 +109,7 @@ public class SvnNgGetInfo extends SvnNgOperationRunner<SvnInfo, SvnGetInfo> impl
     public void nodeFound(File localAbspath, SVNWCDbKind kind) throws SVNException {
         SvnInfo info = buildInfo(localAbspath, kind);
         if (info == null && isFirstInfo) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{1}'' was not found", localAbspath), 
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{0}'' was not found", localAbspath), 
                     SVNLogType.WC);
         }
         isFirstInfo = false;
@@ -139,6 +139,7 @@ public class SvnNgGetInfo extends SvnNgOperationRunner<SvnInfo, SvnGetInfo> impl
         wcInfo.setDepth(SVNDepth.UNKNOWN);
         wcInfo.setRecordedSize(ISVNWCDb.INVALID_FILESIZE);
         wcInfo.setCopyFromRevision(SVNWCContext.INVALID_REVNUM);
+        wcInfo.setSchedule(SvnSchedule.NORMAL);
         
         return info;
     }

@@ -255,7 +255,7 @@ public class SvnNgRemoteDiffEditor implements ISVNEditor {
         if (currentResult.contentState != SVNStatusType.MISSING && currentResult.contentState != SVNStatusType.OBSTRUCTED && !currentResult.treeConflicted) {
             action = SVNEventAction.UPDATE_DELETE;
         }
-        if (context.getEventHandler() != null) {
+        if (eventHandler != null) {
             final DeletedPath dp = new DeletedPath();
             dp.action = currentResult.treeConflicted ? SVNEventAction.TREE_CONFLICT : action;
             dp.kind = kind;
@@ -532,6 +532,7 @@ public class SvnNgRemoteDiffEditor implements ISVNEditor {
             currentResult.contentState = dp.state;
             currentResult.propState = dp.state;
         }
+        SVNEventAction expectedAction = null;
         if (b.treeConflicted) {
             action = SVNEventAction.TREE_CONFLICT;
         } else if (dp != null) {
@@ -542,10 +543,14 @@ public class SvnNgRemoteDiffEditor implements ISVNEditor {
             }
         } else if (currentResult.contentState == SVNStatusType.OBSTRUCTED || currentResult.contentState == SVNStatusType.MISSING) {
             action = SVNEventAction.SKIP;
+            expectedAction = b.added ? SVNEventAction.UPDATE_ADD : SVNEventAction.UPDATE_UPDATE;
         } else if (b.added) {
             action = SVNEventAction.UPDATE_ADD;
         } else {
             action = SVNEventAction.UPDATE_UPDATE;
+        }
+        if (expectedAction == null) {
+            expectedAction = action;
         }
         SVNEvent event = SVNEventFactory.createSVNEvent(b.wcPath, 
                 kind, null, -1, 
@@ -553,7 +558,7 @@ public class SvnNgRemoteDiffEditor implements ISVNEditor {
                 currentResult.propState, 
                 SVNStatusType.LOCK_INAPPLICABLE, 
                 action, 
-                action, 
+                expectedAction, 
                 null, null, null);
         handleEvent(event);
     }

@@ -144,6 +144,12 @@ public class SvnExternalUpdateEditor implements ISVNUpdateEditor {
         }
         WCDbBaseInfo baseInfo = context.getDb().getBaseInfo(localAbsPath, BaseInfoField.kind, BaseInfoField.revision, BaseInfoField.changedRev, 
                 BaseInfoField.changedAuthor, BaseInfoField.changedDate, BaseInfoField.checksum);
+        originalRevision = baseInfo.revision;
+        changedRev = baseInfo.changedRev;
+        changedDate = baseInfo.changedDate;
+        changedAuthor = baseInfo.changedAuthor;
+        originalChecksum = baseInfo.checksum;
+
         if (baseInfo.kind != SVNWCDbKind.File) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS, "Node ''{0}'' is not existing file external", localAbsPath);
             SVNErrorManager.error(err, SVNLogType.WC);
@@ -357,7 +363,7 @@ public class SvnExternalUpdateEditor implements ISVNUpdateEditor {
                 } else {
                     originalMd5 = originalChecksum;
                 }
-                if (expectedChecksum.equals(originalMd5)) {
+                if (!expectedChecksum.equals(originalMd5)) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CHECKSUM_MISMATCH, 
                             "Base checksum mismatch for ''{0}'':\n" +
                             "   expected: ''{1}''\n" +

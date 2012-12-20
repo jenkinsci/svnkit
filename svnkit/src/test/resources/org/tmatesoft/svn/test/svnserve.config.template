@@ -1,0 +1,5 @@
+[general]
+anon-access = %anon.access%
+auth-access = write
+password-db = %password.db.file%
+authz-db = %authzfile%

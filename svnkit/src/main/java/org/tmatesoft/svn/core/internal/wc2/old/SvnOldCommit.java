@@ -50,6 +50,10 @@ public class SvnOldCommit extends SvnOldRunner<SVNCommitInfo, SvnCommit> impleme
     @Override
     protected SVNCommitInfo run() throws SVNException {
         SvnCommitPacket packet = getOperation().collectCommitItems();
+        if (packet == null || packet.isEmpty()) {
+            //if there's no changes, the packet will be null
+            return null;
+        }
         SVNCommitPacket oldPacket = (SVNCommitPacket) packet.getLockingContext();
         
         SVNCommitClient16 client = new SVNCommitClient16(getOperation().getRepositoryPool(), getOperation().getOptions());

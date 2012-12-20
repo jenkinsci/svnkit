@@ -1,44 +1,14 @@
 package org.tmatesoft.svn.core.internal.wc2.ng;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.tmatesoft.svn.core.ISVNDirEntryHandler;
-import org.tmatesoft.svn.core.SVNCancelException;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNDirEntry;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
-import org.tmatesoft.svn.core.internal.wc.ISVNUpdateEditor;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
-import org.tmatesoft.svn.core.internal.wc.SVNExternal;
-import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNFileType;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc17.ISVNDirFetcher;
-import org.tmatesoft.svn.core.internal.wc17.SVNExternalsStore;
-import org.tmatesoft.svn.core.internal.wc17.SVNReporter17;
-import org.tmatesoft.svn.core.internal.wc17.SVNUpdateEditor17;
-import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
+import org.tmatesoft.svn.core.internal.wc.*;
+import org.tmatesoft.svn.core.internal.wc17.*;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext.SVNWCNodeReposInfo;
-import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
-import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
-import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
-import org.tmatesoft.svn.core.internal.wc17.db.Structure;
+import org.tmatesoft.svn.core.internal.wc17.db.*;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.ExternalNodeInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
-import org.tmatesoft.svn.core.internal.wc17.db.SvnExternalFileReporter;
-import org.tmatesoft.svn.core.internal.wc17.db.SvnExternalUpdateEditor;
-import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbExternals;
 import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess.RepositoryInfo;
 import org.tmatesoft.svn.core.io.SVNCapability;
 import org.tmatesoft.svn.core.io.SVNLocationSegment;
@@ -50,6 +20,12 @@ import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 import org.tmatesoft.svn.core.wc2.SvnRelocate;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> extends SvnNgOperationRunner<V, T> {
 
@@ -163,7 +139,7 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
         if (notifySummary) {
             handleEvent(SVNEventFactory.createSVNEvent(localAbspath, SVNNodeKind.NONE, null, -1, SVNEventAction.UPDATE_STARTED, null, null, null, 0, 0));
         }
-        boolean cleanCheckout = isEmptyWc(localAbspath);
+        boolean cleanCheckout = isEmptyWc(localAbspath, anchorAbspath);
         
         SVNRepository repos = getRepositoryAccess().createRepository(anchorUrl, anchorAbspath);
         boolean serverSupportsDepth = repos.hasCapability(SVNCapability.DEPTH);
@@ -329,12 +305,15 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
     }
 
     private void handleExternalItemChange(SVNURL rootUrl, File parentPath, SVNURL parentUrl, File localAbsPath, File oldDefiningPath, SVNExternal newItem) throws SVNException {
+        assert newItem != null;
+        assert rootUrl != null && parentUrl != null;
+
         SVNURL newUrl = newItem.resolveURL(rootUrl, parentUrl);
         newUrl = SvnTarget.fromURL(newUrl).getURL();
-        
+
         SVNRevision externalRevision  = newItem.getRevision();
         SVNRevision externalPegRevision = newItem.getPegRevision();
-        
+
         if (getOperation().getExternalsHandler() != null) {
             SVNRevision[] revs = getOperation().getExternalsHandler().handleExternal(localAbsPath, newUrl, 
                     externalRevision, externalPegRevision, newItem.getRawValue(), 
@@ -348,12 +327,13 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
             externalPegRevision = revs.length > 1 && revs[1] != null ? revs[1] : externalPegRevision;
         }
 
-        
         Structure<RepositoryInfo> repositoryInfo = getRepositoryAccess().createRepositoryFor(SvnTarget.fromURL(newUrl), externalRevision, externalPegRevision, null);
         SVNRepository repository = repositoryInfo.<SVNRepository>get(RepositoryInfo.repository);
         long externalRevnum = repositoryInfo.lng(RepositoryInfo.revision);
         repositoryInfo.release();
-        
+
+        String repositoryUUID = repository.getRepositoryUUID(true);
+        SVNURL repositoryRoot = repository.getRepositoryRoot(true);
         SVNNodeKind externalKind = repository.checkPath("", externalRevnum);
         
         if (externalKind == SVNNodeKind.NONE) {
@@ -367,22 +347,38 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
             SVNErrorManager.error(err, SVNLogType.WC);
         }
 
+        SVNNodeKind localKind = externalKind;
+
         handleEvent(SVNEventFactory.createSVNEvent(localAbsPath, externalKind, null, -1, SVNEventAction.UPDATE_EXTERNAL, null, null, null, 0, 0));
         if (oldDefiningPath == null) {
-            // checkout or export.
-            if (externalKind == SVNNodeKind.DIR) {                
-                SVNFileUtil.ensureDirectoryExists(SVNFileUtil.getParentFile(localAbsPath));
-                switchDirExternal(localAbsPath, newUrl, externalRevision, externalPegRevision, parentPath);
-            } else if (externalKind == SVNNodeKind.FILE) {
-                switchFileExternal(localAbsPath, newUrl, externalPegRevision, externalRevision, parentPath, repository, externalRevnum, repository.getRepositoryRoot(true));
+            SVNFileUtil.ensureDirectoryExists(SVNFileUtil.getParentFile(localAbsPath));
+        }
+        if (localKind == SVNNodeKind.DIR) {
+            switchDirExternal(localAbsPath, newUrl, externalRevision, externalPegRevision, parentPath);
+        } else if (localKind == SVNNodeKind.FILE) {
+            if (!repositoryRoot.equals(rootUrl)) {
+                SVNWCNodeReposInfo localReposInfo = getWcContext().getNodeReposInfo(parentPath);
+                SVNURL localReposRootUrl = localReposInfo.reposRootUrl;
+                String localReposUuid = localReposInfo.reposUuid;
+
+                String externalRepositoryPath = SVNURLUtil.getRelativeURL(repositoryRoot, newUrl, false);
+
+                if  (localReposUuid == null || localReposRootUrl == null ||
+                        externalRepositoryPath == null || !localReposUuid.equals(repositoryUUID)) {
+                    SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Unsupported external: url of " +
+                            "file external ''{0}'' is not in repository ''{0}''", newUrl, rootUrl);
+                    SVNErrorManager.error(errorMessage, SVNLogType.WC);
+                }
+
+                newUrl = localReposRootUrl.appendPath(externalRepositoryPath, false);
+                Structure<RepositoryInfo> repositoryInfoStructure = getRepositoryAccess().createRepositoryFor(SvnTarget.fromURL(newUrl), newItem.getRevision(), newItem.getPegRevision(), null);
+                repository = repositoryInfoStructure.get(RepositoryInfo.repository);
+                externalRevnum = repositoryInfoStructure.lng(RepositoryInfo.revision);
             }
+            switchFileExternal(localAbsPath, newUrl, externalPegRevision, externalRevision, parentPath, repository, externalRevnum, repository.getRepositoryRoot(true));
         } else {
-            // modification or update
-            if (externalKind == SVNNodeKind.DIR) {                
-                switchDirExternal(localAbsPath, newUrl, externalRevision, externalPegRevision, parentPath);
-            } else if (externalKind == SVNNodeKind.FILE) {
-                switchFileExternal(localAbsPath, newUrl, externalPegRevision, externalRevision, parentPath, repository, externalRevnum, repository.getRepositoryRoot(true));
-            }
+            SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.ASSERTION_FAIL);
+            SVNErrorManager.error(errorMessage, SVNLogType.WC);
         }
     }
 
@@ -756,7 +752,11 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
         return update(getWcContext(), localAbspath, revision, depth, true, ignoreExternals, allowUnversionedObstructions, true, false, false, sleepForTimestamp);
     }
 
-    protected static boolean isEmptyWc(File root) {
+    protected static boolean isEmptyWc(File root, File anchorAbspath) {
+        if (!root.equals(anchorAbspath)) {
+            return false;
+        }
+
         File[] children = SVNFileListUtil.listFiles(root);
         if (children != null) {
             return children.length == 1 && SVNFileUtil.getAdminDirectoryName().equals(children[0].getName());
