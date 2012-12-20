@@ -1,0 +1,9 @@
+project.ext {
+  packaging = 'jar'
+  pomName = 'SVNKit Library'
+  pomDescription = 'Pure Java Subversion Library'
+  pomUrl = 'http://www.svnkit.com/'
+  licenses = [['name': 'TMate Open Source License (with dual licensing option)', 'url' : 'http://www.svnkit.com/license.html']]
+  scm = ['url': 'http://svn.svnkit.com/repos/svnkit', 'connection': 'scm:svn:http://svn.svnkit.com/repos/svnkit']
+  developers = [['id' : 'tmate', 'name' : 'TMate Software']]
+}

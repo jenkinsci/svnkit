@@ -169,9 +169,21 @@ public class SshHost {
             if (isDisposed()) {
                 throw new SshHostDisposedException();
             }
-            for (SshConnection connection : myConnections) {
+            for (Iterator<SshConnection> connections = myConnections.iterator(); connections.hasNext();) {
+                final SshConnection connection = connections.next();
+
                 if (connection.getSessionsCount() < MAX_SESSIONS_PER_CONNECTION) {
-                    return connection.openSession();
+                    try {
+                        return connection.openSession();
+                    } catch (IOException e) {
+                        // this connection has been closed by server.
+                        if (e.getMessage() != null && e.getMessage().contains("connection is closed")) {
+                            connection.close();
+                            connections.remove();
+                        } else {
+                            throw e;
+                        }
+                    }
                 }
             }
         } finally {

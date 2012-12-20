@@ -268,10 +268,6 @@ public class SVNUpdateClient extends SVNBasicClient {
      * during the update to check whether the caller wants to stop the update.
      * 
      * <p/>
-     * Before updating a next path from <code>paths</code> this method calls
-     * {@link #handlePathListItem(File)} passing the path to it.
-     * 
-     * <p/>
      * This operation requires repository access (in case the repository is not
      * on the same machine, network connection is established).
      * 
@@ -282,7 +278,7 @@ public class SVNUpdateClient extends SVNBasicClient {
      * @param depth
      *            tree depth to update
      * @param allowUnversionedObstructions
-     *            flag that allows tollerating unversioned items during update
+     *            flag that allows tolerating unversioned items during update
      * @param depthIsSticky
      *            flag that controls whether the requested depth should be
      *            written to the working copy

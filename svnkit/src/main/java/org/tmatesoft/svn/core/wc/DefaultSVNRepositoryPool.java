@@ -11,11 +11,14 @@
  */
 package org.tmatesoft.svn.core.wc;
 
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 
 import org.tmatesoft.svn.core.ISVNCanceller;
 import org.tmatesoft.svn.core.SVNException;
@@ -90,19 +93,21 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
 
     private static final long DEFAULT_IDLE_TIMEOUT = 60*1000;
 
-    private static volatile Timer ourTimer;
+    private static volatile ScheduledExecutorService ourTimer;
     private static volatile int ourInstanceCount;
     
     private ISVNAuthenticationManager myAuthManager;
     private ISVNTunnelProvider myTunnelProvider;
     private ISVNDebugLog myDebugLog;
     private ISVNCanceller myCanceller;
-    private Map myPool;
+    private Map<String, SVNRepository> myPool;
     private long myTimeout;
-    private Map myInactiveRepositories = new SVNHashMap();
-    private Timer myTimer;
+    private Map<SVNRepository, Long> myInactiveRepositories = new HashMap<SVNRepository, Long>();
+    private ScheduledExecutorService myTimer;
 
     private boolean myIsKeepConnection;
+
+    private ScheduledFuture<?> myScheduledTimeoutTask;
     
     /**
      * Constructs a <b>DefaultSVNRepositoryPool</b> instance
@@ -143,23 +148,35 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
         
         synchronized (DefaultSVNRepositoryPool.class) {
             if (ourTimer == null) {
-                ourTimer = new Timer(true);
+                ourTimer = createExecutor();
             }
             if (myIsKeepConnection) {
                 myTimer = ourTimer;
                 try {
-                    myTimer.schedule(new TimeoutTask(), 10000);
+                    myScheduledTimeoutTask = myTimer.scheduleWithFixedDelay(new TimeoutTask(), 10, 10, TimeUnit.SECONDS);
                 } catch (IllegalStateException e) {
                     // Timer already cancelled error.
                     SVNDebugLog.getDefaultLog().logError(SVNLogType.DEFAULT, e);
                     
-                    ourTimer = new Timer(true);
+                    ourTimer = createExecutor();
                     myTimer = ourTimer;
-                    myTimer.schedule(new TimeoutTask(), 10000);
+                    myScheduledTimeoutTask = myTimer.scheduleWithFixedDelay(new TimeoutTask(), 10, 10, TimeUnit.SECONDS);
                 }
             }
             ourInstanceCount++;
         }
+    }
+
+    private ScheduledExecutorService createExecutor() {
+        return Executors.newSingleThreadScheduledExecutor(new DaemonThreadFactory());
+    }
+    
+    private static final class DaemonThreadFactory implements ThreadFactory {
+        public Thread newThread(Runnable r) {
+            final Thread t = new Thread(r);
+            t.setDaemon(true);
+            return t;
+        }        
     }
     
     /**
@@ -209,12 +226,12 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
         synchronized (DefaultSVNRepositoryPool.class) {
             if (myIsKeepConnection && myTimer == null && ourTimer != null) {
                 myTimer = ourTimer;
-                myTimer.schedule(new TimeoutTask(), 10000);
+                myScheduledTimeoutTask = myTimer.scheduleWithFixedDelay(new TimeoutTask(), 10, 10, TimeUnit.SECONDS);
             }
         }
         
         SVNRepository repos = null;
-        Map pool = getPool();
+        Map<String, SVNRepository> pool = getPool();
         if (!mayReuse || pool == null) {            
             repos = SVNRepositoryFactory.create(url, this);
             repos.setAuthenticationManager(myAuthManager);
@@ -250,9 +267,9 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
      */
     public void setAuthenticationManager(ISVNAuthenticationManager authManager) {
         myAuthManager = authManager;
-        Map pool = getPool();
-        for (Iterator protocols = pool.keySet().iterator(); protocols.hasNext();) {
-            String key = (String) protocols.next();
+        Map<String, SVNRepository> pool = getPool();
+        for (Iterator<String> protocols = pool.keySet().iterator(); protocols.hasNext();) {
+            String key = protocols.next();
             SVNRepository repository = (SVNRepository) pool.get(key);
             repository.setAuthenticationManager(myAuthManager);
         }
@@ -302,15 +319,19 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
             myTimer = null;
         }
         
-        Map pool = getPool();
-        for (Iterator protocols = pool.keySet().iterator(); protocols.hasNext();) {
-            String key = (String) protocols.next();
-            SVNRepository repository = (SVNRepository) pool.get(key);
+        Map<String, SVNRepository> pool = getPool();
+        for (Iterator<String> protocols = pool.keySet().iterator(); protocols.hasNext();) {
+            String key = protocols.next();
+            SVNRepository repository = pool.get(key);
             repository.closeSession();
         }
         myPool = null;
 
         synchronized (DefaultSVNRepositoryPool.class) {
+            if (myScheduledTimeoutTask != null) {
+                myScheduledTimeoutTask.cancel(false);
+                myScheduledTimeoutTask = null;
+            }
             ourInstanceCount--;
             if (ourInstanceCount <= 0) {
                 ourInstanceCount = 0;
@@ -329,7 +350,11 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
     public static void shutdownTimer() {
         synchronized (DefaultSVNRepositoryPool.class) {
             if (ourTimer != null) {
-                ourTimer.cancel();
+                try {
+                    ourTimer.shutdownNow();
+                } catch (SecurityException se) {
+                    
+                }
                 ourTimer = null;
             }
         }
@@ -421,8 +446,8 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
      */
     public void setCanceller(ISVNCanceller canceller) {
         myCanceller = canceller;
-        Map pool = getPool();
-        for (Iterator protocols = pool.keySet().iterator(); protocols.hasNext();) {
+        Map<String, SVNRepository> pool = getPool();
+        for (Iterator<String> protocols = pool.keySet().iterator(); protocols.hasNext();) {
             String key = (String) protocols.next();
             SVNRepository repository = (SVNRepository) pool.get(key);
             repository.setCanceller(canceller);
@@ -438,8 +463,8 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
      */
     public void setDebugLog(ISVNDebugLog log) {
         myDebugLog = log == null ? SVNDebugLog.getDefaultLog() : log;
-        Map pool = getPool();
-        for (Iterator protocols = pool.keySet().iterator(); protocols.hasNext();) {
+        Map<String, SVNRepository> pool = getPool();
+        for (Iterator<String> protocols = pool.keySet().iterator(); protocols.hasNext();) {
             String key = (String) protocols.next();
             SVNRepository repository = (SVNRepository) pool.get(key);
             repository.setDebugLog(myDebugLog);
@@ -450,38 +475,29 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
         return myTimeout;
     }
 
-    private Map getPool() {
+    private Map<String, SVNRepository> getPool() {
         if (myPool == null) {
-            myPool = new SVNHashMap();
+            myPool = new HashMap<String, SVNRepository>();
         }
         return myPool;
     }
 
-    private class TimeoutTask extends TimerTask {
+    private class TimeoutTask implements Runnable {
         public void run() {
-            boolean scheduled = false;
             try {
                 long currentTime = System.currentTimeMillis();
                 synchronized (myInactiveRepositories) {
-                    for (Iterator repositories = myInactiveRepositories.keySet().iterator(); repositories.hasNext();) {
-                        SVNRepository repos = (SVNRepository) repositories.next();
+                    for (Iterator<SVNRepository> repositories = myInactiveRepositories.keySet().iterator(); repositories.hasNext();) {
+                        SVNRepository repos = repositories.next();
                         long time = ((Long) myInactiveRepositories.get(repos)).longValue();
                         if (currentTime - time >= getTimeout()) {
                             repositories.remove();
                             repos.closeSession();
                         }
                     }
-                    if (myTimer != null) {
-                        myTimer.schedule(new TimeoutTask(), 10000);
-                        scheduled = true;
-                    }
                 }
             } catch (Throwable th) {
                 SVNDebugLog.getDefaultLog().logSevere(SVNLogType.WC, th);
-                if (!scheduled && myTimer != null) {
-                    myTimer.schedule(new TimeoutTask(), 10000);
-                    scheduled = true;
-                }
             }
         }
     }

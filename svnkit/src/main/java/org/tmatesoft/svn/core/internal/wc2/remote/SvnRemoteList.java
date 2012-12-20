@@ -103,6 +103,9 @@ public class SvnRemoteList extends SvnRemoteOperationRunner<SVNDirEntry, SvnList
                 }
             }
         } else if (entry != null) {
+            if (entry.getKind() == SVNNodeKind.DIR) {
+                entry.setName("");
+            }
             entry.setRelativePath(entry.getKind() == SVNNodeKind.DIR ? "" : entry.getName());
         }
         if (entry == null) {

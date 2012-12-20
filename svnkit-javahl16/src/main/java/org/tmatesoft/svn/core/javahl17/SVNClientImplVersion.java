@@ -25,7 +25,7 @@ class SVNClientImplVersion extends Version {
     }
 
     public String toString() {
-        String revision = getRevisionNumber() < 0 ? "SNAPSHOT" : Long.toString(getRevisionNumber());
+        String revision = getRevisionNumber() < 0 ? org.tmatesoft.svn.util.Version.getRevisionString() : Long.toString(getRevisionNumber());
         return "SVNKit v" + getMajor() + "." + getMinor() + "." + getPatch() + "." + revision;
     }
 

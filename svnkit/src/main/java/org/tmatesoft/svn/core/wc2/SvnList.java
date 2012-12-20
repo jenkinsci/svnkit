@@ -96,4 +96,10 @@ public class SvnList extends SvnReceivingOperation<SVNDirEntry> {
     public boolean isChangesWorkingCopy() {
         return false;
     }
+
+    @Override
+    protected void initDefaults() {
+        super.initDefaults();
+        setDepth(SVNDepth.IMMEDIATES);
+    }
 }

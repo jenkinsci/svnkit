@@ -465,7 +465,7 @@ public class SVNUpdateClient16 extends SVNBasicDelegate {
             SVNURL sourceRoot = repository.getRepositoryRoot(true);
             if (!SVNPathUtil.isAncestor(sourceRoot.toString(), sourceURL.toString())) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_SWITCH, "''{0}''\nis not the same repository as\n''{1}''", new Object[] {
-                        url.toString(), sourceRoot.toString()
+                        sourceURL.toString(), sourceRoot.toString()
                 });
                 SVNErrorManager.error(err, SVNLogType.WC);
             }

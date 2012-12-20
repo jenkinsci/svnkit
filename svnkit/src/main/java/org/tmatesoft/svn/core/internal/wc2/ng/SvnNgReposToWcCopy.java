@@ -163,7 +163,7 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
                 
                 Structure<NodeOriginInfo> no = getWcContext().getNodeOrigin(src, true, NodeOriginInfo.reposRelpath, NodeOriginInfo.reposRootUrl, NodeOriginInfo.revision);
                 if (no.get(NodeOriginInfo.reposRelpath) != null) {
-                    pair.source = no.<SVNURL>get(NodeOriginInfo.reposRootUrl).appendPath(no.<File>get(NodeOriginInfo.reposRelpath).getPath(), false);
+                    pair.source = no.<SVNURL>get(NodeOriginInfo.reposRootUrl).appendPath(SVNFileUtil.getFilePath(no.<File>get(NodeOriginInfo.reposRelpath)), false);
                 } else {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' does not have an URL associated with it", src);
                     SVNErrorManager.error(err, SVNLogType.WC);
@@ -549,7 +549,11 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
             }
             originalUuid = reposInfo.reposUuid;
             originalURL = reposInfo.reposRootUrl;
-            originalReposPath = SVNWCUtils.skipAncestor(new File(originalURL.getPath()), new File(copyFromURL.getPath()));
+            String reposPath = SVNURLUtil.getRelativeURL(originalURL, copyFromURL, false);
+            if (reposPath.startsWith("/")) {
+                reposPath = reposPath.substring("/".length());
+            }
+            originalReposPath = new File(reposPath);
         } else {
             copyFromRev = -1;
         }
@@ -586,7 +590,7 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
         }
         
         if (copyFromURL != null) {
-            context.getDb().installPristine(wbInfo.tempBaseAbspath, wbInfo.getSHA1Checksum(), wbInfo.getSHA1Checksum());
+            context.getDb().installPristine(wbInfo.tempBaseAbspath, wbInfo.getSHA1Checksum(), wbInfo.getMD5Checksum());
         } 
         
         if (newContents == null && copyFromURL == null) {

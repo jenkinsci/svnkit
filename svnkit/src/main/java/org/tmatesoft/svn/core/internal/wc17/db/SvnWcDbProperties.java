@@ -205,7 +205,7 @@ public class SvnWcDbProperties extends SvnWcDbShared {
     	/* Need at least one row, or two rows if there are revert props */
     	if (topOpDepth == -1 || (belowOpDepth == -1 && revertProps != null)) {
     		SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, 
-    				"Insufficient NODES rows for '{0}'", SVNFileUtil.createFilePath(dirAbsPath, localRelPath));
+    				"Insufficient NODES rows for ''{0}''", SVNFileUtil.createFilePath(dirAbsPath, localRelPath));
             SVNErrorManager.error(err, SVNLogType.WC);
             return;
     	}

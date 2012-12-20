@@ -139,6 +139,9 @@ public class DefaultHTTPNegotiateAuthentication extends HTTPNegotiateAuthenticat
             SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "NEGOTIATE: initialize subject, subject: " + mySubject);
         } catch (LoginException e) {
             SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, e);
+            SecurityException rethrown = new SecurityException();
+            rethrown.initCause(e);
+            throw rethrown;
         }
     }
 

@@ -67,7 +67,7 @@ public class SVNStatusPrinter {
             } else {
                 wcRevision = Long.toString(status.getRevision().getNumber());
             }
-            if (status.getRemotePropertiesStatus() != SVNStatusType.STATUS_NONE || status.getRemoteContentsStatus() != SVNStatusType.STATUS_NONE) {
+            if (status.getRemoteNodeStatus() != SVNStatusType.STATUS_NONE) {
                 remoteStatus = '*';
             } else {
                 remoteStatus = ' ';

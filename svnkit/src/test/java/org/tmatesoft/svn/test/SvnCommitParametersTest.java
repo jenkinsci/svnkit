@@ -3,6 +3,7 @@ package org.tmatesoft.svn.test;
 import java.io.File;
 
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Test;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
@@ -144,6 +145,7 @@ public class SvnCommitParametersTest {
 
     @Test
     public void testDeleteMissingInACopy() throws SVNException {
+        Assume.assumeTrue(TestUtil.isNewWorkingCopyTest());
         WorkingCopy wc = prepareMissingWc(getTestName());
         
         File missingFile = wc.getFile(COPY_MISSING_FILE_PATH);
@@ -175,6 +177,7 @@ public class SvnCommitParametersTest {
 
     @Test
     public void testPostCommitDeletions() throws SVNException {
+        Assume.assumeTrue(TestUtil.isNewWorkingCopyTest());
         WorkingCopy wc = prepareMissingWc(getTestName());
         
         File missingFile = wc.getFile(MISSING_FILE_PATH);

@@ -3,11 +3,14 @@ package org.tmatesoft.svn.core.internal.wc2.old;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc16.SVNDiffClient16;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
+import org.tmatesoft.svn.core.internal.wc2.ng.ISvnDiffGenerator;
+import org.tmatesoft.svn.core.internal.wc2.ng.SvnDiffGenerator;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNewDiffGenerator;
 import org.tmatesoft.svn.core.wc.DefaultSVNDiffGenerator;
 import org.tmatesoft.svn.core.wc.ISVNDiffGenerator;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnDiff;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 public class SvnOldDiff extends SvnOldRunner<Void, SvnDiff> {
 
@@ -65,6 +68,23 @@ public class SvnOldDiff extends SvnOldRunner<Void, SvnDiff> {
     }
 
     private ISVNDiffGenerator getDiffGenerator() {
-        return getOperation().getDiffGenerator() != null ? new SvnNewDiffGenerator(getOperation().getDiffGenerator()) : new DefaultSVNDiffGenerator();
+        ISvnDiffGenerator diffGenerator = getOperation().getDiffGenerator();
+
+        if (diffGenerator != null) {
+            if (getOperation().getRelativeToDirectory() != null) {
+                if (diffGenerator instanceof SvnDiffGenerator) {
+                    ((SvnDiffGenerator) diffGenerator).setRelativeToTarget(SvnTarget.fromFile(getOperation().getRelativeToDirectory()));
+                } else {
+                    diffGenerator.setBaseTarget(SvnTarget.fromFile(getOperation().getRelativeToDirectory()));
+                }
+            }
+            return new SvnNewDiffGenerator(diffGenerator);
+        } else {
+            DefaultSVNDiffGenerator defaultSVNDiffGenerator = new DefaultSVNDiffGenerator();
+            if (getOperation().getRelativeToDirectory() != null) {
+                defaultSVNDiffGenerator.setBasePath(getOperation().getRelativeToDirectory());
+            }
+            return defaultSVNDiffGenerator;
+        }
     }
 }

@@ -302,6 +302,7 @@ public class SVNCommitClient16 extends SVNBasicDelegate {
         if (commitMessage == null) {
             return SVNCommitInfo.NULL;
         }
+        commitMessage = SVNCommitUtil.validateCommitMessage(commitMessage);
         List decodedPaths = new ArrayList();
         for (Iterator commitPaths = paths.iterator(); commitPaths.hasNext();) {
             String path = (String) commitPaths.next();
@@ -447,6 +448,8 @@ public class SVNCommitClient16 extends SVNBasicDelegate {
         if (commitMessage == null) {
             return SVNCommitInfo.NULL;
         }
+        commitMessage = validateCommitMessage(commitMessage);
+
         List decodedPaths = new ArrayList();
         for (Iterator commitPaths = sortedPaths.iterator(); commitPaths.hasNext();) {
             String path = (String) commitPaths.next();
