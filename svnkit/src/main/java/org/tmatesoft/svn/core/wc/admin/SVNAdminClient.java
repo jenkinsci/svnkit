@@ -499,7 +499,7 @@ public class SVNAdminClient extends SVNAdminBasicClient {
                 }
             }
             toRepos.setRevisionPropertyValue(0, SVNRevisionProperty.FROM_URL,
-                    SVNPropertyValue.create(fromURL.toDecodedString()));
+                    SVNPropertyValue.create(fromURL.toString()));
             String uuid = fromRepos.getRepositoryUUID(true);
             toRepos.setRevisionPropertyValue(0, SVNRevisionProperty.FROM_UUID, SVNPropertyValue.create(uuid));
             toRepos.setRevisionPropertyValue(0, SVNRevisionProperty.LAST_MERGED_REVISION,
@@ -1601,7 +1601,7 @@ public class SVNAdminClient extends SVNAdminBasicClient {
             SVNErrorManager.error(err, SVNLogType.FSFS);
         }
 
-        SVNURL srcURL = SVNURL.parseURIDecoded(fromURL.getString());
+        SVNURL srcURL = SVNURL.parseURIEncoded(fromURL.getString());
         SVNRepository srcRepos = createRepository(srcURL, fromUUID.getString(), false);
         try {
             return new SessionInfo(srcRepos, Long.parseLong(lastMergedRev.getString()));

@@ -62,7 +62,7 @@ public class SvnRemoteCat extends SvnRemoteOperationRunner<Void, SvnCat> {
             String charset = SVNTranslator.getCharset(
             		properties.getStringValue(SVNProperty.CHARSET), 
             		mimeType, 
-            		repos.getLocation().toDecodedString(), 
+            		repos.getLocation().toString(),
             		getOperation().getOptions());
             String keywords = properties.getStringValue(SVNProperty.KEYWORDS);
             String eol = properties.getStringValue(SVNProperty.EOL_STYLE);

@@ -10,6 +10,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNExternal;
 import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
 import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.core.wc2.*;
@@ -102,7 +103,7 @@ public class MergeTest {
 
                 Assert.assertEquals("mine", TestUtil.readFileContentsString(file));
 
-                final Map<File,SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
+                final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
                 Assert.assertEquals(SVNStatusType.STATUS_DELETED, statuses.get(file).getNodeStatus());
                 Assert.assertFalse(statuses.get(file).isConflicted());
             }
@@ -135,9 +136,7 @@ public class MergeTest {
 
             workingCopy.delete(file);
 
-            final SvnUpdate update = svnOperationFactory.createUpdate();
-            update.setSingleTarget(SvnTarget.fromFile(workingCopy.getWorkingCopyDirectory()));
-            update.run();
+            update(svnOperationFactory, workingCopy);
 
             final SvnGetInfo getInfo = svnOperationFactory.createGetInfo();
             getInfo.setSingleTarget(SvnTarget.fromFile(file));
@@ -146,7 +145,7 @@ public class MergeTest {
             final Collection<SVNConflictDescription> conflicts = svnInfo.getWcInfo().getConflicts();
             Assert.assertEquals(1, conflicts.size());
 
-            final SVNTreeConflictDescription conflict = (SVNTreeConflictDescription)conflicts.iterator().next();
+            final SVNTreeConflictDescription conflict = (SVNTreeConflictDescription) conflicts.iterator().next();
             Assert.assertEquals(SVNConflictAction.DELETE, conflict.getConflictAction());
             Assert.assertEquals(SVNConflictReason.DELETED, conflict.getConflictReason());
             Assert.assertEquals(url, conflict.getSourceLeftVersion().getRepositoryRoot());
@@ -154,6 +153,12 @@ public class MergeTest {
 
             final SvnSchedule schedule = svnInfo.getWcInfo().getSchedule();
             Assert.assertEquals(SvnSchedule.NORMAL, schedule);
+
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopy.getWorkingCopyDirectory());
+            final SvnStatus fileStatus = statuses.get(file);
+
+            Assert.assertTrue(fileStatus.isConflicted());
+            Assert.assertEquals(SVNStatusType.STATUS_CONFLICTED, fileStatus.getNodeStatus());
 
         } finally {
             svnOperationFactory.dispose();
@@ -761,7 +766,6 @@ public class MergeTest {
     }
 
     @Test
-    @Ignore
     public void testConflictOnFileExternalUpdate() throws Exception {
         final TestOptions options = TestOptions.getInstance();
 
@@ -822,6 +826,167 @@ public class MergeTest {
             svnOperationFactory.dispose();
             sandbox.dispose();
         }
+    }
+
+    @Test
+    public void testMergeRecordsActualPropertiesForFileWithMergeInfo() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        Assume.assumeTrue(TestUtil.isNewWorkingCopyTest());
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testMergeRecordsActualPropertiesForFileWithMergeInfo", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder1 = new CommitBuilder(url);
+            commitBuilder1.addFile("directory/file");
+            commitBuilder1.setFileProperty("directory/file", SVNProperty.MERGE_INFO, SVNPropertyValue.create("/somefile:1"));
+            commitBuilder1.commit();
+
+            final CommitBuilder commitBuilder2 = new CommitBuilder(url);
+            commitBuilder2.addFileByCopying("directory/copiedFile", "directory/file");
+            commitBuilder2.delete("directory/file");
+            commitBuilder2.commit();
+
+            final CommitBuilder commitBuilder3 = new CommitBuilder(url);
+            commitBuilder3.addDirectoryByCopying("copiedDirectory", "directory", 1);
+            commitBuilder3.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url.appendPath("copiedDirectory", false));
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+
+            final SvnMerge merge = svnOperationFactory.createMerge();
+            merge.addRevisionRange(SvnRevisionRange.create(SVNRevision.create(1), SVNRevision.create(2)));
+            merge.setSource(SvnTarget.fromURL(url.appendPath("directory", false)), false);
+            merge.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            merge.run();
+
+            Assert.assertEquals(2, TestUtil.getTableSize(workingCopy, SVNWCDbSchema.ACTUAL_NODE.name()));
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testImplicitGapIsExcludedFromMerging() throws Exception {
+        //SVNKIT-305
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testImplicitGapIsExcludedFromMerging", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder1 = new CommitBuilder(url);
+            commitBuilder1.addFile("trunk/file");
+            commitBuilder1.commit();
+
+            final CommitBuilder commitBuilder2 = new CommitBuilder(url);
+            commitBuilder2.delete("trunk/file");
+            commitBuilder2.commit();
+
+            final CommitBuilder commitBuilder3 = new CommitBuilder(url);
+            commitBuilder3.addDirectoryByCopying("branches/branch", "trunk", 1);
+            commitBuilder3.commit();
+
+            final CommitBuilder commitBuilder4 = new CommitBuilder(url); //implicit src gap
+            commitBuilder4.commit();
+
+            final CommitBuilder commitBuilder5 = new CommitBuilder(url);
+            commitBuilder5.delete("branches/branch");
+            commitBuilder5.commit();
+
+            final CommitBuilder commitBuilder6 = new CommitBuilder(url);
+            commitBuilder6.addDirectoryByCopying("branches/branch", "trunk", 3);
+            commitBuilder6.commit();
+
+            final CommitBuilder commitBuilder7 = new CommitBuilder(url);
+            commitBuilder7.addFileByCopying("trunk/file", "trunk/file", 1);
+            commitBuilder7.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url.appendPath("trunk", false));
+
+            final SVNClientManager clientManager = SVNClientManager.newInstance();
+            try {
+                final SVNDiffClient diffClient = clientManager.getDiffClient();
+
+                workingCopy.setProperty(workingCopy.getFile("file"), SVNProperty.MERGE_INFO, SVNPropertyValue.create("/branches/branch/file:3")); //the value doesn't matter
+                workingCopy.setProperty(workingCopy.getWorkingCopyDirectory(), SVNProperty.MERGE_INFO, SVNPropertyValue.create("/branches/branch:6-7"));
+                Assert.assertEquals(8, workingCopy.commit(""));
+                workingCopy.updateToRevision(-1);
+
+                diffClient.doMerge(url.appendPath("branches/branch", false), SVNRevision.HEAD, Arrays.asList(
+                        new SVNRevisionRange(SVNRevision.create(1), SVNRevision.HEAD)
+                ), workingCopy.getWorkingCopyDirectory(), SVNDepth.INFINITY, true, false, false, false);
+
+                Assert.assertEquals(9, workingCopy.commit(""));
+
+            } finally {
+                clientManager.dispose();
+            }
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testMergeAfterShallowMergeProducesCorrectMergeinfo() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testMergeAfterShallowMergeProducesCorrectMergeinfo", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder1 = new CommitBuilder(url);
+            commitBuilder1.addFile("directory/subdirectory/file");
+            commitBuilder1.commit();
+
+            final CommitBuilder commitBuilder2 = new CommitBuilder(url);
+            commitBuilder2.addDirectoryByCopying("copiedDirectory", "directory");
+            commitBuilder2.commit();
+
+            final CommitBuilder commitBuilder3 = new CommitBuilder(url);
+            commitBuilder3.changeFile("directory/subdirectory/file", "contents".getBytes());
+            commitBuilder3.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url);
+
+            final SvnMerge shallowMerge = svnOperationFactory.createMerge();
+            shallowMerge.addRevisionRange(SvnRevisionRange.create(SVNRevision.create(1), SVNRevision.HEAD));
+            shallowMerge.setSource(SvnTarget.fromURL(url.appendPath("directory", false)), false);
+            shallowMerge.setSingleTarget(SvnTarget.fromFile(workingCopy.getFile("copiedDirectory")));
+            shallowMerge.setDepth(SVNDepth.FILES);
+            shallowMerge.run();
+
+            final SvnMerge merge = svnOperationFactory.createMerge();
+            merge.addRevisionRange(SvnRevisionRange.create(SVNRevision.create(1), SVNRevision.HEAD));
+            merge.setSource(SvnTarget.fromURL(url.appendPath("directory", false)), false);
+            merge.setSingleTarget(SvnTarget.fromFile(workingCopy.getFile("copiedDirectory")));
+            merge.setDepth(SVNDepth.INFINITY);
+            merge.run();
+
+            final SvnGetProperties getProperties = svnOperationFactory.createGetProperties();
+            getProperties.setSingleTarget(SvnTarget.fromFile(workingCopy.getFile("copiedDirectory")));
+            final SVNProperties properties = getProperties.run();
+
+            Assert.assertEquals("/directory:2-3", SVNPropertyValue.getPropertyAsString(properties.getSVNPropertyValue(SVNProperty.MERGE_INFO)));
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    private void update(SvnOperationFactory svnOperationFactory, WorkingCopy workingCopy) throws SVNException {
+        final SvnUpdate update = svnOperationFactory.createUpdate();
+        update.setSingleTarget(SvnTarget.fromFile(workingCopy.getWorkingCopyDirectory()));
+        update.run();
     }
 
     private void runResolve(SvnOperationFactory svnOperationFactory, File file, SVNConflictChoice resolution) throws SVNException {

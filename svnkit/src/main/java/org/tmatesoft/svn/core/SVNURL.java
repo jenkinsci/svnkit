@@ -11,6 +11,13 @@
  */
 package org.tmatesoft.svn.core;
 
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.util.SVNLogType;
+
 import java.io.File;
 import java.io.Serializable;
 import java.io.IOException;
@@ -22,12 +29,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Map;
 import java.util.StringTokenizer;
-
-import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -109,6 +110,7 @@ public class SVNURL implements Serializable {
      * @return               a new <b>SVNURL</b> representation of <code>url</code>
      * @throws SVNException  if <code>url</code> is malformed
      */
+    @Deprecated
     public static SVNURL parseURIDecoded(String url) throws SVNException {
         return new SVNURL(url, false);
     }
@@ -138,11 +140,21 @@ public class SVNURL implements Serializable {
             return null;
         }
         String path = repositoryPath.getAbsoluteFile().getAbsolutePath();
-        path = path.replace(File.separatorChar, '/');
+        String host = null;
+        if (SVNFileUtil.isWindows && path.startsWith("//") || path.startsWith("\\\\")) {
+            // this is UNC path, remove host.
+            path = path.replace(File.separatorChar, '/');
+            path = path.substring("//".length());
+            final int lastIndex = path.indexOf("/") > 0 ? path.indexOf("/") : path.length();
+            host = path.substring(0, lastIndex);
+            path = path.substring(host.length());
+        } else {
+            path = path.replace(File.separatorChar, '/');
+        }
         if (!path.startsWith("/")) {
             path = "/" + path;
         }
-        return SVNURL.parseURIDecoded("file://" + path);
+        return SVNURL.create("file", null, host, -1, path, false);
     }
     
     /**
@@ -231,13 +243,13 @@ public class SVNURL implements Serializable {
         if ("file".equals(myProtocol)) {
             String normalizedPath = norlmalizeURLPath(url, url.substring("file://".length()));
             int slashInd = normalizedPath.indexOf('/');
-            if (slashInd == -1) {
+            if (slashInd == -1 && normalizedPath.length() > 0) {
                 //no path, only host - follow subversion behaviour
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "Local URL ''{0}'' contains only a hostname, no path", url);
                 SVNErrorManager.error(err, SVNLogType.DEFAULT);
             }
             
-            myPath = normalizedPath.substring(slashInd);
+            myPath = slashInd == -1 ? "" : normalizedPath.substring(slashInd);
             if (normalizedPath.equals(myPath)) {
                 myHost = "";
             } else {
@@ -546,7 +558,7 @@ public class SVNURL implements Serializable {
         if (path != null && !path.startsWith("/")) {
             path = '/' + path;
         }
-        if ("/".equals(path)) {
+        if ("/".equals(path) && !"file".equals(protocol)) {
             path = "";
         }
         url.append(path);

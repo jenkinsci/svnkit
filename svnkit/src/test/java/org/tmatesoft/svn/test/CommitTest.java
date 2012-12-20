@@ -13,6 +13,7 @@ import org.tmatesoft.svn.core.wc.SVNCommitClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc2.*;
+import org.tmatesoft.svn.core.wc2.admin.SvnRepositoryCreate;
 
 import java.io.File;
 import java.util.Map;
@@ -191,6 +192,39 @@ public class CommitTest {
             final SVNLogEntry logEntry = log.run();
 
             Assert.assertEquals(commitMessage.replace("\r\n", "\n"), logEntry.getMessage());
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testURLsAreNotEncodedTwiceForAddedFiles() throws Exception {
+        //SVNKIT-282
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testURLsAreNotEncodedTwiceForAddedFiles", options);
+        try {
+            //prepare a repository with a space in the URL
+            final File repositoryDirectory = sandbox.createDirectory("svn.repo with space");
+
+            final SvnRepositoryCreate repositoryCreate = svnOperationFactory.createRepositoryCreate();
+            repositoryCreate.setRepositoryRoot(repositoryDirectory);
+            final SVNURL url = repositoryCreate.run();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url);
+
+            //add a file locally
+            final File file = workingCopy.getFile("file");
+            TestUtil.writeFileContentsString(file, "contents");
+            workingCopy.add(file);
+
+            //commit that file
+            final SvnCommit commit = svnOperationFactory.createCommit();
+            commit.setSingleTarget(SvnTarget.fromFile(file));
+            commit.run();
 
         } finally {
             svnOperationFactory.dispose();

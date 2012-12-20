@@ -88,6 +88,10 @@ class DAVResource {
             if (myMediator != null && DAVUtil.isUseDAVWCURL()) {
                 SVNPropertyValue value = myMediator.getWorkspaceProperty(SVNEncodingUtil.uriDecode(myPath), SVNProperty.WC_URL);
                 myVURL = value == null ? null : value.getString();
+                if ("".equals(myVURL)) {
+                    myMediator.setWorkspaceProperty(SVNEncodingUtil.uriDecode(myPath), SVNProperty.WC_URL, null);
+                    myVURL = null;
+                }
                 if (myVURL != null) {
                     return;
                 }

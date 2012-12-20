@@ -1,30 +1,9 @@
 package org.tmatesoft.svn.core.internal.wc17.db;
 
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnBlob;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnKind;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnInt64;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnPath;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnPresence;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnProperties;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnText;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.isColumnNull;
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.reset;
-
-import java.io.File;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNProperties;
-import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetInsertStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectStatement;
@@ -35,19 +14,19 @@ import org.tmatesoft.svn.core.internal.wc.SVNExternal;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
-import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbCreateSchema;
-import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbNodesBase;
-import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbNodesCurrent;
-import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
-import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.ACTUAL_NODE__Fields;
-import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODES__Fields;
-import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODE_PROPS_CACHE__Fields;
-import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.TARGETS_LIST__Fields;
-import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.WCROOT__Fields;
-import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.*;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.*;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
+
+import java.io.File;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.*;
 
 public class SvnWcDbProperties extends SvnWcDbShared {
 	
@@ -119,7 +98,11 @@ public class SvnWcDbProperties extends SvnWcDbShared {
             } finally {        
                 reset(stmt);
                 SVNSqlJetStatement dropCache = new SVNWCDbCreateSchema(root.getSDb().getTemporaryDb(), SVNWCDbCreateSchema.DROP_NODE_PROPS_CACHE, -1);
-                dropCache.done();
+                try {
+                    dropCache.done();
+                } finally {
+                    dropCache.reset();
+                }
             }
         } catch (SVNException e) {
             root.getSDb().getTemporaryDb().rollback();
@@ -255,20 +238,24 @@ public class SvnWcDbProperties extends SvnWcDbShared {
     		}
     		String externals = props != null ? props.getStringValue(SVNProperty.EXTERNALS) : null;
     		if (externals != null && !"".equals(externals)) {
-    			stmt = root.getSDb().getStatement(SVNWCDbStatements.INSERT_EXTERNAL_UPGRADE);
     			SVNExternal[] externalsList = SVNExternal.parseExternals(
     					SVNFileUtil.createFilePath(dirAbsPath, localRelPath), externals);
     			for (SVNExternal externalItem : externalsList) {
     				File itemRelPah = SVNFileUtil.createFilePath(localRelPath, externalItem.getPath());
-    				stmt.bindf("issssis", 
-    						root.getWcId(), 
-    						itemRelPah, 
-    						SVNFileUtil.getFilePath(SVNFileUtil.getFileDir(itemRelPah)), 
-    						SvnWcDbStatementUtil.getPresenceText(SVNWCDbStatus.Normal), 
-    						localRelPath, 
-    						1, /* repos_id */ 
-    						""  /* repos_relpath */);
-    				stmt.exec();
+                    stmt = root.getSDb().getStatement(SVNWCDbStatements.INSERT_EXTERNAL_UPGRADE);
+                    try {
+                        stmt.bindf("issssis",
+                                root.getWcId(),
+                                itemRelPah,
+                                SVNFileUtil.getFilePath(SVNFileUtil.getFileDir(itemRelPah)),
+                                SvnWcDbStatementUtil.getPresenceText(SVNWCDbStatus.Normal),
+                                localRelPath,
+                                1, /* repos_id */
+                                ""  /* repos_relpath */);
+                        stmt.exec();
+                    } finally {
+                        stmt.reset();
+                    }
     			}
     		}
 
@@ -285,15 +272,16 @@ public class SvnWcDbProperties extends SvnWcDbShared {
     	finally {
     		selectRoot.reset();
     	}
-    	    	
-    	SVNSqlJetStatement stmt = root.getSDb().getStatement(SVNWCDbStatements.UPDATE_BASE_NODE_DAV_CACHE);
-    	/* Iterate over all the wcprops, writing each one to the wc_db. */
-    	for (Iterator<String> names = cacheValues.keySet().iterator(); names.hasNext();) {
-    		String name = (String) names.next();
+
+        /* Iterate over all the wcprops, writing each one to the wc_db. */
+        for (Iterator<String> names = cacheValues.keySet().iterator(); names.hasNext();) {
+            String name = (String) names.next();
             SVNProperties props = (SVNProperties) cacheValues.get(name);
             if (props.size() > 0) {
-            	File localRelPath = SVNFileUtil.createFilePath(dirRelPath, name);
-            	stmt.bindf("is", wcId, localRelPath);
+                File localRelPath = SVNFileUtil.createFilePath(dirRelPath, name);
+
+                SVNSqlJetStatement stmt = root.getSDb().getStatement(SVNWCDbStatements.UPDATE_BASE_NODE_DAV_CACHE);
+                stmt.bindf("is", wcId, localRelPath);
             	stmt.bindProperties(3, props);
             	try {
             		stmt.exec();
@@ -315,7 +303,11 @@ public class SvnWcDbProperties extends SvnWcDbShared {
         try {
             collectTargets(root, relpath, depth, changelists);
             stmt = new SVNWCDbCreateSchema(root.getSDb().getTemporaryDb(), SVNWCDbCreateSchema.NODE_PROPS_CACHE, -1);
-            stmt.done();
+            try {
+                stmt.done();
+            } finally {
+                stmt.reset();
+            }
             
             if (baseProperties) {
                 propertiesSelectStmt = new SVNWCDbNodesBase(root.getSDb());
@@ -402,7 +394,11 @@ public class SvnWcDbProperties extends SvnWcDbShared {
                 reset(propertiesSelectStmt);
 
                 SVNSqlJetStatement dropTargets = new SVNWCDbCreateSchema(root.getSDb().getTemporaryDb(), SVNWCDbCreateSchema.DROP_TARGETS_LIST, -1);
-                dropTargets.done();
+                try {
+                    dropTargets.done();
+                } finally {
+                    dropTargets.reset();
+                }
             } finally {
                 root.getSDb().commit();
             }

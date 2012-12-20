@@ -3,7 +3,34 @@
 snapshot() {
 if [ -x $dir/snapshot ]
 then
-   echo "$@" > "%svn_test_work%/commit_msg"
+    echo "" > "%svn_test_work%/commit_msg"
+    i=1
+    for arg in "$@"; do
+
+             if [ "x$arg" = "x" ] ; then
+                     echo -n "''" >> "%svn_test_work%/commit_msg"
+             else
+                     output=`echo "$arg" | grep " "`
+ 
+                     if [ "x$output" != "x" ] ; then
+                             echo -n "'$arg'" >> "%svn_test_work%/commit_msg"
+                     else
+                             echo -n "$arg" >> "%svn_test_work%/commit_msg"
+                     fi
+             fi
+
+            
+
+            if [ $i != $# ] ; then
+                    echo -n " " >> "%svn_test_work%/commit_msg"
+            else
+                    echo "" >> "%svn_test_work%/commit_msg"
+            fi
+
+            i=$(($i+1))
+    done
+    
+   #echo "$@" > "%svn_test_work%/commit_msg"
    $dir/snapshot "%svn_test_work%" > /dev/null 2> /dev/null
 fi
 }

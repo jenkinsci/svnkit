@@ -329,7 +329,12 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
     }
 
     protected ISVNAuthenticationProvider createCacheAuthenticationProvider(File authDir, String userName) {
-        ISVNAuthenticationStorageOptions delegatingOptions = new ISVNAuthenticationStorageOptions() {
+        ISVNAuthenticationStorageOptions delegatingOptions = createAuthenticationStorageOptions();
+        return new DefaultSVNPersistentAuthenticationProvider(authDir, userName, delegatingOptions, getDefaultOptions(), getHostOptionsProvider());
+    }
+
+    public ISVNAuthenticationStorageOptions createAuthenticationStorageOptions() {
+        return new ISVNAuthenticationStorageOptions() {
             public boolean isNonInteractive() throws SVNException {
                 return getAuthenticationStorageOptions().isNonInteractive();
             }
@@ -341,7 +346,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             public boolean isSSLPassphrasePromptSupported() {
                 if (getAuthenticationStorageOptions() == ISVNAuthenticationStorageOptions.DEFAULT) {
                     return DefaultSVNAuthenticationManager.this.isSSLPassphrasePromtSupported();
-                } 
+                }
                 return getAuthenticationStorageOptions().isSSLPassphrasePromptSupported();
             }
 
@@ -349,7 +354,6 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                 return getAuthenticationStorageOptions().getGnomeKeyringPasswordProvider();
             }
         };
-        return new DefaultSVNPersistentAuthenticationProvider(authDir, userName, delegatingOptions, getDefaultOptions(), getHostOptionsProvider());
     }
 
     protected class DumbAuthenticationProvider implements ISVNAuthenticationProvider {

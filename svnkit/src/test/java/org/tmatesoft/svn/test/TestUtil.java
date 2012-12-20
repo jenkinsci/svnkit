@@ -1,5 +1,10 @@
 package org.tmatesoft.svn.test;
 
+import org.tmatesoft.sqljet.core.SqlJetException;
+import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
+import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
+import org.tmatesoft.sqljet.core.table.ISqlJetTable;
+import org.tmatesoft.sqljet.core.table.SqlJetDb;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -206,6 +211,27 @@ public class TestUtil {
             return "@echo off" + "\r\n" + "exit " + exitCodeString + "\r\n";
         } else {
             return "#!/bin/sh" + "\n" + "exit " + exitCodeString + "\n";
+        }
+    }
+
+    public static int getTableSize(WorkingCopy workingCopy, String tableName) throws SqlJetException {
+        final SqlJetDb db = SqlJetDb.open(workingCopy.getWCDbFile(), false);
+        try {
+            final ISqlJetTable table = db.getTable(tableName);
+            db.beginTransaction(SqlJetTransactionMode.READ_ONLY);
+            final ISqlJetCursor cursor = table.open();
+
+            int count = 0;
+
+            for (; !cursor.eof(); cursor.next()) {
+                count++;
+            }
+            cursor.close();
+            db.commit();
+
+            return count;
+        } finally {
+            db.close();
         }
     }
 }

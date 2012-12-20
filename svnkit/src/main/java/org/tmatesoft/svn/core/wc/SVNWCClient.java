@@ -1280,7 +1280,7 @@ public class SVNWCClient extends SVNBasicClient {
      * @param deleteFiles
      *            if <span class="javakeyword">true</span> then files will be
      *            scheduled for deletion as well as deleted from the filesystem,
-     *            otherwise files will be only scheduled for addition and still
+     *            otherwise files will be only scheduled for deletion and still
      *            be present in the filesystem
      * @param dryRun
      *            <span class="javakeyword">true</span> only to try the delete

@@ -208,12 +208,23 @@ public class Sandbox {
             }
 
             TestUtil.writeFileContentsString(activeAuthzFile, contents);
-            //no reload is required
+            svnserveProcess.reload();
             return activeAuthzFile;
         }
 
         //authz for FSFS is useless
         return null;
+    }
+
+    public File writeHookContents(SVNURL url, String hookName, String hookContents) throws SVNException {
+        final File repositoryRoot = urlToRepositoryRoot.get(url);
+
+        final File hookFile = TestUtil.getHookFile(repositoryRoot, hookName);
+        TestUtil.writeFileContentsString(hookFile, hookContents);
+
+        SVNFileUtil.setExecutable(hookFile, true);
+
+        return hookFile;
     }
 
     private ApacheProcess findApacheProcess(SVNURL url) {

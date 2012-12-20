@@ -484,7 +484,7 @@ public class SvnNgRemoteDiffEditor implements ISVNEditor {
         FileBaton b = currentFile;
         if (textChecksum != null) {
             SvnChecksum expected = SvnChecksum.fromString("$md5 $" + textChecksum);
-            if (b.resultMd5Checksum != null && !expected.equals(b.resultMd5Checksum)) {
+            if (expected != null && b.resultMd5Checksum != null && !expected.equals(b.resultMd5Checksum)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CHECKSUM_MISMATCH, "Checksum mismatch for ''{0}''", b.repoPath);
                 SVNErrorManager.error(err, SVNLogType.WC);
             }

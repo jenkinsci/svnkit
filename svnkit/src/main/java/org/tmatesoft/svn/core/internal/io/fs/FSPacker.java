@@ -11,16 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.io.fs;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-
-import org.tmatesoft.svn.core.ISVNCanceller;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -31,6 +22,11 @@ import org.tmatesoft.svn.core.wc.admin.ISVNAdminEventHandler;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminEvent;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminEventAction;
 import org.tmatesoft.svn.util.SVNLogType;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 
 /**
@@ -164,14 +160,15 @@ public class FSPacker {
 
         long startRev = shard * fsfs.getMaxFilesPerDirectory();
         long endRev = (shard + 1) * fsfs.getMaxFilesPerDirectory() - 1;
-        final SVNSqlJetStatement stmt = fsfs.getRevisionProperitesDb().getStatement(SVNWCDbStatements.FSFS_SET_REVPROP);
         for (long rev = startRev; rev <= endRev; rev++) {
+            final SVNSqlJetStatement stmt = fsfs.getRevisionProperitesDb().getStatement(SVNWCDbStatements.FSFS_SET_REVPROP);
             FSFile fsRevPropFile = new FSFile(fsfs.getRevisionPropertiesFile(rev, false));
             try{
                 final SVNProperties fsRevProp = fsRevPropFile.readProperties(false, true);
                 stmt.insert(new Object[] {rev,SVNSkel.createPropList(fsRevProp.asMap()).getData()});
             }finally{
                 fsRevPropFile.close();
+                stmt.reset();
             }
         }
 

@@ -167,6 +167,8 @@ public class DefaultSVNPersistentAuthenticationProvider implements ISVNAuthentic
 
     public SVNAuthentication requestClientAuthentication(String kind, SVNURL url, String realm, SVNErrorMessage errorMessage,
                                                          SVNAuthentication previousAuth, boolean authMayBeStored) {
+        realm = preprocessRealm(realm);
+
         if (ISVNAuthenticationManager.SSL.equals(kind)) {
             if (SVNSSLAuthentication.isCertificatePath(realm)) {
                 return readSSLPassphrase(kind, realm, authMayBeStored, url);
@@ -201,7 +203,7 @@ public class DefaultSVNPersistentAuthenticationProvider implements ISVNAuthentic
         if (!dir.isDirectory()) {
             return null;
         }
-        String fileName = SVNFileUtil.computeChecksum(realm);
+        String fileName = getAuthFileName(realm);
         File authFile = new File(dir, fileName);
         if (authFile.exists()) {
             SVNWCProperties props = new SVNWCProperties(authFile, "");
@@ -280,6 +282,10 @@ public class DefaultSVNPersistentAuthenticationProvider implements ISVNAuthentic
         return null;
     }
 
+    protected String preprocessRealm(String realm) {
+        return realm;
+    }
+
     public boolean isMSCapi(String filepath) {
         if (filepath != null && filepath.startsWith(SVNSSLAuthentication.MSCAPI)) {
             return true;
@@ -315,7 +321,7 @@ public class DefaultSVNPersistentAuthenticationProvider implements ISVNAuthentic
             saveUserNameCredential(values, auth);
         }
         // get file name for auth and store password.
-        String fileName = SVNFileUtil.computeChecksum(realm);
+        String fileName = getAuthFileName(realm);
         File authFile = new File(dir, fileName);
 
         if (authFile.isFile()) {
@@ -336,6 +342,10 @@ public class DefaultSVNPersistentAuthenticationProvider implements ISVNAuthentic
         }
     }
 
+    protected String getAuthFileName(String realm) {
+        return SVNFileUtil.computeChecksum(realm);
+    }
+
     public int acceptServerAuthentication(SVNURL url, String r, Object serverAuth, boolean resultMayBeStored) {
         return ACCEPTED;
     }
@@ -347,15 +357,15 @@ public class DefaultSVNPersistentAuthenticationProvider implements ISVNAuthentic
         if (!ISVNAuthenticationManager.PASSWORD.equals(kind)) {
             return !newValues.equals(oldValues);
         }
-        String newUsername = newValues.getStringValue("username");
-        String newPassType = newValues.getStringValue("passtype");
-        String newRealm = newValues.getStringValue("svn:realmstring");
+        String newUsername = SVNPropertyValue.getPropertyAsString(newValues.getSVNPropertyValue("username"));
+        String newPassType = SVNPropertyValue.getPropertyAsString(newValues.getSVNPropertyValue("passtype"));
+        String newRealm = SVNPropertyValue.getPropertyAsString(newValues.getSVNPropertyValue("svn:realmstring"));
         IPasswordStorage newPasswordStorage = getPasswordStorage(newPassType);
         String newPassword = newPasswordStorage == null ? null : newPasswordStorage.readPassword(newRealm, newUsername, newValues);
 
-        String oldUsername = oldValues.getStringValue("username");
-        String oldPassType = oldValues.getStringValue("passtype");
-        String oldRealm = oldValues.getStringValue("svn:realmstring");
+        String oldUsername = SVNPropertyValue.getPropertyAsString(oldValues.getSVNPropertyValue("username"));
+        String oldPassType = SVNPropertyValue.getPropertyAsString(oldValues.getSVNPropertyValue("passtype"));
+        String oldRealm = SVNPropertyValue.getPropertyAsString(oldValues.getSVNPropertyValue("svn:realmstring"));
         IPasswordStorage oldPasswordStorage = getPasswordStorage(oldPassType);
         String oldPassword = oldPasswordStorage == null ? null : oldPasswordStorage.readPassword(oldRealm, oldUsername, oldValues);
 
@@ -501,7 +511,7 @@ public class DefaultSVNPersistentAuthenticationProvider implements ISVNAuthentic
         if (!dir.isDirectory()) {
             return null;
         }
-        File file = new File(dir, SVNFileUtil.computeChecksum(realm));
+        File file = new File(dir, getAuthFileName(realm));
         if (!file.isFile()) {
             return null;
         }
@@ -524,7 +534,7 @@ public class DefaultSVNPersistentAuthenticationProvider implements ISVNAuthentic
         if (!dir.isDirectory()) {
             dir.mkdirs();
         }
-        File file = new File(dir, SVNFileUtil.computeChecksum(realm));
+        File file = new File(dir, getAuthFileName(realm));
 
         SVNProperties values = new SVNProperties();
         values.put("svn:realmstring", realm);

@@ -119,7 +119,7 @@ public class SVNErrorManager {
         err1.setChildErrorMessage(err2);
         SVNDebugLog.getDefaultLog().log(logType, err1.getMessage(), logLevel);
         if (err1.getErrorCode() == SVNErrorCode.CANCELLED || err2.getErrorCode() == SVNErrorCode.CANCELLED) {
-            throw new SVNCancelException(err1);
+            throw new SVNCancelException(err1, cause);
         } else if (err1.getErrorCode().isAuthentication() || err2.getErrorCode().isAuthentication()) {
             throw new SVNAuthenticationException(err1, cause);
         } 

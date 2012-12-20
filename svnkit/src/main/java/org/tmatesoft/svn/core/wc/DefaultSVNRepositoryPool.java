@@ -315,10 +315,10 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
      */
     public void dispose() {
         synchronized (myInactiveRepositories) {
-            myInactiveRepositories.clear();
             myTimer = null;
         }
-        
+        shutdownInactiveRepositories(Long.MAX_VALUE);
+
         Map<String, SVNRepository> pool = getPool();
         for (Iterator<String> protocols = pool.keySet().iterator(); protocols.hasNext();) {
             String key = protocols.next();
@@ -482,20 +482,24 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
         return myPool;
     }
 
+
+    private void shutdownInactiveRepositories(long currentTime) {
+        synchronized (myInactiveRepositories) {
+            for (Iterator<SVNRepository> repositories = myInactiveRepositories.keySet().iterator(); repositories.hasNext();) {
+              SVNRepository repos = repositories.next();
+              long time = ((Long) myInactiveRepositories.get(repos)).longValue();
+              if (currentTime - time >= getTimeout()) {
+                  repositories.remove();
+                  repos.closeSession();
+              }
+            }
+        }
+    }
+
     private class TimeoutTask implements Runnable {
         public void run() {
             try {
-                long currentTime = System.currentTimeMillis();
-                synchronized (myInactiveRepositories) {
-                    for (Iterator<SVNRepository> repositories = myInactiveRepositories.keySet().iterator(); repositories.hasNext();) {
-                        SVNRepository repos = repositories.next();
-                        long time = ((Long) myInactiveRepositories.get(repos)).longValue();
-                        if (currentTime - time >= getTimeout()) {
-                            repositories.remove();
-                            repos.closeSession();
-                        }
-                    }
-                }
+                shutdownInactiveRepositories(System.currentTimeMillis());
             } catch (Throwable th) {
                 SVNDebugLog.getDefaultLog().logSevere(SVNLogType.WC, th);
             }

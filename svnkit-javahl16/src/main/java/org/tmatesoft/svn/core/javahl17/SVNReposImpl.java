@@ -411,7 +411,6 @@ public class SVNReposImpl {
 
     public static void throwException(SVNException e, SVNClientImpl svnClient) throws ClientException {
         ClientException ec = SVNClientImpl.getClientException(e);
-        ec.initCause(e);
         svnClient.getDebugLog().logFine(SVNLogType.DEFAULT, ec);
         svnClient.getDebugLog().logFine(SVNLogType.DEFAULT, e);
         throw ec;

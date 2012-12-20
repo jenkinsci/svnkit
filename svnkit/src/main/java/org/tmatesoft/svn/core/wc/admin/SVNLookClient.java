@@ -560,6 +560,10 @@ public class SVNLookClient extends SVNAdminBasicClient {
             long revNum = SVNAdminHelper.getRevisionNumber(revision, fsfs.getYoungestRevision(), fsfs);
             FSRoot root = fsfs.createRevisionRoot(revNum);
             long baseRevision = revNum - 1;
+            if (!SVNRevision.isValidRevisionNumber(baseRevision)) {
+                //r0, no changed directories
+                return;
+            }
             SVNNodeEditor editor = generateDeltaTree(fsfs, root, baseRevision);
             editor.traverseChangedDirs(handler);
         } finally {

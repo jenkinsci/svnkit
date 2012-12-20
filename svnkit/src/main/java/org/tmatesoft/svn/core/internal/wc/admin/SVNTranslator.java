@@ -385,7 +385,7 @@ public class SVNTranslator {
             return;
 
         }
-        if (charset == null && eol == null && (keywords == null || keywords.isEmpty())) {
+        if ((charset == null || SVNProperty.isUTF8(charset)) && eol == null && (keywords == null || keywords.isEmpty())) {
             // no expansion, fast copy.
             SVNFileUtil.copyFile(source, destination, false);
             return;
@@ -605,7 +605,7 @@ public class SVNTranslator {
                     map.put("LastChangedBy", author);
                     map.put("Author", author);
                 } else if ("HeadURL".equals(token) || "URL".equalsIgnoreCase(token)) {
-                    url = expand && url == null ? SVNEncodingUtil.uriDecode(u).getBytes("UTF-8") : url;
+                    url = expand && url == null ? u.getBytes("UTF-8") : url;
                     map.put("HeadURL", url);
                     map.put("URL", url);
                 } else if ("Id".equalsIgnoreCase(token)) {

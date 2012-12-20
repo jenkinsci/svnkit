@@ -171,6 +171,128 @@ public class StatusTest {
         }
     }
 
+    @Test
+    public void testRemoteStatusOfRemotelyDeletedNode() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testRemoteStatusOfRemotelyDeletedNode", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder1 = new CommitBuilder(url);
+            commitBuilder1.addFile("file", "theirs".getBytes());
+            commitBuilder1.addDirectory("directory");
+            commitBuilder1.commit();
+
+            final CommitBuilder commitBuilder2 = new CommitBuilder(url);
+            commitBuilder2.delete("file");
+            commitBuilder2.delete("directory");
+            commitBuilder2.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, 0);
+
+            final File file = workingCopy.getFile("file");
+            final File directory = workingCopy.getFile("directory");
+
+            final SvnUpdate updateFile = svnOperationFactory.createUpdate();
+            updateFile.setRevision(SVNRevision.create(1));
+            updateFile.setSingleTarget(SvnTarget.fromFile(file));
+            updateFile.run();
+
+            final SvnUpdate updateDirectory = svnOperationFactory.createUpdate();
+            updateDirectory.setRevision(SVNRevision.create(1));
+            updateDirectory.setSingleTarget(SvnTarget.fromFile(directory));
+            updateDirectory.run();
+
+            final SvnStatus[] fileStatus = new SvnStatus[1];
+            final SvnStatus[] directoryStatus = new SvnStatus[1];
+
+            final SvnGetStatus getStatus = svnOperationFactory.createGetStatus();
+            getStatus.setSingleTarget(SvnTarget.fromFile(workingCopy.getWorkingCopyDirectory()));
+            getStatus.setRemote(true);
+            getStatus.setReportAll(true);
+            getStatus.setReceiver(new ISvnObjectReceiver<SvnStatus>() {
+                public void receive(SvnTarget target, SvnStatus status) throws SVNException {
+                    if (target.getFile().getName().equals("file")) {
+                        fileStatus[0] = status;
+                    } else if (target.getFile().getName().equals("directory")) {
+                        directoryStatus[0] = status;
+                    }
+                }
+            });
+            getStatus.run();
+
+            Assert.assertEquals("file", fileStatus[0].getRepositoryRelativePath());
+            Assert.assertEquals("directory", directoryStatus[0].getRepositoryRelativePath());
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testCombinedNodeAndContentsStatus() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testCombinedNodeAndContentsStatus", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder1 = new CommitBuilder(url);
+            commitBuilder1.addFile("notModifiedFile");
+            commitBuilder1.addFile("modifiedFile");
+            commitBuilder1.addFile("deletedFile");
+            commitBuilder1.commit();
+
+            final CommitBuilder commitBuilder2 = new CommitBuilder(url);
+            commitBuilder2.changeFile("modifiedFile", "contents".getBytes());
+            commitBuilder2.delete("deletedFile");
+            commitBuilder2.addFile("addedFile");
+            commitBuilder2.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, 1);
+
+            final SVNClientManager clientManager = SVNClientManager.newInstance();
+            try {
+                final SVNStatusClient statusClient = clientManager.getStatusClient();
+                statusClient.doStatus(workingCopy.getWorkingCopyDirectory(),
+                        SVNRevision.HEAD,
+                        SVNDepth.INFINITY,
+                        true,
+                        true,
+                        false,
+                        false,
+                        new ISVNStatusHandler() {
+                            public void handleStatus(SVNStatus status) throws SVNException {
+                                final File file = status.getFile();
+                                if (file.getName().endsWith("addedFile")) {
+                                    Assert.assertEquals(SVNStatusType.STATUS_ADDED, status.getCombinedRemoteNodeAndContentsStatus());
+                                } else if (file.getName().endsWith("deletedFile")) {
+                                    Assert.assertEquals(SVNStatusType.STATUS_DELETED, status.getCombinedRemoteNodeAndContentsStatus());
+                                } else if (file.getName().endsWith("modifiedFile")) {
+                                    Assert.assertEquals(SVNStatusType.STATUS_MODIFIED, status.getCombinedRemoteNodeAndContentsStatus());
+                                } else if (file.getName().endsWith("notModifiedFile")) {
+                                    Assert.assertEquals(SVNStatusType.STATUS_NONE, status.getCombinedRemoteNodeAndContentsStatus());
+                                }
+                            }
+                        },
+                        null);
+
+
+            } finally {
+                clientManager.dispose();
+            }
+
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
     private String getTestName() {
         return "StatusTest";
     }

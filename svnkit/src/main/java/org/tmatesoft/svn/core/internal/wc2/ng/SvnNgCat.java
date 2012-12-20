@@ -1,17 +1,6 @@
 package org.tmatesoft.svn.core.internal.wc2.ng;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Date;
-import java.util.Map;
-
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.SVNProperties;
-import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -27,6 +16,11 @@ import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc2.SvnCat;
 import org.tmatesoft.svn.core.wc2.SvnStatus;
 import org.tmatesoft.svn.util.SVNLogType;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Date;
+import java.util.Map;
 
 public class SvnNgCat extends SvnNgOperationRunner<Void, SvnCat> {
 
@@ -68,7 +62,7 @@ public class SvnNgCat extends SvnNgOperationRunner<Void, SvnCat> {
             
             long lastModified = 0;
             if (localModifications && !special) {
-                lastModified = getFirstTarget().lastModified();
+                lastModified = SVNFileUtil.getFileLastModified(getFirstTarget());
             } else {
                 Structure<NodeInfo> info = context.getDb().readInfo(getFirstTarget(), NodeInfo.recordedTime);
                 lastModified = info.lng(NodeInfo.recordedTime) / 1000;

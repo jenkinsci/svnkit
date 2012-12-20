@@ -11,8 +11,6 @@
  */
 package org.tmatesoft.svn.core.internal.wc17;
 
-import static org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.isAbsolute;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -51,6 +49,7 @@ import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.FSMergerBySequence;
 import org.tmatesoft.svn.core.internal.wc.SVNConflictVersion;
 import org.tmatesoft.svn.core.internal.wc.SVNDiffConflictChoiceStyle;
@@ -113,6 +112,8 @@ import org.tmatesoft.svn.util.SVNLogType;
 import de.regnis.q.sequence.line.QSequenceLineRAByteData;
 import de.regnis.q.sequence.line.QSequenceLineRAData;
 import de.regnis.q.sequence.line.QSequenceLineRAFileData;
+
+import static org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.isAbsolute;
 
 /**
  * @version 1.4
@@ -636,10 +637,10 @@ public class SVNWCContext {
         if (!exactComparison && fileType != SVNFileType.SYMLINK) {
             boolean compare = false;
             long recordedSize = nodeInfo.lng(NodeInfo.recordedSize); 
-            if (recordedSize != -1 && localAbsPath.length() != recordedSize) {
+            if (recordedSize != -1 && SVNFileUtil.getFileLength(localAbsPath) != recordedSize) {
                 compare = true;
             }
-            if (!compare && (nodeInfo.lng(NodeInfo.recordedTime)/1000) != localAbsPath.lastModified()) {
+            if (!compare && (nodeInfo.lng(NodeInfo.recordedTime)/1000) != SVNFileUtil.getFileLastModified(localAbsPath)) {
                 compare = true;
             }
             if (!compare) {
@@ -654,24 +655,24 @@ public class SVNWCContext {
         
         if (!modified) {
             if (getDb().isWCLockOwns(localAbsPath, false)) {
-                db.globalRecordFileinfo(localAbsPath, localAbsPath.length(), new SVNDate(localAbsPath.lastModified(), 0));
+                db.globalRecordFileinfo(localAbsPath, SVNFileUtil.getFileLength(localAbsPath), new SVNDate(SVNFileUtil.getFileLastModified(localAbsPath), 0));
             }
         }
         return modified;
     }
         
-    private boolean compareAndVerify(File localAbsPath, File pristineFile, boolean hasProps, boolean propMods, boolean exactComparison) throws SVNException {
+    public boolean compareAndVerify(File localAbsPath, File pristineFile, boolean hasProps, boolean propMods, boolean exactComparison) throws SVNException {
         if (propMods) {
             hasProps = true;
         }
         boolean translationRequired = false;
-        
+
         TranslateInfo translateInfo = null;
-        if (hasProps) {
-            translateInfo = getTranslateInfo(localAbsPath, true, true, true);
-            translationRequired = isTranslationRequired(translateInfo.eolStyleInfo.eolStyle, translateInfo.eolStyleInfo.eolStr, translateInfo.keywords, translateInfo.special, true);
+        if (hasProps || isGlobalCharsetSpecified()) {
+            translateInfo = getTranslateInfo(localAbsPath, true, true, true, true);
+            translationRequired = isTranslationRequired(translateInfo.eolStyleInfo.eolStyle, translateInfo.eolStyleInfo.eolStr, translateInfo.charset, translateInfo.keywords, translateInfo.special, true);
         }
-        if (!translationRequired && localAbsPath.length() != pristineFile.length()) {
+        if (!translationRequired && SVNFileUtil.getFileLength(localAbsPath) != pristineFile.length()) {
             return true;
         }
         
@@ -700,7 +701,7 @@ public class SVNWCContext {
                             
                         versionedStream = SVNTranslator.getTranslatingInputStream(
                                 versionedStream, 
-                                null, 
+                                translateInfo.charset,
                                 eolStr, 
                                 true, 
                                 translateInfo.keywords, 
@@ -708,7 +709,7 @@ public class SVNWCContext {
                     } else {
                         pristineStream = SVNTranslator.getTranslatingInputStream(
                                 pristineStream, 
-                                null,
+                                translateInfo.charset,
                                 translateInfo.eolStyleInfo.eolStr, 
                                 false, 
                                 translateInfo.keywords, 
@@ -724,6 +725,16 @@ public class SVNWCContext {
         } else {
             return !isSameContents(localAbsPath, pristineFile);
         }
+    }
+
+    private boolean isGlobalCharsetSpecified() {
+        ISVNOptions options = getOptions();
+        if (options instanceof DefaultSVNOptions) {
+            DefaultSVNOptions defaultOptions = (DefaultSVNOptions) options;
+            String globalCharset = defaultOptions.getGlobalCharset();
+            return globalCharset != null;
+        }
+        return false;
     }
 
     public static class PristineContentsInfo {
@@ -845,10 +856,11 @@ public class SVNWCContext {
         return null;
     }
 
-    private boolean isTranslationRequired(SVNEolStyle style, byte[] eol, Map<String, byte[]> keywords, boolean special, boolean force_eol_check) {
+    private boolean isTranslationRequired(SVNEolStyle style, byte[] eol, String charset, Map<String, byte[]> keywords, boolean special, boolean force_eol_check) {
         return (special 
                 || (keywords != null && !keywords.isEmpty()) 
                 || (style != SVNEolStyle.None && force_eol_check)
+                || (charset != null)
         // || (style == SVNEolStyle.Native && strcmp(APR_EOL_STR,
         // SVN_SUBST_NATIVE_EOL_STR) != 0)
                 || (style == SVNEolStyle.Fixed && !Arrays.equals(SVNEolStyleInfo.NATIVE_EOL_STR, eol)));
@@ -910,20 +922,24 @@ public class SVNWCContext {
     public static class TranslateInfo {
 
         public SVNEolStyleInfo eolStyleInfo;
+        public String charset;
         public Map<String, byte[]> keywords;
         public boolean special;
     }
-    public TranslateInfo getTranslateInfo(File localAbspath, boolean fetchEolStyle, boolean fetchKeywords, boolean fetchSpecial) throws SVNException {
-        return getTranslateInfo(localAbspath, null, false, fetchEolStyle, fetchKeywords, fetchSpecial);
+    public TranslateInfo getTranslateInfo(File localAbspath, boolean fetchEolStyle, boolean fetchCharset, boolean fetchKeywords, boolean fetchSpecial) throws SVNException {
+        return getTranslateInfo(localAbspath, null, false, fetchEolStyle, fetchCharset, fetchKeywords, fetchSpecial);
     }
 
-    public TranslateInfo getTranslateInfo(File localAbspath, SVNProperties props, boolean forNormalization, boolean fetchEolStyle, boolean fetchKeywords, boolean fetchSpecial) throws SVNException {
+    public TranslateInfo getTranslateInfo(File localAbspath, SVNProperties props, boolean forNormalization, boolean fetchEolStyle, boolean fetchCharset, boolean fetchKeywords, boolean fetchSpecial) throws SVNException {
         TranslateInfo info = new TranslateInfo();
         if (props == null) {
             props = getActualProperties(localAbspath);
         }
         if (fetchEolStyle) {
             info.eolStyleInfo = SVNEolStyleInfo.fromValue(props.getStringValue(SVNProperty.EOL_STYLE));
+        }
+        if (fetchCharset) {
+            info.charset = SVNTranslator.getCharset(props.getStringValue(SVNProperty.CHARSET), props.getStringValue(SVNProperty.MIME_TYPE), localAbspath, getOptions());
         }
         if (fetchKeywords) {
             String keywordsProp = props.getStringValue(SVNProperty.KEYWORDS);
@@ -956,14 +972,14 @@ public class SVNWCContext {
             } else {
                 SVNURL svnUrl = getNodeUrl(localAbsPath);
                 if (svnUrl != null) {
-                    url = svnUrl.toDecodedString();
+                    url = svnUrl.toString();
                 }
             }
         } else {
             url = "";
             changedRev = INVALID_REVNUM;
             changedDate = SVNDate.NULL;
-            changedAuthor = "";            
+            changedAuthor = "";
         }
         return SVNTranslator.computeKeywords(keywordsList, url, changedAuthor, changedDate.format(), Long.toString(changedRev), getOptions());
     }
@@ -1309,7 +1325,7 @@ public class SVNWCContext {
                     if (f.contains(NodeCopyFromField.rootUrl))
                         copyFrom.rootUrl = original_root_url;
                     if (f.contains(NodeCopyFromField.reposRelPath))
-                        copyFrom.reposRelPath = new File(original_repos_relpath, src_relpath);
+                        copyFrom.reposRelPath = SVNFileUtil.createFilePath(original_repos_relpath, src_relpath);
                     if (f.contains(NodeCopyFromField.url))
                         copyFrom.url = SVNURL.parseURIEncoded(SVNPathUtil.append(src_parent_url.toString(), src_relpath.toString()));
                     if (f.contains(NodeCopyFromField.rev))
@@ -2533,7 +2549,7 @@ public class SVNWCContext {
     public InputStream getTranslatedStream(File localAbspath, File versionedAbspath, boolean translateToNormalForm, boolean repairEOL) throws SVNException {
         assert (SVNFileUtil.isAbsolute(localAbspath));
         assert (SVNFileUtil.isAbsolute(versionedAbspath));
-        TranslateInfo translateInfo = getTranslateInfo(localAbspath, true, true, true);
+        TranslateInfo translateInfo = getTranslateInfo(localAbspath, true, true, true, true);
         boolean special = translateInfo.special;
         SVNEolStyle eolStyle = translateInfo.eolStyleInfo.eolStyle;
         byte[] eolStr = translateInfo.eolStyleInfo.eolStr;
@@ -2541,7 +2557,7 @@ public class SVNWCContext {
         if (special) {
             return readSpecialFile(localAbspath);
         }
-        String charset = getCharset(localAbspath);
+        String charset = translateInfo.charset;
         boolean translationRequired = special || keywords != null || eolStyle != null || charset != null;
         if (translationRequired) {
             if (translateToNormalForm) {
@@ -2560,15 +2576,31 @@ public class SVNWCContext {
         return SVNFileUtil.openFileForReading(localAbspath, SVNLogType.WC);
     }
 
-    public File getTranslatedFile(File src, File versionedAbspath, boolean toNormalFormat, boolean forceEOLRepair, boolean useGlobalTmp, boolean forceCopy) throws SVNException {
+    /**
+     * When expanding working copy file (which is already expanded, we just have to update EOLs, keywords, etc)
+     * One has to pass safelyEncode argument set to true as for this case we have to carefully update necessary parts of
+     * the file taking its encoding into account.
+     *
+     * @param src
+     * @param versionedAbspath
+     * @param toNormalFormat
+     * @param forceEOLRepair
+     * @param useGlobalTmp
+     * @param forceCopy
+     * @param safelyEncode
+     * @return
+     * @throws SVNException
+     */
+    public File getTranslatedFile(File src, File versionedAbspath, boolean toNormalFormat, boolean forceEOLRepair, boolean useGlobalTmp, boolean forceCopy, boolean safelyEncode) throws SVNException {
         assert (SVNFileUtil.isAbsolute(versionedAbspath));
-        TranslateInfo translateInfo = getTranslateInfo(versionedAbspath, true, true, true);
+        TranslateInfo translateInfo = getTranslateInfo(versionedAbspath, true, true, true, true);
         SVNEolStyle style = translateInfo.eolStyleInfo.eolStyle;
         byte[] eol = translateInfo.eolStyleInfo.eolStr;
+        String charset = translateInfo.charset;
         Map<String, byte[]> keywords = translateInfo.keywords;
         boolean special = translateInfo.special;
         File xlated_path;
-        if (!isTranslationRequired(style, eol, keywords, special, true) && !forceCopy) {
+        if (!isTranslationRequired(style, eol, charset, keywords, special, true) && !forceCopy) {
             xlated_path = src;
         } else {
             File tmpDir;
@@ -2593,7 +2625,19 @@ public class SVNWCContext {
                     SVNErrorManager.error(err, SVNLogType.WC);
                 }
             }
-            SVNTranslator.copyAndTranslate(src, tmpVFile, null, eol, keywords, special, expand, repairForced);
+
+            if (expand && charset != null && safelyEncode) {
+                File tmp = SVNFileUtil.createUniqueFile(tmpDir, src.getName(), ".tmp", false);
+                try {
+                    SVNTranslator.copyAndTranslate(src, tmp, charset, eol, keywords, special, false, repairForced);
+                    SVNTranslator.copyAndTranslate(tmp, tmpVFile, charset, eol, keywords, special, true, repairForced);
+                } finally {
+                    SVNFileUtil.deleteFile(tmp);
+                }
+            } else {
+                SVNTranslator.copyAndTranslate(src, tmpVFile, charset, eol, keywords, special, expand, repairForced);
+            }
+
             xlated_path = tmpVFile;
         }
         return xlated_path.getAbsoluteFile();
@@ -2686,7 +2730,7 @@ public class SVNWCContext {
                             getOptions().getConflictResolver());
                 }
             } else {
-                info = mergeTextFile(customMerger, leftAbspath, rightAbspath, targetAbspath, leftLabel, rightLabel, targetLabel, dryRun, options, leftVersion, rightVersion, null, detranslatedTargetAbspath,
+                info = mergeTextFile(customMerger, leftAbspath, rightAbspath, targetAbspath, wriAbspath, leftLabel, rightLabel, targetLabel, dryRun, options, leftVersion, rightVersion, null, detranslatedTargetAbspath,
                         mimeprop, getOptions().getConflictResolver());
             }
         }
@@ -2739,42 +2783,49 @@ public class SVNWCContext {
         }
         SVNEolStyle style;
         byte[] eol;
+        String charset;
         Map<String, byte[]> keywords;
         boolean special;
         if (isBinary && (((prop = propDiff.getSVNPropertyValue(SVNProperty.MIME_TYPE)) != null && prop.isString() && mimeTypeIsBinary(prop.getString())) || prop == null)) {
             keywords = null;
             special = false;
             eol = null;
+            charset = null;
             style = SVNEolStyle.None;
         } else if ((!isBinary) && (prop = propDiff.getSVNPropertyValue(SVNProperty.MIME_TYPE)) != null && prop.isString() && mimeTypeIsBinary(prop.getString())) {
             if (kind == SVNWCDbKind.File) {
-                TranslateInfo translateInfo = getTranslateInfo(targetAbspath, true, true, true);
+                TranslateInfo translateInfo = getTranslateInfo(targetAbspath, true, true, true, true);
                 style = translateInfo.eolStyleInfo.eolStyle;
                 eol = translateInfo.eolStyleInfo.eolStr;
+                charset = translateInfo.charset;
                 special = translateInfo.special;
                 keywords = translateInfo.keywords;
             } else {
                 special = false;
                 keywords = null;
                 eol = null;
+                charset = null;
                 style = SVNEolStyle.None;
             }
         } else {
             if (kind == SVNWCDbKind.File) {
-                TranslateInfo translateInfo = getTranslateInfo(targetAbspath, true, true, true);
+                TranslateInfo translateInfo = getTranslateInfo(targetAbspath, true, true, true, true);
                 style = translateInfo.eolStyleInfo.eolStyle;
                 eol = translateInfo.eolStyleInfo.eolStr;
+                charset = translateInfo.charset;
                 special = translateInfo.special;
                 keywords = translateInfo.keywords;
             } else {
                 special = false;
                 keywords = null;
                 eol = null;
+                charset = null;
                 style = SVNEolStyle.None;
             }
             if (special) {
                 keywords = null;
                 eol = null;
+                charset = null;
                 style = SVNEolStyle.None;
             } else {
                 if ((prop = propDiff.getSVNPropertyValue(SVNProperty.EOL_STYLE)) != null && prop.isString()) {
@@ -2791,7 +2842,7 @@ public class SVNWCContext {
                 }
             }
         }
-        if (forceCopy || keywords != null || eol != null || special) {
+        if (forceCopy || keywords != null || eol != null || charset != null || special) {
             File detranslated = openUniqueFile(getDb().getWCRootTempDir(targetAbspath), false).path;
             if (style == SVNEolStyle.Native) {
                 eol = SVNEolStyleInfo.LF_EOL_STR;
@@ -2799,7 +2850,7 @@ public class SVNWCContext {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_UNKNOWN_EOL);
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
-            SVNTranslator.copyAndTranslate(sourceAbspath, detranslated, null, eol, keywords, special, false, true);
+            SVNTranslator.copyAndTranslate(sourceAbspath, detranslated, charset, eol, keywords, special, false, true);
             return detranslated.getAbsoluteFile();
         }
         return sourceAbspath;
@@ -2834,13 +2885,13 @@ public class SVNWCContext {
         return oldTargetAbspath;
     }
 
-    private MergeInfo mergeTextFile(ISvnMerger customMerger, File leftAbspath, File rightAbspath, File targetAbspath, String leftLabel, String rightLabel, String targetLabel, boolean dryRun, SVNDiffOptions options,
+    private MergeInfo mergeTextFile(ISvnMerger customMerger, File leftAbspath, File rightAbspath, File targetAbspath, File wriAbspath, String leftLabel, String rightLabel, String targetLabel, boolean dryRun, SVNDiffOptions options,
             SVNConflictVersion leftVersion, SVNConflictVersion rightVersion, File copyfromText, File detranslatedTargetAbspath, SVNPropertyValue mimeprop, ISVNConflictHandler conflictResolver)
             throws SVNException {
         MergeInfo info = new MergeInfo();
         info.workItems = null;
         String baseName = SVNFileUtil.getFileName(targetAbspath);
-        File tempDir = db.getWCRootTempDir(targetAbspath);
+        File tempDir = db.getWCRootTempDir(wriAbspath == null ? targetAbspath : wriAbspath);
         File resultTarget = SVNFileUtil.createUniqueFile(tempDir, baseName, ".tmp", false);
         boolean containsConflicts = doTextMerge(customMerger, resultTarget, targetAbspath, detranslatedTargetAbspath, leftAbspath, rightAbspath, targetLabel, leftLabel, rightLabel, options);
         if (containsConflicts && !dryRun) {
@@ -2864,7 +2915,7 @@ public class SVNWCContext {
         } else if (copyfromText != null) {
             info.mergeOutcome = SVNStatusType.MERGED;
         } else {
-            boolean special = getTranslateInfo(targetAbspath, false, false, true).special;
+            boolean special = getTranslateInfo(targetAbspath, false, false, false, true).special;
             boolean same = SVNFileUtil.compareFiles(resultTarget, (special ? detranslatedTargetAbspath : targetAbspath), null);
             info.mergeOutcome = same ? SVNStatusType.UNCHANGED : SVNStatusType.MERGED;
         }
@@ -2955,7 +3006,7 @@ public class SVNWCContext {
         workItem = wqBuildFileCopyTranslated(targetAbspath, tmpRight, info.rightCopy);
         info.workItems = wqMerge(info.workItems, workItem);
         try {
-            detranslatedTargetCopy = getTranslatedFile(targetAbspath, targetAbspath, true, false, false, false);
+            detranslatedTargetCopy = getTranslatedFile(targetAbspath, targetAbspath, true, false, false, false, false);
         } catch (SVNException e) {
             if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND) {
                 detranslatedTargetCopy = detranslatedTargetAbspath;
@@ -3403,7 +3454,7 @@ public class SVNWCContext {
                 if (revision >= 0) {
                     File dirAbsPath = SVNFileUtil.getParentFile(localAbspath);
                     WCDbRepositoryInfo info = ctx.getDb().scanBaseRepository(dirAbsPath, RepositoryInfoField.relPath, RepositoryInfoField.rootUrl, RepositoryInfoField.uuid);
-                    reposRelPath = new File(info.relPath, SVNFileUtil.getFileName(localAbspath));
+                    reposRelPath = SVNFileUtil.createFilePath(info.relPath, SVNFileUtil.getFileName(localAbspath));
                     reposRootUrl = info.rootUrl;
                     reposUuid = info.uuid;
                 }
@@ -3438,8 +3489,8 @@ public class SVNWCContext {
             } else {
                 srcPath = SVNFileUtil.createFilePath(wcRootAbspath, workItem.getChild(4).getValue());
             }
-            TranslateInfo tinfo = ctx.getTranslateInfo(localAbspath, true, true, true);
-            SVNTranslator.translate(srcPath, localAbspath, null, tinfo.eolStyleInfo.eolStr, tinfo.keywords, tinfo.special, true);
+            TranslateInfo tinfo = ctx.getTranslateInfo(localAbspath, true, true, true, true);
+            SVNTranslator.translate(srcPath, localAbspath, tinfo.charset, tinfo.eolStyleInfo.eolStr, tinfo.keywords, tinfo.special, true);
             if (tinfo.special) {
                 return;
             }
@@ -3460,8 +3511,8 @@ public class SVNWCContext {
 
         public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) throws SVNException {
             File localAbspath = SVNFileUtil.createFilePath(wcRootAbspath, workItem.getChild(1).getValue());
-            File tmpFile = ctx.getTranslatedFile(localAbspath, localAbspath, false, false, false, false);
-            TranslateInfo info = ctx.getTranslateInfo(localAbspath, false, false, true);
+            File tmpFile = ctx.getTranslatedFile(localAbspath, localAbspath, false, false, false, false, true);
+            TranslateInfo info = ctx.getTranslateInfo(localAbspath, false, false, false, true);
             boolean sameContents = false;
             boolean overwroteWorkFile = false;
             if ((info == null || !info.special) && !tmpFile.equals(localAbspath)) {
@@ -3518,8 +3569,8 @@ public class SVNWCContext {
             File localAbspath = SVNFileUtil.createFilePath(wcRootAbspath, workItem.getChild(1).getValue());
             File srcAbspath = SVNFileUtil.createFilePath(wcRootAbspath, workItem.getChild(2).getValue());
             File dstAbspath = SVNFileUtil.createFilePath(wcRootAbspath, workItem.getChild(3).getValue());
-            TranslateInfo tinf = ctx.getTranslateInfo(localAbspath, true, true, true);
-            SVNTranslator.copyAndTranslate(srcAbspath, dstAbspath, null, tinf.eolStyleInfo.eolStr, tinf.keywords, tinf.special, true, true);
+            TranslateInfo tinf = ctx.getTranslateInfo(localAbspath, true, true, true, true);
+            SVNTranslator.copyAndTranslate(srcAbspath, dstAbspath, tinf.charset, tinf.eolStyleInfo.eolStr, tinf.keywords, tinf.special, true, true);
         }
     }
 
@@ -3572,9 +3623,33 @@ public class SVNWCContext {
         public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) throws SVNException {
             File localAbspath = SVNFileUtil.createFilePath(wcRootAbspath, workItem.getChild(1).getValue());
             int listSize = workItem.getListSize();
-            File oldBasename = listSize > 2 ? SVNFileUtil.createFilePath(workItem.getChild(2).getValue()) : null;
-            File newBasename = listSize > 3 ? SVNFileUtil.createFilePath(workItem.getChild(3).getValue()) : null;
-            File wrkBasename = listSize > 4 ? SVNFileUtil.createFilePath(workItem.getChild(4).getValue()) : null;
+
+            File oldBasename;
+            if (listSize > 2) {
+                String value = workItem.getChild(2).getValue();
+                oldBasename = (value == null || value.length() == 0) ? null : SVNFileUtil.createFilePath(value);
+            }
+            else {
+                oldBasename = null;
+            }
+
+            File newBasename;
+            if (listSize > 3) {
+                String value = workItem.getChild(3).getValue();
+                newBasename = (value == null || value.length() == 0) ? null : SVNFileUtil.createFilePath(value);
+            }
+            else {
+                newBasename = null;
+            }
+
+            File wrkBasename;
+            if (listSize > 4) {
+                String value = workItem.getChild(4).getValue();
+                wrkBasename = (value == null || value.length() == 0) ? null : SVNFileUtil.createFilePath(value);
+            }
+            else {
+                wrkBasename = null;
+            }
             ctx.getDb().opSetTextConflictMarkerFilesTemp(localAbspath, oldBasename, newBasename, wrkBasename);
         }
     }
@@ -3668,8 +3743,8 @@ public class SVNWCContext {
 
     public void getAndRecordFileInfo(File localAbspath, boolean ignoreError) throws SVNException {
         if (localAbspath.exists()) {
-            SVNDate lastModified = new SVNDate(localAbspath.lastModified(), 0);
-            long length = localAbspath.length();
+            SVNDate lastModified = new SVNDate(SVNFileUtil.getFileLastModified(localAbspath), 0);
+            long length = SVNFileUtil.getFileLength(localAbspath);
             db.globalRecordFileinfo(localAbspath, length, lastModified);
         }
     }

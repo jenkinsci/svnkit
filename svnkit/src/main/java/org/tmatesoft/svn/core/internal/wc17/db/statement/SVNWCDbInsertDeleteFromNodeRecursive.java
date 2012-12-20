@@ -50,7 +50,7 @@ public class SVNWCDbInsertDeleteFromNodeRecursive extends SVNSqlJetInsertStateme
                     return false;
                 }
                 final String rowPresence = getColumnString(SVNWCDbSchema.NODES__Fields.presence);
-                if (!"base-deleted".equals(rowPresence) && !"not-present".equals(rowPresence) && !"exclude".equals(rowPresence) && !"absent".equals(rowPresence)) {
+                if (!"base-deleted".equals(rowPresence) && !"not-present".equals(rowPresence) && !"excluded".equals(rowPresence) && !"absent".equals(rowPresence)) {
                     return true;
                 }
                 return false;

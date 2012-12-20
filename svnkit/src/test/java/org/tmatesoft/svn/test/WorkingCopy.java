@@ -283,7 +283,7 @@ public class WorkingCopy {
         ps.setSingleTarget(SvnTarget.fromFile(file));
         ps.setPropertyName(propertyName);
         ps.setPropertyValue(propertyValue);
-        ps.setDepth(SVNDepth.INFINITY);
+        ps.setDepth(SVNDepth.EMPTY);
         ps.setForce(true);
 
         try {

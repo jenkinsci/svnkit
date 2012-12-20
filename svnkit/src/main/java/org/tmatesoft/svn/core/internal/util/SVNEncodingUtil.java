@@ -317,15 +317,15 @@ public class SVNEncodingUtil {
     }
     
     public static String fuzzyEscape(String str) {
-        byte[] bytes = str.getBytes(); // native encoding
+        char[] chars = str.toCharArray();
         StringBuffer result = createStringBuffer(str, 0);
-        for (int i = 0; i < bytes.length; i++) {
-            if (!isASCIIControlChar((char) bytes[i]) || bytes[i] == '\r' 
-                || bytes[i] == '\n' || bytes[i] == '\t') {
-                result.append((char) bytes[i]);
+        for (int i = 0; i < chars.length; i++) {
+            if (!isASCIIControlChar(chars[i]) || chars[i] == '\r'
+                    || chars[i] == '\n' || chars[i] == '\t') {
+                result.append(chars[i]);
             } else {
                 result.append("?\\");
-                int code = bytes[i] & 0xFF;
+                int code = chars[i] & 0xFF;
                 if (code < 100) {
                     result.append('0');
                 }

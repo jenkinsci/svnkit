@@ -77,7 +77,7 @@ public class SvnRemoteAnnotate extends SvnRemoteOperationRunner<SvnAnnotateItem,
         File tmpFile;
     	if (getOperation().hasRemoteTargets()){
     		tmpFile = SVNFileUtil.createTempDirectory("annotate");
-    		path = repository.getLocation().toDecodedString();
+    		path = repository.getLocation().toString();
     	} else {
     	    tmpFile = getWcContext().getDb().getWCRootTempDir(getOperation().getFirstTarget().getFile());
     	    tmpFile = SVNFileUtil.createUniqueFile(tmpFile, "annotate", ".tmp", false);

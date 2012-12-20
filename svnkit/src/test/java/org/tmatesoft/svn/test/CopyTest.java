@@ -2,19 +2,22 @@ package org.tmatesoft.svn.test;
 
 import org.junit.Assert;
 import org.junit.Assume;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectFieldsStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
-import org.tmatesoft.svn.core.internal.wc17.db.*;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
+import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
+import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.core.wc2.*;
 
 import java.io.File;
@@ -165,6 +168,89 @@ public class CopyTest {
 
             assertNoRepositoryPathStartsWithSlash(svnOperationFactory, workingCopy.getWorkingCopyDirectory());
 
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Ignore("SVNKIT-284, currently fails")
+    @Test
+    public void testRemoteCopyURLAutoEncodeCorruptsFilename() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testRemoteCopyURLAutoEncodeCorruptsFilename", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addDirectory("directory");
+            commitBuilder.addFile("file%20with%20space");
+            commitBuilder.commit();
+
+            final SvnRemoteCopy remoteCopy = svnOperationFactory.createRemoteCopy();
+            remoteCopy.addCopySource(SvnCopySource.create(SvnTarget.fromURL(url.appendPath("file%20with%20space", false)), SVNRevision.HEAD));
+            remoteCopy.setSingleTarget(SvnTarget.fromURL(url.appendPath("directory", false)));
+            remoteCopy.setFailWhenDstExists(false);
+            remoteCopy.run();
+
+            final int[] count = {0};
+            final SvnList list = svnOperationFactory.createList();
+            list.setSingleTarget(SvnTarget.fromURL(url.appendPath("directory", false)));
+            list.setReceiver(new ISvnObjectReceiver<SVNDirEntry>() {
+                public void receive(SvnTarget target, SVNDirEntry dirEntry) throws SVNException {
+                    count[0]++;
+                    if (dirEntry.getKind() == SVNNodeKind.FILE) {
+                        Assert.assertEquals("file%20with%20space", dirEntry.getName());
+                    }
+                }
+            });
+            list.run();
+
+            Assert.assertEquals(2, count[0]);
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testImpossibilityToMoveFileUnderUnversionedDirectory() throws Exception  {
+        //SVNKIT-295
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testImpossibilityToMoveFileUnderUnversionedDirectory", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("file");
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url);
+            final File file = workingCopy.getFile("file");
+
+            final File unversionedDirectory = workingCopy.getFile("unversionedDirectory");
+            SVNFileUtil.ensureDirectoryExists(unversionedDirectory);
+
+            final File targetFile = new File(unversionedDirectory, "file");
+
+            final SVNClientManager clientManager = SVNClientManager.newInstance();
+            try {
+                final SVNCopyClient copyClient = clientManager.getCopyClient();
+                copyClient.doCopy(new SVNCopySource[]{new SVNCopySource(SVNRevision.UNDEFINED, SVNRevision.WORKING, file)}, targetFile, true, false, true);
+
+                Assert.fail("An exception should be thrown");
+            } catch (SVNException e) {
+                //expected
+                e.printStackTrace();
+                Assert.assertEquals(TestUtil.isNewWorkingCopyTest() ? SVNErrorCode.WC_PATH_NOT_FOUND : SVNErrorCode.WC_NOT_WORKING_COPY, e.getErrorMessage().getErrorCode());
+            } finally {
+                clientManager.dispose();
+            }
         } finally {
             svnOperationFactory.dispose();
             sandbox.dispose();

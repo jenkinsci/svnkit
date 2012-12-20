@@ -1,14 +1,7 @@
 package org.tmatesoft.svn.core.internal.wc17.db;
 
-import java.io.File;
-import java.util.ArrayList;
-
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetTableStatement;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -21,6 +14,9 @@ import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.util.SVNLogType;
+
+import java.io.File;
+import java.util.ArrayList;
 
 public class SvnWcDbChangelist extends SvnWcDbShared {
 	public static void cleanupPristine(SVNWCDbRoot root, File localAbsPath) throws SVNException {
@@ -42,7 +38,11 @@ public class SvnWcDbChangelist extends SvnWcDbShared {
         finally {
         	try {
         		SVNSqlJetStatement dropList = new SVNWCDbCreateSchema(root.getSDb().getTemporaryDb(), SVNWCDbCreateSchema.DROP_CHANGELIST_LIST, -1);
-        		dropList.done();
+                try {
+        		    dropList.done();
+                } finally {
+                    dropList.reset();
+                }
         	}
         	catch (SVNException e) {}
         }
@@ -66,11 +66,19 @@ public class SvnWcDbChangelist extends SvnWcDbShared {
 	        	
 	        	/* Ensure we have actual nodes for our targets. */
 	        	SVNSqlJetStatement stmt = wcRoot.getSDb().getStatement(SVNWCDbStatements.INSERT_ACTUAL_EMPTIES);
-	        	stmt.done();
+                try {
+	        	    stmt.done();
+                } finally {
+                    stmt.reset();
+                }
 	        	
 	        	/* Now create our notification table. */
 	        	stmt = new SVNWCDbCreateSchema(wcRoot.getSDb().getTemporaryDb(), SVNWCDbCreateSchema.CHANGELIST_LIST, -1);
-	        	stmt.done();
+                try {
+	        	    stmt.done();
+                } finally {
+                    stmt.reset();
+                }
 	        	
 	        	ArrayList<String> targetList = new ArrayList<String>();
 	        	stmt = wcRoot.getSDb().getTemporaryDb().getStatement(SVNWCDbStatements.SELECT_TARGETS_LIST); 
@@ -87,9 +95,13 @@ public class SvnWcDbChangelist extends SvnWcDbShared {
 	        	/* Update our changelists. */
 	        	for (String localRelPath : targetList) {
 	        		SVNSqlJetStatement updateChangelist = wcRoot.getSDb().getStatement(SVNWCDbStatements.UPDATE_ACTUAL_CHANGELISTS);
-	        		((SVNSqlJetTableStatement) updateChangelist).addTrigger(changelistTrigger); 
-	                updateChangelist.bindf("iss", wcRoot.getWcId(), localRelPath, changelistName);
-	                updateChangelist.done();
+                    try {
+                        ((SVNSqlJetTableStatement) updateChangelist).addTrigger(changelistTrigger);
+                        updateChangelist.bindf("iss", wcRoot.getWcId(), localRelPath, changelistName);
+                        updateChangelist.done();
+                    } finally {
+                        stmt.reset();
+                    }
 	            }
 	        		        	
 	        	/* this version doesn't work, trigger breaks outer stmt cursor
@@ -106,14 +118,22 @@ public class SvnWcDbChangelist extends SvnWcDbShared {
 	        	
 	        	if (changelistName != null){
 	            	stmt = wcRoot.getSDb().getTemporaryDb().getStatement(SVNWCDbStatements.MARK_SKIPPED_CHANGELIST_DIRS);
-	            	((SVNSqlJetTableStatement) stmt).addTrigger(changelistTrigger);
-	                stmt.bindf("s", changelistName);
-	                stmt.done();
+                    try {
+                        ((SVNSqlJetTableStatement) stmt).addTrigger(changelistTrigger);
+                        stmt.bindf("s", changelistName);
+                        stmt.done();
+                    } finally {
+                        stmt.reset();
+                    }
 	            }
 	            else {
 	            	stmt = wcRoot.getSDb().getStatement(SVNWCDbStatements.DELETE_ACTUAL_EMPTIES);
-	            	stmt.bindf("i", wcRoot.getWcId());
-	                stmt.done();
+                    try {
+                        stmt.bindf("i", wcRoot.getWcId());
+                        stmt.done();
+                    } finally {
+                        stmt.reset();
+                    }
 	            }
 	            
         	} catch (SVNException e) {
@@ -129,23 +149,31 @@ public class SvnWcDbChangelist extends SvnWcDbShared {
         	long affectedRows = 0;
         	
         	SVNSqlJetStatement stmt = new SVNWCDbCreateSchema(wcRoot.getSDb().getTemporaryDb(), SVNWCDbCreateSchema.TARGETS_LIST, -1);
-        	stmt.done();
+            try {
+        	    stmt.done();
+            } finally {
+                stmt.reset();
+            }
         	    	
         	if (changeLists != null && changeLists.length > 0) {
-        		if (depth == SVNDepth.EMPTY) {
-        			stmt = wcRoot.getSDb().getStatement(SVNWCDbStatements.INSERT_TARGET_WITH_CHANGELIST);
-        		} else if (depth == SVNDepth.FILES){
-        			stmt = wcRoot.getSDb().getStatement(SVNWCDbStatements.INSERT_TARGET_DEPTH_FILES_WITH_CHANGELIST);
-        		} else if (depth == SVNDepth.IMMEDIATES){
-        			stmt = wcRoot.getSDb().getStatement(SVNWCDbStatements.INSERT_TARGET_DEPTH_IMMEDIATES_WITH_CHANGELIST);
-        		} else if (depth == SVNDepth.INFINITY){
-        			stmt = wcRoot.getSDb().getStatement(SVNWCDbStatements.INSERT_TARGET_DEPTH_INFINITY_WITH_CHANGELIST);
-        		}
-        		if (stmt != null) {
-            		for (int i = 0; i < changeLists.length; i++) {
+                for (int i = 0; i < changeLists.length; i++) {
+                    if (depth == SVNDepth.EMPTY) {
+                        stmt = wcRoot.getSDb().getStatement(SVNWCDbStatements.INSERT_TARGET_WITH_CHANGELIST);
+                    } else if (depth == SVNDepth.FILES){
+                        stmt = wcRoot.getSDb().getStatement(SVNWCDbStatements.INSERT_TARGET_DEPTH_FILES_WITH_CHANGELIST);
+                    } else if (depth == SVNDepth.IMMEDIATES){
+                        stmt = wcRoot.getSDb().getStatement(SVNWCDbStatements.INSERT_TARGET_DEPTH_IMMEDIATES_WITH_CHANGELIST);
+                    } else if (depth == SVNDepth.INFINITY){
+                        stmt = wcRoot.getSDb().getStatement(SVNWCDbStatements.INSERT_TARGET_DEPTH_INFINITY_WITH_CHANGELIST);
+                    }
+        		    if (stmt != null) {
             			String changelist = changeLists[i];
-            			stmt.bindf("iss", wcRoot.getWcId(), localRelPath, changelist);
-                		affectedRows += stmt.done();
+                        try {
+                            stmt.bindf("iss", wcRoot.getWcId(), localRelPath, changelist);
+                            affectedRows += stmt.done();
+                        } finally {
+                            stmt.reset();
+                        }
                     }
         		}
         	}
@@ -159,9 +187,13 @@ public class SvnWcDbChangelist extends SvnWcDbShared {
         		} else if (depth.getId() == SVNDepth.INFINITY.getId()){
         			stmt = wcRoot.getSDb().getStatement(SVNWCDbStatements.INSERT_TARGET_DEPTH_INFINITY);
         		}
-        		
-        		stmt.bindf("is", wcRoot.getWcId(), localRelPath);
-        		affectedRows = stmt.done();
+
+                try {
+                    stmt.bindf("is", wcRoot.getWcId(), localRelPath);
+                    affectedRows = stmt.done();
+                } finally {
+                    stmt.reset();
+                }
     			
         		//default:
                 /* We don't know how to handle unknown or exclude. */
