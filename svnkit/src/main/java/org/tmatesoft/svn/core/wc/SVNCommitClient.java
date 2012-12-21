@@ -1085,12 +1085,15 @@ public class SVNCommitClient extends SVNBasicClient {
         
         SvnCommitPacket packet = commit.collectCommitItems();  
         if (packet != null) {
+            return new SVNCommitPacket[] {SvnCodec.commitPacket(commit, packet)};
+            /*
             final SvnCommitPacket[] packets = packet.split(combinePackets);
             final SVNCommitPacket[] result = new SVNCommitPacket[packets.length];
             for (int i = 0; i < packets.length; i++) {
                 result[i] = SvnCodec.commitPacket(commit, packets[i]);
             }
             return result;
+            */
         }
         
         return new SVNCommitPacket[0];
