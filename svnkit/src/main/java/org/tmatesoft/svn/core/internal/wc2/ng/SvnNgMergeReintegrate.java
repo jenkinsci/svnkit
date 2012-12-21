@@ -341,7 +341,7 @@ public class SvnNgMergeReintegrate extends SvnNgOperationRunner<Void, SvnMerge>{
                 pathSessionRelPath = new File("");
             }
             
-            List<SVNLocationSegment> segments = targetRepository.getLocationSegments(pathSessionRelPath.getPath(), targetRev, targetRev, -1);
+            List<SVNLocationSegment> segments = targetRepository.getLocationSegments(SVNFileUtil.getFilePath(pathSessionRelPath), targetRev, targetRev, -1);
             segmentsMap.put(pathReposRelPath, segments);
         }
         
@@ -415,25 +415,25 @@ public class SvnNgMergeReintegrate extends SvnNgOperationRunner<Void, SvnMerge>{
                     }
                 }
             } else {
-                SVNNodeKind kind = sourceRepos.checkPath(sourcePathRelToSession.getPath(), sourceRev);
+                SVNNodeKind kind = sourceRepos.checkPath(SVNFileUtil.getFilePath(sourcePathRelToSession), sourceRev);
                 if (kind == SVNNodeKind.NONE) {
                     continue;
                 }
                 Map<File, Map<String, SVNMergeRangeList>> subtreeCatalog = 
-                        SvnNgMergeinfoUtil.convertToCatalog2(sourceRepos.getMergeInfo(new String[] {sourcePathRelToSession.getPath()}, sourceRev, SVNMergeInfoInheritance.INHERITED, false));
+                        SvnNgMergeinfoUtil.convertToCatalog2(sourceRepos.getMergeInfo(new String[] {SVNFileUtil.getFilePath(sourcePathRelToSession)}, sourceRev, SVNMergeInfoInheritance.INHERITED, false));
                 sourceMergeInfo = subtreeCatalog.get(sourcePathRelToSession);
                 if (sourceMergeInfo == null) {
                     sourceMergeInfo = new HashMap<String, SVNMergeRangeList>();
                 }
             }
             
-            segments = sourceRepos.getLocationSegments(sourcePathRelToSession.getPath(), sourceRev, sourceRev, -1);
+            segments = sourceRepos.getLocationSegments(SVNFileUtil.getFilePath(sourcePathRelToSession), sourceRev, sourceRev, -1);
             Map<String, SVNMergeRangeList> sourceHistroryAsMergeInfo = SvnRepositoryAccess.getMergeInfoFromSegments(segments);
             sourceMergeInfo = SVNMergeInfoUtil.mergeMergeInfos(sourceMergeInfo, sourceHistroryAsMergeInfo);
             Map<String, SVNMergeRangeList> commonMergeInfo = SVNMergeInfoUtil.intersectMergeInfo(sourceMergeInfo, targetHistoryAsMergeInfo, true);
             Map<String, SVNMergeRangeList> filteredMergeInfo = SVNMergeInfoUtil.removeMergeInfo(commonMergeInfo, targetHistoryAsMergeInfo, true);
             
-            newCatalog.put(sourcePath.getPath(), filteredMergeInfo);
+            newCatalog.put(SVNFileUtil.getFilePath(sourcePath), filteredMergeInfo);
         }
         
         if (!sourceCatalog.isEmpty()) {
@@ -444,7 +444,7 @@ public class SvnNgMergeReintegrate extends SvnNgOperationRunner<Void, SvnMerge>{
                 List<SVNLocationSegment> segments = null;
                 Map<String, SVNMergeRangeList> sourceMergeInfo = sourceCatalog.get(path);
                 try {
-                    segments = targetRepos.getLocationSegments(targetPath.getPath(), targetRev, targetRev, -1);
+                    segments = targetRepos.getLocationSegments(SVNFileUtil.getFilePath(targetPath), targetRev, targetRev, -1);
                 } catch (SVNException e) {
                     SVNErrorCode ec = e.getErrorMessage().getErrorCode();
                     if (ec == SVNErrorCode.FS_NOT_FOUND || ec == SVNErrorCode.RA_DAV_REQUEST_FAILED) {
@@ -462,13 +462,13 @@ public class SvnNgMergeReintegrate extends SvnNgOperationRunner<Void, SvnMerge>{
                         result.youngestMergedRevision = endPoints[0];
                     }
                 }
-                segments = sourceRepos.getLocationSegments(sourcePathRelToSession.getPath(), targetRev, targetRev, -1);
+                segments = sourceRepos.getLocationSegments(SVNFileUtil.getFilePath(sourcePathRelToSession), targetRev, targetRev, -1);
                 Map<String, SVNMergeRangeList> sourceHistoryAsMergeInfo = SvnRepositoryAccess.getMergeInfoFromSegments(segments);
                 sourceMergeInfo = SVNMergeInfoUtil.mergeMergeInfos(sourceMergeInfo, sourceHistoryAsMergeInfo);
                 Map<String, SVNMergeRangeList> commonMergeInfo = SVNMergeInfoUtil.intersectMergeInfo(sourceMergeInfo, targetHistoryAsMergeInfo, true);
                 Map<String, SVNMergeRangeList> filteredMergeInfo = SVNMergeInfoUtil.removeMergeInfo(commonMergeInfo, targetHistoryAsMergeInfo, true);
                 if (!filteredMergeInfo.isEmpty()) {
-                    newCatalog.put(path.getPath().replace(File.separatorChar, '/'), filteredMergeInfo);
+                    newCatalog.put(SVNFileUtil.getFilePath(path), filteredMergeInfo);
                 }
             }
         }
