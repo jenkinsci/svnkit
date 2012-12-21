@@ -16,6 +16,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CharsetEncoder;
+import java.nio.charset.CodingErrorAction;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.IOExceptionWrapper;
@@ -33,10 +36,19 @@ public class SVNCharsetInputStream extends FilterInputStream {
     private byte[] mySourceBuffer;
     private ByteBuffer myConvertedBuffer;
     private boolean myEndOfStream;
-
-    public SVNCharsetInputStream(InputStream in, Charset inputCharset, Charset outputCharset) {
+    
+    public SVNCharsetInputStream(InputStream in, Charset inputCharset, Charset outputCharset,
+            CodingErrorAction malformedInputAction, CodingErrorAction unmappableCharAction) {
         super(in);
-        myCharsetConvertor = new SVNCharsetConvertor(inputCharset.newDecoder(), outputCharset.newEncoder());
+        CharsetDecoder decoder = inputCharset.newDecoder();
+        decoder.onMalformedInput(malformedInputAction);
+        decoder.onUnmappableCharacter(unmappableCharAction);
+
+        CharsetEncoder encoder = outputCharset.newEncoder();
+        encoder.onMalformedInput(malformedInputAction);
+        encoder.onUnmappableCharacter(unmappableCharAction);
+
+        myCharsetConvertor = new SVNCharsetConvertor(decoder, encoder);
         mySourceBuffer = new byte[DEFAULT_BUFFER_CAPACITY];
         myConvertedBuffer = ByteBuffer.allocate(DEFAULT_BUFFER_CAPACITY);
         myEndOfStream = false;
