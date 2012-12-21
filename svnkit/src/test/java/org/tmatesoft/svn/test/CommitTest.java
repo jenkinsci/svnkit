@@ -1,22 +1,42 @@
 package org.tmatesoft.svn.test;
 
+import java.io.File;
+import java.util.Map;
+
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.SVNCommitInfo;
+import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNLogEntry;
+import org.tmatesoft.svn.core.SVNLogEntryPath;
+import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNExternal;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
-import org.tmatesoft.svn.core.wc.*;
-import org.tmatesoft.svn.core.wc2.*;
+import org.tmatesoft.svn.core.wc.DefaultSVNCommitHandler;
+import org.tmatesoft.svn.core.wc.SVNClientManager;
+import org.tmatesoft.svn.core.wc.SVNCommitClient;
+import org.tmatesoft.svn.core.wc.SVNCommitItem;
+import org.tmatesoft.svn.core.wc.SVNCommitPacket;
+import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.wc2.SvnCheckout;
+import org.tmatesoft.svn.core.wc2.SvnCommit;
+import org.tmatesoft.svn.core.wc2.SvnLog;
+import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
+import org.tmatesoft.svn.core.wc2.SvnRevisionRange;
+import org.tmatesoft.svn.core.wc2.SvnScheduleForAddition;
+import org.tmatesoft.svn.core.wc2.SvnStatus;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.core.wc2.admin.SvnRepositoryCreate;
-
-import java.io.File;
-import java.util.Map;
 
 public class CommitTest {
     @Test

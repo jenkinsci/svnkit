@@ -843,6 +843,13 @@ public class SVNCommitClient extends SVNBasicClient {
             try {
                 SvnCommit commit = ((SVNCommitPacketWrapper) commitPackets[i]).getOperation();
                 try {
+                    final SvnCommitPacket realPacket = commit.collectCommitItems();
+                    final SVNCommitItem[] oldItems = commitPackets[i].getCommitItems();
+                    for(int j = 0; j < oldItems.length; j++) {
+                        if (commitPackets[i].isCommitItemSkipped(oldItems[j])) {
+                            realPacket.setItemSkipped(oldItems[j].getFile(), true);
+                        }
+                    }
                     commit.setCommitMessage(commitMessage);
                     if (getCommitHandler() != null) {
                         SVNCommitItem[] items = commitPackets[i].getCommitItems();
