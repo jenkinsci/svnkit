@@ -520,7 +520,8 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ASSERTION_FAIL);
                 SVNErrorManager.error(err, SVNLogType.WC);
                 break;
-
+            default:
+                break;
         }
 
         if (reason == null) {
@@ -1187,7 +1188,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         
         WCDbInfo readInfo = myWCContext.getDb().readInfo(fb.localAbsolutePath, InfoField.status, InfoField.kind,
                 InfoField.revision, InfoField.changedRev, InfoField.changedDate, InfoField.changedRev,
-                InfoField.checksum, InfoField.haveWork, InfoField.conflicted, InfoField.reposRelPath);
+                InfoField.checksum, InfoField.haveWork, InfoField.conflicted, InfoField.propsMod, InfoField.reposRelPath);
         status = readInfo.status;
         fb.changedAuthor = readInfo.changedAuthor;
         fb.changedDate = readInfo.changedDate;
@@ -1195,6 +1196,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         fb.oldRevision = readInfo.revision;
         fb.originalChecksum = readInfo.checksum;
         fb.oldRelativePath = readInfo.reposRelPath;
+        fb.localPropMods = readInfo.propsMod;
         
         conflicted = readInfo.conflicted;
         
@@ -1251,6 +1253,32 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         }
         if (!fb.edited && SVNProperty.isRegularProperty(propertyName)) {
             fb.markEdited();
+        }
+        if (!fb.shadowed && (SVNProperty.SPECIAL.equals(propertyName))) {
+            boolean becomesSymlink = propertyValue != null;
+            boolean wasSymlink;
+            boolean modified = false;
+            if (fb.addingFile) {
+                wasSymlink = becomesSymlink;
+            } else {
+                final SVNProperties props = myWCContext.getDb().getBaseProps(fb.localAbsolutePath);
+                wasSymlink = props != null && props.getSVNPropertyValue(SVNProperty.SPECIAL) != null;
+            }
+            if (wasSymlink != becomesSymlink) {
+                if (fb.localPropMods) {
+                    modified = true;
+                } else {
+                    modified = myWCContext.isTextModified(fb.localAbsolutePath, false);
+                }
+                if (modified) {
+                    myWCContext.getDb().opMakeCopyTemp(fb.localAbsolutePath, false);
+                    SVNTreeConflictDescription tc = checkTreeConflict(fb.localAbsolutePath, SVNWCDbStatus.Added, SVNWCDbKind.File, true, SVNConflictAction.EDIT, SVNNodeKind.FILE, fb.newRelativePath);
+                    assert tc != null;
+                    myWCContext.getDb().opSetTreeConflict(fb.localAbsolutePath, tc);
+                    fb.editConflict = tc;
+                    doNotification(fb.localAbsolutePath, SVNNodeKind.FILE, SVNEventAction.TREE_CONFLICT, fb.getURL(), fb.getPreviousURL());
+                }
+            }
         }
         return;
     }
@@ -1329,37 +1357,6 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         }
         if (currentActualProps == null) {
             currentActualProps = new SVNProperties();
-        }
-        
-        if (!fb.shadowed && (!fb.addingFile || fb.addExisted)) {
-            boolean localIsLink = false;
-            boolean incomingIsLink = false;
-            
-            localIsLink = localActualProps.getStringValue(SVNProperty.SPECIAL) != null;
-            incomingIsLink = localIsLink;
-            
-            /* Does an incoming propchange affect symlink-ness? */
-            if (regularProps != null) {
-                for(Iterator<?> names = regularProps.nameSet().iterator(); names.hasNext();) {
-                    String name = (String) names.next();
-                    incomingIsLink = SVNProperty.SPECIAL.equals(name);
-                    if (incomingIsLink) {
-                        break;
-                    }
-                }
-            }
-            
-            if (localIsLink != incomingIsLink) {
-                SVNTreeConflictDescription treeConflict = null;
-                fb.shadowed = true;
-                fb.obstructionFound = true;
-                fb.addExisted = false;
-                
-                treeConflict = checkTreeConflict(fb.localAbsolutePath, SVNWCDbStatus.Added, SVNWCDbKind.File, true, SVNConflictAction.ADD, SVNNodeKind.FILE, fb.newRelativePath);
-                myWCContext.getDb().opSetTreeConflict(fb.localAbsolutePath, treeConflict);
-                fb.alreadyNotified = true;
-                doNotification(fb.localAbsolutePath, SVNNodeKind.UNKNOWN, SVNEventAction.TREE_CONFLICT, fb.getURL(), fb.getPreviousURL());
-            }
         }
         
         SVNStatusType[] propState = new SVNStatusType[] {SVNStatusType.UNKNOWN};
@@ -1683,6 +1680,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
     }
     
     private class FileBaton {
+        public boolean localPropMods;
         private String name;
         private File localAbsolutePath;
         private File newRelativePath;
