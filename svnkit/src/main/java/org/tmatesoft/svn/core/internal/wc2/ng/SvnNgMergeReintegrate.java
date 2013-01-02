@@ -2,6 +2,7 @@ package org.tmatesoft.svn.core.internal.wc2.ng;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -128,6 +129,16 @@ public class SvnNgMergeReintegrate extends SvnNgOperationRunner<Void, SvnMerge>{
             }
         });
         pg.run();
+        
+        if (!explicitMergeInfo.isEmpty()) {
+            final Map<File, File> externals = context.getDb().getExternalsDefinedBelow(mergeTarget);
+            for (Iterator<File> wcPaths = explicitMergeInfo.keySet().iterator(); wcPaths.hasNext();) {
+                final File wcPath = wcPaths.next();
+                if (externals.containsKey(wcPath)) {
+                    wcPaths.remove();
+                }
+            }
+        }
         
         sourceReposInfo = getRepositoryAccess().createRepositoryFor(SvnTarget.fromURL(url2), SVNRevision.UNDEFINED, mergeSource.getPegRevision(), null);
         SVNRepository sourceRepository = sourceReposInfo.get(RepositoryInfo.repository);
