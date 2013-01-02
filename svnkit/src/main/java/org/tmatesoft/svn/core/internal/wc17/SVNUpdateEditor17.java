@@ -1277,6 +1277,10 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                     myWCContext.getDb().opSetTreeConflict(fb.localAbsolutePath, tc);
                     fb.editConflict = tc;
                     doNotification(fb.localAbsolutePath, SVNNodeKind.FILE, SVNEventAction.TREE_CONFLICT, fb.getURL(), fb.getPreviousURL());
+                    
+                    fb.shadowed = true;
+                    fb.addExisted = false;
+                    fb.alreadyNotified = true;
                 }
             }
         }
