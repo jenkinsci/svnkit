@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
@@ -39,6 +40,7 @@ public class SvnCommitPacket {
     private ISvnCommitRunner runner;
     private Map<SVNURL, String> lockTokens;
     private Set<String> skippedPaths;
+    private AtomicInteger sharedIndex;
     
     /**
      * Creates a commit packet and initializes its fields with empty lists. 
@@ -200,9 +202,18 @@ public class SvnCommitPacket {
     public void dispose() throws SVNException {
         try {
             if (runner != null) {
-                runner.disposeCommitPacket(lockingContext);
+                runner.disposeCommitPacket(lockingContext, isLastPacket());
             }
         } finally {
+            if (sharedIndex != null) {
+                sharedIndex.decrementAndGet();
+            }
+            if (items != null) {
+                items.clear();
+            }
+            if (itemsByPath != null) {
+                itemsByPath.clear();
+            }
             runner = null;
             lockingContext = null;
         }
@@ -328,11 +339,14 @@ public class SvnCommitPacket {
                 filteredItems.put(url, filteredCommitItems);
             }
         }
-        return new SvnCommitPacket(filteredItems, filteredItemsByPath, filteredLockingContext, filteredLockTokens, runner, skippedPaths);
+        SvnCommitPacket result = new SvnCommitPacket(filteredItems, filteredItemsByPath, filteredLockingContext, filteredLockTokens, runner, skippedPaths);
+        result.sharedIndex = sharedIndex;
+        return result;
     }
 
-    public SvnCommitPacket[] split(boolean combinePackets) throws SVNException {
+    SvnCommitPacket[] split(boolean combinePackets) throws SVNException {
         final Map<String, SvnCommitPacket> splitPackets = new HashMap<String, SvnCommitPacket>();
+        final AtomicInteger sharedIndex = new AtomicInteger(0);
         for (SVNURL root : getRepositoryRoots()) {
             Collection<SvnCommitItem> items = getItems(root);
             for (SvnCommitItem item : items) {
@@ -343,6 +357,8 @@ public class SvnCommitPacket {
                 if (!splitPackets.containsKey(key)) {
                     final SvnCommitPacket newPacket = new SvnCommitPacket();
                     newPacket.runner = this.runner;
+                    newPacket.sharedIndex = sharedIndex;
+                    sharedIndex.incrementAndGet();
                     splitPackets.put(key, newPacket);
                 }
                 if (getLockTokens().containsKey(item.getUrl())) {
@@ -351,8 +367,9 @@ public class SvnCommitPacket {
                 splitPackets.get(key).addItem(item, root);
             }
         }
+        
         for (SvnCommitPacket splitPacket : splitPackets.values()) {
-            splitPacket.lockingContext = getRunner().splitLockingContext(this.lockingContext, splitPacket);
+            splitPacket.lockingContext = this.lockingContext;
         }
         return splitPackets.values().toArray(new SvnCommitPacket[splitPackets.size()]);
     }
@@ -364,5 +381,9 @@ public class SvnCommitPacket {
         
         final File wcRoot = SvnOperationFactory.getWorkingCopyRoot(item.getKind() == SVNNodeKind.FILE ? item.getPath().getParentFile() : item.getPath(), true);
         return rootURL.toString() + ":" + wcRoot.getAbsolutePath();
+    }
+
+    public boolean isLastPacket() {
+        return sharedIndex == null || sharedIndex.get() == 1;
     }
 }

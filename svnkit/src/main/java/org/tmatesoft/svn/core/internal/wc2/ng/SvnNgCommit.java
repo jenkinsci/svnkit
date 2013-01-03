@@ -87,11 +87,11 @@ public class SvnNgCommit extends SvnNgOperationRunner<SVNCommitInfo, SvnCommit> 
                     this, getOperation().getCommitParameters(), null);
             packet.setLockTokens(lockTokens);
             
-            if (packet.getRepositoryRoots().size() > 1) {
+            if (operation.isFailOnMultipleRepositories() && packet.getRepositoryRoots().size() > 1) {                
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
                         "Commit can only commit to a single repository at a time.\n" +
                         "Are all targets part of the same working copy?");
-                SVNErrorManager.error(err, SVNLogType.WC);
+                SVNErrorManager.error(err, SVNLogType.WC);                
             }
             
             if (!packet.isEmpty()) {
@@ -110,20 +110,23 @@ public class SvnNgCommit extends SvnNgOperationRunner<SVNCommitInfo, SvnCommit> 
 
     @Override
     protected SVNCommitInfo run(SVNWCContext context) throws SVNException {
-        SVNCommitInfo info = doRun(context);
-        if (info != null) {
-            getOperation().receive(getOperation().getFirstTarget(), info);
+        final SvnCommitPacket[] packets = getOperation().splitCommitPackets(getOperation().isCombinePackets());
+        SVNCommitInfo result = SVNCommitInfo.NULL;
+        for(int i = 0; i < packets.length; i++) {
+            if (packets[i] == null || packets[i].isEmpty()) {
+                continue;
+            }
+            packets[i] = packets[i].removeSkippedItems();
+            final SVNURL repositoryRoot = packets[i].getRepositoryRoots().iterator().next();
+            result = doRun(context, packets[i]);
+            if (result != null) {
+                getOperation().receive(SvnTarget.fromURL(repositoryRoot), result);
+            }
         }
-        return info;
+        return result;
     }
     
-    protected SVNCommitInfo doRun(SVNWCContext context) throws SVNException {
-        SvnCommitPacket packet = getOperation().collectCommitItems();
-        if (packet == null || packet.isEmpty()) {
-            return null;
-        }
-        packet = packet.removeSkippedItems();
-
+    protected SVNCommitInfo doRun(SVNWCContext context, SvnCommitPacket packet) throws SVNException {
         SVNProperties revisionProperties = getOperation().getRevisionProperties();
         SVNPropertiesManager.validateRevisionProperties(revisionProperties);
         String commitMessage = getOperation().getCommitMessage();
@@ -185,10 +188,12 @@ public class SvnNgCommit extends SvnNgOperationRunner<SVNCommitInfo, SvnCommit> 
                         bumpError = e;
                         throw e;
                     } finally {
-                        sleepForTimestamp();
+                        // only for the last packet in chain.
+                        if (packet.isLastPacket()) {
+                            sleepForTimestamp();
+                        }
                     }
-                }
-                
+                }                
                 handleEvent(SVNEventFactory.createSVNEvent(null, SVNNodeKind.NONE, null, info.getNewRevision(), SVNEventAction.COMMIT_COMPLETED, 
                         SVNEventAction.COMMIT_COMPLETED, null, null, -1, -1));
             } catch (SVNException e) {
@@ -310,23 +315,28 @@ public class SvnNgCommit extends SvnNgOperationRunner<SVNCommitInfo, SvnCommit> 
         return newLockedPaths;
     };
 
-    public void disposeCommitPacket(Object lockingContext) throws SVNException {
+    public void disposeCommitPacket(Object lockingContext, boolean disposeParentContext) throws SVNException {
         if (!(lockingContext instanceof Collection)) {
+            if (disposeParentContext) {
+                getWcContext().close();
+            }
             return;
         }
-        @SuppressWarnings("unchecked")
-        Collection<File> lockedPaths = (Collection<File>) lockingContext;
-        
-        for (File lockedPath : lockedPaths) {
-            try {
-                getWcContext().releaseWriteLock(lockedPath);
-            } catch (SVNException e) {
-                if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_LOCKED) {
-                    throw e;
+        if (disposeParentContext) {
+            @SuppressWarnings("unchecked")
+            Collection<File> lockedPaths = (Collection<File>) lockingContext;
+            
+            for (File lockedPath : lockedPaths) {
+                try {
+                    getWcContext().releaseWriteLock(lockedPath);
+                } catch (SVNException e) {
+                    if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_LOCKED) {
+                        throw e;
+                    }
                 }
             }
+            getWcContext().close();
         }
-        getWcContext().close();
     }
 
     private void queueCommitted(SvnCommittedQueue queue, File localAbsPath, boolean recurse, 

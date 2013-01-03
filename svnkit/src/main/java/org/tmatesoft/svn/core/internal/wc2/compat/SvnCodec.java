@@ -586,6 +586,10 @@ public class SvnCodec {
             packet.dispose();
         }
         
+        public SvnCommitPacket getPacket() {
+            return this.packet;
+        }
+        
         public SvnCommit getOperation() {
             return operation;
         }

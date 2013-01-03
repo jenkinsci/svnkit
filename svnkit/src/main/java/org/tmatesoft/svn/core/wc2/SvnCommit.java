@@ -96,6 +96,9 @@ public class SvnCommit extends AbstractSvnCommit {
     
     private SvnCommitPacket packet;
     private boolean force;
+    private boolean isFailOnMultipleRepositories;
+    private boolean combinePackets;
+    private SvnCommitPacket[] splitPackets;
 
     protected SvnCommit(SvnOperationFactory factory) {
         super(factory);
@@ -173,6 +176,14 @@ public class SvnCommit extends AbstractSvnCommit {
         return packet;
     }
     
+    public SvnCommitPacket[] splitCommitPackets(boolean combinePackets) throws SVNException {
+        if (splitPackets != null) {
+            return splitPackets;
+        }
+        splitPackets = collectCommitItems().split(combinePackets);
+        return splitPackets;
+    }
+    
     /**
      * If commit packet is <code>null</code>, calls {@link #collectCommitItems()}
      * to create the commit packet, then executes the operation.  
@@ -225,4 +236,28 @@ public class SvnCommit extends AbstractSvnCommit {
     public boolean isChangesWorkingCopy() {
         return true;
     }
+    
+    public void setCombinePackets(boolean combine) {
+        this.combinePackets = combine;
+    }
+    
+    public boolean isCombinePackets() {
+        return this.combinePackets;
+    }
+
+    public boolean isFailOnMultipleRepositories() {
+        return this.isFailOnMultipleRepositories;
+    }
+    
+    public void setFailOnMultipleRepositories(boolean fail) {
+        this.isFailOnMultipleRepositories = fail;
+    }
+
+    @Override
+    protected void initDefaults() {
+        super.initDefaults();
+        setCombinePackets(true);
+    }
+    
+    
 }

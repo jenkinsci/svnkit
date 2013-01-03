@@ -173,7 +173,7 @@ public class CommitTest {
             commit.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
             final SVNCommitInfo commitInfo = commit.run();
 
-            Assert.assertNull(commitInfo);
+            Assert.assertEquals(SVNCommitInfo.NULL, commitInfo);
 
         } finally {
             svnOperationFactory.dispose();
