@@ -136,11 +136,16 @@ public class SvnNgCommit extends SvnNgOperationRunner<SVNCommitInfo, SvnCommit> 
                 items.addAll(packet.getItems(rootUrl));
             }
             SvnCommitItem[] itemsArray = items.toArray(new SvnCommitItem[items.size()]);
-            commitMessage = getOperation().getCommitHandler().getCommitMessage(commitMessage, itemsArray);
-            if (commitMessage == null) {
-                return SVNCommitInfo.NULL;
+            try {
+                commitMessage = getOperation().getCommitHandler().getCommitMessage(commitMessage, itemsArray);
+                if (commitMessage == null) {
+                    return SVNCommitInfo.NULL;
+                }
+                revisionProperties = getOperation().getCommitHandler().getRevisionProperties(commitMessage, itemsArray, revisionProperties);
+            } catch (SVNException e) {
+                SVNErrorMessage err = e.getErrorMessage().wrap("Commit failed (details follow):");
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
-            revisionProperties = getOperation().getCommitHandler().getRevisionProperties(commitMessage, itemsArray, revisionProperties);
         }
         commitMessage = commitMessage == null ? "" : SVNCommitUtil.validateCommitMessage(commitMessage);
 
