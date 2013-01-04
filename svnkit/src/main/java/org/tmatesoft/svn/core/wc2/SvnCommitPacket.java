@@ -358,11 +358,9 @@ public class SvnCommitPacket {
                     final SvnCommitPacket newPacket = new SvnCommitPacket();
                     newPacket.runner = this.runner;
                     newPacket.sharedIndex = sharedIndex;
+                    newPacket.setLockTokens(getLockTokens());
                     sharedIndex.incrementAndGet();
                     splitPackets.put(key, newPacket);
-                }
-                if (getLockTokens().containsKey(item.getUrl())) {
-                    splitPackets.get(key).getLockTokens().put(item.getUrl(), getLockTokens().get(item.getUrl()));
                 }
                 splitPackets.get(key).addItem(item, root);
             }
