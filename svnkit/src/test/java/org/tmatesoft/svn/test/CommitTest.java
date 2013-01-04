@@ -5,7 +5,6 @@ import java.util.Map;
 
 import org.junit.Assert;
 import org.junit.Assume;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
@@ -309,7 +308,6 @@ public class CommitTest {
         }
     }
 
-    @Ignore("Currently fails")
     @Test
     public void testCollectCommitItemsNotCombinedWithExternal() throws Exception {
         //SVNKIT-336
@@ -362,7 +360,6 @@ public class CommitTest {
         }
     }
 
-    @Ignore("Currently fails")
     @Test
     public void testCollectCommitItemsNotCombinedDifferentRepositories() throws Exception {
         //SVNKIT-336
