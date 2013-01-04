@@ -87,7 +87,7 @@ public class SvnNgCommit extends SvnNgOperationRunner<SVNCommitInfo, SvnCommit> 
                     this, getOperation().getCommitParameters(), null);
             packet.setLockTokens(lockTokens);
             
-            if (operation.isFailOnMultipleRepositories() && packet.getRepositoryRoots().size() > 1) {                
+            if (getOperation().isFailOnMultipleRepositories() && packet.getRepositoryRoots().size() > 1) {                
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
                         "Commit can only commit to a single repository at a time.\n" +
                         "Are all targets part of the same working copy?");
