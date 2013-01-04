@@ -26,6 +26,8 @@ import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -200,11 +202,8 @@ class HTTPConnection implements IHTTPConnection {
                             authAttempts++;
                             debugLog.logFine(SVNLogType.NETWORK, "authentication attempt #" + authAttempts);
                             Collection<String> proxyAuthHeaders = connectRequest.getResponseHeader().getHeaderValues(HTTPHeader.PROXY_AUTHENTICATE_HEADER);
-                            Collection<String> authTypes = null;
-                            if (authManager != null && authManager instanceof DefaultSVNAuthenticationManager) {
-                                DefaultSVNAuthenticationManager defaultAuthManager = (DefaultSVNAuthenticationManager) authManager;
-                                authTypes = defaultAuthManager.getAuthTypes(myRepository.getLocation());
-                            }
+                            Collection<String> authTypes = Arrays.asList("Basic", "Digest", "Negotiate", "NTLM");
+                            
                             debugLog.logFine(SVNLogType.NETWORK, "authentication methods supported: " + authTypes);
                             try {
                                 myProxyAuthentication = HTTPAuthentication.parseAuthParameters(proxyAuthHeaders, myProxyAuthentication, myCharset, authTypes, null, myRequestCount); 
