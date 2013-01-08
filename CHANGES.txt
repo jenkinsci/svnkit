@@ -1,3 +1,11 @@
+== version 1.7.8 ==
+
++ HTTP proxy authentication improvements.
++ Batch commit support for 1.7 working copies.
++ When used within Eclipse 4.2, credentials were not saved, fixed. 
++ SqlJet library 1.1.6 is used.
++ Other minor stability improvements and bugfixes. 
+
 == version 1.7.6 ==
 
 + Deadlock in connections pool code fixed.
