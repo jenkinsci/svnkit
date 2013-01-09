@@ -114,7 +114,8 @@ public class SVNSSHConnector implements ISVNConnector {
                             } 
                             privateKey = null;
                         }
-                        int connectTimeout = authManager.getConnectTimeout(repository);
+                        final int connectTimeout = authManager.getConnectTimeout(repository);
+                        final int readTimeout = authManager.getReadTimeout(repository);
                         
                         ServerHostKeyVerifier v = new ServerHostKeyVerifier() {
                             public boolean verifyServerHostKey(String hostname, int port,
@@ -126,7 +127,7 @@ public class SVNSSHConnector implements ISVNConnector {
                                 return true;
                             }
                         };
-                        connection = ourSessionPool.openSession(host, port, userName, privateKey, passphrase, password, v, connectTimeout);
+                        connection = ourSessionPool.openSession(host, port, userName, privateKey, passphrase, password, v, connectTimeout, readTimeout);
                         
                         if (connection == null) {
                             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED, "Cannot connect to ''{0}''", repository.getLocation().setPath("", false));

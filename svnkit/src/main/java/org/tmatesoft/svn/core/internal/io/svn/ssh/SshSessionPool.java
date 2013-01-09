@@ -59,12 +59,13 @@ public class SshSessionPool {
     
     public SshSession openSession(String host, int port, String userName,
             char[] privateKey, char[] passphrase, char[] password,
-            ServerHostKeyVerifier verifier, int connectTimeout) throws IOException {
+            ServerHostKeyVerifier verifier, int connectTimeout, int readTimeout) throws IOException {
 
         final SshHost newHost = new SshHost(host, port);
         newHost.setCredentials(userName, privateKey, passphrase, password);
         newHost.setConnectionTimeout(connectTimeout);
         newHost.setHostVerifier(verifier);
+        newHost.setReadTimeout(readTimeout);
         
         SshSession session = null;
         final String hostKey = newHost.getKey();
