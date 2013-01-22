@@ -11,7 +11,6 @@ import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 
 public class ExceptionsHandlingTest {
 
-    @Ignore("Currently fails")
     @Test
     public void testConnectionIsClosedOnOutOfDateError() throws Exception {
         //SVNKIT-348
@@ -33,15 +32,16 @@ public class ExceptionsHandlingTest {
                 editor.openRoot(0); // <-- the revision is wrong because it contains no file
 
                 try {
-                    editor.deleteEntry("file", 0); // <-- delete non-existing file
+                    editor.openFile("file", 0); // <-- delete non-existing file
 
                     Assert.fail("An exception should be thrown");
                 } catch (SVNException e) {
+                    editor.abortEdit();
                     //expected
                 }
 
                 // this call should not fail with "SVNRepository methods are not reenterable" because the connection was closed
-                Assert.assertEquals(0, svnRepository.getLatestRevision());
+                Assert.assertEquals(1, svnRepository.getLatestRevision());
 
             } finally {
                 svnRepository.closeSession();
