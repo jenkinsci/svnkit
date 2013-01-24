@@ -55,6 +55,10 @@ jar << {
             it = expandClasspath(it, classpath)
         }
     }
+    copy {
+        from file("src/main/conf/logging.properties")
+        into scriptsDir
+    }
 
     configurations.scripts.artifacts.add(new
         org.gradle.api.internal.artifacts.publish.DefaultPublishArtifact("svn-cli-scripts", "dir", "dir", null, new  Date(), scriptsDir))
