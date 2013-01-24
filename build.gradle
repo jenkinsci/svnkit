@@ -1,10 +1,10 @@
 group = 'org.tmatesoft.svnkit'
-version = '1.7.8'
+version = '1.7.9'
 
 project.ext {
    release = false
    target = '1.5'
-   compatibleSvnVersion = '1.7.9'
+   compatibleSvnVersion = '1.7.8'
 }
 
 apply from: 'build.pom.gradle'
