@@ -756,7 +756,7 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
     }
 
     public String getDomain() {
-        String login = getUserName();
+        String login = super.getUserName();
         String domain = null;
         int slashInd = login != null ? login.indexOf('\\') : -1; 
         if (slashInd != -1) {
