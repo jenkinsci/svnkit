@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.security.auth.Subject;
@@ -25,7 +26,6 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
@@ -40,7 +40,7 @@ public class DefaultHTTPNegotiateAuthentication extends HTTPNegotiateAuthenticat
     private static final String NEGOTIATE_TYPE_SPNEGO = "spnego"; 
     private static final String NEGOTIATE_TYPE_KERBEROS = "krb"; 
 
-    private static Map ourOids = new SVNHashMap();
+    private static Map<String, Oid> ourOids = new HashMap<String, Oid>();
     
     static {
         try {
@@ -163,8 +163,8 @@ public class DefaultHTTPNegotiateAuthentication extends HTTPNegotiateAuthenticat
             initializeSubject();
         }
 
-        PrivilegedExceptionAction action = new PrivilegedExceptionAction() {
-            public Object run() throws SVNException {
+        final PrivilegedExceptionAction<String> action = new PrivilegedExceptionAction<String>() {
+            public String run() throws SVNException {
                 SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "NEGOTIATE: authenticate action: isStarted: " + isStarted());
                 if (!isStarted()) {
                     try {
@@ -218,9 +218,9 @@ public class DefaultHTTPNegotiateAuthentication extends HTTPNegotiateAuthenticat
         }
         
         try {
-            String result = (String) action.run();
+            String result = action.run();
             SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "NEGOTIATE: authenticate: result (2):" + result);
-            return (String) action.run();
+            return  result;
         } catch (Exception cause) {
             if (cause instanceof SVNException) {
                 throw (SVNException) cause;

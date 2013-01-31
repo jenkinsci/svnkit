@@ -37,7 +37,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  */
 abstract class HTTPAuthentication {
 
-    private Map myChallengeParameters;
+    private Map<String, String> myChallengeParameters;
     private String myUserName;
     private String myPassword;
     
@@ -60,7 +60,7 @@ abstract class HTTPAuthentication {
     }
 
     public void setChallengeParameter(String name, String value) {
-        Map params = getChallengeParameters();
+        Map<String, String> params = getChallengeParameters();
         params.put(name, value);
     }
     
@@ -71,9 +71,9 @@ abstract class HTTPAuthentication {
         return (String)myChallengeParameters.get(name);
     }
     
-    protected Map getChallengeParameters() {
+    protected Map<String, String> getChallengeParameters() {
         if (myChallengeParameters == null) {
-            myChallengeParameters = new TreeMap();
+            myChallengeParameters = new TreeMap<String, String>();
         }
         return myChallengeParameters;
     }
@@ -110,8 +110,8 @@ abstract class HTTPAuthentication {
         myPassword = password;
     }
     
-    public static HTTPAuthentication parseAuthParameters(Collection authHeaderValues, HTTPAuthentication prevResponse, String charset, 
-            Collection authTypes, ISVNAuthenticationManager authManager, int requestID) throws SVNException {
+    public static HTTPAuthentication parseAuthParameters(Collection<String> authHeaderValues, HTTPAuthentication prevResponse, String charset, 
+            Collection<String> authTypes, ISVNAuthenticationManager authManager, int requestID) throws SVNException {
         if (authHeaderValues == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
                     "Missing HTTP authorization method"); 
@@ -123,8 +123,8 @@ abstract class HTTPAuthentication {
         // sort auth headers accordingly to priorities.
         authHeaderValues = sortSchemes(authHeaderValues, authTypes);
         
-        for (Iterator authSchemes = authHeaderValues.iterator(); authSchemes.hasNext();) {
-            authHeader = (String)authSchemes.next();
+        for (Iterator<String> authSchemes = authHeaderValues.iterator(); authSchemes.hasNext();) {
+            authHeader = authSchemes.next();
             String source = authHeader.trim();
             // parse strings: name="value" or name=value
             int index = source.indexOf(' ');
@@ -270,15 +270,15 @@ abstract class HTTPAuthentication {
         return auth;
     }
     
-    public static boolean isSchemeSupportedByServer(String scheme, Collection authHeaderValues) throws SVNException {
+    public static boolean isSchemeSupportedByServer(String scheme, Collection<String> authHeaderValues) throws SVNException {
         if (authHeaderValues == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Missing HTTP authorization method"); 
             SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
 
         String authHeader = null;
-        for (Iterator authSchemes = authHeaderValues.iterator(); authSchemes.hasNext();) {
-            authHeader = (String)authSchemes.next();
+        for (Iterator<String> authSchemes = authHeaderValues.iterator(); authSchemes.hasNext();) {
+            authHeader = authSchemes.next();
             String source = authHeader.trim();
             int index = source.indexOf(' ');
             
@@ -293,9 +293,9 @@ abstract class HTTPAuthentication {
         return false;
     }
     
-    private static Collection sortSchemes(Collection authHeaders, Collection authTypes) {
+    private static Collection<String> sortSchemes(Collection<String> authHeaders, Collection<String> authTypes) {
         String priorities = System.getProperty(AUTH_METHODS_PROPERTY, System.getProperty(OLD_AUTH_METHODS_PROPERTY));
-        final List schemes = new ArrayList();
+        final List<String> schemes = new ArrayList<String>();
         if (authTypes != null && !authTypes.isEmpty()) {
             schemes.addAll(authTypes);
         } else if (priorities != null && !"".equals(priorities.trim())) {
@@ -309,11 +309,11 @@ abstract class HTTPAuthentication {
             return authHeaders;    
         }
         
-        List ordered = new ArrayList(authHeaders);
-        Collections.sort(ordered, new Comparator() {
-            public int compare(Object o1, Object o2) {
-                String header1 = (String) o1;
-                String header2 = (String) o2;
+        List<String> ordered = new ArrayList<String>(authHeaders);
+        Collections.sort(ordered, new Comparator<String>() {
+            public int compare(String o1, String o2) {
+                String header1 = o1;
+                String header2 = o2;
                 
                 String scheme1 = getSchemeName(header1);
                 String scheme2 = getSchemeName(header2);

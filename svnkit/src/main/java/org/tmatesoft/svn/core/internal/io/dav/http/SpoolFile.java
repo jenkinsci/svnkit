@@ -35,12 +35,12 @@ public class SpoolFile {
     private static final long MEMORY_TRESHOLD = 1024*100; // 100KB
     
     private File myDirectory;
-    private LinkedList myFiles;
+    private LinkedList<File> myFiles;
     private ByteArrayOutputStream myBuffer;
 
     public SpoolFile(File directory) {
         myDirectory = directory;
-        myFiles = new LinkedList();
+        myFiles = new LinkedList<File>();
         myBuffer = new ByteArrayOutputStream();
     }
     
@@ -53,8 +53,8 @@ public class SpoolFile {
     }
     
     public void delete() throws SVNException {
-        for (Iterator files = myFiles.iterator(); files.hasNext();) {
-            File file = (File) files.next();
+        for (Iterator<File> files = myFiles.iterator(); files.hasNext();) {
+            final File file = files.next();
             SVNFileUtil.deleteFile(file);
         }
         myBuffer = null;
