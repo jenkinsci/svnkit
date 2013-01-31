@@ -84,6 +84,10 @@ abstract class HTTPAuthentication {
             myPassword = credentials.getPassword();
         }
     }
+    
+    public String getRawUserName() {
+        return myUserName;
+    }
 
     public String getUserName() {
         return myUserName;
@@ -259,7 +263,7 @@ abstract class HTTPAuthentication {
         }
         
         if (prevResponse != null) {
-            auth.setUserName(prevResponse.getUserName());
+            auth.setUserName(prevResponse.getRawUserName());
             auth.setPassword(prevResponse.getPassword());
         }
         

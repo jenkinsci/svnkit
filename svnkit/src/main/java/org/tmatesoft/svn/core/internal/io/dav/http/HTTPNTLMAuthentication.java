@@ -740,7 +740,7 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
     }
     
     public String getUserName() {
-        String login = super.getUserName();
+        String login = getRawUserName();
         String userName = null;
         int slashInd = login != null ? login.indexOf('\\') : -1; 
         if (slashInd != -1) {
@@ -756,7 +756,7 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
     }
 
     public String getDomain() {
-        String login = super.getUserName();
+        String login = getRawUserName();
         String domain = null;
         int slashInd = login != null ? login.indexOf('\\') : -1; 
         if (slashInd != -1) {
