@@ -114,6 +114,7 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
         ourFlags.put(new Long(NEGOTIATE_KEY_EXCHANGE), "0x40000000 (Negotiate Key Exchange)");
         ourFlags.put(new Long(NEGOTIATE_56), "0x80000000 (Negotiate 56)");
     }
+
     private static Map<Integer, String> ourTargetInfoTypes = new TreeMap<Integer, String>();
     static {
         ourTargetInfoTypes.put(new Integer(1), "Server Name");
@@ -925,6 +926,10 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
             key[i] = (byte) (key[i] << 1);
         }
         return key;
+    }
+
+    public boolean allowPropmtForCredentials() {
+        return true;
     }
 
 }

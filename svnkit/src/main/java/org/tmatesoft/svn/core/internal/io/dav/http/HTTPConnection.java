@@ -79,7 +79,7 @@ import org.xml.sax.helpers.DefaultHandler;
  * @version 1.3
  * @author  TMate Software Ltd.
  */
-class HTTPConnection implements IHTTPConnection {
+public class HTTPConnection implements IHTTPConnection {
     
     private static final DefaultHandler DEFAULT_SAX_HANDLER = new DefaultHandler();
     private static EntityResolver NO_ENTITY_RESOLVER = new EntityResolver() {
@@ -230,9 +230,10 @@ class HTTPConnection implements IHTTPConnection {
                                 }
                             }
                             
-                            if (ntlmProxyAuth != null && ntlmProxyAuth.isNative() && authAttempts == 1) {
-                                debugLog.logFine(SVNLogType.NETWORK, "NTLM system credentials would be used");
-                                continue;
+                            if (ntlmProxyAuth != null && authAttempts == 1) {
+                                if (!ntlmProxyAuth.allowPropmtForCredentials()) {
+                                    continue;
+                                }
                             }
                             if (negotiateProxyAuth != null && !negotiateProxyAuth.needsLogin()) {
                                 debugLog.logFine(SVNLogType.NETWORK, "Negotiate will use existing credentials");
