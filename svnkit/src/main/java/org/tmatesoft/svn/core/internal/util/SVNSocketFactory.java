@@ -14,6 +14,8 @@ package org.tmatesoft.svn.core.internal.util;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -24,7 +26,8 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Arrays;
+import java.util.List;
 import java.util.StringTokenizer;
 
 import javax.net.ssl.KeyManager;
@@ -37,6 +40,8 @@ import org.tmatesoft.svn.core.ISVNCanceller;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNClassLoader;
+import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * <code>SVNSocketFactory</code> is a utility class that represents a custom
@@ -89,25 +94,46 @@ public class SVNSocketFactory {
         if (bufferSize > 0) {
             sslSocket.setReceiveBufferSize(bufferSize);
         }
+        sslSocket = setSSLSocketHost(sslSocket, host);
         InetSocketAddress socketAddress = new InetSocketAddress(address, port);
-        connect(sslSocket, socketAddress, connectTimeout, cancel);
         sslSocket.setReuseAddress(true);
         sslSocket.setTcpNoDelay(true);
         sslSocket.setKeepAlive(true);
         sslSocket.setSoLinger(true, 0);
         sslSocket.setSoTimeout(readTimeout);
         sslSocket = configureSSLSocket(sslSocket);
+
+        connect(sslSocket, socketAddress, connectTimeout, cancel);
+
         return sslSocket;
     }
 
     public static Socket createSSLSocket(KeyManager[] keyManagers, TrustManager trustManager, String host, int port, Socket socket, int readTimeout) throws IOException {
         Socket sslSocket = createSSLContext(keyManagers, trustManager).getSocketFactory().createSocket(socket, host, port, true);
+        sslSocket = setSSLSocketHost(sslSocket, host);
         sslSocket.setReuseAddress(true);
         sslSocket.setTcpNoDelay(true);
         sslSocket.setKeepAlive(true);
         sslSocket.setSoLinger(true, 0);
         sslSocket.setSoTimeout(readTimeout);
         sslSocket = configureSSLSocket(sslSocket);
+        
+        return sslSocket;
+    }
+
+    private static Socket setSSLSocketHost(Socket sslSocket, String host) {
+        try {
+            Method m = sslSocket.getClass().getMethod("setHost", String.class);
+            if (m != null) {
+                m.invoke(sslSocket, host);
+                SVNDebugLog.getDefaultLog().logFinest(SVNLogType.NETWORK, "Host set on an SSL socket"); 
+            } 
+        } catch (SecurityException e) {
+        } catch (NoSuchMethodException e) {
+        } catch (IllegalArgumentException e) {
+        } catch (IllegalAccessException e) {
+        } catch (InvocationTargetException e) {
+        }
         return sslSocket;
     }
 
@@ -213,74 +239,106 @@ public class SVNSocketFactory {
         }
         return isStale;
     }
+    
+    private static X509TrustManager EMPTY_TRUST_MANAGER = new X509TrustManager() {
+        public X509Certificate[] getAcceptedIssuers() {
+            return null;
+        }
+        public void checkClientTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
+        }
+        public void checkServerTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
+        }
+    }; 
+
+    private static KeyManager[] EMPTY_KEY_MANAGERS = new KeyManager[0];
 
 	public static SSLContext createSSLContext(KeyManager[] keyManagers, TrustManager trustManager) throws IOException {
-		if (trustManager == null) {
-			trustManager = new X509TrustManager() {
-				public X509Certificate[] getAcceptedIssuers() {
-					return null;
-				}
+        final TrustManager[] trustManagers = new TrustManager[] {trustManager != null ? trustManager : EMPTY_TRUST_MANAGER};
+        keyManagers = keyManagers != null ? keyManagers : EMPTY_KEY_MANAGERS;
+        
+        try {
+            return createSSLContext(keyManagers, trustManagers, getEnabledSSLProtocols(true));
+        } catch (NoSuchAlgorithmException e) {
+            try {
+                return createSSLContext(keyManagers, trustManagers, getEnabledSSLProtocols(false));
+            } catch (NoSuchAlgorithmException e1) {
+                throw new IOException(e1.getMessage());
+            }
+        }
+	}
 
-				public void checkClientTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
-				}
+    private static SSLContext createSSLContext(KeyManager[] keyManagers, final TrustManager[] trustManagers, final List<String> sslProtocols) throws IOException, NoSuchAlgorithmException {
+        SSLContext context = null;
+        NoSuchAlgorithmException missingAlgorithm = null;
+        for (String sslProtocol : sslProtocols) {
+            try {
+                context = SSLContext.getInstance(sslProtocol);
+                if (context == null) {
+                    continue;
+                }
+                context.init(keyManagers, trustManagers, null);
+                return context;
+            } catch (NoSuchAlgorithmException e) {
+                missingAlgorithm = e;
+            } catch (KeyManagementException e) {
+                throw new IOException(e.getMessage());
+            }
+        }
+        if (missingAlgorithm != null) {
+            throw missingAlgorithm;
+        }
+        throw new NoSuchAlgorithmException();
+    }
+	
+	private static final List<String> getEnabledSSLProtocols(boolean includeUserDefined) {
+	    // in case there is a user-defined list of protocols, 
+	    // use it. if all failed or was not provided, use TLS, then SSLv3.
+        final String sslProtocols;
+        synchronized (SVNSocketFactory.class) {
+            sslProtocols = ourSSLProtocols;
+        }
 
-				public void checkServerTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
-				}
-			};
-		}
-
-		if (keyManagers == null) {
-			keyManagers = new KeyManager[0];
-		}
-
-		final TrustManager[] trustManagers = new TrustManager[] {trustManager};
-		try {
-			final SSLContext context = SSLContext.getInstance("SSLv3");
-			context.init(keyManagers, trustManagers, null);
-			return context;
-		}
-		catch (NoSuchAlgorithmException e) {
-			throw new IOException(e.getMessage());
-		}
-		catch (KeyManagementException e) {
-			throw new IOException(e.getMessage());
-		}
+        List<String> protocolsToUse = new ArrayList<String>();
+	    if (includeUserDefined && sslProtocols != null) {
+            for(StringTokenizer tokens = new StringTokenizer(sslProtocols, ","); tokens.hasMoreTokens();) {
+                String userProtocol = tokens.nextToken().trim();
+                if (!"".equals(userProtocol)) {
+                    protocolsToUse.add(userProtocol);
+                }
+            }
+	    }
+	    if (protocolsToUse.isEmpty()) {
+	        protocolsToUse.add("TLS");
+	        protocolsToUse.add("SSLv3");
+	    }
+	    return protocolsToUse;
 	}
 
     public static Socket configureSSLSocket(Socket socket) {
         if (socket == null || !(socket instanceof SSLSocket)) {
             return null;
         }
-        SSLSocket sslSocket = (SSLSocket) socket;
-        final String sslProtocols;
-        synchronized (SVNSocketFactory.class) {
-            sslProtocols = ourSSLProtocols;
-        }
-        if (sslProtocols != null && "SSLv3".equals(sslProtocols.trim())) {
-            sslSocket.setEnabledProtocols(new String[] {"SSLv3"});
-            return sslSocket;
-        }
-        String[] protocols = null;
+        final SSLSocket sslSocket = (SSLSocket) socket;
+        // configure enabled protocols enabling those supported.
+        final List<String> enabledProtocols = getEnabledSSLProtocols(true);
+        final List<String> defaultEnabledProtocols = Arrays.asList(sslSocket.getEnabledProtocols());
+        final List<String> supportedProtocols = Arrays.asList(sslSocket.getSupportedProtocols());
+        final List<String> protocolsToEnable = new ArrayList<String>();
         
-        if (sslProtocols != null) {
-            final Collection<String> userProtocols = new ArrayList<String>();
-            for(StringTokenizer tokens = new StringTokenizer(sslProtocols, ","); tokens.hasMoreTokens();) {
-                String userProtocol = tokens.nextToken().trim();
-                if (!"".equals(userProtocol)) {
-                    userProtocols.add(userProtocol);
+        for (String enabledProtocol : enabledProtocols) {
+            for (String supportedProtocol : supportedProtocols) {
+                if (supportedProtocol.startsWith(enabledProtocol)) {
+                    protocolsToEnable.add(supportedProtocol);
                 }
             }
-            protocols = (String[]) userProtocols.toArray(new String[userProtocols.size()]);
-        } else {
-            protocols = sslSocket.getSupportedProtocols();
         }
-        String[] suites = sslSocket.getSupportedCipherSuites();
-        if (protocols != null && protocols.length > 0) {
-            sslSocket.setEnabledProtocols(protocols);
+
+        if (protocolsToEnable.isEmpty()) {
+            // fall back to default.
+            protocolsToEnable.addAll(defaultEnabledProtocols);
         }
-        if (suites != null && suites.length > 0) {
-            sslSocket.setEnabledCipherSuites(suites);
-        }
+        sslSocket.setEnabledProtocols(protocolsToEnable.toArray(new String[protocolsToEnable.size()]));
+        SVNDebugLog.getDefaultLog().logFinest(SVNLogType.NETWORK, "SSL protocols explicitly enabled: " + protocolsToEnable);
         return sslSocket;
     }
 }
