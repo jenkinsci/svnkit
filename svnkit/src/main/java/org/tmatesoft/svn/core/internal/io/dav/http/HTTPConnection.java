@@ -636,14 +636,16 @@ public class HTTPConnection implements IHTTPConnection {
 
                 myLastValidAuth = null;
 
-                if (ntlmAuth != null && ntlmAuth.isNative() && authAttempts == 1) {
+                if (ntlmAuth != null && authAttempts == 1) {
                     /*
                      * if this is the first time we get HTTP_UNAUTHORIZED, NTLM is the target auth scheme
                      * and JNA is available, we should try a native auth mechanism first without calling 
                      * auth providers. 
-                     */
-                    continue;
-                }
+                     */                
+                    if (!ntlmAuth.allowPropmtForCredentials()) {
+                        continue;
+                    }
+               }
 
                 if (negoAuth != null && !negoAuth.needsLogin()) {
                     continue;
