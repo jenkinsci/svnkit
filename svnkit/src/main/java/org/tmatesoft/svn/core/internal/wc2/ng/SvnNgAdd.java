@@ -43,7 +43,18 @@ public class SvnNgAdd extends SvnNgOperationRunner<Void, SvnScheduleForAddition>
 	protected Void run(SVNWCContext context) throws SVNException {
 		final Map<File, List<SvnTarget>> rootToTargets = new HashMap<File, List<SvnTarget>>();
 		for (SvnTarget target : getOperation().getTargets()) {
-			final File root = getWcContext().getDb().getWCRoot(target.getFile());
+		    final File targetFile = target.getFile();
+		    final File root;		    
+		    if (!getWcContext().getDb().isWCRoot(targetFile, true)) {
+	            File parentPath = SVNFileUtil.getParentFile(targetFile);
+	            if (getOperation().isAddParents()) {
+	                parentPath = findExistingParent(parentPath);
+	            }
+	            root = getWcContext().getDb().getWCRoot(parentPath);
+	        } else {
+	            root = targetFile;
+	        }
+		    
 			List<SvnTarget> targets = rootToTargets.get(root);
 			if (targets == null) {
 				targets = new ArrayList<SvnTarget>();
@@ -55,7 +66,7 @@ public class SvnNgAdd extends SvnNgOperationRunner<Void, SvnScheduleForAddition>
 
 		for (File root : rootToTargets.keySet()) {
 			final List<SvnTarget> targets = rootToTargets.get(root);
-			File lockRoot = getWcContext().acquireWriteLock(root, false, true);
+			final File lockRoot = getWcContext().acquireWriteLock(root, false, true);
 			try {
 				for (SvnTarget target : targets) {
 					add(target);
