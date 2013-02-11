@@ -1,7 +1,10 @@
 package org.tmatesoft.svn.core.internal.wc2.ng;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 
@@ -36,15 +39,37 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 public class SvnNgAdd extends SvnNgOperationRunner<Void, SvnScheduleForAddition> {
 
-    @Override
-    protected Void run(SVNWCContext context) throws SVNException {
-        for (SvnTarget target : getOperation().getTargets()) {
-            add(target);            
-        }
-        return null;
-    }
+	@Override
+	protected Void run(SVNWCContext context) throws SVNException {
+		final Map<File, List<SvnTarget>> rootToTargets = new HashMap<File, List<SvnTarget>>();
+		for (SvnTarget target : getOperation().getTargets()) {
+			final File root = getWcContext().getDb().getWCRoot(target.getFile());
+			List<SvnTarget> targets = rootToTargets.get(root);
+			if (targets == null) {
+				targets = new ArrayList<SvnTarget>();
+				rootToTargets.put(root, targets);
+			}
 
-    private void add(SvnTarget target) throws SVNException {
+			targets.add(target);
+		}
+
+		for (File root : rootToTargets.keySet()) {
+			final List<SvnTarget> targets = rootToTargets.get(root);
+			File lockRoot = getWcContext().acquireWriteLock(root, false, true);
+			try {
+				for (SvnTarget target : targets) {
+					add(target);
+				}
+			}
+			finally {
+				getWcContext().releaseWriteLock(lockRoot);
+			}
+		}
+
+		return null;
+	}
+
+	private void add(SvnTarget target) throws SVNException {
         if (target.isURL()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "''{0}'' is not a local path", target.getURL());
             SVNErrorManager.error(err, SVNLogType.WC);
@@ -70,8 +95,7 @@ public class SvnNgAdd extends SvnNgOperationRunner<Void, SvnScheduleForAddition>
         } else if (targetType == SVNFileType.NONE && getOperation().isMkDir()) {
             SVNFileUtil.ensureDirectoryExists(path);
         }
-        
-        File lockRoot = getWcContext().acquireWriteLock(existingParent, false, true);
+
         try {
             add(path, parentPath, existingParent);
         } catch (SVNException e) {
@@ -79,8 +103,6 @@ public class SvnNgAdd extends SvnNgOperationRunner<Void, SvnScheduleForAddition>
                 SVNFileUtil.deleteAll(path, true);
             }
             throw e;
-        } finally {
-            getWcContext().releaseWriteLock(lockRoot);
         }
     }
 
@@ -163,7 +185,7 @@ public class SvnNgAdd extends SvnNgOperationRunner<Void, SvnScheduleForAddition>
                         if (SVNProperty.EOL_STYLE.equals(propertyName) &&
                                 e.getErrorMessage().getErrorCode() == SVNErrorCode.ILLEGAL_TARGET &&
                                 e.getErrorMessage().getMessage().indexOf("newlines") >= 0) {
-                            final ISvnAddParameters addParameters = getOperation().getAddParameters() == null ? 
+                            final ISvnAddParameters addParameters = getOperation().getAddParameters() == null ?
                                     ISvnAddParameters.DEFAULT :
                                     getOperation().getAddParameters();
                             ISvnAddParameters.Action action = addParameters.onInconsistentEOLs(path);
