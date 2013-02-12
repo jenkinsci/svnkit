@@ -323,9 +323,9 @@ public class SvnNgPropertiesManager {
                         onValidationError.run();
                         throw e;
                     } else if (action == ISvnAddParameters.Action.ADD_AS_IS) {
-                        SvnNgPropertiesManager.setProperty(context, path, propertyName, null, SVNDepth.EMPTY, false, null, null);
+                        properties.remove(propertyName);
                     } else if (action == ISvnAddParameters.Action.ADD_AS_BINARY) {
-                        SvnNgPropertiesManager.setProperty(context, path, propertyName, null, SVNDepth.EMPTY, false, null, null);
+                        properties.remove(propertyName);
                         detectedMimeType = SVNFileUtil.BINARY_MIME_TYPE;
                     }
                 } else {
