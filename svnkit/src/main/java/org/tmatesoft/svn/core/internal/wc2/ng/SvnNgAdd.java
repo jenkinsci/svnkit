@@ -196,8 +196,13 @@ public class SvnNgAdd extends SvnNgOperationRunner<Void, SvnScheduleForAddition>
                 
             });
         }
-        handleEvent(SVNEventFactory.createSVNEvent(path, SVNNodeKind.FILE, properties.getStringValue(SVNProperty.MIME_TYPE), -1, SVNEventAction.ADD, 
-                SVNEventAction.ADD, null, null, 1, 1));
+        handleEvent(SVNEventFactory.createSVNEvent(path, 
+                SVNNodeKind.FILE, 
+                properties != null ?
+                properties.getStringValue(SVNProperty.MIME_TYPE) : null, -1, 
+                SVNEventAction.ADD, 
+                SVNEventAction.ADD, 
+                null, null, 1, 1));
     }
 
     private void doRevert(File path) {
