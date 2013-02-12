@@ -173,19 +173,19 @@ public class SvnNgAdd extends SvnNgOperationRunner<Void, SvnScheduleForAddition>
     }
 
     private void addFile(File path) throws SVNException {
-        boolean special = SVNFileType.getType(path) == SVNFileType.SYMLINK;
+        final boolean special = SVNFileType.getType(path) == SVNFileType.SYMLINK;
         SVNProperties properties = null;
-        String mimeType = null;
         
         if (!special) {
-            Map<?, ?> autoProps = SVNPropertiesManager.computeAutoProperties(getOperation().getOptions(), path, null);
+            final Map<?, ?> autoProps = SVNPropertiesManager.computeAutoProperties(getOperation().getOptions(), path, null);
             properties = SVNProperties.wrap(autoProps);
-            mimeType = properties.getStringValue(SVNProperty.MIME_TYPE);
         } else {
             properties = new SVNProperties();
             properties.put(SVNProperty.SPECIAL, "*");
         }
         addFromDisk(path, false);
+        
+        String detectedMimeType = null;
         if (properties != null) {
             for (String propertyName : properties.nameSet()) {
                 SVNPropertyValue value = properties.getSVNPropertyValue(propertyName);
@@ -207,7 +207,7 @@ public class SvnNgAdd extends SvnNgOperationRunner<Void, SvnScheduleForAddition>
                                 SvnNgPropertiesManager.setProperty(getWcContext(), path, propertyName, null, SVNDepth.EMPTY, false, null, null);
                             } else if (action == ISvnAddParameters.Action.ADD_AS_BINARY) {
                                 SvnNgPropertiesManager.setProperty(getWcContext(), path, propertyName, null, SVNDepth.EMPTY, false, null, null);
-                                mimeType = SVNFileUtil.BINARY_MIME_TYPE;
+                                detectedMimeType = SVNFileUtil.BINARY_MIME_TYPE;
                             }
                         } else {
                             doRevert(path);
@@ -216,14 +216,13 @@ public class SvnNgAdd extends SvnNgOperationRunner<Void, SvnScheduleForAddition>
                     }
                 }
             }
-            if (mimeType != null) {
-                SvnNgPropertiesManager.setProperty(getWcContext(), path, SVNProperty.MIME_TYPE, SVNPropertyValue.create(mimeType), SVNDepth.EMPTY, false, null, null);
+            if (detectedMimeType != null) {
+                SvnNgPropertiesManager.setProperty(getWcContext(), path, SVNProperty.MIME_TYPE, SVNPropertyValue.create(detectedMimeType), SVNDepth.EMPTY, false, null, null);
             } else {
-                mimeType = properties.getStringValue(SVNProperty.MIME_TYPE);
+                detectedMimeType = properties.getStringValue(SVNProperty.MIME_TYPE);
             }
         }
-
-        handleEvent(SVNEventFactory.createSVNEvent(path, SVNNodeKind.FILE, mimeType, -1, SVNEventAction.ADD, 
+        handleEvent(SVNEventFactory.createSVNEvent(path, SVNNodeKind.FILE, detectedMimeType, -1, SVNEventAction.ADD, 
                 SVNEventAction.ADD, null, null, 1, 1));
     }
 
