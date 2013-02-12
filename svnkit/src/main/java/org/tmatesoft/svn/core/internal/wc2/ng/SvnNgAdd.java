@@ -172,57 +172,32 @@ public class SvnNgAdd extends SvnNgOperationRunner<Void, SvnScheduleForAddition>
         
     }
 
-    private void addFile(File path) throws SVNException {
+    private void addFile(final File path) throws SVNException {
         final boolean special = SVNFileType.getType(path) == SVNFileType.SYMLINK;
         SVNProperties properties = null;
         
         if (!special) {
             final Map<?, ?> autoProps = SVNPropertiesManager.computeAutoProperties(getOperation().getOptions(), path, null);
-            properties = SVNProperties.wrap(autoProps);
+            if (autoProps != null && !autoProps.isEmpty()) {
+                properties = SVNProperties.wrap(autoProps);
+            }
         } else {
             properties = new SVNProperties();
             properties.put(SVNProperty.SPECIAL, "*");
         }
         addFromDisk(path, false);
-        
-        String detectedMimeType = null;
         if (properties != null) {
-            for (String propertyName : properties.nameSet()) {
-                SVNPropertyValue value = properties.getSVNPropertyValue(propertyName);
-                if (value != null) {
-                    try {
-                        SvnNgPropertiesManager.setProperty(getWcContext(), path, SVNNodeKind.FILE, propertyName, value, null, false, null, null);
-                    } catch (SVNException e) {
-                        if (SVNProperty.EOL_STYLE.equals(propertyName) &&
-                                e.getErrorMessage().getErrorCode() == SVNErrorCode.ILLEGAL_TARGET &&
-                                e.getErrorMessage().getMessage().indexOf("newlines") >= 0) {
-                            final ISvnAddParameters addParameters = getOperation().getAddParameters() == null ?
-                                    ISvnAddParameters.DEFAULT :
-                                    getOperation().getAddParameters();
-                            ISvnAddParameters.Action action = addParameters.onInconsistentEOLs(path);
-                            if (action == ISvnAddParameters.Action.REPORT_ERROR) {
-                                doRevert(path);
-                                throw e;
-                            } else if (action == ISvnAddParameters.Action.ADD_AS_IS) {
-                                SvnNgPropertiesManager.setProperty(getWcContext(), path, propertyName, null, SVNDepth.EMPTY, false, null, null);
-                            } else if (action == ISvnAddParameters.Action.ADD_AS_BINARY) {
-                                SvnNgPropertiesManager.setProperty(getWcContext(), path, propertyName, null, SVNDepth.EMPTY, false, null, null);
-                                detectedMimeType = SVNFileUtil.BINARY_MIME_TYPE;
-                            }
-                        } else {
-                            doRevert(path);
-                            throw e;
-                        }
-                    }
+            final ISvnAddParameters addParameters = getOperation().getAddParameters() == null ?
+                    ISvnAddParameters.DEFAULT :
+                    getOperation().getAddParameters();
+            SvnNgPropertiesManager.setAutoProperties(getWcContext(), path, properties, addParameters, new Runnable() {
+                public void run() {
+                    doRevert(path);
                 }
-            }
-            if (detectedMimeType != null) {
-                SvnNgPropertiesManager.setProperty(getWcContext(), path, SVNProperty.MIME_TYPE, SVNPropertyValue.create(detectedMimeType), SVNDepth.EMPTY, false, null, null);
-            } else {
-                detectedMimeType = properties.getStringValue(SVNProperty.MIME_TYPE);
-            }
+                
+            });
         }
-        handleEvent(SVNEventFactory.createSVNEvent(path, SVNNodeKind.FILE, detectedMimeType, -1, SVNEventAction.ADD, 
+        handleEvent(SVNEventFactory.createSVNEvent(path, SVNNodeKind.FILE, properties.getStringValue(SVNProperty.MIME_TYPE), -1, SVNEventAction.ADD, 
                 SVNEventAction.ADD, null, null, 1, 1));
     }
 
