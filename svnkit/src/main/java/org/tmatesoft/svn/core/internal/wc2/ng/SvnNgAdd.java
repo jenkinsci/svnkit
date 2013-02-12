@@ -191,7 +191,7 @@ public class SvnNgAdd extends SvnNgOperationRunner<Void, SvnScheduleForAddition>
                 SVNPropertyValue value = properties.getSVNPropertyValue(propertyName);
                 if (value != null) {
                     try {
-                        SvnNgPropertiesManager.setProperty(getWcContext(), path, propertyName, value, SVNDepth.EMPTY, false, null, null);
+                        SvnNgPropertiesManager.setProperty(getWcContext(), path, SVNNodeKind.FILE, propertyName, value, null, false, null, null);
                     } catch (SVNException e) {
                         if (SVNProperty.EOL_STYLE.equals(propertyName) &&
                                 e.getErrorMessage().getErrorCode() == SVNErrorCode.ILLEGAL_TARGET &&

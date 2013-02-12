@@ -157,7 +157,7 @@ public class SvnNgPropertiesManager {
         }
     }
 
-    private static void setProperty(final SVNWCContext context, final File path, SVNNodeKind kind, String propertyName, SVNPropertyValue value, 
+    public static void setProperty(final SVNWCContext context, final File path, SVNNodeKind kind, String propertyName, SVNPropertyValue value, 
             ISvnPropertyValueProvider pvProvider, boolean skipChecks, ISVNEventHandler eventHandler, ISvnObjectReceiver<SVNPropertyData> receiver) throws SVNException {
         Structure<NodeInfo> nodeInfo = context.getDb().readInfo(path, NodeInfo.status);
         ISVNWCDb.SVNWCDbStatus status = nodeInfo.get(NodeInfo.status);
@@ -168,8 +168,8 @@ public class SvnNgPropertiesManager {
             SVNErrorManager.error(err, SVNLogType.WC);
         }
         
-        if (pvProvider == null && value != null && SVNProperty.isSVNProperty(propertyName)) {
-            ISVNFileContentFetcher fetcher = new ISVNFileContentFetcher() {                
+        if (pvProvider == null && value != null && SVNProperty.isSVNProperty(propertyName)) {            
+            final ISVNFileContentFetcher fetcher = new ISVNFileContentFetcher() {                
                 public SVNPropertyValue getProperty(String propertyName) throws SVNException {
                     return context.getPropertyValue(path, propertyName);
                 }                
