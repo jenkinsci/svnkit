@@ -43,8 +43,10 @@ public class SvnNgAdd extends SvnNgOperationRunner<Void, SvnScheduleForAddition>
 		final Map<File, List<SvnTarget>> rootToTargets = new HashMap<File, List<SvnTarget>>();
 		for (SvnTarget target : getOperation().getTargets()) {
 		    final File targetFile = target.getFile();
-		    final File root;		    
-		    if (!getWcContext().getDb().isWCRoot(targetFile, true)) {
+		    final File root;
+		    final SVNFileType targetType = SVNFileType.getType(target.getFile());
+		    
+		    if (targetType == SVNFileType.FILE || !getWcContext().getDb().isWCRoot(targetFile, true)) {
 	            File parentPath = SVNFileUtil.getParentFile(targetFile);
 	            if (getOperation().isAddParents()) {
 	                parentPath = findExistingParent(parentPath);
