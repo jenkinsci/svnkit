@@ -32,7 +32,7 @@ class SVNWinCrypt {
         }
         ISVNWinCryptLibrary library = JNALibraryLoader.getWinCryptLibrary();
         if (library == null) {
-            return encryptedData;
+            return null;
         }
         byte[] buffer = new byte[encryptedData.length()];
         StringBuffer sb = SVNBase64.normalizeBase64(new StringBuffer(encryptedData));
@@ -58,13 +58,13 @@ class SVNWinCrypt {
                 dataOut.read();
             }
             if (dataOut.cbSize == null || dataOut.cbSize.intValue() <= 0) {
-                return encryptedData;
+                return null;
             }
             byte[] decryptedData = new byte[dataOut.cbSize.intValue()];
             dataOut.cbData.read(0, decryptedData, 0, decryptedData.length);
             return new String(decryptedData, 0, decryptedData.length, "UTF-8");
         } catch (Throwable th) {
-            return encryptedData;
+            return null;
         } finally {
             ISVNKernel32Library kernel = JNALibraryLoader.getKernelLibrary();
             if (kernel != null) {
