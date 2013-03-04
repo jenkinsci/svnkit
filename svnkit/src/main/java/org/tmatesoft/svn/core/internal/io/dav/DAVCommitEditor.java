@@ -41,6 +41,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
+import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -394,7 +395,12 @@ class DAVCommitEditor implements ISVNEditor {
 	    finally {
             // we should run abort edit if exception is thrown
             // abort edit will not be run if there was an error (from server side) on MERGE.
-            abortEdit();
+            try {
+                abortEdit();
+            } catch (SVNException e) {
+                SVNDebugLog.getDefaultLog().logError(SVNLogType.DEFAULT, e);
+            }
+
             // always run close callback to 'unlock' SVNRepository.
             runCloseCallback();            
 	    }
