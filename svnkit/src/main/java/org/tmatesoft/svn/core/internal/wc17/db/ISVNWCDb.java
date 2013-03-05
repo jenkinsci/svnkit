@@ -158,6 +158,8 @@ public interface ISVNWCDb {
                 case ServerExcluded:
                 case Excluded:
                     nKind = SVNNodeKind.NONE;
+                default:
+                    break;
                 }
             }
             return nKind;
@@ -1607,4 +1609,6 @@ public interface ISVNWCDb {
     }
 
     SVNWCDbNodeCheckReplaceData nodeCheckReplace(File localAbspath) throws SVNException;
+    
+    SVNSqlJetDb getSDb(File dirAbsPath) throws SVNException;
 }

@@ -1731,6 +1731,14 @@ public class SVNWCDb implements ISVNWCDb {
         }
         return false;
     }
+    
+    public SVNSqlJetDb getSDb(File localAbsPath) throws SVNException {
+        DirParsedInfo parseDir = parseDir(localAbsPath, Mode.ReadWrite);
+        SVNWCDbDir pdh = parseDir.wcDbDir;
+        verifyDirUsable(pdh);
+        
+        return pdh.getWCRoot().getSDb();        
+    }
 
     public void opAddDirectory(File localAbsPath, SVNSkel workItems) throws SVNException {
         DirParsedInfo parseDir = parseDir(localAbsPath, Mode.ReadWrite);

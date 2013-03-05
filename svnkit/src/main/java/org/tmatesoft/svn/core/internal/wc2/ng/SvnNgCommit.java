@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Level;
 
+import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -19,6 +20,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
@@ -32,6 +34,7 @@ import org.tmatesoft.svn.core.internal.wc17.SVNCommitter17;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
+import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
 import org.tmatesoft.svn.core.internal.wc2.ISvnCommitRunner;
@@ -359,17 +362,31 @@ public class SvnNgCommit extends SvnNgOperationRunner<SVNCommitInfo, SvnCommit> 
     }
 
     private void processCommittedQueue(SvnCommittedQueue queue, long newRevision, Date revDate, String revAuthor) throws SVNException {
-        Collection<File> roots = new HashSet<File>();
-        
-        for (SvnCommittedQueueItem cqi : queue.queue.values()) {
-            processCommittedInternal(cqi.localAbspath, cqi.recurse, true, newRevision, new SVNDate(revDate.getTime(), 0), revAuthor, cqi.newDavCache, cqi.noUnlock, cqi.keepChangelist, cqi.sha1Checksum, queue);
-            File root = getWcContext().getDb().getWCRoot(cqi.localAbspath);
-            roots.add(root);
-        }
-        for (File root : roots) {
-            getWcContext().wqRun(root);
+        final Map<File, Collection<SvnCommittedQueueItem>> itemsMap = new HashMap<File, Collection<SvnCommittedQueueItem>>();
+        for (final SvnCommittedQueueItem cqi : queue.queue.values()) {
+            final File root = getWcContext().getDb().getWCRoot(cqi.localAbspath);
+            if (!itemsMap.containsKey(root)) {
+                itemsMap.put(root, new ArrayList<SvnNgCommit.SvnCommittedQueueItem>());
+            }
+            itemsMap.get(root).add(cqi);
         }
         queue.queue.clear();
+        
+        for (final File root : itemsMap.keySet()) {
+            final SVNSqlJetDb db = getWcContext().getDb().getSDb(root);
+            db.beginTransaction(SqlJetTransactionMode.WRITE);
+            try {
+                for (SvnCommittedQueueItem cqi : itemsMap.get(root)) {
+                    processCommittedInternal(cqi.localAbspath, cqi.recurse, true, newRevision, new SVNDate(revDate.getTime(), 0), revAuthor, cqi.newDavCache, cqi.noUnlock, cqi.keepChangelist, cqi.sha1Checksum, queue);
+                }
+                getWcContext().wqRun(root);
+            } catch (SVNException th) {
+                db.rollback();
+                throw th;
+            } finally {
+                db.commit();
+            }
+        }
     }
     
     private void processCommittedInternal(File localAbspath, boolean recurse, boolean topOfRecurse, long newRevision, SVNDate revDate, String revAuthor, SVNProperties newDavCache, boolean noUnlock,
