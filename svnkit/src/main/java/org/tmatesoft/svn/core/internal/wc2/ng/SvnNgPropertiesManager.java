@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.StringTokenizer;
+import java.util.logging.Level;
 
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -44,6 +45,7 @@ import org.tmatesoft.svn.core.wc2.ISvnAddParameters;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.core.wc2.hooks.ISvnPropertyValueProvider;
+import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 public class SvnNgPropertiesManager {
@@ -320,7 +322,12 @@ public class SvnNgPropertiesManager {
                         e.getErrorMessage().getMessage().indexOf("newlines") >= 0) {
                     ISvnAddParameters.Action action = addParameters.onInconsistentEOLs(path);
                     if (action == ISvnAddParameters.Action.REPORT_ERROR) {
-                        onValidationError.run();
+                        try {
+                            onValidationError.run();
+                        } catch (Throwable th) {
+                            SVNDebugLog.getDefaultLog().log(SVNLogType.WC, th, Level.INFO);
+                        }
+                            
                         throw e;
                     } else if (action == ISvnAddParameters.Action.ADD_AS_IS) {
                         properties.remove(propertyName);
@@ -329,7 +336,11 @@ public class SvnNgPropertiesManager {
                         detectedMimeType = SVNFileUtil.BINARY_MIME_TYPE;
                     }
                 } else {
-                    onValidationError.run();
+                    try {
+                        onValidationError.run();
+                    } catch (Throwable th) {
+                        SVNDebugLog.getDefaultLog().log(SVNLogType.WC, th, Level.INFO);
+                    }
                     throw e;
                 }
             }
