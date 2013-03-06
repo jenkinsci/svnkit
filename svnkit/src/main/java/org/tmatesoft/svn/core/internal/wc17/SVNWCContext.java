@@ -85,6 +85,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeOriginInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.PristineInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.WalkerChildInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbReader;
+import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbReader.InstallInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbShared;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldUpgrade;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -3494,9 +3495,17 @@ public class SVNWCContext {
             if (tinfo.special) {
                 return;
             }
-            ctx.syncFileFlags(localAbspath);
+            
+            final Structure<InstallInfo> installInfo = SvnWcDbReader.readNodeInstallInfo((SVNWCDb) ctx.getDb(), 
+                    localAbspath, InstallInfo.changedDate, InstallInfo.pristineProps);            
+            final SVNProperties props = installInfo.get(InstallInfo.pristineProps);
+            if (props != null &&
+                    props.containsName(SVNProperty.EXECUTABLE) ||
+                    props.containsName(SVNProperty.NEEDS_LOCK)) {
+                ctx.syncFileFlags(localAbspath);
+            }
             if (useCommitTimes) {
-                SVNDate changedDate = ctx.getDb().readInfo(localAbspath, InfoField.changedDate).changedDate;
+                final SVNDate changedDate = installInfo.get(InstallInfo.changedDate);
                 if (changedDate != null) {
                     SVNFileUtil.setLastModified(localAbspath, changedDate.getTime());
                 }
