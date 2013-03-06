@@ -12,8 +12,6 @@
 package org.tmatesoft.svn.core.auth;
 
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.util.SVNDebugLog;
-import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * The <b>SVNPasswordAuthentication</b> class represents a simple 
@@ -62,10 +60,6 @@ public class SVNPasswordAuthentication extends SVNAuthentication {
     public SVNPasswordAuthentication(String userName, String password, boolean storageAllowed, SVNURL url, boolean isPartial) {
         super(ISVNAuthenticationManager.PASSWORD, userName, storageAllowed, url, isPartial);
         myPassword = password == null ? "" : password;
-        SVNDebugLog.getDefaultLog().logFine(SVNLogType.WC, "SVNPasswordAuthentication instantiated."); 
-        SVNDebugLog.getDefaultLog().logFine(SVNLogType.WC, "user name: " + userName); 
-        SVNDebugLog.getDefaultLog().logFine(SVNLogType.WC, "password: " + password); 
-        SVNDebugLog.getDefaultLog().logFine(SVNLogType.WC, new Exception()); 
     }
 
     /**
