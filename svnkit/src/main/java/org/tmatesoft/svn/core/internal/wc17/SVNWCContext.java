@@ -3500,8 +3500,8 @@ public class SVNWCContext {
                     localAbspath, InstallInfo.changedDate, InstallInfo.pristineProps);            
             final SVNProperties props = installInfo.get(InstallInfo.pristineProps);
             if (props != null &&
-                    props.containsName(SVNProperty.EXECUTABLE) ||
-                    props.containsName(SVNProperty.NEEDS_LOCK)) {
+                    (props.containsName(SVNProperty.EXECUTABLE) ||
+                     props.containsName(SVNProperty.NEEDS_LOCK))) {
                 ctx.syncFileFlags(localAbspath);
             }
             if (useCommitTimes) {
