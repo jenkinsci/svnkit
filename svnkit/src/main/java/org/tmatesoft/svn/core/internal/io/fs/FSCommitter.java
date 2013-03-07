@@ -714,24 +714,27 @@ public class FSCommitter {
             }
             txnRoot.setEntry(target, sourceEntry.getName(), sourceEntry.getId(), sourceEntry.getType());
         }
-        long sourceCount = source.getCount();
-        updateAncestry(owner, sourceId, targetId, targetPath, sourceCount);
+        updateAncestry(owner, sourceId, targetId);
         if (owner.supportsMergeInfo()) {
             txnRoot.incrementMergeInfoCount(target, mergeInfoIncrement);
         }
         return mergeInfoIncrement;
     }
 
-    private static void updateAncestry(FSFS owner, FSID sourceId, FSID targetId, String targetPath, long sourcePredecessorCount) throws SVNException {
+    private static void updateAncestry(FSFS owner, FSID sourceId, FSID targetId) throws SVNException {
         if (!targetId.isTxn()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_MUTABLE, "Unexpected immutable node at ''{0}''", targetPath);
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_MUTABLE, "Attempt to update ancestry of non-mutable node");
             SVNErrorManager.error(err, SVNLogType.FSFS);
         }
-        FSRevisionNode revNode = owner.getRevisionNode(targetId);
-        revNode.setPredecessorId(sourceId);
-        revNode.setCount(sourcePredecessorCount != -1 ? sourcePredecessorCount + 1 : sourcePredecessorCount);
-        revNode.setIsFreshTxnRoot(false);
-        owner.putTxnRevisionNode(targetId, revNode);
+        final FSRevisionNode targetNode = owner.getRevisionNode(targetId);
+        final FSRevisionNode sourceNode = owner.getRevisionNode(sourceId);
+        targetNode.setPredecessorId(sourceNode.getId());
+        final long sourcePredecessorCount = sourceNode.getCount();
+        targetNode.setPredecessorId(sourceId);
+        targetNode.setCount(sourcePredecessorCount != -1 ? sourcePredecessorCount + 1 : sourcePredecessorCount);
+        
+        targetNode.setIsFreshTxnRoot(false);
+        owner.putTxnRevisionNode(targetId, targetNode);
     }
 
     private void verifyLocks() throws SVNException {
