@@ -13,6 +13,7 @@ package org.tmatesoft.svn.core.internal.wc17.db;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
+import org.tmatesoft.sqljet.core.internal.SqlJetPagerJournalMode;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.db.*;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb.Mode;
@@ -75,6 +76,15 @@ public class SVNWCDb implements ISVNWCDb {
     private boolean autoUpgrade;
     private boolean enforceEmptyWQ;
     private Map<String, SVNWCDbDir> dirData;
+    private SqlJetPagerJournalMode journalMode;
+
+    public SVNWCDb() {
+        this(null);
+    }
+    
+    public SVNWCDb(SqlJetPagerJournalMode journalMode) {
+        this.journalMode = journalMode;
+    }
 
     public void open(final SVNWCDbOpenMode mode, final ISVNOptions config, final boolean autoUpgrade, final boolean enforceEmptyWQ) {
         this.config = config;
@@ -184,7 +194,7 @@ public class SVNWCDb implements ISVNWCDb {
 
         CreateDbInfo info = new CreateDbInfo();
 
-        info.sDb = openDb(dirAbsPath, sdbFileName, SVNSqlJetDb.Mode.RWCreate);
+        info.sDb = openDb(dirAbsPath, sdbFileName, SVNSqlJetDb.Mode.RWCreate, journalMode);
 
         /* Create the database's schema. */
         info.sDb.execStatement(SVNWCDbStatements.CREATE_SCHEMA);
@@ -1451,7 +1461,7 @@ public class SVNWCDb implements ISVNWCDb {
         while (true) {
 
             try {
-                sDb = openDb(localAbspath, SDB_FILE, sMode);
+                sDb = openDb(localAbspath, SDB_FILE, sMode, journalMode);
                 break;
             } catch (SVNException e) {
                 if (e.getErrorMessage().getErrorCode() != SVNErrorCode.SQLITE_ERROR && !e.isEnoent()) {
@@ -3572,12 +3582,12 @@ public class SVNWCDb implements ISVNWCDb {
         return info;
     }
 
-    private static SVNSqlJetDb openDb(File dirAbsPath, String sdbFileName, Mode sMode) throws SVNException {
+    private static SVNSqlJetDb openDb(File dirAbsPath, String sdbFileName, Mode sMode, SqlJetPagerJournalMode journalMode) throws SVNException {
         if (dirAbsPath == null || sdbFileName == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND);
             SVNErrorManager.error(err, SVNLogType.WC);
         }
-        return SVNSqlJetDb.open(SVNWCUtils.admChild(dirAbsPath, sdbFileName), sMode);
+        return SVNSqlJetDb.open(SVNWCUtils.admChild(dirAbsPath, sdbFileName), sMode, journalMode);
     }
 
     private static void verifyDirUsable(SVNWCDbDir pdh) throws SVNException {

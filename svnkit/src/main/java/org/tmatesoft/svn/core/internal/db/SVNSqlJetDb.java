@@ -97,20 +97,26 @@ public class SVNSqlJetDb {
     }
 
     public static SVNSqlJetDb open(File sdbAbsPath, Mode mode) throws SVNException {
+        return open(sdbAbsPath, mode, getJournalMode());
+    }
+
+    public static SVNSqlJetDb open(File sdbAbsPath, Mode mode, SqlJetPagerJournalMode journalMode) throws SVNException {
         if (mode != Mode.RWCreate) {
             if (!sdbAbsPath.exists()) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "File not found ''{0}''", sdbAbsPath);
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
         }
+        if (journalMode == null) {
+            journalMode = getJournalMode();
+        }
         try {
             SqlJetDb db = SqlJetDb.open(sdbAbsPath, mode != Mode.ReadOnly);
             db.setBusyHandler(DEFAULT_BUSY_HANDLER);
             db.setSafetyLevel(SqlJetSafetyLevel.OFF);
-            db.setJournalMode(ourPagerJournalMode);
+            db.setJournalMode(journalMode);
             
-            SVNSqlJetDb sDb = new SVNSqlJetDb(db);
-            return sDb;
+            return new SVNSqlJetDb(db);
         } catch (SqlJetException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SQLITE_ERROR, e);
             SVNErrorManager.error(err, SVNLogType.WC);

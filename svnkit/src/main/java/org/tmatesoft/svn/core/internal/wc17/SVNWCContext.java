@@ -32,6 +32,7 @@ import java.util.Set;
 import java.util.Stack;
 import java.util.logging.Level;
 
+import org.tmatesoft.sqljet.core.internal.SqlJetPagerJournalMode;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -272,11 +273,19 @@ public class SVNWCContext {
     private List<CleanupHandler> cleanupHandlers = new LinkedList<CleanupHandler>();
 
     public SVNWCContext(ISVNOptions config, ISVNEventHandler eventHandler) {
-        this(SVNWCDbOpenMode.ReadWrite, config, true, true, eventHandler);
+        this(SVNWCDbOpenMode.ReadWrite, config, true, true, eventHandler, null);
+    }
+
+    public SVNWCContext(ISVNOptions config, ISVNEventHandler eventHandler, SqlJetPagerJournalMode journalMode) {
+        this(SVNWCDbOpenMode.ReadWrite, config, true, true, eventHandler, journalMode);
     }
 
     public SVNWCContext(SVNWCDbOpenMode mode, ISVNOptions config, boolean autoUpgrade, boolean enforceEmptyWQ, ISVNEventHandler eventHandler) {
-        this.db = new SVNWCDb();
+        this(SVNWCDbOpenMode.ReadWrite, config, autoUpgrade, enforceEmptyWQ, eventHandler, null);
+    }
+
+    public SVNWCContext(SVNWCDbOpenMode mode, ISVNOptions config, boolean autoUpgrade, boolean enforceEmptyWQ, ISVNEventHandler eventHandler, SqlJetPagerJournalMode journalMode) {
+        this.db = new SVNWCDb(journalMode);
         this.db.open(mode, config, autoUpgrade, enforceEmptyWQ);
         this.closeDb = true;
         this.eventHandler = new Stack<ISVNEventHandler>();
