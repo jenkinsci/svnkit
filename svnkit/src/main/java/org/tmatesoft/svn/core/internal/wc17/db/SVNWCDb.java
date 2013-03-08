@@ -77,13 +77,8 @@ public class SVNWCDb implements ISVNWCDb {
     private boolean enforceEmptyWQ;
     private Map<String, SVNWCDbDir> dirData;
     private SqlJetPagerJournalMode journalMode;
-
-    public SVNWCDb() {
-        this(null);
-    }
     
-    public SVNWCDb(SqlJetPagerJournalMode journalMode) {
-        this.journalMode = journalMode;
+    public SVNWCDb() {
     }
 
     public void open(final SVNWCDbOpenMode mode, final ISVNOptions config, final boolean autoUpgrade, final boolean enforceEmptyWQ) {
@@ -91,6 +86,10 @@ public class SVNWCDb implements ISVNWCDb {
         this.autoUpgrade = autoUpgrade;
         this.enforceEmptyWQ = enforceEmptyWQ;
         this.dirData = new HashMap<String, SVNWCDbDir>();
+    }
+    
+    public void setJournalModel(SqlJetPagerJournalMode journalMode) {
+        this.journalMode = journalMode;
     }
 
     public void close() {
@@ -1457,176 +1456,172 @@ public class SVNWCDb implements ISVNWCDb {
 
 
         do { //workaround to emulate "goto"
-        if (foundRoot == null) {
-        while (true) {
-
-            try {
-                sDb = openDb(localAbspath, SDB_FILE, sMode, journalMode);
-                break;
-            } catch (SVNException e) {
-                if (e.getErrorMessage().getErrorCode() != SVNErrorCode.SQLITE_ERROR && !e.isEnoent()) {
-                    throw e;
-                }
-            }
-
-            if (!movedUpwards || alwaysCheck || isDetectWCGeneration) {
-                wc_format = getOldVersion(localAbspath);
-                if (wc_format != 0) { 
-                    break;
-                }
-            }
-
-            if (SVNFileUtil.getParentFile(localAbspath) == null) { //if is root
-                if (isSymlink && !isAdditionMode) { //if we add a symlink, we never follow it
-                    localAbspath = originalAbspath;
-                    SVNNodeKind resolvedKind = SVNFileType.getNodeKind(SVNFileType.getType(SVNFileUtil.resolveSymlink(localAbspath)));
-
-                    if (resolvedKind == SVNNodeKind.DIR) {
-                        foundRoot = dirData.get(localAbspath.getAbsolutePath());
-                        if (foundRoot != null) {
+            if (foundRoot == null) {
+                while (true) {    
+                    try {
+                        sDb = openDb(localAbspath, SDB_FILE, sMode, journalMode);
+                        break;
+                    } catch (SVNException e) {
+                        if (e.getErrorMessage().getErrorCode() != SVNErrorCode.SQLITE_ERROR && !e.isEnoent()) {
+                            throw e;
+                        }
+                    }
+        
+                    if (!movedUpwards || alwaysCheck || isDetectWCGeneration) {
+                        wc_format = getOldVersion(localAbspath);
+                        if (wc_format != 0) { 
                             break;
                         }
+                    }
+        
+                    if (SVNFileUtil.getParentFile(localAbspath) == null) { //if is root
+                        if (isSymlink && !isAdditionMode) { //if we add a symlink, we never follow it
+                            localAbspath = originalAbspath;
+                            SVNNodeKind resolvedKind = SVNFileType.getNodeKind(SVNFileType.getType(SVNFileUtil.resolveSymlink(localAbspath)));
+        
+                            if (resolvedKind == SVNNodeKind.DIR) {
+                                foundRoot = dirData.get(localAbspath.getAbsolutePath());
+                                if (foundRoot != null) {
+                                    break;
+                                }
+        
+                                kind = SVNNodeKind.DIR;
+                                isSymlink = false;
+                                movedUpwards = false;
+                                localDirAbspath = localAbspath;
+                                buildRelPath = "";
+        
+                                continue;
+                            }
+                        }
+        
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_WORKING_COPY, "''{0}'' is not a working copy", originalAbspath);
+                        SVNErrorManager.error(err, SVNLogType.WC);
+                    }
+        
+                    localAbspath = SVNFileUtil.getParentFile(localAbspath);
+                    movedUpwards = true;
+        
+                    foundRoot = dirData.get(localAbspath.getAbsolutePath());
+                    if (foundRoot != null) {
+                        break;
+                    }
+                }
+            }
 
+            if (foundRoot != null) {
+                info.wcDbDir = foundRoot;
+            } else if (wc_format == 0) {
+                long wcId = UNKNOWN_WC_ID;
+    
+                try {
+                    wcId = fetchWCId(sDb);
+                } catch (SVNException e) {
+                    if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_CORRUPT) {
+                        SVNErrorMessage err = e.getErrorMessage().wrap("Missing a row in WCROOT for ''{0}''.", originalAbspath);
+                        SVNErrorManager.error(err, SVNLogType.WC);
+                    }
+                }
+    
+                info.wcDbDir = new SVNWCDbDir(localAbspath);
+                info.wcDbDir.setWCRoot(new SVNWCDbRoot(this, localAbspath, sDb, wcId, FORMAT_FROM_SDB, autoUpgrade, enforceEmptyWQ));
+    
+            } else {
+                info.wcDbDir = new SVNWCDbDir(localAbspath);
+                info.wcDbDir.setWCRoot(new SVNWCDbRoot(this, localAbspath, null, UNKNOWN_WC_ID, wc_format, autoUpgrade, enforceEmptyWQ));
+    
+                isOldFormat = true;
+            }
+
+            String dirRelPath = SVNPathUtil.getRelativePath(info.wcDbDir.getWCRoot().getAbsPath().getAbsolutePath(), localDirAbspath.getAbsolutePath());
+            info.localRelPath = SVNFileUtil.createFilePath(dirRelPath, buildRelPath);
+
+            if (isSymlink && !isAdditionMode) {
+    
+                SVNWCDbStatus status;
+                boolean conflicted;
+                boolean retryIfDir = false;
+                if (isOldFormat) {
+                    SVNAdminArea area = null;
+                    try {
+                        area = SVNWCAccess.newInstance(null).open(localDirAbspath, false, false, 0);
+                        retryIfDir = area.getEntry(SVNFileUtil.getFileName(originalAbspath), false) == null;
+                    } catch (SVNException e) {
+                        if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND &&
+                                e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_UPGRADE_REQUIRED &&
+                                e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_DIRECTORY &&
+                                e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_WORKING_COPY) {
+                            throw e;
+                        }
+                        retryIfDir = true;
+                    } finally {
+                        if (area != null) {
+                            area.close();
+                        }
+                    }
+                } else {
+                    try {
+                        WCDbInfo wcDbInfo = readInfo(info.wcDbDir.getWCRoot(), info.localRelPath, InfoField.status, InfoField.conflicted);
+                        status = wcDbInfo.status;
+                        conflicted = wcDbInfo.conflicted;
+                        retryIfDir = (status == SVNWCDbStatus.NotPresent || status == SVNWCDbStatus.ServerExcluded || status == SVNWCDbStatus.Excluded) && !conflicted;
+                    } catch (SVNException e) {
+                        if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND &&
+                                e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_UPGRADE_REQUIRED &&
+                                e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_WORKING_COPY) {
+                            throw e;
+                        }
+    
+                        retryIfDir = true;
+                    }
+                }
+    
+                if (retryIfDir) {
+                    SVNNodeKind resolvedKind = SVNFileType.getNodeKind(SVNFileType.getType(SVNFileUtil.resolveSymlink(localAbspath)));
+                    if (resolvedKind == SVNNodeKind.DIR) {
+                        localAbspath = originalAbspath;
+    
+                        //goto emulation using do{}while() + continue
                         kind = SVNNodeKind.DIR;
                         isSymlink = false;
                         movedUpwards = false;
                         localDirAbspath = localAbspath;
                         buildRelPath = "";
-
+                        foundRoot = null;
+                        wc_format = 0; //reset wc_format
+    
                         continue;
                     }
                 }
-
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_WORKING_COPY, "''{0}'' is not a working copy", originalAbspath);
-                SVNErrorManager.error(err, SVNLogType.WC);
             }
-
-            localAbspath = SVNFileUtil.getParentFile(localAbspath);
-            movedUpwards = true;
-
-            foundRoot = dirData.get(localAbspath.getAbsolutePath());
-            if (foundRoot != null) {
-                break;
-            }
-        }
-            }
-
-        if (foundRoot != null) {
-            info.wcDbDir = foundRoot;
-        } else if (wc_format == 0) {
-            long wcId = UNKNOWN_WC_ID;
-
-            try {
-                wcId = fetchWCId(sDb);
-            } catch (SVNException e) {
-                if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_CORRUPT) {
-                    SVNErrorMessage err = e.getErrorMessage().wrap("Missing a row in WCROOT for ''{0}''.", originalAbspath);
-                    SVNErrorManager.error(err, SVNLogType.WC);
-                }
-            }
-
-            info.wcDbDir = new SVNWCDbDir(localAbspath);
-            info.wcDbDir.setWCRoot(new SVNWCDbRoot(this, localAbspath, sDb, wcId, FORMAT_FROM_SDB, autoUpgrade, enforceEmptyWQ));
-
-        } else {
-            info.wcDbDir = new SVNWCDbDir(localAbspath);
-            info.wcDbDir.setWCRoot(new SVNWCDbRoot(this, localAbspath, null, UNKNOWN_WC_ID, wc_format, autoUpgrade, enforceEmptyWQ));
-
-            isOldFormat = true;
-        }
-
-        {
-            String dirRelPath = SVNPathUtil.getRelativePath(info.wcDbDir.getWCRoot().getAbsPath().getAbsolutePath(), localDirAbspath.getAbsolutePath());
-
-            info.localRelPath = SVNFileUtil.createFilePath(dirRelPath, buildRelPath);
-        }
-
-        if (isSymlink && !isAdditionMode) {
-
-            SVNWCDbStatus status;
-            boolean conflicted;
-            boolean retryIfDir = false;
-            if (isOldFormat) {
-                SVNAdminArea area = null;
-                try {
-                    area = SVNWCAccess.newInstance(null).open(localDirAbspath, false, false, 0);
-                    retryIfDir = area.getEntry(SVNFileUtil.getFileName(originalAbspath), false) == null;
-                } catch (SVNException e) {
-                    if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND &&
-                            e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_UPGRADE_REQUIRED &&
-                            e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_DIRECTORY &&
-                            e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_WORKING_COPY) {
-                        throw e;
-                    }
-                    retryIfDir = true;
-                } finally {
-                    if (area != null) {
-                        area.close();
-                    }
-                }
-            } else {
-                try {
-                    WCDbInfo wcDbInfo = readInfo(info.wcDbDir.getWCRoot(), info.localRelPath, InfoField.status, InfoField.conflicted);
-                    status = wcDbInfo.status;
-                    conflicted = wcDbInfo.conflicted;
-                    retryIfDir = (status == SVNWCDbStatus.NotPresent || status == SVNWCDbStatus.ServerExcluded || status == SVNWCDbStatus.Excluded) && !conflicted;
-                } catch (SVNException e) {
-                    if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND &&
-                            e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_UPGRADE_REQUIRED &&
-                            e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_WORKING_COPY) {
-                        throw e;
-                    }
-
-                    retryIfDir = true;
-                }
-            }
-
-            if (retryIfDir) {
-                SVNNodeKind resolvedKind = SVNFileType.getNodeKind(SVNFileType.getType(SVNFileUtil.resolveSymlink(localAbspath)));
-                if (resolvedKind == SVNNodeKind.DIR) {
-                    localAbspath = originalAbspath;
-
-                    //goto emulation using do{}while() + continue
-                    kind = SVNNodeKind.DIR;
-                    isSymlink = false;
-                    movedUpwards = false;
-                    localDirAbspath = localAbspath;
-                    buildRelPath = "";
-                    foundRoot = null;
-                    wc_format = 0; //reset wc_format
-
-                    continue;
-                }
-            }
-        }
-        break;
-    } while (true);
+            break;
+        } while (true);
 
         if (!isAdditionMode || !isSymlink) { //we shouldn't put the resulting root to the cache
-        SVNWCDbDir wcDbDir = new SVNWCDbDir(localDirAbspath);
-        wcDbDir.setWCRoot(info.wcDbDir.getWCRoot());
-        dirData.put(wcDbDir.getLocalAbsPath().getAbsolutePath(), wcDbDir);
-
-        if (!movedUpwards) {
-            return info;
-        }
-
-        File scanAbspath = localDirAbspath;
-
-        do {
-            File parentDir = SVNFileUtil.getParentFile(scanAbspath);
-            SVNWCDbDir parentRoot;
-
-            parentRoot = dirData.get(parentDir.getAbsolutePath());
-
-            if (parentRoot == null) {
-                SVNWCDbDir parentWcDbDir = new SVNWCDbDir(parentDir);
-                parentWcDbDir.setWCRoot(info.wcDbDir.getWCRoot());
-                dirData.put(parentWcDbDir.getLocalAbsPath().getAbsolutePath(), parentWcDbDir);
+            SVNWCDbDir wcDbDir = new SVNWCDbDir(localDirAbspath);
+            wcDbDir.setWCRoot(info.wcDbDir.getWCRoot());
+            dirData.put(wcDbDir.getLocalAbsPath().getAbsolutePath(), wcDbDir);
+    
+            if (!movedUpwards) {
+                return info;
             }
 
-            scanAbspath = parentDir;
-        } while (!localAbspath.equals(scanAbspath));
+            File scanAbspath = localDirAbspath;
+
+            do {
+                File parentDir = SVNFileUtil.getParentFile(scanAbspath);
+                SVNWCDbDir parentRoot;
+    
+                parentRoot = dirData.get(parentDir.getAbsolutePath());
+    
+                if (parentRoot == null) {
+                    SVNWCDbDir parentWcDbDir = new SVNWCDbDir(parentDir);
+                    parentWcDbDir.setWCRoot(info.wcDbDir.getWCRoot());
+                    dirData.put(parentWcDbDir.getLocalAbsPath().getAbsolutePath(), parentWcDbDir);
+                }
+    
+                scanAbspath = parentDir;
+            } while (!localAbspath.equals(scanAbspath));
         }
         return info;
     }

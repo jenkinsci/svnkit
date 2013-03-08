@@ -11,6 +11,8 @@
  */
 package org.tmatesoft.svn.core.internal.wc17;
 
+import static org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.isAbsolute;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -114,8 +116,6 @@ import org.tmatesoft.svn.util.SVNLogType;
 import de.regnis.q.sequence.line.QSequenceLineRAByteData;
 import de.regnis.q.sequence.line.QSequenceLineRAData;
 import de.regnis.q.sequence.line.QSequenceLineRAFileData;
-
-import static org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.isAbsolute;
 
 /**
  * @version 1.4
@@ -273,19 +273,11 @@ public class SVNWCContext {
     private List<CleanupHandler> cleanupHandlers = new LinkedList<CleanupHandler>();
 
     public SVNWCContext(ISVNOptions config, ISVNEventHandler eventHandler) {
-        this(SVNWCDbOpenMode.ReadWrite, config, true, true, eventHandler, null);
-    }
-
-    public SVNWCContext(ISVNOptions config, ISVNEventHandler eventHandler, SqlJetPagerJournalMode journalMode) {
-        this(SVNWCDbOpenMode.ReadWrite, config, true, true, eventHandler, journalMode);
+        this(SVNWCDbOpenMode.ReadWrite, config, true, true, eventHandler);
     }
 
     public SVNWCContext(SVNWCDbOpenMode mode, ISVNOptions config, boolean autoUpgrade, boolean enforceEmptyWQ, ISVNEventHandler eventHandler) {
-        this(SVNWCDbOpenMode.ReadWrite, config, autoUpgrade, enforceEmptyWQ, eventHandler, null);
-    }
-
-    public SVNWCContext(SVNWCDbOpenMode mode, ISVNOptions config, boolean autoUpgrade, boolean enforceEmptyWQ, ISVNEventHandler eventHandler, SqlJetPagerJournalMode journalMode) {
-        this.db = new SVNWCDb(journalMode);
+        this.db = new SVNWCDb();
         this.db.open(mode, config, autoUpgrade, enforceEmptyWQ);
         this.closeDb = true;
         this.eventHandler = new Stack<ISVNEventHandler>();
@@ -4529,5 +4521,11 @@ public class SVNWCContext {
         DirParsedInfo parseDir = ((SVNWCDb) getDb()).parseDir(path, Mode.ReadWrite);
         SvnWcDbShared.canonicalizeURLs(parseDir.wcDbDir.getWCRoot(), true, externalsStore, omitDefaultPort);
         wqRun(path);
+    }
+
+    public void setSqliteJournalMode(SqlJetPagerJournalMode sqliteJournalMode) {
+        if (this.db != null) {
+            ((SVNWCDb) this.db).setJournalModel(sqliteJournalMode);
+        }
     }
 }
