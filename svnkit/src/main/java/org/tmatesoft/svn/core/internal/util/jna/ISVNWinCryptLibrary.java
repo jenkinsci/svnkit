@@ -29,7 +29,8 @@ interface ISVNWinCryptLibrary extends StdCallLibrary {
         
         public DATA_BLOB(byte[] bytes) {
             if (bytes != null) {
-                cbData = new Memory(bytes.length);
+                int allocationSize = Math.max(1, bytes.length);
+                cbData = new Memory(allocationSize);
                 cbData.write(0, bytes, 0, bytes.length);
                 cbSize = new NativeLong(bytes.length);
             } else {

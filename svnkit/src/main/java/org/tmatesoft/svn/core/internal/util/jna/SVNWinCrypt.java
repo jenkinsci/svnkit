@@ -57,7 +57,7 @@ class SVNWinCrypt {
                 }
                 dataOut.read();
             }
-            if (dataOut.cbSize == null || dataOut.cbSize.intValue() <= 0) {
+            if (dataOut.cbSize == null || dataOut.cbSize.intValue() < 0) {
                 return null;
             }
             byte[] decryptedData = new byte[dataOut.cbSize.intValue()];
@@ -138,6 +138,4 @@ class SVNWinCrypt {
     public synchronized static boolean isEnabled() {
         return SVNFileUtil.isWindows && JNALibraryLoader.getWinCryptLibrary() != null;
     }
-
-
 }
