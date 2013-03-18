@@ -18,6 +18,8 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
+import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @version 1.4
@@ -207,6 +209,9 @@ public class SVNWCDbCreateSchema extends SVNSqlJetStatement {
 
                 public Object run(SqlJetDb db) throws SqlJetException {
                     for (Statement stmt : statements) {
+                        
+                        SVNDebugLog.getDefaultLog().logError(SVNLogType.CLIENT, "executing statement: " + stmt.toString());
+                        
                         switch (stmt.getType()) {
                             case TABLE:                                
                                 if (stmt.isDrop()) {
