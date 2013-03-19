@@ -35,7 +35,9 @@ import org.apache.subversion.javahl.callback.CommitCallback;
 import org.apache.subversion.javahl.callback.CommitMessageCallback;
 import org.apache.subversion.javahl.callback.ConflictResolverCallback;
 import org.apache.subversion.javahl.callback.DiffSummaryCallback;
+import org.apache.subversion.javahl.callback.ImportFilterCallback;
 import org.apache.subversion.javahl.callback.InfoCallback;
+import org.apache.subversion.javahl.callback.InheritedProplistCallback;
 import org.apache.subversion.javahl.callback.ListCallback;
 import org.apache.subversion.javahl.callback.LogMessageCallback;
 import org.apache.subversion.javahl.callback.PatchCallback;
@@ -48,6 +50,7 @@ import org.apache.subversion.javahl.types.Checksum;
 import org.apache.subversion.javahl.types.ConflictVersion;
 import org.apache.subversion.javahl.types.CopySource;
 import org.apache.subversion.javahl.types.Depth;
+import org.apache.subversion.javahl.types.DiffOptions;
 import org.apache.subversion.javahl.types.DirEntry;
 import org.apache.subversion.javahl.types.Info;
 import org.apache.subversion.javahl.types.Lock;
@@ -59,6 +62,7 @@ import org.apache.subversion.javahl.types.RevisionRange;
 import org.apache.subversion.javahl.types.Status;
 import org.apache.subversion.javahl.types.Tristate;
 import org.apache.subversion.javahl.types.Version;
+import org.apache.subversion.javahl.types.VersionExtended;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNDirEntry;
@@ -1593,7 +1597,9 @@ public class SVNClientImpl implements ISVNClient {
                 getLongDate(status.getRepositoryChangedDate()),
                 getNodeKind(status.getRepositoryKind()),
                 status.getRepositoryChangedAuthor(),
-                status.getChangelist()
+                status.getChangelist(),
+                null,
+                null
         );
     }
 
@@ -2849,5 +2855,51 @@ public class SVNClientImpl implements ISVNClient {
         getEventHandler().setCancelOperation(false);
         getEventHandler().resetPathPrefix();
         resetLog();
+    }
+
+    public VersionExtended getVersionExtended(boolean verbose) {
+        return null;
+    }
+
+    public void add(String path, Depth depth, boolean force, boolean noIgnores, boolean noAutoProps, boolean addParents) throws ClientException {
+    }
+
+    public void move(Set<String> srcPaths, String destPath, boolean force, boolean moveAsChild, boolean makeParents, boolean metadataOnly, boolean allowMixRev, Map<String, String> revpropTable, CommitMessageCallback handler,
+            CommitCallback callback) throws ClientException {
+    }
+
+    public void doImport(String path, String url, Depth depth, boolean noIgnore, boolean noAutoProps, boolean ignoreUnknownNodeTypes, Map<String, String> revpropTable, ImportFilterCallback importFilterCallback,
+            CommitMessageCallback messageHandler, CommitCallback commitCallback) throws ClientException {
+    }
+
+    public void diff(String target1, Revision revision1, String target2, Revision revision2, String relativeToDir, OutputStream outStream, Depth depth, Collection<String> changelists, boolean ignoreAncestry, boolean noDiffDeleted,
+            boolean force, boolean copiesAsAdds, boolean ignoreProps, boolean propsOnly, DiffOptions options) throws ClientException {
+    }
+
+    public void diff(String target1, Revision revision1, String target2, Revision revision2, String relativeToDir, String outFileName, Depth depth, Collection<String> changelists, boolean ignoreAncestry, boolean noDiffDeleted,
+            boolean force, boolean copiesAsAdds, boolean ignoreProps, boolean propsOnly, DiffOptions options) throws ClientException {
+    }
+
+    public void diff(String target1, Revision revision1, String target2, Revision revision2, String relativeToDir, OutputStream outStream, Depth depth, Collection<String> changelists, boolean ignoreAncestry, boolean noDiffDeleted,
+            boolean force, boolean copiesAsAdds, boolean ignoreProps, boolean propsOnly) throws ClientException {
+    }
+
+    public void diff(String target, Revision pegRevision, Revision startRevision, Revision endRevision, String relativeToDir, OutputStream outStream, Depth depth, Collection<String> changelists, boolean ignoreAncestry,
+            boolean noDiffDeleted, boolean force, boolean copiesAsAdds, boolean ignoreProps, boolean propsOnly, DiffOptions options) throws ClientException {
+    }
+
+    public void diff(String target, Revision pegRevision, Revision startRevision, Revision endRevision, String relativeToDir, String outFileName, Depth depth, Collection<String> changelists, boolean ignoreAncestry, boolean noDiffDeleted,
+            boolean force, boolean copiesAsAdds, boolean ignoreProps, boolean propsOnly, DiffOptions options) throws ClientException {
+    }
+
+    public void diff(String target, Revision pegRevision, Revision startRevision, Revision endRevision, String relativeToDir, OutputStream outStream, Depth depth, Collection<String> changelists, boolean ignoreAncestry,
+            boolean noDiffDeleted, boolean force, boolean copiesAsAdds, boolean ignoreProps, boolean propsOnly) throws ClientException {
+    }
+
+    public void properties(String path, Revision revision, Revision pegRevision, Depth depth, Collection<String> changelists, InheritedProplistCallback callback) throws ClientException {
+    }
+
+    public byte[] propertyGet(String path, String name, Revision revision, Revision pegRevision, Collection<String> changelists) throws ClientException {
+        return null;
     }
 }
