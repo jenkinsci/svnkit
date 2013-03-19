@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Set;
 
+import org.apache.subversion.javahl.callback.ReposFreezeAction;
 import org.apache.subversion.javahl.callback.ReposNotifyCallback;
 import org.apache.subversion.javahl.types.Depth;
 import org.apache.subversion.javahl.types.Lock;
@@ -94,5 +95,27 @@ public class SVNRepos implements ISVNRepos {
 
     public void cancelOperation() throws ClientException {
         delegate.cancelOperation();
+    }
+
+    public void hotcopy(File path, File targetPath, boolean cleanLogs, boolean incremental) throws ClientException {
+        delegate.hotcopy(path, targetPath, cleanLogs, incremental);
+        
+    }
+
+    public void load(File path, 
+            InputStream dataInput, 
+            Revision start, 
+            Revision end, 
+            boolean ignoreUUID, 
+            boolean forceUUID, 
+            boolean usePreCommitHook, 
+            boolean usePostCommitHook, 
+            String relativePath, 
+            ReposNotifyCallback callback) throws ClientException {
+        delegate.load(path, dataInput, start, end, ignoreUUID, forceUUID, usePostCommitHook, usePostCommitHook, relativePath, callback);
+    }
+
+    public void freeze(ReposFreezeAction action, File... paths) throws ClientException {
+        delegate.freeze(action, paths);
     }
 }
