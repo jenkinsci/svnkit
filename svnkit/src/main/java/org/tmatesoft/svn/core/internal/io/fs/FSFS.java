@@ -112,7 +112,7 @@ public class FSFS {
     public static final int REPOSITORY_FORMAT = 5;
     public static final int REPOSITORY_FORMAT_LEGACY = 3;
     public static final int DB_FORMAT_PRE_17 = 4;
-    public static final int DB_FORMAT = 5;
+    public static final int DB_FORMAT = 6;
     public static final int DB_FORMAT_LOW = 1;
     public static final int LAYOUT_FORMAT_OPTION_MINIMAL_FORMAT = 3;
     public static final int MIN_CURRENT_TXN_FORMAT = 3;
@@ -122,7 +122,8 @@ public class FSFS {
     public static final int MIN_REP_SHARING_FORMAT = 4;
     public static final int MIN_PACKED_FORMAT = 4;
     public static final int MIN_KIND_IN_CHANGED_FORMAT = 4;
-    public static final int MIN_PACKED_REVPROP_FORMAT = 5;
+    public static final int MIN_PACKED_REVPROP_SQLITE_DEV_FORMAT = 5;
+    public static final int MIN_PACKED_REVPROP_FORMAT = 6;
 
     //TODO: we should be able to change this via some option
     private static long DEFAULT_MAX_FILES_PER_DIRECTORY = 1000;
@@ -293,7 +294,7 @@ public class FSFS {
         }
 
         /* Open the revprops db. */
-        if (myDBFormat >= MIN_PACKED_REVPROP_FORMAT)
+        if (myDBFormat >= MIN_PACKED_REVPROP_SQLITE_DEV_FORMAT)
           {
             updateMinUnpackedRevProp();
             myRevisionProperitesDb = SVNSqlJetDb.open(
@@ -560,7 +561,7 @@ public class FSFS {
                     SVNFileUtil.createFile(getMinUnpackedRevFile(), "0\n", "US-ASCII");
                 }
 
-                if (myDBFormat < MIN_PACKED_REVPROP_FORMAT)
+                if (myDBFormat < MIN_PACKED_REVPROP_SQLITE_DEV_FORMAT)
                 {
                     SVNFileUtil.createFile(getMinUnpackedRevPropPath(),"0\n", "US-ASCII");
                     myRevisionProperitesDb = SVNSqlJetDb.open(
@@ -619,7 +620,7 @@ public class FSFS {
             return readRevisionProperties(revision);
         } catch(SVNException e ) {
             if(e.getErrorMessage().getErrorCode()==SVNErrorCode.FS_NO_SUCH_REVISION &&
-                    myDBFormat >= MIN_PACKED_REVPROP_FORMAT ) {
+                    myDBFormat >= MIN_PACKED_REVPROP_SQLITE_DEV_FORMAT ) {
                 updateMinUnpackedRevProp();
                 return readRevisionProperties(revision);
             }
@@ -629,7 +630,7 @@ public class FSFS {
 
     private SVNProperties readRevisionProperties(long revision) throws SVNException {
         ensureRevisionsExists(revision);
-        if (myDBFormat < MIN_PACKED_REVPROP_FORMAT || revision >= myMinUnpackedRevProp) {
+        if (myDBFormat < MIN_PACKED_REVPROP_SQLITE_DEV_FORMAT || revision >= myMinUnpackedRevProp) {
             FSFile file = new FSFile(getRevisionPropertiesFile(revision, false));
             try {
                 return file.readProperties(false, true);
@@ -1008,7 +1009,7 @@ public class FSFS {
 
     public void setRevisionProperty(long revision, String propertyName, SVNPropertyValue propertyValue) throws SVNException {
         ensureRevisionsExists(revision);
-        if (myDBFormat < MIN_PACKED_REVPROP_FORMAT ||
+        if (myDBFormat < MIN_PACKED_REVPROP_SQLITE_DEV_FORMAT ||
                 revision >= myMinUnpackedRevProp ) {
             FSWriteLock writeLock = FSWriteLock.getWriteLockForDB(this);
             synchronized (writeLock) {
@@ -2176,7 +2177,7 @@ public class FSFS {
     }
 
     public void updateMinUnpackedRevProp() throws SVNException {
-        assert(myDBFormat >= MIN_PACKED_REVPROP_FORMAT);
+        assert(myDBFormat >= MIN_PACKED_REVPROP_SQLITE_DEV_FORMAT);
         myMinUnpackedRevProp = getMinUnpackedRevProp();
     }
 
