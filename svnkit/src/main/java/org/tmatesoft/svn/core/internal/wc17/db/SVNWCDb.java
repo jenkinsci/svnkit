@@ -3587,7 +3587,7 @@ public class SVNWCDb implements ISVNWCDb {
 
     private static void verifyDirUsable(SVNWCDbDir pdh) throws SVNException {
         if (!SVNWCDbDir.isUsable(pdh)) {
-            if (pdh != null && pdh.getWCRoot() != null && pdh.getWCRoot().getFormat() != ISVNWCDb.WC_FORMAT_17) {
+            if (pdh != null && pdh.getWCRoot() != null && pdh.getWCRoot().getFormat() < ISVNWCDb.WC_FORMAT_17) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT);
                 SVNErrorManager.error(err, SVNLogType.WC);
             }

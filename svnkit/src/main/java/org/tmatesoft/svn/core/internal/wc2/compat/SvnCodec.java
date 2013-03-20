@@ -316,7 +316,7 @@ public class SvnCodec {
         if (result.getNodeStatus() == SVNStatusType.STATUS_ADDED) {
             result.setPropertiesStatus(SVNStatusType.STATUS_NONE);
         }
-        result.setWorkingCopyFormat(ISVNWCDb.WC_FORMAT_17);
+        result.setWorkingCopyFormat(ISVNWCDb.WC_FORMAT_18);
         
         result.setCopyFromRevision(status.getCopyFromRevision() >= 0 ? SVNRevision.create(status.getCopyFromRevision()) : SVNRevision.UNDEFINED);
         result.setCopyFromURL(status.getCopyFromUrl() != null ? status.getCopyFromUrl().toString() : null);

@@ -95,6 +95,7 @@ public interface ISVNWCDb {
 
     // int WC_FORMAT_17 = 23;
     int WC_FORMAT_17 = 29;
+    int WC_FORMAT_18 = 31;
 
     int WC_HAS_WORK_QUEUE = 13;
     long INVALID_FILESIZE = -1;
@@ -104,6 +105,7 @@ public interface ISVNWCDb {
     String PRISTINE_STORAGE_RELPATH = "pristine";
     String PRISTINE_TEMPDIR_RELPATH = "";
     String WCROOT_TEMPDIR_RELPATH = "tmp";
+
 
     /** Enumerated constants for how to open a WC datastore. */
     enum SVNWCDbOpenMode {

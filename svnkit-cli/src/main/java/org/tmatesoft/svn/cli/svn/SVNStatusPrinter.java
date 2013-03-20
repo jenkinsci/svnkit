@@ -55,7 +55,7 @@ public class SVNStatusPrinter {
             } else if (status.isCopied()) {
                 wcRevision = "-";
             } else if (!status.getRevision().isValid()) {
-                if(status.getWorkingCopyFormat() == ISVNWCDb.WC_FORMAT_17) {
+                if(status.getWorkingCopyFormat() >= ISVNWCDb.WC_FORMAT_17) {
                     if(status.getNodeStatus()==SVNStatusType.STATUS_DELETED) {
                         wcRevision = status.getCommittedRevision().toString();
                     } else {

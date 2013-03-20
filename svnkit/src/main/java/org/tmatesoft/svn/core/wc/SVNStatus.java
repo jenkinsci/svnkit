@@ -772,7 +772,7 @@ public class SVNStatus {
     }
     
     public SVNStatusType getCombinedNodeAndContentsStatus() {
-        if (getWorkingCopyFormat() == ISVNWCDb.WC_FORMAT_17) {
+        if (getWorkingCopyFormat() >= ISVNWCDb.WC_FORMAT_17) {
             if (getNodeStatus() == SVNStatusType.STATUS_CONFLICTED) {
                 if (!isVersioned() && isConflicted()) {
                     return SVNStatusType.STATUS_MISSING;
@@ -788,7 +788,7 @@ public class SVNStatus {
     }
 
     public SVNStatusType getCombinedRemoteNodeAndContentsStatus() {
-        if (getWorkingCopyFormat() == ISVNWCDb.WC_FORMAT_17) {
+        if (getWorkingCopyFormat() >= ISVNWCDb.WC_FORMAT_18) {
             if (getRemoteNodeStatus() == SVNStatusType.STATUS_MODIFIED) {
                 return getRemoteContentsStatus();
             }

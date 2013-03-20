@@ -39,7 +39,6 @@ public class SVNWCDbCreateSchema extends SVNSqlJetStatement {
                     + "  properties  BLOB, conflict_old  TEXT, conflict_new  TEXT, conflict_working  TEXT, prop_reject  TEXT, changelist  TEXT, "
                     + "  text_mod  TEXT, tree_conflict_data  TEXT, conflict_data  BLOB, older_checksum  TEXT, left_checksum  TEXT, right_checksum  TEXT, PRIMARY KEY (wc_id, local_relpath) ); "),
             new Statement(Type.INDEX, "I_ACTUAL_PARENT", "CREATE INDEX I_ACTUAL_PARENT ON ACTUAL_NODE (wc_id, parent_relpath); "),
-            new Statement(Type.INDEX, "I_ACTUAL_CHANGELIST", "CREATE INDEX I_ACTUAL_CHANGELIST ON ACTUAL_NODE (changelist); "),
             new Statement(Type.TABLE, "LOCK", "CREATE TABLE LOCK ( repos_id  INTEGER NOT NULL REFERENCES REPOSITORY (id), repos_relpath  TEXT NOT NULL, lock_token  TEXT NOT NULL, "
                     + "  lock_owner  TEXT, lock_comment  TEXT, lock_date  INTEGER, PRIMARY KEY (repos_id, repos_relpath) ); "),
             new Statement(Type.TABLE, "WORK_QUEUE", "CREATE TABLE WORK_QUEUE ( id  INTEGER PRIMARY KEY AUTOINCREMENT, work  BLOB NOT NULL ); "),
@@ -49,8 +48,10 @@ public class SVNWCDbCreateSchema extends SVNSqlJetStatement {
                     + "  parent_relpath  TEXT, repos_id  INTEGER REFERENCES REPOSITORY (id), repos_path  TEXT, revision  INTEGER, presence  TEXT NOT NULL, "
                     + "  moved_here  INTEGER, moved_to  TEXT, kind  TEXT NOT NULL, properties  BLOB, depth  TEXT, checksum  TEXT, symlink_target  TEXT, "
                     + "  changed_revision  INTEGER, changed_date INTEGER, changed_author TEXT, translated_size  INTEGER, last_mod_time  INTEGER, "
-                    + "  dav_cache  BLOB, file_external  TEXT, PRIMARY KEY (wc_id, local_relpath, op_depth) ); "),
+                    + "  dav_cache  BLOB, file_external INTEGER, inherited_props  BLOB, PRIMARY KEY (wc_id, local_relpath, op_depth) ); "),
             new Statement(Type.INDEX, "I_NODES_PARENT", "CREATE INDEX I_NODES_PARENT ON NODES (wc_id, parent_relpath, op_depth); "),
+            new Statement(Type.INDEX, "I_NODES_MOVED", "CREATE UNIQUE INDEX IF NOT EXISTS I_NODES_MOVED ON NODES (wc_id, moved_to, op_depth);"),
+            new Statement(Type.INDEX, "I_PRISTINE_MD5", "CREATE INDEX IF NOT EXISTS I_PRISTINE_MD5 ON PRISTINE (md5_checksum);"),
 
             new Statement(Type.TABLE, "EXTERNALS", "CREATE TABLE EXTERNALS ( " +
             "  wc_id  INTEGER NOT NULL REFERENCES WCROOT (id), " +
@@ -65,7 +66,6 @@ public class SVNWCDbCreateSchema extends SVNSqlJetStatement {
             "  def_revision              TEXT, " +
             "  PRIMARY KEY (wc_id, local_relpath) " +
             "); "),
-            new Statement(Type.INDEX, "I_EXTERNALS_PARENT", "CREATE INDEX I_EXTERNALS_PARENT ON EXTERNALS (wc_id, parent_relpath); " ),
             new Statement(Type.INDEX, "I_EXTERNALS_DEFINED", "CREATE UNIQUE INDEX I_EXTERNALS_DEFINED ON EXTERNALS " +
             		" (wc_id, def_local_relpath, local_relpath); " ),
 
@@ -194,7 +194,7 @@ public class SVNWCDbCreateSchema extends SVNSqlJetStatement {
     private int userVersion;
     
     public SVNWCDbCreateSchema(SVNSqlJetDb sDb) {
-        this(sDb, MAIN_DB_STATEMENTS, ISVNWCDb.WC_FORMAT_17);
+        this(sDb, MAIN_DB_STATEMENTS, ISVNWCDb.WC_FORMAT_18);
     }
 
     public SVNWCDbCreateSchema(SVNSqlJetDb sDb, Statement[] statements, int userVersion) {        

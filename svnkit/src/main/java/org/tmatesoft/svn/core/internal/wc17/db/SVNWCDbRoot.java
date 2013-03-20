@@ -24,6 +24,7 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgUpgradeSDb;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -92,7 +93,7 @@ public class SVNWCDbRoot {
         }
 
         /* If this working copy is from a future version, then bail out. */
-        if (format > ISVNWCDb.WC_FORMAT_17) {
+        if (format > ISVNWCDb.WC_FORMAT_18) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, "This client is too old to work with the working copy at\n" + "''{0}'' (format ''{1}'').", new Object[] {
                     absPath, format
             });
@@ -100,16 +101,9 @@ public class SVNWCDbRoot {
         }
 
         /* Auto-upgrade the SDB if possible. */
-        if (format < ISVNWCDb.WC_FORMAT_17 && autoUpgrade) {
-            if (autoUpgrade) {
-                //format = SvnNgUpgradeSDb.upgrade(absPath, sDb, format);
-            } else {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, "Working copy format of ''{0}'' is too old ''{1}''", new Object[] {
-                        absPath, format
-                });
-                SVNErrorManager.error(err, SVNLogType.WC);
-            }
-        }
+        if (format < ISVNWCDb.WC_FORMAT_18 && autoUpgrade) {
+          format = SvnNgUpgradeSDb.upgrade(absPath, sDb, format);
+        } 
 
         /*
          * Verify that no work items exists. If they do, then our integrity is

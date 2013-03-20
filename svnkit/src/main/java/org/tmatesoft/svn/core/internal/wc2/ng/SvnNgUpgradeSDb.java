@@ -41,8 +41,6 @@ public class SvnNgUpgradeSDb {
     
     public static int upgrade(final File wcRootAbsPath, final SVNSqlJetDb sDb, int startFormat) throws SVNException {
         int resultFormat = 0;
-        File bumpWcRootAbsPath = wcRootAbsPath;
-        
         if (startFormat < SVNWCContext.WC_NG_VERSION /* 12 */) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Working copy ''{0}'' is too old (format {1}, created by Subversion {2})", 
             		wcRootAbsPath, startFormat, versionStringFromFormat(startFormat));
@@ -93,6 +91,12 @@ public class SvnNgUpgradeSDb {
           case 28:
         	  runBump(sDb, wcRootAbsPath, new bumpTo29());
         	  resultFormat = 29;
+          case 29:
+              runBump(sDb, wcRootAbsPath, new bumpTo30());
+              resultFormat = 30;
+          case 30:
+              runBump(sDb, wcRootAbsPath, new bumpTo31());
+              resultFormat = 31;
  
           /* ##future bumps go here.  */
           //#if 0
@@ -164,14 +168,12 @@ public class SvnNgUpgradeSDb {
     }
         
     private static void migrateSingleTreeConflictData(SVNSqlJetDb sDb, String treeConflictData, long wcId, File localRelPath) throws SVNException {
-        Map conflicts = SVNTreeConflictUtil.readTreeConflicts(localRelPath, treeConflictData);
-        for (Iterator keys = conflicts.keySet().iterator(); keys.hasNext();) {
-            File entryPath = (File)keys.next();
-            SVNTreeConflictDescription conflict = (SVNTreeConflictDescription) conflicts.get(entryPath);
+        @SuppressWarnings("unchecked")
+        Map<File, SVNTreeConflictDescription> conflicts = SVNTreeConflictUtil.readTreeConflicts(localRelPath, treeConflictData);
+        for (Iterator<File> keys = conflicts.keySet().iterator(); keys.hasNext();) {
+            File entryPath = keys.next();
+            SVNTreeConflictDescription conflict = conflicts.get(entryPath);
             
-            //String conflictRelpath = SVNFileUtil.getFilePath(
-            //      SVNFileUtil.createFilePath(localRelPath, SVNFileUtil.getBasePath(conflict.getPath())));
-                 
             /* See if we need to update or insert an ACTUAL node. */
             SVNSqlJetStatement stmt = sDb.getStatement(SVNWCDbStatements.SELECT_ACTUAL_NODE); 
             stmt.bindf("is", wcId, conflict.getPath());
@@ -704,7 +706,7 @@ public class SvnNgUpgradeSDb {
 	    	UpdateChecksum uc = new UpdateChecksum(sDb, SVNWCDbSchema.NODES);
 	    	uc.run();
 	    	
-	    	setVersion(sDb, (int)28);
+	    	setVersion(sDb, 28);
 	    }
     }
     
@@ -768,8 +770,45 @@ public class SvnNgUpgradeSDb {
  	            SVNSqlJetDb.createSqlJetError(e);
  	        }
 
-         	setVersion(sDb, (int)29);
+         	setVersion(sDb, 29);
 	    }
+    }
+
+    private static class bumpTo30 implements Bumpable {
+
+        public void bumpTo(SVNSqlJetDb sDb, File wcRootAbsPath) throws SVNException {
+            try {
+                sDb.getDb().createIndex("CREATE UNIQUE INDEX IF NOT EXISTS I_NODES_MOVED ON NODES (wc_id, moved_to, op_depth);");
+                sDb.getDb().createIndex("CREATE INDEX IF NOT EXISTS I_PRISTINE_MD5 ON PRISTINE (md5_checksum);");
+            } catch (SqlJetException e) {
+                SVNSqlJetDb.createSqlJetError(e);
+            }
+            
+            // TODO combine existing conflicts data
+            setVersion(sDb, 30);
+        }
+        
+    }
+
+    private static class bumpTo31 implements Bumpable {
+
+        public void bumpTo(SVNSqlJetDb sDb, File wcRootAbsPath) throws SVNException {
+            try {
+                if (sDb.getDb().getSchema().getIndex("I_ACTUAL_CHANGELIST") != null) {
+                    sDb.getDb().dropIndex("I_ACTUAL_CHANGELIST");
+                }
+                if (sDb.getDb().getSchema().getIndex("I_EXTERNALS_PARENT") != null) {
+                    sDb.getDb().dropIndex("I_EXTERNALS_PARENT");
+                }
+                sDb.getDb().alterTable("ALTER TABLE NODES ADD COLUMN inherited_props BLOB;");
+            } catch (SqlJetException e) {
+                SVNSqlJetDb.createSqlJetError(e);
+            }
+
+            // TODO set empty inherited_props on roots and switched roots.
+            setVersion(sDb, 31);
+        }
+        
     }
     
     private static void upgradeExternals(SVNSqlJetDb sDb, File wcRootAbsPath) throws SVNException {
