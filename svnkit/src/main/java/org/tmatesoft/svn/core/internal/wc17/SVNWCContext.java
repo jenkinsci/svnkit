@@ -1522,7 +1522,10 @@ public class SVNWCContext {
         }
         if (lockAnchor) {
             assert (returnLockRoot);
-            File parentAbspath = SVNFileUtil.getFileDir(localAbspath);
+            File parentAbspath = SVNFileUtil.getParentFile(localAbspath);
+            if (parentAbspath == null) {
+                return localAbspath;
+            }
             SVNWCDbKind parentKind = SVNWCDbKind.Unknown;
             try {
                 parentKind = db.readKind(parentAbspath, true);
