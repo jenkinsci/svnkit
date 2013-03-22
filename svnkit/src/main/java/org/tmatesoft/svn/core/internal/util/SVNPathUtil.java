@@ -114,6 +114,9 @@ public class SVNPathUtil {
                 result.append('/');
             }
         }
+        if (result.length() == 2 && result.charAt(result.length() - 1) == ':') {
+            result.append('/'); 
+        }
         return result.toString();
     }
 
