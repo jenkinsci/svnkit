@@ -34,6 +34,8 @@ import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDbRoot.WCLock;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.PristineInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.RepositoryInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbReader.ConflictInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbReader.ConflictLocation;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.*;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.*;
 import org.tmatesoft.svn.core.wc.*;
@@ -2456,7 +2458,7 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     public List<SVNConflictDescription> readConflicts(File localAbsPath) throws SVNException {
-        List<SVNConflictDescription> conflicts = new ArrayList<SVNConflictDescription>();
+        final List<SVNConflictDescription> conflicts = new ArrayList<SVNConflictDescription>();
 
         /* The parent should be a working copy directory. */
         DirParsedInfo parseDir = parseDir(localAbsPath, Mode.ReadOnly);
@@ -2468,6 +2470,30 @@ public class SVNWCDb implements ISVNWCDb {
          * ### This will be much easier once we have all conflicts in one field
          * of actual.
          */
+        final SVNSkel conflictSkel = SvnWcDbReader.readConflict(pdh.getWCRoot().getDb(), localAbsPath);
+        if (conflictSkel == null) {
+            return conflicts;
+        }
+        final Structure<ConflictInfo> conflictInfo = SvnWcDbReader.readConflictInfo(conflictSkel);
+        final List<Structure<ConflictLocation>> locations = conflictInfo.get(ConflictInfo.locations);
+        Structure<ConflictLocation> leftVersion = null;
+        Structure<ConflictLocation> rightVersion = null;
+        if (locations != null && locations.size() > 0) {
+            leftVersion = locations.get(0);
+        }
+        if (locations != null && locations.size() > 1) {
+            rightVersion = locations.get(1);
+        }
+        
+        if (conflictInfo.is(ConflictInfo.propConflicted)) {
+            
+        }
+        if (conflictInfo.is(ConflictInfo.textConflicted)) {
+            
+        }
+        if (conflictInfo.is(ConflictInfo.treeConflicted)) {
+            
+        }
 
         /* First look for text and property conflicts in ACTUAL */
         SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_CONFLICT_DETAILS);

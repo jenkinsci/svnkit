@@ -25,10 +25,12 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -38,6 +40,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.DirParsedInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.WalkerChildInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.ACTUAL_NODE__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODES__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.util.SVNLogType;
@@ -55,6 +58,53 @@ public class SvnWcDbReader extends SvnWcDbShared {
         sha1Checksum,
         pristineProps,
         changedDate,
+    }
+
+    public enum ConflictInfo {
+        conflictOperation,
+        locations,
+        textConflicted,
+        propConflicted,
+        treeConflicted,
+    }
+
+    public enum ConflictLocation {
+        reposRootURL,
+        reposRelPath,
+        revision,
+        nodeKind, reposUUID,
+    }
+    
+    public enum ConflictKind {
+        text, prop, tree, reject, obstructed;
+    }
+    
+    public enum ConflictOperation {
+        none(""), op_update("update"), op_switch("switch"), op_merge("merge"), op_patch("patch");
+        
+        private String value;
+
+        private ConflictOperation(String value) {
+            this.value = value;
+        }
+        
+        public String getValue() {
+            return value;
+        }
+        
+        public String toString() {
+            return value;
+        }
+
+        public static ConflictOperation parse(byte[] data) {
+            final String stringValue = new String(data);
+            for(ConflictOperation op : ConflictOperation.values()) {
+                if (op.getValue().equals(stringValue)) {
+                    return op;
+                }
+            }
+            return none;
+        }
     }
     
     public static Collection<File> getServerExcludedNodes(SVNWCDb db, File path) throws SVNException {
@@ -566,6 +616,102 @@ public class SvnWcDbReader extends SvnWcDbShared {
         }
         
         return false;
+    }
+    
+    public static SVNSkel readConflict(SVNWCDb db, File localAbspath) throws SVNException {
+        final DirParsedInfo dirInfo = db.obtainWcRoot(localAbspath);
+        final SVNSqlJetDb sdb = dirInfo.wcDbDir.getWCRoot().getSDb();
+        final long wcId = dirInfo.wcDbDir.getWCRoot().getWcId();
+        final String localRelPathStr = dirInfo.localRelPath.getPath().replace(File.separatorChar, '/');
+        
+        final SVNSqlJetStatement stmt = sdb.getStatement(SVNWCDbStatements.SELECT_ACTUAL_NODE);
+        try {
+            stmt.bindf("is", wcId, localRelPathStr);
+            if (!stmt.next()) {
+                final SVNSqlJetStatement stmtNode = sdb.getStatement(SVNWCDbStatements.SELECT_NODE_INFO);
+                try {
+                    stmtNode.bindf("is", wcId, localRelPathStr);
+                    if (stmtNode.next()) {
+                        return null;
+                    }
+                } finally {
+                    reset(stmtNode);
+                }
+                final SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{0}'' was not found.", localAbspath);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+        } finally {
+            reset(stmt);
+        }
+        final byte[] conflictData = stmt.getColumnBlob(ACTUAL_NODE__Fields.conflict_data);
+        if (conflictData != null) {
+            return SVNSkel.parse(conflictData);
+        }
+        return null;
+    }
+    
+    public static Structure<ConflictInfo> readConflictInfo(SVNSkel conflictSkel) throws SVNException {
+        final Structure<ConflictInfo> result = Structure.obtain(ConflictInfo.class);
+        SVNSkel c;
+        final SVNSkel operation = readConflictOperation(conflictSkel);
+        if (operation == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCOMPLETE_DATA, "Not a completed conflict skel");
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+        // operation
+        c = operation.first();
+        result.set(ConflictInfo.conflictOperation, ConflictOperation.parse(c.getData()));
+        
+        // location
+        c = c.next();
+        final Collection<Structure<ConflictLocation>> locations = new ArrayList<Structure<ConflictLocation>>();
+        result.set(ConflictInfo.locations, locations);
+        for(int i = 0; i < c.getListSize(); i++) {
+            final Structure<ConflictLocation> location = readConflictLocation(c.getChild(i));
+            if (location != null) {
+                locations.add(location);
+            }
+        }
+        result.set(ConflictInfo.textConflicted, hasConflictKind(conflictSkel, ConflictKind.text));
+        result.set(ConflictInfo.propConflicted, hasConflictKind(conflictSkel, ConflictKind.prop));
+        result.set(ConflictInfo.treeConflicted, hasConflictKind(conflictSkel, ConflictKind.text));
+        return result;
+    }
+
+    private static SVNSkel readConflictOperation(SVNSkel conflictSkel) {
+        return conflictSkel.first();
+    }
+    
+    private static boolean hasConflictKind(SVNSkel conflictSkel, ConflictKind text) {
+        SVNSkel c = conflictSkel.first().next().first();
+        while(c.next() != null) {
+            if (text.name().equalsIgnoreCase(c.getValue())) {
+                return true;
+            }
+            c = c.next();
+        }
+        return false;
+    }
+
+    private static Structure<ConflictLocation> readConflictLocation(SVNSkel locationSkel) {
+        SVNSkel c = locationSkel.first();
+        if (!c.contentEquals("subversion")) {
+            return null;
+        }
+        final Structure<ConflictLocation> result = Structure.obtain(ConflictLocation.class);
+        c = c.next();
+        result.set(ConflictLocation.reposRootURL, c.getValue());
+        c = c.next();
+        if (c.isAtom()) {
+            result.set(ConflictLocation.reposUUID, c.getValue());
+        }
+        c = c.next();
+        result.set(ConflictLocation.reposRelPath, c.getValue());
+        c = c.next();
+        result.set(ConflictLocation.revision, Long.parseLong(c.getValue()));
+        c = c.next();
+        result.set(ConflictLocation.nodeKind, SVNNodeKind.parseKind(c.getValue()));        
+        return result;
     }
 
 }
