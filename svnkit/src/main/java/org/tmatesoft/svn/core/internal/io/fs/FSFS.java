@@ -29,6 +29,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
+import java.util.zip.InflaterInputStream;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -666,7 +667,8 @@ public class FSFS {
                 currentIndex++;
             }
         } catch (IOException e) {
-            // TODO wrap exception
+            SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.IO_ERROR);
+            SVNErrorManager.error(errorMessage, e, SVNLogType.FSFS);
         } finally {
             SVNFileUtil.closeFile(reader);
         }
@@ -676,53 +678,96 @@ public class FSFS {
         }
         final File packFile = new File(packShardDirectory, packfileName);
         InputStream is = null;
-        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        final byte[] buffer = new byte[8192];
         try {
-            is = new GZIPInputStream(SVNFileUtil.openFileForReading(packFile));
-            while(true) {
-                int rc = is.read(buffer);
-                if (rc < 0) {
-                    break;
-                }
-                bos.write(buffer, 0, rc);
+            is = SVNFileUtil.openFileForReading(packFile);
+
+            final int[] bytesRead = new int[1];
+
+            final long uncompressedSize = decodeUncompressedSize(is, 10, bytesRead);
+
+            if (uncompressedSize + bytesRead[0] != packFile.length()) {
+                is = new InflaterInputStream(is);
             }
+
+            final long firstRevision = readNumber(is);
+            final long revisionsCount = readNumber(is);
+
+            int propsLength = -1;
+            int offset = 0;
+            for(int i = 0; i < revisionsCount; i++) {
+                if (firstRevision + i < revision) {
+                    offset += readNumber(is);
+                } else if (firstRevision + i == revision) {
+                    propsLength = (int) readNumber(is);
+                } else {
+                    readNumber(is);
+                }
+            }
+
+            if (is.read() != '\n') {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Header end not found");
+                SVNErrorManager.error(err, SVNLogType.FSFS);
+            }
+
+            final byte[] propsData = new byte[(int) propsLength];
+            long read = is.skip(offset);
+            if (read < 0) {
+                SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Premature end of file");
+                SVNErrorManager.error(errorMessage, SVNLogType.FSFS);
+            }
+            read = is.read(propsData, 0, propsLength);
+            if (read < 0) {
+                SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Premature end of file");
+                SVNErrorManager.error(errorMessage, SVNLogType.FSFS);
+            }
+            return readProperties(propsData);
+
         } catch (IOException e) {
-            // TODO wrap exception
+            SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.IO_ERROR);
+            SVNErrorManager.error(errorMessage, e, SVNLogType.FSFS);
         } finally {
             SVNFileUtil.closeFile(is);
-            bos.close();
-        }
-        // read header and then revisions
-        is = new ByteArrayInputStream(bos.toByteArray());
-        final long firstRevision = readNumber(reader);
-        final long revisionsCount = readNumber(reader);
-        // empty line, header end
-        if (!"".equals(reader.readLine())) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Header end not found");
-            SVNErrorManager.error(err, SVNLogType.FSFS);
-        }
-        try {
-            for(int i = 0; i < revisionsCount; i++) {
-                final long propsLenght = readNumber(reader);
-                if (firstRevision + i == revision) {
-                    // read props
-                    final byte[] propsData = new byte[(int) propsLenght];
-                    is.read(propsData, 0, (int) propsLenght);
-                    return readProperties(propsData);
-                } else {
-                    is.skip(propsLenght);
-                }
-            }
-        } finally {
-            is.close();
         }
         
         return null;
     }
-    
-    private static SVNProperties readProperties(byte[] propsData) {
-        return null;
+
+    private long decodeUncompressedSize(InputStream inputStream, int lengthRecordSize, int[] outputBytesRead) throws SVNException {
+        int temp = 0;
+        int bytesRead = 0;
+
+        while (true) {
+            if (lengthRecordSize == bytesRead) {
+                SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.SVNDIFF_INVALID_HEADER, "Decompression of svndiff data failed: size too large");
+                SVNErrorManager.error(errorMessage, SVNLogType.FSFS);
+            }
+            int c = 0;
+            try {
+                c = inputStream.read();
+            } catch (IOException e) {
+                SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.IO_ERROR);
+                SVNErrorManager.error(errorMessage, e, SVNLogType.FSFS);
+            }
+            if (c < 0) {
+                SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.SVNDIFF_UNEXPECTED_END, "Decompression of svndiff data failed: no size");
+                SVNErrorManager.error(errorMessage, SVNLogType.FSFS);
+            }
+            bytesRead++;
+            temp = (temp << 7) | (c & 0x7f);
+            if (c < 0x80) {
+                outputBytesRead[0] = bytesRead;
+                return temp;
+            }
+        }
+    }
+
+    private static SVNProperties readProperties(byte[] propsData) throws SVNException {
+        final FSFile fsFile = new FSFile(propsData);
+        try {
+            return fsFile.readProperties(false, true);
+        } finally {
+            fsFile.close();
+        }
     }
 
     private static long readNumber(BufferedReader reader) throws SVNException, IOException {
@@ -738,6 +783,34 @@ public class FSFS {
             SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         return -1;
+    }
+
+    private static long readNumber(InputStream inputStream) throws SVNException {
+        char[] digits = new char[20];
+        int digitsCount = 0;
+
+        while (true) {
+            int c = 0;
+            try {
+                c = inputStream.read();
+            } catch (IOException e) {
+                SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.IO_ERROR);
+                SVNErrorManager.error(errorMessage, e, SVNLogType.FSFS);
+            }
+            if (c < 0) {
+                SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT);
+                SVNErrorManager.error(errorMessage, SVNLogType.FSFS);
+            }
+            if (c != '\n' && (c < '0'|| c > '9')) {
+                SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT);
+                SVNErrorManager.error(errorMessage, SVNLogType.FSFS);
+            }
+            if (c == '\n') {
+                return Long.parseLong(new String(digits, 0, digitsCount));
+            }
+            digits[digitsCount] = (char) c;
+            digitsCount++;
+        }
     }
 
     private boolean isPackedRevisionProperties(long revision) {
@@ -1837,7 +1910,7 @@ public class FSFS {
     }
 
     protected File getPackedRevPropsShardPath(long revision) throws SVNException {
-        return new File(getRevisionPropertiesDbPath(), (revision/myMaxFilesPerDirectory) + PACK_EXT);
+        return new File(getRevisionPropertiesRoot(), (revision/myMaxFilesPerDirectory) + PACK_EXT);
     }
 
     protected File getPackDir(long revision) {
