@@ -14,7 +14,10 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
@@ -26,14 +29,17 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
+import org.tmatesoft.svn.core.internal.wc.SVNConflictVersion;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCConflictDescription17;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
@@ -43,6 +49,9 @@ import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.ACTUAL_NODE__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODES__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
+import org.tmatesoft.svn.core.wc.SVNConflictAction;
+import org.tmatesoft.svn.core.wc.SVNConflictReason;
+import org.tmatesoft.svn.core.wc.SVNOperation;
 import org.tmatesoft.svn.util.SVNLogType;
 
 public class SvnWcDbReader extends SvnWcDbShared {
@@ -67,44 +76,18 @@ public class SvnWcDbReader extends SvnWcDbShared {
         propConflicted,
         treeConflicted,
     }
-
-    public enum ConflictLocation {
-        reposRootURL,
-        reposRelPath,
-        revision,
-        nodeKind, reposUUID,
-    }
     
     public enum ConflictKind {
         text, prop, tree, reject, obstructed;
     }
     
-    public enum ConflictOperation {
-        none(""), op_update("update"), op_switch("switch"), op_merge("merge"), op_patch("patch");
-        
-        private String value;
 
-        private ConflictOperation(String value) {
-            this.value = value;
-        }
-        
-        public String getValue() {
-            return value;
-        }
-        
-        public String toString() {
-            return value;
-        }
-
-        public static ConflictOperation parse(byte[] data) {
-            final String stringValue = new String(data);
-            for(ConflictOperation op : ConflictOperation.values()) {
-                if (op.getValue().equals(stringValue)) {
-                    return op;
-                }
-            }
-            return none;
-        }
+    public enum PropertyConflictInfo {
+        markerAbspath, 
+        mineProps,
+        theirOldProps,
+        theirProps,
+        conflictedPropNames,
     }
     
     public static Collection<File> getServerExcludedNodes(SVNWCDb db, File path) throws SVNException {
@@ -660,14 +643,14 @@ public class SvnWcDbReader extends SvnWcDbShared {
         }
         // operation
         c = operation.first();
-        result.set(ConflictInfo.conflictOperation, ConflictOperation.parse(c.getData()));
+        result.set(ConflictInfo.conflictOperation, SVNOperation.fromString(c.getValue()));
         
         // location
         c = c.next();
-        final Collection<Structure<ConflictLocation>> locations = new ArrayList<Structure<ConflictLocation>>();
+        final Collection<SVNConflictVersion> locations = new ArrayList<SVNConflictVersion>();
         result.set(ConflictInfo.locations, locations);
         for(int i = 0; i < c.getListSize(); i++) {
-            final Structure<ConflictLocation> location = readConflictLocation(c.getChild(i));
+            final SVNConflictVersion location = readConflictLocation(c.getChild(i));
             if (location != null) {
                 locations.add(location);
             }
@@ -677,41 +660,154 @@ public class SvnWcDbReader extends SvnWcDbShared {
         result.set(ConflictInfo.treeConflicted, hasConflictKind(conflictSkel, ConflictKind.text));
         return result;
     }
+    
+    public static void readPropertyConflicts(List<SVNWCConflictDescription17> target, 
+            SVNWCDb db, 
+            File localAbsPath, 
+            SVNSkel conflictSkel, 
+            boolean createTempFiles,
+            SVNOperation operation,
+            SVNConflictVersion leftVersion,
+            SVNConflictVersion rightVersion) throws SVNException {
+        
+        final Structure<PropertyConflictInfo> propertyConflictInfo = readPropertyConflict(db, localAbsPath, conflictSkel);
+        final Set<String> conflictedProps = propertyConflictInfo.get(PropertyConflictInfo.conflictedPropNames);
+        if (!createTempFiles || conflictedProps.isEmpty()) {
+            final SVNWCConflictDescription17 description = SVNWCConflictDescription17.createProp(localAbsPath, SVNNodeKind.UNKNOWN, "");
+            description.setTheirFile((File) propertyConflictInfo.get(PropertyConflictInfo.markerAbspath));
+            description.setOperation(operation);
+            description.setSrcLeftVersion(leftVersion);
+            description.setSrcRightVersion(rightVersion);
+            target.add(description);
+            return;
+        }
+        //
+        final File tmpFileRoot = db.getWCRootTempDir(localAbsPath); 
+        for(String propertyName : conflictedProps) {
+            final SVNWCConflictDescription17 description = SVNWCConflictDescription17.createProp(localAbsPath, SVNNodeKind.UNKNOWN, propertyName);
+            description.setOperation(operation);
+            description.setSrcLeftVersion(leftVersion);
+            description.setSrcRightVersion(rightVersion);
+            description.setPropertyName(propertyName);
+            
+            final Map<String, byte[]> mineProps = propertyConflictInfo.get(PropertyConflictInfo.mineProps); 
+            final Map<String, byte[]> theirProps = propertyConflictInfo.get(PropertyConflictInfo.theirProps); 
+            final Map<String, byte[]> oldProps = propertyConflictInfo.get(PropertyConflictInfo.theirOldProps); 
+            
+            final byte[] mineValue = mineProps.get(propertyName);
+            final byte[] theirValue = theirProps.get(propertyName);
+            final byte[] oldValue = oldProps.get(propertyName);
+            if (theirValue == null) {
+                description.setAction(SVNConflictAction.DELETE);
+            } else if (mineValue == null) {
+                description.setAction(SVNConflictAction.ADD);
+            } else {
+                description.setAction(SVNConflictAction.EDIT);
+            }
+            
+            if (mineValue == null) {
+                description.setReason(SVNConflictReason.DELETED);
+            } else if (theirValue == null) {
+                description.setReason(SVNConflictReason.ADDED);
+            } else {
+                description.setReason(SVNConflictReason.EDITED);
+            }
+            
+            description.setTheirFile((File) propertyConflictInfo.get(PropertyConflictInfo.markerAbspath));
+            if (mineValue != null) {
+                final File tempFile = SVNFileUtil.createUniqueFile(tmpFileRoot, "svn.", ".prop.tmp", false);
+                description.setMyFile(tempFile);
+                SVNFileUtil.writeToFile(tempFile, mineValue);
+            }
+            if (theirValue != null) {
+                final File tempFile = SVNFileUtil.createUniqueFile(tmpFileRoot, "svn.", ".prop.tmp", false);
+                description.setMergedFile(tempFile);
+                SVNFileUtil.writeToFile(tempFile, theirValue);
+            }
+            if (oldValue != null) {
+                final File tempFile = SVNFileUtil.createUniqueFile(tmpFileRoot, "svn.", ".prop.tmp", false);
+                description.setBaseFile(tempFile);
+                SVNFileUtil.writeToFile(tempFile, oldValue);
+            }
+            target.add(description);
+         }
+    }
+    
+    public static Structure<PropertyConflictInfo> readPropertyConflict(SVNWCDb db, File wriAbsPath, SVNSkel conflictSkel) throws SVNException {
+        final SVNSkel propConflict = getConflict(conflictSkel, ConflictKind.prop);
+        final Structure<PropertyConflictInfo> result = Structure.obtain(PropertyConflictInfo.class);
+        SVNSkel c;
+        if (propConflict == null) {
+            final SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_MISSING, "Conflict not set");
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+        c = propConflict.first().next();
+        if (c.first() != null && c.first().isAtom()) {
+            result.set(PropertyConflictInfo.markerAbspath, new File(c.first().getValue()));
+        }
+        c = c.next();
+        final Set<String> conflictedPropertyNames = new HashSet<String>();
+        for(int i = 0; i < c.getListSize(); i++) {
+            conflictedPropertyNames.add(c.getChild(i).getValue());
+        }
+        result.set(PropertyConflictInfo.conflictedPropNames, conflictedPropertyNames);
+        c = c.next();
+        if (c.isValidPropList()) {
+            result.set(PropertyConflictInfo.theirOldProps, c.parsePropList());
+        } else {
+            result.set(PropertyConflictInfo.theirOldProps, new HashMap<String, byte[]>());
+        }
+        c = c.next();
+        if (c.isValidPropList()) {
+            result.set(PropertyConflictInfo.mineProps, c.parsePropList());
+        } else {
+            result.set(PropertyConflictInfo.mineProps, new HashMap<String, byte[]>());
+        }
+        c = c.next();
+        if (c.isValidPropList()) {
+            result.set(PropertyConflictInfo.theirProps, c.parsePropList());
+        } else {
+            result.set(PropertyConflictInfo.theirProps, new HashMap<String, byte[]>());
+        }
+
+        return result;
+    }
 
     private static SVNSkel readConflictOperation(SVNSkel conflictSkel) {
         return conflictSkel.first();
     }
     
-    private static boolean hasConflictKind(SVNSkel conflictSkel, ConflictKind text) {
+    private static boolean hasConflictKind(SVNSkel conflictSkel, ConflictKind kind) {
+        return getConflict(conflictSkel, kind) != null;
+    }
+
+    private static SVNSkel getConflict(SVNSkel conflictSkel, ConflictKind kind) {
         SVNSkel c = conflictSkel.first().next().first();
         while(c.next() != null) {
-            if (text.name().equalsIgnoreCase(c.getValue())) {
-                return true;
+            if (kind.name().equalsIgnoreCase(c.getValue())) {
+                return c;
             }
             c = c.next();
         }
-        return false;
+        return null;
     }
 
-    private static Structure<ConflictLocation> readConflictLocation(SVNSkel locationSkel) {
+    private static SVNConflictVersion readConflictLocation(SVNSkel locationSkel) throws SVNException {
         SVNSkel c = locationSkel.first();
         if (!c.contentEquals("subversion")) {
             return null;
         }
-        final Structure<ConflictLocation> result = Structure.obtain(ConflictLocation.class);
         c = c.next();
-        result.set(ConflictLocation.reposRootURL, c.getValue());
+        final SVNURL repositoryRootURL = SVNURL.parseURIEncoded(c.getValue());
         c = c.next();
-        if (c.isAtom()) {
-            result.set(ConflictLocation.reposUUID, c.getValue());
-        }
+        // TODO UUID
         c = c.next();
-        result.set(ConflictLocation.reposRelPath, c.getValue());
+        final String reposRelPath = c.getValue();
         c = c.next();
-        result.set(ConflictLocation.revision, Long.parseLong(c.getValue()));
+        final long revision = Long.parseLong(c.getValue());
         c = c.next();
-        result.set(ConflictLocation.nodeKind, SVNNodeKind.parseKind(c.getValue()));        
-        return result;
+        final SVNNodeKind nodeKind = SVNNodeKind.parseKind(c.getValue());
+        return new SVNConflictVersion(repositoryRootURL, reposRelPath, revision, nodeKind);
     }
 
 }
