@@ -22,12 +22,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.Map;
+import java.util.*;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.InflaterInputStream;
 
@@ -40,6 +35,8 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
+import org.tmatesoft.svn.core.internal.io.fs.revprop.SVNFSFSPackedRevProps;
+import org.tmatesoft.svn.core.internal.io.fs.revprop.SVNFSFSPackedRevPropsManifest;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
@@ -633,16 +630,13 @@ public class FSFS {
         }
         if (myDBFormat >= MIN_PACKED_REVPROP_FORMAT || properties == null) {
             // read packed revision props
-            try {
-                return readPackedRevisionProperties(revision);
-            } catch (IOException e) {
-                // TODO wrap exception, do retry
-            }
+            return readPackedRevisionProperties(revision);
+            // TODO wrap exception, do retry
         }
         return new SVNProperties();
     }
     
-    private SVNProperties readPackedRevisionProperties(long revision) throws SVNException, IOException {
+    private SVNProperties readPackedRevisionProperties(long revision) throws SVNException {
         if (!isPackedRevisionProperties(revision)) {
             updateMinUnpackedRevProp();
         }
@@ -650,33 +644,7 @@ public class FSFS {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "No such packed revision {0}", (Long) revision);
             SVNErrorManager.error(err, SVNLogType.FSFS);
         }
-        final File packShardDirectory = getPackedRevPropsShardPath(revision);
-        final File manifestFile = new File(packShardDirectory, MANIFEST_FILE);
-        final long revisionIndex = revision < myMaxFilesPerDirectory ? revision - 1 : revision % myMaxFilesPerDirectory;
-        long currentIndex = 0;
-        
-        BufferedReader reader =null;
-        String packfileName = null;
-        try {
-            reader = new BufferedReader(new InputStreamReader(SVNFileUtil.openFileForReading(manifestFile)));
-            while(true) {
-                packfileName = reader.readLine();
-                if (packfileName == null || revisionIndex == currentIndex) {
-                    break;
-                } 
-                currentIndex++;
-            }
-        } catch (IOException e) {
-            SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.IO_ERROR);
-            SVNErrorManager.error(errorMessage, e, SVNLogType.FSFS);
-        } finally {
-            SVNFileUtil.closeFile(reader);
-        }
-        if (packfileName == null && currentIndex <= revisionIndex) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "Packed revprop manifest for rev {0} too small", (Long) revision);
-            SVNErrorManager.error(err, SVNLogType.FSFS);
-        }
-        final File packFile = new File(packShardDirectory, packfileName);
+        final File packFile = getPackedRevPropFile(revision);
         InputStream is = null;
         try {
             is = SVNFileUtil.openFileForReading(packFile);
@@ -732,7 +700,37 @@ public class FSFS {
         return null;
     }
 
-    private long decodeUncompressedSize(InputStream inputStream, int lengthRecordSize, int[] outputBytesRead) throws SVNException {
+    private File getPackedRevPropFile(long revision) throws SVNException {
+        final File packShardDirectory = getPackedRevPropsShardPath(revision);
+        final File manifestFile = new File(packShardDirectory, MANIFEST_FILE);
+        final long revisionIndex = revision < myMaxFilesPerDirectory ? revision - 1 : revision % myMaxFilesPerDirectory;
+        long currentIndex = 0;
+
+        BufferedReader reader =null;
+        String packfileName = null;
+        try {
+            reader = new BufferedReader(new InputStreamReader(SVNFileUtil.openFileForReading(manifestFile)));
+            while(true) {
+                packfileName = reader.readLine();
+                if (packfileName == null || revisionIndex == currentIndex) {
+                    break;
+                }
+                currentIndex++;
+            }
+        } catch (IOException e) {
+            SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.IO_ERROR);
+            SVNErrorManager.error(errorMessage, e, SVNLogType.FSFS);
+        } finally {
+            SVNFileUtil.closeFile(reader);
+        }
+        if (packfileName == null && currentIndex <= revisionIndex) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "Packed revprop manifest for rev {0} too small", (Long) revision);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
+        }
+        return new File(packShardDirectory, packfileName);
+    }
+
+    private static long decodeUncompressedSize(InputStream inputStream, int lengthRecordSize, int[] outputBytesRead) throws SVNException {
         int temp = 0;
         int bytesRead = 0;
 
@@ -1171,21 +1169,66 @@ public class FSFS {
 
     public void setRevisionProperty(long revision, String propertyName, SVNPropertyValue propertyValue) throws SVNException {
         ensureRevisionsExists(revision);
-        if (myDBFormat < MIN_PACKED_REVPROP_FORMAT || revision >= myMinUnpackedRevProp ) {
+
             FSWriteLock writeLock = FSWriteLock.getWriteLockForDB(this);
             synchronized (writeLock) {
                 try {
                     writeLock.lock();
-                    SVNWCProperties revProps = new SVNWCProperties(getRevisionPropertiesFile(revision, false), null);
-                    revProps.setPropertyValue(propertyName, propertyValue);
+
+                    if (!isPackedRevisionProperties(revision)) {
+                        SVNWCProperties revProps = new SVNWCProperties(getRevisionPropertiesFile(revision, false), null);
+                        revProps.setPropertyValue(propertyName, propertyValue);
+                    } else {
+                        final File packShardDirectory = getPackedRevPropsShardPath(revision);
+                        final File manifestFile = new File(packShardDirectory, MANIFEST_FILE);
+
+                        final SVNFSFSPackedRevPropsManifest manifest = SVNFSFSPackedRevPropsManifest.fromFile(manifestFile, revision, myMaxFilesPerDirectory);
+
+                        final File packedRevPropFile = new File(packShardDirectory, manifest.getPackName(revision));
+
+                        final byte[] buffer = new byte[(int) packedRevPropFile.length()];
+                        InputStream inputStream = null;
+                        try {
+                            inputStream = SVNFileUtil.openFileForReading(packedRevPropFile);
+                            int read = SVNFileUtil.readIntoBuffer(inputStream, buffer, 0, buffer.length);
+                            if (read != buffer.length) {
+                                SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.STREAM_UNEXPECTED_EOF);
+                                SVNErrorManager.error(errorMessage, SVNLogType.FSFS);
+                            }
+                        } catch (IOException e) {
+                            SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.IO_ERROR);
+                            SVNErrorManager.error(errorMessage, e, SVNLogType.FSFS);
+                        } finally {
+                            SVNFileUtil.closeFile(inputStream);
+                        }
+
+                        final SVNFSFSPackedRevProps packedRevProps = SVNFSFSPackedRevProps.fromCompressedByteArray(buffer);
+                        SVNProperties properties = packedRevProps.parseProperties(revision);
+                        properties.put(propertyName, propertyValue);
+                        final List<SVNFSFSPackedRevProps> packs = packedRevProps.setProperties(revision, properties, getRevPropPackSize());
+
+                        for (SVNFSFSPackedRevProps pack : packs) {
+                            final String packName = manifest.updatePackName(pack.getFirstRevision(), (int) pack.getRevisionsCount());
+                            //TODO: write pack to packName via tmp file
+
+                            final OutputStream outputStream = SVNFileUtil.openFileForWriting(new File(packShardDirectory, packName));
+                            try {
+                                pack.writeCompressedLevelNone(outputStream);
+                            } finally {
+                                SVNFileUtil.closeFile(outputStream);
+                            }
+                        }
+                        SVNFileUtil.writeToFile(manifestFile, manifest.asString(), "UTF-8");
+                    }
                 } finally {
                     writeLock.unlock();
                     FSWriteLock.release(writeLock);
                 }
             }
-        } else {
-            // TODO pack?
-        }
+    }
+
+    private long getRevPropPackSize() {
+        return Short.MAX_VALUE * 2;
     }
 
     public SVNProperties getTransactionProperties(String txnID) throws SVNException {

@@ -8,12 +8,18 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.util.SVNLogType;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 
 public class SVNFSFSPackedRevPropsManifest {
+
+    public static SVNFSFSPackedRevPropsManifest fromFile(File manifestFile, long revision, long maxFilesPerDirectory) throws SVNException {
+        final long firstRevision = revision < maxFilesPerDirectory ? 1 : revision - revision % maxFilesPerDirectory;
+        return fromString(firstRevision, SVNFileUtil.readFile(manifestFile));
+    }
 
     public static SVNFSFSPackedRevPropsManifest fromString(long firstRevision, String manifestString) throws SVNException {
         final List<String> packNames = new ArrayList<String>();
