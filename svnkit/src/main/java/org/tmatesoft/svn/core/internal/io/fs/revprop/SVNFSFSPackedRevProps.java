@@ -102,7 +102,7 @@ public class SVNFSFSPackedRevProps {
         return parseProperties(entry.data, entry.offset, entry.length);
     }
 
-    public long getTotalSize() {
+    private long getTotalSize() {
         long totalSize = 0;
         for (Entry entry : entries) {
             totalSize += entry.getSize();
@@ -110,7 +110,7 @@ public class SVNFSFSPackedRevProps {
         return totalSize;
     }
 
-    public long getSerializedSize() throws SVNException {
+    private long getSerializedSize() throws SVNException {
         return asUncompressedByteArray().length;
     }
 
