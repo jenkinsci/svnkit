@@ -22,6 +22,26 @@ public class SVNFSFSPackedRevProps {
 
     private static final int INT64_BUFFER_SIZE = 21;
 
+    public static SVNFSFSPackedRevProps fromPackFile(File file) throws SVNException {
+        final byte[] buffer = new byte[(int) file.length()];
+        InputStream inputStream = null;
+        try {
+            inputStream = SVNFileUtil.openFileForReading(file);
+            int read = SVNFileUtil.readIntoBuffer(inputStream, buffer, 0, buffer.length);
+            if (read != buffer.length) {
+                SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.STREAM_UNEXPECTED_EOF);
+                SVNErrorManager.error(errorMessage, SVNLogType.FSFS);
+            }
+            return fromCompressedByteArray(buffer);
+        } catch (IOException e) {
+            SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.IO_ERROR);
+            SVNErrorManager.error(errorMessage, e, SVNLogType.FSFS);
+        } finally {
+            SVNFileUtil.closeFile(inputStream);
+        }
+        return null;
+    }
+
     public static SVNFSFSPackedRevProps fromCompressedByteArray(byte[] compressedData) throws SVNException {
         final byte[] uncompressedData = decompress(compressedData);
         return fromUncompressedByteArray(uncompressedData);
@@ -89,7 +109,16 @@ public class SVNFSFSPackedRevProps {
         }
     }
 
-    public void writeCompressedLevelNone(OutputStream outputStream) throws SVNException {
+    public void writeToFile(File packFile) throws SVNException {
+        final OutputStream outputStream = SVNFileUtil.openFileForWriting(packFile);
+        try {
+            writeCompressedLevelNone(outputStream);
+        } finally {
+            SVNFileUtil.closeFile(outputStream);
+        }
+    }
+
+    private void writeCompressedLevelNone(OutputStream outputStream) throws SVNException {
         compressLevelNone(asUncompressedByteArray(), outputStream);
     }
 

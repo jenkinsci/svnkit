@@ -1186,39 +1186,37 @@ public class FSFS {
 
                         final File packedRevPropFile = new File(packShardDirectory, manifest.getPackName(revision));
 
-                        final byte[] buffer = new byte[(int) packedRevPropFile.length()];
-                        InputStream inputStream = null;
-                        try {
-                            inputStream = SVNFileUtil.openFileForReading(packedRevPropFile);
-                            int read = SVNFileUtil.readIntoBuffer(inputStream, buffer, 0, buffer.length);
-                            if (read != buffer.length) {
-                                SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.STREAM_UNEXPECTED_EOF);
-                                SVNErrorManager.error(errorMessage, SVNLogType.FSFS);
-                            }
-                        } catch (IOException e) {
-                            SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.IO_ERROR);
-                            SVNErrorManager.error(errorMessage, e, SVNLogType.FSFS);
-                        } finally {
-                            SVNFileUtil.closeFile(inputStream);
-                        }
-
-                        final SVNFSFSPackedRevProps packedRevProps = SVNFSFSPackedRevProps.fromCompressedByteArray(buffer);
+                        final SVNFSFSPackedRevProps packedRevProps = SVNFSFSPackedRevProps.fromPackFile(packedRevPropFile);
                         SVNProperties properties = packedRevProps.parseProperties(revision);
                         properties.put(propertyName, propertyValue);
                         final List<SVNFSFSPackedRevProps> packs = packedRevProps.setProperties(revision, properties, getRevPropPackSize());
 
-                        for (SVNFSFSPackedRevProps pack : packs) {
-                            final String packName = manifest.updatePackName(pack.getFirstRevision(), (int) pack.getRevisionsCount());
-                            //TODO: write pack to packName via tmp file
+                        File tmpFile = SVNFileUtil.createUniqueFile(packShardDirectory, "svn", ".tmp", false);
 
-                            final OutputStream outputStream = SVNFileUtil.openFileForWriting(new File(packShardDirectory, packName));
-                            try {
-                                pack.writeCompressedLevelNone(outputStream);
-                            } finally {
-                                SVNFileUtil.closeFile(outputStream);
+                        if (packs.size() == 1) {
+                            final SVNFSFSPackedRevProps pack = packs.get(0);
+                            pack.writeToFile(tmpFile);
+                            SVNFileUtil.deleteFile(packedRevPropFile);
+                            SVNFileUtil.rename(tmpFile, packedRevPropFile);
+                        } else {
+                            final Set<String> packNamesToDelete = new HashSet<String>(3);
+                            for (SVNFSFSPackedRevProps pack : packs) {
+                                final String oldPackName = manifest.getPackName(pack.getFirstRevision());
+                                packNamesToDelete.add(oldPackName);
+
+                                final String packName = manifest.updatePackName(pack.getFirstRevision(), (int) pack.getRevisionsCount());
+                                File packFile = new File(packShardDirectory, packName);
+                                pack.writeToFile(packFile);
+                            }
+                            SVNFileUtil.writeToFile(tmpFile, manifest.asString(), "UTF-8");
+                            SVNFileUtil.deleteFile(manifestFile);
+                            SVNFileUtil.rename(tmpFile, manifestFile);
+
+                            for (String packNameToDelete : packNamesToDelete) {
+                                final File packFile = new File(packShardDirectory, packNameToDelete);
+                                SVNFileUtil.deleteFile(packFile);
                             }
                         }
-                        SVNFileUtil.writeToFile(manifestFile, manifest.asString(), "UTF-8");
                     }
                 } finally {
                     writeLock.unlock();
