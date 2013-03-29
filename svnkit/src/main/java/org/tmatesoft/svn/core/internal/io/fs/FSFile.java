@@ -37,6 +37,8 @@ public class FSFile {
     
     private File myFile;
     private byte[] myData;
+    private int myOffset;
+    private int myLength;
     private FileChannel myChannel;
     private InputStream myInputStream;
     private long myPosition;
@@ -60,8 +62,14 @@ public class FSFile {
     }
 
     public FSFile(byte[] data) {
+        this(data, 0, data.length);
+    }
+
+    public FSFile(byte[] data, int offset, int length) {
         myFile = null;
         myData = data;
+        myOffset = offset;
+        myLength = length;
         myPosition = 0;
         myBufferPosition = 0;
         myBuffer = ByteBuffer.allocate(1024);
@@ -79,7 +87,7 @@ public class FSFile {
     }
 
     public long size() {
-        return myData == null ? myFile.length() : myData.length;
+        return myData == null ? myFile.length() : myLength;
     }
     
     public void resetDigest() {
@@ -373,7 +381,7 @@ public class FSFile {
             if (myData == null) {
                 getChannel().position(myBufferPosition);
             } else {
-                myInputStream = new ByteArrayInputStream(myData);
+                myInputStream = new ByteArrayInputStream(myData, myOffset, myLength);
             }
             myBuffer.clear();
             int read;

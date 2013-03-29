@@ -14,10 +14,13 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.zip.InflaterInputStream;
 
 public class SVNFSFSPackedRevProps {
+
+    private static final int INT64_BUFFER_SIZE = 21;
 
     public static SVNFSFSPackedRevProps fromCompressedByteArray(byte[] compressedData) throws SVNException {
         final byte[] uncompressedData = decompress(compressedData);
@@ -97,6 +100,80 @@ public class SVNFSFSPackedRevProps {
         }
         final Entry entry = entries.get(revisionIndex);
         return parseProperties(entry.data, entry.offset, entry.length);
+    }
+
+    public long getTotalSize() {
+        long totalSize = 0;
+        for (Entry entry : entries) {
+            totalSize += entry.getSize();
+        }
+        return totalSize;
+    }
+
+    public long getSerializedSize() throws SVNException {
+        return asUncompressedByteArray().length;
+    }
+
+    public List<SVNFSFSPackedRevProps> setProperties(long revision, SVNProperties properties, long revPropPackSize) throws SVNException {
+        final byte[] propertiesByteArray = composePropertiesByteArray(properties);
+        final long revisionIndex = revision - getFirstRevision();
+        final long newTotalSize = getTotalSize() - getSerializedSize() + propertiesByteArray.length +
+                (getRevisionsCount() + 2) * INT64_BUFFER_SIZE;
+
+        setEntry(revision, propertiesByteArray);
+
+        if (newTotalSize < revPropPackSize || entries.size() == 1) {
+            return Collections.singletonList(this);
+        } else {
+            final List<SVNFSFSPackedRevProps> packs = new ArrayList<SVNFSFSPackedRevProps>();
+
+            int leftCount = 0;
+            int rightCount = 0;
+
+            int left = 0;
+            int right = (int) getRevisionsCount() - 1;
+
+            long leftSize = 2 * INT64_BUFFER_SIZE;
+            long rightSize = 2 * INT64_BUFFER_SIZE;
+
+            while (left <= right) {
+                final Entry leftEntry = entries.get(left);
+                final Entry rightEntry = entries.get(right);
+
+                if (leftSize + leftEntry.getSize() < rightSize + rightEntry.getSize()) {
+                    leftSize += leftEntry.getSize();
+                    left++;
+                } else {
+                    rightSize += rightEntry.getSize();
+                    right--;
+                }
+            }
+
+            leftCount = left;
+            rightCount = (int) (getRevisionsCount() - left);
+
+            if (leftSize > revPropPackSize || rightSize > revPropPackSize) {
+                leftCount = (int) revisionIndex;
+                rightCount = (int) (getRevisionsCount() - leftCount - 1);
+            }
+
+            if (leftCount != 0) {
+                final long leftFirstRevision = getFirstRevision();
+                packs.add(new SVNFSFSPackedRevProps(leftFirstRevision, entries.subList(0, leftCount), null));
+            }
+
+            if (leftCount + rightCount < getRevisionsCount()) {
+                final long middleFirstRevision = revision;
+                packs.add(new SVNFSFSPackedRevProps(middleFirstRevision, Collections.singletonList(entries.get((int) revisionIndex)), null));
+            }
+
+            if (rightCount != 0) {
+                final long rightFirstRevision = getRevisionsCount() - rightCount + getFirstRevision();
+                packs.add(new SVNFSFSPackedRevProps(rightFirstRevision, entries.subList((int) (getRevisionsCount() - rightCount), (int)getRevisionsCount()), null));
+            }
+
+            return packs;
+        }
     }
 
     private static byte[] decompress(byte[] compressedData) throws SVNException {
@@ -221,6 +298,16 @@ public class SVNFSFSPackedRevProps {
         }
     }
 
+    private static byte[] composePropertiesByteArray(SVNProperties properties) throws SVNException {
+        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        try {
+            SVNWCProperties.setProperties(properties, byteArrayOutputStream, SVNWCProperties.SVN_HASH_TERMINATOR);
+            return byteArrayOutputStream.toByteArray();
+        } finally {
+            SVNFileUtil.closeFile(byteArrayOutputStream);
+        }
+    }
+
     private byte[] toUncompressedByteArray() throws SVNException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         try {
@@ -278,6 +365,15 @@ public class SVNFSFSPackedRevProps {
         }
     }
 
+    private void setEntry(long revision, byte[] data) {
+        invalidateCaches();
+        entries.set((int) (revision - getFirstRevision()), new Entry(data, 0, data.length));
+    }
+
+    private void invalidateCaches() {
+        this.cachedUncompressedByteArray = null;
+    }
+
     public static class Builder {
         private long firstRevision;
         private final List<Entry> entries;
@@ -305,6 +401,10 @@ public class SVNFSFSPackedRevProps {
 
         public void addByteArrayEntry(byte[] data, int offset, int length) {
             entries.add(new Entry(data, offset, length));
+        }
+
+        public void addPropertiesEntry(SVNProperties properties) throws SVNException {
+            addByteArrayEntry(composePropertiesByteArray(properties));
         }
     }
 
