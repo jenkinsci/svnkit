@@ -20,7 +20,7 @@ import java.util.zip.InflaterInputStream;
 
 public class SVNFSFSPackedRevProps {
 
-    private static final int INT64_BUFFER_SIZE = 21;
+    public static final int INT64_BUFFER_SIZE = 21;
 
     public static SVNFSFSPackedRevProps fromPackFile(File file) throws SVNException {
         final byte[] buffer = new byte[(int) file.length()];

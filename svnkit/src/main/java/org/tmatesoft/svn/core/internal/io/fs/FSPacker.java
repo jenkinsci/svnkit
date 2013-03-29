@@ -15,11 +15,15 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.tmatesoft.svn.core.ISVNCanceller;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.io.fs.revprop.SVNFSFSPackedRevProps;
+import org.tmatesoft.svn.core.internal.io.fs.revprop.SVNFSFSPackedRevPropsManifest;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
@@ -155,14 +159,46 @@ public class FSPacker {
 
     private void packRevPropShard(FSFS fsfs, long shard) throws SVNException {
         File shardPath = new File(fsfs.getRevisionPropertiesRoot(), String.valueOf(shard));
+        File packPath = new File(fsfs.getRevisionPropertiesRoot(), String.valueOf(shard) + FSFS.PACK_EXT);
 
         firePackEvent(shard, true);
 
         long startRev = shard * fsfs.getMaxFilesPerDirectory();
         long endRev = (shard + 1) * fsfs.getMaxFilesPerDirectory() - 1;
+
+        long totalSize = 2 * SVNFSFSPackedRevProps.INT64_BUFFER_SIZE;
+        boolean packIsEmpty = true;
+        String packName = null;
+
+        final SVNFSFSPackedRevPropsManifest.Builder manifestBuilder = new SVNFSFSPackedRevPropsManifest.Builder();
+
         for (long rev = startRev; rev <= endRev; rev++) {
             // TODO pack to packs
+
+            final File path = new File(shardPath, String.valueOf(rev));
+            final long size = path.length();
+
+            final long maxPackSize = 100; //TODO: should it be a parameter?
+            if (!packIsEmpty && totalSize + SVNFSFSPackedRevProps.INT64_BUFFER_SIZE + size > maxPackSize) {
+                copyRevProps(packName, packPath, shardPath, startRev, rev-1);
+                totalSize = 2 * SVNFSFSPackedRevProps.INT64_BUFFER_SIZE;
+                startRev = rev;
+            }
+
+            if (packIsEmpty) {
+                packName = rev + ".0";
+            }
+            manifestBuilder.addPackName(packName);
+            packIsEmpty = false;
+            totalSize += SVNFSFSPackedRevProps.INT64_BUFFER_SIZE + size;
         }
+
+        if (!packIsEmpty) {
+            copyRevProps(packName, packPath, shardPath, startRev, endRev - 1);
+        }
+
+        final SVNFSFSPackedRevPropsManifest manifest = manifestBuilder.build();
+        SVNFileUtil.writeToFile(new File(shardPath, FSFS.MANIFEST_FILE), manifest.asString(), "UTF-8");
 
         File finalPath = fsfs.getMinUnpackedRevPropPath();
         File tmpFile = SVNFileUtil.createUniqueFile(fsfs.getDBRoot(), "tempfile", ".tmp", false);
@@ -172,6 +208,22 @@ public class FSPacker {
         SVNFileUtil.deleteAll(shardPath, true, myCanceller);
 
         firePackEvent(shard, false);
+    }
+
+    private void copyRevProps(String packName, File packPath, File shardPath, long startRev, long endRev) throws SVNException {
+        final SVNFSFSPackedRevProps.Builder packedRevPropsBuilder = new SVNFSFSPackedRevProps.Builder();
+        packedRevPropsBuilder.setFirstRevision(startRev);
+
+        for (long rev = startRev; rev <= endRev; rev++) {
+            final File revPropFile = new File(shardPath, String.valueOf(rev));
+            final byte[] content = SVNFileUtil.readFully(revPropFile);
+
+            packedRevPropsBuilder.addByteArrayEntry(content);
+        }
+
+        final SVNFSFSPackedRevProps packedRevProps = packedRevPropsBuilder.build();
+        final File packFile = new File(packPath, packName);
+        packedRevProps.writeToFile(packFile);
     }
 
 }

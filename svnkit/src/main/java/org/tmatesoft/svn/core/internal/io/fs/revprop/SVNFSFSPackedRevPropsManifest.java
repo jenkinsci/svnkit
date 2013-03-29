@@ -104,4 +104,27 @@ public class SVNFSFSPackedRevPropsManifest {
         }
         return stringBuilder.toString();
     }
+
+    public static class Builder {
+
+        private long firstRevision;
+        private final List<String> packNames;
+
+        public Builder() {
+            this.firstRevision = -1;
+            this.packNames = new ArrayList<String>();
+        }
+
+        public SVNFSFSPackedRevPropsManifest build() {
+            return new SVNFSFSPackedRevPropsManifest(firstRevision, packNames);
+        }
+
+        public void setFirstRevision(long firstRevision) {
+            this.firstRevision = firstRevision;
+        }
+
+        public void addPackName(String packName) {
+            packNames.add(packName);
+        }
+    }
 }
