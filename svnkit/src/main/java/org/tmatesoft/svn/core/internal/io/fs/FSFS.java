@@ -85,6 +85,10 @@ public class FSFS {
     public static final String PACK_KIND_MANIFEST = "manifest";
     public static final String ENABLE_REP_SHARING_OPTION = "enable-rep-sharing";
     public static final String REP_SHARING_SECTION = "rep-sharing";
+    public static final String PACKED_REVPROPS_SECTION = "packed-revprops";
+    public static final String COMPRESS_PACKED_REVPROPS_OPTION = "compress-packed-revprops";
+    public static final String REVPROP_PACK_SIZE_OPTION = "revprop-pack-size";
+
     public static final String PATH_CONFIG = "fsfs.conf";
     public static final String TXN_PATH_EXT = ".txn";
     public static final String TXN_MERGEINFO_PATH = "mergeinfo";
@@ -164,6 +168,8 @@ public class FSFS {
     private long myMinUnpackedRevProp;
     
     private boolean myIsHooksEnabled;
+    private boolean myCompressPackedRevprops;
+    private long myRevpropPackSize;
 
     public FSFS(File repositoryRoot) {
         myRepositoryRoot = repositoryRoot;
@@ -289,6 +295,22 @@ public class FSFS {
         /* Open the revprops db. */
         if (myDBFormat >= MIN_PACKED_REVPROP_FORMAT) {
             updateMinUnpackedRevProp();
+
+            myCompressPackedRevprops = DefaultSVNOptions.getBooleanValue(config.getPropertyValue(PACKED_REVPROPS_SECTION, COMPRESS_PACKED_REVPROPS_OPTION), false);
+            String revpropPackSizeString = config.getPropertyValue(PACKED_REVPROPS_SECTION, REVPROP_PACK_SIZE_OPTION);
+            long defaultRevpropPackSize = myCompressPackedRevprops ? 0x100 : 0x40;
+            long revpropPackSize = defaultRevpropPackSize;
+            if (revpropPackSizeString != null) {
+                try {
+                    revpropPackSize = Long.parseLong(revpropPackSizeString);
+                } catch (NumberFormatException e) {
+                    //ignore
+                }
+            }
+            myRevpropPackSize = revpropPackSize;
+        } else {
+            myRevpropPackSize = 0x10000;
+            myCompressPackedRevprops = false;
         }
     }
 
@@ -1152,7 +1174,7 @@ public class FSFS {
     }
 
     protected long getRevPropPackSize() {
-        return Short.MAX_VALUE * 2;
+        return myRevpropPackSize;
     }
 
     public SVNProperties getTransactionProperties(String txnID) throws SVNException {
