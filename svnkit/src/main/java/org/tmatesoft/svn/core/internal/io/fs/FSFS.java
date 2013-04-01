@@ -565,7 +565,7 @@ public class FSFS {
         }
     }
 
-    protected void writeDBFormat(int format, long maxFilesPerDir, boolean overwrite) throws SVNException {
+    public void writeDBFormat(int format, long maxFilesPerDir, boolean overwrite) throws SVNException {
         File formatFile = getDBFormatFile();
         SVNErrorManager.assertionFailure(format >= 1 && format <= DB_FORMAT, "unexpected format " + String.valueOf(format), SVNLogType.FSFS);
         String contents = null;
@@ -628,12 +628,12 @@ public class FSFS {
                 file.close();
             }
         }
-        if (myDBFormat >= MIN_PACKED_REVPROP_FORMAT || properties == null) {
+        if (myDBFormat >= MIN_PACKED_REVPROP_FORMAT && properties == null) {
             // read packed revision props
             return readPackedRevisionProperties(revision);
             // TODO wrap exception, do retry
         }
-        return new SVNProperties();
+        return properties == null ? new SVNProperties() : properties;
     }
     
     private SVNProperties readPackedRevisionProperties(long revision) throws SVNException {
@@ -645,59 +645,9 @@ public class FSFS {
             SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         final File packFile = getPackedRevPropFile(revision);
-        InputStream is = null;
-        try {
-            is = SVNFileUtil.openFileForReading(packFile);
-
-            final int[] bytesRead = new int[1];
-
-            final long uncompressedSize = decodeUncompressedSize(is, 10, bytesRead);
-
-            if (uncompressedSize + bytesRead[0] != packFile.length()) {
-                is = new InflaterInputStream(is);
-            }
-
-            final long firstRevision = readNumber(is);
-            final long revisionsCount = readNumber(is);
-
-            int propsLength = -1;
-            int offset = 0;
-            for(int i = 0; i < revisionsCount; i++) {
-                if (firstRevision + i < revision) {
-                    offset += readNumber(is);
-                } else if (firstRevision + i == revision) {
-                    propsLength = (int) readNumber(is);
-                } else {
-                    readNumber(is);
-                }
-            }
-
-            if (is.read() != '\n') {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Header end not found");
-                SVNErrorManager.error(err, SVNLogType.FSFS);
-            }
-
-            final byte[] propsData = new byte[(int) propsLength];
-            long read = is.skip(offset);
-            if (read < 0) {
-                SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Premature end of file");
-                SVNErrorManager.error(errorMessage, SVNLogType.FSFS);
-            }
-            read = is.read(propsData, 0, propsLength);
-            if (read < 0) {
-                SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Premature end of file");
-                SVNErrorManager.error(errorMessage, SVNLogType.FSFS);
-            }
-            return readProperties(propsData);
-
-        } catch (IOException e) {
-            SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.IO_ERROR);
-            SVNErrorManager.error(errorMessage, e, SVNLogType.FSFS);
-        } finally {
-            SVNFileUtil.closeFile(is);
-        }
-        
-        return null;
+        final SVNFSFSPackedRevProps packedRevProps = SVNFSFSPackedRevProps.fromPackFile(packFile);
+        final SVNProperties properties = packedRevProps.parseProperties(revision);
+        return properties == null ? new SVNProperties() : properties;
     }
 
     private File getPackedRevPropFile(long revision) throws SVNException {
