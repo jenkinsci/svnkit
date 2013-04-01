@@ -1151,7 +1151,7 @@ public class FSFS {
             }
     }
 
-    private long getRevPropPackSize() {
+    protected long getRevPropPackSize() {
         return Short.MAX_VALUE * 2;
     }
 

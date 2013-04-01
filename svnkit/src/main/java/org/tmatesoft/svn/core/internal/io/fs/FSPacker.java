@@ -99,7 +99,7 @@ public class FSPacker {
 
         if (packRevisionProperties) {
             myCanceller.checkCancelled();
-            packRevPropShard(fsfs, shard, revpropShardPath);
+            packRevPropShard(fsfs, shard, revpropShardPath, (long)(0.9 * fsfs.getRevPropPackSize()));
         }
 
 
@@ -177,7 +177,7 @@ public class FSPacker {
         }
     }
 
-    private void packRevPropShard(FSFS fsfs, long shard, File shardPath) throws SVNException {
+    private void packRevPropShard(FSFS fsfs, long shard, File shardPath, long maxPackSize) throws SVNException {
         File packPath = new File(fsfs.getRevisionPropertiesRoot(), String.valueOf(shard) + FSFS.PACK_EXT);
 
         firePackEvent(shard, true);
@@ -195,12 +195,9 @@ public class FSPacker {
         final SVNFSFSPackedRevPropsManifest.Builder manifestBuilder = new SVNFSFSPackedRevPropsManifest.Builder();
 
         for (long rev = startRev; rev <= endRev; rev++) {
-            // TODO pack to packs
-
             final File path = new File(shardPath, String.valueOf(rev));
             final long size = path.length();
 
-            final long maxPackSize = 300; //TODO: should it be a parameter?
             if (!packIsEmpty && totalSize + SVNFSFSPackedRevProps.INT64_BUFFER_SIZE + size > maxPackSize) {
                 copyRevProps(packName, packPath, shardPath, startRev, rev-1);
                 totalSize = 2 * SVNFSFSPackedRevProps.INT64_BUFFER_SIZE;
