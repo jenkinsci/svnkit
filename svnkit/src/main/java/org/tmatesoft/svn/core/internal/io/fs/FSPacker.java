@@ -15,8 +15,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.tmatesoft.svn.core.ISVNCanceller;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -76,7 +74,8 @@ public class FSPacker {
         long youngestRev = fsfs.getYoungestRevision();
         long completedShards = (youngestRev + 1) / maxFilesPerDirectory;
         long minUnpackedRevProp = 0;
-        if (fsfs.getDBFormat() >= FSFS.MIN_PACKED_REVPROP_FORMAT)
+        boolean packRevisionProperties = fsfs.getDBFormat() >= FSFS.MIN_PACKED_REVPROP_FORMAT;
+        if (packRevisionProperties)
         {
             minUnpackedRevProp =fsfs.getMinUnpackedRevProp();
         }
@@ -89,16 +88,16 @@ public class FSPacker {
 
         for (long i = minUnpackedRev / maxFilesPerDirectory; i < completedShards; i++) {
             myCanceller.checkCancelled();
-            packShard(fsfs, i);
+            packShard(fsfs, i, packRevisionProperties);
         }
     }
 
-    private void packShard(FSFS fsfs, long shard) throws SVNException {
+    private void packShard(FSFS fsfs, long shard, boolean packRevisionProperties) throws SVNException {
         File revShardPath = new File(fsfs.getDBRevsDir(), String.valueOf(shard));
         File revpropShardPath = new File(fsfs.getRevisionPropertiesRoot(), String.valueOf(shard));
         packRevShard(fsfs, shard, revShardPath);
 
-        if (fsfs.getDBFormat() >= FSFS.MIN_PACKED_REVPROP_FORMAT) {
+        if (packRevisionProperties) {
             myCanceller.checkCancelled();
             packRevPropShard(fsfs, shard, revpropShardPath);
         }
@@ -110,8 +109,25 @@ public class FSPacker {
         SVNFileUtil.writeToFile(tmpFile, line, "UTF-8");
         SVNFileUtil.rename(tmpFile, finalPath);
         SVNFileUtil.deleteAll(revShardPath, true, myCanceller);
+        if (packRevisionProperties) {
+            deleteRevPropShard(revpropShardPath, shard, fsfs.getMaxFilesPerDirectory());
+        }
 
         firePackEvent(shard, false);
+    }
+
+    private void deleteRevPropShard(File revpropShardPath, long shard, long maxFilesPerDirectory) throws SVNException {
+        if (shard == 0) {
+            for (int i = 1; i < maxFilesPerDirectory; i++) {
+                if (myCanceller != null) {
+                    myCanceller.checkCancelled();
+                }
+                final File path = new File(revpropShardPath, String.valueOf(i));
+                SVNFileUtil.deleteFile(path);
+            }
+        } else {
+            SVNFileUtil.deleteAll(revpropShardPath, true, myCanceller);
+        }
     }
 
     private void packRevShard(FSFS fsfs, long shard, File shardPath) throws SVNException {
