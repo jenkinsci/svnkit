@@ -1196,7 +1196,6 @@ public class FSFS {
                         if (packs.size() == 1) {
                             final SVNFSFSPackedRevProps pack = packs.get(0);
                             pack.writeToFile(tmpFile);
-                            SVNFileUtil.deleteFile(packedRevPropFile);
                             SVNFileUtil.rename(tmpFile, packedRevPropFile);
                         } else {
                             final Set<String> packNamesToDelete = new HashSet<String>(3);
@@ -1209,7 +1208,6 @@ public class FSFS {
                                 pack.writeToFile(packFile);
                             }
                             SVNFileUtil.writeToFile(tmpFile, manifest.asString(), "UTF-8");
-                            SVNFileUtil.deleteFile(manifestFile);
                             SVNFileUtil.rename(tmpFile, manifestFile);
 
                             for (String packNameToDelete : packNamesToDelete) {
