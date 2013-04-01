@@ -8,7 +8,6 @@ import org.tmatesoft.svn.core.internal.io.fs.FSFile;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNWCProperties;
-import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -16,6 +15,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterInputStream;
 
 public class SVNFSFSPackedRevProps {
@@ -101,25 +101,34 @@ public class SVNFSFSPackedRevProps {
 
     public byte[] asCompressedLevelNoneByteArray() throws SVNException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        OutputStream outputStream = byteArrayOutputStream;
         try {
-            writeCompressedLevelNone(byteArrayOutputStream);
+            outputStream = writeCompressedLevelNone(byteArrayOutputStream);
             return byteArrayOutputStream.toByteArray();
-        } finally {
-            SVNFileUtil.closeFile(byteArrayOutputStream);
-        }
-    }
-
-    public void writeToFile(File packFile) throws SVNException {
-        final OutputStream outputStream = SVNFileUtil.openFileForWriting(packFile);
-        try {
-            writeCompressedLevelNone(outputStream);
         } finally {
             SVNFileUtil.closeFile(outputStream);
         }
     }
 
-    private void writeCompressedLevelNone(OutputStream outputStream) throws SVNException {
-        compressLevelNone(asUncompressedByteArray(), outputStream);
+    public void writeToFile(File packFile, boolean compress) throws SVNException {
+        OutputStream outputStream = SVNFileUtil.openFileForWriting(packFile);
+        try {
+            if (compress) {
+               outputStream = writeCompressedLevelDefault(outputStream);
+            } else {
+               outputStream = writeCompressedLevelNone(outputStream);
+            }
+        } finally {
+            SVNFileUtil.closeFile(outputStream);
+        }
+    }
+
+    private OutputStream writeCompressedLevelDefault(OutputStream outputStream) throws SVNException {
+        return compressLevelDefault(asUncompressedByteArray(), outputStream);
+    }
+
+    private OutputStream writeCompressedLevelNone(OutputStream outputStream) throws SVNException {
+        return compressLevelNone(asUncompressedByteArray(), outputStream);
     }
 
     public SVNProperties parseProperties(long revision) throws SVNException {
@@ -249,9 +258,17 @@ public class SVNFSFSPackedRevProps {
         return copiedBytes;
     }
 
-    protected static void compressLevelNone(byte[] uncompressedData, OutputStream outputStream) throws SVNException {
-        writeEncodedCompressedSize(uncompressedData, outputStream);
+    protected static OutputStream compressLevelNone(byte[] uncompressedData, OutputStream outputStream) throws SVNException {
+        writeEncodedUnCompressedSize(uncompressedData.length, outputStream);
         writeBody(uncompressedData, outputStream);
+        return outputStream;
+    }
+
+    private OutputStream compressLevelDefault(byte[] uncompressedData, OutputStream outputStream) throws SVNException {
+        writeEncodedUnCompressedSize(uncompressedData.length, outputStream);
+        outputStream = new DeflaterOutputStream(outputStream);
+        writeBody(uncompressedData, outputStream);
+        return outputStream;
     }
 
     private static void writeBody(byte[] bytes, OutputStream outputStream) throws SVNException {
@@ -263,8 +280,8 @@ public class SVNFSFSPackedRevProps {
         }
     }
 
-    private static void writeEncodedCompressedSize(byte[] data, OutputStream outputStream) throws SVNException {
-        long v = data.length >> 7;
+    private static void writeEncodedUnCompressedSize(int compressedSize, OutputStream outputStream) throws SVNException {
+        long v = compressedSize >> 7;
         int n = 1;
         while (v > 0) {
             v = v >> 7;
@@ -273,7 +290,7 @@ public class SVNFSFSPackedRevProps {
 
         while (--n >= 0) {
             final byte cont = (byte) (((n > 0) ? 0x1 : 0x0) << 7);
-            final byte b = (byte) (((data.length >> (n * 7)) & 0x7f) | cont);
+            final byte b = (byte) (((compressedSize >> (n * 7)) & 0x7f) | cont);
             try {
                 outputStream.write(b);
             } catch (IOException e) {

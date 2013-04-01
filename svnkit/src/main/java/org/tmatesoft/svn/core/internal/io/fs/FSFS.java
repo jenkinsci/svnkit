@@ -1145,7 +1145,7 @@ public class FSFS {
 
                         if (packs.size() == 1) {
                             final SVNFSFSPackedRevProps pack = packs.get(0);
-                            pack.writeToFile(tmpFile);
+                            pack.writeToFile(tmpFile, isCompressPackedRevprops());
                             SVNFileUtil.rename(tmpFile, packedRevPropFile);
                         } else {
                             final Set<String> packNamesToDelete = new HashSet<String>(3);
@@ -1155,7 +1155,7 @@ public class FSFS {
 
                                 final String packName = manifest.updatePackName(pack.getFirstRevision(), (int) pack.getRevisionsCount());
                                 File packFile = new File(packShardDirectory, packName);
-                                pack.writeToFile(packFile);
+                                pack.writeToFile(packFile, isCompressPackedRevprops());
                             }
                             SVNFileUtil.writeToFile(tmpFile, manifest.asString(), "UTF-8");
                             SVNFileUtil.rename(tmpFile, manifestFile);
@@ -1947,7 +1947,7 @@ public class FSFS {
         return myTransactionCurrentLockFile;
     }
 
-    protected File getConfigFile() {
+    public File getConfigFile() {
         return new File(getDBRoot(), PATH_CONFIG);
     }
 
@@ -2338,4 +2338,7 @@ public class FSFS {
         }
     }
 
+    public boolean isCompressPackedRevprops() {
+        return myCompressPackedRevprops;
+    }
 }

@@ -199,7 +199,7 @@ public class FSPacker {
             final long size = path.length();
 
             if (!packIsEmpty && totalSize + SVNFSFSPackedRevProps.INT64_BUFFER_SIZE + size > maxPackSize) {
-                copyRevProps(packName, packPath, shardPath, startRev, rev-1);
+                copyRevProps(packName, packPath, shardPath, startRev, rev-1, fsfs.isCompressPackedRevprops());
                 totalSize = 2 * SVNFSFSPackedRevProps.INT64_BUFFER_SIZE;
                 startRev = rev;
                 packIsEmpty = true;
@@ -214,7 +214,7 @@ public class FSPacker {
         }
 
         if (!packIsEmpty) {
-            copyRevProps(packName, packPath, shardPath, startRev, endRev /*=rev - 1*/);
+            copyRevProps(packName, packPath, shardPath, startRev, endRev /*=rev - 1*/, fsfs.isCompressPackedRevprops());
         }
 
         final SVNFSFSPackedRevPropsManifest manifest = manifestBuilder.build();
@@ -222,7 +222,7 @@ public class FSPacker {
 
    }
 
-    private void copyRevProps(String packName, File packPath, File shardPath, long startRev, long endRev) throws SVNException {
+    private void copyRevProps(String packName, File packPath, File shardPath, long startRev, long endRev, boolean compressPackedRevprops) throws SVNException {
         final SVNFSFSPackedRevProps.Builder packedRevPropsBuilder = new SVNFSFSPackedRevProps.Builder();
         packedRevPropsBuilder.setFirstRevision(startRev);
 
@@ -235,7 +235,7 @@ public class FSPacker {
 
         final SVNFSFSPackedRevProps packedRevProps = packedRevPropsBuilder.build();
         final File packFile = new File(packPath, packName);
-        packedRevProps.writeToFile(packFile);
+        packedRevProps.writeToFile(packFile, compressPackedRevprops);
     }
 
 }
