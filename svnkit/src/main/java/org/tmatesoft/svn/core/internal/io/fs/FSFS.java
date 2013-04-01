@@ -653,31 +653,9 @@ public class FSFS {
     private File getPackedRevPropFile(long revision) throws SVNException {
         final File packShardDirectory = getPackedRevPropsShardPath(revision);
         final File manifestFile = new File(packShardDirectory, MANIFEST_FILE);
-        final long revisionIndex = revision < myMaxFilesPerDirectory ? revision - 1 : revision % myMaxFilesPerDirectory;
-        long currentIndex = 0;
 
-        BufferedReader reader =null;
-        String packfileName = null;
-        try {
-            reader = new BufferedReader(new InputStreamReader(SVNFileUtil.openFileForReading(manifestFile)));
-            while(true) {
-                packfileName = reader.readLine();
-                if (packfileName == null || revisionIndex == currentIndex) {
-                    break;
-                }
-                currentIndex++;
-            }
-        } catch (IOException e) {
-            SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.IO_ERROR);
-            SVNErrorManager.error(errorMessage, e, SVNLogType.FSFS);
-        } finally {
-            SVNFileUtil.closeFile(reader);
-        }
-        if (packfileName == null && currentIndex <= revisionIndex) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "Packed revprop manifest for rev {0} too small", (Long) revision);
-            SVNErrorManager.error(err, SVNLogType.FSFS);
-        }
-        return new File(packShardDirectory, packfileName);
+        final SVNFSFSPackedRevPropsManifest manifest = SVNFSFSPackedRevPropsManifest.fromFile(manifestFile, revision, myMaxFilesPerDirectory);
+        return new File(packShardDirectory, manifest.getPackName(revision));
     }
 
     private static long decodeUncompressedSize(InputStream inputStream, int lengthRecordSize, int[] outputBytesRead) throws SVNException {
