@@ -255,6 +255,25 @@ public class SVNFileUtil {
         return file.getParentFile();
     }
 
+    public static byte[] readFully(File file) throws SVNException {
+        final byte[] buffer = new byte[(int) file.length()];
+        final InputStream inputStream = SVNFileUtil.openFileForReading(file);
+        try {
+            final int read = SVNFileUtil.readIntoBuffer(inputStream, buffer, 0, buffer.length);
+            if (read != buffer.length) {
+                SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.STREAM_UNEXPECTED_EOF);
+                SVNErrorManager.error(errorMessage, SVNLogType.DEFAULT);
+            }
+            return buffer;
+        } catch (IOException e) {
+            SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.IO_ERROR);
+            SVNErrorManager.error(errorMessage, e, SVNLogType.DEFAULT);
+        } finally {
+            SVNFileUtil.closeFile(inputStream);
+        }
+        return null;
+    }
+
     public static String readFile(File file) throws SVNException {
         InputStream is = null;
         try {
