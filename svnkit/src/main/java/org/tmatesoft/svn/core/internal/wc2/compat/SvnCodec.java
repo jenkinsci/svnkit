@@ -184,6 +184,8 @@ public class SvnCodec {
         result.setSwitched(status.isSwitched());
         result.setVersioned(status.isVersioned());
         result.setWcLocked(status.isLocked());
+
+        result.setWorkingCopyFormat(status.getWorkingCopyFormat());
         
         try {
             result.setCopyFromUrl(status.getCopyFromURL() != null ? SVNURL.parseURIEncoded(status.getCopyFromURL()) : null);
@@ -316,7 +318,7 @@ public class SvnCodec {
         if (result.getNodeStatus() == SVNStatusType.STATUS_ADDED) {
             result.setPropertiesStatus(SVNStatusType.STATUS_NONE);
         }
-        result.setWorkingCopyFormat(ISVNWCDb.WC_FORMAT_17);
+        result.setWorkingCopyFormat(status.getWorkingCopyFormat());
         
         result.setCopyFromRevision(status.getCopyFromRevision() >= 0 ? SVNRevision.create(status.getCopyFromRevision()) : SVNRevision.UNDEFINED);
         result.setCopyFromURL(status.getCopyFromUrl() != null ? status.getCopyFromUrl().toString() : null);
