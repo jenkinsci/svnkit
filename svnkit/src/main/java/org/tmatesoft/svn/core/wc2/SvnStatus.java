@@ -7,6 +7,7 @@ import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 /**
@@ -60,6 +61,8 @@ public class SvnStatus extends SvnObject {
     private long repositoryChangedRevision;
     private SVNDate repositoryChangedDate;
     private String repositoryChangedAuthor;
+
+    private int workingCopyFormat = ISVNWCDb.WC_FORMAT_18;
     
     /**
      * Gets the item's node kind characterizing it as an entry.
@@ -669,5 +672,21 @@ public class SvnStatus extends SvnObject {
      */
     public long getCopyFromRevision() {
         return copyFromRevision;
+    }
+
+    /**
+     * Get the working copy format. This method is used for internal purposes only
+     * @return working copy format
+     */
+    public int getWorkingCopyFormat() {
+        return workingCopyFormat;
+    }
+
+    /**
+     * Set the working copy format. This method is used for internal purposes only
+     * @param workingCopyFormat working copy format
+     */
+    public void setWorkingCopyFormat(int workingCopyFormat) {
+        this.workingCopyFormat = workingCopyFormat;
     }
 }
