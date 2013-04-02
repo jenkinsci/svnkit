@@ -76,11 +76,10 @@ public class SvnWcDbReader extends SvnWcDbShared {
         propConflicted,
         treeConflicted,
     }
-    
+
     public enum ConflictKind {
         text, prop, tree, reject, obstructed;
     }
-    
 
     public enum PropertyConflictInfo {
         markerAbspath, 
@@ -89,6 +88,19 @@ public class SvnWcDbReader extends SvnWcDbShared {
         theirProps,
         conflictedPropNames,
     }
+
+    public enum TextConflictInfo {
+        mineAbsPath,
+        theirOldAbsPath,
+        theirAbsPath,
+    }
+
+    public enum TreeConflictInfo {
+        localChange,
+        incomingChange,
+        moveSrcOpRootAbsPath,
+    }
+    
     
     public static Collection<File> getServerExcludedNodes(SVNWCDb db, File path) throws SVNException {
         DirParsedInfo dirInfo = db.obtainWcRoot(path);
@@ -735,12 +747,12 @@ public class SvnWcDbReader extends SvnWcDbShared {
     
     public static Structure<PropertyConflictInfo> readPropertyConflict(SVNWCDb db, File wriAbsPath, SVNSkel conflictSkel) throws SVNException {
         final SVNSkel propConflict = getConflict(conflictSkel, ConflictKind.prop);
-        final Structure<PropertyConflictInfo> result = Structure.obtain(PropertyConflictInfo.class);
-        SVNSkel c;
         if (propConflict == null) {
             final SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_MISSING, "Conflict not set");
             SVNErrorManager.error(err, SVNLogType.WC);
         }
+        SVNSkel c;
+        final Structure<PropertyConflictInfo> result = Structure.obtain(PropertyConflictInfo.class);
         c = propConflict.first().next();
         if (c.first() != null && c.first().isAtom()) {
             result.set(PropertyConflictInfo.markerAbspath, new File(c.first().getValue()));
@@ -770,6 +782,61 @@ public class SvnWcDbReader extends SvnWcDbShared {
             result.set(PropertyConflictInfo.theirProps, new HashMap<String, byte[]>());
         }
 
+        return result;
+    }
+
+    public static Structure<TextConflictInfo> readTextConflict(SVNWCDb db, File wriAbsPath, SVNSkel conflictSkel) throws SVNException {
+        final SVNSkel textConflict = getConflict(conflictSkel, ConflictKind.text);
+        if (textConflict == null) {
+            final SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_MISSING, "Conflict not set");
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+        final Structure<TextConflictInfo> result = Structure.obtain(TextConflictInfo.class);
+        SVNSkel m = textConflict.first().next().first();
+        if (m.isAtom()) {
+            final File path = SVNFileUtil.createFilePath(wriAbsPath, m.getValue());
+            result.set(TextConflictInfo.theirOldAbsPath, path);
+        }
+        m = m.next();
+        if (m.isAtom()) {
+            final File path = SVNFileUtil.createFilePath(wriAbsPath, m.getValue());
+            result.set(TextConflictInfo.mineAbsPath, path);
+        }
+        m = m.next();
+        if (m.isAtom()) {
+            final File path = db.fromRelPath(wriAbsPath, new File(m.getValue()));
+            result.set(TextConflictInfo.theirAbsPath, path);
+        }
+        
+        return result;
+    }
+
+    public static Structure<TreeConflictInfo> readTreeConflict(SVNWCDb db, File wriAbsPath, SVNSkel conflictSkel) throws SVNException {
+        final SVNSkel treeConflict = getConflict(conflictSkel, ConflictKind.tree);
+        if (treeConflict == null) {
+            final SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_MISSING, "Conflict not set");
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+        final Structure<TreeConflictInfo> result = Structure.obtain(TreeConflictInfo.class);
+        SVNSkel c = treeConflict.first().next().next();
+        
+        SVNConflictReason reason = SVNConflictReason.fromString(c.getValue());
+        if (reason == null) {
+            reason = SVNConflictReason.EDITED;
+        }
+        boolean movedAway = reason == SVNConflictReason.MOVED_AWAY;
+        result.set(TreeConflictInfo.localChange, reason);
+        c = c.next();
+        
+        SVNConflictAction incoming = SVNConflictAction.fromString(c.getValue());
+        if (incoming == null) {
+            incoming = SVNConflictAction.EDIT;
+        }
+        result.set(TreeConflictInfo.incomingChange, incoming);
+        c = c.next();
+        if (c != null && movedAway) {
+            result.set(TreeConflictInfo.moveSrcOpRootAbsPath, db.fromRelPath(wriAbsPath, new File(c.getValue())));
+        }
         return result;
     }
 

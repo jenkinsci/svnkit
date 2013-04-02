@@ -82,8 +82,8 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.internal.wc17.SVNExternalsStore;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCConflictDescription17;
-import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCConflictDescription17.ConflictKind;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbAdditionInfo.AdditionInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbBaseInfo.BaseInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbDeletionInfo.DeletionInfoField;
@@ -94,6 +94,8 @@ import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.PristineInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.RepositoryInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbReader.ConflictInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbReader.TextConflictInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbReader.TreeConflictInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbCreateSchema;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbInsertDeleteList;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
@@ -107,13 +109,14 @@ import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSelectDeletionIn
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
+import org.tmatesoft.svn.core.wc.SVNConflictAction;
 import org.tmatesoft.svn.core.wc.SVNConflictDescription;
+import org.tmatesoft.svn.core.wc.SVNConflictReason;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNMergeFileSet;
 import org.tmatesoft.svn.core.wc.SVNOperation;
 import org.tmatesoft.svn.core.wc.SVNPropertyConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNTextConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnChecksum;
@@ -2548,7 +2551,7 @@ public class SVNWCDb implements ISVNWCDb {
         /* The parent should be a working copy directory. */
         DirParsedInfo parseDir = parseDir(localAbsPath, Mode.ReadOnly);
         SVNWCDbDir pdh = parseDir.wcDbDir;
-        File localRelPath = parseDir.localRelPath;
+//        final File localRelPath = parseDir.localRelPath;
         verifyDirUsable(pdh);
 
         /*
@@ -2574,63 +2577,39 @@ public class SVNWCDb implements ISVNWCDb {
             SvnWcDbReader.readPropertyConflicts(conflicts, this, localAbsPath, conflictSkel, createTempFiles, (SVNOperation) conflictInfo.get(ConflictInfo.conflictOperation), leftVersion, rightVersion);
         }
         if (conflictInfo.is(ConflictInfo.textConflicted)) {
+            final Structure<TextConflictInfo> textConflictInfo = SvnWcDbReader.readTextConflict(this, localAbsPath, conflictSkel);
+            final SVNWCConflictDescription17 description = SVNWCConflictDescription17.createText(localAbsPath);
             
+            description.setOperation(conflictInfo.<SVNOperation>get(ConflictInfo.conflictOperation));
+            description.setSrcLeftVersion(leftVersion);
+            description.setSrcRightVersion(rightVersion);
+            description.setTheirFile(textConflictInfo.<File>get(TextConflictInfo.theirAbsPath));
+            description.setBaseFile(textConflictInfo.<File>get(TextConflictInfo.theirOldAbsPath));
+            description.setMyFile(textConflictInfo.<File>get(TextConflictInfo.mineAbsPath));
+            description.setMergedFile(localAbsPath);
+            
+            conflicts.add(description);
         }
+        
         if (conflictInfo.is(ConflictInfo.treeConflicted)) {
-            
-        }
-        /*
-        SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_CONFLICT_DETAILS);
-        try {
-
-            stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelPath);
-
-            boolean have_row = stmt.next();
-
-            if (have_row) {
-                String prop_reject = getColumnText(stmt, ACTUAL_NODE__Fields.prop_reject);
-                if (prop_reject != null) {
-                    final File reposFile = SVNFileUtil.createFilePath(pdh.getWCRoot().getAbsPath(), prop_reject);
-                    final SVNMergeFileSet mergeFiles = new SVNMergeFileSet(null, null, null, localAbsPath, null, reposFile, null, null, null);
-                    final SVNPropertyConflictDescription desc = new SVNPropertyConflictDescription(mergeFiles, SVNNodeKind.UNKNOWN, "", null, null);
-                    conflicts.add(desc);
-                }
-
-                String conflict_old = getColumnText(stmt, ACTUAL_NODE__Fields.conflict_old);
-                if ("".equals(conflict_old)) {
-                    conflict_old = null;
-                }
-                String conflict_new = getColumnText(stmt, ACTUAL_NODE__Fields.conflict_new);
-                if ("".equals(conflict_new)) {
-                    conflict_new = null;
-                }
-                String conflict_working = getColumnText(stmt, ACTUAL_NODE__Fields.conflict_working);
-                if ("".equals(conflict_working)) {
-                    conflict_working = null;
-                }
-
-                if (conflict_old != null || conflict_new != null || conflict_working != null) {
-                    File baseFile = conflict_old != null ? SVNFileUtil.createFilePath(pdh.getWCRoot().getAbsPath(), conflict_old) : null;
-                    File theirFile = conflict_new != null ? SVNFileUtil.createFilePath(pdh.getWCRoot().getAbsPath(), conflict_new) : null;
-                    File myFile = conflict_working != null ? SVNFileUtil.createFilePath(pdh.getWCRoot().getAbsPath(), conflict_working) : null;
-                    File mergedFile = new File(SVNFileUtil.getFileName(localAbsPath));
-                    SVNMergeFileSet mergeFiles = new SVNMergeFileSet(null, null, baseFile, myFile, null, theirFile, mergedFile, null, null);
-                    SVNTextConflictDescription desc = new SVNTextConflictDescription(mergeFiles, SVNNodeKind.UNKNOWN, null, null);
-                    conflicts.add(desc);
-                }
-
-                byte[] conflict_data = getColumnBlob(stmt, ACTUAL_NODE__Fields.tree_conflict_data);
-                if (conflict_data != null) {
-                    SVNSkel skel = SVNSkel.parse(conflict_data);
-                    SVNTreeConflictDescription desc = SVNTreeConflictUtil.readSingleTreeConflict(skel, SVNFileUtil.getParentFile(localAbsPath));
-                    conflicts.add(desc);
-                }
-
+            final Structure<TreeConflictInfo> treeConflictInfo = SvnWcDbReader.readTreeConflict(this, localAbsPath, conflictSkel);
+            final SVNNodeKind tcKind;
+            if (leftVersion != null) {
+                tcKind = leftVersion.getKind();
+            } else if (rightVersion != null) {
+                tcKind = rightVersion.getKind();
+            } else {
+                tcKind = SVNNodeKind.FILE;
             }
-        } finally {
-            stmt.reset();
+            final SVNWCConflictDescription17 description = SVNWCConflictDescription17.createTree(localAbsPath, 
+                    tcKind, 
+                    conflictInfo.<SVNOperation>get(ConflictInfo.conflictOperation), 
+                    leftVersion, 
+                    rightVersion);
+            description.setReason(treeConflictInfo.<SVNConflictReason>get(TreeConflictInfo.localChange));
+            description.setAction(treeConflictInfo.<SVNConflictAction>get(TreeConflictInfo.incomingChange));
+            conflicts.add(description);
         }
-        */
         return conflicts;
     }
 
