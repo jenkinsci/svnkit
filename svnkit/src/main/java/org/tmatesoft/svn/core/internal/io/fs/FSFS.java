@@ -630,7 +630,7 @@ public class FSFS {
                 file.close();
             }
         }
-        if (myDBFormat >= MIN_PACKED_REVPROP_FORMAT || properties == null) {
+        if (myDBFormat >= MIN_PACKED_REVPROP_FORMAT && properties == null) {
             // read packed revision props
             try {
                 return readPackedRevisionProperties(revision);
@@ -638,7 +638,7 @@ public class FSFS {
                 // TODO wrap exception, do retry
             }
         }
-        return new SVNProperties();
+        return properties;
     }
     
     private SVNProperties readPackedRevisionProperties(long revision) throws SVNException, IOException {
