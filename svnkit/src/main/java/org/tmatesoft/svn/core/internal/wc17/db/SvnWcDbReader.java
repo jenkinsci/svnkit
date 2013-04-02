@@ -635,12 +635,12 @@ public class SvnWcDbReader extends SvnWcDbShared {
                 final SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{0}'' was not found.", localAbspath);
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
+            final byte[] conflictData = stmt.getColumnBlob(ACTUAL_NODE__Fields.conflict_data);
+            if (conflictData != null) {
+                return SVNSkel.parse(conflictData);
+            }
         } finally {
             reset(stmt);
-        }
-        final byte[] conflictData = stmt.getColumnBlob(ACTUAL_NODE__Fields.conflict_data);
-        if (conflictData != null) {
-            return SVNSkel.parse(conflictData);
         }
         return null;
     }
@@ -669,7 +669,7 @@ public class SvnWcDbReader extends SvnWcDbShared {
         }
         result.set(ConflictInfo.textConflicted, hasConflictKind(conflictSkel, ConflictKind.text));
         result.set(ConflictInfo.propConflicted, hasConflictKind(conflictSkel, ConflictKind.prop));
-        result.set(ConflictInfo.treeConflicted, hasConflictKind(conflictSkel, ConflictKind.text));
+        result.set(ConflictInfo.treeConflicted, hasConflictKind(conflictSkel, ConflictKind.tree));
         return result;
     }
     
@@ -794,17 +794,17 @@ public class SvnWcDbReader extends SvnWcDbShared {
         final Structure<TextConflictInfo> result = Structure.obtain(TextConflictInfo.class);
         SVNSkel m = textConflict.first().next().first();
         if (m.isAtom()) {
-            final File path = SVNFileUtil.createFilePath(wriAbsPath, m.getValue());
+            final File path = db.fromRelPath(db.getWCRoot(wriAbsPath), new File(m.getValue()));
             result.set(TextConflictInfo.theirOldAbsPath, path);
         }
         m = m.next();
         if (m.isAtom()) {
-            final File path = SVNFileUtil.createFilePath(wriAbsPath, m.getValue());
+            final File path = db.fromRelPath(db.getWCRoot(wriAbsPath), new File(m.getValue()));
             result.set(TextConflictInfo.mineAbsPath, path);
         }
         m = m.next();
         if (m.isAtom()) {
-            final File path = db.fromRelPath(wriAbsPath, new File(m.getValue()));
+            final File path = db.fromRelPath(db.getWCRoot(wriAbsPath), new File(m.getValue()));
             result.set(TextConflictInfo.theirAbsPath, path);
         }
         
@@ -835,7 +835,7 @@ public class SvnWcDbReader extends SvnWcDbShared {
         result.set(TreeConflictInfo.incomingChange, incoming);
         c = c.next();
         if (c != null && movedAway) {
-            result.set(TreeConflictInfo.moveSrcOpRootAbsPath, db.fromRelPath(wriAbsPath, new File(c.getValue())));
+            result.set(TreeConflictInfo.moveSrcOpRootAbsPath, db.fromRelPath(db.getWCRoot(wriAbsPath), new File(c.getValue())));
         }
         return result;
     }
@@ -850,8 +850,8 @@ public class SvnWcDbReader extends SvnWcDbShared {
 
     private static SVNSkel getConflict(SVNSkel conflictSkel, ConflictKind kind) {
         SVNSkel c = conflictSkel.first().next().first();
-        while(c.next() != null) {
-            if (kind.name().equalsIgnoreCase(c.getValue())) {
+        while(c != null) {
+            if (kind.name().equalsIgnoreCase(c.first().getValue())) {
                 return c;
             }
             c = c.next();

@@ -117,6 +117,7 @@ import org.tmatesoft.svn.core.wc.SVNMergeFileSet;
 import org.tmatesoft.svn.core.wc.SVNOperation;
 import org.tmatesoft.svn.core.wc.SVNPropertyConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNTextConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnChecksum;
@@ -2371,7 +2372,7 @@ public class SVNWCDb implements ISVNWCDb {
                 stmt.reset();
             }
             stmt = db.getStatement(SVNWCDbStatements.SELECT_ACTUAL_CHILDREN_INFO);
-                try {
+            try {
                 stmt.bindf("is", wcRoot.getWcId(), dirRelPath);
                 while(stmt.next()) {
                     File childRelPath = SVNFileUtil.createFilePath(getColumnText(stmt, SVNWCDbSchema.ACTUAL_NODE__Fields.local_relpath));
@@ -2388,7 +2389,8 @@ public class SVNWCDb implements ISVNWCDb {
                         SVNProperties properties = getColumnProperties(stmt, SVNWCDbSchema.ACTUAL_NODE__Fields.properties);
                         childItem.special = properties.getSVNPropertyValue(SVNProperty.SPECIAL) != null;
                     }
-                    childItem.conflicted = !isColumnNull(stmt, SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_old) ||
+                    childItem.conflicted = !isColumnNull(stmt, SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_data) ||
+                                            !isColumnNull(stmt, SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_old) ||
                                             !isColumnNull(stmt, SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_new) ||
                                             !isColumnNull(stmt, SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_working) ||
                                             !isColumnNull(stmt, SVNWCDbSchema.ACTUAL_NODE__Fields.prop_reject) ||
@@ -2532,14 +2534,22 @@ public class SVNWCDb implements ISVNWCDb {
         final List<SVNWCConflictDescription17> conflicts = readConflicts(localAbsPath, false);
         final List<SVNConflictDescription> translated = new ArrayList<SVNConflictDescription>();
         for(SVNWCConflictDescription17 description : conflicts) {
-            final SVNMergeFileSet mergeFiles = new SVNMergeFileSet(null, null, description.getBaseFile(), description.getMyFile(), localAbsPath.getAbsolutePath(), 
-                    description.getTheirFile(), description.getMergedFile(), null, description.getMimeType());
+            
+            final SVNMergeFileSet mergeFiles = new SVNMergeFileSet(null, null, 
+                    description.getBaseFile(), 
+                    description.getMyFile(), 
+                    localAbsPath.getAbsolutePath(), 
+                    description.getTheirFile(), 
+                    description.getMergedFile(), 
+                    null, 
+                    description.getMimeType());
+            
             if (description.getKind() == ConflictKind.PROPERTY) {
                 translated.add(new SVNPropertyConflictDescription(mergeFiles, description.getNodeKind(), description.getPropertyName(), description.getAction(), description.getReason()));
             } else if (description.getKind() == ConflictKind.TREE) {
-                
+                translated.add(new SVNTreeConflictDescription(localAbsPath, description.getNodeKind(), description.getAction(), description.getReason(), description.getOperation(), description.getSrcLeftVersion(), description.getSrcRightVersion()));
             } else if (description.getKind() == ConflictKind.TEXT) {
-                
+                translated.add(new SVNTextConflictDescription(mergeFiles, description.getNodeKind(), description.getAction(), description.getReason()));
             }
         }
         return translated;
@@ -2822,7 +2832,9 @@ public class SVNWCDb implements ISVNWCDb {
                     info.hadProps = props != null && props.length > 2; 
                 }
                 if (f.contains(InfoField.conflicted) && haveActual) {
-                    info.conflicted = !isColumnNull(stmtActual, SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_old) || /* old */
+                    info.conflicted = 
+                        !isColumnNull(stmtActual, SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_data) || /* data */
+                        !isColumnNull(stmtActual, SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_old) || /* old */
                         !isColumnNull(stmtActual, SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_new) || /* new */
                         !isColumnNull(stmtActual, SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_working) || /* working */
                         !isColumnNull(stmtActual, SVNWCDbSchema.ACTUAL_NODE__Fields.prop_reject) || /* prop_reject */
