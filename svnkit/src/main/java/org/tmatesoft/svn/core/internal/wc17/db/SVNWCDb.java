@@ -2018,28 +2018,16 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     public SVNTreeConflictDescription opReadTreeConflict(File localAbsPath) throws SVNException {
-        assert (isAbsolute(localAbsPath));
-        final DirParsedInfo parsed = parseDir(localAbsPath, Mode.ReadWrite);
-        final SVNWCDbDir pdh = parsed.wcDbDir;
-        final File localRelpath = parsed.localRelPath;
-        verifyDirUsable(pdh);
-        return readTreeConflict(pdh, localRelpath);
-    }
-
-    private SVNTreeConflictDescription readTreeConflict(SVNWCDbDir pdh, File localRelpath) throws SVNException {
-        SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_ACTUAL_TREE_CONFLICT);
-        try {
-            stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelpath);
-            boolean haveRow = stmt.next();
-            if (!haveRow) {
-                return null;
-            }
-            byte[] conflictData = stmt.getColumnBlob(SVNWCDbSchema.ACTUAL_NODE__Fields.tree_conflict_data);
-            SVNSkel skel = SVNSkel.parse(conflictData);
-            return SVNTreeConflictUtil.readSingleTreeConflict(skel, pdh.getWCRoot().getAbsPath());
-        } finally {
-            stmt.reset();
+        final List<SVNConflictDescription> conflicts = readConflicts(localAbsPath);
+        if (conflicts == null || conflicts.isEmpty()) {
+            return null;
         }
+        for (SVNConflictDescription conflictDescription : conflicts) {
+            if (conflictDescription.isTreeConflict()) {
+                return (SVNTreeConflictDescription) conflictDescription;
+            }
+        }
+        return null;
     }
 
     public void opRevert(File localAbspath, SVNDepth depth) throws SVNException {        
