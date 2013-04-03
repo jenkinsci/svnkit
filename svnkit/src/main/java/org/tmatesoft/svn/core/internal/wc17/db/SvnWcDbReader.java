@@ -861,7 +861,7 @@ public class SvnWcDbReader extends SvnWcDbShared {
 
     private static SVNConflictVersion readConflictLocation(SVNSkel locationSkel) throws SVNException {
         SVNSkel c = locationSkel.first();
-        if (!c.contentEquals("subversion")) {
+        if (c == null || !c.contentEquals("subversion")) {
             return null;
         }
         c = c.next();
