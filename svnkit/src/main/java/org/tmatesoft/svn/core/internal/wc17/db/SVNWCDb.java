@@ -2351,6 +2351,11 @@ public class SVNWCDb implements ISVNWCDb {
                                 childItem.lock.date = SVNWCUtils.readDate(getColumnInt64(lockStmt, SVNWCDbSchema.LOCK__Fields.lock_date));
                         }
                     } else {
+                        final File movedToRelpath = getColumnPath(stmt, SVNWCDbSchema.NODES__Fields.moved_to);
+                        if (movedToRelpath != null) {
+                            childItem.movedToAbsPath = SVNFileUtil.createFilePath(wcRoot.getAbsPath(), movedToRelpath);
+                        }
+                        childItem.movedHere = getColumnBoolean(stmt, SVNWCDbSchema.NODES__Fields.moved_here);
                         childItem.layersCount++;
                         childItem.haveMoreWork = childItem.layersCount > 1;
                     }

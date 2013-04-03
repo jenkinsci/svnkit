@@ -326,6 +326,9 @@ public interface ISVNWCDb {
         public SVNWCDbLock lock;
         public boolean incomplete;
 
+        public File movedToAbsPath;
+        public boolean movedHere;
+
         public void load(WCDbInfo info) {
             if (info == null) {
                 return;
@@ -357,6 +360,9 @@ public interface ISVNWCDb {
             locked = info.lock != null;
             lock = info.lock;
             incomplete = info.status == SVNWCDbStatus.Incomplete;
+            
+            movedHere = info.movedHere;
+            movedToAbsPath = info.movedToAbsPath;
         }
     }
 
@@ -1135,6 +1141,9 @@ public interface ISVNWCDb {
         public boolean opRoot;
         public boolean hadProps;
         public boolean haveMoreWork;
+        
+        public boolean movedHere;
+        public File movedToAbsPath;
 
     }
 

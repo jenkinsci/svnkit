@@ -474,6 +474,10 @@ public class SVNStatusEditor17 {
             
         }
         
+        if (info.movedToAbsPath != null) {
+            stat.setMovedToPath(info.movedToAbsPath);
+        }
+        
         return stat;
     }
 
