@@ -187,6 +187,9 @@ public class SvnCodec {
 
         result.setWorkingCopyFormat(status.getWorkingCopyFormat());
         
+        result.setMovedFromPath(status.getMovedFromPath());
+        result.setMovedToPath(status.getMovedToPath());
+        
         try {
             result.setCopyFromUrl(status.getCopyFromURL() != null ? SVNURL.parseURIEncoded(status.getCopyFromURL()) : null);
             result.setCopyFromRevision(status.getCopyFromRevision() != null ? status.getCopyFromRevision().getNumber() : -1);
@@ -322,6 +325,9 @@ public class SvnCodec {
         
         result.setCopyFromRevision(status.getCopyFromRevision() >= 0 ? SVNRevision.create(status.getCopyFromRevision()) : SVNRevision.UNDEFINED);
         result.setCopyFromURL(status.getCopyFromUrl() != null ? status.getCopyFromUrl().toString() : null);
+        
+        result.setMovedFromPath(status.getMovedFromPath());
+        result.setMovedToPath(status.getMovedToPath());
         
         return result;
     }
@@ -609,8 +615,9 @@ public class SvnCodec {
             if (this == EMPTY) {
                 return EMPTY;
             }
-            Collection items = new ArrayList();
-            Map lockTokens = getLockTokens() == null ? null : new SVNHashMap(getLockTokens());
+            Collection<SVNCommitItem> items = new ArrayList<SVNCommitItem>();
+            @SuppressWarnings("unchecked")
+            Map<String, String> lockTokens = getLockTokens() == null ? null : new SVNHashMap(getLockTokens());
             SVNCommitItem[] filteredItems = filterSkippedItemsAndLockTokens(items, lockTokens);
             return new SVNCommitPacketWrapper(getOperation(), packet, filteredItems, lockTokens);
         }
