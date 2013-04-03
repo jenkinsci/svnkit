@@ -50,7 +50,7 @@ public class SVNWCDbCreateSchema extends SVNSqlJetStatement {
                     + "  changed_revision  INTEGER, changed_date INTEGER, changed_author TEXT, translated_size  INTEGER, last_mod_time  INTEGER, "
                     + "  dav_cache  BLOB, file_external INTEGER, inherited_props  BLOB, PRIMARY KEY (wc_id, local_relpath, op_depth) ); "),
             new Statement(Type.INDEX, "I_NODES_PARENT", "CREATE INDEX I_NODES_PARENT ON NODES (wc_id, parent_relpath, op_depth); "),
-//            new Statement(Type.INDEX, "I_NODES_MOVED", "CREATE UNIQUE INDEX IF NOT EXISTS I_NODES_MOVED ON NODES (wc_id, moved_to, op_depth);"),
+            new Statement(Type.INDEX, "I_NODES_MOVED", "CREATE UNIQUE INDEX I_NODES_MOVED ON NODES (wc_id, moved_to, op_depth);"),
             new Statement(Type.INDEX, "I_PRISTINE_MD5", "CREATE INDEX IF NOT EXISTS I_PRISTINE_MD5 ON PRISTINE (md5_checksum);"),
 
             new Statement(Type.TABLE, "EXTERNALS", "CREATE TABLE EXTERNALS ( " +

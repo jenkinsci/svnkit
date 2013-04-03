@@ -778,7 +778,7 @@ public class SvnNgUpgradeSDb {
 
         public void bumpTo(SVNSqlJetDb sDb, File wcRootAbsPath) throws SVNException {
             try {
-//                sDb.getDb().createIndex("CREATE UNIQUE INDEX IF NOT EXISTS I_NODES_MOVED ON NODES (wc_id, moved_to, op_depth);");
+                sDb.getDb().createIndex("CREATE UNIQUE INDEX IF NOT EXISTS I_NODES_MOVED ON NODES (wc_id, moved_to, op_depth);");
                 sDb.getDb().createIndex("CREATE INDEX IF NOT EXISTS I_PRISTINE_MD5 ON PRISTINE (md5_checksum);");
             } catch (SqlJetException e) {
                 SVNSqlJetDb.createSqlJetError(e);
