@@ -58,7 +58,7 @@ public class SVNStatusPrinter {
             if (status.getMovedFromPath() != null) {
                 movedFromLine = String.format("\n        > moved from %s", getRelativePath(status.getMovedFromPath()));
             }
-            if (status.getMovedFromPath() != null) {
+            if (status.getMovedToPath() != null) {
                 movedToLine = String.format("\n        > moved to %s", getRelativePath(status.getMovedToPath()));
             }
         }
