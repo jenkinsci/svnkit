@@ -179,7 +179,7 @@ public class SvnWcDbShared {
         result.set(MovedInfo.movedFromAbsPath, root.getAbsPath(additionInfo.<File>get(AdditionInfo.movedFromRelPath)));
         result.set(MovedInfo.movedFromOpRootAbsPath, root.getAbsPath(additionInfo.<File>get(AdditionInfo.movedFromOpRootRelPath)));
         
-        long movedFromOpDepth = additionInfo.<Long>get(AdditionInfo.movedFromOpDepth);
+        long movedFromOpDepth = additionInfo.lng(AdditionInfo.movedFromOpDepth);
         File tmp = additionInfo.<File>get(AdditionInfo.movedFromOpRootRelPath);
         while(SVNWCUtils.relpathDepth(tmp) > movedFromOpDepth) {
             tmp = SVNFileUtil.getFileDir(tmp);
@@ -266,7 +266,7 @@ public class SvnWcDbShared {
                             (info.hasField(AdditionInfo.movedFromRelPath) ||
                             info.hasField(AdditionInfo.movedFromOpRootRelPath))) {
                         final Structure<MovedFromInfo> movedFromInfo = getMovedFromInfo(root, currentRelpath, localRelpath);
-                        info.set(AdditionInfo.movedFromOpDepth, movedFromInfo.get(MovedFromInfo.opDepth));
+                        info.set(AdditionInfo.movedFromOpDepth, movedFromInfo.lng(MovedFromInfo.opDepth));
                         info.set(AdditionInfo.movedFromOpRootRelPath, movedFromInfo.get(MovedFromInfo.movedFromOpRootRelPath));
                         info.set(AdditionInfo.movedFromRelPath, movedFromInfo.get(MovedFromInfo.movedFromRelPath));
                     }
