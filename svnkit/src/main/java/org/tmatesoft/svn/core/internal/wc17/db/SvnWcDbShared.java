@@ -313,17 +313,17 @@ public class SvnWcDbShared {
             if (!stmt.next()) {
                 return result;
             }
+            result.set(MovedFromInfo.opDepth, getColumnInt64(stmt, NODES__Fields.op_depth));
+            final File deleteOpRootReplpath = getColumnPath(stmt, NODES__Fields.local_relpath);
+            result.set(MovedFromInfo.movedFromOpRootRelPath, deleteOpRootReplpath);
+            if (movedToOpRootRelPath.equals(localRelPath)) {
+                result.set(MovedFromInfo.movedFromRelPath, deleteOpRootReplpath);
+            } else {
+                final File childRelPath = SVNWCUtils.skipAncestor(movedToOpRootRelPath, localRelPath);
+                result.set(MovedFromInfo.movedFromRelPath, SVNFileUtil.createFilePath(deleteOpRootReplpath, childRelPath));
+            }
         } finally {
             reset(stmt);
-        }
-        result.set(MovedFromInfo.opDepth, getColumnInt64(stmt, NODES__Fields.op_depth));
-        final File deleteOpRootReplpath = getColumnPath(stmt, NODES__Fields.local_relpath);
-        result.set(MovedFromInfo.movedFromOpRootRelPath, deleteOpRootReplpath);
-        if (movedToOpRootRelPath.equals(localRelPath)) {
-            result.set(MovedFromInfo.movedFromRelPath, deleteOpRootReplpath);
-        } else {
-            final File childRelPath = SVNWCUtils.skipAncestor(movedToOpRootRelPath, localRelPath);
-            result.set(MovedFromInfo.movedFromRelPath, SVNFileUtil.createFilePath(deleteOpRootReplpath, childRelPath));
         }
         return result;
     }
