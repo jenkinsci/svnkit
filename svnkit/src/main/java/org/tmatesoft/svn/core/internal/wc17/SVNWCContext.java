@@ -1050,6 +1050,8 @@ public class SVNWCContext {
             return info;
         }
         final File dir_path = (readInfo.kind == SVNWCDbKind.Dir) ? localAbsPath : SVNFileUtil.getFileDir(localAbsPath);
+        final File rootPath = getDb().getWCRoot(dir_path);
+        
         final List<SVNConflictDescription> conflicts = db.readConflicts(localAbsPath);
         for (final SVNConflictDescription cd : conflicts) {
             final SVNMergeFileSet cdf = cd.getMergeFiles();
@@ -1088,7 +1090,7 @@ public class SVNWCContext {
                 }
             } else if (isPropNeed && cd.isPropertyConflict()) {
                 if (cdf.getRepositoryFile() != null) {
-                    final File path = SVNFileUtil.isAbsolute(cdf.getRepositoryFile()) ? cdf.getRepositoryFile() : SVNFileUtil.createFilePath(dir_path, cdf.getRepositoryFile());
+                    final File path = SVNFileUtil.isAbsolute(cdf.getRepositoryFile()) ? cdf.getRepositoryFile() : SVNFileUtil.createFilePath(rootPath, cdf.getRepositoryFile());
                     final SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(path));
                     if (kind == SVNNodeKind.FILE) {
                         info.propConflicted = true;
