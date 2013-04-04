@@ -148,8 +148,23 @@ public class StructureFields {
         originalReposId,
         originalRootUrl, 
         originalUuid, 
-        originalRevision
+        originalRevision,
+        movedFromRelPath,
+        movedFromOpRootRelPath,
+        movedFromOpDepth,
     }
     
+    public enum MovedFromInfo {
+        movedFromRelPath,
+        movedFromOpRootRelPath,
+        opDepth,        
+    }
+
+    public enum MovedInfo {
+        movedFromAbsPath,
+        movedFromOpRootAbsPath,
+        opRootAbsPath,
+        movedFromDeleteAbsPath,
+    }
     
 }

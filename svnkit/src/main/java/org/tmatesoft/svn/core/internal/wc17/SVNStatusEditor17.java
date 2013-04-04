@@ -27,6 +27,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo.RepositoryInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.DirParsedInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.ExternalNodeInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.MovedInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeOriginInfo;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgPropertiesManager;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
@@ -333,6 +334,7 @@ public class SVNStatusEditor17 {
                 text_status = SVNStatusType.STATUS_MODIFIED;
             }
         }
+        File movedFromAbsPath = null;
         boolean conflicted = info.conflicted;
         if (conflicted) {
             SVNWCContext.ConflictInfo conflictInfo = context.getConflicted(localAbsPath, true, true, true);
@@ -354,6 +356,17 @@ public class SVNStatusEditor17 {
                         node_status = SVNStatusType.STATUS_ADDED;
                     } else if (scheduleInfo.schedule == SVNWCSchedule.replace) {
                         node_status = SVNStatusType.STATUS_REPLACED;
+                    }
+                }
+                
+                if (info.movedHere && info.opRoot) {
+                    try {
+                        final Structure<MovedInfo> movedInfo = SvnWcDbShared.scanMoved((SVNWCDb) context.getDb(), localAbsPath);
+                        movedFromAbsPath = movedInfo.get(MovedInfo.movedFromAbsPath);
+                    } catch (SVNException e) {
+                        if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_UNEXPECTED_STATUS) {
+                            throw e;
+                        }
                     }
                 }
             }
@@ -474,6 +487,7 @@ public class SVNStatusEditor17 {
             
         }
         
+        stat.setMovedFromPath(movedFromAbsPath);
         if (info.movedToAbsPath != null) {
             stat.setMovedToPath(info.movedToAbsPath);
         }

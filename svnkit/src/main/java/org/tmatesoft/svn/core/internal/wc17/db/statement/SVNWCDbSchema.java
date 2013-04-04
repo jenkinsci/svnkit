@@ -107,7 +107,8 @@ public enum SVNWCDbSchema {
     }
 
     public enum NODES__Indices {
-        I_NODES_PARENT;
+        I_NODES_PARENT,
+        I_NODES_MOVED,
     }
 
     public enum WORK_QUEUE__Fields {

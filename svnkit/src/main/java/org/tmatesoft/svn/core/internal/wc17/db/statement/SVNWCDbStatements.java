@@ -156,7 +156,8 @@ public enum SVNWCDbStatements {
     CLEAR_ACTUAL_NODE_LEAVING_CHANGELIST(SVNWCDbClearActualNodeLeavingChangelist.class), 
     SELECT_REVERT_LIST_COPIED_CHILDREN(SVNWCDbSelectRevertListCopiedChildren.class), 
     MARK_SKIPPED_CHANGELIST_DIRS(SVNWCDbMarkSkippedChangelistDirs.class), 
-    SELECT_ALL_SERVER_EXCLUDED_NODES(SVNWCDbSelectAllServerExcludedNodes.class),
+    SELECT_ALL_SERVER_EXCLUDED_NODES(SVNWCDbSelectAllServerExcludedNodes.class), 
+    SELECT_MOVED_FROM_RELPATH(SVNWCDbSelectMovedFromRelPath.class),
     ;
     
 
