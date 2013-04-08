@@ -54,6 +54,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
+import org.tmatesoft.svn.core.io.ISVNInheritedPropertiesHandler;
 import org.tmatesoft.svn.core.io.ISVNLocationEntryHandler;
 import org.tmatesoft.svn.core.io.ISVNLocationSegmentHandler;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
@@ -1670,6 +1671,9 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             return SVNDepthFilterEditor.getDepthFilterEditor(depth, editor, hasTarget);
         }
         return editor;
+    }
+
+    public void getInheritedProperties(String path, long revision, String propertyName, ISVNInheritedPropertiesHandler handler) throws SVNException {
     }
 
 }

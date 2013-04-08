@@ -24,6 +24,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.tmatesoft.svn.core.ISVNCanceller;
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
@@ -2771,6 +2772,18 @@ public abstract class SVNRepository {
             throw svne;
         }
     }
+    
+    public Map<String, SVNProperties> getInheritedProperties(String path, long revision, String propertyName) throws SVNException {
+        final Map<String, SVNProperties> result = new TreeMap<String, SVNProperties>(SVNPathUtil.PATH_COMPARATOR);
+        getInheritedProperties(path, revision, propertyName, new ISVNInheritedPropertiesHandler() {
+            public void handleInheritedProperites(String inheritedFromPath, SVNProperties properties) throws SVNException {
+                result.put(inheritedFromPath, properties);
+            }
+        });
+        return result;
+    }
+
+    public abstract void getInheritedProperties(String path, long revision, String propertyName, ISVNInheritedPropertiesHandler handler) throws SVNException;
     
     protected abstract long getDeletedRevisionImpl(String path, long pegRevision, long endRevision) throws SVNException;
     
