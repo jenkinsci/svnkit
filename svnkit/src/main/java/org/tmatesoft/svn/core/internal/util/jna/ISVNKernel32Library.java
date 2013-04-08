@@ -48,8 +48,8 @@ interface ISVNKernel32Library extends StdCallLibrary {
         }
         
         protected List<String> getFieldOrder() {
-            return Arrays.asList("dwOSVersionInfoSize", "dwMajorVersion", "dwMinorVersion", "dwBuildNumber", 
-                    "dwPlatformId", "szCSDVersion");
+            return Arrays.asList("dwMajorVersion", "dwMinorVersion", "dwBuildNumber", 
+                    "dwPlatformId", "szCSDVersion", "dwOSVersionInfoSize");
         }
 
     }
