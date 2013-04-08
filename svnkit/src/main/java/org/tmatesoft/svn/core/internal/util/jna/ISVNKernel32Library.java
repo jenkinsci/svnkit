@@ -11,6 +11,9 @@
  */
 package org.tmatesoft.svn.core.internal.util.jna;
 
+import java.util.Arrays;
+import java.util.List;
+
 import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
@@ -43,6 +46,16 @@ interface ISVNKernel32Library extends StdCallLibrary {
             }
             dwOSVersionInfoSize = new NativeLong(this.size());
         }
+        
+        protected List<String> getFieldOrder() {
+            return Arrays.asList("dwMajorVersion", 
+                    "dwMinorVersion", 
+                    "dwBuildNumber", 
+                    "dwPlatformId", 
+                    "szCSDVersion", 
+                    "dwOSVersionInfoSize");
+        }
+
     }
 
     public long FILE_ATTRIBUTE_READONLY = 0x01;

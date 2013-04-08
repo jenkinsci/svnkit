@@ -11,6 +11,9 @@
  */
 package org.tmatesoft.svn.core.internal.util.jna;
 
+import java.util.Arrays;
+import java.util.List;
+
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -331,5 +334,9 @@ public class SVNGnomeKeyring {
         public String keyringName;
         public Pointer keyringInfo;
         public Pointer loop;
+        
+        protected List<String> getFieldOrder() {
+            return Arrays.asList("keyringName", "keyringInfo", "loop");
+        }
     }
 }
