@@ -11,6 +11,9 @@
  */
 package org.tmatesoft.svn.core.internal.util.jna;
 
+import java.util.Arrays;
+import java.util.List;
+
 import com.sun.jna.Memory;
 import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
@@ -41,6 +44,10 @@ interface ISVNWinCryptLibrary extends StdCallLibrary {
         
         public NativeLong cbSize;
         public Pointer cbData;
+        
+        protected List<String> getFieldOrder() {
+            return Arrays.asList("cbSize", "cbData");
+        }
     }
     
     public boolean CryptProtectData(Pointer dataIn, 

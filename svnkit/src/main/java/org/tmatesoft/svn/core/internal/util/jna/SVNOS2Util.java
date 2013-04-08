@@ -23,7 +23,7 @@ public class SVNOS2Util {
     private static boolean ourIsJNAEnabled;
     private static boolean ourIsOS2IO4JPresent;
 
-    private static Class os2io4jClazz;
+    private static Class<?> os2io4jClazz;
     private static Method setReadOnlyMethod;
     private static Method setHiddenMethod;
     private static Method moveFileMethod;

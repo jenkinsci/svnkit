@@ -11,6 +11,9 @@
  */
 package org.tmatesoft.svn.core.internal.util.jna;
 
+import java.util.Arrays;
+import java.util.List;
+
 import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
@@ -35,23 +38,40 @@ public interface ISVNSecurityLibrary extends StdCallLibrary {
     public static class SecHandle extends Structure {
         public NativeLong dwLower;
         public NativeLong dwUpper;
+        
+        protected List<String> getFieldOrder() {
+            return Arrays.asList("dwLower", "dwUpper");
+        }
     }
     
     public static class TimeStamp extends Structure {
         public NativeLong LowPart;
         public NativeLong HighPart;
+
+        protected List<String> getFieldOrder() {
+            return Arrays.asList("LowPart", "HighPart");
+        }
     }
     
     public static class SecBufferDesc extends Structure {
         public NativeLong ulVersion;
         public NativeLong cBuffers;
         public Pointer pBuffers;
+
+        protected List<String> getFieldOrder() {
+            return Arrays.asList("ulVersion", "cBuffers", "pBuffers");
+        }
+
     }
     
     public static class SecBuffer extends Structure {
         public NativeLong cbBuffer;
         public NativeLong BufferType;
         public Pointer pvBuffer;
+
+        protected List<String> getFieldOrder() {
+            return Arrays.asList("cbBuffer", "BufferType", "pvBuffer");
+        }
     }
     
     public static class SEC_WINNT_AUTH_IDENTITY extends Structure {
@@ -62,6 +82,10 @@ public interface ISVNSecurityLibrary extends StdCallLibrary {
         public WString Password;
         public NativeLong PasswordLength;
         public NativeLong Flags;
+
+        protected List<String> getFieldOrder() {
+            return Arrays.asList("User", "UserLength", "Domain", "DomainLength", "Password", "PasswordLength", "Flags");
+        }
     }
     
     public int FreeCredentialsHandle(Pointer phCredential);

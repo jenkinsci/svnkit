@@ -11,6 +11,9 @@
  */
 package org.tmatesoft.svn.core.internal.util.jna;
 
+import java.util.Arrays;
+import java.util.List;
+
 import com.sun.jna.Callback;
 import com.sun.jna.Library;
 import com.sun.jna.Pointer;
@@ -128,5 +131,9 @@ public interface ISVNGnomeKeyringLibrary extends Library {
         public Pointer user;
         public Pointer domain;
         public Pointer password;
+
+        protected List<String> getFieldOrder() {
+            return Arrays.asList("keyring", "itemId", "protocol", "server", "object", "authType", "port", "user", "domain", "password");
+        }
     }
 }
