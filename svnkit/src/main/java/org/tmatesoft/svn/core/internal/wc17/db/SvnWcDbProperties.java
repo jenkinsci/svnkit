@@ -541,7 +541,7 @@ public class SvnWcDbProperties extends SvnWcDbShared {
             reset(stmt);
         }
         
-        return cachedProperties;
+        return inheritedProperties;
     }
     
     /*
