@@ -459,7 +459,7 @@ public class SVNPropertiesManager {
                     SVNErrorManager.error(error, SVNLogType.DEFAULT);
                 }
             }
-        } else if (SVNProperty.IGNORE.equals(name) || SVNProperty.EXTERNALS.equals(name)) {
+        } else if (SVNProperty.IGNORE.equals(name) || SVNProperty.INHERITABLE_IGNORES.equals(name) || SVNProperty.EXTERNALS.equals(name)) {
             if (!value.getString().endsWith("\n")) {
                 value = SVNPropertyValue.create(value.getString().concat("\n"));
             }

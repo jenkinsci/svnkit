@@ -23,9 +23,12 @@ import java.util.Map;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc17.db.Structure;
+import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.InheritedProperties;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -390,6 +393,42 @@ public class SVNSkel {
             props.put(name, value);
         }
         return props;
+    }
+
+    public boolean isValidInheritedProperties() {
+        final int length = getListSize();
+        if (length >= 0 && (length & 1) == 0) {
+            for(SVNSkel child = first(); child != null; child = child.next()) {
+                if (!child.isAtom()) {
+                    return false;
+                }
+                if (child.next() == null) {
+                    return false;
+                }
+                child = child.next();
+                if (!child.isValidPropList()) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    public List<Structure<InheritedProperties>> parseInheritedProperties() throws SVNException {
+        if (!isValidInheritedProperties()) {
+            error("iprops");
+        }
+        List<Structure<InheritedProperties>> result = new ArrayList<Structure<InheritedProperties>>();
+        for(SVNSkel elt = first(); elt != null; elt = elt.next()) {
+            final String parent = elt.getValue();
+            elt = elt.next();
+            final SVNProperties props = SVNProperties.wrap(elt.parsePropList());
+            final Structure<InheritedProperties> element = Structure.obtain(InheritedProperties.class);
+            element.set(InheritedProperties.pathOrURL, parent);
+            element.set(InheritedProperties.properties, props);
+            result.add(element);
+        }
+        return result;
     }
 
     public byte[] unparse() throws SVNException {

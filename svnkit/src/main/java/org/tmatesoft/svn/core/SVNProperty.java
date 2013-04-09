@@ -94,6 +94,16 @@ public class SVNProperty {
     public static final String MERGE_INFO = SVN_PREFIX + "mergeinfo";
     
     /**
+     * @since SVN 1.8
+     */
+    public static final String INHERITABLE_IGNORES = SVN_PREFIX + "global-ignores";
+
+    /**
+     * @since SVN 1.8
+     */
+    public static final String INHERITABLE_AUTO_PROPS = SVN_PREFIX + "auto-props";
+    
+    /**
      * An <span class="javastring">"svn:entry:revision"</span> SVN untweakable metaproperty.
      */
     public static final String REVISION = SVN_ENTRY_PREFIX + "revision";

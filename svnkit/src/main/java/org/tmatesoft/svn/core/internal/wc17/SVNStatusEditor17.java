@@ -27,6 +27,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo.RepositoryInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.DirParsedInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.ExternalNodeInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.InheritedProperties;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.MovedInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeOriginInfo;
 import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgPropertiesManager;
@@ -509,20 +510,29 @@ public class SVNStatusEditor17 {
     }
 
     private Collection<String> collectIgnorePatterns(SVNWCDbRoot root, File localRelPath, Collection<String> ignores) throws SVNException {
-        SVNProperties props = SvnWcDbProperties.readProperties(root, localRelPath);
-        final String localIgnores = props != null ? props.getStringValue(SVNProperty.IGNORE) : null;
-        if (localIgnores != null) {
-            final List<String> patterns = new ArrayList<String>();
+        final List<String> patterns = new ArrayList<String>();
+        if (ignores != null) {
             patterns.addAll(ignores);
-            for (StringTokenizer tokens = new StringTokenizer(localIgnores, "\r\n"); tokens.hasMoreTokens();) {
-                String token = tokens.nextToken().trim();
-                if (token.length() > 0) {
-                    patterns.add(token);
-                }
-            }
-            return patterns;
         }
-        return ignores;
+        final SVNProperties props = SvnWcDbProperties.readProperties(root, localRelPath);
+        if (props != null) {
+            final String localIgnores = props.getStringValue(SVNProperty.IGNORE);
+            if (localIgnores != null) {
+                SvnNgPropertiesManager.splitAndAppend(patterns, localIgnores);
+            }            
+            final String inheritedIgnores = props.getStringValue(SVNProperty.INHERITABLE_IGNORES);
+            if (inheritedIgnores != null) {
+                SvnNgPropertiesManager.splitAndAppend(patterns, inheritedIgnores);
+            }            
+            
+        }
+        final List<Structure<InheritedProperties>> inheritedProps = SvnWcDbProperties.readInheritedProperties(root, localRelPath, SVNProperty.INHERITABLE_IGNORES);
+        for (Structure<InheritedProperties> element : inheritedProps) {
+            final SVNProperties inherited = element.get(InheritedProperties.properties);
+            SvnNgPropertiesManager.splitAndAppend(patterns, inherited.getStringValue(SVNProperty.INHERITABLE_IGNORES));
+            
+        }
+        return patterns;
     }
 
     public void setRepositoryInfo(SVNURL repositoryRoot, HashMap<String, SVNLock> repositoryLocks) {

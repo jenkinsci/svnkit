@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
@@ -391,6 +392,18 @@ public class SvnNgPropertiesManager {
                 regular.put(name, pv);
             } else if (SVNProperty.isWorkingCopyProperty(name) && working != null) {
                 working.put(name, pv);
+            }
+        }
+    }
+
+    public static void splitAndAppend(final List<String> patterns, final String ignores) {
+        if (ignores == null) {
+            return;
+        }
+        for (StringTokenizer tokens = new StringTokenizer(ignores, "\r\n"); tokens.hasMoreTokens();) {
+            String token = tokens.nextToken().trim();
+            if (token.length() > 0) {
+                patterns.add(token);
             }
         }
     }

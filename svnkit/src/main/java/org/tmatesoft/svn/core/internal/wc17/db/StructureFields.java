@@ -167,4 +167,9 @@ public class StructureFields {
         movedFromDeleteAbsPath,
     }
     
+    public enum InheritedProperties {
+        pathOrURL,
+        properties
+    }
+    
 }

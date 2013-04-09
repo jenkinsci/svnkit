@@ -1,9 +1,33 @@
 package org.tmatesoft.svn.core.internal.wc17.db;
 
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnBlob;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnInt64;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnKind;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnPath;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnPresence;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnProperties;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnText;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.isColumnNull;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.getColumnInheritedProperties;
+import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.reset;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
-import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetInsertStatement;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectStatement;
@@ -14,19 +38,20 @@ import org.tmatesoft.svn.core.internal.wc.SVNExternal;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
-import org.tmatesoft.svn.core.internal.wc17.db.statement.*;
-import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.*;
+import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.InheritedProperties;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbCreateSchema;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbNodesBase;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbNodesCurrent;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.ACTUAL_NODE__Fields;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODES__Fields;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODE_PROPS_CACHE__Fields;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.TARGETS_LIST__Fields;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.WCROOT__Fields;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
-
-import java.io.File;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-
-import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.*;
 
 public class SvnWcDbProperties extends SvnWcDbShared {
 	
@@ -50,7 +75,22 @@ public class SvnWcDbProperties extends SvnWcDbShared {
             }
         } finally {
             reset(stmt);
-        }        return props;
+        }        
+        return props;
+    }
+
+    public static SVNProperties readChangedProperties(SVNWCDbRoot root, File relpath) throws SVNException {
+        SVNSqlJetStatement stmt = null;
+        try {
+            stmt = root.getSDb().getStatement(SVNWCDbStatements.SELECT_ACTUAL_PROPS);
+            stmt.bindf("is", root.getWcId(), relpath);
+            if (stmt.next() && !isColumnNull(stmt, ACTUAL_NODE__Fields.properties)) {
+                return getColumnProperties(stmt, ACTUAL_NODE__Fields.properties);
+            } 
+        } finally {
+            reset(stmt);
+        }        
+        return null;
     }
     
     public static SVNProperties readPristineProperties(SVNWCDbRoot root, File relpath) throws SVNException {
@@ -403,6 +443,105 @@ public class SvnWcDbProperties extends SvnWcDbShared {
                 root.getSDb().commit();
             }
         }
+    }
+    
+    public static List<Structure<InheritedProperties>> readInheritedProperties(SVNWCDbRoot root, File localRelPath, String propertyName) throws SVNException {
+        SVNSqlJetStatement stmt = null;
+        File relPath = localRelPath;
+        File parentRelPath = null;
+        File expectedParentReposRelPath = null;
+        
+        final List<Structure<InheritedProperties>> inheritedProperties = new ArrayList<Structure<InheritedProperties>>();
+        List<Structure<InheritedProperties>> cachedProperties = null; 
+
+        try {
+            stmt = root.getSDb().getStatement(SVNWCDbStatements.SELECT_NODE_INFO);
+            
+            while(relPath != null) {
+                SVNProperties nodeProps = null;
+                
+                parentRelPath = "".equals(relPath.getPath()) ? null : SVNFileUtil.getFileDir(relPath);
+                stmt.bindf("is", root.getWcId(), relPath);
+                if (!stmt.next()) {
+                    nodeNotFound(root, relPath);
+                }
+                final long opDepth = getColumnInt64(stmt, NODES__Fields.op_depth);
+                SVNWCDbStatus status = getColumnPresence(stmt, NODES__Fields.presence);
+                if (status != SVNWCDbStatus.Normal && status != SVNWCDbStatus.Incomplete) {
+                    final SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS,
+                            "The node ''{0}'' has a status that has no properites", root.getAbsPath(relPath));
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                }
+                if (opDepth > 0) {                    
+                } else if (expectedParentReposRelPath != null) {
+                    final File reposRelPath = getColumnPath(stmt, NODES__Fields.repos_path);
+                    if (!expectedParentReposRelPath.equals(reposRelPath)) {
+                        reset(stmt);
+                        break;
+                    }
+                    expectedParentReposRelPath = SVNFileUtil.getFileDir(expectedParentReposRelPath);
+                } else {
+                    final File reposRelPath = getColumnPath(stmt, NODES__Fields.repos_path);
+                    expectedParentReposRelPath = SVNFileUtil.getFileDir(reposRelPath);
+                }
+                
+                if (opDepth == 0 && !isColumnNull(stmt, NODES__Fields.inherited_props)) {
+                    cachedProperties = getColumnInheritedProperties(stmt, NODES__Fields.inherited_props);
+                    parentRelPath = null;
+                }
+                
+                nodeProps = getColumnProperties(stmt, NODES__Fields.properties);
+                
+                reset(stmt);
+                if (!relPath.equals(localRelPath)) {
+                    final SVNProperties changedProps = readChangedProperties(root, relPath);
+                    if (changedProps != null) {
+                        nodeProps = changedProps;
+                    }
+                    if (nodeProps != null && !nodeProps.isEmpty()) {
+                        if (propertyName != null) {
+                            final SVNProperties filteredProperites = new SVNProperties();
+                            if (nodeProps.containsName(propertyName)) {
+                                filteredProperites.put(propertyName, nodeProps.getSVNPropertyValue(propertyName));
+                            }
+                            nodeProps = filteredProperites;
+                        } 
+                        if (nodeProps != null && !nodeProps.isEmpty()) {
+                            final Structure<InheritedProperties> inheritedProperitesElement = Structure.obtain(InheritedProperties.class);
+                            inheritedProperitesElement.set(InheritedProperties.pathOrURL, SVNFileUtil.getFilePath(root.getAbsPath(relPath)));
+                            inheritedProperitesElement.set(InheritedProperties.properties, nodeProps);
+                            inheritedProperties.add(0, inheritedProperitesElement);
+                        }
+                    }
+                }
+                relPath = parentRelPath;
+            }
+            
+            if (cachedProperties != null) {
+                for (Structure<InheritedProperties> element : cachedProperties) {
+                    SVNProperties props = element.get(InheritedProperties.properties);
+                    if (props == null || props.isEmpty()) {
+                        continue;
+                    }
+                    if (propertyName != null) {
+                        if (!props.containsName(propertyName)) {
+                            continue;
+                        }
+                        final SVNProperties filteredProperties = new SVNProperties();
+                        filteredProperties.put(propertyName, props.getSVNPropertyValue(propertyName));
+                        props = filteredProperties;
+                    }
+                    if (!props.isEmpty()) {
+                        element.set(InheritedProperties.properties, props);
+                        inheritedProperties.add(0, element);
+                    }
+                }
+            }
+        } finally {
+            reset(stmt);
+        }
+        
+        return cachedProperties;
     }
     
     /*

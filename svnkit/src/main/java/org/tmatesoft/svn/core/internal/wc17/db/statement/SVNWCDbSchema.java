@@ -103,7 +103,7 @@ public enum SVNWCDbSchema {
     }
 
     public enum NODES__Fields {
-        wc_id, local_relpath, op_depth, parent_relpath, repos_id, repos_path, revision, presence, moved_here, moved_to, kind, properties, depth, checksum, symlink_target, changed_revision, changed_date, changed_author, translated_size, last_mod_time, dav_cache, file_external;
+        wc_id, local_relpath, op_depth, parent_relpath, repos_id, repos_path, revision, presence, moved_here, moved_to, kind, properties, depth, checksum, symlink_target, changed_revision, changed_date, changed_author, translated_size, last_mod_time, dav_cache, file_external, inherited_props;
     }
 
     public enum NODES__Indices {
