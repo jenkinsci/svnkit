@@ -4,12 +4,14 @@ import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.db.*;
+import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.*;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODES__Fields;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldUpgrade;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.util.SVNLogType;
@@ -782,8 +784,7 @@ public class SvnNgUpgradeSDb {
                 sDb.getDb().createIndex("CREATE INDEX IF NOT EXISTS I_PRISTINE_MD5 ON PRISTINE (md5_checksum);");
             } catch (SqlJetException e) {
                 SVNSqlJetDb.createSqlJetError(e);
-            }
-            
+            }            
             // TODO combine existing conflicts data
             setVersion(sDb, 30);
         }
@@ -804,8 +805,26 @@ public class SvnNgUpgradeSDb {
             } catch (SqlJetException e) {
                 SVNSqlJetDb.createSqlJetError(e);
             }
-
-            // TODO set empty inherited_props on roots and switched roots.
+            
+            final SVNSqlJetStatement stmt = sDb.getStatement(SVNWCDbStatements.SELECT_WCROOT_NODES);
+            final SVNSqlJetStatement markRootStmt = sDb.getStatement(SVNWCDbStatements.UPDATE_IPROPS);
+            final byte[] emptyInheritedProps = SVNSkel.createEmptyList().unparse();
+            try {
+                while(stmt.next()) {
+                    final long wcId = stmt.getColumnLong(NODES__Fields.wc_id);
+                    final String localRelPath = stmt.getColumnString(NODES__Fields.local_relpath);
+                    
+                    try {
+                        markRootStmt.bindf("isb", wcId, localRelPath, emptyInheritedProps);
+                        markRootStmt.done();
+                    } finally {
+                        markRootStmt.reset();
+                    }                    
+                }
+            } finally {
+                stmt.reset();
+            }
+            
             setVersion(sDb, 31);
         }
         

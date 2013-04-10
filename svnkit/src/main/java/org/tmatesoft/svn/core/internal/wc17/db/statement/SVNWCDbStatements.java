@@ -158,6 +158,8 @@ public enum SVNWCDbStatements {
     MARK_SKIPPED_CHANGELIST_DIRS(SVNWCDbMarkSkippedChangelistDirs.class), 
     SELECT_ALL_SERVER_EXCLUDED_NODES(SVNWCDbSelectAllServerExcludedNodes.class), 
     SELECT_MOVED_FROM_RELPATH(SVNWCDbSelectMovedFromRelPath.class),
+    SELECT_WCROOT_NODES(SVNWCDbSelectWCRootNodes.class),
+    UPDATE_IPROPS(SVNWCDbUpdateIProps.class),
     ;
     
 
