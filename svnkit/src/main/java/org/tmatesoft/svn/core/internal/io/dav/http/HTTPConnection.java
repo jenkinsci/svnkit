@@ -448,6 +448,7 @@ public class HTTPConnection implements IHTTPConnection {
                         request.dispatch(method, path, header, ok1, ok2, context);
                         break;
                     } catch (EOFException pe) {
+                        myRepository.getDebugLog().logFine(SVNLogType.NETWORK, pe);
                         // retry, EOF always means closed connection.
                         if (retryCount > 0) {
                             close();
