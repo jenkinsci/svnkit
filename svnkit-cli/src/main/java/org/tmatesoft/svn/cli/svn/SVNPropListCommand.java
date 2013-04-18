@@ -53,6 +53,7 @@ public class SVNPropListCommand extends SVNPropertiesCommand {
         options.add(SVNOption.REVISION);
         options.add(SVNOption.QUIET);
         options.add(SVNOption.REVPROP);
+        options.add(SVNOption.SHOW_INHERITED_PROPS);
         options.add(SVNOption.XML);
         options.add(SVNOption.CHANGELIST);
         return options;

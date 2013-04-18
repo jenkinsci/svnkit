@@ -55,6 +55,7 @@ public class SVNPropGetCommand extends SVNPropertiesCommand {
         options.add(SVNOption.STRICT);
         options.add(SVNOption.XML);
         options.add(SVNOption.CHANGELIST);
+        options.add(SVNOption.SHOW_INHERITED_PROPS);
         return options;
     }
 
