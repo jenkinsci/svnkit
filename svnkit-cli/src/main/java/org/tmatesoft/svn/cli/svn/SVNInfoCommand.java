@@ -32,8 +32,10 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNConflictVersion;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNTreeConflictUtil;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
 import org.tmatesoft.svn.core.wc.ISVNInfoHandler;
 import org.tmatesoft.svn.core.wc.SVNConflictAction;
 import org.tmatesoft.svn.core.wc.SVNConflictReason;
@@ -178,6 +180,22 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
             if (info.getCopyFromRevision() != null && info.getCopyFromRevision().getNumber() >= 0) {
                 buffer.append("Copied From Rev: " + info.getCopyFromRevision() + "\n");
             }
+            if (info.getMovedFromPath() != null) {
+                final File relativePath = SVNWCUtils.skipAncestor(info.getWorkingCopyRoot(), info.getMovedFromPath());
+                if (relativePath != null && !"".equals(relativePath.getPath())) {
+                    buffer.append("Moved From: " + relativePath + "\n");
+                } else {
+                    buffer.append("Moved From: " + info.getMovedFromPath() + "\n");
+                }
+            }
+            if (info.getMovedToPath() != null) {
+                final File relativePath = SVNWCUtils.skipAncestor(info.getWorkingCopyRoot(), info.getMovedToPath());
+                if (relativePath != null && !"".equals(relativePath.getPath())) {
+                    buffer.append("Moved From: " + relativePath + "\n");
+                } else {
+                    buffer.append("Moved From: " + info.getMovedToPath() + "\n");
+                }
+            }
         }
         if (info.getAuthor() != null) {
             buffer.append("Last Changed Author: " + info.getAuthor() + "\n");
@@ -320,6 +338,22 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
             }
             buffer = openCDataTag("checksum", info.getChecksum(), buffer);
             buffer = openCDataTag("changelist", info.getChangelistName(), buffer);
+            if (info.getMovedFromPath() != null) {
+                final File relativePath = SVNWCUtils.skipAncestor(info.getWorkingCopyRoot(), info.getMovedFromPath());
+                if (relativePath != null && !"".equals(relativePath.getPath())) {
+                    buffer = openCDataTag("moved-from", relativePath.getPath(), buffer);
+                } else {
+                    buffer = openCDataTag("moved-from", info.getMovedFromPath().getPath(), buffer);
+                }
+            }
+            if (info.getMovedToPath() != null) {
+                final File relativePath = SVNWCUtils.skipAncestor(info.getWorkingCopyRoot(), info.getMovedToPath());
+                if (relativePath != null && !"".equals(relativePath.getPath())) {
+                    buffer = openCDataTag("moved-from", relativePath.getPath(), buffer);
+                } else {
+                    buffer = openCDataTag("moved-from", info.getMovedToPath().getPath(), buffer);
+                }
+            }
             buffer = closeXMLTag("wc-info", buffer);
         }
         if (info.getAuthor() != null || info.getCommittedRevision().isValid() ||

@@ -427,6 +427,8 @@ public class SvnCodec {
         } catch (SVNException e) {
         }
         wcInfo.setWcRoot(wcRoot);
+        wcInfo.setMovedFrom(info.getMovedFromPath());
+        wcInfo.setMovedTo(info.getMovedToPath());
         
         return result;
     }
@@ -504,6 +506,8 @@ public class SvnCodec {
                 wcInfo.getRecordedSize(), 
                 treeConflict);
         i.setWorkingCopyRoot(wcInfo.getWcRoot());
+        i.setMovedFromPath(wcInfo.getMovedFrom());
+        i.setMovedToPath(wcInfo.getMovedTo());
         return i;
     }
     
