@@ -2879,7 +2879,10 @@ public class SVNWCDb implements ISVNWCDb {
                     info.movedHere = getColumnBoolean(stmtInfo, NODES__Fields.moved_here);
                 }
                 if (f.contains(InfoField.movedTo)) {
-                    info.movedToAbsPath = getColumnPath(stmtInfo, NODES__Fields.moved_to);
+                    final File relativePath = getColumnPath(stmtInfo, NODES__Fields.moved_to);
+                    if (relativePath != null) {                        
+                        info.movedToAbsPath = SVNFileUtil.createFilePath(wcRoot.getAbsPath(), relativePath);
+                    }
                 }
             } else if (haveActual) {
                 if (isColumnNull(stmtActual, SVNWCDbSchema.ACTUAL_NODE__Fields.tree_conflict_data)) {
