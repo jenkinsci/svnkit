@@ -2875,6 +2875,12 @@ public class SVNWCDb implements ISVNWCDb {
                         info.haveBase = opDepth == 0;
                     }
                 }
+                if (f.contains(InfoField.movedHere)) {
+                    info.movedHere = getColumnBoolean(stmtInfo, NODES__Fields.moved_here);
+                }
+                if (f.contains(InfoField.movedTo)) {
+                    info.movedToAbsPath = getColumnPath(stmtInfo, NODES__Fields.moved_to);
+                }
             } else if (haveActual) {
                 if (isColumnNull(stmtActual, SVNWCDbSchema.ACTUAL_NODE__Fields.tree_conflict_data)) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "Corrupt data for ''{0}''", wcRoot.getAbsPath(localRelPath));
