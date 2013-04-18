@@ -146,6 +146,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
     private boolean myIsShowDiff;
 
     private int myStripCount;
+    private boolean myIsShowInhertiedProps;
     
     public SVNCommandEnvironment(String programName, PrintStream out, PrintStream err, InputStream in) {
         super(programName, out, err, in);
@@ -639,6 +640,8 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
             myRegularExpression = optionValue.getValue();
         } else if (option == SVNOption.TRUST_SERVER_CERT) {
             myIsTrustServerCertificate = true;
+        } else if (option == SVNOption.SHOW_INHERITED_PROPS) {
+            myIsShowInhertiedProps = true;
         } else if(option == SVNOption.STRIP ) {
             final String value = optionValue.getValue();
             try {
@@ -963,6 +966,10 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
 
     public boolean isAllowMixedRevisions() {
         return myIsAllowMixedRevisions;
+    }
+    
+    public boolean isShowInheritedProps() {
+        return myIsShowInhertiedProps;
     }
 
     public SVNProperties getRevisionProperties(String message, SVNCommitItem[] commitables, SVNProperties revisionProperties) throws SVNException {

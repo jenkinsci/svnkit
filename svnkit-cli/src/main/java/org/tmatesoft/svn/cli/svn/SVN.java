@@ -147,6 +147,7 @@ public class SVN extends AbstractSVNLauncher {
         SVNCommandLine.registerOption(SVNOption.CONFIG_OPTION);
 
         SVNCommandLine.registerOption(SVNOption.STRIP);
+        SVNCommandLine.registerOption(SVNOption.SHOW_INHERITED_PROPS);
         
     }
 
