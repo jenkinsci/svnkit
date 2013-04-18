@@ -349,9 +349,9 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
             if (info.getMovedToPath() != null) {
                 final File relativePath = SVNWCUtils.skipAncestor(info.getWorkingCopyRoot(), info.getMovedToPath());
                 if (relativePath != null && !"".equals(relativePath.getPath())) {
-                    buffer = openCDataTag("moved-from", relativePath.getPath(), buffer);
+                    buffer = openCDataTag("moved-to", relativePath.getPath(), buffer);
                 } else {
-                    buffer = openCDataTag("moved-from", info.getMovedToPath().getPath(), buffer);
+                    buffer = openCDataTag("moved-to", info.getMovedToPath().getPath(), buffer);
                 }
             }
             buffer = closeXMLTag("wc-info", buffer);
