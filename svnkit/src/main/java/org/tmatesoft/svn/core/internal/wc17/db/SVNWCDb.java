@@ -1998,7 +1998,7 @@ public class SVNWCDb implements ISVNWCDb {
 
     private Map<String, SVNTreeConflictDescription> readAllTreeConflicts(SVNWCDbDir pdh, File localRelpath) throws SVNException {
         Map<String, SVNTreeConflictDescription> treeConflicts = new HashMap<String, SVNTreeConflictDescription>();
-        SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_ACTUAL_CHILDREN_TREE_CONFLICT);
+        SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_ACTUAL_CHILDREN_CONFLICT);
         try {
             stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelpath);
             boolean haveRow = stmt.next();

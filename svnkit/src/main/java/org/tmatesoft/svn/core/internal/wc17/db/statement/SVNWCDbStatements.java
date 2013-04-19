@@ -129,7 +129,7 @@ public enum SVNWCDbStatements {
     CLEAR_BASE_NODE_RECURSIVE_DAV_CACHE(SVNWCDbClearDavCacheRecursive.class),
     DELETE_LOWEST_WORKING_NODE(SVNWCDbDeleteLowestWorkingNode.class),
     DELETE_ACTUAL_NODE_WITHOUT_CONFLICT(SVNWCDbDeleteActualNodeWithoutConflict.class),
-    SELECT_ACTUAL_CHILDREN_TREE_CONFLICT(SVNWCDbSelectActualChildrenTreeConflict.class),
+    SELECT_ACTUAL_CHILDREN_CONFLICT(SVNWCDbSelectActualChildrenConflict.class),
     CLEAR_ACTUAL_NODE_LEAVING_CONFLICT(SVNWCDbClearActualNodeLeavingConflict.class),
     INSERT_WORKING_NODE_FROM_BASE_COPY_PRESENCE(SVNWCDbInsertWorkingNodeFromBaseCopyPresence.class),
     INSERT_WORKING_NODE_FROM_BASE_COPY(SVNWCDbInsertWorkingNodeFromBaseCopy.class),
