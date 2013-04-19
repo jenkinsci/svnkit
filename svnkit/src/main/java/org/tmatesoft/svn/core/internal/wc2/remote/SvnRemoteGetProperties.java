@@ -68,6 +68,7 @@ public class SvnRemoteGetProperties extends SvnRemoteOperationRunner<SVNProperti
                 final SvnInheritedProperties propItem = new SvnInheritedProperties();
                 propItem.setTarget(SvnTarget.fromURL(repositoryRoot.appendPath(path, false)));
                 propItem.setProperties(inheritedProperties.get(path));
+                result.add(propItem);
             }
             if (!result.isEmpty()) {
                 getOperation().getTargetInheritedPropertiesReceiver().receive(target, result);

@@ -708,7 +708,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             String parentPath = path;
             
             final FSRevisionRoot root = myFSFS.createRevisionRoot(revision);
-            while(!"/".equals(parentPath)) {
+            while(!"/".equals(parentPath) && !"".equals(parentPath)) {
                 parentPath = SVNPathUtil.removeTail(parentPath);
 
                 final FSRevisionNode node = root.getRevisionNode(parentPath);
