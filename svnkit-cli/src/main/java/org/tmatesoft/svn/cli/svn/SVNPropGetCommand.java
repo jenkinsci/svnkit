@@ -24,6 +24,7 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -32,6 +33,11 @@ import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
+import org.tmatesoft.svn.core.wc2.SvnGetProperties;
+import org.tmatesoft.svn.core.wc2.SvnInheritedProperties;
+import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
 
 
@@ -46,7 +52,7 @@ public class SVNPropGetCommand extends SVNPropertiesCommand {
     }
 
     protected Collection createSupportedOptions() {
-        Collection options = new LinkedList();
+        final Collection<SVNOption> options = new LinkedList<SVNOption>();
         options.add(SVNOption.VERBOSE);
         options.add(SVNOption.RECURSIVE);
         options.add(SVNOption.DEPTH);
@@ -60,7 +66,7 @@ public class SVNPropGetCommand extends SVNPropertiesCommand {
     }
 
     public void run() throws SVNException {
-        String propertyName = getSVNEnvironment().popArgument();
+        final String propertyName = getSVNEnvironment().popArgument();
         if (propertyName == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS);
             SVNErrorManager.error(err, SVNLogType.CLIENT);
@@ -71,7 +77,7 @@ public class SVNPropGetCommand extends SVNPropertiesCommand {
             SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
 
-        Collection targets = new LinkedList(); 
+        Collection<String> targets = new LinkedList<String>(); 
         targets = getSVNEnvironment().combineTargets(targets, true);
         if (targets.isEmpty()) {
             targets.add("");
@@ -124,24 +130,52 @@ public class SVNPropGetCommand extends SVNPropertiesCommand {
             }
             
             boolean likeProplist = getSVNEnvironment().isVerbose() && !getSVNEnvironment().isStrict();
-            Collection changeLists = getSVNEnvironment().getChangelistsCollection();
+            Collection<String> changeLists = getSVNEnvironment().getChangelistsCollection();
             SVNWCClient client = getSVNEnvironment().getClientManager().getWCClient();
-            for (Iterator ts = targets.iterator(); ts.hasNext();) {
-                String targetPath = (String) ts.next();
+            for (Iterator<String> ts = targets.iterator(); ts.hasNext();) {
+                String targetPath = ts.next();
                 SVNPath target = new SVNPath(targetPath, true);
                 SVNRevision pegRevision = target.getPegRevision();
                 boolean printFileNames = false;
+                final SvnOperationFactory of = client.getOperationsFactory();
+                final SvnGetProperties pl = of.createGetProperties();
                 if (target.isURL()) {
-                    client.doGetProperty(target.getURL(), propertyName, pegRevision, 
-                            getSVNEnvironment().getStartRevision(), depth, this);
+                    pl.setSingleTarget(SvnTarget.fromURL(target.getURL(), pegRevision));
+                } else {
+                    pl.setSingleTarget(SvnTarget.fromFile(target.getFile(), pegRevision));
+                }
+                pl.setDepth(depth);
+                pl.setRevision(getSVNEnvironment().getStartRevision());
+                pl.setApplicalbeChangelists(changeLists);
+                pl.setReceiver(new ISvnObjectReceiver<SVNProperties>() {
+                    public void receive(SvnTarget target, SVNProperties props) throws SVNException {
+                        final SVNPropertyData propertyData = new SVNPropertyData(propertyName, props.getSVNPropertyValue(propertyName), getSVNEnvironment().getOptions());
+                        if (target.isURL()) {
+                            handleProperty(target.getURL(), propertyData);
+                        } else {
+                            handleProperty(target.getFile(), propertyData);
+                        }
+                    }
+                });
+                if (getSVNEnvironment().isShowInheritedProps()) {
+                    pl.setTargetInheritedPropertiesReceiver(new ISvnObjectReceiver<List<SvnInheritedProperties>>() {
+                        public void receive(SvnTarget target, List<SvnInheritedProperties> propsList) throws SVNException {
+                            if (getSVNEnvironment().isXML()) {
+//                                printInhertiedPropertiesXML(target, propsList);
+                            } else {
+//                                printInhertiedProperties(target, propsList);
+                            }
+                        }
+                    });
+                }
+                if (target.isURL()) {
                     printFileNames = !getSVNEnvironment().isStrict() && (getSVNEnvironment().isVerbose() || 
                             depth.compareTo(SVNDepth.EMPTY) > 0 || targets.size() > 1 || getURLProperties().size() > 1); 
                 } else {
-                    client.doGetProperty(target.getFile(), propertyName, pegRevision, 
-                            getSVNEnvironment().getStartRevision(), depth, this, changeLists);
                     printFileNames = !getSVNEnvironment().isStrict() && (getSVNEnvironment().isVerbose() || 
                             depth.compareTo(SVNDepth.EMPTY) > 0 || targets.size() > 1 || getPathProperties().size() > 1); 
                 }
+                pl.run();
                 if (!getSVNEnvironment().isXML()) {
                     printCollectedProperties(printFileNames, target.isURL(), likeProplist);
                 } else {
@@ -156,10 +190,10 @@ public class SVNPropGetCommand extends SVNPropertiesCommand {
     }
     
     protected void printCollectedProperties(boolean printFileName, boolean isURL, boolean likePropList) {
-        Map map = isURL ? getURLProperties() : getPathProperties();
-        for (Iterator keys = map.keySet().iterator(); keys.hasNext();) {
+        Map<Object, List<SVNPropertyData>> map = isURL ? getURLProperties() : getPathProperties();
+        for (Iterator<Object> keys = map.keySet().iterator(); keys.hasNext();) {
             Object key = keys.next();
-            List props = (List) map.get(key);
+            List<SVNPropertyData> props = map.get(key);
             if (printFileName) {
                 if (isURL) {
                     if (likePropList) {
