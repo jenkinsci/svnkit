@@ -1,8 +1,11 @@
 package org.tmatesoft.svn.core.internal.wc2.remote;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.SVNDepth;
@@ -22,6 +25,7 @@ import org.tmatesoft.svn.core.internal.wc2.SvnRepositoryAccess.RepositoryInfo;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc2.SvnGetProperties;
+import org.tmatesoft.svn.core.wc2.SvnInheritedProperties;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -55,7 +59,20 @@ public class SvnRemoteGetProperties extends SvnRemoteOperationRunner<SVNProperti
         SVNURL url = repositoryInfo.<SVNURL>get(RepositoryInfo.url);
         repositoryInfo.release();
         
-        SVNNodeKind kind = repository.checkPath("", revnum);        
+        SVNNodeKind kind = repository.checkPath("", revnum);
+        if (getOperation().getTargetInheritedPropertiesReceiver() != null) {
+            final SVNURL repositoryRoot = repository.getRepositoryRoot(true);
+            final Map<String, SVNProperties> inheritedProperties = repository.getInheritedProperties("", revnum, null);
+            final List<SvnInheritedProperties> result = new ArrayList<SvnInheritedProperties>();
+            for (String path : inheritedProperties.keySet()) {
+                final SvnInheritedProperties propItem = new SvnInheritedProperties();
+                propItem.setTarget(SvnTarget.fromURL(repositoryRoot.appendPath(path, false)));
+                propItem.setProperties(inheritedProperties.get(path));
+            }
+            if (!result.isEmpty()) {
+                getOperation().getTargetInheritedPropertiesReceiver().receive(target, result);
+            }
+        }
         remotePropertyGet(url, kind, "", repository, revnum, getOperation().getDepth());
         
         return getOperation().first();
