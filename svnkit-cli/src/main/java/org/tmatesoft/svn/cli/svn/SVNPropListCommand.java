@@ -92,7 +92,7 @@ public class SVNPropListCommand extends SVNPropertiesCommand {
                 StringBuffer buffer = openXMLTag("revprops", SVNXMLUtil.XML_STYLE_NORMAL, "rev", Long.toString(rev), null);
                 for (Iterator props = revisionProperties.iterator(); props.hasNext();) {
                     SVNPropertyData property = (SVNPropertyData) props.next();
-                    buffer = addXMLProp(property, buffer);
+                    buffer = addXMLProp(property, false, buffer);
                 }
                 buffer = closeXMLTag("revprops", buffer);
                 getSVNEnvironment().getOut().print(buffer);
@@ -231,7 +231,7 @@ public class SVNPropListCommand extends SVNPropertiesCommand {
             StringBuffer buffer = openXMLTag("target", SVNXMLUtil.XML_STYLE_NORMAL, "path", target, null);
             for (Iterator plist = props.iterator(); plist.hasNext();) {
                 SVNPropertyData property = (SVNPropertyData) plist.next();
-                buffer = addXMLProp(property, buffer);
+                buffer = addXMLProp(property, false, buffer);
             }
             buffer = closeXMLTag("target", buffer);
             getSVNEnvironment().getOut().print(buffer);
@@ -247,11 +247,7 @@ public class SVNPropListCommand extends SVNPropertiesCommand {
                 name = SVNCommandUtil.getLocalPath(getSVNEnvironment().getRelativePath(props.getTarget().getFile()));
             }
             StringBuffer buffer = openXMLTag("target", SVNXMLUtil.XML_STYLE_NORMAL, "path", name, null);
-            final List<SVNPropertyData> propdataList = getPropdataList(props.getProperties());
-            for (Iterator<SVNPropertyData> plist = propdataList.iterator(); plist.hasNext();) {
-                SVNPropertyData property = (SVNPropertyData) plist.next();
-                buffer = addXMLProp(property, buffer);
-            }
+            printXMLPropHash(buffer, props.getProperties(), !getSVNEnvironment().isVerbose(), true);
             buffer = closeXMLTag("target", buffer);
             getSVNEnvironment().getOut().print(buffer);
         }

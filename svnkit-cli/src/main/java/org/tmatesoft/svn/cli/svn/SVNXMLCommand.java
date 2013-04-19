@@ -69,23 +69,23 @@ public abstract class SVNXMLCommand extends SVNCommand {
         return SVNXMLUtil.closeXMLTag(null, tagName, target);
     }
 
-    protected StringBuffer printXMLPropHash(StringBuffer buffer, SVNProperties propHash, boolean namesOnly) {
+    protected StringBuffer printXMLPropHash(StringBuffer buffer, SVNProperties propHash, boolean namesOnly, boolean inheritedProperties) {
         if (propHash != null && !propHash.isEmpty()) {
             buffer = buffer == null ? new StringBuffer() : buffer;
             for (Iterator propNames = propHash.nameSet().iterator(); propNames.hasNext();) {
                 String propName = (String) propNames.next();
                 SVNPropertyValue propVal = propHash.getSVNPropertyValue(propName);
                 if (namesOnly) {
-                    buffer = openXMLTag("property", SVNXMLUtil.XML_STYLE_SELF_CLOSING, "name", propName, buffer);
+                    buffer = openXMLTag(inheritedProperties ? "inherited-property" : "property", SVNXMLUtil.XML_STYLE_SELF_CLOSING, "name", propName, buffer);
                 } else {
-                    buffer = addXMLProp(new SVNPropertyData(propName, propVal, null), buffer);                    
+                    buffer = addXMLProp(new SVNPropertyData(propName, propVal, null), inheritedProperties, buffer);                    
                 }
             }
         }
         return buffer;
     }
 
-    protected StringBuffer addXMLProp(SVNPropertyData property, StringBuffer xmlBuffer) {
+    protected StringBuffer addXMLProp(SVNPropertyData property, boolean inheritedProperty, StringBuffer xmlBuffer) {
         String value = property.getValue().getString();
         value = value == null ? "" : value;
         boolean isXMLSafe = true;
@@ -118,9 +118,9 @@ public abstract class SVNXMLCommand extends SVNCommand {
             }
         }
         value = SVNEncodingUtil.xmlEncodeCDATA(value);
-        xmlBuffer = openXMLTag("property", SVNXMLUtil.XML_STYLE_PROTECT_CDATA, attrs, xmlBuffer);
+        xmlBuffer = openXMLTag(inheritedProperty ? "inherited-property" : "property", SVNXMLUtil.XML_STYLE_PROTECT_CDATA, attrs, xmlBuffer);
         xmlBuffer.append(value);
-        xmlBuffer = closeXMLTag("property", xmlBuffer);
+        xmlBuffer = closeXMLTag(inheritedProperty ? "inherited-property" : "property", xmlBuffer);
         return xmlBuffer;
     }
 }

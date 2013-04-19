@@ -93,7 +93,7 @@ public class SVNPropGetCommand extends SVNPropertiesCommand {
                 if (getSVNEnvironment().isXML()) {
                     printXMLHeader("properties");
                     StringBuffer buffer = openXMLTag("revprops", SVNXMLUtil.XML_STYLE_NORMAL, "rev", Long.toString(rev), null);
-                    buffer = addXMLProp(propertyValue, buffer);
+                    buffer = addXMLProp(propertyValue, false, buffer);
                     buffer = closeXMLTag("revprops", buffer);
                     getSVNEnvironment().getOut().print(buffer);
                     printXMLFooter("properties");
@@ -202,7 +202,7 @@ public class SVNPropGetCommand extends SVNPropertiesCommand {
             } 
             SVNPropertyData property = (SVNPropertyData) props.get(0);
             StringBuffer buffer = openXMLTag("target", SVNXMLUtil.XML_STYLE_NORMAL, "path", target, null);
-            buffer = addXMLProp(property, buffer);
+            buffer = addXMLProp(property, false, buffer);
             buffer = closeXMLTag("target", buffer);
             getSVNEnvironment().getOut().print(buffer);
         }

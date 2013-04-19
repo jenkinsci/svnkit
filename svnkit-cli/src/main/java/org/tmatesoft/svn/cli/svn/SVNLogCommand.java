@@ -564,7 +564,7 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
         }
         if (revProps != null && !revProps.isEmpty()) {
             buffer = openXMLTag("revprops", SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
-            buffer = printXMLPropHash(buffer, revProps, false);
+            buffer = printXMLPropHash(buffer, revProps, false, false);
             buffer = closeXMLTag("revprops", buffer);
         }
         if (logEntry.hasChildren()) {
