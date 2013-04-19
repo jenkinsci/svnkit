@@ -191,9 +191,9 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
             if (info.getMovedToPath() != null) {
                 final File relativePath = SVNWCUtils.skipAncestor(info.getWorkingCopyRoot(), info.getMovedToPath());
                 if (relativePath != null && !"".equals(relativePath.getPath())) {
-                    buffer.append("Moved From: " + relativePath + "\n");
+                    buffer.append("Moved To: " + relativePath + "\n");
                 } else {
-                    buffer.append("Moved From: " + info.getMovedToPath() + "\n");
+                    buffer.append("Moved To: " + info.getMovedToPath() + "\n");
                 }
             }
         }
