@@ -2855,6 +2855,15 @@ public class SVNWCDb implements ISVNWCDb {
                 if (f.contains(InfoField.opRoot)) {
                     info.opRoot = opDepth > 0 && opDepth == SVNWCUtils.relpathDepth(localRelPath);
                 }
+                if (f.contains(InfoField.movedHere)) {
+                    info.movedHere = getColumnBoolean(stmtInfo, NODES__Fields.moved_here);
+                }
+                if (f.contains(InfoField.movedTo)) {
+                    final File relativePath = getColumnPath(stmtInfo, NODES__Fields.moved_to);
+                    if (relativePath != null) {                        
+                        info.movedToAbsPath = SVNFileUtil.createFilePath(wcRoot.getAbsPath(), relativePath);
+                    }
+                }
                 if (f.contains(InfoField.haveBase) || f.contains(InfoField.haveWork)) {
                     while(opDepth != 0) {
                         haveInfo = stmtInfo.next();
@@ -2873,15 +2882,6 @@ public class SVNWCDb implements ISVNWCDb {
                     }
                     if (f.contains(InfoField.haveBase)) {
                         info.haveBase = opDepth == 0;
-                    }
-                }
-                if (f.contains(InfoField.movedHere)) {
-                    info.movedHere = getColumnBoolean(stmtInfo, NODES__Fields.moved_here);
-                }
-                if (f.contains(InfoField.movedTo)) {
-                    final File relativePath = getColumnPath(stmtInfo, NODES__Fields.moved_to);
-                    if (relativePath != null) {                        
-                        info.movedToAbsPath = SVNFileUtil.createFilePath(wcRoot.getAbsPath(), relativePath);
                     }
                 }
             } else if (haveActual) {
