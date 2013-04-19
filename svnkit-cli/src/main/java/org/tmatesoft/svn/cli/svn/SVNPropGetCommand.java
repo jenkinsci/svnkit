@@ -25,9 +25,11 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
@@ -51,7 +53,7 @@ public class SVNPropGetCommand extends SVNPropertiesCommand {
         super("propget", new String[] {"pget", "pg"});
     }
 
-    protected Collection createSupportedOptions() {
+    protected Collection<SVNOption> createSupportedOptions() {
         final Collection<SVNOption> options = new LinkedList<SVNOption>();
         options.add(SVNOption.VERBOSE);
         options.add(SVNOption.RECURSIVE);
@@ -161,7 +163,7 @@ public class SVNPropGetCommand extends SVNPropertiesCommand {
                     pl.setTargetInheritedPropertiesReceiver(new ISvnObjectReceiver<List<SvnInheritedProperties>>() {
                         public void receive(SvnTarget target, List<SvnInheritedProperties> propsList) throws SVNException {
                             if (getSVNEnvironment().isXML()) {
-//                                printInhertiedPropertiesXML(target, propsList);
+                                printInhertiedPropertiesXML(target, propertyName, propsList);
                             } else {
 //                                printInhertiedProperties(target, propsList);
                             }
@@ -224,12 +226,32 @@ public class SVNPropGetCommand extends SVNPropertiesCommand {
         }
     }
 
-    protected void printCollectedPropertiesXML(boolean isURL) {
-        Map map = isURL ? getURLProperties() : getPathProperties();
+    private void printInhertiedPropertiesXML(SvnTarget target, String propertyName, List<SvnInheritedProperties> propsList) {
+        for (SvnInheritedProperties props : propsList) {
+            final SVNPropertyValue pv = props.getProperties().getSVNPropertyValue(propertyName);
+            if (pv == null) {
+                continue;
+            }
+            final SVNPropertyData pd = new SVNPropertyData(propertyName, pv, getSVNEnvironment().getOptions()); 
+            final String name;
+            if (props.getTarget().isURL()) {
+                name = props.getTarget().getPathOrUrlString(); 
+            } else {
+                name = SVNFileUtil.getFilePath(props.getTarget().getFile());
+            }
+            StringBuffer buffer = openXMLTag("target", SVNXMLUtil.XML_STYLE_NORMAL, "path", name, null);
+            buffer = addXMLProp(pd, true, buffer);
+            buffer = closeXMLTag("target", buffer);
+            getSVNEnvironment().getOut().print(buffer);
+        }
+    }
 
-        for (Iterator keys = map.keySet().iterator(); keys.hasNext();) {
-            Object key = keys.next();
-            List props = (List) map.get(key);
+    protected void printCollectedPropertiesXML(boolean isURL) {
+        Map<Object, List<SVNPropertyData>> map = isURL ? getURLProperties() : getPathProperties();
+
+        for (Iterator<Object> keys = map.keySet().iterator(); keys.hasNext();) {
+            final Object key = keys.next();
+            final List<SVNPropertyData> props = map.get(key);
             String target = key.toString();
             if (!isURL) {
                 target = SVNCommandUtil.getLocalPath(getSVNEnvironment().getRelativePath((File) key));
