@@ -29,6 +29,7 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -244,7 +245,7 @@ public class SVNPropListCommand extends SVNPropertiesCommand {
             if (props.getTarget().isURL()) {
                 name = props.getTarget().getPathOrUrlString(); 
             } else {
-                name = SVNCommandUtil.getLocalPath(getSVNEnvironment().getRelativePath(props.getTarget().getFile()));
+                name = SVNFileUtil.getFilePath(props.getTarget().getFile());
             }
             StringBuffer buffer = openXMLTag("target", SVNXMLUtil.XML_STYLE_NORMAL, "path", name, null);
             printXMLPropHash(buffer, props.getProperties(), !getSVNEnvironment().isVerbose(), true);
