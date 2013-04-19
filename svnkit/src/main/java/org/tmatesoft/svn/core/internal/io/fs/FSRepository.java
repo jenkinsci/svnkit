@@ -710,16 +710,19 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             final FSRevisionRoot root = myFSFS.createRevisionRoot(revision);
             while(!"/".equals(parentPath) && !"".equals(parentPath)) {
                 parentPath = SVNPathUtil.removeTail(parentPath);
-
+                if ("".equals(parentPath)) {
+                    parentPath = "/";
+                }
+                
                 final FSRevisionNode node = root.getRevisionNode(parentPath);
                 final SVNProperties properties = myFSFS.getProperties(node);
                 if (properties != null && handler != null && !properties.isEmpty()) {
                     if (propertyName != null && properties.containsName(propertyName)) {
                         final SVNProperties singleProperty = new SVNProperties();
                         singleProperty.put(propertyName, properties.getSVNPropertyValue(propertyName));
-                        handler.handleInheritedProperites(path, singleProperty);
+                        handler.handleInheritedProperites(parentPath, singleProperty);
                     } else if (propertyName == null) {
-                        handler.handleInheritedProperites(path, properties);
+                        handler.handleInheritedProperites(parentPath, properties);
                     }
                 }
             }
