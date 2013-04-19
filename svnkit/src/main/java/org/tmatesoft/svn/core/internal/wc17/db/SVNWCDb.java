@@ -2003,12 +2003,42 @@ public class SVNWCDb implements ISVNWCDb {
             stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelpath);
             boolean haveRow = stmt.next();
             while (haveRow) {
-                File childRelpath = SVNFileUtil.createFilePath(stmt.getColumnString(SVNWCDbSchema.ACTUAL_NODE__Fields.local_relpath));
-                String childBaseName = SVNFileUtil.getFileName(childRelpath);
-                byte[] conflictData = stmt.getColumnBlob(SVNWCDbSchema.ACTUAL_NODE__Fields.tree_conflict_data);
-                SVNSkel skel = SVNSkel.parse(conflictData);
-                SVNTreeConflictDescription treeConflict = SVNTreeConflictUtil.readSingleTreeConflict(skel, pdh.getWCRoot().getAbsPath());
-                treeConflicts.put(childBaseName, treeConflict);
+                final File childRelpath = SVNFileUtil.createFilePath(stmt.getColumnString(SVNWCDbSchema.ACTUAL_NODE__Fields.local_relpath));
+                final String childBaseName = SVNFileUtil.getFileName(childRelpath);
+                final byte[] conflictData = stmt.getColumnBlob(SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_data);
+                final SVNSkel skel = SVNSkel.parse(conflictData);
+                final Structure<ConflictInfo> conflictInfo = SvnWcDbReader.readConflictInfo(skel);
+
+                if (conflictInfo != null && conflictInfo.is(ConflictInfo.treeConflicted)) {
+                    final List<SVNConflictVersion> locations = conflictInfo.get(ConflictInfo.locations);
+                    SVNConflictVersion leftVersion = null;
+                    SVNConflictVersion rightVersion = null;
+                    if (locations != null && locations.size() > 0) {
+                        leftVersion = locations.get(0);
+                    }
+                    if (locations != null && locations.size() > 1) {
+                        rightVersion = locations.get(1);
+                    }
+
+                    final File childAbsPath = pdh.getWCRoot().getAbsPath(childRelpath);
+                    final Structure<TreeConflictInfo> treeConflictInfo = SvnWcDbReader.readTreeConflict(this, childAbsPath, skel);
+                    final SVNNodeKind tcKind;
+                    if (leftVersion != null) {
+                        tcKind = leftVersion.getKind();
+                    } else if (rightVersion != null) {
+                        tcKind = rightVersion.getKind();
+                    } else {
+                        tcKind = SVNNodeKind.FILE;
+                    }
+                    final SVNTreeConflictDescription treeConflict = new SVNTreeConflictDescription(
+                            childAbsPath, tcKind, 
+                            treeConflictInfo.<SVNConflictAction>get(TreeConflictInfo.incomingChange), 
+                            treeConflictInfo.<SVNConflictReason>get(TreeConflictInfo.localChange), 
+                            conflictInfo.<SVNOperation>get(ConflictInfo.conflictOperation), 
+                            leftVersion, 
+                            rightVersion);
+                    treeConflicts.put(childBaseName, treeConflict);
+                }
                 haveRow = stmt.next();
             }
         } finally {
