@@ -76,7 +76,7 @@ public abstract class SVNXMLCommand extends SVNCommand {
                 String propName = (String) propNames.next();
                 SVNPropertyValue propVal = propHash.getSVNPropertyValue(propName);
                 if (namesOnly) {
-                    buffer = openXMLTag(inheritedProperties ? "inherited-property" : "property", SVNXMLUtil.XML_STYLE_SELF_CLOSING, "name", propName, buffer);
+                    buffer = openXMLTag(inheritedProperties ? "inherited_property" : "property", SVNXMLUtil.XML_STYLE_SELF_CLOSING, "name", propName, buffer);
                 } else {
                     buffer = addXMLProp(new SVNPropertyData(propName, propVal, null), inheritedProperties, buffer);                    
                 }
@@ -118,9 +118,9 @@ public abstract class SVNXMLCommand extends SVNCommand {
             }
         }
         value = SVNEncodingUtil.xmlEncodeCDATA(value);
-        xmlBuffer = openXMLTag(inheritedProperty ? "inherited-property" : "property", SVNXMLUtil.XML_STYLE_PROTECT_CDATA, attrs, xmlBuffer);
+        xmlBuffer = openXMLTag(inheritedProperty ? "inherited_property" : "property", SVNXMLUtil.XML_STYLE_PROTECT_CDATA, attrs, xmlBuffer);
         xmlBuffer.append(value);
-        xmlBuffer = closeXMLTag(inheritedProperty ? "inherited-property" : "property", xmlBuffer);
+        xmlBuffer = closeXMLTag(inheritedProperty ? "inherited_property" : "property", xmlBuffer);
         return xmlBuffer;
     }
 }
