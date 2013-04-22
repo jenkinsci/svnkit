@@ -57,8 +57,8 @@ public class SvnNgGetProperties extends SvnNgOperationRunner<SVNProperties, SvnG
         }
         
         if (getOperation().getTargetInheritedPropertiesReceiver() != null) {
-            final SVNRevision pegRevision = getOperation().getFirstTarget().getResolvedPegRevision(SVNRevision.HEAD, SVNRevision.WORKING);
-            final SVNRevision revision = getOperation().getRevision() == SVNRevision.UNDEFINED ? pegRevision : getOperation().getRevision();
+            SVNRevision pegRevision = getOperation().getFirstTarget().getResolvedPegRevision(SVNRevision.HEAD, SVNRevision.WORKING);
+            SVNRevision revision = getOperation().getRevision() == SVNRevision.UNDEFINED ? pegRevision : getOperation().getRevision();
             
             final boolean hasLocalIProps = (pegRevision == SVNRevision.WORKING || pegRevision == SVNRevision.UNDEFINED) &&
                     (revision == SVNRevision.WORKING || revision == SVNRevision.UNDEFINED);
@@ -73,15 +73,21 @@ public class SvnNgGetProperties extends SvnNgOperationRunner<SVNProperties, SvnG
                     final SVNURL url = rootURL.appendPath(SVNFileUtil.getFilePath(reposRelPath), false);
                     
                     Structure<RevisionsPair> revisionPair = null;
-                    revisionPair = getRepositoryAccess().getRevisionNumber(null, getOperation().getFirstTarget(), pegRevision, revisionPair);
-                    final long pegrevnum = revisionPair.lng(RevisionsPair.revNumber);
-                    revisionPair = getRepositoryAccess().getRevisionNumber(null, getOperation().getFirstTarget(), revision, revisionPair);
-                    long revnum = revisionPair.lng(RevisionsPair.revNumber);
+                    if (pegRevision.isLocal()) {
+                        revisionPair = getRepositoryAccess().getRevisionNumber(null, getOperation().getFirstTarget(), pegRevision, revisionPair);
+                        final long pegrevnum = revisionPair.lng(RevisionsPair.revNumber);
+                        pegRevision = SVNRevision.create(pegrevnum);
+                    }
+                    if (revision.isLocal()) {
+                        revisionPair = getRepositoryAccess().getRevisionNumber(null, getOperation().getFirstTarget(), revision, revisionPair);
+                        long revnum = revisionPair.lng(RevisionsPair.revNumber);
+                        revision = SVNRevision.create(revnum);
+                    }
                     
                     SvnTarget opTarget = getOperation().getFirstTarget();
-                    Structure<RepositoryInfo> repositoryInfo = getRepositoryAccess().createRepositoryFor(SvnTarget.fromURL(url), SVNRevision.create(revnum), SVNRevision.create(pegrevnum), null);                    
+                    Structure<RepositoryInfo> repositoryInfo = getRepositoryAccess().createRepositoryFor(SvnTarget.fromURL(url), revision, pegRevision, null);                    
                     final SVNRepository repository = repositoryInfo.<SVNRepository>get(RepositoryInfo.repository);
-                    revnum = repositoryInfo.lng(RepositoryInfo.revision);
+                    long revnum = repositoryInfo.lng(RepositoryInfo.revision);
                     repositoryInfo.release();
                     final SVNURL repositoryRoot = repository.getRepositoryRoot(true);
                     final Map<String, SVNProperties> inheritedProperties = repository.getInheritedProperties("", revnum, null);
