@@ -168,6 +168,7 @@ public class SVNPropGetCommand extends SVNPropertiesCommand {
                             if (getSVNEnvironment().isXML()) {
                                 printInhertiedPropertiesXML(target, propertyName, propsList);
                             } else {
+                                // TODO
 //                                printInhertiedProperties(target, propsList);
                             }
                         }
