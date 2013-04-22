@@ -1674,6 +1674,34 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
     }
 
     public void getInheritedProperties(String path, long revision, String propertyName, ISVNInheritedPropertiesHandler handler) throws SVNException {
+        try {
+            openConnection();
+            path = getLocationRelativePath(path);
+            write("(w(n))", new Object[] { "get-iprops", revision });
+            authenticate();
+            List<List<?>> items = read("l", null, false);
+            items = (List<List<?>>) items.get(0);
+            for (List<?> iprops : items) {
+                final List<?> values = SVNReader.parseTuple("sl", iprops, null);
+                final SVNProperties props = SVNReader.getProperties(values, 1, null);
+                final String parentRelPath = getRepositoryPath((String) values.get(0));
+                
+                if (handler != null) {
+                    if (propertyName != null && props.containsName(propertyName)) {
+                        final SVNProperties filtered = new SVNProperties();
+                        filtered.put(propertyName, props.getSVNPropertyValue(propertyName));
+                        handler.handleInheritedProperites(parentRelPath, filtered);
+                    } else if (propertyName == null) {
+                        handler.handleInheritedProperites(parentRelPath, props);
+                    }
+                }
+            }
+        } catch (SVNException e) {
+            closeSession();
+            handleUnsupportedCommand(e, "'get-iprops' not implemented");
+        } finally {
+            closeConnection();
+        }
     }
 
 }
