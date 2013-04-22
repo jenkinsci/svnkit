@@ -178,9 +178,11 @@ public class SVNPropListCommand extends SVNPropertiesCommand {
                     errorCode = e.getErrorMessage().getErrorCode();
                 }
                 if (!getSVNEnvironment().isXML()) {
-                    printCollectedProperties(target.isURL());
+                    printCollectedProperties(false);
+                    printCollectedProperties(true);
                 } else {
-                    printCollectedPropertiesXML(target.isURL());
+                    printCollectedPropertiesXML(false);
+                    printCollectedPropertiesXML(true);
                 }
                 clearCollectedProperties();
             }
