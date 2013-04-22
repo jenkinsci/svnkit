@@ -14,6 +14,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb.Mode;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.DirParsedInfo;
@@ -63,7 +64,8 @@ public class SvnNgGetProperties extends SvnNgOperationRunner<SVNProperties, SvnG
                     if (SVNPathUtil.isURL(pathOrURL)) {
                         result.setTarget(SvnTarget.fromURL(SVNURL.parseURIEncoded(pathOrURL)));
                     } else {
-                        result.setTarget(SvnTarget.fromFile(new File(pathOrURL)));
+                        final File absolutePath = wcRoot.getAbsPath(SVNFileUtil.createFilePath(pathOrURL));
+                        result.setTarget(SvnTarget.fromFile(absolutePath));
                     }
                     resultList.add(result);
                 }
