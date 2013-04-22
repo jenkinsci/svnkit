@@ -21,7 +21,9 @@ import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.DirParsedInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDbRoot;
 import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.InheritedProperties;
+import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbProperties;
+import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbReader;
 import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnGetProperties;
@@ -56,6 +58,7 @@ public class SvnNgGetProperties extends SvnNgOperationRunner<SVNProperties, SvnG
             final List<Structure<InheritedProperties>> inheritedProps = SvnWcDbProperties.readInheritedProperties(wcRoot, pdh.localRelPath, null);
             final List<SvnInheritedProperties> resultList = new ArrayList<SvnInheritedProperties>();
 
+            SVNURL repositoryRoot = null;
             if (inheritedProps != null && !inheritedProps.isEmpty()) {
                 for (Structure<InheritedProperties> props : inheritedProps) {
                     final SvnInheritedProperties result = new SvnInheritedProperties();
@@ -63,9 +66,15 @@ public class SvnNgGetProperties extends SvnNgOperationRunner<SVNProperties, SvnG
                     final String pathOrURL = props.<String>get(InheritedProperties.pathOrURL);
                     if (SVNPathUtil.isURL(pathOrURL)) {
                         result.setTarget(SvnTarget.fromURL(SVNURL.parseURIEncoded(pathOrURL)));
-                    } else {
-                        final File absolutePath = wcRoot.getAbsPath(SVNFileUtil.createFilePath(pathOrURL));
+                    } else if (SVNPathUtil.isAbsolute(pathOrURL)) {
+                        final File absolutePath = SVNFileUtil.createFilePath(pathOrURL);
                         result.setTarget(SvnTarget.fromFile(absolutePath));
+                    } else {             
+                        if (repositoryRoot == null) {
+                            final Structure<NodeInfo> info = context.getDb().readInfo(target, NodeInfo.reposRootUrl);
+                            repositoryRoot = info.get(NodeInfo.reposRootUrl);
+                        }
+                        result.setTarget(SvnTarget.fromURL(repositoryRoot.appendPath(pathOrURL, false)));
                     }
                     resultList.add(result);
                 }
