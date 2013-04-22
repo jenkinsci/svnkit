@@ -151,6 +151,9 @@ public class SVNPropGetCommand extends SVNPropertiesCommand {
                 pl.setApplicalbeChangelists(changeLists);
                 pl.setReceiver(new ISvnObjectReceiver<SVNProperties>() {
                     public void receive(SvnTarget target, SVNProperties props) throws SVNException {
+                        if (!props.containsName(propertyName)) {
+                            return;
+                        }
                         final SVNPropertyData propertyData = new SVNPropertyData(propertyName, props.getSVNPropertyValue(propertyName), getSVNEnvironment().getOptions());
                         if (target.isURL()) {
                             handleProperty(target.getURL(), propertyData);
