@@ -1677,7 +1677,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         try {
             openConnection();
             path = getLocationRelativePath(path);
-            write("(w(n))", new Object[] { "get-iprops", revision });
+            write("(w(s(n)))", new Object[] { "get-iprops", path, revision });
             authenticate();
             List<List<?>> items = read("l", null, false);
             items = (List<List<?>>) items.get(0);
