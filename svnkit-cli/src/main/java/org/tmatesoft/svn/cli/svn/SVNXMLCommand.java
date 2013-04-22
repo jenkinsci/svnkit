@@ -86,7 +86,10 @@ public abstract class SVNXMLCommand extends SVNCommand {
     }
 
     protected StringBuffer addXMLProp(SVNPropertyData property, boolean inheritedProperty, StringBuffer xmlBuffer) {
-        String value = property.getValue().getString();
+        String value = null;
+        if (property != null && property.getValue() != null) {
+            value = property.getValue().getString();
+        }
         value = value == null ? "" : value;
         boolean isXMLSafe = true;
         if (property.getValue().isBinary()) {
