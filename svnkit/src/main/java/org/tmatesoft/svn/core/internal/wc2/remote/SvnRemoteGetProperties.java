@@ -55,7 +55,7 @@ public class SvnRemoteGetProperties extends SvnRemoteOperationRunner<SVNProperti
         SVNURL url;
         SVNRepository repository;
         long revnum;
-        if ((getOperation().getRevision().isLocal() || target.getResolvedPegRevision().isLocal()) && target.isFile()) {
+        if (target.getResolvedPegRevision().isLocal() && target.isFile()) {
             final File localAbsPath = getOperation().getFirstTarget().getFile();            
             final Structure<NodeOriginInfo> origin = getWcContext().getNodeOrigin(localAbsPath, false, 
                     NodeOriginInfo.isCopy, NodeOriginInfo.copyRootAbsPath, 
@@ -68,8 +68,12 @@ public class SvnRemoteGetProperties extends SvnRemoteOperationRunner<SVNProperti
                 Structure<RevisionsPair> revisionPair = null;
                 revisionPair = getRepositoryAccess().getRevisionNumber(null, target, target.getResolvedPegRevision(), revisionPair);
                 final long pegrevnum = revisionPair.lng(RevisionsPair.revNumber);
-                revisionPair = getRepositoryAccess().getRevisionNumber(null, target, getOperation().getRevision(), revisionPair);
-                revnum = revisionPair.lng(RevisionsPair.revNumber);
+                if (getOperation().getRevision().isLocal()) {
+                    revisionPair = getRepositoryAccess().getRevisionNumber(null, target, getOperation().getRevision(), revisionPair);
+                    revnum = revisionPair.lng(RevisionsPair.revNumber);
+                } else {
+                    revnum = getOperation().getRevision().getNumber();
+                }
                 
                 Structure<RepositoryInfo> repositoryInfo = getRepositoryAccess().createRepositoryFor(SvnTarget.fromURL(url), SVNRevision.create(revnum), SVNRevision.create(pegrevnum), null);                    
                 repository = repositoryInfo.<SVNRepository>get(RepositoryInfo.repository);
