@@ -92,7 +92,7 @@ public abstract class SVNXMLCommand extends SVNCommand {
         }
         value = value == null ? "" : value;
         boolean isXMLSafe = true;
-        if (property.getValue().isBinary()) {
+        if (property.getValue() != null && property.getValue().isBinary()) {
             CharsetDecoder decoder = Charset.forName("UTF-8").newDecoder();
             decoder.onMalformedInput(CodingErrorAction.REPORT);
             decoder.onUnmappableCharacter(CodingErrorAction.REPORT);
