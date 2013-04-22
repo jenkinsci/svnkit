@@ -96,8 +96,11 @@ public class SvnRemoteGetProperties extends SvnRemoteOperationRunner<SVNProperti
         repositoryInfo.release();
         
         SVNNodeKind kind = repository.checkPath("", revnum);
-        if (kind == null || kind == SVNNodeKind.UNKNOWN || kind == SVNNodeKind.NONE) {
+        if (kind == null || kind == SVNNodeKind.UNKNOWN) {
             final SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNKNOWN_KIND, "Unknown node kind for ''{0}''", repository.getLocation());
+            SVNErrorManager.error(err, SVNLogType.WC);
+        } else if (kind == SVNNodeKind.NONE) {
+            final SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "''{0}'' does not exist in revision {1}", repository.getLocation(), revnum);
             SVNErrorManager.error(err, SVNLogType.WC);
         }
         if (getOperation().getTargetInheritedPropertiesReceiver() != null) {
