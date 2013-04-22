@@ -77,7 +77,7 @@ public class SvnRemoteGetProperties extends SvnRemoteOperationRunner<SVNProperti
                 if (getOperation().getRevision().isLocal()) {
                     revisionPair = getRepositoryAccess().getRevisionNumber(null, target, getOperation().getRevision(), revisionPair);
                     revnum = revisionPair.lng(RevisionsPair.revNumber);
-                    revision = SVNRevision.create(pegrevnum);
+                    revision = SVNRevision.create(revnum);
                 } 
             } else {
                 return null;
