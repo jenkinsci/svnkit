@@ -48,6 +48,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODES__Fi
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODE_PROPS_CACHE__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.TARGETS_LIST__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.WCROOT__Fields;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSelectIPropsNode;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -443,6 +444,37 @@ public class SvnWcDbProperties extends SvnWcDbShared {
                 root.getSDb().commit();
             }
         }
+    }
+    
+    public static Map<File, File> getInheritedPropertiesNodes(SVNWCDbRoot root, File localRelPath, SVNDepth depth) throws SVNException {
+        final Map<File, File> result = new HashMap<File, File>();
+        SVNWCDbSelectIPropsNode stmt = null;
+        try {
+            stmt = (SVNWCDbSelectIPropsNode) root.getSDb().getStatement(SVNWCDbStatements.SELECT_IPROPS_NODE);
+            stmt.setDepth(SVNDepth.EMPTY);
+            stmt.bindf("is", root.getWcId(), localRelPath);
+            if (stmt.next()) {
+                final File path = root.getAbsPath(getColumnPath(stmt, NODES__Fields.local_relpath));
+                result.put(path, getColumnPath(stmt, NODES__Fields.repos_path));
+            }
+        } finally {
+            reset(stmt);
+        }
+        if (depth == SVNDepth.EMPTY) {
+            return result;
+        }
+        try {
+            stmt.setDepth(depth);
+            stmt.bindf("is", root.getWcId(), localRelPath);
+            while(stmt.next()) {
+                final File path = root.getAbsPath(getColumnPath(stmt, NODES__Fields.local_relpath));
+                result.put(path, getColumnPath(stmt, NODES__Fields.repos_path));
+            }
+        } finally {
+            reset(stmt);
+        }
+        
+        return result;
     }
     
     public static List<Structure<InheritedProperties>> readInheritedProperties(SVNWCDbRoot root, File localRelPath, String propertyName) throws SVNException {

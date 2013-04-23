@@ -160,6 +160,7 @@ public enum SVNWCDbStatements {
     SELECT_MOVED_FROM_RELPATH(SVNWCDbSelectMovedFromRelPath.class),
     SELECT_WCROOT_NODES(SVNWCDbSelectWCRootNodes.class),
     UPDATE_IPROPS(SVNWCDbUpdateIProps.class),
+    SELECT_IPROPS_NODE(SVNWCDbSelectIPropsNode.class),
     ;
     
 
