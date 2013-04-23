@@ -485,7 +485,8 @@ public interface ISVNWCDb {
      * be passed in WORK_ITEMS.
      */
     void addBaseDirectory(File localAbsPath, File reposRelPath, SVNURL reposRootUrl, String reposUuid, long revision, SVNProperties props, long changedRev, SVNDate changedDate, String changedAuthor,
-            List<File> children, SVNDepth depth, SVNProperties davCache, SVNSkel conflict, boolean updateActualProps, SVNProperties actualProps, SVNSkel workItems) throws SVNException;
+            List<File> children, SVNDepth depth, SVNProperties davCache, SVNSkel conflict, boolean updateActualProps, SVNProperties actualProps, 
+            Map<String, SVNProperties> iprops, SVNSkel workItems) throws SVNException;
 
     /**
      * Add or replace a file in the BASE tree.
@@ -516,7 +517,7 @@ public interface ISVNWCDb {
      */
     public void addBaseFile(File localAbspath, File reposRelpath, SVNURL reposRootUrl, String reposUuid, long revision, SVNProperties props, long changedRev, SVNDate changedDate,
             String changedAuthor, SvnChecksum checksum, SVNProperties davCache, SVNSkel conflict, boolean updateActualProps, SVNProperties actualProps,
-            boolean keepRecordedInfo, boolean insertBaseDeleted, SVNSkel workItems) throws SVNException;
+            boolean keepRecordedInfo, boolean insertBaseDeleted, Map<String, SVNProperties>  iprops, SVNSkel workItems) throws SVNException;
 
     /**
      * Add or replace a symlink in the BASE tree.

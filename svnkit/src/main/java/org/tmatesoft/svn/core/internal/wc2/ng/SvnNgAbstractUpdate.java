@@ -143,11 +143,14 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
         
         SVNRepository repos = getRepositoryAccess().createRepository(anchorUrl, anchorAbspath);
         boolean serverSupportsDepth = repos.hasCapability(SVNCapability.DEPTH);
+        
+        
         final SVNReporter17 reporter = new SVNReporter17(localAbspath, wcContext, true, !serverSupportsDepth, depth, 
                 getOperation().isUpdateLocksOnDemand(), false, !depthIsSticky, useCommitTimes, null);
         final long revNumber = getWcContext().getRevisionNumber(revision, null, repos, localAbspath);
         final SVNURL reposRoot = repos.getRepositoryRoot(true);
         
+        final Map<File, Map<String, SVNProperties>> inheritableProperties = SvnNgInheritableProperties.getInheritalbeProperites(wcContext, repos, localAbspath, revNumber, depth);
     
         final SVNRepository[] repos2 = new SVNRepository[1];
         ISVNDirFetcher dirFetcher = new ISVNDirFetcher() {
@@ -176,7 +179,8 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
     
         SVNExternalsStore externalsStore = new SVNExternalsStore();
         ISVNUpdateEditor editor = SVNUpdateEditor17.createUpdateEditor(wcContext, revNumber, 
-                anchorAbspath, target, useCommitTimes,
+                anchorAbspath, target, inheritableProperties, 
+                useCommitTimes,
                 null,
                 depth, 
                 depthIsSticky,
@@ -679,8 +683,10 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
         };
         final SVNReporter17 reporter = new SVNReporter17(localAbsPath, getWcContext(), true, !serverSupportsDepth, depth, 
                 getOperation().isUpdateLocksOnDemand(), false, !depthIsSticky, useCommitTimes, null);
+        
+        // TODO compute inheritable properties
         ISVNUpdateEditor editor = SVNUpdateEditor17.createUpdateEditor(getWcContext(), 
-                revnum, anchor, target, useCommitTimes, switchRevUrl, depth, depthIsSticky, allowUnversionedObstructions, 
+                revnum, anchor, target, null, useCommitTimes, switchRevUrl, depth, depthIsSticky, allowUnversionedObstructions, 
                 false, serverSupportsDepth, false, dirFetcher, externalsStore, preservedExts);
         
         try {

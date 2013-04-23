@@ -109,11 +109,14 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
     private Map<File, Map<String, SVNDirEntry>> myDirEntries;
     private boolean myIsCleanCheckout;
     private File myWCRootAbsPath;
+
+    private Map<File, Map<String, SVNProperties>> myInheritableProperties;
     
     public static ISVNUpdateEditor createUpdateEditor(SVNWCContext context, 
             long targetRevision, 
             File anchorAbspath, 
             String targetName, 
+            Map<File, Map<String, SVNProperties>> inheritableProperties, 
             boolean useCommitTimes,
             SVNURL switchURL, 
             SVNDepth depth,
@@ -143,6 +146,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         editor.myTargetBasename = targetName;
         editor.myAnchorAbspath = anchorAbspath;        
         editor.myWCRootAbsPath = context.getDb().getWCRoot(anchorAbspath);
+        editor.myInheritableProperties = inheritableProperties;
         
         if (switchURL != null) {
             editor.mySwitchRelpath = SVNFileUtil.createFilePath(SVNPathUtil.getRelativePath(repositoryInfo.rootUrl.getPath(), switchURL.getPath()));
@@ -171,8 +175,6 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         }
         return (ISVNUpdateEditor) SVNCancellableEditor.newInstance(result, context.getEventHandler(), null);
     }
-    
-    
 
     public static ISVNUpdateEditor createUpdateEditor(SVNWCContext wcContext, File anchorAbspath, String target, SVNURL reposRoot, SVNURL switchURL, SVNExternalsStore externalsStore,
             boolean allowUnversionedObstructions, boolean depthIsSticky, SVNDepth depth, String[] preservedExts, 
@@ -1008,8 +1010,13 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             if (davProps != null) {
                 davProps.removeNullValues();
             }
+            
+            Map<String, SVNProperties> iprops = null;
+            if (myInheritableProperties != null) {
+                iprops = myInheritableProperties.remove(db.localAbsolutePath);
+            }
             myWCContext.getDb().addBaseDirectory(db.localAbsolutePath, db.newRelativePath, myReposRootURL, myReposUuid, myTargetRevision, props, db.changedRevsion, db.changedDate, db.changedAuthor, null, db.ambientDepth, 
-                    davProps != null && !davProps.isEmpty() ? davProps : null, null, !db.shadowed && newBaseProps != null, newActualProps, allWorkItems);
+                    davProps != null && !davProps.isEmpty() ? davProps : null, null, !db.shadowed && newBaseProps != null, newActualProps, iprops, allWorkItems);
             
         }
         myWCContext.wqRun(db.localAbsolutePath);
@@ -1458,9 +1465,14 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         if (davProps != null) {
             davProps.removeNullValues();
         }
+        Map<String, SVNProperties> iprops = null;
+        if (myInheritableProperties != null) {
+            iprops = myInheritableProperties.remove(fb.localAbsolutePath);
+        }
         myWCContext.getDb().addBaseFile(fb.localAbsolutePath, fb.newRelativePath, myReposRootURL, myReposUuid, myTargetRevision, newBaseProps, fb.changedRevison, fb.changedDate, fb.changedAuthor, newChecksum, 
                 davProps != null && !davProps.isEmpty() ? davProps : null, null, 
-                !fb.shadowed && newBaseProps != null, newActualProps, keepRecordedInfo, fb.shadowed && fb.obstructionFound, allWorkItems);
+                !fb.shadowed && newBaseProps != null, newActualProps, keepRecordedInfo, fb.shadowed && fb.obstructionFound, 
+                iprops, allWorkItems);
 
         if (fb.addExisted && fb.addingFile) {
             myWCContext.getDb().opRemoveWorkingTemp(fb.localAbsolutePath);
