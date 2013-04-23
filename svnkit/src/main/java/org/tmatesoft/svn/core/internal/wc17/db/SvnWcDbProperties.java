@@ -449,8 +449,8 @@ public class SvnWcDbProperties extends SvnWcDbShared {
     public static Map<File, File> getInheritedPropertiesNodes(SVNWCDbRoot root, File localRelPath, SVNDepth depth) throws SVNException {
         final Map<File, File> result = new HashMap<File, File>();
         SVNWCDbSelectIPropsNode stmt = null;
+        stmt = (SVNWCDbSelectIPropsNode) root.getSDb().getStatement(SVNWCDbStatements.SELECT_IPROPS_NODE);
         try {
-            stmt = (SVNWCDbSelectIPropsNode) root.getSDb().getStatement(SVNWCDbStatements.SELECT_IPROPS_NODE);
             stmt.setDepth(SVNDepth.EMPTY);
             stmt.bindf("is", root.getWcId(), localRelPath);
             if (stmt.next()) {
@@ -463,6 +463,7 @@ public class SvnWcDbProperties extends SvnWcDbShared {
         if (depth == SVNDepth.EMPTY) {
             return result;
         }
+        stmt = (SVNWCDbSelectIPropsNode) root.getSDb().getStatement(SVNWCDbStatements.SELECT_IPROPS_NODE);
         try {
             stmt.setDepth(depth);
             stmt.bindf("is", root.getWcId(), localRelPath);
