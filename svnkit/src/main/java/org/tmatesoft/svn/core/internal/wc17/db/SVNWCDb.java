@@ -453,6 +453,7 @@ public class SVNWCDb implements ISVNWCDb {
             ibb.actualProps = actualProps;
         }
         
+        ibb.iprops = iprops;
         ibb.localRelpath = localRelpath;
         ibb.wcId = pdh.getWCRoot().getWcId();
             
@@ -598,6 +599,7 @@ public class SVNWCDb implements ISVNWCDb {
 
     public class InsertBase implements SVNSqlJetTransaction {
 
+        public Map<String, SVNProperties> iprops;
         public SVNWCDbStatus status;
         public SVNWCDbKind kind;
         public long reposId = INVALID_REPOS_ID;
@@ -705,6 +707,7 @@ public class SVNWCDb implements ISVNWCDb {
                 } else {
                     stmt.bindNull(20);
                 }
+                stmt.bindIProperties(23, iprops);
                 stmt.done();
             } finally {
                 stmt.reset();
@@ -955,6 +958,7 @@ public class SVNWCDb implements ISVNWCDb {
         ibb.davCache = davCache;
         ibb.conflict = conflict;
         ibb.workItems = workItems;
+        ibb.iprops = iprops;
         
         if (updateActualProps) {
             ibb.updateActualProps = true;

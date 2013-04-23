@@ -207,6 +207,11 @@ public abstract class SVNSqlJetStatement {
         binds.set(i - 1, props != null ? SVNSkel.createPropList(props.asMap()).unparse() : null);
     }
 
+    public void bindIProperties(int i, Map<String, SVNProperties> iprops) throws SVNException {
+        adjustBinds(i);
+        binds.set(i - 1, iprops != null ? SVNSkel.createInheritedProperties(iprops).unparse() : null);
+    }
+
     public void bindChecksum(int i, SvnChecksum checksum) {
         adjustBinds(i);
         binds.set(i - 1, checksum != null ? checksum.toString() : null);

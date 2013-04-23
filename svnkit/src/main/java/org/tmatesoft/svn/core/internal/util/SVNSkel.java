@@ -414,6 +414,17 @@ public class SVNSkel {
         return true;
     }
 
+    public static SVNSkel createInheritedProperties(Map<String, SVNProperties> iprops) throws SVNException {
+        SVNSkel result = createEmptyList();
+        for (String path : iprops.keySet()) {
+            SVNSkel pathSkel = SVNSkel.createAtom(path);
+            SVNSkel propSkel = SVNSkel.createPropList(iprops.get(path).asMap());
+            result.appendChild(pathSkel);
+            result.appendChild(propSkel);
+        }
+        return result;
+    }
+
     public List<Structure<InheritedProperties>> parseInheritedProperties() throws SVNException {
         if (!isValidInheritedProperties()) {
             error("iprops");
