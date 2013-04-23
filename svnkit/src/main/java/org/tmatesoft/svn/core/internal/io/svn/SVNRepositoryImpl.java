@@ -1641,7 +1641,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             Object[] buffer = new Object[] { "get-deleted-rev", path, srev, erev };
             write("(w(snn))", buffer);
             authenticate();
-            List values = read("r", null, false);
+            List<?> values = read("r", null, false);
             return SVNReader.getLong(values, 0);
         } catch (SVNException e) {
             closeSession();
@@ -1679,20 +1679,31 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             path = getLocationRelativePath(path);
             write("(w(s(n)))", new Object[] { "get-iprops", path, revision });
             authenticate();
-            List<List<?>> items = read("l", null, false);
-            items = (List<List<?>>) items.get(0);
-            for (List<?> iprops : items) {
-                final List<?> values = SVNReader.parseTuple("sl", iprops, null);
-                final SVNProperties props = SVNReader.getProperties(values, 1, null);
-                final String parentRelPath = getRepositoryPath((String) values.get(0));
-                
-                if (handler != null) {
-                    if (propertyName != null && props.containsName(propertyName)) {
+            List<?> items = read("l", null, false);            
+            items = (List<?>) items.get(0);
+
+            for(int i = 0; i < items.size(); i++) {
+                final SVNItem ipropsItem = (SVNItem) items.get(i);
+                final List<?> pathAndProperties = SVNReader.parseTuple("sl", ipropsItem.getItems(), null);
+                String parentRelPath = SVNReader.getString(pathAndProperties, 0);
+                if (!parentRelPath.startsWith("/")) {
+                    parentRelPath = "/" + parentRelPath;
+                }
+                final List<?> propslist = SVNReader.getList(pathAndProperties, 1);
+                final SVNProperties properties = new SVNProperties();
+                for(int j = 0; j < propslist.size(); j++) {
+                    final SVNItem property = (SVNItem) propslist.get(j);
+                    final List<?> propNameAndValue = SVNReader.parseTuple("sb", property.getItems(), null);
+                    final String propName = (String) propNameAndValue.get(0);
+                    properties.put(propName, SVNPropertyValue.create(propName, SVNReader.getBytes(propNameAndValue, 1)));
+                }
+                if (!properties.isEmpty() && handler != null) {
+                    if (propertyName != null && properties.containsName(propertyName)) {
                         final SVNProperties filtered = new SVNProperties();
-                        filtered.put(propertyName, props.getSVNPropertyValue(propertyName));
+                        filtered.put(propertyName, properties.getSVNPropertyValue(propertyName));
                         handler.handleInheritedProperites(parentRelPath, filtered);
                     } else if (propertyName == null) {
-                        handler.handleInheritedProperites(parentRelPath, props);
+                        handler.handleInheritedProperites(parentRelPath, properties);
                     }
                 }
             }
