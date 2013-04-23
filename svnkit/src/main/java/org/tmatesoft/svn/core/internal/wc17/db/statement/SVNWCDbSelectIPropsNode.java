@@ -38,9 +38,9 @@ public class SVNWCDbSelectIPropsNode extends SVNSqlJetSelectStatement {
     @Override
     protected Object[] getWhere() throws SVNException {
         if (depth == SVNDepth.EMPTY || depth == SVNDepth.IMMEDIATES || depth == SVNDepth.FILES) {
-            return new Object[] {getBind(0), getBind(1), 0};
+            return new Object[] {getBind(1), getBind(2), 0};
         }
-        return new Object[] {getBind(0)};
+        return new Object[] {getBind(1)};
     }
 
     @Override
@@ -49,7 +49,7 @@ public class SVNWCDbSelectIPropsNode extends SVNSqlJetSelectStatement {
             if (getColumnLong(NODES__Fields.op_depth) != 0) {
                 return false;
             }
-            final String selectPath = (String) getBind(1);
+            final String selectPath = (String) getBind(2);
             final String rowPath = getColumnString(NODES__Fields.local_relpath);
             if (!rowPath.startsWith(selectPath + "/")) {
                 return false;

@@ -53,7 +53,7 @@ public class SvnNgInheritableProperties {
                 }
                 result.put(localNodeAbsPath, iprops);
             }
-        } finally {
+        } finally {        
             repository.setLocation(originalLocation, false);
         }
         return result;
