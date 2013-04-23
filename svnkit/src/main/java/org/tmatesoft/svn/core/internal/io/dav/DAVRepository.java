@@ -840,6 +840,8 @@ public class DAVRepository extends SVNRepository {
     public boolean hasCapability(SVNCapability capability) throws SVNException {
         if (capability == SVNCapability.COMMIT_REVPROPS) {
             return true;
+        } else if (capability == SVNCapability.INHERITED_PROPS) {
+            return false;
         }
 	    try {
             openConnection();
@@ -1345,7 +1347,7 @@ public class DAVRepository extends SVNRepository {
         return new SVNDirEntry(url, repositoryRoot, name, kind, size, hasProperties, lastRevision, date, author);
     }
 
-    public void getInheritedProperties(String path, long revision, String propertyName, ISVNInheritedPropertiesHandler handler) throws SVNException {
+    protected void getInheritedPropertiesImpl(String path, long revision, String propertyName, ISVNInheritedPropertiesHandler handler) throws SVNException {
     }
 
 }

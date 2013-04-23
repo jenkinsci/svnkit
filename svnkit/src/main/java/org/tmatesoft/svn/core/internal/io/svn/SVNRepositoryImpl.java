@@ -1673,7 +1673,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         return editor;
     }
 
-    public void getInheritedProperties(String path, long revision, String propertyName, ISVNInheritedPropertiesHandler handler) throws SVNException {
+    protected void getInheritedPropertiesImpl(String path, long revision, String propertyName, ISVNInheritedPropertiesHandler handler) throws SVNException {
         try {
             openConnection();
             path = getLocationRelativePath(path);

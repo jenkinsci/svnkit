@@ -700,7 +700,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
 		return false;
 	}
 	
-    public void getInheritedProperties(String path, long revision, String propertyName, ISVNInheritedPropertiesHandler handler) throws SVNException {
+    protected void getInheritedPropertiesImpl(String path, long revision, String propertyName, ISVNInheritedPropertiesHandler handler) throws SVNException {
         try {
             openRepository();
             path = getRepositoryPath(path);
