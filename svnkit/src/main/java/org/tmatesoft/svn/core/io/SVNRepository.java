@@ -2786,6 +2786,9 @@ public abstract class SVNRepository {
     }
 
     public void getInheritedProperties(String path, long revision, String propertyName, ISVNInheritedPropertiesHandler handler) throws SVNException {
+        if (isInvalidRevision(revision)) {
+            revision = getLatestRevision();
+        }
         if (hasCapability(SVNCapability.INHERITED_PROPS)) {
             getInheritedPropertiesImpl(path, revision, propertyName, handler);
             return;
