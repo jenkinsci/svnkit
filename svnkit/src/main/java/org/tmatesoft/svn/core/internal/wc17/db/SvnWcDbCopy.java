@@ -231,7 +231,7 @@ public class SvnWcDbCopy extends SvnWcDbShared {
             
             dstPdh.getWCRoot().getSDb().runTransaction(iw);            
         }
-        List<String> children = srcPdh.getWCRoot().getDb().gatherRepoChildren(srcPdh, srcRelpath, srcOpDepth);
+        List<String> children = srcPdh.getWCRoot().getDb().gatherRepoChildren(srcPdh.getWCRoot(), srcRelpath, srcOpDepth);
         for (String name : children) {
             File srcChildRelpath = SVNFileUtil.createFilePath(srcRelpath, name);
             File dstChildRelpath = SVNFileUtil.createFilePath(dstRelpath, name);
@@ -373,7 +373,7 @@ public class SvnWcDbCopy extends SvnWcDbShared {
         List<String> children = null;
         if (kind == SVNWCDbKind.Dir) {
             long opDepth = getOpDepthOf(srcPdh.getWCRoot(), localSrcRelpath);
-            children = srcPdh.getWCRoot().getDb().gatherRepoChildren(srcPdh, localSrcRelpath, opDepth);
+            children = srcPdh.getWCRoot().getDb().gatherRepoChildren(srcPdh.getWCRoot(), localSrcRelpath, opDepth);
         }
         
         if (srcPdh.getWCRoot() == dstPdh.getWCRoot()) {

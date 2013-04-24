@@ -24,7 +24,7 @@ public class SVNWCDbUpdateIProps extends SVNSqlJetUpdateStatement {
 
     @Override
     protected Object[] getWhere() throws SVNException {
-        return new Object[] {getBind(0), getBind(1), 0};
+        return new Object[] {getBind(1), getBind(2), 0};
     }
 
 }

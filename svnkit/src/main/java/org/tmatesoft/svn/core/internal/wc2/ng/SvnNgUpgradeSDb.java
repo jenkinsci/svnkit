@@ -782,6 +782,7 @@ public class SvnNgUpgradeSDb {
             try {
                 sDb.getDb().createIndex("CREATE UNIQUE INDEX IF NOT EXISTS I_NODES_MOVED ON NODES (wc_id, moved_to, op_depth);");
                 sDb.getDb().createIndex("CREATE INDEX IF NOT EXISTS I_PRISTINE_MD5 ON PRISTINE (md5_checksum);");
+
             } catch (SqlJetException e) {
                 SVNSqlJetDb.createSqlJetError(e);
             }            
@@ -802,6 +803,11 @@ public class SvnNgUpgradeSDb {
                     sDb.getDb().dropIndex("I_EXTERNALS_PARENT");
                 }
                 sDb.getDb().alterTable("ALTER TABLE NODES ADD COLUMN inherited_props BLOB;");
+
+                sDb.getDb().dropIndex("I_NODES_PARENT");
+                sDb.getDb().createIndex("CREATE UNIQUE INDEX I_NODESL_PARENT ON NODES (wc_id, parent_relpaht, local_relpath, op_depth);");
+                sDb.getDb().dropIndex("I_ACTUAL_PARENT");
+                sDb.getDb().createIndex("CREATE UNIQUE INDEX I_ACTUAL_PARENT ON ACTUAL_NODE (wc_id, parent_relpaht, local_relpath);");
             } catch (SqlJetException e) {
                 SVNSqlJetDb.createSqlJetError(e);
             }

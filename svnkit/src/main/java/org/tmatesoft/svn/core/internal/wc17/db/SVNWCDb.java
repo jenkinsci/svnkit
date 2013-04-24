@@ -3893,7 +3893,7 @@ public class SVNWCDb implements ISVNWCDb {
                 }
             }
             
-            final List<String> children = gatherRepoChildren(pdh, localRelpath, 0);
+            final List<String> children = gatherRepoChildren(pdh.getWCRoot(), localRelpath, 0);
             for (String name : children) {
                 MakeCopy cbt = new MakeCopy();
                 cbt.localAbspath = SVNFileUtil.createFilePath(localAbspath, name);
@@ -3910,11 +3910,11 @@ public class SVNWCDb implements ISVNWCDb {
 
     };
 
-    public List<String> gatherRepoChildren(SVNWCDbDir pdh, File localRelpath, long opDepth) throws SVNException {
+    public List<String> gatherRepoChildren(SVNWCDbRoot root, File localRelpath, long opDepth) throws SVNException {
         final List<String> children = new ArrayList<String>();
-        final SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_OP_DEPTH_CHILDREN);
+        final SVNSqlJetStatement stmt = root.getSDb().getStatement(SVNWCDbStatements.SELECT_OP_DEPTH_CHILDREN);
         try {
-            stmt.bindf("isi", pdh.getWCRoot().getWcId(), localRelpath, opDepth);
+            stmt.bindf("isi", root.getWcId(), localRelpath, opDepth);
             boolean haveRow = stmt.next();
             while (haveRow) {
                 String childRelpath = SVNFileUtil.getFileName(SVNFileUtil.createFilePath(stmt.getColumnString(SVNWCDbSchema.NODES__Fields.local_relpath)));
@@ -4034,14 +4034,15 @@ public class SVNWCDb implements ISVNWCDb {
             if (newReposRootURL != null) {
                 reposId = createReposId(db, newReposRootURL, newReposUUID);
             }
-            bumpNodeRevision(dbWcRoot, wcRoot, localRelPath, baseInfo, reposId, newReposRelPath, newRevision, depth, exludedRelPaths, true, false);
+            bumpNodeRevision(dbWcRoot, wcRoot, localRelPath, reposId, newReposRelPath, newRevision, depth, exludedRelPaths, true, false);
         }
 
-        private void bumpNodeRevision(SVNWCDbRoot root, File wcRoot, File localRelPath, WCDbBaseInfo baseInfo, long reposId, File newReposRelPath, long newRevision,
+        private void bumpNodeRevision(SVNWCDbRoot root, File wcRoot, File localRelPath, long reposId, File newReposRelPath, long newRevision,
                 SVNDepth depth, Collection<File> exludedRelPaths, boolean isRoot, boolean skipWhenDir) throws SVNException {
             if (exludedRelPaths != null && exludedRelPaths.contains(localRelPath)) {
                 return;
             }
+            final WCDbBaseInfo baseInfo = getBaseInfo(root, localRelPath, BaseInfoField.status, BaseInfoField.kind, BaseInfoField.revision, BaseInfoField.reposId, BaseInfoField.updateRoot);
             if (baseInfo.updateRoot && baseInfo.kind == SVNWCDbKind.File && !isRoot) {
                 return;
             }
@@ -4060,7 +4061,12 @@ public class SVNWCDb implements ISVNWCDb {
             }
             final Map<String, SVNProperties> nodeIprops = iprops != null ? iprops.get(root.getAbsPath(localRelPath)) : null;
             if (nodeIprops != null || setReposRelPath || (newRevision >= 0 && newRevision != baseInfo.revision)) {
-                opSetRevAndReposRelpath(root, localRelPath, nodeIprops, newRevision, setReposRelPath, newReposRelPath, newReposRootURL, newReposUUID);
+                try {
+                    opSetRevAndReposRelpath(root, localRelPath, nodeIprops, newRevision, setReposRelPath, newReposRelPath, newReposRootURL, newReposUUID);
+                } catch (Throwable th) {
+                    th.printStackTrace();
+                }
+                
             }
             
             if (depth.compareTo(SVNDepth.EMPTY) <= 0 ||
@@ -4075,14 +4081,14 @@ public class SVNWCDb implements ISVNWCDb {
                 depthBelowHere = SVNDepth.EMPTY;
             }
             
-            Map<String, WCDbBaseInfo> children = getBaseChildrenMap(root, localRelPath, false);
-            for (String child : children.keySet()) {
+            List<String> children = gatherRepoChildren(root, localRelPath, 0);
+            for (String child : children) {
                 File childReposRelPath = null;
                 File childLocalRelPath = SVNFileUtil.createFilePath(localRelPath, child);                
                 if (newReposRelPath != null) {
                     childReposRelPath = SVNFileUtil.createFilePath(newReposRelPath, child);
                 }
-                bumpNodeRevision(root, wcRoot, childLocalRelPath, children.get(child), reposId, childReposRelPath, newRevision, depthBelowHere, exludedRelPaths, false, depth.compareTo(SVNDepth.IMMEDIATES) < 0);               
+                bumpNodeRevision(root, wcRoot, childLocalRelPath, reposId, childReposRelPath, newRevision, depthBelowHere, exludedRelPaths, false, depth.compareTo(SVNDepth.IMMEDIATES) < 0);               
             }        
         }
     }
@@ -4212,7 +4218,6 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     private void opSetRevAndReposRelpath(SVNWCDbRoot wcRoot, File localRelpath, Map<String, SVNProperties> nodeIprops, long revision, boolean setReposRelpath, final File reposRelpath, SVNURL reposRootUrl, String reposUuid) throws SVNException {
-        assert (SVNRevision.isValidRevisionNumber(revision) || setReposRelpath);
         SVNSqlJetStatement stmt = null;
         if (SVNRevision.isValidRevisionNumber(revision)) {
             stmt = wcRoot.getSDb().getStatement(SVNWCDbStatements.UPDATE_BASE_REVISION);
@@ -4843,7 +4848,7 @@ public class SVNWCDb implements ISVNWCDb {
         }
 
         private void commitDescendant(File parentLocalRelPath, File parentReposRelPath, long opDepth, long revision) throws SVNException {
-            List<String> children = gatherRepoChildren(pdh, parentLocalRelPath, opDepth);
+            List<String> children = gatherRepoChildren(pdh.getWCRoot(), parentLocalRelPath, opDepth);
             for (String name : children) {
                 SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.COMMIT_DESCENDANT_TO_BASE);
                 try {
