@@ -32,7 +32,7 @@ public class SvnNgInheritableProperties {
             final Map<File, File> nodesWithIProps = SvnWcDbProperties.getInheritedPropertiesNodes(wcRoot, localRelPath, depth);
             if (!nodesWithIProps.containsKey(localAbsPath)) {
                 if (needsCachedIProps(context, localAbsPath, repository)) {
-                    nodesWithIProps.put(localAbsPath, localRelPath);
+                    nodesWithIProps.put(localAbsPath, localAbsPath);
                 }
             }
             for (File localNodeAbsPath : nodesWithIProps.keySet()) {
