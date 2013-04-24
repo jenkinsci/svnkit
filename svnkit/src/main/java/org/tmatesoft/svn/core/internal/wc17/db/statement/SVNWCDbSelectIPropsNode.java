@@ -24,6 +24,9 @@ public class SVNWCDbSelectIPropsNode extends SVNSqlJetSelectStatement {
     }
     
     public void setDepth(SVNDepth depth) {
+        if (depth == SVNDepth.UNKNOWN) {
+            depth = SVNDepth.INFINITY;
+        }
         this.depth = depth;
     }
 
@@ -38,17 +41,17 @@ public class SVNWCDbSelectIPropsNode extends SVNSqlJetSelectStatement {
     @Override
     protected Object[] getWhere() throws SVNException {
         if (depth == SVNDepth.EMPTY || depth == SVNDepth.IMMEDIATES || depth == SVNDepth.FILES) {
-            return new Object[] {getBind(1), getBind(2), 0};
+            return new Object[] {getBind(1), getBind(2)};
         }
         return new Object[] {getBind(1)};
     }
 
     @Override
     protected boolean isFilterPassed() throws SVNException {
+        if (getColumnLong(NODES__Fields.op_depth) != 0) {
+            return false;
+        }
         if (depth == SVNDepth.INFINITY) {
-            if (getColumnLong(NODES__Fields.op_depth) != 0) {
-                return false;
-            }
             final String selectPath = (String) getBind(2);
             final String rowPath = getColumnString(NODES__Fields.local_relpath);
             if (!rowPath.startsWith(selectPath + "/")) {
