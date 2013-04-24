@@ -657,6 +657,21 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
             }
         }
         
+        final Map<File, Map<String, SVNProperties>> wcIprops = new HashMap<File, Map<String,SVNProperties>>();
+        if (!switchRootUrl.equals(switchRevUrl)) {
+            boolean isWcRoot = getWcContext().checkWCRoot(localAbsPath, false).wcRoot;
+            boolean needsCache = true;
+            if (!isWcRoot) {
+                final SVNURL parentURL = getWcContext().getNodeUrl(SVNFileUtil.getParentFile(localAbsPath));
+                needsCache =  !(parentURL.appendPath(localAbsPath.getName(), false).equals(switchRevUrl));
+            }
+            if (needsCache) {
+                Map<String, SVNProperties> iprops = repository.getInheritedProperties("", revnum, null);
+                iprops = SvnNgInheritableProperties.translateInheritedPropertiesPaths(iprops);
+                wcIprops.put(localAbsPath, iprops);
+            }
+        }
+        
         repository.setLocation(anchorUrl, false);
         boolean serverSupportsDepth = repository.hasCapability(SVNCapability.DEPTH);
         SVNExternalsStore externalsStore = new SVNExternalsStore();
@@ -688,9 +703,8 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
         final SVNReporter17 reporter = new SVNReporter17(localAbsPath, getWcContext(), true, !serverSupportsDepth, depth, 
                 getOperation().isUpdateLocksOnDemand(), false, !depthIsSticky, useCommitTimes, null);
         
-        // TODO compute inheritable properties
-        ISVNUpdateEditor editor = SVNUpdateEditor17.createUpdateEditor(getWcContext(), 
-                revnum, anchor, target, null, useCommitTimes, switchRevUrl, depth, depthIsSticky, allowUnversionedObstructions, 
+        final ISVNUpdateEditor editor = SVNUpdateEditor17.createUpdateEditor(getWcContext(), 
+                revnum, anchor, target, wcIprops, useCommitTimes, switchRevUrl, depth, depthIsSticky, allowUnversionedObstructions, 
                 false, serverSupportsDepth, false, dirFetcher, externalsStore, preservedExts);
         
         try {
