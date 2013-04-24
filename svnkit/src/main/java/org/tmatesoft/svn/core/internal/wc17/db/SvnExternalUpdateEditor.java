@@ -345,7 +345,8 @@ public class SvnExternalUpdateEditor implements ISVNUpdateEditor {
 
     public SVNCommitInfo closeEdit() throws SVNException {
         if (!fileClosed) {
-            context.getDb().opBumpRevisionPostUpdate(localAbsPath, SVNDepth.INFINITY, null, null, null, targetRevision, null);
+            // TODO get inherited props
+            context.getDb().opBumpRevisionPostUpdate(localAbsPath, SVNDepth.INFINITY, null, null, null, targetRevision, null, null);
         }
         return null;
     }

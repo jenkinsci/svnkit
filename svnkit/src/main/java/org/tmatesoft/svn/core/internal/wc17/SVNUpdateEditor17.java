@@ -1512,7 +1512,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             myWCContext.getDb().opSetBaseIncompleteTemp(myAnchorAbspath, false);
         }
         if (!myIsTargetDeleted) {
-            myWCContext.getDb().opBumpRevisionPostUpdate(myTargetAbspath , myRequestedDepth, mySwitchRelpath, myReposRootURL, myReposUuid, myTargetRevision, mySkippedTrees);
+            myWCContext.getDb().opBumpRevisionPostUpdate(myTargetAbspath , myRequestedDepth, mySwitchRelpath, myReposRootURL, myReposUuid, myTargetRevision, mySkippedTrees, myInheritableProperties);
             if (myTargetBasename == null || "".equals(myTargetBasename)) {
                 SVNWCDbStatus status = null;
                 boolean error = false;

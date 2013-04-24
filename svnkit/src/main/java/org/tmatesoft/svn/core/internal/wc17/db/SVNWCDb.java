@@ -3964,7 +3964,7 @@ public class SVNWCDb implements ISVNWCDb {
     }
     
     public void opBumpRevisionPostUpdate(File localAbsPath, SVNDepth depth, File newReposRelPath, SVNURL newReposRootURL, String newReposUUID,
-            long newRevision, Collection<File> excludedPaths) throws SVNException {
+            long newRevision, Collection<File> excludedPaths, Map<File, Map<String, SVNProperties>> inheritableProperties) throws SVNException {
         DirParsedInfo parseDir = parseDir(localAbsPath, Mode.ReadWrite);
         SVNWCDbDir pdh = parseDir.wcDbDir;
         verifyDirUsable(pdh);
@@ -3987,6 +3987,7 @@ public class SVNWCDb implements ISVNWCDb {
         brb.wcRoot = pdh.getWCRoot().getAbsPath();
         brb.exludedRelPaths = excludedPaths;
         brb.dbWcRoot = pdh.getWCRoot();
+        brb.iprops = inheritableProperties;
         
         pdh.getWCRoot().getSDb().runTransaction(brb);
         pdh.flushEntries(localAbsPath);
@@ -3994,6 +3995,7 @@ public class SVNWCDb implements ISVNWCDb {
     
     private class BumpRevisionPostUpdate implements SVNSqlJetTransaction {
         
+        public Map<File, Map<String, SVNProperties>> iprops;
         private SVNDepth depth;
         private File newReposRelPath;
         private SVNURL newReposRootURL;
@@ -4056,8 +4058,9 @@ public class SVNWCDb implements ISVNWCDb {
             if (newReposRelPath != null && !baseInfo.reposRelPath.equals(newReposRelPath)) {
                 setReposRelPath = true;
             }
-            if (setReposRelPath || (newRevision >= 0 && newRevision != baseInfo.revision)) {
-                opSetRevAndReposRelpath(root, localRelPath, newRevision, setReposRelPath, newReposRelPath, newReposRootURL, newReposUUID);
+            final Map<String, SVNProperties> nodeIprops = iprops != null ? iprops.get(root.getAbsPath(localRelPath)) : null;
+            if (nodeIprops != null || setReposRelPath || (newRevision >= 0 && newRevision != baseInfo.revision)) {
+                opSetRevAndReposRelpath(root, localRelPath, nodeIprops, newRevision, setReposRelPath, newReposRelPath, newReposRootURL, newReposUUID);
             }
             
             if (depth.compareTo(SVNDepth.EMPTY) <= 0 ||
@@ -4208,9 +4211,9 @@ public class SVNWCDb implements ISVNWCDb {
         pdh.getWCRoot().getSDb().runTransaction(baton);
     }
 
-    private void opSetRevAndReposRelpath(SVNWCDbRoot wcRoot, File localRelpath, long revision, boolean setReposRelpath, final File reposRelpath, SVNURL reposRootUrl, String reposUuid) throws SVNException {
+    private void opSetRevAndReposRelpath(SVNWCDbRoot wcRoot, File localRelpath, Map<String, SVNProperties> nodeIprops, long revision, boolean setReposRelpath, final File reposRelpath, SVNURL reposRootUrl, String reposUuid) throws SVNException {
         assert (SVNRevision.isValidRevisionNumber(revision) || setReposRelpath);
-        SVNSqlJetStatement stmt;
+        SVNSqlJetStatement stmt = null;
         if (SVNRevision.isValidRevisionNumber(revision)) {
             stmt = wcRoot.getSDb().getStatement(SVNWCDbStatements.UPDATE_BASE_REVISION);
             try {
@@ -4238,7 +4241,13 @@ public class SVNWCDb implements ISVNWCDb {
             } finally {
                 stmt.reset();
             }
-            
+        }
+        try {
+            stmt = wcRoot.getSDb().getStatement(SVNWCDbStatements.UPDATE_IPROPS);
+            stmt.bindf("isb", wcRoot.getWcId(), localRelpath, nodeIprops != null ? SVNSkel.createInheritedProperties(nodeIprops).unparse() : null);
+            stmt.done();
+        } finally {
+            stmt.reset();
         }
     }
 
