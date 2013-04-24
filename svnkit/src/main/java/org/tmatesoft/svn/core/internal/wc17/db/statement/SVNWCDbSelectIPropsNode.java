@@ -51,13 +51,21 @@ public class SVNWCDbSelectIPropsNode extends SVNSqlJetSelectStatement {
         if (getColumnLong(NODES__Fields.op_depth) != 0) {
             return false;
         }
-        if (depth == SVNDepth.INFINITY) {
-            final String selectPath = (String) getBind(2);
-            final String rowPath = getColumnString(NODES__Fields.local_relpath);
-            if (!rowPath.startsWith(selectPath + "/")) {
-                return false;
-            } 
-        } 
         return getColumnBlob(SVNWCDbSchema.NODES__Fields.inherited_props) != null;
     }
+
+    @Override
+    protected String getPathScope() {
+        if (depth == SVNDepth.INFINITY) {
+            return (String) getBind(2);
+        }
+        return null;
+    }
+
+    @Override
+    protected boolean isStrictiDescendant() {
+        return true;
+    }
+    
+    
 }
