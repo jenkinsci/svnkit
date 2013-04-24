@@ -45,16 +45,7 @@ public class SvnNgInheritableProperties {
                 Map<String, SVNProperties> iprops = null;
                 try {
                     iprops = repository.getInheritedProperties("", revision, null);
-                    // make paths relative, necessary for update
-                    final Map<String, SVNProperties> filtered = new HashMap<String, SVNProperties>();
-                    for (String path : iprops.keySet()) {
-                        final SVNProperties props = iprops.get(path);
-                        if (path.startsWith("/")) {
-                            path = path.substring(1);
-                        }
-                        filtered.put(path, props);
-                    }
-                    iprops = filtered;
+                    iprops = translateInheritedPropertiesPaths(iprops);
                 } catch (SVNException e) {
                     if (e.getErrorMessage().getErrorCode() != SVNErrorCode.FS_NOT_FOUND) {
                         throw e;
@@ -67,6 +58,18 @@ public class SvnNgInheritableProperties {
             repository.setLocation(originalLocation, false);
         }
         return result;
+    }
+
+    public static Map<String, SVNProperties> translateInheritedPropertiesPaths(Map<String, SVNProperties> iprops) {
+        final Map<String, SVNProperties> filtered = new HashMap<String, SVNProperties>();
+        for (String path : iprops.keySet()) {
+            final SVNProperties props = iprops.get(path);
+            if (path.startsWith("/")) {
+                path = path.substring(1);
+            }
+            filtered.put(path, props);
+        }
+        return filtered;
     }
 
     private static boolean needsCachedIProps(SVNWCContext context, File localAbsPath, SVNRepository repository) throws SVNException {

@@ -3,6 +3,8 @@ package org.tmatesoft.svn.core.internal.wc17.db;
 import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
@@ -71,9 +73,10 @@ public class SvnExternalUpdateEditor implements ISVNUpdateEditor {
     private SvnChecksum newMd5Checksum;
     private SvnChecksum newSha1Checksum;
     private boolean fileClosed;
+    private Map<String, SVNProperties> iprops;
     
     public static ISVNUpdateEditor createEditor(SVNWCContext context, File localAbsPath, File wriAbsPath,
-            SVNURL url, SVNURL reposRootUrl, String reposUuid, boolean useCommitTimes, String[] preservedExts,
+            SVNURL url, SVNURL reposRootUrl, String reposUuid, Map<String, SVNProperties> iprops, boolean useCommitTimes, String[] preservedExts,
             File recordAncestorAbsPath, SVNURL recordedUrl, SVNRevision recordedPegRev, SVNRevision recordedRev) { 
         
         SvnExternalUpdateEditor editor = new SvnExternalUpdateEditor();
@@ -91,6 +94,7 @@ public class SvnExternalUpdateEditor implements ISVNUpdateEditor {
         editor.recordedReposRelPath = SVNFileUtil.createFilePath(SVNURLUtil.getRelativeURL(reposRootUrl, recordedUrl, false));
         editor.recordedPegRevision = recordedPegRev != null ? recordedPegRev.getNumber() : SVNWCContext.INVALID_REVNUM;
         editor.recordedRevision = recordedRev != null ? recordedRev.getNumber() : SVNWCContext.INVALID_REVNUM;
+        editor.iprops = iprops;
         
         return (ISVNUpdateEditor) SVNCancellableEditor.newInstance(editor, context.getEventHandler(), null);
     }
@@ -313,6 +317,7 @@ public class SvnExternalUpdateEditor implements ISVNUpdateEditor {
                 reposUuid, 
                 targetRevision, 
                 newPristineProperties,
+                iprops,
                 changedRev,
                 changedDate,
                 changedAuthor,
@@ -326,7 +331,7 @@ public class SvnExternalUpdateEditor implements ISVNUpdateEditor {
                 newActualProperties,
                 false,
                 allWorkItems);
-        
+        this.iprops = null;
         context.wqRun(wriAbsPath);
         
         if (context.getEventHandler() != null) {
@@ -344,9 +349,12 @@ public class SvnExternalUpdateEditor implements ISVNUpdateEditor {
     }
 
     public SVNCommitInfo closeEdit() throws SVNException {
-        if (!fileClosed) {
-            // TODO get inherited props
-            context.getDb().opBumpRevisionPostUpdate(localAbsPath, SVNDepth.INFINITY, null, null, null, targetRevision, null, null);
+        if (!fileClosed || iprops != null) {
+            Map<File, Map<String, SVNProperties>> wcIprops = iprops != null ? new HashMap<File, Map<String,SVNProperties>>() : null;
+            if (wcIprops != null) {
+                wcIprops.put(localAbsPath, iprops);
+            }
+            context.getDb().opBumpRevisionPostUpdate(localAbsPath, SVNDepth.INFINITY, null, null, null, targetRevision, null, wcIprops);
         }
         return null;
     }

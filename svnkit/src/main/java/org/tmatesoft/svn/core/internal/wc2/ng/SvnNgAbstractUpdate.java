@@ -539,7 +539,10 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
         String uuid = repository.getRepositoryUUID(true);
         String[] preservedExts = getOperation().getOptions().getPreservedConflictFileExtensions();
         boolean useCommitTimes = getOperation().getOptions().isUseCommitTimes();
-
+        Map<String, SVNProperties> iprops = repository.getInheritedProperties("", revnum, null);
+        if (iprops != null && !iprops.isEmpty()) {
+            iprops = SvnNgInheritableProperties.translateInheritedPropertiesPaths(iprops);
+        }
         File definitionAbsPath = SVNFileUtil.getParentFile(localAbsPath);
         ISVNUpdateEditor updateEditor = SvnExternalUpdateEditor.createEditor(
                 getWcContext(), 
@@ -547,7 +550,8 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
                 definitionAbsPath, 
                 swithUrl, 
                 reposRootUrl, 
-                uuid, 
+                uuid,
+                iprops,
                 useCommitTimes, 
                 preservedExts, 
                 definitionAbsPath, 

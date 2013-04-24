@@ -126,7 +126,8 @@ public class StructureFields {
         updateActualProperties,
         newActualProperties,
         keepRecordedInfo,
-        workItems;
+        workItems, 
+        iprops;
     }
     
     public enum DeletionInfo {
