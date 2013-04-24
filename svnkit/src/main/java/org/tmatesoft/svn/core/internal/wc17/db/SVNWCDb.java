@@ -4042,7 +4042,9 @@ public class SVNWCDb implements ISVNWCDb {
             if (exludedRelPaths != null && exludedRelPaths.contains(localRelPath)) {
                 return;
             }
-            final WCDbBaseInfo baseInfo = getBaseInfo(root, localRelPath, BaseInfoField.status, BaseInfoField.kind, BaseInfoField.revision, BaseInfoField.reposId, BaseInfoField.updateRoot);
+            final WCDbBaseInfo baseInfo = getBaseInfo(root, localRelPath, 
+                    BaseInfoField.status, BaseInfoField.kind, BaseInfoField.revision, BaseInfoField.reposId, BaseInfoField.updateRoot, 
+                    BaseInfoField.reposRelPath);
             if (baseInfo.updateRoot && baseInfo.kind == SVNWCDbKind.File && !isRoot) {
                 return;
             }
