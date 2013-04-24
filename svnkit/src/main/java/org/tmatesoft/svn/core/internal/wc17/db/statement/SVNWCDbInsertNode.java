@@ -59,6 +59,7 @@ public class SVNWCDbInsertNode extends SVNSqlJetInsertStatement {
         values.put("dav_cache", getBind(18));
         values.put("symlink_target", getBind(19));
         values.put("file_external", getBind(20));
+        values.put("inherited_props", getBind(23));
         return values;
     }
 
