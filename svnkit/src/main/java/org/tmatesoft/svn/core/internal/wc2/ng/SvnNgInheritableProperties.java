@@ -45,6 +45,16 @@ public class SvnNgInheritableProperties {
                 Map<String, SVNProperties> iprops = null;
                 try {
                     iprops = repository.getInheritedProperties("", revision, null);
+                    // make paths relative, necessary for update
+                    final Map<String, SVNProperties> filtered = new HashMap<String, SVNProperties>();
+                    for (String path : iprops.keySet()) {
+                        final SVNProperties props = iprops.get(path);
+                        if (path.startsWith("/")) {
+                            path = path.substring(1);
+                        }
+                        filtered.put(path, props);
+                    }
+                    iprops = filtered;
                 } catch (SVNException e) {
                     if (e.getErrorMessage().getErrorCode() != SVNErrorCode.FS_NOT_FOUND) {
                         throw e;
