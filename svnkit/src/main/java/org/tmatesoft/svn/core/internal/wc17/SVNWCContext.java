@@ -2221,7 +2221,7 @@ public class SVNWCContext {
         if (fromVal != null && (fromVal.getBytes() != null || fromVal.getString() != null)) {
             valueSkel.prependPropertyValue(fromVal);
         }
-        skel.addChild(valueSkel);
+        skel.prepend(valueSkel);
     }
 
     SVNStatusType setPropMergeState(SVNStatusType state, SVNStatusType newValue) {
@@ -3347,7 +3347,7 @@ public class SVNWCContext {
     public SVNSkel wqBuildPrejInstall(File localAbspath, SVNSkel conflictSkel) throws SVNException {
         assert (conflictSkel != null);
         SVNSkel workItem = SVNSkel.createEmptyList();
-        workItem.addChild(conflictSkel);
+        workItem.prepend(conflictSkel);
         workItem.prependPath(getRelativePath(localAbspath));
         workItem.prependString(WorkQueueOperation.PREJ_INSTALL.getOpName());
         SVNSkel result = SVNSkel.createEmptyList();
@@ -3375,7 +3375,7 @@ public class SVNWCContext {
     	SVNSkel result = SVNSkel.createEmptyList();
     	SVNSkel workItem = SVNSkel.createEmptyList();
     	workItem.prependString(WorkQueueOperation.POSTUPGRADE.getOpName());
-    	result.addChild(workItem);
+    	result.prepend(workItem);
     	return result;
     }
     
@@ -3389,11 +3389,11 @@ public class SVNWCContext {
         if (workItem1.isAtom()) {
             if (workItem2.isAtom()) {
                 SVNSkel result = SVNSkel.createEmptyList();
-                result.addChild(workItem2);
-                result.addChild(workItem1);
+                result.prepend(workItem2);
+                result.prepend(workItem1);
                 return result;
             }
-            workItem2.addChild(workItem1);
+            workItem2.prepend(workItem1);
             return workItem2;
         }
         if (workItem2.isAtom()) {

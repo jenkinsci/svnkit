@@ -42,7 +42,7 @@ public class SVNProperties implements Cloneable, Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private Map myProperties;
+    private Map<String, SVNPropertyValue> myProperties;
 
     /**
      * Creates a new <code>SVNProperties</code> object wrapping a given map with
@@ -140,7 +140,7 @@ public class SVNProperties implements Cloneable, Serializable {
      *
      * @return copy of SVNProperties as Map object
      */
-    public Map asMap() {
+    public Map<String, SVNPropertyValue> asMap() {
         if (myProperties == null) {
             return Collections.unmodifiableMap(Collections.EMPTY_MAP);
         }

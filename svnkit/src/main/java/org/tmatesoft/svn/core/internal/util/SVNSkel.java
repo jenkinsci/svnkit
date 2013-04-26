@@ -222,8 +222,8 @@ public class SVNSkel {
             SVNPropertyValue pv = props.get(propertyName);
             SVNSkel value = createAtom(pv);
 
-            list.addChild(value);
-            list.addChild(name);
+            list.prepend(value);
+            list.prepend(name);
             
         }
         if (!list.isValidPropList()) {
@@ -289,7 +289,7 @@ public class SVNSkel {
         myList.add(child);
     }
 
-    public void addChild(SVNSkel child) throws SVNException {
+    public void prepend(SVNSkel child) throws SVNException {
         if (isAtom()) {
             SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.FS_MALFORMED_SKEL, "Unable to add a child to atom");
             SVNErrorManager.error(error, SVNLogType.DEFAULT);
@@ -299,12 +299,12 @@ public class SVNSkel {
 
     public void prependString(String str) throws SVNException {
         SVNSkel skel = SVNSkel.createAtom(str);
-        addChild(skel);
+        prepend(skel);
     }
 
     public void prependPropertyValue(SVNPropertyValue propertyValue) throws SVNException{
         SVNSkel skel = SVNSkel.createAtom(propertyValue);
-        addChild(skel);
+        prepend(skel);
     }
 
     public void prependPath(File path) throws SVNException {        

@@ -238,7 +238,6 @@ public class SvnWcDbRevert extends SvnWcDbShared {
     
     public static Map<File, SVNWCDbKind> readRevertCopiedChildren(SVNWCContext context, File localAbsPath) throws SVNException {
         Map<File, SVNWCDbKind> result = new TreeMap<File, ISVNWCDb.SVNWCDbKind>(new Comparator<File>() {
-            @SuppressWarnings("unchecked")
             public int compare(File o1, File o2) {
                 String path1 = o1.getAbsolutePath();
                 String path2 = o2.getAbsolutePath();

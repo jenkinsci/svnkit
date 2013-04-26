@@ -93,9 +93,9 @@ import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDbRoot.WCLock;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.PristineInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.RepositoryInfo;
-import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbReader.ConflictInfo;
-import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbReader.TextConflictInfo;
-import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbReader.TreeConflictInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbConflicts.ConflictInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbConflicts.TextConflictInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbConflicts.TreeConflictInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbCreateSchema;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbInsertDeleteList;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
@@ -2012,7 +2012,7 @@ public class SVNWCDb implements ISVNWCDb {
                 final String childBaseName = SVNFileUtil.getFileName(childRelpath);
                 final byte[] conflictData = stmt.getColumnBlob(SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_data);
                 final SVNSkel skel = SVNSkel.parse(conflictData);
-                final Structure<ConflictInfo> conflictInfo = SvnWcDbReader.readConflictInfo(skel);
+                final Structure<ConflictInfo> conflictInfo = SvnWcDbConflicts.readConflictInfo(skel);
 
                 if (conflictInfo != null && conflictInfo.is(ConflictInfo.treeConflicted)) {
                     final List<SVNConflictVersion> locations = conflictInfo.get(ConflictInfo.locations);
@@ -2026,7 +2026,7 @@ public class SVNWCDb implements ISVNWCDb {
                     }
 
                     final File childAbsPath = pdh.getWCRoot().getAbsPath(childRelpath);
-                    final Structure<TreeConflictInfo> treeConflictInfo = SvnWcDbReader.readTreeConflict(this, childAbsPath, skel);
+                    final Structure<TreeConflictInfo> treeConflictInfo = SvnWcDbConflicts.readTreeConflict(this, childAbsPath, skel);
                     final SVNNodeKind tcKind;
                     if (leftVersion != null) {
                         tcKind = leftVersion.getKind();
@@ -2596,11 +2596,11 @@ public class SVNWCDb implements ISVNWCDb {
          * ### This will be much easier once we have all conflicts in one field
          * of actual.
          */
-        final SVNSkel conflictSkel = SvnWcDbReader.readConflict(pdh.getWCRoot().getDb(), localAbsPath);
+        final SVNSkel conflictSkel = SvnWcDbConflicts.readConflict(pdh.getWCRoot().getDb(), localAbsPath);
         if (conflictSkel == null) {
             return conflicts;
         }
-        final Structure<ConflictInfo> conflictInfo = SvnWcDbReader.readConflictInfo(conflictSkel);
+        final Structure<ConflictInfo> conflictInfo = SvnWcDbConflicts.readConflictInfo(conflictSkel);
         final List<SVNConflictVersion> locations = conflictInfo.get(ConflictInfo.locations);
         SVNConflictVersion leftVersion = null;
         SVNConflictVersion rightVersion = null;
@@ -2612,10 +2612,10 @@ public class SVNWCDb implements ISVNWCDb {
         }
         
         if (conflictInfo.is(ConflictInfo.propConflicted)) {
-            SvnWcDbReader.readPropertyConflicts(conflicts, this, localAbsPath, conflictSkel, createTempFiles, (SVNOperation) conflictInfo.get(ConflictInfo.conflictOperation), leftVersion, rightVersion);
+            SvnWcDbConflicts.readPropertyConflicts(conflicts, this, localAbsPath, conflictSkel, createTempFiles, (SVNOperation) conflictInfo.get(ConflictInfo.conflictOperation), leftVersion, rightVersion);
         }
         if (conflictInfo.is(ConflictInfo.textConflicted)) {
-            final Structure<TextConflictInfo> textConflictInfo = SvnWcDbReader.readTextConflict(this, localAbsPath, conflictSkel);
+            final Structure<TextConflictInfo> textConflictInfo = SvnWcDbConflicts.readTextConflict(this, localAbsPath, conflictSkel);
             final SVNWCConflictDescription17 description = SVNWCConflictDescription17.createText(localAbsPath);
             
             description.setOperation(conflictInfo.<SVNOperation>get(ConflictInfo.conflictOperation));
@@ -2630,7 +2630,7 @@ public class SVNWCDb implements ISVNWCDb {
         }
         
         if (conflictInfo.is(ConflictInfo.treeConflicted)) {
-            final Structure<TreeConflictInfo> treeConflictInfo = SvnWcDbReader.readTreeConflict(this, localAbsPath, conflictSkel);
+            final Structure<TreeConflictInfo> treeConflictInfo = SvnWcDbConflicts.readTreeConflict(this, localAbsPath, conflictSkel);
             final SVNNodeKind tcKind;
             if (leftVersion != null) {
                 tcKind = leftVersion.getKind();
