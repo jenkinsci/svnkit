@@ -1639,7 +1639,7 @@ public class SvnOperationFactory implements ISvnOperationOptionsProvider {
             }
             SVNWCDb db = new SVNWCDb();
             try {
-                db.open(SVNWCDbOpenMode.ReadOnly, (ISVNOptions) null, true, false);
+                db.open(SVNWCDbOpenMode.ReadOnly, (ISVNOptions) null, false, false);
                 DirParsedInfo info = db.parseDir(path, Mode.ReadOnly, true, isAdditionMode);
                 if (info != null && SVNWCDbDir.isUsable(info.wcDbDir)) {
                     return SvnWcGeneration.V17;
