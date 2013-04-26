@@ -102,7 +102,7 @@ public class SVNWCDbRoot {
 
         /* Auto-upgrade the SDB if possible. */
         if (format < ISVNWCDb.WC_FORMAT_18 && autoUpgrade) {
-          format = SvnNgUpgradeSDb.upgrade(absPath, sDb, format);
+          format = SvnNgUpgradeSDb.upgrade(absPath, db, sDb, format);
         } 
 
         /*
