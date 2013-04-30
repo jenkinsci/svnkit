@@ -22,6 +22,7 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.SVNConflictVersion;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCConflictDescription17;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.DirParsedInfo;
@@ -64,6 +65,15 @@ public class SvnWcDbConflicts extends SvnWcDbShared {
         localChange,
         incomingChange,
         moveSrcOpRootAbsPath,
+    }
+    
+    public enum ConflictStatus {
+        conflicted,
+        conflictIgnored,
+        
+        textConflicted,
+        propConflicted,
+        treeConflicted
     }
     
     public static SVNSkel createConflictSkel() throws SVNException {
@@ -426,16 +436,89 @@ public class SvnWcDbConflicts extends SvnWcDbShared {
         }
         return result;
     }
+    
+    public static Structure<ConflictStatus> getConflictStatusForUpdate(SVNWCDb db, File localAbsPath, boolean treeConflictOnly) throws SVNException {
+        final Structure<ConflictStatus> result = getConflictStatus(db, localAbsPath);
+        if (treeConflictOnly) {
+            result.set(ConflictStatus.conflicted, result.is(ConflictStatus.treeConflicted));
+        } else {
+            result.set(ConflictStatus.conflicted, result.is(ConflictStatus.treeConflicted) || result.is(ConflictStatus.textConflicted) || result.is(ConflictStatus.propConflicted));
+        }
+        return result;
+    }
+    
+    private static Structure<ConflictStatus> getConflictStatus(SVNWCDb db, File localAbsPath) throws SVNException {
+        final Structure<ConflictStatus> result = Structure.obtain(ConflictStatus.class);
+        final SVNSkel conflicts = readConflict(db, localAbsPath);
+        if (conflicts == null) {
+            return result;
+        }
+        boolean resolvedText = false;
+        boolean resolvedProps = false;
+        
+        final Structure<ConflictInfo> conflictsInfo = readConflictInfo(conflicts);
+        if (conflictsInfo.is(ConflictInfo.textConflicted)) {
+            final Structure<TextConflictInfo> tc = readTextConflict(db, localAbsPath, conflicts);
+            
+            final File mineAbsPath = tc.get(TextConflictInfo.mineAbsPath);
+            final File theirAbsPath = tc.get(TextConflictInfo.theirAbsPath);
+            final File theirOldAbsPath = tc.get(TextConflictInfo.theirOldAbsPath);
+            boolean done = false;
+            
+            if (mineAbsPath != null) {
+                result.set(ConflictStatus.textConflicted, SVNFileType.getType(mineAbsPath) == SVNFileType.FILE);
+                done = result.is(ConflictStatus.textConflicted);
+            }
+            if (!done && theirAbsPath != null) {
+                result.set(ConflictStatus.textConflicted, SVNFileType.getType(theirAbsPath) == SVNFileType.FILE);
+                done = result.is(ConflictStatus.textConflicted);
+            }
+            if (!done && theirOldAbsPath != null) {
+                result.set(ConflictStatus.textConflicted, SVNFileType.getType(theirOldAbsPath) == SVNFileType.FILE);
+                done = result.is(ConflictStatus.textConflicted);
+            }
+            
+            if (!done && (mineAbsPath != null || theirAbsPath != null || theirOldAbsPath != null)) {
+                resolvedText = false;
+            }
+        }
+        if (conflictsInfo.is(ConflictInfo.propConflicted)) {
+            final Structure<PropertyConflictInfo> pc = readPropertyConflict(db, localAbsPath, conflicts);
+            final File propRejectPath = pc.get(PropertyConflictInfo.markerAbspath);
+            if (propRejectPath != null) {
+                result.set(ConflictStatus.propConflicted, SVNFileType.getType(propRejectPath) == SVNFileType.FILE);
+            }
+            if (!result.is(ConflictStatus.propConflicted)) {
+                resolvedProps = true;
+            }
+        }
+        if (conflictsInfo.is(ConflictInfo.treeConflicted)) {
+            final Structure<TreeConflictInfo> pc = readTreeConflict(db, localAbsPath, conflicts);
+            final SVNConflictReason reason = pc.get(TreeConflictInfo.incomingChange);
+            final SVNConflictAction action = pc.get(TreeConflictInfo.localChange);
+            
+            if (reason == SVNConflictReason.MOVED_AWAY && action == SVNConflictAction.EDIT) {
+                result.set(ConflictStatus.treeConflicted, false);
+                result.set(ConflictStatus.conflictIgnored, true);
+            }
+        }
+        if (resolvedProps || resolvedText) {
+            if (db.isWCLockOwns(localAbsPath, false)) {
+                db.opMarkResolved(localAbsPath, resolvedText, resolvedProps, false);
+            }
+        }
+        return result;
+    }
 
-    static SVNSkel readConflictOperation(SVNSkel conflictSkel) {
+    private static SVNSkel readConflictOperation(SVNSkel conflictSkel) {
         return conflictSkel.first();
     }
 
-    static boolean hasConflictKind(SVNSkel conflictSkel, ConflictKind kind) {
+    private static boolean hasConflictKind(SVNSkel conflictSkel, ConflictKind kind) {
         return SvnWcDbConflicts.getConflict(conflictSkel, kind) != null;
     }
 
-    static SVNSkel getConflict(SVNSkel conflictSkel, ConflictKind kind) {
+    private static SVNSkel getConflict(SVNSkel conflictSkel, ConflictKind kind) {
         SVNSkel c = conflictSkel.first().next().first();
         while(c != null) {
             if (kind.name().equalsIgnoreCase(c.first().getValue())) {
@@ -446,7 +529,7 @@ public class SvnWcDbConflicts extends SvnWcDbShared {
         return null;
     }
 
-    static SVNConflictVersion readConflictLocation(SVNSkel locationSkel) throws SVNException {
+    private static SVNConflictVersion readConflictLocation(SVNSkel locationSkel) throws SVNException {
         SVNSkel c = locationSkel.first();
         if (c == null || !c.contentEquals("subversion")) {
             return null;
