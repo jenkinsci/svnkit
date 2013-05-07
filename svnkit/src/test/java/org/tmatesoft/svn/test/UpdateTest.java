@@ -2,6 +2,7 @@ package org.tmatesoft.svn.test;
 
 import org.junit.Assert;
 import org.junit.Assume;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
@@ -19,6 +20,7 @@ import org.tmatesoft.svn.core.wc2.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class UpdateTest {
 
@@ -269,6 +271,42 @@ public class UpdateTest {
             // timestamps should always increase, otherwise this confuses build tools that rely on timestamps
             Assert.assertTrue(timestampBeforeUpdates < timestampBetweenUpdates);
             Assert.assertTrue(timestampBetweenUpdates < timestampAfterUpdates);
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Ignore("Currently fails")
+    @Test
+    public void testUpdateBinaryFile() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testUpdateBinaryFile", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder1 = new CommitBuilder(url);
+            commitBuilder1.addFile("file", new byte[]{0, 1, 2, 3});
+            commitBuilder1.setFileProperty("file", SVNProperty.MIME_TYPE, SVNPropertyValue.create("application/octet-stream"));
+            commitBuilder1.commit();
+
+            final CommitBuilder commitBuilder2 = new CommitBuilder(url);
+            commitBuilder2.changeFile("file", new byte[]{0, 1, 2, 3, 4});
+            commitBuilder2.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, 1);
+            final File file = workingCopy.getFile("file");
+            TestUtil.writeFileContentsString(file, "changed");
+
+            final SvnUpdate update = svnOperationFactory.createUpdate();
+            update.setSingleTarget(SvnTarget.fromFile(workingCopy.getWorkingCopyDirectory()));
+            update.run();
+
+            final Map<File,SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopy.getWorkingCopyDirectory());
+            Assert.assertEquals(SVNStatusType.STATUS_CONFLICTED, statuses.get(file).getNodeStatus());
 
         } finally {
             svnOperationFactory.dispose();
