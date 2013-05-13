@@ -545,7 +545,10 @@ public class SvnWcDbConflicts extends SvnWcDbShared {
     }
 
     public static void conflictSkelOpUpdate(SVNSkel conflictSkel, SVNConflictVersion original, SVNConflictVersion target) throws SVNException {
-        assert conflictSkel != null && conflictSkel.getListSize() >= 2 && conflictSkel.getChild(1) != null && conflictSkel.getChild(1).isAtom();
+        assert conflictSkel != null &&
+               conflictSkel.first() != null &&
+               conflictSkel.first().next() != null &&
+               !conflictSkel.first().next().isAtom();
 
         SVNSkel why = getOperation(conflictSkel);
 
@@ -561,8 +564,18 @@ public class SvnWcDbConflicts extends SvnWcDbShared {
     }
 
     private static SVNSkel getOperation(SVNSkel conflictSkel) throws SVNException {
-        assert conflictSkel != null && conflictSkel.getListSize() >= 2 && conflictSkel.getChild(1) != null && conflictSkel.getChild(1).isAtom();
-        return conflictSkel.getListSize() > 0 ? conflictSkel.getChild(0) : null;
+        assert conflictSkel != null &&
+                conflictSkel.first() != null &&
+                conflictSkel.first().next() != null &&
+                !conflictSkel.first().next().isAtom();
+
+        SVNSkel why = conflictSkel.first();
+
+        if (why.first() == null) {
+            why = null;
+        }
+
+        return why;
     }
 
     public void addPropConflict(SVNSkel skel, String propName, SVNPropertyValue baseVal, SVNPropertyValue mineVal, SVNPropertyValue toVal, SVNPropertyValue fromVal) throws SVNException {
