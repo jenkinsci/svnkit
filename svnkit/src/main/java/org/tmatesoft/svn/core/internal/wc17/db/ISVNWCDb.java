@@ -868,6 +868,8 @@ public interface ISVNWCDb {
      */
     void opMarkResolved(File localAbspath, boolean resolvedText, boolean resolvedProps, boolean resolvedTree) throws SVNException;
 
+    void opMarkConflict(File localAbspath, SVNSkel conflictSkel, SVNSkel workItems) throws SVNException;
+
     void opRevert(File localAbspath, SVNDepth depth) throws SVNException;
 
     /**
@@ -1196,6 +1198,8 @@ public interface ISVNWCDb {
      * This function will probably be removed.
      */
     List<SVNConflictDescription> readConflicts(File localAbsPath) throws SVNException;
+
+    SVNSkel readConflict(File localAbsPath) throws SVNException;
 
     /**
      * Return the kind of the node in DB at LOCAL_ABSPATH. The WORKING tree will

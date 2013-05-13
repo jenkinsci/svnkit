@@ -294,7 +294,10 @@ public class SVNSkel {
             SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.FS_MALFORMED_SKEL, "Unable to add a child to atom");
             SVNErrorManager.error(error, SVNLogType.DEFAULT);
         }
-        myList.add(0, child);        
+        if (!myList.isEmpty()) {
+            child.myNext = myList.get(0);
+        }
+        myList.add(0, child);
     }
 
     public void prependString(String str) throws SVNException {

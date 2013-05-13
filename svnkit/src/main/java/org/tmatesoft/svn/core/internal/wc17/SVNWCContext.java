@@ -61,7 +61,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumOutputStream;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
-import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
+import org.tmatesoft.svn.core.internal.wc17.db.*;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbLock;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbOpenMode;
@@ -77,19 +77,15 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo.RepositoryInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbWorkQueueInfo;
-import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.DirParsedInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.ReposInfo;
-import org.tmatesoft.svn.core.internal.wc17.db.Structure;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.AdditionInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.DeletionInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeOriginInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.PristineInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.WalkerChildInfo;
-import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbReader;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbReader.InstallInfo;
-import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbShared;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldUpgrade;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.ISVNConflictHandler;
@@ -2206,22 +2202,14 @@ public class SVNWCContext {
 
     void conflictSkelAddPropConflict(SVNSkel skel, String propName, SVNPropertyValue baseVal, SVNPropertyValue mineVal, SVNPropertyValue toVal, SVNPropertyValue fromVal) throws SVNException {
         SVNSkel propSkel = SVNSkel.createEmptyList();
-        prependPropValue(fromVal, propSkel);
-        prependPropValue(toVal, propSkel);
-        prependPropValue(mineVal, propSkel);
-        prependPropValue(baseVal, propSkel);
+        SvnWcDbConflicts.prependPropValue(fromVal, propSkel);
+        SvnWcDbConflicts.prependPropValue(toVal, propSkel);
+        SvnWcDbConflicts.prependPropValue(mineVal, propSkel);
+        SvnWcDbConflicts.prependPropValue(baseVal, propSkel);
         
         propSkel.prependString(propName);
         propSkel.prependString(CONFLICT_KIND_PROP);
         skel.appendChild(propSkel);
-    }
-
-    private void prependPropValue(SVNPropertyValue fromVal, SVNSkel skel) throws SVNException {
-        SVNSkel valueSkel = SVNSkel.createEmptyList();
-        if (fromVal != null && (fromVal.getBytes() != null || fromVal.getString() != null)) {
-            valueSkel.prependPropertyValue(fromVal);
-        }
-        skel.prepend(valueSkel);
     }
 
     SVNStatusType setPropMergeState(SVNStatusType state, SVNStatusType newValue) {
@@ -3638,6 +3626,10 @@ public class SVNWCContext {
             File localAbspath = SVNFileUtil.createFilePath(wcRootAbspath, workItem.getChild(1).getValue());
             int listSize = workItem.getListSize();
 
+            File oldBaseAbsPath = null;
+            File newBaseAbsPath = null;
+            File wrkBaseAbsPath = null;
+
             File oldBasename;
             if (listSize > 2) {
                 String value = workItem.getChild(2).getValue();
@@ -3645,6 +3637,9 @@ public class SVNWCContext {
             }
             else {
                 oldBasename = null;
+            }
+            if (oldBasename != null) {
+                oldBaseAbsPath = SVNFileUtil.createFilePath(wcRootAbspath, oldBasename);
             }
 
             File newBasename;
@@ -3655,6 +3650,9 @@ public class SVNWCContext {
             else {
                 newBasename = null;
             }
+            if (newBasename != null) {
+                newBaseAbsPath = SVNFileUtil.createFilePath(wcRootAbspath, newBasename);
+            }
 
             File wrkBasename;
             if (listSize > 4) {
@@ -3664,7 +3662,19 @@ public class SVNWCContext {
             else {
                 wrkBasename = null;
             }
-            ctx.getDb().opSetTextConflictMarkerFilesTemp(localAbspath, oldBasename, newBasename, wrkBasename);
+            if (wrkBasename != null) {
+                wrkBaseAbsPath = SVNFileUtil.createFilePath(wcRootAbspath, wrkBasename);
+            }
+            SVNSkel conflicts = ctx.getDb().readConflict(localAbspath);
+
+            if (conflicts == null) {
+                conflicts = SvnWcDbConflicts.createConflictSkel();
+                SvnWcDbConflicts.conflictSkelOpUpdate(conflicts, null, null);
+            }
+
+            SvnWcDbConflicts.addTextConflict(conflicts, ctx.getDb(), localAbspath, wrkBaseAbsPath, oldBaseAbsPath, newBaseAbsPath);
+
+            ctx.getDb().opMarkConflict(localAbspath, conflicts, null);
         }
     }
 

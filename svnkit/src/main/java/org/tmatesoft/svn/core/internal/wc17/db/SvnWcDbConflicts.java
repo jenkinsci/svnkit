@@ -11,12 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.SVNProperties;
-import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
@@ -34,6 +29,8 @@ import org.tmatesoft.svn.core.wc.SVNOperation;
 import org.tmatesoft.svn.util.SVNLogType;
 
 public class SvnWcDbConflicts extends SvnWcDbShared {
+
+    private static final String CONFLICT_OP_UPDATE = "update";
 
     public enum ConflictInfo {
         conflictOperation,
@@ -122,7 +119,7 @@ public class SvnWcDbConflicts extends SvnWcDbShared {
         why.prepend(SVNSkel.createAtom(operation.getName()));
     }
     
-    public static void addTextConflict(SVNSkel skel, SVNWCDb db, File wriAbsPath, File mineAbsPath, File theirOldAbsPath, File theirAbsPath) throws SVNException {
+    public static void addTextConflict(SVNSkel skel, ISVNWCDb db, File wriAbsPath, File mineAbsPath, File theirOldAbsPath, File theirAbsPath) throws SVNException {
         final SVNSkel textConflict = SVNSkel.createEmptyList();
         final SVNSkel markers = SVNSkel.createEmptyList();
         
@@ -150,7 +147,7 @@ public class SvnWcDbConflicts extends SvnWcDbShared {
         skel.first().next().prepend(textConflict);
     }
 
-    public static void addPropConflict(SVNSkel skel, SVNWCDb db, File wriAbsPath, File markerAbsPath, 
+    public static void addPropConflict(SVNSkel skel, ISVNWCDb db, File wriAbsPath, File markerAbsPath,
             SVNProperties mineProps, 
             SVNProperties theirOldProps, 
             SVNProperties theirProps,
@@ -518,7 +515,7 @@ public class SvnWcDbConflicts extends SvnWcDbShared {
         return SvnWcDbConflicts.getConflict(conflictSkel, kind) != null;
     }
 
-    private static SVNSkel getConflict(SVNSkel conflictSkel, ConflictKind kind) {
+    public static SVNSkel getConflict(SVNSkel conflictSkel, ConflictKind kind) {
         SVNSkel c = conflictSkel.first().next().first();
         while(c != null) {
             if (kind.name().equalsIgnoreCase(c.first().getValue())) {
@@ -545,6 +542,48 @@ public class SvnWcDbConflicts extends SvnWcDbShared {
         c = c.next();
         final SVNNodeKind nodeKind = SVNNodeKind.parseKind(c.getValue());
         return new SVNConflictVersion(repositoryRootURL, reposRelPath, revision, nodeKind);
+    }
+
+    public static void conflictSkelOpUpdate(SVNSkel conflictSkel, SVNConflictVersion original, SVNConflictVersion target) throws SVNException {
+        assert conflictSkel != null && conflictSkel.getListSize() >= 2 && conflictSkel.getChild(1) != null && conflictSkel.getChild(1).isAtom();
+
+        SVNSkel why = getOperation(conflictSkel);
+
+        assert why == null;
+
+        why = conflictSkel.getChild(0);
+
+        SVNSkel origins = SVNSkel.createEmptyList();
+        prependLocation(origins, target);
+        prependLocation(origins, original);
+        why.prepend(origins);
+        why.prependString(CONFLICT_OP_UPDATE);
+    }
+
+    private static SVNSkel getOperation(SVNSkel conflictSkel) throws SVNException {
+        assert conflictSkel != null && conflictSkel.getListSize() >= 2 && conflictSkel.getChild(1) != null && conflictSkel.getChild(1).isAtom();
+        return conflictSkel.getListSize() > 0 ? conflictSkel.getChild(0) : null;
+    }
+
+    public void addPropConflict(SVNSkel skel, String propName, SVNPropertyValue baseVal, SVNPropertyValue mineVal, SVNPropertyValue toVal, SVNPropertyValue fromVal) throws SVNException {
+        SVNSkel propSkel = SVNSkel.createEmptyList();
+        prependPropValue(fromVal, propSkel);
+        prependPropValue(toVal, propSkel);
+        prependPropValue(mineVal, propSkel);
+        prependPropValue(baseVal, propSkel);
+
+        propSkel.prependString(propName);
+        propSkel.prependString(ConflictKind.prop.toString());
+        skel.appendChild(propSkel);
+    }
+
+
+    public static void prependPropValue(SVNPropertyValue fromVal, SVNSkel skel) throws SVNException {
+        SVNSkel valueSkel = SVNSkel.createEmptyList();
+        if (fromVal != null && (fromVal.getBytes() != null || fromVal.getString() != null)) {
+            valueSkel.prependPropertyValue(fromVal);
+        }
+        skel.prepend(valueSkel);
     }
 
 }
