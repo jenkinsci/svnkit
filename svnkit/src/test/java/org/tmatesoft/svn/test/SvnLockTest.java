@@ -17,9 +17,7 @@ import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
-import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
-import org.tmatesoft.svn.core.wc2.SvnSetLock;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
+import org.tmatesoft.svn.core.wc2.*;
 import org.tmatesoft.svn.core.wc2.admin.SvnRepositoryGetLock;
 
 public class SvnLockTest {
@@ -94,21 +92,34 @@ public class SvnLockTest {
             setLock.setStealLock(true);
             setLock.run();
 
+            //svnlook-like way to obtain lock, requires access to FSFS repository
             final SvnRepositoryGetLock getLock = svnOperationFactory.createRepositoryGetLock();
             getLock.setRepositoryRoot(new File(url.getPath()));
             getLock.setPath("directory/file");
-            final SVNLock lock = getLock.run();
+            SVNLock lock = getLock.run();
 
-            final String actualLockOwner = lock == null ? null : lock.getOwner();
-            final String actualLockMessage = lock == null ? null : lock.getComment();
+            checkLockOwnerAndMessage(expectedLockMessage, expectedLockOwner, lock);
 
-            Assert.assertEquals(expectedLockOwner, actualLockOwner);
-            Assert.assertEquals(expectedLockMessage, actualLockMessage);
+            //svn info-like way to obtain lock, requires only working copy (even working copy is not mandatory, one can use SvnTarget#fromURL)
+            final SvnGetInfo getInfo = svnOperationFactory.createGetInfo();
+            getInfo.setSingleTarget(SvnTarget.fromFile(file));
+            final SvnInfo info = getInfo.run();
+
+            lock = info.getLock();
+            checkLockOwnerAndMessage(expectedLockMessage, expectedLockOwner, lock);
 
         } finally {
             svnOperationFactory.dispose();
             sandbox.dispose();
         }
+    }
+
+    private void checkLockOwnerAndMessage(String expectedLockMessage, String expectedLockOwner, SVNLock lock) {
+        String actualLockOwner = lock == null ? null : lock.getOwner();
+        String actualLockMessage = lock == null ? null : lock.getComment();
+
+        Assert.assertEquals(expectedLockOwner, actualLockOwner);
+        Assert.assertEquals(expectedLockMessage, actualLockMessage);
     }
 
     private SVNCommitInfo tryCommit(final String filePath, SVNRepository repository, final Map<String, String> locks) throws SVNException {
