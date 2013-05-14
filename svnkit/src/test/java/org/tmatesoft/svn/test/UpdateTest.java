@@ -278,7 +278,6 @@ public class UpdateTest {
         }
     }
 
-    @Ignore("Currently fails")
     @Test
     public void testUpdateBinaryFile() throws Exception {
         final TestOptions options = TestOptions.getInstance();
