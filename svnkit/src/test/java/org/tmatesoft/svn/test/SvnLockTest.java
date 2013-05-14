@@ -1,6 +1,7 @@
 package org.tmatesoft.svn.test;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -16,6 +17,10 @@ import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
+import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
+import org.tmatesoft.svn.core.wc2.SvnSetLock;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
+import org.tmatesoft.svn.core.wc2.admin.SvnRepositoryGetLock;
 
 public class SvnLockTest {
     
@@ -61,6 +66,49 @@ public class SvnLockTest {
         SVNCommitInfo info = tryCommit(filePath, repository, locks);
         Assert.assertNotNull(info);
         Assert.assertEquals(2, info.getNewRevision());
+    }
+
+    @Test
+    public void testSvnRepositoryGetLock() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getClass().getSimpleName() + ".testSvnRepositoryGetLock", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("directory/file");
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url);
+            final File file = workingCopy.getFile("directory/file");
+
+            final String expectedLockMessage = "Lock message";
+            final String expectedLockOwner = "owner";
+
+            final SvnSetLock setLock = svnOperationFactory.createSetLock();
+            svnOperationFactory.setAuthenticationManager(new BasicAuthenticationManager(expectedLockOwner, null));
+            setLock.setSingleTarget(SvnTarget.fromFile(file));
+            setLock.setLockMessage(expectedLockMessage);
+            setLock.setStealLock(true);
+            setLock.run();
+
+            final SvnRepositoryGetLock getLock = svnOperationFactory.createRepositoryGetLock();
+            getLock.setRepositoryRoot(new File(url.getPath()));
+            getLock.setPath("directory/file");
+            final SVNLock lock = getLock.run();
+
+            final String actualLockOwner = lock == null ? null : lock.getOwner();
+            final String actualLockMessage = lock == null ? null : lock.getComment();
+
+            Assert.assertEquals(expectedLockOwner, actualLockOwner);
+            Assert.assertEquals(expectedLockMessage, actualLockMessage);
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
     }
 
     private SVNCommitInfo tryCommit(final String filePath, SVNRepository repository, final Map<String, String> locks) throws SVNException {
