@@ -30,6 +30,8 @@ import org.tmatesoft.svn.util.SVNLogType;
 public class SvnWcDbConflicts extends SvnWcDbShared {
 
     private static final String CONFLICT_OP_UPDATE = "update";
+    private static final String CONFLICT_OP_SWITCH = "switch";
+    private static final String CONFLICT_OP_MERGE = "merge";
 
     public enum ConflictInfo {
         conflictOperation,
@@ -563,6 +565,42 @@ public class SvnWcDbConflicts extends SvnWcDbShared {
         why.prependString(CONFLICT_OP_UPDATE);
     }
 
+    public static void conflictSkelOpSwitch(SVNSkel conflictSkel, SVNConflictVersion original, SVNConflictVersion target) throws SVNException {
+        assert conflictSkel != null &&
+                conflictSkel.first() != null &&
+                conflictSkel.first().next() != null &&
+                !conflictSkel.first().next().isAtom();
+
+        SVNSkel why = getOperation(conflictSkel);
+
+        assert why == null;
+
+        why = conflictSkel.getChild(0);
+        SVNSkel origins = SVNSkel.createEmptyList();
+        prependLocation(origins, target);
+        prependLocation(origins, original);
+        why.prepend(origins);
+        why.prependString(CONFLICT_OP_SWITCH);
+    }
+
+    public static void conflictSkelOpMerge(SVNSkel conflictSkel, SVNConflictVersion original, SVNConflictVersion target) throws SVNException {
+        assert conflictSkel != null &&
+                conflictSkel.first() != null &&
+                conflictSkel.first().next() != null &&
+                !conflictSkel.first().next().isAtom();
+
+        SVNSkel why = getOperation(conflictSkel);
+
+        assert why == null;
+
+        why = conflictSkel.getChild(0);
+        SVNSkel origins = SVNSkel.createEmptyList();
+        prependLocation(origins, target);
+        prependLocation(origins, original);
+        why.prepend(origins);
+        why.prependString(CONFLICT_OP_MERGE);
+    }
+
     private static SVNSkel getOperation(SVNSkel conflictSkel) throws SVNException {
         assert conflictSkel != null &&
                 conflictSkel.first() != null &&
@@ -606,9 +644,9 @@ public class SvnWcDbConflicts extends SvnWcDbShared {
             if (conflictDescription.getOperation() == SVNOperation.UPDATE) {
                 SvnWcDbConflicts.conflictSkelOpUpdate(skel, conflictDescription.getSourceLeftVersion(), conflictDescription.getSourceRightVersion());
             } else if (conflictDescription.getOperation() == SVNOperation.SWITCH) {
-                throw new UnsupportedOperationException("TODO");
+                SvnWcDbConflicts.conflictSkelOpSwitch(skel, conflictDescription.getSourceLeftVersion(), conflictDescription.getSourceRightVersion());
             } else if (conflictDescription.getOperation() == SVNOperation.MERGE) {
-                throw new UnsupportedOperationException("TODO");
+                SvnWcDbConflicts.conflictSkelOpMerge(skel, conflictDescription.getSourceLeftVersion(), conflictDescription.getSourceRightVersion());
             }
         }
 

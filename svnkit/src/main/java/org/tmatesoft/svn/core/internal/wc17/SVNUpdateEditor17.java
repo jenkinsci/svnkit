@@ -1675,7 +1675,9 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             }
             edited = true;
             if (editConflict != null) {
-                myWCContext.getDb().opSetTreeConflict(localAbsolutePath, editConflict);
+                SVNSkel conflict = SvnWcDbConflicts.treeConflictDescriptionToSkel(myWCContext.getDb(), myWCRootAbsPath, editConflict);
+                myWCContext.getDb().opMarkConflict(localAbsolutePath, conflict, null);
+
                 doNotification(localAbsolutePath, SVNNodeKind.DIR, SVNEventAction.TREE_CONFLICT, getURL(), getPreviousURL());
                 alreadyNotified = true;
             }
