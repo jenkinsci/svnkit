@@ -314,11 +314,11 @@ public class UpdateTest {
     }
 
     @Test
-    public void testUpdateTextFileResultsInConflict() throws Exception {
+    public void testUpdateTextFileResultsInTextConflict() throws Exception {
         final TestOptions options = TestOptions.getInstance();
 
         final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
-        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testUpdateTextFileResultsInConflict", options);
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testUpdateTextFileResultsInTextConflict", options);
         try {
             final SVNURL url = sandbox.createSvnRepository();
 
