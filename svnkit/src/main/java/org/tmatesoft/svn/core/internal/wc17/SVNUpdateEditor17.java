@@ -60,6 +60,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo.RepositoryInfoField;
+import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbConflicts;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaProcessor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.wc.SVNConflictAction;
@@ -1736,7 +1737,9 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             }
             edited = true;
             if (editConflict != null) {
-                myWCContext.getDb().opSetTreeConflict(localAbsolutePath, editConflict);
+                SVNSkel conflict = SvnWcDbConflicts.treeConflictDescriptionToSkel(myWCContext.getDb(), myWCRootAbsPath, editConflict);
+                myWCContext.getDb().opMarkConflict(localAbsolutePath, conflict, null);
+
                 doNotification(localAbsolutePath, SVNNodeKind.FILE, SVNEventAction.TREE_CONFLICT, getURL(), getPreviousURL());
                 alreadyNotified = true;
             }

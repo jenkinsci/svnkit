@@ -14,6 +14,7 @@ import java.util.Set;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.SVNConflictVersion;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -23,9 +24,7 @@ import org.tmatesoft.svn.core.internal.wc17.SVNWCConflictDescription17;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.DirParsedInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.ACTUAL_NODE__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
-import org.tmatesoft.svn.core.wc.SVNConflictAction;
-import org.tmatesoft.svn.core.wc.SVNConflictReason;
-import org.tmatesoft.svn.core.wc.SVNOperation;
+import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.util.SVNLogType;
 
 public class SvnWcDbConflicts extends SvnWcDbShared {
@@ -107,6 +106,7 @@ public class SvnWcDbConflicts extends SvnWcDbShared {
         loc.prepend(SVNSkel.createEmptyList());
         loc.prepend(SVNSkel.createAtom(location.getRepositoryRoot().toString()));
         loc.prepend(SVNSkel.createAtom("subversion"));
+        skel.prepend(loc);
     }
     
     public static void setConflictOperation(SVNSkel skel, SVNOperation operation, SVNConflictVersion original, SVNConflictVersion target) throws SVNException {
@@ -186,7 +186,7 @@ public class SvnWcDbConflicts extends SvnWcDbShared {
         skel.first().next().prepend(propConflict);
     }
 
-    public static void addTreeConflict(SVNSkel skel, SVNWCDb db, File wriAbsPath, 
+    public static void addTreeConflict(SVNSkel skel, ISVNWCDb db, File wriAbsPath,
             SVNConflictReason localChange,
             SVNConflictAction incomingChange,
             File moveSrcOpRootAbsPath) throws SVNException {
@@ -590,7 +590,6 @@ public class SvnWcDbConflicts extends SvnWcDbShared {
         skel.appendChild(propSkel);
     }
 
-
     public static void prependPropValue(SVNPropertyValue fromVal, SVNSkel skel) throws SVNException {
         SVNSkel valueSkel = SVNSkel.createEmptyList();
         if (fromVal != null && (fromVal.getBytes() != null || fromVal.getString() != null)) {
@@ -599,4 +598,20 @@ public class SvnWcDbConflicts extends SvnWcDbShared {
         skel.prepend(valueSkel);
     }
 
+    public static SVNSkel treeConflictDescriptionToSkel(ISVNWCDb db, File wriAbsPath, SVNTreeConflictDescription conflictDescription) throws SVNException {
+        SVNSkel skel = createConflictSkel();
+        addTreeConflict(skel, db, wriAbsPath, conflictDescription.getConflictReason(), conflictDescription.getConflictAction(), null);
+
+        if (conflictDescription.getOperation() != null) {
+            if (conflictDescription.getOperation() == SVNOperation.UPDATE) {
+                SvnWcDbConflicts.conflictSkelOpUpdate(skel, conflictDescription.getSourceLeftVersion(), conflictDescription.getSourceRightVersion());
+            } else if (conflictDescription.getOperation() == SVNOperation.SWITCH) {
+                throw new UnsupportedOperationException("TODO");
+            } else if (conflictDescription.getOperation() == SVNOperation.MERGE) {
+                throw new UnsupportedOperationException("TODO");
+            }
+        }
+
+        return skel;
+    }
 }
