@@ -375,7 +375,8 @@ public class UpdateTest {
             update.run();
 
             final Map<File,SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopy.getWorkingCopyDirectory());
-            Assert.assertEquals(SVNStatusType.STATUS_CONFLICTED, statuses.get(file).getNodeStatus());
+            Assert.assertEquals(SVNStatusType.STATUS_DELETED, statuses.get(file).getNodeStatus());
+            Assert.assertTrue(statuses.get(file).isConflicted());
         } finally {
             svnOperationFactory.dispose();
             sandbox.dispose();
