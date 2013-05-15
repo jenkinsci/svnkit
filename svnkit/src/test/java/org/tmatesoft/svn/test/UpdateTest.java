@@ -418,6 +418,45 @@ public class UpdateTest {
         }
     }
 
+    @Test
+    public void testLocalModificationIncomingDeletionTreeConflict() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testLocalModificationIncomingDeletionTreeConflict", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder1 = new CommitBuilder(url);
+            commitBuilder1.addFile("file");
+            commitBuilder1.addFile("directory/file");
+            commitBuilder1.commit();
+
+            final CommitBuilder commitBuilder2 = new CommitBuilder(url);
+            commitBuilder2.delete("file");
+            commitBuilder2.delete("directory");
+            commitBuilder2.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, 1);
+            final File file = workingCopy.getFile("file");
+            final File anotherFile = workingCopy.getFile("directory/file");
+
+            TestUtil.writeFileContentsString(file, "changed");
+            TestUtil.writeFileContentsString(anotherFile, "changed");
+
+            final SvnUpdate update = svnOperationFactory.createUpdate();
+            update.setSingleTarget(SvnTarget.fromFile(workingCopy.getWorkingCopyDirectory()));
+            update.run();
+
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopy.getWorkingCopyDirectory());
+            Assert.assertEquals(SVNStatusType.STATUS_CONFLICTED, statuses.get(file).getNodeStatus());
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
     private void assertDavPropertiesAreCleaned(WorkingCopy workingCopy) throws SqlJetException, SVNException {
         final SqlJetDb db = SqlJetDb.open(workingCopy.getWCDbFile(), false);
         try {
