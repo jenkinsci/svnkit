@@ -2257,16 +2257,8 @@ public class SVNWCDb implements ISVNWCDb {
 
     public void opSetTreeConflict(File localAbspath, SVNTreeConflictDescription treeConflict) throws SVNException {
         assert (isAbsolute(localAbspath));
-        SetTreeConflict stb = new SetTreeConflict();
-        stb.treeConflict = treeConflict;
-        DirParsedInfo parseDir = parseDir(localAbspath, Mode.ReadWrite);
-        stb.localRelpath = parseDir.localRelPath;
-        SVNWCDbDir pdh = parseDir.wcDbDir;
-        verifyDirUsable(pdh);
-        stb.wcId = pdh.getWCRoot().getWcId();
-        stb.parentRelpath = SVNFileUtil.getFileDir(stb.localRelpath);
-        pdh.getWCRoot().getSDb().runTransaction(stb);
-        pdh.flushEntries(localAbspath);
+        SVNSkel conflictSkel = SvnWcDbConflicts.treeConflictDescriptionToSkel(this, localAbspath, treeConflict);
+        opMarkConflict(localAbspath, conflictSkel, null);
     }
 
     private class SetTreeConflict implements SVNSqlJetTransaction {

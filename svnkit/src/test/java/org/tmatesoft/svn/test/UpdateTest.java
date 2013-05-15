@@ -439,6 +439,7 @@ public class UpdateTest {
 
             final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, 1);
             final File file = workingCopy.getFile("file");
+            final File directory = workingCopy.getFile("directory");
             final File anotherFile = workingCopy.getFile("directory/file");
 
             TestUtil.writeFileContentsString(file, "changed");
@@ -449,7 +450,15 @@ public class UpdateTest {
             update.run();
 
             final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopy.getWorkingCopyDirectory());
-            Assert.assertEquals(SVNStatusType.STATUS_CONFLICTED, statuses.get(file).getNodeStatus());
+            Assert.assertTrue(statuses.get(file).isCopied());
+            Assert.assertTrue(statuses.get(directory).isCopied());
+            Assert.assertTrue(statuses.get(anotherFile).isCopied());
+            Assert.assertTrue(statuses.get(file).isConflicted());
+            Assert.assertTrue(statuses.get(directory).isConflicted());
+            Assert.assertFalse(statuses.get(anotherFile).isConflicted());
+            Assert.assertEquals(SVNStatusType.STATUS_ADDED, statuses.get(file).getNodeStatus());
+            Assert.assertEquals(SVNStatusType.STATUS_ADDED, statuses.get(directory).getNodeStatus());
+            Assert.assertEquals(SVNStatusType.STATUS_MODIFIED, statuses.get(anotherFile).getNodeStatus());
 
         } finally {
             svnOperationFactory.dispose();
