@@ -1100,7 +1100,9 @@ public class SVNWCDb implements ISVNWCDb {
         }
     }
 
-    public File fromRelPath(File wcRootAbsPath, File localRelPath) throws SVNException {
+    public File fromRelPath(File wriAbsPath, File localRelPath) throws SVNException {
+        DirParsedInfo parsed = parseDir(wriAbsPath, Mode.ReadOnly);
+        File wcRootAbsPath = parsed.wcDbDir.getWCRoot().getAbsPath();
         return SVNFileUtil.createFilePath(wcRootAbsPath, localRelPath);
     }
 

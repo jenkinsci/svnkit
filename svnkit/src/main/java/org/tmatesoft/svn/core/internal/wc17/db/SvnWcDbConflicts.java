@@ -341,7 +341,7 @@ public class SvnWcDbConflicts extends SvnWcDbShared {
          }
     }
 
-    public static Structure<PropertyConflictInfo> readPropertyConflict(SVNWCDb db, File wriAbsPath, SVNSkel conflictSkel) throws SVNException {
+    public static Structure<PropertyConflictInfo> readPropertyConflict(ISVNWCDb db, File wriAbsPath, SVNSkel conflictSkel) throws SVNException {
         final SVNSkel propConflict = SvnWcDbConflicts.getConflict(conflictSkel, ConflictKind.prop);
         if (propConflict == null) {
             final SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_MISSING, "Conflict not set");
@@ -351,7 +351,8 @@ public class SvnWcDbConflicts extends SvnWcDbShared {
         final Structure<PropertyConflictInfo> result = Structure.obtain(PropertyConflictInfo.class);
         c = propConflict.first().next();
         if (c.first() != null && c.first().isAtom()) {
-            result.set(PropertyConflictInfo.markerAbspath, new File(c.first().getValue()));
+            File markerRelpath = SVNFileUtil.createFilePath(c.first().getValue());
+            result.set(PropertyConflictInfo.markerAbspath, db.fromRelPath(wriAbsPath, markerRelpath));
         }
         c = c.next();
         final Set<String> conflictedPropertyNames = new HashSet<String>();

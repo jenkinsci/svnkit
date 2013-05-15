@@ -3588,6 +3588,11 @@ public class SVNWCContext {
 
         public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) throws SVNException {
             File localAbspath = SVNFileUtil.createFilePath(wcRootAbspath, workItem.getChild(1).getValue());
+
+            SVNSkel conflicts = ctx.getDb().readConflict(localAbspath);
+            Structure<SvnWcDbConflicts.PropertyConflictInfo> propertyConflictInfo = SvnWcDbConflicts.readPropertyConflict(ctx.getDb(), wcRootAbspath, conflicts);
+            File prejfileAbspath = propertyConflictInfo.get(SvnWcDbConflicts.PropertyConflictInfo.markerAbspath);
+
             SVNSkel conflictSkel = null;
             if (workItem.getListSize() > 2) {
                 conflictSkel = workItem.getChild(2);
@@ -3596,7 +3601,7 @@ public class SVNWCContext {
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
             File tmpPrejfileAbspath = ctx.createPrejFile(localAbspath, conflictSkel);
-            File prejfileAbspath = ctx.getPrejfileAbspath(localAbspath);
+
             assert (prejfileAbspath != null);
             SVNFileUtil.rename(tmpPrejfileAbspath, prejfileAbspath);
         }
@@ -3683,7 +3688,16 @@ public class SVNWCContext {
         public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) throws SVNException {
             File localAbspath = SVNFileUtil.createFilePath(wcRootAbspath, workItem.getChild(1).getValue());
             String prejBasename = workItem.getListSize() > 2 ? workItem.getChild(2).getValue() : null;
-            ctx.getDb().opSetPropertyConflictMarkerFileTemp(localAbspath, prejBasename);
+            File prejAbspath = SVNFileUtil.createFilePath(wcRootAbspath, prejBasename);
+            SVNSkel conflicts = ctx.getDb().readConflict(localAbspath);
+            if (conflicts == null) {
+                conflicts = SvnWcDbConflicts.createConflictSkel();
+                SvnWcDbConflicts.conflictSkelOpUpdate(conflicts, null, null);
+            }
+            Set<String> propNames = new HashSet<String>();
+            SvnWcDbConflicts.addPropConflict(conflicts, ctx.getDb(), localAbspath, prejAbspath,
+                    null, null, null, propNames);
+            ctx.getDb().opMarkConflict(localAbspath, conflicts, null);
         }
     }
 
