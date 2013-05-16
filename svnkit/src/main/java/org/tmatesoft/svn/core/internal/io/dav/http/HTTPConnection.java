@@ -21,15 +21,20 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.ConnectException;
+import java.net.CookieHandler;
 import java.net.HttpURLConnection;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
@@ -107,6 +112,8 @@ public class HTTPConnection implements IHTTPConnection {
     }
 
     private static SAXParserFactory ourSAXParserFactory;
+    private final static Map<String,List<String>> emptyHeader = Collections.unmodifiableMap(Collections.<String, List<String>>emptyMap());
+    
     private byte[] myBuffer;
     private SAXParser mySAXParser;
     private SVNURL myHost;
@@ -126,7 +133,6 @@ public class HTTPConnection implements IHTTPConnection {
     private boolean myIsSpoolAll;
     private File mySpoolDirectory;
     private long myNextRequestTimeout;
-    private Collection<String> myCookies;
     private int myRequestCount;
     private HTTPStatus myLastStatus;
 
@@ -341,7 +347,6 @@ public class HTTPConnection implements IHTTPConnection {
     }
     
     public void clearAuthenticationCache() {
-        myCookies = null;
         myLastValidAuth = null;
         myTrustManager = null;
         myKeyManager = null;
@@ -419,6 +424,12 @@ public class HTTPConnection implements IHTTPConnection {
                 err = null;
                 String httpAuthResponse = null;
                 String proxyAuthResponse = null;
+                URI actualURI = null;
+                try {
+                    actualURI = new URI(myRepository.getLocation().toDecodedString());
+                } catch (URISyntaxException e) {
+                    myRepository.getDebugLog().logError(SVNLogType.NETWORK, e);
+                }
                 while(retryCount >= 0) {
                     connect(keyManager, trustManager, proxyManager);
                     request.reset();
@@ -441,8 +452,12 @@ public class HTTPConnection implements IHTTPConnection {
                         request.setAuthentication(httpAuthResponse);
                     }
 
-                    if (myCookies != null && !myCookies.isEmpty()) {
-                        request.setCookies(myCookies);
+                    final CookieHandler cookieHandler = CookieHandler.getDefault();
+                    if (cookieHandler != null && actualURI != null) {
+                        final Map<String, List<String>> cookieHeader = cookieHandler.get(actualURI, emptyHeader);
+                        if (cookieHeader != null) {
+                            request.setCookies(cookieHeader);
+                        }
                     }
                     try {                        
                         request.dispatch(method, path, header, ok1, ok2, context);
@@ -459,8 +474,9 @@ public class HTTPConnection implements IHTTPConnection {
                         retryCount--;
                     }
                 }
-                if (request.getResponseHeader().hasHeader(HTTPHeader.SET_COOKIE)) {
-                    myCookies = request.getResponseHeader().getHeaderValues(HTTPHeader.COOKIE);
+                final CookieHandler cookieHandler = CookieHandler.getDefault();
+                if(cookieHandler != null && actualURI != null){
+                    cookieHandler.put(actualURI, request.getResponseHeader().getRawHeaders());
                 }
                 myNextRequestTimeout = request.getNextRequestTimeout();
                 myLastStatus = request.getStatus();
