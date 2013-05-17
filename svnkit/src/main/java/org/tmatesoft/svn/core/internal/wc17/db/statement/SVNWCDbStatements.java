@@ -161,6 +161,15 @@ public enum SVNWCDbStatements {
     SELECT_WCROOT_NODES(SVNWCDbSelectWCRootNodes.class),
     UPDATE_IPROPS(SVNWCDbUpdateIProps.class),
     SELECT_IPROPS_NODE(SVNWCDbSelectIPropsNode.class),
+    DELETE_BASE_RECURSIVE(SVNWCDbDeleteBaseRecursive.class),
+    DELETE_WORKING_RECURSIVE(SVNWCDbDeleteWorkingRecursive.class),
+    DELETE_WORKING_BASE_DELETE(SVNWCDbDeleteWorkingBaseDelete.class),
+    DELETE_ACTUAL_FOR_BASE_RECURSIVE(SVNWCDbDeleteActualForBaseRecursive.class),
+    SELECT_MOVED_OUTSIDE(SVNWCDbSelectMovedOutside.class),
+    SELECT_MOVED_TO(SVNWCDbSelectMovedTo.class),
+    CLEAR_MOVED_HERE_RECURSIVE(SVNWCDbClearMovedHereRecursive.class),
+    HAS_SERVER_EXCLUDED_DESCENDANTS(SVNWCDbHasServerExcludedDescendants.class),
+    SELECT_BASE_PRESENT(SVNWCDbSelectBasePresent.class),
     ;
     
 

@@ -46,6 +46,7 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb.Mode;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
@@ -240,6 +241,8 @@ public class SVNWCContext {
         FILE_COPY_TRANSLATED("file-translate", new RunFileTranslate()),
         SYNC_FILE_FLAGS("sync-file-flags", new RunSyncFileFlags()),
         PREJ_INSTALL("prej-install", new RunPrejInstall()),
+        DIRECTORY_REMOVE("dir-remove", null/*TODO*/),
+        DIRECTORY_INSTALL("dir-install", null/*TODO*/),
         RECORD_FILEINFO("record-fileinfo", new RunRecordFileInfo()),
         TMP_SET_TEXT_CONFLICT_MARKERS("tmp-set-text-conflict-markers", new RunSetTextConflictMarkersTemp()),
         TMP_SET_PROPERTY_CONFLICT_MARKER("tmp-set-property-conflict-marker", new RunSetPropertyConflictMarkerTemp()),
@@ -3277,10 +3280,14 @@ public class SVNWCContext {
     }
     
     public SVNSkel wqBuildBaseRemove(File localAbspath, long notPresentRevision, SVNWCDbKind notPresentKind) throws SVNException {
+        return wqBuildBaseRemove((SVNWCDb) getDb(), localAbspath, notPresentRevision, notPresentKind);
+    }
+
+    public static SVNSkel wqBuildBaseRemove(SVNWCDb db, File localAbspath, long notPresentRevision, SVNWCDbKind notPresentKind) throws SVNException {
         SVNSkel workItem = SVNSkel.createEmptyList();
         workItem.prependString(Integer.toString(notPresentKind.ordinal()));
         workItem.prependString(Long.toString(notPresentRevision));
-        workItem.prependPath(getRelativePath(localAbspath));
+        workItem.prependPath(getRelativePath(db, localAbspath));
         workItem.prependString(WorkQueueOperation.BASE_REMOVE.getOpName());
         SVNSkel result = SVNSkel.createEmptyList();
         result.appendChild(workItem);
@@ -3324,12 +3331,26 @@ public class SVNWCContext {
     }
 
     public SVNSkel wqBuildFileRemove(File localAbspath) throws SVNException {
+        return wqBuildFileRemove((SVNWCDb)getDb(), localAbspath, localAbspath);
+    }
+
+    public static SVNSkel wqBuildFileRemove(SVNWCDb db, File wriAbspath, File localAbspath) throws SVNException {
         SVNSkel workItem = SVNSkel.createEmptyList();
-        workItem.prependPath(getRelativePath(localAbspath));
+        workItem.prependPath(db.toRelPath(wriAbspath, localAbspath));
         workItem.prependString(WorkQueueOperation.FILE_REMOVE.getOpName());
         SVNSkel result = SVNSkel.createEmptyList();
         result.appendChild(workItem);
         return result;
+    }
+
+    public static SVNSkel wqBuildDirRemove(SVNWCDb db, File wriAbspath, File localAbspath, boolean recursive) throws SVNException {
+        SVNSkel workItem = SVNSkel.createEmptyList();
+        if (recursive) {
+            workItem.prependString("1");
+        }
+        workItem.prependPath(db.toRelPath(wriAbspath, localAbspath));
+        workItem.prependString(WorkQueueOperation.DIRECTORY_REMOVE.getOpName());
+        return workItem;
     }
 
     public SVNSkel wqBuildPrejInstall(File localAbspath, SVNSkel conflictSkel) throws SVNException {
@@ -4534,10 +4555,14 @@ public class SVNWCContext {
     }
     
     private File getRelativePath(File localAbsPath) throws SVNException {
-        if (localAbsPath == null) {
+        return getRelativePath((SVNWCDb)getDb(), localAbsPath);
+    }
+
+    private static File getRelativePath(SVNWCDb db, File localAbspath) throws SVNException {
+        if (localAbspath == null) {
             return null;
         }
-        DirParsedInfo parseDir = ((SVNWCDb) getDb()).parseDir(localAbsPath, Mode.ReadWrite);
+        DirParsedInfo parseDir = db.parseDir(localAbspath, Mode.ReadWrite);
         return parseDir.localRelPath;
     }
 

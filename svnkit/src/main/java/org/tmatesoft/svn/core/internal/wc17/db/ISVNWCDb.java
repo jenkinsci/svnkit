@@ -580,6 +580,8 @@ public interface ISVNWCDb {
      */
     void removeBase(File localAbsPath) throws SVNException;
 
+    void removeBase(File localAbsPath, boolean keepAsWorking, boolean queueDeletes, long notPresentRevision, SVNSkel conflict, SVNSkel workItems) throws SVNException;
+
     /**
      * Retrieve information about a node in the BASE tree.
      * <p>

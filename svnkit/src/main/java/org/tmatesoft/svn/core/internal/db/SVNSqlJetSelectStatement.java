@@ -293,4 +293,8 @@ public class SVNSqlJetSelectStatement extends SVNSqlJetTableStatement {
         }
         super.reset();
     }
+
+    protected static boolean isStrictDescendantOf(String descendant, String ancestor) {
+        return descendant.startsWith(ancestor + "/");
+    }
 }

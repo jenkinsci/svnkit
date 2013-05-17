@@ -382,7 +382,7 @@ public class SvnWcDbConflicts extends SvnWcDbShared {
         return result;
     }
 
-    public static Structure<TextConflictInfo> readTextConflict(SVNWCDb db, File wriAbsPath, SVNSkel conflictSkel) throws SVNException {
+    public static Structure<TextConflictInfo> readTextConflict(ISVNWCDb db, File wriAbsPath, SVNSkel conflictSkel) throws SVNException {
         final SVNSkel textConflict = SvnWcDbConflicts.getConflict(conflictSkel, ConflictKind.text);
         if (textConflict == null) {
             final SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_MISSING, "Conflict not set");
@@ -408,7 +408,7 @@ public class SvnWcDbConflicts extends SvnWcDbShared {
         return result;
     }
 
-    public static Structure<TreeConflictInfo> readTreeConflict(SVNWCDb db, File wriAbsPath, SVNSkel conflictSkel) throws SVNException {
+    public static Structure<TreeConflictInfo> readTreeConflict(ISVNWCDb db, File wriAbsPath, SVNSkel conflictSkel) throws SVNException {
         final SVNSkel treeConflict = SvnWcDbConflicts.getConflict(conflictSkel, ConflictKind.tree);
         if (treeConflict == null) {
             final SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_MISSING, "Conflict not set");

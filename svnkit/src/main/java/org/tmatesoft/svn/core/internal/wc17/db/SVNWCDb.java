@@ -63,12 +63,8 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
+import org.tmatesoft.svn.core.internal.db.*;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb.Mode;
-import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectStatement;
-import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
-import org.tmatesoft.svn.core.internal.db.SVNSqlJetTransaction;
-import org.tmatesoft.svn.core.internal.db.SVNSqlJetUpdateStatement;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
@@ -83,6 +79,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.internal.wc17.SVNExternalsStore;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCConflictDescription17;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCConflictDescription17.ConflictKind;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbAdditionInfo.AdditionInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbBaseInfo.BaseInfoField;
@@ -2137,6 +2134,46 @@ public class SVNWCDb implements ISVNWCDb {
         return null;
     }
 
+    public void opMakeCopy(File localAbspath, SVNSkel conflicts, SVNSkel workItems) throws SVNException {
+        assert isAbsolute(localAbspath);
+
+        DirParsedInfo parsed = parseDir(localAbspath, Mode.ReadOnly);
+        SVNWCDbDir pdh = parsed.wcDbDir;
+        verifyDirUsable(pdh);
+        File localRelpath = toRelPath(localAbspath);
+        SVNSqlJetDb sdb = pdh.getWCRoot().getSDb();
+        sdb.beginTransaction(SqlJetTransactionMode.WRITE);
+        SVNSqlJetStatement stmt = null;
+        try {
+            stmt = sdb.getStatement(SVNWCDbStatements.SELECT_WORKING_NODE);
+            stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelpath);
+            boolean haveRow = stmt.next();
+
+            if (haveRow) {
+                SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS,
+                        "Modification of '{{0}}' already exists", localAbspath);
+                SVNErrorManager.error(errorMessage, SVNLogType.WC);
+            }
+
+            catchCopyOfServerExcluded(pdh.getWCRoot(), localRelpath);
+
+            MakeCopy makeCopy = new MakeCopy();
+            makeCopy.pdh = pdh;
+            makeCopy.localAbspath = localAbspath;
+            makeCopy.localRelpath = localRelpath;
+            makeCopy.opDepth = SVNWCUtils.relpathDepth(localRelpath);
+            makeCopy.conflicts = conflicts;
+            makeCopy.workItems = workItems;
+            sdb.runTransaction(makeCopy);
+
+        } finally {
+            if (stmt != null) {
+                stmt.reset();
+            }
+            sdb.commit();
+        }
+    }
+
     public void opRevert(File localAbspath, SVNDepth depth) throws SVNException {        
         final DirParsedInfo parsed = parseDir(localAbspath, Mode.ReadWrite);
         SVNWCDbDir pdh = parsed.wcDbDir;
@@ -3188,40 +3225,193 @@ public class SVNWCDb implements ISVNWCDb {
         BaseRemove brb = new BaseRemove();
         brb.localRelpath = localRelpath;
         brb.wcId = pdh.getWCRoot().getWcId();
+        brb.root = pdh.getWCRoot();
         pdh.getWCRoot().getSDb().runTransaction(brb);
         pdh.flushEntries(localAbsPath);
     }
 
-    private class BaseRemove implements SVNSqlJetTransaction {
+    public void removeBase(File localAbsPath, boolean keepAsWorking, boolean queueDeletes, long notPresentRevision, SVNSkel conflict, SVNSkel workItems) throws SVNException {
+        assert (isAbsolute(localAbsPath));
+        DirParsedInfo parseDir = parseDir(localAbsPath, Mode.ReadWrite);
+        SVNWCDbDir pdh = parseDir.wcDbDir;
+        File localRelpath = parseDir.localRelPath;
+        verifyDirUsable(pdh);
+        BaseRemove brb = new BaseRemove();
+        brb.localRelpath = localRelpath;
+        brb.wcId = pdh.getWCRoot().getWcId();
+        brb.root = pdh.getWCRoot();
+        brb.keepAsWorking = keepAsWorking;
+        brb.queueDeletes = queueDeletes;
+        brb.notPresentRevision = notPresentRevision;
+        brb.conflict = conflict;
+        brb.workItems = workItems;
+        pdh.getWCRoot().getSDb().runTransaction(brb);
+        pdh.flushEntries(localAbsPath);
+    }
 
+    public class BaseRemove implements SVNSqlJetTransaction {
+
+        public SVNWCDbRoot root;
         public long wcId;
         public File localRelpath;
 
+        public boolean keepAsWorking;
+        private boolean queueDeletes;
+
+        public SVNSkel conflict;
+        public SVNSkel workItems;
+        public long notPresentRevision;
+
         public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
-            boolean haveRow = false;
-            SVNSqlJetStatement stmt = db.getStatement(SVNWCDbStatements.DELETE_BASE_NODE);
+            boolean keepWorking;
+
+            WCDbBaseInfo baseInfo = getBaseInfo(root, localRelpath, BaseInfoField.status, BaseInfoField.kind, BaseInfoField.reposRelPath, BaseInfoField.reposId);
+            if (baseInfo.status == SVNWCDbStatus.Normal && keepAsWorking) {
+                opMakeCopy(SVNFileUtil.createFilePath(root.getAbsPath(), localRelpath), null, null);
+                keepWorking = true;
+            } else {
+                SVNSqlJetStatement selectWorkingNodeStatement = db.getStatement(SVNWCDbStatements.SELECT_WORKING_NODE);
+                try {
+                    selectWorkingNodeStatement.bindf("is", wcId, localRelpath);
+                    keepWorking = selectWorkingNodeStatement.next();
+                } finally {
+                    selectWorkingNodeStatement.reset();
+                }
+            }
+
+            if (keepWorking && queueDeletes && (baseInfo.status == SVNWCDbStatus.Normal || baseInfo.status == SVNWCDbStatus.Incomplete)) {
+                File localAbsPath = SVNFileUtil.createFilePath(root.getAbsPath(), localRelpath);
+
+                SVNSkel workItem;
+                if (baseInfo.kind == SVNWCDbKind.Dir) {
+                    SVNSqlJetStatement selectWorkingNodeStatement = db.getStatement(SVNWCDbStatements.SELECT_BASE_PRESENT);
+                    try {
+                        selectWorkingNodeStatement.bindf("is", wcId, localRelpath);
+                        while (selectWorkingNodeStatement.next()) {
+                            String nodeRelpath = selectWorkingNodeStatement.getColumnString(NODES__Fields.local_relpath);
+                            SVNWCDbKind nodeKind = SvnWcDbStatementUtil.parseKind(selectWorkingNodeStatement.getColumnString(NODES__Fields.kind));
+
+                            File nodeAbsPath = SVNFileUtil.createFilePath(root.getAbsPath(), nodeRelpath);
+
+                            if (nodeKind == SVNWCDbKind.Dir) {
+                                workItem = SVNWCContext.wqBuildDirRemove(SVNWCDb.this, root.getAbsPath(), nodeAbsPath, false);
+                            } else {
+                                workItem = SVNWCContext.wqBuildFileRemove(SVNWCDb.this, root.getAbsPath(), nodeAbsPath);
+                            }
+                            addWorkItems(root.getSDb(), workItem);
+
+                        }
+                    } finally {
+                        selectWorkingNodeStatement.reset();
+                    }
+
+                    workItem = SVNWCContext.wqBuildDirRemove(SVNWCDb.this, root.getAbsPath(), localAbsPath, false);
+                } else {
+                    workItem = SVNWCContext.wqBuildFileRemove(SVNWCDb.this, root.getAbsPath(), localAbsPath);
+                }
+
+                addWorkItems(root.getSDb(), workItem);
+            }
+
+            if (!keepWorking) {
+                SVNSqlJetStatement stmt = db.getStatement(SVNWCDbStatements.DELETE_ACTUAL_NODE_RECURSIVE);
+                try {
+                    stmt.bindf("is", wcId, localRelpath);
+                    stmt.done();
+                } finally {
+                    stmt.reset();
+                }
+            } else if (!keepAsWorking) {
+                SVNSqlJetStatement stmt = db.getStatement(SVNWCDbStatements.DELETE_ACTUAL_FOR_BASE_RECURSIVE);
+                try {
+                    stmt.bindf("is", wcId, localRelpath);
+                    stmt.done();
+                } finally {
+                    stmt.reset();
+                }
+            }
+
+            if (conflict != null) {
+                SVNSqlJetStatement stmt = db.getStatement(SVNWCDbStatements.SELECT_MOVED_OUTSIDE);
+                try {
+                    stmt.bindf("isi", wcId, localRelpath, SVNWCUtils.relpathDepth(localRelpath));
+                    boolean haveRow = stmt.next();
+
+                    while (haveRow) {
+                        File childRelpath = SVNFileUtil.createFilePath(stmt.getColumnString(NODES__Fields.local_relpath));
+                        clearMovedHere(childRelpath, root);
+                        haveRow = stmt.next();
+                    }
+                } finally {
+                    stmt.reset();
+                }
+            }
+
+            if (keepWorking) {
+                SVNSqlJetStatement stmt = db.getStatement(SVNWCDbStatements.DELETE_WORKING_BASE_DELETE);
+                try {
+                    stmt.bindf("is", wcId, localRelpath);
+                    stmt.done();
+                } finally {
+                    stmt.reset();
+                }
+            } else {
+                SVNSqlJetStatement stmt = db.getStatement(SVNWCDbStatements.DELETE_WORKING_RECURSIVE);
+                try {
+                    stmt.bindf("is", wcId, localRelpath);
+                    stmt.done();
+                } finally {
+                    stmt.reset();
+                }
+            }
+
+            SVNSqlJetStatement stmt = db.getStatement(SVNWCDbStatements.DELETE_BASE_RECURSIVE);
             try {
                 stmt.bindf("is", wcId, localRelpath);
                 stmt.done();
             } finally {
                 stmt.reset();
             }
-            retractParentDelete(db);
-            stmt = db.getStatement(SVNWCDbStatements.SELECT_WORKING_NODE);
+
+            stmt = db.getStatement(SVNWCDbStatements.DELETE_BASE_NODE);
             try {
                 stmt.bindf("is", wcId, localRelpath);
-                haveRow = stmt.next();
+                stmt.done();
             } finally {
                 stmt.reset();
             }
-            if (!haveRow) {
-                stmt = db.getStatement(SVNWCDbStatements.DELETE_ACTUAL_NODE_WITHOUT_CONFLICT);
-                try{
+
+            retractParentDelete(db);
+
+            if (!keepWorking) {
+                stmt = db.getStatement(SVNWCDbStatements.DELETE_ACTUAL_NODE);
+                try {
                     stmt.bindf("is", wcId, localRelpath);
                     stmt.done();
                 } finally {
                     stmt.reset();
                 }
+            }
+
+            if (SVNRevision.isValidRevisionNumber(notPresentRevision)) {
+                InsertBase ibb = new InsertBase();
+                ibb.reposId = baseInfo.reposId;
+                ibb.status = SVNWCDbStatus.NotPresent;
+                ibb.kind = baseInfo.kind;
+                ibb.reposRelpath = baseInfo.reposRelPath;
+                ibb.revision = notPresentRevision;
+
+                ibb.children = null;
+                ibb.depth = SVNDepth.UNKNOWN;
+                ibb.checksum = null;
+                ibb.target = null;
+
+                ibb.transaction(db);
+            }
+
+            addWorkItems(root.getSDb(), workItems);
+            if (conflict != null) {
+                markConflictInternal(root, localRelpath, conflict);
             }
         }
 
@@ -3229,6 +3419,26 @@ public class SVNWCDb implements ISVNWCDb {
             SVNSqlJetStatement stmt = db.getStatement(SVNWCDbStatements.DELETE_LOWEST_WORKING_NODE);
             try {
                 stmt.bindf("is", wcId, localRelpath);
+                stmt.done();
+            } finally {
+                stmt.reset();
+            }
+        }
+
+        private void clearMovedHere(File srcRelpath, SVNWCDbRoot wcRoot) throws SVNException {
+            SVNSqlJetStatement stmt = wcRoot.getSDb().getStatement(SVNWCDbStatements.SELECT_MOVED_TO);
+            File dstRelpath;
+            try {
+                stmt.bindf("isd", wcRoot.getWcId(), srcRelpath, SVNWCUtils.relpathDepth(srcRelpath));
+                stmt.next();
+                dstRelpath = SVNFileUtil.createFilePath(stmt.getColumnString(NODES__Fields.moved_to));
+            } finally {
+                stmt.reset();
+            }
+
+            stmt = wcRoot.getSDb().getStatement(SVNWCDbStatements.CLEAR_MOVED_HERE_RECURSIVE);
+            try {
+                stmt.bindf("isd", wcRoot.getWcId(), dstRelpath, SVNWCUtils.relpathDepth(dstRelpath));
                 stmt.done();
             } finally {
                 stmt.reset();
@@ -3957,12 +4167,31 @@ public class SVNWCDb implements ISVNWCDb {
         }
     }
 
+    private void catchCopyOfServerExcluded(SVNWCDbRoot wcRoot, File localRelpath) throws SVNException {
+        SVNSqlJetStatement stmt = wcRoot.getSDb().getStatement(SVNWCDbStatements.HAS_SERVER_EXCLUDED_DESCENDANTS);
+        try {
+            stmt.bindf("is", wcRoot.getWcId(), localRelpath);
+            boolean haveRow = stmt.next();
+            if (haveRow) {
+                File serverExcludedRelpath = SVNFileUtil.createFilePath(stmt.getColumnString(NODES__Fields.local_relpath));
+                SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.AUTHZ_UNREADABLE,
+                        "Cannot copy '{{0}}' excluded by server",
+                        SVNFileUtil.createFilePath(wcRoot.getAbsPath(), serverExcludedRelpath));
+                SVNErrorManager.error(errorMessage, SVNLogType.WC);
+            }
+        } finally {
+            stmt.reset();
+        }
+    }
+
     private class MakeCopy implements SVNSqlJetTransaction {
 
         File localAbspath;
         SVNWCDbDir pdh;
         File localRelpath;
         long opDepth;
+        SVNSkel conflicts;
+        SVNSkel workItems;
 
         public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
             SVNSqlJetStatement stmt;
@@ -4027,6 +4256,12 @@ public class SVNWCDb implements ISVNWCDb {
             }
             
             pdh.flushEntries(localAbspath);
+
+            if (conflicts != null) {
+                markConflictInternal(pdh.getWCRoot(), localRelpath, conflicts);
+            }
+
+            addWorkItems(pdh.getWCRoot().getSDb(), workItems);
         }
 
     };
