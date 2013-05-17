@@ -738,8 +738,8 @@ public class HTTPConnection implements IHTTPConnection {
                 myLastValidAuth = httpAuth;
             }
 
-            if (authManager instanceof ISVNAuthenticationManagerExt) {
-                ((ISVNAuthenticationManagerExt)authManager).acknowledgeConnectionSuccessful(myRepository.getLocation());
+            if (myLastStatus.getCodeClass() == 2 && authManager instanceof ISVNAuthenticationManagerExt) {
+                ((ISVNAuthenticationManagerExt) authManager).acknowledgeConnectionSuccessful(myRepository.getLocation(), method);
             }
 
             myLastStatus.setHeader(request.getResponseHeader());
