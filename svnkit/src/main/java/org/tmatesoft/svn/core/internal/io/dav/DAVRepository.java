@@ -367,10 +367,11 @@ public class DAVRepository extends SVNRepository {
                     
                     long size = 0;
                     if ((entryFields & SVNDirEntry.DIRENT_SIZE) != 0) {
-                    SVNPropertyValue sizeValue = child.getPropertyValue(DAVElement.GET_CONTENT_LENGTH);
-                        if (sizeValue != null) {
+                        final SVNPropertyValue sizeValue = child.getPropertyValue(DAVElement.GET_CONTENT_LENGTH);
+                        final String sizeValueString = SVNPropertyValue.getPropertyAsString(sizeValue);
+                        if (sizeValueString != null && sizeValueString.trim().length() > 0) {
                             try {
-                                size = Long.parseLong(sizeValue.getString());
+                                size = Long.parseLong(sizeValueString.trim());
                             } catch (NumberFormatException nfe) {
                                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, nfe), SVNLogType.NETWORK);
                             }
@@ -495,11 +496,12 @@ public class DAVRepository extends SVNRepository {
                         SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, nfe), SVNLogType.NETWORK);
                     }
                 }
-                SVNPropertyValue sizeValue = child.getPropertyValue(DAVElement.GET_CONTENT_LENGTH);
+                final SVNPropertyValue sizeValue = child.getPropertyValue(DAVElement.GET_CONTENT_LENGTH);
+                final String sizeValueString = SVNPropertyValue.getPropertyAsString(sizeValue);
                 long size = 0;
-                if (sizeValue != null) {
+                if (sizeValueString != null && sizeValueString.trim().length() > 0) {
                     try {
-                        size = Long.parseLong(sizeValue.getString());
+                        size = Long.parseLong(sizeValueString.trim());
                     } catch (NumberFormatException nfe) {
                         SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, nfe), SVNLogType.NETWORK);
                     }
@@ -1310,12 +1312,12 @@ public class DAVRepository extends SVNRepository {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, nfe), SVNLogType.NETWORK);
             }
         }
-        SVNPropertyValue sizeValue = child.getPropertyValue(DAVElement.GET_CONTENT_LENGTH);
-        
+        final SVNPropertyValue sizeValue = child.getPropertyValue(DAVElement.GET_CONTENT_LENGTH);
+        final String sizeValueString = SVNPropertyValue.getPropertyAsString(sizeValue);
         long size = 0;
-        if (sizeValue != null) {
+        if (sizeValueString != null && sizeValueString.trim().length() > 0) {
             try {
-                size = Long.parseLong(sizeValue.getString());
+                size = Long.parseLong(sizeValueString.trim());
             } catch (NumberFormatException nfe) {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, nfe), SVNLogType.NETWORK);
             }
