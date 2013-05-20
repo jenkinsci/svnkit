@@ -241,7 +241,7 @@ public class SVNWCContext {
         FILE_COPY_TRANSLATED("file-translate", new RunFileTranslate()),
         SYNC_FILE_FLAGS("sync-file-flags", new RunSyncFileFlags()),
         PREJ_INSTALL("prej-install", new RunPrejInstall()),
-        DIRECTORY_REMOVE("dir-remove", null/*TODO*/),
+        DIRECTORY_REMOVE("dir-remove", new RunDirRemove()),
         DIRECTORY_INSTALL("dir-install", null/*TODO*/),
         RECORD_FILEINFO("record-fileinfo", new RunRecordFileInfo()),
         TMP_SET_TEXT_CONFLICT_MARKERS("tmp-set-text-conflict-markers", new RunSetTextConflictMarkersTemp()),
@@ -3625,6 +3625,36 @@ public class SVNWCContext {
 
             assert (prejfileAbspath != null);
             SVNFileUtil.rename(tmpPrejfileAbspath, prejfileAbspath);
+        }
+    }
+
+    public static class RunDirRemove implements RunWorkQueueOperation {
+
+        @Override
+        public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) throws SVNException {
+            SVNSkel arg1 = workItem.first().next();
+
+            File localRelpath = SVNFileUtil.createFilePath(arg1.getValue());
+            File localAbspath = SVNFileUtil.createFilePath(wcRootAbspath, localRelpath);
+
+            boolean recursive = false;
+
+            if (arg1.next() != null) {
+                recursive = !"0".equals(arg1.next().getValue());
+            }
+
+            if (recursive) {
+                SVNFileUtil.deleteAll(localAbspath, true);
+            } else {
+                try {
+                    SVNFileUtil.deleteFile(localAbspath);
+                } catch (SVNException e) {
+                    if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_DIRECTORY &&
+                            e.getErrorMessage().getErrorCode() != SVNErrorCode.DIR_NOT_EMPTY) {
+                        throw e;
+                    }
+                }
+            }
         }
     }
 

@@ -328,7 +328,7 @@ public class SVNWCDb implements ISVNWCDb {
         }
 
         /* Is the list a single work item? Or a list of work items? */
-        if (skel.isAtom()) {
+        if (skel.first().isAtom()) {
             addSingleWorkItem(sDb, skel);
         } else {
             /* SKEL is a list-of-lists, aka list of work items. */
@@ -3279,7 +3279,7 @@ public class SVNWCDb implements ISVNWCDb {
                 }
             }
 
-            if (keepWorking && queueDeletes && (baseInfo.status == SVNWCDbStatus.Normal || baseInfo.status == SVNWCDbStatus.Incomplete)) {
+            if (!keepWorking && queueDeletes && (baseInfo.status == SVNWCDbStatus.Normal || baseInfo.status == SVNWCDbStatus.Incomplete)) {
                 File localAbsPath = SVNFileUtil.createFilePath(root.getAbsPath(), localRelpath);
 
                 SVNSkel workItem;
