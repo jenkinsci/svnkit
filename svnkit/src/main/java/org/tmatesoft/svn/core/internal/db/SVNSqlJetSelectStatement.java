@@ -99,7 +99,7 @@ public class SVNSqlJetSelectStatement extends SVNSqlJetTableStatement {
             next = super.next();
             loadRowValues(next);
             if (next && !pathScopeMatches()) {
-                return false;
+                continue;
             }
         } while(next && !pathIsDecendant());
         

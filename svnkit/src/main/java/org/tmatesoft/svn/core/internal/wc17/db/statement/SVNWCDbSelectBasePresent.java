@@ -1,5 +1,7 @@
 package org.tmatesoft.svn.core.internal.wc17.db.statement;
 
+import org.tmatesoft.sqljet.core.SqlJetException;
+import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetSelectFieldsStatement;
@@ -55,4 +57,19 @@ public class SVNWCDbSelectBasePresent extends SVNSqlJetSelectFieldsStatement<SVN
                 (presence == ISVNWCDb.SVNWCDbStatus.Normal || presence == ISVNWCDb.SVNWCDbStatus.Incomplete) &&
                 minOpDepthSelect.getMinOpDepth((Long)getBind(1), getColumnString(SVNWCDbSchema.NODES__Fields.local_relpath)) == null;
     }
+
+    @Override
+    protected ISqlJetCursor openCursor() throws SVNException {
+        ISqlJetCursor cursor = super.openCursor();
+        if (cursor != null) {
+            try {
+                cursor = cursor.reverse();
+            } catch (SqlJetException e) {
+                SVNSqlJetDb.createSqlJetError(e);
+            }
+        }
+        return cursor;
+    }
+
+    //TODO: implement ORDER BY
 }

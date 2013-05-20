@@ -13,6 +13,7 @@ import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.io.dav.DAVUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNExternal;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.core.wc2.*;
@@ -459,6 +460,44 @@ public class UpdateTest {
             Assert.assertEquals(SVNStatusType.STATUS_ADDED, statuses.get(file).getNodeStatus());
             Assert.assertEquals(SVNStatusType.STATUS_ADDED, statuses.get(directory).getNodeStatus());
             Assert.assertEquals(SVNStatusType.STATUS_MODIFIED, statuses.get(anotherFile).getNodeStatus());
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testUpdateToZeroRevsionDeletesFilesInWorkingCopy() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testUpdateToZeroRevsionDeletesFilesInWorkingCopy", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url);
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+            final File file = workingCopy.getFile("directory/subdirectory/file");
+            SVNFileUtil.ensureDirectoryExists(file.getParentFile());
+            TestUtil.writeFileContentsString(file, "");
+
+            workingCopy.add(file);
+            workingCopy.commit("");
+
+            final EventsHandler eventHandler = new EventsHandler();
+            svnOperationFactory.setEventHandler(eventHandler);
+
+            final SvnUpdate update = svnOperationFactory.createUpdate();
+            update.setRevision(SVNRevision.create(0));
+            update.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            update.run();
+
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
+            Assert.assertEquals(1, statuses.size());
+            Assert.assertEquals(0, statuses.get(workingCopyDirectory).getRevision());
+            Assert.assertEquals(SVNStatusType.STATUS_NORMAL, statuses.get(workingCopyDirectory).getNodeStatus());
+            Assert.assertFalse(workingCopy.getFile("directory").exists());
 
         } finally {
             svnOperationFactory.dispose();
