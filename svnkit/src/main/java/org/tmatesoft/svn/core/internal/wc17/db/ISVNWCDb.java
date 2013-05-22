@@ -1629,4 +1629,13 @@ public interface ISVNWCDb {
     SVNWCDbNodeCheckReplaceData nodeCheckReplace(File localAbspath) throws SVNException;
     
     SVNSqlJetDb getSDb(File dirAbsPath) throws SVNException;
+
+    SVNWCDbBaseMovedToData baseMovedTo(File localAbsPath) throws SVNException;
+
+    class SVNWCDbBaseMovedToData {
+        public File moveDstAbsPath;
+        public File moveDstOpRootAbsPath;
+        public File moveSrcRootAbsPath;
+        public File moveSrcOpRootAbsPath;
+    }
 }

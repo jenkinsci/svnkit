@@ -5492,4 +5492,92 @@ public class SVNWCDb implements ISVNWCDb {
 
         return new SVNWCDbNodeCheckReplaceData(checkReplace.replaceRoot, checkReplace.replace, checkReplace.baseReplace);
     }
+
+    public SVNWCDbBaseMovedToData baseMovedTo(File localAbsPath) throws SVNException {
+        assert isAbsolute(localAbsPath);
+
+        DirParsedInfo parsed = parseDir(localAbsPath, Mode.ReadOnly);
+        SVNWCDbDir pdh = parsed.wcDbDir;
+        verifyDirUsable(pdh);
+
+        BaseMovedTo bmt = new BaseMovedTo();
+        bmt.wcRoot = pdh.getWCRoot();
+        bmt.localRelPath = parsed.localRelPath;
+        bmt.opDepth = 0;
+        pdh.getWCRoot().getSDb().runTransaction(bmt);
+
+        SVNWCDbBaseMovedToData baseMovedToData = new SVNWCDbBaseMovedToData();
+        if (bmt.moveDstRelPath != null) {
+            baseMovedToData.moveDstAbsPath = SVNFileUtil.createFilePath(pdh.getWCRoot().getAbsPath(), bmt.moveDstRelPath);
+        }
+        if (bmt.moveDstOpRootRelPath != null) {
+            baseMovedToData.moveDstOpRootAbsPath = SVNFileUtil.createFilePath(pdh.getWCRoot().getAbsPath(), bmt.moveDstOpRootRelPath);
+        }
+        if (bmt.moveSrcRootRelPath != null) {
+            baseMovedToData.moveSrcRootAbsPath = SVNFileUtil.createFilePath(pdh.getWCRoot().getAbsPath(), bmt.moveSrcRootRelPath);
+        }
+        if (bmt.moveSrcOpRootRelPath != null) {
+            baseMovedToData.moveSrcOpRootAbsPath = SVNFileUtil.createFilePath(pdh.getWCRoot().getAbsPath(), bmt.moveSrcOpRootRelPath);
+        }
+        return baseMovedToData;
+    }
+
+    private static class BaseMovedTo implements SVNSqlJetTransaction {
+
+        public SVNWCDbRoot wcRoot;
+        public File localRelPath;
+        public long opDepth;
+
+        public File moveDstOpRootRelPath;
+        public File moveDstRelPath;
+        public File moveSrcRootRelPath;
+        public File moveSrcOpRootRelPath;
+
+        @Override
+        public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
+            File moveDstOpRootRelPath = null;
+            File moveDstRelPath = null;
+            File moveSrcRootRelPath = null;
+            File moveSrcOpRootRelPath = null;
+            long deleteOpDepth = 0;
+            File relPath = localRelPath;
+
+            boolean haveRow;
+            do {
+                SVNSqlJetStatement stmt = wcRoot.getSDb().getStatement(SVNWCDbStatements.SELECT_LOWEST_WORKING_NODE);
+                try {
+                    stmt.bindf("isi", wcRoot.getWcId(), localRelPath, opDepth);
+                    haveRow = stmt.next();
+                    if (haveRow) {
+                        deleteOpDepth = stmt.getColumnLong(NODES__Fields.op_depth);
+                        moveDstOpRootRelPath = SVNFileUtil.createFilePath(stmt.getColumnString(NODES__Fields.moved_to));
+                        if (moveDstOpRootRelPath != null) {
+                            moveSrcRootRelPath = relPath;
+                        }
+                    }
+                    if (moveDstOpRootRelPath == null) {
+                        relPath = SVNFileUtil.getParentFile(relPath);
+                    }
+
+                } finally {
+                    stmt.reset();
+                }
+            } while (moveDstOpRootRelPath == null && haveRow && deleteOpDepth <= SVNWCUtils.relpathDepth(relPath));
+
+
+            if (moveDstOpRootRelPath != null) {
+                moveDstRelPath = SVNFileUtil.createFilePath(moveDstOpRootRelPath, SVNWCUtils.skipAncestor(relPath, localRelPath));
+
+                while (deleteOpDepth < SVNWCUtils.relpathDepth(relPath)) {
+                    relPath = SVNFileUtil.getParentFile(relPath);
+                }
+                moveSrcOpRootRelPath = relPath;
+            }
+
+            this.moveSrcRootRelPath = moveSrcRootRelPath;
+            this.moveSrcOpRootRelPath = moveSrcOpRootRelPath;
+            this.moveDstRelPath = moveDstRelPath;
+            this.moveDstOpRootRelPath = moveDstOpRootRelPath;
+        }
+    }
 }
