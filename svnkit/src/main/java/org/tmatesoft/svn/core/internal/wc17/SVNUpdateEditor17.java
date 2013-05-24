@@ -1520,13 +1520,15 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             SVNErrorManager.error(err, SVNLogType.WC);            
         }
 
-        SVNProperties entryProps = fb.entryPropChanges;
-        SVNProperties davProps = fb.davPropChanges;
+        SVNProperties regularPropChanges = new SVNProperties();
+        SVNProperties entryProps = new SVNProperties();
+        SVNProperties davProps = new SVNProperties();
+        SvnNgPropertiesManager.categorizeProperties(fb.propChanges, regularPropChanges, entryProps, davProps);
+
         SVNPropertyValue newWCDavURL = davProps != null ? davProps.getSVNPropertyValue(SVNProperty.WC_URL) : null;
         if (newWCDavURL == null) {
             davProps = null;
         }
-        SVNProperties regularPropChanges = fb.regularPropChanges;
 
         AccumulatedChangeInfo lastChange = accumulateLastChange(fb.localAbsolutePath, entryProps);
         long newChangedRev = lastChange.changedRev;
@@ -1546,7 +1548,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         for (Iterator<?> i = entryProps.nameSet().iterator(); i.hasNext();) {
             String name = (String) i.next();
             if (SVNProperty.LOCK_TOKEN.equals(name)) {
-                if (mySwitchRelpath == null || fb.newRelativePath.equals(fb.oldReposRelativePath)) {
+                if (mySwitchRelpath == null || fb.newRelativePath.equals(fb.oldReposRelPath)) {
                 assert (entryProps.getStringValue(name) == null);
                 myWCContext.getDb().removeLock(fb.localAbsolutePath);
                 lockState = SVNStatusType.LOCK_UNLOCKED;
@@ -1873,7 +1875,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         private BumpDirectoryInfo bumpInfo;
         private SVNDepth ambientDepth;
         private boolean wasIncomplete;
-        
+
         public void markEdited() throws SVNException {
             if (edited) {
                 return;
@@ -1883,8 +1885,8 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             }
             edited = true;
             if (editConflict != null) {
-                SVNSkel conflict = SvnWcDbConflicts.treeConflictDescriptionToSkel(myWCContext.getDb(), myWCRootAbsPath, editConflict);
-                myWCContext.getDb().opMarkConflict(localAbsolutePath, conflict, null);
+                completeConflict(editConflict, localAbsolutePath, oldReposRelPath, oldRevision, newRelativePath, SVNNodeKind.DIR, SVNNodeKind.DIR);
+                myWCContext.getDb().opMarkConflict(localAbsolutePath, editConflict, null);
 
                 doNotification(localAbsolutePath, SVNNodeKind.DIR, SVNEventAction.TREE_CONFLICT, getURL(), getPreviousURL());
                 alreadyNotified = true;
@@ -1899,8 +1901,8 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         }
 
         public SVNURL getPreviousURL() throws SVNException {
-            if (oldRelativePath != null) {
-                return SVNWCUtils.join(myReposRootURL, oldRelativePath);
+            if (oldReposRelPath != null) {
+                return SVNWCUtils.join(myReposRootURL, oldReposRelPath);
             }
             return null;
         }
@@ -1952,8 +1954,8 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             }
             edited = true;
             if (editConflict != null) {
-                SVNSkel conflict = SvnWcDbConflicts.treeConflictDescriptionToSkel(myWCContext.getDb(), myWCRootAbsPath, editConflict);
-                myWCContext.getDb().opMarkConflict(localAbsolutePath, conflict, null);
+                completeConflict(editConflict, localAbsolutePath, oldReposRelPath, oldRevision, newRelativePath, SVNNodeKind.FILE, SVNNodeKind.FILE);
+                myWCContext.getDb().opMarkConflict(localAbsolutePath, editConflict, null);
 
                 doNotification(localAbsolutePath, SVNNodeKind.FILE, SVNEventAction.TREE_CONFLICT, getURL(), getPreviousURL());
                 alreadyNotified = true;
@@ -1968,8 +1970,8 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         }
 
         public SVNURL getPreviousURL() throws SVNException {
-            if (oldRelativePath != null) {
-                return SVNWCUtils.join(myReposRootURL, oldRelativePath);
+            if (oldReposRelPath != null) {
+                return SVNWCUtils.join(myReposRootURL, oldReposRelPath);
             }
             return null;
         }
@@ -2033,6 +2035,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             d.shadowed = parent.shadowed || parent.editedObstructed;
         }
         d.ambientDepth = SVNDepth.UNKNOWN;
+        d.propChanges = new SVNProperties();
         return d;
     }
     
@@ -2062,6 +2065,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         f.directoryBaton = parent;
         f.changedRevison = -1;
         f.bumpInfo.refCount++;
+        f.propChanges = new SVNProperties();
         
         return f;
     }
@@ -2232,17 +2236,8 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             isLocallyModified = myWCContext.isTextModified(fb.localAbsolutePath, false);
         }
         
-        SVNProperties propChanges = new SVNProperties();
-        if (fb.regularPropChanges != null) {
-            propChanges.putAll(fb.regularPropChanges);
-        } 
-        if (fb.entryPropChanges != null) {
-            propChanges.putAll(fb.entryPropChanges);
-        }
-        if (fb.davPropChanges != null) {
-            propChanges.putAll(fb.davPropChanges);
-        }
-        
+        SVNProperties propChanges = fb.propChanges;
+
         if (!isLocallyModified && fb.newTextBaseSHA1Checksum != null) {
             mergeFileInfo.installPristine = true;
         } else if (fb.newTextBaseSHA1Checksum != null) {
