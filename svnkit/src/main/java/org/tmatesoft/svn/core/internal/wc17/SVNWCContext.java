@@ -4525,6 +4525,8 @@ public class SVNWCContext {
         public File localFile;
         public File propRejectFile;
         public SVNTreeConflictDescription treeConflict;
+
+        public boolean ignored; //TODO (never assigned currently)
     }
 
     public PropDiffs getPropDiffs(File localAbsPath) throws SVNException {
