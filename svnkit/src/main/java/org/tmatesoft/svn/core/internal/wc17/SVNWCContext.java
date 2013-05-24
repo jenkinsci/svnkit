@@ -3630,7 +3630,6 @@ public class SVNWCContext {
 
     public static class RunDirRemove implements RunWorkQueueOperation {
 
-        @Override
         public void runOperation(SVNWCContext ctx, File wcRootAbspath, SVNSkel workItem) throws SVNException {
             SVNSkel arg1 = workItem.first().next();
 
