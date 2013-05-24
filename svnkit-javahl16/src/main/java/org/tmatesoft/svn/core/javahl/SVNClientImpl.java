@@ -19,10 +19,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.tigris.subversion.javahl.BlameCallback;
 import org.tigris.subversion.javahl.BlameCallback2;
@@ -85,7 +87,6 @@ import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.core.internal.io.svn.SVNSSHConnector;
 import org.tmatesoft.svn.core.internal.util.DefaultSVNDebugFormatter;
 import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
@@ -1182,13 +1183,19 @@ public class SVNClientImpl implements SVNClientInterface {
         if (path == null || callback == null) {
             return;
         }
-        PropertyData[] properties = properties(path, revision, pegRevision, 
-                JavaHLObjectFactory.getSVNDepth(depth), changelists);
-        Map propsMap = new SVNHashMap();
+        final PropertyData[] properties = properties(path, revision, pegRevision, JavaHLObjectFactory.getSVNDepth(depth), changelists);
+        final Map<String, Map<String, byte[]>> propsMap = new TreeMap<String, Map<String,byte[]>>(SVNPathUtil.PATH_COMPARATOR);
         for (int i = 0; i < properties.length; i++) {
-            propsMap.put(properties[i].getName(), properties[i].getData());
+            final String propertyPath = properties[i].getPath();
+            if (!propsMap.containsKey(propertyPath)) {
+                propsMap.put(propertyPath, new HashMap<String, byte[]>());
+            }
+            propsMap.get(propertyPath).put(properties[i].getName(), properties[i].getData());
         }
-        callback.singlePath(path, propsMap);
+        for (String propertyPath : propsMap.keySet()) {
+            final Map<String, byte[]> pathProps = propsMap.get(propertyPath);
+            callback.singlePath(propertyPath, pathProps);
+        }
 	}
 
     private PropertyData[] properties(String path, Revision revision, Revision pegRevision, SVNDepth depth, 
