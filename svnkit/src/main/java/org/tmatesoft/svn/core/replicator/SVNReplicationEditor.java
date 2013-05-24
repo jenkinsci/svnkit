@@ -554,7 +554,7 @@ public class SVNReplicationEditor implements ISVNEditor {
     }
 
     private SVNLogEntryPath getFileCopyOrigin(String path) throws SVNException {
-        Object[] paths = myCopiedPaths.keySet().toArray();
+        String[] paths = (String[]) myCopiedPaths.keySet().toArray(new String[myCopiedPaths.size()]);
         Arrays.sort(paths, 0, paths.length, SVNPathUtil.PATH_COMPARATOR);
         SVNLogEntryPath realPath = null;
         List candidates = new ArrayList();
