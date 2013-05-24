@@ -2,29 +2,23 @@ package org.tmatesoft.svn.core.internal.wc17.db;
 
 import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.reset;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.io.*;
+import java.util.*;
 
+import de.regnis.q.sequence.line.QSequenceLineRAByteData;
+import de.regnis.q.sequence.line.QSequenceLineRAFileData;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
-import org.tmatesoft.svn.core.internal.wc.SVNConflictVersion;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.SVNFileType;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.*;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCConflictDescription17;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.DirParsedInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.ACTUAL_NODE__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.wc2.ISvnConflictHandler;
 import org.tmatesoft.svn.util.SVNLogType;
 
 public class SvnWcDbConflicts extends SvnWcDbShared {
@@ -617,7 +611,7 @@ public class SvnWcDbConflicts extends SvnWcDbShared {
         return why;
     }
 
-    public void addPropConflict(SVNSkel skel, String propName, SVNPropertyValue baseVal, SVNPropertyValue mineVal, SVNPropertyValue toVal, SVNPropertyValue fromVal) throws SVNException {
+    public static void addPropConflict(SVNSkel skel, String propName, SVNPropertyValue baseVal, SVNPropertyValue mineVal, SVNPropertyValue toVal, SVNPropertyValue fromVal) throws SVNException {
         SVNSkel propSkel = SVNSkel.createEmptyList();
         prependPropValue(fromVal, propSkel);
         prependPropValue(toVal, propSkel);

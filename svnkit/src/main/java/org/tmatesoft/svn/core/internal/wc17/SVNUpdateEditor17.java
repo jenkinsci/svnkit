@@ -68,15 +68,7 @@ import org.tmatesoft.svn.core.internal.wc2.ng.SvnNgPropertiesManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaProcessor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
-import org.tmatesoft.svn.core.wc.SVNConflictAction;
-import org.tmatesoft.svn.core.wc.SVNConflictDescription;
-import org.tmatesoft.svn.core.wc.SVNConflictReason;
-import org.tmatesoft.svn.core.wc.SVNEvent;
-import org.tmatesoft.svn.core.wc.SVNEventAction;
-import org.tmatesoft.svn.core.wc.SVNOperation;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNStatusType;
-import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
+import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.core.wc2.ISvnObjectReceiver;
 import org.tmatesoft.svn.core.wc2.SvnChecksum;
 import org.tmatesoft.svn.core.wc2.SvnStatus;
@@ -117,8 +109,9 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
     private File myWCRootAbsPath;
 
     private Map<File, Map<String, SVNProperties>> myInheritableProperties;
+    private ISVNConflictHandler myConflictHandler;
     
-    public static ISVNUpdateEditor createUpdateEditor(SVNWCContext context, 
+    public static ISVNUpdateEditor createUpdateEditor(SVNWCContext context,
             long targetRevision, 
             File anchorAbspath, 
             String targetName, 
@@ -1067,7 +1060,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         }
         
         if (db.addExisted) {
-            baseProps = myWCContext.getPristineProps(db.localAbsolutePath);
+            baseProps = myWCContext.getDb().readPristineProperties(db.localAbsolutePath);
         } else if (!db.addingDir) {
             baseProps = myWCContext.getDb().getBaseProps(db.localAbsolutePath);
         } else {
@@ -1117,11 +1110,12 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                     actualProps = baseProps;
                 }
             }
-            MergePropertiesInfo mergeProperiesInfo = myWCContext.mergeProperties2(null, db.localAbsolutePath, SVNWCDbKind.Dir, null, null, null, baseProps, actualProps, regularProps, true, false);
+            MergePropertiesInfo mergeProperiesInfo = myWCContext.mergeProperties3(null, db.localAbsolutePath, SVNWCDbKind.Dir, null, baseProps, actualProps, regularProps);
             newActualProps = mergeProperiesInfo.newActualProperties;
             newBaseProps = mergeProperiesInfo.newBaseProperties;
             propStatus[0] = mergeProperiesInfo.mergeOutcome;
-            allWorkItems = myWCContext.wqMerge(allWorkItems, mergeProperiesInfo.workItems);            
+            conflictSkel = mergeProperiesInfo.conflictSkel;
+//            allWorkItems = myWCContext.wqMerge(allWorkItems, mergeProperiesInfo.workItems);
         }
         AccumulatedChangeInfo change = accumulateLastChange(db.localAbsolutePath, entryProps);
 
@@ -1191,14 +1185,29 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             }
             
             Map<String, SVNProperties> iprops = null;
+
+            if (conflictSkel != null) {
+                completeConflict(conflictSkel, db.localAbsolutePath, db.oldReposRelPath, db.oldRevision,
+                        db.newRelativePath, SVNNodeKind.DIR, SVNNodeKind.DIR);
+
+                SVNSkel workItem = myWCContext.conflictCreateMarker(conflictSkel, db.localAbsolutePath);
+                allWorkItems = myWCContext.wqMerge(allWorkItems, workItem);
+            }
+
             if (myInheritableProperties != null) {
                 iprops = myInheritableProperties.remove(db.localAbsolutePath);
             }
-            myWCContext.getDb().addBaseDirectory(db.localAbsolutePath, db.newRelativePath, myReposRootURL, myReposUuid, myTargetRevision, props, db.changedRevsion, db.changedDate, db.changedAuthor, null, db.ambientDepth, 
+
+            myWCContext.getDb().addBaseDirectory(db.localAbsolutePath, db.newRelativePath, myReposRootURL, myReposUuid, myTargetRevision, props, db.changedRevsion, db.changedDate, db.changedAuthor, null, db.ambientDepth,
                     davProps != null && !davProps.isEmpty() ? davProps : null, null, !db.shadowed && newBaseProps != null, newActualProps, iprops, allWorkItems);
             
         }
         myWCContext.wqRun(db.localAbsolutePath);
+
+        if (conflictSkel != null && myConflictHandler != null) {
+            SvnWcDbConflicts.
+        }
+
         if (!db.alreadyNotified && myWCContext.getEventHandler() != null && db.edited) {
             SVNEventAction action = null;
             if (db.shadowed) {
