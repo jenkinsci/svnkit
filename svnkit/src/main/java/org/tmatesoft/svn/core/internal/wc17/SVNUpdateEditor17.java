@@ -1196,7 +1196,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             }
 
             myWCContext.getDb().addBaseDirectory(db.localAbsolutePath, db.newRelativePath, myReposRootURL, myReposUuid, myTargetRevision, props, db.changedRevsion, db.changedDate, db.changedAuthor, null, db.ambientDepth,
-                    davProps != null && !davProps.isEmpty() ? davProps : null, null, !db.shadowed && newBaseProps != null, newActualProps, iprops, allWorkItems);
+                    davProps != null && !davProps.isEmpty() ? davProps : null, conflictSkel, !db.shadowed && newBaseProps != null, newActualProps, iprops, allWorkItems);
             
         }
         myWCContext.wqRun(db.localAbsolutePath);

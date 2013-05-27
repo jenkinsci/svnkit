@@ -129,6 +129,7 @@ public class SvnWcDbExternals extends SvnWcDbShared {
             insertBase.fileExternal = true;
             insertBase.iprops = info.<Map<String, SVNProperties>>get(ExternalNodeInfo.iprops);
             insertBase.wcId = root.getWcId();
+            insertBase.wcRoot = root;
             
             try {
                 insertBase.transaction(root.getSDb());

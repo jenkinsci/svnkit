@@ -247,6 +247,7 @@ public class SVNWCDb implements ISVNWCDb {
         ibb.depth = depth;
 
         ibb.wcId = createDb.wcId;
+        ibb.wcRoot = pdh.getWCRoot();
         ibb.localRelpath = SVNFileUtil.createFilePath("");
         /* ### no children, conflicts, or work items to install in a txn... */
 
@@ -453,6 +454,7 @@ public class SVNWCDb implements ISVNWCDb {
         ibb.iprops = iprops;
         ibb.localRelpath = localRelpath;
         ibb.wcId = pdh.getWCRoot().getWcId();
+        ibb.wcRoot = pdh.getWCRoot();
             
         pdh.getWCRoot().getSDb().runTransaction(ibb);
         pdh.flushEntries(localAbsPath);
@@ -633,6 +635,8 @@ public class SVNWCDb implements ISVNWCDb {
 
         public long wcId;
         public File localRelpath;
+
+        public SVNWCDbRoot wcRoot;
         
         public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
             assert (conflict == null);
@@ -745,6 +749,10 @@ public class SVNWCDb implements ISVNWCDb {
             }
             
             addWorkItems(db, workItems);
+
+            if (conflict != null) {
+                markConflictInternal(wcRoot, localRelpath, conflict);
+            }
         }
 
     }
@@ -966,6 +974,7 @@ public class SVNWCDb implements ISVNWCDb {
 
         ibb.localRelpath = localRelpath;
         ibb.wcId = pdh.getWCRoot().getWcId();
+        ibb.wcRoot = pdh.getWCRoot();
         
         pdh.getWCRoot().getSDb().runTransaction(ibb);
         pdh.flushEntries(localAbspath);
@@ -1013,6 +1022,7 @@ public class SVNWCDb implements ISVNWCDb {
         }
 
         ibb.wcId = pdh.getWCRoot().getWcId();
+        ibb.wcRoot = pdh.getWCRoot();
         ibb.localRelpath = localRelpath;
         pdh.getWCRoot().getSDb().runTransaction(ibb);
         pdh.flushEntries(localAbsPath);
@@ -4314,6 +4324,7 @@ public class SVNWCDb implements ISVNWCDb {
         
         insertBase.localRelpath = parsed.localRelPath;
         insertBase.wcId = pdh.getWCRoot().getWcId();
+        insertBase.wcRoot = pdh.getWCRoot();
         
         pdh.getWCRoot().getSDb().runTransaction(insertBase);
         pdh.flushEntries(localAbspath);
@@ -4986,6 +4997,7 @@ public class SVNWCDb implements ISVNWCDb {
         ibb.reposUUID = reposUuid;
         
         ibb.wcId = pdh.getWCRoot().getWcId();
+        ibb.wcRoot = pdh.getWCRoot();
         ibb.localRelpath = localRelpath;
         pdh.getWCRoot().getSDb().runTransaction(ibb);
         pdh.flushEntries(localAbspath);
@@ -5341,6 +5353,7 @@ public class SVNWCDb implements ISVNWCDb {
                 
                 ib.localRelpath = localRelpath;
                 ib.wcId = pdh.getWCRoot().getWcId();
+                ib.wcRoot = pdh.getWCRoot();
           
                 try {
                     ib.transaction(pdh.getWCRoot().getSDb());

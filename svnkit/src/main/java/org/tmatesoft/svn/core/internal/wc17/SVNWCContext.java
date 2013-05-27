@@ -4185,10 +4185,8 @@ public class SVNWCContext {
         OutputStream stream = openUniqueFile.stream;
         File tempAbspath = openUniqueFile.path;
         try {
-            int listSize = conflictSkel.getListSize();
-            for (int i = 0; i < listSize; i++) {
-                SVNSkel child = conflictSkel.getChild(i);
-                appendPropConflict(stream, child);
+            for (SVNSkel scan = conflictSkel.first().next(); scan != null; scan = scan.next()) {
+                appendPropConflict(stream, scan);
             }
         } finally {
             SVNFileUtil.closeFile(stream);
@@ -4934,9 +4932,9 @@ public class SVNWCContext {
             propConflict.first().next().prependPath(markerRelPath);
 
             Structure<SvnWcDbConflicts.PropertyConflictInfo> propertyConflictInfoStructure = SvnWcDbConflicts.readPropertyConflict(getDb(), localAbsPath, conflictSkel);
-            SVNProperties mineProps = propertyConflictInfoStructure.get(SvnWcDbConflicts.PropertyConflictInfo.mineProps);
-            SVNProperties theirOriginalProps = propertyConflictInfoStructure.get(SvnWcDbConflicts.PropertyConflictInfo.theirOldProps);
-            SVNProperties theirProps = propertyConflictInfoStructure.get(SvnWcDbConflicts.PropertyConflictInfo.theirProps);
+            SVNProperties mineProps = SVNProperties.wrap((SVNHashMap)propertyConflictInfoStructure.get(SvnWcDbConflicts.PropertyConflictInfo.mineProps));
+            SVNProperties theirOriginalProps = SVNProperties.wrap((SVNHashMap)propertyConflictInfoStructure.get(SvnWcDbConflicts.PropertyConflictInfo.theirOldProps));
+            SVNProperties theirProps = SVNProperties.wrap((SVNHashMap)propertyConflictInfoStructure.get(SvnWcDbConflicts.PropertyConflictInfo.theirProps));
             Set<String> conflictedProps = propertyConflictInfoStructure.get(SvnWcDbConflicts.PropertyConflictInfo.conflictedPropNames);
             SVNProperties oldProps;
 
@@ -4946,7 +4944,8 @@ public class SVNWCContext {
                 oldProps = theirOriginalProps;
             }
 
-            SVNSkel propData = SvnWcDbConflicts.createConflictSkel();
+            SVNSkel propData = SVNSkel.createEmptyList();
+            propData.prepend(SVNSkel.createEmptyList());
 
             for (String propName : conflictedProps) {
                 SvnWcDbConflicts.addPropConflict(propData, propName,
@@ -4982,9 +4981,9 @@ public class SVNWCContext {
 
         if (propConflicted) {
             Structure<SvnWcDbConflicts.PropertyConflictInfo> propertyConflictInfoStructure = SvnWcDbConflicts.readPropertyConflict(db, localAbsPath, conflictSkel);
-            SVNProperties mineProps = propertyConflictInfoStructure.get(SvnWcDbConflicts.PropertyConflictInfo.mineProps);
-            SVNProperties theirOldProps = propertyConflictInfoStructure.get(SvnWcDbConflicts.PropertyConflictInfo.theirOldProps);
-            SVNProperties theirProps = propertyConflictInfoStructure.get(SvnWcDbConflicts.PropertyConflictInfo.theirProps);
+            SVNProperties mineProps = SVNProperties.wrap((SVNHashMap)propertyConflictInfoStructure.get(SvnWcDbConflicts.PropertyConflictInfo.mineProps));
+            SVNProperties theirOldProps = SVNProperties.wrap((SVNHashMap)propertyConflictInfoStructure.get(SvnWcDbConflicts.PropertyConflictInfo.theirOldProps));
+            SVNProperties theirProps = SVNProperties.wrap((SVNHashMap)propertyConflictInfoStructure.get(SvnWcDbConflicts.PropertyConflictInfo.theirProps));
             Set<String> conflicted = propertyConflictInfoStructure.get(SvnWcDbConflicts.PropertyConflictInfo.conflictedPropNames);
             boolean markResolved = true;
 

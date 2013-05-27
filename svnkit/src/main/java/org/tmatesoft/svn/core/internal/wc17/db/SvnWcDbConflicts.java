@@ -513,12 +513,10 @@ public class SvnWcDbConflicts extends SvnWcDbShared {
     }
 
     public static SVNSkel getConflict(SVNSkel conflictSkel, ConflictKind kind) {
-        SVNSkel c = conflictSkel.first().next().first();
-        while(c != null) {
+        for (SVNSkel c = conflictSkel.first().next().first(); c != null; c = c.next()) {
             if (kind.name().equalsIgnoreCase(c.first().getValue())) {
                 return c;
             }
-            c = c.next();
         }
         return null;
     }
@@ -611,12 +609,12 @@ public class SvnWcDbConflicts extends SvnWcDbShared {
         return why;
     }
 
-    public static void addPropConflict(SVNSkel skel, String propName, SVNPropertyValue baseVal, SVNPropertyValue mineVal, SVNPropertyValue toVal, SVNPropertyValue fromVal) throws SVNException {
+    public static void addPropConflict(SVNSkel skel, String propName, SVNPropertyValue originalVal, SVNPropertyValue mineVal, SVNPropertyValue incomingVal, SVNPropertyValue incomingBaseVal) throws SVNException {
         SVNSkel propSkel = SVNSkel.createEmptyList();
-        prependPropValue(fromVal, propSkel);
-        prependPropValue(toVal, propSkel);
+        prependPropValue(incomingBaseVal, propSkel);
+        prependPropValue(incomingVal, propSkel);
         prependPropValue(mineVal, propSkel);
-        prependPropValue(baseVal, propSkel);
+        prependPropValue(originalVal, propSkel);
 
         propSkel.prependString(propName);
         propSkel.prependString(ConflictKind.prop.toString());
