@@ -1011,6 +1011,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         if (myCurrentDirectory.propChanges == null) {
             myCurrentDirectory.propChanges = new SVNProperties();
         }
+        myCurrentDirectory.propChanges.put(name, value);
 
         // TODO use String pool for property names and some of the values.
         if (!myCurrentDirectory.edited && SVNProperty.isRegularProperty(name)) {
@@ -1593,7 +1594,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             MergePropertiesInfo info = new MergePropertiesInfo();
             info.newActualProperties = newActualProps;
             info.newBaseProperties = newBaseProps;
-            info = myWCContext.mergeProperties2(info, fb.localAbsolutePath, 
+            info = myWCContext.mergeProperties2(info, fb.localAbsolutePath,
                     SVNWCDbKind.File, null, null, null, currentBaseProps, currentActualProps, regularPropChanges, true, false);
             newActualProps = info.newActualProperties;
             newBaseProps = info.newBaseProperties;
