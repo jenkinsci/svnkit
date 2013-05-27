@@ -1102,9 +1102,14 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                     actualProps = baseProps;
                 }
             }
-            MergePropertiesInfo mergeProperiesInfo = myWCContext.mergeProperties3(null, db.localAbsolutePath, SVNWCDbKind.Dir, null, baseProps, actualProps, regularProps);
+
+            newBaseProps = new SVNProperties(baseProps);
+            newBaseProps.putAll(regularProps);
+
+            MergePropertiesInfo mergeProperiesInfo = null;
+            mergeProperiesInfo = myWCContext.mergeProperties3(mergeProperiesInfo, db.localAbsolutePath,
+                    null, baseProps, actualProps, regularProps);
             newActualProps = mergeProperiesInfo.newActualProperties;
-            newBaseProps = mergeProperiesInfo.newBaseProperties;
             propStatus[0] = mergeProperiesInfo.mergeOutcome;
             conflictSkel = mergeProperiesInfo.conflictSkel;
 //            allWorkItems = myWCContext.wqMerge(allWorkItems, mergeProperiesInfo.workItems);
