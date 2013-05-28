@@ -445,4 +445,9 @@ public class SVNEventAction {
      * @since 1.7, SVN 1.7
      */
     public static final SVNEventAction FAILED_FORBIDDEN_BY_SERVER = new SVNEventAction(67, "failed_forbidden_by_server");
+
+    /**
+     * @since 1.8, SVN 1.8
+     */
+    public static final SVNEventAction UPDATE_BROKEN_LOCK = new SVNEventAction(69, "update_broken_lock");
 }

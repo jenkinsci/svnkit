@@ -516,8 +516,8 @@ public interface ISVNWCDb {
      * @param svnProperties
      */
     public void addBaseFile(File localAbspath, File reposRelpath, SVNURL reposRootUrl, String reposUuid, long revision, SVNProperties props, long changedRev, SVNDate changedDate,
-            String changedAuthor, SvnChecksum checksum, SVNProperties davCache, SVNSkel conflict, boolean updateActualProps, SVNProperties actualProps,
-            boolean keepRecordedInfo, boolean insertBaseDeleted, Map<String, SVNProperties>  iprops, SVNSkel workItems) throws SVNException;
+                            String changedAuthor, SvnChecksum checksum, SVNProperties davCache, boolean deleteWorking, boolean updateActualProps, SVNProperties actualProps,
+                            boolean keepRecordedInfo, boolean insertBaseDeleted, Map<String, SVNProperties> iprops, SVNSkel conflict, SVNSkel workItems) throws SVNException;
 
     /**
      * Add or replace a symlink in the BASE tree.

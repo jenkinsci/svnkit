@@ -1573,7 +1573,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             localActualProps = new SVNProperties();
         }
         if (fb.addExisted) {
-            currentBaseProps = myWCContext.getPristineProps(fb.localAbsolutePath);
+            currentBaseProps = myWCContext.getDb().readPristineProperties(fb.localAbsolutePath);
             currentActualProps = localActualProps;
         } else if (!fb.addingFile) {
             currentBaseProps = myWCContext.getDb().getBaseProps(fb.localAbsolutePath);
@@ -1598,22 +1598,25 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             boolean installPristine = false;
             MergePropertiesInfo info = new MergePropertiesInfo();
             info.newActualProperties = newActualProps;
-            info.newBaseProperties = newBaseProps;
-            info = myWCContext.mergeProperties2(info, fb.localAbsolutePath,
-                    SVNWCDbKind.File, null, null, null, currentBaseProps, currentActualProps, regularPropChanges, true, false);
+            info.newBaseProperties = new SVNProperties(currentBaseProps);
+            info.newBaseProperties.putAll(regularPropChanges);
+            info.conflictSkel = conflictSkel;
+            info = myWCContext.mergeProperties3(info, fb.localAbsolutePath,
+                    null, currentBaseProps, currentActualProps, regularPropChanges);
             newActualProps = info.newActualProperties;
-            newBaseProps = info.newBaseProperties;
             propState[0] = info.mergeOutcome;
+            conflictSkel = info.conflictSkel;
             allWorkItems = myWCContext.wqMerge(allWorkItems, info.workItems);
 
             File installFrom = null;
-            if (!fb.obstructionFound) {
+            if (!fb.obstructionFound && fb.editObstructed) {
                 MergeFileInfo fileInfo = null;                
                 try {
                     fileInfo = mergeFile(fb, currentActualProps, fb.changedDate);
                     contentState = fileInfo.contentState;
                     installFrom = fileInfo.installFrom;
                     installPristine = fileInfo.installPristine;
+                    conflictSkel = fileInfo.conflictSkel;
                 } catch (SVNException e) {
                     if (SVNWCContext.isErrorAccess(e)) {
                         doNotification(fb.localAbsolutePath, SVNNodeKind.FILE, SVNEventAction.UPDATE_SKIP_ACCESS_DENINED, fb.getURL(), fb.getPreviousURL());                        
@@ -1625,7 +1628,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                     throw e;
                 }
                 if (fileInfo != null) {
-                    allWorkItems = myWCContext.wqMerge(allWorkItems, fileInfo.workItems);
+                    allWorkItems = myWCContext.wqMerge(allWorkItems, fileInfo.workItem);
                 }
             } else {
                 installPristine = false;
@@ -1648,7 +1651,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                 keepRecordedInfo = true;
             }
             if (installFrom != null && !fb.localAbsolutePath.equals(installFrom)) {
-                SVNSkel wi = myWCContext.wqBuildFileRemove(installFrom);
+                SVNSkel wi = myWCContext.wqBuildFileRemove(fb.localAbsolutePath, installFrom);
                 allWorkItems = myWCContext.wqMerge(allWorkItems, wi);
                 
             }
@@ -1662,7 +1665,9 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             MergePropertiesInfo info = new MergePropertiesInfo();
             info.newActualProperties = newActualProps;
             info.newBaseProperties = newBaseProps;
-            info = myWCContext.mergeProperties2(info, fb.localAbsolutePath, SVNWCDbKind.File, null, null, null, currentBaseProps, fakeActualProperties, regularPropChanges, true, false);
+            info.conflictSkel = conflictSkel;
+            info = myWCContext.mergeProperties3(info, fb.localAbsolutePath, null, currentBaseProps, fakeActualProperties, regularPropChanges);
+            conflictSkel = info.conflictSkel;
             newActualProps = info.newActualProperties;
             newBaseProps = info.newBaseProperties;
             propState[0] = info.mergeOutcome;
@@ -1679,6 +1684,20 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             newChecksum = fb.originalChecksum;
         }
 
+        if (conflictSkel != null) {
+            completeConflict(conflictSkel, fb.localAbsolutePath, fb.oldReposRelPath, fb.oldRevision,
+                    fb.newRelativePath, SVNNodeKind.FILE, SVNNodeKind.FILE);
+            SVNSkel workItem = myWCContext.conflictCreateMarker(conflictSkel, fb.localAbsolutePath);
+            allWorkItems = myWCContext.wqMerge(allWorkItems, workItem);
+        }
+
+        if (myInheritableProperties != null) {
+            Map<String, SVNProperties> iprops = myInheritableProperties.get(fb.localAbsolutePath);
+            if (iprops != null) {
+                myInheritableProperties.remove(fb.localAbsolutePath);
+            }
+        }
+
         if (davProps != null) {
             davProps.removeNullValues();
         }
@@ -1686,13 +1705,14 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         if (myInheritableProperties != null) {
             iprops = myInheritableProperties.remove(fb.localAbsolutePath);
         }
-        myWCContext.getDb().addBaseFile(fb.localAbsolutePath, fb.newRelativePath, myReposRootURL, myReposUuid, myTargetRevision, newBaseProps, fb.changedRevison, fb.changedDate, fb.changedAuthor, newChecksum, 
-                davProps != null && !davProps.isEmpty() ? davProps : null, null, 
+        myWCContext.getDb().addBaseFile(fb.localAbsolutePath, fb.newRelativePath, myReposRootURL, myReposUuid,
+                myTargetRevision, newBaseProps, fb.changedRevison, fb.changedDate, fb.changedAuthor, newChecksum,
+                davProps != null && !davProps.isEmpty() ? davProps : null, fb.addExisted && fb.addingFile,
                 !fb.shadowed && newBaseProps != null, newActualProps, keepRecordedInfo, fb.shadowed && fb.obstructionFound, 
-                iprops, allWorkItems);
+                iprops, conflictSkel, allWorkItems);
 
-        if (fb.addExisted && fb.addingFile) {
-            myWCContext.getDb().opRemoveWorkingTemp(fb.localAbsolutePath);
+        if (conflictSkel != null && myConflictHandler != null) {
+            myWCContext.invokeConflictResolver(fb.localAbsolutePath, conflictSkel, myConflictHandler, ISVNCanceller.NULL);
         }
         if (fb.directoryBaton.notPresentFiles != null) {
             fb.directoryBaton.notPresentFiles.remove(fb.name);
@@ -1703,7 +1723,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             SVNEventAction action = SVNEventAction.UPDATE_UPDATE;
 
             if (fb.edited) {
-                if (fb.shadowed) {
+                if (fb.shadowed || fb.editObstructed) {
                     action = fb.addingFile ? SVNEventAction.UPDATE_SHADOWED_ADD : SVNEventAction.UPDATE_SHADOWED_UPDATE;
                 } else if (fb.obstructionFound || fb.addExisted) {
                     if (contentState != SVNStatusType.CONFLICTED) {
@@ -1712,6 +1732,9 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                 } else if (fb.addingFile) {
                     action = SVNEventAction.UPDATE_ADD;
                 }
+            } else {
+                assert lockState == SVNStatusType.LOCK_UNLOCKED;
+                action = SVNEventAction.UPDATE_BROKEN_LOCK;
             }
             
             String mimeType = myWCContext.getProperty(fb.localAbsolutePath, SVNProperty.MIME_TYPE);
@@ -2188,10 +2211,11 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
     
     private static class MergeFileInfo {
 
-        public SVNSkel workItems;
+        public SVNSkel workItem;
         public boolean installPristine;
         public File installFrom;
         public SVNStatusType contentState;
+        public SVNSkel conflictSkel;
     }
     
     public static MergeInfo performFileMerge(SVNWCContext context, File localAbsPath, File wriAbsPath, SvnChecksum newChecksum, SvnChecksum originalChecksum,
@@ -2221,7 +2245,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         MergeInfo mergeInfo = context.merge(mergeLeft, null, newTextBaseTmpAbsPath, null, localAbsPath, wriAbsPath, 
                 oldRevStr, newRevStr, mineStr, actualProperties, false, null, propChanges);
         if (deleteLeft) {
-            SVNSkel workItem = context.wqBuildFileRemove(mergeLeft);
+            SVNSkel workItem = context.wqBuildFileRemove(wriAbsPath, mergeLeft);
             context.wqMerge(mergeInfo.workItems, workItem);
         }
         return mergeInfo;
@@ -2256,7 +2280,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                     fb.oldRevision, 
                     myTargetRevision, 
                     propChanges);
-            mergeFileInfo.workItems = myWCContext.wqMerge(mergeFileInfo.workItems, mergeInfo.workItems);
+            mergeFileInfo.workItem = myWCContext.wqMerge(mergeFileInfo.workItem, mergeInfo.workItems);
             mergeFileInfo.contentState = mergeInfo.mergeOutcome;
         } else {
             magicPropsChanged = myWCContext.hasMagicProperty(propChanges);
@@ -2280,7 +2304,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                 date = lastChangedDate;
             }
             SVNSkel workItem = myWCContext.wqBuildRecordFileinfo(fb.localAbsolutePath, date);
-            mergeFileInfo.workItems = myWCContext.wqMerge(mergeFileInfo.workItems, workItem);
+            mergeFileInfo.workItem = myWCContext.wqMerge(mergeFileInfo.workItem, workItem);
         }
         
         if (mergeFileInfo.contentState == SVNStatusType.CONFLICTED) {

@@ -588,6 +588,46 @@ public class UpdateTest {
         }
     }
 
+    @Test
+    public void testMergeFileProperties() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testMergeFileProperties", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder1 = new CommitBuilder(url);
+            commitBuilder1.addFile("file");
+            commitBuilder1.commit();
+
+            final CommitBuilder commitBuilder2 = new CommitBuilder(url);
+            commitBuilder2.setFileProperty("file", "remoteProperty", SVNPropertyValue.create("remotePropertyValue"));
+            commitBuilder2.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, 1);
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+            final File file = workingCopy.getFile("file");
+            workingCopy.setProperty(file, "localProperty", SVNPropertyValue.create("localPropertyValue"));
+
+            final SvnUpdate update = svnOperationFactory.createUpdate();
+            update.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            update.run();
+
+            final SvnGetProperties getProperties = svnOperationFactory.createGetProperties();
+            getProperties.setSingleTarget(SvnTarget.fromFile(file));
+            SVNProperties properties = getProperties.run();
+
+            Assert.assertEquals(2, properties.size());
+            Assert.assertEquals("remotePropertyValue", SVNPropertyValue.getPropertyAsString(properties.getSVNPropertyValue("remoteProperty")));
+            Assert.assertEquals("localPropertyValue", SVNPropertyValue.getPropertyAsString(properties.getSVNPropertyValue("localProperty")));
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
     private void assertDavPropertiesAreCleaned(WorkingCopy workingCopy) throws SqlJetException, SVNException {
         final SqlJetDb db = SqlJetDb.open(workingCopy.getWCDbFile(), false);
         try {

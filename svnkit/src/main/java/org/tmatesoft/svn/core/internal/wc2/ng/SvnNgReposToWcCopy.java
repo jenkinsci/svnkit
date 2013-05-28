@@ -600,7 +600,7 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
         SVNSkel wi = context.wqBuildFileInstall(path, sourcePath, false, recordFileInfo);
         wi = context.wqMerge(wi, null);
         if (sourcePath != null) {
-            SVNSkel remove = context.wqBuildFileRemove(sourcePath);
+            SVNSkel remove = context.wqBuildFileRemove(path, sourcePath);
             wi = context.wqMerge(wi, remove);
         }
         

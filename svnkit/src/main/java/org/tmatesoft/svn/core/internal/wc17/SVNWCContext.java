@@ -3413,7 +3413,7 @@ public class SVNWCContext {
             SVNSkel workItem = wqBuildFileInstall(targetAbspath, installFrom, false, false);
             info.workItems = wqMerge(info.workItems, workItem);
             if (removeSource) {
-                workItem = wqBuildFileRemove(installFrom);
+                workItem = wqBuildFileRemove(wriAbspath, installFrom);
                 info.workItems = wqMerge(info.workItems, workItem);
             }
         }
@@ -3625,8 +3625,8 @@ public class SVNWCContext {
         return result;
     }
 
-    public SVNSkel wqBuildFileRemove(File localAbspath) throws SVNException {
-        return wqBuildFileRemove((SVNWCDb)getDb(), localAbspath, localAbspath);
+    public SVNSkel wqBuildFileRemove(File wriAbsPath, File localAbspath) throws SVNException {
+        return wqBuildFileRemove((SVNWCDb)getDb(), wriAbsPath, localAbspath);
     }
 
     public static SVNSkel wqBuildFileRemove(SVNWCDb db, File wriAbspath, File localAbspath) throws SVNException {
