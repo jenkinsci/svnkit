@@ -576,10 +576,11 @@ public class UpdateTest {
             getProperties.setSingleTarget(SvnTarget.fromFile(directory));
             SVNProperties properties = getProperties.run();
 
-            Assert.assertEquals(2, properties.size());
-            Assert.assertEquals("remotePropertyValue", SVNPropertyValue.getPropertyAsString(properties.getSVNPropertyValue("remoteProperty")));
-            Assert.assertEquals("localPropertyValue", SVNPropertyValue.getPropertyAsString(properties.getSVNPropertyValue("localProperty")));
+            Assert.assertEquals(1, properties.size());
+            Assert.assertEquals("localPropertyValue", SVNPropertyValue.getPropertyAsString(properties.getSVNPropertyValue("property")));
 
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
+            Assert.assertEquals(SVNStatusType.STATUS_CONFLICTED, statuses.get(directory).getNodeStatus());
 
         } finally {
             svnOperationFactory.dispose();
