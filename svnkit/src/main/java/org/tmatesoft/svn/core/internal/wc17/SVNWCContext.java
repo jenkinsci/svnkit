@@ -30,7 +30,6 @@ import java.util.logging.Level;
 
 import org.tmatesoft.sqljet.core.internal.SqlJetPagerJournalMode;
 import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb.Mode;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
@@ -71,11 +70,9 @@ import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.NodeOriginInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.PristineInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.StructureFields.WalkerChildInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbReader.InstallInfo;
-import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbInsertActualPropertiesConflicts;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldUpgrade;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.*;
-import org.tmatesoft.svn.core.wc2.ISvnConflictHandler;
 import org.tmatesoft.svn.core.wc2.ISvnMerger;
 import org.tmatesoft.svn.core.wc2.SvnChecksum;
 import org.tmatesoft.svn.core.wc2.SvnMergeResult;
@@ -2908,8 +2905,9 @@ public class SVNWCContext {
     public static class MergeInfo {
 
         public SVNSkel workItems;
+        public SVNSkel conflictSkel;
         public SVNStatusType mergeOutcome;
-
+        public boolean foundTextConflict;
     }
     
     public static class MergePropertiesInfo {
@@ -2937,7 +2935,7 @@ public class SVNWCContext {
             return result;
         }
         SVNProperties actualProps = getDb().readProperties(target);
-        result = merge(left, leftVersion, right, rightVersion, target, target, leftLabel, rightLabel, targetLabel, actualProps, dryRun, options, propDiff);
+        result = merge(left, right, target, target, leftLabel, rightLabel, targetLabel, actualProps, dryRun, options, propDiff);
         if (!dryRun) {
             getDb().addWorkQueue(target, result.workItems);
             wqRun(target);
@@ -2945,8 +2943,11 @@ public class SVNWCContext {
         return result;
     }
 
-    public MergeInfo merge(File leftAbspath, SVNConflictVersion leftVersion, File rightAbspath, SVNConflictVersion rightVersion, File targetAbspath, File wriAbspath, String leftLabel,
-            String rightLabel, String targetLabel, SVNProperties actualProps, boolean dryRun, SVNDiffOptions options, SVNProperties propDiff) throws SVNException {
+    public MergeInfo merge(File leftAbspath, File rightAbspath,
+                           File targetAbspath, File wriAbspath,
+                           String leftLabel, String rightLabel,
+                           String targetLabel, SVNProperties oldActualProps,
+                           boolean dryRun, SVNDiffOptions options, SVNProperties propDiff) throws SVNException {
         assert (SVNFileUtil.isAbsolute(leftAbspath));
         assert (SVNFileUtil.isAbsolute(rightAbspath));
         assert (SVNFileUtil.isAbsolute(targetAbspath));
@@ -2973,7 +2974,7 @@ public class SVNWCContext {
         if (mimeprop != null && mimeprop.isString()) {
             isBinary = mimeTypeIsBinary(mimeprop.getString());
         } else {
-            SVNPropertyValue value = actualProps.getSVNPropertyValue(SVNProperty.MIME_TYPE);            
+            SVNPropertyValue value = oldActualProps.getSVNPropertyValue(SVNProperty.MIME_TYPE);
             isBinary = value != null && mimeTypeIsBinary(value.getString());
         }
         
@@ -2982,19 +2983,18 @@ public class SVNWCContext {
         info.mergeOutcome = SVNStatusType.NO_MERGE;
         ISvnMerger customMerger = createCustomMerger();
         if (isBinary || customMerger == null) {
-            attemptTrivialMerge(info, leftAbspath, rightAbspath, targetAbspath, dryRun);
+            info = attemptTrivialMerge(info, leftAbspath, rightAbspath, targetAbspath, detranslatedTargetAbspath, dryRun);
         }
         if (info.mergeOutcome == SVNStatusType.NO_MERGE) {
             if (isBinary) {
                 if (dryRun) {
                     info.mergeOutcome = SVNStatusType.CONFLICTED;
                 } else {
-                    info = mergeBinaryFile(leftAbspath, rightAbspath, targetAbspath, leftLabel, rightLabel, targetLabel, leftVersion, rightVersion, detranslatedTargetAbspath, mimeprop, 
-                            getOptions().getConflictResolver());
+                    info = mergeBinaryFile(info, leftAbspath, rightAbspath, targetAbspath, leftLabel, rightLabel, targetLabel, detranslatedTargetAbspath, dryRun);
                 }
             } else {
-                info = mergeTextFile(customMerger, leftAbspath, rightAbspath, targetAbspath, wriAbspath, leftLabel, rightLabel, targetLabel, dryRun, options, leftVersion, rightVersion, null, detranslatedTargetAbspath,
-                        mimeprop, getOptions().getConflictResolver());
+                info = mergeTextFile(info, customMerger, leftAbspath, rightAbspath, targetAbspath, wriAbspath, leftLabel, rightLabel, targetLabel, dryRun, options, null, detranslatedTargetAbspath,
+                        mimeprop);
             }
         }
         if (!dryRun) {
@@ -3004,27 +3004,95 @@ public class SVNWCContext {
         return info;
     }
 
-    private void attemptTrivialMerge(MergeInfo info, File leftAbspath, File rightAbspath, File targetAbspath, boolean dryRun) throws SVNException {
+    private MergeInfo attemptTrivialMerge(MergeInfo info, File leftAbspath, File rightAbspath, File targetAbspath, File detranslatedTargetAbspath, boolean dryRun) throws SVNException {
         SVNFileType ft = SVNFileType.getType(targetAbspath);
         if (ft != SVNFileType.FILE) {
             info.mergeOutcome = SVNStatusType.NO_MERGE;
-            return;
+            return info;
         }
-        boolean sameContents = SVNFileUtil.compareFiles(leftAbspath, targetAbspath, null);
-        info.mergeOutcome = SVNStatusType.NO_MERGE;
-        
-        if (sameContents) {
-            sameContents = SVNFileUtil.compareFiles(leftAbspath, rightAbspath, null);
-            if (sameContents) {
+
+        long leftSize = SVNFileUtil.getFileLength(leftAbspath);
+        long rightSize = SVNFileUtil.getFileLength(rightAbspath);
+        long detranslatedTargetSize = SVNFileUtil.getFileLength(detranslatedTargetAbspath);
+
+        boolean absentLeft = (SVNFileType.getType(leftAbspath) == SVNFileType.NONE);
+        boolean absentRight = (SVNFileType.getType(rightAbspath) == SVNFileType.NONE);
+        boolean absentDetranslatedTarget = (SVNFileType.getType(detranslatedTargetAbspath) == SVNFileType.NONE);
+
+        boolean diffLeftRightSize = !absentLeft && !absentRight && leftSize != rightSize;
+        boolean diffLeftDetranslatedTargetSize = !absentLeft && !absentDetranslatedTarget && leftSize != detranslatedTargetSize;
+        boolean diffRightDetranslatedTargetSize = !absentRight && !absentDetranslatedTarget && rightSize != detranslatedTargetSize;
+
+        boolean sameLeftRight;
+        boolean sameLeftDetranslatedTarget;
+        boolean sameRightDetranslatedTarget;
+
+        if (diffLeftRightSize && diffLeftDetranslatedTargetSize && diffRightDetranslatedTargetSize) {
+            sameLeftRight = sameLeftDetranslatedTarget = sameRightDetranslatedTarget = false;
+        } else if (diffLeftRightSize && diffLeftDetranslatedTargetSize) {
+            sameLeftRight = sameLeftDetranslatedTarget = false;
+            sameRightDetranslatedTarget = SVNFileUtil.compareFiles(rightAbspath, detranslatedTargetAbspath, null);
+        } else if (diffLeftRightSize && diffRightDetranslatedTargetSize) {
+            sameLeftRight = sameRightDetranslatedTarget = false;
+            sameLeftDetranslatedTarget = SVNFileUtil.compareFiles(leftAbspath, detranslatedTargetAbspath, null);
+        } else if (diffLeftDetranslatedTargetSize && diffRightDetranslatedTargetSize) {
+            sameLeftDetranslatedTarget = sameRightDetranslatedTarget = false;
+            sameLeftRight = SVNFileUtil.compareFiles(leftAbspath, rightAbspath, null);
+        } else {
+            assert !diffLeftRightSize && !diffLeftDetranslatedTargetSize && !diffRightDetranslatedTargetSize;
+            sameLeftRight = SVNFileUtil.compareFiles(leftAbspath, rightAbspath, null);
+            sameLeftDetranslatedTarget = SVNFileUtil.compareFiles(leftAbspath, detranslatedTargetAbspath, null);
+            sameRightDetranslatedTarget = SVNFileUtil.compareFiles(rightAbspath, detranslatedTargetAbspath, null);
+        }
+
+        if (sameLeftDetranslatedTarget) {
+            if (sameLeftRight) {
                 info.mergeOutcome = SVNStatusType.UNCHANGED;
             } else {
                 info.mergeOutcome = SVNStatusType.MERGED;
                 if (!dryRun) {
-                    SVNSkel item = wqBuildFileInstall(targetAbspath, rightAbspath, false, false);
-                    info.workItems = wqMerge(info.workItems, item);
-                }                
+                    boolean deleteSrc = false;
+                    File wcRootAbsPath = getDb().getWCRoot(targetAbspath);
+
+                    if (SVNPathUtil.isAncestor(wcRootAbsPath.getAbsolutePath(), rightAbspath.getAbsolutePath())) {
+                        InputStream tmpSrc = null;
+                        OutputStream tmpDst = null;
+                        try {
+                            tmpSrc = SVNFileUtil.openFileForReading(rightAbspath);
+                            WritableBaseInfo writableBaseInfo = openWritableBase(rightAbspath, false, false);
+                            tmpDst = writableBaseInfo.stream;
+
+                            SVNTranslator.copy(tmpSrc, tmpDst);
+
+                        } catch (IOException e) {
+                            SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.IO_ERROR);
+                            SVNErrorManager.error(errorMessage, SVNLogType.WC);
+                        } finally {
+                            SVNFileUtil.closeFile(tmpSrc);
+                            SVNFileUtil.closeFile(tmpDst);
+                        }
+
+                        deleteSrc = true;
+                    }
+
+                    SVNSkel workItem = wqBuildFileInstall(targetAbspath, rightAbspath, false, false);
+                    info.workItems = wqMerge(info.workItems, workItem);
+
+                    if (deleteSrc) {
+                        workItem = wqBuildFileRemove(wcRootAbsPath, rightAbspath);
+                        info.workItems = wqMerge(info.workItems, workItem);
+                    }
+                }
+            }
+            return info;
+        } else {
+            if (sameRightDetranslatedTarget) {
+                info.mergeOutcome = SVNStatusType.UNCHANGED;
+                return info;
             }
         }
+        info.mergeOutcome = SVNStatusType.NO_MERGE;
+        return info;
     }
 
     private boolean isMarkedAsBinary(File localAbsPath) throws SVNException {
@@ -3148,18 +3216,19 @@ public class SVNWCContext {
         return oldTargetAbspath;
     }
 
-    private MergeInfo mergeTextFile(ISvnMerger customMerger, File leftAbspath, File rightAbspath, File targetAbspath, File wriAbspath, String leftLabel, String rightLabel, String targetLabel, boolean dryRun, SVNDiffOptions options,
-            SVNConflictVersion leftVersion, SVNConflictVersion rightVersion, File copyfromText, File detranslatedTargetAbspath, SVNPropertyValue mimeprop, ISVNConflictHandler conflictResolver)
+    private MergeInfo mergeTextFile(MergeInfo info, ISvnMerger customMerger, File leftAbspath, File rightAbspath, File targetAbspath, File wriAbspath, String leftLabel, String rightLabel, String targetLabel, boolean dryRun, SVNDiffOptions options,
+            File copyfromText, File detranslatedTargetAbspath, SVNPropertyValue mimeprop)
             throws SVNException {
-        MergeInfo info = new MergeInfo();
         info.workItems = null;
         String baseName = SVNFileUtil.getFileName(targetAbspath);
         File tempDir = db.getWCRootTempDir(wriAbspath == null ? targetAbspath : wriAbspath);
         File resultTarget = SVNFileUtil.createUniqueFile(tempDir, baseName, ".tmp", false);
+
+        //TODO: external merger
         boolean containsConflicts = doTextMerge(customMerger, resultTarget, targetAbspath, detranslatedTargetAbspath, leftAbspath, rightAbspath, targetLabel, leftLabel, rightLabel, options);
         if (containsConflicts && !dryRun) {
-            info = maybeResolveConflicts(leftAbspath, rightAbspath, targetAbspath, copyfromText, leftLabel, rightLabel, targetLabel, leftVersion, rightVersion, resultTarget,
-                    detranslatedTargetAbspath, mimeprop, options, conflictResolver);
+            info.mergeOutcome = SVNStatusType.CONFLICTED;
+
             if (info.mergeOutcome == SVNStatusType.CONFLICTED) {
                 PresevePreMergeFileInfo preserveInfo = preservePreMergeFiles(leftAbspath, rightAbspath, targetAbspath, leftLabel, rightLabel, targetLabel, detranslatedTargetAbspath);
                 SVNSkel workItem = preserveInfo.workItems;
@@ -3167,8 +3236,11 @@ public class SVNWCContext {
                 File rightCopy = preserveInfo.rightCopy;
                 File targetCopy = preserveInfo.targetCopy;
                 info.workItems = wqMerge(info.workItems, workItem);
-                workItem = wqBuildSetTextConflictMarkersTmp(targetAbspath, leftCopy, rightCopy, targetCopy);
-                info.workItems = wqMerge(info.workItems, workItem);
+
+                if (info.conflictSkel == null) {
+                    info.conflictSkel = SvnWcDbConflicts.createConflictSkel();
+                }
+                SvnWcDbConflicts.addTextConflict(info.conflictSkel, getDb(), targetAbspath, targetCopy, leftCopy, rightCopy);
             }
             if (info.mergeOutcome == SVNStatusType.MERGED) {
                 return info;
@@ -3420,48 +3492,21 @@ public class SVNWCContext {
         return info;
     }
 
-    private MergeInfo mergeBinaryFile(File leftAbspath, File rightAbspath, File targetAbspath, String leftLabel, String rightLabel, String targetLabel, SVNConflictVersion leftVersion,
-            SVNConflictVersion rightVersion, File detranslatedTargetAbspath, SVNPropertyValue mimeprop, ISVNConflictHandler conflictResolver) throws SVNException {
+    private MergeInfo mergeBinaryFile(MergeInfo info, File leftAbspath, File rightAbspath, File targetAbspath, String leftLabel, String rightLabel, String targetLabel,
+                                      File detranslatedTargetAbspath, boolean dryRun) throws SVNException {
         assert (SVNFileUtil.isAbsolute(targetAbspath));
-        MergeInfo info = new MergeInfo();
         info.workItems = null;
         File leftCopy, rightCopy;
         File conflictWrk;
-        SVNSkel workItem;
+
         File mergeDirpath = SVNFileUtil.getFileDir(targetAbspath);
         String mergeFilename = SVNFileUtil.getFileName(targetAbspath);
-        if (conflictResolver != null) {
-            File installFrom = null;
-            SVNConflictDescription cdesc = setupTextConflictDesc(leftAbspath, rightAbspath, targetAbspath, leftVersion, rightVersion, null, detranslatedTargetAbspath, mimeprop, true);
-            SVNConflictResult result = conflictResolver.handleConflict(cdesc);
-            if (result == null) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CONFLICT_RESOLVER_FAILURE, "Conflict callback violated API: returned no results");
-                SVNErrorManager.error(err, SVNLogType.WC);
-            }
-            if (result.getConflictChoice() == SVNConflictChoice.BASE) {
-                installFrom = leftAbspath;
-                info.mergeOutcome = SVNStatusType.MERGED;
-            } else if (result.getConflictChoice() == SVNConflictChoice.THEIRS_FULL) {
-                installFrom = rightAbspath;
-                info.mergeOutcome = SVNStatusType.MERGED;
-            } else if (result.getConflictChoice() == SVNConflictChoice.MINE_FULL) {
-                info.mergeOutcome = SVNStatusType.MERGED;
-                return info;
-            } else if (result.getConflictChoice() == SVNConflictChoice.MERGED) {
-                if (result.getMergedFile() == null) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CONFLICT_RESOLVER_FAILURE, "Conflict callback violated API: returned no results");
-                    SVNErrorManager.error(err, SVNLogType.WC);
-                } else {
-                    installFrom = result.getMergedFile();
-                    info.mergeOutcome = SVNStatusType.MERGED;
-                }
-            } else {
-            }
-            if (installFrom != null) {
-                info.workItems = wqBuildFileInstall(targetAbspath, installFrom, false, false);
-                return info;
-            }
+
+        if (dryRun) {
+            info.mergeOutcome = SVNStatusType.CONFLICTED;
+            return info;
         }
+
         leftCopy = SVNFileUtil.createUniqueFile(mergeDirpath, mergeFilename, leftLabel, false);
         rightCopy = SVNFileUtil.createUniqueFile(mergeDirpath, mergeFilename, rightLabel, false);
         SVNFileUtil.copyFile(leftAbspath, leftCopy, true);
@@ -3473,8 +3518,12 @@ public class SVNWCContext {
         } else {
             conflictWrk = null;
         }
-        workItem = wqBuildSetTextConflictMarkersTmp(targetAbspath, leftCopy, rightCopy, conflictWrk);
-        info.workItems = wqMerge(info.workItems, workItem);
+
+        if (info.conflictSkel == null) {
+            info.conflictSkel = SvnWcDbConflicts.createConflictSkel();
+        }
+        SvnWcDbConflicts.addTextConflict(info.conflictSkel, getDb(), targetAbspath, conflictWrk, leftCopy, rightCopy);
+
         info.mergeOutcome = SVNStatusType.CONFLICTED;
         return info;
     }

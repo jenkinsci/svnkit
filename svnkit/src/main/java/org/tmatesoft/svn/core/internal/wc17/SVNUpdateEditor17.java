@@ -1609,7 +1609,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             allWorkItems = myWCContext.wqMerge(allWorkItems, info.workItems);
 
             File installFrom = null;
-            if (!fb.obstructionFound && fb.editObstructed) {
+            if (!fb.obstructionFound && !fb.editObstructed) {
                 MergeFileInfo fileInfo = null;                
                 try {
                     fileInfo = mergeFile(fb, currentActualProps, fb.changedDate);
@@ -2242,8 +2242,9 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             mergeLeft = context.getDb().getPristinePath(wriAbsPath, originalChecksum);
         }
         
-        MergeInfo mergeInfo = context.merge(mergeLeft, null, newTextBaseTmpAbsPath, null, localAbsPath, wriAbsPath, 
+        MergeInfo mergeInfo = context.merge(mergeLeft, newTextBaseTmpAbsPath, localAbsPath, wriAbsPath,
                 oldRevStr, newRevStr, mineStr, actualProperties, false, null, propChanges);
+        mergeInfo.foundTextConflict = mergeInfo.mergeOutcome == SVNStatusType.CONFLICTED;
         if (deleteLeft) {
             SVNSkel workItem = context.wqBuildFileRemove(wriAbsPath, mergeLeft);
             context.wqMerge(mergeInfo.workItems, workItem);
@@ -2255,11 +2256,16 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         DirectoryBaton pb = fb.directoryBaton;
         boolean isLocallyModified;
         boolean magicPropsChanged= false;
+        boolean foundTextConflict = false;
+
+        assert !fb.shadowed && !fb.obstructionFound && !fb.editObstructed;
         
         MergeFileInfo mergeFileInfo = new MergeFileInfo();
+        mergeFileInfo.workItem = null;
         mergeFileInfo.installPristine = false;
         mergeFileInfo.contentState = SVNStatusType.UNCHANGED;
-        
+        mergeFileInfo.installFrom = null;
+
         if (fb.addingFile && !fb.addExisted) {
             isLocallyModified = false;
         } else {
@@ -2271,7 +2277,8 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         if (!isLocallyModified && fb.newTextBaseSHA1Checksum != null) {
             mergeFileInfo.installPristine = true;
         } else if (fb.newTextBaseSHA1Checksum != null) {
-            MergeInfo mergeInfo = performFileMerge(myWCContext, fb.localAbsolutePath, 
+            MergeInfo mergeInfo = performFileMerge(myWCContext,
+                    fb.localAbsolutePath,
                     pb.localAbsolutePath, 
                     fb.newTextBaseSHA1Checksum, 
                     fb.addExisted ? null : fb.originalChecksum,
@@ -2282,6 +2289,8 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                     propChanges);
             mergeFileInfo.workItem = myWCContext.wqMerge(mergeFileInfo.workItem, mergeInfo.workItems);
             mergeFileInfo.contentState = mergeInfo.mergeOutcome;
+            mergeFileInfo.conflictSkel = mergeInfo.conflictSkel;
+            foundTextConflict = mergeInfo.foundTextConflict;
         } else {
             magicPropsChanged = myWCContext.hasMagicProperty(propChanges);
             TranslateInfo translateInfo = myWCContext.getTranslateInfo(fb.localAbsolutePath, actualProps, true, false, false, true, false);
@@ -2297,18 +2306,9 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                 }
             }
         }
-        
-        if (!mergeFileInfo.installPristine && !isLocallyModified) {
-            SVNDate date = SVNDate.NULL;
-            if (lastChangedDate != null) {
-                date = lastChangedDate;
-            }
-            SVNSkel workItem = myWCContext.wqBuildRecordFileinfo(fb.localAbsolutePath, date);
-            mergeFileInfo.workItem = myWCContext.wqMerge(mergeFileInfo.workItem, workItem);
-        }
-        
-        if (mergeFileInfo.contentState == SVNStatusType.CONFLICTED) {
-            
+
+        if (foundTextConflict) {
+            mergeFileInfo.contentState = SVNStatusType.CONFLICTED;
         } else if (fb.newTextBaseSHA1Checksum != null) {
             if (isLocallyModified) {
                 mergeFileInfo.contentState = SVNStatusType.MERGED;
