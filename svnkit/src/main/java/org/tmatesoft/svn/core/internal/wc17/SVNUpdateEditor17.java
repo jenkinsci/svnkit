@@ -1610,9 +1610,10 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
 
             File installFrom = null;
             if (!fb.obstructionFound && !fb.editObstructed) {
-                MergeFileInfo fileInfo = null;                
+                MergeFileInfo fileInfo = new MergeFileInfo();
+                fileInfo.conflictSkel = conflictSkel;
                 try {
-                    fileInfo = mergeFile(fb, currentActualProps, fb.changedDate);
+                    fileInfo = mergeFile(fb, fileInfo, currentActualProps, fb.changedDate);
                     contentState = fileInfo.contentState;
                     installFrom = fileInfo.installFrom;
                     installPristine = fileInfo.installPristine;
@@ -2252,15 +2253,17 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         return mergeInfo;
     }
 
-    private MergeFileInfo mergeFile(FileBaton fb, SVNProperties actualProps, SVNDate lastChangedDate) throws SVNException {
+    private MergeFileInfo mergeFile(FileBaton fb, MergeFileInfo mergeFileInfo, SVNProperties actualProps, SVNDate lastChangedDate) throws SVNException {
         DirectoryBaton pb = fb.directoryBaton;
         boolean isLocallyModified;
         boolean magicPropsChanged= false;
         boolean foundTextConflict = false;
 
         assert !fb.shadowed && !fb.obstructionFound && !fb.editObstructed;
-        
-        MergeFileInfo mergeFileInfo = new MergeFileInfo();
+
+        if (mergeFileInfo == null) {
+            mergeFileInfo = new MergeFileInfo();
+        }
         mergeFileInfo.workItem = null;
         mergeFileInfo.installPristine = false;
         mergeFileInfo.contentState = SVNStatusType.UNCHANGED;
