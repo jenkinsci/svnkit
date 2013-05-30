@@ -514,6 +514,8 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             }
         }
 
+        completeConflict(treeConflict, localAbsPath, info.reposRelPath, info.revision, null, info.kind == SVNWCDbKind.Dir ? SVNNodeKind.DIR : SVNNodeKind.FILE, SVNNodeKind.NONE);
+
         if (!deletingTarget && !deletingSwitched) {
             myWCContext.getDb().removeBase(localAbsPath, keepAsWorking, queueDeletes, -1, treeConflict, null);
         } else {
