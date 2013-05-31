@@ -289,7 +289,7 @@ public class SvnExternalUpdateEditor implements ISVNUpdateEditor {
                     if (davPropChanges != null) {
                         propChanges.putAll(davPropChanges);
                     }
-                    MergeInfo outcome = SVNUpdateEditor17.performFileMerge(context, localAbsPath, wriAbsPath, newChecksum, originalChecksum, actualProperties, 
+                    MergeInfo outcome = SVNUpdateEditor17.performFileMerge(null, context, localAbsPath, wriAbsPath, newChecksum, originalChecksum, actualProperties,
                             extPatterns, originalRevision, targetRevision, propChanges);
                     if (outcome.workItems != null) {
                         allWorkItems = context.wqMerge(allWorkItems, outcome.workItems);

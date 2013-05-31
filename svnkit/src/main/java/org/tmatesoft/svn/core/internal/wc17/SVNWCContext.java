@@ -2159,10 +2159,8 @@ public class SVNWCContext {
             serverBaseProps = pristineProps;
         }
         SVNProperties theirProps = new SVNProperties(serverBaseProps);
-        SVNStatusType state = mergePropertiesInfo.mergeOutcome;
-        if (state != null) {
-            state = SVNStatusType.UNCHANGED;
-        }
+        SVNStatusType state = SVNStatusType.UNCHANGED;
+
         Set<String> propertyNames = propChanges.nameSet();
         for (String propertyName : propertyNames) {
             SVNPropertyValue baseVal = pristineProps.getSVNPropertyValue(propertyName);
@@ -2173,7 +2171,7 @@ public class SVNWCContext {
             boolean didMerge = false;
 
             theirProps.put(propertyName, toVal);
-            setPropMergeState(state, SVNStatusType.CHANGED);
+            state = setPropMergeState(state, SVNStatusType.CHANGED);
 
             SVNPropertyValue resultVal = workingVal;
 
@@ -2202,10 +2200,10 @@ public class SVNWCContext {
                 newActualProps.put(propertyName, resultVal);
             }
             if (didMerge) {
-                setPropMergeState(state, SVNStatusType.MERGED);
+                state = setPropMergeState(state, SVNStatusType.MERGED);
             }
             if (conflictRemains) {
-                setPropMergeState(state, SVNStatusType.CONFLICTED);
+                state = setPropMergeState(state, SVNStatusType.CONFLICTED);
 
                 if (conflictProps == null) {
                     conflictProps = new HashSet<String>();
@@ -2935,7 +2933,7 @@ public class SVNWCContext {
             return result;
         }
         SVNProperties actualProps = getDb().readProperties(target);
-        result = merge(left, right, target, target, leftLabel, rightLabel, targetLabel, actualProps, dryRun, options, propDiff);
+        result = merge(null, null, left, right, target, target, leftLabel, rightLabel, targetLabel, actualProps, dryRun, options, propDiff);
         if (!dryRun) {
             getDb().addWorkQueue(target, result.workItems);
             wqRun(target);
@@ -2943,7 +2941,8 @@ public class SVNWCContext {
         return result;
     }
 
-    public MergeInfo merge(File leftAbspath, File rightAbspath,
+    public MergeInfo merge(SVNSkel workItems, SVNSkel conflictSkel,
+                           File leftAbspath, File rightAbspath,
                            File targetAbspath, File wriAbspath,
                            String leftLabel, String rightLabel,
                            String targetLabel, SVNProperties oldActualProps,
@@ -2953,7 +2952,8 @@ public class SVNWCContext {
         assert (SVNFileUtil.isAbsolute(targetAbspath));
         assert (wriAbspath == null || SVNFileUtil.isAbsolute(wriAbspath));
         MergeInfo info = new MergeInfo();
-        info.workItems = null;
+        info.workItems = workItems;
+        info.conflictSkel = conflictSkel;
         if (wriAbspath == null) {
             SVNWCDbKind kind = db.readKind(targetAbspath, true);
             boolean hidden;
@@ -3703,8 +3703,6 @@ public class SVNWCContext {
         workItem.prepend(conflictSkel);
         workItem.prependPath(getRelativePath(localAbspath));
         workItem.prependString(WorkQueueOperation.PREJ_INSTALL.getOpName());
-        SVNSkel result = SVNSkel.createEmptyList();
-        result.appendChild(workItem);
         return workItem;
     }
 
@@ -3739,17 +3737,18 @@ public class SVNWCContext {
         if (workItem2 == null) {
             return workItem1;
         }
-        if (workItem1.isAtom()) {
-            if (workItem2.isAtom()) {
+        if (isSingleWorkItem(workItem1)) {
+            if (isSingleWorkItem(workItem2)) {
                 SVNSkel result = SVNSkel.createEmptyList();
                 result.prepend(workItem2);
                 result.prepend(workItem1);
                 return result;
             }
+
             workItem2.prepend(workItem1);
             return workItem2;
         }
-        if (workItem2.isAtom()) {
+        if (isSingleWorkItem(workItem2)) {
             workItem1.appendChild(workItem2);
             return workItem1;
         }
@@ -3758,6 +3757,10 @@ public class SVNWCContext {
             workItem1.appendChild(workItem2.getChild(i));
         }
         return workItem1;
+    }
+
+    private static boolean isSingleWorkItem(SVNSkel workItem) {
+        return workItem.first().isAtom();
     }
 
     public void wqRun(File dirAbspath) throws SVNException {

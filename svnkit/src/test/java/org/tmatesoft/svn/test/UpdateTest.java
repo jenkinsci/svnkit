@@ -377,7 +377,57 @@ public class UpdateTest {
 
             final Map<File,SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopy.getWorkingCopyDirectory());
             Assert.assertEquals(SVNStatusType.STATUS_CONFLICTED, statuses.get(file).getNodeStatus());
+            Assert.assertEquals(SVNStatusType.STATUS_CONFLICTED, statuses.get(file).getPropertiesStatus());
+            Assert.assertEquals(SVNStatusType.STATUS_NORMAL, statuses.get(file).getTextStatus());
 
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testUpdateTextFileResultsInTextAndPropertiesConflict() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testUpdateTextFileResultsInTextAndPropertiesConflict", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder1 = new CommitBuilder(url);
+            commitBuilder1.addFile("file", "content".getBytes());
+            commitBuilder1.setFileProperty("file", "propertyName", SVNPropertyValue.create("propertyValue"));
+            commitBuilder1.commit();
+
+            final CommitBuilder commitBuilder2 = new CommitBuilder(url);
+            commitBuilder2.changeFile("file", "changed content".getBytes());
+            commitBuilder2.setFileProperty("file", "propertyName", SVNPropertyValue.create("changedValue"));
+            commitBuilder2.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, 1);
+            final File file = workingCopy.getFile("file");
+            TestUtil.writeFileContentsString(file, "changed in another way content");
+            workingCopy.setProperty(file, "propertyName", SVNPropertyValue.create("changedInAnotherWay"));
+
+            final EventsHandler events = new EventsHandler();
+            svnOperationFactory.setEventHandler(events);
+
+            final SvnUpdate update = svnOperationFactory.createUpdate();
+            update.setSingleTarget(SvnTarget.fromFile(workingCopy.getWorkingCopyDirectory()));
+            update.run();
+
+            final Map<File,SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopy.getWorkingCopyDirectory());
+            Assert.assertEquals(SVNStatusType.STATUS_CONFLICTED, statuses.get(file).getNodeStatus());
+            Assert.assertEquals(SVNStatusType.STATUS_CONFLICTED, statuses.get(file).getTextStatus());
+            Assert.assertEquals(SVNStatusType.STATUS_CONFLICTED, statuses.get(file).getPropertiesStatus());
+
+            for (SVNEvent event : events.events) {
+                if (file.equals(event.getFile())) {
+                    Assert.assertEquals(SVNStatusType.CONFLICTED, event.getContentsStatus());
+                    Assert.assertEquals(SVNStatusType.CONFLICTED, event.getPropertiesStatus());
+                }
+            }
         } finally {
             svnOperationFactory.dispose();
             sandbox.dispose();

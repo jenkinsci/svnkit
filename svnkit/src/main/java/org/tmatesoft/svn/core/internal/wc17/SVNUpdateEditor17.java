@@ -1614,6 +1614,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             if (!fb.obstructionFound && !fb.editObstructed) {
                 MergeFileInfo fileInfo = new MergeFileInfo();
                 fileInfo.conflictSkel = conflictSkel;
+                fileInfo.workItem = allWorkItems;
                 try {
                     fileInfo = mergeFile(fb, fileInfo, currentActualProps, fb.changedDate);
                     contentState = fileInfo.contentState;
@@ -2221,7 +2222,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         public SVNSkel conflictSkel;
     }
     
-    public static MergeInfo performFileMerge(SVNWCContext context, File localAbsPath, File wriAbsPath, SvnChecksum newChecksum, SvnChecksum originalChecksum,
+    public static MergeInfo performFileMerge(MergeInfo mergeInfo, SVNWCContext context, File localAbsPath, File wriAbsPath, SvnChecksum newChecksum, SvnChecksum originalChecksum,
             SVNProperties actualProperties, String[] extPatterns,
             long oldRevision, long targetRevision, SVNProperties propChanges) throws SVNException {
         File mergeLeft = null;
@@ -2245,7 +2246,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             mergeLeft = context.getDb().getPristinePath(wriAbsPath, originalChecksum);
         }
         
-        MergeInfo mergeInfo = context.merge(mergeLeft, newTextBaseTmpAbsPath, localAbsPath, wriAbsPath,
+        mergeInfo = context.merge(mergeInfo.workItems, mergeInfo.conflictSkel, mergeLeft, newTextBaseTmpAbsPath, localAbsPath, wriAbsPath,
                 oldRevStr, newRevStr, mineStr, actualProperties, false, null, propChanges);
         mergeInfo.foundTextConflict = mergeInfo.mergeOutcome == SVNStatusType.CONFLICTED;
         if (deleteLeft) {
@@ -2282,15 +2283,18 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         if (!isLocallyModified && fb.newTextBaseSHA1Checksum != null) {
             mergeFileInfo.installPristine = true;
         } else if (fb.newTextBaseSHA1Checksum != null) {
-            MergeInfo mergeInfo = performFileMerge(myWCContext,
+            MergeInfo mergeInfo = new MergeInfo();
+            mergeInfo.conflictSkel = mergeFileInfo.conflictSkel;
+            mergeInfo.workItems = mergeFileInfo.workItem;
+            mergeInfo = performFileMerge(mergeInfo, myWCContext,
                     fb.localAbsolutePath,
-                    pb.localAbsolutePath, 
-                    fb.newTextBaseSHA1Checksum, 
+                    pb.localAbsolutePath,
+                    fb.newTextBaseSHA1Checksum,
                     fb.addExisted ? null : fb.originalChecksum,
-                    actualProps, 
-                    myExtensionPatterns, 
-                    fb.oldRevision, 
-                    myTargetRevision, 
+                    actualProps,
+                    myExtensionPatterns,
+                    fb.oldRevision,
+                    myTargetRevision,
                     propChanges);
             mergeFileInfo.workItem = myWCContext.wqMerge(mergeFileInfo.workItem, mergeInfo.workItems);
             mergeFileInfo.contentState = mergeInfo.mergeOutcome;

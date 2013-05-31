@@ -639,8 +639,6 @@ public class SVNWCDb implements ISVNWCDb {
         public SVNWCDbRoot wcRoot;
         
         public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
-            assert (conflict == null);
-            
             long recordedSize = INVALID_FILESIZE;
             long recordedModTime = 0;
             File parentRelpath = SVNFileUtil.getFileDir(localRelpath);
