@@ -1606,6 +1606,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             info = myWCContext.mergeProperties3(info, fb.localAbsolutePath,
                     null, currentBaseProps, currentActualProps, regularPropChanges);
             newActualProps = info.newActualProperties;
+            newBaseProps = info.newBaseProperties;
             propState[0] = info.mergeOutcome;
             conflictSkel = info.conflictSkel;
             allWorkItems = myWCContext.wqMerge(allWorkItems, info.workItems);

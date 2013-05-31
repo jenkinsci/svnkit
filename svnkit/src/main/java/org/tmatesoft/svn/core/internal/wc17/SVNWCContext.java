@@ -2152,14 +2152,13 @@ public class SVNWCContext {
         }
 
         Set<String> conflictProps = null;
-        SVNSkel conflictSkel = null;
+        mergePropertiesInfo.newActualProperties = new SVNProperties(actualProps);
 
-        SVNProperties newActualProps = new SVNProperties(actualProps);
         if (serverBaseProps == null) {
             serverBaseProps = pristineProps;
         }
         SVNProperties theirProps = new SVNProperties(serverBaseProps);
-        SVNStatusType state = SVNStatusType.UNCHANGED;
+        mergePropertiesInfo.mergeOutcome = SVNStatusType.UNCHANGED;
 
         Set<String> propertyNames = propChanges.nameSet();
         for (String propertyName : propertyNames) {
@@ -2171,7 +2170,7 @@ public class SVNWCContext {
             boolean didMerge = false;
 
             theirProps.put(propertyName, toVal);
-            state = setPropMergeState(state, SVNStatusType.CHANGED);
+            mergePropertiesInfo.mergeOutcome = setPropMergeState(mergePropertiesInfo.mergeOutcome, SVNStatusType.CHANGED);
 
             SVNPropertyValue resultVal = workingVal;
 
@@ -2197,13 +2196,13 @@ public class SVNWCContext {
                 didMerge = propStatusInfo.didMerge;
             }
             if (resultVal != workingVal) {
-                newActualProps.put(propertyName, resultVal);
+                mergePropertiesInfo.newActualProperties.put(propertyName, resultVal);
             }
             if (didMerge) {
-                state = setPropMergeState(state, SVNStatusType.MERGED);
+                mergePropertiesInfo.mergeOutcome = setPropMergeState(mergePropertiesInfo.mergeOutcome, SVNStatusType.MERGED);
             }
             if (conflictRemains) {
-                state = setPropMergeState(state, SVNStatusType.CONFLICTED);
+                mergePropertiesInfo.mergeOutcome = setPropMergeState(mergePropertiesInfo.mergeOutcome, SVNStatusType.CONFLICTED);
 
                 if (conflictProps == null) {
                     conflictProps = new HashSet<String>();
@@ -2211,19 +2210,14 @@ public class SVNWCContext {
                 conflictProps.add(propertyName);
             }
             if (conflictProps != null) {
-                if (conflictSkel == null) {
-                    conflictSkel = SvnWcDbConflicts.createConflictSkel();
+                if (mergePropertiesInfo.conflictSkel == null) {
+                    mergePropertiesInfo.conflictSkel = SvnWcDbConflicts.createConflictSkel();
                 }
-                SvnWcDbConflicts.addPropConflict(conflictSkel, getDb(), localAbsPath, null,
+                SvnWcDbConflicts.addPropConflict(mergePropertiesInfo.conflictSkel, getDb(), localAbsPath, null,
                         actualProps, serverBaseProps, theirProps, conflictProps);
             }
         }
-
-        MergePropertiesInfo propertiesInfo = new MergePropertiesInfo();
-        propertiesInfo.conflictSkel = conflictSkel;
-        propertiesInfo.mergeOutcome = state;
-        propertiesInfo.newActualProperties = newActualProps;
-        return propertiesInfo;
+        return mergePropertiesInfo;
     }
     
     private ISvnMerger createCustomMerger() {
