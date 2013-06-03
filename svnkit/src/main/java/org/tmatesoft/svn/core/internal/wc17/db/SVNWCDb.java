@@ -3414,6 +3414,9 @@ public class SVNWCDb implements ISVNWCDb {
                 ibb.checksum = null;
                 ibb.target = null;
 
+                ibb.localRelpath = localRelpath;
+                ibb.wcRoot = root;
+
                 ibb.transaction(db);
             }
 
