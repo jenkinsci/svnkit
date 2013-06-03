@@ -680,6 +680,54 @@ public class UpdateTest {
         }
     }
 
+    @Test
+    public void testUpdateDeletedMissingDirectory() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testUpdateDeletedMissingDirectory", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder1 = new CommitBuilder(url);
+            commitBuilder1.addDirectory("directory/subdirectory");
+            commitBuilder1.commit();
+
+            final CommitBuilder commitBuilder2 = new CommitBuilder(url);
+            commitBuilder2.delete("directory");
+            commitBuilder2.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, 1);
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+            final File directory = workingCopy.getFile("directory");
+
+            SVNFileUtil.deleteAll(directory, true);
+
+            final SvnUpdate update = svnOperationFactory.createUpdate();
+            update.setSingleTarget(SvnTarget.fromFile(directory));
+            update.run();
+
+            final SvnUpdate update1 = svnOperationFactory.createUpdate();
+            update1.setRevision(SVNRevision.create(1));
+            update1.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            update1.run();
+
+            final SvnUpdate update2 = svnOperationFactory.createUpdate();
+            update2.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            update2.run();
+
+            final SvnGetInfo getInfo = svnOperationFactory.createGetInfo();
+            getInfo.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            final SvnInfo info = getInfo.run();
+
+            Assert.assertEquals(2, info.getRevision());
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
     private void assertDavPropertiesAreCleaned(WorkingCopy workingCopy) throws SqlJetException, SVNException {
         final SqlJetDb db = SqlJetDb.open(workingCopy.getWCDbFile(), false);
         try {
