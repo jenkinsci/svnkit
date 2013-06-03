@@ -1638,4 +1638,13 @@ public interface ISVNWCDb {
         public File moveSrcRootAbsPath;
         public File moveSrcOpRootAbsPath;
     }
+
+    NodeInstallInfo readNodeInstallInfo(File localAbsPath, File wriAbsPath) throws SVNException;
+
+    static class NodeInstallInfo {
+        public SVNWCDbRoot wcRoot;
+        public SvnChecksum checksum;
+        public SVNProperties properties;
+        public SVNDate changedDate;
+    }
 }

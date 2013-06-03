@@ -397,6 +397,7 @@ public class SVNReporter17 implements ISVNReporterBaton {
     private static void restoreFile(SVNWCContext context, File localAbsPath, boolean useCommitTimes, boolean removeTextConflicts) throws SVNException {
         SVNSkel workItem = context.wqBuildFileInstall(localAbsPath, null, useCommitTimes, true);
         context.getDb().addWorkQueue(localAbsPath, workItem);
+        context.wqRun(localAbsPath);
         if (removeTextConflicts) {
             resolveTextConflict(context, localAbsPath);
         }

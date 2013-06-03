@@ -3676,9 +3676,7 @@ public class SVNWCContext {
         SVNSkel workItem = SVNSkel.createEmptyList();
         workItem.prependPath(db.toRelPath(wriAbspath, localAbspath));
         workItem.prependString(WorkQueueOperation.FILE_REMOVE.getOpName());
-        SVNSkel result = SVNSkel.createEmptyList();
-        result.appendChild(workItem);
-        return result;
+        return workItem;
     }
 
     public static SVNSkel wqBuildDirRemove(SVNWCDb db, File wriAbspath, File localAbspath, boolean recursive) throws SVNException {
@@ -3839,14 +3837,23 @@ public class SVNWCContext {
             File localAbspath = SVNFileUtil.createFilePath(wcRootAbspath, workItem.getChild(1).getValue());
             boolean useCommitTimes = "1".equals(workItem.getChild(2).getValue());
             boolean recordFileInfo = "1".equals(workItem.getChild(3).getValue());
-            File srcPath;
-            if (workItem.getListSize() <= 4) {
-                srcPath = ctx.getPristineContents(localAbspath, false, true).path;
+
+            ISVNWCDb.NodeInstallInfo nodeInstallInfo = ctx.getDb().readNodeInstallInfo(localAbspath, wcRootAbspath);
+
+            File sourceAbsPath = null;
+            if (workItem.getListSize() >= 5) {
+                File localRelPath = SVNFileUtil.createFilePath(workItem.getChild(4).getValue());
+                sourceAbsPath = ctx.getDb().fromRelPath(wcRootAbspath, localRelPath);
+            } else if (nodeInstallInfo.checksum == null) {
+                SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT_TEXT_BASE, "Can't install '{0}' from pristine store, " +
+                        "because no checksum is recorded for this file", localAbspath);
+                SVNErrorManager.error(errorMessage, SVNLogType.WC);
             } else {
-                srcPath = SVNFileUtil.createFilePath(wcRootAbspath, workItem.getChild(4).getValue());
+                sourceAbsPath = SvnWcDbPristines.getPristineFuturePath(nodeInstallInfo.wcRoot, nodeInstallInfo.checksum);
             }
+
             TranslateInfo tinfo = ctx.getTranslateInfo(localAbspath, true, true, true, true);
-            SVNTranslator.translate(srcPath, localAbspath, tinfo.charset, tinfo.eolStyleInfo.eolStr, tinfo.keywords, tinfo.special, true);
+            SVNTranslator.translate(sourceAbsPath, localAbspath, tinfo.charset, tinfo.eolStyleInfo.eolStr, tinfo.keywords, tinfo.special, true);
             if (tinfo.special) {
                 return;
             }

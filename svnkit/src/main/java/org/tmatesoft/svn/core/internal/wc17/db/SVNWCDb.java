@@ -5594,4 +5594,57 @@ public class SVNWCDb implements ISVNWCDb {
             this.moveDstOpRootRelPath = moveDstOpRootRelPath;
         }
     }
+
+    @Override
+    public NodeInstallInfo readNodeInstallInfo(File localAbsPath, File wriAbsPath) throws SVNException {
+        assert isAbsolute(localAbsPath);
+
+        if (wriAbsPath == null) {
+            wriAbsPath = localAbsPath;
+        }
+
+        DirParsedInfo parsed = parseDir(wriAbsPath, Mode.ReadOnly);
+        verifyDirUsable(parsed.wcDbDir);
+
+        NodeInstallInfo nodeInstallInfo = new NodeInstallInfo();
+
+        File localRelPath = parsed.localRelPath;
+
+        SVNWCDbRoot wcRoot = parsed.wcDbDir.getWCRoot();
+        File wcRootAbsPath = wcRoot.getAbsPath();
+
+        if (!localAbsPath.equals(wriAbsPath)) {
+            if (!SVNPathUtil.isAncestor(SVNFileUtil.getFilePath(wcRootAbsPath), SVNFileUtil.getFilePath(localAbsPath))) {
+                SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node '{{0}}' is not in working copy '{{1}}'",
+                        localAbsPath, wcRootAbsPath);
+                SVNErrorManager.error(errorMessage, SVNLogType.WC);
+            }
+            localRelPath = SVNFileUtil.createFilePath(SVNPathUtil.getRelativePath(SVNFileUtil.getFilePath(wcRootAbsPath),
+                    SVNFileUtil.getFilePath(localAbsPath)));
+        }
+
+        nodeInstallInfo.wcRoot = wcRoot;
+
+        boolean haveRow;
+
+        SVNSqlJetStatement stmt = wcRoot.getSDb().getStatement(SVNWCDbStatements.SELECT_NODE_INFO);
+        try {
+            stmt.bindf("is", wcRoot.getWcId(), localRelPath);
+            haveRow = stmt.next();
+
+            if (haveRow) {
+                nodeInstallInfo.checksum = SvnWcDbStatementUtil.getColumnChecksum(stmt, NODES__Fields.checksum);
+                nodeInstallInfo.properties = SvnWcDbStatementUtil.getColumnProperties(stmt, NODES__Fields.properties);
+                nodeInstallInfo.changedDate = SvnWcDbStatementUtil.getColumnDate(stmt, NODES__Fields.changed_date);
+            } else {
+                SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node '{{0}}' is not installable", new Object[]{localAbsPath.getPath()});
+                SVNErrorManager.error(errorMessage, SVNLogType.WC);
+            }
+
+        } finally {
+            stmt.reset();
+        }
+
+        return nodeInstallInfo;
+    }
 }
