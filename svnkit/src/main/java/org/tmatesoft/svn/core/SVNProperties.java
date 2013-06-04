@@ -410,7 +410,7 @@ public class SVNProperties implements Cloneable, Serializable {
             String changed = (String) props.next();
             SVNPropertyValue value1 = getSVNPropertyValue(changed);
             SVNPropertyValue value2 = properties.getSVNPropertyValue(changed);
-            if (!value1.equals(value2)) {
+            if (!SVNPropertyValue.areEqual(value1, value2)) {
                 result.put(changed, value2);
             }
         }

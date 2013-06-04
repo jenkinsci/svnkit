@@ -731,9 +731,19 @@ public class SVNWCDb implements ISVNWCDb {
 
             if (parentRelpath != null) {
                 if (localRelpath != null && (status == SVNWCDbStatus.Normal || status == SVNWCDbStatus.Incomplete) && !fileExternal) {
-                    extendParentDelete(db, wcId, localRelpath);
+                    extendParentDelete(db, wcId, localRelpath, kind == SVNWCDbKind.Dir ? SVNNodeKind.DIR : SVNNodeKind.FILE, 0);
                 } else if (status == SVNWCDbStatus.NotPresent || status == SVNWCDbStatus.ServerExcluded || status == SVNWCDbStatus.Excluded) {
-                    retractParentDelete(db, wcId, localRelpath);
+                    retractParentDelete(db, wcId, localRelpath, 0);
+                }
+            }
+
+            if (deleteWorking) {
+                stmt = db.getStatement(SVNWCDbStatements.DELETE_WORKING_NODE);
+                try {
+                    stmt.bindf("is", wcId, localRelpath);
+                    stmt.done();
+                } finally {
+                    stmt.reset();
                 }
             }
             
@@ -875,53 +885,46 @@ public class SVNWCDb implements ISVNWCDb {
         }
     }
     
-    public void retractParentDelete(SVNSqlJetDb db, long wcId, File localRelPath) throws SVNException {
-        SVNSqlJetStatement stmt = db.getStatement(SVNWCDbStatements.DELETE_LOWEST_WORKING_NODE);
+    public void extendParentDelete(SVNSqlJetDb db, long wcId, File localRelPath, SVNNodeKind kind, int opDepth) throws SVNException {
+        long parentOpDepth = 0;
+        SVNSqlJetStatement stmt;
+        File parentRelPath = SVNFileUtil.getFileDir(localRelPath);
+
+        stmt = db.getStatement(SVNWCDbStatements.SELECT_LOWEST_WORKING_NODE);
         try {
-            stmt.bindf("is", wcId, localRelPath);
-            stmt.done();
+            stmt.bindf("isi", wcId, parentRelPath, opDepth);
+            boolean haveRow = stmt.next();
+
+            if (haveRow) {
+                parentOpDepth = stmt.getColumnLong(NODES__Fields.op_depth);
+            }
+            stmt.reset();
+            if (haveRow) {
+                long existingOpDepth = 0;
+                stmt.bindf("isi", wcId, localRelPath, opDepth);
+                haveRow = stmt.next();
+                if (haveRow) {
+                    existingOpDepth = stmt.getColumnLong(NODES__Fields.op_depth);
+                }
+                stmt.reset();
+                if (!haveRow || parentOpDepth < existingOpDepth) {
+                    stmt = db.getStatement(SVNWCDbStatements.DELETE_LOWEST_WORKING_NODE);
+                    stmt.bindf("isist", wcId, localRelPath, parentOpDepth, parentRelPath, kind);
+                    stmt.done();
+                }
+            }
         } finally {
             stmt.reset();
         }
     }
 
-    public void extendParentDelete(SVNSqlJetDb db, long wcId, File localRelpath) throws SVNException {
-        assert (localRelpath != null);
-        boolean haveRow;
-        SVNSqlJetStatement stmt;
-        long parentOpDepth = 0;
-        File parentRelpath = SVNFileUtil.getFileDir(localRelpath);
-        assert (parentRelpath != null);
-        stmt = db.getStatement(SVNWCDbStatements.SELECT_LOWEST_WORKING_NODE);
+    public void retractParentDelete(SVNSqlJetDb db, long wcId, File localRelPath, int opDepth) throws SVNException {
+        SVNSqlJetStatement stmt = db.getStatement(SVNWCDbStatements.DELETE_LOWEST_WORKING_NODE);
         try {
-            stmt.bindf("is", wcId, parentRelpath);
-            haveRow = stmt.next();
-            if (haveRow) {
-                parentOpDepth = stmt.getColumnLong(SVNWCDbSchema.NODES__Fields.op_depth);
-            }
+            stmt.bindf("isi", wcId, localRelPath, opDepth);
+            stmt.done();
         } finally {
             stmt.reset();
-        }
-        if (haveRow) {
-            long opDepth = 0;
-            try {
-                stmt.bindf("is", wcId, localRelpath);
-                haveRow = stmt.next();
-                if (haveRow) {
-                    opDepth = stmt.getColumnLong(SVNWCDbSchema.NODES__Fields.op_depth);
-                }
-            } finally {
-                stmt.reset();
-            }
-            if (!haveRow || parentOpDepth < opDepth) {
-                stmt = db.getStatement(SVNWCDbStatements.INSTALL_WORKING_NODE_FOR_DELETE);
-                try {
-                    stmt.bindf("isit", wcId, localRelpath, parentOpDepth, getPresenceText(SVNWCDbStatus.BaseDeleted));
-                    stmt.done();
-                } finally {
-                    stmt.reset();
-                }
-            }
         }
     }
 
