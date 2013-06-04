@@ -1556,7 +1556,7 @@ public interface ISVNWCDb {
 
     void opMakeCopyTemp(File localAbspath, boolean removeBase) throws SVNException;
 
-    void opSetNewDirToIncompleteTemp(File localAbspath, File reposRelpath, SVNURL reposRootURL, String reposUuid, long revision, SVNDepth depth) throws SVNException;
+    void opSetNewDirToIncompleteTemp(File localAbspath, File reposRelpath, SVNURL reposRootURL, String reposUuid, long revision, SVNDepth depth, boolean insertBaseDeleted, boolean deleteWorking, SVNSkel conflict, SVNSkel workItems) throws SVNException;
 
     File getWCRootTempDir(File localAbspath) throws SVNException;
 

@@ -728,6 +728,51 @@ public class UpdateTest {
         }
     }
 
+    @Test
+    public void testUnversionedFileObstruction() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testUnversionedFileObstruction", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addDirectory("obstruction");
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, 0);
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+            final File obstruction = workingCopy.getFile("obstruction");
+            SVNFileUtil.createFile(obstruction, "contents", "UTF-8");
+
+            final SvnUpdate update = svnOperationFactory.createUpdate();
+            update.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            update.run();
+
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
+
+            Assert.assertEquals(SVNStatusType.STATUS_DELETED, statuses.get(obstruction).getNodeStatus());
+
+            SVNFileUtil.deleteFile(obstruction);
+
+            final SvnRevert revert = svnOperationFactory.createRevert();
+            revert.setSingleTarget(SvnTarget.fromFile(obstruction));
+            revert.run();
+
+            final SvnUpdate update1 = svnOperationFactory.createUpdate();
+            update1.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            update1.run();
+
+            final Map<File, SvnStatus> statuses1 = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
+            Assert.assertEquals(SVNStatusType.STATUS_NORMAL, statuses1.get(obstruction).getNodeStatus());
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
     private void assertDavPropertiesAreCleaned(WorkingCopy workingCopy) throws SqlJetException, SVNException {
         final SqlJetDb db = SqlJetDb.open(workingCopy.getWCDbFile(), false);
         try {

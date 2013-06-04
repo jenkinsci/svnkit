@@ -798,7 +798,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             status = readInfo.status;
             wcKind = readInfo.kind;
             conflicted = readInfo.conflicted;
-            versionedLocallyAndPresent = isNodePresent(status);
+            versionedLocallyAndPresent = false;
         } catch (SVNException e) {
             if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND) {
                 throw e;
@@ -894,7 +894,8 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             completeConflict(treeConflict, db.localAbsolutePath, db.oldReposRelPath, db.oldRevision, db.newRelativePath, wcKind == SVNWCDbKind.Dir ? SVNNodeKind.DIR : SVNNodeKind.FILE, SVNNodeKind.DIR);
         }
 
-        myWCContext.getDb().opSetNewDirToIncompleteTemp(db.localAbsolutePath, db.newRelativePath, myReposRootURL, myReposUuid, myTargetRevision, db.ambientDepth);
+        myWCContext.getDb().opSetNewDirToIncompleteTemp(db.localAbsolutePath, db.newRelativePath, myReposRootURL, myReposUuid, myTargetRevision, db.ambientDepth,
+                db.shadowed && db.obstructionFound, !db.shadowed && status == SVNWCDbStatus.Added, treeConflict, null);
         if (!db.shadowed) {
             SVNFileUtil.ensureDirectoryExists(db.localAbsolutePath);
         }

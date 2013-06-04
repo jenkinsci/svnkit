@@ -630,6 +630,7 @@ public class SVNWCDb implements ISVNWCDb {
         
        public boolean insertBaseDeleted;
        public boolean keepRecordedInfo;
+        public boolean deleteWorking;
        
         public SVNSkel workItems;
 
@@ -4306,7 +4307,8 @@ public class SVNWCDb implements ISVNWCDb {
         }
     }
 
-    public void opSetNewDirToIncompleteTemp(File localAbspath, File reposRelpath, SVNURL reposRootURL, String reposUuid, long revision, SVNDepth depth) throws SVNException {
+    public void opSetNewDirToIncompleteTemp(File localAbspath, File reposRelpath, SVNURL reposRootURL, String reposUuid, long revision, SVNDepth depth,
+                                            boolean insertBaseDeleted, boolean deleteWorking, SVNSkel conflict, SVNSkel workItems) throws SVNException {
 
         assert (SVNFileUtil.isAbsolute(localAbspath));
         assert (SVNRevision.isValidRevisionNumber(revision));
@@ -4327,7 +4329,12 @@ public class SVNWCDb implements ISVNWCDb {
         insertBase.localRelpath = parsed.localRelPath;
         insertBase.wcId = pdh.getWCRoot().getWcId();
         insertBase.wcRoot = pdh.getWCRoot();
-        
+
+        insertBase.insertBaseDeleted = insertBaseDeleted;
+        insertBase.deleteWorking = deleteWorking;
+        insertBase.conflict = conflict;
+        insertBase.workItems = workItems;
+
         pdh.getWCRoot().getSDb().runTransaction(insertBase);
         pdh.flushEntries(localAbspath);
     }
