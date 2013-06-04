@@ -773,6 +773,69 @@ public class UpdateTest {
         }
     }
 
+    @Ignore("Incomplete")
+    @Test
+    public void testConflictsWhileEolStyleChange() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testConflictsWhileEolStyleChange", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("file", ("remote" + "\r\n").getBytes());
+            commitBuilder.commit();
+
+            final CommitBuilder commitBuilder2 = new CommitBuilder(url);
+            commitBuilder2.setFileProperty("file", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_CRLF));
+            commitBuilder2.commit();
+
+            final CommitBuilder commitBuilder3 = new CommitBuilder(url);
+            commitBuilder3.changeFile("file", ("remote" + "\r").getBytes());
+            commitBuilder3.setFileProperty("file", SVNProperty.EOL_STYLE, SVNPropertyValue.create(SVNProperty.EOL_STYLE_CR));
+            commitBuilder3.commit();
+
+            final CommitBuilder commitBuilder4 = new CommitBuilder(url);
+            commitBuilder4.setFileProperty("file", SVNProperty.EOL_STYLE, null);
+            commitBuilder4.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, 1);
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+            final File file = workingCopy.getFile("file");
+
+            TestUtil.writeFileContentsString(file, "changed" + "\n");
+
+            final SvnUpdate update2 = svnOperationFactory.createUpdate();
+            update2.setRevision(SVNRevision.create(2));
+            update2.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            update2.run();
+
+            final Map<File, SvnStatus> statuses2 = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
+            Assert.assertEquals(SVNStatusType.STATUS_CONFLICTED, statuses2.get(file).getNodeStatus());
+
+            TestUtil.writeFileContentsString(file, "changed" + "\r");
+
+            final SvnUpdate update3 = svnOperationFactory.createUpdate();
+            update3.setRevision(SVNRevision.create(3));
+            update3.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            update3.run();
+
+            TestUtil.writeFileContentsString(file, "changed" + "\r");
+
+            final SvnUpdate update4 = svnOperationFactory.createUpdate();
+            update4.setRevision(SVNRevision.create(4));
+            update4.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            update4.run();
+
+            //TODO: compare statuses after each update with native SVN and complete
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
     private void assertDavPropertiesAreCleaned(WorkingCopy workingCopy) throws SqlJetException, SVNException {
         final SqlJetDb db = SqlJetDb.open(workingCopy.getWCDbFile(), false);
         try {
