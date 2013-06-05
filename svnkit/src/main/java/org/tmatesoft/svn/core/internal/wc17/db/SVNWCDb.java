@@ -322,7 +322,7 @@ public class SVNWCDb implements ISVNWCDb {
         }
     }
 
-    private void addWorkItems(SVNSqlJetDb sDb, SVNSkel skel) throws SVNException {
+    public static void addWorkItems(SVNSqlJetDb sDb, SVNSkel skel) throws SVNException {
         /* Maybe there are no work items to insert. */
         if (skel == null) {
             return;
@@ -340,7 +340,7 @@ public class SVNWCDb implements ISVNWCDb {
 
     }
 
-    private void addSingleWorkItem(SVNSqlJetDb sDb, SVNSkel workItem) throws SVNException {
+    private static void addSingleWorkItem(SVNSqlJetDb sDb, SVNSkel workItem) throws SVNException {
         final byte[] serialized = workItem.unparse();
         final SVNSqlJetStatement stmt = sDb.getStatement(SVNWCDbStatements.INSERT_WORK_ITEM);
         try {
@@ -908,7 +908,7 @@ public class SVNWCDb implements ISVNWCDb {
                 }
                 stmt.reset();
                 if (!haveRow || parentOpDepth < existingOpDepth) {
-                    stmt = db.getStatement(SVNWCDbStatements.DELETE_LOWEST_WORKING_NODE);
+                    stmt = db.getStatement(SVNWCDbStatements.INSTALL_WORKING_NODE_FOR_DELETE);
                     stmt.bindf("isist", wcId, localRelPath, parentOpDepth, parentRelPath, kind);
                     stmt.done();
                 }
@@ -4216,7 +4216,7 @@ public class SVNWCDb implements ISVNWCDb {
             boolean removeWorking = false;
             boolean addWorkingBaseDeleted = false;
             stmt = db.getStatement(SVNWCDbStatements.SELECT_LOWEST_WORKING_NODE);
-            stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelpath);
+            stmt.bindf("isi", pdh.getWCRoot().getWcId(), localRelpath, 0);
             try {
                 haveRow = stmt.next();
                 if (haveRow) {

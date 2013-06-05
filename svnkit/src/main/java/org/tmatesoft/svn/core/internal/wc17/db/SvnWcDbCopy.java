@@ -12,6 +12,7 @@ import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.SVNWCDbStatus;
@@ -319,8 +320,9 @@ public class SvnWcDbCopy extends SvnWcDbShared {
 
     private static void doCopy(SVNWCDbDir srcPdh, File localSrcRelpath, SVNWCDbDir dstPdh, File localDstRelpath, SVNSkel workItems) throws SVNException {
         Structure<CopyInfo> copyInfo = getCopyInfo(srcPdh.getWCRoot(), localSrcRelpath);
-        long[] dstOpDepths = getOpDepthForCopy(dstPdh.getWCRoot(), localDstRelpath, 
-                copyInfo.lng(CopyInfo.copyFromId), copyInfo.<File>get(CopyInfo.copyFromRelpath), copyInfo.lng(CopyInfo.copyFromRev));
+        File copyFromRelpath = copyInfo.<File>get(CopyInfo.copyFromRelpath);
+        long[] dstOpDepths = getOpDepthForCopy(dstPdh.getWCRoot(), localDstRelpath,
+                copyInfo.lng(CopyInfo.copyFromId), copyFromRelpath, copyInfo.lng(CopyInfo.copyFromRev));
         
         SVNWCDbStatus status = copyInfo.get(CopyInfo.status);
         SVNWCDbStatus dstPresence = null;
@@ -348,7 +350,13 @@ public class SvnWcDbCopy extends SvnWcDbShared {
                         throw e;
                     }
                 }
+            } else {
+                if (copyFromRelpath == null) {
+                    SVNWCDb.addWorkItems(dstPdh.getWCRoot().getSDb(), workItems);
+                    return;
+                }
             }
+            //"break;" is absent by intention
         case NotPresent:
         case Excluded:
             if (dstOpDepths[1] > 0) {

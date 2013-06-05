@@ -887,6 +887,53 @@ public class UpdateTest {
         }
     }
 
+    @Test
+    public void testApplyRemoteCopyUponLocalCopy() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testApplyRemoteCopyUponLocalCopy", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder1 = new CommitBuilder(url);
+            commitBuilder1.addFile("directory/file");
+            commitBuilder1.addFile("anotherDirectory/anotherFile");
+            commitBuilder1.commit();
+
+            final CommitBuilder commitBuilder2 = new CommitBuilder(url);
+            commitBuilder2.addDirectoryByCopying("copied", "directory");
+            commitBuilder2.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, 1);
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+            final File anotherDirectory = workingCopy.getFile("anotherDirectory");
+            final File copied = workingCopy.getFile("copied");
+            final File copiedFile = workingCopy.getFile("copied/file");
+            final File copiedAnotherFile = workingCopy.getFile("copied/anotherFile");
+
+            final SvnCopy copy = svnOperationFactory.createCopy();
+            copy.addCopySource(SvnCopySource.create(SvnTarget.fromFile(anotherDirectory), SVNRevision.WORKING));
+            copy.setSingleTarget(SvnTarget.fromFile(copied));
+            copy.run();
+
+            final SvnUpdate update = svnOperationFactory.createUpdate();
+            update.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            update.run();
+
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
+            Assert.assertEquals(SVNStatusType.STATUS_DELETED, statuses.get(copiedFile).getNodeStatus());
+            Assert.assertEquals(SVNStatusType.STATUS_REPLACED, statuses.get(copied).getNodeStatus());
+            Assert.assertTrue(statuses.get(copied).isCopied());
+            Assert.assertTrue(statuses.get(copied).isConflicted());
+            Assert.assertTrue(statuses.get(copiedAnotherFile).isCopied());
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
     private void assertDavPropertiesAreCleaned(WorkingCopy workingCopy) throws SqlJetException, SVNException {
         final SqlJetDb db = SqlJetDb.open(workingCopy.getWCDbFile(), false);
         try {
