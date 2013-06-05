@@ -836,6 +836,57 @@ public class UpdateTest {
         }
     }
 
+    @Test
+    public void testUpdateUponAddedFileShouldPreserveProperties() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testUpdateUponAddedFileShouldPreserveProperties", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("file", "original".getBytes());
+            commitBuilder.setFileProperty("file", "propertyName", SVNPropertyValue.create("propertyValue"));
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, 0);
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+            final File file = workingCopy.getFile("file");
+
+            TestUtil.writeFileContentsString(file, "changed");
+
+            final SvnScheduleForAddition scheduleForAddition = svnOperationFactory.createScheduleForAddition();
+            scheduleForAddition.setSingleTarget(SvnTarget.fromFile(file));
+            scheduleForAddition.run();
+
+            final SvnSetProperty setProperty = svnOperationFactory.createSetProperty();
+            setProperty.setSingleTarget(SvnTarget.fromFile(file));
+            setProperty.setPropertyName("propertyName");
+            setProperty.setPropertyValue(SVNPropertyValue.create("propertyValue"));
+            setProperty.run();
+
+            final SvnUpdate update = svnOperationFactory.createUpdate();
+            update.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            update.run();
+
+            final SvnGetProperties getProperties = svnOperationFactory.createGetProperties();
+            getProperties.setSingleTarget(SvnTarget.fromFile(file));
+            final SVNProperties properties = getProperties.run();
+
+            Assert.assertEquals("propertyValue", SVNPropertyValue.getPropertyAsString(properties.getSVNPropertyValue("propertyName")));
+
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
+            Assert.assertEquals(SVNStatusType.STATUS_CONFLICTED, statuses.get(file).getNodeStatus());
+            Assert.assertEquals(SVNStatusType.STATUS_NORMAL, statuses.get(file).getPropertiesStatus());
+            Assert.assertEquals(SVNStatusType.STATUS_CONFLICTED, statuses.get(file).getTextStatus());
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
     private void assertDavPropertiesAreCleaned(WorkingCopy workingCopy) throws SqlJetException, SVNException {
         final SqlJetDb db = SqlJetDb.open(workingCopy.getWCDbFile(), false);
         try {

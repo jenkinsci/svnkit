@@ -973,6 +973,7 @@ public class SVNWCDb implements ISVNWCDb {
         }
         ibb.keepRecordedInfo = keepRecordedInfo;
         ibb.insertBaseDeleted = insertBaseDeleted;
+        ibb.deleteWorking = deleteWorking;
 
         ibb.localRelpath = localRelpath;
         ibb.wcId = pdh.getWCRoot().getWcId();
