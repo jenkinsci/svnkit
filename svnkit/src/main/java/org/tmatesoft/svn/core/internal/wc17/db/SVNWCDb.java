@@ -5558,7 +5558,6 @@ public class SVNWCDb implements ISVNWCDb {
         public File moveSrcRootRelPath;
         public File moveSrcOpRootRelPath;
 
-        @Override
         public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
             File moveDstOpRootRelPath = null;
             File moveDstRelPath = null;
@@ -5606,7 +5605,6 @@ public class SVNWCDb implements ISVNWCDb {
         }
     }
 
-    @Override
     public NodeInstallInfo readNodeInstallInfo(File localAbsPath, File wriAbsPath) throws SVNException {
         assert isAbsolute(localAbsPath);
 
