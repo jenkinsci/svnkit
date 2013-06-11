@@ -8,17 +8,13 @@ import java.util.Map;
 import junit.framework.Assert;
 
 import org.junit.Test;
-import org.tmatesoft.svn.core.SVNCommitInfo;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNLock;
-import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.auth.BasicAuthenticationManager;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
 import org.tmatesoft.svn.core.wc2.*;
-import org.tmatesoft.svn.core.wc2.admin.SvnRepositoryGetLock;
 
 public class SvnLockTest {
     
@@ -120,6 +116,57 @@ public class SvnLockTest {
 
         Assert.assertEquals(expectedLockOwner, actualLockOwner);
         Assert.assertEquals(expectedLockMessage, actualLockMessage);
+    }
+
+    
+    @Test
+    public void testRecursiveInfoGetsFileLock() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testRecursiveInfoGetsFileLock", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("directory/file");
+            commitBuilder.commit();
+
+            final SVNURL fileUrl = url.appendPath("directory/file", false);
+
+            final String lockMessage = "lock message";
+
+            final SvnSetLock setLock = svnOperationFactory.createSetLock();
+            setLock.setSingleTarget(SvnTarget.fromURL(fileUrl));
+            setLock.setLockMessage(lockMessage);
+            setLock.run();
+
+            final SVNLock[] lock = new SVNLock[1];
+
+            final SvnGetInfo getInfo = svnOperationFactory.createGetInfo();
+            getInfo.setDepth(SVNDepth.INFINITY);
+            getInfo.setSingleTarget(SvnTarget.fromURL(url));
+            getInfo.setReceiver(new ISvnObjectReceiver<SvnInfo>() {
+                @Override
+                public void receive(SvnTarget target, SvnInfo info) throws SVNException {
+                    if (target.getPathOrUrlDecodedString().endsWith("file")) {
+                        lock[0] = info.getLock();
+                    }
+                }
+            });
+            getInfo.run();
+
+            Assert.assertNotNull(lock[0]);
+            Assert.assertEquals("/directory/file", lock[0].getPath());
+            Assert.assertEquals(lockMessage, lock[0].getComment());
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    private String getTestName() {
+        return getClass().getSimpleName();
     }
 
     private SVNCommitInfo tryCommit(final String filePath, SVNRepository repository, final Map<String, String> locks) throws SVNException {
