@@ -74,6 +74,7 @@ import org.tmatesoft.svn.core.internal.wc2.old.SvnOldUpgrade;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.core.wc2.*;
+import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 import de.regnis.q.sequence.line.QSequenceLineRAByteData;
@@ -5197,112 +5198,129 @@ public class SVNWCContext {
         conflictDescription.setOperation(operation);
         conflictDescription.setSrcLeftVersion(leftVersion);
         conflictDescription.setSrcRightVersion(rightVersion);
+        try {
+            if (workingVal != null) {
+                File uniqueFile = SVNFileUtil.createUniqueFile(dirPath, "svn", "", false);
+                SVNFileUtil.writeToFile(uniqueFile, SVNPropertyValue.getPropertyAsBytes(workingVal));
+                conflictDescription.setMyFile(uniqueFile);
+            }
+            if (incomingNewVal != null) {
+                File uniqueFile = SVNFileUtil.createUniqueFile(dirPath, "svn", "", false);
+                SVNFileUtil.writeToFile(uniqueFile, SVNPropertyValue.getPropertyAsBytes(incomingNewVal));
+                conflictDescription.setTheirFile(uniqueFile);
+            }
+            if (baseVal == null && incomingOldVal == null) {
+            } else if ((baseVal != null && incomingOldVal == null) || (baseVal == null && incomingOldVal != null)) {
+                SVNPropertyValue conflictBaseVal = baseVal != null ? baseVal : incomingOldVal;
+                File uniqueFile = SVNFileUtil.createUniqueFile(dirPath, "svn", "", false);
+                SVNFileUtil.writeToFile(uniqueFile, SVNPropertyValue.getPropertyAsBytes(conflictBaseVal));
+                conflictDescription.setBaseFile(uniqueFile);
+            } else {
+                SVNPropertyValue conflictBaseVal;
 
-        if (workingVal != null) {
-            File uniqueFile = SVNFileUtil.createUniqueFile(dirPath, null, null, false);
-            SVNFileUtil.writeToFile(uniqueFile, SVNPropertyValue.getPropertyAsBytes(workingVal));
-            conflictDescription.setMyFile(uniqueFile);
-        }
-        if (incomingNewVal != null) {
-            File uniqueFile = SVNFileUtil.createUniqueFile(dirPath, null, null, false);
-            SVNFileUtil.writeToFile(uniqueFile, SVNPropertyValue.getPropertyAsBytes(incomingNewVal));
-            conflictDescription.setTheirFile(uniqueFile);
-        }
-        if (baseVal == null && incomingOldVal == null) {
-        } else if ((baseVal != null && incomingOldVal == null) || (baseVal == null && incomingOldVal != null)) {
-            SVNPropertyValue conflictBaseVal = baseVal != null ? baseVal : incomingOldVal;
-            File uniqueFile = SVNFileUtil.createUniqueFile(dirPath, null, null, false);
-            SVNFileUtil.writeToFile(uniqueFile, SVNPropertyValue.getPropertyAsBytes(conflictBaseVal));
-            conflictDescription.setBaseFile(uniqueFile);
-        } else {
-            SVNPropertyValue conflictBaseVal;
-
-            if (!arePropsEqual(baseVal, incomingOldVal)) {
-                if (workingVal != null && arePropsEqual(baseVal, workingVal)) {
-                    conflictBaseVal = incomingOldVal;
+                if (!arePropsEqual(baseVal, incomingOldVal)) {
+                    if (workingVal != null && arePropsEqual(baseVal, workingVal)) {
+                        conflictBaseVal = incomingOldVal;
+                    } else {
+                        conflictBaseVal = baseVal;
+                    }
                 } else {
                     conflictBaseVal = baseVal;
                 }
-            } else {
-                conflictBaseVal = baseVal;
-            }
 
-            File uniqueFile = SVNFileUtil.createUniqueFile(dirPath, null, null, false);
-            SVNFileUtil.writeToFile(uniqueFile, SVNPropertyValue.getPropertyAsBytes(conflictBaseVal));
-            conflictDescription.setBaseFile(uniqueFile);
+                File uniqueFile = SVNFileUtil.createUniqueFile(dirPath, "svn", "", false);
+                SVNFileUtil.writeToFile(uniqueFile, SVNPropertyValue.getPropertyAsBytes(conflictBaseVal));
+                conflictDescription.setBaseFile(uniqueFile);
 
-            if (workingVal != null && incomingNewVal != null) {
-                SVNDiffOptions svnDiffOptions = new SVNDiffOptions();
+                if (workingVal != null && incomingNewVal != null) {
+                    SVNDiffOptions svnDiffOptions = new SVNDiffOptions();
 
-                FSMergerBySequence merger = new FSMergerBySequence(null, null, null);
-                ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                try {
-                    merger.merge(new QSequenceLineRAByteData(SVNPropertyValue.getPropertyAsBytes(conflictBaseVal)),
-                            new QSequenceLineRAByteData(SVNPropertyValue.getPropertyAsBytes(workingVal)),
-                            new QSequenceLineRAByteData(SVNPropertyValue.getPropertyAsBytes(incomingNewVal)),
-                            svnDiffOptions, byteArrayOutputStream, SVNDiffConflictChoiceStyle.CHOOSE_MODIFIED_LATEST);
-                    File mergedFile = SVNFileUtil.createUniqueFile(conflictDescription.getMergedFile(), null, null, false);
-                    SVNFileUtil.writeToFile(mergedFile, byteArrayOutputStream.toByteArray());
-                } catch (IOException e) {
-                    SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.IO_ERROR);
-                    SVNErrorManager.error(errorMessage, SVNLogType.WC);
-                } finally {
-                    SVNFileUtil.closeFile(byteArrayOutputStream);
+                    FSMergerBySequence merger = new FSMergerBySequence(CONFLICT_START, CONFLICT_SEPARATOR, CONFLICT_END);
+                    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                    try {
+                        merger.merge(new QSequenceLineRAByteData(SVNPropertyValue.getPropertyAsBytes(conflictBaseVal)),
+                                new QSequenceLineRAByteData(SVNPropertyValue.getPropertyAsBytes(workingVal)),
+                                new QSequenceLineRAByteData(SVNPropertyValue.getPropertyAsBytes(incomingNewVal)),
+                                svnDiffOptions, byteArrayOutputStream, SVNDiffConflictChoiceStyle.CHOOSE_MODIFIED_LATEST);
+                        File mergedFile = SVNFileUtil.createUniqueFile(conflictDescription.getMergedFile(), null, null, false);
+                        SVNFileUtil.writeToFile(mergedFile, byteArrayOutputStream.toByteArray());
+                    } catch (IOException e) {
+                        SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.IO_ERROR);
+                        SVNErrorManager.error(errorMessage, SVNLogType.WC);
+                    } finally {
+                        SVNFileUtil.closeFile(byteArrayOutputStream);
+                    }
                 }
             }
-        }
-        if (incomingOldVal == null && incomingNewVal != null) {
-            conflictDescription.setAction(SVNConflictAction.ADD);
-        } else if (incomingOldVal != null && incomingNewVal == null) {
-            conflictDescription.setAction(SVNConflictAction.DELETE);
-        } else {
-            conflictDescription.setAction(SVNConflictAction.EDIT);
-        }
-
-        if (baseVal != null && workingVal == null) {
-            conflictDescription.setReason(SVNConflictReason.DELETED);
-        } else if (baseVal == null && workingVal != null) {
-            conflictDescription.setReason(SVNConflictReason.OBSTRUCTED);
-        } else {
-            conflictDescription.setReason(SVNConflictReason.EDITED);
-        }
-
-        SVNConflictResult conflictResult = conflictHandler.handleConflict(conflictDescription.toConflictDescription());
-
-        SVNPropertyValue newValue = null;
-
-        if (conflictResult.getConflictChoice() == SVNConflictChoice.POSTPONE) {
-            conflictRemains = true;
-        } else if (conflictResult.getConflictChoice() == SVNConflictChoice.MINE_FULL) {
-            conflictRemains = false;
-            newValue = workingVal;
-        } else if (conflictResult.getConflictChoice() == SVNConflictChoice.THEIRS_FULL) {
-            conflictRemains = false;
-            newValue = incomingNewVal;
-        } else if (conflictResult.getConflictChoice() == SVNConflictChoice.BASE) {
-            conflictRemains = false;
-            newValue = baseVal;
-        } else if (conflictResult.getConflictChoice() == SVNConflictChoice.MERGED) {
-            if (conflictDescription.getMergedFile() == null && conflictResult.getMergedFile() == null) {
-                SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.WC_CONFLICT_RESOLVER_FAILURE, "Conflict callback violated API:" +
-                        " returned no merged file");
-                SVNErrorManager.error(errorMessage, SVNLogType.WC);
+            if (incomingOldVal == null && incomingNewVal != null) {
+                conflictDescription.setAction(SVNConflictAction.ADD);
+            } else if (incomingOldVal != null && incomingNewVal == null) {
+                conflictDescription.setAction(SVNConflictAction.DELETE);
+            } else {
+                conflictDescription.setAction(SVNConflictAction.EDIT);
             }
-            byte[] merged = SVNFileUtil.readFully(conflictResult.getMergedFile() != null ? conflictResult.getMergedFile() : conflictDescription.getMergedFile());
-            newValue = SVNPropertyValue.create(propName, merged);
-            conflictRemains = false;
-        } else {
-            //the same as "POSTPONE"
-            conflictRemains = true;
-        }
 
-        if (!conflictRemains) {
-            SVNProperties props = getDb().readProperties(localAbsPath);
-            props.put(propName, newValue);
-            getDb().opSetProps(localAbsPath, props, null, false, null);
-        }
+            if (baseVal != null && workingVal == null) {
+                conflictDescription.setReason(SVNConflictReason.DELETED);
+            } else if (baseVal == null && workingVal != null) {
+                conflictDescription.setReason(SVNConflictReason.OBSTRUCTED);
+            } else {
+                conflictDescription.setReason(SVNConflictReason.EDITED);
+            }
 
-        return conflictRemains;
+            SVNConflictResult conflictResult = conflictHandler.handleConflict(conflictDescription.toConflictDescription());
+
+            SVNPropertyValue newValue = null;
+
+            if (conflictResult.getConflictChoice() == SVNConflictChoice.POSTPONE) {
+                conflictRemains = true;
+            } else if (conflictResult.getConflictChoice() == SVNConflictChoice.MINE_FULL) {
+                conflictRemains = false;
+                newValue = workingVal;
+            } else if (conflictResult.getConflictChoice() == SVNConflictChoice.THEIRS_FULL) {
+                conflictRemains = false;
+                newValue = incomingNewVal;
+            } else if (conflictResult.getConflictChoice() == SVNConflictChoice.BASE) {
+                conflictRemains = false;
+                newValue = baseVal;
+            } else if (conflictResult.getConflictChoice() == SVNConflictChoice.MERGED) {
+                if (conflictDescription.getMergedFile() == null && conflictResult.getMergedFile() == null) {
+                    SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.WC_CONFLICT_RESOLVER_FAILURE, "Conflict callback violated API:" +
+                            " returned no merged file");
+                    SVNErrorManager.error(errorMessage, SVNLogType.WC);
+                }
+                byte[] merged = SVNFileUtil.readFully(conflictResult.getMergedFile() != null ? conflictResult.getMergedFile() : conflictDescription.getMergedFile());
+                newValue = SVNPropertyValue.create(propName, merged);
+                conflictRemains = false;
+            } else {
+                //the same as "POSTPONE"
+                conflictRemains = true;
+            }
+
+            if (!conflictRemains) {
+                SVNProperties props = getDb().readProperties(localAbsPath);
+                props.put(propName, newValue);
+                getDb().opSetProps(localAbsPath, props, null, false, null);
+            }
+
+            return conflictRemains;
+        } finally {
+            try {
+                if (conflictDescription != null) {
+                    if (conflictDescription.getMyFile() != null) {
+                        SVNFileUtil.deleteFile(conflictDescription.getMyFile());
+                    }
+                    if (conflictDescription.getBaseFile() != null) {
+                        SVNFileUtil.deleteFile(conflictDescription.getBaseFile());
+                    }
+                    if (conflictDescription.getTheirFile() != null) {
+                        SVNFileUtil.deleteFile(conflictDescription.getTheirFile());
+                    }
+                }
+            } catch (SVNException e) {
+                SVNDebugLog.getDefaultLog().logError(SVNLogType.WC, e);
+            }
+        }
     }
 
     public TextConflictResolutionInfo resolveTextConflict(File localAbsPath, SVNOperation operation,
