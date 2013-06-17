@@ -1069,6 +1069,9 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             newActualProps = mergeProperiesInfo.newActualProperties;
             propStatus[0] = mergeProperiesInfo.mergeOutcome;
             conflictSkel = mergeProperiesInfo.conflictSkel;
+
+            newActualProps.removeNullValues();
+            newBaseProps.removeNullValues();
 //            allWorkItems = myWCContext.wqMerge(allWorkItems, mergeProperiesInfo.workItems);
         }
         AccumulatedChangeInfo change = accumulateLastChange(db.localAbsolutePath, entryProps);
@@ -1565,6 +1568,9 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             propState[0] = info.mergeOutcome;
             conflictSkel = info.conflictSkel;
             allWorkItems = myWCContext.wqMerge(allWorkItems, info.workItems);
+
+            newActualProps.removeNullValues();
+            newBaseProps.removeNullValues();
 
             File installFrom = null;
             if (!fb.obstructionFound && !fb.editObstructed) {
