@@ -15,7 +15,10 @@ import org.tmatesoft.svn.core.internal.io.dav.DAVUtil;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNExternal;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNTreeConflictUtil;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
+import org.tmatesoft.svn.core.internal.wc2.compat.SvnCodec;
 import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.core.wc2.*;
 
@@ -1023,6 +1026,53 @@ public class UpdateTest {
             Assert.assertFalse(statuses.get(file).isConflicted());
             Assert.assertEquals(SVNStatusType.STATUS_MODIFIED, statuses.get(file).getNodeStatus());
 
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
+    @Test
+    public void testTreeConflictRemoteEditLocalDelete() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testTreeConflictRemoteEditLocalDelete", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder1 = new CommitBuilder(url);
+            commitBuilder1.addDirectory("directory");
+            commitBuilder1.commit();
+
+            final CommitBuilder commitBuilder2 = new CommitBuilder(url);
+            commitBuilder2.setDirectoryProperty("directory", "propertyName", SVNPropertyValue.create("propertyValue"));
+            commitBuilder2.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, 1);
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+            final File directory = workingCopy.getFile("directory");
+
+            final SvnScheduleForRemoval scheduleForRemoval = svnOperationFactory.createScheduleForRemoval();
+            scheduleForRemoval.setSingleTarget(SvnTarget.fromFile(directory));
+            scheduleForRemoval.run();
+
+            final SvnUpdate update = svnOperationFactory.createUpdate();
+            update.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            update.run();
+
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
+            final SVNWCContext context = new SVNWCContext(svnOperationFactory.getOptions(), svnOperationFactory.getEventHandler());
+            try {
+                final SVNStatus status = SvnCodec.status(context, statuses.get(directory));
+                final SVNTreeConflictDescription treeConflict = status.getTreeConflict();
+
+                Assert.assertEquals(SVNOperation.UPDATE, treeConflict.getOperation());
+                Assert.assertEquals(SVNConflictAction.EDIT, treeConflict.getConflictAction());
+                Assert.assertEquals(SVNConflictReason.DELETED, treeConflict.getConflictReason());
+            } finally {
+                context.close();
+            }
         } finally {
             svnOperationFactory.dispose();
             sandbox.dispose();

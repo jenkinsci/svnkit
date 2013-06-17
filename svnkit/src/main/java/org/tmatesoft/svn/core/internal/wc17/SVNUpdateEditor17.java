@@ -912,7 +912,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         if (!haveWork) {
             baseStatus = status;
         } else {
-            WCDbBaseInfo baseInfo = myWCContext.getDb().getBaseInfo(db.localAbsolutePath, BaseInfoField.status, BaseInfoField.revision, 
+            WCDbBaseInfo baseInfo = myWCContext.getDb().getBaseInfo(db.localAbsolutePath, BaseInfoField.status, BaseInfoField.revision, BaseInfoField.reposRelPath,
                     BaseInfoField.changedRev, BaseInfoField.changedDate, BaseInfoField.changedAuthor, BaseInfoField.depth);
             baseStatus = baseInfo.status;
             db.oldRevision = baseInfo.revision;
@@ -920,6 +920,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             db.changedAuthor = baseInfo.changedAuthor;
             db.changedDate = baseInfo.changedDate;
             db.changedRevsion = baseInfo.changedRev;
+            db.oldReposRelPath = baseInfo.reposRelPath;
         }
         db.wasIncomplete  = baseStatus == SVNWCDbStatus.Incomplete;
 
@@ -1372,7 +1373,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         conflicted = readInfo.conflicted;
         
         if (readInfo.haveWork) {
-            WCDbBaseInfo baseInfo = myWCContext.getDb().getBaseInfo(fb.localAbsolutePath, BaseInfoField.revision, 
+            WCDbBaseInfo baseInfo = myWCContext.getDb().getBaseInfo(fb.localAbsolutePath, BaseInfoField.revision, BaseInfoField.reposRelPath,
                     BaseInfoField.changedRev, BaseInfoField.changedAuthor, BaseInfoField.changedDate,
                     BaseInfoField.checksum);
             fb.changedAuthor = baseInfo.changedAuthor;
