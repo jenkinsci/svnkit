@@ -12,6 +12,7 @@ import org.tmatesoft.sqljet.core.table.SqlJetDb;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.io.dav.DAVUtil;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNExternal;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
@@ -975,6 +976,59 @@ public class UpdateTest {
         }
     }
 
+    @Test
+    public void testResolveTextConflictWhileUpdate() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testResolveTextConflictWhileUpdate", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder1 = new CommitBuilder(url);
+            commitBuilder1.addFile("file");
+            commitBuilder1.commit();
+
+            final CommitBuilder commitBuilder2 = new CommitBuilder(url);
+            commitBuilder2.changeFile("file", "content".getBytes());
+            commitBuilder2.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url, 1);
+            final File file = workingCopy.getFile("file");
+            TestUtil.writeFileContentsString(file, "changed");
+
+            final DefaultSVNOptions svnOptions = new DefaultSVNOptions();
+            svnOptions.setConflictHandler(new ISVNConflictHandler() {
+                @Override
+                public SVNConflictResult handleConflict(SVNConflictDescription conflictDescription) throws SVNException {
+                    if (conflictDescription.getPath().getName().equals("file")) {
+                        return new SVNConflictResult(SVNConflictChoice.BASE, null);
+                    }
+                    return null;
+                }
+            });
+            svnOperationFactory.setOptions(svnOptions);
+
+            final EventsHandler eventHandler = new EventsHandler();
+            svnOperationFactory.setEventHandler(eventHandler);
+
+            final SvnUpdate update = svnOperationFactory.createUpdate();
+            update.setSingleTarget(SvnTarget.fromFile(file));
+            update.run();
+
+            SVNEvent event = eventHandler.findEvent(SVNEventAction.RESOLVED);
+            Assert.assertNotNull(event);
+
+            Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopy.getWorkingCopyDirectory());
+            Assert.assertFalse(statuses.get(file).isConflicted());
+            Assert.assertEquals(SVNStatusType.STATUS_MODIFIED, statuses.get(file).getNodeStatus());
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
     private void assertDavPropertiesAreCleaned(WorkingCopy workingCopy) throws SqlJetException, SVNException {
         final SqlJetDb db = SqlJetDb.open(workingCopy.getWCDbFile(), false);
         try {
@@ -1015,6 +1069,15 @@ public class UpdateTest {
         }
 
         public void checkCancelled() throws SVNCancelException {
+        }
+
+        public SVNEvent findEvent(SVNEventAction eventAction) {
+            for (SVNEvent event : events) {
+                if (event.getAction() == eventAction) {
+                    return event;
+                }
+            }
+            return null;
         }
     }
 }

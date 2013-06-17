@@ -109,7 +109,8 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
             boolean cleanCheckout,
             ISVNDirFetcher dirFetcher,
             SVNExternalsStore externalsStore,
-            String[] preservedExtensions) throws SVNException {        
+            String[] preservedExtensions,
+            ISVNConflictHandler conflictHandler) throws SVNException {
         if (depth == SVNDepth.UNKNOWN) {
             depthIsSticky = false;
         }
@@ -146,6 +147,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         editor.myIsCleanCheckout = cleanCheckout;
         editor.myExtensionPatterns = preservedExtensions;
         editor.myExternalsStore = externalsStore;
+        editor.myConflictHandler = conflictHandler;
         
         if (dirFetcher != null) {
             editor.initExcludedDirectoryEntries(dirFetcher);
@@ -222,6 +224,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
         if (dirFetcher != null) {
             initExcludedDirectoryEntries(dirFetcher);
         }
+        myConflictHandler = myWCContext.getOptions().getConflictResolver();
     }
     
     private void initExcludedDirectoryEntries(ISVNDirFetcher dirFetcher) throws SVNException {

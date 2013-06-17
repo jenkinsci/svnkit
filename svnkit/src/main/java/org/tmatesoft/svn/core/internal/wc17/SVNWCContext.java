@@ -4722,7 +4722,7 @@ public class SVNWCContext {
     
     public void resolvedConflict(File localAbsPath, SVNDepth depth, boolean resolveText, 
     		String resolveProps, boolean resolveTree, SVNConflictChoice conflictChoice) throws SVNException {
-    	recursiveResolveConflict(localAbsPath, depth, resolveText, resolveProps, resolveTree, conflictChoice, null);
+    	recursiveResolveConflict(localAbsPath, depth, resolveText, resolveProps, resolveTree, conflictChoice, getOptions().getConflictResolver());
     }
             
     private boolean attemptDeletion(File parentDir, File baseName) throws SVNException {
@@ -5317,6 +5317,7 @@ public class SVNWCContext {
         SVNProperties props = db.readProperties(localAbsPath);
 
         SVNWCConflictDescription17 conflictDescription = new SVNWCConflictDescription17();
+        conflictDescription.setLocalAbspath(localAbsPath);
         conflictDescription.setBinary(false);
         conflictDescription.setMimeType(props.getStringValue(SVNProperty.MIME_TYPE));
         conflictDescription.setBaseFile(leftAbsPath);
@@ -5326,6 +5327,7 @@ public class SVNWCContext {
         conflictDescription.setOperation(operation);
         conflictDescription.setSrcLeftVersion(leftVersion);
         conflictDescription.setSrcRightVersion(rightVersion);
+        conflictDescription.setKind(SVNWCConflictDescription17.ConflictKind.TEXT);
 
         SVNConflictResult result = conflictHandler.handleConflict(conflictDescription.toConflictDescription());
         if (result == null) {
@@ -5404,6 +5406,7 @@ public class SVNWCContext {
         } else {
             //choice == SVNConflictChoice.POSTPONE
             resolutionInfo.resolved = false;
+            return resolutionInfo;
         }
         assert installFromAbsPath != null;
 
