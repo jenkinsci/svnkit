@@ -580,12 +580,12 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
 
                     if (workingStatus == SVNWCDbStatus.Added) {
                         myWCContext.getDb().scanAddition(localAbspath, AdditionInfoField.status);
+                    }
 
-                        if (workingStatus == SVNWCDbStatus.MovedHere) {
-                            reason = SVNConflictReason.MOVED_HERE;
-                        } else {
-                            reason = SVNConflictReason.ADDED;
-                        }
+                    if (workingStatus == SVNWCDbStatus.MovedHere) {
+                        reason = SVNConflictReason.MOVED_HERE;
+                    } else {
+                        reason = SVNConflictReason.ADDED;
                     }
                 } else {
                     ISVNWCDb.SVNWCDbBaseMovedToData baseMovedToData = myWCContext.getDb().baseMovedTo(localAbspath);
