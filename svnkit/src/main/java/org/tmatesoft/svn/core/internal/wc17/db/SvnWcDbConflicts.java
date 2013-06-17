@@ -494,7 +494,7 @@ public class SvnWcDbConflicts extends SvnWcDbShared {
         }
         if (resolvedProps || resolvedText) {
             if (db.isWCLockOwns(localAbsPath, false)) {
-                db.opMarkResolved(localAbsPath, resolvedText, resolvedProps, false);
+                db.opMarkResolved(localAbsPath, resolvedText, resolvedProps, false, null);
             }
         }
         return result;
@@ -640,5 +640,47 @@ public class SvnWcDbConflicts extends SvnWcDbShared {
         }
 
         return skel;
+    }
+
+    public static boolean conflictSkelResolve(SVNSkel conflictSkel, ISVNWCDb db, File wriAbsPAth, boolean resolveText, String resolveProp, boolean resolveTree) throws SVNException {
+        SVNSkel operation = getOperation(conflictSkel);
+
+        if (operation == null) {
+            SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.INCOMPLETE_DATA, "Not a completed conflict skel");
+            SVNErrorManager.error(errorMessage, SVNLogType.WC);
+        }
+
+        SVNSkel pconflict = conflictSkel.first().next().first();
+        while (pconflict != null) {
+            SVNSkel c =  pconflict.first();
+            if (resolveText && c.contentEquals(ConflictKind.text.name())) {
+                pconflict = pconflict.next();
+                continue;
+            } else if (resolveProp != null && c.contentEquals(ConflictKind.prop.name())) {
+                SVNSkel propnames = c.next().next().first();
+                if (resolveProp.length() == 0) {
+                    propnames = null;
+                } else {
+                    while (propnames != null) {
+                        if (propnames.contentEquals(resolveProp)) {
+                            propnames = propnames.next();
+                            break;
+                        }
+                        propnames = propnames.next();
+                    }
+                }
+
+                if (c.next().next().first() == null) {
+                    pconflict = pconflict.next();
+                    continue;
+                }
+            } else if (resolveTree && c.contentEquals(ConflictKind.tree.name())) {
+                pconflict = pconflict.next();
+                continue;
+            }
+
+            pconflict = pconflict.next();
+        }
+        return !isConflictSkelComplete(conflictSkel);
     }
 }

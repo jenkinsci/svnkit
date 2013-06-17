@@ -47,7 +47,9 @@ public enum SVNWCDbSchema {
     //19 version of sDb
     BASE_NODE(BASE_NODE__Fields.class),
     //19 version of sDb
-    WORKING_NODE(WORKING_NODE__Fields.class)
+    WORKING_NODE(WORKING_NODE__Fields.class),
+
+    UPDATE_MOVE_LIST(UPDATE_MOVE_LIST__Fields.class)
     ;
 
     final public Class<? extends Enum<?>> fields;
@@ -153,5 +155,7 @@ public enum SVNWCDbSchema {
         wc_id, local_relpath, parent_relpath, copyfrom_repos_id, copyfrom_repos_path, copyfrom_revnum, presence, kind, properties, depth, checksum, symlink_target, changed_rev, changed_date, changed_author, translated_size, last_mod_time;
     }
     
-    
+    public enum UPDATE_MOVE_LIST__Fields {
+        local_relpath, action, kind, content_state, prop_state
+    }
 }

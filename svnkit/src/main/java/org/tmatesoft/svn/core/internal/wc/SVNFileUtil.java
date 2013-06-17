@@ -2174,6 +2174,10 @@ public class SVNFileUtil {
         return new File(parent, child.toString());
     }
 
+    public static File skipAncestor(File parent, File child) {
+        return SVNFileUtil.createFilePath(SVNPathUtil.getRelativePath(SVNFileUtil.getFilePath(parent), SVNFileUtil.getFilePath(child)));
+    }
+
     public static String getFileExtension(File path) {
         if (path == null)
             return null;

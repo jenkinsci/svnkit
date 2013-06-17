@@ -432,7 +432,7 @@ public class SvnWcDbShared {
         return getDepthInfo(pdh.getWCRoot(), localRelpath, 0, fields);
     }
     
-    protected static Structure<NodeInfo> getDepthInfo(SVNWCDbRoot wcroot, File localRelPath, long opDepth, NodeInfo...fields) throws SVNException {
+    public static Structure<NodeInfo> getDepthInfo(SVNWCDbRoot wcroot, File localRelPath, long opDepth, NodeInfo...fields) throws SVNException {
         Structure<NodeInfo> info = Structure.obtain(NodeInfo.class, fields);
         SVNSqlJetStatement stmt = wcroot.getSDb().getStatement(info.hasField(NodeInfo.lock) ? SVNWCDbStatements.SELECT_BASE_NODE_WITH_LOCK : SVNWCDbStatements.SELECT_BASE_NODE);
         try {

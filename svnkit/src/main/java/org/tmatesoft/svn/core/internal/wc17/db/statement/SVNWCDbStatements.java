@@ -170,6 +170,21 @@ public enum SVNWCDbStatements {
     CLEAR_MOVED_HERE_RECURSIVE(SVNWCDbClearMovedHereRecursive.class),
     HAS_SERVER_EXCLUDED_DESCENDANTS(SVNWCDbHasServerExcludedDescendants.class),
     SELECT_BASE_PRESENT(SVNWCDbSelectBasePresent.class),
+    CLEAR_MOVE_TO_RELPATH(SVNWCDbClearMovedToRelPath.class),
+    UPDATE_OP_DEPTH_RECURSIVE(SVNWCDbUpdateOpDepthRecursive.class),
+    SELECT_OP_DEPTH_MOVED_PAIR(SVNWCDbSelectOpDepthMovedPair.class),
+    SELECT_UPDATE_MOVE_LIST(SVNWCDbSelectUpdateMoveList.class),
+    INSERT_UPDATE_MOVE_LIST(SVNWCDbInsertUpdateMoveList.class),
+    SELECT_REPOS_PATH_REVISION(SVNWCDbSelectReposPathRevision.class),
+    DELETE_WORKING_OP_DEPTH_ABOVE(SVNWCDbDeleteWorkingOpDepthAbove.class),
+    SELECT_CHILDREN_OP_DEPTH(SVNWCDbSelectChildrenOpDepth.class),
+    SELECT_HIGHEST_WORKING_NODE(SVNWCDbSelectHighestWorkingNode.class),
+    DELETE_NO_LOWER_LAYER(SVNWCDbDeleteNoLowerLayer.class),
+    REPLACE_WITH_BASE_DELETED(SVNWCDbReplaceWithBaseDeleted.class),
+    DELETE_WORKING_OP_DEPTH(SVNWCDbDeleteWorkingOpDepth.class),
+    SELECT_LOCAL_RELPATH_OP_DEPTH(SVNWCDbSelectLocalRelPathOpDepth.class),
+    COPY_MOVE_NODE(SVNWCDbCopyMoveNode.class),
+    UPDATE_ACTUAL_CONFLICT(SVNWCDbUpdateActualConflict.class)
     ;
     
 

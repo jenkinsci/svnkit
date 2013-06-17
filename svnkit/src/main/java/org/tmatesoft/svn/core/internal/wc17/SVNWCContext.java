@@ -73,9 +73,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbReader.InstallInfo;
 import org.tmatesoft.svn.core.internal.wc2.old.SvnOldUpgrade;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.*;
-import org.tmatesoft.svn.core.wc2.ISvnMerger;
-import org.tmatesoft.svn.core.wc2.SvnChecksum;
-import org.tmatesoft.svn.core.wc2.SvnMergeResult;
+import org.tmatesoft.svn.core.wc2.*;
 import org.tmatesoft.svn.util.SVNLogType;
 
 import de.regnis.q.sequence.line.QSequenceLineRAByteData;
@@ -133,6 +131,49 @@ public class SVNWCContext {
     public static final String WC_ADM_PRISTINE = "pristine";
     public static final String WC_ADM_NONEXISTENT_PATH = "nonexistent-path";
     public static final String WC_NON_ENTRIES_STRING = "12\n";
+
+    public TreeLocalModsInfo hasLocalMods(File localAbspath, File anchorAbspath) throws SVNException {
+        final TreeLocalModsInfo modsInfo = new TreeLocalModsInfo();
+        SVNStatusEditor17 statusEditor = new SVNStatusEditor17(anchorAbspath, this, getOptions(), false, false, SVNDepth.INFINITY, new ISvnObjectReceiver<SvnStatus>() {
+
+            public void receive(SvnTarget target, SvnStatus status) throws SVNException {
+                SVNStatusType nodeStatus = status.getNodeStatus();
+                if (nodeStatus == SVNStatusType.STATUS_NORMAL
+                	|| nodeStatus == SVNStatusType.STATUS_INCOMPLETE
+                    || nodeStatus == SVNStatusType.STATUS_IGNORED
+                    || nodeStatus == SVNStatusType.STATUS_NONE
+                    || nodeStatus == SVNStatusType.STATUS_UNVERSIONED
+                    || nodeStatus == SVNStatusType.STATUS_EXTERNAL) {
+                    return;
+                }
+                if (nodeStatus == SVNStatusType.STATUS_DELETED) {
+                    modsInfo.modificationsFound = true;
+                    return;
+                }
+                if (nodeStatus == SVNStatusType.STATUS_MISSING || nodeStatus == SVNStatusType.STATUS_OBSTRUCTED) {
+                    if (status.getPropertiesStatus() != SVNStatusType.STATUS_MODIFIED) {
+                        return;
+                    }
+                }
+                modsInfo.modificationsFound = true;
+                modsInfo.nonDeleteModificationsFound = true;
+                throw new SVNCancelException();
+            }
+        });
+
+        try {
+            statusEditor.walkStatus(localAbspath, SVNDepth.INFINITY, false, false, false, null);
+        } catch (SVNCancelException cancel) {
+        }
+
+        return modsInfo;
+    }
+
+    protected static class TreeLocalModsInfo {
+
+        public boolean modificationsFound;
+        public boolean nonDeleteModificationsFound;
+    }
 
     public interface CleanupHandler {
 
@@ -2010,6 +2051,10 @@ public class SVNWCContext {
     }
 
     public void writeCheck(File localAbspath) throws SVNException {
+        writeCheck(getDb(), localAbspath);
+    }
+
+    public static void writeCheck(ISVNWCDb db, File localAbspath) throws SVNException {
         boolean locked = db.isWCLockOwns(localAbspath, false);
         if (!locked) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "No write-lock in ''{0}''", localAbspath);
@@ -2034,7 +2079,7 @@ public class SVNWCContext {
         return db.readProperties(localAbspath);
     }
     
-    public MergePropertiesInfo mergeProperties(File localAbsPath, SVNConflictVersion leftVersion, SVNConflictVersion rightVersion, 
+    public MergePropertiesInfo mergeProperties(File localAbsPath, SVNConflictVersion leftVersion, SVNConflictVersion rightVersion,
             SVNProperties baseProperties, SVNProperties propChanges, boolean dryRun) throws SVNException {
         Structure<NodeInfo> info = getDb().readInfo(localAbsPath, NodeInfo.status, NodeInfo.kind, NodeInfo.hadProps, NodeInfo.propsMod, NodeInfo.haveBase);
         SVNWCDbStatus status = info.get(NodeInfo.status);
@@ -2787,7 +2832,7 @@ public class SVNWCContext {
         return info;
     }
 
-    public boolean hasMagicProperty(SVNProperties properties) {
+    public static boolean hasMagicProperty(SVNProperties properties) {
         for (Iterator<String> i = properties.nameSet().iterator(); i.hasNext();) {
             String property = i.next();
             if (SVNProperty.EXECUTABLE.equals(property) || SVNProperty.KEYWORDS.equals(property) || SVNProperty.EOL_STYLE.equals(property) || SVNProperty.SPECIAL.equals(property)
@@ -3679,6 +3724,17 @@ public class SVNWCContext {
         return workItem;
     }
 
+    public SVNSkel wqBuildDirInstall(File localAbsPath) throws SVNException {
+        return wqBuildDirInstall((SVNWCDb)getDb(), localAbsPath);
+    }
+
+    public static SVNSkel wqBuildDirInstall(SVNWCDb db, File localAbsPath) throws SVNException {
+        SVNSkel workItem = SVNSkel.createEmptyList();
+        workItem.prependPath(db.toRelPath(localAbsPath));
+        workItem.prependString(WorkQueueOperation.DIRECTORY_INSTALL.getOpName());
+        return workItem;
+    }
+
     public static SVNSkel wqBuildDirRemove(SVNWCDb db, File wriAbspath, File localAbspath, boolean recursive) throws SVNException {
         SVNSkel workItem = SVNSkel.createEmptyList();
         if (recursive) {
@@ -4512,7 +4568,7 @@ public class SVNWCContext {
             }
         }
         if (resolveText || resolveProps) {
-            getDb().opMarkResolved(localAbsPath, resolveText, resolveProps, false);
+            getDb().opMarkResolved(localAbsPath, resolveText, resolveProps, false, null);
             if (foundFile) {
                 didResolve = true;
             }
@@ -4575,79 +4631,98 @@ public class SVNWCContext {
     	}
     }
     
-    private void recursiveResolveConflict(File localAbsPath, boolean thisIsConflicted, SVNDepth depth, boolean resolveText, 
-    		String resolveProps, boolean resolveTree, SVNConflictChoice conflictChoice) throws SVNException {
-    	SVNHashMap visited = new SVNHashMap();
-    	SVNDepth childDepth;
-    	
-    	checkCancelled();
-    	
-    	if (thisIsConflicted) {
-    		resolveOneConflict(localAbsPath, resolveText, resolveProps, resolveTree, conflictChoice);
-    	}
-    	
-    	
-    	if (depth.getId() < SVNDepth.FILES.getId())
-    		return;
-    	
-    	childDepth = (depth.getId() < SVNDepth.INFINITY.getId()) ? SVNDepth.EMPTY : depth;
-    	Set<String> children = db.readChildren(localAbsPath);
-    	for (String child : children) {
-    		checkCancelled();
-    		File childAbsPath = SVNFileUtil.createFilePath(localAbsPath, child);
-    		WCDbInfo readInfo = db.readInfo(childAbsPath, InfoField.status, InfoField.kind, InfoField.conflicted);
-    		SVNWCDbStatus status = readInfo.status;
-            SVNWCDbKind kind = readInfo.kind;
-            boolean conflicted = readInfo.conflicted;
-            if (status == SVNWCDbStatus.NotPresent || status == SVNWCDbStatus.Excluded || status == SVNWCDbStatus.ServerExcluded) {
-            	continue;
-            }
-            visited.put(child, child);
-            if (kind == SVNWCDbKind.Dir && depth.getId() < SVNDepth.IMMEDIATES.getId())
-            	continue;
-    		if (kind == SVNWCDbKind.Dir)
-    			recursiveResolveConflict(childAbsPath, conflicted, childDepth, resolveText, resolveProps, resolveTree, conflictChoice);
-    		else if (conflicted)
-    			resolveOneConflict(childAbsPath, resolveText, resolveProps, resolveTree, conflictChoice);
-    	}
-    	
-    	List<String> conflictVictims = getDb().readConflictVictims(localAbsPath);
+    private void recursiveResolveConflict(File localAbsPath, SVNDepth depth, boolean resolveText,
+    		String resolveProps, boolean resolveTree, SVNConflictChoice conflictChoice, ISVNConflictHandler conflictHandler) throws SVNException {
+        if (resolveProps != null && resolveProps.length() > 0) {
+            SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS, "Resolving a single property is not (yet) supported.");
+            SVNErrorManager.error(errorMessage, SVNLogType.WC);
+        }
 
-    	for (String child : conflictVictims) {
-    		if (visited.containsKey(child))
-    	        continue; /* Already visited */
+        Structure<NodeInfo> nodeInfoStructure = getDb().readInfo(localAbsPath, NodeInfo.kind, NodeInfo.conflicted);
+        SVNWCDbKind kind = nodeInfoStructure.get(NodeInfo.kind);
+        boolean conflicted = nodeInfoStructure.is(NodeInfo.conflicted);
 
-    	    checkCancelled();
-    	      
-    	    File childAbsPath = SVNFileUtil.createFilePath(localAbsPath, child);
+        if (kind != SVNWCDbKind.Dir) {
+            depth = SVNDepth.EMPTY;
+        } else if (depth == SVNDepth.UNKNOWN) {
+            depth = SVNDepth.INFINITY;
+        }
 
-    	    /* We only have to resolve one level of tree conflicts. All other
-    	        conflicts are resolved in the other loop */
-    	    resolveOneConflict(childAbsPath, false, "", resolveTree, conflictChoice);
-   	    }
+        if (getEventHandler() != null) {
+            getEventHandler().handleEvent(new SVNEvent(localAbsPath, SVNNodeKind.UNKNOWN,
+                    null, -1, SVNStatusType.UNKNOWN, SVNStatusType.UNKNOWN, SVNStatusType.LOCK_UNKNOWN, null,
+                    SVNEventAction.RESOLVER_STARTING, SVNEventAction.RESOLVER_STARTING, null, null, null, null, null), ISVNEventHandler.UNKNOWN);
+        }
+
+        final ConflictStatusWalker statusWalker = new ConflictStatusWalker();
+        statusWalker.resolveText = resolveText;
+        statusWalker.resolveProp = resolveProps;
+        statusWalker.resolveTree = resolveTree;
+        statusWalker.conflictChoice = conflictChoice;
+        statusWalker.conflictHandler = conflictHandler;
+
+        SVNStatusEditor17 editor = new SVNStatusEditor17(localAbsPath, this, getOptions(), false, false, depth, statusWalker);
+        editor.walkStatus(localAbsPath, depth, false, false, true, null);
+
+        if (getEventHandler() != null) {
+            getEventHandler().handleEvent(new SVNEvent(localAbsPath, SVNNodeKind.UNKNOWN,
+                    null, -1, SVNStatusType.UNKNOWN, SVNStatusType.UNKNOWN, SVNStatusType.LOCK_UNKNOWN, null,
+                    SVNEventAction.RESOLVER_DONE, SVNEventAction.RESOLVER_DONE, null, null, null, null, null), ISVNEventHandler.UNKNOWN);
+        }
+
+//    	SVNHashMap visited = new SVNHashMap();
+//    	SVNDepth childDepth;
+//
+//    	checkCancelled();
+//
+//    	if (thisIsConflicted) {
+//    		resolveOneConflict(localAbsPath, resolveText, resolveProps, resolveTree, conflictChoice);
+//    	}
+//
+//
+//    	if (depth.getId() < SVNDepth.FILES.getId())
+//    		return;
+//
+//    	childDepth = (depth.getId() < SVNDepth.INFINITY.getId()) ? SVNDepth.EMPTY : depth;
+//    	Set<String> children = db.readChildren(localAbsPath);
+//    	for (String child : children) {
+//    		checkCancelled();
+//    		File childAbsPath = SVNFileUtil.createFilePath(localAbsPath, child);
+//    		WCDbInfo readInfo = db.readInfo(childAbsPath, InfoField.status, InfoField.kind, InfoField.conflicted);
+//    		SVNWCDbStatus status = readInfo.status;
+//            SVNWCDbKind kind = readInfo.kind;
+//            boolean conflicted = readInfo.conflicted;
+//            if (status == SVNWCDbStatus.NotPresent || status == SVNWCDbStatus.Excluded || status == SVNWCDbStatus.ServerExcluded) {
+//            	continue;
+//            }
+//            visited.put(child, child);
+//            if (kind == SVNWCDbKind.Dir && depth.getId() < SVNDepth.IMMEDIATES.getId())
+//            	continue;
+//    		if (kind == SVNWCDbKind.Dir)
+//    			recursiveResolveConflict(childAbsPath, conflicted, childDepth, resolveText, resolveProps, resolveTree, conflictChoice);
+//    		else if (conflicted)
+//    			resolveOneConflict(childAbsPath, resolveText, resolveProps, resolveTree, conflictChoice);
+//    	}
+//
+//    	List<String> conflictVictims = getDb().readConflictVictims(localAbsPath);
+//
+//    	for (String child : conflictVictims) {
+//    		if (visited.containsKey(child))
+//    	        continue; /* Already visited */
+//
+//    	    checkCancelled();
+//
+//    	    File childAbsPath = SVNFileUtil.createFilePath(localAbsPath, child);
+//
+//    	    /* We only have to resolve one level of tree conflicts. All other
+//    	        conflicts are resolved in the other loop */
+//    	    resolveOneConflict(childAbsPath, false, "", resolveTree, conflictChoice);
+//   	    }
     }
     
     public void resolvedConflict(File localAbsPath, SVNDepth depth, boolean resolveText, 
     		String resolveProps, boolean resolveTree, SVNConflictChoice conflictChoice) throws SVNException {
-    	/* ### the underlying code does NOT support resolving individual
-	       ### properties. bail out if the caller tries it.  */
-	    if (resolveProps != null && !"".equals(resolveProps)) {
-    		SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS, "Resolving a single property is not (yet) supported.");
-            SVNErrorManager.error(err, SVNLogType.WC);
-    	}
-    	
-        WCDbInfo readInfo = db.readInfo(localAbsPath, InfoField.kind, InfoField.conflicted);
-        SVNWCDbKind dbKind = readInfo.kind;
-        boolean conflicted = readInfo.conflicted;
-            
-    	/* When the implementation still used the entry walker, depth
-    	  unknown was translated to infinity. */
-    	if (dbKind != SVNWCDbKind.Dir)
-    		depth = SVNDepth.EMPTY;
-    	else if (depth == SVNDepth.UNKNOWN)
-    		depth = SVNDepth.INFINITY;
-    	
-    	recursiveResolveConflict(localAbsPath, conflicted, depth, resolveText, resolveProps, resolveTree, conflictChoice);
+    	recursiveResolveConflict(localAbsPath, depth, resolveText, resolveProps, resolveTree, conflictChoice, null);
     }
             
     private boolean attemptDeletion(File parentDir, File baseName) throws SVNException {
@@ -5064,7 +5139,7 @@ public class SVNWCContext {
                 }
             }
             if (markResolved) {
-                db.opMarkResolved(localAbsPath, false, true, false);
+                db.opMarkResolved(localAbsPath, false, true, false, null);
             }
         }
 
@@ -5084,7 +5159,7 @@ public class SVNWCContext {
                     getDb().addWorkQueue(localAbsPath, workItems);
                     wqRun(localAbsPath);
                 }
-                getDb().opMarkResolved(localAbsPath, true, false, false);
+                getDb().opMarkResolved(localAbsPath, true, false, false, null);
             }
         }
 
@@ -5363,5 +5438,326 @@ public class SVNWCContext {
 
         File editedCopyAbsPath = SVNFileUtil.createUniqueFile(dirPath, fileName, ".edited", false);
         return SVNWCContext.wqBuildFileCopyTranslated((SVNWCDb) db, localAbsPath, sourceAbsPath, editedCopyAbsPath);
+    }
+
+    private class ConflictStatusWalker implements ISvnObjectReceiver<SvnStatus> {
+
+        public boolean resolveText;
+        public String resolveProp;
+        public boolean resolveTree;
+        public SVNConflictChoice conflictChoice;
+        public ISVNConflictHandler conflictHandler;
+        public ISVNCanceller canceller;
+        public ISVNEventHandler eventHandler;
+
+        @Override
+        public void receive(SvnTarget target, SvnStatus status) throws SVNException {
+            boolean resolved = false;
+
+            if (!status.isConflicted()) {
+                return;
+            }
+
+            final File localAbsPath = target.getFile();
+
+            final List<SVNConflictDescription> conflictDescriptions = getDb().readConflicts(localAbsPath);
+            for (SVNConflictDescription conflictDescription : conflictDescriptions) {
+                SVNConflictChoice myChoice = conflictChoice;
+                File mergeFile = null;
+
+                if (myChoice == null) {
+                    if (conflictHandler == null) {
+                        SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.WC_CONFLICT_RESOLVER_FAILURE, "No conflict-callback and no " +
+                                "pre-defined conflict-choice provided");
+                        SVNErrorManager.error(errorMessage, SVNLogType.WC);
+                    }
+
+                    SVNConflictResult result = conflictHandler.handleConflict(conflictDescription);
+
+                    myChoice = result.getConflictChoice();
+                    mergeFile = result.getMergedFile();
+                }
+
+                if (myChoice == SVNConflictChoice.POSTPONE) {
+                    continue;
+                }
+
+                if (conflictDescription.isTreeConflict()) {
+                    if (!resolveTree) {
+                        break;
+                    }
+                    boolean didResolve = resolveTreeConflictOnNode(localAbsPath, myChoice);
+                    resolved = true;
+                } else if (conflictDescription.isTextConflict()) {
+                    if (!resolveText) {
+                        break;
+                    }
+                    boolean didResolve = resolveTextConflictOnNode(localAbsPath, myChoice, mergeFile);
+                    if (didResolve) {
+                        resolved = true;
+                    }
+                } else if (conflictDescription.isPropertyConflict()) {
+                    if (resolveProp == null) {
+                        break;
+                    }
+                    if (resolveProp.length() != 0 && !resolveProp.equals(conflictDescription.getPropertyName())) {
+                        break;
+                    }
+                    boolean didResolve = resolvePropConflictOnNode(localAbsPath, conflictDescription.getPropertyName(), myChoice, mergeFile);
+                    if (didResolve) {
+                        resolved = true;
+                    }
+                } else {
+                    break;
+                }
+            }
+
+            if (getEventHandler() != null && resolved) {
+                getEventHandler().handleEvent(new SVNEvent(localAbsPath, SVNNodeKind.UNKNOWN, null, -1,
+                        SVNStatusType.UNKNOWN, SVNStatusType.UNKNOWN, SVNStatusType.LOCK_UNKNOWN,
+                        null, SVNEventAction.RESOLVED, SVNEventAction.RESOLVED, null, null, null, null, null), ISVNEventHandler.UNKNOWN);
+            }
+        }
+    }
+
+    private boolean resolveTreeConflictOnNode(File localAbsPath, SVNConflictChoice conflictChoice) throws SVNException {
+        boolean didResolve = false;
+
+        SVNSkel conflicts = SvnWcDbConflicts.readConflict((SVNWCDb) getDb(), localAbsPath);
+
+        if (conflicts == null) {
+            return didResolve;
+        }
+
+        Structure<SvnWcDbConflicts.ConflictInfo> conflictInfoStructure = SvnWcDbConflicts.readConflictInfo(conflicts);
+        boolean treeConflicted = conflictInfoStructure.is(SvnWcDbConflicts.ConflictInfo.treeConflicted);
+        SVNOperation operation = conflictInfoStructure.get(SvnWcDbConflicts.ConflictInfo.conflictOperation);
+
+        if (!treeConflicted) {
+            return didResolve;
+        }
+
+        final Structure<SvnWcDbConflicts.TreeConflictInfo> treeConflictInfoStructure = SvnWcDbConflicts.readTreeConflict(getDb(), localAbsPath, conflicts);
+        final SVNConflictReason reason = treeConflictInfoStructure.get(SvnWcDbConflicts.TreeConflictInfo.localChange);
+        final SVNConflictAction action = treeConflictInfoStructure.get(SvnWcDbConflicts.TreeConflictInfo.incomingChange);
+
+        if (operation == SVNOperation.UPDATE || operation == SVNOperation.SWITCH) {
+            if (reason == SVNConflictReason.DELETED || reason == SVNConflictReason.REPLACED) {
+                if (conflictChoice == SVNConflictChoice.MERGED) {
+                    getDb().resolveBreakMovedAway(localAbsPath, getEventHandler());
+                    didResolve = true;
+                } else if (conflictChoice == SVNConflictChoice.MINE_CONFLICT) {
+                    getDb().resolveDeleteRaiseMovedAway(localAbsPath, getEventHandler());
+                } else {
+                    SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.WC_CONFLICT_RESOLVER_FAILURE, "Tree conflict can only be resolved to " +
+                            "'working' or 'mine-conflict' state; " +
+                            "'{0}' not resolved", localAbsPath);
+                    SVNErrorManager.error(errorMessage, SVNLogType.WC);
+                }
+            } else if (reason == SVNConflictReason.MOVED_AWAY && action == SVNConflictAction.EDIT) {
+                if (conflictChoice == SVNConflictChoice.MINE_CONFLICT) {
+                    getDb().updateMovedAwayConflictVictim(localAbsPath, getEventHandler());
+                    didResolve = true;
+                } else if (conflictChoice == SVNConflictChoice.MERGED) {
+                    getDb().resolveBreakMovedAway(localAbsPath, getEventHandler());
+                    didResolve = true;
+                } else {
+                    SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.WC_CONFLICT_RESOLVER_FAILURE,
+                            "Tree conflict can only be resolved to " +
+                            "'working' or 'mine-conflict' state; " +
+                                    "'{0}' not resolved", localAbsPath);
+                    SVNErrorManager.error(errorMessage, SVNLogType.WC);
+                }
+            }
+        }
+
+        if (!didResolve && conflictChoice != SVNConflictChoice.MERGED) {
+            SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.WC_CONFLICT_RESOLVER_FAILURE,
+                    "Tree conflict can only be " +
+                            "resolved to 'working' state; " +
+                            "'{0}' not resolved", localAbsPath);
+            SVNErrorManager.error(errorMessage, SVNLogType.WC);
+        }
+
+        getDb().opMarkResolved(localAbsPath, false, false, true, null);
+        wqRun(localAbsPath);
+        return didResolve;
+    }
+
+    private boolean resolveTextConflictOnNode(File localAbsPath, SVNConflictChoice conflictChoice, File mergedFile) throws SVNException {
+        SVNSkel workItems = null;
+        boolean didResolve = false;
+
+        SVNSkel conflicts = SvnWcDbConflicts.readConflict((SVNWCDb) getDb(), localAbsPath);
+
+        if (conflicts == null) {
+            return didResolve;
+        }
+
+        Structure<SvnWcDbConflicts.ConflictInfo> conflictInfoStructure = SvnWcDbConflicts.readConflictInfo(conflicts);
+        SVNOperation operation = conflictInfoStructure.get(SvnWcDbConflicts.ConflictInfo.conflictOperation);
+        boolean textConflicted = conflictInfoStructure.is(SvnWcDbConflicts.ConflictInfo.textConflicted);
+
+        if (!textConflicted) {
+            return didResolve;
+        }
+
+        Structure<SvnWcDbConflicts.TextConflictInfo> textConflictInfoStructure = SvnWcDbConflicts.readTextConflict(getDb(), localAbsPath, conflicts);
+        File conflictWorkingAbsPath = textConflictInfoStructure.get(SvnWcDbConflicts.TextConflictInfo.mineAbsPath);
+        File conflictOldAbsPath = textConflictInfoStructure.get(SvnWcDbConflicts.TextConflictInfo.theirOldAbsPath);
+        File conflictNewAbsPath = textConflictInfoStructure.get(SvnWcDbConflicts.TextConflictInfo.theirAbsPath);
+
+        File autoResolveSrc = null;
+
+        if (conflictChoice == SVNConflictChoice.BASE) {
+            autoResolveSrc = conflictOldAbsPath;
+        } else if (conflictChoice == SVNConflictChoice.MINE_FULL) {
+            autoResolveSrc = conflictWorkingAbsPath;
+        } else if (conflictChoice == SVNConflictChoice.THEIRS_FULL) {
+            autoResolveSrc = conflictNewAbsPath;
+        } else if (conflictChoice == SVNConflictChoice.MERGED) {
+            autoResolveSrc = mergedFile;
+        } else if (conflictChoice == SVNConflictChoice.THEIRS_CONFLICT || conflictChoice == SVNConflictChoice.MINE_CONFLICT) {
+            if (conflictOldAbsPath != null && conflictWorkingAbsPath != null && conflictNewAbsPath != null) {
+                File tempDir = getDb().getWCRootTempDir(localAbsPath);
+                UniqueFileInfo uniqueFileInfo = openUniqueFile(tempDir, false);
+                autoResolveSrc = uniqueFileInfo.path;
+
+                //TODO: style!
+                doTextMerge(null, autoResolveSrc, null, conflictWorkingAbsPath, conflictOldAbsPath, conflictNewAbsPath, null, null, null, null);
+            } else {
+                autoResolveSrc = null;
+            }
+        } else {
+            SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS, "Invalid 'conflict_result' argument");
+            SVNErrorManager.error(errorMessage, SVNLogType.WC);
+        }
+
+        SVNSkel workItem;
+
+        if (autoResolveSrc != null) {
+            workItem = wqBuildFileCopyTranslated(localAbsPath, autoResolveSrc, localAbsPath);
+            workItems = wqMerge(workItems, workItem);
+
+            workItem = wqBuildSyncFileFlags(localAbsPath);
+            workItems = wqMerge(workItems, workItem);
+        }
+
+        RemoveArtifactInfo removeArtifactInfo = removeArtifactFileIfExists(localAbsPath, conflictOldAbsPath);
+        didResolve = removeArtifactInfo.fileFound;
+        workItem = removeArtifactInfo.workItem;
+        workItems = wqMerge(workItems, workItem);
+
+        removeArtifactInfo = removeArtifactFileIfExists(localAbsPath, conflictNewAbsPath);
+        didResolve = removeArtifactInfo.fileFound;
+        workItem = removeArtifactInfo.workItem;
+        workItems = wqMerge(workItems, workItem);
+
+        removeArtifactInfo = removeArtifactFileIfExists(localAbsPath, conflictWorkingAbsPath);
+        didResolve = removeArtifactInfo.fileFound;
+        workItem = removeArtifactInfo.workItem;
+        workItems = wqMerge(workItems, workItem);
+
+        getDb().opMarkResolved(localAbsPath, true, false, false, workItems);
+        wqRun(localAbsPath);
+
+        return didResolve;
+    }
+
+    private boolean resolvePropConflictOnNode(File localAbsPath, String conflictedPropName, SVNConflictChoice conflictChoice, File mergedFile) throws SVNException {
+        boolean didResolve = false;
+
+        SVNSkel conflicts = SvnWcDbConflicts.readConflict((SVNWCDb) getDb(), localAbsPath);
+
+        if (conflicts == null) {
+            return didResolve;
+        }
+
+        Structure<SvnWcDbConflicts.ConflictInfo> conflictInfoStructure = SvnWcDbConflicts.readConflictInfo(conflicts);
+        SVNOperation operation = conflictInfoStructure.get(SvnWcDbConflicts.ConflictInfo.conflictOperation);
+        boolean propConflicted = conflictInfoStructure.is(SvnWcDbConflicts.ConflictInfo.propConflicted);
+
+        if (!propConflicted) {
+            return didResolve;
+        }
+
+        Structure<SvnWcDbConflicts.PropertyConflictInfo> propertyConflictInfoStructure = SvnWcDbConflicts.readPropertyConflict(getDb(), localAbsPath, conflicts);
+        File propRejectFile = propertyConflictInfoStructure.get(SvnWcDbConflicts.PropertyConflictInfo.markerAbspath);
+        SVNProperties mineProps = SVNProperties.wrap((SVNHashMap)propertyConflictInfoStructure.get(SvnWcDbConflicts.PropertyConflictInfo.mineProps));
+        SVNProperties theirOldProps = SVNProperties.wrap((SVNHashMap)propertyConflictInfoStructure.get(SvnWcDbConflicts.PropertyConflictInfo.theirOldProps));
+        SVNProperties theirProps = SVNProperties.wrap((SVNHashMap) propertyConflictInfoStructure.get(SvnWcDbConflicts.PropertyConflictInfo.theirProps));
+        Set<String> conflictedPropNames = propertyConflictInfoStructure.get(SvnWcDbConflicts.PropertyConflictInfo.conflictedPropNames);
+
+        SVNProperties oldProps;
+        if (operation == SVNOperation.MERGE) {
+            oldProps = getDb().readPristineProperties(localAbsPath);
+        } else {
+            oldProps = theirOldProps;
+        }
+
+        SVNProperties resolveFrom = null;
+        if (conflictChoice == SVNConflictChoice.BASE) {
+            resolveFrom = theirOldProps != null ? theirOldProps : oldProps;
+        } else if (conflictChoice == SVNConflictChoice.MINE_FULL || conflictChoice == SVNConflictChoice.MINE_CONFLICT) {
+            resolveFrom = mineProps;
+        } else if (conflictChoice == SVNConflictChoice.THEIRS_FULL || conflictChoice == SVNConflictChoice.THEIRS_CONFLICT) {
+            resolveFrom = theirProps;
+        } else if (conflictChoice == SVNConflictChoice.MERGED) {
+            if (mergedFile != null && conflictedPropName.length() > 0) {
+                SVNProperties actualProps = getDb().readProperties(localAbsPath);
+                resolveFrom = actualProps;
+                byte[] propValue = SVNFileUtil.readFully(mergedFile);
+                resolveFrom.put(conflictedPropName, SVNPropertyValue.create(conflictedPropName, propValue));
+            } else {
+                resolveFrom = null;
+            }
+        } else {
+            SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS, "Invalid 'conflict_result' argument");
+            SVNErrorManager.error(errorMessage, SVNLogType.WC);
+        }
+
+        if (conflictedPropNames != null && conflictedPropNames.size() > 0 && resolveFrom != null) {
+            SVNProperties actualProperties = getDb().readProperties(localAbsPath);
+
+            for (String propName : conflictedPropNames) {
+                SVNPropertyValue newValue = resolveFrom.getSVNPropertyValue(propName);
+                actualProperties.put(propName, newValue);
+            }
+
+            getDb().opSetProps(localAbsPath, actualProperties, null, false, null);
+        }
+
+        SVNSkel workItems = null;
+
+        RemoveArtifactInfo artifactInfo = removeArtifactFileIfExists(localAbsPath, propRejectFile);
+        didResolve = artifactInfo.fileFound;
+        SVNSkel workItem = artifactInfo.workItem;
+        workItems = wqMerge(workItems, workItem);
+
+        getDb().opMarkResolved(localAbsPath, false, true, false, workItems);
+        wqRun(localAbsPath);
+
+        return didResolve;
+    }
+
+    private RemoveArtifactInfo removeArtifactFileIfExists(File wriAbsPath, File artifactFileAbsPath) throws SVNException {
+        RemoveArtifactInfo removeArtifactInfo = new RemoveArtifactInfo();
+
+        removeArtifactInfo.workItem = null;
+        if (artifactFileAbsPath != null) {
+            SVNNodeKind nodeKind = SVNFileType.getNodeKind(SVNFileType.getType(artifactFileAbsPath));
+
+            if (nodeKind == SVNNodeKind.FILE) {
+                wqBuildFileRemove(wriAbsPath, artifactFileAbsPath);
+                removeArtifactInfo.fileFound = true;
+            }
+        }
+
+        return removeArtifactInfo;
+    }
+
+    private static class RemoveArtifactInfo {
+        public SVNSkel workItem;
+        public boolean fileFound;
     }
 }
