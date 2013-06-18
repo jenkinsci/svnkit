@@ -130,7 +130,7 @@ public class SVNSqlJetSelectStatement extends SVNSqlJetTableStatement {
     }
 
     private boolean pathIsDecendant() throws SVNException {
-        if (isPathScoped()) {
+        if (getPathScope() != null) {
             final String rowPath = getRowPath();
             if (rowPath != null) {
                 if ("".equals(getPathScope()) && !(isStrictiDescendant() && "".equals(rowPath))) {
