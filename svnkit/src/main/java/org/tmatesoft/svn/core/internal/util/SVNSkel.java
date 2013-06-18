@@ -14,11 +14,7 @@ package org.tmatesoft.svn.core.internal.util;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -630,5 +626,15 @@ public class SVNSkel {
         SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.FS_MALFORMED_SKEL, "Malformed{0}{1} skeleton", new Object[]{type == null ? "" : " ",
                 type == null ? "" : type});
         SVNErrorManager.error(error, SVNLogType.DEFAULT);
+    }
+
+    public void removeChildren(Collection<SVNSkel> childrenToRemove) {
+        for (SVNSkel child : childrenToRemove) {
+            myList.remove(child);
+        }
+        for (int i = 0; i < myList.size(); i++) {
+            final SVNSkel skel = myList.get(i);
+            skel.myNext = i < myList.size() - 1  ? myList.get(i + 1) : null;
+        }
     }
 }

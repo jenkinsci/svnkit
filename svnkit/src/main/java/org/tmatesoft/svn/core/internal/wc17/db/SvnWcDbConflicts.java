@@ -650,37 +650,49 @@ public class SvnWcDbConflicts extends SvnWcDbShared {
             SVNErrorManager.error(errorMessage, SVNLogType.WC);
         }
 
-        SVNSkel pconflict = conflictSkel.first().next().first();
+        SVNSkel conflicts = conflictSkel.first().next();
+        Set<SVNSkel> conflictsToRemove = new HashSet<SVNSkel>();
+
+        SVNSkel pconflict = conflicts.first();
         while (pconflict != null) {
             SVNSkel c =  pconflict.first();
             if (resolveText && c.contentEquals(ConflictKind.text.name())) {
+                conflictsToRemove.add(pconflict);
                 pconflict = pconflict.next();
                 continue;
             } else if (resolveProp != null && c.contentEquals(ConflictKind.prop.name())) {
-                SVNSkel propnames = c.next().next().first();
+                SVNSkel props = c.next().next();
+                SVNSkel propnames = props.first();
                 if (resolveProp.length() == 0) {
+                    props.removeChildren(props.getList());
                     propnames = null;
                 } else {
+                    Set<SVNSkel> propsToRemove = new HashSet<SVNSkel>();
                     while (propnames != null) {
                         if (propnames.contentEquals(resolveProp)) {
+                            propsToRemove.add(propnames);
                             propnames = propnames.next();
                             break;
                         }
                         propnames = propnames.next();
                     }
+                    props.removeChildren(propsToRemove);
                 }
 
                 if (c.next().next().first() == null) {
+                    conflictsToRemove.add(pconflict);
                     pconflict = pconflict.next();
                     continue;
                 }
             } else if (resolveTree && c.contentEquals(ConflictKind.tree.name())) {
+                conflictsToRemove.add(pconflict);
                 pconflict = pconflict.next();
                 continue;
             }
 
             pconflict = pconflict.next();
         }
+        conflicts.removeChildren(conflictsToRemove);
         return !isConflictSkelComplete(conflictSkel);
     }
 }
