@@ -1209,6 +1209,7 @@ public interface ISVNWCDb {
      * will throw {@link SVNErrorCode#WC_PATH_NOT_FOUND}.
      */
     SVNWCDbKind readKind(File localAbsPath, boolean allowMissing) throws SVNException;
+    SVNNodeKind readKind(File localAbsPath, boolean allowMissing, boolean showDeleted, boolean showHidden) throws SVNException;
 
     /**
      * Return TRUE if LOCAL_ABSPATH in DB "is not present, and I haven't
@@ -1651,4 +1652,12 @@ public interface ISVNWCDb {
     void resolveDeleteRaiseMovedAway(File localAbsPath, ISVNEventHandler eventHandler) throws SVNException;
 
     void updateMovedAwayConflictVictim(File victimAbsPath, ISVNEventHandler eventHandler) throws SVNException;
+
+    SwitchedInfo isSwitched(File localAbsPath) throws SVNException;
+
+    static class SwitchedInfo {
+        public boolean isWcRoot;
+        public boolean isSwitched;
+        public SVNWCDbKind kind;
+    }
 }

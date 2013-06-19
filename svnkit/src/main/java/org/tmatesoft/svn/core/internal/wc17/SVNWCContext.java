@@ -1524,49 +1524,66 @@ public class SVNWCContext {
     }
 
     public File obtainAnchorPath(File localAbspath, boolean lockAnchor, boolean returnLockRoot) throws SVNException {
-        SVNWCDbKind kind = db.readKind(localAbspath, returnLockRoot);
-        if (!returnLockRoot && kind != SVNWCDbKind.Dir) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "Can''t obtain lock on non-directory ''{0}''", localAbspath);
-            SVNErrorManager.error(err, SVNLogType.WC);
-            return null;
+        SVNNodeKind kind;
+        boolean isWcRoot;
+        boolean isSwitched;
+        try {
+            ISVNWCDb.SwitchedInfo switchedInfo = getDb().isSwitched(localAbspath);
+            kind = switchedInfo.kind == SVNWCDbKind.Dir ? SVNNodeKind.DIR : SVNNodeKind.FILE;
+            isWcRoot = switchedInfo.isWcRoot;;
+            isSwitched = switchedInfo.isSwitched;
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND) {
+                throw e;
+            }
+            kind = SVNNodeKind.NONE;
+            isWcRoot = false;
+            isSwitched = false;
         }
+
+        if (lockAnchor && kind == SVNNodeKind.DIR) {
+            if (isWcRoot) {
+                lockAnchor = false;
+            }
+        }
+
         if (lockAnchor) {
             assert (returnLockRoot);
             File parentAbspath = SVNFileUtil.getParentFile(localAbspath);
-            if (parentAbspath == null) {
-                return localAbspath;
-            }
-            SVNWCDbKind parentKind = SVNWCDbKind.Unknown;
-            try {
-                parentKind = db.readKind(parentAbspath, true);
-            } catch (SVNException e) {
-                if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_WORKING_COPY &&
-                        e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
-                    throw e;
-                }
-            }
-            if (kind == SVNWCDbKind.Dir && parentKind == SVNWCDbKind.Dir) {
-                boolean disjoint = isChildDisjoint(localAbspath);
-                if (!disjoint) {
+
+            if (kind == SVNNodeKind.DIR) {
+                if (!isSwitched) {
                     localAbspath = parentAbspath;
                 }
-            } else if (parentKind == SVNWCDbKind.Dir) {
+            } else if (kind != SVNNodeKind.NONE && kind != SVNNodeKind.UNKNOWN) {
                 localAbspath = parentAbspath;
-            } else if (kind != SVNWCDbKind.Dir) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_WORKING_COPY, "''{0}'' is not a working copy", localAbspath);
-                SVNErrorManager.error(err, SVNLogType.WC);
-            }
-        } else if (kind != SVNWCDbKind.Dir) {
-            localAbspath = SVNFileUtil.getFileDir(localAbspath);
-            if (kind == SVNWCDbKind.Unknown) {
-                kind = db.readKind(localAbspath, false);
-                if (kind != SVNWCDbKind.Dir) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "Can't obtain lock on non-directory ''{0}''", localAbspath);
-                    SVNErrorManager.error(err, SVNLogType.WC);
+            } else {
+                SVNNodeKind parentKind;
+                try {
+                    parentKind = getDb().readKind(parentAbspath, true, true, false);
+                } catch (SVNException e) {
+                    if (!isNotCurrentWc(e)) {
+                        throw e;
+                    }
+                    parentKind = SVNNodeKind.UNKNOWN;
                 }
+
+                if (parentKind != SVNNodeKind.DIR) {
+                    SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.WC_NOT_WORKING_COPY, "'{0}' is not a working copy", localAbspath);
+                    SVNErrorManager.error(errorMessage, SVNLogType.WC);
+                }
+                localAbspath = parentAbspath;
             }
+        } else if (kind != SVNNodeKind.DIR) {
+            localAbspath = SVNFileUtil.getParentFile(localAbspath);
         }
-        return localAbspath;
+
+         return localAbspath;
+    }
+
+    private static boolean isNotCurrentWc(SVNException e) {
+        return e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_WORKING_COPY ||
+                e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UPGRADE_REQUIRED;
     }
 
     private boolean isChildDisjoint(File localAbspath) throws SVNException {

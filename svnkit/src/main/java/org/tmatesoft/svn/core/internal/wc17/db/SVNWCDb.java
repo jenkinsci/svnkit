@@ -3168,6 +3168,87 @@ public class SVNWCDb implements ISVNWCDb {
         }
     }
 
+    public SVNNodeKind readKind(File localAbsPath, boolean allowMissing, boolean showDeleted, boolean showHidden) throws SVNException {
+        assert isAbsolute(localAbsPath);
+
+        DirParsedInfo parsed = parseDir(localAbsPath, Mode.ReadOnly);
+        SVNWCDbDir pdh = parsed.wcDbDir;
+        verifyDirUsable(pdh);
+        SVNWCDbRoot wcRoot = pdh.getWCRoot();
+        File localRelPath = parsed.localRelPath;
+
+        SVNSqlJetStatement stmt = wcRoot.getSDb().getStatement(SVNWCDbStatements.SELECT_NODE_INFO);
+        try {
+            stmt.bindf("is", wcRoot.getWcId(), localRelPath);
+            boolean haveInfo = stmt.next();
+
+            if (!haveInfo) {
+                if (allowMissing) {
+                    return SVNNodeKind.UNKNOWN;
+                } else {
+                    SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node '{0}' was not found.", SVNFileUtil.createFilePath(wcRoot.getAbsPath(), localRelPath));
+                    SVNErrorManager.error(errorMessage, SVNLogType.WC);
+                }
+            }
+
+            if (!(showDeleted && showHidden)) {
+                int opDepth = (int) stmt.getColumnLong(NODES__Fields.op_depth);
+                boolean reportNone = false;
+                SVNWCDbStatus status = SvnWcDbStatementUtil.getColumnPresence(stmt, NODES__Fields.presence);
+
+                if (opDepth > 0) {
+                    status = convertToWorkingStatus(status);
+                }
+
+                switch (status) {
+                    case NotPresent:
+                        if (! (showHidden && showDeleted)) {
+                            reportNone = true;
+                        }
+                        break;
+                    case Excluded:
+                    case ServerExcluded:
+                        if (!showHidden) {
+                            reportNone = true;
+                        }
+                        break;
+                    case Deleted:
+                        if (!showDeleted) {
+                            reportNone = true;
+                        }
+                        break;
+                    default:
+                        break;
+                }
+
+                if (reportNone) {
+                    return SVNNodeKind.NONE;
+                }
+            }
+
+            return SvnWcDbStatementUtil.getColumnKind(stmt, NODES__Fields.kind) == SVNWCDbKind.Dir ? SVNNodeKind.DIR : SVNNodeKind.FILE;
+
+        } finally {
+            stmt.reset();
+        }
+    }
+
+    private SVNWCDbStatus convertToWorkingStatus(SVNWCDbStatus status) {
+        SVNWCDbStatus workStatus = status;
+        assert workStatus == SVNWCDbStatus.Normal ||
+                workStatus == SVNWCDbStatus.NotPresent ||
+                workStatus == SVNWCDbStatus.BaseDeleted ||
+                workStatus == SVNWCDbStatus.Incomplete ||
+                workStatus == SVNWCDbStatus.Excluded;
+        if (workStatus == SVNWCDbStatus.Excluded) {
+            return SVNWCDbStatus.Excluded;
+        } else if (workStatus == SVNWCDbStatus.NotPresent || workStatus == SVNWCDbStatus.BaseDeleted) {
+            return SVNWCDbStatus.Deleted;
+        } else {
+            return SVNWCDbStatus.Added;
+        }
+    }
+
     public InputStream readPristine(File wcRootAbsPath, SvnChecksum checksum) throws SVNException {
         assert (isAbsolute(wcRootAbsPath));
         assert (checksum != null);
@@ -6412,5 +6493,77 @@ public class SVNWCDb implements ISVNWCDb {
         }
 
         return relPathToKind;
+    }
+
+    public SwitchedInfo isSwitched(File localAbsPath) throws SVNException {
+        assert isAbsolute(localAbsPath);
+
+        DirParsedInfo parsed = parseDir(localAbsPath, Mode.ReadOnly);
+        SVNWCDbDir pdh = parsed.wcDbDir;
+        verifyDirUsable(pdh);
+        File localRelPath = parsed.localRelPath;
+
+        SwitchedInfo switchedInfo = new SwitchedInfo();
+        switchedInfo.isSwitched = false;
+        if (localRelPath.getPath().length() == 0) {
+            switchedInfo.isWcRoot = true;
+            switchedInfo.kind = SVNWCDbKind.Dir;
+            return switchedInfo;
+        }
+        switchedInfo.isWcRoot = false;
+
+        IsSwitched is = new IsSwitched();
+        is.wcRoot = pdh.getWCRoot();
+        is.localRelPath = localRelPath;
+        try {
+            is.transaction(pdh.getWCRoot().getSDb());
+        } catch (SqlJetException e) {
+            SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.WC_DB_ERROR, e);
+            SVNErrorManager.error(errorMessage, SVNLogType.WC);
+        }
+
+        switchedInfo.isSwitched = is.isSwitched;
+        switchedInfo.kind = is.kind;
+        return switchedInfo;
+    }
+
+    private class IsSwitched implements SVNSqlJetTransaction {
+        private SVNWCDbRoot wcRoot;
+        private File localRelPath;
+
+        private boolean isSwitched;
+        private SVNWCDbKind kind;
+
+        @Override
+        public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
+            Structure<NodeInfo> nodeInfoStructure = SvnWcDbShared.readInfo(wcRoot, localRelPath, NodeInfo.status, NodeInfo.kind,
+                    NodeInfo.reposRelPath, NodeInfo.reposId);
+            SVNWCDbStatus status = nodeInfoStructure.get(NodeInfo.status);
+            kind = nodeInfoStructure.get(NodeInfo.kind);
+            File reposRelPath = nodeInfoStructure.get(NodeInfo.reposRelPath);
+            long reposId = nodeInfoStructure.lng(NodeInfo.reposId);
+
+            if (status == SVNWCDbStatus.ServerExcluded || status == SVNWCDbStatus.Excluded || status == SVNWCDbStatus.NotPresent) {
+                SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node '{0}' was not found.", SVNFileUtil.createFilePath(wcRoot.getAbsPath(), localRelPath));
+                SVNErrorManager.error(errorMessage, SVNLogType.WC);
+            } else if (reposRelPath == null) {
+                isSwitched = false;
+                return;
+            }
+
+            File parentLocalRelPath = SVNFileUtil.getParentFile(localRelPath);
+            String name = SVNFileUtil.getFileName(localRelPath);
+
+            WCDbBaseInfo baseInfo = getBaseInfo(wcRoot, parentLocalRelPath, BaseInfoField.reposRelPath, BaseInfoField.reposId);
+            File parentReposRelPath = baseInfo.reposRelPath;
+            long parentReposId = baseInfo.reposId;
+
+            if (reposId != parentReposId) {
+                isSwitched = true;
+            } else {
+                File expectedPath = SVNFileUtil.createFilePath(parentReposRelPath, name);
+                isSwitched = expectedPath != reposRelPath;
+            }
+        }
     }
 }
