@@ -1171,7 +1171,7 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
 
         if (!db.alreadyNotified && myWCContext.getEventHandler() != null && db.edited) {
             SVNEventAction action = null;
-            if (db.shadowed) {
+            if (db.shadowed || db.editedObstructed) {
                 action = SVNEventAction.UPDATE_SHADOWED_UPDATE;
             } else if (db.obstructionFound || db.addExisted) {
                 action = SVNEventAction.UPDATE_EXISTS;
