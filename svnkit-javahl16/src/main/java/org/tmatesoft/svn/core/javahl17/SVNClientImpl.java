@@ -1924,7 +1924,12 @@ public class SVNClientImpl implements ISVNClient {
         }
         return new ISvnObjectReceiver<SvnDiffStatus>() {
             public void receive(SvnTarget target, SvnDiffStatus diffStatus) throws SVNException {
-                if (diffStatus != null && diffStatus.getModificationType() == SVNStatusType.STATUS_NONE) {
+                if (diffStatus == null) {
+                    return;
+                }
+                if (!diffStatus.isPropertiesModified() &&
+                        (diffStatus.getModificationType() == SVNStatusType.STATUS_NONE ||
+                         diffStatus.getModificationType() == SVNStatusType.STATUS_NORMAL)) {
                     return;
                 }
                 receiver.onSummary(getDiffSummary(diffStatus));
