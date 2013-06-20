@@ -86,7 +86,6 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
     }
 
     protected long updateInternal(SVNWCContext wcContext, File localAbspath, File anchorAbspath, SVNRevision revision, SVNDepth depth, boolean depthIsSticky, boolean ignoreExternals, boolean allowUnversionedObstructions, boolean addsAsMoodifications, boolean sleepForTimestamp, boolean notifySummary, ISVNConflictHandler conflictHandler) throws SVNException {
-        
         if (depth == SVNDepth.UNKNOWN) {
             depthIsSticky = false;
         }
@@ -97,34 +96,43 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
         } else {
             target = "";
         }
-        final SVNURL anchorUrl = wcContext.getNodeUrl(anchorAbspath);
-    
-        if (anchorUrl == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "'{0}' has no URL", anchorAbspath);
-            SVNErrorManager.error(err, SVNLogType.WC);
-            return SVNWCContext.INVALID_REVNUM;
-        }
-        
-        long baseRevision = wcContext.getNodeBaseRev(anchorAbspath);
-        SVNWCContext.ConflictInfo conflictInfo;
-        boolean treeConflict = false;
-        try {
-            conflictInfo = wcContext.getConflicted(localAbspath, false, false, true);
-            treeConflict = conflictInfo != null && conflictInfo.treeConflicted;
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND) {
-                throw e;
+
+        ISVNWCDb.WCDbBaseInfo nodeBaseInfo = wcContext.getNodeBase(anchorAbspath, true, false);
+        File reposRelPath = nodeBaseInfo.reposRelPath;
+        SVNURL reposRootUrl = nodeBaseInfo.reposRootUrl;
+        String reposUuid = nodeBaseInfo.reposUuid;
+
+        boolean targetConflicted = false;
+
+        final SVNURL anchorUrl;
+
+        if (reposRelPath != null) {
+            anchorUrl = reposRootUrl.appendPath(SVNFileUtil.getFilePath(reposRelPath), false);
+
+            try {
+                SVNWCContext.ConflictInfo conflictInfo = wcContext.getConflicted(localAbspath, true, true, false);
+                if (conflictInfo.textConflicted || conflictInfo.propConflicted) {
+                    targetConflicted = true;
+                }
+            } catch (SVNException e) {
+                if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND) {
+                    throw e;
+                }
             }
-            treeConflict = false;
+
+        } else {
+            anchorUrl = null;
         }
-        if (baseRevision == SVNWCContext.INVALID_REVNUM || treeConflict) {
-            if (wcContext.getEventHandler() != null) {
-                handleEvent(SVNEventFactory.createSVNEvent(localAbspath, SVNNodeKind.NONE, null, -1, 
-                        treeConflict ? SVNEventAction.SKIP_CONFLICTED : SVNEventAction.UPDATE_SKIP_WORKING_ONLY, null, null, null, 0, 0));
-                
+
+        if (anchorUrl == null || targetConflicted) {
+            SVNEvent event = SVNEventFactory.createSVNEvent(localAbspath, SVNNodeKind.UNKNOWN, null, -1, SVNEventAction.SKIP_CONFLICTED, SVNEventAction.UPDATE_SKIP_WORKING_ONLY, null, null);
+            ISVNEventHandler eventHandler = getOperation().getEventHandler();
+            if (eventHandler != null) {
+                eventHandler.handleEvent(event, ISVNEventHandler.UNKNOWN);
             }
-            return SVNWCContext.INVALID_REVNUM;
+            return -1;
         }
+
         if (depthIsSticky && depth.compareTo(SVNDepth.INFINITY) < 0) {
             if (depth == SVNDepth.EXCLUDE) {
                 wcContext.exclude(localAbspath);

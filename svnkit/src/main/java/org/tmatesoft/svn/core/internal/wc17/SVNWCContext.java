@@ -5798,4 +5798,44 @@ public class SVNWCContext {
         public SVNSkel workItem;
         public boolean fileFound;
     }
+
+    public WCDbBaseInfo getNodeBase(File localAbsPath, boolean ignoreNonExisting, boolean showHidden) throws SVNException {
+        SVNException err = null;
+        WCDbBaseInfo baseInfo = null;
+        try {
+            baseInfo = getDb().getBaseInfo(localAbsPath, BaseInfoField.status, BaseInfoField.kind, BaseInfoField.revision, BaseInfoField.reposRelPath,
+                BaseInfoField.reposRootUrl, BaseInfoField.reposUuid, BaseInfoField.lock);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND) {
+                throw e;
+            }
+            err = e;
+        }
+        if (err != null || (err == null && !showHidden && (baseInfo.status != SVNWCDbStatus.Normal && baseInfo.status != SVNWCDbStatus.Incomplete))) {
+            if (!ignoreNonExisting) {
+                if (err != null) {
+                    throw err;
+                } else {
+                    SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node '{0}' was not found.", localAbsPath);
+                    SVNErrorManager.error(errorMessage, err, SVNLogType.WC);
+                }
+            }
+            if (baseInfo == null) {
+                baseInfo = new WCDbBaseInfo();
+            }
+            baseInfo.kind = SVNWCDbKind.Unknown;
+            baseInfo.revision = SVNRepository.INVALID_REVISION;
+            baseInfo.reposRelPath = null;
+            baseInfo.reposRootUrl = null;
+            baseInfo.reposUuid = null;
+            baseInfo.lock = null;
+            return baseInfo;
+        }
+
+        assert SVNRevision.isValidRevisionNumber(baseInfo.revision);
+        assert baseInfo.reposRelPath != null;
+        assert baseInfo.reposRootUrl != null;
+        assert baseInfo.reposUuid != null;
+        return baseInfo;
+    }
 }
