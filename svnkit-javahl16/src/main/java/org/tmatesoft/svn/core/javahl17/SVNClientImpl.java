@@ -77,6 +77,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.io.svn.SVNSSHConnector;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
@@ -2170,7 +2171,7 @@ public class SVNClientImpl implements ISVNClient {
         String url = getUrlString(info.getUrl());
         String repositoryRoot = getUrlString(info.getRepositoryRootUrl());
         boolean hasWcInfo = info.getWcInfo() != null;
-        String path = (repositoryRoot != null && url != null) ? SVNPathUtil.getRelativePath(repositoryRoot, url) :
+        String path = (repositoryRoot != null && url != null) ? SVNEncodingUtil.uriDecode(SVNPathUtil.getRelativePath(repositoryRoot, url)) :
                         (hasWcInfo ? getFilePath(info.getWcInfo().getPath()) : null);
 
         return new Info(path,
