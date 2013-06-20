@@ -152,9 +152,9 @@ public class SVNWCContext {
                     return;
                 }
                 if (nodeStatus == SVNStatusType.STATUS_MISSING || nodeStatus == SVNStatusType.STATUS_OBSTRUCTED) {
-                    if (status.getPropertiesStatus() != SVNStatusType.STATUS_MODIFIED) {
-                        return;
-                    }
+                    modsInfo.modificationsFound = true;
+                    modsInfo.nonDeleteModificationsFound = true;
+                    throw new SVNCancelException();
                 }
                 modsInfo.modificationsFound = true;
                 modsInfo.nonDeleteModificationsFound = true;

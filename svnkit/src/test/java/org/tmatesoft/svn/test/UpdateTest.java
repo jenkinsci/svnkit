@@ -1129,6 +1129,51 @@ public class UpdateTest {
         }
     }
 
+    @Test
+    public void testWrongNodeKindObstructionOnDeleteCausesTreeConflict() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testWrongNodeKindObstructionOnDeleteCausesTreeConflict", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder1 = new CommitBuilder(url);
+            commitBuilder1.addFile("directory/subdirectory/file");
+            commitBuilder1.addFile("anotherDirectory/subdirectory/file");
+            commitBuilder1.commit();
+
+            final CommitBuilder commitBuilder2 = new CommitBuilder(url);
+            commitBuilder2.delete("directory/subdirectory");
+            commitBuilder2.commit();
+
+            final CommitBuilder commitBuilder3 = new CommitBuilder(url);
+            commitBuilder3.addDirectoryByCopying("directory/subdirectory", "anotherDirectory/subdirectory");
+            commitBuilder3.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url);
+            final File workingCopyDirectory = workingCopy.getWorkingCopyDirectory();
+            final File subdirectory = workingCopy.getFile("directory/subdirectory");
+            final File file = workingCopy.getFile("directory/subdirectory/file");
+            SVNFileUtil.deleteAll(subdirectory, null);
+            TestUtil.writeFileContentsString(subdirectory, "Obstruction");
+
+            final SvnUpdate update = svnOperationFactory.createUpdate();
+            update.setRevision(SVNRevision.create(2));
+            update.setSingleTarget(SvnTarget.fromFile(workingCopyDirectory));
+            update.run();
+
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopyDirectory);
+            Assert.assertTrue(statuses.get(subdirectory).isConflicted());
+            Assert.assertEquals(SVNStatusType.STATUS_OBSTRUCTED, statuses.get(subdirectory).getNodeStatus());
+            Assert.assertEquals(SVNStatusType.STATUS_MISSING, statuses.get(file).getNodeStatus());
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
     private void assertDavPropertiesAreCleaned(WorkingCopy workingCopy) throws SqlJetException, SVNException {
         final SqlJetDb db = SqlJetDb.open(workingCopy.getWCDbFile(), false);
         try {
