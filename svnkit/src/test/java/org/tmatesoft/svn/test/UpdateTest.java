@@ -1002,7 +1002,6 @@ public class UpdateTest {
 
             final DefaultSVNOptions svnOptions = new DefaultSVNOptions();
             svnOptions.setConflictHandler(new ISVNConflictHandler() {
-                @Override
                 public SVNConflictResult handleConflict(SVNConflictDescription conflictDescription) throws SVNException {
                     if (conflictDescription.getPath().getName().equals("file")) {
                         return new SVNConflictResult(SVNConflictChoice.BASE, null);

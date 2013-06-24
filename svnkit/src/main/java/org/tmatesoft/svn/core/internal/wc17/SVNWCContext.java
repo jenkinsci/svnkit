@@ -5488,7 +5488,6 @@ public class SVNWCContext {
         public ISVNCanceller canceller;
         public ISVNEventHandler eventHandler;
 
-        @Override
         public void receive(SvnTarget target, SvnStatus status) throws SVNException {
             boolean resolved = false;
 

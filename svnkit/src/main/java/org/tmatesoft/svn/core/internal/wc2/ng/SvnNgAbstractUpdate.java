@@ -808,7 +808,6 @@ public abstract class SvnNgAbstractUpdate<V, T extends AbstractSvnUpdate<V>> ext
             this.conflicts = new ArrayList<SVNConflictDescription>();
         }
 
-        @Override
         public SVNConflictResult handleConflict(SVNConflictDescription conflictDescription) throws SVNException {
             conflicts.add(conflictDescription);
             return new SVNConflictResult(SVNConflictChoice.POSTPONE, null);

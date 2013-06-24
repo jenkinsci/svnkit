@@ -89,7 +89,6 @@ public class SvnLockTest {
             getInfo.setDepth(SVNDepth.INFINITY);
             getInfo.setSingleTarget(SvnTarget.fromURL(url));
             getInfo.setReceiver(new ISvnObjectReceiver<SvnInfo>() {
-                @Override
                 public void receive(SvnTarget target, SvnInfo info) throws SVNException {
                     if (target.getPathOrUrlDecodedString().endsWith("file")) {
                         lock[0] = info.getLock();

@@ -5770,7 +5770,6 @@ public class SVNWCDb implements ISVNWCDb {
         public SVNWCDbRoot wcRoot;
         public File localRelPath;
 
-        @Override
         public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
             BaseMovedTo movedTo = opDepthMovedTo(SVNWCUtils.relpathDepth(localRelPath) - 1, wcRoot, localRelPath);
 
@@ -5792,7 +5791,6 @@ public class SVNWCDb implements ISVNWCDb {
         public File dstRelPath;
         public long dstOpDepth;
 
-        @Override
         public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
             SVNSqlJetStatement stmt;
 
@@ -5864,7 +5862,6 @@ public class SVNWCDb implements ISVNWCDb {
         public SVNConflictVersion oldVersion;
         public SVNConflictVersion newVersion;
 
-        @Override
         public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
             SVNWCDbRoot wcRoot = pdh.getWCRoot();
             long opDepth = SVNWCUtils.relpathDepth(localRelPath);
@@ -6151,7 +6148,6 @@ public class SVNWCDb implements ISVNWCDb {
         public SVNConflictVersion oldVersion;
         public SVNConflictVersion newVersion;
 
-        @Override
         public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
             BaseMovedTo movedTo = opDepthMovedTo(SVNWCUtils.relpathDepth(moveSrcOpRootRelPath), wcRoot, victimRelPath);
             File moveRootDstRelPath = movedTo.moveDstOpRootRelPath;
@@ -6534,7 +6530,6 @@ public class SVNWCDb implements ISVNWCDb {
         private boolean isSwitched;
         private SVNWCDbKind kind;
 
-        @Override
         public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
             Structure<NodeInfo> nodeInfoStructure = SvnWcDbShared.readInfo(wcRoot, localRelPath, NodeInfo.status, NodeInfo.kind,
                     NodeInfo.reposRelPath, NodeInfo.reposId);
