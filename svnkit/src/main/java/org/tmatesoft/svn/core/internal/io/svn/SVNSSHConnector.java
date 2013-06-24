@@ -11,25 +11,14 @@
  */
 package org.tmatesoft.svn.core.internal.io.svn;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.ConnectException;
-import java.net.SocketTimeoutException;
-import java.net.UnknownHostException;
-
+import com.trilead.ssh2.ServerHostKeyVerifier;
+import com.trilead.ssh2.StreamGobbler;
+import com.trilead.ssh2.auth.AgentProxy;
 import org.tmatesoft.svn.core.SVNAuthenticationException;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.auth.BasicAuthenticationManager;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
-import org.tmatesoft.svn.core.auth.ISVNSSHHostVerifier;
-import org.tmatesoft.svn.core.auth.SVNAuthentication;
-import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
-import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
+import org.tmatesoft.svn.core.auth.*;
 import org.tmatesoft.svn.core.internal.io.svn.ssh.SshAuthenticationException;
 import org.tmatesoft.svn.core.internal.io.svn.ssh.SshSession;
 import org.tmatesoft.svn.core.internal.io.svn.ssh.SshSessionPool;
@@ -38,8 +27,10 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
-import com.trilead.ssh2.ServerHostKeyVerifier;
-import com.trilead.ssh2.StreamGobbler;
+import java.io.*;
+import java.net.ConnectException;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 
 /**
  * @version 1.3
@@ -107,6 +98,7 @@ public class SVNSSHConnector implements ISVNConnector {
                         if (password != null && password.length == 0) {
                             password = null;
                         }
+                        AgentProxy agentProxy = authentication.getAgentProxy();
                         if (privateKey != null && !SVNSSHPrivateKeyUtil.isValidPrivateKey(privateKey, authentication.getPassphrase())) {
                             if (password == null) {
                                 SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "File ''{0}'' is not valid OpenSSH DSA or RSA private key file", authentication.getPrivateKeyFile());
@@ -127,7 +119,7 @@ public class SVNSSHConnector implements ISVNConnector {
                                 return true;
                             }
                         };
-                        connection = ourSessionPool.openSession(host, port, userName, privateKey, passphrase, password, v, connectTimeout, readTimeout);
+                        connection = ourSessionPool.openSession(host, port, userName, privateKey, passphrase, password, agentProxy, v, connectTimeout, readTimeout);
                         
                         if (connection == null) {
                             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED, "Cannot connect to ''{0}''", repository.getLocation().setPath("", false));

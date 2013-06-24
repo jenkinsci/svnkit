@@ -11,6 +11,21 @@
  */
 package org.tmatesoft.svn.cli;
 
+import com.jcraft.jsch.agentproxy.AgentProxyException;
+import com.jcraft.jsch.agentproxy.Connector;
+import com.jcraft.jsch.agentproxy.ConnectorFactory;
+import com.jcraft.jsch.agentproxy.TrileadAgentProxy;
+import com.trilead.ssh2.auth.AgentProxy;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.auth.*;
+import org.tmatesoft.svn.core.internal.util.SVNSSLUtil;
+import org.tmatesoft.svn.core.internal.wc.ISVNAuthStoreHandler;
+import org.tmatesoft.svn.core.internal.wc.ISVNGnomeKeyringPasswordProvider;
+import org.tmatesoft.svn.core.internal.wc.ISVNSSLPasspharsePromptSupport;
+import org.tmatesoft.svn.core.wc.SVNWCUtil;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -21,22 +36,6 @@ import java.security.cert.X509Certificate;
 import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Map;
-
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
-import org.tmatesoft.svn.core.auth.SVNAuthentication;
-import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
-import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
-import org.tmatesoft.svn.core.auth.SVNSSLAuthentication;
-import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
-import org.tmatesoft.svn.core.internal.util.SVNSSLUtil;
-import org.tmatesoft.svn.core.internal.wc.ISVNAuthStoreHandler;
-import org.tmatesoft.svn.core.internal.wc.ISVNGnomeKeyringPasswordProvider;
-import org.tmatesoft.svn.core.internal.wc.ISVNSSLPasspharsePromptSupport;
-import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
 
 /**
@@ -258,7 +257,7 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
                     if (defaultPrivateKeyFile != null) {
                         privateKeyFilePrompt = "Private key for '" + url.getHost() + "' (OpenSSH format) [" + defaultPrivateKeyFile.getAbsolutePath() + "]";
                     } else {
-                        privateKeyFilePrompt = "Private key for '" + url.getHost() + "' (OpenSSH format)"; 
+                        privateKeyFilePrompt = "Private key for '" + url.getHost() + "' (OpenSSH format) (leave blank to use a SSH agent)";
                     }
 
                     keyFilePath = prompt(privateKeyFilePrompt);
@@ -287,27 +286,29 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
                         continue;
                     }
                 }
-                
-                String passphrasePrompt = null;
-                if (defaultPassphrase != null) {
-                    passphrasePrompt = "Private key passphrase [";
-                    for (int i = 0; i < defaultPassphrase.length(); i++) {
-                        passphrasePrompt += "*";
-                    }
-                    passphrasePrompt += "]";
-                } else {
-                    passphrasePrompt = "Private key passphrase [none]";
-                }
-                
-                passphrase = promptPassword(passphrasePrompt);
-                if ("".equals(passphrase)) {
+
+                if(keyFile != null) {
+                    String passphrasePrompt = null;
                     if (defaultPassphrase != null) {
-                        passphrase = defaultPassphrase;
+                        passphrasePrompt = "Private key passphrase [";
+                        for (int i = 0; i < defaultPassphrase.length(); i++) {
+                            passphrasePrompt += "*";
+                        }
+                        passphrasePrompt += "]";
                     } else {
-                        passphrase = null;
+                        passphrasePrompt = "Private key passphrase [none]";
                     }
-                } else if (passphrase == null) {
-                    return null;
+
+                    passphrase = promptPassword(passphrasePrompt);
+                    if ("".equals(passphrase)) {
+                        if (defaultPassphrase != null) {
+                            passphrase = defaultPassphrase;
+                        } else {
+                            passphrase = null;
+                        }
+                    } else if (passphrase == null) {
+                        return null;
+                    }
                 }
             }
 
@@ -325,6 +326,14 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
                 return new SVNSSHAuthentication(name, password, port, authMayBeStored, url, false);
             } else if (keyFile != null) {
                 return new SVNSSHAuthentication(name, keyFile, passphrase, port, authMayBeStored, url, false);
+            } else {
+                try {
+                    Connector connector = ConnectorFactory.getDefault().createConnector();
+                    AgentProxy agentConnection = new TrileadAgentProxy(connector);
+                    return new SVNSSHAuthentication(name, agentConnection, port, url, false);
+                } catch (AgentProxyException e) {
+                    return null;
+                }
             }
         } else if (ISVNAuthenticationManager.USERNAME.equals(kind)) {
             String name = System.getProperty("user.name");
