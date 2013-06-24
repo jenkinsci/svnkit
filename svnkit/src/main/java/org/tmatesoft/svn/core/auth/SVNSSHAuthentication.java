@@ -11,9 +11,10 @@
  */
 package org.tmatesoft.svn.core.auth;
 
-import java.io.File;
-
+import com.trilead.ssh2.auth.AgentProxy;
 import org.tmatesoft.svn.core.SVNURL;
+
+import java.io.File;
 
 /**
  * The <b>SVNSSHAuthentication</b> class represents a kind of credentials used 
@@ -35,6 +36,7 @@ public class SVNSSHAuthentication extends SVNAuthentication {
     private String myPassword;
     private String myPassphrase;
     private File myPrivateKeyFile;
+    private AgentProxy myAgentProxy;
     private int myPortNumber;
     private char[] myPrivateKeyValue;
     
@@ -159,7 +161,12 @@ public class SVNSSHAuthentication extends SVNAuthentication {
         super(ISVNAuthenticationManager.SSH, userName, storageAllowed, url, isPartial);
         myPortNumber = portNumber;
     }
-    
+
+    public SVNSSHAuthentication(String userName, AgentProxy agentProxy, int portNumber, SVNURL url, boolean isPartial) {
+        this(userName, portNumber, false, url, isPartial);
+        myAgentProxy = agentProxy;
+    }
+
     /**
      * Returns the user account's password. This is used when an  
      * ssh private key is not used. 
@@ -200,7 +207,7 @@ public class SVNSSHAuthentication extends SVNAuthentication {
     public char[] getPrivateKey() {
         return myPrivateKeyValue;
     }
-    
+
     /**
      * Returns the number of the port across which an ssh tunnel 
      * is established. 
@@ -220,4 +227,11 @@ public class SVNSSHAuthentication extends SVNAuthentication {
     public boolean hasPrivateKey() {
         return myPrivateKeyFile != null || myPrivateKeyValue != null;
     }
+
+    /**
+     * Tells whether this authentication object has a SSH agent connection
+     */
+    public AgentProxy getAgentProxy() {
+        return myAgentProxy;
+    };
 }
