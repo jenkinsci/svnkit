@@ -13,13 +13,7 @@ import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnCopySource;
-import org.tmatesoft.svn.core.wc2.SvnLog;
-import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
-import org.tmatesoft.svn.core.wc2.SvnRemoteCopy;
-import org.tmatesoft.svn.core.wc2.SvnRevisionRange;
-import org.tmatesoft.svn.core.wc2.SvnSwitch;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
+import org.tmatesoft.svn.core.wc2.*;
 
 public class DavSwitchTest {
     
@@ -101,4 +95,31 @@ public class DavSwitchTest {
         }
     }
 
+    @Test
+    public void testUpdateOnUrlWithSpace() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        Assume.assumeTrue(TestUtil.areAllApacheOptionsSpecified(options));
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getClass().getSimpleName() + ".testUpdateOnUrlWithSpace", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepositoryWithDavAccess();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addDirectory("directory with space/subdirectory");
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url.appendPath("directory with space", false));
+
+            final SvnGetInfo getInfo = svnOperationFactory.createGetInfo();
+            getInfo.setSingleTarget(SvnTarget.fromFile(workingCopy.getWorkingCopyDirectory()));
+            final SvnInfo info = getInfo.run();
+
+            Assert.assertEquals(1, info.getRevision());
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
 }
