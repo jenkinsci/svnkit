@@ -426,7 +426,7 @@ public class HTTPConnection implements IHTTPConnection {
                 String proxyAuthResponse = null;
                 URI actualURI = null;
                 try {
-                    actualURI = new URI(myRepository.getLocation().toDecodedString());
+                    actualURI = new URI(myRepository.getLocation().toString());
                 } catch (URISyntaxException e) {
                     myRepository.getDebugLog().logError(SVNLogType.NETWORK, e);
                 }
