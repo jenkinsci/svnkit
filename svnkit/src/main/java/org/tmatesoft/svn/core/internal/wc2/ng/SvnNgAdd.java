@@ -16,6 +16,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
@@ -136,7 +137,7 @@ public class SvnNgAdd extends SvnNgOperationRunner<Void, SvnScheduleForAddition>
                     SVNErrorManager.error(err, SVNLogType.WC);
                 }
                 SVNFileUtil.ensureDirectoryExists(parentPath);
-                addFromDisk(parentPath, true);
+                addFromDisk(parentPath, null, true);
             }
         }
         SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(path));
@@ -186,7 +187,7 @@ public class SvnNgAdd extends SvnNgOperationRunner<Void, SvnScheduleForAddition>
             properties = new SVNProperties();
             properties.put(SVNProperty.SPECIAL, "*");
         }
-        addFromDisk(path, false);
+        addFromDisk(path, null, false);
         if (properties != null) {
             final ISvnAddParameters addParameters = getOperation().getAddParameters() == null ?
                     ISvnAddParameters.DEFAULT :
@@ -223,7 +224,7 @@ public class SvnNgAdd extends SvnNgOperationRunner<Void, SvnScheduleForAddition>
     private void addDirectory(File path, SVNDepth depth) throws SVNException {
         checkCancelled();
         try {
-            addFromDisk(path, true);
+            addFromDisk(path, null, true);
         } catch (SVNException e) {
             if (!(getOperation().isForce() && e.getErrorMessage().getErrorCode() == SVNErrorCode.ENTRY_EXISTS)) {
                 throw e;
@@ -266,13 +267,23 @@ public class SvnNgAdd extends SvnNgOperationRunner<Void, SvnScheduleForAddition>
         }
     }
 
-    private void addFromDisk(File path, boolean fireEvent) throws SVNException {
+    private void addFromDisk(File path, SVNProperties props, boolean fireEvent) throws SVNException {
         SVNNodeKind kind = checkCanAddNode(path);
         checkCanAddtoParent(path);
         if (kind == SVNNodeKind.FILE) {
-            getWcContext().getDb().opAddFile(path, null);
+            SVNSkel workItem = null;
+
+            if (props != null && (props.getSVNPropertyValue(SVNProperty.EXECUTABLE) != null || props.getSVNPropertyValue(SVNProperty.NEEDS_LOCK) != null)) {
+                workItem = getWcContext().wqBuildSyncFileFlags(path);
+            }
+
+            getWcContext().getDb().opAddFile(path, props, workItem);
+
+            if (workItem != null) {
+                getWcContext().wqRun(path);
+            }
         } else {
-            getWcContext().getDb().opAddDirectory(path, null);
+            getWcContext().getDb().opAddDirectory(path, props, null);
         }
         if (fireEvent) {
             handleEvent(SVNEventFactory.createSVNEvent(path, kind, null, -1, SVNEventAction.ADD, 

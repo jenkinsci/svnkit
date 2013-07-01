@@ -154,6 +154,41 @@ public class MoveTest {
         }
     }
 
+    @Test
+    public void testMovedToAndMovedFrom() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testMovedToAndMovedFrom", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("sourceFile");
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url);
+            final File sourceFile = workingCopy.getFile("sourceFile");
+            final File targetFile = workingCopy.getFile("targetFile");
+
+            final SvnCopy copy = svnOperationFactory.createCopy();
+            copy.setMove(true);
+            copy.addCopySource(SvnCopySource.create(SvnTarget.fromFile(sourceFile), SVNRevision.WORKING));
+            copy.setSingleTarget(SvnTarget.fromFile(targetFile));
+            copy.run();
+
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopy.getWorkingCopyDirectory());
+            Assert.assertEquals(sourceFile, statuses.get(targetFile).getMovedFromPath());
+            Assert.assertNull(statuses.get(targetFile).getMovedToPath());
+            Assert.assertEquals(targetFile, statuses.get(sourceFile).getMovedToPath());
+            Assert.assertNull(statuses.get(sourceFile).getMovedFromPath());
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
     private String getTestName() {
         return "MoveTest";
     }

@@ -390,7 +390,11 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
                 }
     
                 if (sameRepositories) {
+                    ISVNEventHandler eventHandler = getWcContext().getEventHandler();
+                    getWcContext().setEventHandler(null);
                     new SvnNgWcToWcCopy().copy(getWcContext(), dstPath, pair.dst, true);
+                    getWcContext().setEventHandler(eventHandler);
+
                     File dstLock = getWcContext().acquireWriteLock(dstPath, false, true);
                     try {
                         getWcContext().removeFromRevisionControl(dstPath, false, false);
@@ -606,7 +610,7 @@ public class SvnNgReposToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
         
         context.getDb().opCopyFile(path, newBaseProps, changedRev, changedDate, changedAuthor,
                 originalReposPath, originalURL, originalUuid, copyFromRev, 
-                copyFromURL != null ? wbInfo.getSHA1Checksum() : null, null, null);
+                copyFromURL != null ? wbInfo.getSHA1Checksum() : null, false, null, null, null);
         
         context.getDb().opSetProps(path, newProps, null, false, wi);
         context.wqRun(dirPath);

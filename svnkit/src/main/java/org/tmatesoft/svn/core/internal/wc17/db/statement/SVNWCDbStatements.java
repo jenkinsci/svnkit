@@ -184,7 +184,19 @@ public enum SVNWCDbStatements {
     DELETE_WORKING_OP_DEPTH(SVNWCDbDeleteWorkingOpDepth.class),
     SELECT_LOCAL_RELPATH_OP_DEPTH(SVNWCDbSelectLocalRelPathOpDepth.class),
     COPY_MOVE_NODE(SVNWCDbCopyMoveNode.class),
-    UPDATE_ACTUAL_CONFLICT(SVNWCDbUpdateActualConflict.class)
+    UPDATE_ACTUAL_CONFLICT(SVNWCDbUpdateActualConflict.class),
+    SELECT_CONFLICT_VICTIMS(SVNWCDbSelectConflictVictims.class),
+    DELETE_MOVED_BACK(SVNWCDbDeleteMovedBack.class),
+    SELECT_MOVED_BACK(SVNWCDbSelectMovedBack.class),
+    SELECT_MIN_MAX_REVISIONS(SVNWCDbSelectMinMaxRevisions.class),
+    SELECT_COPY_PRISTINES(SVNWCDbSelectCopyPristines.class),
+    UPDATE_MOVED_TO_RELPATH(SVNWCDbUpdateMovedToRelPath.class),
+    DELETE_FILE_EXTERNALS(SVNWCDbDeleteFileExternals.class),
+    DELETE_EXTERNAL_REGISTRATIONS(SVNWCDbDeleteExternalRegistrations.class),
+    DELETE_FILE_EXTERNAL_REGISTRATIONS(SVNWCDbDeleteFileExternalRegistrations.class),
+    SELECT_MOVED_FOR_DELETE(SVNWCDbSelectMovedForDelete.class),
+    UPDATE_MOVED_TO_DESCENDANTS(SVNWCDbUpdateMovedToDescendants.class),
+    CLEAR_MOVED_TO_DESCENDANTS(SVNWCDbClearMovedToDescendants.class)
     ;
     
 

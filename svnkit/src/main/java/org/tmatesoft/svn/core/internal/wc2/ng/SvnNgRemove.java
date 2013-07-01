@@ -7,6 +7,7 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -41,7 +42,7 @@ public class SvnNgRemove extends SvnNgOperationRunner<Void, SvnScheduleForRemova
                     checkCanDelete(getOperation().getOperationFactory(), context, path);
                 }
                 if (!getOperation().isDryRun()) {
-                    delete(context, path, !getOperation().isDeleteFiles(), true, getOperation().getEventHandler());
+                    delete(context, path, null, !getOperation().isDeleteFiles(), true, getOperation().getEventHandler());
                 }
             } finally {
                 getWcContext().releaseWriteLock(lockRoot);
@@ -98,7 +99,7 @@ public class SvnNgRemove extends SvnNgOperationRunner<Void, SvnScheduleForRemova
         status.run();
     }
 
-    public static void delete(SVNWCContext context, File path, boolean keepLocal, boolean deleteUnversioned, ISVNEventHandler handler) throws SVNException {
+    public static void delete(SVNWCContext context, File path, File movedToAbsPath, boolean keepLocal, boolean deleteUnversioned, ISVNEventHandler handler) throws SVNException {
         Structure<NodeInfo> info = null;
         try {
             info = context.getDb().readInfo(path, NodeInfo.status, NodeInfo.kind, NodeInfo.conflicted);
@@ -135,7 +136,9 @@ public class SvnNgRemove extends SvnNgOperationRunner<Void, SvnScheduleForRemova
         }
         info.release();
 
-        context.getDb().opDelete(path, handler);
+        SVNSkel workItems = null; //TODO
+
+        context.getDb().opDelete(path, movedToAbsPath, movedToAbsPath != null || !keepLocal, null, workItems, handler);
         if (!keepLocal && conflicts != null) {
             for (SVNConflictDescription conflict : conflicts) {
                 if (conflict.isTextConflict()) {

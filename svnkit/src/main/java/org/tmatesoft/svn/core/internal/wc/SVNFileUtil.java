@@ -1104,6 +1104,13 @@ public class SVNFileUtil {
         return null;
     }
 
+    public static void copySymlink(File source, File target) throws SVNException {
+        if (source.equals(target)) {
+            return;
+        }
+        SVNFileUtil.createSymlink(target, SVNFileUtil.getSymlinkName(source));
+    }
+
     public static String computeChecksum(String line) {
         if (line == null) {
             return null;
@@ -2175,7 +2182,12 @@ public class SVNFileUtil {
     }
 
     public static File skipAncestor(File parent, File child) {
-        return SVNFileUtil.createFilePath(SVNPathUtil.getRelativePath(SVNFileUtil.getFilePath(parent), SVNFileUtil.getFilePath(child)));
+        String parentPath = SVNFileUtil.getFilePath(parent);
+        String childPath = SVNFileUtil.getFilePath(child);
+        if (SVNPathUtil.isAncestor(parentPath, childPath)) {
+            return SVNFileUtil.createFilePath(SVNPathUtil.getRelativePath(parentPath, childPath));
+        }
+        return null;
     }
 
     public static String getFileExtension(File path) {

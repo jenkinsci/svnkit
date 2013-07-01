@@ -11,6 +11,7 @@ import org.tmatesoft.svn.core.internal.db.SVNSqlJetStatement;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.*;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCConflictDescription17;
+import org.tmatesoft.svn.core.internal.wc17.SVNWCUtils;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.DirParsedInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.ACTUAL_NODE__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
@@ -694,5 +695,27 @@ public class SvnWcDbConflicts extends SvnWcDbShared {
         }
         conflicts.removeChildren(conflictsToRemove);
         return !isConflictSkelComplete(conflictSkel);
+    }
+
+    public static List<File> readConflictMarkers(SVNWCDb db, File wriAbsPath, SVNSkel conflictSkel) throws SVNException {
+        assert conflictSkel != null;
+
+        List<File> list = null;
+
+        for (SVNSkel conflict = conflictSkel.first().next().first(); conflict != null; conflict = conflict.next()) {
+            for (SVNSkel marker = conflict.first().next().first(); marker != null; marker = marker.next()) {
+                if (!marker.isAtom()) {
+                    continue;
+                }
+                if (list == null) {
+                    list = new ArrayList(4);
+                }
+
+                File path = db.fromRelPath(wriAbsPath, SVNFileUtil.createFilePath(marker.getValue()));
+                list.add(path);
+            }
+
+        }
+        return list;
     }
 }

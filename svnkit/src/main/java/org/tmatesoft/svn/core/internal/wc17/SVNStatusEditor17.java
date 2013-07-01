@@ -265,28 +265,23 @@ public class SVNStatusEditor17 {
             switched_p = name == null || !name.equals(SVNFileUtil.getFileName(localAbsPath)); 
         }
 
-        if (info.kind == SVNWCDbKind.Dir) {
-            if (info.status == SVNWCDbStatus.Incomplete || info.incomplete) {
-                node_status = SVNStatusType.STATUS_INCOMPLETE;
-            } else if (info.status == SVNWCDbStatus.Deleted) {
-                node_status = SVNStatusType.STATUS_DELETED;
-                if (!info.haveBase) {
+        if (info.status == SVNWCDbStatus.Incomplete || info.incomplete) {
+            node_status = SVNStatusType.STATUS_INCOMPLETE;
+        } else if (info.status == SVNWCDbStatus.Deleted) {
+            node_status = SVNStatusType.STATUS_DELETED;
+            if (!info.haveBase || info.haveMoreWork || info.copied) {
+                copied = true;
+            } else if (!info.haveMoreWork && info.haveBase) {
+                copied = false;
+            } else {
+                WCDbDeletionInfo deletionInfo = context.getDb().scanDeletion(localAbsPath);
+                if (deletionInfo.workDelAbsPath != null) {
                     copied = true;
-                } else {
-                    copied = context.getNodeScheduleInternal(localAbsPath, false, true).copied;
-                }
-            } else if (pathKind == null || pathKind != SVNNodeKind.DIR) {
-                if (pathKind == null || pathKind == SVNNodeKind.NONE) {
-                    node_status = SVNStatusType.STATUS_MISSING;
-                } else {
-                    node_status = SVNStatusType.STATUS_OBSTRUCTED;
                 }
             }
         } else {
-            if (info.status == SVNWCDbStatus.Deleted) {
-                node_status = SVNStatusType.STATUS_DELETED;
-                copied = context.getNodeScheduleInternal(localAbsPath, false, true).copied;
-            } else if (pathKind == null || pathKind != SVNNodeKind.FILE) {
+            SVNNodeKind expectedKind = info.kind == SVNWCDbKind.Dir ? SVNNodeKind.DIR : SVNNodeKind.FILE;
+            if (pathKind == null || pathKind != expectedKind) {
                 if (pathKind == null || pathKind == SVNNodeKind.NONE) {
                     node_status = SVNStatusType.STATUS_MISSING;
                 } else {
@@ -294,7 +289,7 @@ public class SVNStatusEditor17 {
                 }
             }
         }
-        
+
         if (info.status != SVNWCDbStatus.Deleted) {
             if (info.propsMod) {
                 prop_status = SVNStatusType.STATUS_MODIFIED;
@@ -345,18 +340,17 @@ public class SVNStatusEditor17 {
         }
         if (node_status == SVNStatusType.STATUS_NORMAL) {
             if (info.status == SVNWCDbStatus.Added) {
+                copied = info.copied;
                 if (!info.opRoot) {
-                    copied = true;
-                } else if (info.kind == SVNWCDbKind.File && !info.haveBase && !info.haveMoreWork) {
+                } else if (!info.haveBase && !info.haveMoreWork) {
                     node_status = SVNStatusType.STATUS_ADDED;
-                    copied = info.hasChecksum;
                 } else {
-                    ScheduleInternalInfo scheduleInfo = context.getNodeScheduleInternal(localAbsPath, true, true);
-                    copied = scheduleInfo.copied;
-                    if (scheduleInfo.schedule == SVNWCSchedule.add) {
-                        node_status = SVNStatusType.STATUS_ADDED;
-                    } else if (scheduleInfo.schedule == SVNWCSchedule.replace) {
+                    WCDbInfo infoBelowWorking = context.getDb().readInfoBelowWorking(localAbsPath);
+
+                    if (infoBelowWorking.status != SVNWCDbStatus.NotPresent && infoBelowWorking.status != SVNWCDbStatus.Deleted) {
                         node_status = SVNStatusType.STATUS_REPLACED;
+                    } else {
+                        node_status = SVNStatusType.STATUS_ADDED;
                     }
                 }
                 
@@ -403,8 +397,7 @@ public class SVNStatusEditor17 {
             }
             origin.release();
         }
-        
-        WCDbRepositoryInfo reposInfo = getRepositoryRootUrlRelPath(context, parentReposInfo, info, localAbsPath);
+
         SVNNodeKind statusKind = null;
         switch (info.kind) {
         case Dir:
@@ -422,6 +415,7 @@ public class SVNStatusEditor17 {
         stat.setKind(statusKind);
         stat.setPath(localAbsPath);
 
+        WCDbRepositoryInfo reposInfo = getRepositoryRootUrlRelPath(context, parentReposInfo, info, localAbsPath);
         if (info.lock != null) {
             stat.setLock(new SVNLock(SVNFileUtil.getFilePath(reposInfo.relPath), info.lock.token, info.lock.owner, info.lock.comment, info.lock.date, null));
         }
@@ -450,12 +444,16 @@ public class SVNStatusEditor17 {
         stat.setRepositoryChangedAuthor(null);
 
         stat.setWcLocked(info.locked);
-        stat.setConflicted(info.conflicted);
+        stat.setConflicted(conflicted);
         stat.setVersioned(true);
         stat.setChangelist(info.changelist);
         stat.setRepositoryRootUrl(reposInfo.rootUrl);
         stat.setRepositoryRelativePath(SVNFileUtil.getFilePath(reposInfo.relPath));
         stat.setRepositoryUuid(reposInfo.uuid);
+
+        stat.setTextStatus(text_status);
+        stat.setNodeStatus(node_status);
+        stat.setPropertiesStatus(prop_status);
 
         if (stat.isVersioned() && stat.isConflicted()) {
             SVNWCContext.ConflictInfo conflictInfo = context.getConflicted(stat.getPath(), true, true, true);
@@ -469,25 +467,26 @@ public class SVNStatusEditor17 {
                 stat.setNodeStatus(SVNStatusType.STATUS_CONFLICTED);
             }
         }
-
-        if (stat.isSwitched() && stat.isVersioned() && stat.getKind() == SVNNodeKind.FILE) {
-            try {
-                Structure<ExternalNodeInfo> externalInfo = SvnWcDbExternals.readExternal(context, stat.getPath(), stat.getPath(), ExternalNodeInfo.kind);
-                if (externalInfo != null) {
-                    stat.setFileExternal(externalInfo.<SVNWCDbKind>get(ExternalNodeInfo.kind) == SVNWCDbKind.File);
-                    stat.setSwitched(false);
-                    stat.setNodeStatus(stat.getTextStatus());
-                    
-                    externalInfo.release();
-                }
-            } catch (SVNException e) {
-                if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND) {
-                    throw e;
-                }
-            }
-            
-        }
-        
+        stat.setFileExternal(info.fileExternal);
+//
+//        if (stat.isSwitched() && stat.isVersioned() && stat.getKind() == SVNNodeKind.FILE) {
+//            try {
+//                Structure<ExternalNodeInfo> externalInfo = SvnWcDbExternals.readExternal(context, stat.getPath(), stat.getPath(), ExternalNodeInfo.kind);
+//                if (externalInfo != null) {
+//                    stat.setFileExternal(externalInfo.<SVNWCDbKind>get(ExternalNodeInfo.kind) == SVNWCDbKind.File);
+//                    stat.setSwitched(false);
+//                    stat.setNodeStatus(stat.getTextStatus());
+//
+//                    externalInfo.release();
+//                }
+//            } catch (SVNException e) {
+//                if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND) {
+//                    throw e;
+//                }
+//            }
+//
+//        }
+//
         stat.setMovedFromPath(movedFromAbsPath);
         if (info.movedToAbsPath != null) {
             stat.setMovedToPath(info.movedToAbsPath);
@@ -545,7 +544,8 @@ public class SVNStatusEditor17 {
         
         WCDbInfo readInfo = context.getDb().readInfo(localAbsPath, InfoField.status, InfoField.kind, InfoField.revision, InfoField.reposRelPath, InfoField.reposRootUrl, InfoField.reposUuid,
                 InfoField.changedRev, InfoField.changedDate, InfoField.changedAuthor, InfoField.depth, InfoField.checksum, InfoField.lock, InfoField.translatedSize,
-                InfoField.lastModTime, InfoField.changelist, InfoField.conflicted, InfoField.opRoot, InfoField.hadProps, InfoField.propsMod, InfoField.haveBase, InfoField.haveMoreWork);
+                InfoField.lastModTime, InfoField.changelist, InfoField.conflicted, InfoField.opRoot, InfoField.hadProps, InfoField.propsMod, InfoField.haveBase, InfoField.haveMoreWork,
+                InfoField.movedHere, InfoField.movedTo);
         result.load(readInfo);
         
         result.locked = context.getDb().isWCLocked(localAbsPath);

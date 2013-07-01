@@ -301,7 +301,7 @@ public class SvnNgMergeCallback implements ISvnDiffCallback {
             boolean same = compareFiles(leftFile, originalProperties, path);
             if (same || isForce() || isRecordOnly()) {
                 if (!isDryRun()) {
-                    SvnNgRemove.delete(getContext(), path, false, true, null);
+                    SvnNgRemove.delete(getContext(), path, null, false, true, null);
                 }
                 result.contentState = SVNStatusType.CHANGED;
             } else {
@@ -357,7 +357,7 @@ public class SvnNgMergeCallback implements ISvnDiffCallback {
                         SvnNgRemove.checkCanDelete(driver.operation.getOperationFactory(), getContext(), path);
                     }
                     if (!isDryRun()) {
-                        SvnNgRemove.delete(getContext(), path, false, false, null);
+                        SvnNgRemove.delete(getContext(), path, null, false, false, null);
                     }
                     result.contentState = SVNStatusType.CHANGED;
                 } catch (SVNException e) {
@@ -457,12 +457,12 @@ public class SvnNgMergeCallback implements ISvnDiffCallback {
                             reposInfo.reposRootUrl, 
                             reposInfo.reposUuid, 
                             copyFromRev, 
-                            null, 
+                            null, false,
                             SVNDepth.INFINITY, 
                             null, 
                             null);
                 } else {
-                    getContext().getDb().opAddDirectory(path, null);
+                    getContext().getDb().opAddDirectory(path, null, null);
                 }
             }
             result.contentState = SVNStatusType.CHANGED;
@@ -478,12 +478,12 @@ public class SvnNgMergeCallback implements ISvnDiffCallback {
                                 reposInfo.reposRootUrl, 
                                 reposInfo.reposUuid, 
                                 copyFromRev, 
-                                null, 
+                                null, false,
                                 SVNDepth.INFINITY, 
                                 null, 
                                 null);
                     } else {
-                        getContext().getDb().opAddDirectory(path, null);
+                        getContext().getDb().opAddDirectory(path, null, null);
                     }
                 } else {
                     setAddedPath(path);
