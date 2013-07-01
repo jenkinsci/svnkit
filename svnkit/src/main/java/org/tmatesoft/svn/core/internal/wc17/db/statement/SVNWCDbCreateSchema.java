@@ -144,7 +144,7 @@ public class SVNWCDbCreateSchema extends SVNSqlJetStatement {
     };
     
     public static final Statement[] CREATE_UPDATE_MOVE_LIST = new Statement[] {
-        new Statement(Type.TABLE, "UPDATE_MOVE_lIST", "CREATE TABLE UPDATE_MOVE_lIST (\n" +
+        new Statement(Type.TABLE, "UPDATE_MOVE_LIST", "CREATE TABLE UPDATE_MOVE_LIST (\n" +
                 "  local_relpath TEXT PRIMARY KEY NOT NULL UNIQUE,\n" +
                 "  action INTEGER NOT NULL,\n" +
                 "  kind  INTEGER NOT NULL,\n" +
@@ -154,7 +154,7 @@ public class SVNWCDbCreateSchema extends SVNSqlJetStatement {
     };
 
     public static final Statement[] FINALIZE_UPDATE_MOVE = new Statement[] {
-        new Statement(Type.TABLE, "UPDATE_MOVE_lIST", "UPDATE_MOVE_LIST", true, true)
+        new Statement(Type.TABLE, "UPDATE_MOVE_LIST", "UPDATE_MOVE_LIST", true, true)
     };
 
     private enum Type {

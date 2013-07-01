@@ -40,7 +40,7 @@ public class SVNWCDbSelectMovedOutside extends SVNSqlJetSelectFieldsStatement<SV
 
         return getColumnLong(SVNWCDbSchema.NODES__Fields.op_depth) >= opDepth &&
                 getColumn(SVNWCDbSchema.NODES__Fields.moved_to) != null &&
-                isStrictDescendantOf(getColumnString(SVNWCDbSchema.NODES__Fields.moved_to), getBind(2).toString());
+                !isStrictDescendantOf(getColumnString(SVNWCDbSchema.NODES__Fields.moved_to), getBind(2).toString());
     }
 
     protected void defineFields() {

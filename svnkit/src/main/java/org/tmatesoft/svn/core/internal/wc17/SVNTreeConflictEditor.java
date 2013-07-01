@@ -246,7 +246,7 @@ public class SVNTreeConflictEditor implements ISVNEditor2 {
         boolean mustDeleteWorkingNode = false;
 
         File localAbsPath = SVNFileUtil.createFilePath(wcRoot.getAbsPath(), relPath);
-        File parentRelPath = SVNFileUtil.getParentFile(relPath);
+        File parentRelPath = SVNFileUtil.getFileDir(relPath);
 
         Structure<StructureFields.NodeInfo> depthInfo = SvnWcDbShared.getDepthInfo(wcRoot, relPath, SVNWCUtils.relpathDepth(moveRootDstRelPath),
                 StructureFields.NodeInfo.kind, StructureFields.NodeInfo.reposRelPath);

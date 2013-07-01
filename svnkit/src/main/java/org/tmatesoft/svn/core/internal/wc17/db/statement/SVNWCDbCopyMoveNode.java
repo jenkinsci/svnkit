@@ -63,13 +63,13 @@ public class SVNWCDbCopyMoveNode extends SVNSqlJetStatement {
             values.put(SVNWCDbSchema.NODES__Fields.presence.name(), stmt1.getColumnString(SVNWCDbSchema.NODES__Fields.presence));
             values.put(SVNWCDbSchema.NODES__Fields.depth.name(), stmt1.getColumnString(SVNWCDbSchema.NODES__Fields.depth));
             values.put(SVNWCDbSchema.NODES__Fields.kind.name(), stmt1.getColumnString(SVNWCDbSchema.NODES__Fields.kind));
-            values.put(SVNWCDbSchema.NODES__Fields.changed_revision.name(), stmt1.getColumnLong(SVNWCDbSchema.NODES__Fields.changed_revision));
+            values.put(SVNWCDbSchema.NODES__Fields.changed_revision.name(), stmt1.getColumnString(SVNWCDbSchema.NODES__Fields.changed_revision));
             values.put(SVNWCDbSchema.NODES__Fields.changed_date.name(), stmt1.getColumnString(SVNWCDbSchema.NODES__Fields.changed_date));
             values.put(SVNWCDbSchema.NODES__Fields.changed_author.name(), stmt1.getColumnString(SVNWCDbSchema.NODES__Fields.changed_author));
             values.put(SVNWCDbSchema.NODES__Fields.checksum.name(), stmt1.getColumnString(SVNWCDbSchema.NODES__Fields.checksum));
             values.put(SVNWCDbSchema.NODES__Fields.properties.name(), stmt1.getColumnBlob(SVNWCDbSchema.NODES__Fields.properties));
-            values.put(SVNWCDbSchema.NODES__Fields.translated_size.name(), stmt1.getColumnLong(SVNWCDbSchema.NODES__Fields.translated_size));
-            values.put(SVNWCDbSchema.NODES__Fields.last_mod_time.name(), stmt1.getColumnLong(SVNWCDbSchema.NODES__Fields.last_mod_time));
+            values.put(SVNWCDbSchema.NODES__Fields.translated_size.name(), stmt1.getColumnString(SVNWCDbSchema.NODES__Fields.translated_size));
+            values.put(SVNWCDbSchema.NODES__Fields.last_mod_time.name(), stmt1.getColumnString(SVNWCDbSchema.NODES__Fields.last_mod_time));
             values.put(SVNWCDbSchema.NODES__Fields.symlink_target.name(), stmt1.getColumnString(SVNWCDbSchema.NODES__Fields.symlink_target));
             values.put(SVNWCDbSchema.NODES__Fields.moved_here.name(), 1);
             values.put(SVNWCDbSchema.NODES__Fields.moved_to.name(), stmt2.getColumnString(SVNWCDbSchema.NODES__Fields.moved_to));

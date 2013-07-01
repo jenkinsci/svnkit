@@ -592,7 +592,8 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
                     }
                 } else {
                     ISVNWCDb.SVNWCDbBaseMovedToData baseMovedToData = myWCContext.getDb().baseMovedTo(localAbspath);
-                    if (baseMovedToData.moveSrcOpRootAbsPath != null) {
+                    moveSrcOpRootAbsPath = baseMovedToData.moveSrcOpRootAbsPath;
+                    if (moveSrcOpRootAbsPath != null) {
                         reason = SVNConflictReason.MOVED_AWAY;
                     } else {
                         reason = SVNConflictReason.REPLACED;
@@ -602,7 +603,8 @@ public class SVNUpdateEditor17 implements ISVNUpdateEditor {
 
             case Deleted:
                 ISVNWCDb.SVNWCDbBaseMovedToData baseMovedToData = myWCContext.getDb().baseMovedTo(localAbspath);
-                if (baseMovedToData.moveSrcOpRootAbsPath != null) {
+                moveSrcOpRootAbsPath = baseMovedToData.moveSrcOpRootAbsPath;
+                if (moveSrcOpRootAbsPath != null) {
                     reason = SVNConflictReason.MOVED_AWAY;
                 } else {
                     reason = SVNConflictReason.DELETED;

@@ -1673,4 +1673,6 @@ public interface ISVNWCDb {
     long[] minMaxRevisions(File localAbsPath, boolean committed) throws SVNException;
 
     public boolean opHandleMoveBack(File localAbsPath, File movedFromAbsPath, SVNSkel workItems) throws SVNException;
+
+    File requiredLockForResolve(File localAbsPath) throws SVNException;
 }

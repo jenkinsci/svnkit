@@ -30,6 +30,7 @@ import java.util.logging.Level;
 
 import org.tmatesoft.sqljet.core.internal.SqlJetPagerJournalMode;
 import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.db.SVNSqlJetDb.Mode;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
@@ -5836,5 +5837,27 @@ public class SVNWCContext {
         assert baseInfo.reposRootUrl != null;
         assert baseInfo.reposUuid != null;
         return baseInfo;
+    }
+
+    public File acquireWriteLockForResolve(File localAbsPath) throws SVNException {
+        File obtainedAbsPath = null;
+        File requestedAbsPath = localAbsPath;
+        boolean locked = false;
+        while (!locked) {
+            obtainedAbsPath = acquireWriteLock(requestedAbsPath, false, true);
+            locked = true;
+            File requiredAbsPath = getDb().requiredLockForResolve(localAbsPath);
+
+            File child = SVNFileUtil.skipAncestor(requiredAbsPath, obtainedAbsPath);
+            if (child != null && !"".equals(SVNFileUtil.getFilePath(child))) {
+                releaseWriteLock(obtainedAbsPath);
+                locked = false;
+                requestedAbsPath = requiredAbsPath;
+            } else {
+                assert !requiredAbsPath.equals(obtainedAbsPath) || SVNFileUtil.skipAncestor(obtainedAbsPath, requiredAbsPath) != null;
+            }
+        }
+
+        return obtainedAbsPath;
     }
 }
