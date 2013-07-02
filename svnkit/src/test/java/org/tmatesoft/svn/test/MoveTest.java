@@ -189,6 +189,40 @@ public class MoveTest {
         }
     }
 
+    @Test
+    public void testDoubleLockingOnMove() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testDoubleLockingOnMove", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final CommitBuilder commitBuilder = new CommitBuilder(url);
+            commitBuilder.addFile("directory/sourceDirectory/source");
+            commitBuilder.addDirectory("directory/targetDirectory");
+            commitBuilder.commit();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url);
+            final File source = workingCopy.getFile("directory/sourceDirectory/source");
+            final File target = workingCopy.getFile("directory/targetDirectory/target");
+
+            final SvnCopy copy = svnOperationFactory.createCopy();
+            copy.setMove(true);
+            copy.addCopySource(SvnCopySource.create(SvnTarget.fromFile(source), SVNRevision.WORKING));
+            copy.setSingleTarget(SvnTarget.fromFile(target));
+            copy.run();
+
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopy.getWorkingCopyDirectory());
+            Assert.assertEquals(target, statuses.get(source).getMovedToPath());
+            Assert.assertEquals(source, statuses.get(target).getMovedFromPath());
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
     private String getTestName() {
         return "MoveTest";
     }

@@ -6836,7 +6836,7 @@ public class SVNWCDb implements ISVNWCDb {
                 return;
             }
 
-            File parentLocalRelPath = SVNFileUtil.getParentFile(localRelPath);
+            File parentLocalRelPath = SVNFileUtil.getFileDir(localRelPath);
             String name = SVNFileUtil.getFileName(localRelPath);
 
             WCDbBaseInfo baseInfo = getBaseInfo(wcRoot, parentLocalRelPath, BaseInfoField.reposRelPath, BaseInfoField.reposId);
