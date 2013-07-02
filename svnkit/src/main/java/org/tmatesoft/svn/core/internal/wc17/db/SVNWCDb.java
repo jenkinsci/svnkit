@@ -6847,7 +6847,7 @@ public class SVNWCDb implements ISVNWCDb {
                 isSwitched = true;
             } else {
                 File expectedPath = SVNFileUtil.createFilePath(parentReposRelPath, name);
-                isSwitched = expectedPath != reposRelPath;
+                isSwitched = !expectedPath.equals(reposRelPath);
             }
         }
     }
