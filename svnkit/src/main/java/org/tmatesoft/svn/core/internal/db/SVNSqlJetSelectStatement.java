@@ -143,7 +143,7 @@ public class SVNSqlJetSelectStatement extends SVNSqlJetTableStatement {
         return true;
     }
 
-    private String getRowPath() {
+    protected String getRowPath() throws SVNException {
         if (SVNWCDbSchema.NODES__Indices.I_NODES_PARENT.toString().equals(getIndexName())) {
             return (String) rowValues.get(SVNWCDbSchema.NODES__Fields.parent_relpath.toString());
         }

@@ -196,7 +196,9 @@ public enum SVNWCDbStatements {
     DELETE_FILE_EXTERNAL_REGISTRATIONS(SVNWCDbDeleteFileExternalRegistrations.class),
     SELECT_MOVED_FOR_DELETE(SVNWCDbSelectMovedForDelete.class),
     UPDATE_MOVED_TO_DESCENDANTS(SVNWCDbUpdateMovedToDescendants.class),
-    CLEAR_MOVED_TO_DESCENDANTS(SVNWCDbClearMovedToDescendants.class)
+    CLEAR_MOVED_TO_DESCENDANTS(SVNWCDbClearMovedToDescendants.class),
+    DELETE_NODES_ABOVE_DEPTH_RECURSIVE(SVNWCDbDeleteNodesAboveDepthRecursive.class),
+    SELECT_MOVED_HERE_CHILDREN(SVNWCDbSelectMovedHereChildren.class)
     ;
     
 

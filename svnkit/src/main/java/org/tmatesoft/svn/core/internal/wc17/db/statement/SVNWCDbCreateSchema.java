@@ -111,10 +111,7 @@ public class SVNWCDbCreateSchema extends SVNSqlJetStatement {
         new Statement(Type.TABLE, "REVERT_LIST", "CREATE TABLE REVERT_LIST (" +
         		" local_relpath TEXT NOT NULL, " +
         		" actual INTEGER NOT NULL, " +
-        		" conflict_old TEXT, " +
-                " conflict_new TEXT, " +
-                " conflict_working TEXT, " +
-                " prop_reject TEXT, " +
+        		" conflict_data BLOB, " +
                 " notify INTEGER, " +
                 " op_depth INTEGER, " +
                 " repos_id INTEGER, " +

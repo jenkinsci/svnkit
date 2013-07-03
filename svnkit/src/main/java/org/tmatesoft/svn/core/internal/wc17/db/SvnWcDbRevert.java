@@ -9,6 +9,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.db.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -21,12 +22,12 @@ import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.NODES__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSchema.REVERT_LIST__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
-import org.tmatesoft.svn.core.wc.ISVNEventHandler;
-import org.tmatesoft.svn.core.wc.SVNEventAction;
+import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.util.SVNLogType;
 
 import java.io.File;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -35,6 +36,9 @@ import static org.tmatesoft.svn.core.internal.wc17.db.SvnWcDbStatementUtil.*;
 public class SvnWcDbRevert extends SvnWcDbShared {
     
     public static void revert(SVNWCDbRoot root, File localRelPath) throws SVNException {
+        File movedTo;
+        boolean movedHere;
+
         SVNSqlJetDb sdb = root.getSDb();
 
         SvnRevertNodesTrigger nodesTableTrigger = new SvnRevertNodesTrigger(sdb);
@@ -73,9 +77,37 @@ public class SvnWcDbRevert extends SvnWcDbShared {
                 nodeNotFound(root, localRelPath);
             }
             opDepth = getColumnInt64(stmt, NODES__Fields.op_depth);
+            movedTo = getColumnPath(stmt, NODES__Fields.moved_to);
+            movedHere = getColumnBoolean(stmt, NODES__Fields.moved_here);
         } finally {
             reset(stmt);
         }
+        if (movedTo != null) {
+            SVNWCDb.ResolveBreakMovedAway resolveBreakMovedAway = new SVNWCDb.ResolveBreakMovedAway();
+            resolveBreakMovedAway.wcRoot = root;
+            resolveBreakMovedAway.localRelPath = localRelPath;
+            try {
+                resolveBreakMovedAway.transaction(sdb);
+            } catch (SqlJetException e) {
+                SVNSqlJetDb.createSqlJetError(e);
+            }
+        } else {
+            SVNSkel conflict = root.getDb().readConflictInternal(root, localRelPath);
+            if (conflict != null) {
+                Structure<SvnWcDbConflicts.ConflictInfo> conflictInfoStructure = SvnWcDbConflicts.readConflictInfo(conflict);
+                boolean treeConflicted = conflictInfoStructure.is(SvnWcDbConflicts.ConflictInfo.treeConflicted);
+                SVNOperation operation = conflictInfoStructure.get(SvnWcDbConflicts.ConflictInfo.conflictOperation);
+                if (treeConflicted && (operation == SVNOperation.UPDATE || operation == SVNOperation.SWITCH)) {
+                    Structure<SvnWcDbConflicts.TreeConflictInfo> treeConflictInfoStructure = SvnWcDbConflicts.readTreeConflict(root.getDb(), root.getAbsPath(), conflict);
+                    SVNConflictReason reason = treeConflictInfoStructure.get(SvnWcDbConflicts.TreeConflictInfo.localChange);
+                    SVNConflictAction action = treeConflictInfoStructure.get(SvnWcDbConflicts.TreeConflictInfo.incomingChange);
+                    if (reason == SVNConflictReason.DELETED) {
+                        root.getDb().resolveDeleteRaiseMovedAway(SVNFileUtil.createFilePath(root.getAbsPath(), localRelPath), null);
+                    }
+                }
+            }
+        }
+
         if (opDepth > 0 && opDepth == SVNWCUtils.relpathDepth(localRelPath)) {
 
             boolean haveRow;
@@ -128,6 +160,10 @@ public class SvnWcDbRevert extends SvnWcDbShared {
             } finally {
                 stmt.reset();
             }
+
+            if (movedHere) {
+                clearMovedTo(root, localRelPath, nodesTableTrigger);
+            }
         }
         long affectedRows;
         stmt = sdb.getStatement(SVNWCDbStatements.DELETE_ACTUAL_NODE_LEAVING_CHANGELIST);
@@ -152,7 +188,28 @@ public class SvnWcDbRevert extends SvnWcDbShared {
         }
     }
 
+    private static void clearMovedTo(SVNWCDbRoot root, File localRelPath, SvnRevertNodesTrigger nodesTableTrigger) throws SVNException {
+        SVNSqlJetStatement stmt = root.getSDb().getStatement(SVNWCDbStatements.SELECT_MOVED_FROM_RELPATH);
+        try {
+            stmt.bindf("is", root.getWcId(), localRelPath);
+            boolean haveRow = stmt.next();
+            if (!haveRow) {
+                return;
+            }
+            File movedFromRelPath = SvnWcDbStatementUtil.getColumnPath(stmt, NODES__Fields.local_relpath);
+            stmt.reset();
+            stmt = root.getSDb().getStatement(SVNWCDbStatements.CLEAR_MOVE_TO_RELPATH);
+            stmt.bindf("isi", root.getWcId(), movedFromRelPath, SVNWCUtils.relpathDepth(movedFromRelPath));
+            ((SVNSqlJetTableStatement) stmt).addTrigger(nodesTableTrigger);
+            stmt.done();
+        } finally {
+            stmt.reset();
+        }
+    }
+
     public static void revertRecursive(SVNWCDbRoot root, File localRelPath) throws SVNException {
+        boolean movedHere;
+
         SVNSqlJetDb sdb = root.getSDb();
         SvnRevertNodesTrigger nodesTableTrigger = new SvnRevertNodesTrigger(sdb);
         SvnRevertActualNodesTrigger actualNodesTableTrigger = new SvnRevertActualNodesTrigger(sdb);
@@ -179,24 +236,51 @@ public class SvnWcDbRevert extends SvnWcDbShared {
                 nodeNotFound(root, localRelPath);
             }
             opDepth = getColumnInt64(stmt, NODES__Fields.op_depth);
+            movedHere = getColumnBoolean(stmt, NODES__Fields.moved_here);
         } finally {
             reset(stmt);
         }
+
+        if (opDepth > 0 && opDepth != SVNWCUtils.relpathDepth(localRelPath)) {
+            SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_OPERATION_DEPTH, "Can't revert '%s' without" + " reverting parent", SVNFileUtil.createFilePath(root.getAbsPath(), localRelPath));
+            SVNErrorManager.error(errorMessage, SVNLogType.WC);
+        }
+
+        stmt = sdb.getStatement(SVNWCDbStatements.SELECT_MOVED_OUTSIDE);
+        try {
+            stmt.bindf("isi", root.getWcId(), localRelPath, opDepth);
+            boolean haveRow = stmt.next();
+            while (haveRow) {
+                File moveSrcRelPath = getColumnPath(stmt, NODES__Fields.local_relpath);
+
+                SVNWCDb.ResolveBreakMovedAway resolveBreakMovedAway = new SVNWCDb.ResolveBreakMovedAway();
+                resolveBreakMovedAway.wcRoot = root;
+                resolveBreakMovedAway.localRelPath = moveSrcRelPath;
+                try {
+                    resolveBreakMovedAway.transaction(sdb);
+                } catch (SqlJetException e) {
+                    SVNSqlJetDb.createSqlJetError(e);
+                }
+
+                haveRow = stmt.next();
+            }
+        } finally {
+            reset(stmt);
+        }
+
+        long selectOpDepth = opDepth != 0 ? opDepth : 1;
+        stmt = sdb.getStatement(SVNWCDbStatements.DELETE_NODES_ABOVE_DEPTH_RECURSIVE);
+        try {
+            stmt.bindf("isi", root.getWcId(), localRelPath, selectOpDepth);
+            ((SVNSqlJetTableStatement) stmt).addTrigger(nodesTableTrigger);
+            stmt.done();
+        } finally {
+            reset(stmt);
+        }
+
         if (opDepth > 0 && opDepth != SVNWCUtils.relpathDepth(localRelPath)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_OPERATION_DEPTH, "Can''t revert ''{0}'' without reverting parent", root.getAbsPath(localRelPath));
             SVNErrorManager.error(err, SVNLogType.WC);
-        }
-        if (opDepth == 0) {
-            opDepth = 1;
-        }
-
-        stmt = sdb.getStatement(SVNWCDbStatements.DELETE_NODES_RECURSIVE);
-        try {
-            ((SVNSqlJetTableStatement) stmt).addTrigger(nodesTableTrigger);
-            stmt.bindf("isi", root.getWcId(), localRelPath, opDepth);
-            stmt.done();
-        } finally {
-            stmt.reset();
         }
 
         stmt = sdb.getStatement(SVNWCDbStatements.DELETE_ACTUAL_NODE_LEAVING_CHANGELIST_RECURSIVE);
@@ -224,6 +308,23 @@ public class SvnWcDbRevert extends SvnWcDbShared {
         } finally {
             stmt.reset();
         }
+
+        stmt = sdb.getStatement(SVNWCDbStatements.SELECT_MOVED_HERE_CHILDREN);
+        try {
+            stmt.bindf("is", root.getWcId(), localRelPath);
+            boolean haveRow = stmt.next();
+            while (haveRow) {
+                File movedHereChildRelPath = getColumnPath(stmt, NODES__Fields.moved_to);
+                clearMovedTo(root, movedHereChildRelPath, nodesTableTrigger);
+                haveRow = stmt.next();
+            }
+        } finally {
+            stmt.reset();
+        }
+
+        if (opDepth > 0 && opDepth == SVNWCUtils.relpathDepth(localRelPath) && movedHere) {
+            clearMovedTo(root, localRelPath, nodesTableTrigger);
+        }
     }
     
     public enum RevertInfo {
@@ -233,7 +334,8 @@ public class SvnWcDbRevert extends SvnWcDbShared {
         conflictWorking,
         propReject,
         copiedHere,
-        kind
+        kind,
+        markerFiles
     }
     
     public static Map<File, SVNWCDbKind> readRevertCopiedChildren(SVNWCContext context, File localAbsPath) throws SVNException {
@@ -307,23 +409,15 @@ public class SvnWcDbRevert extends SvnWcDbShared {
                 boolean isActual = getColumnBoolean(stmt, REVERT_LIST__Fields.actual);
                 boolean anotherRow = false;
                 if (isActual) {
-                    result.set(RevertInfo.reverted, !isColumnNull(stmt, REVERT_LIST__Fields.notify));
-                    if (!isColumnNull(stmt, REVERT_LIST__Fields.conflict_old)) {
-                        String path = getColumnText(stmt, REVERT_LIST__Fields.conflict_old);
-                        result.set(RevertInfo.conflictOld, SVNFileUtil.createFilePath(root.getAbsPath(), path));
+                    byte[] conflictData = getColumnBlob(stmt, REVERT_LIST__Fields.conflict_data);
+                    if (conflictData != null) {
+                        SVNSkel conflicts = SVNSkel.parse(conflictData);
+                        result.set(RevertInfo.markerFiles, SvnWcDbConflicts.readConflictMarkers((SVNWCDb) context.getDb(), root.getAbsPath(), conflicts));
+                        if (!isColumnNull(stmt, REVERT_LIST__Fields.notify)) {
+                            result.set(RevertInfo.reverted, true);
+                        }
                     }
-                    if (!isColumnNull(stmt, REVERT_LIST__Fields.conflict_new)) {
-                        String path = getColumnText(stmt, REVERT_LIST__Fields.conflict_new);
-                        result.set(RevertInfo.conflictNew, SVNFileUtil.createFilePath(root.getAbsPath(), path));
-                    }
-                    if (!isColumnNull(stmt, REVERT_LIST__Fields.conflict_working)) {
-                        String path = getColumnText(stmt, REVERT_LIST__Fields.conflict_working);
-                        result.set(RevertInfo.conflictWorking, SVNFileUtil.createFilePath(root.getAbsPath(), path));
-                    }
-                    if (!isColumnNull(stmt, REVERT_LIST__Fields.prop_reject)) {
-                        String path = getColumnText(stmt, REVERT_LIST__Fields.prop_reject);
-                        result.set(RevertInfo.propReject, SVNFileUtil.createFilePath(root.getAbsPath(), path));
-                    }
+
                     anotherRow = stmt.next();
                 }
                 if (!isActual || anotherRow) {
@@ -359,7 +453,7 @@ public class SvnWcDbRevert extends SvnWcDbShared {
         DirParsedInfo dirInfo = db.obtainWcRoot(localAbsPath);
         SVNWCDbRoot root = dirInfo.wcDbDir.getWCRoot();
         
-        SVNSqlJetStatement stmt = new SVNWCDbCreateSchema(root.getSDb(), SVNWCDbCreateSchema.DROP_REVERT_LIST, -1);
+        SVNSqlJetStatement stmt = new SVNWCDbCreateSchema(root.getSDb().getTemporaryDb(), SVNWCDbCreateSchema.DROP_REVERT_LIST, -1);
         try {
             stmt.done();
         } finally {

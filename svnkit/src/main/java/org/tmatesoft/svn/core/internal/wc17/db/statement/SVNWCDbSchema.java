@@ -140,7 +140,7 @@ public enum SVNWCDbSchema {
     }
 
     public enum REVERT_LIST__Fields {
-        local_relpath, actual, conflict_old, conflict_new, conflict_working, prop_reject, notify, op_depth, repos_id, kind;
+        local_relpath, actual, conflict_data, notify, op_depth, repos_id, kind;
     }
     
     public enum CHANGELIST_LIST__Fields {

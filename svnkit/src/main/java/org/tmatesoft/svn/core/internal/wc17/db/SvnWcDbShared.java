@@ -171,7 +171,7 @@ public class SvnWcDbShared {
         final SVNWCDbRoot root = pdh.getWCRoot();
         
         final Structure<AdditionInfo> additionInfo = scanAddition(pdh.getWCRoot(), localRelpath, AdditionInfo.values());
-        if (additionInfo.get(AdditionInfo.status) != SVNWCDbStatus.MovedHere) {
+        if (additionInfo.get(AdditionInfo.status) != SVNWCDbStatus.MovedHere || additionInfo.get(AdditionInfo.movedFromRelPath) == null) {
             final SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS, "Path ''{0}'' was not moved here", localAbsPath);
             SVNErrorManager.error(err, SVNLogType.WC);
         }
@@ -192,6 +192,7 @@ public class SvnWcDbShared {
         Structure<AdditionInfo> info = Structure.obtain(AdditionInfo.class, fields);
         info.set(AdditionInfo.originalRevision, SVNWCDb.INVALID_REVNUM);
         info.set(AdditionInfo.originalReposId, SVNWCDb.INVALID_REPOS_ID);
+        info.set(AdditionInfo.movedFromOpDepth, 0);
         
         begingReadTransaction(root);
         File buildRelpath = SVNFileUtil.createFilePath("");
@@ -266,7 +267,9 @@ public class SvnWcDbShared {
                             (info.hasField(AdditionInfo.movedFromRelPath) ||
                             info.hasField(AdditionInfo.movedFromOpRootRelPath))) {
                         final Structure<MovedFromInfo> movedFromInfo = getMovedFromInfo(root, currentRelpath, localRelpath);
-                        info.set(AdditionInfo.movedFromOpDepth, movedFromInfo.lng(MovedFromInfo.opDepth));
+                        if (movedFromInfo.hasValue(MovedFromInfo.opDepth)) {
+                            info.set(AdditionInfo.movedFromOpDepth, movedFromInfo.lng(MovedFromInfo.opDepth));
+                        }
                         info.set(AdditionInfo.movedFromOpRootRelPath, movedFromInfo.get(MovedFromInfo.movedFromOpRootRelPath));
                         info.set(AdditionInfo.movedFromRelPath, movedFromInfo.get(MovedFromInfo.movedFromRelPath));
                     }

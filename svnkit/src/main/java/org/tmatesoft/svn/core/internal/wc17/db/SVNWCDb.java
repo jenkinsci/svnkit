@@ -6066,13 +6066,13 @@ public class SVNWCDb implements ISVNWCDb {
         }
     }
 
-    private class ResolveBreakMovedAway implements SVNSqlJetTransaction {
+    protected static class ResolveBreakMovedAway implements SVNSqlJetTransaction {
 
         public SVNWCDbRoot wcRoot;
         public File localRelPath;
 
         public void transaction(SVNSqlJetDb db) throws SqlJetException, SVNException {
-            BaseMovedTo movedTo = opDepthMovedTo(SVNWCUtils.relpathDepth(localRelPath) - 1, wcRoot, localRelPath);
+            BaseMovedTo movedTo = wcRoot.getDb().opDepthMovedTo(SVNWCUtils.relpathDepth(localRelPath) - 1, wcRoot, localRelPath);
 
             BreakMove breakMove = new BreakMove();
             breakMove.wcRoot = wcRoot;
@@ -6084,7 +6084,7 @@ public class SVNWCDb implements ISVNWCDb {
         }
     }
 
-    private class BreakMove implements SVNSqlJetTransaction {
+    private static class BreakMove implements SVNSqlJetTransaction {
 
         public SVNWCDbRoot wcRoot;
         public File srcRelPath;
