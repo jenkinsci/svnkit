@@ -1352,7 +1352,8 @@ public interface ISVNWCDb {
     class WCDbAdditionInfo {
 
         public enum AdditionInfoField {
-            status, opRootAbsPath, reposRelPath, reposRootUrl, reposUuid, originalReposRelPath, originalRootUrl, originalUuid, originalRevision
+            status, opRootAbsPath, reposRelPath, reposRootUrl, reposUuid, originalReposRelPath, originalReposId, originalRootUrl, originalUuid, originalRevision,
+            movedFromRelPath, movedFromOpRootRelPath;
         }
 
         public SVNWCDbStatus status;
@@ -1364,6 +1365,11 @@ public interface ISVNWCDb {
         public SVNURL originalRootUrl;
         public String originalUuid;
         public long originalRevision;
+        public long originalReposId;
+
+        public File movedFromRelPath;
+        public File movedFromOpRootRelPath;
+        public int movedFromOpDepth;
     }
 
     /**

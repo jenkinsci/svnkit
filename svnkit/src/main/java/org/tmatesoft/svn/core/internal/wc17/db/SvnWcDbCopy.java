@@ -576,8 +576,8 @@ public class SvnWcDbCopy extends SvnWcDbShared {
         } else if (status == SVNWCDbStatus.Added) {
             Structure<AdditionInfo> additionInfo = scanAddition(wcRoot, localRelPath, AdditionInfo.opRootRelPath, 
                     AdditionInfo.originalReposRelPath, AdditionInfo.originalReposId, AdditionInfo.originalRevision);
-            additionInfo.from(AdditionInfo.originalReposRelPath, AdditionInfo.originalReposId, AdditionInfo.originalRevision)
-                .into(result, CopyInfo.copyFromRelpath, CopyInfo.copyFromId, CopyInfo.copyFromRev);
+            additionInfo.from(AdditionInfo.originalReposRelPath, AdditionInfo.originalReposId, AdditionInfo.originalRevision, AdditionInfo.status)
+                .into(result, CopyInfo.copyFromRelpath, CopyInfo.copyFromId, CopyInfo.copyFromRev, CopyInfo.status);
             
             if (additionInfo.get(AdditionInfo.originalReposRelPath) != null) {
                 File opRootRelPath = additionInfo.get(AdditionInfo.opRootRelPath);

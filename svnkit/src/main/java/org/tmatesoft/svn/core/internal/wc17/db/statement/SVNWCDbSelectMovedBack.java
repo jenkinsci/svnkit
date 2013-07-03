@@ -81,6 +81,9 @@ public class SVNWCDbSelectMovedBack extends SVNSqlJetSelectFieldsStatement<SVNWC
     public void reset() throws SVNException {
         super.reset();
         firstPartOfUnion = true;
+        if (joinedStatement != null) {
+            joinedStatement.reset();
+        }
     }
 
     @Override
@@ -88,14 +91,13 @@ public class SVNWCDbSelectMovedBack extends SVNSqlJetSelectFieldsStatement<SVNWC
         if (firstPartOfUnion) {
             boolean next = super.next();
             if (next) {
-                joinedStatement = new JoinedStatement(sDb);
-                try {
-                    joinedStatement.bindf("isi", getBind(1), getColumnString(SVNWCDbSchema.NODES__Fields.local_relpath), getBind(3));
-                    joinedStatement.next();
-                    return true;
-                } finally {
+                if (joinedStatement != null) {
                     joinedStatement.reset();
                 }
+                joinedStatement = new JoinedStatement(sDb);
+                joinedStatement.bindf("isi", getBind(1), getColumnString(SVNWCDbSchema.NODES__Fields.local_relpath), getBind(3));
+                joinedStatement.next();
+                return true;
             } else {
                 firstPartOfUnion = false;
                 resetCursor();
@@ -104,13 +106,12 @@ public class SVNWCDbSelectMovedBack extends SVNSqlJetSelectFieldsStatement<SVNWC
         if (!firstPartOfUnion) {
             boolean next = super.next();
             if (next) {
-                joinedStatement = new JoinedStatement(sDb);
-                try {
-                    joinedStatement.bindf("isi", getBind(1), getColumnString(SVNWCDbSchema.NODES__Fields.local_relpath), getBind(3));
-                    joinedStatement.next();
-                } finally {
+                if (joinedStatement != null) {
                     joinedStatement.reset();
                 }
+                joinedStatement = new JoinedStatement(sDb);
+                joinedStatement.bindf("isi", getBind(1), getColumnString(SVNWCDbSchema.NODES__Fields.local_relpath), getBind(3));
+                joinedStatement.next();
             }
             return next;
         }
@@ -124,6 +125,11 @@ public class SVNWCDbSelectMovedBack extends SVNSqlJetSelectFieldsStatement<SVNWC
             SVNSqlJetDb.createSqlJetError(e);
         }
         setCursor(openCursor());
+    }
+
+    @Override
+    public SVNSqlJetStatement getJoinedStatement(Enum<?> joinedTable) throws SVNException {
+        return joinedStatement;
     }
 
     private static class JoinedStatement extends SVNSqlJetSelectFieldsStatement<SVNWCDbSchema.NODES__Fields> {

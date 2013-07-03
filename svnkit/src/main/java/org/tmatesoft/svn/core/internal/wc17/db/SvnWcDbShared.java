@@ -638,11 +638,7 @@ public class SvnWcDbShared {
                 }
                 if (info.hasField(NodeInfo.conflicted)) {
                     if (haveActual) {
-                        info.set(NodeInfo.conflicted, !isColumnNull(stmtActual, SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_old) || /* old */
-                            !isColumnNull(stmtActual, SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_new) || /* new */
-                            !isColumnNull(stmtActual, SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_working) || /* working */
-                            !isColumnNull(stmtActual, SVNWCDbSchema.ACTUAL_NODE__Fields.prop_reject) || /* prop_reject */
-                            !isColumnNull(stmtActual, SVNWCDbSchema.ACTUAL_NODE__Fields.tree_conflict_data)); /* tree_conflict_data */
+                        info.set(NodeInfo.conflicted, !isColumnNull(stmtActual, SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_data));
                     } else {
                         info.set(NodeInfo.conflicted, false);
                     }

@@ -3904,6 +3904,9 @@ public class SVNWCDb implements ISVNWCDb {
         WCDbAdditionInfo additionInfo = new WCDbAdditionInfo();
         additionInfo.originalRevision = INVALID_REVNUM;
         long originalReposId = INVALID_REPOS_ID;
+        additionInfo.movedFromRelPath = null;
+        additionInfo.movedFromOpRootRelPath = null;
+        additionInfo.movedFromOpDepth = 0;
 
 
         File currentRelpath = localRelpath;
@@ -3952,8 +3955,8 @@ public class SVNWCDb implements ISVNWCDb {
                 additionInfo.opRootAbsPath = SVNFileUtil.createFilePath(pdh.getWCRoot().getAbsPath(), currentRelpath);
             }
 
-            if (f.contains(AdditionInfoField.originalReposRelPath) || f.contains(AdditionInfoField.originalRootUrl) || f.contains(AdditionInfoField.originalUuid)
-                    || (f.contains(AdditionInfoField.originalRevision) && additionInfo.originalRevision == INVALID_REVNUM) || f.contains(AdditionInfoField.status)) {
+            if (f.contains(AdditionInfoField.originalReposRelPath) || f.contains(AdditionInfoField.originalReposId) || f.contains(AdditionInfoField.originalRootUrl) || f.contains(AdditionInfoField.originalUuid) || (f.contains(AdditionInfoField.originalRevision) && additionInfo.originalRevision == INVALID_REVNUM) ||
+                    f.contains(AdditionInfoField.status) || f.contains(AdditionInfoField.movedFromRelPath) || f.contains(AdditionInfoField.movedFromOpRootRelPath)) {
                 if (!localRelpath.equals(currentRelpath)) {
                     stmt.reset();
                     stmt.bindf("is", pdh.getWCRoot().getWcId(), currentRelpath);
@@ -3977,19 +3980,31 @@ public class SVNWCDb implements ISVNWCDb {
                     additionInfo.originalReposRelPath = getColumnPath(stmt, NODES__Fields.repos_path);
                 }
 
-                if (!isColumnNull(stmt, NODES__Fields.repos_id) && (f.contains(AdditionInfoField.status) || f.contains(AdditionInfoField.originalRootUrl) || f.contains(AdditionInfoField.originalUuid))) {
-                    if (f.contains(AdditionInfoField.originalRootUrl) || f.contains(AdditionInfoField.originalUuid)) {
+                if (!isColumnNull(stmt, NODES__Fields.repos_id) && (f.contains(AdditionInfoField.status) || f.contains(AdditionInfoField.originalReposId) || f.contains(AdditionInfoField.movedFromRelPath) || f.contains(AdditionInfoField.movedFromOpRootRelPath))) {
+                    if (f.contains(AdditionInfoField.originalReposId)) {
                         originalReposId = getColumnInt64(stmt, NODES__Fields.repos_id);
                         ReposInfo reposInfo = fetchReposInfo(pdh.getWCRoot().getSDb(), originalReposId);
                         additionInfo.originalRootUrl = SVNURL.parseURIEncoded(reposInfo.reposRootUrl);
                         additionInfo.originalUuid = reposInfo.reposUuid;
+                        additionInfo.originalReposId = originalReposId;
                     }
-                    if (f.contains(AdditionInfoField.status)) {
+
+                    boolean movedHere = getColumnBoolean(stmt, NODES__Fields.moved_here);
+
+                    if (movedHere) {
                         if (getColumnBoolean(stmt, NODES__Fields.moved_here)) {
                             additionInfo.status = SVNWCDbStatus.MovedHere;
                         } else {
                             additionInfo.status = SVNWCDbStatus.Copied;
                         }
+                    }
+
+                    if (movedHere && (f.contains(AdditionInfoField.movedFromRelPath) || f.contains(AdditionInfoField.movedFromOpRootRelPath))) {
+                        Structure<StructureFields.MovedFromInfo> movedFromInfo = getMovedFromInfo(pdh.getWCRoot(), currentRelpath, localRelpath);
+                        currentRelpath = movedFromInfo.get(StructureFields.MovedFromInfo.movedFromOpRootRelPath);
+                        additionInfo.movedFromOpRootRelPath = currentRelpath;
+                        additionInfo.movedFromRelPath = movedFromInfo.get(StructureFields.MovedFromInfo.movedFromRelPath);
+                        additionInfo.movedFromOpDepth = (int) movedFromInfo.lng(StructureFields.MovedFromInfo.opDepth);
                     }
                 }
             }
