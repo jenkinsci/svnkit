@@ -769,7 +769,7 @@ public class SVNWCContext {
         final SvnChecksum checksum = readInfo.<SvnChecksum>get(PristineInfo.checksum);
         readInfo.release();
         
-        if (status == SVNWCDbStatus.Added) {
+        if (status == SVNWCDbStatus.Added && checksum == null) {
             final WCDbAdditionInfo scanAddition = db.scanAddition(localAbspath, AdditionInfoField.status);
             if (scanAddition.status == SVNWCDbStatus.Added) {
                 return info;
