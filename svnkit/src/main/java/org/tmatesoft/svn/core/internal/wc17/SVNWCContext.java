@@ -3612,10 +3612,12 @@ public class SVNWCContext {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "''{0}'' not found", srcAbspath);
             SVNErrorManager.error(err, SVNLogType.WC);
         }
+        File srcRelPath = getDb().toRelPath(srcAbspath);
+        File dstRelPath = getDb().toRelPath(dstAbspath);
+
         SVNSkel workItem = SVNSkel.createEmptyList();
-        File anchorRelativePath = getRelativePath(anchorPath);
-        workItem.prependPath(SVNFileUtil.createFilePath(anchorRelativePath, SVNWCUtils.skipAncestor(anchorPath, dstAbspath)));
-        workItem.prependPath(SVNFileUtil.createFilePath(anchorRelativePath, SVNWCUtils.skipAncestor(anchorPath, srcAbspath)));
+        workItem.prependPath(dstRelPath);
+        workItem.prependPath(srcRelPath);
         workItem.prependString(WorkQueueOperation.FILE_MOVE.getOpName());
         SVNSkel result = SVNSkel.createEmptyList();
         result.appendChild(workItem);

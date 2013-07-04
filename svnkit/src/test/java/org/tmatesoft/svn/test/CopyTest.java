@@ -292,6 +292,45 @@ public class CopyTest {
         }
     }
 
+    @Test
+    public void testCopyAddedDirectoryWithUnversionedFiles() throws Exception {
+        final TestOptions options = TestOptions.getInstance();
+
+        final SvnOperationFactory svnOperationFactory = new SvnOperationFactory();
+        final Sandbox sandbox = Sandbox.createWithCleanup(getTestName() + ".testCopyAddedDirectoryWithUnversionedFiles", options);
+        try {
+            final SVNURL url = sandbox.createSvnRepository();
+
+            final WorkingCopy workingCopy = sandbox.checkoutNewWorkingCopy(url);
+            final File sourceDirectory = workingCopy.getFile("sourceDirectory");
+            final File targetDirectory = workingCopy.getFile("targetDirectory");
+            final File sourceFile = new File(sourceDirectory, "file");
+            final File targetFile = new File(targetDirectory, "file");
+
+            SVNFileUtil.ensureDirectoryExists(sourceDirectory);
+            workingCopy.add(sourceDirectory);
+            TestUtil.writeFileContentsString(sourceFile, "content");
+
+            final SvnCopy copy = svnOperationFactory.createCopy();
+            copy.addCopySource(SvnCopySource.create(SvnTarget.fromFile(sourceDirectory), SVNRevision.WORKING));
+            copy.setSingleTarget(SvnTarget.fromFile(targetDirectory));
+            copy.run();
+
+            Assert.assertTrue(targetFile.isFile());
+            Assert.assertTrue(sourceFile.isFile());
+
+            final Map<File, SvnStatus> statuses = TestUtil.getStatuses(svnOperationFactory, workingCopy.getWorkingCopyDirectory());
+            Assert.assertEquals(SVNStatusType.STATUS_UNVERSIONED, statuses.get(sourceFile).getNodeStatus());
+            Assert.assertEquals(SVNStatusType.STATUS_UNVERSIONED, statuses.get(targetFile).getNodeStatus());
+            Assert.assertEquals(SVNStatusType.STATUS_ADDED, statuses.get(sourceDirectory).getNodeStatus());
+            Assert.assertEquals(SVNStatusType.STATUS_ADDED, statuses.get(targetDirectory).getNodeStatus());
+
+        } finally {
+            svnOperationFactory.dispose();
+            sandbox.dispose();
+        }
+    }
+
     private void assertNoRepositoryPathStartsWithSlash(SvnOperationFactory svnOperationFactory, File workingCopyDirectory) throws SVNException {
         final SVNWCContext context = new SVNWCContext(ISVNWCDb.SVNWCDbOpenMode.ReadOnly, svnOperationFactory.getOptions(), false, false, svnOperationFactory.getEventHandler());
         try {

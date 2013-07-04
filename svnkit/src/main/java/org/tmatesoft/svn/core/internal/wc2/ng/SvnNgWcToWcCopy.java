@@ -852,7 +852,7 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
             if (files != null) {
                 diskChildren = new HashSet<String>();
                 for (File file : files) {
-                    diskChildren.add(SVNFileUtil.getFilePath(file));
+                    diskChildren.add(SVNFileUtil.getFileName(file));
                 }
             } else {
                 diskChildren = null;
@@ -911,6 +911,8 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
             workItems = null;
 
             for (String name : diskChildren) {
+                name = SVNPathUtil.tail(name);
+
                 if (name.equals(SVNFileUtil.getAdminDirectoryName())) {
                     continue;
                 }
@@ -929,7 +931,7 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
                 SVNSkel workItem = copyToTmpDir.workItem;
 
                 if (workItem != null) {
-                    SVNWCContext.wqMerge(workItems, workItem);
+                    workItems = SVNWCContext.wqMerge(workItems, workItem);
                 }
             }
 
