@@ -996,7 +996,7 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
         } else if (copyToTmpDir.kind == SVNNodeKind.UNKNOWN) {
             SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.NODE_UNEXPECTED_KIND, "Source '{0}' is unexpected kind", srcAbsPath);
             SVNErrorManager.error(errorMessage, SVNLogType.WC);
-        } else if (copyToTmpDir.kind == SVNNodeKind.DIR || isSpecial) {
+        } else if (copyToTmpDir.kind == SVNNodeKind.DIR) {
             deleteOnClose = true;
         } else {
             deleteOnClose = false;
@@ -1021,6 +1021,7 @@ public class SvnNgWcToWcCopy extends SvnNgOperationRunner<Void, SvnCopy> {
             } else if (!isSpecial) {
                 SVNFileUtil.copyFile(srcAbsPath, dstTmpAbsPath, false, true);
             } else {
+                SVNFileUtil.deleteFile(dstTmpAbsPath);
                 SVNFileUtil.copySymlink(srcAbsPath, dstTmpAbsPath);
             }
 
